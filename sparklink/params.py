@@ -121,12 +121,20 @@ class Params:
                 data.append(this_row)
         return data
 
-    def iteration_history_df(self):
+    def iteration_history_df_gammas(self):
         data = []
         for it_num, param_value in enumerate(self.param_history):
             data.extend(self.convert_params_dict_to_data(param_value, it_num))
         data.extend(self.convert_params_dict_to_data(self.params, it_num+1))
         return data
+
+    def iteration_history_df_lambdas(self):
+        data = []
+        for it_num, param_value in enumerate(self.param_history):
+            data.append({"λ": param_value['λ'], "iteration": it_num})
+        data.append({"λ": self.params['λ'], "iteration": it_num+1})
+        return data
+
 
     def reset_param_values_to_none(self):
         """
@@ -178,13 +186,99 @@ class Params:
         self.populate_params(lambda_value, pi_df_collected)
         self.iteration += 1
 
+    def pi_iteration_chart(self):
+        data = self.iteration_history_df_gammas()
+
+        chart_data = alt.Data(values=data)
+
+
+        # chart = alt.Chart(chart_data).mark_bar().encode(
+        #     x='iteration:O',
+        #     y=alt.Y('sum(probability):Q', axis=alt.Axis(title='𝛾 value')),
+        #     color='value:N',
+        #     row=alt.Row('column:N', sort=alt.SortField("gamma"))
+        # ).resolve_scale(
+        #     y='independent'
+        # ).properties(height=100)
+
+
+        # c0 = chart.transform_filter(
+        #     (datum.match == 0)
+        # ).properties(title="Match")
+
+        # c1 = chart.transform_filter(
+        #     (datum.match == 1)
+        # ).properties(title="Non match")
+
+        # facetted_chart = c0 | c1
+
+        # fc = facetted_chart.configure_title(
+        #     anchor='middle'
+        # ).properties(
+        #     title='Probability distribution of comparison vector values by iteration number'
+        # )
+
+        chart_def = {'config': {'view': {'width': 400, 'height': 300},
+                                'mark': {'tooltip': None},
+                                'title': {'anchor': 'middle'}},
+                     'hconcat': [{'mark': 'bar',
+                                  'encoding': {'color': {'type': 'nominal', 'field': 'value'},
+                                               'row': {'type': 'nominal', 'field': 'column', 'sort': {'field': 'gamma'}},
+                                               'x': {'type': 'ordinal', 'field': 'iteration'},
+                                               'y': {'type': 'quantitative',
+                                                     'aggregate': 'sum',
+                                                     'axis': {'title': '𝛾 value'},
+                                                     'field': 'probability'}},
+                                  'height': 100,
+                                  'resolve': {'scale': {'y': 'independent'}},
+                                  'title': 'Match',
+                                  'transform': [{'filter': '(datum.match === 0)'}]},
+                                 {'mark': 'bar',
+                                  'encoding': {'color': {'type': 'nominal', 'field': 'value'},
+                                               'row': {'type': 'nominal', 'field': 'column', 'sort': {'field': 'gamma'}},
+                                               'x': {'type': 'ordinal', 'field': 'iteration'},
+                                               'y': {'type': 'quantitative',
+                                                     'aggregate': 'sum',
+                                                     'axis': {'title': '𝛾 value'},
+                                                     'field': 'probability'}},
+                                  'height': 100,
+                                  'resolve': {'scale': {'y': 'independent'}},
+                                  'title': 'Non match',
+                                  'transform': [{'filter': '(datum.match === 1)'}]}],
+                     'data': {'values': data},
+                     'title': 'Probability distribution of comparison vector values by iteration number',
+                     '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
+
+        if altair_installed:
+            return alt.Chart.from_dict(chart_def)
+        else:
+            return chart_def
+
+
+    def lambda_iteration_chart(self):
+        data = self.iteration_history_df_lambdas()
+        chart_def = {'config': {'view': {'width': 400, 'height': 300}, 'mark': {'tooltip': None}},
+                     'data': {'values': data},
+                     'mark': 'bar',
+                     'encoding': {'x': {'type': 'ordinal', 'field': 'iteration'},
+                                  'y': {'type': 'quantitative',
+                                        'axis': {'title': 'λ (estimated proportion of matches)'},
+                                        'field': 'λ'}},
+                     'title': 'Lambda value by iteration',
+                     '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
+        if altair_installed:
+            return alt.Chart.from_dict(chart_def)
+        else:
+            return chart_def
+
+
+
     def probability_distribution_chart(self):
         """
         If altair is installed, returns the chart
         Otherwise will return the chart spec as a dictionary
         """
         data = self.convert_params_dict_to_data(self.params)
-
 
         # chart_data = alt.Data(values=data)
         # chart = alt.Chart(chart_data).mark_bar().encode(
@@ -233,7 +327,7 @@ class Params:
                                   'transform': [{'filter': '(datum.match === 1)'}],
                                   'width': 150}],
                      'data': {'values': data},
-                     'title': 'Probability distribution of comparison vector values, m=0 and m=1',
+                     'title': f'Probability distribution of comparison vector values. Current λ={self.params["λ"]:.3f}',
                      '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
         if altair_installed:
             return alt.Chart.from_dict(chart_def)
