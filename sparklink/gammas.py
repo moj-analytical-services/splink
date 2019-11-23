@@ -20,28 +20,67 @@ def gammas_case_statement_3_levels(col_name, i):
     else 0 end as gamma_{i}"""
 
 
-
-
-def add_gammas(df, setting_dict, spark, override_case_statements = None):
+def complete_settings_dict(gamma_settings_dict):
+    """
+    Where the user has omitted details from the settings dict,
+    populate them with the defaults
     """
 
-    """
-    # TODO: Implement override_case_statements customisability
-
-    case_statement_functions = {
-        "2_levels": gammas_case_statement_2_levels
-        "3_levels": gammas_case_statement_3_levels
+    case_lookup = {
+        2: gammas_case_statement_2_levels,
+        3: gammas_case_statement_3_levels
     }
 
-    gamma_select_expressions = []
-    for i, col_name in enumerate(binary_comparison_cols):
-        gamma_select_expressions.append(gammas_case_statement(col_name, i))
+    gamma_counter = 0
+    for col_name, col_value in gamma_settings_dict.items():
 
-    gammas_select_expr = ",\n".join(gamma_select_expressions)
+        col_value["gamma_index"] = gamma_counter
+
+
+        if "col_name" not in col_value:
+            col_value["col_name"] = col_name
+
+        if "levels" not in col_value:
+            col_value["levels"] = 2
+
+        if "case_expression" not in col_value:
+            col_value["case_expression"] = case_lookup[col_value["levels"]](col_name, gamma_counter)
+
+        gamma_counter += 1
+
+
+
+    return gamma_settings_dict
+
+
+def add_gammas(df, gamma_settings_dict, spark, include_orig_cols=False):
+    """
+
+    """
+    gamma_settings_dict = complete_settings_dict(gamma_settings_dict)
+
+    gamma_case_expressions = []
+    for key, value in gamma_settings_dict.items():
+        gamma_case_expressions.append(value["case_expression"])
+
+    gammas_select_expr = ",\n".join(gamma_case_expressions)
+
+
+    if include_orig_cols:
+        orig_cols = gamma_settings_dict.keys()
+
+        l = [f"{c}_l" for c in orig_cols]
+        r = [f"{c}_r" for c in orig_cols]
+        both = zip(l, r)
+        flat_list = [item for sublist in both for item in sublist]
+        orig_columns_select_expr = ", ".join(flat_list) + ", "
+    else:
+        orig_columns_select_expr = ""
+
 
     df.registerTempTable("df")
     sql = f"""
-    select unique_id_l, unique_id_r, {gammas_select_expr}
+    select {orig_columns_select_expr} unique_id_l, unique_id_r, {gammas_select_expr}
     from df
     """
 
