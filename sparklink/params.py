@@ -73,7 +73,7 @@ class Params:
             self.params["π"][f"gamma_{i}"]["prob_dist_match"] = prob_dist_match
             self.params["π"][f"gamma_{i}"]["prob_dist_non_match"] = prob_dist_non_match
 
-    def update_pi_value(self, gamma_str, level_int, match_str, prob_float):
+    def set_pi_value(self, gamma_str, level_int, match_str, prob_float):
         """
         gamma_str e.g. gamma_0
         level_int e.g. 1
@@ -170,8 +170,8 @@ class Params:
             match_prob = row_dict["new_probability_match"]
             non_match_prob = row_dict["new_probability_non_match"]
 
-            self.update_pi_value(gamma_str, level_int,"match",match_prob)
-            self.update_pi_value(gamma_str, level_int, "non_match", non_match_prob)
+            self.set_pi_value(gamma_str, level_int,"match",match_prob)
+            self.set_pi_value(gamma_str, level_int, "non_match", non_match_prob)
 
 
 

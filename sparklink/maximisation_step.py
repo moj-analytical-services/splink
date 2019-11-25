@@ -21,7 +21,7 @@ def get_new_lambda(df_e, spark):
     return new_lambda
 
 
-def sql_gen_intermediate_pi_aggregate(df, params):
+def sql_gen_intermediate_pi_aggregate(params):
     """
     This intermediate step is calculated for efficiency purposes.
 
@@ -75,7 +75,9 @@ def run_maximisation_step(df_e, spark, params):
     """
 
 
-    sql = sql_gen_intermediate_pi_aggregate(df_e, params)
+    sql = sql_gen_intermediate_pi_aggregate(params)
+
+    df_e.registerTempTable("df_e")
     df_intermediate = spark.sql(sql)
     log.debug(format_sql(sql))
     df_intermediate.registerTempTable("df_intermediate")
