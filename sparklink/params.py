@@ -189,14 +189,15 @@ class Params:
     def pi_iteration_chart(self):
         data = self.iteration_history_df_gammas()
 
-        chart_data = alt.Data(values=data)
+        # chart_data = alt.Data(values=data)
 
 
         # chart = alt.Chart(chart_data).mark_bar().encode(
         #     x='iteration:O',
         #     y=alt.Y('sum(probability):Q', axis=alt.Axis(title='𝛾 value')),
         #     color='value:N',
-        #     row=alt.Row('column:N', sort=alt.SortField("gamma"))
+        #     row=alt.Row('column:N', sort=alt.SortField("gamma")),
+        #     tooltip = ['probability:Q', 'iteration:O', 'column:N', 'value:N']
         # ).resolve_scale(
         #     y='independent'
         # ).properties(height=100)
@@ -224,6 +225,12 @@ class Params:
                      'hconcat': [{'mark': 'bar',
                                   'encoding': {'color': {'type': 'nominal', 'field': 'value'},
                                                'row': {'type': 'nominal', 'field': 'column', 'sort': {'field': 'gamma'}},
+                                               'tooltip': [{'type': 'quantitative', 'field': 'probability'},
+                                                           {'type': 'ordinal',
+                                                            'field': 'iteration'},
+                                                           {'type': 'nominal',
+                                                               'field': 'column'},
+                                                           {'type': 'nominal', 'field': 'value'}],
                                                'x': {'type': 'ordinal', 'field': 'iteration'},
                                                'y': {'type': 'quantitative',
                                                      'aggregate': 'sum',
@@ -236,6 +243,12 @@ class Params:
                                  {'mark': 'bar',
                                   'encoding': {'color': {'type': 'nominal', 'field': 'value'},
                                                'row': {'type': 'nominal', 'field': 'column', 'sort': {'field': 'gamma'}},
+                                               'tooltip': [{'type': 'quantitative', 'field': 'probability'},
+                                                           {'type': 'ordinal',
+                                                            'field': 'iteration'},
+                                                           {'type': 'nominal',
+                                                            'field': 'column'},
+                                                           {'type': 'nominal', 'field': 'value'}],
                                                'x': {'type': 'ordinal', 'field': 'iteration'},
                                                'y': {'type': 'quantitative',
                                                      'aggregate': 'sum',
@@ -261,10 +274,14 @@ class Params:
                      'data': {'values': data},
                      'mark': 'bar',
                      'encoding': {'x': {'type': 'ordinal', 'field': 'iteration'},
+
                                   'y': {'type': 'quantitative',
                                         'axis': {'title': 'λ (estimated proportion of matches)'},
-                                        'field': 'λ'}},
-                     'title': 'Lambda value by iteration',
+                                        'field': 'λ'},
+                                  'tooltip': [{'type': 'quantitative', 'field': 'λ'},
+                                 {'type': 'ordinal',
+                                  'field': 'iteration'}]},
+                                                      'title': 'Lambda value by iteration',
                      '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
         if altair_installed:
             return alt.Chart.from_dict(chart_def)
@@ -313,6 +330,10 @@ class Params:
                      'hconcat': [{'mark': 'bar',
                                   'encoding': {'color': {'type': 'nominal', 'field': 'match'},
                                                'row': {'type': 'nominal', 'field': 'column', 'sort': {'field': 'gamma'}},
+                                               'tooltip': [{'type': 'nominal', 'field': 'column'},
+                                                           {'type': 'quantitative',
+                                                            'field': 'probability', 'format': '.4f'},
+                                                           {'type': 'ordinal', 'field': 'value'}],
                                                'x': {'type': 'quantitative', 'field': 'probability'},
                                                'y': {'type': 'nominal', 'axis': {'title': '𝛾 value'}, 'field': 'value'}},
                                   'resolve': {'scale': {'y': 'independent'}},
@@ -321,13 +342,17 @@ class Params:
                                  {'mark': 'bar',
                                   'encoding': {'color': {'type': 'nominal', 'field': 'match'},
                                                'row': {'type': 'nominal', 'field': 'column', 'sort': {'field': 'gamma'}},
+                                               'tooltip': [{'type': 'nominal', 'field': 'column'},
+                                                           {'type': 'quantitative',
+                                                            'field': 'probability', 'format': '.4f'},
+                                                           {'type': 'ordinal', 'field': 'value'}],
                                                'x': {'type': 'quantitative', 'field': 'probability'},
                                                'y': {'type': 'nominal', 'axis': {'title': '𝛾 value'}, 'field': 'value'}},
                                   'resolve': {'scale': {'y': 'independent'}},
                                   'transform': [{'filter': '(datum.match === 1)'}],
                                   'width': 150}],
                      'data': {'values': data},
-                     'title': f'Probability distribution of comparison vector values. Current λ={self.params["λ"]:.3f}',
+                     'title': 'Probability distribution of comparison vector values, m=0 and m=1',
                      '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
         if altair_installed:
             return alt.Chart.from_dict(chart_def)
