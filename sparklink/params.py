@@ -297,12 +297,16 @@ class Params:
         """
         data = self.convert_params_dict_to_data(self.params)
 
+
+        # data = params.convert_params_dict_to_data(params.params)
+
         # chart_data = alt.Data(values=data)
         # chart = alt.Chart(chart_data).mark_bar().encode(
         #     x='probability:Q',
         #     y=alt.Y('value:N', axis=alt.Axis(title='𝛾 value')),
         #     color='match:N',
-        #     row=alt.Row('column:N', sort=alt.SortField("gamma"))
+        #     row=alt.Row('column:N', sort=alt.SortField("gamma")),
+        #     tooltip=["column:N", alt.Tooltip('probability:Q', format='.4f'), "value:O"]
         # ).resolve_scale(
         #     y='independent'
         # ).properties(width=150)
@@ -323,6 +327,11 @@ class Params:
         # ).properties(
         #     title='Probability distribution of comparison vector values, m=0 and m=1'
         # )
+
+        # fc
+        # d = fc.to_dict()
+        # d["data"]["values"] = None
+        # d
 
         chart_def = {'config': {'view': {'width': 400, 'height': 300},
                                 'mark': {'tooltip': None},
