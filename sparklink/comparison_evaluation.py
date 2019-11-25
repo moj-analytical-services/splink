@@ -53,12 +53,16 @@ def get_real_params(df_comparison, df_with_gamma, spark, est_params):
     return p.params
 
 
-def comparison_with_match_prob(df_comparison, df_e):
+def comparison_with_match_prob(df_comparison, df_e, spark):
     df_e.registerTempTable('df_e')
     df_comparison.registerTempTable('df_comparison')
 
-    sql = """
-    select e.match_probability, c.*
+    gamma_cols = [f"e.{c}" for c in df_e.columns if re.match("^gamma_\d$", c)]
+
+    gamma_expr = ", ".join(gamma_cols)
+
+    sql = f"""
+    select e.match_probability, {gamma_expr}, c.*
     from df_e as e
     left join df_comparison as c
     on e.unique_id_l = c.unique_id_l

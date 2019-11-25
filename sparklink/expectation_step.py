@@ -90,3 +90,9 @@ def sql_gen_gamma_case_when(gamma_str, match, params):
     sql = f""" case \n{case_statements} \nend \nas prob_{gamma_str}{name_suffix}"""
 
     return sql.strip()
+
+def calculate_likelihood(df_gammas, params, spark):
+    """
+    Compute likelihood of observing df_gammas given the parameters
+    """
+    pass

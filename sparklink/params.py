@@ -30,6 +30,8 @@ class Params:
 
         self.generate_param_dict()
 
+        self.real_params = None
+
     @property
     def gamma_cols(self):
         return self.params['π'].keys()
@@ -187,7 +189,13 @@ class Params:
         self.iteration += 1
 
     def pi_iteration_chart(self):
-        data = self.iteration_history_df_gammas()
+
+        if self.real_params:
+            data = self.iteration_history_df_gammas()
+            data_real = self.convert_params_dict_to_data(self.real_params, "real_param")
+            data.extend(data_real)
+        else:
+            data = self.iteration_history_df_gammas()
 
         # chart_data = alt.Data(values=data)
 
@@ -262,6 +270,7 @@ class Params:
                      'title': 'Probability distribution of comparison vector values by iteration number',
                      '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
 
+
         if altair_installed:
             return alt.Chart.from_dict(chart_def)
         else:
@@ -270,6 +279,8 @@ class Params:
 
     def lambda_iteration_chart(self):
         data = self.iteration_history_df_lambdas()
+        if self.real_params:
+            data.append({"λ": self.real_params["λ"], "iteration": "real_param"})
         chart_def = {'config': {'view': {'width': 400, 'height': 300}, 'mark': {'tooltip': None}},
                      'data': {'values': data},
                      'mark': 'bar',
