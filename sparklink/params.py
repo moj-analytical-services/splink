@@ -205,11 +205,11 @@ class Params:
 
         # c0 = chart.transform_filter(
         #     (datum.match == 0)
-        # ).properties(title="Match")
+        # ).properties(title="Non match")
 
         # c1 = chart.transform_filter(
         #     (datum.match == 1)
-        # ).properties(title="Non match")
+        # ).properties(title="Match")
 
         # facetted_chart = c0 | c1
 
@@ -238,7 +238,7 @@ class Params:
                                                      'field': 'probability'}},
                                   'height': 100,
                                   'resolve': {'scale': {'y': 'independent'}},
-                                  'title': 'Match',
+                                  'title': 'Non Match',
                                   'transform': [{'filter': '(datum.match === 0)'}]},
                                  {'mark': 'bar',
                                   'encoding': {'color': {'type': 'nominal', 'field': 'value'},
@@ -256,7 +256,7 @@ class Params:
                                                      'field': 'probability'}},
                                   'height': 100,
                                   'resolve': {'scale': {'y': 'independent'}},
-                                  'title': 'Non match',
+                                  'title': 'Match',
                                   'transform': [{'filter': '(datum.match === 1)'}]}],
                      'data': {'values': data},
                      'title': 'Probability distribution of comparison vector values by iteration number',
