@@ -3,13 +3,17 @@ import logging
 log = logging.getLogger(__name__)
 from formatlog import format_sql
 
-def run_expectation_step(df_with_gamma, spark, params):
+def run_expectation_step(df_with_gamma, spark, params, print_ll=False):
 
     sql = sql_gen_gamma_prob_columns(df_with_gamma, params)
 
     df_with_gamma.registerTempTable("df_with_gamma")
     df_with_gamma_probs = spark.sql(sql)
     log.debug(format_sql(sql))
+
+    if print_ll:
+        ll = get_overall_log_likelihood(df_with_gamma_probs, params, spark)
+        print(ll)
 
     sql = sql_gen_expected_match_prob(df_with_gamma_probs, params)
     df_with_gamma_probs.registerTempTable("df_with_gamma_probs")
@@ -91,8 +95,52 @@ def sql_gen_gamma_case_when(gamma_str, match, params):
 
     return sql.strip()
 
-def calculate_likelihood(df_gammas, params, spark):
+
+def calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
     """
-    Compute likelihood of observing df_gammas given the parameters
+    Compute likelihood of observing df_with_gamma given the parameters
+
+    Likelihood is just ((1-lambda) * prob not match) * (lambda * prob match)
     """
-    pass
+
+
+    gamma_cols = params.gamma_cols
+
+    # sql = sql_gen_gamma_prob_columns(df_with_gamma, params)
+
+    # df_with_gamma.registerTempTable("df_with_gamma")
+    # df_with_gamma_probs = spark.sql(sql)
+
+    λ = params.params['λ']
+
+    match_prob = " * ".join([f"prob_{g}_match" for g in gamma_cols])
+    match_prob = f"({λ} * {match_prob})"
+    non_match_prob = " * ".join([f"prob_{g}_non_match" for g in gamma_cols])
+    non_match_prob = f"({1-λ} * {non_match_prob})"
+    log_likelihood = f"ln({match_prob} + {non_match_prob})"
+
+
+
+    numerator = " * ".join([f"prob_{g}_match" for g in gamma_cols])
+    denom_part = " * ".join([f"prob_{g}_non_match" for g in gamma_cols])
+    match_prob_expression = f"({λ} * {numerator})/(( {λ} * {numerator}) + ({1 -λ} * {denom_part})) as match_probability"
+
+
+    df_with_gamma_probs.registerTempTable("df_with_gamma_probs")
+    sql = f"""
+    select *,
+    cast({log_likelihood} as float) as  log_likelihood,
+    {match_prob_expression}
+
+    from df_with_gamma_probs
+    """
+    log.debug(format_sql(sql))
+    df = spark.sql(sql)
+
+    return df
+
+
+def get_overall_log_likelihood(df_with_gamma_probs, params, spark):
+
+    df = calculate_log_likelihood_df(df_with_gamma_probs, params, spark)
+    return df.groupby().sum("log_likelihood").collect()[0][0]
