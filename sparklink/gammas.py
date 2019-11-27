@@ -1,7 +1,7 @@
 import logging
 
-from formatlog import format_sql
-from sql import comparison_columns_select_expr
+from .formatlog import format_sql
+from .sql import comparison_columns_select_expr
 
 log = logging.getLogger(__name__)
 

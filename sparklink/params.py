@@ -1,7 +1,7 @@
 import copy
 import json
 from pprint import pprint
-from gammas import complete_settings_dict
+from .gammas import complete_settings_dict
 import random
 
 altair_installed = True

@@ -1,12 +1,12 @@
 import re
 
 import logging
-from params import Params
+from .params import Params
 
-from maximisation_step import run_maximisation_step
+from .maximisation_step import run_maximisation_step
 
 log = logging.getLogger(__name__)
-from formatlog import format_sql
+from .formatlog import format_sql
 
 def view_matches(df_e, df_comparison):
     df_e.registerTempTable('df_e')

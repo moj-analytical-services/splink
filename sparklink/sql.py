@@ -4,7 +4,7 @@ import copy
 import logging
 
 log = logging.getLogger(__name__)
-from formatlog import format_sql
+from .formatlog import format_sql
 
 def comparison_columns_select_expr(df):
     """
@@ -18,20 +18,3 @@ def comparison_columns_select_expr(df):
     both = zip(l, r)
     flat_list = [item for sublist in both for item in sublist]
     return ", ".join(flat_list)
-
-
-
-
-
-
-
-def value_to_level(gamma_str, value, params):
-
-    for level_key, level in params["π"][gamma_str]["prob_dist_match"].items():
-        if level["value"] == value:
-            return level_key
-
-
-
-
-

@@ -1,0 +1,14 @@
+name: continuous-integration-workflow.yml
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Get and run the base moj spark local Docker image for testing
+      run:  |
+        docker build . --file Dockerfile_testrunner --tag testdocker
+        docker run --rm testdocker pytest -v

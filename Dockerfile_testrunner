@@ -1,0 +1,3 @@
+FROM mamonu/moj-spark-jovyan:baseenv
+ADD . /myfiles
+WORKDIR /myfiles
