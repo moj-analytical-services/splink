@@ -1,7 +1,7 @@
 import logging
 
 log = logging.getLogger(__name__)
-from formatlog import format_sql
+from .formatlog import format_sql
 
 def get_new_lambda(df_e, spark):
     """

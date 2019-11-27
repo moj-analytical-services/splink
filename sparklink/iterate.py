@@ -1,5 +1,5 @@
-from expectation_step import run_expectation_step
-from maximisation_step import run_maximisation_step
+from .expectation_step import run_expectation_step
+from .maximisation_step import run_maximisation_step
 
 def iterate(df_gammas, spark, params, print_iteration=False, num_iterations=10, print_ll=False):
 
