@@ -31,4 +31,4 @@ def sql_gen_concat_cols(cols, delimiter=" "):
     surrounded = [f'coalesce({name}, "")' for name in cols]
     with_spaces = f', "{delimiter}", '.join(surrounded)
 
-    return f'md5(concat({with_spaces})) as unique_id'
+    return f'md5(concat({with_spaces}))'
