@@ -165,6 +165,13 @@ class Params:
 
         self.params["λ"] = lambda_value
 
+        # Populate all values with 0 (we sometimes never see some values of gamma so everything breaks.)
+        for gamma_str in self.params['π']:
+            for level_key, level_value in self.params["π"][gamma_str]["prob_dist_match"].items():
+                level_value["probability"] = 0
+            for level_key, level_value in self.params["π"][gamma_str]["prob_dist_non_match"].items():
+                level_value["probability"] = 0
+
         for row in pi_df_collected:
             row_dict = row.asDict()
             gamma_str = row_dict["gamma_col"]
