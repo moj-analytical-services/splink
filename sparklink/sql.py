@@ -18,3 +18,17 @@ def comparison_columns_select_expr(df):
     both = zip(l, r)
     flat_list = [item for sublist in both for item in sublist]
     return ", ".join(flat_list)
+
+
+def sql_gen_concat_cols(cols, delimiter=" "):
+    """
+    Generate a sql expression to concatenate multiple columns
+    together using a delimiter
+    e.g. ["a", "b", "c"]
+    => concat("a", " ", "b", " ", "c")
+    """
+
+    surrounded = [f'coalesce({name}, "")' for name in cols]
+    with_spaces = f', "{delimiter}", '.join(surrounded)
+
+    return f'md5(concat({with_spaces})) as unique_id'
