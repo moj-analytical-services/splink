@@ -32,3 +32,18 @@ def sql_gen_concat_cols(cols, delimiter=" "):
     with_spaces = f', "{delimiter}", '.join(surrounded)
 
     return f'md5(concat({with_spaces}))'
+
+
+def blank_strings_to_nulls(df, columns):
+    """
+    turn blank strings into columns
+    """
+
+    if type(columns) == str:
+        columns = [columns]
+
+    for c in columns:
+        df = df.withColumn(c, f.when(f.trim(f.col(c)) ==
+                                 '', None).otherwise(f.col(c)))
+
+    return df
