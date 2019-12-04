@@ -71,3 +71,29 @@ def comparison_with_match_prob(df_comparison, df_e, spark):
 
     """
     return spark.sql(sql)
+
+
+def get_largest_blocks(blocking_rule, df, spark, limit=5):
+    """
+    For a given blocking rule, find out which will be the largest blocks
+    """
+
+    parts = re.split(" |=", blocking_rule)
+    parts = [p for p in parts if "l." in p]
+    parts = [p.replace("l.", "") for p in parts]
+
+    col_expr = ", ".join(parts)
+
+    filter_nulls_expr = " and ".join(f"{p} is not null" for p in parts)
+
+    sql = f"""
+    SELECT {col_expr}, count(*)
+    FROM df
+    WHERE {filter_nulls_expr}
+    GROUP BY {col_expr}
+    ORDER BY count(*) desc
+    LIMIT {limit}
+    """
+    df.registerTempTable("df")
+    return spark.sql(sql)
+
