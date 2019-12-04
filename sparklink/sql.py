@@ -2,6 +2,7 @@ import re
 import copy
 
 import logging
+import pyspark.sql.functions as f
 
 log = logging.getLogger(__name__)
 from .formatlog import format_sql
