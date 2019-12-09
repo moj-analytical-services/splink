@@ -18,7 +18,7 @@ class Params:
     of the model (in self.param_history)
     """
 
-    def __init__(self, gamma_settings, starting_lambda = 0.5):
+    def __init__(self, gamma_settings, starting_lambda = 0.2):
         self.params = {'λ': starting_lambda,
                        'π': {}}
 
@@ -28,9 +28,15 @@ class Params:
 
         self.gamma_settings = complete_settings_dict(gamma_settings)
 
-        self.generate_param_dict()
+
 
         self.real_params = None
+        self.prob_m_2_levels = [1,9]
+        self.prob_nm_2_levels = [9,1]
+        self.prob_m_3_levels = [1,2,7]
+        self.prob_nm_3_levels = [7,2,1]
+
+        self.generate_param_dict()
 
     @property
     def gamma_cols(self):
@@ -44,6 +50,7 @@ class Params:
 
         """
 
+
         for col_name, col_dict in self.gamma_settings.items():
             i = col_dict["gamma_index"]
 
@@ -56,15 +63,21 @@ class Params:
             prob_dist_match = {}
             prob_dist_non_match = {}
 
+            # probs_m = [random.uniform(0, 1) for r in range(num_levels)]
+            # probs_nm = [random.uniform(0, 1) for r in range(num_levels)]
+            if num_levels == 2:
+                probs_m = self.prob_m_2_levels
+                probs_nm = self.prob_nm_2_levels
 
-            probs_m = [random.uniform(0, 1) for r in range(num_levels)]
+            if num_levels == 3:
+                probs_m = self.prob_m_3_levels
+                probs_nm = self.prob_nm_3_levels
+
             s = sum(probs_m)
             probs_m = [p/s for p in probs_m]
 
-            probs_nm = [random.uniform(0, 1) for r in range(num_levels)]
             s = sum(probs_nm)
             probs_nm = [p/s for p in probs_nm]
-
 
             for level_num in range(num_levels):
                 prob_dist_match[f"level_{level_num}"] = {
