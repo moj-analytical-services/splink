@@ -51,6 +51,8 @@ def sql_gen_gamma_prob_columns(df_with_gamma, params):
 
 def sql_gen_expected_match_prob(df, params):
     gamma_cols = params.gamma_cols
+    # numerator = " * ".join([f"power(prob_{g}_match, CASE WHEN gamma_{g} = -1 THEN 0 ELSE 1)" for g in gamma_cols])
+    # denom_part = " * ".join([f"power(prob_{g}_non_match, CASE WHEN gamma_{g} = -1 THEN 0 ELSE 1)" for g in gamma_cols])
     numerator = " * ".join([f"prob_{g}_match" for g in gamma_cols])
     denom_part = " * ".join([f"prob_{g}_non_match" for g in gamma_cols])
 
@@ -80,6 +82,7 @@ def sql_gen_gamma_case_when(gamma_str, match, params):
     levels = params.params["π"][gamma_str][dist]
 
     case_statements = []
+    case_statements.append(f"WHEN {gamma_str} = -1 THEN 1")
     for key, level in levels.items():
             case_stmt = f"when {gamma_str} = {level['value']} then {level['probability']}"
             case_statements.append(case_stmt)
