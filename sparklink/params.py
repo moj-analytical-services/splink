@@ -191,9 +191,9 @@ class Params:
             level_int = row_dict["gamma_value"]
             match_prob = row_dict["new_probability_match"]
             non_match_prob = row_dict["new_probability_non_match"]
-
-            self.set_pi_value(gamma_str, level_int,"match",match_prob)
-            self.set_pi_value(gamma_str, level_int, "non_match", non_match_prob)
+            if level_int != -1:
+                self.set_pi_value(gamma_str, level_int,"match",match_prob)
+                self.set_pi_value(gamma_str, level_int, "non_match", non_match_prob)
 
 
 
