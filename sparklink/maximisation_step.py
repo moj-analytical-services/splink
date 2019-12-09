@@ -53,8 +53,8 @@ def get_new_pi_df(df_e, spark, params):
     for gamma_str in params.gamma_cols:
         sql = f"""
         select {gamma_str} as gamma_value,
-        cast(sum(expected_num_matches)/(select sum(expected_num_matches) from df_intermediate) as float) as new_probability_match,
-        cast(sum(expected_num_non_matches)/(select sum(expected_num_non_matches) from df_intermediate) as float) as new_probability_non_match,
+        cast(sum(expected_num_matches)/(select sum(expected_num_matches) from df_intermediate where {gamma_str} != -1) as float) as new_probability_match,
+        cast(sum(expected_num_non_matches)/(select sum(expected_num_non_matches) from df_intermediate where {gamma_str} != -1) as float) as new_probability_non_match,
         '{gamma_str}' as gamma_col
         from df_intermediate
         group by {gamma_str}
