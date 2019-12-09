@@ -9,12 +9,14 @@ log = logging.getLogger(__name__)
 # Generate gammas dataset
 def gammas_case_statement_2_levels(col_name, i):
     return f"""case
+    when {col_name}_l is null or {col_name}_r is null then -1
     when {col_name}_l = {col_name}_r then 1
     else 0 end as gamma_{i}"""
 
 
 def gammas_case_statement_3_levels(col_name, i):
     return f"""case
+    when {col_name}_l is null or {col_name}_r is null then -1
     when {col_name}_l = {col_name}_r then 2
     when levenshtein({col_name}_l, {col_name}_r)/((length({col_name}_l) + length({col_name}_r))/2) <= 0.3
     then 1
@@ -37,7 +39,6 @@ def complete_settings_dict(gamma_settings_dict):
 
         col_value["gamma_index"] = gamma_counter
 
-
         if "col_name" not in col_value:
             col_value["col_name"] = col_name
 
@@ -48,8 +49,6 @@ def complete_settings_dict(gamma_settings_dict):
             col_value["case_expression"] = case_lookup[col_value["levels"]](col_name, gamma_counter)
 
         gamma_counter += 1
-
-
 
     return gamma_settings_dict
 
