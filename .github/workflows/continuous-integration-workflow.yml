@@ -15,5 +15,5 @@ jobs:
           --env COVERALLS_REPO_TOKEN=${{ secrets.GITHUB_TOKEN }} --env COVERALLS_SERVICE_NAME=github \
           --env GITHUB_REF=${{ github.ref }} \
           testdocker \
-          "pytest --cov-report term-missing --cov=sparklink tests/; export GIT_BRANCH=$(echo GITHUB_REF | sed "s/refs\/heads\///"); coveralls"
+          "pytest --cov-report term-missing --cov=sparklink tests/; export GIT_BRANCH=$(echo $GITHUB_REF | sed "s/refs\/heads\///"); coveralls"
 
