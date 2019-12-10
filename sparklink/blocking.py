@@ -65,7 +65,7 @@ def block_using_rules(
     sql = sql_gen_block_using_rules(columns_to_retain, blocking_rules, unique_id_col)
 
     log_sql(sql, logger)
-    df.registerTempTable("df")
+    df.createOrReplaceTempView("df")
     df_comparison = spark.sql(sql)
 
     # Think this may be more efficient than using union to join each dataset because we only dropduplicates once
@@ -114,7 +114,7 @@ def cartestian_block(
 
     sql = sql_gen_cartesian_block(columns_to_retain, unique_id_col)
 
-    log_sql(sql, logger)
+    log_sql(sql, log)
     df.createOrReplaceTempView("df")
     df_comparison = spark.sql(sql)
 
