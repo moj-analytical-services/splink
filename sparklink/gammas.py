@@ -120,13 +120,23 @@ def sql_gen_add_gammas(
     return sql
 
 
-def add_gammas(df_comparison, gamma_settings_dict, spark=None, include_orig_cols=False):
+def add_gammas(
+    df_comparison,
+    gamma_settings_dict,
+    spark=None,
+    include_orig_cols=False,
+    unique_id_col: str = "unique_id",
+):
     """
 
     """
     gamma_settings_dict = complete_settings_dict(gamma_settings_dict)
 
-    sql = sql_gen_add_gammas(gamma_settings_dict)
+    sql = sql_gen_add_gammas(
+        gamma_settings_dict,
+        include_orig_cols=include_orig_cols,
+        unique_id_col=unique_id_col,
+    )
 
     log_sql(sql, log)
     df_comparison.createOrReplaceTempView("df_comparison")
