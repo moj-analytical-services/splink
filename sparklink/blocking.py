@@ -6,7 +6,12 @@ from .sql import comparison_columns_select_expr, sql_gen_comparison_columns
 log = logging.getLogger(__name__)
 
 
-def sql_gen_block_using_rules(columns_to_retain: list, blocking_rules: list, unique_id_col: str="unique_id", table_name: str="df"):
+def sql_gen_block_using_rules(
+    columns_to_retain: list,
+    blocking_rules: list,
+    unique_id_col: str = "unique_id",
+    table_name: str = "df",
+):
     """Build a SQL statement that implements a list of blocking rules.
 
     The left and right tables are aliased as `l` and `r` respectively, so an example
@@ -46,14 +51,21 @@ def sql_gen_block_using_rules(columns_to_retain: list, blocking_rules: list, uni
     return sql
 
 
-def block_using_rules(df, columns_to_retain, blocking_rules, spark=None, unique_id_col="unique_id", logger = log):
+def block_using_rules(
+    df,
+    columns_to_retain: list,
+    blocking_rules: list,
+    spark=None,
+    unique_id_col="unique_id",
+    logger=log,
+):
     """Apply a series of blocking rules to create a dataframe of record comparisons.
     """
 
     sql = sql_gen_block_using_rules(columns_to_retain, blocking_rules, unique_id_col)
 
     log_sql(sql, logger)
-    df.registerTempTable('df')
+    df.registerTempTable("df")
     df_comparison = spark.sql(sql)
 
     # Think this may be more efficient than using union to join each dataset because we only dropduplicates once
@@ -62,23 +74,48 @@ def block_using_rules(df, columns_to_retain, blocking_rules, spark=None, unique_
     return df_comparison
 
 
-def cartestian_block(df, spark=None,  unique_id_col="unique_id"):
-    columns = list(df.columns)
+def sql_gen_cartesian_block(
+    columns_to_retain: list, unique_id_col: str = "unique_id", table_name: str = "df"
+):
+    """Build a SQL statement that generates the cartesian product of the input dataset
 
-    sql_select_expr = comparison_columns_select_expr(df)
-    df.createOrReplaceTempView("df")
+    Args:
+        columns_to_retain: List of columns to keep in returned dataset
+        unique_id_col (str, optional): The name of the column containing the row's unique_id. Defaults to "unique_id".
+        table_name (str, optional): Name of the table. Defaults to "df".
+
+    Returns:
+        str: A SQL statement that will generate the cartesian product
+    """
+
+    if unique_id_col not in columns_to_retain:
+        columns_to_retain.insert(0, unique_id_col)
+
+    sql_select_expr = sql_gen_comparison_columns(columns_to_retain)
 
     sql = f"""
     select
     {sql_select_expr}
-    from df as l
-    cross join df as r
+    from {table_name} as l
+    cross join {table_name} as r
     where l.{unique_id_col} < r.{unique_id_col}
     """
 
+    return sql
 
-    # Note the 'union' function in pyspark > 2.0 is not the same thing as union in a sql statement
+
+def cartestian_block(
+    df,
+    columns_to_retain: list,
+    spark=None,
+    unique_id_col: str = "unique_id",
+    logger=log,
+):
+
+    sql = sql_gen_cartesian_block(columns_to_retain, unique_id_col)
+
+    log_sql(sql, logger)
+    df.createOrReplaceTempView("df")
     df_comparison = spark.sql(sql)
-    log.debug(format_sql(sql))
 
     return df_comparison
