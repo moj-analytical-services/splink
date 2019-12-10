@@ -11,4 +11,8 @@ jobs:
     - name: Get and run the base moj spark local Docker image for testing
       run:  |
         docker build . --file Dockerfile_testrunner --tag testdocker
-        docker run --rm testdocker pytest -v
+        docker run --rm \
+          --env COVERALLS_REPO_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+          testdocker \
+          "pytest --cov-report term-missing --cov=sparklink tests/; coveralls"
+
