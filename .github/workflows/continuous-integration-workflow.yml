@@ -13,6 +13,7 @@ jobs:
         docker build . --file Dockerfile_testrunner --tag testdocker
         docker run --rm \
           --env COVERALLS_REPO_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+          --env COVERALLS_SERVICE_NAME= github
           testdocker \
           "pytest --cov-report term-missing --cov=sparklink tests/; coveralls"
 
