@@ -160,9 +160,9 @@ class Params:
         """
         self.params["λ"] = None
         for gamma_str in self.params['π']:
-            for level_key, level_value in self.params["π"][gamma_str]["prob_dist_match"].items():
+            for level_value in self.params["π"][gamma_str]["prob_dist_match"].values():
                 level_value["probability"] = None
-            for level_key, level_value in self.params["π"][gamma_str]["prob_dist_non_match"].items():
+            for level_value in self.params["π"][gamma_str]["prob_dist_non_match"].values():
                 level_value["probability"] = None
 
     def save_params_to_iteration_history(self):

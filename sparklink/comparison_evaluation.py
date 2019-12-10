@@ -27,7 +27,7 @@ def view_matches(df_e, df_comparison, spark):
 
 def get_real_params(df_comparison, df_with_gamma, spark, est_params):
 
-    gamma_cols = [c for c in df_with_gamma.columns if re.match("^gamma_\d$", c)]
+    gamma_cols = [c for c in df_with_gamma.columns if re.match(r"^gamma_\d$", c)]
     df_with_gamma.registerTempTable('df_with_gamma')
     df_comparison.registerTempTable('df_comparison')
 
@@ -57,7 +57,7 @@ def comparison_with_match_prob(df_comparison, df_e, spark):
     df_e.registerTempTable('df_e')
     df_comparison.registerTempTable('df_comparison')
 
-    gamma_cols = [f"e.{c}" for c in df_e.columns if re.match("^gamma_\d$", c)]
+    gamma_cols = [f"e.{c}" for c in df_e.columns if re.match(r"^gamma_\d$", c)]
 
     gamma_expr = ", ".join(gamma_cols)
 
