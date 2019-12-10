@@ -65,7 +65,7 @@ def get_new_pi_df(df_e, spark, params):
 
     levels = spark.sql(sql).collect()
     log.debug(format_sql(sql))
-    return levels
+    return [l.asDict() for l in levels]
 
 
 

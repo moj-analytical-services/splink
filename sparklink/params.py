@@ -2,6 +2,7 @@ import copy
 import json
 from pprint import pprint
 from .gammas import complete_settings_dict
+from .chart_definitions import lambda_iteration_chart_def, pi_iteration_chart_def, probability_distribution_chart
 import random
 
 altair_installed = True
@@ -12,6 +13,8 @@ except ImportError:
 
 
 class Params:
+
+
     """
     Stores both current model parameters (in self.params)
     and values of params for all previous iterations
@@ -27,8 +30,6 @@ class Params:
         self.iteration = 1
 
         self.gamma_settings = complete_settings_dict(gamma_settings)
-
-
 
         self.real_params = None
         self.prob_m_2_levels = [1,9]
@@ -63,15 +64,16 @@ class Params:
             prob_dist_match = {}
             prob_dist_non_match = {}
 
-            # probs_m = [random.uniform(0, 1) for r in range(num_levels)]
-            # probs_nm = [random.uniform(0, 1) for r in range(num_levels)]
             if num_levels == 2:
                 probs_m = self.prob_m_2_levels
                 probs_nm = self.prob_nm_2_levels
 
-            if num_levels == 3:
+            elif num_levels == 3:
                 probs_m = self.prob_m_3_levels
                 probs_nm = self.prob_nm_3_levels
+            else:
+                probs_m = [random.uniform(0, 1) for r in range(num_levels)]
+                probs_nm = [random.uniform(0, 1) for r in range(num_levels)]
 
             s = sum(probs_m)
             probs_m = [p/s for p in probs_m]
@@ -185,8 +187,7 @@ class Params:
             for level_key, level_value in self.params["π"][gamma_str]["prob_dist_non_match"].items():
                 level_value["probability"] = 0
 
-        for row in pi_df_collected:
-            row_dict = row.asDict()
+        for row_dict in pi_df_collected:
             gamma_str = row_dict["gamma_col"]
             level_int = row_dict["gamma_value"]
             match_prob = row_dict["new_probability_match"]
@@ -217,107 +218,25 @@ class Params:
         else:
             data = self.iteration_history_df_gammas()
 
-        # chart_data = alt.Data(values=data)
-
-
-        # chart = alt.Chart(chart_data).mark_bar().encode(
-        #     x='iteration:O',
-        #     y=alt.Y('sum(probability):Q', axis=alt.Axis(title='𝛾 value')),
-        #     color='value:N',
-        #     row=alt.Row('column:N', sort=alt.SortField("gamma")),
-        #     tooltip = ['probability:Q', 'iteration:O', 'column:N', 'value:N']
-        # ).resolve_scale(
-        #     y='independent'
-        # ).properties(height=100)
-
-
-        # c0 = chart.transform_filter(
-        #     (datum.match == 0)
-        # ).properties(title="Non match")
-
-        # c1 = chart.transform_filter(
-        #     (datum.match == 1)
-        # ).properties(title="Match")
-
-        # facetted_chart = c0 | c1
-
-        # fc = facetted_chart.configure_title(
-        #     anchor='middle'
-        # ).properties(
-        #     title='Probability distribution of comparison vector values by iteration number'
-        # )
-
-        chart_def = {'config': {'view': {'width': 400, 'height': 300},
-                                'mark': {'tooltip': None},
-                                'title': {'anchor': 'middle'}},
-                     'hconcat': [{'mark': 'bar',
-                                  'encoding': {'color': {'type': 'nominal', 'field': 'value'},
-                                               'row': {'type': 'nominal', 'field': 'column', 'sort': {'field': 'gamma'}},
-                                               'tooltip': [{'type': 'quantitative', 'field': 'probability'},
-                                                           {'type': 'ordinal',
-                                                            'field': 'iteration'},
-                                                           {'type': 'nominal',
-                                                               'field': 'column'},
-                                                           {'type': 'nominal', 'field': 'value'}],
-                                               'x': {'type': 'ordinal', 'field': 'iteration'},
-                                               'y': {'type': 'quantitative',
-                                                     'aggregate': 'sum',
-                                                     'axis': {'title': '𝛾 value'},
-                                                     'field': 'probability'}},
-                                  'height': 100,
-                                  'resolve': {'scale': {'y': 'independent'}},
-                                  'title': 'Non Match',
-                                  'transform': [{'filter': '(datum.match === 0)'}]},
-                                 {'mark': 'bar',
-                                  'encoding': {'color': {'type': 'nominal', 'field': 'value'},
-                                               'row': {'type': 'nominal', 'field': 'column', 'sort': {'field': 'gamma'}},
-                                               'tooltip': [{'type': 'quantitative', 'field': 'probability'},
-                                                           {'type': 'ordinal',
-                                                            'field': 'iteration'},
-                                                           {'type': 'nominal',
-                                                            'field': 'column'},
-                                                           {'type': 'nominal', 'field': 'value'}],
-                                               'x': {'type': 'ordinal', 'field': 'iteration'},
-                                               'y': {'type': 'quantitative',
-                                                     'aggregate': 'sum',
-                                                     'axis': {'title': '𝛾 value'},
-                                                     'field': 'probability'}},
-                                  'height': 100,
-                                  'resolve': {'scale': {'y': 'independent'}},
-                                  'title': 'Match',
-                                  'transform': [{'filter': '(datum.match === 1)'}]}],
-                     'data': {'values': data},
-                     'title': 'Probability distribution of comparison vector values by iteration number',
-                     '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
-
+        pi_iteration_chart_def["data"]["values"] = data
 
         if altair_installed:
-            return alt.Chart.from_dict(chart_def)
+            return alt.Chart.from_dict(pi_iteration_chart_def)
         else:
-            return chart_def
+            return pi_iteration_chart_def
 
 
     def lambda_iteration_chart(self):
         data = self.iteration_history_df_lambdas()
         if self.real_params:
             data.append({"λ": self.real_params["λ"], "iteration": "real_param"})
-        chart_def = {'config': {'view': {'width': 400, 'height': 300}, 'mark': {'tooltip': None}},
-                     'data': {'values': data},
-                     'mark': 'bar',
-                     'encoding': {'x': {'type': 'ordinal', 'field': 'iteration'},
 
-                                  'y': {'type': 'quantitative',
-                                        'axis': {'title': 'λ (estimated proportion of matches)'},
-                                        'field': 'λ'},
-                                  'tooltip': [{'type': 'quantitative', 'field': 'λ'},
-                                 {'type': 'ordinal',
-                                  'field': 'iteration'}]},
-                                                      'title': 'Lambda value by iteration',
-                     '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
+        lambda_iteration_chart_def["data"]["values"] = data
+
         if altair_installed:
-            return alt.Chart.from_dict(chart_def)
+            return alt.Chart.from_dict(lambda_iteration_chart_def)
         else:
-            return chart_def
+            return lambda_iteration_chart_def
 
 
 
@@ -328,76 +247,12 @@ class Params:
         """
         data = self.convert_params_dict_to_data(self.params)
 
+        probability_distribution_chart["data"]["values"] = data
 
-        # data = params.convert_params_dict_to_data(params.params)
-
-        # chart_data = alt.Data(values=data)
-        # chart = alt.Chart(chart_data).mark_bar().encode(
-        #     x='probability:Q',
-        #     y=alt.Y('value:N', axis=alt.Axis(title='𝛾 value')),
-        #     color='match:N',
-        #     row=alt.Row('column:N', sort=alt.SortField("gamma")),
-        #     tooltip=["column:N", alt.Tooltip('probability:Q', format='.4f'), "value:O"]
-        # ).resolve_scale(
-        #     y='independent'
-        # ).properties(width=150)
-
-
-        # c0 = chart.transform_filter(
-        #     (datum.match == 0)
-        # )
-
-        # c1 = chart.transform_filter(
-        #     (datum.match == 1)
-        # )
-
-        # facetted_chart = c0 | c1
-
-        # fc = facetted_chart.configure_title(
-        #     anchor='middle'
-        # ).properties(
-        #     title='Probability distribution of comparison vector values, m=0 and m=1'
-        # )
-
-        # fc
-        # d = fc.to_dict()
-        # d["data"]["values"] = None
-        # d
-
-        chart_def = {'config': {'view': {'width': 400, 'height': 300},
-                                'mark': {'tooltip': None},
-                                'title': {'anchor': 'middle'}},
-                     'hconcat': [{'mark': 'bar',
-                                  'encoding': {'color': {'type': 'nominal', 'field': 'match'},
-                                               'row': {'type': 'nominal', 'field': 'column', 'sort': {'field': 'gamma'}},
-                                               'tooltip': [{'type': 'nominal', 'field': 'column'},
-                                                           {'type': 'quantitative',
-                                                            'field': 'probability', 'format': '.4f'},
-                                                           {'type': 'ordinal', 'field': 'value'}],
-                                               'x': {'type': 'quantitative', 'field': 'probability'},
-                                               'y': {'type': 'nominal', 'axis': {'title': '𝛾 value'}, 'field': 'value'}},
-                                  'resolve': {'scale': {'y': 'independent'}},
-                                  'transform': [{'filter': '(datum.match === 0)'}],
-                                  'width': 150},
-                                 {'mark': 'bar',
-                                  'encoding': {'color': {'type': 'nominal', 'field': 'match'},
-                                               'row': {'type': 'nominal', 'field': 'column', 'sort': {'field': 'gamma'}},
-                                               'tooltip': [{'type': 'nominal', 'field': 'column'},
-                                                           {'type': 'quantitative',
-                                                            'field': 'probability', 'format': '.4f'},
-                                                           {'type': 'ordinal', 'field': 'value'}],
-                                               'x': {'type': 'quantitative', 'field': 'probability'},
-                                               'y': {'type': 'nominal', 'axis': {'title': '𝛾 value'}, 'field': 'value'}},
-                                  'resolve': {'scale': {'y': 'independent'}},
-                                  'transform': [{'filter': '(datum.match === 1)'}],
-                                  'width': 150}],
-                     'data': {'values': data},
-                     'title': 'Probability distribution of comparison vector values, m=0 and m=1',
-                     '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
         if altair_installed:
-            return alt.Chart.from_dict(chart_def)
+            return alt.Chart.from_dict(probability_distribution_chart)
         else:
-            return chart_def
+            return probability_distribution_chart
 
     def __repr__(self):
 
