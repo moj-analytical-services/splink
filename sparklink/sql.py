@@ -5,7 +5,7 @@ import logging
 import pyspark.sql.functions as f
 
 log = logging.getLogger(__name__)
-from .formatlog import format_sql
+from .logging_utils import format_sql
 
 def comparison_columns_select_expr(df):
     """
@@ -16,6 +16,26 @@ def comparison_columns_select_expr(df):
 
     l = [f"l.{c} as {c}_l" for c in df.columns]
     r = [f"r.{c} as {c}_r" for c in df.columns]
+    both = zip(l, r)
+    flat_list = [item for sublist in both for item in sublist]
+    return ", ".join(flat_list)
+
+def sql_gen_comparison_columns(columns:list) -> str:
+    """Build SQL expression that renames columns and sets them aside each other for comparisons
+
+    Args:
+        columns (list): [description]
+
+   Examples:
+        >>> sql_gen_comparison_columns(["name", "dob"])
+        "name_l, name_r, dob_l, dob_r"
+
+    Returns:
+        SQL expression
+    """
+
+    l = [f"l.{c} as {c}_l" for c in columns]
+    r = [f"r.{c} as {c}_r" for c in columns]
     both = zip(l, r)
     flat_list = [item for sublist in both for item in sublist]
     return ", ".join(flat_list)

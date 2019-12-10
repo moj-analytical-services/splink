@@ -56,7 +56,7 @@ def test_cartesian(spark, caplog):
         df = spark.createDataFrame(Row(**x) for x in original_data)
 
 
-        df_c = cartestian_block(df, spark)
+        df_c = cartestian_block(df, df.columns, spark=spark)
 
         df_correct = pd.DataFrame(correct_answer)
         sort_order = list(df_correct.columns)

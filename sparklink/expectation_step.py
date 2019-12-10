@@ -1,7 +1,7 @@
 import logging
 
 log = logging.getLogger(__name__)
-from .formatlog import format_sql
+from .logging_utils import format_sql
 
 def run_expectation_step(df_with_gamma, spark, params, print_ll=False):
 
