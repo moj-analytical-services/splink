@@ -93,6 +93,17 @@ def sql_gen_add_gammas(
     unique_id_col: str = "unique_id",
     table_name: str = "df_comparison",
 ):
+    """Build SQL statement that adds gamma columns to the comparison dataframe
+
+    Args:
+        gamma_settings_dict (dict): Gamma settings dict
+        include_orig_cols (bool, optional): Whether to include original strings in output df. Defaults to False.
+        unique_id_col (str, optional): Name of the unique id column. Defaults to "unique_id".
+        table_name (str, optional): Name of the comparison df. Defaults to "df_comparison".
+
+    Returns:
+        str: A SQL string
+    """
 
     gamma_case_expressions = []
     for key in gamma_settings_dict:
@@ -127,9 +138,19 @@ def add_gammas(
     include_orig_cols=False,
     unique_id_col: str = "unique_id",
 ):
+    """[summary]
+
+    Args:
+        df_comparison (spark dataframe): A Spark dataframe containing record comparisons
+        gamma_settings_dict (dict): The gamma settings dict
+        spark (Spark session): The Spark session.
+        include_orig_cols (bool, optional): Whether to include original string comparison columns or just leave gammas. Defaults to False.
+        unique_id_col (str, optional): Name of the unique id column. Defaults to "unique_id".
+
+    Returns:
+        Spark dataframe: A dataframe containing new columns representing the gammas of the model
     """
 
-    """
     gamma_settings_dict = complete_settings_dict(gamma_settings_dict)
 
     sql = sql_gen_add_gammas(
