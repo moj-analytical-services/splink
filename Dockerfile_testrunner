@@ -2,4 +2,4 @@ FROM mamonu/moj-spark-jovyan:baseenv
 ADD . /myfiles
 WORKDIR /myfiles
 
-RUN pip install pytest pytest-cov poetry boto3 moto coveralls
+RUN pip install pytest pytest-cov poetry coveralls
