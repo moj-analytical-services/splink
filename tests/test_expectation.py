@@ -71,11 +71,15 @@ def test_expected_match_prob(params1, sqlite_con):
     df = pd.read_sql("select * from df_with_gamma_probs1", sqlite_con)
 
     cols_to_keep = ["prob_gamma_0_match", "prob_gamma_0_non_match", "prob_gamma_1_match", "prob_gamma_1_non_match"]
+    cols_to_keep = ["gamma_0", "gamma_1"]
     df = df[cols_to_keep][:5]
+
+
 
     print("\n")
 
     print(df)
+    df.to_csv("deleteme.csv")
 
     sql = sql_gen_expected_match_prob(params1, "df_with_gamma_probs1")
     df = pd.read_sql(sql, sqlite_con)
@@ -83,6 +87,8 @@ def test_expected_match_prob(params1, sqlite_con):
 
     correct_list = [None, None, None, None, None]
 
-    # for i in zip(result_list, correct_list):
-    #     assert i[0] == pytest.approx(i[1])
+    print(params1.__str__())
+
+    for i in zip(result_list, correct_list):
+        assert i[0] == pytest.approx(i[1])
 
