@@ -23,13 +23,11 @@ def run_expectation_step(df_with_gamma, spark, params, print_ll=False):
     return df_e
 
 
-def sql_gen_gamma_prob_columns(df_with_gamma, params):
+def sql_gen_gamma_prob_columns(params, table_name="df_with_gamma"):
     """
     For each row, look up the probability of observing the gamma value given the record
     is a match and non_match respectively
     """
-
-    gamma_cols_to_select = ", ".join(params.gamma_cols)
 
     case_statements = []
     for gamma_str in params.gamma_cols:
@@ -43,16 +41,15 @@ def sql_gen_gamma_prob_columns(df_with_gamma, params):
     -- We use case statements for these lookups rather than joins for performance and simplicity
     select *,
     {case_statements}
-    from df_with_gamma
+    from {table_name}
     """
 
     return sql
 
 
-def sql_gen_expected_match_prob(df, params):
+def sql_gen_expected_match_prob(params, table_name="df_with_gamma_probs"):
     gamma_cols = params.gamma_cols
-    # numerator = " * ".join([f"power(prob_{g}_match, CASE WHEN gamma_{g} = -1 THEN 0 ELSE 1)" for g in gamma_cols])
-    # denom_part = " * ".join([f"power(prob_{g}_non_match, CASE WHEN gamma_{g} = -1 THEN 0 ELSE 1)" for g in gamma_cols])
+
     numerator = " * ".join([f"prob_{g}_match" for g in gamma_cols])
     denom_part = " * ".join([f"prob_{g}_non_match" for g in gamma_cols])
 
@@ -62,7 +59,7 @@ def sql_gen_expected_match_prob(df, params):
     sql = f"""
     select *,
     {match_prob_expression}
-    from df_with_gamma_probs
+    from {table_name}
     """
 
     return sql
