@@ -12,17 +12,17 @@ def test_new_lambda_iteration_2(sqlite_con):
     df = pd.read_sql(sql, sqlite_con)
     new_lambda = df.iloc[0, 0]
 
-    assert new_lambda == pytest.approx(0.604325148)
+    assert new_lambda == pytest.approx(0.534993426)
 
 
 def test_new_pi_iteration_2(sqlite_con):
 
     rows = [
-        ["gamma_0", 0, 0.073658578, 0.392964749],
-        ["gamma_0", 1, 0.926341422, 0.607035251],
-        ["gamma_1", 0, 0.162618753, 0.257093413],
-        ["gamma_1", 1, 0.262911769, 0.103913114],
-        ["gamma_1", 2, 0.574469478, 0.638993473]
+        ["gamma_0", 0, 0.088546179, 0.435753788],
+        ["gamma_0", 1, 0.911453821, 0.564246212],
+        ["gamma_1", 0, 0.231340865, 0.27146747],
+        ["gamma_1", 1, 0.372351177, 0.109234086],
+        ["gamma_1", 2, 0.396307958, 0.619298443]
     ]
 
     for r in rows:

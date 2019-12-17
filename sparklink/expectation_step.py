@@ -11,9 +11,9 @@ from .logging_utils import format_sql
 
 def run_expectation_step(df_with_gamma, spark, params, print_ll=False):
 
-    sql = sql_gen_gamma_prob_columns(df_with_gamma, params)
+    sql = sql_gen_gamma_prob_columns(params)
 
-    df_with_gamma.registerTempTable("df_with_gamma")
+    df_with_gamma.createOrReplaceTempView("df_with_gamma")
     df_with_gamma_probs = spark.sql(sql)
     log.debug(format_sql(sql))
 
@@ -21,11 +21,11 @@ def run_expectation_step(df_with_gamma, spark, params, print_ll=False):
         ll = get_overall_log_likelihood(df_with_gamma_probs, params, spark)
         print(ll)
 
-    sql = sql_gen_expected_match_prob(df_with_gamma_probs, params)
-    df_with_gamma_probs.registerTempTable("df_with_gamma_probs")
+    sql = sql_gen_expected_match_prob(params)
+    df_with_gamma_probs.createOrReplaceTempView("df_with_gamma_probs")
     df_e = spark.sql(sql)
     log.debug(format_sql(sql))
-    df_e.registerTempTable("df_e")
+    df_e.createOrReplaceTempView("df_e")
     return df_e
 
 
@@ -114,7 +114,7 @@ def calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
 
     # sql = sql_gen_gamma_prob_columns(df_with_gamma, params)
 
-    # df_with_gamma.registerTempTable("df_with_gamma")
+    # df_with_gamma.createOrReplaceTempView("df_with_gamma")
     # df_with_gamma_probs = spark.sql(sql)
 
     λ = params.params['λ']
@@ -132,7 +132,7 @@ def calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
     match_prob_expression = f"({λ} * {numerator})/(( {λ} * {numerator}) + ({1 -λ} * {denom_part})) as match_probability"
 
 
-    df_with_gamma_probs.registerTempTable("df_with_gamma_probs")
+    df_with_gamma_probs.createOrReplaceTempView("df_with_gamma_probs")
     sql = f"""
     select *,
     cast({log_likelihood} as float) as  log_likelihood,

@@ -71,6 +71,7 @@ def sqlite_con(gamma_settings1, params1):
 
     sql = sql_gen_block_using_rules(columns, rules, table_name="test1")
     df = pd.read_sql(sql, con)
+    df = df.drop_duplicates(["unique_id_l", "unique_id_r"])
     df = df.sort_values(["unique_id_l", "unique_id_r"])
     df.to_sql('df_comparison1', con, index=False)
 
@@ -98,12 +99,12 @@ def sqlite_con(gamma_settings1, params1):
     # Create a new parameters object and run everything again.
 
      # Probability columns
-    params2 = Params(gamma_settings1, starting_lambda=0.611461117)
-    params2.prob_m_2_levels = [0.06188102, 0.93811898]  #i.e. 0.1 prob of observing gamma = 0 amongst matches and 0.9 of observing gamma = 1
-    params2.prob_nm_2_levels = [0.417364051, 0.582635949]
+    params2 = Params(gamma_settings1, starting_lambda=0.540922141)
+    params2.prob_m_2_levels = [0.087438272, 0.912561728]  #i.e. 0.1 prob of observing gamma = 0 amongst matches and 0.9 of observing gamma = 1
+    params2.prob_nm_2_levels = [0.441543191, 0.558456809]
 
-    params2.prob_m_3_levels = [0.122657023, 0.230883807, 0.64645917]
-    params2.prob_nm_3_levels = [0.321718123, 0.151396764, 0.526885114]
+    params2.prob_m_3_levels = [0.173315146, 0.326240275, 0.500444578]
+    params2.prob_nm_3_levels = [0.340356209, 0.160167628, 0.499476163]
     params2.generate_param_dict()
 
     sql = sql_gen_gamma_prob_columns(params2, "df_gammas1")

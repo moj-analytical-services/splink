@@ -32,14 +32,9 @@ def test_probability_columns(sqlite_con):
     df = pd.read_sql(sql, sqlite_con)
 
     cols_to_keep = ["prob_gamma_0_match", "prob_gamma_0_non_match", "prob_gamma_1_match", "prob_gamma_1_non_match"]
-    pd_df_result = df[cols_to_keep][:5]
+    pd_df_result = df[cols_to_keep][:4]
 
     df_correct = [{"prob_gamma_0_match": 0.9,
-     "prob_gamma_0_non_match": 0.2,
-     "prob_gamma_1_match": 0.7,
-     "prob_gamma_1_non_match": 0.25
-    },
-    {"prob_gamma_0_match": 0.9,
      "prob_gamma_0_non_match": 0.2,
      "prob_gamma_1_match": 0.7,
      "prob_gamma_1_non_match": 0.25
@@ -68,7 +63,6 @@ def test_expected_match_prob(params1, sqlite_con):
 
     df = pd.read_sql("select * from df_with_match_probability1", sqlite_con)
 
-    df[["gamma_0", "gamma_1"]].to_csv("delete.csv", index=False)
 
     cols_to_keep = ["prob_gamma_0_match", "prob_gamma_0_non_match", "prob_gamma_1_match", "prob_gamma_1_non_match"]
 
@@ -76,7 +70,15 @@ def test_expected_match_prob(params1, sqlite_con):
     df = pd.read_sql(sql, sqlite_con)
     result_list = list(df["match_probability"])
 
-    correct_list = [0.893617021, 0.893617021, 0.705882353, 0.705882353, 0.189189189]
+    correct_list = [
+    0.893617021,
+    0.705882353,
+    0.705882353,
+    0.189189189,
+    0.189189189,
+    0.893617021,
+    0.375,
+    0.375]
 
     for i in zip(result_list, correct_list):
         assert i[0] == pytest.approx(i[1])

@@ -1,4 +1,7 @@
-from sparklink.blocking import cartestian_block
+from sparklink.blocking import cartestian_block, block_using_rules
+from sparklink.gammas import add_gammas
+from sparklink.iterate import iterate
+from sparklink.expectation_step import run_expectation_step
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import pytest
@@ -7,14 +10,13 @@ import logging
 log = logging.getLogger(__name__)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def spark():
 
     try:
         import pyspark
         from pyspark import SparkContext, SparkConf
         from pyspark.sql import SparkSession
-
 
         conf = SparkConf()
 
@@ -36,32 +38,124 @@ def spark():
         print("Spark not available")
         yield spark
 
+
 from pyspark.sql import SparkSession, Row
 
-def test_cartesian(spark, caplog):
+# def test_cartesian(spark, caplog):
 
-    if spark:
-        original_data = [
-            {"unique_id": 1, "name": "Robin"},
-            {"unique_id": 2, "name": "John"},
-            {"unique_id": 3, "name": "James"}
-        ]
+#     if spark:
+#         original_data = [
+#             {"unique_id": 1, "name": "Robin"},
+#             {"unique_id": 2, "name": "John"},
+#             {"unique_id": 3, "name": "James"}
+#         ]
 
-        correct_answer = [
-            {'name_l': 'Robin', 'name_r': 'John', 'unique_id_l': 1, 'unique_id_r': 2},
-            {'name_l': 'Robin', 'name_r': 'James', 'unique_id_l': 1, 'unique_id_r': 3},
-            {'name_l': 'John', 'name_r': 'James', 'unique_id_l': 2, 'unique_id_r': 3}
-        ]
+#         correct_answer = [
+#             {'name_l': 'Robin', 'name_r': 'John', 'unique_id_l': 1, 'unique_id_r': 2},
+#             {'name_l': 'Robin', 'name_r': 'James', 'unique_id_l': 1, 'unique_id_r': 3},
+#             {'name_l': 'John', 'name_r': 'James', 'unique_id_l': 2, 'unique_id_r': 3}
+#         ]
 
-        df = spark.createDataFrame(Row(**x) for x in original_data)
+#         df = spark.createDataFrame(Row(**x) for x in original_data)
 
 
-        df_c = cartestian_block(df, df.columns, spark=spark)
+#         df_c = cartestian_block(df, df.columns, spark=spark)
 
-        df_correct = pd.DataFrame(correct_answer)
-        sort_order = list(df_correct.columns)
-        df_correct = df_correct.sort_values(sort_order)
-        df_test = df_c.toPandas().sort_values(sort_order)
+#         df_correct = pd.DataFrame(correct_answer)
+#         sort_order = list(df_correct.columns)
+#         df_correct = df_correct.sort_values(sort_order)
+#         df_test = df_c.toPandas().sort_values(sort_order)
 
-        assert_frame_equal(df_correct, df_test)
+#         assert_frame_equal(df_correct, df_test)
+
+
+def test_expectation(spark, sqlite_con, params1, gamma_settings1):
+    dfpd = pd.read_sql("select * from test1", sqlite_con)
+    df = spark.createDataFrame(dfpd)
+
+    rules = [
+        "l.mob = r.mob",
+        "l.surname = r.surname",
+    ]
+
+    df_comparison = block_using_rules(df, rules, spark=spark)
+
+    df_gammas = add_gammas(
+        df_comparison, gamma_settings1, spark, include_orig_cols=False
+    )
+
+    df_e = iterate(df_gammas, spark, params1, num_iterations=1)
+
+    df_e_pd = df_e.toPandas()
+    df_e_pd = df_e_pd.sort_values(["unique_id_l", "unique_id_r"])
+
+    correct_list = [
+        0.893617021,
+        0.705882353,
+        0.705882353,
+        0.189189189,
+        0.189189189,
+        0.893617021,
+        0.375,
+        0.375,
+    ]
+    result_list = list(df_e_pd["match_probability"].astype(float))
+
+    for i in zip(result_list, correct_list):
+        assert i[0] == pytest.approx(i[1])
+
+    assert params1.params["λ"] == pytest.approx(0.540922141)
+
+    assert params1.params["π"]["gamma_0"]["prob_dist_match"]["level_0"][
+        "probability"
+    ] == pytest.approx(0.087438272, abs=0.0001)
+    assert params1.params["π"]["gamma_1"]["prob_dist_non_match"]["level_1"][
+        "probability"
+    ] == pytest.approx(0.160167628, abs=0.0001)
+
+
+def test_iterate(spark, sqlite_con, params1, gamma_settings1):
+    dfpd = pd.read_sql("select * from test1", sqlite_con)
+    df = spark.createDataFrame(dfpd)
+
+    rules = [
+        "l.mob = r.mob",
+        "l.surname = r.surname",
+    ]
+
+    df_comparison = block_using_rules(df, rules, spark=spark)
+
+    df_gammas = add_gammas(
+        df_comparison, gamma_settings1, spark, include_orig_cols=False
+    )
+
+    df_e = iterate(df_gammas, spark, params1, num_iterations=2)
+
+    df_e_pd = df_e.toPandas()
+    df_e_pd = df_e_pd.sort_values(["unique_id_l", "unique_id_r"])
+
+
+    correct_list = [
+        0.658602114,
+        0.796821727,
+        0.796821727,
+        0.189486495,
+        0.189486495,
+        0.658602114,
+        0.495063367,
+        0.495063367,
+    ]
+    result_list = list(df_e_pd["match_probability"].astype(float))
+
+    for i in zip(result_list, correct_list):
+        assert i[0] == pytest.approx(i[1], abs=0.0001)
+
+    assert params1.params["λ"] == pytest.approx(0.534993426, abs=0.0001)
+
+    assert params1.params["π"]["gamma_0"]["prob_dist_match"]["level_0"][
+        "probability"
+    ] == pytest.approx(0.088546179, abs=0.0001)
+    assert params1.params["π"]["gamma_1"]["prob_dist_non_match"]["level_1"][
+        "probability"
+    ] == pytest.approx(0.109234086, abs=0.0001)
 
