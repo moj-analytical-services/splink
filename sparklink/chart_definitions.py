@@ -1,4 +1,4 @@
-pi_iteration_chart_def = {'config': {'view': {'width': 400, 'height': 300},
+pi_iteration_chart_def = {'config': {'view': {'width': 400, 'height': 300}, # pragma: no cover
                                 'mark': {'tooltip': None},
                                 'title': {'anchor': 'middle'}},
                      'hconcat': [{'mark': 'bar',
@@ -42,7 +42,7 @@ pi_iteration_chart_def = {'config': {'view': {'width': 400, 'height': 300},
                      '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
 
 
-lambda_iteration_chart_def = {'config': {'view': {'width': 400, 'height': 300}, 'mark': {'tooltip': None}},
+lambda_iteration_chart_def = {'config': {'view': {'width': 400, 'height': 300}, 'mark': {'tooltip': None}}, # pragma: no cover
                      'data': {'values': None},
                      'mark': 'bar',
                      'encoding': {'x': {'type': 'ordinal', 'field': 'iteration'},
@@ -57,7 +57,7 @@ lambda_iteration_chart_def = {'config': {'view': {'width': 400, 'height': 300}, 
                      '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
 
 
-probability_distribution_chart = chart_def = {'config': {'view': {'width': 400, 'height': 300},
+probability_distribution_chart = chart_def = {'config': {'view': {'width': 400, 'height': 300}, # pragma: no cover
                                 'mark': {'tooltip': None},
                                 'title': {'anchor': 'middle'}},
                      'hconcat': [{'mark': 'bar',
