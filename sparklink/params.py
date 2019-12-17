@@ -209,7 +209,7 @@ class Params:
         self.populate_params(lambda_value, pi_df_collected)
         self.iteration += 1
 
-    def pi_iteration_chart(self):
+    def pi_iteration_chart(self): # pragma: no cover
 
         if self.real_params:
             data = self.iteration_history_df_gammas()
@@ -226,7 +226,7 @@ class Params:
             return pi_iteration_chart_def
 
 
-    def lambda_iteration_chart(self):
+    def lambda_iteration_chart(self): # pragma: no cover
         data = self.iteration_history_df_lambdas()
         if self.real_params:
             data.append({"λ": self.real_params["λ"], "iteration": "real_param"})
@@ -240,7 +240,7 @@ class Params:
 
 
 
-    def probability_distribution_chart(self):
+    def probability_distribution_chart(self): # pragma: no cover
         """
         If altair is installed, returns the chart
         Otherwise will return the chart spec as a dictionary
