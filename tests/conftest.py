@@ -74,13 +74,9 @@ def sqlite_con(gamma_settings1, params1):
     df = df.sort_values(["unique_id_l", "unique_id_r"])
     df.to_sql('df_comparison1', con, index=False)
 
-
-
     sql = sql_gen_add_gammas(gamma_settings1, include_orig_cols=True, table_name="df_comparison1")
     df = pd.read_sql(sql, con)
     df.to_sql('df_gammas1', con, index=False)
-
-
 
     sql = sql_gen_gamma_prob_columns(params1, "df_gammas1")
     df = pd.read_sql(sql, con)
@@ -98,5 +94,34 @@ def sqlite_con(gamma_settings1, params1):
 
     df = pd.read_sql(sql, con)
     df.to_sql('df_pi1', con, index=False)
+
+    # Create a new parameters object and run everything again.
+
+     # Probability columns
+    params2 = Params(gamma_settings1, starting_lambda=0.611461117)
+    params2.prob_m_2_levels = [0.06188102, 0.93811898]  #i.e. 0.1 prob of observing gamma = 0 amongst matches and 0.9 of observing gamma = 1
+    params2.prob_nm_2_levels = [0.417364051, 0.582635949]
+
+    params2.prob_m_3_levels = [0.122657023, 0.230883807, 0.64645917]
+    params2.prob_nm_3_levels = [0.321718123, 0.151396764, 0.526885114]
+    params2.generate_param_dict()
+
+    sql = sql_gen_gamma_prob_columns(params2, "df_gammas1")
+    df = pd.read_sql(sql, con)
+    df.to_sql('df_with_gamma_probs1_it2', con, index=False)
+
+    sql = sql_gen_expected_match_prob(params2, "df_with_gamma_probs1_it2")
+    df = pd.read_sql(sql, con)
+    df.to_sql('df_with_match_probability1_it2', con, index=False)
+
+    sql = sql_gen_intermediate_pi_aggregate(params2, table_name="df_with_match_probability1_it2")
+    df = pd.read_sql(sql, con)
+    df.to_sql('df_intermediate1_it2', con, index=False)
+
+    sql = sql_gen_pi_df(params2,"df_intermediate1_it2")
+
+    df = pd.read_sql(sql, con)
+    df.to_sql('df_pi1_it2', con, index=False)
+
 
     yield con
