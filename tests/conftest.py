@@ -5,7 +5,8 @@ import pandas as pd
 
 from sparklink.blocking import sql_gen_block_using_rules
 from sparklink.gammas import sql_gen_gammas_case_statement_2_levels, sql_gen_add_gammas, complete_settings_dict
-from sparklink.expectation_step import sql_gen_gamma_prob_columns
+from sparklink.expectation_step import sql_gen_gamma_prob_columns, sql_gen_expected_match_prob
+from sparklink.maximisation_step import sql_gen_intermediate_pi_aggregate, sql_gen_pi_df
 from sparklink.params import Params
 
 
@@ -31,10 +32,6 @@ def gamma_settings1():
 
 @pytest.fixture(scope='function')
 def params1(gamma_settings1):
-
-
-
-
 
     # Probability columns
     params = Params(gamma_settings1, starting_lambda=0.4)
@@ -88,5 +85,18 @@ def sqlite_con(gamma_settings1, params1):
     sql = sql_gen_gamma_prob_columns(params1, "df_gammas1")
     df = pd.read_sql(sql, con)
     df.to_sql('df_with_gamma_probs1', con, index=False)
+
+    sql = sql_gen_expected_match_prob(params1, "df_with_gamma_probs1")
+    df = pd.read_sql(sql, con)
+    df.to_sql('df_with_match_probability1', con, index=False)
+
+    sql = sql_gen_intermediate_pi_aggregate(params1, table_name="df_with_match_probability1")
+    df = pd.read_sql(sql, con)
+    df.to_sql('df_intermediate1', con, index=False)
+
+    sql = sql_gen_pi_df(params1,"df_intermediate1")
+
+    df = pd.read_sql(sql, con)
+    df.to_sql('df_pi1', con, index=False)
 
     yield con
