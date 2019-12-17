@@ -21,8 +21,8 @@ def get_new_lambda(df_e, spark):
     This can then be used in future iterations.
     """
 
-    sql = sql_gen_new_lambda(table_name = "df_e")
-    df_e.registerTempTable("df_e")
+    sql = sql_gen_new_lambda(table_name = "df_intermediate")
+    df_e.createOrReplaceTempView("df_e")
 
     new_lambda = spark.sql(sql).collect()[0][0]
     log.debug(format_sql(sql))
@@ -91,10 +91,10 @@ def run_maximisation_step(df_e, spark, params):
 
     sql = sql_gen_intermediate_pi_aggregate(params)
 
-    df_e.registerTempTable("df_e")
+    df_e.createOrReplaceTempView("df_e")
     df_intermediate = spark.sql(sql)
     log.debug(format_sql(sql))
-    df_intermediate.registerTempTable("df_intermediate")
+    df_intermediate.createOrReplaceTempView("df_intermediate")
     df_intermediate.persist()
 
     new_lambda = get_new_lambda(df_e,  spark)

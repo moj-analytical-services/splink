@@ -53,14 +53,16 @@ def sql_gen_block_using_rules(
 
 def block_using_rules(
     df,
-    columns_to_retain: list,
     blocking_rules: list,
+    columns_to_retain: list=None,
     spark=None,
     unique_id_col="unique_id",
     logger=log,
 ):
     """Apply a series of blocking rules to create a dataframe of record comparisons.
     """
+    if columns_to_retain is None:
+        columns_to_retain = df.columns
 
     sql = sql_gen_block_using_rules(columns_to_retain, blocking_rules, unique_id_col)
 

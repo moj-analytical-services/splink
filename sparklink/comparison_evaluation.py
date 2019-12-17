@@ -9,8 +9,8 @@ log = logging.getLogger(__name__)
 from .logging_utils import format_sql
 
 def view_matches(df_e, df_comparison, spark):
-    df_e.registerTempTable('df_e')
-    df_comparison.registerTempTable('df_comparison')
+    df_e.createOrReplaceTempView('df_e')
+    df_comparison.createOrReplaceTempView('df_comparison')
 
     sql = """
     select e.match_probability, c.*
@@ -28,8 +28,8 @@ def view_matches(df_e, df_comparison, spark):
 def get_real_params(df_comparison, df_with_gamma, spark, est_params):
 
     gamma_cols = [c for c in df_with_gamma.columns if re.match(r"^gamma_\d$", c)]
-    df_with_gamma.registerTempTable('df_with_gamma')
-    df_comparison.registerTempTable('df_comparison')
+    df_with_gamma.createOrReplaceTempView('df_with_gamma')
+    df_comparison.createOrReplaceTempView('df_comparison')
 
     # Want match probability, gammas, label
     gamma_select_expr = ", ".join([f"g.{c}" for c in gamma_cols])
@@ -54,8 +54,8 @@ def get_real_params(df_comparison, df_with_gamma, spark, est_params):
 
 
 def comparison_with_match_prob(df_comparison, df_e, spark):
-    df_e.registerTempTable('df_e')
-    df_comparison.registerTempTable('df_comparison')
+    df_e.createOrReplaceTempView('df_e')
+    df_comparison.createOrReplaceTempView('df_comparison')
 
     gamma_cols = [f"e.{c}" for c in df_e.columns if re.match(r"^gamma_\d$", c)]
 
@@ -94,6 +94,6 @@ def get_largest_blocks(blocking_rule, df, spark, limit=5):
     ORDER BY count(*) desc
     LIMIT {limit}
     """
-    df.registerTempTable("df")
+    df.createOrReplaceTempView("df")
     return spark.sql(sql)
 
