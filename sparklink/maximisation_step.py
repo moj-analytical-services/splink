@@ -3,10 +3,10 @@ import logging
 log = logging.getLogger(__name__)
 from .logging_utils import format_sql
 
-def sql_gen_new_lambda(table_name = "df_e"):
+def sql_gen_new_lambda(table_name = "df_intermediate"):
 
     sql = f"""
-    select cast(sum(match_probability)/count(*) as float) as new_lambda
+    select cast(sum(expected_num_matches)/sum(num_rows) as float) as new_lambda
     from {table_name}
     """
 

@@ -5,7 +5,7 @@ from sparklink.maximisation_step import sql_gen_new_lambda, sql_gen_intermediate
 
 def test_new_lambda(params1, sqlite_con):
 
-    sql = sql_gen_new_lambda(table_name="df_with_match_probability1")
+    sql = sql_gen_new_lambda(table_name="df_intermediate1")
     df = pd.read_sql(sql, sqlite_con)
     new_lambda = df.iloc[0,0]
 
