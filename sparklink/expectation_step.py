@@ -1,3 +1,9 @@
+"""
+In the expectation step we calculate the membership probabilities
+i.e. for each comparison, what is the probability that it's a member
+of group match = 0 and group match = 1
+"""
+
 import logging
 
 log = logging.getLogger(__name__)
