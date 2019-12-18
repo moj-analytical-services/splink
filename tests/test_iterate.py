@@ -7,15 +7,15 @@ from sparklink.maximisation_step import (
 )
 
 
-def test_new_lambda_iteration_2(sqlite_con):
+def test_new_lambda_iteration_2(sqlite_con_1):
     sql = sql_gen_new_lambda(table_name="df_intermediate1_it2")
-    df = pd.read_sql(sql, sqlite_con)
+    df = pd.read_sql(sql, sqlite_con_1)
     new_lambda = df.iloc[0, 0]
 
     assert new_lambda == pytest.approx(0.534993426)
 
 
-def test_new_pi_iteration_2(sqlite_con):
+def test_new_pi_iteration_2(sqlite_con_1):
 
     rows = [
         ["gamma_0", 0, 0.088546179, 0.435753788],
@@ -33,7 +33,7 @@ def test_new_pi_iteration_2(sqlite_con):
          and gamma_value = {r[1]}
          """
 
-        df = pd.read_sql(sql, sqlite_con)
+        df = pd.read_sql(sql, sqlite_con_1)
         pm = df.loc[0, "new_probability_match"]
         pnm = df.loc[0, "new_probability_non_match"]
 

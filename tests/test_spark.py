@@ -69,8 +69,8 @@ from pyspark.sql import SparkSession, Row
 #         assert_frame_equal(df_correct, df_test)
 
 
-def test_expectation(spark, sqlite_con, params1, gamma_settings1):
-    dfpd = pd.read_sql("select * from test1", sqlite_con)
+def test_expectation(spark, sqlite_con_1, params_1, gamma_settings_1):
+    dfpd = pd.read_sql("select * from test1", sqlite_con_1)
     df = spark.createDataFrame(dfpd)
 
     rules = [
@@ -81,10 +81,10 @@ def test_expectation(spark, sqlite_con, params1, gamma_settings1):
     df_comparison = block_using_rules(df, rules, spark=spark)
 
     df_gammas = add_gammas(
-        df_comparison, gamma_settings1, spark, include_orig_cols=False
+        df_comparison, gamma_settings_1, spark, include_orig_cols=False
     )
 
-    df_e = iterate(df_gammas, spark, params1, num_iterations=1)
+    df_e = iterate(df_gammas, spark, params_1, num_iterations=1)
 
     df_e_pd = df_e.toPandas()
     df_e_pd = df_e_pd.sort_values(["unique_id_l", "unique_id_r"])
@@ -104,18 +104,18 @@ def test_expectation(spark, sqlite_con, params1, gamma_settings1):
     for i in zip(result_list, correct_list):
         assert i[0] == pytest.approx(i[1])
 
-    assert params1.params["λ"] == pytest.approx(0.540922141)
+    assert params_1.params["λ"] == pytest.approx(0.540922141)
 
-    assert params1.params["π"]["gamma_0"]["prob_dist_match"]["level_0"][
+    assert params_1.params["π"]["gamma_0"]["prob_dist_match"]["level_0"][
         "probability"
     ] == pytest.approx(0.087438272, abs=0.0001)
-    assert params1.params["π"]["gamma_1"]["prob_dist_non_match"]["level_1"][
+    assert params_1.params["π"]["gamma_1"]["prob_dist_non_match"]["level_1"][
         "probability"
     ] == pytest.approx(0.160167628, abs=0.0001)
 
 
-def test_iterate(spark, sqlite_con, params1, gamma_settings1):
-    dfpd = pd.read_sql("select * from test1", sqlite_con)
+def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
+    dfpd = pd.read_sql("select * from test1", sqlite_con_1)
     df = spark.createDataFrame(dfpd)
 
     rules = [
@@ -126,10 +126,10 @@ def test_iterate(spark, sqlite_con, params1, gamma_settings1):
     df_comparison = block_using_rules(df, rules, spark=spark)
 
     df_gammas = add_gammas(
-        df_comparison, gamma_settings1, spark, include_orig_cols=False
+        df_comparison, gamma_settings_1, spark, include_orig_cols=False
     )
 
-    df_e = iterate(df_gammas, spark, params1, num_iterations=2)
+    df_e = iterate(df_gammas, spark, params_1, num_iterations=2)
 
     df_e_pd = df_e.toPandas()
     df_e_pd = df_e_pd.sort_values(["unique_id_l", "unique_id_r"])
@@ -150,12 +150,12 @@ def test_iterate(spark, sqlite_con, params1, gamma_settings1):
     for i in zip(result_list, correct_list):
         assert i[0] == pytest.approx(i[1], abs=0.0001)
 
-    assert params1.params["λ"] == pytest.approx(0.534993426, abs=0.0001)
+    assert params_1.params["λ"] == pytest.approx(0.534993426, abs=0.0001)
 
-    assert params1.params["π"]["gamma_0"]["prob_dist_match"]["level_0"][
+    assert params_1.params["π"]["gamma_0"]["prob_dist_match"]["level_0"][
         "probability"
     ] == pytest.approx(0.088546179, abs=0.0001)
-    assert params1.params["π"]["gamma_1"]["prob_dist_non_match"]["level_1"][
+    assert params_1.params["π"]["gamma_1"]["prob_dist_non_match"]["level_1"][
         "probability"
     ] == pytest.approx(0.109234086, abs=0.0001)
 

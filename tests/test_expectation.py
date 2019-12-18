@@ -9,7 +9,7 @@ from sparklink.expectation_step import sql_gen_gamma_prob_columns, sql_gen_expec
 from sparklink.params import Params
 
 
-def test_probability_columns(sqlite_con):
+def test_probability_columns(sqlite_con_1):
 
     gamma_settings = {
     "mob": {
@@ -29,7 +29,7 @@ def test_probability_columns(sqlite_con):
     params.generate_param_dict()
 
     sql = sql_gen_gamma_prob_columns(params, "df_gammas1")
-    df = pd.read_sql(sql, sqlite_con)
+    df = pd.read_sql(sql, sqlite_con_1)
 
     cols_to_keep = ["prob_gamma_0_match", "prob_gamma_0_non_match", "prob_gamma_1_match", "prob_gamma_1_non_match"]
     pd_df_result = df[cols_to_keep][:4]
@@ -59,15 +59,15 @@ def test_probability_columns(sqlite_con):
 
     assert_frame_equal(pd_df_correct, pd_df_result)
 
-def test_expected_match_prob(params1, sqlite_con):
+def test_expected_match_prob(params_1, sqlite_con_1):
 
-    df = pd.read_sql("select * from df_with_match_probability1", sqlite_con)
+    df = pd.read_sql("select * from df_with_match_probability1", sqlite_con_1)
 
 
     cols_to_keep = ["prob_gamma_0_match", "prob_gamma_0_non_match", "prob_gamma_1_match", "prob_gamma_1_non_match"]
 
-    sql = sql_gen_expected_match_prob(params1, "df_with_gamma_probs1")
-    df = pd.read_sql(sql, sqlite_con)
+    sql = sql_gen_expected_match_prob(params_1, "df_with_gamma_probs1")
+    df = pd.read_sql(sql, sqlite_con_1)
     result_list = list(df["match_probability"])
 
     correct_list = [
@@ -82,3 +82,4 @@ def test_expected_match_prob(params1, sqlite_con):
 
     for i in zip(result_list, correct_list):
         assert i[0] == pytest.approx(i[1])
+
