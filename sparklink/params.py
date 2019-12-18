@@ -254,7 +254,7 @@ class Params:
         else:
             return probability_distribution_chart
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
 
         p = self.params
         lines = []
