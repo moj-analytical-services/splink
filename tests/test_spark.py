@@ -91,7 +91,7 @@ def test_expectation(spark, sqlite_con_1, params_1, gamma_settings_1):
 
 def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
 
-    original_params = copy.deepcopy(params_1)
+    original_params = copy.deepcopy(params_1.params)
     dfpd = pd.read_sql("select * from test1", sqlite_con_1)
     df = spark.createDataFrame(dfpd)
 
@@ -106,7 +106,13 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
         df_comparison, gamma_settings_1, spark, include_orig_cols=False
     )
 
-    df_e = iterate(df_gammas, spark, params_1, num_iterations=2)
+    # deliberately manually iterating by running this twice with num_it =1
+    # rather than setting num_iterations=2
+    df_e = iterate(df_gammas, spark, params_1, num_iterations=1)
+
+    first_it_params = copy.deepcopy(params_1.params)
+
+    df_e = iterate(df_gammas, spark, params_1, num_iterations=1)
 
     df_e_pd = df_e.toPandas()
     df_e_pd = df_e_pd.sort_values(["unique_id_l", "unique_id_r"])
@@ -139,3 +145,49 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
     ## Test whether the params object is correctly storing the iteration history
 
     assert params_1.param_history[0] == original_params
+    assert params_1.param_history[1] == first_it_params
+
+    ## Now test whether, when we
+
+    data = params_1.convert_params_dict_to_data(original_params)
+    val1 = {'gamma': 'gamma_0', 'match': 0, 'value_of_gamma': 'level_0', 'probability': 0.8, 'value': 0, 'column': 'mob'}
+    val2 = {'gamma': 'gamma_1', 'match': 1, 'value_of_gamma': 'level_1', 'probability': 0.2, 'value': 1, 'column': 'surname'}
+
+    assert val1 in data
+    assert val2 in data
+
+    correct_list = [
+        {"iteration": 0, 'λ': 0.4},
+        {"iteration": 1, 'λ': 0.540922141}
+    ]
+
+    result_list = params_1.iteration_history_df_lambdas()
+
+    for i in zip(result_list, correct_list):
+        assert i[0]["iteration"] == i[1]["iteration"]
+        assert i[0]["λ"] == pytest.approx(i[1]['λ'])
+
+
+    result_list = params_1.iteration_history_df_gammas()
+
+    val1 = {'iteration': 0, 'gamma': 'gamma_0', 'match': 0, 'value_of_gamma': 'level_0', 'probability': 0.8, 'value': 0, 'column': 'mob'}
+    assert val1 in result_list
+
+    val2 = {'iteration': 1, 'gamma': 'gamma_1', 'match': 0, 'value_of_gamma': 'level_1', 'probability': 0.160167628, 'value': 1, 'column': 'surname'}
+
+    for r in result_list:
+        if r["iteration"] == 1:
+            if r["gamma"] == 'gamma_1':
+                if r["match"] == 0:
+                    if r["value"] == 1:
+                        record = r
+
+    for k, v in record.items():
+        expected_value = val2[k]
+        if k == 'probability':
+            assert v == pytest.approx(expected_value, abs=0.0001)
+        else:
+            assert v == expected_value
+
+
+
