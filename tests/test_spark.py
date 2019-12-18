@@ -1,3 +1,5 @@
+import copy
+
 from sparklink.blocking import cartestian_block, block_using_rules
 from sparklink.gammas import add_gammas
 from sparklink.iterate import iterate
@@ -40,33 +42,6 @@ def spark():
 
 
 from pyspark.sql import SparkSession, Row
-
-# def test_cartesian(spark, caplog):
-
-#     if spark:
-#         original_data = [
-#             {"unique_id": 1, "name": "Robin"},
-#             {"unique_id": 2, "name": "John"},
-#             {"unique_id": 3, "name": "James"}
-#         ]
-
-#         correct_answer = [
-#             {'name_l': 'Robin', 'name_r': 'John', 'unique_id_l': 1, 'unique_id_r': 2},
-#             {'name_l': 'Robin', 'name_r': 'James', 'unique_id_l': 1, 'unique_id_r': 3},
-#             {'name_l': 'John', 'name_r': 'James', 'unique_id_l': 2, 'unique_id_r': 3}
-#         ]
-
-#         df = spark.createDataFrame(Row(**x) for x in original_data)
-
-
-#         df_c = cartestian_block(df, df.columns, spark=spark)
-
-#         df_correct = pd.DataFrame(correct_answer)
-#         sort_order = list(df_correct.columns)
-#         df_correct = df_correct.sort_values(sort_order)
-#         df_test = df_c.toPandas().sort_values(sort_order)
-
-#         assert_frame_equal(df_correct, df_test)
 
 
 def test_expectation(spark, sqlite_con_1, params_1, gamma_settings_1):
@@ -115,6 +90,8 @@ def test_expectation(spark, sqlite_con_1, params_1, gamma_settings_1):
 
 
 def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
+
+    original_params = copy.deepcopy(params_1)
     dfpd = pd.read_sql("select * from test1", sqlite_con_1)
     df = spark.createDataFrame(dfpd)
 
@@ -159,3 +136,6 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
         "probability"
     ] == pytest.approx(0.109234086, abs=0.0001)
 
+    ## Test whether the params object is correctly storing the iteration history
+
+    assert params_1.param_history[0] == original_params
