@@ -133,3 +133,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# gitignore exception for docs files (otherwise docs/build does not get saved in repo 
+!docs/*
