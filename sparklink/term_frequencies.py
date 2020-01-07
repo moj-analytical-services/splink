@@ -92,17 +92,17 @@ def make_adjustment_for_term_frequencies(df_e, params, term_freq_column_list, re
     df_e.createOrReplaceTempView("df_e")
 
     # Generate a lookup table for each column with 'term specific' lambdas.
-    for c in ["surname", "fname"]:
+    for c in term_freq_column_list:
         sql = sql_gen_generate_adjusted_lambda(c, params)
         lookup = spark.sql(sql)
         lookup.createOrReplaceTempView(f"{c}_lookup")
 
     # Merge these lookup tables into main table
-    sql  = sql_gen_add_adjumentments_to_df_e(["surname", "fname"])
+    sql  = sql_gen_add_adjumentments_to_df_e(term_freq_column_list)
     df_e_adj = spark.sql(sql)
     df_e_adj.createOrReplaceTempView("df_e_adj")
 
-    sql = sql_gen_compute_final_group_membership_prob_from_adjustments(["surname", "fname"])
+    sql = sql_gen_compute_final_group_membership_prob_from_adjustments(term_freq_column_list)
     df = spark.sql(sql)
     if not retain_adjustment_columns:
         for c in term_freq_column_list:
