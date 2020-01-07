@@ -58,7 +58,7 @@ def sql_gen_add_adjumentments_to_df_e(term_freq_column_list):
      left join
     {c}_lookup
     on {c}_lookup.{c}_l = e.{c}_l
-    and {c}_lookup.{c}_l = e.{c}_r
+    and {c}_lookup.{c}_r = e.{c}_r
     """
 
     left_joins = [left_join_template.format(c=c) for c in term_freq_column_list]
