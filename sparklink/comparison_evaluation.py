@@ -12,8 +12,13 @@ def view_matches(df_e, df_comparison, spark):
     df_e.createOrReplaceTempView('df_e')
     df_comparison.createOrReplaceTempView('df_comparison')
 
-    sql = """
-    select e.match_probability, c.*
+    if "tf_adjusted_match_prob" in df_e.columns:
+        adj_col = "e.tf_adjusted_match_prob, "
+    else:
+        adj_col = ""
+
+    sql = f"""
+    select e.match_probability, {adj_col} c.*
     from df_e as e
     left join df_comparison as c
     on e.unique_id_l = c.unique_id_l
