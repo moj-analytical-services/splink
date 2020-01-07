@@ -1,13 +1,6 @@
+# For more information on where formulas came from, see
 # https://github.com/moj-analytical-services/sparklink/issues/17
 
-# This first implementation enables term freq adjustments to be made for just a single column
-# However, it's designed to be flexible enough to accomodate multiple columns later i.e. shouldn't
-# need to be re-written from scratch, just extended.
-
-# ----
-
-# Input is the final df_e and params after all iterations have completed
-# Output is the match_probability_adjusted column.
 
 def sql_gen_bayes_string(probs):
     """Convenience function for computing an updated probability using bayes' rule
@@ -49,7 +42,7 @@ def sql_gen_generate_adjusted_lambda(column_name, params, table_name='df_e'):
     )
 
     select {column_name}_l, {column_name}_r, {sql_gen_bayes_string(["adj_lambda", 1-params.params["λ"]])}
-    as {column_name}_adjustment_nulls
+    as {column_name}_adj_nulls
     from temp_adj
     """
 
@@ -57,7 +50,7 @@ def sql_gen_generate_adjusted_lambda(column_name, params, table_name='df_e'):
 
 def sql_gen_add_adjumentments_to_df_e(term_freq_column_list):
 
-    coalesce_template = "coalesce({c}_adjustment_nulls, 0.5) as {c}_adjustment"
+    coalesce_template = "coalesce({c}_adj_nulls, 0.5) as {c}_adj"
     coalesces =  [coalesce_template.format(c=c) for c in term_freq_column_list]
     coalesces = ",\n ".join(coalesces)
 
@@ -73,7 +66,7 @@ def sql_gen_add_adjumentments_to_df_e(term_freq_column_list):
 
 
     sql = f"""
-    select *, {coalesces}
+    select e.*, {coalesces}
     from df_e as e
 
     {left_joins}
@@ -84,11 +77,38 @@ def sql_gen_add_adjumentments_to_df_e(term_freq_column_list):
 
 def sql_gen_compute_final_group_membership_prob_from_adjustments(term_freq_column_list, table_name="df_e_adj"):
 
-    term_freq_column_list = [c + "_adjustment" for c in term_freq_column_list]
+    term_freq_column_list = [c + "_adj" for c in term_freq_column_list]
     term_freq_column_list.insert(0, "match_probability")
     sql = f"""
-    select *, {sql_gen_bayes_string(term_freq_column_list)} as final_group_memebership_prob
+    select *, {sql_gen_bayes_string(term_freq_column_list)} as tf_adjusted_match_prob
     from {table_name}
     """
 
     return sql
+
+
+def make_adjustment_for_term_frequencies(df_e, params, term_freq_column_list, retain_adjustment_columns=False, spark=None):
+
+    df_e.createOrReplaceTempView("df_e")
+
+    # Generate a lookup table for each column with 'term specific' lambdas.
+    for c in ["surname", "fname"]:
+        sql = sql_gen_generate_adjusted_lambda(c, params)
+        lookup = spark.sql(sql)
+        lookup.createOrReplaceTempView(f"{c}_lookup")
+
+    # Merge these lookup tables into main table
+    sql  = sql_gen_add_adjumentments_to_df_e(["surname", "fname"])
+    df_e_adj = spark.sql(sql)
+    df_e_adj.createOrReplaceTempView("df_e_adj")
+
+    sql = sql_gen_compute_final_group_membership_prob_from_adjustments(["surname", "fname"])
+    df = spark.sql(sql)
+    if not retain_adjustment_columns:
+        for c in term_freq_column_list:
+            df = df.drop(c+ "_adj")
+
+    return df
+
+
+
