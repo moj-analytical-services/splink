@@ -57,7 +57,22 @@ lambda_iteration_chart_def = {'config': {'view': {'width': 400, 'height': 300}, 
                      '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
 
 
-probability_distribution_chart = chart_def = {'config': {'view': {'width': 400, 'height': 300}, # pragma: no cover
+ll_iteration_chart_def = {'config': {'view': {'width': 400, 'height': 300}, 'mark': {'tooltip': None}}, # pragma: no cover
+                     'data': {'values': None},
+                     'mark': 'bar',
+                     'encoding': {'x': {'type': 'ordinal', 'field': 'iteration'},
+
+                                  'y': {'type': 'quantitative',
+                                        'axis': {'title': 'Log likelihood by iteration number'},
+                                        'field': 'log_likelihood'},
+                                  'tooltip': [{'type': 'quantitative', 'field': 'log_likelihood'},
+                                 {'type': 'ordinal',
+                                  'field': 'iteration'}]},
+                                                      'title': 'Log likelihood value by iteration',
+                     '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
+
+
+probability_distribution_chart = {'config': {'view': {'width': 400, 'height': 300}, # pragma: no cover
                                 'mark': {'tooltip': None},
                                 'title': {'anchor': 'middle'}},
                      'hconcat': [{'mark': 'bar',
@@ -87,3 +102,33 @@ probability_distribution_chart = chart_def = {'config': {'view': {'width': 400, 
                      'data': {'values': None},
                      'title': 'Probability distribution of comparison vector values, m=0 and m=1',
                      '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
+
+
+multi_chart_template = """
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/vega@{vega_version}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@{vegalite_version}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@{vegaembed_version}"></script>
+</head>
+<body>
+
+<div id="vis1"></div>
+<br/>
+<div id="vis2"></div>
+<br/>
+<div id="vis3"></div>
+<br/>
+<div id="vis4"></div>
+<br/>
+
+<script type="text/javascript">
+  vegaEmbed('#vis1', {spec1}).catch(console.error);
+  vegaEmbed('#vis2', {spec2}).catch(console.error);
+  vegaEmbed('#vis3', {spec3}).catch(console.error);
+  vegaEmbed('#vis4', {spec4}).catch(console.error);
+</script>
+</body>
+</html>
+""" # pragma: no cover
