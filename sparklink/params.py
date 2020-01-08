@@ -2,7 +2,7 @@ import copy
 import json
 from pprint import pprint
 from .gammas import complete_settings_dict
-from .chart_definitions import lambda_iteration_chart_def, pi_iteration_chart_def, probability_distribution_chart
+from .chart_definitions import lambda_iteration_chart_def, pi_iteration_chart_def, probability_distribution_chart, ll_iteration_chart_def, multi_chart_template
 import random
 
 altair_installed = True
@@ -30,6 +30,8 @@ class Params:
         self.iteration = 1
 
         self.gamma_settings = complete_settings_dict(gamma_settings)
+
+        self.log_likelihood_exists = False
 
         self.real_params = None
         self.prob_m_2_levels = [1,9]
@@ -152,6 +154,12 @@ class Params:
         data.append({"λ": self.params['λ'], "iteration": it_num+1})
         return data
 
+    def iteration_history_df_log_likelihood(self):
+        data = []
+        for it_num, param_value in enumerate(self.param_history):
+            data.append({"log_likelihood": param_value['log_likelihood'], "iteration": it_num})
+        data.append({"log_likelihood": self.params['log_likelihood'], "iteration": it_num+1})
+        return data
 
     def reset_param_values_to_none(self):
         """
@@ -171,6 +179,8 @@ class Params:
         """
         current_params = copy.deepcopy(self.params)
         self.param_history.append(current_params)
+        if "log_likelihood" in self.params:
+            self.log_likelihood_exists = True
 
     def populate_params(self, lambda_value, pi_df_collected):
         """
@@ -209,6 +219,9 @@ class Params:
         self.populate_params(lambda_value, pi_df_collected)
         self.iteration += 1
 
+
+    ### The rest of this module is just 'presentational' elements - charts, and __repr__ etc.
+
     def pi_iteration_chart(self): # pragma: no cover
 
         if self.real_params:
@@ -238,6 +251,19 @@ class Params:
         else:
             return lambda_iteration_chart_def
 
+    def ll_iteration_chart(self): # pragma: no cover
+        if self.log_likelihood_exists:
+            data = self.iteration_history_df_log_likelihood()
+
+            ll_iteration_chart_def["data"]["values"] = data
+
+            if altair_installed:
+                return alt.Chart.from_dict(ll_iteration_chart_def)
+            else:
+                return ll_iteration_chart_def
+        else:
+            raise Exception("Log likelihood not calculated.  To calculate pass 'compute_ll=True' to iterate(). Note this causes algorithm to run more slowly because additional calculations are required.")
+
 
 
     def probability_distribution_chart(self): # pragma: no cover
@@ -253,6 +279,30 @@ class Params:
             return alt.Chart.from_dict(probability_distribution_chart)
         else:
             return probability_distribution_chart
+
+
+    def all_charts_write_html_file(self, filename="sparklink_charts.html"):
+
+        if altair_installed:
+            c1 = self.probability_distribution_chart().to_json(indent=None)
+            c2 = self.lambda_iteration_chart().to_json(indent=None)
+            c3 = self.pi_iteration_chart().to_json(indent=None)
+            if self.log_likelihood_exists:
+                c4 = self.ll_iteration_chart().to_json(indent=None)
+            else:
+                c4 = ""
+
+            with open(filename, 'w') as f:
+                f.write(multi_chart_template.format(
+                    vega_version=alt.VEGA_VERSION,
+                    vegalite_version=alt.VEGALITE_VERSION,
+                    vegaembed_version=alt.VEGAEMBED_VERSION,
+                    spec1=c1,
+                    spec2=c2,
+                    spec3=c3,
+                    spec4=c4
+                ))
+
 
     def __repr__(self):  # pragma: no cover
 

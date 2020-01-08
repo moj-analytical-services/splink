@@ -7,24 +7,41 @@ of group match = 0 and group match = 1
 import logging
 
 log = logging.getLogger(__name__)
-from .logging_utils import format_sql
+from .logging_utils import log_sql, log_other
 
-def run_expectation_step(df_with_gamma, spark, params, print_ll=False):
+def run_expectation_step(df_with_gamma, spark, params, compute_ll=False, logger=log):
+    """[summary]
+
+    Args:
+        df_with_gamma ([type]): [description]
+        spark ([type]): [description]
+        params ([type]): [description]
+        compute_ll (bool, optional): [description]. Defaults to False.
+
+    Returns:
+        [type]: [description]
+    """
 
     sql = sql_gen_gamma_prob_columns(params)
 
     df_with_gamma.createOrReplaceTempView("df_with_gamma")
+    log_sql(sql, logger)
     df_with_gamma_probs = spark.sql(sql)
-    log.debug(format_sql(sql))
 
-    if print_ll:
+
+    # This is optional because is slows down execution
+    if compute_ll:
         ll = get_overall_log_likelihood(df_with_gamma_probs, params, spark)
-        print(ll)
+        message = f"Log likelihood for iteration {params.iteration-1}:  {ll}"
+        log_other(message, logger, level='INFO')
+        params.params["log_likelihood"] = ll
 
     sql = sql_gen_expected_match_prob(params)
+
+    log_sql(sql, logger)
     df_with_gamma_probs.createOrReplaceTempView("df_with_gamma_probs")
     df_e = spark.sql(sql)
-    log.debug(format_sql(sql))
+
     df_e.createOrReplaceTempView("df_e")
     return df_e
 
@@ -102,7 +119,7 @@ def sql_gen_gamma_case_when(gamma_str, match, params):
     return sql.strip()
 
 
-def calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
+def calculate_log_likelihood_df(df_with_gamma_probs, params, spark, logger=log):
     """
     Compute likelihood of observing df_with_gamma given the parameters
 
@@ -112,11 +129,6 @@ def calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
 
     gamma_cols = params.gamma_cols
 
-    # sql = sql_gen_gamma_prob_columns(df_with_gamma, params)
-
-    # df_with_gamma.createOrReplaceTempView("df_with_gamma")
-    # df_with_gamma_probs = spark.sql(sql)
-
     λ = params.params['λ']
 
     match_prob = " * ".join([f"prob_{g}_match" for g in gamma_cols])
@@ -125,12 +137,9 @@ def calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
     non_match_prob = f"({1-λ} * {non_match_prob})"
     log_likelihood = f"ln({match_prob} + {non_match_prob})"
 
-
-
     numerator = " * ".join([f"prob_{g}_match" for g in gamma_cols])
     denom_part = " * ".join([f"prob_{g}_non_match" for g in gamma_cols])
     match_prob_expression = f"({λ} * {numerator})/(( {λ} * {numerator}) + ({1 -λ} * {denom_part})) as match_probability"
-
 
     df_with_gamma_probs.createOrReplaceTempView("df_with_gamma_probs")
     sql = f"""
@@ -140,7 +149,7 @@ def calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
 
     from df_with_gamma_probs
     """
-    log.debug(format_sql(sql))
+    log_sql(sql, logger)
     df = spark.sql(sql)
 
     return df
