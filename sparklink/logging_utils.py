@@ -18,6 +18,7 @@ def log_sql(sql, logger, level='INFO'):
 
     level = level.upper()
     sql = format_sql(sql)
+    sql = "\n\n" + sql + "\n\n"
 
     # Is the logger a Spark logger or a Python logger?
     if type(logger).__name__ == 'JavaObject':

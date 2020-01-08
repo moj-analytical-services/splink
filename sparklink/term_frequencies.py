@@ -1,6 +1,11 @@
 # For more information on where formulas came from, see
 # https://github.com/moj-analytical-services/sparklink/issues/17
 
+import logging
+
+from .logging_utils import log_sql, format_sql
+
+log = logging.getLogger(__name__)
 
 def sql_gen_bayes_string(probs):
     """Convenience function for computing an updated probability using bayes' rule
@@ -87,22 +92,25 @@ def sql_gen_compute_final_group_membership_prob_from_adjustments(term_freq_colum
     return sql
 
 
-def make_adjustment_for_term_frequencies(df_e, params, term_freq_column_list, retain_adjustment_columns=False, spark=None):
+def make_adjustment_for_term_frequencies(df_e, params, term_freq_column_list, retain_adjustment_columns=False, spark=None, logger=log):
 
     df_e.createOrReplaceTempView("df_e")
 
     # Generate a lookup table for each column with 'term specific' lambdas.
     for c in term_freq_column_list:
         sql = sql_gen_generate_adjusted_lambda(c, params)
+        log_sql(sql, logger)
         lookup = spark.sql(sql)
         lookup.createOrReplaceTempView(f"{c}_lookup")
 
     # Merge these lookup tables into main table
     sql  = sql_gen_add_adjumentments_to_df_e(term_freq_column_list)
+    log_sql(sql, logger)
     df_e_adj = spark.sql(sql)
     df_e_adj.createOrReplaceTempView("df_e_adj")
 
     sql = sql_gen_compute_final_group_membership_prob_from_adjustments(term_freq_column_list)
+    log_sql(sql, logger)
     df = spark.sql(sql)
     if not retain_adjustment_columns:
         for c in term_freq_column_list:
