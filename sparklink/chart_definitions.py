@@ -151,11 +151,11 @@ multi_chart_template = """
 </head>
 <body>
 
-<div id="vis1"></div>
+<div id="vis1"></div><div id="vis2"></div>
 <br/>
-<div id="vis2"></div><div id="vis4"></div>
+<div id="vis3"></div><div id="vis5"></div>
 <br/>
-<div id="vis3"></div>
+<div id="vis4"></div>
 
 
 
@@ -165,6 +165,7 @@ multi_chart_template = """
   vegaEmbed('#vis2', {spec2}).catch(console.error);
   vegaEmbed('#vis3', {spec3}).catch(console.error);
   vegaEmbed('#vis4', {spec4}).catch(console.error);
+  vegaEmbed('#vis5', {spec5}).catch(console.error);
 </script>
 </body>
 </html>
