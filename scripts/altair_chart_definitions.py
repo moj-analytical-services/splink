@@ -64,3 +64,30 @@
         d = fc.to_dict()
         d["data"]["values"] = None
         d
+
+
+---
+chart_data = alt.Data(values=adjustment_factors)
+chart = alt.Chart(chart_data).mark_bar().encode(
+        x=alt.X('normalised:Q', scale=alt.Scale(domain=[-0.5,0.5])),
+        y=alt.Y('col_name:N', sort=alt.SortField("gamma")),
+        color = alt.Color('normalised:Q', scale=alt.Scale(domain=[-0.5, -0.4, 0, 0.4, 0.5], range=['red', 'orange', 'green', 'orange', 'red'])),
+        tooltip = ['field:N', 'normalised:Q'])
+chart
+
+
+
+chart_data = alt.Data(values=data)
+chart = alt.Chart(chart_data).mark_bar().encode(
+        x=alt.X('normalised_adjustment:Q', scale=alt.Scale(domain=[-0.5,0.5]), axis=alt.Axis(title='Influence on match probabiity.')),
+        y=alt.Y('level:N'),
+        row=alt.Row('col_name:N',  sort=alt.SortField("gamma")),
+        color = alt.Color('normalised_adjustment:Q', scale=alt.Scale(domain=[-0.5, -0.4, 0, 0.4, 0.5], range=['red', 'orange', 'green', 'orange', 'red'])),
+        tooltip = ['col_name:N', 'normalised_adjustment:Q']
+        ).resolve_scale(
+            y='independent'
+        ).properties(height=50, title="Influence of comparison vector values on match probability"
+).configure_title(
+            anchor='middle'
+        )
+chart

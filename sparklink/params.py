@@ -7,7 +7,9 @@ from .chart_definitions import (
     pi_iteration_chart_def,
     probability_distribution_chart,
     ll_iteration_chart_def,
+    adjustment_weight_chart_def,
     multi_chart_template,
+
 )
 import random
 
@@ -64,7 +66,9 @@ class Params:
             self.params["π"][f"gamma_{i}"]["desc"] = f"Comparison of {col_name}"
             self.params["π"][f"gamma_{i}"]["column_name"] = f"{col_name}"
 
+
             num_levels = col_dict["levels"]
+            self.params["π"][f"gamma_{i}"]["num_levels"] = num_levels
 
             prob_dist_match = {}
             prob_dist_non_match = {}
@@ -147,6 +151,31 @@ class Params:
                 this_row["column"] = gamma_dict["column_name"]
                 data.append(this_row)
         return data
+
+    def convert_params_dict_to_normalised_adjustment_data(self):
+        """
+        Get the data needed for a chart that shows which comparison
+        vector values have the greatest effect on matc probability
+        """
+        data = []
+        # Want to compare the u and m probabilities
+        pi = gk = self.params["π"]
+        gk = list(pi.keys())
+
+        for g in gk:
+            this_gamma = pi[g]
+            for l in range(this_gamma["num_levels"]):
+                row = {}
+                level = f"level_{l}"
+                row["level"] = level
+                row["col_name"] = this_gamma["column_name"]
+                row["m"] = this_gamma["prob_dist_match"][level]["probability"]
+                row["u"] = this_gamma["prob_dist_non_match"][level]["probability"]
+                row["adjustment"] = row["m"]/(row["m"] + row["u"])
+                row["normalised_adjustment"] = row["adjustment"] - 0.5
+                data.append(row)
+        return data
+
 
     def iteration_history_df_gammas(self):
         data = []
@@ -293,6 +322,21 @@ class Params:
             return alt.Chart.from_dict(probability_distribution_chart)
         else:
             return probability_distribution_chart
+
+
+    def adjustment_factor_chart(self):  # pragma: no cover
+        """
+        If altair is installed, returns the chart
+        Otherwise will return the chart spec as a dictionary
+        """
+        data = self.convert_params_dict_to_normalised_adjustment_data()
+
+        adjustment_weight_chart_def["data"]["values"] = data
+
+        if altair_installed:
+            return alt.Chart.from_dict(adjustment_weight_chart_def)
+        else:
+            return adjustment_weight_chart_def
 
     def all_charts_write_html_file(self, filename="sparklink_charts.html"):
 

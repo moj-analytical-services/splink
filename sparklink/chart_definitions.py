@@ -103,6 +103,43 @@ probability_distribution_chart = {'config': {'view': {'width': 400, 'height': 30
                      'title': 'Probability distribution of comparison vector values, m=0 and m=1',
                      '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
 
+adjustment_weight_chart_def = {'config': {'view': {'width': 400, 'height': 300},
+  'mark': {'tooltip': None},
+  'title': {'anchor': 'middle'}},
+ 'data': {'values': None},
+ 'mark': 'bar',
+ 'encoding': {'color': {'type': 'quantitative',
+   'field': 'normalised_adjustment',
+   'scale': {'domain': [-0.5, -0.4, 0, 0.4, 0.5],
+    'range': ['red', 'orange', 'green', 'orange', 'red']}},
+  'row': {'type': 'nominal', 'field': 'col_name', 'sort': {'field': 'gamma'}},
+  'tooltip': [{'type': 'nominal', 'field': 'col_name'},
+   {'type': 'quantitative', 'field': 'normalised_adjustment'}],
+  'x': {'type': 'quantitative',
+   'axis': {'title': 'Influence on match probabiity.'},
+   'field': 'normalised_adjustment',
+   'scale': {'domain': [-0.5, 0.5]}},
+  'y': {'type': 'nominal', 'field': 'level'}},
+ 'height': 50,
+ 'resolve': {'scale': {'y': 'independent'}},
+ 'title': 'Influence of comparison vector values on match probability',
+ '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
+
+adjustment_factor_chart_def = {'config': {'view': {'width': 400, 'height': 300}, 'mark': {'tooltip': None}},
+ 'data': {'values': None},
+ 'mark': 'bar',
+ 'encoding': {'color': {'type': 'quantitative',
+   'field': 'normalised',
+   'scale': {'domain': [-0.5, -0.4, 0, 0.4, 0.5],
+    'range': ['red', 'orange', 'green', 'orange', 'red']}},
+  'tooltip': [{'type': 'nominal', 'field': 'field'},
+   {'type': 'quantitative', 'field': 'normalised'}],
+  'x': {'type': 'quantitative',
+   'field': 'normalised',
+   'scale': {'domain': [-0.5, 0.5]}},
+ 'y': {'type': 'nominal', 'field': 'col_name', 'sort': {'field': 'gamma'}}},
+ '$schema': 'https://vega.github.io/schema/vega-lite/v3.4.0.json'}
+
 
 multi_chart_template = """
 <!DOCTYPE html>
@@ -116,12 +153,12 @@ multi_chart_template = """
 
 <div id="vis1"></div>
 <br/>
-<div id="vis2"></div>
+<div id="vis2"></div><div id="vis4"></div>
 <br/>
 <div id="vis3"></div>
-<br/>
-<div id="vis4"></div>
-<br/>
+
+
+
 
 <script type="text/javascript">
   vegaEmbed('#vis1', {spec1}).catch(console.error);
