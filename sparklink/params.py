@@ -171,8 +171,14 @@ class Params:
                 row["col_name"] = this_gamma["column_name"]
                 row["m"] = this_gamma["prob_dist_match"][level]["probability"]
                 row["u"] = this_gamma["prob_dist_non_match"][level]["probability"]
-                row["adjustment"] = row["m"]/(row["m"] + row["u"])
-                row["normalised_adjustment"] = row["adjustment"] - 0.5
+                try:
+                    row["adjustment"] = row["m"]/(row["m"] + row["u"])
+                    row["normalised_adjustment"] = row["adjustment"] - 0.5
+                except ZeroDivisionError:
+                    row["adjustment"] = None
+                    row["normalised_adjustment"] = None
+
+
                 data.append(row)
         return data
 
