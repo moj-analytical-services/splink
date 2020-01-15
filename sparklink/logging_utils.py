@@ -44,7 +44,7 @@ def log_other(message, logger, level='DEBUG'):
         if level == 'INFO':
             logger.info(message)
         elif level == 'DEBUG':
-            logger.debug(message)
+            logger.info(message)
         elif level == 'WARNING':
             logger.warning(message)
         elif level == 'ERROR':
