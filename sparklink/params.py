@@ -342,12 +342,14 @@ class Params:
 
         if altair_installed:
             c1 = self.probability_distribution_chart().to_json(indent=None)
-            c2 = self.lambda_iteration_chart().to_json(indent=None)
-            c3 = self.pi_iteration_chart().to_json(indent=None)
+            c2 = self.adjustment_factor_chart().to_json(indent=None)
+            c3 = self.lambda_iteration_chart().to_json(indent=None)
+            c4 = self.pi_iteration_chart().to_json(indent=None)
+
             if self.log_likelihood_exists:
-                c4 = self.ll_iteration_chart().to_json(indent=None)
+                c5 = self.ll_iteration_chart().to_json(indent=None)
             else:
-                c4 = ""
+                c5 = ""
 
             with open(filename, "w") as f:
                 f.write(
@@ -359,6 +361,7 @@ class Params:
                         spec2=c2,
                         spec3=c3,
                         spec4=c4,
+                        spec5=c5,
                     )
                 )
 
