@@ -370,6 +370,31 @@ class Params:
                         spec5=c5,
                     )
                 )
+        else:
+            c1 = json.dumps(self.probability_distribution_chart())
+            c2 = json.dumps(self.adjustment_factor_chart())
+            c3 = json.dumps(self.lambda_iteration_chart())
+            c4 = json.dumps(self.pi_iteration_chart())
+
+            if self.log_likelihood_exists:
+                c5 = json.dumps(self.ll_iteration_chart())
+            else:
+                c5 = ""
+
+            with open(filename, "w") as f:
+                            f.write(
+                                multi_chart_template.format(
+                                    vega_version='5',
+                                    vegalite_version='3.3.0',
+                                    vegaembed_version='4',
+                                    spec1=c1,
+                                    spec2=c2,
+                                    spec3=c3,
+                                    spec4=c4,
+                                    spec5=c5,
+                                )
+                            )
+
 
     def __repr__(self):  # pragma: no cover
 
