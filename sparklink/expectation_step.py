@@ -27,6 +27,7 @@ def run_expectation_step(df_with_gamma, spark, params, compute_ll=False, logger=
     df_with_gamma.createOrReplaceTempView("df_with_gamma")
     log_sql(sql, logger)
     df_with_gamma_probs = spark.sql(sql)
+    df_with_gamma_probs.persist()
 
 
     # This is optional because is slows down execution
