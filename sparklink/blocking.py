@@ -5,6 +5,14 @@ from .sql import comparison_columns_select_expr, sql_gen_comparison_columns
 
 log = logging.getLogger(__name__)
 
+def sql_gen_and_not_previous_rules(previous_rules: list):
+    if previous_rules:
+        or_clauses = [f"({r})" for r in previous_rules]
+        previous_rules = " OR ".join(or_clauses)
+        return f"AND NOT ({previous_rules})"
+    else:
+        return ""
+
 
 def sql_gen_block_using_rules(
     columns_to_retain: list,
@@ -33,7 +41,9 @@ def sql_gen_block_using_rules(
     sql_select_expr = sql_gen_comparison_columns(columns_to_retain)
 
     sqls = []
+    previous_rules =[]
     for rule in blocking_rules:
+        not_previous_rules_statement = sql_gen_and_not_previous_rules(previous_rules)
         sql = f"""
         select
         {sql_select_expr}
@@ -41,8 +51,10 @@ def sql_gen_block_using_rules(
         left join {table_name} as r
         on
         {rule}
+        {not_previous_rules_statement}
         where l.{unique_id_col} < r.{unique_id_col}
         """
+        previous_rules.append(rule)
         sqls.append(sql)
 
     # Note the 'union' function in pyspark > 2.0 is not the same thing as union in a sql statement
@@ -71,7 +83,8 @@ def block_using_rules(
     df_comparison = spark.sql(sql)
 
     # Think this may be more efficient than using union to join each dataset because we only dropduplicates once
-    df_comparison = df_comparison.dropDuplicates()
+    # df_comparison = df_comparison.dropDuplicates()
+    # Eliminated the need for this at all
 
     return df_comparison
 
