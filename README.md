@@ -6,4 +6,8 @@
 # sparklink
 WORK IN PROGRESS:  Implementation in Apache Spark of the EM algorithm to estimate parameters of Fellegi-Sunter's canonical model of record linkage.
 
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/sparklink/issue_36)
+
+The best documentation is currently the demo `ipynb`, which you can find [here](https://github.com/moj-analytical-services/sparklink/blob/dev/simple_demo.ipynb).  Better docs to come.
+
+You can run this end-to-end demo in an interactive Jupyter notebook by clicking the button below:
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/sparklink/dev)
