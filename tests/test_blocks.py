@@ -15,6 +15,8 @@ def db():
     cur.execute("insert into test values (?, ?, ?)", (2, "john", "smith"))
     cur.execute("insert into test values (?, ?, ?)", (3, "john", "linacre"))
     cur.execute("insert into test values (?, ?, ?)", (4, "john", "smith"))
+    cur.execute("insert into test values (?, ?, ?)", (5, None, "smith"))
+    cur.execute("insert into test values (?, ?, ?)", (6, "john", None))
 
     yield cur
 
@@ -38,17 +40,21 @@ def test_blocking_rules_sql_gen(db):
     result = [dict(r) for r in result]
 
     correct_answer = [
-        {'unique_id_l': 1, 'unique_id_r': 3, 'first_name_l': 'robin', 'first_name_r': 'john', 'surname_l': 'linacre', 'surname_r': 'linacre'},
-        {'unique_id_l': 2, 'unique_id_r': 4, 'first_name_l': 'john', 'first_name_r': 'john', 'surname_l': 'smith', 'surname_r': 'smith'},
-        {'unique_id_l': 2, 'unique_id_r': 3, 'first_name_l': 'john', 'first_name_r': 'john', 'surname_l': 'smith', 'surname_r': 'linacre'},
-        {'unique_id_l': 2, 'unique_id_r': 4, 'first_name_l': 'john', 'first_name_r': 'john', 'surname_l': 'smith', 'surname_r': 'smith'},
-        {'unique_id_l': 3, 'unique_id_r': 4, 'first_name_l': 'john', 'first_name_r': 'john', 'surname_l': 'linacre', 'surname_r': 'smith'}
+        {'unique_id_l': 1, 'unique_id_r': 3},
+        {'unique_id_l': 2, 'unique_id_r': 3},
+        {'unique_id_l': 2, 'unique_id_r': 4},
+        {'unique_id_l': 3, 'unique_id_r': 4},
+        {'unique_id_l': 2, 'unique_id_r': 5},
+        {'unique_id_l': 4, 'unique_id_r': 5},
+        {'unique_id_l': 2, 'unique_id_r': 6},
+        {'unique_id_l': 3, 'unique_id_r': 6},
+        {'unique_id_l': 4, 'unique_id_r': 6}
         ]
 
-    pd_correct = pd.DataFrame(correct_answer)
+    pd_correct = pd.DataFrame(correct_answer)[["unique_id_l", "unique_id_r"]]
     pd_correct = pd_correct.sort_values(["unique_id_l", "unique_id_r"])
-    pd_result = pd.DataFrame(result)
+    pd_result = pd.DataFrame(result)[["unique_id_l", "unique_id_r"]]
     pd_result = pd_result.sort_values(["unique_id_l", "unique_id_r"])
 
-    assert_frame_equal(pd_correct, pd_result)
+    assert_frame_equal(pd_correct.reset_index(drop=True), pd_result.reset_index(drop=True))
 
