@@ -1,6 +1,7 @@
 # Derivations for a lot of the expected answers here:
 # https://github.com/moj-analytical-services/sparklink/blob/dev/tests/expectation_maximisation_test_answers.xlsx
 import copy
+import os
 
 from sparklink.blocking import cartestian_block, block_using_rules
 from sparklink.gammas import add_gammas
@@ -198,4 +199,12 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
             assert v == expected_value
 
 
+    # Test whether saving and loading parameters works
+    import tempfile
+    dir = tempfile.TemporaryDirectory()
+    fname = os.path.join(dir.name, "params.json")
+    params_1.save_params_to_json_file(fname)
+    from sparklink.params import load_params_from_json
+    p = load_params_from_json(fname)
+    assert p.params["λ"] == pytest.approx(params_1.params['λ'])
 

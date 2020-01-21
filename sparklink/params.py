@@ -1,6 +1,7 @@
 import copy
+import os
 import json
-from pprint import pprint
+
 from .gammas import complete_settings_dict
 from .chart_definitions import (
     lambda_iteration_chart_def,
@@ -28,7 +29,7 @@ class Params:
     of the model (in self.param_history)
     """
 
-    def __init__(self, gamma_settings, starting_lambda=0.2):
+    def __init__(self, gamma_settings={}, starting_lambda=0.2):
         self.params = {"λ": starting_lambda, "π": {}}
 
         self.param_history = []
@@ -270,6 +271,39 @@ class Params:
         self.populate_params(lambda_value, pi_df_collected)
         self.iteration += 1
 
+    def to_dict(self):
+        p_dict = {}
+        p_dict["current_params"] = self.params
+        p_dict["historical_params"] = self.param_history
+        p_dict["gamma_settings"] = self.gamma_settings
+
+        return p_dict
+
+
+
+
+    def save_params_to_json_file(self, path=None, overwrite=False):
+
+        proceed_with_write = False
+        if not path:
+            raise ValueError("Must provide a path to write to")
+
+
+        if os.path.isfile(path):
+            if overwrite:
+                proceed_with_write = True
+            else:
+                raise ValueError(f"The path {path} already exists. Please provide a different path.")
+        else:
+            proceed_with_write = True
+
+        if proceed_with_write:
+            d = self.to_dict()
+            with open(path, 'w') as f:
+                json.dump(d, f, indent=4)
+
+
+
     ### The rest of this module is just 'presentational' elements - charts, and __repr__ etc.
 
     def pi_iteration_chart(self):  # pragma: no cover
@@ -461,3 +495,22 @@ class Params:
                 lines.append(f"    value {value}: {prob} {value_label}")
 
         return "\n".join(lines)
+
+def load_params_from_json(path):
+    # Load params
+    with open(path, "r") as f:
+        params_from_json = json.load(f)
+
+    keys = set(params_from_json.keys())
+    expected_keys = {'current_params', 'gamma_settings', 'historical_params'}
+
+    if keys == expected_keys:
+        p = Params(gamma_settings = {})
+
+        p.gamma_settings = params_from_json["gamma_settings"]
+        p.params = params_from_json["current_params"]
+        p.param_history = params_from_json["historical_params"]
+    else:
+        raise ValueError("Your saved params seem to be corrupted")
+
+    return p
