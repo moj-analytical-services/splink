@@ -501,15 +501,21 @@ def load_params_from_json(path):
     with open(path, "r") as f:
         params_from_json = json.load(f)
 
-    keys = set(params_from_json.keys())
+    p = load_params_from_dict(params_from_json)
+
+    return p
+
+def load_params_from_dict(param_dict):
+
+    keys = set(param_dict.keys())
     expected_keys = {'current_params', 'gamma_settings', 'historical_params'}
 
     if keys == expected_keys:
         p = Params(gamma_settings = {})
 
-        p.gamma_settings = params_from_json["gamma_settings"]
-        p.params = params_from_json["current_params"]
-        p.param_history = params_from_json["historical_params"]
+        p.gamma_settings = param_dict["gamma_settings"]
+        p.params = param_dict["current_params"]
+        p.param_history = param_dict["historical_params"]
     else:
         raise ValueError("Your saved params seem to be corrupted")
 
