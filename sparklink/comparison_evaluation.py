@@ -92,7 +92,7 @@ def get_largest_blocks(blocking_rule, df, spark, limit=5):
     filter_nulls_expr = " and ".join(f"{p} is not null" for p in parts)
 
     sql = f"""
-    SELECT {col_expr}, count(*)
+    SELECT {col_expr}, count(*) as count
     FROM df
     WHERE {filter_nulls_expr}
     GROUP BY {col_expr}
