@@ -22,9 +22,9 @@ def sql_gen_bayes_string(probs):
     """
 
     # Needed in case e.g. float constant value passed
-    probs = [str(p) for p in probs]
+    probs = [f"cast({p} as double)" for p in probs]
 
-    inverse_probs = [f"(1 - {p})" for p in probs]
+    inverse_probs = [f"(cast(1 - {p} as double))" for p in probs]
 
     probs_multiplied = " * ".join(probs)
     inverse_probs_multiplied = " * ".join(inverse_probs)
