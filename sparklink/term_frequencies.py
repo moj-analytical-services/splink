@@ -70,8 +70,14 @@ def sql_gen_add_adjumentments_to_df_e(term_freq_column_list):
     left_joins = "\n ".join(left_joins)
 
 
+
+    broadcast_hints = [f"BROADCAST({c}_lookup)" for c in term_freq_column_list]
+    broadcast_hint = " ".join(broadcast_hints)
+    broadcast_hint = f" /*+  {broadcast_hint} */ "
+
+
     sql = f"""
-    select e.*, {coalesces}
+    select {broadcast_hint} e.*, {coalesces}
     from df_e as e
 
     {left_joins}
