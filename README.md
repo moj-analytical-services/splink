@@ -3,13 +3,13 @@
 ![python-version-dependency](https://img.shields.io/badge/python-%3E%3D3.6-blue)
 
 
-# sparklink
+# sparklink: Probabalistic record linkage at scale
 
-WORK IN PROGRESS.  Sparklink is currently in alpha.
+WARNING:  Sparklink is work in progress and is currently in alpha testing.  Please feel free to try it, but note this software is not fully tested, and the interface is likely to change rapidly.
 
-Probabalistic record linkage at scale.
+`sparklink` implements Fellegi-Sunter's canonical model of record linkage in Apache Spark, including EM algorithm to estimate parameters of the model.
 
-`sparklink` implements Fellegi-Sunter's canonical model of record linkage in Apache Spark, including EM algorithm to estimate parameters of the model. It has been shown to be capable of de-duplicating or linking recordsets of at least 10 million records in less than an hour, on a cluster size of 10.
+It has been shown to be capable of de-duplicating or linking recordsets of at least 10 million records in less than an hour, on a cluster size of 10.
 
 ## Interactive demo
 
