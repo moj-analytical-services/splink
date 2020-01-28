@@ -4,10 +4,20 @@
 
 
 # sparklink
-WORK IN PROGRESS:  Implementation in Apache Spark of the EM algorithm to estimate parameters of Fellegi-Sunter's canonical model of record linkage.
 
+WORK IN PROGRESS.  Sparklink is currently in alpha.
 
-The best documentation is currently the demo `ipynb`, which you can find [here](https://github.com/moj-analytical-services/sparklink/blob/dev/simple_demo.ipynb).  Better docs to come.
+Probabalistic record linkage at scale.
+
+`sparklink` implements Fellegi-Sunter's canonical model of record linkage in Apache Spark, including EM algorithm to estimate parameters of the model. It has been shown to be capable of de-duplicating or linking recordsets of at least 10 million records in less than an hour, on a cluster size of 10.
+
+## Interactive demo
 
 You can run this end-to-end demo in an interactive Jupyter notebook by clicking the button below:
+
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/sparklink/dev)
+
+## Documentation
+
+Better docs to come. The best documentation is currently the demo `ipynb`, which you can find [here](https://github.com/moj-analytical-services/sparklink/blob/dev/simple_demo.ipynb).
+
