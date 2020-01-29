@@ -9,7 +9,15 @@ WARNING:  Sparklink is work in progress and is currently in alpha testing.  Plea
 
 `sparklink` implements Fellegi-Sunter's canonical model of record linkage in Apache Spark, including EM algorithm to estimate parameters of the model.
 
-It has been shown to be capable of de-duplicating or linking recordsets of at least 10 million records in less than an hour, on a cluster size of 10.
+The aim of `sparklink` is to:
+
+- Work at much greater scale than current open source implementations (100 million records +).
+
+- Get results faster than current open source implementations - with runtimes of less than an hour.
+
+- Have a highly transparent methodology, so the match scores can be easily explained both graphically and in words
+
+- Have accuracy similar to some of the best alternatives
 
 ## Interactive demo
 
