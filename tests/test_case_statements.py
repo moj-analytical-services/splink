@@ -8,15 +8,14 @@ from sparklink.case_statements import *
 from sparklink.case_statements import _add_null_treatment_to_case_statement
 
 
-
-
 def test_case(sqlite_con_3):
 
+    cur = sqlite_con_3.cursor()
     case_statement = sql_gen_case_smnt_strict_equality_2("str_col", 0)
     sql = f"""select {case_statement} from str_comp"""
 
-    sqlite_con_3.execute(sql)
-    result = sqlite_con_3.fetchall()
+    cur.execute(sql)
+    result = cur.fetchall()
     result = [dict(r) for r in result]
 
     assert result[0]['gamma_0'] == 1
@@ -31,8 +30,8 @@ def test_case(sqlite_con_3):
 
     sql = _add_null_treatment_to_case_statement(sql)
 
-    sqlite_con_3.execute(sql)
-    result = sqlite_con_3.fetchall()
+    cur.execute(sql)
+    result = cur.fetchall()
     result = [dict(r) for r in result]
 
     assert result[0]['gamma_0'] == 2
@@ -44,8 +43,8 @@ def test_case(sqlite_con_3):
     case_statement = sql_gen_case_stmt_numeric_abs_3("float_col", 1, 0)
     sql = f"""select {case_statement} from float_comp"""
 
-    sqlite_con_3.execute(sql)
-    result = sqlite_con_3.fetchall()
+    cur.execute(sql)
+    result = cur.fetchall()
     result = [dict(r) for r in result]
 
 
@@ -59,8 +58,8 @@ def test_case(sqlite_con_3):
     case_statement = sql_gen_case_stmt_numeric_abs_4("float_col", 1, 10, 0)
     sql = f"""select {case_statement} from float_comp"""
 
-    sqlite_con_3.execute(sql)
-    result = sqlite_con_3.fetchall()
+    cur.execute(sql)
+    result = cur.fetchall()
     result = [dict(r) for r in result]
 
     assert result[0]['gamma_0'] == 3
@@ -73,8 +72,8 @@ def test_case(sqlite_con_3):
     case_statement = sql_gen_case_stmt_numeric_perc_3("float_col", 0.01, 0)
     sql = f"""select {case_statement} from float_comp"""
 
-    sqlite_con_3.execute(sql)
-    result = sqlite_con_3.fetchall()
+    cur.execute(sql)
+    result = cur.fetchall()
     result = [dict(r) for r in result]
 
 
@@ -88,8 +87,8 @@ def test_case(sqlite_con_3):
     case_statement = sql_gen_case_stmt_numeric_perc_3("float_col", 0.20, 0)
     sql = f"""select {case_statement} from float_comp"""
 
-    sqlite_con_3.execute(sql)
-    result = sqlite_con_3.fetchall()
+    cur.execute(sql)
+    result = cur.fetchall()
     result = [dict(r) for r in result]
 
 
@@ -102,8 +101,8 @@ def test_case(sqlite_con_3):
     case_statement = sql_gen_case_stmt_numeric_perc_4("float_col", 0.01, 0.1, 0)
     sql = f"""select {case_statement} from float_comp"""
     print(sql)
-    sqlite_con_3.execute(sql)
-    result = sqlite_con_3.fetchall()
+    cur.execute(sql)
+    result = cur.fetchall()
     result = [dict(r) for r in result]
 
     assert result[0]['gamma_0'] == 3

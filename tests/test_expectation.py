@@ -4,7 +4,7 @@ import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import pytest
 
-from sparklink.gammas import sql_gen_gammas_case_statement_2_levels, sql_gen_add_gammas, complete_settings_dict
+from sparklink.gammas import sql_gen_case_smnt_strict_equality_2, sql_gen_add_gammas, complete_settings_dict
 from sparklink.expectation_step import sql_gen_gamma_prob_columns, sql_gen_expected_match_prob
 from sparklink.params import Params
 
