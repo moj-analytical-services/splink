@@ -4,7 +4,7 @@ import sqlite3
 import pandas as pd
 
 from sparklink.blocking import sql_gen_cartesian_block, sql_gen_block_using_rules
-from sparklink.gammas import sql_gen_gammas_case_statement_2_levels, sql_gen_add_gammas, complete_settings_dict
+from sparklink.gammas import  sql_gen_add_gammas, complete_settings_dict
 from sparklink.expectation_step import sql_gen_gamma_prob_columns, sql_gen_expected_match_prob
 from sparklink.maximisation_step import sql_gen_intermediate_pi_aggregate, sql_gen_pi_df
 from sparklink.params import Params
@@ -203,3 +203,27 @@ def sqlite_con_2(gamma_settings_2, params_2):
     df.to_sql('df_with_match_probability2', con, index=False)
 
     yield con
+
+@pytest.fixture(scope='function')
+def sqlite_con_3():
+    con = sqlite3.connect(":memory:")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur.execute("create table str_comp (str_col_l, str_col_r)")
+    cur.execute("insert into str_comp values (?, ?)",  ("these strings are equal", "these strings are equal"))
+    cur.execute("insert into str_comp values (?, ?)",  ("these strings are almost equal", "these strings are almos equal"))
+    cur.execute("insert into str_comp values (?, ?)",  ("these strings are almost equal", "not the same at all"))
+    cur.execute("insert into str_comp values (?, ?)",  ("these strings are almost equal", None))
+    cur.execute("insert into str_comp values (?, ?)",  (None, None))
+
+
+    cur.execute("create table float_comp (float_col_l, float_col_r)")
+    cur.execute("insert into float_comp values (?, ?)",  (1.0, 1.0))
+    cur.execute("insert into float_comp values (?, ?)",  (100.0, 99.9))
+    cur.execute("insert into float_comp values (?, ?)",  (100.0, 90.1))
+    cur.execute("insert into float_comp values (?, ?)",  (-100.0, -85.1))
+    cur.execute("insert into float_comp values (?, ?)",  (None, -85.1))
+
+
+    yield con
+

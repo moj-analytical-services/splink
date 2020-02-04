@@ -7,6 +7,8 @@ from sparklink.blocking import cartestian_block, block_using_rules
 from sparklink.gammas import add_gammas
 from sparklink.iterate import iterate
 from sparklink.expectation_step import run_expectation_step
+from sparklink.case_statements import *
+from sparklink.case_statements import _check_jaro_registered
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import pytest
@@ -22,14 +24,32 @@ def spark():
         import pyspark
         from pyspark import SparkContext, SparkConf
         from pyspark.sql import SparkSession
+        from pyspark.sql import types
 
         conf = SparkConf()
 
         conf.set("spark.sql.shuffle.partitions", "1")
         conf.set("spark.jars.ivy", "/home/jovyan/.ivy2/")
+        conf.set('spark.driver.extraClassPath', 'jars/scala-udf-similarity-0.0.6.jar')
+        conf.set('spark.jars', 'jars/scala-udf-similarity-0.0.6.jar')
+
         sc = SparkContext.getOrCreate(conf=conf)
 
         spark = SparkSession(sc)
+
+        udfs = [
+            ('jaro_winkler_sim', 'JaroWinklerSimilarity',types.DoubleType()),
+        ('jaccard_sim', 'JaccardSimilarity',types.DoubleType()),
+        ('cosine_distance', 'CosineDistance',types.DoubleType()),
+        ('Dmetaphone', 'DoubleMetaphone',types.StringType()),
+        ('QgramTokeniser', 'QgramTokeniser',types.StringType()),
+        ('Q3gramTokeniser','Q3gramTokeniser',types.StringType()),
+        ('Q4gramTokeniser','Q4gramTokeniser',types.StringType()),
+        ('Q5gramTokeniser','Q5gramTokeniser',types.StringType())
+        ]
+
+        for a,b,c in udfs:
+            spark.udf.registerJavaFunction(a, 'uk.gov.moj.dash.linkage.'+ b, c)
         SPARK_EXISTS = True
     except:
         SPARK_EXISTS = False
@@ -207,4 +227,72 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
     from sparklink.params import load_params_from_json
     p = load_params_from_json(fname)
     assert p.params["λ"] == pytest.approx(params_1.params['λ'])
+
+def test_case_statements(spark, sqlite_con_3):
+
+    assert _check_jaro_registered(spark) == True
+
+    spark.sql("drop temporary function jaro_winkler_sim")
+    assert _check_jaro_registered(spark) == False
+    from pyspark.sql.types import DoubleType
+    spark.udf.registerJavaFunction('jaro_winkler_sim', 'uk.gov.moj.dash.linkage.JaroWinklerSimilarity', DoubleType())
+
+    assert _check_jaro_registered(spark) == True
+
+    dfpd = pd.read_sql("select * from str_comp", sqlite_con_3)
+    df = spark.createDataFrame(dfpd)
+    df.createOrReplaceTempView("str_comp")
+
+    case_statement = sql_gen_case_stmt_levenshtein_3("str_col", 0)
+    sql = f"""select {case_statement} from str_comp"""
+    df = spark.sql(sql).toPandas()
+
+    assert df.loc[0,'gamma_0'] == 2
+    assert df.loc[1,'gamma_0'] == 1
+    assert df.loc[2,'gamma_0'] == 0
+    assert df.loc[3,'gamma_0'] == -1
+    assert df.loc[4,'gamma_0'] == -1
+
+    case_statement = sql_gen_case_stmt_levenshtein_4("str_col", 0)
+    sql = f"""select {case_statement} from str_comp"""
+    df = spark.sql(sql).toPandas()
+
+    assert df.loc[0,'gamma_0'] == 3
+    assert df.loc[1,'gamma_0'] == 2
+    assert df.loc[2,'gamma_0'] == 0
+    assert df.loc[3,'gamma_0'] == -1
+    assert df.loc[4,'gamma_0'] == -1
+
+    case_statement = sql_gen_gammas_case_stmt_jaro_2("str_col", 0)
+    sql = f"""select {case_statement} from str_comp"""
+    df = spark.sql(sql).toPandas()
+
+    assert df.loc[0,'gamma_0'] == 1
+    assert df.loc[1,'gamma_0'] == 1
+    assert df.loc[2,'gamma_0'] == 0
+    assert df.loc[3,'gamma_0'] == -1
+    assert df.loc[4,'gamma_0'] == -1
+
+    case_statement = sql_gen_gammas_case_stmt_jaro_3("str_col", 0)
+    sql = f"""select {case_statement} from str_comp"""
+    df = spark.sql(sql).toPandas()
+
+    assert df.loc[0,'gamma_0'] == 2
+    assert df.loc[1,'gamma_0'] == 2
+    assert df.loc[2,'gamma_0'] == 0
+    assert df.loc[3,'gamma_0'] == -1
+    assert df.loc[4,'gamma_0'] == -1
+
+    case_statement = sql_gen_gammas_case_stmt_jaro_4("str_col", 0, threshold3=0.001)
+    sql = f"""select {case_statement} from str_comp"""
+    df = spark.sql(sql).toPandas()
+
+    assert df.loc[0,'gamma_0'] == 3
+    assert df.loc[1,'gamma_0'] == 3
+    assert df.loc[2,'gamma_0'] == 1
+    assert df.loc[3,'gamma_0'] == -1
+    assert df.loc[4,'gamma_0'] == -1
+
+
+
 
