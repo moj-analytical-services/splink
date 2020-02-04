@@ -3,48 +3,11 @@ import re
 
 from .logging_utils import log_sql
 from .sql import comparison_columns_select_expr, sql_gen_comparison_columns
+from .case_statements import _add_null_treatment_to_case_statement, sql_gen_case_smnt_strict_equality_2, sql_gen_case_stmt_levenshtein_3
 
 log = logging.getLogger(__name__)
 
 
-def add_null_treatment_to_case_statement(case_statement: str):
-    """Add null treatment to user provided case statement if not already exists
-
-    Args:
-        case_statement (str): [description]
-
-    Returns:
-        str: case statement with null treatment added
-    """
-
-    sl = case_statement.lower()
-
-    if "then -1" not in sl:
-        variable_name = re.search(r"when ([\w_]{1,100})_l", case_statement)[1]
-        find = r"(case)(\s+)(when)"
-        replace = r"\1 \nwhen {col_name}_l is null or {col_name}_r is null then -1\n\3"
-        new_case_statement = re.sub(find, replace, case_statement)
-        new_case_statement = new_case_statement.format(col_name=variable_name)
-
-        return new_case_statement
-    else:
-        return case_statement
-
-
-def sql_gen_gammas_case_statement_2_levels(col_name, i):
-    return f"""case
-    when {col_name}_l is null or {col_name}_r is null then -1
-    when {col_name}_l = {col_name}_r then 1
-    else 0 end as gamma_{i}"""
-
-
-def sql_gen_gammas_case_statement_3_levels(col_name, i):
-    return f"""case
-    when {col_name}_l is null or {col_name}_r is null then -1
-    when {col_name}_l = {col_name}_r then 2
-    when levenshtein({col_name}_l, {col_name}_r)/((length({col_name}_l) + length({col_name}_r))/2) <= 0.3
-    then 1
-    else 0 end as gamma_{i}"""
 
 
 def complete_settings_dict(gamma_settings_dict: dict):
@@ -58,8 +21,8 @@ def complete_settings_dict(gamma_settings_dict: dict):
     """
 
     case_lookup = {
-        2: sql_gen_gammas_case_statement_2_levels,
-        3: sql_gen_gammas_case_statement_3_levels,
+        2: sql_gen_case_smnt_strict_equality_2,
+        3: sql_gen_case_stmt_levenshtein_3
     }
 
     gamma_counter = 0
@@ -79,7 +42,7 @@ def complete_settings_dict(gamma_settings_dict: dict):
             )
         else:
             old_case_stmt = col_value["case_expression"]
-            new_case_stmt = add_null_treatment_to_case_statement(old_case_stmt)
+            new_case_stmt = _add_null_treatment_to_case_statement(old_case_stmt)
             col_value["case_expression"] = new_case_stmt
 
         gamma_counter += 1
