@@ -4,7 +4,7 @@ import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import pytest
 
-from sparklink.gammas import sql_gen_gammas_case_statement_2_levels, sql_gen_add_gammas, complete_settings_dict
+from sparklink.gammas import  sql_gen_add_gammas, complete_settings_dict
 
 @pytest.fixture(scope='module')
 def db():
@@ -25,17 +25,7 @@ def db():
     yield cur
 
 
-def test_case(db):
 
-    case_statement = sql_gen_gammas_case_statement_2_levels("fname", 0)
-    sql = f"""select {case_statement} from test1"""
-
-    db.execute(sql)
-    result = db.fetchall()
-    result = [dict(r) for r in result]
-
-    assert result[0]['gamma_0'] == 1
-    assert result[1]['gamma_0'] == 0
 
 
 def test_add_gammas(db):
