@@ -4,6 +4,7 @@ import copy
 import os
 
 from sparklink.blocking import cartestian_block, block_using_rules
+from sparklink.params import Params
 from sparklink.gammas import add_gammas
 from sparklink.iterate import iterate
 from sparklink.expectation_step import run_expectation_step
@@ -105,7 +106,38 @@ def test_expectation(spark, sqlite_con_1, params_1, gamma_settings_1):
     for i in zip(result_list, correct_list):
         assert i[0] == pytest.approx(i[1])
 
+def test_tiny_numbers(spark, sqlite_con_1):
 
+    # Regression test, see https://github.com/moj-analytical-services/sparklink/issues/48
+
+    dfpd = pd.read_sql("select * from test1", sqlite_con_1)
+    df = spark.createDataFrame(dfpd)
+
+    rules = [
+        "l.mob = r.mob",
+        "l.surname = r.surname",
+    ]
+
+    gamma_settings = {
+    "mob": {
+        "levels": 2,
+        "m_probabilities": [5.9380419956766985e-25, 1-5.9380419956766985e-25],
+        "u_probabilities": [0.8, 0.2]
+
+    },
+    "surname": {
+        "levels": 2,
+    }}
+
+
+    df_comparison = block_using_rules(df, rules, spark=spark)
+
+    df_gammas = add_gammas(
+        df_comparison, gamma_settings, spark, include_orig_cols=False
+    )
+    params = Params(gamma_settings, starting_lambda=0.4, spark="supress_warnings")
+
+    df_e = run_expectation_step(df_gammas, spark, params)
 
 def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
 

@@ -107,7 +107,7 @@ def sql_gen_gamma_case_when(gamma_str, match, params):
     case_statements = []
     case_statements.append(f"WHEN {gamma_str} = -1 THEN cast(1 as double)")
     for key, level in levels.items():
-            case_stmt = f"when {gamma_str} = {level['value']} then cast({level['probability']} as double)"
+            case_stmt = f"when {gamma_str} = {level['value']} then cast({level['probability']:.35f} as double)"
             case_statements.append(case_stmt)
 
     case_statements = "\n".join(case_statements)
