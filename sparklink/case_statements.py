@@ -189,7 +189,7 @@ def sql_gen_case_stmt_numeric_2(col_name, gamma_index=None):
         return c
 
 
-def sql_gen_case_stmt_numeric_abs_3(col_name, gamma_index=None, abs_amount=1):
+def sql_gen_case_stmt_numeric_abs_3(col_name, gamma_index=None, abs_amount=1, equality_threshold=0.0001):
 
     col1 =  f"{col_name}_l"
     col2 =  f"{col_name}_r"
@@ -198,7 +198,7 @@ def sql_gen_case_stmt_numeric_abs_3(col_name, gamma_index=None, abs_amount=1):
 
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
-    when {abs_difference} < 0.0001 THEN 2  /* 0.0001 to account for floating point errors */
+    when {abs_difference} < {equality_threshold} THEN 2
     when {abs_difference} < {abs_amount} THEN 1
     else 0 end"""
     if gamma_index is not None:
@@ -206,7 +206,7 @@ def sql_gen_case_stmt_numeric_abs_3(col_name, gamma_index=None, abs_amount=1):
     else:
         return c
 
-def sql_gen_case_stmt_numeric_abs_4(col_name, gamma_index=None, abs_amount_low = 1, abs_amount_high = 10):
+def sql_gen_case_stmt_numeric_abs_4(col_name, gamma_index=None, abs_amount_low = 1, abs_amount_high = 10, equality_threshold=0.0001):
 
     col1 =  f"{col_name}_l"
     col2 =  f"{col_name}_r"
@@ -215,7 +215,7 @@ def sql_gen_case_stmt_numeric_abs_4(col_name, gamma_index=None, abs_amount_low =
 
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
-    when {abs_difference} < 0.0001 THEN 3  /* 0.0001 to account for floating point errors */
+    when {abs_difference} < {equality_threshold} THEN 3
     when {abs_difference} < {abs_amount_low} THEN 2
     when {abs_difference} < {abs_amount_high} THEN 1
     else 0 end"""
@@ -225,7 +225,7 @@ def sql_gen_case_stmt_numeric_abs_4(col_name, gamma_index=None, abs_amount_low =
         return c
 
 
-def sql_gen_case_stmt_numeric_perc_3(col_name, gamma_index=None, per_diff=0.05):
+def sql_gen_case_stmt_numeric_perc_3(col_name, gamma_index=None, per_diff=0.05, equality_threshold=0.0001):
 
     col1 =  f"{col_name}_l"
     col2 =  f"{col_name}_r"
@@ -235,7 +235,7 @@ def sql_gen_case_stmt_numeric_perc_3(col_name, gamma_index=None, per_diff=0.05):
 
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
-    when {abs_difference}/abs({max_of_cols}) < 0.00001 then 2
+    when {abs_difference}/abs({max_of_cols}) < {equality_threshold} then 2
     when {abs_difference}/abs({max_of_cols}) < {per_diff} then 1
     else 0 end"""
     if gamma_index is not None:
@@ -243,7 +243,7 @@ def sql_gen_case_stmt_numeric_perc_3(col_name, gamma_index=None, per_diff=0.05):
     else:
         return c
 
-def sql_gen_case_stmt_numeric_perc_4(col_name, gamma_index=None, per_diff_low = 0.05, per_diff_high=0.10):
+def sql_gen_case_stmt_numeric_perc_4(col_name, gamma_index=None, per_diff_low = 0.05, per_diff_high=0.10, equality_threshold=0.0001):
 
     col1 =  f"{col_name}_l"
     col2 =  f"{col_name}_r"
@@ -253,7 +253,7 @@ def sql_gen_case_stmt_numeric_perc_4(col_name, gamma_index=None, per_diff_low = 
 
     c =  f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
-    when {abs_difference}/abs({max_of_cols}) < 0.00001 then 3
+    when {abs_difference}/abs({max_of_cols}) < {equality_threshold} then 3
     when {abs_difference}/abs({max_of_cols}) < {per_diff_low} then 2
     when {abs_difference}/abs({max_of_cols}) < {per_diff_high} then 1
     else 0 end"""
