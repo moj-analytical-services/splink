@@ -14,7 +14,7 @@ def _check_jaro_registered(spark):
 
 
     warnings.warn(f"The jaro_winkler_sim user definined function is not available in Spark "
-                        "Or you did not pass 'spark' (the SparkSession) into 'complete_settings_dict' "
+                        "Or you did not pass 'spark' (the SparkSession) into 'Params' "
                         "Falling back to using levenshtein in the default string comparison functions "
                         "You can import these functions using the scala-udf-similarity-0.0.6.jar provided with Sparklink")
     return False
