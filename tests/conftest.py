@@ -2,6 +2,7 @@ import pytest
 import sqlite3
 
 import pandas as pd
+import copy
 
 from sparklink.blocking import sql_gen_cartesian_block, sql_gen_block_using_rules
 from sparklink.gammas import  sql_gen_add_gammas, complete_settings_dict
@@ -9,12 +10,15 @@ from sparklink.expectation_step import sql_gen_gamma_prob_columns, sql_gen_expec
 from sparklink.maximisation_step import sql_gen_intermediate_pi_aggregate, sql_gen_pi_df
 from sparklink.params import Params
 
-
+@pytest.mark.filterwarnings("ignore:*")
 @pytest.fixture(scope='function')
 def gamma_settings_1():
     gamma_settings = {
     "mob": {
-        "levels": 2
+        "levels": 2,
+        "m_probabilities": [0.1, 0.9],
+        "u_probabilities": [0.8, 0.2]
+
     },
     "surname": {
         "levels": 3,
@@ -25,22 +29,19 @@ def gamma_settings_1():
         else 0
         end
         as gamma_1
-        """
+        """,
+    "m_probabilities": [0.1,0.2,0.7],
+    "u_probabilities": [0.5,0.25,0.25]
     }}
-    gamma_settings = complete_settings_dict(gamma_settings)
+    gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")
     yield gamma_settings
 
+@pytest.mark.filterwarnings("ignore:*")
 @pytest.fixture(scope='function')
 def params_1(gamma_settings_1):
 
     # Probability columns
-    params = Params(gamma_settings_1, starting_lambda=0.4)
-    params.prob_m_2_levels = [0.1, 0.9]  #i.e. 0.1 prob of observing gamma = 0 amongst matches and 0.9 of observing gamma = 1
-    params.prob_nm_2_levels = [0.8, 0.2]
-
-    params.prob_m_3_levels = [0.1,0.2,0.7]
-    params.prob_nm_3_levels = [0.5,0.25,0.25]
-    params.generate_param_dict()
+    params = Params(gamma_settings_1, starting_lambda=0.4, spark="supress_warnings")
     yield params
 
 @pytest.fixture(scope='function')
@@ -99,12 +100,14 @@ def sqlite_con_1(gamma_settings_1, params_1):
 
     # Create a new parameters object and run everything again for a second iteration
      # Probability columns
-    params2 = Params(gamma_settings_1, starting_lambda=0.540922141)
-    params2.prob_m_2_levels = [0.087438272, 0.912561728]  #i.e. 0.1 prob of observing gamma = 0 amongst matches and 0.9 of observing gamma = 1
-    params2.prob_nm_2_levels = [0.441543191, 0.558456809]
+    gamma_settings_it_2 = copy.deepcopy(gamma_settings_1)
+    gamma_settings_it_2["mob"]["m_probabilities"]  = [0.087438272, 0.912561728]
+    gamma_settings_it_2["mob"]["u_probabilities"]  = [0.441543191, 0.558456809]
+    gamma_settings_it_2["surname"]["m_probabilities"]  = [0.173315146, 0.326240275, 0.500444578]
+    gamma_settings_it_2["surname"]["u_probabilities"]  = [0.340356209, 0.160167628, 0.499476163]
 
-    params2.prob_m_3_levels = [0.173315146, 0.326240275, 0.500444578]
-    params2.prob_nm_3_levels = [0.340356209, 0.160167628, 0.499476163]
+    params2 = Params(gamma_settings_it_2, starting_lambda=0.540922141, spark="supress_warnings")
+
     params2.generate_param_dict()
 
     sql = sql_gen_gamma_prob_columns(params2, "df_gammas1")
@@ -126,12 +129,14 @@ def sqlite_con_1(gamma_settings_1, params_1):
 
     yield con
 
-
+@pytest.mark.filterwarnings("ignore:*")
 @pytest.fixture(scope='function')
 def gamma_settings_2():
     gamma_settings = {
     "forename": {
-        "levels": 2
+        "levels": 2,
+        "m_probabilities": [0.4, 0.6],
+        "u_probabilities": [0.65, 0.35]
     },
     "surname": {
         "levels": 3,
@@ -142,25 +147,27 @@ def gamma_settings_2():
         else 0
         end
         as gamma_1
-        """
+        """,
+        "m_probabilities": [0.05,0.2,0.75],
+        "u_probabilities": [0.4,0.3,0.3]
     },
     "dob": {
-        "levels": 2
+        "levels": 2,
+        "m_probabilities": [0.4, 0.6],
+        "u_probabilities": [0.65, 0.35]
     }}
 
-    gamma_settings = complete_settings_dict(gamma_settings)
+
+
+    gamma_settings = complete_settings_dict(gamma_settings,  spark="supress_warnings")
     yield gamma_settings
 
 @pytest.fixture(scope='function')
 def params_2(gamma_settings_2):
 
     # Probability columns
-    params = Params(gamma_settings_2, starting_lambda=0.1)
-    params.prob_m_2_levels = [0.4, 0.6]  #i.e. 0.1 prob of observing gamma = 0 amongst matches and 0.9 of observing gamma = 1
-    params.prob_nm_2_levels = [0.65, 0.35]
+    params = Params(gamma_settings_2, starting_lambda=0.1, spark="supress_warnings")
 
-    params.prob_m_3_levels = [0.05,0.2,0.75]
-    params.prob_nm_3_levels = [0.4,0.3,0.3]
     params.generate_param_dict()
     yield params
 

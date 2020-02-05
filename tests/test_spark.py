@@ -88,7 +88,7 @@ def test_expectation(spark, sqlite_con_1, params_1, gamma_settings_1):
     df_e_pd = df_e.toPandas()
     df_e_pd = df_e_pd.sort_values(["unique_id_l", "unique_id_r"])
 
-    print(df_e_pd)
+
 
     correct_list = [
         0.893617021,
@@ -233,7 +233,8 @@ def test_case_statements(spark, sqlite_con_3):
     assert _check_jaro_registered(spark) == True
 
     spark.sql("drop temporary function jaro_winkler_sim")
-    assert _check_jaro_registered(spark) == False
+    with pytest.warns(UserWarning):
+        assert _check_jaro_registered(spark) == False
     from pyspark.sql.types import DoubleType
     spark.udf.registerJavaFunction('jaro_winkler_sim', 'uk.gov.moj.dash.linkage.JaroWinklerSimilarity', DoubleType())
 

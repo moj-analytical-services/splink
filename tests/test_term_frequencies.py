@@ -51,8 +51,7 @@ def tf_test(gamma_settings_1, params_1):
 
     yield con
 
-    # df = pd.read_sql(sql, con)
-    # print(df)
+
 
 
 def test_expected_match_prob(tf_test):
@@ -67,4 +66,3 @@ def test_expected_match_prob(tf_test):
     sql = sql_gen_generate_adjusted_lambda("surname", params, table_name='test_freq')
 
     df = pd.read_sql(sql, tf_test)
-    print(df)

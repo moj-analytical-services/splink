@@ -40,7 +40,7 @@ def test_case(sqlite_con_3):
     assert result[3]['gamma_0'] == -1
     assert result[4]['gamma_0'] == -1
 
-    case_statement = sql_gen_case_stmt_numeric_abs_3("float_col", 1, 0)
+    case_statement = sql_gen_case_stmt_numeric_abs_3("float_col", gamma_index=0, abs_amount=1)
     sql = f"""select {case_statement} from float_comp"""
 
     cur.execute(sql)
@@ -55,7 +55,7 @@ def test_case(sqlite_con_3):
     assert result[4]['gamma_0'] == -1
 
 
-    case_statement = sql_gen_case_stmt_numeric_abs_4("float_col", 1, 10, 0)
+    case_statement = sql_gen_case_stmt_numeric_abs_4("float_col", abs_amount_low=1, abs_amount_high=10, gamma_index=0)
     sql = f"""select {case_statement} from float_comp"""
 
     cur.execute(sql)
@@ -69,7 +69,7 @@ def test_case(sqlite_con_3):
     assert result[4]['gamma_0'] == -1
 
 
-    case_statement = sql_gen_case_stmt_numeric_perc_3("float_col", 0.01, 0)
+    case_statement = sql_gen_case_stmt_numeric_perc_3("float_col", per_diff=0.01, gamma_index=0)
     sql = f"""select {case_statement} from float_comp"""
 
     cur.execute(sql)
@@ -84,7 +84,7 @@ def test_case(sqlite_con_3):
     assert result[4]['gamma_0'] == -1
 
 
-    case_statement = sql_gen_case_stmt_numeric_perc_3("float_col", 0.20, 0)
+    case_statement = sql_gen_case_stmt_numeric_perc_3("float_col", per_diff=0.20, gamma_index=0)
     sql = f"""select {case_statement} from float_comp"""
 
     cur.execute(sql)
@@ -98,9 +98,10 @@ def test_case(sqlite_con_3):
     assert result[3]['gamma_0'] == 1
     assert result[4]['gamma_0'] == -1
 
-    case_statement = sql_gen_case_stmt_numeric_perc_4("float_col", 0.01, 0.1, 0)
+
+    case_statement = sql_gen_case_stmt_numeric_perc_4("float_col", per_diff_low=0.01, per_diff_high=0.1, gamma_index=0)
     sql = f"""select {case_statement} from float_comp"""
-    print(sql)
+
     cur.execute(sql)
     result = cur.fetchall()
     result = [dict(r) for r in result]
