@@ -14,7 +14,7 @@ def param_example():
     }
     }
 
-    params = Params(gamma_settings, starting_lambda=0.2)
+    params = Params(gamma_settings, starting_lambda=0.2, spark="supress_warnings")
 
     yield params
 

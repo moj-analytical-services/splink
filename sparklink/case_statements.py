@@ -1,9 +1,22 @@
 import re
-
+import warnings
 def _check_jaro_registered(spark):
+
+    if spark is None:
+        return False
+
+    if spark == 'supress_warnings':  # Allows us to surpress the warning in the test suite
+        return False
+
     for fn in spark.catalog.listFunctions():
         if fn.name == 'jaro_winkler_sim':
             return True
+
+
+    warnings.warn(f"The jaro_winkler_sim user definined function is not available in Spark "
+                        "Or you did not pass 'spark' (the SparkSession) into 'complete_settings_dict' "
+                        "Falling back to using levenshtein in the default string comparison functions "
+                        "You can import these functions using the scala-udf-similarity-0.0.6.jar provided with Sparklink")
     return False
 
 
@@ -31,11 +44,50 @@ def _add_null_treatment_to_case_statement(case_statement: str):
         return case_statement
 
 
-def sql_gen_case_smnt_strict_equality_2(col_name, i):
-    return f"""case
+def _add_as_gamma_to_case_statement(case_statement: str, gamma_index):
+    """As the correct column alias to the case statement if it does not exist
+
+    Args:
+        case_statement (str): Original case statement
+
+    Returns:
+        str: case_statement with correct alias
+    """
+
+    sl = case_statement.lower()
+    last_end_index = sl.rfind("end")
+    sl = sl[:last_end_index + 3]
+    return f"{sl} as gamma_{gamma_index}"
+
+def _check_no_obvious_problem_with_case_statement(case_statement):
+    seems_valid = True
+    cs_l = case_statement.lower()
+    if 'case' not in cs_l:
+        seems_valid = False
+    if 'end' not in cs_l:
+        seems_valid = False
+    if 'when' not in cs_l:
+        seems_valid = False
+    if 'then' not in cs_l:
+        seems_valid = False
+
+    if not seems_valid:
+        s1 = "The case expression you provided does not seem to be valid SQL."
+        s2 = f"Expression provided is: '{case_statement}'"
+        raise ValueError(f"{s1} {s2}")
+
+def sql_gen_case_smnt_strict_equality_2(col_name, gamma_index=None):
+    c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when {col_name}_l = {col_name}_r then 1
-    else 0 end as gamma_{i}"""
+    else 0 end as gamma_{gamma_index}"""
+
+    if gamma_index is not None:
+        return _add_as_gamma_to_case_statement(c, gamma_index)
+    else:
+        return c
+
+
 
 # Sting comparison select statements
 
@@ -43,47 +95,67 @@ def sql_gen_case_smnt_strict_equality_2(col_name, i):
 # American Political Science Review (2019) 113, 2, 353–371, Using a Probabilistic Model to Assist Merging of Large-Scale
 # Administrative Records
 
-def sql_gen_gammas_case_stmt_jaro_2(col_name, i, threshold=0.94):
-    return f"""case
+def sql_gen_gammas_case_stmt_jaro_2(col_name, gamma_index=None, threshold=0.94):
+    c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold} then 1
-    else 0 end as gamma_{i}"""
+    else 0 end"""
+    if gamma_index is not None:
+        return _add_as_gamma_to_case_statement(c, gamma_index)
+    else:
+        return c
 
 
-def sql_gen_gammas_case_stmt_jaro_3(col_name, i, threshold1=0.94, threshold2=0.88):
-    return f"""case
+def sql_gen_gammas_case_stmt_jaro_3(col_name, gamma_index=None, threshold1=0.94, threshold2=0.88):
+    c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold1} then 2
     when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold2} then 1
-    else 0 end as gamma_{i}"""
+    else 0 end"""
+    if gamma_index is not None:
+        return _add_as_gamma_to_case_statement(c, gamma_index)
+    else:
+        return c
 
-def sql_gen_gammas_case_stmt_jaro_4(col_name, i, threshold1=0.94, threshold2=0.88, threshold3=0.7):
-    return f"""case
+def sql_gen_gammas_case_stmt_jaro_4(col_name, gamma_index=None, threshold1=0.94, threshold2=0.88, threshold3=0.7):
+    c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold1} then 3
     when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold2} then 2
     when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold3} then 1
-    else 0 end as gamma_{i}"""
+    else 0 end"""
+    if gamma_index is not None:
+        return _add_as_gamma_to_case_statement(c, gamma_index)
+    else:
+        return c
 
 
 # levenshtein fallbacks for if string similarity jar isn't available
-def sql_gen_case_stmt_levenshtein_3(col_name, i, threshold=0.3):
-    return f"""case
+def sql_gen_case_stmt_levenshtein_3(col_name, gamma_index=None, threshold=0.3):
+    c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when {col_name}_l = {col_name}_r then 2
     when levenshtein({col_name}_l, {col_name}_r)/((length({col_name}_l) + length({col_name}_r))/2) <= {threshold}
     then 1
-    else 0 end as gamma_{i}"""
+    else 0 end"""
+    if gamma_index is not None:
+        return _add_as_gamma_to_case_statement(c, gamma_index)
+    else:
+        return c
 
-def sql_gen_case_stmt_levenshtein_4(col_name, i, threshold1=0.2, threshold2=0.4):
-    return f"""case
+def sql_gen_case_stmt_levenshtein_4(col_name, gamma_index=None, threshold1=0.2, threshold2=0.4):
+    c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when {col_name}_l = {col_name}_r then 3
     when levenshtein({col_name}_l, {col_name}_r)/((length({col_name}_l) + length({col_name}_r))/2) <= {threshold1}
     then 2
     when levenshtein({col_name}_l, {col_name}_r)/((length({col_name}_l) + length({col_name}_r))/2) <= {threshold2}
     then 1
-    else 0 end as gamma_{i}"""
+    else 0 end"""
+    if gamma_index is not None:
+        return _add_as_gamma_to_case_statement(c, gamma_index)
+    else:
+        return c
 
 
 
@@ -100,37 +172,60 @@ def _sql_gen_max_of_two_cols(col1, col2):
 def _sql_gen_abs_diff(col1, col2):
     return f"(abs({col1} - {col2}))"
 
-
-
-def sql_gen_case_stmt_numeric_abs_3(col_name, abs_amount, i):
+def sql_gen_case_stmt_numeric_2(col_name, gamma_index=None):
 
     col1 =  f"{col_name}_l"
     col2 =  f"{col_name}_r"
 
     abs_difference = _sql_gen_abs_diff(col1, col2)
 
-    return f"""case
+    c = f"""case
+    when {col_name}_l is null or {col_name}_r is null then -1
+    when {abs_difference} < 0.00001 then 1
+    else 0 end"""
+    if gamma_index is not None:
+        return _add_as_gamma_to_case_statement(c, gamma_index)
+    else:
+        return c
+
+
+def sql_gen_case_stmt_numeric_abs_3(col_name, gamma_index=None, abs_amount=1):
+
+    col1 =  f"{col_name}_l"
+    col2 =  f"{col_name}_r"
+
+    abs_difference = _sql_gen_abs_diff(col1, col2)
+
+    c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when {abs_difference} < 0.0001 THEN 2  /* 0.0001 to account for floating point errors */
     when {abs_difference} < {abs_amount} THEN 1
-    else 0 end as gamma_{i}"""
+    else 0 end"""
+    if gamma_index is not None:
+        return _add_as_gamma_to_case_statement(c, gamma_index)
+    else:
+        return c
 
-def sql_gen_case_stmt_numeric_abs_4(col_name, abs_amount_low, abs_amount_high, i):
+def sql_gen_case_stmt_numeric_abs_4(col_name, gamma_index=None, abs_amount_low = 1, abs_amount_high = 10):
 
     col1 =  f"{col_name}_l"
     col2 =  f"{col_name}_r"
 
     abs_difference = _sql_gen_abs_diff(col1, col2)
 
-    return f"""case
+    c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when {abs_difference} < 0.0001 THEN 3  /* 0.0001 to account for floating point errors */
     when {abs_difference} < {abs_amount_low} THEN 2
     when {abs_difference} < {abs_amount_high} THEN 1
-    else 0 end as gamma_{i}"""
+    else 0 end"""
+    if gamma_index is not None:
+        return _add_as_gamma_to_case_statement(c, gamma_index)
+    else:
+        return c
 
 
-def sql_gen_case_stmt_numeric_perc_3(col_name, per_diff, i):
+def sql_gen_case_stmt_numeric_perc_3(col_name, gamma_index=None, per_diff=0.05):
 
     col1 =  f"{col_name}_l"
     col2 =  f"{col_name}_r"
@@ -138,13 +233,17 @@ def sql_gen_case_stmt_numeric_perc_3(col_name, per_diff, i):
     max_of_cols = _sql_gen_max_of_two_cols(col1, col2)
     abs_difference = _sql_gen_abs_diff(col1, col2)
 
-    return f"""case
+    c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when {abs_difference}/abs({max_of_cols}) < 0.00001 then 2
     when {abs_difference}/abs({max_of_cols}) < {per_diff} then 1
-    else 0 end as gamma_{i}"""
+    else 0 end"""
+    if gamma_index is not None:
+        return _add_as_gamma_to_case_statement(c, gamma_index)
+    else:
+        return c
 
-def sql_gen_case_stmt_numeric_perc_4(col_name, per_diff_low, per_diff_high, i):
+def sql_gen_case_stmt_numeric_perc_4(col_name, gamma_index=None, per_diff_low = 0.05, per_diff_high=0.10):
 
     col1 =  f"{col_name}_l"
     col2 =  f"{col_name}_r"
@@ -152,10 +251,14 @@ def sql_gen_case_stmt_numeric_perc_4(col_name, per_diff_low, per_diff_high, i):
     max_of_cols = _sql_gen_max_of_two_cols(col1, col2)
     abs_difference = _sql_gen_abs_diff(col1, col2)
 
-    return f"""case
+    c =  f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when {abs_difference}/abs({max_of_cols}) < 0.00001 then 3
     when {abs_difference}/abs({max_of_cols}) < {per_diff_low} then 2
     when {abs_difference}/abs({max_of_cols}) < {per_diff_high} then 1
-    else 0 end as gamma_{i}"""
+    else 0 end"""
+    if gamma_index is not None:
+        return _add_as_gamma_to_case_statement(c, gamma_index)
+    else:
+        return c
 

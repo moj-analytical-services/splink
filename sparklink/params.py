@@ -29,22 +29,18 @@ class Params:
     of the model (in self.param_history)
     """
 
-    def __init__(self, gamma_settings={}, starting_lambda=0.2):
+    def __init__(self, gamma_settings={}, starting_lambda=0.2, spark=None):
         self.params = {"λ": starting_lambda, "π": {}}
 
         self.param_history = []
 
         self.iteration = 1
 
-        self.gamma_settings = complete_settings_dict(gamma_settings)
+        self.gamma_settings = complete_settings_dict(gamma_settings, spark)
 
         self.log_likelihood_exists = False
 
         self.real_params = None
-        self.prob_m_2_levels = [1, 9]
-        self.prob_nm_2_levels = [9, 1]
-        self.prob_m_3_levels = [1, 2, 7]
-        self.prob_nm_3_levels = [7, 2, 1]
 
         self.generate_param_dict()
 
@@ -74,16 +70,8 @@ class Params:
             prob_dist_match = {}
             prob_dist_non_match = {}
 
-            if num_levels == 2:
-                probs_m = self.prob_m_2_levels
-                probs_nm = self.prob_nm_2_levels
-
-            elif num_levels == 3:
-                probs_m = self.prob_m_3_levels
-                probs_nm = self.prob_nm_3_levels
-            else:
-                probs_m = [random.uniform(0, 1) for r in range(num_levels)]
-                probs_nm = [random.uniform(0, 1) for r in range(num_levels)]
+            probs_m = col_dict["m_probabilities"]
+            probs_nm = col_dict["u_probabilities"]
 
             s = sum(probs_m)
             probs_m = [p / s for p in probs_m]

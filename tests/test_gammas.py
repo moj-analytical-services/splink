@@ -47,7 +47,7 @@ def test_add_gammas(db):
         """
     }}
 
-    gamma_settings = complete_settings_dict(gamma_settings)
+    gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")
 
 
     sql = sql_gen_add_gammas(gamma_settings, include_orig_cols=False, table_name="test2")
