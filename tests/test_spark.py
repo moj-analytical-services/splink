@@ -7,7 +7,7 @@ from sparklink.blocking import cartestian_block, block_using_rules
 from sparklink.params import Params
 from sparklink.gammas import add_gammas
 from sparklink.iterate import iterate
-from sparklink.expectation_step import run_expectation_step
+from sparklink.expectation_step import run_expectation_step, get_overall_log_likelihood
 from sparklink.case_statements import *
 from sparklink.case_statements import _check_jaro_registered
 import pandas as pd
@@ -33,6 +33,8 @@ def spark():
         conf.set("spark.jars.ivy", "/home/jovyan/.ivy2/")
         conf.set('spark.driver.extraClassPath', 'jars/scala-udf-similarity-0.0.6.jar')
         conf.set('spark.jars', 'jars/scala-udf-similarity-0.0.6.jar')
+        conf.set('spark.driver.memory', '4g')
+        conf.set("spark.sql.shuffle.partitions", "24")
 
         sc = SparkContext.getOrCreate(conf=conf)
 
@@ -327,5 +329,53 @@ def test_case_statements(spark, sqlite_con_3):
     assert df.loc[4,'gamma_0'] == -1
 
 
+from sparklink.gammas import add_gammas
+
+def test_iteration_known_data_generating_process(spark, gamma_settings_4, params_4, sqlite_con_4):
+
+    dfpd = pd.read_sql("select * from df", sqlite_con_4)
+    df = spark.createDataFrame(dfpd)
+
+    df_comparison = cartestian_block(df, dfpd.columns, spark=spark)
+
+    df_gammas = add_gammas(df_comparison, gamma_settings_4, spark=spark)
+
+    wr = df_gammas.repartition(1)
+    we.write.parquet("for_pandas_delete/")
+
+    # df_e = iterate(df_gammas, spark, params_4, num_iterations=0, compute_ll=True)
+    # print(get_overall_log_likelihood(df_e,params_4, spark))
+
+    # df_e = iterate(df_gammas, spark, params_4, num_iterations=20, compute_ll=True)
+
+    # params_4.all_charts_write_html_file(filename="sparklink_charts_fromtest.html")
+
+    # print(get_overall_log_likelihood(df_e,params_4, spark))
+    # print(params_4)
+
+    # # Known parameters
+
+    # gamma_settings = {
+    # "col_2_levels": {
+    #     "levels": 2,
+    #     "m_probabilities": [0,1],  # Amongst records that are truly matches, how often does this agree?  Answer:  100%
+    #     "u_probabilities": [0.5,0.5],  # Amongst records that are not matches, how often does this agree?  Answer:  50%
+
+    # },
+    # "col_5_levels": {
+    #    "levels": 2,
+    #    "m_probabilities": [0,1],
+    #    "u_probabilities": [0.8,0.2],
+    # },
+    # "col_20_levels": {
+    #     "levels": 2,
+    #      "m_probabilities": [0,1],
+    #    "u_probabilities": [0.95,0.05],
+    # }}
+
+
+    # real_params = Params(gamma_settings, starting_lambda=1/(20*5*2), spark=spark)
+    # df_e_2 = run_expectation_step(df_gammas, spark, real_params)
+    # print(get_overall_log_likelihood(df_e_2,real_params, spark))
 
 
