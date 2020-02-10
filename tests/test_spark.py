@@ -334,48 +334,17 @@ from sparklink.gammas import add_gammas
 def test_iteration_known_data_generating_process(spark, gamma_settings_4, params_4, sqlite_con_4):
 
     dfpd = pd.read_sql("select * from df", sqlite_con_4)
-    df = spark.createDataFrame(dfpd)
 
-    df_comparison = cartestian_block(df, dfpd.columns, spark=spark)
+    df_gammas = spark.createDataFrame(dfpd)
 
-    df_gammas = add_gammas(df_comparison, gamma_settings_4, spark=spark)
+    df_e = iterate(df_gammas, spark, params_4, num_iterations=40, compute_ll=False)
 
-    wr = df_gammas.repartition(1)
-    we.write.parquet("for_pandas_delete/")
-
-    # df_e = iterate(df_gammas, spark, params_4, num_iterations=0, compute_ll=True)
-    # print(get_overall_log_likelihood(df_e,params_4, spark))
-
-    # df_e = iterate(df_gammas, spark, params_4, num_iterations=20, compute_ll=True)
-
-    # params_4.all_charts_write_html_file(filename="sparklink_charts_fromtest.html")
-
-    # print(get_overall_log_likelihood(df_e,params_4, spark))
-    # print(params_4)
-
-    # # Known parameters
-
-    # gamma_settings = {
-    # "col_2_levels": {
-    #     "levels": 2,
-    #     "m_probabilities": [0,1],  # Amongst records that are truly matches, how often does this agree?  Answer:  100%
-    #     "u_probabilities": [0.5,0.5],  # Amongst records that are not matches, how often does this agree?  Answer:  50%
-
-    # },
-    # "col_5_levels": {
-    #    "levels": 2,
-    #    "m_probabilities": [0,1],
-    #    "u_probabilities": [0.8,0.2],
-    # },
-    # "col_20_levels": {
-    #     "levels": 2,
-    #      "m_probabilities": [0,1],
-    #    "u_probabilities": [0.95,0.05],
-    # }}
+    assert params_4.params["π"]["gamma_0"]["prob_dist_match"]["level_0"]["probability"] == pytest.approx(0.05, abs=0.002)
+    assert params_4.params["π"]["gamma_1"]["prob_dist_match"]["level_0"]["probability"] == pytest.approx(0.1, abs=0.002)
+    assert params_4.params["π"]["gamma_2"]["prob_dist_match"]["level_0"]["probability"] == pytest.approx(0.05, abs=0.002)
 
 
-    # real_params = Params(gamma_settings, starting_lambda=1/(20*5*2), spark=spark)
-    # df_e_2 = run_expectation_step(df_gammas, spark, real_params)
-    # print(get_overall_log_likelihood(df_e_2,real_params, spark))
-
+    assert params_4.params["π"]["gamma_0"]["prob_dist_non_match"]["level_1"]["probability"] == pytest.approx(0.05, abs=0.002)
+    assert params_4.params["π"]["gamma_1"]["prob_dist_non_match"]["level_1"]["probability"] == pytest.approx(0.2, abs=0.002)
+    assert params_4.params["π"]["gamma_2"]["prob_dist_non_match"]["level_1"]["probability"] == pytest.approx(0.5, abs=0.002)
 
