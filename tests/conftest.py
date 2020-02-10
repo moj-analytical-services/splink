@@ -266,7 +266,7 @@ def gamma_settings_4():
 def params_4(gamma_settings_4):
 
     # Probability columns
-    params = Params(gamma_settings_4, starting_lambda=0.1, spark="supress_warnings")
+    params = Params(gamma_settings_4, starting_lambda=0.9, spark="supress_warnings")
 
     params.generate_param_dict()
     yield params
@@ -274,31 +274,47 @@ def params_4(gamma_settings_4):
 
 @pytest.fixture(scope='function')
 def sqlite_con_4():
-    # import numpy as np
-    # def repeat_to_length(input_list, target_length):
-        # return [str(i) for i in np.random.choice(input_list, target_length)]
-    def repeat_to_length(input_list, target_length):
-        l = list(input_list)
-        multiple = target_length/len(l)
-        return l * int(multiple)
 
-    numrows = 400
-    uids = range(numrows)
+    ## Going to create all combinatinos of gammas in the right frequencies to guarantee independence
 
-    levels_2 = repeat_to_length(range(2), numrows)
-    levels_5 = repeat_to_length(range(5), numrows)
-    levels_20 = repeat_to_length(range(20), numrows)
-    z = zip(uids, levels_2, levels_5, levels_20)
+    ## Create df gammas for non-matches
+    probs = [0.05,0.2,0.5] # Amongst non-matches, gamma_0 agrees 5% of the time, gamma_1 agrees 20% of the time etc
+    iprobs = [1/p for p in probs]
+
+    df_nm = None
+    for index, num_options in enumerate(iprobs):
+        n = int(num_options)
+        df_nm_new = pd.DataFrame({f"gamma_{index}": [0]*(n-1) + [1], "join_col": [1]*n })  # Creates n rec
+        if df_nm is not None:
+            df_nm = df_nm.merge(df_nm_new, left_on="join_col", right_on="join_col")
+
+        else:
+            df_nm = df_nm_new
+    df_nm = df_nm.drop("join_col", axis=1)
+    df_nm["true_match"] = 0
 
 
+    ## Create df gammas for non-matches
+    probs = [0.05,0.1,0.05] # Amongst matches, gamma_0 DISAGREES 5% of the time, gamma_1 DISAGREES 10% of the time etc
+    iprobs = [1/p for p in probs]
+
+    df_m = None
+    for index, num_options in enumerate(iprobs):
+        n = int(num_options)
+        df_m_new = pd.DataFrame({f"gamma_{index}": [1]*(n-1) + [0], "join_col": [1]*n })
+        if df_m is not None:
+            df_m = df_m.merge(df_m_new, left_on="join_col", right_on="join_col")
+
+        else:
+            df_m = df_m_new
+    df_m = df_m.drop("join_col", axis=1)
+    df_m["true_match"] = 1
+
+    df_all = pd.concat([df_nm, df_m])
 
     con = sqlite3.connect(":memory:")
     con.row_factory = sqlite3.Row
-    cur = con.cursor()
-    cur.execute("create table df (unique_id, col_2_levels, col_5_levels, col_20_levels, group)")
-    for row in z:
-        group = ",".join(row)
-        cur.execute("insert into df values (?, ?, ?, ?)",  (row + (group,)))
 
+    df_all.to_sql("df", con, index=False)
 
     yield con
