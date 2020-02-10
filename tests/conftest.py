@@ -9,6 +9,7 @@ from sparklink.gammas import  sql_gen_add_gammas, complete_settings_dict
 from sparklink.expectation_step import sql_gen_gamma_prob_columns, sql_gen_expected_match_prob
 from sparklink.maximisation_step import sql_gen_intermediate_pi_aggregate, sql_gen_pi_df
 from sparklink.params import Params
+from sparklink.case_statements import sql_gen_case_smnt_strict_equality_2
 
 @pytest.mark.filterwarnings("ignore:*")
 @pytest.fixture(scope='function')
@@ -234,3 +235,70 @@ def sqlite_con_3():
 
     yield con
 
+
+# Generate a test dataset with known data generating process to see if
+# results iterate towards the 'right answer'
+
+
+@pytest.fixture(scope='function')
+def gamma_settings_4():
+    gamma_settings = {
+    "col_2_levels": {
+        "levels": 2,
+        "case_expression": sql_gen_case_smnt_strict_equality_2("col_2_levels")
+    },
+    "col_5_levels": {
+       "levels": 2,
+       "case_expression": sql_gen_case_smnt_strict_equality_2("col_5_levels")
+    },
+    "col_20_levels": {
+        "levels": 2,
+        "case_expression": sql_gen_case_smnt_strict_equality_2("col_20_levels")
+
+    }}
+
+
+
+    gamma_settings = complete_settings_dict(gamma_settings,  spark="supress_warnings")
+    yield gamma_settings
+
+@pytest.fixture(scope='function')
+def params_4(gamma_settings_4):
+
+    # Probability columns
+    params = Params(gamma_settings_4, starting_lambda=0.1, spark="supress_warnings")
+
+    params.generate_param_dict()
+    yield params
+
+
+@pytest.fixture(scope='function')
+def sqlite_con_4():
+    # import numpy as np
+    # def repeat_to_length(input_list, target_length):
+        # return [str(i) for i in np.random.choice(input_list, target_length)]
+    def repeat_to_length(input_list, target_length):
+        l = list(input_list)
+        multiple = target_length/len(l)
+        return l * int(multiple)
+
+    numrows = 400
+    uids = range(numrows)
+
+    levels_2 = repeat_to_length(range(2), numrows)
+    levels_5 = repeat_to_length(range(5), numrows)
+    levels_20 = repeat_to_length(range(20), numrows)
+    z = zip(uids, levels_2, levels_5, levels_20)
+
+
+
+    con = sqlite3.connect(":memory:")
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    cur.execute("create table df (unique_id, col_2_levels, col_5_levels, col_20_levels, group)")
+    for row in z:
+        group = ",".join(row)
+        cur.execute("insert into df values (?, ?, ?, ?)",  (row + (group,)))
+
+
+    yield con
