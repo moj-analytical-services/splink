@@ -33,7 +33,12 @@ def _add_null_treatment_to_case_statement(case_statement: str):
     sl = case_statement.lower()
 
     if "then -1" not in sl:
-        variable_name = re.search(r"when ([\w_]{1,100})_l", case_statement)[1]
+        try:
+            variable_name = re.search(r"when ([\w_]{1,100})_l", case_statement)[1]
+        except:
+            raise ValueError(("Your case statement needs to reference a variable on the left hand "
+                              "side of the comparison i.e. a variable ending with _l "
+                             f"current case statement: \n{case_statement}"))
         find = r"(case)(\s+)(when)"
         replace = r"\1 \nwhen {col_name}_l is null or {col_name}_r is null then -1\n\3"
         new_case_statement = re.sub(find, replace, case_statement)
