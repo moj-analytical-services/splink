@@ -8,22 +8,10 @@ from sparklink.gammas import sql_gen_case_smnt_strict_equality_2, sql_gen_add_ga
 from sparklink.expectation_step import sql_gen_gamma_prob_columns, sql_gen_expected_match_prob
 from sparklink.params import Params
 
-def test_probability_columns(sqlite_con_1):
+def test_probability_columns(sqlite_con_1, gamma_settings_1):
 
-    gamma_settings = {
-    "mob": {
-        "levels": 2,
-        "m_probabilities": [0.1, 0.9],
-        "u_probabilities": [0.8, 0.2]
-    },
-    "surname": {
-        "levels": 3,
-        "m_probabilities": [0.1,0.2,0.7],
-        "u_probabilities": [0.5,0.25,0.25]
-    }
-    }
 
-    params = Params(gamma_settings, starting_lambda=0.4, spark="supress_warnings")
+    params = Params(gamma_settings_1, spark="supress_warnings")
 
     sql = sql_gen_gamma_prob_columns(params, "df_gammas1")
     df = pd.read_sql(sql, sqlite_con_1)
