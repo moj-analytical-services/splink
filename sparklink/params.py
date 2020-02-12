@@ -10,7 +10,6 @@ from .chart_definitions import (
     ll_iteration_chart_def,
     adjustment_weight_chart_def,
     multi_chart_template,
-
 )
 import random
 
@@ -29,14 +28,15 @@ class Params:
     of the model (in self.param_history)
     """
 
-    def __init__(self, gamma_settings={}, starting_lambda=0.2, spark=None):
-        self.params = {"λ": starting_lambda, "π": {}}
+    def __init__(self, settings={}, spark=None):
+
 
         self.param_history = []
 
         self.iteration = 1
 
-        self.gamma_settings = complete_settings_dict(gamma_settings, spark)
+        self.settings = complete_settings_dict(settings, spark)
+        self.params = {"λ": settings["proportion_of_matches"], "π": {}}
 
         self.log_likelihood_exists = False
 
@@ -56,15 +56,15 @@ class Params:
 
         """
 
-        for col_name, col_dict in self.gamma_settings.items():
+        for col_dict in self.settings["comparison_columns"]:
+            col_name = col_dict["col_name"]
             i = col_dict["gamma_index"]
 
             self.params["π"][f"gamma_{i}"] = {}
             self.params["π"][f"gamma_{i}"]["desc"] = f"Comparison of {col_name}"
             self.params["π"][f"gamma_{i}"]["column_name"] = f"{col_name}"
 
-
-            num_levels = col_dict["levels"]
+            num_levels = col_dict["num_levels"]
             self.params["π"][f"gamma_{i}"]["num_levels"] = num_levels
 
             prob_dist_match = {}
@@ -161,16 +161,14 @@ class Params:
                 row["m"] = this_gamma["prob_dist_match"][level]["probability"]
                 row["u"] = this_gamma["prob_dist_non_match"][level]["probability"]
                 try:
-                    row["adjustment"] = row["m"]/(row["m"] + row["u"])
+                    row["adjustment"] = row["m"] / (row["m"] + row["u"])
                     row["normalised_adjustment"] = row["adjustment"] - 0.5
                 except ZeroDivisionError:
                     row["adjustment"] = None
                     row["normalised_adjustment"] = None
 
-
                 data.append(row)
         return data
-
 
     def iteration_history_df_gammas(self):
         data = []
@@ -263,12 +261,9 @@ class Params:
         p_dict = {}
         p_dict["current_params"] = self.params
         p_dict["historical_params"] = self.param_history
-        p_dict["gamma_settings"] = self.gamma_settings
+        p_dict["settings"] = self.settings
 
         return p_dict
-
-
-
 
     def save_params_to_json_file(self, path=None, overwrite=False):
 
@@ -276,21 +271,20 @@ class Params:
         if not path:
             raise ValueError("Must provide a path to write to")
 
-
         if os.path.isfile(path):
             if overwrite:
                 proceed_with_write = True
             else:
-                raise ValueError(f"The path {path} already exists. Please provide a different path.")
+                raise ValueError(
+                    f"The path {path} already exists. Please provide a different path."
+                )
         else:
             proceed_with_write = True
 
         if proceed_with_write:
             d = self.to_dict()
-            with open(path, 'w') as f:
+            with open(path, "w") as f:
                 json.dump(d, f, indent=4)
-
-
 
     ### The rest of this module is just 'presentational' elements - charts, and __repr__ etc.
 
@@ -351,7 +345,6 @@ class Params:
         else:
             return probability_distribution_chart
 
-
     def adjustment_factor_chart(self):  # pragma: no cover
         """
         If altair is installed, returns the chart
@@ -404,19 +397,18 @@ class Params:
                 c5 = ""
 
             with open(filename, "w") as f:
-                            f.write(
-                                multi_chart_template.format(
-                                    vega_version='5',
-                                    vegalite_version='3.3.0',
-                                    vegaembed_version='4',
-                                    spec1=c1,
-                                    spec2=c2,
-                                    spec3=c3,
-                                    spec4=c4,
-                                    spec5=c5,
-                                )
-                            )
-
+                f.write(
+                    multi_chart_template.format(
+                        vega_version="5",
+                        vegalite_version="3.3.0",
+                        vegaembed_version="4",
+                        spec1=c1,
+                        spec2=c2,
+                        spec3=c3,
+                        spec4=c4,
+                        spec5=c5,
+                    )
+                )
 
     def __repr__(self):  # pragma: no cover
 
@@ -484,6 +476,7 @@ class Params:
 
         return "\n".join(lines)
 
+
 def load_params_from_json(path):
     # Load params
     with open(path, "r") as f:
@@ -493,15 +486,16 @@ def load_params_from_json(path):
 
     return p
 
+
 def load_params_from_dict(param_dict):
 
     keys = set(param_dict.keys())
-    expected_keys = {'current_params', 'gamma_settings', 'historical_params'}
+    expected_keys = {"current_params", "settings", "historical_params"}
 
     if keys == expected_keys:
-        p = Params(gamma_settings = {})
+        p = Params(settings=param_dict["settings"])
 
-        p.gamma_settings = param_dict["gamma_settings"]
+
         p.params = param_dict["current_params"]
         p.param_history = param_dict["historical_params"]
     else:

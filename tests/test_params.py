@@ -6,15 +6,15 @@ import pytest
 @pytest.fixture(scope='module')
 def param_example():
     gamma_settings = {
-    "fname": {
-        "levels": 2
-    },
-    "sname": {
-        "levels": 3
-    }
-    }
+                      "proportion_of_matches": 0.2,
+                     "comparison_columns": [
+                        {"col_name": "fname"},
+                        {"col_name": "sname",
+                        "num_levels": 3}
+                    ]
+                    }
 
-    params = Params(gamma_settings, starting_lambda=0.2, spark="supress_warnings")
+    params = Params(gamma_settings, spark="supress_warnings")
 
     yield params
 

@@ -121,15 +121,17 @@ def test_tiny_numbers(spark, sqlite_con_1):
     ]
 
     gamma_settings = {
-    "mob": {
-        "levels": 2,
+        "proportion_of_matches" : 0.4,
+        "comparison_columns" : [
+    {"col_name": "mob",
+        "num_levels": 2,
         "m_probabilities": [5.9380419956766985e-25, 1-5.9380419956766985e-25],
         "u_probabilities": [0.8, 0.2]
 
     },
-    "surname": {
-        "levels": 2,
-    }}
+    {"col_name":"surname",
+        "num_levels": 2,
+    }]}
 
 
     df_comparison = block_using_rules(df, rules, spark=spark)
@@ -137,7 +139,7 @@ def test_tiny_numbers(spark, sqlite_con_1):
     df_gammas = add_gammas(
         df_comparison, gamma_settings, spark, include_orig_cols=False
     )
-    params = Params(gamma_settings, starting_lambda=0.4, spark="supress_warnings")
+    params = Params(gamma_settings, spark="supress_warnings")
 
     df_e = run_expectation_step(df_gammas, spark, params)
 
@@ -257,7 +259,16 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
     import tempfile
     dir = tempfile.TemporaryDirectory()
     fname = os.path.join(dir.name, "params.json")
+
+    # print(params_1.params)
+    # import json
+    # print(json.dumps(params_1.to_dict(), indent=4))
+
     params_1.save_params_to_json_file(fname)
+    print(fname)
+    print(fname)
+    print(fname)
+    print(fname)
     from sparklink.params import load_params_from_json
     p = load_params_from_json(fname)
     assert p.params["λ"] == pytest.approx(params_1.params['λ'])

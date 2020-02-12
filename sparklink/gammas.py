@@ -99,17 +99,19 @@ def complete_settings_dict(settings_dict: dict, spark=None):
     Returns:
         dict: A gamma settings dictionary
     """
-
+    validate_settings(settings_dict)
     default_case_statements = _get_default_case_statements_functions(spark)
 
     # Complete non-column settings
     non_col_keys = ["em_convergence",
                     "unique_id_column_name",
-                    "proportion_of_matches",
                     "other_columns_to_retain"]
     for key in non_col_keys:
         if key not in settings_dict:
             settings_dict[key] =  _get_default_value(key, is_column_setting=False)
+
+    if "proportion_of_matches" not in settings_dict:
+        settings_dict["proportion_of_matches"] = _get_default_value("proportion_of_matches", is_column_setting=False)
 
     gamma_counter = 0
     for gamma_counter, column_settings in enumerate(settings_dict["comparison_columns"]):
@@ -142,6 +144,7 @@ def complete_settings_dict(settings_dict: dict, spark=None):
         else:
             levels = column_settings["num_levels"]
             probs = column_settings["m_probabilities"]
+
             if len(probs) != levels:
                 raise ValueError("Number of m probabilities provided is not equal to number of levels specified")
 
@@ -182,14 +185,14 @@ def sql_gen_add_gammas(
     """
 
     gamma_case_expressions = []
-    for key in settings_dict:
-        value = settings_dict[key]
+    for value in settings_dict["comparison_columns"]:
         gamma_case_expressions.append(value["case_expression"])
 
     gammas_select_expr = ",\n".join(gamma_case_expressions)
 
     if include_orig_cols:
-        orig_cols = settings_dict.keys()
+        orig_cols = settings_dict["comparison_columns"]
+        orig_cols = [c["col_name"] for c in orig_cols]
 
         l = [f"{c}_l" for c in orig_cols]
         r = [f"{c}_r" for c in orig_cols]
@@ -227,8 +230,8 @@ def add_gammas(
         Spark dataframe: A dataframe containing new columns representing the gammas of the model
     """
 
-    # Validate the gamma settings provided by the user are valid
-    validate_settings(settings_dict)
+
+
 
     settings_dict = complete_settings_dict(settings_dict, spark)
 
