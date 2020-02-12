@@ -1,12 +1,13 @@
 [tool.poetry]
 name = "sparklink"
-version = "0.1.1"
+version = "0.1.2"
 description = "WORK IN PROGRESS:  Implementation in Apache Spark of the EM algorithm to estimate parameters of Fellegi-Sunter's canonical model of record linkage."
 authors = ["Robin Linacre <robinlinacre@hotmail.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.6"
+jsonschema = "^3.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.3"
