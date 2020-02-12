@@ -1,0 +1,145 @@
+{
+  "definitions": {},
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://example.com/root.json",
+  "type": "object",
+  "title": "Sparklink settings",
+  "required": [
+    "comparison_columns"
+  ],
+  "properties": {
+    "proportion_of_matches": {
+      "$id": "#/properties/proportion_of_matches",
+      "type": "number",
+      "title": "The proportion of comparisons thought to be matches",
+      "description": "This provides the initial value (prior) that EM algorithm will start iterating from",
+      "default": 0.3,
+      "minimum": 0,
+      "maximum": 1,
+      "examples": [
+        0.3, 0.1, 0.9
+      ]
+    },
+    "em_convergence": {
+      "$id": "#/properties/em_convergence",
+      "type": "number",
+      "title": "Convergence tolerance for the EM algorithm.",
+      "description": " The algorithm will stop converging when the maximum of the change in model parameters between iterations is below this value.",
+      "default": 0.0001,
+      "examples": [
+        0.0001, 0.00001, 1e-6
+      ],
+      "maximum": 0.05,
+      "minimum": 1e-12
+    },
+    "unique_id_column_name": {
+      "$id": "#/properties/unique_id_column_name",
+      "type": "string",
+      "title": "The name of the column in the input dataset representing a unique id",
+      "default": "unique_id",
+      "examples": [
+        "unique_id"
+      ]
+    },
+    "comparison_columns": {
+      "$id": "#/properties/comparison_columns",
+      "type": "array",
+      "title": "A list of columns to use for probabalistic matching",
+      "description": "Comparisons between the values in these columns will be used to determine match scores",
+      "minItems":1,
+      "items": {
+        "$id": "#/properties/comparison_columns/items",
+        "type": "object",
+        "title": "A column that is used for probabalistic matching",
+        "required": [
+          "col_name"
+        ],
+
+        "properties": {
+          "col_name": {
+            "$id": "#/properties/comparison_columns/items/properties/col_name",
+            "type": "string",
+            "title": "The name of the column in the input dataset",
+            "default": "",
+            "examples": [
+              "first_name",
+              "surname"
+            ]
+          },
+          "num_levels": {
+            "$id": "#/properties/comparison_columns/items/properties/num_levels",
+            "type": "integer",
+            "title": "The number of different similarity categories that will be computed for this column i.e. the granularity of similarity comparison for the column",
+            "description": "By default, for a string variable, two levels would implies level 0: no match, level 1: almost exact match.  Three levels imples level 0: no match, level 1: strings are similar but not exactly the same, level 2: strings are almost exactly the same.",
+            "default": 2,
+            "examples": [
+              2, 3, 4
+            ],
+            "minimum": 2
+          },
+          "data_type": {
+            "$id": "#/properties/comparison_columns/items/properties/data_type",
+            "type": "string",
+            "title": "The data type of the column.  This is used to choose how similarity is assessed this column i.e. which SQL SELECT CASE statement to use.  This is ignored if you explicitly provide a case_expression.",
+            "default": "string",
+            "examples": [
+                "string",
+              "numeric"
+            ],
+            "enum": ["string", "numeric"]
+          },
+          "case_expression": {
+            "$id": "#/properties/comparison_columns/items/properties/case_expression",
+            "type": "string",
+            "title": "A SELECT CASE expression that compares the values of the input column and returns integer values corresponding to num_levels. ",
+            "description": "This is an override which allows the user to cusomise how similarity is computed for this column.  If given, this overrides the default mechanism of comparing columns and ignores data_type",
+            "examples": [
+              "CASE WHEN first_name_l = first_name_r THEN 1 ELSE 0 END",
+              "CASE \n WHEN jaro_winkler_sim(first_name_l, first_name_r) < 0.94 THEN 2 \n WHEN jaro_winkler_sim(first_name_l, first_name_r) < 0.8 THEN 1 \n  ELSE 0 END"
+            ],
+            "pattern": "(?=.*?CASE|.*?case)(?=.*?END|.*?end).*"
+          },
+          "m_probabilities": {
+            "$id": "#/properties/comparison_columns/items/properties/m_probabilities",
+            "type": "array",
+            "title": "A array of the m probabilities for this column i.e. the probability of observing each similarity value amonst matches. There will be num_levels values in this array.",
+            "description": "The first probability given corresponds to level 0: least similar.  It refers to the probability of observing level 0 in the comparison vector amongst matches.  The second probability corresponds to level 1, up to level n, most similar.",
+            "examples": [
+              [0.05,0.95],
+              [0.01, 0.1, 0.89]
+            ],
+            "minItems":2
+          },
+          "u_probabilities": {
+            "$id": "#/properties/comparison_columns/items/properties/u_probabilities",
+            "type": "array",
+            "title": "A array of the u probabilities for this column i.e. the probability of observing each similarity value amonst non-matches. There will be num_levels values in this array.",
+            "description": "The first probability given corresponds to level 0: least similar.  It refers to the probability of observing level 0 in the comparison vector amongst matches.  The second probability corresponds to level 1, up to level n, most similar.",
+            "examples": [
+              [0.9,0.1],
+              [0.8, 0.1, 0.1]
+            ],
+            "minItems":2
+          }
+        }
+      }
+    },
+    "other_columns_to_retain": {
+      "$id": "#/properties/other_columns_to_retain",
+      "type": "array",
+      "title": "A list of columns not being used in the probabalistic matching comparisons that you want to include in your results.",
+      "default": [],
+      "examples": ["col_1", "col2"],
+      "items": {
+        "$id": "#/properties/other_columns_to_retain/items",
+        "type": "string",
+        "title": "Individual strings representing other columns to retain",
+        "examples": [
+          "group",
+          "an_other_column"
+        ],
+        "pattern": "^(.*)$"
+      }
+    }
+  }
+}
