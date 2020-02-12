@@ -4,7 +4,7 @@ import warnings
 import jsonschema
 
 from .logging_utils import log_sql
-from .validate import validate_settings
+from .validate import validate_settings, _get_default_value
 from .sql import comparison_columns_select_expr, sql_gen_comparison_columns
 from .case_statements import (
     _add_null_treatment_to_case_statement,
@@ -89,11 +89,11 @@ def _get_probabilities(m_or_u, levels):
     return _normalise_prob_list(probabilities)
 
 
-def complete_settings_dict(gamma_settings_dict: dict, spark=None):
+def complete_settings_dict(settings_dict: dict, spark=None):
     """Auto-populate any missing settings from the settings dictionary
 
     Args:
-        gamma_settings_dict (dict): The settings dictionary
+        settings_dict (dict): The settings dictionary
         spark: The SparkSession
 
     Returns:
@@ -102,63 +102,69 @@ def complete_settings_dict(gamma_settings_dict: dict, spark=None):
 
     default_case_statements = _get_default_case_statements_functions(spark)
 
+    # Complete non-column settings
+    non_col_keys = ["em_convergence",
+                    "unique_id_column_name",
+                    "proportion_of_matches",
+                    "other_columns_to_retain"]
+    for key in non_col_keys:
+        if key not in settings_dict:
+            settings_dict[key] =  _get_default_value(key, is_column_setting=False)
+
     gamma_counter = 0
-    for col_name, col_value in gamma_settings_dict.items():
+    for gamma_counter, column_settings in enumerate(settings_dict["comparison_columns"]):
 
-        col_value["gamma_index"] = gamma_counter
+        column_settings["gamma_index"] = gamma_counter
+        col_name = column_settings["col_name"]
 
-        if "col_name" not in col_value:
-            col_value["col_name"] = col_name
+        # Populate non-existing keys from defaults
+        for key in ["num_levels", "data_type"]:
+            if key not in column_settings:
+                default = _get_default_value(key, is_column_setting=True)
+                column_settings[key] = default
 
-        if "levels" not in col_value:
-            col_value["levels"] = 2
-
-        if "data_type" not in col_value:
-            col_value["data_type"] = "string"
-
-        if "case_expression" not in col_value:
-            data_type = col_value["data_type"]
-            levels = col_value["levels"]
+        if "case_expression" not in column_settings:
+            data_type = column_settings["data_type"]
+            levels = column_settings["num_levels"]
             case_fn = _get_default_case_statement_fn(default_case_statements, data_type, levels)
-            col_value["case_expression"] = case_fn(col_name, gamma_counter)
+            column_settings["case_expression"] = case_fn(col_name, gamma_counter)
         else:
-            _check_no_obvious_problem_with_case_statement(col_value["case_expression"])
-            old_case_stmt = col_value["case_expression"]
+            _check_no_obvious_problem_with_case_statement(column_settings["case_expression"])
+            old_case_stmt = column_settings["case_expression"]
             new_case_stmt = _add_null_treatment_to_case_statement(old_case_stmt)
             new_case_stmt = _add_as_gamma_to_case_statement(new_case_stmt, gamma_counter)
-            col_value["case_expression"] = new_case_stmt
+            column_settings["case_expression"] = new_case_stmt
 
-        if "m_probabilities" not in col_value:
-            levels = col_value["levels"]
+        if "m_probabilities" not in column_settings:
+            levels = column_settings["num_levels"]
             probs = _get_probabilities("m", levels)
-            col_value["m_probabilities"] = probs
+            column_settings["m_probabilities"] = probs
         else:
-            levels = col_value["levels"]
-            probs = col_value["m_probabilities"]
+            levels = column_settings["num_levels"]
+            probs = column_settings["m_probabilities"]
             if len(probs) != levels:
                 raise ValueError("Number of m probabilities provided is not equal to number of levels specified")
 
-        if "u_probabilities" not in col_value:
-            levels = col_value["levels"]
+        if "u_probabilities" not in column_settings:
+            levels = column_settings["num_levels"]
             probs = _get_probabilities("u", levels)
-            col_value["u_probabilities"] = probs
+            column_settings["u_probabilities"] = probs
         else:
-            levels = col_value["levels"]
-            probs = col_value["u_probabilities"]
+            levels = column_settings["num_levels"]
+            probs = column_settings["u_probabilities"]
             if len(probs) != levels:
                 raise ValueError("Number of m probabilities provided is not equal to number of levels specified")
 
-        col_value["m_probabilities"] = _normalise_prob_list(col_value["m_probabilities"])
-        col_value["u_probabilities"] = _normalise_prob_list(col_value["u_probabilities"])
-
+        column_settings["m_probabilities"] = _normalise_prob_list(column_settings["m_probabilities"])
+        column_settings["u_probabilities"] = _normalise_prob_list(column_settings["u_probabilities"])
 
         gamma_counter += 1
 
-    return gamma_settings_dict
+    return settings_dict
 
 
 def sql_gen_add_gammas(
-    gamma_settings_dict: dict,
+    settings_dict: dict,
     include_orig_cols: bool = False,
     unique_id_col: str = "unique_id",
     table_name: str = "df_comparison",
@@ -166,7 +172,7 @@ def sql_gen_add_gammas(
     """Build SQL statement that adds gamma columns to the comparison dataframe
 
     Args:
-        gamma_settings_dict (dict): Gamma settings dict
+        settings_dict (dict): Gamma settings dict
         include_orig_cols (bool, optional): Whether to include original strings in output df. Defaults to False.
         unique_id_col (str, optional): Name of the unique id column. Defaults to "unique_id".
         table_name (str, optional): Name of the comparison df. Defaults to "df_comparison".
@@ -176,14 +182,14 @@ def sql_gen_add_gammas(
     """
 
     gamma_case_expressions = []
-    for key in gamma_settings_dict:
-        value = gamma_settings_dict[key]
+    for key in settings_dict:
+        value = settings_dict[key]
         gamma_case_expressions.append(value["case_expression"])
 
     gammas_select_expr = ",\n".join(gamma_case_expressions)
 
     if include_orig_cols:
-        orig_cols = gamma_settings_dict.keys()
+        orig_cols = settings_dict.keys()
 
         l = [f"{c}_l" for c in orig_cols]
         r = [f"{c}_r" for c in orig_cols]
@@ -203,7 +209,7 @@ def sql_gen_add_gammas(
 
 def add_gammas(
     df_comparison,
-    gamma_settings_dict,
+    settings_dict,
     spark=None,
     include_orig_cols=False,
     unique_id_col: str = "unique_id",
@@ -212,7 +218,7 @@ def add_gammas(
 
     Args:
         df_comparison (spark dataframe): A Spark dataframe containing record comparisons
-        gamma_settings_dict (dict): The gamma settings dict
+        settings_dict (dict): The gamma settings dict
         spark (Spark session): The Spark session.
         include_orig_cols (bool, optional): Whether to include original string comparison columns or just leave gammas. Defaults to False.
         unique_id_col (str, optional): Name of the unique id column. Defaults to "unique_id".
@@ -222,12 +228,12 @@ def add_gammas(
     """
 
     # Validate the gamma settings provided by the user are valid
-    validate_settings(gamma_settings_dict)
+    validate_settings(settings_dict)
 
-    gamma_settings_dict = complete_settings_dict(gamma_settings_dict, spark)
+    settings_dict = complete_settings_dict(settings_dict, spark)
 
     sql = sql_gen_add_gammas(
-        gamma_settings_dict,
+        settings_dict,
         include_orig_cols=include_orig_cols,
         unique_id_col=unique_id_col,
     )
