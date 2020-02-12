@@ -1,8 +1,10 @@
 import logging
 import re
 import warnings
+import jsonschema
 
 from .logging_utils import log_sql
+from .validate import validate_settings
 from .sql import comparison_columns_select_expr, sql_gen_comparison_columns
 from .case_statements import (
     _add_null_treatment_to_case_statement,
@@ -218,6 +220,9 @@ def add_gammas(
     Returns:
         Spark dataframe: A dataframe containing new columns representing the gammas of the model
     """
+
+    # Validate the gamma settings provided by the user are valid
+    validate_settings(gamma_settings_dict)
 
     gamma_settings_dict = complete_settings_dict(gamma_settings_dict, spark)
 
