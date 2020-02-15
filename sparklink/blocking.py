@@ -18,10 +18,12 @@ def sql_gen_and_not_previous_rules(previous_rules: list):
 
 
 def sql_gen_block_using_rules(
+    link_type: str,
     columns_to_retain: list,
     blocking_rules: list,
     unique_id_col: str = "unique_id",
-    table_name: str = "df",
+    table_name_l: str = "df_l",
+    table_name_r: str = "df_r",
 ):
     """Build a SQL statement that implements a list of blocking rules.
 
@@ -29,6 +31,7 @@ def sql_gen_block_using_rules(
     blocking rule would be `l.surname = r.surname AND l.forename = r.forename`.
 
     Args:
+        link_type: One of 'link_only', 'dedupe_only', or 'dedupe_and_link'
         columns_to_retain: List of columns to keep in returned dataset
         blocking_rules: Each element of the list represents a blocking rule
         unique_id_col (str, optional): The name of the column containing the row's unique_id. Defaults to "unique_id".
@@ -38,10 +41,21 @@ def sql_gen_block_using_rules(
         str: A SQL statement that implements the blocking rules
     """
 
+    # In both these cases the data is in a single table
+    # (In the dedupe_and_link case the two tables have already been vertically concatenated)
+    if link_type in ['dedupe_only', 'dedupe_and_link']:
+        table_name_l = "df"
+        table_name_r = "df"
+
     if unique_id_col not in columns_to_retain:
         columns_to_retain.insert(0, unique_id_col)
 
     sql_select_expr = sql_gen_comparison_columns(columns_to_retain)
+
+    if link_type == "link_only":
+        where_condition = ""
+    else:
+        where_condition = f"where l.{unique_id_col} < r.{unique_id_col}"
 
     sqls = []
     previous_rules =[]
@@ -50,42 +64,88 @@ def sql_gen_block_using_rules(
         sql = f"""
         select
         {sql_select_expr}
-        from {table_name} as l
-        left join {table_name} as r
+        from {table_name_l} as l
+        left join {table_name_r} as r
         on
         {rule}
         {not_previous_rules_statement}
-        where l.{unique_id_col} < r.{unique_id_col}
+        {where_condition}
         """
         previous_rules.append(rule)
         sqls.append(sql)
 
-    # Note the 'union' function in pyspark > 2.0 is not the same thing as union in a sql statement
     sql = "union all".join(sqls)
 
     return sql
 
 
 def block_using_rules(
-    df,
+    link_type: str,
+    df_l,
+    df_r,
     blocking_rules: list,
     columns_to_retain: list=None,
     spark=None,
     unique_id_col="unique_id",
-    logger=log,
+    logger=log
 ):
     """Apply a series of blocking rules to create a dataframe of record comparisons.
     """
     if columns_to_retain is None:
         columns_to_retain = df.columns
 
-    sql = sql_gen_block_using_rules(columns_to_retain, blocking_rules, unique_id_col)
+    sql = sql_gen_block_using_rules(link_type, columns_to_retain, blocking_rules, unique_id_col)
 
     log_sql(sql, logger)
     df.createOrReplaceTempView("df")
     df_comparison = spark.sql(sql)
 
     return df_comparison
+
+def block_using_rules_link_and_dedupe(df_l, df_r, blocking_rules: list,  columns_to_retain: list=None,
+    spark=None,
+    unique_id_col="unique_id",
+    logger=log):
+
+    return block_using_rules("link_and_dedupe",
+                             df_l,
+                             df_r,
+                             blocking_rules,
+                             columns_to_retain,
+                             spark,
+                             unique_id_col,
+                             logger)
+
+
+def block_using_rules_link_only(df_l, df_r, blocking_rules: list,  columns_to_retain: list=None,
+    spark=None,
+    unique_id_col="unique_id",
+    logger=log):
+
+    return block_using_rules("link_only",
+                             df_l,
+                             df_r,
+                             blocking_rules,
+                             columns_to_retain,
+                             spark,
+                             unique_id_col,
+                             logger)
+
+
+def block_using_rules_dedupe_only(df_l, df_r, blocking_rules: list,  columns_to_retain: list=None,
+    spark=None,
+    unique_id_col="unique_id",
+    logger=log):
+
+    return block_using_rules("dedupe_only",
+                             df_l,
+                             None,
+                             blocking_rules,
+                             columns_to_retain,
+                             spark,
+                             unique_id_col,
+                             logger)
+
 
 
 def sql_gen_cartesian_block(
