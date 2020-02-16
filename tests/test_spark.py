@@ -3,9 +3,9 @@
 import copy
 import os
 
-from sparklink.blocking import cartestian_block, block_using_rules
+from sparklink.blocking import cartestian_block, block_using_rules_dedupe_only
 from sparklink.params import Params
-from sparklink.gammas import add_gammas
+from sparklink.gammas import add_gammas, complete_settings_dict
 from sparklink.iterate import iterate
 from sparklink.expectation_step import run_expectation_step, get_overall_log_likelihood
 from sparklink.case_statements import *
@@ -74,12 +74,12 @@ def test_expectation(spark, sqlite_con_1, params_1, gamma_settings_1):
     dfpd = pd.read_sql("select * from test1", sqlite_con_1)
     df = spark.createDataFrame(dfpd)
 
-    rules = [
+    gamma_settings_1["blocking_rules"] = [
         "l.mob = r.mob",
         "l.surname = r.surname",
     ]
 
-    df_comparison = block_using_rules(df, rules, spark=spark)
+    df_comparison = block_using_rules_dedupe_only(df, gamma_settings_1, spark=spark)
 
     df_gammas = add_gammas(
         df_comparison, gamma_settings_1, spark, include_orig_cols=False
@@ -115,12 +115,9 @@ def test_tiny_numbers(spark, sqlite_con_1):
     dfpd = pd.read_sql("select * from test1", sqlite_con_1)
     df = spark.createDataFrame(dfpd)
 
-    rules = [
-        "l.mob = r.mob",
-        "l.surname = r.surname",
-    ]
 
-    gamma_settings = {
+    settings = {
+        "link_type": "dedupe_only",
         "proportion_of_matches" : 0.4,
         "comparison_columns" : [
     {"col_name": "mob",
@@ -131,15 +128,21 @@ def test_tiny_numbers(spark, sqlite_con_1):
     },
     {"col_name":"surname",
         "num_levels": 2,
-    }]}
+    }],
+    "blocking_rules": [
+        "l.mob = r.mob",
+        "l.surname = r.surname",
+    ]}
+
+    settings = complete_settings_dict(settings)
 
 
-    df_comparison = block_using_rules(df, rules, spark=spark)
+    df_comparison = block_using_rules_dedupe_only(df, settings, spark=spark)
 
     df_gammas = add_gammas(
-        df_comparison, gamma_settings, spark, include_orig_cols=False
+        df_comparison, settings, spark, include_orig_cols=False
     )
-    params = Params(gamma_settings, spark="supress_warnings")
+    params = Params(settings, spark="supress_warnings")
 
     df_e = run_expectation_step(df_gammas, spark, params)
 
@@ -154,7 +157,9 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
         "l.surname = r.surname",
     ]
 
-    df_comparison = block_using_rules(df, rules, spark=spark)
+    gamma_settings_1["blocking_rules"] = rules
+
+    df_comparison = block_using_rules_dedupe_only(df, gamma_settings_1, spark=spark)
 
     df_gammas = add_gammas(
         df_comparison, gamma_settings_1, spark, include_orig_cols=False

@@ -33,7 +33,7 @@ def test_blocking_rules_sql_gen(db):
         "l.first_name = r.first_name"
     ]
 
-    sql = sql_gen_block_using_rules(columns, rules, table_name="test")
+    sql = sql_gen_block_using_rules("dedupe_only", columns, rules, table_name_dedupe="test")
 
     db.execute(sql)
     result = db.fetchall()

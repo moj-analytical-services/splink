@@ -6,6 +6,7 @@ import pytest
 @pytest.fixture(scope='module')
 def param_example():
     gamma_settings = {
+                    "link_type": "dedupe_only",
                       "proportion_of_matches": 0.2,
                      "comparison_columns": [
                         {"col_name": "fname"},
