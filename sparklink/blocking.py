@@ -2,6 +2,7 @@ import logging
 
 from .logging_utils import log_sql, format_sql
 from .sql import comparison_columns_select_expr, sql_gen_comparison_columns
+from .settings import _get_columns_to_retain
 
 log = logging.getLogger(__name__)
 
@@ -16,6 +17,30 @@ def sql_gen_and_not_previous_rules(previous_rules: list):
     else:
         return ""
 
+def sql_gen_vertically_concatenate(columns_to_retain: list, table_name_l = "df_l", table_name_r = "df_r"):
+
+    retain = ", ".join(columns_to_retain)
+
+    sql = f"""
+    select {retain}, 'left' as source_table
+    from {table_name_l}
+    union all
+    select {retain}, 'right' as source_table
+    from {table_name_r}
+    """
+
+    return sql
+
+def vertically_concatenate_datasets(df_l, df_r, settings, logger=log, spark=None):
+
+    columns_to_retain = _get_columns_to_retain(settings)
+    sql = sql_gen_vertically_concatenate(columns_to_retain)
+
+    df_l.createOrReplaceTempView("df_l")
+    df_r.createOrReplaceTempView("df_r")
+    log_sql(sql, logger)
+    df = spark.sql(sql)
+    return df
 
 def sql_gen_block_using_rules(
     link_type: str,
@@ -24,6 +49,7 @@ def sql_gen_block_using_rules(
     unique_id_col: str = "unique_id",
     table_name_l: str = "df_l",
     table_name_r: str = "df_r",
+    table_name_dedupe: str = "df"
 ):
     """Build a SQL statement that implements a list of blocking rules.
 
@@ -31,7 +57,7 @@ def sql_gen_block_using_rules(
     blocking rule would be `l.surname = r.surname AND l.forename = r.forename`.
 
     Args:
-        link_type: One of 'link_only', 'dedupe_only', or 'dedupe_and_link'
+        link_type: One of 'link_only', 'dedupe_only', or 'link_and_dedupe'
         columns_to_retain: List of columns to keep in returned dataset
         blocking_rules: Each element of the list represents a blocking rule
         unique_id_col (str, optional): The name of the column containing the row's unique_id. Defaults to "unique_id".
@@ -42,10 +68,10 @@ def sql_gen_block_using_rules(
     """
 
     # In both these cases the data is in a single table
-    # (In the dedupe_and_link case the two tables have already been vertically concatenated)
-    if link_type in ['dedupe_only', 'dedupe_and_link']:
-        table_name_l = "df"
-        table_name_r = "df"
+    # (In the link_and_dedupe case the two tables have already been vertically concatenated)
+    if link_type in ['dedupe_only', 'link_and_dedupe']:
+        table_name_l = table_name_dedupe
+        table_name_r = table_name_dedupe
 
     if unique_id_col not in columns_to_retain:
         columns_to_retain.insert(0, unique_id_col)
@@ -65,7 +91,7 @@ def sql_gen_block_using_rules(
         select
         {sql_select_expr}
         from {table_name_l} as l
-        left join {table_name_r} as r
+        inner join {table_name_r} as r
         on
         {rule}
         {not_previous_rules_statement}
@@ -83,7 +109,7 @@ def block_using_rules(
     link_type: str,
     df_l,
     df_r,
-    blocking_rules: list,
+    settings,
     columns_to_retain: list=None,
     spark=None,
     unique_id_col="unique_id",
@@ -92,17 +118,34 @@ def block_using_rules(
     """Apply a series of blocking rules to create a dataframe of record comparisons.
     """
     if columns_to_retain is None:
-        columns_to_retain = df.columns
+        columns_to_retain = _get_columns_to_retain(settings)
 
-    sql = sql_gen_block_using_rules(link_type, columns_to_retain, blocking_rules, unique_id_col)
+    if link_type == "dedupe_only":
+        df_l.createOrReplaceTempView("df")
+
+    if link_type == "link_only":
+        df_l.createOrReplaceTempView("df_l")
+        df_r.createOrReplaceTempView("df_r")
+
+    if link_type == "link_and_dedupe":
+        df_concat = vertically_concatenate_datasets(df_l, df_r, settings, logger=logger, spark=spark)
+        df_concat.createOrReplaceTempView("df")
+        df_concat.persist()
+
+    rules = settings["blocking_rules"]
+
+    sql = sql_gen_block_using_rules(link_type, columns_to_retain, rules, unique_id_col)
 
     log_sql(sql, logger)
-    df.createOrReplaceTempView("df")
+
     df_comparison = spark.sql(sql)
+
+    if link_type == "link_and_dedupe":
+        df_concat.unpersist()
 
     return df_comparison
 
-def block_using_rules_link_and_dedupe(df_l, df_r, blocking_rules: list,  columns_to_retain: list=None,
+def block_using_rules_link_and_dedupe(df_l, df_r, settings: list,  columns_to_retain: list=None,
     spark=None,
     unique_id_col="unique_id",
     logger=log):
@@ -110,14 +153,14 @@ def block_using_rules_link_and_dedupe(df_l, df_r, blocking_rules: list,  columns
     return block_using_rules("link_and_dedupe",
                              df_l,
                              df_r,
-                             blocking_rules,
+                             settings,
                              columns_to_retain,
                              spark,
                              unique_id_col,
                              logger)
 
 
-def block_using_rules_link_only(df_l, df_r, blocking_rules: list,  columns_to_retain: list=None,
+def block_using_rules_link_only(df_l, df_r, settings: list,  columns_to_retain: list=None,
     spark=None,
     unique_id_col="unique_id",
     logger=log):
@@ -125,22 +168,22 @@ def block_using_rules_link_only(df_l, df_r, blocking_rules: list,  columns_to_re
     return block_using_rules("link_only",
                              df_l,
                              df_r,
-                             blocking_rules,
+                             settings,
                              columns_to_retain,
                              spark,
                              unique_id_col,
                              logger)
 
 
-def block_using_rules_dedupe_only(df_l, df_r, blocking_rules: list,  columns_to_retain: list=None,
+def block_using_rules_dedupe_only(df, settings: list,  columns_to_retain: list=None,
     spark=None,
     unique_id_col="unique_id",
     logger=log):
 
     return block_using_rules("dedupe_only",
-                             df_l,
+                             df,
                              None,
-                             blocking_rules,
+                             settings,
                              columns_to_retain,
                              spark,
                              unique_id_col,

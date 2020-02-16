@@ -19,6 +19,7 @@ from sparklink.case_statements import sql_gen_case_smnt_strict_equality_2
 @pytest.fixture(scope="function")
 def gamma_settings_1():
     gamma_settings = {
+        "link_type": "dedupe_only",
         "proportion_of_matches": 0.4,
         "comparison_columns": [
             {
@@ -83,7 +84,7 @@ def sqlite_con_1(gamma_settings_1, params_1):
     one = cur.fetchone()
     columns = one.keys()
 
-    sql = sql_gen_block_using_rules(columns, rules, table_name="test1")
+    sql = sql_gen_block_using_rules("dedupe_only", columns, rules, table_name_dedupe="test1")
     df = pd.read_sql(sql, con)
     df = df.drop_duplicates(["unique_id_l", "unique_id_r"])
     df = df.sort_values(["unique_id_l", "unique_id_r"])
@@ -163,6 +164,7 @@ def sqlite_con_1(gamma_settings_1, params_1):
 @pytest.fixture(scope="function")
 def gamma_settings_2():
     gamma_settings = {
+        "link_type": "dedupe_only",
         "proportion_of_matches": 0.1,
         "comparison_columns": [
             {
@@ -291,6 +293,7 @@ def sqlite_con_3():
 @pytest.fixture(scope="function")
 def gamma_settings_4():
     gamma_settings = {
+        "link_type": "dedupe_only",
         "proportion_of_matches":0.9,
         "comparison_columns": [
             {

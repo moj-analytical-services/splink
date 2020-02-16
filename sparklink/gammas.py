@@ -105,7 +105,7 @@ def complete_settings_dict(settings_dict: dict, spark=None):
     # Complete non-column settings
     non_col_keys = ["em_convergence",
                     "unique_id_column_name",
-                    "other_columns_to_retain"]
+                    "additional_columns_to_retain"]
     for key in non_col_keys:
         if key not in settings_dict:
             settings_dict[key] =  _get_default_value(key, is_column_setting=False)

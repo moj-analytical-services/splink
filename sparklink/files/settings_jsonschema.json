@@ -5,9 +5,25 @@
   "type": "object",
   "title": "Sparklink settings",
   "required": [
-    "comparison_columns"
+    "comparison_columns",
+    "link_type"
   ],
   "properties": {
+    "link_type": {
+      "$id": "#/properties/link_type",
+      "type": "string",
+      "title": "The type of data linking task - `dedupe_only`, `link_only` or `link_and_dedupe`.  Required.",
+      "examples": [
+        "dedupe_only",
+        "link_only",
+        "link_and_dedupe"
+      ],
+      "enum": [
+        "dedupe_only",
+        "link_only",
+        "link_and_dedupe"
+      ]
+    },
     "proportion_of_matches": {
       "$id": "#/properties/proportion_of_matches",
       "type": "number",
@@ -17,7 +33,9 @@
       "minimum": 0,
       "maximum": 1,
       "examples": [
-        0.3, 0.1, 0.9
+        0.3,
+        0.1,
+        0.9
       ]
     },
     "em_convergence": {
@@ -27,7 +45,9 @@
       "description": " The algorithm will stop converging when the maximum of the change in model parameters between iterations is below this value.",
       "default": 0.0001,
       "examples": [
-        0.0001, 0.00001, 1e-6
+        0.0001,
+        0.00001,
+        1e-6
       ],
       "maximum": 0.05,
       "minimum": 1e-12
@@ -35,7 +55,7 @@
     "unique_id_column_name": {
       "$id": "#/properties/unique_id_column_name",
       "type": "string",
-      "title": "The name of the column in the input dataset representing a unique id",
+      "title": "The name of the column in the input dataset representing a unique id. For linking tasks, ids must be unique to each dataset being linked, and do not need to be globally unique across these two datasets",
       "default": "unique_id",
       "examples": [
         "unique_id"
@@ -46,7 +66,7 @@
       "type": "array",
       "title": "A list of columns to use for probabalistic matching",
       "description": "Comparisons between the values in these columns will be used to determine match scores",
-      "minItems":1,
+      "minItems": 1,
       "items": {
         "$id": "#/properties/comparison_columns/items",
         "type": "object",
@@ -73,7 +93,9 @@
             "description": "By default, for a string variable, two levels would implies level 0: no match, level 1: almost exact match.  Three levels imples level 0: no match, level 1: strings are similar but not exactly the same, level 2: strings are almost exactly the same.",
             "default": 2,
             "examples": [
-              2, 3, 4
+              2,
+              3,
+              4
             ],
             "minimum": 2
           },
@@ -83,10 +105,13 @@
             "title": "The data type of the column.  This is used to choose how similarity is assessed this column i.e. which SQL SELECT CASE statement to use.  This is ignored if you explicitly provide a case_expression.",
             "default": "string",
             "examples": [
-                "string",
+              "string",
               "numeric"
             ],
-            "enum": ["string", "numeric"]
+            "enum": [
+              "string",
+              "numeric"
+            ]
           },
           "case_expression": {
             "$id": "#/properties/comparison_columns/items/properties/case_expression",
@@ -98,9 +123,12 @@
               "CASE \n WHEN jaro_winkler_sim(first_name_l, first_name_r) < 0.94 THEN 2 \n WHEN jaro_winkler_sim(first_name_l, first_name_r) < 0.8 THEN 1 \n  ELSE 0 END"
             ],
             "allOf": [
-              {"pattern": "(CASE|case)"},
-              {"pattern": "(END|end)"}
-
+              {
+                "pattern": "(CASE|case)"
+              },
+              {
+                "pattern": "(END|end)"
+              }
             ]
           },
           "m_probabilities": {
@@ -109,10 +137,17 @@
             "title": "A array of the m probabilities for this column i.e. the probability of observing each similarity value amonst matches. There will be num_levels values in this array.",
             "description": "The first probability given corresponds to level 0: least similar.  It refers to the probability of observing level 0 in the comparison vector amongst matches.  The second probability corresponds to level 1, up to level n, most similar.",
             "examples": [
-              [0.05,0.95],
-              [0.01, 0.1, 0.89]
+              [
+                0.05,
+                0.95
+              ],
+              [
+                0.01,
+                0.1,
+                0.89
+              ]
             ],
-            "minItems":2
+            "minItems": 2
           },
           "u_probabilities": {
             "$id": "#/properties/comparison_columns/items/properties/u_probabilities",
@@ -120,10 +155,23 @@
             "title": "A array of the u probabilities for this column i.e. the probability of observing each similarity value amonst non-matches. There will be num_levels values in this array.",
             "description": "The first probability given corresponds to level 0: least similar.  It refers to the probability of observing level 0 in the comparison vector amongst matches.  The second probability corresponds to level 1, up to level n, most similar.",
             "examples": [
-              [0.9,0.1],
-              [0.8, 0.1, 0.1]
+              [
+                0.9,
+                0.1
+              ],
+              [
+                0.8,
+                0.1,
+                0.1
+              ]
             ],
-            "minItems":2
+            "minItems": 2
+          },
+          "term_frequency_adjusments": {
+            "$id": "#/properties/comparison_columns/items/properties/term_frequency_adjusments",
+            "type": "boolean",
+            "default": false,
+            "description": "Whether ex post term frequency adjustments should be made to match scores for this column"
           },
           "gamma_index": {
             "$id": "#/properties/comparison_columns/items/properties/gamma_index",
@@ -133,14 +181,47 @@
         }
       }
     },
-    "other_columns_to_retain": {
-      "$id": "#/properties/other_columns_to_retain",
+    "blocking_rules": {
+      "$id": "#/properties/blocking_rules",
+      "type": "array",
+      "title": "A list of one or more blocking rules to apply. Not needed if cartesian_product=true is set",
+      "description": "Each rule is a SQL expression represeting the ON clause in a join",
+      "items": {
+        "$id": "#/properties/blocking_rules/items",
+        "type": "string",
+        "title": "Each item in the array is a SQL expression represing a left join ON condition",
+        "default": [],
+        "examples": [
+          [
+            "l.first_name = r.first_name AND l.surname = r.surname",
+            "l.dob = r.dob"
+          ]
+        ],
+        "pattern": "^(.*)$"
+      }
+    },
+    "cartesian_product": {
+      "$id": "#/properties/cartesian_product",
+      "type": "boolean",
+      "title": "If set to true, all comparisons between the input datasets will be generated",
+      "description": "For large input datasets, the will generally be computationally intractable because it will generate numrows squared comparisons",
+      "default": false,
+      "examples": [
+        false,
+        true
+      ]
+    },
+    "additional_columns_to_retain": {
+      "$id": "#/properties/additional_columns_to_retain",
       "type": "array",
       "title": "A list of columns not being used in the probabalistic matching comparisons that you want to include in your results.",
       "default": [],
-      "examples": ["col_1", "col2"],
+      "examples": [
+        "col_1",
+        "col2"
+      ],
       "items": {
-        "$id": "#/properties/other_columns_to_retain/items",
+        "$id": "#/properties/additional_columns_to_retain/items",
         "type": "string",
         "title": "Individual strings representing other columns to retain",
         "examples": [
