@@ -97,12 +97,16 @@ def sql_gen_compute_final_group_membership_prob_from_adjustments(term_freq_colum
 
     return sql
 
-
+import warnings
 def make_adjustment_for_term_frequencies(df_e, params, settings, retain_adjustment_columns=False, spark=None, logger=log):
 
     df_e.createOrReplaceTempView("df_e")
 
     term_freq_column_list = [c["col_name"] for c in settings["comparison_columns"] if c["term_frequency_adjustments"] == True]
+
+    if len(term_freq_column_list) == 0:
+        warnings.warn("No term frequency adjustment columns are specified in your settings object.  Returning original df")
+        return df_e
 
     # Generate a lookup table for each column with 'term specific' lambdas.
     for c in term_freq_column_list:
