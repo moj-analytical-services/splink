@@ -17,7 +17,7 @@ def iterate(df_gammas, spark, params, log_iteration=False, num_iterations=10, co
 
         run_maximisation_step(df_e, spark, params)
         if log_iteration:
-            log_other(params, logger=log)
+            log_other(f"Iteration {i} complete", logger=log, level='INFO')
 
     # The final version of df_e should align to the current parameters - i.e. those computed in the last max step
     df_e = run_expectation_step(df_gammas, spark, params, compute_ll=compute_ll)

@@ -116,7 +116,6 @@ def sql_gen_block_using_rules(
 
 @check_spark_types
 def block_using_rules(
-    link_type: str,
     settings,
     spark: SparkSession,
     df_l: DataFrame=None,
@@ -128,6 +127,8 @@ def block_using_rules(
 ):
     """Apply a series of blocking rules to create a dataframe of record comparisons.
     """
+
+    link_type = settings["link_type"]
 
     if columns_to_retain is None:
         columns_to_retain = _get_columns_to_retain(settings)
@@ -157,50 +158,6 @@ def block_using_rules(
 
 
     return df_comparison
-
-@check_spark_types
-def block_using_rules_link_and_dedupe(df_l, df_r, settings: list, spark,  columns_to_retain: list=None,
-    unique_id_col="unique_id",
-    logger=log):
-
-    return block_using_rules("link_and_dedupe",
-                             settings,
-                             spark,
-                             columns_to_retain=columns_to_retain,
-                             unique_id_col=unique_id_col,
-                             logger=logger,
-                             df_l=df_l,
-                             df_r=df_r)
-
-@check_spark_types
-def block_using_rules_link_only(df_l, df_r, settings: list, spark,  columns_to_retain: list=None,
-    unique_id_col="unique_id",
-    logger=log):
-
-    return block_using_rules("link_only",
-                             settings,
-                             spark,
-                             columns_to_retain=columns_to_retain,
-                             unique_id_col=unique_id_col,
-                             logger=logger,
-                             df_l=df_l,
-                             df_r=df_r)
-
-@check_spark_types
-def block_using_rules_dedupe_only(df, settings: list, spark, columns_to_retain: list=None,
-    unique_id_col="unique_id",
-    logger=log):
-
-    return block_using_rules("dedupe_only",
-                             settings,
-                             spark,
-                             columns_to_retain=columns_to_retain,
-                             unique_id_col=unique_id_col,
-                             logger=logger,
-                             df=df)
-
-
-
 
 
 def sql_gen_cartesian_block(

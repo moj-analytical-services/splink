@@ -51,6 +51,19 @@
       "maximum": 0.05,
       "minimum": 1e-12
     },
+    "max_iterations": {
+      "$id": "#/properties/max_iterations",
+      "type": "number",
+      "title": "The maximum number of iterations to run even if convergence has not been reached",
+      "default": 100,
+      "examples": [
+        0.0001,
+        0.00001,
+        1e-6
+      ],
+      "maximum": 0.05,
+      "minimum": 1e-12
+    },
     "unique_id_column_name": {
       "$id": "#/properties/unique_id_column_name",
       "type": "string",
@@ -166,7 +179,7 @@
             ],
             "minItems": 2
           },
-          "term_frequency_adjusments": {
+          "term_frequency_adjustments": {
             "$id": "#/properties/comparison_columns/items/properties/term_frequency_adjusments",
             "type": "boolean",
             "default": false,

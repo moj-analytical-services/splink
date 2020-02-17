@@ -98,9 +98,11 @@ def sql_gen_compute_final_group_membership_prob_from_adjustments(term_freq_colum
     return sql
 
 
-def make_adjustment_for_term_frequencies(df_e, params, term_freq_column_list, retain_adjustment_columns=False, spark=None, logger=log):
+def make_adjustment_for_term_frequencies(df_e, params, settings, retain_adjustment_columns=False, spark=None, logger=log):
 
     df_e.createOrReplaceTempView("df_e")
+
+    term_freq_column_list = [c["col_name"] for c in settings["comparison_columns"] if c["term_frequency_adjustments"] == True]
 
     # Generate a lookup table for each column with 'term specific' lambdas.
     for c in term_freq_column_list:
