@@ -1,8 +1,18 @@
 import logging
 
+# For type hints. Try except to ensure the sql_gen functions even if spark doesn't exist.
+try:
+    from pyspark.sql.dataframe import DataFrame
+    from pyspark.sql.session import SparkSession
+except ImportError:
+    DataFrame = None
+    SparkSession = None
+
+
 from .logging_utils import log_sql, format_sql
 from .sql import comparison_columns_select_expr, sql_gen_comparison_columns
 from .settings import _get_columns_to_retain
+from .check_types import check_spark_types
 
 log = logging.getLogger(__name__)
 
@@ -104,24 +114,26 @@ def sql_gen_block_using_rules(
 
     return sql
 
-
+@check_spark_types
 def block_using_rules(
     link_type: str,
-    df_l,
-    df_r,
     settings,
+    spark: SparkSession,
+    df_l: DataFrame=None,
+    df_r: DataFrame=None,
+    df: DataFrame=None,
     columns_to_retain: list=None,
-    spark=None,
     unique_id_col="unique_id",
     logger=log
 ):
     """Apply a series of blocking rules to create a dataframe of record comparisons.
     """
+
     if columns_to_retain is None:
         columns_to_retain = _get_columns_to_retain(settings)
 
     if link_type == "dedupe_only":
-        df_l.createOrReplaceTempView("df")
+        df.createOrReplaceTempView("df")
 
     if link_type == "link_only":
         df_l.createOrReplaceTempView("df_l")
@@ -143,51 +155,51 @@ def block_using_rules(
     if link_type == "link_and_dedupe":
         df_concat.unpersist()
 
+
     return df_comparison
 
-def block_using_rules_link_and_dedupe(df_l, df_r, settings: list,  columns_to_retain: list=None,
-    spark=None,
+@check_spark_types
+def block_using_rules_link_and_dedupe(df_l, df_r, settings: list, spark,  columns_to_retain: list=None,
     unique_id_col="unique_id",
     logger=log):
 
     return block_using_rules("link_and_dedupe",
-                             df_l,
-                             df_r,
                              settings,
-                             columns_to_retain,
                              spark,
-                             unique_id_col,
-                             logger)
+                             columns_to_retain=columns_to_retain,
+                             unique_id_col=unique_id_col,
+                             logger=logger,
+                             df_l=df_l,
+                             df_r=df_r)
 
-
-def block_using_rules_link_only(df_l, df_r, settings: list,  columns_to_retain: list=None,
-    spark=None,
+@check_spark_types
+def block_using_rules_link_only(df_l, df_r, settings: list, spark,  columns_to_retain: list=None,
     unique_id_col="unique_id",
     logger=log):
 
     return block_using_rules("link_only",
-                             df_l,
-                             df_r,
                              settings,
-                             columns_to_retain,
                              spark,
-                             unique_id_col,
-                             logger)
+                             columns_to_retain=columns_to_retain,
+                             unique_id_col=unique_id_col,
+                             logger=logger,
+                             df_l=df_l,
+                             df_r=df_r)
 
-
-def block_using_rules_dedupe_only(df, settings: list,  columns_to_retain: list=None,
-    spark=None,
+@check_spark_types
+def block_using_rules_dedupe_only(df, settings: list, spark, columns_to_retain: list=None,
     unique_id_col="unique_id",
     logger=log):
 
     return block_using_rules("dedupe_only",
-                             df,
-                             None,
                              settings,
-                             columns_to_retain,
                              spark,
-                             unique_id_col,
-                             logger)
+                             columns_to_retain=columns_to_retain,
+                             unique_id_col=unique_id_col,
+                             logger=logger,
+                             df=df)
+
+
 
 
 

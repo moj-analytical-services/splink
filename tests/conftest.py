@@ -43,6 +43,7 @@ def gamma_settings_1():
                 "u_probabilities": [0.5, 0.25, 0.25],
             },
         ],
+        "blocking_rules": []
     }
     gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")
     yield gamma_settings
@@ -194,6 +195,7 @@ def gamma_settings_2():
                 "u_probabilities": [0.65, 0.35],
             },
         ],
+        "blocking_rules": []
     }
 
     gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")
@@ -311,7 +313,8 @@ def gamma_settings_4():
                 "num_levels": 2,
                 "case_expression": sql_gen_case_smnt_strict_equality_2("col_20_levels"),
             },
-        ]
+        ],
+        "blocking_rules": []
     }
 
     gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")
