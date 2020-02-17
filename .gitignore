@@ -1,3 +1,5 @@
+*.zip
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -135,5 +137,5 @@ dmypy.json
 .pyre/
 
 
-# gitignore exception for docs files (otherwise docs/build does not get saved in repo 
+# gitignore exception for docs files (otherwise docs/build does not get saved in repo
 !docs/*

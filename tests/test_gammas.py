@@ -60,6 +60,7 @@ def test_add_gammas(db):
                                     """
             },
         ],
+        "blocking_rules": []
     }
 
     gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")

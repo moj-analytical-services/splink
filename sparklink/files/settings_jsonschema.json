@@ -4,10 +4,9 @@
   "$id": "http://example.com/root.json",
   "type": "object",
   "title": "Sparklink settings",
-  "required": [
-    "comparison_columns",
-    "link_type"
-  ],
+  "oneOf": [{"required": ["blocking_rules", "comparison_columns", "link_type"]},
+    {"required": ["cartesian_product", "comparison_columns", "link_type"]}
+            ],
   "properties": {
     "link_type": {
       "$id": "#/properties/link_type",

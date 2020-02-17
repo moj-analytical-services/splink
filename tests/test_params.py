@@ -12,7 +12,8 @@ def param_example():
                         {"col_name": "fname"},
                         {"col_name": "sname",
                         "num_levels": 3}
-                    ]
+                    ],
+                    "blocking_rules": []
                     }
 
     params = Params(gamma_settings, spark="supress_warnings")
