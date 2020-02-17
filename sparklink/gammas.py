@@ -120,7 +120,7 @@ def complete_settings_dict(settings_dict: dict, spark=None):
         col_name = column_settings["col_name"]
 
         # Populate non-existing keys from defaults
-        for key in ["num_levels", "data_type"]:
+        for key in ["num_levels", "data_type", "term_frequency_adjustments"]:
             if key not in column_settings:
                 default = _get_default_value(key, is_column_setting=True)
                 column_settings[key] = default
