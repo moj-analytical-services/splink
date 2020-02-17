@@ -3,7 +3,7 @@
 import copy
 import os
 
-from sparklink.blocking import cartestian_block, block_using_rules_dedupe_only
+from sparklink.blocking import cartestian_block, block_using_rules
 from sparklink.params import Params
 from sparklink.gammas import add_gammas, complete_settings_dict
 from sparklink.iterate import iterate
@@ -79,7 +79,7 @@ def test_expectation(spark, sqlite_con_1, params_1, gamma_settings_1):
         "l.surname = r.surname",
     ]
 
-    df_comparison = block_using_rules_dedupe_only(df, gamma_settings_1, spark=spark)
+    df_comparison = block_using_rules(gamma_settings_1, df=df, spark=spark)
 
     df_gammas = add_gammas(
         df_comparison, gamma_settings_1, spark, include_orig_cols=False
@@ -137,7 +137,7 @@ def test_tiny_numbers(spark, sqlite_con_1):
     settings = complete_settings_dict(settings)
 
 
-    df_comparison = block_using_rules_dedupe_only(df, settings, spark=spark)
+    df_comparison = block_using_rules(settings, df=df, spark=spark)
 
     df_gammas = add_gammas(
         df_comparison, settings, spark, include_orig_cols=False
@@ -159,7 +159,7 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
 
     gamma_settings_1["blocking_rules"] = rules
 
-    df_comparison = block_using_rules_dedupe_only(df, gamma_settings_1, spark=spark)
+    df_comparison = block_using_rules(gamma_settings_1, df=df, spark=spark)
 
     df_gammas = add_gammas(
         df_comparison, gamma_settings_1, spark, include_orig_cols=False
