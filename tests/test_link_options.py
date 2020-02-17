@@ -2,7 +2,7 @@ import pytest
 import sqlite3
 import pandas as pd
 
-from sparklink.blocking import sql_gen_block_using_rules
+from sparklink.blocking import sql_gen_block_using_rules, sql_gen_vertically_concatenate
 from sparklink.settings import _get_columns_to_retain
 from sparklink.gammas import complete_settings_dict
 
@@ -48,6 +48,11 @@ def link_dedupe_data():
 
     data_into_table(data_r, "df_r", con)
 
+    cols_to_retain = ["unique_id", "surname", "first_name"]
+    sql = sql_gen_vertically_concatenate(cols_to_retain)
+    df = pd.read_sql(sql, con)
+    df.to_sql("df", con, index=False)
+
     yield con
 
 def test_link_only(link_dedupe_data):
@@ -69,3 +74,24 @@ def test_link_only(link_dedupe_data):
 
     assert list(df["unique_id_l"]) == [1,1,2,2]
     assert list(df["unique_id_r"]) == [7,9,8,9]
+
+
+def test_link_dedupe(link_dedupe_data):
+
+    settings = {
+        "link_type": "link_and_dedupe",
+        "comparison_columns": [{"col_name": "first_name"},
+                            {"col_name": "surname"}],
+        "blocking_rules": [
+            "l.first_name = r.first_name",
+            "l.surname = r.surname"
+        ]
+    }
+    settings = complete_settings_dict(settings)
+    ctr = _get_columns_to_retain(settings)
+    sql = sql_gen_block_using_rules("link_and_dedupe", ctr, settings["blocking_rules"])
+    df  = pd.read_sql(sql, link_dedupe_data)
+    df = df.sort_values(["unique_id_l", "unique_id_r"])
+
+    assert list(df["unique_id_l"]) == [1,1,2,2,7,8]
+    assert list(df["unique_id_r"]) == [7,9,8,9,9,9]
