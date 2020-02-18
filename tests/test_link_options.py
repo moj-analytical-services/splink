@@ -4,7 +4,7 @@ import pandas as pd
 
 from sparklink.blocking import sql_gen_block_using_rules, sql_gen_vertically_concatenate
 from sparklink.settings import _get_columns_to_retain
-from sparklink.gammas import complete_settings_dict
+from sparklink.settings import complete_settings_dict
 
 def data_into_table(data, table_name, con):
     cur = con.cursor()

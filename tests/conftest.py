@@ -37,7 +37,7 @@ def gamma_settings_1():
             when substr(surname_l,1, 3) =  substr(surname_r, 1, 3) then 1
             else 0
             end
-            as gamma_1
+            as gamma_surname
             """,
                 "m_probabilities": [0.1, 0.2, 0.7],
                 "u_probabilities": [0.5, 0.25, 0.25],
@@ -94,6 +94,7 @@ def sqlite_con_1(gamma_settings_1, params_1):
     sql = sql_gen_add_gammas(
         gamma_settings_1, include_orig_cols=True, table_name="df_comparison1"
     )
+
     df = pd.read_sql(sql, con)
     df.to_sql("df_gammas1", con, index=False)
 
@@ -183,7 +184,7 @@ def gamma_settings_2():
         when substr(surname_l,1, 3) =  substr(surname_r, 1, 3) then 1
         else 0
         end
-        as gamma_1
+        as gamma_surname
         """,
                 "m_probabilities": [0.05, 0.2, 0.75],
                 "u_probabilities": [0.4, 0.3, 0.3],
@@ -332,10 +333,11 @@ def params_4(gamma_settings_4):
 
 
 @pytest.fixture(scope="function")
-def sqlite_con_4():
+def sqlite_con_4(gamma_settings_4):
 
     ## Going to create all combinatinos of gammas in the right frequencies to guarantee independence
 
+    col_names = [c["col_name"] for c in gamma_settings_4["comparison_columns"]]
     ## Create df gammas for non-matches
     probs = [
         0.05,
@@ -345,10 +347,12 @@ def sqlite_con_4():
     iprobs = [1 / p for p in probs]
 
     df_nm = None
+
     for index, num_options in enumerate(iprobs):
+        col_name = col_names[index]
         n = int(num_options)
         df_nm_new = pd.DataFrame(
-            {f"gamma_{index}": [0] * (n - 1) + [1], "join_col": [1] * n}
+            {f"gamma_{col_name}": [0] * (n - 1) + [1], "join_col": [1] * n}
         )  # Creates n rec
         if df_nm is not None:
             df_nm = df_nm.merge(df_nm_new, left_on="join_col", right_on="join_col")
@@ -368,9 +372,10 @@ def sqlite_con_4():
 
     df_m = None
     for index, num_options in enumerate(iprobs):
+        col_name = col_names[index]
         n = int(num_options)
         df_m_new = pd.DataFrame(
-            {f"gamma_{index}": [1] * (n - 1) + [0], "join_col": [1] * n}
+            {f"gamma_{col_name}": [1] * (n - 1) + [0], "join_col": [1] * n}
         )
         if df_m is not None:
             df_m = df_m.merge(df_m_new, left_on="join_col", right_on="join_col")

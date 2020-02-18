@@ -1,4 +1,4 @@
-from sparklink.gammas import complete_settings_dict
+from sparklink.settings import complete_settings_dict
 from sparklink.validate import validate_settings
 from sparklink.params import Params
 from sparklink.case_statements import _check_jaro_registered

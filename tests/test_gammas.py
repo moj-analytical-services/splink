@@ -56,7 +56,7 @@ def test_add_gammas(db):
                                     when substr(sname_l,1, 3) =  substr(sname_r, 1, 3) then 1
                                     else 0
                                     end
-                                    as gamma_1
+                                    as gamma_sname
                                     """
             },
         ],
@@ -73,10 +73,10 @@ def test_add_gammas(db):
     result = [dict(r) for r in result]
 
     correct_answer = [
-        {"unique_id_l": 1, "unique_id_r": 2, "gamma_0": 1, "gamma_1": 2},
-        {"unique_id_l": 3, "unique_id_r": 4, "gamma_0": 1, "gamma_1": 1},
-        {"unique_id_l": 5, "unique_id_r": 6, "gamma_0": -1, "gamma_1": -1},
-        {"unique_id_l": 7, "unique_id_r": 8, "gamma_0": 0, "gamma_1": 0},
+        {"unique_id_l": 1, "unique_id_r": 2, "gamma_fname": 1, "gamma_sname": 2},
+        {"unique_id_l": 3, "unique_id_r": 4, "gamma_fname": 1, "gamma_sname": 1},
+        {"unique_id_l": 5, "unique_id_r": 6, "gamma_fname": -1, "gamma_sname": -1},
+        {"unique_id_l": 7, "unique_id_r": 8, "gamma_fname": 0, "gamma_sname": 0},
     ]
 
     pd_correct = pd.DataFrame(correct_answer)
@@ -96,9 +96,9 @@ def test_add_gammas(db):
         "unique_id_r",
         "fname_l",
         "fname_r",
+        "gamma_fname",
         "sname_l",
         "sname_r",
-        "gamma_0",
-        "gamma_1",
+        "gamma_sname",
     ]
     assert col_names == correct_col_names

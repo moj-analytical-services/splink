@@ -30,7 +30,6 @@ class Params:
 
     def __init__(self, settings={}, spark=None):
 
-
         self.param_history = []
 
         self.iteration = 1
@@ -60,12 +59,14 @@ class Params:
             col_name = col_dict["col_name"]
             i = col_dict["gamma_index"]
 
-            self.params["π"][f"gamma_{i}"] = {}
-            self.params["π"][f"gamma_{i}"]["desc"] = f"Comparison of {col_name}"
-            self.params["π"][f"gamma_{i}"]["column_name"] = f"{col_name}"
+            self.params["π"][f"gamma_{col_name}"] = {}
+            self.params["π"][f"gamma_{col_name}"]["gamma_index"] = i
+
+            self.params["π"][f"gamma_{col_name}"]["desc"] = f"Comparison of {col_name}"
+            self.params["π"][f"gamma_{col_name}"]["column_name"] = f"{col_name}"
 
             num_levels = col_dict["num_levels"]
-            self.params["π"][f"gamma_{i}"]["num_levels"] = num_levels
+            self.params["π"][f"gamma_{col_name}"]["num_levels"] = num_levels
 
             prob_dist_match = {}
             prob_dist_non_match = {}
@@ -89,8 +90,8 @@ class Params:
                     "probability": probs_nm[level_num],
                 }
 
-            self.params["π"][f"gamma_{i}"]["prob_dist_match"] = prob_dist_match
-            self.params["π"][f"gamma_{i}"]["prob_dist_non_match"] = prob_dist_non_match
+            self.params["π"][f"gamma_{col_name}"]["prob_dist_match"] = prob_dist_match
+            self.params["π"][f"gamma_{col_name}"]["prob_dist_non_match"] = prob_dist_non_match
 
     def set_pi_value(self, gamma_str, level_int, match_str, prob_float):
         """

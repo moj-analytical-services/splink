@@ -83,8 +83,7 @@ def sql_gen_expected_match_prob(params, table_name="df_with_gamma_probs"):
     match_prob_expression = f"({castλ} * {numerator})/(( {castλ} * {numerator}) + ({castoneminusλ} * {denom_part})) as match_probability"
 
     sql = f"""
-    select *,
-    {match_prob_expression}
+    select {match_prob_expression}, *
     from {table_name}
     """
 
