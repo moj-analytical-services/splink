@@ -108,19 +108,7 @@ def sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
     return sql
 
 
-def sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_probs"):
-    gamma_cols = params.gamma_cols
-
-    numerator = " * ".join([f"prob_{g}_match" for g in gamma_cols])
-    denom_part = " * ".join([f"prob_{g}_non_match" for g in gamma_cols])
-
-    λ = params.params['λ']
-    castλ = f"cast({λ} as double)"
-    castoneminusλ = f"cast({1-λ} as double)"
-    match_prob_expression = f"({castλ} * {numerator})/(( {castλ} * {numerator}) + ({castoneminusλ} * {denom_part})) as match_probability"
-
-    # Get select expression for the other columns to select
-
+def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
     # Column order for case statement.  We want orig_col_l, orig_col_r, gamma_orig_col, prob_gamma_u, prob_gamma_m
     select_cols = OrderedDict()
     select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
@@ -136,11 +124,47 @@ def sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_prob
         if settings["retain_intermediate_calculation_columns"]:
             select_cols[f"prob_gamma_{col_name}_non_match"] = f"prob_gamma_{col_name}_non_match"
             select_cols[f"prob_gamma_{col_name}_match"] = f"prob_gamma_{col_name}_match"
+            if tf_adj_cols:
+                if col["term_frequency_adjustments"]:
+                    select_cols[col_name+"_adj"] =  col_name+"_adj"
 
     for c in settings["additional_columns_to_retain"]:
         select_cols[c] = c
+    return ", ".join(select_cols.values())
 
-    select_expr =  ", ".join(select_cols.values())
+def sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_probs"):
+    gamma_cols = params.gamma_cols
+
+    numerator = " * ".join([f"prob_{g}_match" for g in gamma_cols])
+    denom_part = " * ".join([f"prob_{g}_non_match" for g in gamma_cols])
+
+    λ = params.params['λ']
+    castλ = f"cast({λ} as double)"
+    castoneminusλ = f"cast({1-λ} as double)"
+    match_prob_expression = f"({castλ} * {numerator})/(( {castλ} * {numerator}) + ({castoneminusλ} * {denom_part})) as match_probability"
+
+    # Get select expression for the other columns to select
+
+    # Column order for case statement.  We want orig_col_l, orig_col_r, gamma_orig_col, prob_gamma_u, prob_gamma_m
+    # select_cols = OrderedDict()
+    # select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
+
+    # for col in settings["comparison_columns"]:
+    #     col_name = col["col_name"]
+    #     if settings["retain_matching_columns"]:
+    #         select_cols = _add_left_right(select_cols, col_name)
+    #     if col["term_frequency_adjustments"]:
+    #         select_cols = _add_left_right(select_cols, col_name)
+    #     select_cols["gamma_" + col_name] = "gamma_" + col_name
+
+    #     if settings["retain_intermediate_calculation_columns"]:
+    #         select_cols[f"prob_gamma_{col_name}_non_match"] = f"prob_gamma_{col_name}_non_match"
+    #         select_cols[f"prob_gamma_{col_name}_match"] = f"prob_gamma_{col_name}_match"
+
+    # for c in settings["additional_columns_to_retain"]:
+    #     select_cols[c] = c
+
+    select_expr = _column_order_df_e_select_expr(settings)
 
     sql = f"""
     select {match_prob_expression}, {select_expr}
