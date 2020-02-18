@@ -170,10 +170,10 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
 
     assert params_1.params["λ"] == pytest.approx(0.540922141)
 
-    assert params_1.params["π"]["gamma_0"]["prob_dist_match"]["level_0"][
+    assert params_1.params["π"]["gamma_mob"]["prob_dist_match"]["level_0"][
         "probability"
     ] == pytest.approx(0.087438272, abs=0.0001)
-    assert params_1.params["π"]["gamma_1"]["prob_dist_non_match"]["level_1"][
+    assert params_1.params["π"]["gamma_surname"]["prob_dist_non_match"]["level_1"][
         "probability"
     ] == pytest.approx(0.160167628, abs=0.0001)
 
@@ -205,10 +205,10 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
 
 
 
-    assert params_1.params["π"]["gamma_0"]["prob_dist_match"]["level_0"][
+    assert params_1.params["π"]["gamma_mob"]["prob_dist_match"]["level_0"][
         "probability"
     ] == pytest.approx(0.088546179, abs=0.0001)
-    assert params_1.params["π"]["gamma_1"]["prob_dist_non_match"]["level_1"][
+    assert params_1.params["π"]["gamma_surname"]["prob_dist_non_match"]["level_1"][
         "probability"
     ] == pytest.approx(0.109234086, abs=0.0001)
 
@@ -220,8 +220,8 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
     ## Now test whether, when we
 
     data = params_1.convert_params_dict_to_data(original_params)
-    val1 = {'gamma': 'gamma_0', 'match': 0, 'value_of_gamma': 'level_0', 'probability': 0.8, 'value': 0, 'column': 'mob'}
-    val2 = {'gamma': 'gamma_1', 'match': 1, 'value_of_gamma': 'level_1', 'probability': 0.2, 'value': 1, 'column': 'surname'}
+    val1 = {'gamma': 'gamma_mob', 'match': 0, 'value_of_gamma': 'level_0', 'probability': 0.8, 'value': 0, 'column': 'mob'}
+    val2 = {'gamma': 'gamma_surname', 'match': 1, 'value_of_gamma': 'level_1', 'probability': 0.2, 'value': 1, 'column': 'surname'}
 
     assert val1 in data
     assert val2 in data
@@ -240,14 +240,14 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
 
     result_list = params_1.iteration_history_df_gammas()
 
-    val1 = {'iteration': 0, 'gamma': 'gamma_0', 'match': 0, 'value_of_gamma': 'level_0', 'probability': 0.8, 'value': 0, 'column': 'mob'}
+    val1 = {'iteration': 0, 'gamma': 'gamma_mob', 'match': 0, 'value_of_gamma': 'level_0', 'probability': 0.8, 'value': 0, 'column': 'mob'}
     assert val1 in result_list
 
-    val2 = {'iteration': 1, 'gamma': 'gamma_1', 'match': 0, 'value_of_gamma': 'level_1', 'probability': 0.160167628, 'value': 1, 'column': 'surname'}
+    val2 = {'iteration': 1, 'gamma': 'gamma_surname', 'match': 0, 'value_of_gamma': 'level_1', 'probability': 0.160167628, 'value': 1, 'column': 'surname'}
 
     for r in result_list:
         if r["iteration"] == 1:
-            if r["gamma"] == 'gamma_1':
+            if r["gamma"] == 'gamma_surname':
                 if r["match"] == 0:
                     if r["value"] == 1:
                         record = r
@@ -270,10 +270,7 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
     # print(json.dumps(params_1.to_dict(), indent=4))
 
     params_1.save_params_to_json_file(fname)
-    print(fname)
-    print(fname)
-    print(fname)
-    print(fname)
+
     from sparklink.params import load_params_from_json
     p = load_params_from_json(fname)
     assert p.params["λ"] == pytest.approx(params_1.params['λ'])
@@ -294,55 +291,55 @@ def test_case_statements(spark, sqlite_con_3):
     df = spark.createDataFrame(dfpd)
     df.createOrReplaceTempView("str_comp")
 
-    case_statement = sql_gen_case_stmt_levenshtein_3("str_col", 0)
+    case_statement = sql_gen_case_stmt_levenshtein_3("str_col", "str_col")
     sql = f"""select {case_statement} from str_comp"""
     df = spark.sql(sql).toPandas()
 
-    assert df.loc[0,'gamma_0'] == 2
-    assert df.loc[1,'gamma_0'] == 1
-    assert df.loc[2,'gamma_0'] == 0
-    assert df.loc[3,'gamma_0'] == -1
-    assert df.loc[4,'gamma_0'] == -1
+    assert df.loc[0,'gamma_str_col'] == 2
+    assert df.loc[1,'gamma_str_col'] == 1
+    assert df.loc[2,'gamma_str_col'] == 0
+    assert df.loc[3,'gamma_str_col'] == -1
+    assert df.loc[4,'gamma_str_col'] == -1
 
-    case_statement = sql_gen_case_stmt_levenshtein_4("str_col", 0)
+    case_statement = sql_gen_case_stmt_levenshtein_4("str_col", "str_col")
     sql = f"""select {case_statement} from str_comp"""
     df = spark.sql(sql).toPandas()
 
-    assert df.loc[0,'gamma_0'] == 3
-    assert df.loc[1,'gamma_0'] == 2
-    assert df.loc[2,'gamma_0'] == 0
-    assert df.loc[3,'gamma_0'] == -1
-    assert df.loc[4,'gamma_0'] == -1
+    assert df.loc[0,'gamma_str_col'] == 3
+    assert df.loc[1,'gamma_str_col'] == 2
+    assert df.loc[2,'gamma_str_col'] == 0
+    assert df.loc[3,'gamma_str_col'] == -1
+    assert df.loc[4,'gamma_str_col'] == -1
 
-    case_statement = sql_gen_gammas_case_stmt_jaro_2("str_col", 0)
+    case_statement = sql_gen_gammas_case_stmt_jaro_2("str_col", "str_col")
     sql = f"""select {case_statement} from str_comp"""
     df = spark.sql(sql).toPandas()
 
-    assert df.loc[0,'gamma_0'] == 1
-    assert df.loc[1,'gamma_0'] == 1
-    assert df.loc[2,'gamma_0'] == 0
-    assert df.loc[3,'gamma_0'] == -1
-    assert df.loc[4,'gamma_0'] == -1
+    assert df.loc[0,'gamma_str_col'] == 1
+    assert df.loc[1,'gamma_str_col'] == 1
+    assert df.loc[2,'gamma_str_col'] == 0
+    assert df.loc[3,'gamma_str_col'] == -1
+    assert df.loc[4,'gamma_str_col'] == -1
 
-    case_statement = sql_gen_gammas_case_stmt_jaro_3("str_col", 0)
+    case_statement = sql_gen_gammas_case_stmt_jaro_3("str_col", "str_col")
     sql = f"""select {case_statement} from str_comp"""
     df = spark.sql(sql).toPandas()
 
-    assert df.loc[0,'gamma_0'] == 2
-    assert df.loc[1,'gamma_0'] == 2
-    assert df.loc[2,'gamma_0'] == 0
-    assert df.loc[3,'gamma_0'] == -1
-    assert df.loc[4,'gamma_0'] == -1
+    assert df.loc[0,'gamma_str_col'] == 2
+    assert df.loc[1,'gamma_str_col'] == 2
+    assert df.loc[2,'gamma_str_col'] == 0
+    assert df.loc[3,'gamma_str_col'] == -1
+    assert df.loc[4,'gamma_str_col'] == -1
 
-    case_statement = sql_gen_gammas_case_stmt_jaro_4("str_col", 0, threshold3=0.001)
+    case_statement = sql_gen_gammas_case_stmt_jaro_4("str_col", "str_col", threshold3=0.001)
     sql = f"""select {case_statement} from str_comp"""
     df = spark.sql(sql).toPandas()
 
-    assert df.loc[0,'gamma_0'] == 3
-    assert df.loc[1,'gamma_0'] == 3
-    assert df.loc[2,'gamma_0'] == 1
-    assert df.loc[3,'gamma_0'] == -1
-    assert df.loc[4,'gamma_0'] == -1
+    assert df.loc[0,'gamma_str_col'] == 3
+    assert df.loc[1,'gamma_str_col'] == 3
+    assert df.loc[2,'gamma_str_col'] == 1
+    assert df.loc[3,'gamma_str_col'] == -1
+    assert df.loc[4,'gamma_str_col'] == -1
 
 
 from sparklink.gammas import add_gammas
@@ -355,12 +352,12 @@ def test_iteration_known_data_generating_process(spark, gamma_settings_4, params
 
     df_e = iterate(df_gammas, spark, params_4, num_iterations=40, compute_ll=False)
 
-    assert params_4.params["π"]["gamma_0"]["prob_dist_match"]["level_0"]["probability"] == pytest.approx(0.05, abs=0.002)
-    assert params_4.params["π"]["gamma_1"]["prob_dist_match"]["level_0"]["probability"] == pytest.approx(0.1, abs=0.002)
-    assert params_4.params["π"]["gamma_2"]["prob_dist_match"]["level_0"]["probability"] == pytest.approx(0.05, abs=0.002)
+    assert params_4.params["π"]["gamma_col_2_levels"]["prob_dist_match"]["level_0"]["probability"] == pytest.approx(0.05, abs=0.002)
+    assert params_4.params["π"]["gamma_col_5_levels"]["prob_dist_match"]["level_0"]["probability"] == pytest.approx(0.1, abs=0.002)
+    assert params_4.params["π"]["gamma_col_20_levels"]["prob_dist_match"]["level_0"]["probability"] == pytest.approx(0.05, abs=0.002)
 
 
-    assert params_4.params["π"]["gamma_0"]["prob_dist_non_match"]["level_1"]["probability"] == pytest.approx(0.05, abs=0.002)
-    assert params_4.params["π"]["gamma_1"]["prob_dist_non_match"]["level_1"]["probability"] == pytest.approx(0.2, abs=0.002)
-    assert params_4.params["π"]["gamma_2"]["prob_dist_non_match"]["level_1"]["probability"] == pytest.approx(0.5, abs=0.002)
+    assert params_4.params["π"]["gamma_col_2_levels"]["prob_dist_non_match"]["level_1"]["probability"] == pytest.approx(0.05, abs=0.002)
+    assert params_4.params["π"]["gamma_col_5_levels"]["prob_dist_non_match"]["level_1"]["probability"] == pytest.approx(0.2, abs=0.002)
+    assert params_4.params["π"]["gamma_col_20_levels"]["prob_dist_non_match"]["level_1"]["probability"] == pytest.approx(0.5, abs=0.002)
 

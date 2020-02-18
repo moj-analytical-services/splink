@@ -27,7 +27,7 @@ def test_prob_sum_one(param_example):
     p = param_example.params
 
     for m in ["prob_dist_match", "prob_dist_non_match"]:
-        for g in ["gamma_0", "gamma_1"]:
+        for g in ["gamma_fname", "gamma_sname"]:
             levels  = p["π"][g][m]
 
             total = 0
@@ -40,19 +40,19 @@ def test_update(param_example):
 
 
     pi_df_collected = [
-     {'gamma_value': 1, 'new_probability_match': 0.9, 'new_probability_non_match': 0.1, 'gamma_col': 'gamma_0'},
-     {'gamma_value': 0, 'new_probability_match': 0.2, 'new_probability_non_match': 0.8, 'gamma_col': 'gamma_0'},
-     {'gamma_value': 1, 'new_probability_match': 0.9, 'new_probability_non_match': 0.1, 'gamma_col': 'gamma_1'},
-     {'gamma_value': 2, 'new_probability_match': 0.7, 'new_probability_non_match': 0.3, 'gamma_col': 'gamma_1'},
-     {'gamma_value': 0, 'new_probability_match': 0.5, 'new_probability_non_match': 0.5, 'gamma_col': 'gamma_1'}]
+     {'gamma_value': 1, 'new_probability_match': 0.9, 'new_probability_non_match': 0.1, 'gamma_col': 'gamma_fname'},
+     {'gamma_value': 0, 'new_probability_match': 0.2, 'new_probability_non_match': 0.8, 'gamma_col': 'gamma_fname'},
+     {'gamma_value': 1, 'new_probability_match': 0.9, 'new_probability_non_match': 0.1, 'gamma_col': 'gamma_sname'},
+     {'gamma_value': 2, 'new_probability_match': 0.7, 'new_probability_non_match': 0.3, 'gamma_col': 'gamma_sname'},
+     {'gamma_value': 0, 'new_probability_match': 0.5, 'new_probability_non_match': 0.5, 'gamma_col': 'gamma_sname'}]
 
     param_example.save_params_to_iteration_history()
     param_example.reset_param_values_to_none()
-    assert param_example.params["π"]["gamma_0"]["prob_dist_match"]["level_0"]["probability"] is None
+    assert param_example.params["π"]["gamma_fname"]["prob_dist_match"]["level_0"]["probability"] is None
     param_example.populate_params(0.2, pi_df_collected)
 
     new_params = param_example.params
 
-    assert new_params["π"]["gamma_0"]["prob_dist_match"]["level_0"]["probability"] == 0.2
-    assert new_params["π"]["gamma_0"]["prob_dist_non_match"]["level_0"]["probability"] == 0.8
+    assert new_params["π"]["gamma_fname"]["prob_dist_match"]["level_0"]["probability"] == 0.2
+    assert new_params["π"]["gamma_fname"]["prob_dist_non_match"]["level_0"]["probability"] == 0.8
 
