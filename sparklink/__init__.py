@@ -5,6 +5,7 @@ from sparklink.case_statements import _check_jaro_registered
 from sparklink.blocking import block_using_rules
 from sparklink.gammas import add_gammas
 from sparklink.iterate import iterate
+from sparklink.expectation_step import run_expectation_step
 from sparklink.term_frequencies import make_adjustment_for_term_frequencies
 
 try:
@@ -73,13 +74,20 @@ class Sparklink():
         if self.settings["link_type"] in ("link_only", "link_and_dedupe"):
             return block_using_rules(self.settings, self.spark, df_l = self.df_l, df_r=self.df_r)
 
+    def manually_apply_fellegi_sunter_weights(self):
+        df_comparison = self._get_df_comparison()
+        df_gammas = add_gammas(df_comparison, self.settings, self.spark, include_orig_cols = True)
+        return run_expectation_step(df_gammas, self.params, self.settings, self.spark)
+
+
+
 
     def get_scored_comparisons(self, persist_df_gammas=True):
         df_comparison = self._get_df_comparison()
         df_gammas = add_gammas(df_comparison, self.settings, self.spark, include_orig_cols = True)
         df_gammas.persist()
 
-        df_e = iterate(df_gammas, self.spark, self.params, log_iteration=True, num_iterations=5, compute_ll=False)
+        df_e = iterate(df_gammas, self.params, self.settings, self.spark, log_iteration=True, num_iterations=5, compute_ll=False)
         df_gammas.unpersist()
         return df_e
 

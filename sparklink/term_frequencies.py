@@ -4,7 +4,7 @@
 import logging
 
 from .logging_utils import log_sql, format_sql
-
+from .expectation_step import _column_order_df_e_select_expr
 log = logging.getLogger(__name__)
 
 def sql_gen_bayes_string(probs):
@@ -86,14 +86,24 @@ def sql_gen_add_adjumentments_to_df_e(term_freq_column_list):
     return sql
 
 
-def sql_gen_compute_final_group_membership_prob_from_adjustments(term_freq_column_list, table_name="df_e_adj"):
+def sql_gen_compute_final_group_membership_prob_from_adjustments(term_freq_column_list, settings, table_name="df_e_adj"):
 
     term_freq_column_list = [c + "_adj" for c in term_freq_column_list]
     term_freq_column_list.insert(0, "match_probability")
+    tf_adjusted_match_prob_expr = sql_gen_bayes_string(term_freq_column_list)
+
+    select_expr = _column_order_df_e_select_expr(settings, tf_adj_cols=True)
+
     sql = f"""
-    select *, {sql_gen_bayes_string(term_freq_column_list)} as tf_adjusted_match_prob
+    select
+        {tf_adjusted_match_prob_expr} as tf_adjusted_match_prob,
+        match_probability,
+        {select_expr}
+
     from {table_name}
     """
+
+    print(sql)
 
     return sql
 
@@ -121,7 +131,7 @@ def make_adjustment_for_term_frequencies(df_e, params, settings, retain_adjustme
     df_e_adj = spark.sql(sql)
     df_e_adj.createOrReplaceTempView("df_e_adj")
 
-    sql = sql_gen_compute_final_group_membership_prob_from_adjustments(term_freq_column_list)
+    sql = sql_gen_compute_final_group_membership_prob_from_adjustments(term_freq_column_list, settings)
     log_sql(sql, logger)
     df = spark.sql(sql)
     if not retain_adjustment_columns:
