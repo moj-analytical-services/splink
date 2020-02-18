@@ -86,7 +86,7 @@ def test_expectation(spark, sqlite_con_1, params_1, gamma_settings_1):
     )
 
     # df_e = iterate(df_gammas, spark, params_1, num_iterations=1)
-    df_e = run_expectation_step(df_gammas, spark, params_1)
+    df_e = run_expectation_step(df_gammas, params_1, gamma_settings_1, spark)
 
     df_e_pd = df_e.toPandas()
     df_e_pd = df_e_pd.sort_values(["unique_id_l", "unique_id_r"])
@@ -144,7 +144,7 @@ def test_tiny_numbers(spark, sqlite_con_1):
     )
     params = Params(settings, spark="supress_warnings")
 
-    df_e = run_expectation_step(df_gammas, spark, params)
+    df_e = run_expectation_step(df_gammas, params, settings, spark)
 
 def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
 
@@ -166,7 +166,7 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
     )
 
 
-    df_e = iterate(df_gammas, spark, params_1, num_iterations=1)
+    df_e = iterate(df_gammas, params_1, gamma_settings_1, spark, num_iterations=1)
 
     assert params_1.params["λ"] == pytest.approx(0.540922141)
 
@@ -200,7 +200,7 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
 
     # Does it still work with another iteration?
 
-    df_e = iterate(df_gammas, spark, params_1, num_iterations=1)
+    df_e = iterate(df_gammas,  params_1, gamma_settings_1, spark, num_iterations=1)
     assert params_1.params["λ"] == pytest.approx(0.534993426, abs=0.0001)
 
 
@@ -350,7 +350,10 @@ def test_iteration_known_data_generating_process(spark, gamma_settings_4, params
 
     df_gammas = spark.createDataFrame(dfpd)
 
-    df_e = iterate(df_gammas, spark, params_4, num_iterations=40, compute_ll=False)
+    gamma_settings_4["retain_matching_columns"] = False
+    # gamma_settings_4[]
+
+    df_e = iterate(df_gammas, params_4, gamma_settings_4, spark, num_iterations=40, compute_ll=False)
 
     assert params_4.params["π"]["gamma_col_2_levels"]["prob_dist_match"]["level_0"]["probability"] == pytest.approx(0.05, abs=0.002)
     assert params_4.params["π"]["gamma_col_5_levels"]["prob_dist_match"]["level_0"]["probability"] == pytest.approx(0.1, abs=0.002)

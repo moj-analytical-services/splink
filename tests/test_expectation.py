@@ -14,7 +14,7 @@ def test_probability_columns(sqlite_con_1, gamma_settings_1):
 
     params = Params(gamma_settings_1, spark="supress_warnings")
 
-    sql = sql_gen_gamma_prob_columns(params, "df_gammas1")
+    sql = sql_gen_gamma_prob_columns(params, gamma_settings_1,"df_gammas1")
     df = pd.read_sql(sql, sqlite_con_1)
 
     cols_to_keep = ["prob_gamma_mob_match", "prob_gamma_mob_non_match", "prob_gamma_surname_match", "prob_gamma_surname_non_match"]
@@ -45,14 +45,14 @@ def test_probability_columns(sqlite_con_1, gamma_settings_1):
 
     assert_frame_equal(pd_df_correct, pd_df_result)
 
-def test_expected_match_prob(params_1, sqlite_con_1):
+def test_expected_match_prob(gamma_settings_1, params_1, sqlite_con_1):
 
     df = pd.read_sql("select * from df_with_match_probability1", sqlite_con_1)
 
 
     cols_to_keep = ["prob_gamma_mob_match", "prob_gamma_0_non_match", "prob_gamma_surname_match", "prob_gamma_surname_non_match"]
 
-    sql = sql_gen_expected_match_prob(params_1, "df_with_gamma_probs1")
+    sql = sql_gen_expected_match_prob(params_1, gamma_settings_1, "df_with_gamma_probs1")
     df = pd.read_sql(sql, sqlite_con_1)
     result_list = list(df["match_probability"])
 
