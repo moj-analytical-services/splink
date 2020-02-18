@@ -2,8 +2,8 @@ import pytest
 import sqlite3
 import pandas as pd
 
-from sparklink.blocking import sql_gen_block_using_rules, sql_gen_vertically_concatenate
-from sparklink.settings import _get_columns_to_retain
+from sparklink.blocking import sql_gen_block_using_rules, sql_gen_vertically_concatenate, _get_columns_to_retain_blocking
+
 from sparklink.settings import complete_settings_dict
 
 def data_into_table(data, table_name, con):
@@ -67,7 +67,7 @@ def test_link_only(link_dedupe_data):
         ]
     }
     settings = complete_settings_dict(settings)
-    ctr = _get_columns_to_retain(settings)
+    ctr = _get_columns_to_retain_blocking(settings)
     sql = sql_gen_block_using_rules("link_only", ctr, settings["blocking_rules"])
     df  = pd.read_sql(sql, link_dedupe_data)
     df = df.sort_values(["unique_id_l", "unique_id_r"])
@@ -88,7 +88,7 @@ def test_link_dedupe(link_dedupe_data):
         ]
     }
     settings = complete_settings_dict(settings)
-    ctr = _get_columns_to_retain(settings)
+    ctr = _get_columns_to_retain_blocking(settings)
     sql = sql_gen_block_using_rules("link_and_dedupe", ctr, settings["blocking_rules"])
     df  = pd.read_sql(sql, link_dedupe_data)
     df = df.sort_values(["unique_id_l", "unique_id_r"])

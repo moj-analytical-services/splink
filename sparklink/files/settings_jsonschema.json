@@ -73,6 +73,28 @@
         "unique_id"
       ]
     },
+    "retain_matching_columns": {
+      "$id": "#/properties/retain_matching_columns",
+      "type": "boolean",
+      "title": "If set to true, each column in the `comparison_columns` array will be retained in output datasets. This is helpful so that the user can inspect matches, but once the comparison vector (gamma) columns are computed, this information is not actually needed by the algorithm.",
+      "description": "The algorithm will run faster and use less resources if this is set to false.",
+      "default": true,
+      "examples": [
+        false,
+        true
+      ]
+    },
+    "retain_intermediate_calculation_columns": {
+      "$id": "#/properties/retain_intermediate_m_u_probability_columns",
+      "type": "boolean",
+      "title": "Retain intermediate calculation columns, such as the individual m and u probabilities associated with each column in `comparison_columns`",
+      "description": "The algorithm will run faster and use less resources if this is set to false.",
+      "default": true,
+      "examples": [
+        false,
+        true
+      ]
+    },
     "comparison_columns": {
       "$id": "#/properties/comparison_columns",
       "type": "array",
@@ -189,6 +211,12 @@
             "$id": "#/properties/comparison_columns/items/properties/gamma_index",
             "type": "integer",
             "description": "Gamma values in the comparison vector will be put in columns called gamma_0, gamma_1 etc.  This is the gamma index corresponding to this column"
+          },
+          "col_is_in_input_df": {
+            "$id": "#/properties/comparison_columns/items/properties/is_col_in_input_df",
+            "type": "boolean",
+            "description": "Usually, an entry in comparison columns corresponds one to one with the columns in the input dataframe.  However, if the user specifies a custom case_expression, this could refer to one or more columns in combination.  In this case, col_name will not be in the input dataframe, and is_col_in_input_df should be set to false. This will usually happen automatically",
+            "default": true
           }
         }
       }

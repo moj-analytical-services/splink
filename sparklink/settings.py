@@ -1,3 +1,4 @@
+from collections import OrderedDict
 
 from .case_statements import (
     _add_null_treatment_to_case_statement,
@@ -49,11 +50,28 @@ def _get_default_case_statements_functions(spark):
     return default_case_statements
 
 
-def _get_columns_to_retain(settings):
-    columns_to_retain = [settings["unique_id_column_name"]]
-    columns_to_retain = columns_to_retain + [c["col_name"] for c in settings["comparison_columns"]]
-    columns_to_retain = columns_to_retain + settings["additional_columns_to_retain"]
-    return columns_to_retain
+
+
+def _get_columns_to_retain_df_e(settings):
+
+    # Use ordered dict as an ordered set - i.e. to make sure we don't have duplicate cols to retain
+
+    columns_to_retain = OrderedDict()
+    columns_to_retain[settings["unique_id_column_name"]] = None
+
+    if settings["retain_matching_columns"]:
+        for c in settings["comparison_columns"]:
+            if c["col_is_in_input_df"]:
+                columns_to_retain[c["col_name"]] = None
+
+    for c in settings["comparison_columns"]:
+        if c["term_frequency_adjustments"]:
+            columns_to_retain[c["col_name"]]
+
+    for c in settings["additional_columns_to_retain"]:
+        columns_to_retain[c] = None
+
+    return columns_to_retain.keys()
 
 def _get_default_case_statement_fn(default_statements, data_type, levels):
     if data_type not in ["string", "numeric"]:
@@ -105,7 +123,9 @@ def complete_settings_dict(settings_dict: dict, spark=None):
     # Complete non-column settings
     non_col_keys = ["em_convergence",
                     "unique_id_column_name",
-                    "additional_columns_to_retain"]
+                    "additional_columns_to_retain",
+                    "retain_matching_columns",
+                    "retain_intermediate_calculation_columns"]
     for key in non_col_keys:
         if key not in settings_dict:
             settings_dict[key] =  _get_default_value(key, is_column_setting=False)
@@ -121,7 +141,7 @@ def complete_settings_dict(settings_dict: dict, spark=None):
 
 
         # Populate non-existing keys from defaults
-        for key in ["num_levels", "data_type", "term_frequency_adjustments"]:
+        for key in ["num_levels", "data_type", "term_frequency_adjustments", "col_is_in_input_df"]:
             if key not in column_settings:
                 default = _get_default_value(key, is_column_setting=True)
                 column_settings[key] = default

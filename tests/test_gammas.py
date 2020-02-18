@@ -60,7 +60,8 @@ def test_add_gammas(db):
                                     """
             },
         ],
-        "blocking_rules": []
+        "blocking_rules": [],
+        "retain_matching_columns": False
     }
 
     gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")
@@ -86,6 +87,7 @@ def test_add_gammas(db):
 
     assert_frame_equal(pd_correct, pd_result)
 
+    gamma_settings["retain_matching_columns"] = True
     sql = sql_gen_add_gammas(gamma_settings, include_orig_cols=True, table_name="test2")
 
     db.execute(sql)

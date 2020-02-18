@@ -98,11 +98,11 @@ def sqlite_con_1(gamma_settings_1, params_1):
     df = pd.read_sql(sql, con)
     df.to_sql("df_gammas1", con, index=False)
 
-    sql = sql_gen_gamma_prob_columns(params_1, "df_gammas1")
+    sql = sql_gen_gamma_prob_columns(params_1, gamma_settings_1, "df_gammas1")
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_gamma_probs1", con, index=False)
 
-    sql = sql_gen_expected_match_prob(params_1, "df_with_gamma_probs1")
+    sql = sql_gen_expected_match_prob(params_1, gamma_settings_1, "df_with_gamma_probs1")
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_match_probability1", con, index=False)
 
@@ -140,11 +140,11 @@ def sqlite_con_1(gamma_settings_1, params_1):
 
     params2.generate_param_dict()
 
-    sql = sql_gen_gamma_prob_columns(params2, "df_gammas1")
+    sql = sql_gen_gamma_prob_columns(params2, gamma_settings_it_2, "df_gammas1")
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_gamma_probs1_it2", con, index=False)
 
-    sql = sql_gen_expected_match_prob(params2, "df_with_gamma_probs1_it2")
+    sql = sql_gen_expected_match_prob(params2, gamma_settings_it_2, "df_with_gamma_probs1_it2")
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_match_probability1_it2", con, index=False)
 
@@ -245,11 +245,11 @@ def sqlite_con_2(gamma_settings_2, params_2):
     df = pd.read_sql(sql, con)
     df.to_sql("df_gammas2", con, index=False)
 
-    sql = sql_gen_gamma_prob_columns(params_2, "df_gammas2")
+    sql = sql_gen_gamma_prob_columns(params_2, gamma_settings_2,"df_gammas2")
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_gamma_probs2", con, index=False)
 
-    sql = sql_gen_expected_match_prob(params_2, "df_with_gamma_probs2")
+    sql = sql_gen_expected_match_prob(params_2, gamma_settings_2, "df_with_gamma_probs2")
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_match_probability2", con, index=False)
 
@@ -386,10 +386,15 @@ def sqlite_con_4(gamma_settings_4):
     df_m["true_match"] = 1
 
     df_all = pd.concat([df_nm, df_m])
+    df_all = df_all.reset_index()
+    df_all = df_all.rename(columns = {"index": "unique_id_l"})
+    df_all["unique_id_r"] = df_all["unique_id_l"]
 
     con = sqlite3.connect(":memory:")
     con.row_factory = sqlite3.Row
 
     df_all.to_sql("df", con, index=False)
+
+
 
     yield con

@@ -5,11 +5,27 @@ of group match = 0 and group match = 1
 """
 
 import logging
+from collections import OrderedDict
+
+# For type hints. Try except to ensure the sql_gen functions even if spark doesn't exist.
+try:
+    from pyspark.sql.dataframe import DataFrame
+    from pyspark.sql.session import SparkSession
+except ImportError:
+    DataFrame = None
+    SparkSession = None
 
 log = logging.getLogger(__name__)
 from .logging_utils import log_sql, log_other
+from .gammas import _add_left_right
+from .params import Params
 
-def run_expectation_step(df_with_gamma, spark, params, compute_ll=False, logger=log):
+def run_expectation_step(df_with_gamma: DataFrame,
+                         params: Params,
+                         settings: dict,
+                         spark: SparkSession,
+                         compute_ll=False,
+                         logger=log):
     """[summary]
 
     Args:
@@ -22,7 +38,7 @@ def run_expectation_step(df_with_gamma, spark, params, compute_ll=False, logger=
         [type]: [description]
     """
 
-    sql = sql_gen_gamma_prob_columns(params)
+    sql = sql_gen_gamma_prob_columns(params, settings)
 
     df_with_gamma.createOrReplaceTempView("df_with_gamma")
     log_sql(sql, logger)
@@ -37,7 +53,7 @@ def run_expectation_step(df_with_gamma, spark, params, compute_ll=False, logger=
         log_other(message, logger, level='INFO')
         params.params["log_likelihood"] = ll
 
-    sql = sql_gen_expected_match_prob(params)
+    sql = sql_gen_expected_match_prob(params, settings)
 
     log_sql(sql, logger)
     df_with_gamma_probs.createOrReplaceTempView("df_with_gamma_probs")
@@ -47,31 +63,52 @@ def run_expectation_step(df_with_gamma, spark, params, compute_ll=False, logger=
     return df_e
 
 
-def sql_gen_gamma_prob_columns(params, table_name="df_with_gamma"):
+def sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
     """
     For each row, look up the probability of observing the gamma value given the record
     is a match and non_match respectively
     """
 
-    case_statements = []
+    # Get case statements
+    case_statements = {}
     for gamma_str in params.gamma_cols:
         for match in [0, 1]:
-            case_statements.append(
-                sql_gen_gamma_case_when(gamma_str, match, params))
+            alias = _case_when_col_alias(gamma_str, match)
+            case_statement = sql_gen_gamma_case_when(gamma_str, match, params)
+            case_statements[alias] = case_statement
 
-    case_statements = ", \n\n".join(case_statements)
+
+    # Column order for case statement.  We want orig_col_l, orig_col_r, gamma_orig_col, prob_gamma_u, prob_gamma_m
+    select_cols = OrderedDict()
+    select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
+
+    for col in settings["comparison_columns"]:
+        col_name = col["col_name"]
+        if settings["retain_matching_columns"]:
+            select_cols = _add_left_right(select_cols, col_name)
+        if col["term_frequency_adjustments"]:
+            select_cols = _add_left_right(select_cols, col_name)
+        select_cols["gamma_" + col_name] = "gamma_" + col_name
+
+        select_cols[f"prob_gamma_{col_name}_non_match"] = case_statements[f"prob_gamma_{col_name}_non_match"]
+        select_cols[f"prob_gamma_{col_name}_match"] = case_statements[f"prob_gamma_{col_name}_match"]
+
+    for c in settings["additional_columns_to_retain"]:
+        select_cols[c] = c
+
+    select_expr =  ", ".join(select_cols.values())
+
 
     sql = f"""
     -- We use case statements for these lookups rather than joins for performance and simplicity
-    select *,
-    {case_statements}
+    select {select_expr}
     from {table_name}
     """
 
     return sql
 
 
-def sql_gen_expected_match_prob(params, table_name="df_with_gamma_probs"):
+def sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_probs"):
     gamma_cols = params.gamma_cols
 
     numerator = " * ".join([f"prob_{g}_match" for g in gamma_cols])
@@ -82,13 +119,44 @@ def sql_gen_expected_match_prob(params, table_name="df_with_gamma_probs"):
     castoneminusλ = f"cast({1-λ} as double)"
     match_prob_expression = f"({castλ} * {numerator})/(( {castλ} * {numerator}) + ({castoneminusλ} * {denom_part})) as match_probability"
 
+    # Get select expression for the other columns to select
+
+    # Column order for case statement.  We want orig_col_l, orig_col_r, gamma_orig_col, prob_gamma_u, prob_gamma_m
+    select_cols = OrderedDict()
+    select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
+
+    for col in settings["comparison_columns"]:
+        col_name = col["col_name"]
+        if settings["retain_matching_columns"]:
+            select_cols = _add_left_right(select_cols, col_name)
+        if col["term_frequency_adjustments"]:
+            select_cols = _add_left_right(select_cols, col_name)
+        select_cols["gamma_" + col_name] = "gamma_" + col_name
+
+        if settings["retain_intermediate_calculation_columns"]:
+            select_cols[f"prob_gamma_{col_name}_non_match"] = f"prob_gamma_{col_name}_non_match"
+            select_cols[f"prob_gamma_{col_name}_match"] = f"prob_gamma_{col_name}_match"
+
+    for c in settings["additional_columns_to_retain"]:
+        select_cols[c] = c
+
+    select_expr =  ", ".join(select_cols.values())
+
     sql = f"""
-    select {match_prob_expression}, *
+    select {match_prob_expression}, {select_expr}
     from {table_name}
     """
 
     return sql
 
+def _case_when_col_alias(gamma_str, match):
+
+    if match == 1:
+        name_suffix = "_match"
+    if match == 0:
+        name_suffix = "_non_match"
+
+    return f"prob_{gamma_str}{name_suffix}"
 
 def sql_gen_gamma_case_when(gamma_str, match, params):
     """
@@ -111,12 +179,9 @@ def sql_gen_gamma_case_when(gamma_str, match, params):
 
     case_statements = "\n".join(case_statements)
 
-    if match == 1:
-        name_suffix = "_match"
-    if match == 0:
-        name_suffix = "_non_match"
+    alias = _case_when_col_alias(gamma_str, match)
 
-    sql = f""" case \n{case_statements} \nend \nas prob_{gamma_str}{name_suffix}"""
+    sql = f""" case \n{case_statements} \nend \nas {alias}"""
 
     return sql.strip()
 

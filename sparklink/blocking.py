@@ -1,4 +1,5 @@
 import logging
+from collections import OrderedDict
 
 # For type hints. Try except to ensure the sql_gen functions even if spark doesn't exist.
 try:
@@ -11,10 +12,26 @@ except ImportError:
 
 from .logging_utils import log_sql, format_sql
 from .sql import comparison_columns_select_expr, sql_gen_comparison_columns
-from .settings import _get_columns_to_retain
-from .check_types import check_spark_types
+from .check_types import check_spark_types, check_types
 
 log = logging.getLogger(__name__)
+
+
+def _get_columns_to_retain_blocking(settings):
+
+    # Use ordered dict as an ordered set - i.e. to make sure we don't have duplicate cols to retain
+
+    columns_to_retain = OrderedDict()
+    columns_to_retain[settings["unique_id_column_name"]] = None
+
+    for c in settings["comparison_columns"]:
+        if c["col_is_in_input_df"]:
+            columns_to_retain[c["col_name"]] = None
+
+    for c in settings["additional_columns_to_retain"]:
+        columns_to_retain[c] = None
+
+    return columns_to_retain.keys()
 
 def sql_gen_and_not_previous_rules(previous_rules: list):
     if previous_rules:
@@ -114,24 +131,35 @@ def sql_gen_block_using_rules(
 
     return sql
 
-@check_spark_types
+@check_types
 def block_using_rules(
-    settings,
+    settings: dict,
     spark: SparkSession,
     df_l: DataFrame=None,
     df_r: DataFrame=None,
     df: DataFrame=None,
-    columns_to_retain: list=None,
-    unique_id_col="unique_id",
     logger=log
 ):
     """Apply a series of blocking rules to create a dataframe of record comparisons.
+
+    Args:
+        settings (dict): A sparklink settings dictionary
+        spark (SparkSession): The pyspark.sql.session.SparkSession
+        df_l (DataFrame, optional): Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
+        df_r (DataFrame, optional): Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
+        df (DataFrame, optional): Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
+        logger ([type], optional): [description]. Defaults to log.
+
+    Returns:
+        pyspark.sql.dataframe.DataFrame: A dataframe of each record comparison
     """
+
 
     link_type = settings["link_type"]
 
-    if columns_to_retain is None:
-        columns_to_retain = _get_columns_to_retain(settings)
+
+    columns_to_retain = _get_columns_to_retain_blocking(settings)
+    unique_id_col = settings["unique_id_column_name"]
 
     if link_type == "dedupe_only":
         df.createOrReplaceTempView("df")
