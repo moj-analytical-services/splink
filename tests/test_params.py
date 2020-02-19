@@ -46,10 +46,10 @@ def test_update(param_example):
      {'gamma_value': 2, 'new_probability_match': 0.7, 'new_probability_non_match': 0.3, 'gamma_col': 'gamma_sname'},
      {'gamma_value': 0, 'new_probability_match': 0.5, 'new_probability_non_match': 0.5, 'gamma_col': 'gamma_sname'}]
 
-    param_example.save_params_to_iteration_history()
-    param_example.reset_param_values_to_none()
+    param_example._save_params_to_iteration_history()
+    param_example._reset_param_values_to_none()
     assert param_example.params["π"]["gamma_fname"]["prob_dist_match"]["level_0"]["probability"] is None
-    param_example.populate_params(0.2, pi_df_collected)
+    param_example._populate_params(0.2, pi_df_collected)
 
     new_params = param_example.params
 

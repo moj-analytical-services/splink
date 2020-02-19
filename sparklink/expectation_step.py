@@ -19,26 +19,32 @@ log = logging.getLogger(__name__)
 from .logging_utils import log_sql, log_other
 from .gammas import _add_left_right
 from .params import Params
+from .check_types import check_types
 
+@check_types
 def run_expectation_step(df_with_gamma: DataFrame,
                          params: Params,
                          settings: dict,
                          spark: SparkSession,
                          compute_ll=False,
                          logger=log):
-    """[summary]
+    """Run the expectation step of the EM algorithm described in the fastlink paper:
+    http://imai.fas.harvard.edu/research/files/linkage.pdf
 
-    Args:
-        df_with_gamma ([type]): [description]
-        spark ([type]): [description]
-        params ([type]): [description]
-        compute_ll (bool, optional): [description]. Defaults to False.
+      Args:
+          df_with_gamma (DataFrame): Spark dataframe with comparison vectors already populated
+          params (Params): sparklink params object
+          settings (dict): sparklink settings dictionary
+          spark (SparkSession): SparkSession
+          compute_ll (bool, optional): Whether to compute the log likelihood. Degrades performance. Defaults to False.
+          logger ([type], optional): [description]. Defaults to log.
 
-    Returns:
-        [type]: [description]
-    """
+      Returns:
+          DataFrame: Spark dataframe with a match_probability column
+      """
 
-    sql = sql_gen_gamma_prob_columns(params, settings)
+
+    sql = _sql_gen_gamma_prob_columns(params, settings)
 
     df_with_gamma.createOrReplaceTempView("df_with_gamma")
     log_sql(sql, logger)
@@ -63,7 +69,7 @@ def run_expectation_step(df_with_gamma: DataFrame,
     return df_e
 
 
-def sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
+def _sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
     """
     For each row, look up the probability of observing the gamma value given the record
     is a match and non_match respectively
@@ -71,10 +77,10 @@ def sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
 
     # Get case statements
     case_statements = {}
-    for gamma_str in params.gamma_cols:
+    for gamma_str in params._gamma_cols:
         for match in [0, 1]:
             alias = _case_when_col_alias(gamma_str, match)
-            case_statement = sql_gen_gamma_case_when(gamma_str, match, params)
+            case_statement = _sql_gen_gamma_case_when(gamma_str, match, params)
             case_statements[alias] = case_statement
 
 
@@ -133,7 +139,7 @@ def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
     return ", ".join(select_cols.values())
 
 def sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_probs"):
-    gamma_cols = params.gamma_cols
+    gamma_cols = params._gamma_cols
 
     numerator = " * ".join([f"prob_{g}_match" for g in gamma_cols])
     denom_part = " * ".join([f"prob_{g}_non_match" for g in gamma_cols])
@@ -142,27 +148,6 @@ def sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_prob
     castλ = f"cast({λ} as double)"
     castoneminusλ = f"cast({1-λ} as double)"
     match_prob_expression = f"({castλ} * {numerator})/(( {castλ} * {numerator}) + ({castoneminusλ} * {denom_part})) as match_probability"
-
-    # Get select expression for the other columns to select
-
-    # Column order for case statement.  We want orig_col_l, orig_col_r, gamma_orig_col, prob_gamma_u, prob_gamma_m
-    # select_cols = OrderedDict()
-    # select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
-
-    # for col in settings["comparison_columns"]:
-    #     col_name = col["col_name"]
-    #     if settings["retain_matching_columns"]:
-    #         select_cols = _add_left_right(select_cols, col_name)
-    #     if col["term_frequency_adjustments"]:
-    #         select_cols = _add_left_right(select_cols, col_name)
-    #     select_cols["gamma_" + col_name] = "gamma_" + col_name
-
-    #     if settings["retain_intermediate_calculation_columns"]:
-    #         select_cols[f"prob_gamma_{col_name}_non_match"] = f"prob_gamma_{col_name}_non_match"
-    #         select_cols[f"prob_gamma_{col_name}_match"] = f"prob_gamma_{col_name}_match"
-
-    # for c in settings["additional_columns_to_retain"]:
-    #     select_cols[c] = c
 
     select_expr = _column_order_df_e_select_expr(settings)
 
@@ -182,7 +167,7 @@ def _case_when_col_alias(gamma_str, match):
 
     return f"prob_{gamma_str}{name_suffix}"
 
-def sql_gen_gamma_case_when(gamma_str, match, params):
+def _sql_gen_gamma_case_when(gamma_str, match, params):
     """
     Create the case statements that look up the correct probabilities in the
     params dict for each gamma
@@ -197,7 +182,7 @@ def sql_gen_gamma_case_when(gamma_str, match, params):
 
     case_statements = []
     case_statements.append(f"WHEN {gamma_str} = -1 THEN cast(1 as double)")
-    for key, level in levels.items():
+    for level in levels.values():
             case_stmt = f"when {gamma_str} = {level['value']} then cast({level['probability']:.35f} as double)"
             case_statements.append(case_stmt)
 
@@ -210,7 +195,7 @@ def sql_gen_gamma_case_when(gamma_str, match, params):
     return sql.strip()
 
 
-def calculate_log_likelihood_df(df_with_gamma_probs, params, spark, logger=log):
+def _calculate_log_likelihood_df(df_with_gamma_probs, params, spark, logger=log):
     """
     Compute likelihood of observing df_with_gamma given the parameters
 
@@ -248,5 +233,5 @@ def calculate_log_likelihood_df(df_with_gamma_probs, params, spark, logger=log):
 
 def get_overall_log_likelihood(df_with_gamma_probs, params, spark):
 
-    df = calculate_log_likelihood_df(df_with_gamma_probs, params, spark)
+    df = _calculate_log_likelihood_df(df_with_gamma_probs, params, spark)
     return df.groupby().sum("log_likelihood").collect()[0][0]

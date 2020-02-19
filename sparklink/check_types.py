@@ -1,3 +1,10 @@
+"""
+**Functions**
+.. autofunction:: block_using_rules
+"""
+
+
+
 from typing import get_type_hints, Union
 
 try:
@@ -9,7 +16,12 @@ except ImportError:
     SparkSession = None
     spark_exists = False
 
+from functools import wraps
+
+
+
 def check_spark_types(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         type_hints = get_type_hints(func)
 
@@ -47,6 +59,7 @@ def check_spark_types(func):
     return wrapper
 
 def check_types(func):
+    @wraps(func)
     def wrapper(*args, **kwargs):
         type_hints = get_type_hints(func)
 

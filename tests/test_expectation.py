@@ -6,7 +6,7 @@ import pytest
 
 from sparklink.gammas import sql_gen_add_gammas
 from sparklink.settings import sql_gen_case_smnt_strict_equality_2, complete_settings_dict
-from sparklink.expectation_step import sql_gen_gamma_prob_columns, sql_gen_expected_match_prob
+from sparklink.expectation_step import _sql_gen_gamma_prob_columns, sql_gen_expected_match_prob
 from sparklink.params import Params
 
 def test_probability_columns(sqlite_con_1, gamma_settings_1):
@@ -14,7 +14,7 @@ def test_probability_columns(sqlite_con_1, gamma_settings_1):
 
     params = Params(gamma_settings_1, spark="supress_warnings")
 
-    sql = sql_gen_gamma_prob_columns(params, gamma_settings_1,"df_gammas1")
+    sql = _sql_gen_gamma_prob_columns(params, gamma_settings_1,"df_gammas1")
     df = pd.read_sql(sql, sqlite_con_1)
 
     cols_to_keep = ["prob_gamma_mob_match", "prob_gamma_mob_non_match", "prob_gamma_surname_match", "prob_gamma_surname_non_match"]

@@ -204,7 +204,7 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
 
     ## Now test whether, when we
 
-    data = params_1.convert_params_dict_to_data(original_params)
+    data = params_1._convert_params_dict_to_dataframe(original_params)
     val1 = {
         "gamma": "gamma_mob",
         "match": 0,
@@ -227,13 +227,13 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
 
     correct_list = [{"iteration": 0, "λ": 0.4}, {"iteration": 1, "λ": 0.540922141}]
 
-    result_list = params_1.iteration_history_df_lambdas()
+    result_list = params_1._iteration_history_df_lambdas()
 
     for i in zip(result_list, correct_list):
         assert i[0]["iteration"] == i[1]["iteration"]
         assert i[0]["λ"] == pytest.approx(i[1]["λ"])
 
-    result_list = params_1.iteration_history_df_gammas()
+    result_list = params_1._iteration_history_df_gammas()
 
     val1 = {
         "iteration": 0,

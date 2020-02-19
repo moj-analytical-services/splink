@@ -40,7 +40,7 @@ def sql_gen_intermediate_pi_aggregate(params, table_name="df_e"):
     Without this intermediate table, we'd be repeating these calculations multiple times.
     """
 
-    gamma_cols_expr = ", ".join(params.gamma_cols)
+    gamma_cols_expr = ", ".join(params._gamma_cols)
 
     sql = f"""
     select {gamma_cols_expr}, sum(match_probability) as expected_num_matches, sum(1- match_probability) as expected_num_non_matches, count(*) as num_rows
@@ -54,7 +54,7 @@ def sql_gen_pi_df(params, table_name="df_intermediate"):
 
     sqls = []
 
-    for gamma_str in params.gamma_cols:
+    for gamma_str in params._gamma_cols:
         sql = f"""
         select {gamma_str} as gamma_value,
         cast(sum(expected_num_matches)/(select sum(expected_num_matches) from {table_name} where {gamma_str} != -1) as float) as new_probability_match,
@@ -100,5 +100,5 @@ def run_maximisation_step(df_e, spark, params):
     new_lambda = get_new_lambda(df_e,  spark)
     pi_df_collected = get_new_pi_df(df_e, spark, params)
 
-    params.update_params(new_lambda, pi_df_collected)
+    params._update_params(new_lambda, pi_df_collected)
     df_intermediate.unpersist()
