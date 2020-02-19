@@ -42,11 +42,11 @@ class Sparklink:
         self.spark = spark
         _check_jaro_registered(spark)
 
-        settings = complete_settings_dict(settings)
+        settings = complete_settings_dict(settings, spark)
         validate_settings(settings)
         self.settings = settings
 
-        self.params = Params(settings)
+        self.params = Params(settings, spark)
 
         self.df_r = df_r
         self.df_l = df_l

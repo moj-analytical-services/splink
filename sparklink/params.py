@@ -2,6 +2,13 @@ import copy
 import os
 import json
 
+
+try:
+    from pyspark.sql.session import SparkSession
+except ImportError:
+    SparkSession = None
+
+
 from .gammas import complete_settings_dict
 from .chart_definitions import (
     lambda_iteration_chart_def,
@@ -21,6 +28,16 @@ except ImportError:
 
 
 class Params:
+    """Stores the current model parameters (in self.params) and values for params for all previous iterations
+
+    Args:
+        settings (dict): A sparklink setting object
+        spark (SparkSession): You sparksession. Defaults to None.
+
+    Attributes:
+        params (str): A dictionary storing the current parameters.
+
+    """
 
     """
     Stores both current model parameters (in self.params)
@@ -28,7 +45,13 @@ class Params:
     of the model (in self.param_history)
     """
 
-    def __init__(self, settings={}, spark=None):
+    def __init__(self, settings:dict, spark:SparkSession):
+        """[summary]
+
+        Args:
+            settings (dict, optional): [description]. Defaults to {}.
+            spark ([type], optional): [description]. Defaults to None.
+        """
 
         self.param_history = []
 
@@ -41,18 +64,17 @@ class Params:
 
         self.real_params = None
 
-        self.generate_param_dict()
+        self._generate_param_dict()
 
     @property
-    def gamma_cols(self):
+    def _gamma_cols(self):
         return self.params["π"].keys()
 
     def describe_gammas(self):
         return {k: i["desc"] for k, i in self.params["π"].items()}
 
-    def generate_param_dict(self):
-        """
-
+    def _generate_param_dict(self):
+        """Uses the sparklink settings object to generate a parameter dictionary
         """
 
         for col_dict in self.settings["comparison_columns"]:
@@ -93,7 +115,7 @@ class Params:
             self.params["π"][f"gamma_{col_name}"]["prob_dist_match"] = prob_dist_match
             self.params["π"][f"gamma_{col_name}"]["prob_dist_non_match"] = prob_dist_non_match
 
-    def set_pi_value(self, gamma_str, level_int, match_str, prob_float):
+    def _set_pi_value(self, gamma_str, level_int, match_str, prob_float):
         """
         gamma_str e.g. gamma_0
         level_int e.g. 1
@@ -107,7 +129,7 @@ class Params:
         ] = prob_float
 
     @staticmethod
-    def convert_params_dict_to_data(params, iteration_num=None):
+    def _convert_params_dict_to_dataframe(params, iteration_num=None):
         """
         Convert the params dict into a dataframe
 
@@ -142,7 +164,7 @@ class Params:
                 data.append(this_row)
         return data
 
-    def convert_params_dict_to_normalised_adjustment_data(self):
+    def _convert_params_dict_to_normalised_adjustment_data(self):
         """
         Get the data needed for a chart that shows which comparison
         vector values have the greatest effect on matc probability
@@ -171,21 +193,21 @@ class Params:
                 data.append(row)
         return data
 
-    def iteration_history_df_gammas(self):
+    def _iteration_history_df_gammas(self):
         data = []
         for it_num, param_value in enumerate(self.param_history):
-            data.extend(self.convert_params_dict_to_data(param_value, it_num))
-        data.extend(self.convert_params_dict_to_data(self.params, it_num + 1))
+            data.extend(self._convert_params_dict_to_dataframe(param_value, it_num))
+        data.extend(self._convert_params_dict_to_dataframe(self.params, it_num + 1))
         return data
 
-    def iteration_history_df_lambdas(self):
+    def _iteration_history_df_lambdas(self):
         data = []
         for it_num, param_value in enumerate(self.param_history):
             data.append({"λ": param_value["λ"], "iteration": it_num})
         data.append({"λ": self.params["λ"], "iteration": it_num + 1})
         return data
 
-    def iteration_history_df_log_likelihood(self):
+    def _iteration_history_df_log_likelihood(self):
         data = []
         for it_num, param_value in enumerate(self.param_history):
             data.append(
@@ -196,7 +218,7 @@ class Params:
         )
         return data
 
-    def reset_param_values_to_none(self):
+    def _reset_param_values_to_none(self):
         """
         Reset λ and all probability values to None to ensure we
         don't accidentally re-use old values
@@ -210,7 +232,7 @@ class Params:
             ].values():
                 level_value["probability"] = None
 
-    def save_params_to_iteration_history(self):
+    def _save_params_to_iteration_history(self):
         """
         Take current params and
         """
@@ -219,7 +241,7 @@ class Params:
         if "log_likelihood" in self.params:
             self.log_likelihood_exists = True
 
-    def populate_params(self, lambda_value, pi_df_collected):
+    def _populate_params(self, lambda_value, pi_df_collected):
         """
         Take results of sql query that computes updated values
         and update parameters
@@ -244,21 +266,21 @@ class Params:
             match_prob = row_dict["new_probability_match"]
             non_match_prob = row_dict["new_probability_non_match"]
             if level_int != -1:
-                self.set_pi_value(gamma_str, level_int, "match", match_prob)
-                self.set_pi_value(gamma_str, level_int, "non_match", non_match_prob)
+                self._set_pi_value(gamma_str, level_int, "match", match_prob)
+                self._set_pi_value(gamma_str, level_int, "non_match", non_match_prob)
 
-    def update_params(self, lambda_value, pi_df_collected):
+    def _update_params(self, lambda_value, pi_df_collected):
         """
         Save current value of parameters to iteration history
         Reset values
         Then update the parameters from the dataframe
         """
-        self.save_params_to_iteration_history()
-        self.reset_param_values_to_none()
-        self.populate_params(lambda_value, pi_df_collected)
+        self._save_params_to_iteration_history()
+        self._reset_param_values_to_none()
+        self._populate_params(lambda_value, pi_df_collected)
         self.iteration += 1
 
-    def to_dict(self):
+    def _to_dict(self):
         p_dict = {}
         p_dict["current_params"] = self.params
         p_dict["historical_params"] = self.param_history
@@ -283,7 +305,7 @@ class Params:
             proceed_with_write = True
 
         if proceed_with_write:
-            d = self.to_dict()
+            d = self._to_dict()
             with open(path, "w") as f:
                 json.dump(d, f, indent=4)
 
@@ -292,11 +314,11 @@ class Params:
     def pi_iteration_chart(self):  # pragma: no cover
 
         if self.real_params:
-            data = self.iteration_history_df_gammas()
-            data_real = self.convert_params_dict_to_data(self.real_params, "real_param")
+            data = self._iteration_history_df_gammas()
+            data_real = self._convert_params_dict_to_dataframe(self.real_params, "real_param")
             data.extend(data_real)
         else:
-            data = self.iteration_history_df_gammas()
+            data = self._iteration_history_df_gammas()
 
         pi_iteration_chart_def["data"]["values"] = data
 
@@ -306,7 +328,7 @@ class Params:
             return pi_iteration_chart_def
 
     def lambda_iteration_chart(self):  # pragma: no cover
-        data = self.iteration_history_df_lambdas()
+        data = self._iteration_history_df_lambdas()
         if self.real_params:
             data.append({"λ": self.real_params["λ"], "iteration": "real_param"})
 
@@ -319,7 +341,7 @@ class Params:
 
     def ll_iteration_chart(self):  # pragma: no cover
         if self.log_likelihood_exists:
-            data = self.iteration_history_df_log_likelihood()
+            data = self._iteration_history_df_log_likelihood()
 
             ll_iteration_chart_def["data"]["values"] = data
 
@@ -337,7 +359,7 @@ class Params:
         If altair is installed, returns the chart
         Otherwise will return the chart spec as a dictionary
         """
-        data = self.convert_params_dict_to_data(self.params)
+        data = self._convert_params_dict_to_dataframe(self.params)
 
         probability_distribution_chart["data"]["values"] = data
 
@@ -351,7 +373,7 @@ class Params:
         If altair is installed, returns the chart
         Otherwise will return the chart spec as a dictionary
         """
-        data = self.convert_params_dict_to_normalised_adjustment_data()
+        data = self._convert_params_dict_to_normalised_adjustment_data()
 
         adjustment_weight_chart_def["data"]["values"] = data
 
@@ -494,7 +516,7 @@ def load_params_from_dict(param_dict):
     expected_keys = {"current_params", "settings", "historical_params"}
 
     if keys == expected_keys:
-        p = Params(settings=param_dict["settings"])
+        p = Params(settings=param_dict["settings"], spark=None)
 
 
         p.params = param_dict["current_params"]

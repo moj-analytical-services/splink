@@ -7,7 +7,7 @@ import copy
 from sparklink.blocking import sql_gen_cartesian_block, sql_gen_block_using_rules
 from sparklink.gammas import sql_gen_add_gammas, complete_settings_dict
 from sparklink.expectation_step import (
-    sql_gen_gamma_prob_columns,
+    _sql_gen_gamma_prob_columns,
     sql_gen_expected_match_prob,
 )
 from sparklink.maximisation_step import sql_gen_intermediate_pi_aggregate, sql_gen_pi_df
@@ -98,7 +98,7 @@ def sqlite_con_1(gamma_settings_1, params_1):
     df = pd.read_sql(sql, con)
     df.to_sql("df_gammas1", con, index=False)
 
-    sql = sql_gen_gamma_prob_columns(params_1, gamma_settings_1, "df_gammas1")
+    sql = _sql_gen_gamma_prob_columns(params_1, gamma_settings_1, "df_gammas1")
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_gamma_probs1", con, index=False)
 
@@ -138,9 +138,9 @@ def sqlite_con_1(gamma_settings_1, params_1):
         gamma_settings_it_2, spark="supress_warnings"
     )
 
-    params2.generate_param_dict()
+    params2._generate_param_dict()
 
-    sql = sql_gen_gamma_prob_columns(params2, gamma_settings_it_2, "df_gammas1")
+    sql = _sql_gen_gamma_prob_columns(params2, gamma_settings_it_2, "df_gammas1")
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_gamma_probs1_it2", con, index=False)
 
@@ -209,7 +209,7 @@ def params_2(gamma_settings_2):
     # Probability columns
     params = Params(gamma_settings_2, spark="supress_warnings")
 
-    params.generate_param_dict()
+    params._generate_param_dict()
     yield params
 
 
@@ -245,7 +245,7 @@ def sqlite_con_2(gamma_settings_2, params_2):
     df = pd.read_sql(sql, con)
     df.to_sql("df_gammas2", con, index=False)
 
-    sql = sql_gen_gamma_prob_columns(params_2, gamma_settings_2,"df_gammas2")
+    sql = _sql_gen_gamma_prob_columns(params_2, gamma_settings_2,"df_gammas2")
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_gamma_probs2", con, index=False)
 
@@ -328,7 +328,7 @@ def params_4(gamma_settings_4):
     # Probability columns
     params = Params(gamma_settings_4, spark="supress_warnings")
 
-    params.generate_param_dict()
+    params._generate_param_dict()
     yield params
 
 

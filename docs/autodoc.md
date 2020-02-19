@@ -7,7 +7,7 @@ Firstly the two following modules need to be installed
 
 bash
 ```
-pip install Sphinx  sphinx_rtd_theme commonmark recommonmark 
+pip install Sphinx  sphinx_rtd_theme commonmark recommonmark sphinxcontrib-napoleon
 ```
 
 
