@@ -82,12 +82,12 @@ class Sparklink():
 
 
 
-    def get_scored_comparisons(self, persist_df_gammas=True):
+    def get_scored_comparisons(self, persist_df_gammas=True, num_iterations=20):
         df_comparison = self._get_df_comparison()
         df_gammas = add_gammas(df_comparison, self.settings, self.spark, include_orig_cols = True)
         df_gammas.persist()
 
-        df_e = iterate(df_gammas, self.params, self.settings, self.spark, log_iteration=True, num_iterations=5, compute_ll=False)
+        df_e = iterate(df_gammas, self.params, self.settings, self.spark, log_iteration=True, num_iterations=num_iterations, compute_ll=False)
         df_gammas.unpersist()
         return df_e
 
