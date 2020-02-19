@@ -24,7 +24,7 @@ def check_spark_types(func):
 
                     # If it's of type union it will have the __args__ argument
                     try:
-                        if possible_types.__origin__ == Union:
+                        if this_type_hint.__origin__ == Union:
                             possible_types = this_type_hint.__args__
                         else:
                             possible_types = (this_type_hint,)
@@ -61,7 +61,7 @@ def check_types(func):
 
                 # If it's of type union it will have the __args__ argument
                 try:
-                    if possible_types.__origin__ == Union:
+                    if this_type_hint.__origin__ == Union:
                         possible_types = this_type_hint.__args__
                     else:
                         possible_types = (this_type_hint,)
