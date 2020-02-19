@@ -51,7 +51,7 @@ def iterate(
         # pi and lambda pre-maximisation
         # compute_log_likelihood()
 
-        run_maximisation_step(df_e, spark, params)
+        run_maximisation_step(df_e, params, spark)
         if log_iteration:
             log_other(f"Iteration {i} complete", logger=log, level="INFO")
 
