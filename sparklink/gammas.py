@@ -4,13 +4,20 @@ import warnings
 import jsonschema
 from collections import OrderedDict
 
+try:
+    from pyspark.sql.dataframe import DataFrame
+    from pyspark.sql.session import SparkSession
+except ImportError:
+    DataFrame = None
+    SparkSession = None
+
 from .logging_utils import log_sql
 from .validate import validate_settings, _get_default_value
 from .sql import comparison_columns_select_expr, sql_gen_comparison_columns
 from .settings import complete_settings_dict
+from .check_types import check_types
 
 log = logging.getLogger(__name__)
-
 
 def _add_left_right(columns_to_retain, name):
     columns_to_retain[name + "_l"] = name + "_l"
@@ -48,15 +55,13 @@ def _get_select_expression_gammas(settings: dict):
 
 def sql_gen_add_gammas(
     settings: dict,
-    include_orig_cols: bool = False,
     unique_id_col: str = "unique_id",
     table_name: str = "df_comparison",
 ):
     """Build SQL statement that adds gamma columns to the comparison dataframe
 
     Args:
-        settings (dict): Gamma settings dict
-        include_orig_cols (bool, optional): Whether to include original strings in output df. Defaults to False.
+        settings (dict): `sparklink` settings dict
         unique_id_col (str, optional): Name of the unique id column. Defaults to "unique_id".
         table_name (str, optional): Name of the comparison df. Defaults to "df_comparison".
 
@@ -77,21 +82,20 @@ def sql_gen_add_gammas(
 
 
 
-
+@check_types
 def add_gammas(
-    df_comparison,
-    settings_dict,
-    spark=None,
-    include_orig_cols=False,
+    df_comparison: DataFrame,
+    settings_dict: dict,
+    spark:SparkSession,
     unique_id_col: str = "unique_id",
 ):
-    """[summary]
+    """ Compute the comparison vectors and add them to the dataframe.  See
+    https://imai.fas.harvard.edu/research/files/linkage.pdf for more details of what is meant by comparison vectors
 
     Args:
-        df_comparison (spark dataframe): A Spark dataframe containing record comparisons
-        settings_dict (dict): The gamma settings dict
-        spark (Spark session): The Spark session.
-        include_orig_cols (bool, optional): Whether to include original string comparison columns or just leave gammas. Defaults to False.
+        df_comparison (spark dataframe): A Spark dataframe containing record comparisons, with records compared using the convention col_name_l, col_name_r
+        settings_dict (dict): The `sparklink` settings dictionary
+        spark (Spark session): The Spark session object
         unique_id_col (str, optional): Name of the unique id column. Defaults to "unique_id".
 
     Returns:
@@ -103,7 +107,6 @@ def add_gammas(
 
     sql = sql_gen_add_gammas(
         settings_dict,
-        include_orig_cols=include_orig_cols,
         unique_id_col=unique_id_col,
     )
 

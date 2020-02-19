@@ -3,9 +3,20 @@
 
 import logging
 
+try:
+    from pyspark.sql.dataframe import DataFrame
+    from pyspark.sql.session import SparkSession
+except ImportError:
+    DataFrame = None
+    SparkSession = None
+
 from .logging_utils import log_sql, format_sql
 from .expectation_step import _column_order_df_e_select_expr
+from .params import Params
+from .check_types import check_types
+
 log = logging.getLogger(__name__)
+
 
 def sql_gen_bayes_string(probs):
     """Convenience function for computing an updated probability using bayes' rule
@@ -35,7 +46,7 @@ def sql_gen_bayes_string(probs):
     """
 
 
-def sql_gen_generate_adjusted_lambda(column_name, params, table_name='df_e'):
+def sql_gen_generate_adjusted_lambda(column_name, params, table_name="df_e"):
 
     sql = f"""
     with temp_adj as
@@ -53,10 +64,11 @@ def sql_gen_generate_adjusted_lambda(column_name, params, table_name='df_e'):
 
     return sql
 
+
 def sql_gen_add_adjumentments_to_df_e(term_freq_column_list):
 
     coalesce_template = "coalesce({c}_adj_nulls, 0.5) as {c}_adj"
-    coalesces =  [coalesce_template.format(c=c) for c in term_freq_column_list]
+    coalesces = [coalesce_template.format(c=c) for c in term_freq_column_list]
     coalesces = ",\n ".join(coalesces)
 
     left_join_template = """
@@ -69,12 +81,9 @@ def sql_gen_add_adjumentments_to_df_e(term_freq_column_list):
     left_joins = [left_join_template.format(c=c) for c in term_freq_column_list]
     left_joins = "\n ".join(left_joins)
 
-
-
     broadcast_hints = [f"BROADCAST({c}_lookup)" for c in term_freq_column_list]
     broadcast_hint = " ".join(broadcast_hints)
     broadcast_hint = f" /*+  {broadcast_hint} */ "
-
 
     sql = f"""
     select {broadcast_hint} e.*, {coalesces}
@@ -86,7 +95,9 @@ def sql_gen_add_adjumentments_to_df_e(term_freq_column_list):
     return sql
 
 
-def sql_gen_compute_final_group_membership_prob_from_adjustments(term_freq_column_list, settings, table_name="df_e_adj"):
+def sql_gen_compute_final_group_membership_prob_from_adjustments(
+    term_freq_column_list, settings, table_name="df_e_adj"
+):
 
     term_freq_column_list = [c + "_adj" for c in term_freq_column_list]
     term_freq_column_list.insert(0, "match_probability")
@@ -107,15 +118,31 @@ def sql_gen_compute_final_group_membership_prob_from_adjustments(term_freq_colum
 
     return sql
 
+
 import warnings
-def make_adjustment_for_term_frequencies(df_e, params, settings, retain_adjustment_columns=False, spark=None, logger=log):
+
+@check_types
+def make_adjustment_for_term_frequencies(
+    df_e: DataFrame,
+    params: Params,
+    settings: dict,
+    spark: SparkSession,
+    retain_adjustment_columns: bool = False,
+    logger=log,
+):
 
     df_e.createOrReplaceTempView("df_e")
 
-    term_freq_column_list = [c["col_name"] for c in settings["comparison_columns"] if c["term_frequency_adjustments"] == True]
+    term_freq_column_list = [
+        c["col_name"]
+        for c in settings["comparison_columns"]
+        if c["term_frequency_adjustments"] == True
+    ]
 
     if len(term_freq_column_list) == 0:
-        warnings.warn("No term frequency adjustment columns are specified in your settings object.  Returning original df")
+        warnings.warn(
+            "No term frequency adjustment columns are specified in your settings object.  Returning original df"
+        )
         return df_e
 
     # Generate a lookup table for each column with 'term specific' lambdas.
@@ -126,19 +153,19 @@ def make_adjustment_for_term_frequencies(df_e, params, settings, retain_adjustme
         lookup.createOrReplaceTempView(f"{c}_lookup")
 
     # Merge these lookup tables into main table
-    sql  = sql_gen_add_adjumentments_to_df_e(term_freq_column_list)
+    sql = sql_gen_add_adjumentments_to_df_e(term_freq_column_list)
     log_sql(sql, logger)
     df_e_adj = spark.sql(sql)
     df_e_adj.createOrReplaceTempView("df_e_adj")
 
-    sql = sql_gen_compute_final_group_membership_prob_from_adjustments(term_freq_column_list, settings)
+    sql = sql_gen_compute_final_group_membership_prob_from_adjustments(
+        term_freq_column_list, settings
+    )
     log_sql(sql, logger)
     df = spark.sql(sql)
     if not retain_adjustment_columns:
         for c in term_freq_column_list:
-            df = df.drop(c+ "_adj")
+            df = df.drop(c + "_adj")
 
     return df
-
-
 
