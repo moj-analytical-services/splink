@@ -2,13 +2,13 @@ import pandas as pd
 import pytest
 
 from sparklink.maximisation_step import (
-    sql_gen_new_lambda,
-    sql_gen_intermediate_pi_aggregate,
+    _sql_gen_new_lambda,
+    _sql_gen_intermediate_pi_aggregate,
 )
 
 
 def test_new_lambda_iteration_2(sqlite_con_1):
-    sql = sql_gen_new_lambda(table_name="df_intermediate1_it2")
+    sql = _sql_gen_new_lambda(table_name="df_intermediate1_it2")
     df = pd.read_sql(sql, sqlite_con_1)
     new_lambda = df.iloc[0, 0]
 

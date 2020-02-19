@@ -8,9 +8,9 @@ from sparklink.blocking import sql_gen_cartesian_block, sql_gen_block_using_rule
 from sparklink.gammas import sql_gen_add_gammas, complete_settings_dict
 from sparklink.expectation_step import (
     _sql_gen_gamma_prob_columns,
-    sql_gen_expected_match_prob,
+    _sql_gen_expected_match_prob,
 )
-from sparklink.maximisation_step import sql_gen_intermediate_pi_aggregate, sql_gen_pi_df
+from sparklink.maximisation_step import _sql_gen_intermediate_pi_aggregate, _sql_gen_pi_df
 from sparklink.params import Params
 from sparklink.case_statements import sql_gen_case_smnt_strict_equality_2
 
@@ -102,17 +102,17 @@ def sqlite_con_1(gamma_settings_1, params_1):
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_gamma_probs1", con, index=False)
 
-    sql = sql_gen_expected_match_prob(params_1, gamma_settings_1, "df_with_gamma_probs1")
+    sql = _sql_gen_expected_match_prob(params_1, gamma_settings_1, "df_with_gamma_probs1")
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_match_probability1", con, index=False)
 
-    sql = sql_gen_intermediate_pi_aggregate(
+    sql = _sql_gen_intermediate_pi_aggregate(
         params_1, table_name="df_with_match_probability1"
     )
     df = pd.read_sql(sql, con)
     df.to_sql("df_intermediate1", con, index=False)
 
-    sql = sql_gen_pi_df(params_1, "df_intermediate1")
+    sql = _sql_gen_pi_df(params_1, "df_intermediate1")
 
     df = pd.read_sql(sql, con)
     df.to_sql("df_pi1", con, index=False)
@@ -144,17 +144,17 @@ def sqlite_con_1(gamma_settings_1, params_1):
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_gamma_probs1_it2", con, index=False)
 
-    sql = sql_gen_expected_match_prob(params2, gamma_settings_it_2, "df_with_gamma_probs1_it2")
+    sql = _sql_gen_expected_match_prob(params2, gamma_settings_it_2, "df_with_gamma_probs1_it2")
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_match_probability1_it2", con, index=False)
 
-    sql = sql_gen_intermediate_pi_aggregate(
+    sql = _sql_gen_intermediate_pi_aggregate(
         params2, table_name="df_with_match_probability1_it2"
     )
     df = pd.read_sql(sql, con)
     df.to_sql("df_intermediate1_it2", con, index=False)
 
-    sql = sql_gen_pi_df(params2, "df_intermediate1_it2")
+    sql = _sql_gen_pi_df(params2, "df_intermediate1_it2")
 
     df = pd.read_sql(sql, con)
     df.to_sql("df_pi1_it2", con, index=False)
@@ -249,7 +249,7 @@ def sqlite_con_2(gamma_settings_2, params_2):
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_gamma_probs2", con, index=False)
 
-    sql = sql_gen_expected_match_prob(params_2, gamma_settings_2, "df_with_gamma_probs2")
+    sql = _sql_gen_expected_match_prob(params_2, gamma_settings_2, "df_with_gamma_probs2")
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_match_probability2", con, index=False)
 

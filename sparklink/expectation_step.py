@@ -59,7 +59,7 @@ def run_expectation_step(df_with_gamma: DataFrame,
         log_other(message, logger, level='INFO')
         params.params["log_likelihood"] = ll
 
-    sql = sql_gen_expected_match_prob(params, settings)
+    sql = _sql_gen_expected_match_prob(params, settings)
 
     log_sql(sql, logger)
     df_with_gamma_probs.createOrReplaceTempView("df_with_gamma_probs")
@@ -138,7 +138,7 @@ def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
         select_cols[c] = c
     return ", ".join(select_cols.values())
 
-def sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_probs"):
+def _sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_probs"):
     gamma_cols = params._gamma_cols
 
     numerator = " * ".join([f"prob_{g}_match" for g in gamma_cols])
