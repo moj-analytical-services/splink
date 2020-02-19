@@ -66,7 +66,7 @@ def test_link_only(link_dedupe_data):
             "l.surname = r.surname"
         ]
     }
-    settings = complete_settings_dict(settings)
+    settings = complete_settings_dict(settings, spark=None)
     ctr = _get_columns_to_retain_blocking(settings)
     sql = sql_gen_block_using_rules("link_only", ctr, settings["blocking_rules"])
     df  = pd.read_sql(sql, link_dedupe_data)
@@ -87,7 +87,7 @@ def test_link_dedupe(link_dedupe_data):
             "l.surname = r.surname"
         ]
     }
-    settings = complete_settings_dict(settings)
+    settings = complete_settings_dict(settings, spark=None)
     ctr = _get_columns_to_retain_blocking(settings)
     sql = sql_gen_block_using_rules("link_and_dedupe", ctr, settings["blocking_rules"])
     df  = pd.read_sql(sql, link_dedupe_data)

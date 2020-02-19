@@ -92,7 +92,7 @@ def sqlite_con_1(gamma_settings_1, params_1):
     df.to_sql("df_comparison1", con, index=False)
 
     sql = sql_gen_add_gammas(
-        gamma_settings_1, include_orig_cols=True, table_name="df_comparison1"
+        gamma_settings_1, table_name="df_comparison1"
     )
 
     df = pd.read_sql(sql, con)
@@ -240,7 +240,7 @@ def sqlite_con_2(gamma_settings_2, params_2):
     df.to_sql("df_comparison2", con, index=False)
 
     sql = sql_gen_add_gammas(
-        gamma_settings_2, include_orig_cols=True, table_name="df_comparison2"
+        gamma_settings_2, table_name="df_comparison2"
     )
     df = pd.read_sql(sql, con)
     df.to_sql("df_gammas2", con, index=False)

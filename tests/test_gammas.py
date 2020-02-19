@@ -67,7 +67,7 @@ def test_add_gammas(db):
     gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")
 
     sql = sql_gen_add_gammas(
-        gamma_settings, include_orig_cols=False, table_name="test2"
+        gamma_settings, table_name="test2"
     )
     db.execute(sql)
     result = db.fetchall()
@@ -88,7 +88,7 @@ def test_add_gammas(db):
     assert_frame_equal(pd_correct, pd_result)
 
     gamma_settings["retain_matching_columns"] = True
-    sql = sql_gen_add_gammas(gamma_settings, include_orig_cols=True, table_name="test2")
+    sql = sql_gen_add_gammas(gamma_settings, table_name="test2")
 
     db.execute(sql)
     result = db.fetchone()
