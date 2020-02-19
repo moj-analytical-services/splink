@@ -59,9 +59,13 @@ def check_types(func):
                 this_arg = args_dict[key]
                 this_type_hint = type_hints[key]
 
-                if type(this_type_hint) == type(Union):
-                    possible_types = this_type_hint.__args__
-                else:
+                # If it's of type union it will have the __args__ argument
+                try:
+                    if possible_types.__origin__ == Union:
+                        possible_types = this_type_hint.__args__
+                    else:
+                        possible_types = (this_type_hint,)
+                except AttributeError:
                     possible_types = (this_type_hint,)
 
                 if isinstance(this_arg, possible_types):
