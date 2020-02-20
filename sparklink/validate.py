@@ -64,6 +64,7 @@ def validate_settings(settings_dict: dict):
     """
     if jsonschema_installed == False:
         warnings.warn("Your settings dictionary has not been validated because jsonschema is not installed")
+        return None
 
     schema = _get_schema()
     exception_raised = False
