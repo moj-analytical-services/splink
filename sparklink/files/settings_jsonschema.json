@@ -57,12 +57,11 @@
       "title": "The maximum number of iterations to run even if convergence has not been reached",
       "default": 100,
       "examples": [
-        0.0001,
-        0.00001,
-        1e-6
+        10,
+        150
       ],
-      "maximum": 0.05,
-      "minimum": 1e-12
+      "maximum": 200,
+      "minimum": 1
     },
     "unique_id_column_name": {
       "$id": "#/properties/unique_id_column_name",
