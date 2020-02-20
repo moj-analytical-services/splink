@@ -53,7 +53,7 @@ def iterate(
 
         run_maximisation_step(df_e, params, spark)
         if log_iteration:
-            log_other(f"Iteration {i} complete", logger=log, level="INFO")
+            log.info(f"Iteration {i} complete")
 
     # The final version of df_e should align to the current parameters - i.e. those computed in the last max step
     df_e = run_expectation_step(

@@ -1,7 +1,13 @@
 import pkg_resources
-from jsonschema import validate, ValidationError
+try:
+    from jsonschema import validate, ValidationError
+    jsonschema_installed = True
+except:
+    jsonschema_installed = False
+
 import json
 import copy
+import warnings
 
 from .check_types import check_types
 
@@ -56,6 +62,9 @@ def validate_settings(settings_dict: dict):
     Returns:
         [type]: [description]
     """
+    if jsonschema_installed == False:
+        warnings.warn("Your settings dictionary has not been validated because jsonschema is not installed")
+
     schema = _get_schema()
     exception_raised = False
     try:

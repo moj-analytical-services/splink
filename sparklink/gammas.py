@@ -1,7 +1,6 @@
 import logging
 import re
 import warnings
-import jsonschema
 from collections import OrderedDict
 
 try:
