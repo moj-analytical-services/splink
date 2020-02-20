@@ -60,8 +60,14 @@ def _add_as_gamma_to_case_statement(case_statement: str, gamma_col_name):
     """
 
     sl = case_statement.lower()
-    last_end_index = sl.rfind("end")
-    sl = sl[:last_end_index + 3]
+    # What we're trying to do is distinguish between 'case when end as gamma_blah' from case when end
+    sl = sl.replace('\n', ' ').replace('\r', '')
+    sl = sl.strip()
+    # Only need to do anything if the last non-blank string is not ' end'
+    if sl[-4:] != ' end':
+        # The case statement has a 'end as gamma blah'
+        last_end_index = sl.rfind(" end ")
+        sl = sl[:last_end_index + 5]
     return f"{sl} as gamma_{gamma_col_name}"
 
 def _check_no_obvious_problem_with_case_statement(case_statement):
