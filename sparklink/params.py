@@ -309,6 +309,18 @@ class Params:
             with open(path, "w") as f:
                 json.dump(d, f, indent=4)
 
+    def is_converged(self):
+        p_latest = self.params
+        p_previous = self.param_history[-1]
+        threshold = self.settings["em_convergence"]
+    
+        p_new = {key:value for key, value in _flatten_dict(p_latest).items() if '_probability' in key.lower()}
+        p_old = {key:value for key, value in _flatten_dict(p_previous).items() if '_probability' in key.lower()}
+    
+        diff = [abs(p_new[item] - p_old[item]) < threshold for item in p_new]
+    
+        return(all(diff))
+    
     ### The rest of this module is just 'presentational' elements - charts, and __repr__ etc.
 
     def pi_iteration_chart(self):  # pragma: no cover
@@ -525,3 +537,15 @@ def load_params_from_dict(param_dict):
         raise ValueError("Your saved params seem to be corrupted")
 
     return p
+                         
+                         
+def _flatten_dict(dictionary, accumulator=None, parent_key=None, separator="_"):
+    if accumulator is None:
+        accumulator = {}
+    for k, v in dictionary.items():
+        k = f"{parent_key}{separator}{k}" if parent_key else k
+        if isinstance(v, dict):
+            _flatten_dict(dictionary=v, accumulator=accumulator, parent_key=k)
+            continue
+        accumulator[k] = v
+    return accumulator

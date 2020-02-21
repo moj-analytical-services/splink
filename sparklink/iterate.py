@@ -53,7 +53,11 @@ def iterate(
 
         run_maximisation_step(df_e, params, spark)
         if log_iteration:
-            log.info(f"Iteration {i} complete")
+            log_other(f"Iteration {i} complete", logger=log, level="INFO")
+            
+        if params.is_converged():
+            log.info("EM algorithm has converged")
+            break
 
     # The final version of df_e should align to the current parameters - i.e. those computed in the last max step
     df_e = run_expectation_step(
