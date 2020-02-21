@@ -96,7 +96,10 @@ class Sparklink:
         df_gammas = add_gammas(df_comparison, self.settings, self.spark)
         return run_expectation_step(df_gammas, self.params, self.settings, self.spark)
 
-    def get_scored_comparisons(self, num_iterations=20):
+    def get_scored_comparisons(self, num_iterations=None):
+        
+        if (num_iterations is None):
+            num_iterations=self.settings["max_iterations"]
 
         df_comparison = self._get_df_comparison()
 
