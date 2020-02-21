@@ -70,8 +70,8 @@ class Sparklink:
                 )
 
         if link_type in ["link_only", "link_and_dedupe"]:
-            check_1 = self.df_r is isinstance(self.df, DataFrame)
-            check_2 = self.df_l is isinstance(self.df, DataFrame)
+            check_1 = isinstance(self.df_l, DataFrame)
+            check_2 = isinstance(self.df_r, DataFrame)
             check_3 = self.df is None
 
             if not all([check_1, check_2, check_3]):
