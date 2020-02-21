@@ -55,9 +55,9 @@
       "$id": "#/properties/max_iterations",
       "type": "number",
       "title": "The maximum number of iterations to run even if convergence has not been reached",
-      "default": 100,
+      "default": 10,
       "examples": [
-        10,
+        20,
         150
       ],
       "maximum": 200,
