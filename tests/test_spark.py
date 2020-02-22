@@ -374,7 +374,7 @@ def test_iteration_known_data_generating_process(
     df_gammas = spark.createDataFrame(dfpd)
 
     gamma_settings_4["retain_matching_columns"] = False
-    # gamma_settings_4[]
+    gamma_settings_4["em_convergence"] = 0.001
 
     df_e = iterate(
         df_gammas,
@@ -385,23 +385,26 @@ def test_iteration_known_data_generating_process(
         compute_ll=False,
     )
 
+
+    assert params_4.iteration < 20
+
     assert params_4.params["π"]["gamma_col_2_levels"]["prob_dist_match"]["level_0"][
         "probability"
-    ] == pytest.approx(0.05, abs=0.002)
+    ] == pytest.approx(0.05, abs=0.01)
     assert params_4.params["π"]["gamma_col_5_levels"]["prob_dist_match"]["level_0"][
         "probability"
-    ] == pytest.approx(0.1, abs=0.002)
+    ] == pytest.approx(0.1, abs=0.01)
     assert params_4.params["π"]["gamma_col_20_levels"]["prob_dist_match"]["level_0"][
         "probability"
-    ] == pytest.approx(0.05, abs=0.002)
+    ] == pytest.approx(0.05, abs=0.01)
 
     assert params_4.params["π"]["gamma_col_2_levels"]["prob_dist_non_match"]["level_1"][
         "probability"
-    ] == pytest.approx(0.05, abs=0.002)
+    ] == pytest.approx(0.05, abs=0.01)
     assert params_4.params["π"]["gamma_col_5_levels"]["prob_dist_non_match"]["level_1"][
         "probability"
-    ] == pytest.approx(0.2, abs=0.002)
+    ] == pytest.approx(0.2, abs=0.01)
     assert params_4.params["π"]["gamma_col_20_levels"]["prob_dist_non_match"][
         "level_1"
-    ]["probability"] == pytest.approx(0.5, abs=0.002)
+    ]["probability"] == pytest.approx(0.5, abs=0.01)
 
