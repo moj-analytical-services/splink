@@ -3,6 +3,7 @@ In the expectation step we calculate the membership probabilities
 i.e. for each comparison, what is the probability that it's a member
 of group match = 0 and group match = 1
 """
+from .logging_utils import format_sql
 
 import logging
 from collections import OrderedDict
@@ -15,8 +16,8 @@ except ImportError:
     DataFrame = None
     SparkSession = None
 
-log = logging.getLogger(__name__)
-from .logging_utils import log_sql, log_other
+logger = logging.getLogger(__name__)
+
 from .gammas import _add_left_right
 from .params import Params
 from .check_types import check_types
@@ -26,8 +27,7 @@ def run_expectation_step(df_with_gamma: DataFrame,
                          params: Params,
                          settings: dict,
                          spark: SparkSession,
-                         compute_ll=False,
-                         logger=log):
+                         compute_ll=False):
     """Run the expectation step of the EM algorithm described in the fastlink paper:
     http://imai.fas.harvard.edu/research/files/linkage.pdf
 
@@ -37,7 +37,6 @@ def run_expectation_step(df_with_gamma: DataFrame,
           settings (dict): sparklink settings dictionary
           spark (SparkSession): SparkSession
           compute_ll (bool, optional): Whether to compute the log likelihood. Degrades performance. Defaults to False.
-          logger ([type], optional): [description]. Defaults to log.
 
       Returns:
           DataFrame: Spark dataframe with a match_probability column
@@ -47,7 +46,7 @@ def run_expectation_step(df_with_gamma: DataFrame,
     sql = _sql_gen_gamma_prob_columns(params, settings)
 
     df_with_gamma.createOrReplaceTempView("df_with_gamma")
-    log_sql(sql, logger)
+    logger.debug(format_sql(sql))
     df_with_gamma_probs = spark.sql(sql)
     # df_with_gamma_probs.persist()
 
@@ -56,12 +55,12 @@ def run_expectation_step(df_with_gamma: DataFrame,
     if compute_ll:
         ll = get_overall_log_likelihood(df_with_gamma_probs, params, spark)
         message = f"Log likelihood for iteration {params.iteration-1}:  {ll}"
-        log_other(message, logger, level='INFO')
+        logger.info(message)
         params.params["log_likelihood"] = ll
 
     sql = _sql_gen_expected_match_prob(params, settings)
 
-    log_sql(sql, logger)
+    logger.debug(format_sql(sql))
     df_with_gamma_probs.createOrReplaceTempView("df_with_gamma_probs")
     df_e = spark.sql(sql)
 
@@ -195,7 +194,7 @@ def _sql_gen_gamma_case_when(gamma_str, match, params):
     return sql.strip()
 
 
-def _calculate_log_likelihood_df(df_with_gamma_probs, params, spark, logger=log):
+def _calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
     """
     Compute likelihood of observing df_with_gamma given the parameters
 
@@ -225,7 +224,7 @@ def _calculate_log_likelihood_df(df_with_gamma_probs, params, spark, logger=log)
 
     from df_with_gamma_probs
     """
-    log_sql(sql, logger)
+    logger.debug(format_sql(sql))
     df = spark.sql(sql)
 
     return df

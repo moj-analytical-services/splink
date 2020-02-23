@@ -15,7 +15,7 @@ from pandas.util.testing import assert_frame_equal
 import pytest
 import logging
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="module")
@@ -62,7 +62,7 @@ def spark():
         yield spark
     else:
         spark = None
-        log.error("Spark not available")
+        logger.error("Spark not available")
         print("Spark not available")
         yield spark
 
