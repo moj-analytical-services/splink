@@ -10,13 +10,13 @@ except ImportError:
     DataFrame = None
     SparkSession = None
 
-from .logging_utils import log_sql
+from .logging_utils import format_sql
 from .validate import validate_settings, _get_default_value
 from .sql import comparison_columns_select_expr, sql_gen_comparison_columns
 from .settings import complete_settings_dict
 from .check_types import check_types
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 def _add_left_right(columns_to_retain, name):
     columns_to_retain[name + "_l"] = name + "_l"
@@ -109,7 +109,7 @@ def add_gammas(
         unique_id_col=unique_id_col,
     )
 
-    log_sql(sql, log)
+    logger.debug(format_sql(sql))
     df_comparison.createOrReplaceTempView("df_comparison")
     df_gammas = spark.sql(sql)
 

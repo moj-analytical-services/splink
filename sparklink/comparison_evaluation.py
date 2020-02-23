@@ -5,7 +5,7 @@ from .params import Params
 
 from .maximisation_step import run_maximisation_step
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 from .logging_utils import format_sql
 
 def view_matches(df_e, df_comparison, spark):

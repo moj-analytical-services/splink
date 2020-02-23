@@ -1,11 +1,7 @@
 import re
 import copy
 
-import logging
 import pyspark.sql.functions as f
-
-log = logging.getLogger(__name__)
-from .logging_utils import format_sql
 
 def comparison_columns_select_expr(df):
     """

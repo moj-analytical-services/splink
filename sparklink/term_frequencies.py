@@ -10,12 +10,12 @@ except ImportError:
     DataFrame = None
     SparkSession = None
 
-from .logging_utils import log_sql, format_sql
+from .logging_utils import format_sql
 from .expectation_step import _column_order_df_e_select_expr
 from .params import Params
 from .check_types import check_types
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def sql_gen_bayes_string(probs):
@@ -127,8 +127,7 @@ def make_adjustment_for_term_frequencies(
     params: Params,
     settings: dict,
     spark: SparkSession,
-    retain_adjustment_columns: bool = False,
-    logger=log,
+    retain_adjustment_columns: bool = False
 ):
 
     df_e.createOrReplaceTempView("df_e")
@@ -148,20 +147,20 @@ def make_adjustment_for_term_frequencies(
     # Generate a lookup table for each column with 'term specific' lambdas.
     for c in term_freq_column_list:
         sql = sql_gen_generate_adjusted_lambda(c, params)
-        log_sql(sql, logger)
+        logger.debug(format_sql(sql))
         lookup = spark.sql(sql)
         lookup.createOrReplaceTempView(f"{c}_lookup")
 
     # Merge these lookup tables into main table
     sql = sql_gen_add_adjumentments_to_df_e(term_freq_column_list)
-    log_sql(sql, logger)
+    logger.debug(format_sql(sql))
     df_e_adj = spark.sql(sql)
     df_e_adj.createOrReplaceTempView("df_e_adj")
 
     sql = sql_gen_compute_final_group_membership_prob_from_adjustments(
         term_freq_column_list, settings
     )
-    log_sql(sql, logger)
+    logger.debug(format_sql(sql))
     df = spark.sql(sql)
     if not retain_adjustment_columns:
         for c in term_freq_column_list:

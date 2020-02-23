@@ -97,7 +97,7 @@ class Sparklink:
         return run_expectation_step(df_gammas, self.params, self.settings, self.spark)
 
     def get_scored_comparisons(self, num_iterations=None):
-        
+
         if (num_iterations is None):
             num_iterations=self.settings["max_iterations"]
 
@@ -112,7 +112,6 @@ class Sparklink:
             self.params,
             self.settings,
             self.spark,
-            log_iteration=True,
             num_iterations=num_iterations,
             compute_ll=False,
         )

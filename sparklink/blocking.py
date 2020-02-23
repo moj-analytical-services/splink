@@ -10,11 +10,11 @@ except ImportError:
     SparkSession = None
 
 
-from .logging_utils import log_sql, format_sql
+from .logging_utils import format_sql
 from .sql import comparison_columns_select_expr, sql_gen_comparison_columns
 from .check_types import check_spark_types, check_types
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def _get_columns_to_retain_blocking(settings):
@@ -58,14 +58,14 @@ def sql_gen_vertically_concatenate(columns_to_retain: list, table_name_l = "df_l
 
     return sql
 
-def vertically_concatenate_datasets(df_l, df_r, settings, logger=log, spark=None):
+def vertically_concatenate_datasets(df_l, df_r, settings, spark=None):
 
-    columns_to_retain = _get_columns_to_retain(settings)
+    columns_to_retain = _get_columns_to_retain_blocking(settings)
     sql = sql_gen_vertically_concatenate(columns_to_retain)
 
     df_l.createOrReplaceTempView("df_l")
     df_r.createOrReplaceTempView("df_r")
-    log_sql(sql, logger)
+    logger.debug(format_sql(sql))
     df = spark.sql(sql)
     return df
 
@@ -137,8 +137,7 @@ def block_using_rules(
     spark: SparkSession,
     df_l: DataFrame=None,
     df_r: DataFrame=None,
-    df: DataFrame=None,
-    logger=log
+    df: DataFrame=None
 ):
     """Apply a series of blocking rules to create a dataframe of record comparisons.
 
@@ -148,7 +147,6 @@ def block_using_rules(
         df_l (DataFrame, optional): Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
         df_r (DataFrame, optional): Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
         df (DataFrame, optional): Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
-        logger ([type], optional): [description]. Defaults to log.
 
     Returns:
         pyspark.sql.dataframe.DataFrame: A dataframe of each record comparison
@@ -169,7 +167,7 @@ def block_using_rules(
         df_r.createOrReplaceTempView("df_r")
 
     if link_type == "link_and_dedupe":
-        df_concat = vertically_concatenate_datasets(df_l, df_r, settings, logger=logger, spark=spark)
+        df_concat = vertically_concatenate_datasets(df_l, df_r, settings, spark=spark)
         df_concat.createOrReplaceTempView("df")
         df_concat.persist()
 
@@ -177,7 +175,7 @@ def block_using_rules(
 
     sql = sql_gen_block_using_rules(link_type, columns_to_retain, rules, unique_id_col)
 
-    log_sql(sql, logger)
+    logger.debug(format_sql(sql))
 
     df_comparison = spark.sql(sql)
 
@@ -222,13 +220,12 @@ def cartestian_block(
     df,
     columns_to_retain: list,
     spark=None,
-    unique_id_col: str = "unique_id",
-    logger=log,
+    unique_id_col: str = "unique_id"
 ):
 
     sql = sql_gen_cartesian_block(columns_to_retain, unique_id_col)
 
-    log_sql(sql, log)
+    logger.debug(format_sql(sql))
     df.createOrReplaceTempView("df")
     df_comparison = spark.sql(sql)
 

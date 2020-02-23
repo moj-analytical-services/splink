@@ -8,7 +8,7 @@ except ImportError:
     DataFrame = None
     SparkSession = None
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 from .logging_utils import format_sql
 from .params import Params
 
@@ -35,7 +35,7 @@ def _get_new_lambda(df_e, spark):
     df_e.createOrReplaceTempView("df_e")
 
     new_lambda = spark.sql(sql).collect()[0][0]
-    log.debug(format_sql(sql))
+    logger.debug(format_sql(sql))
     return new_lambda
 
 
@@ -88,7 +88,7 @@ def _get_new_pi_df(df_e, spark, params):
 
     sql = _sql_gen_pi_df(params)
     levels = spark.sql(sql).collect()
-    log.debug(format_sql(sql))
+    logger.debug(format_sql(sql))
     return [l.asDict() for l in levels]
 
 
@@ -102,7 +102,7 @@ def run_maximisation_step(df_e: DataFrame, params:Params, spark:SparkSession):
 
     df_e.createOrReplaceTempView("df_e")
     df_intermediate = spark.sql(sql)
-    log.debug(format_sql(sql))
+    logger.debug(format_sql(sql))
     df_intermediate.createOrReplaceTempView("df_intermediate")
     df_intermediate.persist()
 

@@ -133,6 +133,7 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
         "additional_columns_to_retain",
         "retain_matching_columns",
         "retain_intermediate_calculation_columns",
+        "max_iterations"
     ]
     for key in non_col_keys:
         if key not in settings_dict:

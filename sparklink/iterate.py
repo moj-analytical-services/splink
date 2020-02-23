@@ -13,8 +13,7 @@ from .check_types import check_types
 
 import logging
 
-log = logging.getLogger(__name__)
-from .logging_utils import log_sql, log_other
+logger = logging.getLogger(__name__)
 
 @check_types
 def iterate(
@@ -22,7 +21,6 @@ def iterate(
     params: Params,
     settings: dict,
     spark: SparkSession,
-    log_iteration:bool=False,
     num_iterations:int=10,
     compute_ll:bool=False,
 ):
@@ -52,11 +50,11 @@ def iterate(
         # compute_log_likelihood()
 
         run_maximisation_step(df_e, params, spark)
-        if log_iteration:
-            log_other(f"Iteration {i} complete", logger=log, level="INFO")
-            
+
+        logger.info(f"Iteration {i} complete")
+
         if params.is_converged():
-            log.info("EM algorithm has converged")
+            logger.info("EM algorithm has converged")
             break
 
     # The final version of df_e should align to the current parameters - i.e. those computed in the last max step
