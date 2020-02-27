@@ -123,8 +123,8 @@
           "num_levels": {
             "$id": "#/properties/comparison_columns/items/properties/num_levels",
             "type": "integer",
-            "title": "The number of different similarity categories that will be computed for this column i.e. the granularity of similarity comparison for the column",
-            "description": "By default, for a string variable, two levels would implies level 0: no match, level 1: almost exact match.  Three levels imples level 0: no match, level 1: strings are similar but not exactly the same, level 2: strings are almost exactly the same.",
+            "title": "The number of different similarity levels that will be computed for this column",
+            "description": "A greater value for `num_levels` means the algorithm can be more precise about how string similarity is treated - e.g. with three levels, it enables it to make a distinction between strings which are an almost-exact match, strings which are quite similar, and strings which don't really match at all.  However, more levels results in longer compute times and can sometimes affect convergence. By default, for a string variable, two levels would implies level 0: no match, level 1: almost exact match.  Three levels imples level 0: no match, level 1: strings are similar but not exactly the same, level 2: strings are almost exactly the same.  This column determines which pre-configured SQL CASE expression is used to generate values in the comparison vector.",
             "default": 2,
             "examples": [
               2,
@@ -136,7 +136,8 @@
           "data_type": {
             "$id": "#/properties/comparison_columns/items/properties/data_type",
             "type": "string",
-            "title": "The data type of the column.  This is used to choose how similarity is assessed this column i.e. which SQL SELECT CASE statement to use.  This is ignored if you explicitly provide a case_expression.",
+            "title": "The data type of the column.  This is used to choose how similarity is assessed this column. This is ignored if you explicitly provide a case_expression.",
+            "description": "- If `string` is specified, `splink` will use the Jaro Winkler string comparison functions.\n- If `numeric` is specified, then similarity will be assessed based on the absolute percentage difference between the two values.",
             "default": "string",
             "examples": [
               "string",
@@ -168,8 +169,8 @@
           "m_probabilities": {
             "$id": "#/properties/comparison_columns/items/properties/m_probabilities",
             "type": "array",
-            "title": "A array of the m probabilities for this column i.e. the probability of observing each similarity value amonst matches. There will be num_levels values in this array.",
-            "description": "The first probability given corresponds to level 0: least similar.  It refers to the probability of observing level 0 in the comparison vector amongst matches.  The second probability corresponds to level 1, up to level n, most similar.",
+            "title": "A array of the 'starting' m probabilities for this column (the priors, which are fed into the EM algorithm), i.e probability of observing each similarity level amonst matches.  There will be `num_level` values in this array.  See http://imai.fas.harvard.edu/research/files/linkage.pdf for further details.",
+            "description": "The first probability given corresponds to level 0: least similar.  It refers to the probability of observing level 0 in the comparison vector if the record really is a match.  The second probability corresponds to level 1, up to level n, most similar.",
             "examples": [
               [
                 0.05,
@@ -186,8 +187,8 @@
           "u_probabilities": {
             "$id": "#/properties/comparison_columns/items/properties/u_probabilities",
             "type": "array",
-            "title": "A array of the u probabilities for this column i.e. the probability of observing each similarity value amonst non-matches. There will be num_levels values in this array.",
-            "description": "The first probability given corresponds to level 0: least similar.  It refers to the probability of observing level 0 in the comparison vector amongst matches.  The second probability corresponds to level 1, up to level n, most similar.",
+            "title": "A array of the 'starting' u probabilities for this column (the priors, which are fed into the EM algorithm) i.e. the probability of observing each similarity value amonst non-matches. There will be num_levels values in this array.  See http://imai.fas.harvard.edu/research/files/linkage.pdf for further details.",
+            "description": "The first probability given corresponds to level 0: least similar.  It refers to the probability of observing level 0 in the comparison vector if the record 'in reality' is not a match.  The second probability corresponds to level 1, up to level n, most similar.",
             "examples": [
               [
                 0.9,
@@ -205,7 +206,8 @@
             "$id": "#/properties/comparison_columns/items/properties/term_frequency_adjusments",
             "type": "boolean",
             "default": false,
-            "description": "Whether ex post term frequency adjustments should be made to match scores for this column"
+            "title": "Whether ex post term frequency adjustments should be made to match scores for this column",
+            "description": "For some columns such as first name, the value of first name is important due to the distribution of values being non-uniform.  For instance, a match on 'linacre' contains more information than a match on 'smith. If this is set to true, a term frequency adjustment is made to account for these difference.  For details of how this works, see here: https://static.cambridge.org/content/id/urn:cambridge.org:id:article:S0003055418000783/resource/name/S0003055418000783sup001.pdf"
           },
           "gamma_index": {
             "$id": "#/properties/comparison_columns/items/properties/gamma_index",
