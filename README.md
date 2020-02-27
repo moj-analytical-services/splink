@@ -23,9 +23,9 @@ The aim of `sparklink` is to:
 
 You can run this end-to-end demo in an interactive Jupyter notebook by clicking the button below:
 
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/sparklink/dev?urlpath=lab/tree/quickstart_demo.ipynb)
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/sparklink/dev?urlpath=lab/tree/demo_notebooks/quickstart_demo.ipynb)
 
 ## Documentation
 
-Better docs to come. The best documentation is currently the demo `ipynb`, which you can find [here](https://github.com/moj-analytical-services/sparklink/blob/dev/quickstart_demo.ipynb).
+Better docs to come. The best documentation is currently the demo `ipynbs`, which you can find [here](https://github.com/moj-analytical-services/sparklink/tree/dev/demo_notebooks).
 
