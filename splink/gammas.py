@@ -47,7 +47,7 @@ def _get_select_expression_gammas(settings: dict):
         cols_to_retain["gamma_" + col_name] = col["case_expression"]
 
     for c in settings["additional_columns_to_retain"]:
-        cols_to_retain[c] = c
+        cols_to_retain = _add_left_right(cols_to_retain, c)
 
     return ", ".join(cols_to_retain.values())
 
