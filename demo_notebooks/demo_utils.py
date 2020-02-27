@@ -23,11 +23,14 @@ def render_key_as_markdown(key, is_col=False):
         md.append(f"\n**Possible values**: {enum}")
 
     if "examples" in value:
+
         if len(value["examples"]) > 0:
             ex = value["examples"][0]
+            if type(ex) == str:
+                ex = f'"{ex}"'
             example = ("```",
             "settings = {",
-            f'    "{key}": "{ex}"',
+            f'    "{key}": {ex}',
             "}",
             "```")
             example = "\n".join(example)
