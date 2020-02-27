@@ -98,7 +98,7 @@ def _get_probabilities(m_or_u, levels):
     if levels > 4:
         raise ValueError(
             f"No default m and u probabilities available when levels > 4, "
-            "please specify custom values for 'm_probabilities' and æu_probabilities' "
+            "please specify custom values for 'm_probabilities' and 'u_probabilities' "
             "within your settings dictionary"
         )
 
