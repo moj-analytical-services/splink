@@ -1,10 +1,17 @@
 from IPython.display import display, Markdown
 from sparklink.validate import _get_schema
 
+from IPython.display import display, Markdown
+from sparklink.validate import _get_schema
+
 def render_key_as_markdown(key, is_col=False):
     md = []
     schema = _get_schema()
-    value = schema["properties"][key]
+    if is_col:
+        value = schema["properties"]["comparison_columns"]["items"]["properties"][key]
+    else:
+        value = schema["properties"][key]
+
     if "title" in value:
         md.append(f"**Summary**:\n{value['title']}")
 
@@ -22,20 +29,41 @@ def render_key_as_markdown(key, is_col=False):
         enum = ", ".join(enum)
         md.append(f"\n**Possible values**: {enum}")
 
-    if "examples" in value:
+    if "default" in value:
+        md.append(f"\n**Default value if not provided**: {value['default']}")
 
-        if len(value["examples"]) > 0:
-            ex = value["examples"][0]
-            if type(ex) == str:
-                ex = f'"{ex}"'
-            example = ("```",
-            "settings = {",
-            f'    "{key}": {ex}',
-            "}",
-            "```")
-            example = "\n".join(example)
-            md.append("\n**Example**:\n")
-            md.append(example)
+
+    if "examples" in value:
+        if is_col:
+
+            if len(value["examples"]) > 0:
+                ex = value["examples"][0]
+                if type(ex) == str:
+                    ex = f'"{ex}"'
+
+                example = ("```",
+                 "settings = {",
+                 '    "comparison_columns: [',
+                 '    {',
+                f'        "{key}": {ex}',
+                 '    }',
+                 ']',
+                 '```')
+                example = "\n".join(example)
+                md.append("\n**Example**:\n")
+                md.append(example)
+        else:
+            if len(value["examples"]) > 0:
+                ex = value["examples"][0]
+                if type(ex) == str:
+                    ex = f'"{ex}"'
+                example = ("```",
+                "settings = {",
+                f'    "{key}": {ex}',
+                "}",
+                "```")
+                example = "\n".join(example)
+                md.append("\n**Example**:\n")
+                md.append(example)
 
     return Markdown("\n".join(md))
-render_key_as_markdown("link_type")
