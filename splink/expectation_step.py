@@ -99,7 +99,7 @@ def _sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
         select_cols[f"prob_gamma_{col_name}_match"] = case_statements[f"prob_gamma_{col_name}_match"]
 
     for c in settings["additional_columns_to_retain"]:
-        select_cols[c] = c
+        select_cols = _add_left_right(select_cols, c)
 
     select_expr =  ", ".join(select_cols.values())
 
@@ -134,7 +134,7 @@ def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
                     select_cols[col_name+"_adj"] =  col_name+"_adj"
 
     for c in settings["additional_columns_to_retain"]:
-        select_cols[c] = c
+        select_cols = _add_left_right(select_cols, c)
     return ", ".join(select_cols.values())
 
 def _sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_probs"):
