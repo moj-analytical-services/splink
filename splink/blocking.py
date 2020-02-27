@@ -88,7 +88,9 @@ def sql_gen_block_using_rules(
         columns_to_retain: List of columns to keep in returned dataset
         blocking_rules: Each element of the list represents a blocking rule
         unique_id_col (str, optional): The name of the column containing the row's unique_id. Defaults to "unique_id".
-        table_name (str, optional): Name of the table. Defaults to "df".
+        table_name_l (str, optional): Name of the left table to link (where `link_type` is `link_only` or `link_and_dedupe`). Defaults to "df_l".
+        table_name_r (str, optional): Name of the right table to link (where `link_type` is `link_only` or `link_and_dedupe`). Defaults to "df_r".
+        table_name_dedupe (str, optional): Name of the table to dedupe (where (where `link_type` is `dedupe_only`). Defaults to "df".
 
     Returns:
         str: A SQL statement that implements the blocking rules
@@ -187,18 +189,32 @@ def block_using_rules(
 
 
 def sql_gen_cartesian_block(
-    columns_to_retain: list, unique_id_col: str = "unique_id", table_name: str = "df"
+    link_type: str,
+    columns_to_retain: list,
+    unique_id_col: str = "unique_id",
+    table_name_l: str = "df_l",
+    table_name_r: str = "df_r",
+    table_name_dedupe: str = "df"
 ):
-    """Build a SQL statement that generates the cartesian product of the input dataset
+    """Build a SQL statement that performs a cartesian join.
 
     Args:
+        link_type: One of 'link_only', 'dedupe_only', or 'link_and_dedupe'
         columns_to_retain: List of columns to keep in returned dataset
         unique_id_col (str, optional): The name of the column containing the row's unique_id. Defaults to "unique_id".
-        table_name (str, optional): Name of the table. Defaults to "df".
+        table_name_l (str, optional): Name of the left table to link (where `link_type` is `link_only` or `link_and_dedupe`). Defaults to "df_l".
+        table_name_r (str, optional): Name of the right table to link (where `link_type` is `link_only` or `link_and_dedupe`). Defaults to "df_r".
+        table_name_dedupe (str, optional): Name of the table to dedupe (where (where `link_type` is `dedupe_only`). Defaults to "df".
 
     Returns:
-        str: A SQL statement that will generate the cartesian product
+        str: A SQL statement that implements the join
     """
+    
+    # In both these cases the data is in a single table
+    # (In the link_and_dedupe case the two tables have already been vertically concatenated)
+    if link_type in ['dedupe_only', 'link_and_dedupe']:
+        table_name_l = table_name_dedupe
+        table_name_r = table_name_dedupe
 
     if unique_id_col not in columns_to_retain:
         columns_to_retain.insert(0, unique_id_col)
@@ -208,25 +224,60 @@ def sql_gen_cartesian_block(
     sql = f"""
     select
     {sql_select_expr}
-    from {table_name} as l
-    cross join {table_name} as r
+    from {table_name_l} as l
+    cross join {table_name_r} as r
     where l.{unique_id_col} < r.{unique_id_col}
     """
 
     return sql
 
 
-def cartestian_block(
-    df,
-    columns_to_retain: list,
-    spark=None,
-    unique_id_col: str = "unique_id"
+def cartesian_block(    
+    settings: dict,
+    spark: SparkSession,
+    df_l: DataFrame=None,
+    df_r: DataFrame=None,
+    df: DataFrame=None
 ):
+    """Apply a cartesian join to create a dataframe of record comparisons.
 
-    sql = sql_gen_cartesian_block(columns_to_retain, unique_id_col)
+    Args:
+        settings (dict): A sparklink settings dictionary
+        spark (SparkSession): The pyspark.sql.session.SparkSession
+        df_l (DataFrame, optional): Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
+        df_r (DataFrame, optional): Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
+        df (DataFrame, optional): Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
 
+    Returns:
+        pyspark.sql.dataframe.DataFrame: A dataframe of each record comparison
+    """
+
+
+    link_type = settings["link_type"]
+
+
+    columns_to_retain = _get_columns_to_retain_blocking(settings)
+    unique_id_col = settings["unique_id_column_name"]
+
+    if link_type == "dedupe_only":
+        df.createOrReplaceTempView("df")
+
+    if link_type == "link_only":
+        df_l.createOrReplaceTempView("df_l")
+        df_r.createOrReplaceTempView("df_r")
+
+    if link_type == "link_and_dedupe":
+        df_concat = vertically_concatenate_datasets(df_l, df_r, settings, spark=spark)
+        df_concat.createOrReplaceTempView("df")
+        df_concat.persist()
+
+    sql = sql_gen_cartesian_block(link_type, columns_to_retain, unique_id_col)
+    
     logger.debug(format_sql(sql))
-    df.createOrReplaceTempView("df")
+
     df_comparison = spark.sql(sql)
+
+    if link_type == "link_and_dedupe":
+        df_concat.unpersist()
 
     return df_comparison
