@@ -12,6 +12,7 @@
       "$id": "#/properties/link_type",
       "type": "string",
       "title": "The type of data linking task - `dedupe_only`, `link_only` or `link_and_dedupe`.  Required.",
+      "description": "- When `dedupe_only`, the user provides a single input dataframe, and `splink` tries to find duplicate entries\n- When `link_only`, the user provides two dataframes, and `splink` tries to find a link between two two.  It makes no attempt to deduplicate datasets so this is best used when input datasets contain no duplicates\n- When `link_and_dedupe`, the user provides two dataframes, and `splink` simultanouesly links and dedupes the dataframes.",
       "examples": [
         "dedupe_only",
         "link_only",
