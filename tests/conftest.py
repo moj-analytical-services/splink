@@ -233,7 +233,9 @@ def sqlite_con_2(gamma_settings_2, params_2):
     one = cur.fetchone()
     columns = one.keys()
 
-    sql = sql_gen_cartesian_block(columns, table_name="test2")
+    sql = sql_gen_cartesian_block(
+        link_type="dedupe_only", columns_to_retain=columns, table_name_dedupe="test2"
+    )
 
     df = pd.read_sql(sql, con)
     df = df.sort_values(["unique_id_l", "unique_id_r"])
