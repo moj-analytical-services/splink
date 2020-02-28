@@ -84,12 +84,20 @@ class Splink:
     def _get_df_comparison(self):
 
         if self.settings["link_type"] == "dedupe_only":
-            return block_using_rules(self.settings, self.spark, df=self.df)
+            if len(self.settings["blocking_rules"])>0:
+                return block_using_rules(self.settings, self.spark, df=self.df)
+            else:
+                return cartesian_block(self.settings, self.spark, df=self.df)
 
         if self.settings["link_type"] in ("link_only", "link_and_dedupe"):
-            return block_using_rules(
-                self.settings, self.spark, df_l=self.df_l, df_r=self.df_r
-            )
+            if len(self.settings["blocking_rules"])>0:
+                return block_using_rules(
+                    self.settings, self.spark, df_l=self.df_l, df_r=self.df_r
+                )
+            else:
+                return cartesian_block(
+                    self.settings, self.spark, df_l=self.df_l, df_r=self.df_r
+                )
 
     def manually_apply_fellegi_sunter_weights(self):
         df_comparison = self._get_df_comparison()
