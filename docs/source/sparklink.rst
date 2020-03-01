@@ -1,85 +1,85 @@
-sparklink package
+splink package
 =================
 
 Submodules
 ----------
 
-sparklink.blocking module
+splink.blocking module
 -------------------------
 
-.. automodule:: sparklink.blocking
+.. automodule:: splink.blocking
    :members:
    :undoc-members:
    :show-inheritance:
 
-sparklink.chart\_definitions module
+splink.chart\_definitions module
 -----------------------------------
 
-.. automodule:: sparklink.chart_definitions
+.. automodule:: splink.chart_definitions
    :members:
    :undoc-members:
    :show-inheritance:
 
-sparklink.comparison\_evaluation module
+splink.comparison\_evaluation module
 ---------------------------------------
 
-.. automodule:: sparklink.comparison_evaluation
+.. automodule:: splink.comparison_evaluation
    :members:
    :undoc-members:
    :show-inheritance:
 
-sparklink.expectation\_step module
+splink.expectation\_step module
 ----------------------------------
 
-.. automodule:: sparklink.expectation_step
+.. automodule:: splink.expectation_step
    :members:
    :undoc-members:
    :show-inheritance:
 
-sparklink.gammas module
+splink.gammas module
 -----------------------
 
-.. automodule:: sparklink.gammas
+.. automodule:: splink.gammas
    :members:
    :undoc-members:
    :show-inheritance:
 
-sparklink.iterate module
+splink.iterate module
 ------------------------
 
-.. automodule:: sparklink.iterate
+.. automodule:: splink.iterate
    :members:
    :undoc-members:
    :show-inheritance:
 
-sparklink.logging\_utils module
+splink.logging\_utils module
 -------------------------------
 
-.. automodule:: sparklink.logging_utils
+.. automodule:: splink.logging_utils
    :members:
    :undoc-members:
    :show-inheritance:
 
-sparklink.maximisation\_step module
+splink.maximisation\_step module
 -----------------------------------
 
-.. automodule:: sparklink.maximisation_step
+.. automodule:: splink.maximisation_step
    :members:
    :undoc-members:
    :show-inheritance:
 
-sparklink.params module
+splink.params module
 -----------------------
 
-.. automodule:: sparklink.params
+.. automodule:: splink.params
    :members:
    :undoc-members:
    :show-inheritance:
 
-sparklink.sql module
+splink.sql module
 --------------------
 
-.. automodule:: sparklink.sql
+.. automodule:: splink.sql
    :members:
    :undoc-members:
    :show-inheritance:
@@ -88,7 +88,7 @@ sparklink.sql module
 Module contents
 ---------------
 
-.. automodule:: sparklink
+.. automodule:: splink
    :members:
    :undoc-members:
    :show-inheritance:

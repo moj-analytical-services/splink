@@ -27,7 +27,7 @@ def _get_select_expression_gammas(settings: dict):
     """Get a select expression which picks which columns to keep in df_gammas
 
     Args:
-        settings (dict): A `sparklink` settings dictionary
+        settings (dict): A `splink` settings dictionary
 
     Returns:
         str: A select expression
@@ -60,7 +60,7 @@ def sql_gen_add_gammas(
     """Build SQL statement that adds gamma columns to the comparison dataframe
 
     Args:
-        settings (dict): `sparklink` settings dict
+        settings (dict): `splink` settings dict
         unique_id_col (str, optional): Name of the unique id column. Defaults to "unique_id".
         table_name (str, optional): Name of the comparison df. Defaults to "df_comparison".
 
@@ -93,7 +93,7 @@ def add_gammas(
 
     Args:
         df_comparison (spark dataframe): A Spark dataframe containing record comparisons, with records compared using the convention col_name_l, col_name_r
-        settings_dict (dict): The `sparklink` settings dictionary
+        settings_dict (dict): The `splink` settings dictionary
         spark (Spark session): The Spark session object
         unique_id_col (str, optional): Name of the unique id column. Defaults to "unique_id".
 

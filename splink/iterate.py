@@ -28,8 +28,8 @@ def iterate(
 
     Args:
         df_gammas (DataFrame): Spark dataframe including gamma columns
-        params (Params): The `sparklink` params object
-        settings (dict): The `sparklink` settings dictionary
+        params (Params): The `splink` params object
+        settings (dict): The `splink` settings dictionary
         spark (SparkSession): The SparkSession object
         log_iteration (bool, optional): Whether to write a message to the log after each iteration. Defaults to False.
         num_iterations (int, optional): The number of iterations to run. Defaults to 10.

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-pytest -x --cov-report term-missing --cov=sparklink tests/
+pytest -x --cov-report term-missing --cov=splink tests/
 
 if [ $? -ne 0 ]
 then

@@ -1,7 +1,7 @@
-sparklink
+splink
 =========
 
 .. toctree::
    :maxdepth: 4
 
-   sparklink
+   splink

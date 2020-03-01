@@ -1,15 +1,15 @@
 # Derivations for a lot of the expected answers here:
-# https://github.com/moj-analytical-services/sparklink/blob/dev/tests/expectation_maximisation_test_answers.xlsx
+# https://github.com/moj-analytical-services/splink/blob/dev/tests/expectation_maximisation_test_answers.xlsx
 import copy
 import os
 
-from sparklink.blocking import cartestian_block, block_using_rules
-from sparklink.params import Params
-from sparklink.gammas import add_gammas, complete_settings_dict
-from sparklink.iterate import iterate
-from sparklink.expectation_step import run_expectation_step, get_overall_log_likelihood
-from sparklink.case_statements import *
-from sparklink.case_statements import _check_jaro_registered
+from splink.blocking import cartestian_block, block_using_rules
+from splink.params import Params
+from splink.gammas import add_gammas, complete_settings_dict
+from splink.iterate import iterate
+from splink.expectation_step import run_expectation_step, get_overall_log_likelihood
+from splink.case_statements import *
+from splink.case_statements import _check_jaro_registered
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import pytest
@@ -107,7 +107,7 @@ def test_expectation(spark, sqlite_con_1, params_1, gamma_settings_1):
 
 def test_tiny_numbers(spark, sqlite_con_1):
 
-    # Regression test, see https://github.com/moj-analytical-services/sparklink/issues/48
+    # Regression test, see https://github.com/moj-analytical-services/splink/issues/48
 
     dfpd = pd.read_sql("select * from test1", sqlite_con_1)
     df = spark.createDataFrame(dfpd)
@@ -282,7 +282,7 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
 
     params_1.save_params_to_json_file(fname)
 
-    from sparklink.params import load_params_from_json
+    from splink.params import load_params_from_json
 
     p = load_params_from_json(fname)
     assert p.params["λ"] == pytest.approx(params_1.params["λ"])
@@ -362,7 +362,7 @@ def test_case_statements(spark, sqlite_con_3):
     assert df.loc[4, "gamma_str_col"] == -1
 
 
-from sparklink.gammas import add_gammas
+from splink.gammas import add_gammas
 
 
 def test_iteration_known_data_generating_process(

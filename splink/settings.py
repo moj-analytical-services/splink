@@ -114,14 +114,14 @@ def _get_probabilities(m_or_u, levels):
 
 def complete_settings_dict(settings_dict: dict, spark: SparkSession):
     """Auto-populate any missing settings from the settings dictionary using the 'sensible defaults' that
-    are specified in the json schmea (./sparklink/files/settings_jsonschema.json)
+    are specified in the json schmea (./splink/files/settings_jsonschema.json)
 
     Args:
         settings_dict (dict): The settings dictionary
         spark: The SparkSession
 
     Returns:
-        dict: A `sparklink` settings dictionary with all keys populated.
+        dict: A `splink` settings dictionary with all keys populated.
     """
     validate_settings(settings_dict)
     default_case_statements = _get_default_case_statements_functions(spark)

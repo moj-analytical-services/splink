@@ -1,2 +1,2 @@
-docker build -t sparklink -f Dockerfile_testrunner .
-docker run --rm sparklink pytest -v -s
+docker build -t splink -f Dockerfile_testrunner .
+docker run --rm splink pytest -v -s

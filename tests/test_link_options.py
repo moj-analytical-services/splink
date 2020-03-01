@@ -2,9 +2,9 @@ import pytest
 import sqlite3
 import pandas as pd
 
-from sparklink.blocking import sql_gen_block_using_rules, sql_gen_vertically_concatenate, _get_columns_to_retain_blocking
+from splink.blocking import sql_gen_block_using_rules, sql_gen_vertically_concatenate, _get_columns_to_retain_blocking
 
-from sparklink.settings import complete_settings_dict
+from splink.settings import complete_settings_dict
 
 def data_into_table(data, table_name, con):
     cur = con.cursor()

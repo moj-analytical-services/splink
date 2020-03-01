@@ -142,7 +142,7 @@ def block_using_rules(
     """Apply a series of blocking rules to create a dataframe of record comparisons.
 
     Args:
-        settings (dict): A sparklink settings dictionary
+        settings (dict): A splink settings dictionary
         spark (SparkSession): The pyspark.sql.session.SparkSession
         df_l (DataFrame, optional): Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
         df_r (DataFrame, optional): Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
