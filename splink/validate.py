@@ -74,7 +74,7 @@ def validate_settings(settings_dict: dict):
         message = (
             "There is an error in your settings dictionary. "
             "To quickly write a valid settings dictionary using autocompelte you might want to try "
-            "our online tool https://robinlinacre.com/simple_splink_settings_editor/, or you can use "
+            "our online tool https://robinlinacre.com/simple_sparklink_settings_editor/, or you can use "
             "the autocomplete features of VS Code - just copy and paste code from the following gist "
             "into VS Code, setting language mode to json, or having saved the file as a .json file\n"
             "https://gist.github.com/RobinL/cfe1152dbd33ae26e05a43d9a0ec85b9"
