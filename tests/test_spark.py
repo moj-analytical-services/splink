@@ -3,7 +3,7 @@
 import copy
 import os
 
-from splink.blocking import cartestian_block, block_using_rules
+from splink.blocking import cartesian_block, block_using_rules
 from splink.params import Params
 from splink.gammas import add_gammas, complete_settings_dict
 from splink.iterate import iterate
