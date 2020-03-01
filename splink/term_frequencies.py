@@ -1,5 +1,5 @@
 # For more information on where formulas came from, see
-# https://github.com/moj-analytical-services/sparklink/issues/17
+# https://github.com/moj-analytical-services/splink/issues/17
 
 import logging
 

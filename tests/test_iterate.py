@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from sparklink.maximisation_step import (
+from splink.maximisation_step import (
     _sql_gen_new_lambda,
     _sql_gen_intermediate_pi_aggregate,
 )

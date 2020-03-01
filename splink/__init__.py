@@ -6,16 +6,16 @@ except ImportError:
     DataFrame = None
     SparkSession = None
 
-from sparklink.settings import complete_settings_dict
-from sparklink.validate import validate_settings
-from sparklink.params import Params
-from sparklink.case_statements import _check_jaro_registered
-from sparklink.blocking import block_using_rules
-from sparklink.gammas import add_gammas
-from sparklink.iterate import iterate
-from sparklink.expectation_step import run_expectation_step
-from sparklink.term_frequencies import make_adjustment_for_term_frequencies
-from sparklink.check_types import check_types
+from splink.settings import complete_settings_dict
+from splink.validate import validate_settings
+from splink.params import Params
+from splink.case_statements import _check_jaro_registered
+from splink.blocking import block_using_rules
+from splink.gammas import add_gammas
+from splink.iterate import iterate
+from splink.expectation_step import run_expectation_step
+from splink.term_frequencies import make_adjustment_for_term_frequencies
+from splink.check_types import check_types
 
 try:
     from pyspark.sql.dataframe import DataFrame
@@ -28,7 +28,7 @@ except ImportError:
     spark_exists = False
 
 
-class Sparklink:
+class Splink:
     @check_types
     def __init__(
         self,
@@ -64,9 +64,9 @@ class Sparklink:
 
             if not all([check_1, check_2, check_3]):
                 raise ValueError(
-                    "For link_type = 'dedupe_only', you must pass a single Spark dataframe to Sparklink using the df argument. "
+                    "For link_type = 'dedupe_only', you must pass a single Spark dataframe to Splink using the df argument. "
                     "The df_l and df_r arguments should be omitted or set to None. "
-                    "e.g. linker = Sparklink(settings, spark, df=my_df)"
+                    "e.g. linker = Splink(settings, spark, df=my_df)"
                 )
 
         if link_type in ["link_only", "link_and_dedupe"]:
@@ -76,9 +76,9 @@ class Sparklink:
 
             if not all([check_1, check_2, check_3]):
                 raise ValueError(
-                    f"For link_type = '{link_type}', you must pass two Spark dataframes to Sparklink using the df_l and df_r argument. "
+                    f"For link_type = '{link_type}', you must pass two Spark dataframes to Splink using the df_l and df_r argument. "
                     "The df argument should be omitted or set to None. "
-                    "e.g. linker = Sparklink(settings, spark, df_l=my_first_df, df_r=df_to_link_to_first_one)"
+                    "e.g. linker = Splink(settings, spark, df_l=my_first_df, df_r=df_to_link_to_first_one)"
                 )
 
     def _get_df_comparison(self):

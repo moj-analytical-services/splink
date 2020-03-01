@@ -4,15 +4,15 @@ import sqlite3
 import pandas as pd
 import copy
 
-from sparklink.blocking import sql_gen_cartesian_block, sql_gen_block_using_rules
-from sparklink.gammas import sql_gen_add_gammas, complete_settings_dict
-from sparklink.expectation_step import (
+from splink.blocking import sql_gen_cartesian_block, sql_gen_block_using_rules
+from splink.gammas import sql_gen_add_gammas, complete_settings_dict
+from splink.expectation_step import (
     _sql_gen_gamma_prob_columns,
     _sql_gen_expected_match_prob,
 )
-from sparklink.maximisation_step import _sql_gen_intermediate_pi_aggregate, _sql_gen_pi_df
-from sparklink.params import Params
-from sparklink.case_statements import sql_gen_case_smnt_strict_equality_2
+from splink.maximisation_step import _sql_gen_intermediate_pi_aggregate, _sql_gen_pi_df
+from splink.params import Params
+from splink.case_statements import sql_gen_case_smnt_strict_equality_2
 
 
 @pytest.mark.filterwarnings("ignore:*")

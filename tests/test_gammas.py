@@ -4,7 +4,7 @@ import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import pytest
 
-from sparklink.gammas import sql_gen_add_gammas, complete_settings_dict
+from splink.gammas import sql_gen_add_gammas, complete_settings_dict
 
 
 @pytest.fixture(scope="module")

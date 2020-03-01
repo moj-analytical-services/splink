@@ -31,7 +31,7 @@ class Params:
     """Stores the current model parameters (in self.params) and values for params for all previous iterations
 
     Args:
-        settings (dict): A sparklink setting object
+        settings (dict): A splink setting object
         spark (SparkSession): You sparksession. Defaults to None.
 
     Attributes:
@@ -74,7 +74,7 @@ class Params:
         return {k: i["desc"] for k, i in self.params["π"].items()}
 
     def _generate_param_dict(self):
-        """Uses the sparklink settings object to generate a parameter dictionary
+        """Uses the splink settings object to generate a parameter dictionary
         """
 
         for col_dict in self.settings["comparison_columns"]:
@@ -313,14 +313,14 @@ class Params:
         p_latest = self.params
         p_previous = self.param_history[-1]
         threshold = self.settings["em_convergence"]
-    
+
         p_new = {key:value for key, value in _flatten_dict(p_latest).items() if '_probability' in key.lower()}
         p_old = {key:value for key, value in _flatten_dict(p_previous).items() if '_probability' in key.lower()}
-    
+
         diff = [abs(p_new[item] - p_old[item]) < threshold for item in p_new]
-    
+
         return(all(diff))
-    
+
     ### The rest of this module is just 'presentational' elements - charts, and __repr__ etc.
 
     def pi_iteration_chart(self):  # pragma: no cover
@@ -394,7 +394,7 @@ class Params:
         else:
             return adjustment_weight_chart_def
 
-    def all_charts_write_html_file(self, filename="sparklink_charts.html"):
+    def all_charts_write_html_file(self, filename="splink_charts.html"):
 
         if altair_installed:
             c1 = self.probability_distribution_chart().to_json(indent=None)
@@ -537,8 +537,8 @@ def load_params_from_dict(param_dict):
         raise ValueError("Your saved params seem to be corrupted")
 
     return p
-                         
-                         
+
+
 def _flatten_dict(dictionary, accumulator=None, parent_key=None, separator="_"):
     if accumulator is None:
         accumulator = {}

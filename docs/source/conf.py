@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'sparklink'
+project = 'splink'
 copyright = '2019, Robin Linacre'
 author = 'Robin Linacre'
 

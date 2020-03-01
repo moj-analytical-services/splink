@@ -1,7 +1,7 @@
 # Not much point in doing full test coverage of this until we're confident the formulas we're implementing
 # are the correct ones.
 # See discussion here:
-# https://github.com/moj-analytical-services/sparklink/issues/17
+# https://github.com/moj-analytical-services/splink/issues/17
 
 # Basically, only want to do full test coverage here after we've checked our results align with R fasklink pacakge.
 
@@ -9,7 +9,7 @@ import pytest
 import sqlite3
 import pandas as pd
 
-from sparklink.term_frequencies import *
+from splink.term_frequencies import *
 
 def data_into_table(data, table_name, con):
     cur = con.cursor()

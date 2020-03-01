@@ -1,4 +1,4 @@
-from sparklink.params import Params
+from splink.params import Params
 import pytest
 
 # Light testing at the moment.  Focus on aspects that could break main algo

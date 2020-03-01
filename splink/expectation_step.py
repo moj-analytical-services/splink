@@ -33,8 +33,8 @@ def run_expectation_step(df_with_gamma: DataFrame,
 
       Args:
           df_with_gamma (DataFrame): Spark dataframe with comparison vectors already populated
-          params (Params): sparklink params object
-          settings (dict): sparklink settings dictionary
+          params (Params): splink params object
+          settings (dict): splink settings dictionary
           spark (SparkSession): SparkSession
           compute_ll (bool, optional): Whether to compute the log likelihood. Degrades performance. Defaults to False.
 

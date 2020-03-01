@@ -1,5 +1,5 @@
 import pytest
-from sparklink.blocking import sql_gen_block_using_rules
+from splink.blocking import sql_gen_block_using_rules
 import sqlite3
 import pandas as pd
 from pandas.util.testing import assert_frame_equal

@@ -4,8 +4,8 @@ import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import pytest
 
-from sparklink.case_statements import *
-from sparklink.case_statements import _add_null_treatment_to_case_statement
+from splink.case_statements import *
+from splink.case_statements import _add_null_treatment_to_case_statement
 
 
 def test_case(sqlite_con_3):

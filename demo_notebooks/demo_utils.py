@@ -1,8 +1,8 @@
 from IPython.display import display, Markdown
-from sparklink.validate import _get_schema
+from splink.validate import _get_schema
 
 from IPython.display import display, Markdown
-from sparklink.validate import _get_schema
+from splink.validate import _get_schema
 
 def render_key_as_markdown(key, is_col=False):
     md = []

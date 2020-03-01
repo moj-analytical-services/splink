@@ -4,10 +4,10 @@ import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import pytest
 
-from sparklink.gammas import sql_gen_add_gammas
-from sparklink.settings import sql_gen_case_smnt_strict_equality_2, complete_settings_dict
-from sparklink.expectation_step import _sql_gen_gamma_prob_columns, _sql_gen_expected_match_prob
-from sparklink.params import Params
+from splink.gammas import sql_gen_add_gammas
+from splink.settings import sql_gen_case_smnt_strict_equality_2, complete_settings_dict
+from splink.expectation_step import _sql_gen_gamma_prob_columns, _sql_gen_expected_match_prob
+from splink.params import Params
 
 def test_probability_columns(sqlite_con_1, gamma_settings_1):
 
