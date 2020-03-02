@@ -141,7 +141,7 @@ def block_using_rules(
     df_r: DataFrame=None,
     df: DataFrame=None
 ):
-    """Apply a series of blocking rules to create a dataframe of record comparisons.
+    """Apply a series of blocking rules to create a dataframe of record comparisons. If no blocking rules provided, performs a cartesian join.
 
     Args:
         settings (dict): A splink settings dictionary
@@ -153,7 +153,9 @@ def block_using_rules(
     Returns:
         pyspark.sql.dataframe.DataFrame: A dataframe of each record comparison
     """
-
+    
+    if len(settings["blocking_rules"])==0:
+        return cartesian_block(settings, spark, df_l, df_r, df)
 
     link_type = settings["link_type"]
 

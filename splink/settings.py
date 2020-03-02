@@ -1,4 +1,5 @@
 from collections import OrderedDict
+import warnings
 
 
 try:
@@ -114,7 +115,7 @@ def _get_probabilities(m_or_u, levels):
 
 def complete_settings_dict(settings_dict: dict, spark: SparkSession):
     """Auto-populate any missing settings from the settings dictionary using the 'sensible defaults' that
-    are specified in the json schmea (./splink/files/settings_jsonschema.json)
+    are specified in the json schema (./splink/files/settings_jsonschema.json)
 
     Args:
         settings_dict (dict): The settings dictionary
@@ -128,6 +129,7 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
 
     # Complete non-column settings
     non_col_keys = [
+        "blocking_rules",
         "em_convergence",
         "unique_id_column_name",
         "additional_columns_to_retain",
@@ -139,6 +141,15 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
         if key not in settings_dict:
             settings_dict[key] = _get_default_value(key, is_column_setting=False)
 
+    if len(settings_dict["blocking_rules"])==0:
+        warnings.warn(
+            """
+            You have not specified any blocking rules, meaning all comparisons between the 
+            input dataset(s) will be generated and blocking will not be used. 
+            For large input datasets, this will generally be computationally intractable 
+            because it will generate comparisons equal to the number of rows squared.
+            """)        
+            
     if "proportion_of_matches" not in settings_dict:
         settings_dict["proportion_of_matches"] = _get_default_value(
             "proportion_of_matches", is_column_setting=False
