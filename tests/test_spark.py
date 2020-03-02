@@ -3,7 +3,7 @@
 import copy
 import os
 
-from splink.blocking import cartesian_block, block_using_rules
+from splink.blocking import block_using_rules
 from splink.params import Params
 from splink.gammas import add_gammas, complete_settings_dict
 from splink.iterate import iterate
@@ -69,6 +69,27 @@ def spark():
 
 from pyspark.sql import SparkSession, Row
 
+
+def test_no_blocking(spark, link_dedupe_data):
+    settings = {
+        "link_type": "link_only",
+        "comparison_columns": [{"col_name": "first_name"},
+                            {"col_name": "surname"}],
+        "blocking_rules": []
+    }
+    settings = complete_settings_dict(settings, spark=None)
+    dfpd_l = pd.read_sql("select * from df_l", link_dedupe_data)
+    dfpd_r = pd.read_sql("select * from df_r", link_dedupe_data)
+    df_l = spark.createDataFrame(dfpd_l)
+    df_r = spark.createDataFrame(dfpd_r)
+    
+    
+    df_comparison = block_using_rules(settings, spark, df_l=df_l, df_r=df_r)
+    df = df_comparison.toPandas()
+
+
+    assert list(df["unique_id_l"]) == [1,1,1,2,2,2]
+    assert list(df["unique_id_r"]) == [7,8,9,7,8,9]
 
 def test_expectation(spark, sqlite_con_1, params_1, gamma_settings_1):
     dfpd = pd.read_sql("select * from test1", sqlite_con_1)
