@@ -114,8 +114,6 @@ def sql_gen_compute_final_group_membership_prob_from_adjustments(
     from {table_name}
     """
 
-    print(sql)
-
     return sql
 
 
