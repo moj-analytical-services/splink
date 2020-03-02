@@ -4,7 +4,7 @@ import sqlite3
 import pandas as pd
 import copy
 
-from splink.blocking import sql_gen_cartesian_block, sql_gen_block_using_rules
+from splink.blocking import sql_gen_cartesian_block, sql_gen_block_using_rules, sql_gen_vertically_concatenate
 from splink.gammas import sql_gen_add_gammas, complete_settings_dict
 from splink.expectation_step import (
     _sql_gen_gamma_prob_columns,
@@ -14,6 +14,53 @@ from splink.maximisation_step import _sql_gen_intermediate_pi_aggregate, _sql_ge
 from splink.params import Params
 from splink.case_statements import sql_gen_case_smnt_strict_equality_2
 
+def data_into_table(data, table_name, con):
+    cur = con.cursor()
+
+    keys = data[0].keys()
+    cols = ", ".join(keys)
+
+    sql = f"""
+    create table if not exists {table_name} ({cols})
+    """
+
+    cur.execute(sql)
+
+    question_marks = ", ".join("?" for k in keys)
+    insert_statement = f"insert into {table_name} values ({question_marks})"
+
+    for d in data:
+        values = tuple(d.values())
+        cur.execute(insert_statement, values)
+
+@pytest.fixture(scope='module')
+def link_dedupe_data():
+
+     # Create the database and the database table
+    con = sqlite3.connect(":memory:")
+    con.row_factory = sqlite3.Row
+
+    data_l = [
+    {"unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
+    {"unique_id": 2, "surname": "Smith", "first_name": "John"}
+    ]
+
+    data_into_table(data_l, "df_l", con)
+
+    data_r = [
+    {"unique_id": 7, "surname": "Linacre", "first_name": "Robin"},
+    {"unique_id": 8, "surname": "Smith", "first_name": "John"},
+    {"unique_id": 9, "surname": "Smith", "first_name": "Robin"}
+    ]
+
+    data_into_table(data_r, "df_r", con)
+
+    cols_to_retain = ["unique_id", "surname", "first_name"]
+    sql = sql_gen_vertically_concatenate(cols_to_retain)
+    df = pd.read_sql(sql, con)
+    df.to_sql("df", con, index=False)
+
+    yield con
 
 @pytest.mark.filterwarnings("ignore:*")
 @pytest.fixture(scope="function")
