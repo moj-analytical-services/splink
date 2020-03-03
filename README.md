@@ -21,11 +21,11 @@ The aim of `splink` is to:
 
 ## Interactive demo
 
-You can run this end-to-end demo in an interactive Jupyter notebook by clicking the button below:
+You can run demos of `splink` in an interactive Jupyter notebook by clicking the button below:
 
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink/dev?urlpath=lab/tree/demo_notebooks/quickstart_demo.ipynb)
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab/tree/index.ipynb)
 
 ## Documentation
 
-Better docs to come. The best documentation is currently the demo `ipynbs`, which you can find [here](https://github.com/moj-analytical-services/splink/tree/dev/demo_notebooks).
+Better docs to come. The best documentation is currently a series of demonstrations notebooks in the [splink_demos](https://github.com/moj-analytical-services/splink_demos) repo.
 
