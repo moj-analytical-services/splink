@@ -82,11 +82,11 @@ def test_no_blocking(spark, link_dedupe_data):
     dfpd_r = pd.read_sql("select * from df_r", link_dedupe_data)
     df_l = spark.createDataFrame(dfpd_l)
     df_r = spark.createDataFrame(dfpd_r)
-    
-    
+
+
     df_comparison = block_using_rules(settings, spark, df_l=df_l, df_r=df_r)
     df = df_comparison.toPandas()
-
+    df = df.sort_values(["unique_id_l", "unique_id_r"])
 
     assert list(df["unique_id_l"]) == [1,1,1,2,2,2]
     assert list(df["unique_id_r"]) == [7,8,9,7,8,9]
@@ -429,3 +429,75 @@ def test_iteration_known_data_generating_process(
         "level_1"
     ]["probability"] == pytest.approx(0.5, abs=0.01)
 
+
+def test_link_option_link_dedupe(spark, link_dedupe_data_repeat_ids):
+    settings = {
+        "link_type": "link_and_dedupe",
+        "comparison_columns": [{"col_name": "first_name"},
+                            {"col_name": "surname"}],
+        "blocking_rules": [
+            "l.first_name = r.first_name",
+            "l.surname = r.surname"
+        ]
+    }
+    settings = complete_settings_dict(settings, spark=None)
+    dfpd_l = pd.read_sql("select * from df_l", link_dedupe_data_repeat_ids)
+    df_l = spark.createDataFrame(dfpd_l)
+    dfpd_r = pd.read_sql("select * from df_r", link_dedupe_data_repeat_ids)
+    df_r = spark.createDataFrame(dfpd_r)
+    df = block_using_rules(settings, spark, df_l=df_l, df_r=df_r)
+    df = df.toPandas()
+    df["u_l"] = df["unique_id_l"].astype(str) + df["_source_table_l"].str.slice(0,1)
+    df["u_r"] = df["unique_id_r"].astype(str) + df["_source_table_r"].str.slice(0,1)
+    df = df.sort_values(["_source_table_l", "_source_table_r", "unique_id_l", "unique_id_r"])
+
+    assert list(df["u_l"]) == ['2l', '1l', '1l', '2l', '2l', '3l', '3l', '1r', '2r']
+    assert list(df["u_r"]) == ['3l', '1r', '3r', '2r', '3r', '2r', '3r', '3r', '3r']
+
+
+def test_link_option_link(spark, link_dedupe_data_repeat_ids):
+    settings = {
+        "link_type": "link_only",
+        "comparison_columns": [{"col_name": "first_name"},
+                            {"col_name": "surname"}],
+        "blocking_rules": [
+            "l.first_name = r.first_name",
+            "l.surname = r.surname"
+        ]
+    }
+    settings = complete_settings_dict(settings, spark=None)
+    dfpd_l = pd.read_sql("select * from df_l", link_dedupe_data_repeat_ids)
+    df_l = spark.createDataFrame(dfpd_l)
+    dfpd_r = pd.read_sql("select * from df_r", link_dedupe_data_repeat_ids)
+    df_r = spark.createDataFrame(dfpd_r)
+    df = block_using_rules(settings, spark, df_l=df_l, df_r=df_r)
+    df = df.toPandas()
+
+    df = df.sort_values(["unique_id_l", "unique_id_r"])
+
+    assert list(df["unique_id_l"]) == [1, 1, 2, 2, 3, 3]
+    assert list(df["unique_id_r"]) == [1, 3, 2, 3, 2, 3]
+
+
+
+def test_link_option_dedupe_only(spark, link_dedupe_data_repeat_ids):
+    settings = {
+        "link_type": "dedupe_only",
+        "comparison_columns": [{"col_name": "first_name"},
+                            {"col_name": "surname"}],
+        "blocking_rules": [
+            "l.first_name = r.first_name",
+            "l.surname = r.surname"
+        ]
+    }
+    settings = complete_settings_dict(settings, spark=None)
+    dfpd = pd.read_sql("select * from df_l", link_dedupe_data_repeat_ids)
+    df = spark.createDataFrame(dfpd)
+
+    df = block_using_rules(settings, spark, df=df)
+    df = df.toPandas()
+
+    df = df.sort_values(["unique_id_l", "unique_id_r"])
+
+    assert list(df["unique_id_l"]) == [2]
+    assert list(df["unique_id_r"]) == [3]

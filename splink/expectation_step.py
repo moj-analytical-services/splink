@@ -98,6 +98,9 @@ def _sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
         select_cols[f"prob_gamma_{col_name}_non_match"] = case_statements[f"prob_gamma_{col_name}_non_match"]
         select_cols[f"prob_gamma_{col_name}_match"] = case_statements[f"prob_gamma_{col_name}_match"]
 
+    if settings["link_type"] == 'link_and_dedupe':
+        select_cols = _add_left_right(select_cols, "_source_table")
+
     for c in settings["additional_columns_to_retain"]:
         select_cols = _add_left_right(select_cols, c)
 
@@ -132,6 +135,9 @@ def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
             if tf_adj_cols:
                 if col["term_frequency_adjustments"]:
                     select_cols[col_name+"_adj"] =  col_name+"_adj"
+
+    if settings["link_type"] == 'link_and_dedupe':
+        select_cols = _add_left_right(select_cols, "_source_table")
 
     for c in settings["additional_columns_to_retain"]:
         select_cols = _add_left_right(select_cols, c)
