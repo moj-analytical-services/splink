@@ -21,6 +21,8 @@ def _get_columns_to_retain_blocking(settings):
 
     # Use ordered dict as an ordered set - i.e. to make sure we don't have duplicate cols to retain
 
+    # That means we're only interested in the keys so we set values to None
+
     columns_to_retain = OrderedDict()
     columns_to_retain[settings["unique_id_column_name"]] = None
 
@@ -31,7 +33,7 @@ def _get_columns_to_retain_blocking(settings):
     for c in settings["additional_columns_to_retain"]:
         columns_to_retain[c] = None
 
-    return columns_to_retain.keys()
+    return list(columns_to_retain.keys())
 
 def sql_gen_and_not_previous_rules(previous_rules: list):
     if previous_rules:
@@ -49,10 +51,10 @@ def sql_gen_vertically_concatenate(columns_to_retain: list, table_name_l = "df_l
     retain = ", ".join(columns_to_retain)
 
     sql = f"""
-    select {retain}, 'left' as source_table
+    select {retain}, 'left' as _source_table
     from {table_name_l}
     union all
-    select {retain}, 'right' as source_table
+    select {retain}, 'right' as _source_table
     from {table_name_r}
     """
 
@@ -109,8 +111,11 @@ def sql_gen_block_using_rules(
 
     if link_type == "link_only":
         where_condition = ""
-    else:
+    elif link_type == "dedupe_only":
         where_condition = f"where l.{unique_id_col} < r.{unique_id_col}"
+    elif link_type == "link_and_dedupe":
+            # Where a record from left and right are being compared, you want the left record to end up in the _l fields,  and the right record to end up in _r fields.
+            where_condition = f"where (l._source_table < r._source_table) or (l.{unique_id_col} < r.{unique_id_col} and l._source_table = r._source_table)"
 
     sqls = []
     previous_rules =[]
@@ -153,12 +158,11 @@ def block_using_rules(
     Returns:
         pyspark.sql.dataframe.DataFrame: A dataframe of each record comparison
     """
-    
+
     if len(settings["blocking_rules"])==0:
         return cartesian_block(settings, spark, df_l, df_r, df)
 
     link_type = settings["link_type"]
-
 
     columns_to_retain = _get_columns_to_retain_blocking(settings)
     unique_id_col = settings["unique_id_column_name"]
@@ -172,6 +176,7 @@ def block_using_rules(
 
     if link_type == "link_and_dedupe":
         df_concat = vertically_concatenate_datasets(df_l, df_r, settings, spark=spark)
+        columns_to_retain.append("_source_table")
         df_concat.createOrReplaceTempView("df")
         df_concat.persist()
 
@@ -211,7 +216,7 @@ def sql_gen_cartesian_block(
     Returns:
         str: A SQL statement that implements the join
     """
-    
+
     # In both these cases the data is in a single table
     # (In the link_and_dedupe case the two tables have already been vertically concatenated)
     if link_type in ['dedupe_only', 'link_and_dedupe']:
@@ -223,18 +228,26 @@ def sql_gen_cartesian_block(
 
     sql_select_expr = sql_gen_comparison_columns(columns_to_retain)
 
+    if link_type == "link_only":
+        where_condition = ""
+    elif link_type == "dedupe_only":
+        where_condition = f"where l.{unique_id_col} < r.{unique_id_col}"
+    elif link_type == "link_and_dedupe":
+            # Where a record from left and right are being compared, you want the left record to end up in the _l fields,  and the right record to end up in _r fields.
+            where_condition = f"where (l._source_table < r._source_table) or (l.{unique_id_col} < r.{unique_id_col} and l._source_table = r._source_table)"
+
     sql = f"""
     select
     {sql_select_expr}
     from {table_name_l} as l
     cross join {table_name_r} as r
-    where l.{unique_id_col} < r.{unique_id_col}
+    {where_condition}
     """
 
     return sql
 
 
-def cartesian_block(    
+def cartesian_block(
     settings: dict,
     spark: SparkSession,
     df_l: DataFrame=None,
@@ -254,9 +267,7 @@ def cartesian_block(
         pyspark.sql.dataframe.DataFrame: A dataframe of each record comparison
     """
 
-
     link_type = settings["link_type"]
-
 
     columns_to_retain = _get_columns_to_retain_blocking(settings)
     unique_id_col = settings["unique_id_column_name"]
@@ -269,12 +280,13 @@ def cartesian_block(
         df_r.createOrReplaceTempView("df_r")
 
     if link_type == "link_and_dedupe":
+        columns_to_retain.append("_source_table")
         df_concat = vertically_concatenate_datasets(df_l, df_r, settings, spark=spark)
         df_concat.createOrReplaceTempView("df")
         df_concat.persist()
 
     sql = sql_gen_cartesian_block(link_type, columns_to_retain, unique_id_col)
-    
+
     logger.debug(format_sql(sql))
 
     df_comparison = spark.sql(sql)

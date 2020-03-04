@@ -62,6 +62,37 @@ def link_dedupe_data():
 
     yield con
 
+
+@pytest.fixture(scope='module')
+def link_dedupe_data_repeat_ids():
+
+     # Create the database and the database table
+    con = sqlite3.connect(":memory:")
+    con.row_factory = sqlite3.Row
+
+    data_l = [
+    {"unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
+    {"unique_id": 2, "surname": "Smith", "first_name": "John"},
+    {"unique_id": 3, "surname": "Smith", "first_name": "John"}
+    ]
+
+    data_into_table(data_l, "df_l", con)
+
+    data_r = [
+    {"unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
+    {"unique_id": 2, "surname": "Smith", "first_name": "John"},
+    {"unique_id": 3, "surname": "Smith", "first_name": "Robin"}
+    ]
+
+    data_into_table(data_r, "df_r", con)
+
+    cols_to_retain = ["unique_id", "surname", "first_name"]
+    sql = sql_gen_vertically_concatenate(cols_to_retain)
+    df = pd.read_sql(sql, con)
+    df.to_sql("df", con, index=False)
+
+    yield con
+
 @pytest.mark.filterwarnings("ignore:*")
 @pytest.fixture(scope="function")
 def gamma_settings_1():
