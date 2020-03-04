@@ -60,7 +60,7 @@
         150
       ],
       "maximum": 200,
-      "minimum": 1
+      "minimum": 0
     },
     "unique_id_column_name": {
       "$id": "#/properties/unique_id_column_name",
