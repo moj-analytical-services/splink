@@ -79,6 +79,7 @@ class Splink:
                     f"For link_type = '{link_type}', you must pass two Spark dataframes to Splink using the df_l and df_r argument. "
                     "The df argument should be omitted or set to None. "
                     "e.g. linker = Splink(settings, spark, df_l=my_first_df, df_r=df_to_link_to_first_one)"
+
                 )
 
     def _get_df_comparison(self):
@@ -97,9 +98,6 @@ class Splink:
         return run_expectation_step(df_gammas, self.params, self.settings, self.spark)
 
     def get_scored_comparisons(self, num_iterations=None):
-
-        if (num_iterations is None):
-            num_iterations=self.settings["max_iterations"]
 
         df_comparison = self._get_df_comparison()
 
