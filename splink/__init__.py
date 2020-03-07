@@ -99,6 +99,9 @@ class Splink:
 
     def get_scored_comparisons(self, num_iterations=None):
 
+        if not num_iterations:
+            num_iterations = self.settings["max_iterations"]
+
         df_comparison = self._get_df_comparison()
 
         df_gammas = add_gammas(df_comparison, self.settings, self.spark)
@@ -110,7 +113,6 @@ class Splink:
             self.params,
             self.settings,
             self.spark,
-            num_iterations=num_iterations,
             compute_ll=False,
         )
         df_gammas.unpersist()

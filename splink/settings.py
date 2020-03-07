@@ -150,10 +150,14 @@ def _complete_probabilities(col_settings: dict, setting_name: str):
         setting_name (str): Either 'm_probabilities' or 'u_probabilities'
 
     """
+    if setting_name == 'm_probabilities':
+        letter = "m"
+    elif setting_name == 'u_probabilities':
+        letter = "u"
 
     if setting_name not in col_settings:
         levels = col_settings["num_levels"]
-        probs = _get_probabilities("m", levels)
+        probs = _get_probabilities(letter, levels)
         col_settings[setting_name] = probs
     else:
         levels = col_settings["num_levels"]
