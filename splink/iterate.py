@@ -21,7 +21,6 @@ def iterate(
     params: Params,
     settings: dict,
     spark: SparkSession,
-    num_iterations:int=10,
     compute_ll:bool=False,
 ):
     """Repeatedly run expectation and maximisation step until convergence or max itations is reached.
