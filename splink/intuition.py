@@ -48,12 +48,12 @@ def intuition_report(row_dict, params):
 
         d["col_name"] = col_params["column_name"]
         col_name = d["col_name"]
-        try:
+        if pi[gk]["custom_comparison"] == False:
             d["value_l"] = row_dict[col_name + "_l"]
             d["value_r"] = row_dict[col_name + "_r"]
-        except KeyError:
-            d["value_l"] = "Custom comparison, value cannot be shown"
-            d["value_r"] = "Custom comparison, value cannot be shown"
+        else:
+            d["value_l"] = ", ".join([row_dict[c + "_l"] for c in pi[gk]["custom_columns_used"] ])
+            d["value_r"] = ", ".join([row_dict[c + "_r"] for c in pi[gk]["custom_columns_used"] ])
         d["num_levels"] = col_params["num_levels"]
 
         d["gamma_col_name"] = gk
