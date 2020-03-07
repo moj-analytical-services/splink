@@ -34,7 +34,7 @@ def _add_null_treatment_to_case_statement(case_statement: str):
 
     if "then -1" not in sl:
         try:
-            variable_name = re.search(r"when ([\w_]{1,100})_l", case_statement)[1]
+            variable_name = re.search(r"when ([\w_]{1,100})_l", case_statement.lower())[1]
         except:
             raise ValueError(("Your case statement needs to reference a variable on the left hand "
                               "side of the comparison i.e. a variable ending with _l "

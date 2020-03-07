@@ -5,6 +5,7 @@
   "type": "object",
   "title": "Splink settings",
   "required": ["comparison_columns", "link_type"],
+  "additionalProperties": false,
   "properties": {
     "link_type": {
       "$id": "#/properties/link_type",
@@ -54,12 +55,13 @@
       "$id": "#/properties/max_iterations",
       "type": "number",
       "title": "The maximum number of iterations to run even if convergence has not been reached",
-      "default": 10,
+      "description": "Set this value to zero if you do not want to use the EM algorithm and just want to score matches from m and u probabilities",
+      "default": 25,
       "examples": [
         20,
         150
       ],
-      "maximum": 200,
+      "maximum": 500,
       "minimum": 0
     },
     "unique_id_column_name": {
@@ -99,13 +101,14 @@
       "title": "A list of columns to use for probabalistic matching",
       "description": "Comparisons between the values in these columns will be used to determine match scores",
       "minItems": 1,
+
       "items": {
         "$id": "#/properties/comparison_columns/items",
         "type": "object",
-        "title": "A column that is used for probabalistic matching",
-        "required": [
-          "col_name"
-        ],
+        "title": "A comparison of input column(s) that is used for probabalistic matching",
+        "oneOf": [{"required": ["col_name"]},
+                {"required": ["custom_name", "custom_columns_used", "case_expression", "num_levels"]}
+            ],
         "additionalProperties": false,
         "properties": {
           "col_name": {
@@ -145,6 +148,29 @@
               "string",
               "numeric"
             ]
+          },
+          "custom_name": {
+            "$id": "#/properties/comparison_columns/items/properties/custom_name",
+            "type": "string",
+            "title": "Custom name to identify this comparison in charts and calculations",
+            "description": "If supplying a custom case expression that is not specific to a single input column, you must provide ",
+            "default": "",
+            "examples": [
+              "name_inversion_comparison",
+              "whole_row_concat_cosine_similarity"
+            ]
+          },
+          "custom_columns_used": {
+            "$id": "#/properties/comparison_columns/items/properties/custom_columns_used",
+            "type": "array",
+            "title": "A list of the columns required by the custom case expression used for this custom column",
+            "description": "When using a custom comparison, this is needed so Sparklink knows what columns to retain",
+            "default": [],
+            "examples": [
+              ["first_name"],
+              ["first_nsme","surname"]
+            ],
+            "minItems": 1
           },
           "case_expression": {
             "$id": "#/properties/comparison_columns/items/properties/case_expression",
@@ -211,12 +237,6 @@
             "$id": "#/properties/comparison_columns/items/properties/gamma_index",
             "type": "integer",
             "description": "Gamma values in the comparison vector will be put in columns called gamma_0, gamma_1 etc.  This is the gamma index corresponding to this column"
-          },
-          "col_is_in_input_df": {
-            "$id": "#/properties/comparison_columns/items/properties/is_col_in_input_df",
-            "type": "boolean",
-            "description": "Usually, an entry in comparison columns corresponds one to one with the columns in the input dataframe.  However, if the user specifies a custom case_expression, this could refer to one or more columns in combination.  In this case, col_name will not be in the input dataframe, and is_col_in_input_df should be set to false. This will usually happen automatically",
-            "default": true
           }
         }
       }
