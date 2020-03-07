@@ -175,7 +175,8 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
 
     df_gammas = add_gammas(df_comparison, gamma_settings_1, spark)
 
-    df_e = iterate(df_gammas, params_1, gamma_settings_1, spark, num_iterations=1)
+    gamma_settings_1["max_iterations"] = 1
+    df_e = iterate(df_gammas, params_1, gamma_settings_1, spark)
 
     assert params_1.params["λ"] == pytest.approx(0.540922141)
 
@@ -207,8 +208,8 @@ def test_iterate(spark, sqlite_con_1, params_1, gamma_settings_1):
         assert i[0] == pytest.approx(i[1], abs=0.0001)
 
     # Does it still work with another iteration?
-
-    df_e = iterate(df_gammas, params_1, gamma_settings_1, spark, num_iterations=1)
+    gamma_settings_1["max_iterations"] = 1
+    df_e = iterate(df_gammas, params_1, gamma_settings_1, spark)
     assert params_1.params["λ"] == pytest.approx(0.534993426, abs=0.0001)
 
     assert params_1.params["π"]["gamma_mob"]["prob_dist_match"]["level_0"][
@@ -396,13 +397,12 @@ def test_iteration_known_data_generating_process(
 
     gamma_settings_4["retain_matching_columns"] = False
     gamma_settings_4["em_convergence"] = 0.001
-
+    gamma_settings_4["max_iterations"] = 40
     df_e = iterate(
         df_gammas,
         params_4,
         gamma_settings_4,
         spark,
-        num_iterations=40,
         compute_ll=False,
     )
 
@@ -485,8 +485,7 @@ def test_link_option_link_dedupe(spark, link_dedupe_data_repeat_ids):
     settings = {
         "link_type": "link_and_dedupe",
         "comparison_columns": [{"col_name": "first_name"},
-                            {"col_name": "surname"}],
-        "cartesian_product": True
+                            {"col_name": "surname"}]
     }
     settings = complete_settings_dict(settings, spark=None)
     dfpd_l = pd.read_sql("select * from df_l", link_dedupe_data_repeat_ids)

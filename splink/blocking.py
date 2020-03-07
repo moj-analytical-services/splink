@@ -162,7 +162,7 @@ def block_using_rules(
         pyspark.sql.dataframe.DataFrame: A dataframe of each record comparison
     """
 
-    if len(settings["blocking_rules"])==0:
+    if "blocking_rules" not in settings or len(settings["blocking_rules"])==0:
         return cartesian_block(settings, spark, df_l, df_r, df)
 
     link_type = settings["link_type"]
