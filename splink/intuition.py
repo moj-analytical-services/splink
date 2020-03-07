@@ -48,8 +48,12 @@ def intuition_report(row_dict, params):
 
         d["col_name"] = col_params["column_name"]
         col_name = d["col_name"]
-        d["value_l"] = row_dict[col_name + "_l"]
-        d["value_r"] = row_dict[col_name + "_r"]
+        try:
+            d["value_l"] = row_dict[col_name + "_l"]
+            d["value_r"] = row_dict[col_name + "_r"]
+        except KeyError:
+            d["value_l"] = "Custom comparison, value cannot be shown"
+            d["value_r"] = "Custom comparison, value cannot be shown"
         d["num_levels"] = col_params["num_levels"]
 
         d["gamma_col_name"] = gk

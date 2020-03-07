@@ -105,8 +105,6 @@ def _sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
                     select_cols = _add_left_right(select_cols, c2)
 
             select_cols["gamma_" + col_name] = "gamma_" + col_name
-            print("gamma_" + col_name)
-
 
         select_cols[f"prob_gamma_{col_name}_non_match"] = case_statements[f"prob_gamma_{col_name}_non_match"]
         select_cols[f"prob_gamma_{col_name}_match"] = case_statements[f"prob_gamma_{col_name}_match"]
