@@ -394,7 +394,13 @@ class Params:
         else:
             return adjustment_weight_chart_def
 
-    def all_charts_write_html_file(self, filename="splink_charts.html"):
+    def all_charts_write_html_file(self, filename="splink_charts.html", overwrite=False):
+
+        if os.path.isfile(filename):
+            if not overwrite:
+                raise ValueError(
+                    f"The path {filename} already exists. Please provide a different path."
+                )
 
         if altair_installed:
             c1 = self.probability_distribution_chart().to_json(indent=None)

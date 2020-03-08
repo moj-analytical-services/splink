@@ -14,6 +14,7 @@ from .check_types import check_types
 import logging
 
 logger = logging.getLogger(__name__)
+from typing import Callable
 
 @check_types
 def iterate(
@@ -23,6 +24,7 @@ def iterate(
     spark: SparkSession,
     num_iterations:int=10,
     compute_ll:bool=False,
+    save_state_fn:Callable=None
 ):
     """Repeatedly run expectation and maximisation step until convergence or max itations is reached.
 
@@ -34,6 +36,7 @@ def iterate(
         log_iteration (bool, optional): Whether to write a message to the log after each iteration. Defaults to False.
         num_iterations (int, optional): The number of iterations to run. Defaults to 10.
         compute_ll (bool, optional): Whether to compute the log likelihood.  This is not necessary and significantly degrades performance. Defaults to False.
+        save_state_fn (function, optional):  A function provided by the user that takes two arguments, params and settings, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
 
     Returns:
         DataFrame: A spark dataframe including a match probability column
@@ -53,6 +56,8 @@ def iterate(
 
         logger.info(f"Iteration {i} complete")
 
+        if save_state_fn:
+            save_state_fn(params, settings)
         if params.is_converged():
             logger.info("EM algorithm has converged")
             break

@@ -27,7 +27,7 @@ except ImportError:
     SparkSession = None
     spark_exists = False
 
-
+from typing import Callable
 class Splink:
     @check_types
     def __init__(
@@ -37,6 +37,7 @@ class Splink:
         df_l: DataFrame = None,
         df_r: DataFrame = None,
         df: DataFrame = None,
+        save_state_fn: Callable = None
     ):
 
         self.spark = spark
@@ -51,6 +52,7 @@ class Splink:
         self.df_r = df_r
         self.df_l = df_l
         self.df = df
+        self.save_state_fn = save_state_fn
         self._check_args()
 
     def _check_args(self):
@@ -98,7 +100,7 @@ class Splink:
 
     def get_scored_comparisons(self, num_iterations=None):
 
-        if (num_iterations is None):
+        if num_iterations is None:
             num_iterations=self.settings["max_iterations"]
 
         df_comparison = self._get_df_comparison()
@@ -114,6 +116,7 @@ class Splink:
             self.spark,
             num_iterations=num_iterations,
             compute_ll=False,
+            save_state_fn=self.save_state_fn
         )
         df_gammas.unpersist()
         return df_e
