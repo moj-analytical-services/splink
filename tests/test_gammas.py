@@ -52,6 +52,7 @@ def test_add_gammas(db):
                 "num_levels": 3,
                 "case_expression": """
                                     case
+                                    when sname_l is null or sname_r is null then -1
                                     when sname_l = sname_r then 2
                                     when substr(sname_l,1, 3) =  substr(sname_r, 1, 3) then 1
                                     else 0

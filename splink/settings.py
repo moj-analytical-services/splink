@@ -11,7 +11,6 @@ except ImportError:
 
 
 from .case_statements import (
-    _add_null_treatment_to_case_statement,
     _check_jaro_registered,
     _check_no_obvious_problem_with_case_statement,
     _add_as_gamma_to_case_statement,
@@ -137,8 +136,7 @@ def _complete_case_expression(col_settings, spark):
             col_settings["case_expression"]
         )
         old_case_stmt = col_settings["case_expression"]
-        new_case_stmt = _add_null_treatment_to_case_statement(old_case_stmt)
-        new_case_stmt = _add_as_gamma_to_case_statement(new_case_stmt, col_name_for_case_fn)
+        new_case_stmt = _add_as_gamma_to_case_statement(old_case_stmt, col_name_for_case_fn)
         col_settings["case_expression"] = new_case_stmt
 
 

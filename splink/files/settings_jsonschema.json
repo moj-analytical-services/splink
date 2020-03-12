@@ -175,11 +175,11 @@
           "case_expression": {
             "$id": "#/properties/comparison_columns/items/properties/case_expression",
             "type": "string",
-            "title": "A SELECT CASE expression that compares the values of the input column and returns integer values corresponding to num_levels. ",
-            "description": "This is an override which allows the user to cusomise how similarity is computed for this column.  If given, this overrides the default mechanism of comparing columns and ignores data_type",
+            "title": "A SELECT CASE expression that compares the values of the input column and returns integer values corresponding to num_levels. Nulls should be explicitly dealt with in the case expression, and should be assigned a value of -1, see examples.",
+            "description": "This is an override which allows the user to customise how similarity is computed.  If given, this overrides the default mechanism of comparing columns and ignores data_type",
             "examples": [
-              "CASE WHEN first_name_l = first_name_r THEN 1 ELSE 0 END",
-              "CASE \n WHEN jaro_winkler_sim(first_name_l, first_name_r) < 0.94 THEN 2 \n WHEN jaro_winkler_sim(first_name_l, first_name_r) < 0.8 THEN 1 \n  ELSE 0 END"
+              "CASE \nWHEN first_name_l is null or first_name_r is null then -1 \nWHENfirst_name_l = first_name_r THEN 1 ELSE 0 END",
+              "CASE \nWHEN first_name_l is null or first_name_r is null then -1 \nWHEN jaro_winkler_sim(first_name_l, first_name_r) < 0.94 THEN 2 \n WHEN jaro_winkler_sim(first_name_l, first_name_r) < 0.8 THEN 1 \n  ELSE 0 END"
             ],
             "allOf": [
               {
