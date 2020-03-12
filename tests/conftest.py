@@ -111,6 +111,7 @@ def gamma_settings_1():
                 "num_levels": 3,
                 "case_expression": """
             case
+            when surname_l is null or surname_r is null then -1
             when surname_l = surname_r then 2
             when substr(surname_l,1, 3) =  substr(surname_r, 1, 3) then 1
             else 0
@@ -258,6 +259,7 @@ def gamma_settings_2():
                 "num_levels": 3,
                 "case_expression": """
         case
+        when surname_l is null or surname_r is null then -1
         when surname_l = surname_r then 2
         when substr(surname_l,1, 3) =  substr(surname_r, 1, 3) then 1
         else 0

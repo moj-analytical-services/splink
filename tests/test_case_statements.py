@@ -5,8 +5,6 @@ from pandas.util.testing import assert_frame_equal
 import pytest
 
 from splink.case_statements import *
-from splink.case_statements import _add_null_treatment_to_case_statement
-
 
 def test_case(sqlite_con_3):
 
@@ -28,8 +26,6 @@ def test_case(sqlite_con_3):
     else 0 end as gamma_0 from str_comp
     """
 
-    sql = _add_null_treatment_to_case_statement(sql)
-
     cur.execute(sql)
     result = cur.fetchall()
     result = [dict(r) for r in result]
@@ -37,8 +33,7 @@ def test_case(sqlite_con_3):
     assert result[0]['gamma_0'] == 2
     assert result[1]['gamma_0'] == 0
     assert result[2]['gamma_0'] == 0
-    assert result[3]['gamma_0'] == -1
-    assert result[4]['gamma_0'] == -1
+
 
     case_statement = sql_gen_case_stmt_numeric_abs_3("float_col", gamma_col_name="0", abs_amount=1)
     sql = f"""select {case_statement} from float_comp"""
