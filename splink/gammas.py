@@ -39,12 +39,20 @@ def _get_select_expression_gammas(settings: dict):
     cols_to_retain = _add_left_right(cols_to_retain, settings["unique_id_column_name"])
 
     for col in settings["comparison_columns"]:
-        col_name = col["col_name"]
-        if settings["retain_matching_columns"]:
-            cols_to_retain = _add_left_right(cols_to_retain, col_name)
-        if col["term_frequency_adjustments"]:
-            cols_to_retain = _add_left_right(cols_to_retain, col_name)
-        cols_to_retain["gamma_" + col_name] = col["case_expression"]
+        if "col_name" in col:
+            col_name = col["col_name"]
+            if settings["retain_matching_columns"]:
+                cols_to_retain = _add_left_right(cols_to_retain, col_name)
+            if col["term_frequency_adjustments"]:
+                cols_to_retain = _add_left_right(cols_to_retain, col_name)
+            cols_to_retain["gamma_" + col_name] = col["case_expression"]
+        if "custom_name" in col:
+            custon_name = col["custom_name"]
+            if settings["retain_matching_columns"]:
+                for c2 in col["custom_columns_used"]:
+                    cols_to_retain = _add_left_right(cols_to_retain, c2)
+            cols_to_retain["gamma_" + custon_name] = col["case_expression"]
+
 
     if settings["link_type"] == 'link_and_dedupe':
         cols_to_retain = _add_left_right(cols_to_retain, "_source_table")

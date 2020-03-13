@@ -88,12 +88,23 @@ def _sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
     select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
 
     for col in settings["comparison_columns"]:
-        col_name = col["col_name"]
-        if settings["retain_matching_columns"]:
-            select_cols = _add_left_right(select_cols, col_name)
-        if col["term_frequency_adjustments"]:
-            select_cols = _add_left_right(select_cols, col_name)
-        select_cols["gamma_" + col_name] = "gamma_" + col_name
+        if "col_name" in col:
+            col_name = col["col_name"]
+            if settings["retain_matching_columns"]:
+                select_cols = _add_left_right(select_cols, col_name)
+            if col["term_frequency_adjustments"]:
+                select_cols = _add_left_right(select_cols, col_name)
+
+            select_cols["gamma_" + col_name] = "gamma_" + col_name
+
+        if "custom_name" in col:
+            col_name = col["custom_name"]
+
+            if settings["retain_matching_columns"]:
+                for c2 in col["custom_columns_used"]:
+                    select_cols = _add_left_right(select_cols, c2)
+
+            select_cols["gamma_" + col_name] = "gamma_" + col_name
 
         select_cols[f"prob_gamma_{col_name}_non_match"] = case_statements[f"prob_gamma_{col_name}_non_match"]
         select_cols[f"prob_gamma_{col_name}_match"] = case_statements[f"prob_gamma_{col_name}_match"]
@@ -122,12 +133,22 @@ def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
     select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
 
     for col in settings["comparison_columns"]:
-        col_name = col["col_name"]
-        if settings["retain_matching_columns"]:
-            select_cols = _add_left_right(select_cols, col_name)
-        if col["term_frequency_adjustments"]:
-            select_cols = _add_left_right(select_cols, col_name)
-        select_cols["gamma_" + col_name] = "gamma_" + col_name
+        if "col_name" in col:
+            col_name = col["col_name"]
+
+            # Note adding cols is idempotent so don't need to worry about adding twice
+            if settings["retain_matching_columns"]:
+                select_cols = _add_left_right(select_cols, col_name)
+            if col["term_frequency_adjustments"]:
+                select_cols = _add_left_right(select_cols, col_name)
+            select_cols["gamma_" + col_name] = "gamma_" + col_name
+
+        if "custom_name" in col:
+            col_name = col["custom_name"]
+            if settings["retain_matching_columns"]:
+                for c2 in col["custom_columns_used"]:
+                    select_cols = _add_left_right(select_cols, c2)
+            select_cols["gamma_" + col_name] = "gamma_" + col_name
 
         if settings["retain_intermediate_calculation_columns"]:
             select_cols[f"prob_gamma_{col_name}_non_match"] = f"prob_gamma_{col_name}_non_match"
@@ -135,6 +156,8 @@ def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
             if tf_adj_cols:
                 if col["term_frequency_adjustments"]:
                     select_cols[col_name+"_adj"] =  col_name+"_adj"
+
+
 
     if settings["link_type"] == 'link_and_dedupe':
         select_cols = _add_left_right(select_cols, "_source_table")

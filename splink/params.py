@@ -78,7 +78,11 @@ class Params:
         """
 
         for col_dict in self.settings["comparison_columns"]:
-            col_name = col_dict["col_name"]
+            if "col_name" in col_dict:
+                col_name = col_dict["col_name"]
+            elif "custom_name" in col_dict:
+                col_name = col_dict["custom_name"]
+
             i = col_dict["gamma_index"]
 
             self.params["π"][f"gamma_{col_name}"] = {}
@@ -86,6 +90,12 @@ class Params:
 
             self.params["π"][f"gamma_{col_name}"]["desc"] = f"Comparison of {col_name}"
             self.params["π"][f"gamma_{col_name}"]["column_name"] = f"{col_name}"
+
+            if "custom_name" in col_dict:
+                self.params["π"][f"gamma_{col_name}"]["custom_comparison"] = True
+                self.params["π"][f"gamma_{col_name}"]["custom_columns_used"] = col_dict["custom_columns_used"]
+            else:
+                self.params["π"][f"gamma_{col_name}"]["custom_comparison"] = False
 
             num_levels = col_dict["num_levels"]
             self.params["π"][f"gamma_{col_name}"]["num_levels"] = num_levels

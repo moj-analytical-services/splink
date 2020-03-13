@@ -27,8 +27,11 @@ def _get_columns_to_retain_blocking(settings):
     columns_to_retain[settings["unique_id_column_name"]] = None
 
     for c in settings["comparison_columns"]:
-        if c["col_is_in_input_df"]:
+        if "col_name" in c:
             columns_to_retain[c["col_name"]] = None
+        if "custom_columns_used" in c:
+            for c2 in c["custom_columns_used"]:
+                columns_to_retain[c2] = None
 
     for c in settings["additional_columns_to_retain"]:
         columns_to_retain[c] = None
@@ -159,7 +162,7 @@ def block_using_rules(
         pyspark.sql.dataframe.DataFrame: A dataframe of each record comparison
     """
 
-    if len(settings["blocking_rules"])==0:
+    if "blocking_rules" not in settings or len(settings["blocking_rules"])==0:
         return cartesian_block(settings, spark, df_l, df_r, df)
 
     link_type = settings["link_type"]

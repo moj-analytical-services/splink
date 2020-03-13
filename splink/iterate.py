@@ -22,7 +22,6 @@ def iterate(
     params: Params,
     settings: dict,
     spark: SparkSession,
-    num_iterations:int=10,
     compute_ll:bool=False,
     save_state_fn:Callable=None
 ):
@@ -43,6 +42,8 @@ def iterate(
     """
 
     df_gammas.persist()
+
+    num_iterations = settings["max_iterations"]
     for i in range(num_iterations):
         df_e = run_expectation_step(
             df_gammas, params, settings, spark, compute_ll=compute_ll
