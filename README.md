@@ -5,7 +5,7 @@
 
 # splink: Probabalistic record linkage at scale
 
-WARNING:  Splink is work in progress and is currently in alpha testing.  Please feel free to try it, but note this software is not fully tested, and the interface is likely to change rapidly.
+WARNING:  Splink is work in progress and is currently in beta testing.  Please feel free to try it, but note this software is not fully tested, and the interface is likely to continue to change.
 
 `splink` implements Fellegi-Sunter's canonical model of record linkage in Apache Spark, including EM algorithm to estimate parameters of the model.
 
@@ -29,3 +29,6 @@ You can run demos of `splink` in an interactive Jupyter notebook by clicking the
 
 Better docs to come. The best documentation is currently a series of demonstrations notebooks in the [splink_demos](https://github.com/moj-analytical-services/splink_demos) repo.
 
+## Acknowledgements
+
+We are grateful to [ADR UK](https://www.adruk.org/) (Administrative Data Research UK) for providing funding for this work as part of the [Data First](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) project.
