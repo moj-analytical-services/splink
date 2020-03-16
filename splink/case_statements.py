@@ -1,5 +1,6 @@
 import re
 import warnings
+
 def _check_jaro_registered(spark):
 
     if spark is None:
@@ -18,7 +19,6 @@ def _check_jaro_registered(spark):
                         "Falling back to using levenshtein in the default string comparison functions "
                         "You can import these functions using the scala-udf-similarity-0.0.6.jar provided with Splink")
     return False
-
 
 
 def _add_as_gamma_to_case_statement(case_statement: str, gamma_col_name):

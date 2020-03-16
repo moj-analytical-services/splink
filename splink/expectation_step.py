@@ -3,7 +3,7 @@ In the expectation step we calculate the membership probabilities
 i.e. for each comparison, what is the probability that it's a member
 of group match = 0 and group match = 1
 """
-from .logging_utils import format_sql
+from .logging_utils import _format_sql
 
 import logging
 from collections import OrderedDict
@@ -46,7 +46,7 @@ def run_expectation_step(df_with_gamma: DataFrame,
     sql = _sql_gen_gamma_prob_columns(params, settings)
 
     df_with_gamma.createOrReplaceTempView("df_with_gamma")
-    logger.debug(format_sql(sql))
+    logger.debug(_format_sql(sql))
     df_with_gamma_probs = spark.sql(sql)
     # df_with_gamma_probs.persist()
 
@@ -60,7 +60,7 @@ def run_expectation_step(df_with_gamma: DataFrame,
 
     sql = _sql_gen_expected_match_prob(params, settings)
 
-    logger.debug(format_sql(sql))
+    logger.debug(_format_sql(sql))
     df_with_gamma_probs.createOrReplaceTempView("df_with_gamma_probs")
     df_e = spark.sql(sql)
 
@@ -230,8 +230,7 @@ def _calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
     Likelihood is just ((1-lambda) * prob not match) * (lambda * prob match)
     """
 
-
-    gamma_cols = params.gamma_cols
+    gamma_cols = params._gamma_cols
 
     λ = params.params['λ']
 
@@ -253,13 +252,23 @@ def _calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
 
     from df_with_gamma_probs
     """
-    logger.debug(format_sql(sql))
+    logger.debug(_format_sql(sql))
     df = spark.sql(sql)
 
     return df
 
 
 def get_overall_log_likelihood(df_with_gamma_probs, params, spark):
+    """Compute overall log likelihood score for model
+
+    Args:
+        df_with_gamma_probs (DataFrame): A dataframe of comparisons with corresponding probabilities
+        params (Params): splink Params object
+        spark (SparkSession): Your sparksession.
+
+    Returns:
+        float: The log likelihood
+    """
 
     df = _calculate_log_likelihood_df(df_with_gamma_probs, params, spark)
     return df.groupby().sum("log_likelihood").collect()[0][0]

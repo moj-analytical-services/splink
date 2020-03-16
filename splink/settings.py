@@ -126,7 +126,6 @@ def _complete_case_expression(col_settings, spark):
 
     if "case_expression" not in col_settings:
         data_type = col_settings["data_type"]
-        col_name = col_settings["col_name"]
         case_fn = _get_default_case_statement_fn(
             default_case_statements, data_type, levels
         )

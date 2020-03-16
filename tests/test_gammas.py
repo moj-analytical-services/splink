@@ -4,7 +4,7 @@ import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import pytest
 
-from splink.gammas import sql_gen_add_gammas, complete_settings_dict
+from splink.gammas import _sql_gen_add_gammas, complete_settings_dict
 
 
 @pytest.fixture(scope="module")
@@ -67,7 +67,7 @@ def test_add_gammas(db):
 
     gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")
 
-    sql = sql_gen_add_gammas(
+    sql = _sql_gen_add_gammas(
         gamma_settings, table_name="test2"
     )
     db.execute(sql)
@@ -89,7 +89,7 @@ def test_add_gammas(db):
     assert_frame_equal(pd_correct, pd_result)
 
     gamma_settings["retain_matching_columns"] = True
-    sql = sql_gen_add_gammas(gamma_settings, table_name="test2")
+    sql = _sql_gen_add_gammas(gamma_settings, table_name="test2")
 
     db.execute(sql)
     result = db.fetchone()

@@ -1,7 +1,7 @@
+from collections import OrderedDict
 import logging
 import re
 import warnings
-from collections import OrderedDict
 
 try:
     from pyspark.sql.dataframe import DataFrame
@@ -10,11 +10,10 @@ except ImportError:
     DataFrame = None
     SparkSession = None
 
-from .logging_utils import format_sql
-from .validate import validate_settings, _get_default_value
-from .sql import comparison_columns_select_expr, sql_gen_comparison_columns
-from .settings import complete_settings_dict
 from .check_types import check_types
+from .logging_utils import _format_sql
+from .settings import complete_settings_dict
+from .validate import validate_settings, _get_default_value
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +62,7 @@ def _get_select_expression_gammas(settings: dict):
     return ", ".join(cols_to_retain.values())
 
 
-def sql_gen_add_gammas(
+def _sql_gen_add_gammas(
     settings: dict,
     unique_id_col: str = "unique_id",
     table_name: str = "df_comparison",
@@ -90,8 +89,6 @@ def sql_gen_add_gammas(
     return sql
 
 
-
-
 @check_types
 def add_gammas(
     df_comparison: DataFrame,
@@ -115,12 +112,12 @@ def add_gammas(
 
     settings_dict = complete_settings_dict(settings_dict, spark)
 
-    sql = sql_gen_add_gammas(
+    sql = _sql_gen_add_gammas(
         settings_dict,
         unique_id_col=unique_id_col,
     )
 
-    logger.debug(format_sql(sql))
+    logger.debug(_format_sql(sql))
     df_comparison.createOrReplaceTempView("df_comparison")
     df_gammas = spark.sql(sql)
 

@@ -30,27 +30,17 @@ except ImportError:
 class Params:
     """Stores the current model parameters (in self.params) and values for params for all previous iterations
 
-    Args:
-        settings (dict): A splink setting object
-        spark (SparkSession): You sparksession. Defaults to None.
-
     Attributes:
         params (str): A dictionary storing the current parameters.
 
-    """
-
-    """
-    Stores both current model parameters (in self.params)
-    and values of params for all previous iterations
-    of the model (in self.param_history)
     """
 
     def __init__(self, settings:dict, spark:SparkSession):
         """[summary]
 
         Args:
-            settings (dict, optional): [description]. Defaults to {}.
-            spark ([type], optional): [description]. Defaults to None.
+            settings (dict): A splink setting object
+            spark (SparkSession): Your sparksession. Defaults to None.
         """
 
         self.param_history = []

@@ -4,7 +4,7 @@ import pandas as pd
 from pandas.util.testing import assert_frame_equal
 import pytest
 
-from splink.gammas import sql_gen_add_gammas
+from splink.gammas import _sql_gen_add_gammas
 from splink.settings import sql_gen_case_smnt_strict_equality_2, complete_settings_dict
 from splink.expectation_step import _sql_gen_gamma_prob_columns, _sql_gen_expected_match_prob
 from splink.params import Params
@@ -49,8 +49,6 @@ def test_expected_match_prob(gamma_settings_1, params_1, sqlite_con_1):
 
     df = pd.read_sql("select * from df_with_match_probability1", sqlite_con_1)
 
-
-    cols_to_keep = ["prob_gamma_mob_match", "prob_gamma_0_non_match", "prob_gamma_surname_match", "prob_gamma_surname_non_match"]
 
     sql = _sql_gen_expected_match_prob(params_1, gamma_settings_1, "df_with_gamma_probs1")
     df = pd.read_sql(sql, sqlite_con_1)
