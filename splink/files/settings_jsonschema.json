@@ -262,6 +262,7 @@
           "gamma_index": {
             "$id": "#/properties/comparison_columns/items/properties/gamma_index",
             "type": "integer",
+            "title": "The comparison vector index.  This is an implementation detail and users should not set this manually.",
             "description": "Gamma values in the comparison vector will be put in columns called gamma_0, gamma_1 etc.  This is the gamma index corresponding to this column"
           }
         }
