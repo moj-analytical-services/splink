@@ -3,6 +3,7 @@
 import copy
 import os
 
+from splink import Splink, load_from_json
 from splink.blocking import block_using_rules
 from splink.params import Params
 from splink.gammas import add_gammas, complete_settings_dict
@@ -570,3 +571,24 @@ def test_link_option_dedupe_only(spark, link_dedupe_data_repeat_ids):
 
     assert list(df["unique_id_l"]) == [2]
     assert list(df["unique_id_r"]) == [3]
+
+
+def test_main_api(spark, sqlite_con_1):
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparison_columns": [{"col_name": "surname"},
+                            {"col_name": "mob"}],
+        "blocking_rules": ["l.mob = r.mob", "l.surname = r.surname"],
+        "max_iterations": 2
+    }
+    settings = complete_settings_dict(settings, spark=None)
+    dfpd = pd.read_sql("select * from test1", sqlite_con_1)
+
+    df = spark.createDataFrame(dfpd)
+
+    linker = Splink(settings,spark, df=df)
+    df_e = linker.get_scored_comparisons()
+    linker.save_model_as_json("saved_model.json", overwrite=True)
+    linker_2 = load_from_json("saved_model.json", spark=spark, df=df)
+    df_e = linker_2.get_scored_comparisons()

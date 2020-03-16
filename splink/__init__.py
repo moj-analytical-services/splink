@@ -9,7 +9,7 @@ except ImportError:
 
 from splink.settings import complete_settings_dict
 from splink.validate import validate_settings
-from splink.params import Params
+from splink.params import Params, load_params_from_json
 from splink.case_statements import _check_jaro_registered
 from splink.blocking import block_using_rules
 from splink.gammas import add_gammas
@@ -118,20 +118,14 @@ class Splink:
         df_gammas = add_gammas(df_comparison, self.settings, self.spark)
         return run_expectation_step(df_gammas, self.params, self.settings, self.spark)
 
-    def get_scored_comparisons(self, num_iterations:int=None):
+    def get_scored_comparisons(self):
         """Use the EM algorithm to estimate model parameters and return match probabilities.
 
         Note: Does not compute term frequency adjustments.
 
-        Args:
-            num_iterations (int, optional): Override to allow user to specify max iterations. Defaults to None.
-
         Returns:
             DataFrame: A spark dataframe including a match probability column
         """
-
-        if not num_iterations:
-            num_iterations = self.settings["max_iterations"]
 
         df_comparison = self._get_df_comparison()
 
@@ -168,3 +162,34 @@ class Splink:
             spark=self.spark,
         )
 
+    def save_model_as_json(self, path:str, overwrite=False):
+        """Save model (settings, parameters and parameter history) as a json file so it can later be re-loaded using load_from_json
+
+        Args:
+            path (str): Path to the json file.
+            overwrite (bool): Whether to overwrite the file if it exsits
+        """
+        self.params.save_params_to_json_file(path, overwrite=overwrite)
+
+
+def load_from_json(path: str,
+        spark: SparkSession,
+        df_l: DataFrame = None,
+        df_r: DataFrame = None,
+        df: DataFrame = None,
+        save_state_fn: Callable = None):
+    """Load a splink model from a json file which has previously been created using 'save_model_as_json'
+
+    Args:
+        path (string): path to json file created using Splink.save_model_as_json
+        spark (SparkSession): SparkSession object
+        df_l (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
+        df_r (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
+        df (DataFrame, optional): The dataframe to dedupe. Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
+        save_state_fn (function, optional):  A function provided by the user that takes two arguments, params and settings, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
+    """
+    params = load_params_from_json(path)
+    settings = params.settings
+    linker = Splink(settings, spark, df_l, df_r, df, save_state_fn)
+    linker.params = params
+    return linker
