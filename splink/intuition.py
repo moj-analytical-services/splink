@@ -1,5 +1,5 @@
 from .chart_definitions import adjustment_factor_chart_def
-
+from params import Params
 
 altair_installed = True
 try:
@@ -29,7 +29,16 @@ Final probability of match = {final}
 """
 
 
-def intuition_report(row_dict, params):
+def intuition_report(row_dict:dict, params:Params):
+    """Generate a text summary of a row in the comparison table which explains how the match_probability was computed
+
+    Args:
+        row_dict (dict): A python dictionary representing the comparison row
+        params (Params): splink params object
+
+    Returns:
+        string: The intuition report
+    """
 
     pi = params.params["π"]
     lam = params.params["λ"]
@@ -82,8 +91,7 @@ def intuition_report(row_dict, params):
 
     return report
 
-def get_adjustment_factors(row_dict, params):
-
+def _get_adjustment_factors(row_dict, params):
 
     pi = params.params["π"]
 
@@ -109,7 +117,7 @@ def get_adjustment_factors(row_dict, params):
 
 def adjustment_factor_chart(row_dict, params):
 
-    adjustment_factor_chart_def["data"]["values"] = get_adjustment_factors(row_dict, params)
+    adjustment_factor_chart_def["data"]["values"] = _get_adjustment_factors(row_dict, params)
 
     if altair_installed:
         return alt.Chart.from_dict(adjustment_factor_chart_def)

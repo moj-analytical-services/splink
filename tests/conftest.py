@@ -4,8 +4,8 @@ import sqlite3
 import pandas as pd
 import copy
 
-from splink.blocking import sql_gen_cartesian_block, sql_gen_block_using_rules, sql_gen_vertically_concatenate
-from splink.gammas import sql_gen_add_gammas, complete_settings_dict
+from splink.blocking import _sql_gen_cartesian_block, _sql_gen_block_using_rules, _sql_gen_vertically_concatenate
+from splink.gammas import _sql_gen_add_gammas, complete_settings_dict
 from splink.expectation_step import (
     _sql_gen_gamma_prob_columns,
     _sql_gen_expected_match_prob,
@@ -56,7 +56,7 @@ def link_dedupe_data():
     data_into_table(data_r, "df_r", con)
 
     cols_to_retain = ["unique_id", "surname", "first_name"]
-    sql = sql_gen_vertically_concatenate(cols_to_retain)
+    sql = _sql_gen_vertically_concatenate(cols_to_retain)
     df = pd.read_sql(sql, con)
     df.to_sql("df", con, index=False)
 
@@ -87,7 +87,7 @@ def link_dedupe_data_repeat_ids():
     data_into_table(data_r, "df_r", con)
 
     cols_to_retain = ["unique_id", "surname", "first_name"]
-    sql = sql_gen_vertically_concatenate(cols_to_retain)
+    sql = _sql_gen_vertically_concatenate(cols_to_retain)
     df = pd.read_sql(sql, con)
     df.to_sql("df", con, index=False)
 
@@ -164,13 +164,13 @@ def sqlite_con_1(gamma_settings_1, params_1):
     one = cur.fetchone()
     columns = one.keys()
 
-    sql = sql_gen_block_using_rules("dedupe_only", columns, rules, table_name_dedupe="test1")
+    sql = _sql_gen_block_using_rules("dedupe_only", columns, rules, table_name_dedupe="test1")
     df = pd.read_sql(sql, con)
     df = df.drop_duplicates(["unique_id_l", "unique_id_r"])
     df = df.sort_values(["unique_id_l", "unique_id_r"])
     df.to_sql("df_comparison1", con, index=False)
 
-    sql = sql_gen_add_gammas(
+    sql = _sql_gen_add_gammas(
         gamma_settings_1, table_name="df_comparison1"
     )
 
@@ -313,7 +313,7 @@ def sqlite_con_2(gamma_settings_2, params_2):
     one = cur.fetchone()
     columns = one.keys()
 
-    sql = sql_gen_cartesian_block(
+    sql = _sql_gen_cartesian_block(
         link_type="dedupe_only", columns_to_retain=columns, table_name_dedupe="test2"
     )
 
@@ -321,7 +321,7 @@ def sqlite_con_2(gamma_settings_2, params_2):
     df = df.sort_values(["unique_id_l", "unique_id_r"])
     df.to_sql("df_comparison2", con, index=False)
 
-    sql = sql_gen_add_gammas(
+    sql = _sql_gen_add_gammas(
         gamma_settings_2, table_name="df_comparison2"
     )
     df = pd.read_sql(sql, con)

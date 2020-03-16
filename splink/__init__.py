@@ -1,4 +1,5 @@
-# For type hints. Try except to ensure the sql_gen functions even if spark doesn't exist.
+from typing import Callable
+
 try:
     from pyspark.sql.dataframe import DataFrame
     from pyspark.sql.session import SparkSession
@@ -17,6 +18,7 @@ from splink.expectation_step import run_expectation_step
 from splink.term_frequencies import make_adjustment_for_term_frequencies
 from splink.check_types import check_types
 
+# For type hints. I use try except to ensure that the sql generation functions work even if spark does not exist
 try:
     from pyspark.sql.dataframe import DataFrame
     from pyspark.sql.session import SparkSession
@@ -27,7 +29,7 @@ except ImportError:
     SparkSession = None
     spark_exists = False
 
-from typing import Callable
+
 class Splink:
     @check_types
     def __init__(
@@ -37,8 +39,21 @@ class Splink:
         df_l: DataFrame = None,
         df_r: DataFrame = None,
         df: DataFrame = None,
-        save_state_fn: Callable = None
+        save_state_fn: Callable = None,
     ):
+        """splink data linker
+
+        Provides easy access to the core user-facing functinoality of splink
+
+        Args:
+            settings (dict): splink settings dictionary
+            spark (SparkSession): SparkSession object
+            df_l (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
+            df_r (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
+            df (DataFrame, optional): The dataframe to dedupe. Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
+            save_state_fn (function, optional):  A function provided by the user that takes two arguments, params and settings, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
+
+        """
 
         self.spark = spark
         _check_jaro_registered(spark)
@@ -81,7 +96,6 @@ class Splink:
                     f"For link_type = '{link_type}', you must pass two Spark dataframes to Splink using the df_l and df_r argument. "
                     "The df argument should be omitted or set to None. "
                     "e.g. linker = Splink(settings, spark, df_l=my_first_df, df_r=df_to_link_to_first_one)"
-
                 )
 
     def _get_df_comparison(self):
@@ -95,11 +109,26 @@ class Splink:
             )
 
     def manually_apply_fellegi_sunter_weights(self):
+        """Compute match probabilities from m and u probabilities specified in the splink settings object
+
+        Returns:
+            DataFrame: A spark dataframe including a match probability column
+        """
         df_comparison = self._get_df_comparison()
         df_gammas = add_gammas(df_comparison, self.settings, self.spark)
         return run_expectation_step(df_gammas, self.params, self.settings, self.spark)
 
-    def get_scored_comparisons(self, num_iterations=None):
+    def get_scored_comparisons(self, num_iterations:int=None):
+        """Use the EM algorithm to estimate model parameters and return match probabilities.
+
+        Note: Does not compute term frequency adjustments.
+
+        Args:
+            num_iterations (int, optional): Override to allow user to specify max iterations. Defaults to None.
+
+        Returns:
+            DataFrame: A spark dataframe including a match probability column
+        """
 
         if not num_iterations:
             num_iterations = self.settings["max_iterations"]
@@ -116,12 +145,20 @@ class Splink:
             self.settings,
             self.spark,
             compute_ll=False,
-            save_state_fn=self.save_state_fn
+            save_state_fn=self.save_state_fn,
         )
         df_gammas.unpersist()
         return df_e
 
-    def make_term_frequency_adjustments(self, df_e:DataFrame):
+    def make_term_frequency_adjustments(self, df_e: DataFrame):
+        """Take the outputs of 'get_scored_comparisons' and make term frequency adjustments on designated columns in the settings dictionary
+
+        Args:
+            df_e (DataFrame): A dataframe produced by the get_scored_comparisons method
+
+        Returns:
+            DataFrame: A spark dataframe including a column with term frequency adjusted match probabilities
+        """
 
         return make_adjustment_for_term_frequencies(
             df_e,

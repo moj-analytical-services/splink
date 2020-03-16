@@ -10,12 +10,31 @@ except ImportError:
     SparkSession = None
 
 
-from .logging_utils import format_sql
-from .sql import comparison_columns_select_expr, sql_gen_comparison_columns
-from .check_types import check_spark_types, check_types
+from .logging_utils import _format_sql
+from .sql import sql_gen_comparison_columns
+from .check_types import check_types
 
 logger = logging.getLogger(__name__)
 
+def sql_gen_comparison_columns(columns:list) -> str:
+    """Build SQL expression that renames columns and sets them aside each other for comparisons
+
+    Args:
+        columns (list): [description]
+
+   Examples:
+        >>> sql_gen_comparison_columns(["name", "dob"])
+        "name_l, name_r, dob_l, dob_r"
+
+    Returns:
+        SQL expression
+    """
+
+    l = [f"l.{c} as {c}_l" for c in columns]
+    r = [f"r.{c} as {c}_r" for c in columns]
+    both = zip(l, r)
+    flat_list = [item for sublist in both for item in sublist]
+    return ", ".join(flat_list)
 
 def _get_columns_to_retain_blocking(settings):
 
@@ -38,7 +57,7 @@ def _get_columns_to_retain_blocking(settings):
 
     return list(columns_to_retain.keys())
 
-def sql_gen_and_not_previous_rules(previous_rules: list):
+def _sql_gen_and_not_previous_rules(previous_rules: list):
     if previous_rules:
         # Note the isnull function is important here - otherwise
         # you filter out any records with nulls in the previous rules
@@ -49,7 +68,7 @@ def sql_gen_and_not_previous_rules(previous_rules: list):
     else:
         return ""
 
-def sql_gen_vertically_concatenate(columns_to_retain: list, table_name_l = "df_l", table_name_r = "df_r"):
+def _sql_gen_vertically_concatenate(columns_to_retain: list, table_name_l = "df_l", table_name_r = "df_r"):
 
     retain = ", ".join(columns_to_retain)
 
@@ -63,18 +82,18 @@ def sql_gen_vertically_concatenate(columns_to_retain: list, table_name_l = "df_l
 
     return sql
 
-def vertically_concatenate_datasets(df_l, df_r, settings, spark=None):
+def _vertically_concatenate_datasets(df_l, df_r, settings, spark=None):
 
     columns_to_retain = _get_columns_to_retain_blocking(settings)
-    sql = sql_gen_vertically_concatenate(columns_to_retain)
+    sql = _sql_gen_vertically_concatenate(columns_to_retain)
 
     df_l.createOrReplaceTempView("df_l")
     df_r.createOrReplaceTempView("df_r")
-    logger.debug(format_sql(sql))
+    logger.debug(_format_sql(sql))
     df = spark.sql(sql)
     return df
 
-def sql_gen_block_using_rules(
+def _sql_gen_block_using_rules(
     link_type: str,
     columns_to_retain: list,
     blocking_rules: list,
@@ -123,7 +142,7 @@ def sql_gen_block_using_rules(
     sqls = []
     previous_rules =[]
     for rule in blocking_rules:
-        not_previous_rules_statement = sql_gen_and_not_previous_rules(previous_rules)
+        not_previous_rules_statement = _sql_gen_and_not_previous_rules(previous_rules)
         sql = f"""
         select
         {sql_select_expr}
@@ -178,16 +197,16 @@ def block_using_rules(
         df_r.createOrReplaceTempView("df_r")
 
     if link_type == "link_and_dedupe":
-        df_concat = vertically_concatenate_datasets(df_l, df_r, settings, spark=spark)
+        df_concat = _vertically_concatenate_datasets(df_l, df_r, settings, spark=spark)
         columns_to_retain.append("_source_table")
         df_concat.createOrReplaceTempView("df")
         df_concat.persist()
 
     rules = settings["blocking_rules"]
 
-    sql = sql_gen_block_using_rules(link_type, columns_to_retain, rules, unique_id_col)
+    sql = _sql_gen_block_using_rules(link_type, columns_to_retain, rules, unique_id_col)
 
-    logger.debug(format_sql(sql))
+    logger.debug(_format_sql(sql))
 
     df_comparison = spark.sql(sql)
 
@@ -198,7 +217,7 @@ def block_using_rules(
     return df_comparison
 
 
-def sql_gen_cartesian_block(
+def _sql_gen_cartesian_block(
     link_type: str,
     columns_to_retain: list,
     unique_id_col: str = "unique_id",
@@ -284,13 +303,13 @@ def cartesian_block(
 
     if link_type == "link_and_dedupe":
         columns_to_retain.append("_source_table")
-        df_concat = vertically_concatenate_datasets(df_l, df_r, settings, spark=spark)
+        df_concat = _vertically_concatenate_datasets(df_l, df_r, settings, spark=spark)
         df_concat.createOrReplaceTempView("df")
         df_concat.persist()
 
-    sql = sql_gen_cartesian_block(link_type, columns_to_retain, unique_id_col)
+    sql = _sql_gen_cartesian_block(link_type, columns_to_retain, unique_id_col)
 
-    logger.debug(format_sql(sql))
+    logger.debug(_format_sql(sql))
 
     df_comparison = spark.sql(sql)
 

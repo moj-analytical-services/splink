@@ -1,5 +1,5 @@
 import pytest
-from splink.blocking import sql_gen_block_using_rules
+from splink.blocking import _sql_gen_block_using_rules
 import sqlite3
 import pandas as pd
 from pandas.util.testing import assert_frame_equal
@@ -33,7 +33,7 @@ def test_blocking_rules_sql_gen(db):
         "l.first_name = r.first_name"
     ]
 
-    sql = sql_gen_block_using_rules("dedupe_only", columns, rules, table_name_dedupe="test")
+    sql = _sql_gen_block_using_rules("dedupe_only", columns, rules, table_name_dedupe="test")
 
     db.execute(sql)
     result = db.fetchall()

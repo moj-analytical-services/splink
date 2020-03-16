@@ -10,7 +10,7 @@ except ImportError:
     DataFrame = None
     SparkSession = None
 
-from .logging_utils import format_sql
+from .logging_utils import _format_sql
 from .expectation_step import _column_order_df_e_select_expr
 from .params import Params
 from .check_types import check_types
@@ -145,20 +145,20 @@ def make_adjustment_for_term_frequencies(
     # Generate a lookup table for each column with 'term specific' lambdas.
     for c in term_freq_column_list:
         sql = sql_gen_generate_adjusted_lambda(c, params)
-        logger.debug(format_sql(sql))
+        logger.debug(_format_sql(sql))
         lookup = spark.sql(sql)
         lookup.createOrReplaceTempView(f"{c}_lookup")
 
     # Merge these lookup tables into main table
     sql = sql_gen_add_adjumentments_to_df_e(term_freq_column_list)
-    logger.debug(format_sql(sql))
+    logger.debug(_format_sql(sql))
     df_e_adj = spark.sql(sql)
     df_e_adj.createOrReplaceTempView("df_e_adj")
 
     sql = sql_gen_compute_final_group_membership_prob_from_adjustments(
         term_freq_column_list, settings
     )
-    logger.debug(format_sql(sql))
+    logger.debug(_format_sql(sql))
     df = spark.sql(sql)
     if not retain_adjustment_columns:
         for c in term_freq_column_list:

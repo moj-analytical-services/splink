@@ -9,7 +9,7 @@ except ImportError:
     SparkSession = None
 
 logger = logging.getLogger(__name__)
-from .logging_utils import format_sql
+from .logging_utils import _format_sql
 from .params import Params
 
 
@@ -35,7 +35,7 @@ def _get_new_lambda(df_e, spark):
     df_e.createOrReplaceTempView("df_e")
 
     new_lambda = spark.sql(sql).collect()[0][0]
-    logger.debug(format_sql(sql))
+    logger.debug(_format_sql(sql))
     return new_lambda
 
 
@@ -88,21 +88,27 @@ def _get_new_pi_df(df_e, spark, params):
 
     sql = _sql_gen_pi_df(params)
     levels = spark.sql(sql).collect()
-    logger.debug(format_sql(sql))
+    logger.debug(_format_sql(sql))
     return [l.asDict() for l in levels]
 
 
 
 def run_maximisation_step(df_e: DataFrame, params:Params, spark:SparkSession):
-    """
-    Compute new parameters and save them in the params dict
+    """Compute new parameters and save them in the params object
+
+    Note that the params object will be updated in-place by this function
+
+    Args:
+        df_e (DataFrame): the result of the expectation step
+        params (Params): splink Params object
+        spark (SparkSession): The spark session
     """
 
     sql = _sql_gen_intermediate_pi_aggregate(params)
 
     df_e.createOrReplaceTempView("df_e")
     df_intermediate = spark.sql(sql)
-    logger.debug(format_sql(sql))
+    logger.debug(_format_sql(sql))
     df_intermediate.createOrReplaceTempView("df_intermediate")
     df_intermediate.persist()
 
