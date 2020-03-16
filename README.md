@@ -41,6 +41,10 @@ We also provide an interactive `splink` settings editor and example settings [he
 
 The statistical model behind `splink` is the same as that used in the R [fastLink package](https://github.com/kosukeimai/fastLink).  Accompanying the fastLink package is an [academic paper](http://imai.fas.harvard.edu/research/files/linkage.pdf) that describes this model.  This is the best place to start for users wanting to understand the theory about how `splink` works.
 
+## Video intro
+
+You can find a short video introducing `splink` and running though an introductory demo [here](https://www.youtube.com/watch?v=_8lV2Lbd6Xs&feature=youtu.be&t=1295).
+
 ## Acknowledgements
 
 We are grateful to [ADR UK](https://www.adruk.org/) (Administrative Data Research UK) for providing funding for this work as part of the [Data First](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) project.
