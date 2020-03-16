@@ -11,7 +11,6 @@ except ImportError:
 
 
 from .logging_utils import _format_sql
-from .sql import sql_gen_comparison_columns
 from .check_types import check_types
 
 logger = logging.getLogger(__name__)
