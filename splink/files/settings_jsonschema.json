@@ -4,14 +4,21 @@
   "$id": "http://example.com/root.json",
   "type": "object",
   "title": "Splink settings",
-  "required": ["comparison_columns", "link_type"],
+  "required": [
+    "comparison_columns",
+    "link_type"
+  ],
   "additionalProperties": false,
   "properties": {
+    "$schema": {
+      "type": "string",
+      "format": "uri"
+    },
     "link_type": {
       "$id": "#/properties/link_type",
       "type": "string",
       "title": "The type of data linking task - `dedupe_only`, `link_only` or `link_and_dedupe`.  Required.",
-      "description": "- When `dedupe_only`, the user provides a single input dataframe, and `splink` tries to find duplicate entries\n- When `link_only`, the user provides two dataframes, and `splink` tries to find a link between two two.  It makes no attempt to deduplicate datasets so this is best used when input datasets contain no duplicates\n- When `link_and_dedupe`, the user provides two dataframes, and `splink` simultanouesly links and dedupes the dataframes.",
+      "description": "- When `dedupe_only`, the user provides a single input dataframe, and `splink` tries to find duplicate entries\n- When `link_only`, the user provides two dataframes, and `splink` tries to find a link between the two.  It makes no attempt to deduplicate datasets so this is best used when at datasets contain no duplicates.\n- When `link_and_dedupe`, the user provides two dataframes, and `splink` simultanouesly links and dedupes the dataframes.",
       "examples": [
         "dedupe_only",
         "link_only",
@@ -26,8 +33,8 @@
     "proportion_of_matches": {
       "$id": "#/properties/proportion_of_matches",
       "type": "number",
-      "title": "The proportion of comparisons thought to be matches",
-      "description": "This provides the initial value (prior) that EM algorithm will start iterating from",
+      "title": "The proportion of record comparisons thought to be matches",
+      "description": "This provides the initial value (prior) from which the EM algorithm will start iterating",
       "default": 0.3,
       "minimum": 0,
       "maximum": 1,
@@ -40,8 +47,8 @@
     "em_convergence": {
       "$id": "#/properties/em_convergence",
       "type": "number",
-      "title": "Convergence tolerance for the EM algorithm.",
-      "description": " The algorithm will stop converging when the maximum of the change in model parameters between iterations is below this value.",
+      "title": "Convergence tolerance for the EM algorithm",
+      "description": "The algorithm will stop converging when the maximum of the change in model parameters between iterations is below this value",
       "default": 0.0001,
       "examples": [
         0.0001,
@@ -55,7 +62,7 @@
       "$id": "#/properties/max_iterations",
       "type": "number",
       "title": "The maximum number of iterations to run even if convergence has not been reached",
-      "description": "Set this value to zero if you do not want to use the EM algorithm and just want to score matches from m and u probabilities",
+      "description": "Set this value to zero if you do not want to use the EM algorithm and just want to score matches from values you have manually specified in the `m_probabilities` and `u_probabilities` arrays",
       "default": 25,
       "examples": [
         20,
@@ -67,17 +74,20 @@
     "unique_id_column_name": {
       "$id": "#/properties/unique_id_column_name",
       "type": "string",
-      "title": "The name of the column in the input dataset representing a unique id. For linking tasks, ids must be unique to each dataset being linked, and do not need to be globally unique across these two datasets",
+      "title": "The name of the column in the input dataset representing a unique id",
+      "description": "For linking tasks, ids must be unique to each dataset being linked, and do not need to be globally unique across these two datasets",
       "default": "unique_id",
       "examples": [
-        "unique_id"
+        "unique_id",
+        "id",
+        "pk"
       ]
     },
     "retain_matching_columns": {
       "$id": "#/properties/retain_matching_columns",
       "type": "boolean",
-      "title": "If set to true, each column in the `comparison_columns` array will be retained in output datasets. This is helpful so that the user can inspect matches, but once the comparison vector (gamma) columns are computed, this information is not actually needed by the algorithm.",
-      "description": "The algorithm will run faster and use less resources if this is set to false.",
+      "title": "If set to true, each column in the `comparison_columns` array will be retained in output datasets",
+      "description": "This is helpful so that the user can inspect matches, but once the comparison vector (gamma) columns are computed, this information is not actually needed by the algorithm.  The algorithm will run faster and use less resources if this is set to false.",
       "default": true,
       "examples": [
         false,
@@ -101,20 +111,31 @@
       "title": "A list of columns to use for probabalistic matching",
       "description": "Comparisons between the values in these columns will be used to determine match scores",
       "minItems": 1,
-
       "items": {
         "$id": "#/properties/comparison_columns/items",
         "type": "object",
         "title": "A comparison of input column(s) that is used for probabalistic matching",
-        "oneOf": [{"required": ["col_name"]},
-                {"required": ["custom_name", "custom_columns_used", "case_expression", "num_levels"]}
-            ],
+        "oneOf": [
+          {
+            "required": [
+              "col_name"
+            ]
+          },
+          {
+            "required": [
+              "custom_name",
+              "custom_columns_used",
+              "case_expression",
+              "num_levels"
+            ]
+          }
+        ],
         "additionalProperties": false,
         "properties": {
           "col_name": {
             "$id": "#/properties/comparison_columns/items/properties/col_name",
             "type": "string",
-            "title": "The name of the column in the input dataset",
+            "title": "The name of the column in the input dataset. Required, unless a `custom_name` is used instead",
             "default": "",
             "examples": [
               "first_name",
@@ -124,8 +145,8 @@
           "num_levels": {
             "$id": "#/properties/comparison_columns/items/properties/num_levels",
             "type": "integer",
-            "title": "The number of different similarity levels that will be computed for this column",
-            "description": "A greater value for `num_levels` means the algorithm can be more precise about how string similarity is treated - e.g. with three levels, it enables it to make a distinction between strings which are an almost-exact match, strings which are quite similar, and strings which don't really match at all.  However, more levels results in longer compute times and can sometimes affect convergence. By default, for a string variable, two levels would implies level 0: no match, level 1: almost exact match.  Three levels imples level 0: no match, level 1: strings are similar but not exactly the same, level 2: strings are almost exactly the same.  This column determines which pre-configured SQL CASE expression is used to generate values in the comparison vector.",
+            "title": "The number of different similarity categories (gradations of similarity) that will be computed for this column. ",
+            "description": "See [here](https://imai.fas.harvard.edu/research/files/linkage.pdf), page 355 equation (1). A greater value for `num_levels` means the algorithm can be more granular about how string similarity is treated - e.g. with three levels, it enables it to make a distinction between strings which are an almost-exact match, strings which are quite similar, and strings which don't match at all.  However, more levels results in longer compute times and can sometimes affect convergence. By default, for a string variable, two levels would implies level 0: no match, level 1: almost exact match.  Three levels imples level 0: no match, level 1: strings are similar but not exactly the same, level 2: strings are almost exactly the same.  This column determines which pre-configured SQL CASE expression is used to generate values in the comparison vector.",
             "default": 2,
             "examples": [
               2,
@@ -152,7 +173,7 @@
           "custom_name": {
             "$id": "#/properties/comparison_columns/items/properties/custom_name",
             "type": "string",
-            "title": "Custom name to identify this comparison in charts and calculations",
+            "title": "Custom name to identify this comparison in charts and calculations.  Required if `col_name` is not specified.",
             "description": "If supplying a custom case expression that is not specific to a single input column, you must provide ",
             "default": "",
             "examples": [
@@ -163,12 +184,17 @@
           "custom_columns_used": {
             "$id": "#/properties/comparison_columns/items/properties/custom_columns_used",
             "type": "array",
-            "title": "A list of the columns required by the custom case expression used for this custom column",
-            "description": "When using a custom comparison, this is needed so Sparklink knows what columns to retain",
+            "title": "A list of the columns required by the custom case expression used for this custom column. Required if custom_name is specified",
+            "description": "When using a custom comparison, this is required so splink knows what columns to retain",
             "default": [],
             "examples": [
-              ["first_name"],
-              ["first_nsme","surname"]
+              [
+                "first_name"
+              ],
+              [
+                "first_name",
+                "surname"
+              ]
             ],
             "minItems": 1
           },
@@ -193,7 +219,7 @@
           "m_probabilities": {
             "$id": "#/properties/comparison_columns/items/properties/m_probabilities",
             "type": "array",
-            "title": "A array of the 'starting' m probabilities for this column (the priors, which are fed into the EM algorithm), i.e probability of observing each similarity level amonst matches.  There will be `num_level` values in this array.  See http://imai.fas.harvard.edu/research/files/linkage.pdf for further details.",
+            "title": "A array of the 'starting' m probabilities for this column (the priors, which are fed into the EM algorithm). These are the probabilities of observing each similarity level amongst matches.  There will be `num_level` values in this array.  See [here](http://imai.fas.harvard.edu/research/files/linkage.pdf) equation (2) of page 355, for further details - these probabilities correspond to the parameters of the discrete distribution designated by pi",
             "description": "The first probability given corresponds to level 0: least similar.  It refers to the probability of observing level 0 in the comparison vector if the record really is a match.  The second probability corresponds to level 1, up to level n, most similar.",
             "examples": [
               [
@@ -211,7 +237,7 @@
           "u_probabilities": {
             "$id": "#/properties/comparison_columns/items/properties/u_probabilities",
             "type": "array",
-            "title": "A array of the 'starting' u probabilities for this column (the priors, which are fed into the EM algorithm) i.e. the probability of observing each similarity value amonst non-matches. There will be num_levels values in this array.  See http://imai.fas.harvard.edu/research/files/linkage.pdf for further details.",
+            "title": "A array of the 'starting' u probabilities for this column (the priors, which are fed into the EM algorithm). These are the probabilities of observing each similarity level amongst non-matches.  There will be `num_level` values in this array.  See [here](http://imai.fas.harvard.edu/research/files/linkage.pdf) equation (2) of page 355, for further details - these probabilities correspond to the parameters of the discrete distribution designated by pi",
             "description": "The first probability given corresponds to level 0: least similar.  It refers to the probability of observing level 0 in the comparison vector if the record 'in reality' is not a match.  The second probability corresponds to level 1, up to level n, most similar.",
             "examples": [
               [
@@ -231,7 +257,7 @@
             "type": "boolean",
             "default": false,
             "title": "Whether ex post term frequency adjustments should be made to match scores for this column",
-            "description": "For some columns such as first name, the value of first name is important due to the distribution of values being non-uniform.  For instance, a match on 'linacre' contains more information than a match on 'smith. If this is set to true, a term frequency adjustment is made to account for these difference.  For details of how this works, see here: https://static.cambridge.org/content/id/urn:cambridge.org:id:article:S0003055418000783/resource/name/S0003055418000783sup001.pdf"
+            "description": "For some columns such as first name, the value of first name is important due to the distribution of values being non-uniform.  For instance, a match on 'linacre' contains more information than a match on 'smith. If this is set to true, a term frequency adjustment is made to account for these difference.  For details of how this works, see [here](https://static.cambridge.org/content/id/urn:cambridge.org:id:article:S0003055418000783/resource/name/S0003055418000783sup001.pdf) page 7"
           },
           "gamma_index": {
             "$id": "#/properties/comparison_columns/items/properties/gamma_index",
@@ -271,9 +297,10 @@
       "$id": "#/properties/additional_columns_to_retain",
       "type": "array",
       "title": "A list of columns not being used in the probabalistic matching comparisons that you want to include in your results.",
+      "description": "A common example is if the user has labelled data (training data) and wishes to retain the labels in the outputs",
       "default": [],
       "examples": [
-        "col_1",
+        "label",
         "col2"
       ],
       "items": {
