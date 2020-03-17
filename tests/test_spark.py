@@ -592,3 +592,9 @@ def test_main_api(spark, sqlite_con_1):
     linker.save_model_as_json("saved_model.json", overwrite=True)
     linker_2 = load_from_json("saved_model.json", spark=spark, df=df)
     df_e = linker_2.get_scored_comparisons()
+
+    from splink.intuition import intuition_report
+    params = linker.params
+    row_dict = df_e.toPandas().sample(1).to_dict(orient="records")[0]
+    print(intuition_report(row_dict, params))
+
