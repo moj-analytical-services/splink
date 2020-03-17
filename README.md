@@ -3,7 +3,7 @@
 ![python-version-dependency](https://img.shields.io/badge/python-%3E%3D3.6-blue)
 
 
-# splink: Probabalistic record linkage at scale
+# splink: Probabilistic record linkage and deduplication at scale
 
 WARNING:  Splink is is currently in beta testing.  Please feel free to try it, but note this software is not fully tested, and the interface is likely to continue to change.
 
