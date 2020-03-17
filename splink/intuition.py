@@ -1,5 +1,5 @@
 from .chart_definitions import adjustment_factor_chart_def
-from params import Params
+from .params import Params
 
 altair_installed = True
 try:
