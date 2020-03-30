@@ -26,6 +26,10 @@ try:
 except ImportError:
     altair_installed = False
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 class Params:
     """Stores the current model parameters (in self.params) and values for params for all previous iterations
@@ -318,6 +322,16 @@ class Params:
         p_old = {key:value for key, value in _flatten_dict(p_previous).items() if '_probability' in key.lower()}
 
         diff = [abs(p_new[item] - p_old[item]) < threshold for item in p_new]
+
+        biggest_change = 0
+        biggest_change_key = ''
+        for key in p_new.keys():
+            new_change = abs(p_new[key] - p_old[key])
+            if new_change > biggest_change:
+                biggest_change = new_change
+                biggest_change_key = key
+        
+        logger.info(f"The maximum change in parameters was {biggest_change} for key {biggest_change_key}")
 
         return(all(diff))
 
