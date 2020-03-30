@@ -408,7 +408,7 @@ def test_case_statements(spark, sqlite_con_3):
     df = spark.createDataFrame(dfpd)
     df.createOrReplaceTempView("df_names")
 
-    sql = sql_gen_gammas_name_inversion_3("surname", ["forename1", "forename2"], "surname")
+    sql = sql_gen_gammas_name_inversion_4("surname", ["forename1", "forename2"], "surname")
 
     df_results = spark.sql(f"select {sql} from df_names").toPandas()
     assert df_results.loc[0, "gamma_surname"] == 3
