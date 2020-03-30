@@ -245,3 +245,20 @@ def sql_gen_case_stmt_numeric_perc_4(col_name, gamma_col_name=None, per_diff_low
     else:
         return c
 
+def _sql_gen_get_or_list(col_name, other_name_cols, threshold=0.94):
+    # Note the ifnull 1234 just ensures that if one of the other columns is null, the jaro score is lower than the threshold
+    ors = [f"jaro_winkler_sim({col_name}_l, ifnull({n}_r, '1234')) > {threshold}" for n in other_name_cols]
+    ors_string = " OR ".join(ors)
+    return f"({ors_string})"
+
+def sql_gen_gammas_name_inversion_3(col_name, other_name_cols, gamma_col_name=None, threshold1=0.94, threshold2=0.88):
+    c = f"""case
+    when {col_name}_l is null or {col_name}_r is null then -1
+    when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold1} then 3
+    when {_sql_gen_get_or_list(col_name, other_name_cols, threshold1)} then 2
+    when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold2} then 1
+    else 0 end"""
+    if gamma_col_name is not None:
+        return _add_as_gamma_to_case_statement(c, gamma_col_name)
+    else:
+        return c
