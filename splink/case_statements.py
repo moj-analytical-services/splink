@@ -251,7 +251,20 @@ def _sql_gen_get_or_list(col_name, other_name_cols, threshold=0.94):
     ors_string = " OR ".join(ors)
     return f"({ors_string})"
 
-def sql_gen_gammas_name_inversion_3(col_name, other_name_cols, gamma_col_name=None, threshold1=0.94, threshold2=0.88):
+def sql_gen_gammas_name_inversion_3(col_name:str, other_name_cols:list, gamma_col_name=None, threshold1=0.94, threshold2=0.88):
+    """Generate a case expression which can handle name inversions where e.g. surname and forename are inverted
+    
+    Args:
+        col_name (str): The name of the column we want to generate a custom case expression for e.g. surname
+        other_name_cols (list): The name of the other columns that contain names e.g. forename1, forename2
+        gamma_col_name (str, optional): . The name of the column, for the alias e.g. surname
+        threshold1 (float, optional): Jaro threshold for almost exact match. Defaults to 0.94.
+        threshold2 (float, optional): Jaro threshold for close match Defaults to 0.88.
+    
+    Returns:
+        str: A sql string
+    """    
+       
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold1} then 3
