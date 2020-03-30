@@ -251,7 +251,7 @@ def _sql_gen_get_or_list(col_name, other_name_cols, threshold=0.94):
     ors_string = " OR ".join(ors)
     return f"({ors_string})"
 
-def sql_gen_gammas_name_inversion_3(col_name:str, other_name_cols:list, gamma_col_name=None, threshold1=0.94, threshold2=0.88):
+def sql_gen_gammas_name_inversion_4(col_name:str, other_name_cols:list, gamma_col_name=None, threshold1=0.94, threshold2=0.88):
     """Generate a case expression which can handle name inversions where e.g. surname and forename are inverted
     
     Args:
