@@ -147,7 +147,9 @@ def make_adjustment_for_term_frequencies(
         sql = sql_gen_generate_adjusted_lambda(c, params)
         logger.debug(_format_sql(sql))
         lookup = spark.sql(sql)
+        lookup.persist()
         lookup.createOrReplaceTempView(f"{c}_lookup")
+        
 
     # Merge these lookup tables into main table
     sql = sql_gen_add_adjumentments_to_df_e(term_freq_column_list)
