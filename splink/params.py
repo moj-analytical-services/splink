@@ -337,6 +337,24 @@ class Params:
 
     ### The rest of this module is just 'presentational' elements - charts, and __repr__ etc.
 
+    def _print_m_u_probs(self):
+
+        def field_value_to_probs(fv):
+            m_probs = []
+            for key, val in fv['prob_dist_match'].items():
+                m_probs.append(val["probability"])
+            u_probs = []
+            for key, val in fv['prob_dist_non_match'].items():
+                u_probs.append(val["probability"])
+            
+            print(f'"m_probabilities": {m_probs},')
+            print(f'"u_probabilities": {u_probs}')
+                
+        for field, value in self.params['π'].items():
+            print(field)
+            field_value_to_probs(value)
+
+
     def pi_iteration_chart(self):  # pragma: no cover
 
         if self.real_params:
