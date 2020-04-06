@@ -17,6 +17,7 @@ from splink.iterate import iterate
 from splink.expectation_step import run_expectation_step
 from splink.term_frequencies import make_adjustment_for_term_frequencies
 from splink.check_types import check_types
+from splink.break_lineage import default_break_lineage_blocked_comparisons, default_break_lineage_scored_comparisons
 
 # For type hints. I use try except to ensure that the sql generation functions work even if spark does not exist
 try:
@@ -40,6 +41,8 @@ class Splink:
         df_r: DataFrame = None,
         df: DataFrame = None,
         save_state_fn: Callable = None,
+        break_lineage_blocked_comparisons: Callable = default_break_lineage_blocked_comparisons, 
+        break_lineage_scored_comparisons: Callable = default_break_lineage_scored_comparisons
     ):
         """splink data linker
 
@@ -52,10 +55,13 @@ class Splink:
             df_r (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
             df (DataFrame, optional): The dataframe to dedupe. Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
             save_state_fn (function, optional):  A function provided by the user that takes two arguments, params and settings, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
-
+            break_lineage_blocked_comparisons (function, optional): Large jobs will likely run into memory errors unless the lineage is broken after blocking.  This is a user-provided function that takes one argument - df - and allows the user to break lineage.  For example, the function might save df to the AWS s3 file system, and then reload it from the saved files.
+            break_lineage_scored_comparisons (function, optional): Large jobs will likely run into memory errors unless the lineage is broken after comparisons are scored and before term frequency adjustments.  This is a user-provided function that takes one argument - df - and allows the user to break lineage.  For example, the function might save df to the AWS s3 file system, and then reload it from the saved files.
         """
 
         self.spark = spark
+        self.break_lineage_blocked_comparisons = break_lineage_blocked_comparisons
+        self.break_lineage_scored_comparisons = break_lineage_scored_comparisons
         _check_jaro_registered(spark)
 
         settings = complete_settings_dict(settings, spark)
@@ -131,7 +137,7 @@ class Splink:
 
         df_gammas = add_gammas(df_comparison, self.settings, self.spark)
 
-        df_gammas.persist()
+        df_gammas = self.break_lineage_blocked_comparisons(df_gammas, self.spark)
 
         df_e = iterate(
             df_gammas,
@@ -141,10 +147,19 @@ class Splink:
             compute_ll=False,
             save_state_fn=self.save_state_fn,
         )
+        
+        # In case the user's break lineage function has persisted it
         df_gammas.unpersist()
-        return df_e
 
-    def make_term_frequency_adjustments(self, df_e: DataFrame):
+        df_e = self.break_lineage_scored_comparisons(df_e, self.spark)
+
+        df_e_adj = self._make_term_frequency_adjustments(df_e)
+
+        df_e.unpersist()
+
+        return df_e_adj
+
+    def _make_term_frequency_adjustments(self, df_e: DataFrame):
         """Take the outputs of 'get_scored_comparisons' and make term frequency adjustments on designated columns in the settings dictionary
 
         Args:
@@ -170,6 +185,8 @@ class Splink:
             overwrite (bool): Whether to overwrite the file if it exsits
         """
         self.params.save_params_to_json_file(path, overwrite=overwrite)
+
+
 
 
 def load_from_json(path: str,
