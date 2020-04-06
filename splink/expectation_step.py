@@ -48,9 +48,7 @@ def run_expectation_step(df_with_gamma: DataFrame,
     df_with_gamma.createOrReplaceTempView("df_with_gamma")
     logger.debug(_format_sql(sql))
     df_with_gamma_probs = spark.sql(sql)
-    # df_with_gamma_probs.persist()
-
-
+    
     # This is optional because is slows down execution
     if compute_ll:
         ll = get_overall_log_likelihood(df_with_gamma_probs, params, spark)

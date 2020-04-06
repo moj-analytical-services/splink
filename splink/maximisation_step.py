@@ -23,16 +23,15 @@ def _sql_gen_new_lambda(table_name = "df_intermediate"):
     return sql
 
 
-def _get_new_lambda(df_e, spark):
+def _get_new_lambda(df_intermediate, spark):
     """
     Calculate lambda, as expected proportion of matches
     given current parameter estimates.
 
     This can then be used in future iterations.
     """
-
+    df_intermediate.createOrReplaceTempView("df_intermediate")
     sql = _sql_gen_new_lambda(table_name = "df_intermediate")
-    df_e.createOrReplaceTempView("df_e")
 
     new_lambda = spark.sql(sql).collect()[0][0]
     logger.debug(_format_sql(sql))
@@ -63,7 +62,6 @@ def _sql_gen_intermediate_pi_aggregate(params, table_name="df_e"):
 def _sql_gen_pi_df(params, table_name="df_intermediate"):
 
     sqls = []
-
     for gamma_str in params._gamma_cols:
         sql = f"""
         select {gamma_str} as gamma_value,
@@ -81,11 +79,11 @@ def _sql_gen_pi_df(params, table_name="df_intermediate"):
 
 
 
-def _get_new_pi_df(df_e, spark, params):
+def _get_new_pi_df(df_intermediate, spark, params):
     """
     Calculate and collect a dataframe that contains all the new values of pi
     """
-
+    df_intermediate.createOrReplaceTempView("df_intermediate")
     sql = _sql_gen_pi_df(params)
     levels = spark.sql(sql).collect()
     logger.debug(_format_sql(sql))
