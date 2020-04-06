@@ -41,7 +41,7 @@ def iterate(
         DataFrame: A spark dataframe including a match probability column
     """
 
-    df_gammas.persist()
+    # df_gammas.persist()
 
     num_iterations = settings["max_iterations"]
     for i in range(num_iterations):
@@ -68,6 +68,6 @@ def iterate(
         df_gammas, params, settings, spark, compute_ll=compute_ll
     )
 
-    df_gammas.unpersist()
+    # df_gammas.unpersist()
     return df_e
 
