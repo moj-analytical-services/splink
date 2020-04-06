@@ -41,17 +41,11 @@ def iterate(
         DataFrame: A spark dataframe including a match probability column
     """
 
-    # df_gammas.persist()
-
     num_iterations = settings["max_iterations"]
     for i in range(num_iterations):
         df_e = run_expectation_step(
             df_gammas, params, settings, spark, compute_ll=compute_ll
         )
-
-        # To align to the parameters in the iteration chart, LL must be computed against
-        # pi and lambda pre-maximisation
-        # compute_log_likelihood()
 
         run_maximisation_step(df_e, params, spark)
 
@@ -68,6 +62,4 @@ def iterate(
         df_gammas, params, settings, spark, compute_ll=compute_ll
     )
 
-    # df_gammas.unpersist()
     return df_e
-
