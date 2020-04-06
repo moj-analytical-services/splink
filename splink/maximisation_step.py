@@ -110,8 +110,8 @@ def run_maximisation_step(df_e: DataFrame, params:Params, spark:SparkSession):
     df_intermediate.createOrReplaceTempView("df_intermediate")
     df_intermediate.persist()
 
-    new_lambda = _get_new_lambda(df_e,  spark)
-    pi_df_collected = _get_new_pi_df(df_e, spark, params)
+    new_lambda = _get_new_lambda(df_intermediate,  spark)
+    pi_df_collected = _get_new_pi_df(df_intermediate, spark, params)
 
     params._update_params(new_lambda, pi_df_collected)
     df_intermediate.unpersist()
