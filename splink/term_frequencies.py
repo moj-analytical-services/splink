@@ -48,17 +48,24 @@ def sql_gen_bayes_string(probs):
 
 def sql_gen_generate_adjusted_lambda(column_name, params, table_name="df_e"):
 
+    # Get 'average' param for matching on this column
+    max_level = params.params["π"][f"gamma_{column_name}"]["num_levels"] - 1
+    m = params.params["π"][f"gamma_{column_name}"]["prob_dist_match"][f"level_{max_level}"]["probability"]
+    u = params.params["π"][f"gamma_{column_name}"]["prob_dist_non_match"][f"level_{max_level}"]["probability"]
+    average_adjustment = m/(m+u)
+
+
     sql = f"""
     with temp_adj as
     (
-    select {column_name}_l, {column_name}_r, sum(match_probability)/count(match_probability) as adj_lambda
+    select {column_name}_l, sum(1-match_probability)/(select sum(1-match_probability) from df_e) as u, sum(match_probability)/(select sum(match_probability) from df_e) as m
     from {table_name}
     where {column_name}_l = {column_name}_r
-    group by {column_name}_l, {column_name}_r
+    group by {column_name}_l
     )
 
-    select {column_name}_l, {column_name}_r, {sql_gen_bayes_string(["adj_lambda", 1-params.params["λ"]])}
-    as {column_name}_adj_nulls
+    select {column_name}_l, {sql_gen_bayes_string(["(m/(m+u))", 1-average_adjustment])}
+    as {column_name}_tf_adj_nulls
     from temp_adj
     """
 
@@ -67,15 +74,14 @@ def sql_gen_generate_adjusted_lambda(column_name, params, table_name="df_e"):
 
 def sql_gen_add_adjumentments_to_df_e(term_freq_column_list):
 
-    coalesce_template = "coalesce({c}_adj_nulls, 0.5) as {c}_adj"
+    coalesce_template = "coalesce({c}_tf_adj_nulls, 0.5) as {c}_tf_adj"
     coalesces = [coalesce_template.format(c=c) for c in term_freq_column_list]
     coalesces = ",\n ".join(coalesces)
 
     left_join_template = """
      left join
     {c}_lookup
-    on {c}_lookup.{c}_l = e.{c}_l
-    and {c}_lookup.{c}_r = e.{c}_r
+    on {c}_lookup.{c}_l = e.{c}_l and {c}_lookup.{c}_l = e.{c}_r
     """
 
     left_joins = [left_join_template.format(c=c) for c in term_freq_column_list]
@@ -99,7 +105,7 @@ def sql_gen_compute_final_group_membership_prob_from_adjustments(
     term_freq_column_list, settings, table_name="df_e_adj"
 ):
 
-    term_freq_column_list = [c + "_adj" for c in term_freq_column_list]
+    term_freq_column_list = [c + "_tf_adj" for c in term_freq_column_list]
     term_freq_column_list.insert(0, "match_probability")
     tf_adjusted_match_prob_expr = sql_gen_bayes_string(term_freq_column_list)
 
@@ -137,9 +143,6 @@ def make_adjustment_for_term_frequencies(
     ]
 
     if len(term_freq_column_list) == 0:
-        warnings.warn(
-            "No term frequency adjustment columns are specified in your settings object.  Returning original df"
-        )
         return df_e
 
     # Generate a lookup table for each column with 'term specific' lambdas.
@@ -163,7 +166,7 @@ def make_adjustment_for_term_frequencies(
     df = spark.sql(sql)
     if not retain_adjustment_columns:
         for c in term_freq_column_list:
-            df = df.drop(c + "_adj")
+            df = df.drop(c + "_tf_adj")
 
     return df
 

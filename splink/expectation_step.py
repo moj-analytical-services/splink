@@ -153,7 +153,7 @@ def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
             select_cols[f"prob_gamma_{col_name}_match"] = f"prob_gamma_{col_name}_match"
             if tf_adj_cols:
                 if col["term_frequency_adjustments"]:
-                    select_cols[col_name+"_adj"] =  col_name+"_adj"
+                    select_cols[col_name+"_tf_adj"] =  col_name+"_tf_adj"
 
 
 
