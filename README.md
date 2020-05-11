@@ -49,4 +49,6 @@ You can find a short video introducing `splink` and running though an introducto
 
 ## Acknowledgements
 
-We are grateful to [ADR UK](https://www.adruk.org/) (Administrative Data Research UK) for providing funding for this work as part of the [Data First](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) project.
+We are very grateful to [ADR UK](https://www.adruk.org/) (Administrative Data Research UK) for providing funding for this work as part of the [Data First](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) project.
+
+We are also very grateful to colleagues at the UK's Office for National Statistics for their expert advice and peer review of this work.
