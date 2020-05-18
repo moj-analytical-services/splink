@@ -1,5 +1,5 @@
 # For more information on where formulas came from, see
-# https://github.com/moj-analytical-services/splink/issues/17
+# https://github.com/moj-analytical-services/splink/pull/107
 
 import logging
 
@@ -45,7 +45,7 @@ def sql_gen_bayes_string(probs):
     (  {probs_multiplied} + {inverse_probs_multiplied} )
     """
 
-
+# See https://github.com/moj-analytical-services/splink/pull/107
 def sql_gen_generate_adjusted_lambda(column_name, params, table_name="df_e"):
 
     # Get 'average' param for matching on this column
