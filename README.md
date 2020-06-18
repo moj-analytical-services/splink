@@ -37,7 +37,7 @@ You can run demos of `splink` in an interactive Jupyter notebook by clicking the
 
 The best documentation is currently a series of demonstrations notebooks in the [splink_demos](https://github.com/moj-analytical-services/splink_demos) repo.
 
-We also provide an interactive `splink` settings editor and example settings [here](https://moj-analytical-services.github.io/splink_settings_editor/)
+We also provide an interactive `splink` settings editor and example settings [here](https://moj-analytical-services.github.io/splink_settings_editor/).  A tool to generate custom `m` and `u` probabilities can be found [here](https://observablehq.com/@robinl/m-and-u-probabilities).
 
 The statistical model behind `splink` is the same as that used in the R [fastLink package](https://github.com/kosukeimai/fastLink).  Accompanying the fastLink package is an [academic paper](http://imai.fas.harvard.edu/research/files/linkage.pdf) that describes this model.  This is the best place to start for users wanting to understand the theory about how `splink` works.
 
