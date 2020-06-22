@@ -1,3 +1,5 @@
+![image](https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png)
+
 [![Coverage Status](https://coveralls.io/repos/github/moj-analytical-services/splink/badge.svg?branch=master)](https://coveralls.io/github/moj-analytical-services/splink?branch=master)
 ![issues-status](https://img.shields.io/github/issues-raw/moj-analytical-services/splink)
 ![python-version-dependency](https://img.shields.io/badge/python-%3E%3D3.6-blue)
