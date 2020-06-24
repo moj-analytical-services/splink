@@ -1,0 +1,4163 @@
+{
+    "current_params": {
+        "\u03bb": 0.4202170968055725,
+        "\u03c0": {
+            "gamma_first_name": {
+                "gamma_index": 0,
+                "desc": "Comparison of first_name",
+                "column_name": "first_name",
+                "custom_comparison": false,
+                "num_levels": 3,
+                "prob_dist_match": {
+                    "level_0": {
+                        "value": 0,
+                        "probability": 0.36529818177223206
+                    },
+                    "level_1": {
+                        "value": 1,
+                        "probability": 0.06679295003414154
+                    },
+                    "level_2": {
+                        "value": 2,
+                        "probability": 0.5679088830947876
+                    }
+                },
+                "prob_dist_non_match": {
+                    "level_0": {
+                        "value": 0,
+                        "probability": 0.5305693745613098
+                    },
+                    "level_1": {
+                        "value": 1,
+                        "probability": 0.0010929006384685636
+                    },
+                    "level_2": {
+                        "value": 2,
+                        "probability": 0.4683377146720886
+                    }
+                }
+            },
+            "gamma_surname": {
+                "gamma_index": 1,
+                "desc": "Comparison of surname",
+                "column_name": "surname",
+                "custom_comparison": false,
+                "num_levels": 3,
+                "prob_dist_match": {
+                    "level_0": {
+                        "value": 0,
+                        "probability": 0.3789216876029968
+                    },
+                    "level_1": {
+                        "value": 1,
+                        "probability": 0.05638887733221054
+                    },
+                    "level_2": {
+                        "value": 2,
+                        "probability": 0.5646894574165344
+                    }
+                },
+                "prob_dist_non_match": {
+                    "level_0": {
+                        "value": 0,
+                        "probability": 0.3229864835739136
+                    },
+                    "level_1": {
+                        "value": 1,
+                        "probability": 2.1636668012803284e-09
+                    },
+                    "level_2": {
+                        "value": 2,
+                        "probability": 0.6770135164260864
+                    }
+                }
+            },
+            "gamma_dob": {
+                "gamma_index": 2,
+                "desc": "Comparison of dob",
+                "column_name": "dob",
+                "custom_comparison": false,
+                "num_levels": 2,
+                "prob_dist_match": {
+                    "level_0": {
+                        "value": 0,
+                        "probability": 0.13735157251358032
+                    },
+                    "level_1": {
+                        "value": 1,
+                        "probability": 0.8626484274864197
+                    }
+                },
+                "prob_dist_non_match": {
+                    "level_0": {
+                        "value": 0,
+                        "probability": 0.9876886606216431
+                    },
+                    "level_1": {
+                        "value": 1,
+                        "probability": 0.012311361730098724
+                    }
+                }
+            },
+            "gamma_city": {
+                "gamma_index": 3,
+                "desc": "Comparison of city",
+                "column_name": "city",
+                "custom_comparison": false,
+                "num_levels": 2,
+                "prob_dist_match": {
+                    "level_0": {
+                        "value": 0,
+                        "probability": 0.23625244200229645
+                    },
+                    "level_1": {
+                        "value": 1,
+                        "probability": 0.7637475728988647
+                    }
+                },
+                "prob_dist_non_match": {
+                    "level_0": {
+                        "value": 0,
+                        "probability": 0.8606055378913879
+                    },
+                    "level_1": {
+                        "value": 1,
+                        "probability": 0.13939447700977325
+                    }
+                }
+            },
+            "gamma_email": {
+                "gamma_index": 4,
+                "desc": "Comparison of email",
+                "column_name": "email",
+                "custom_comparison": false,
+                "num_levels": 2,
+                "prob_dist_match": {
+                    "level_0": {
+                        "value": 0,
+                        "probability": 0.13317029178142548
+                    },
+                    "level_1": {
+                        "value": 1,
+                        "probability": 0.8668296933174133
+                    }
+                },
+                "prob_dist_non_match": {
+                    "level_0": {
+                        "value": 0,
+                        "probability": 0.9999889731407166
+                    },
+                    "level_1": {
+                        "value": 1,
+                        "probability": 1.1013254152203444e-05
+                    }
+                }
+            }
+        }
+    },
+    "historical_params": [
+        {
+            "\u03bb": 0.3,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.2
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.7
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.7000000000000001
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.2
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.1
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.2
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.7
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.7000000000000001
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.2
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.1
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.9
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.1
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.9
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.1
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.9
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.1
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.3559739887714386,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.2684518098831177
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.07068818062543869
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.660860002040863
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5639071464538574
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.006509868428111076
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.42958298325538635
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.2625163495540619
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.058174461126327515
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6793091893196106
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3866064250469208
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.004652306903153658
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.608741283416748
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.16022531688213348
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8397746682167053
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.890222430229187
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.1097775399684906
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.16518081724643707
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8348191976547241
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8401907086372375
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.15980930626392365
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.10278414934873581
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8972158432006836
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9378442168235779
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06215580180287361
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.37210899591445923,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.345141738653183
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.07343417406082153
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5814241170883179
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5292676687240601
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.002430522348731756
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.46830180287361145
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3549565076828003
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06117827072739601
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.583865225315094
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3400283753871918
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0014600710710510612
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6585115790367126
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.12506991624832153
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8749300837516785
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9298155307769775
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.07018443942070007
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.188503697514534
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8114963173866272
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8440937399864197
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.15590626001358032
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.08191067725419998
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.9180893301963806
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.971825361251831
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.028174640610814095
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.3850109875202179,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3606603443622589
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.07194076478481293
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5673989057540894
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5236670970916748
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0017389676067978144
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.4745939373970032
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.37278521060943604
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.060440193861722946
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5667746067047119
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.32949262857437134
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0006816518143750727
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6698257327079773
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.11803563684225082
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.881964385509491
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9511022567749023
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.04889773577451706
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.2058258205652237
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7941741943359375
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8469859957695007
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.15301401913166046
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.08670134842395782
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.9132986664772034
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9843726754188538
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.015627343207597733
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.3941519856452942,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.36288976669311523
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0705905333161354
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5665196776390076
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5247636437416077
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0015244391979649663
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.47371190786361694
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.37576472759246826
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.05954251065850258
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5646927356719971
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.327114999294281
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.00038579097599722445
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6724992394447327
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.12065470218658447
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8793452978134155
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9619675874710083
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0380324088037014
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.2141055017709732
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.785894513130188
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8504401445388794
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.149559885263443
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.09662088751792908
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.9033790826797485
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9897674322128296
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.010232578031718731
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.4007764458656311,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.36336517333984375
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06959769129753113
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5670371055603027
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5263075232505798
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0014027818106114864
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.47228971123695374
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3766372799873352
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.058804191648960114
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5645585060119629
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.32608282566070557
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.00023243666510097682
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6736847162246704
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.12463843822479248
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8753615617752075
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9686039686203003
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0313960500061512
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.21910367906093597
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7808963060379028
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8534202575683594
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.14657972753047943
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.10521775484085083
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8947822451591492
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9929105639457703
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.007089435122907162
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.40557217597961426,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.36360013484954834
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06889253854751587
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5675073266029358
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5275160074234009
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0013180950190871954
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.47116586565971375
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3771011233329773
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0582454651594162
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5646533966064453
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.32541367411613464
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.00014161347644403577
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6744446754455566
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.12804275751113892
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8719572424888611
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9730901718139648
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.026909830048680305
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.2227616012096405
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7772383689880371
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8555517196655273
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.14444828033447266
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.11168348044157028
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8883165121078491
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9949820041656494
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.005018011201173067
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.40905526280403137,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.36378616094589233
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06838846951723099
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5678253769874573
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5283923745155334
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0012578490423038602
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.4703497588634491
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3774169981479645
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.05782903730869293
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5647539496421814
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3249293267726898
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 8.573826198698953e-05
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6749849319458008
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.130616694688797
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8693833351135254
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9762892723083496
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.023710714653134346
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.22558094561100006
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7744190692901611
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8570034503936768
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.14299657940864563
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.11644857376813889
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8835514187812805
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9964116215705872
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0035883572418242693
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.4116111397743225,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.36395594477653503
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06802202761173248
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5680220127105713
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5290164351463318
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0012149924878031015
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.46976858377456665
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.37765559554100037
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.057516470551490784
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5648279190063477
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3245634436607361
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 5.126602263771929e-05
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6753852963447571
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13248895108699799
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8675110340118408
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9786530137062073
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.021346986293792725
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.22777189314365387
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7722281217575073
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8579937815666199
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.14200621843338013
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1199955865740776
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8800044059753418
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9974188208580017
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.002581164240837097
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.4135124981403351,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3641153573989868
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0677507147192955
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5681339502334595
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5294589400291443
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0011843295069411397
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.4693567454814911
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.37784695625305176
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.05727875232696533
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5648742914199829
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.32427892088890076
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 3.0217428502510302e-05
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6756908297538757
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1338350623846054
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8661649227142334
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9804471135139465
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.019552888348698616
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.2294805943965912
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7705193758010864
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.858680784702301
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.14131923019886017
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.12268058955669403
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8773193955421448
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9981363415718079
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0018636712338775396
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.4149475693702698,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.36426427960395813
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06754633039236069
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5681893825531006
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5297731161117554
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0011621455196291208
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.46906471252441406
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3780061900615692
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.05709553509950638
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5648982524871826
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3240525722503662
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 1.755945777404122e-05
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6759299039840698
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1348014920949936
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8651984930038452
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9818383455276489
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.01816166192293167
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.23082058131694794
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7691794037818909
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8591668009757996
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.14083316922187805
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.12474856525659561
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8752514123916626
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9986510276794434
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0013489817501977086
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.41604605317115784,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.36440157890319824
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06738993525505066
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5682084560394287
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5299969911575317
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.001145875663496554
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.4688571095466614
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.37814176082611084
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.05695264786481857
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.56490558385849
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.32386913895606995
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 1.0070943972095847e-05
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6761208176612854
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1354970633983612
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8645029664039612
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9829361438751221
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.017063844949007034
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.23187902569770813
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7681209444999695
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8595173358917236
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.14048266410827637
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.12636710703372955
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8736329078674316
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9990219473838806
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0009780348045751452
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.4168980121612549,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3645265996456146
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06726856529712677
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5682048201560974
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5301571488380432
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.001133770914748311
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.4687090814113617
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.37825873494148254
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.056840088218450546
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5649011731147766
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3237183392047882
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 5.709568540623877e-06
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6762759685516357
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1359996348619461
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8640003800392151
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9838150143623352
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.016184980049729347
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.23272180557250977
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7672781944274902
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8597745895385742
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.14022542536258698
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.12765221297740936
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8723477721214294
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9992901682853699
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0007098222267813981
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.41756683588027954,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3646392822265625
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06717319041490555
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5681875348091125
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5302721858024597
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0011246372014284134
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.4686031639575958
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3783603608608246
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.05675063282251358
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5648890137672424
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.32359299063682556
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 3.204993163308245e-06
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.676403820514679
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13636431097984314
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8636357188224792
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9845271110534668
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.015472890809178352
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.23339833319187164
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7666016817092896
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8599663376808167
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.14003363251686096
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.12868547439575195
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.871314525604248
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9994845390319824
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0005154687096364796
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.41809767484664917,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3647399842739105
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06709738075733185
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5681626200675964
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5303551554679871
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0011176523985341191
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.4685271978378296
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.37844905257225037
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.05667896196246147
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5648720264434814
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.32348790764808655
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 1.7841286990005756e-06
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6765102744102478
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13663002848625183
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8633699417114258
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9851099252700806
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.014890077523887157
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.23394575715065002
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7660542130470276
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8601114153862
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.13988858461380005
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1295253187417984
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8704746961593628
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.999625563621521
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.00037443600012920797
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.41852325201034546,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3648294508457184
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06703651696443558
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.568134069442749
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5304151177406311
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.001112243626266718
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.46847259998321533
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.378526508808136
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.05662112310528755
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5648523569107056
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.32339921593666077
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 9.863100558504811e-07
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6765998005867004
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13682444393634796
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8631755709648132
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9855909943580627
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.014408993534743786
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.23439206182956696
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7656079530715942
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.860222578048706
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.13977743685245514
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1302143633365631
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8697856664657593
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9997279644012451
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.00027200832846574485
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.4188675880432129,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3649085462093353
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06698719412088394
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5681042671203613
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5304586887359619
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0011080065742135048
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.46843332052230835
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3785942494869232
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.05657410994172096
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5648316740989685
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3233239948749542
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 5.421449600362394e-07
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6766754984855652
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1369672268629074
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8630327582359314
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9859910011291504
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.014009003527462482
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.23475851118564606
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7652415037155151
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8603087067604065
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.13969126343727112
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13078422844409943
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8692157864570618
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9998024106025696
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.00019758484268095344
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.4191484749317169,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.36497819423675537
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06694690883159637
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5680748820304871
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5304903388023376
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0011046517174690962
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.4684050381183624
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3786534070968628
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.056535642594099045
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5648109316825867
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3232598900794983
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 2.9660142786269716e-07
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6767398118972778
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13707248866558075
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8629274964332581
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9863256216049194
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.013674389570951462
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.23506133258342743
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7649386525154114
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8603762984275818
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.1396237313747406
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1312587708234787
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8687412142753601
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9998564720153809
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.00014350008859764785
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.419379323720932,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3650393784046173
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06691374629735947
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5680468678474426
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5305134057998657
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0011019691592082381
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.46838465332984924
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.37870508432388306
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.05650397017598152
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5647909045219421
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3232051134109497
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 1.61640528517637e-07
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.676794707775116
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13715039193630219
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8628495931625366
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.986607015132904
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.013392996974289417
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.23531308770179749
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7646868824958801
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8604297637939453
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.13957025110721588
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13165627419948578
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.868343710899353
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9998958110809326
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.00010419684258522466
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.41957035660743713,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3650929629802704
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06688627600669861
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.568020761013031
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5305302143096924
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0010998047655448318
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.4683699607849121
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.378750205039978
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.05647773668169975
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5647720694541931
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3231582045555115
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 8.780980209621703e-08
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.676841676235199
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13720828294754028
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8627917170524597
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9868447184562683
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.013155294582247734
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.235523521900177
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.764476478099823
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8604725003242493
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.13952749967575073
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13199090957641602
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.868009090423584
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.99992436170578
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 7.563956751255319e-05
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.4197293519973755,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.36513984203338623
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06686337292194366
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5679967999458313
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5305425524711609
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0010980438673868775
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.46835941076278687
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3787895143032074
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.056455887854099274
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5647546052932739
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3231179416179657
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 4.7576474315746964e-08
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6768820285797119
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13725148141384125
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8627485036849976
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9870463013648987
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.012953723780810833
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.23570026457309723
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.764299750328064
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8605069518089294
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.13949304819107056
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1322738379240036
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8677261471748352
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9999451041221619
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 5.489486284204759e-05
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.41986241936683655,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.36518076062202454
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06684418767690659
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5679750442504883
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5305516123771667
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0010966005502268672
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.468351811170578
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.37882375717163086
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.056437600404024124
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5647386312484741
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3230833113193512
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 2.572134327749609e-08
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6769166588783264
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13728384673595428
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8627161383628845
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9872177839279175
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.012782229110598564
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.23584935069084167
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7641506195068359
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8605349659919739
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.13946503400802612
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13251395523548126
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8674860596656799
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.99996018409729
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 3.982944690505974e-05
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.41997432708740234,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3652164340019226
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06682804226875305
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.567955493927002
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5305582284927368
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.001095409388653934
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.46834635734558105
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.37885358929634094
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.05642222240567207
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5647242069244385
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3230535089969635
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 1.3880529614596071e-08
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6769464612007141
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1373082399368286
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8626917600631714
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9873641133308411
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.012635906226933002
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.23597560822963715
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7640243768692017
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8605578541755676
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.13944211602210999
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13271836936473846
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8672816157341003
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9999710917472839
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 2.8891603506053798e-05
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.4200688302516937,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.36524754762649536
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06681438535451889
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5679380893707275
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5305631160736084
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0010944200912490487
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.46834248304367065
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.37887951731681824
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.056409239768981934
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5647112131118774
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3230278193950653
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 7.479263430809624e-09
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6769722104072571
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.1373267024755478
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.862673282623291
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9874892234802246
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.01251075230538845
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.23608288168907166
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.763917088508606
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8605768084526062
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.1394232213497162
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13289287686347961
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.867107093334198
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9999790191650391
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 2.0952731574652717e-05
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "\u03bb": 0.42014896869659424,
+            "\u03c0": {
+                "gamma_first_name": {
+                    "gamma_index": 0,
+                    "desc": "Comparison of first_name",
+                    "column_name": "first_name",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3652746081352234
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.06680280715227127
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5679225921630859
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.5305666923522949
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.0010935940081253648
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.4683397114276886
+                        }
+                    }
+                },
+                "gamma_surname": {
+                    "gamma_index": 1,
+                    "desc": "Comparison of surname",
+                    "column_name": "surname",
+                    "custom_comparison": false,
+                    "num_levels": 3,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.3789020776748657
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.05639823526144028
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.5646997094154358
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.32300564646720886
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 4.024926170131948e-09
+                        },
+                        "level_2": {
+                            "value": 2,
+                            "probability": 0.6769943833351135
+                        }
+                    }
+                },
+                "gamma_dob": {
+                    "gamma_index": 2,
+                    "desc": "Comparison of dob",
+                    "column_name": "dob",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13734076917171478
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.862659215927124
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9875965118408203
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.012403479777276516
+                        }
+                    }
+                },
+                "gamma_city": {
+                    "gamma_index": 3,
+                    "desc": "Comparison of city",
+                    "column_name": "city",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.2361743152141571
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.7638257145881653
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.8605924248695374
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.13940754532814026
+                        }
+                    }
+                },
+                "gamma_email": {
+                    "gamma_index": 4,
+                    "desc": "Comparison of email",
+                    "column_name": "email",
+                    "custom_comparison": false,
+                    "num_levels": 2,
+                    "prob_dist_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.13304221630096436
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 0.8669577836990356
+                        }
+                    },
+                    "prob_dist_non_match": {
+                        "level_0": {
+                            "value": 0,
+                            "probability": 0.9999848008155823
+                        },
+                        "level_1": {
+                            "value": 1,
+                            "probability": 1.51921512951958e-05
+                        }
+                    }
+                }
+            }
+        }
+    ],
+    "settings": {
+        "link_type": "dedupe_only",
+        "blocking_rules": [
+            "l.first_name = r.first_name",
+            "l.surname = r.surname",
+            "l.dob = r.dob"
+        ],
+        "comparison_columns": [
+            {
+                "col_name": "first_name",
+                "num_levels": 3,
+                "term_frequency_adjustments": true,
+                "gamma_index": 0,
+                "data_type": "string",
+                "case_expression": "case     when first_name_l is null or first_name_r is null then -1     when jaro_winkler_sim(first_name_l, first_name_r) > 0.94 then 2     when jaro_winkler_sim(first_name_l, first_name_r) > 0.88 then 1     else 0 end  as gamma_first_name",
+                "m_probabilities": [
+                    0.1,
+                    0.2,
+                    0.7
+                ],
+                "u_probabilities": [
+                    0.7000000000000001,
+                    0.2,
+                    0.1
+                ]
+            },
+            {
+                "col_name": "surname",
+                "num_levels": 3,
+                "term_frequency_adjustments": true,
+                "gamma_index": 1,
+                "data_type": "string",
+                "case_expression": "case     when surname_l is null or surname_r is null then -1     when jaro_winkler_sim(surname_l, surname_r) > 0.94 then 2     when jaro_winkler_sim(surname_l, surname_r) > 0.88 then 1     else 0 end  as gamma_surname",
+                "m_probabilities": [
+                    0.1,
+                    0.2,
+                    0.7
+                ],
+                "u_probabilities": [
+                    0.7000000000000001,
+                    0.2,
+                    0.1
+                ]
+            },
+            {
+                "col_name": "dob",
+                "gamma_index": 2,
+                "num_levels": 2,
+                "data_type": "string",
+                "term_frequency_adjustments": false,
+                "case_expression": "case     when dob_l is null or dob_r is null then -1     when jaro_winkler_sim(dob_l, dob_r) > 0.94 then 1     else 0 end  as gamma_dob",
+                "m_probabilities": [
+                    0.1,
+                    0.9
+                ],
+                "u_probabilities": [
+                    0.9,
+                    0.1
+                ]
+            },
+            {
+                "col_name": "city",
+                "gamma_index": 3,
+                "num_levels": 2,
+                "data_type": "string",
+                "term_frequency_adjustments": false,
+                "case_expression": "case     when city_l is null or city_r is null then -1     when jaro_winkler_sim(city_l, city_r) > 0.94 then 1     else 0 end  as gamma_city",
+                "m_probabilities": [
+                    0.1,
+                    0.9
+                ],
+                "u_probabilities": [
+                    0.9,
+                    0.1
+                ]
+            },
+            {
+                "col_name": "email",
+                "gamma_index": 4,
+                "num_levels": 2,
+                "data_type": "string",
+                "term_frequency_adjustments": false,
+                "case_expression": "case     when email_l is null or email_r is null then -1     when jaro_winkler_sim(email_l, email_r) > 0.94 then 1     else 0 end  as gamma_email",
+                "m_probabilities": [
+                    0.1,
+                    0.9
+                ],
+                "u_probabilities": [
+                    0.9,
+                    0.1
+                ]
+            }
+        ],
+        "additional_columns_to_retain": [
+            "group"
+        ],
+        "em_convergence": 0.0001,
+        "unique_id_column_name": "unique_id",
+        "retain_matching_columns": true,
+        "retain_intermediate_calculation_columns": true,
+        "max_iterations": 25,
+        "proportion_of_matches": 0.3
+    }
+}
