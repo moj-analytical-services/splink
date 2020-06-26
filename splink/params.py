@@ -10,6 +10,7 @@ except ImportError:
 
 
 from .gammas import complete_settings_dict
+from .validate import _get_default_value
 from .chart_definitions import (
     lambda_iteration_chart_def,
     pi_iteration_chart_def,
@@ -587,3 +588,37 @@ def _flatten_dict(dictionary, accumulator=None, parent_key=None, separator="_"):
             continue
         accumulator[k] = v
     return accumulator
+
+
+def get_or_update_settings(params, settings=None):
+    if type(params).__name__ != "Params":
+        raise ValueError("params argument must be a Params object")
+    
+    if not settings:
+        settings = params.settings
+    
+    for comp in settings["comparison_columns"]:
+        if "col_name" in comp.keys():
+            label = "gamma_"+comp["col_name"]
+        else:
+            label = "gamma_"+comp["custom_name"]
+            
+        if "num_levels" in comp.keys():
+            num_levels = comp["num_levels"]
+        else:
+            num_levels = _get_default_value("num_levels", is_column_setting=True)
+        
+        
+        if label in params.params["π"].keys():
+            saved = params.params["π"][label]
+    
+            if num_levels == saved["num_levels"]:
+                m_probs = [val['probability'] for key, val in saved["prob_dist_match"].items()]
+                u_probs = [val['probability'] for key, val in saved["prob_dist_non_match"].items()]
+    
+                comp["m_probabilities"] = m_probs
+                comp["u_probabilities"] = u_probs
+            else:
+                print(f"{label}: Saved m and u probabilities do not match the specified number of levels ({num_levels}) - default probabilities will be used")
+    
+    return(settings)
