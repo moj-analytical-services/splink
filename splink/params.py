@@ -16,6 +16,7 @@ from .chart_definitions import (
     probability_distribution_chart,
     ll_iteration_chart_def,
     adjustment_weight_chart_def,
+    adjustment_history_chart_def,
     multi_chart_template,
 )
 import random
@@ -196,6 +197,44 @@ class Params:
 
                 data.append(row)
         return data
+    
+    def _convert_params_dict_to_normalised_adjustment_iteration_history(self):
+        """
+        Get the data needed for a chart that shows which comparison
+        vector values have the greatest effect on match probability
+        """
+        adj_data = []
+
+        pi = gk = self.params["π"]
+        gk = list(pi.keys())
+
+        for it_num, param_value in enumerate(self.param_history):
+            for g in gk:
+                pi = gk = self.param_history[it_num]["π"]
+                gk = list(pi.keys())
+                this_gamma = pi[g]
+                for l in range(this_gamma["num_levels"]):
+                    row = {}
+                    row["iteration"] = it_num
+                    level = f"level_{l}"
+                    row["level"] = level
+                    row["num_levels"] = this_gamma["num_levels"]
+                    row["col_name"] = this_gamma["column_name"]
+                    row["m"] = this_gamma["prob_dist_match"][level]["probability"]
+                    row["u"] = this_gamma["prob_dist_non_match"][level]["probability"]
+                    try:
+                        row["adjustment"] = row["m"] / (row["m"] + row["u"])
+                        row["normalised_adjustment"] = row["adjustment"] - 0.5
+                    except ZeroDivisionError: 
+                        row["adjustment"] = None
+                        row["normalised_adjustment"] = None
+                    if it_num == len(self.param_history)-1:
+                        row["final"]=True
+                    else:
+                        row["final"]=False
+
+                    adj_data.append(row)
+        return adj_data
 
     def _iteration_history_df_gammas(self):
         data = []
@@ -425,6 +464,47 @@ class Params:
             return alt.Chart.from_dict(adjustment_weight_chart_def)
         else:
             return adjustment_weight_chart_def
+        
+    def adjustment_factor_history_charts(self):
+        """
+        If altair is installed, returns the chart
+        Otherwise will return the chart spec as a dictionary
+        """
+        # Empty list of chart definitions
+        chart_defs = []
+    
+        # Full iteration history
+        data = self._convert_params_dict_to_normalised_adjustment_iteration_history()
+    
+        # Create charts for each column
+        for col_dict in self.settings["comparison_columns"]:
+        
+            # Get column name
+            if "col_name" in col_dict:
+                col_name = col_dict["col_name"]
+            elif "custom_name" in col_dict:
+                col_name = col_dict["custom_name"] 
+           
+            chart_def = copy.deepcopy(adjustment_history_chart_def)
+            # Assign iteration history to values of chart_def
+            chart_def["data"]["values"] = [d for d in data if d['col_name']==col_name]
+            chart_def["title"]["text"] = col_name
+            chart_defs.append(chart_def)
+        
+        combined_charts = {
+            "config": {
+                "view": {"width": 400, "height": 120},
+            },
+            "vconcat": chart_defs,
+            "resolve": {"scale":{"color": "independent"}},
+            '$schema': 'https://vega.github.io/schema/vega-lite/v4.8.1.json'
+        }
+        
+        if altair_installed:
+            return alt.Chart.from_dict(combined_charts)
+        else:
+            return combined_charts
+        
 
     def all_charts_write_html_file(self, filename="splink_charts.html", overwrite=False):
 
@@ -445,6 +525,8 @@ class Params:
             else:
                 c5 = ""
 
+            c6 = self.adjustment_factor_history_charts().to_json(indent=None)
+            
             with open(filename, "w") as f:
                 f.write(
                     multi_chart_template.format(
@@ -456,11 +538,12 @@ class Params:
                         spec3=c3,
                         spec4=c4,
                         spec5=c5,
+                        spec6=c6
                     )
                 )
         else:
             c1 = json.dumps(self.probability_distribution_chart())
-            c2 = json.dumps(self.adjustment_factor_chart())
+            c2 = json.dumps(self.adjustment_factor_charts())
             c3 = json.dumps(self.lambda_iteration_chart())
             c4 = json.dumps(self.pi_iteration_chart())
 
@@ -468,7 +551,9 @@ class Params:
                 c5 = json.dumps(self.ll_iteration_chart())
             else:
                 c5 = ""
-
+            
+            c6 = json.dumps(self.adjustment_factor_history_charts())
+            
             with open(filename, "w") as f:
                 f.write(
                     multi_chart_template.format(
@@ -480,6 +565,7 @@ class Params:
                         spec3=c3,
                         spec4=c4,
                         spec5=c5,
+                        spec6=c6,
                     )
                 )
 

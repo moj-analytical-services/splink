@@ -260,7 +260,8 @@ multi_chart_template = """
 <div id="vis3"></div><div id="vis5"></div>
 <br/>
 <div id="vis4"></div>
-
+<br/>
+<div id="vis6"></div>
 
 
 
@@ -270,8 +271,136 @@ multi_chart_template = """
   vegaEmbed('#vis3', {spec3}).catch(console.error);
   vegaEmbed('#vis4', {spec4}).catch(console.error);
   vegaEmbed('#vis5', {spec5}).catch(console.error);
+  vegaEmbed('#vis6', {spec6}).catch(console.error);
 </script>
 </body>
 </html>
 """  # pragma: no cover
 
+adjustment_history_chart_def = {
+    'hconcat': [{
+        'mark': 'bar',
+         'encoding': {
+             'color': {
+                 'type': 'nominal',
+                 'field': 'level',
+                 'legend': {},
+                 'scale': {
+                     'scheme': 'redyellowgreen'}
+             },
+             'tooltip': [
+                 {'type': 'nominal', 'field': 'col_name'},
+                 {'type': 'nominal', 'field': 'level'},
+                 {'type': 'quantitative', 'field': 'm'},
+                 {'type': 'quantitative', 'field': 'u'},
+                 {'type': 'quantitative', 'field': 'normalised_adjustment'}],
+             'x': {
+                 'type': 'ordinal', 
+                 'field': 'level'
+             },
+             'y': {
+                 'type': 'quantitative',
+                 'axis': {'title': 'Influence on match probability'},
+                 'field': 'normalised_adjustment',
+                 'scale': {'domain': [-0.5, 0.5]}
+             }
+         },
+        'width': 100,
+        'selection': {
+            'selector190': {'type': 'single', 'on': 'mouseover', 'fields': ['level', 'col_name']}
+        },
+        'transform': [
+            {'calculate': 'datum.iteration + 0.8/datum.num_levels*(parseInt(substring(datum.level, 6))-(datum.num_levels-1)/2)', 
+             'as': 'iteration_jitter'},
+            {'filter': 'datum.final === true'}
+        ]
+    },
+        {
+            'layer': [{
+                'mark': 'bar',
+                'encoding': {
+                    'color': {
+                        'type': 'nominal',
+                        'field': 'level',
+                        'legend': {},
+                        'scale': {'scheme': 'redyellowgreen'}
+                    },
+                    'opacity': {
+                        'condition': {
+                            'value': 0.5,
+                            'selection': {'not': 'selector190'}
+                        },
+                        'value': 1 
+                    },
+                    'size': {
+                        'condition': {
+                            'value': 4, 
+                            'selection': {'not': 'selector190'}
+                        },
+                        'value': 6
+                    },
+                    'tooltip': [
+                        {'type': 'nominal', 'field': 'col_name'},
+                        {'type': 'quantitative', 'field': 'iteration'},
+                        {'type': 'nominal', 'field': 'level'},
+                        {'type': 'quantitative', 'field': 'm'},
+                        {'type': 'quantitative', 'field': 'u'},
+                        {'type': 'quantitative', 'field': 'normalised_adjustment'}
+                    ],
+                    'x': {
+                        'type': 'quantitative',     
+                        'axis': {'title': 'Iteration'},
+                        'field': 'iteration_jitter'
+                    },
+                    'y': {
+                        'type': 'quantitative',
+                        'axis': {'title': 'Influence on match probability'},
+                        'field': 'normalised_adjustment',
+                        'scale': {'domain': [-0.5, 0.5]}
+                    }
+                },
+                'transform': [
+                    {'calculate': 'datum.iteration + 0.8/datum.num_levels*(parseInt(substring(datum.level, 6))-(datum.num_levels-1)/2)',
+                     'as': 'iteration_jitter'}
+                ]
+            },
+                {
+                    'mark': 'line',
+                    'encoding': {
+                        'color': {'value': '#000000'},
+                        'detail': {'type': 'nominal', 'field': 'level'},
+                        'opacity': {
+                            'condition': {
+                                'value': 0,'selection': {'not': 'selector190'}
+                            },
+                            'value': 1
+                        },
+                        'tooltip': [
+                            {'type': 'nominal', 'field': 'col_name'},
+                            {'type': 'nominal', 'field': 'level'},
+                            {'type': 'quantitative', 'field': 'm'},
+                            {'type': 'quantitative', 'field': 'u'},
+                            {'type': 'quantitative', 'field': 'normalised_adjustment'}  
+                        ],
+                        'x': {
+                            'type': 'quantitative', 
+                            'field': 'iteration_jitter'  
+                        },
+                        'y': {
+                            'type': 'quantitative',
+                            'axis': {'title': 'Influence on match probability'},
+                            'field': 'normalised_adjustment', 
+                            'scale': {'domain': [-0.5, 0.5]}
+                        }
+                    },
+                    'transform': [
+                        {'calculate': 'datum.iteration + 0.8/datum.num_levels*(parseInt(substring(datum.level, 6))-(datum.num_levels-1)/2)',
+                         'as': 'iteration_jitter'}
+                    ]
+                }
+            ]
+        }
+    ],
+    'title': {'text': None, 'orient': 'top', 'dx': 200},
+    'data': {'values': None}
+}
