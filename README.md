@@ -7,8 +7,6 @@
 
 # splink: Probabilistic record linkage and deduplication at scale
 
-WARNING:  Splink is is currently in beta testing.  Please feel free to try it, but note this software is not fully tested, and the interface is likely to continue to change.
-
 `splink` implements Fellegi-Sunter's canonical model of record linkage in Apache Spark, including EM algorithm to estimate parameters of the model.
 
 The aims of `splink` are to:
@@ -45,9 +43,11 @@ The statistical model behind `splink` is the same as that used in the R [fastLin
 
 You can read a short blog post about `splink` [here](https://robinlinacre.com/introducing_splink).
 
-## Video intro
+## Videos
 
 You can find a short video introducing `splink` and running though an introductory demo [here](https://www.youtube.com/watch?v=_8lV2Lbd6Xs&feature=youtu.be&t=1295).
+
+A 'best practices and performance tuning' tutorial can be found [here](https://www.youtube.com/watch?v=HzcqrRvXhCE).
 
 ## Acknowledgements
 
