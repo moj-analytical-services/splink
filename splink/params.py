@@ -21,6 +21,7 @@ from .chart_definitions import (
 )
 from .check_types import check_types
 import random
+import warnings
 
 altair_installed = True
 try:
@@ -621,6 +622,6 @@ def get_or_update_settings(params: Params, settings: dict = None):
                 comp["m_probabilities"] = m_probs
                 comp["u_probabilities"] = u_probs
             else:
-                print(f"{label}: Saved m and u probabilities do not match the specified number of levels ({num_levels}) - default probabilities will be used")
+                warnings.warn(f"{label}: Saved m and u probabilities do not match the specified number of levels ({num_levels}) - default probabilities will be used")
     
     return(settings)
