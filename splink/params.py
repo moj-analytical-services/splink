@@ -335,6 +335,9 @@ class Params:
         logger.info(f"The maximum change in parameters was {biggest_change} for key {biggest_change_key}")
 
         return(all(diff))
+    
+    def get_settings_with_current_params(self):
+        return get_or_update_settings(self)
 
     ### The rest of this module is just 'presentational' elements - charts, and __repr__ etc.
 
