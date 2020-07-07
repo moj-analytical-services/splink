@@ -1,4 +1,4 @@
-from splink.params import Params
+from splink.params import Params, get_or_update_settings
 import pytest
 
 # Light testing at the moment.  Focus on aspects that could break main algo
@@ -56,3 +56,50 @@ def test_update(param_example):
     assert new_params["π"]["gamma_fname"]["prob_dist_match"]["level_0"]["probability"] == 0.2
     assert new_params["π"]["gamma_fname"]["prob_dist_non_match"]["level_0"]["probability"] == 0.8
 
+def test_update_settings():
+    
+    old_settings = {
+        "link_type": "dedupe_only",
+        "proportion_of_matches": 0.2,
+        "comparison_columns": [
+            {"col_name": "fname"},
+            {"col_name": "sname",
+             "num_levels": 3}
+        ],
+        "blocking_rules": []
+    }
+
+    params = Params(old_settings, spark="supress_warnings")
+    
+    new_settings = {
+        "link_type": "dedupe_only",
+        "blocking_rules": [],
+        "comparison_columns": [
+            {
+                "col_name": "fname",
+                "num_levels": 3,
+                "m_probabilities": [0.02,0.03,0.95],
+                "u_probabilities": [0.92,0.05,0.03]
+            },
+            {
+                "custom_name": "sname",
+                "custom_columns_used": ["fname", "sname"],
+                "num_levels": 3,
+                "case_expression": """
+                    case when concat(fname_l, sname_l) = concat(fname_r, sname_r) then 1
+                    else 0 end
+                """,
+                "m_probabilities": [0.01,0.02,0.97],
+                "u_probabilities": [0.9,0.05,0.05]
+            },
+            {"col_name": "dob"}
+        ]
+    }
+    
+    update = get_or_update_settings(params, new_settings)
+    
+    # new settings used due to num_levels mismatch
+    assert update["comparison_columns"][0]["m_probabilities"] == new_settings["comparison_columns"][0]["m_probabilities"]
+    # new settings updated with old settings 
+    assert update["comparison_columns"][1]["u_probabilities"] == pytest.approx(params.settings["comparison_columns"][1]["u_probabilities"])
+    

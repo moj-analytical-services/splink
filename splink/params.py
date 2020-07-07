@@ -10,6 +10,7 @@ except ImportError:
 
 
 from .gammas import complete_settings_dict
+from .validate import _get_default_value
 from .chart_definitions import (
     lambda_iteration_chart_def,
     pi_iteration_chart_def,
@@ -18,7 +19,9 @@ from .chart_definitions import (
     adjustment_weight_chart_def,
     multi_chart_template,
 )
+from .check_types import check_types
 import random
+import warnings
 
 altair_installed = True
 try:
@@ -334,6 +337,9 @@ class Params:
         logger.info(f"The maximum change in parameters was {biggest_change} for key {biggest_change_key}")
 
         return(all(diff))
+    
+    def get_settings_with_current_params(self):
+        return get_or_update_settings(self)
 
     ### The rest of this module is just 'presentational' elements - charts, and __repr__ etc.
 
@@ -587,3 +593,35 @@ def _flatten_dict(dictionary, accumulator=None, parent_key=None, separator="_"):
             continue
         accumulator[k] = v
     return accumulator
+
+@check_types
+def get_or_update_settings(params: Params, settings: dict = None):
+    
+    if not settings:
+        settings = params.settings
+    
+    for comp in settings["comparison_columns"]:
+        if "col_name" in comp.keys():
+            label = "gamma_"+comp["col_name"]
+        else:
+            label = "gamma_"+comp["custom_name"]
+            
+        if "num_levels" in comp.keys():
+            num_levels = comp["num_levels"]
+        else:
+            num_levels = _get_default_value("num_levels", is_column_setting=True)
+        
+        
+        if label in params.params["π"].keys():
+            saved = params.params["π"][label]
+    
+            if num_levels == saved["num_levels"]:
+                m_probs = [val['probability'] for key, val in saved["prob_dist_match"].items()]
+                u_probs = [val['probability'] for key, val in saved["prob_dist_non_match"].items()]
+    
+                comp["m_probabilities"] = m_probs
+                comp["u_probabilities"] = u_probs
+            else:
+                warnings.warn(f"{label}: Saved m and u probabilities do not match the specified number of levels ({num_levels}) - default probabilities will be used")
+    
+    return(settings)
