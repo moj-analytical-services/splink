@@ -19,6 +19,7 @@ from .chart_definitions import (
     adjustment_weight_chart_def,
     multi_chart_template,
 )
+from .check_types import check_types
 import random
 
 altair_installed = True
@@ -592,10 +593,8 @@ def _flatten_dict(dictionary, accumulator=None, parent_key=None, separator="_"):
         accumulator[k] = v
     return accumulator
 
-
-def get_or_update_settings(params, settings=None):
-    if type(params).__name__ != "Params":
-        raise ValueError("params argument must be a Params object")
+@check_types
+def get_or_update_settings(params: Params, settings: dict = None):
     
     if not settings:
         settings = params.settings
