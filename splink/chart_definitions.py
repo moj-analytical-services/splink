@@ -282,7 +282,7 @@ adjustment_history_chart_def = {
         'mark': 'bar',
          'encoding': {
              'color': {
-                 'type': 'nominal',
+                 'type': 'ordinal',
                  'field': 'level',
                  'legend': {},
                  'scale': {
@@ -290,7 +290,7 @@ adjustment_history_chart_def = {
              },
              'tooltip': [
                  {'type': 'nominal', 'field': 'col_name'},
-                 {'type': 'nominal', 'field': 'level'},
+                 {'type': 'ordinal', 'field': 'level'},
                  {'type': 'quantitative', 'field': 'm'},
                  {'type': 'quantitative', 'field': 'u'},
                  {'type': 'quantitative', 'field': 'normalised_adjustment'}],
@@ -305,19 +305,17 @@ adjustment_history_chart_def = {
                  'scale': {'domain': [-0.5, 0.5]}
              }
          },
+        "transform": [
+            {"filter": "(datum.final === true)"}
+        ],
         'width': 100,
         'selection': {
             'selector190': {'type': 'single', 'on': 'mouseover', 'fields': ['level', 'col_name']}
-        },
-        'transform': [
-            {'calculate': 'datum.iteration + 0.8/datum.num_levels*(parseInt(substring(datum.level, 6))-(datum.num_levels-1)/2)', 
-             'as': 'iteration_jitter'},
-            {'filter': 'datum.final === true'}
-        ]
+        }
     },
         {
             'layer': [{
-                'mark': 'bar',
+                'mark': 'line',
                 'encoding': {
                     'color': {
                         'type': 'nominal',
@@ -334,23 +332,23 @@ adjustment_history_chart_def = {
                     },
                     'size': {
                         'condition': {
-                            'value': 4, 
+                            'value': 3, 
                             'selection': {'not': 'selector190'}
                         },
-                        'value': 6
+                        'value': 5
                     },
                     'tooltip': [
                         {'type': 'nominal', 'field': 'col_name'},
                         {'type': 'quantitative', 'field': 'iteration'},
-                        {'type': 'nominal', 'field': 'level'},
+                        {'type': 'ordinal', 'field': 'level'},
                         {'type': 'quantitative', 'field': 'm'},
                         {'type': 'quantitative', 'field': 'u'},
                         {'type': 'quantitative', 'field': 'normalised_adjustment'}
                     ],
                     'x': {
-                        'type': 'quantitative',     
+                        'type': 'ordinal',     
                         'axis': {'title': 'Iteration'},
-                        'field': 'iteration_jitter'
+                        'field': 'iteration'
                     },
                     'y': {
                         'type': 'quantitative',
@@ -358,46 +356,8 @@ adjustment_history_chart_def = {
                         'field': 'normalised_adjustment',
                         'scale': {'domain': [-0.5, 0.5]}
                     }
-                },
-                'transform': [
-                    {'calculate': 'datum.iteration + 0.8/datum.num_levels*(parseInt(substring(datum.level, 6))-(datum.num_levels-1)/2)',
-                     'as': 'iteration_jitter'}
-                ]
-            },
-                {
-                    'mark': 'line',
-                    'encoding': {
-                        'color': {'value': '#000000'},
-                        'detail': {'type': 'nominal', 'field': 'level'},
-                        'opacity': {
-                            'condition': {
-                                'value': 0,'selection': {'not': 'selector190'}
-                            },
-                            'value': 1
-                        },
-                        'tooltip': [
-                            {'type': 'nominal', 'field': 'col_name'},
-                            {'type': 'nominal', 'field': 'level'},
-                            {'type': 'quantitative', 'field': 'm'},
-                            {'type': 'quantitative', 'field': 'u'},
-                            {'type': 'quantitative', 'field': 'normalised_adjustment'}  
-                        ],
-                        'x': {
-                            'type': 'quantitative', 
-                            'field': 'iteration_jitter'  
-                        },
-                        'y': {
-                            'type': 'quantitative',
-                            'axis': {'title': 'Influence on match probability'},
-                            'field': 'normalised_adjustment', 
-                            'scale': {'domain': [-0.5, 0.5]}
-                        }
-                    },
-                    'transform': [
-                        {'calculate': 'datum.iteration + 0.8/datum.num_levels*(parseInt(substring(datum.level, 6))-(datum.num_levels-1)/2)',
-                         'as': 'iteration_jitter'}
-                    ]
                 }
+            }
             ]
         }
     ],
