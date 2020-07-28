@@ -28,7 +28,7 @@ pi_iteration_chart_def = {
                     "field": "probability",
                 },
             },
-            "height": 100,
+            "height": 150,
             "resolve": {"scale": {"y": "independent"}},
             "title": "Non Match",
             "transform": [{"filter": "(datum.match === 0)"}],
@@ -56,7 +56,7 @@ pi_iteration_chart_def = {
                     "field": "probability",
                 },
             },
-            "height": 100,
+            "height": 150,
             "resolve": {"scale": {"y": "independent"}},
             "title": "Match",
             "transform": [{"filter": "(datum.match === 1)"}],
@@ -126,7 +126,11 @@ probability_distribution_chart = {
         {
             "mark": "bar",
             "encoding": {
-                "color": {"type": "nominal", "field": "match"},
+                "color": {
+                    "type": "nominal",
+                    "field": "match",
+                    "scale": {"domain": [0, 1], "range": ["red", "green"]}
+                },
                 "row": {
                     "type": "nominal",
                     "field": "column",
@@ -152,7 +156,11 @@ probability_distribution_chart = {
         {
             "mark": "bar",
             "encoding": {
-                "color": {"type": "nominal", "field": "match"},
+                "color": {
+                    "type": "nominal",
+                    "field": "match",
+                    "scale": {"domain": [0, 1], "range": ["red", "green"]}
+                },
                 "row": {
                     "type": "nominal",
                     "field": "column",
@@ -181,6 +189,39 @@ probability_distribution_chart = {
     "$schema": "https://vega.github.io/schema/vega-lite/v3.4.0.json",
 }
 
+gamma_distribution_chart_def = {
+    "config": {
+        "view": {"width": 400, "height": 300},  # pragma: no cover
+        "mark": {"tooltip": None},
+        "title": {"anchor": "middle"},
+    },
+            "mark": "bar",
+            "encoding": {
+                "row": {
+                    "type": "nominal",
+                    "field": "column",
+                    "sort": {"field": "column"},
+                },
+                "tooltip": [
+                    {"type": "nominal", "field": "column"},
+                    {"type": "quantitative", "field": "level_proportion", "format": ".4f"},
+                    {"type": "ordinal", "field": "level"},
+                ],
+                "x": {"type": "quantitative", "field": "level_proportion"},
+                "y": {
+                    "type": "nominal",
+                    "axis": {"title": "𝛾 value"},
+                    "field": "level",
+                },
+            },
+            "resolve": {"scale": {"y": "independent"}},
+            "width": 150,
+            "height": 50,
+    "data": {"values": None},
+    "title": "Distribution of (non-null) 𝛾 values",
+    "$schema": "https://vega.github.io/schema/vega-lite/v3.4.0.json",
+}
+
 adjustment_weight_chart_def = {
     "config": {
         "view": {"width": 400, "height": 300},
@@ -198,9 +239,9 @@ adjustment_weight_chart_def = {
                 "range": ["red", "orange", "green", "orange", "red"],
             },
         },
-        "row": {"type": "nominal", "field": "col_name", "sort": {"field": "gamma"}},
+        "row": {"type": "nominal", "field": "column", "sort": {"field": "column"}},
         "tooltip": [
-            {"type": "nominal", "field": "col_name"},
+            {"type": "nominal", "field": "column"},
             {"type": "quantitative", "field": "normalised_adjustment"},
         ],
         "x": {
@@ -239,7 +280,7 @@ adjustment_factor_chart_def = {
             "field": "normalised",
             "scale": {"domain": [-0.5, 0.5]},
         },
-        "y": {"type": "nominal", "field": "col_name", "sort": {"field": "gamma"}},
+        "y": {"type": "nominal", "field": "column", "sort": {"field": "gamma"}},
     },
     "$schema": "https://vega.github.io/schema/vega-lite/v3.4.0.json",
 }
@@ -255,13 +296,13 @@ multi_chart_template = """
 </head>
 <body>
 
-<div id="vis1"></div><div id="vis2"></div>
+<div id="vis1"></div><div id="vis2"></div><div id="vis3"></div>
 <br/>
-<div id="vis3"></div><div id="vis5"></div>
-<br/>
-<div id="vis4"></div>
+<div id="vis4"></div><div id="vis5"></div>
 <br/>
 <div id="vis6"></div>
+<br/>
+<div id="vis7"></div>
 
 
 
@@ -272,6 +313,7 @@ multi_chart_template = """
   vegaEmbed('#vis4', {spec4}).catch(console.error);
   vegaEmbed('#vis5', {spec5}).catch(console.error);
   vegaEmbed('#vis6', {spec6}).catch(console.error);
+  vegaEmbed('#vis7', {spec7}).catch(console.error);
 </script>
 </body>
 </html>
@@ -289,7 +331,7 @@ adjustment_history_chart_def = {
                      'scheme': 'redyellowgreen'}
              },
              'tooltip': [
-                 {'type': 'nominal', 'field': 'col_name'},
+                 {'type': 'nominal', 'field': 'column'},
                  {'type': 'ordinal', 'field': 'level'},
                  {'type': 'quantitative', 'field': 'm'},
                  {'type': 'quantitative', 'field': 'u'},
@@ -309,13 +351,15 @@ adjustment_history_chart_def = {
             {"filter": "(datum.final === true)"}
         ],
         'width': 100,
+        'height': 150,
         'selection': {
-            'selector190': {'type': 'single', 'on': 'mouseover', 'fields': ['level', 'col_name']}
+            'selector190': {'type': 'single', 'on': 'mouseover', 'fields': ['level', 'column']}
         }
     },
         {
             'layer': [{
                 'mark': 'line',
+                'height': 150,
                 'encoding': {
                     'color': {
                         'type': 'nominal',
@@ -338,7 +382,7 @@ adjustment_history_chart_def = {
                         'value': 5
                     },
                     'tooltip': [
-                        {'type': 'nominal', 'field': 'col_name'},
+                        {'type': 'nominal', 'field': 'column'},
                         {'type': 'quantitative', 'field': 'iteration'},
                         {'type': 'ordinal', 'field': 'level'},
                         {'type': 'quantitative', 'field': 'm'},

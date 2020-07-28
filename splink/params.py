@@ -14,6 +14,7 @@ from .chart_definitions import (
     lambda_iteration_chart_def,
     pi_iteration_chart_def,
     probability_distribution_chart,
+    gamma_distribution_chart_def,
     ll_iteration_chart_def,
     adjustment_weight_chart_def,
     adjustment_history_chart_def,
@@ -176,6 +177,7 @@ class Params:
         """
         data = []
         # Want to compare the u and m probabilities
+        lam = self.params['λ']
         pi = gk = self.params["π"]
         gk = list(pi.keys())
 
@@ -184,10 +186,11 @@ class Params:
             for l in range(this_gamma["num_levels"]):
                 row = {}
                 level = f"level_{l}"
-                row["level"] = level
-                row["col_name"] = this_gamma["column_name"]
+                row["level"] = l
+                row["column"] = this_gamma["column_name"]
                 row["m"] = this_gamma["prob_dist_match"][level]["probability"]
                 row["u"] = this_gamma["prob_dist_non_match"][level]["probability"]
+                row["level_proportion"] = row["m"]*lam + row["u"]*(1-lam)
                 try:
                     row["adjustment"] = row["m"] / (row["m"] + row["u"])
                     row["normalised_adjustment"] = row["adjustment"] - 0.5
@@ -217,9 +220,9 @@ class Params:
                     row = {}
                     row["iteration"] = it_num
                     level = f"level_{l}"
-                    row["level"] = level
+                    row["level"] = l
                     row["num_levels"] = this_gamma["num_levels"]
-                    row["col_name"] = this_gamma["column_name"]
+                    row["column"] = this_gamma["column_name"]
                     row["m"] = this_gamma["prob_dist_match"][level]["probability"]
                     row["u"] = this_gamma["prob_dist_non_match"][level]["probability"]
                     try:
@@ -450,6 +453,20 @@ class Params:
             return alt.Chart.from_dict(probability_distribution_chart)
         else:
             return probability_distribution_chart
+        
+    def gamma_distribution_chart(self):  # pragma: no cover
+        """
+        If altair is installed, returns the chart
+        Otherwise will return the chart spec as a dictionary
+        """
+        data = self._convert_params_dict_to_normalised_adjustment_data()
+
+        gamma_distribution_chart_def["data"]["values"] = data
+
+        if altair_installed:
+            return alt.Chart.from_dict(gamma_distribution_chart_def)
+        else:
+            return gamma_distribution_chart_def
 
     def adjustment_factor_chart(self):  # pragma: no cover
         """
@@ -487,7 +504,7 @@ class Params:
            
             chart_def = copy.deepcopy(adjustment_history_chart_def)
             # Assign iteration history to values of chart_def
-            chart_def["data"]["values"] = [d for d in data if d['col_name']==col_name]
+            chart_def["data"]["values"] = [d for d in data if d['column']==col_name]
             chart_def["title"]["text"] = col_name
             chart_defs.append(chart_def)
         
@@ -526,6 +543,7 @@ class Params:
                 c5 = ""
 
             c6 = self.adjustment_factor_history_charts().to_json(indent=None)
+            c7 = self.gamma_distribution_chart().to_json(indent=None)
             
             with open(filename, "w") as f:
                 f.write(
@@ -534,11 +552,12 @@ class Params:
                         vegalite_version=alt.VEGALITE_VERSION,
                         vegaembed_version=alt.VEGAEMBED_VERSION,
                         spec1=c1,
-                        spec2=c2,
-                        spec3=c3,
-                        spec4=c4,
+                        spec2=c7,
+                        spec3=c2,
+                        spec4=c3,
                         spec5=c5,
-                        spec6=c6
+                        spec6=c4,
+                        spec7=c6
                     )
                 )
         else:
@@ -553,6 +572,7 @@ class Params:
                 c5 = ""
             
             c6 = json.dumps(self.adjustment_factor_history_charts())
+            c7 = json.dumps(self.gamma_distribution_chart())
             
             with open(filename, "w") as f:
                 f.write(
@@ -561,11 +581,12 @@ class Params:
                         vegalite_version="3.3.0",
                         vegaembed_version="4",
                         spec1=c1,
-                        spec2=c2,
-                        spec3=c3,
-                        spec4=c4,
+                        spec2=c7,
+                        spec3=c2,
+                        spec4=c3,
                         spec5=c5,
-                        spec6=c6,
+                        spec6=c4,
+                        spec7=c6
                     )
                 )
 
