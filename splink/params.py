@@ -178,7 +178,7 @@ class Params:
         data = []
         # Want to compare the u and m probabilities
         lam = self.params['λ']
-        pi = gk = self.params["π"]
+        pi = self.params["π"]
         gk = list(pi.keys())
 
         for g in gk:
@@ -208,12 +208,12 @@ class Params:
         """
         adj_data = []
 
-        pi = gk = self.params["π"]
+        pi = self.params["π"]
         gk = list(pi.keys())
 
         for it_num, param_value in enumerate(self.param_history):
             for g in gk:
-                pi = gk = self.param_history[it_num]["π"]
+                pi = self.param_history[it_num]["π"]
                 gk = list(pi.keys())
                 this_gamma = pi[g]
                 for l in range(this_gamma["num_levels"]):
