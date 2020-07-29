@@ -512,6 +512,7 @@ class Params:
             "config": {
                 "view": {"width": 400, "height": 120},
             },
+            "title": {"text":"Influence factors iteration history", "anchor": "middle"},
             "vconcat": chart_defs,
             "resolve": {"scale":{"color": "independent"}},
             '$schema': 'https://vega.github.io/schema/vega-lite/v4.8.1.json'

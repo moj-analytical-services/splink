@@ -369,7 +369,7 @@ adjustment_history_chart_def = {
                     },
                     'opacity': {
                         'condition': {
-                            'value': 0.5,
+                            'value': 0.8,
                             'selection': {'not': 'selector190'}
                         },
                         'value': 1 
