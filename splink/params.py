@@ -178,7 +178,7 @@ class Params:
         data = []
         # Want to compare the u and m probabilities
         lam = self.params['λ']
-        pi = self.params["π"]
+        pi = gk = self.params["π"]
         gk = list(pi.keys())
 
         for g in gk:
@@ -208,12 +208,12 @@ class Params:
         """
         adj_data = []
 
-        pi = self.params["π"]
+        pi = gk = self.params["π"]
         gk = list(pi.keys())
 
         for it_num, param_value in enumerate(self.param_history):
             for g in gk:
-                pi = self.param_history[it_num]["π"]
+                pi = gk = self.param_history[it_num]["π"]
                 gk = list(pi.keys())
                 this_gamma = pi[g]
                 for l in range(this_gamma["num_levels"]):
@@ -506,6 +506,7 @@ class Params:
             # Assign iteration history to values of chart_def
             chart_def["data"]["values"] = [d for d in data if d['column']==col_name]
             chart_def["title"]["text"] = col_name
+            chart_def["hconcat"][1]["layer"][0]["encoding"]["color"]["legend"]["tickCount"] = col_dict["num_levels"]-1
             chart_defs.append(chart_def)
         
         combined_charts = {

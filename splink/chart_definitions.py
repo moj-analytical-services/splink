@@ -324,11 +324,10 @@ adjustment_history_chart_def = {
         'mark': 'bar',
          'encoding': {
              'color': {
-                 'type': 'ordinal',
+                 'type': 'quantitative',
                  'field': 'level',
                  'legend': {},
-                 'scale': {
-                     'scheme': 'redyellowgreen'}
+                 'scale': {'range': ['red', 'orange', 'green']}
              },
              'tooltip': [
                  {'type': 'nominal', 'field': 'column'},
@@ -362,10 +361,10 @@ adjustment_history_chart_def = {
                 'height': 150,
                 'encoding': {
                     'color': {
-                        'type': 'nominal',
+                        'type': 'quantitative',
                         'field': 'level',
-                        'legend': {},
-                        'scale': {'scheme': 'redyellowgreen'}
+                        'legend': {'type': 'symbol', 'tickCount':2},
+                        'scale': {'range': ['red', 'orange', 'green']}
                     },
                     'opacity': {
                         'condition': {
