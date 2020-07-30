@@ -570,7 +570,7 @@ class Params:
                 )
         else:
             c1 = json.dumps(self.probability_distribution_chart())
-            c2 = json.dumps(self.adjustment_factor_charts())
+            c2 = json.dumps(self.adjustment_factor_chart())
             c3 = json.dumps(self.lambda_iteration_chart())
             c4 = json.dumps(self.pi_iteration_chart())
 
