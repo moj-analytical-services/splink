@@ -709,6 +709,8 @@ def get_or_update_settings(params: Params, settings: dict = None):
     if not settings:
         settings = params.settings
     
+    settings["proportion_of_matches"] = params.params['λ']                     
+                         
     for comp in settings["comparison_columns"]:
         if "col_name" in comp.keys():
             label = "gamma_"+comp["col_name"]
