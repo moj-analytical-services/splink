@@ -222,68 +222,49 @@ gamma_distribution_chart_def = {
     "$schema": "https://vega.github.io/schema/vega-lite/v3.4.0.json",
 }
 
-adjustment_weight_chart_def = {
+bayes_factor_chart_def = {
     "config": {
         "view": {"width": 400, "height": 300},
         "mark": {"tooltip": None},
         "title": {"anchor": "middle"},
     },
     "data": {"values": None},
-    "mark": "bar",
+    "mark": {"type": "bar", "clip": True},
     "encoding": {
         "color": {
             "type": "quantitative",
-            "field": "normalised_adjustment",
+            "field": "logk",
+            "title": "log2(K)",
             "scale": {
-                "domain": [-0.5, -0.4, 0, 0.4, 0.5],
-                "range": ["red", "orange", "green", "orange", "red"],
+                "scheme": "redyellowgreen"
+                #"domain": [-10, -7, 0, 7, 10],
+                #"range": ["red", "orange", "green", "orange", "red"],
             },
         },
         "row": {"type": "nominal", "field": "column", "sort": {"field": "column"}},
         "tooltip": [
             {"type": "nominal", "field": "column"},
-            {"type": "quantitative", "field": "normalised_adjustment"},
+            {"type": "quantitative", "field": "bayes_factor", "title": "Bayes factor, K"},
+            {"type": "quantitative", "field": "logk", "title": "log2(K)"}
         ],
         "x": {
             "type": "quantitative",
-            "axis": {"title": "Influence on match probabiity."},
-            "field": "normalised_adjustment",
-            "scale": {"domain": [-0.5, 0.5]},
+            "axis": {"title": "log2(Bayes factor, K = m/u)", 
+                     "values": [-10,-5,0,5,10]},
+            "field": "logk",
+            "scale": {"domain": [-10, 10]},
         },
         "y": {"type": "nominal", "field": "level"},
     },
+    "transform": [
+        {"calculate": "(log(datum.bayes_factor) / log(2))", "as": "logk"}
+    ],
     "height": 50,
     "resolve": {"scale": {"y": "independent"}},
     "title": "Influence of comparison vector values on match probability",
     "$schema": "https://vega.github.io/schema/vega-lite/v3.4.0.json",
 }
 
-adjustment_factor_chart_def = {
-    "config": {"view": {"width": 400, "height": 300}, "mark": {"tooltip": None}},
-    "data": {"values": None},
-    "mark": "bar",
-    "encoding": {
-        "color": {
-            "type": "quantitative",
-            "field": "normalised",
-            "scale": {
-                "domain": [-0.5, -0.4, 0, 0.4, 0.5],
-                "range": ["red", "orange", "green", "orange", "red"],
-            },
-        },
-        "tooltip": [
-            {"type": "nominal", "field": "field"},
-            {"type": "quantitative", "field": "normalised"},
-        ],
-        "x": {
-            "type": "quantitative",
-            "field": "normalised",
-            "scale": {"domain": [-0.5, 0.5]},
-        },
-        "y": {"type": "nominal", "field": "column", "sort": {"field": "gamma"}},
-    },
-    "$schema": "https://vega.github.io/schema/vega-lite/v3.4.0.json",
-}
 
 
 multi_chart_template = """
@@ -319,91 +300,98 @@ multi_chart_template = """
 </html>
 """  # pragma: no cover
 
-adjustment_history_chart_def = {
-    'hconcat': [{
-        'mark': 'bar',
-         'encoding': {
-             'color': {
-                 'type': 'quantitative',
-                 'field': 'level',
-                 'legend': {},
-                 'scale': {'range': ['red', 'orange', 'green']}
-             },
-             'tooltip': [
-                 {'type': 'nominal', 'field': 'column'},
-                 {'type': 'ordinal', 'field': 'level'},
-                 {'type': 'quantitative', 'field': 'm'},
-                 {'type': 'quantitative', 'field': 'u'},
-                 {'type': 'quantitative', 'field': 'normalised_adjustment'}],
-             'x': {
-                 'type': 'ordinal', 
-                 'field': 'level'
-             },
-             'y': {
-                 'type': 'quantitative',
-                 'axis': {'title': 'Influence on match probability'},
-                 'field': 'normalised_adjustment',
-                 'scale': {'domain': [-0.5, 0.5]}
-             }
-         },
+bayes_factor_history_chart_def = {
+    "hconcat": [{
+        "mark": "bar",
+        "encoding": {
+            "color": {
+                "type": "quantitative",
+                "field": "level",
+                "scale": {"range": ["red", "orange", "green"]}
+            },
+            "tooltip": [
+                {"type": "nominal", "field": "column"},
+                {"type": "ordinal", "field": "level"},
+                {"type": "quantitative", "field": "m"},
+                {"type": "quantitative", "field": "u"},
+                {"type": "quantitative", "field": "bayes_factor", "title": "Bayes factor, K"},
+                {"type": "quantitative", "field": "logk", "title": "log2(K)"}
+            ],
+            "x": {"type": "ordinal", "field": "level"},
+            "y": {
+                "type": "quantitative",
+                "axis": {
+                    "title": "log2(Bayes factor, K = m/u)",
+                    "values": [-10,-5,-2,-1,0,1,2,5,10]
+                },
+                "field": "logk",
+                #"scale": {"domain": [-10, 10]},
+            }
+        },
+        "height": 150,
+        "selection": {
+            "selector190": {
+                "type": "single",
+                "on": "mouseover",
+                "fields": ["level", "column"]
+            }
+        },
         "transform": [
+            {"calculate": "(log(datum.bayes_factor) / log(2))", "as": "logk"},
             {"filter": "(datum.final === true)"}
         ],
-        'width': 100,
-        'height': 150,
-        'selection': {
-            'selector190': {'type': 'single', 'on': 'mouseover', 'fields': ['level', 'column']}
-        }
+        "width": 100
     },
         {
-            'layer': [{
-                'mark': 'line',
-                'height': 150,
-                'encoding': {
-                    'color': {
-                        'type': 'quantitative',
-                        'field': 'level',
-                        'legend': {'type': 'symbol', 'tickCount':2},
-                        'scale': {'range': ['red', 'orange', 'green']}
-                    },
-                    'opacity': {
-                        'condition': {
-                            'value': 0.8,
-                            'selection': {'not': 'selector190'}
+            "layer": [
+                {
+                    "mark": "line",
+                    "encoding": {
+                        "color": {
+                            "type": "quantitative",
+                            "field": "level",
+                            "legend": {"tickCount": 2, "type": "symbol"},
+                            "scale": {"range": ["red", "orange", "green"]}
                         },
-                        'value': 1 
-                    },
-                    'size': {
-                        'condition': {
-                            'value': 3, 
-                            'selection': {'not': 'selector190'}
+                        "opacity": {
+                            "condition": {"selection": {"not": "selector190"}, "value": 0.8},
+                            "value": 1
                         },
-                        'value': 5
+                        "size": {
+                            "condition": {"selection": {"not": "selector190"}, "value": 3},
+                            "value": 5
+                        },
+                        "tooltip": [
+                            {"type": "nominal", "field": "column"},
+                            {"type": "quantitative", "field": "iteration"},
+                            {"type": "ordinal", "field": "level"},
+                            {"type": "quantitative", "field": "m"},
+                            {"type": "quantitative", "field": "u"},
+                            {"type": "quantitative", "field": "bayes_factor", "title": "Bayes factor, K"},
+                            {"type": "quantitative", "field": "logk", "title": "log2(K)"}
+                        ],
+                        "x": {
+                            "type": "ordinal",
+                            "axis": {"title": "Iteration"},
+                            "field": "iteration"
+                        },
+                        "y": {
+                            "type": "quantitative",
+                            "axis": {
+                                "title": "log2(Bayes factor, K = m/u)",
+                                "values": [-10,-5,-2,-1,0,1,2,5,10]
+                            },
+                            "field": "logk",
+                            #"scale": {"domain": [-10, 10]},
+                        }
                     },
-                    'tooltip': [
-                        {'type': 'nominal', 'field': 'column'},
-                        {'type': 'quantitative', 'field': 'iteration'},
-                        {'type': 'ordinal', 'field': 'level'},
-                        {'type': 'quantitative', 'field': 'm'},
-                        {'type': 'quantitative', 'field': 'u'},
-                        {'type': 'quantitative', 'field': 'normalised_adjustment'}
+                    "transform": [
+                        {"calculate": "(log(datum.bayes_factor) / log(2))", "as": "logk"}
                     ],
-                    'x': {
-                        'type': 'ordinal',     
-                        'axis': {'title': 'Iteration'},
-                        'field': 'iteration'
-                    },
-                    'y': {
-                        'type': 'quantitative',
-                        'axis': {'title': 'Influence on match probability'},
-                        'field': 'normalised_adjustment',
-                        'scale': {'domain': [-0.5, 0.5]}
-                    }
+                    "height": 150
                 }
-            }
-            ]
-        }
-    ],
+            ],
+        }],
     'title': {'text': None, 'orient': 'top', 'dx': 200},
     'data': {'values': None}
 }
