@@ -265,8 +265,6 @@ bayes_factor_chart_def = {
     "$schema": "https://vega.github.io/schema/vega-lite/v3.4.0.json",
 }
 
-
-
 multi_chart_template = """
 <!DOCTYPE html>
 <html>
