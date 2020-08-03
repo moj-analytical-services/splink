@@ -118,7 +118,6 @@ def bayes_factor_chart(row_dict, params):
 
     bayes_factor_chart_def["data"]["values"] = _get_bayes_factors(row_dict, params)
     bayes_factor_chart_def["encoding"]["y"]["field"] = "column"
-    bayes_factor_chart_def["encoding"]["color"]["scale"]["domain"] = [-10,10]
     del bayes_factor_chart_def["encoding"]["row"]
     del bayes_factor_chart_def["height"]
 

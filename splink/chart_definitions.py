@@ -236,7 +236,8 @@ bayes_factor_chart_def = {
             "field": "logk",
             "title": "log2(K)",
             "scale": {
-                "scheme": "redyellowgreen"
+                "scheme": "redyellowgreen",
+                "domainMid": 0.0,
                 #"domain": [-10, -7, 0, 7, 10],
                 #"range": ["red", "orange", "green", "orange", "red"],
             },
