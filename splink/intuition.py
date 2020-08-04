@@ -1,4 +1,4 @@
-from .chart_definitions import adjustment_factor_chart_def
+from .chart_definitions import bayes_factor_chart_def
 from .params import Params
 
 altair_installed = True
@@ -18,9 +18,9 @@ Comparison of {col_name}.  Values are:
 {col_name}_r: {value_r}
 Comparison has {num_levels} levels
 𝛾 for this comparison = {gamma_col_name} = {gamma_value}
-Amongst matches, P(𝛾 = {prob_m}):
-Amongst non matches, P(𝛾 = {prob_nm}):
-Adjustment factor = p1/(p1 + p2) = {adj}
+Amongst matches, m = P(𝛾|match) = {prob_m}
+Amongst non matches, u = P(𝛾|non-match) = {prob_nm}
+Bayes factor = m/u = {bf}
 New probability of match (updated belief): {updated_belief}
 """
 
@@ -71,15 +71,14 @@ def intuition_report(row_dict:dict, params:Params):
         d["prob_m"] = float(row_dict[f"prob_{gk}_match"])
         d["prob_nm"] = float(row_dict[f"prob_{gk}_non_match"])
 
-        d["adj"] = d["prob_m"]/(d["prob_m"] + d["prob_nm"])
+        d["bf"] = d["prob_m"]/d["prob_nm"]
 
-        # Update beleif
-        adj = d["adj"]
+        # Update belief
+        bf = d["bf"]
         current_prob = d["current_p"]
 
-        a = adj*current_prob
-        b = (1-adj) * (1-current_prob)
-        new_p = a/(a+b)
+        a = bf*current_prob
+        new_p = a/(a + (1-current_prob))
         d["updated_belief"] = new_p
         d["current_p"] = new_p
 
@@ -91,36 +90,39 @@ def intuition_report(row_dict:dict, params:Params):
 
     return report
 
-def _get_adjustment_factors(row_dict, params):
+def _get_bayes_factors(row_dict, params):
 
     pi = params.params["π"]
 
     gamma_keys = pi.keys() # gamma_0, gamma_1 etc.
 
-    adjustment_factors  = []
+    bayes_factors  = []
 
 
     for gk in gamma_keys:
 
         col_params = pi[gk]
 
-        col_name = col_params["column_name"]
+        column = col_params["column_name"]
 
         prob_m = float(row_dict[f"prob_{gk}_match"])
         prob_nm = float(row_dict[f"prob_{gk}_non_match"])
 
-        adj = prob_m/(prob_m + prob_nm)
+        bf = prob_m/prob_nm
 
-        adjustment_factors.append({"gamma": gk,"col_name": col_name, "value": adj, "normalised": adj-0.5})
+        bayes_factors.append({"gamma": gk,"column": column, "bayes_factor": bf})
 
-    return adjustment_factors
+    return bayes_factors
 
-def adjustment_factor_chart(row_dict, params):
+def bayes_factor_chart(row_dict, params):
 
-    adjustment_factor_chart_def["data"]["values"] = _get_adjustment_factors(row_dict, params)
+    bayes_factor_chart_def["data"]["values"] = _get_bayes_factors(row_dict, params)
+    bayes_factor_chart_def["encoding"]["y"]["field"] = "column"
+    del bayes_factor_chart_def["encoding"]["row"]
+    del bayes_factor_chart_def["height"]
 
     if altair_installed:
-        return alt.Chart.from_dict(adjustment_factor_chart_def)
+        return alt.Chart.from_dict(bayes_factor_chart_def)
     else:
-        return adjustment_factor_chart_def
+        return bayes_factor_chart_def
 

@@ -13,12 +13,11 @@ from .gammas import complete_settings_dict
 from .validate import _get_default_value
 from .chart_definitions import (
     lambda_iteration_chart_def,
-    pi_iteration_chart_def,
     probability_distribution_chart,
     gamma_distribution_chart_def,
     ll_iteration_chart_def,
-    adjustment_weight_chart_def,
-    adjustment_history_chart_def,
+    bayes_factor_chart_def,
+    bayes_factor_history_chart_def,
     multi_chart_template,
 )
 from .check_types import check_types
@@ -173,10 +172,10 @@ class Params:
                 data.append(this_row)
         return data
 
-    def _convert_params_dict_to_normalised_adjustment_data(self):
+    def _convert_params_dict_to_bayes_factor_data(self):
         """
         Get the data needed for a chart that shows which comparison
-        vector values have the greatest effect on matc probability
+        vector values have the greatest effect on match probability
         """
         data = []
         # Want to compare the u and m probabilities
@@ -195,21 +194,19 @@ class Params:
                 row["u"] = this_gamma["prob_dist_non_match"][level]["probability"]
                 row["level_proportion"] = row["m"]*lam + row["u"]*(1-lam)
                 try:
-                    row["adjustment"] = row["m"] / (row["m"] + row["u"])
-                    row["normalised_adjustment"] = row["adjustment"] - 0.5
+                    row["bayes_factor"] = row["m"] / row["u"]
                 except ZeroDivisionError:
-                    row["adjustment"] = None
-                    row["normalised_adjustment"] = None
+                    row["bayes_factor"] = None
 
                 data.append(row)
         return data
     
-    def _convert_params_dict_to_normalised_adjustment_iteration_history(self):
+    def _convert_params_dict_to_bayes_factor_iteration_history(self):
         """
         Get the data needed for a chart that shows which comparison
         vector values have the greatest effect on match probability
         """
-        adj_data = []
+        data = []
 
         pi = gk = self.params["π"]
         gk = list(pi.keys())
@@ -229,18 +226,17 @@ class Params:
                     row["m"] = this_gamma["prob_dist_match"][level]["probability"]
                     row["u"] = this_gamma["prob_dist_non_match"][level]["probability"]
                     try:
-                        row["adjustment"] = row["m"] / (row["m"] + row["u"])
-                        row["normalised_adjustment"] = row["adjustment"] - 0.5
+                        row["bayes_factor"] = row["m"] / row["u"]
                     except ZeroDivisionError: 
-                        row["adjustment"] = None
-                        row["normalised_adjustment"] = None
+                        row["bayes_factor"] = None
+                    
                     if it_num == len(self.param_history)-1:
                         row["final"]=True
                     else:
                         row["final"]=False
 
-                    adj_data.append(row)
-        return adj_data
+                    data.append(row)
+        return data
 
     def _iteration_history_df_gammas(self):
         data = []
@@ -402,23 +398,6 @@ class Params:
             print(field)
             field_value_to_probs(value)
 
-
-    def pi_iteration_chart(self):  # pragma: no cover
-
-        if self.real_params:
-            data = self._iteration_history_df_gammas()
-            data_real = self._convert_params_dict_to_dataframe(self.real_params, "real_param")
-            data.extend(data_real)
-        else:
-            data = self._iteration_history_df_gammas()
-
-        pi_iteration_chart_def["data"]["values"] = data
-
-        if altair_installed:
-            return alt.Chart.from_dict(pi_iteration_chart_def)
-        else:
-            return pi_iteration_chart_def
-
     def lambda_iteration_chart(self):  # pragma: no cover
         data = self._iteration_history_df_lambdas()
         if self.real_params:
@@ -465,7 +444,7 @@ class Params:
         If altair is installed, returns the chart
         Otherwise will return the chart spec as a dictionary
         """
-        data = self._convert_params_dict_to_normalised_adjustment_data()
+        data = self._convert_params_dict_to_bayes_factor_data()
 
         gamma_distribution_chart_def["data"]["values"] = data
 
@@ -474,21 +453,21 @@ class Params:
         else:
             return gamma_distribution_chart_def
 
-    def adjustment_factor_chart(self):  # pragma: no cover
+    def bayes_factor_chart(self):  # pragma: no cover
         """
         If altair is installed, returns the chart
         Otherwise will return the chart spec as a dictionary
         """
-        data = self._convert_params_dict_to_normalised_adjustment_data()
+        data = self._convert_params_dict_to_bayes_factor_data()
 
-        adjustment_weight_chart_def["data"]["values"] = data
+        bayes_factor_chart_def["data"]["values"] = data
 
         if altair_installed:
-            return alt.Chart.from_dict(adjustment_weight_chart_def)
+            return alt.Chart.from_dict(bayes_factor_chart_def)
         else:
-            return adjustment_weight_chart_def
+            return bayes_factor_chart_def
         
-    def adjustment_factor_history_charts(self):
+    def bayes_factor_history_charts(self):
         """
         If altair is installed, returns the chart
         Otherwise will return the chart spec as a dictionary
@@ -497,7 +476,7 @@ class Params:
         chart_defs = []
     
         # Full iteration history
-        data = self._convert_params_dict_to_normalised_adjustment_iteration_history()
+        data = self._convert_params_dict_to_bayes_factor_iteration_history()
     
         # Create charts for each column
         for col_dict in self.settings["comparison_columns"]:
@@ -508,7 +487,7 @@ class Params:
             elif "custom_name" in col_dict:
                 col_name = col_dict["custom_name"] 
            
-            chart_def = copy.deepcopy(adjustment_history_chart_def)
+            chart_def = copy.deepcopy(bayes_factor_history_chart_def)
             # Assign iteration history to values of chart_def
             chart_def["data"]["values"] = [d for d in data if d['column']==col_name]
             chart_def["title"]["text"] = col_name
@@ -519,7 +498,7 @@ class Params:
             "config": {
                 "view": {"width": 400, "height": 120},
             },
-            "title": {"text":"Influence factors iteration history", "anchor": "middle"},
+            "title": {"text":"Bayes factor iteration history", "anchor": "middle"},
             "vconcat": chart_defs,
             "resolve": {"scale":{"color": "independent"}},
             '$schema': 'https://vega.github.io/schema/vega-lite/v4.8.1.json'
@@ -541,17 +520,16 @@ class Params:
 
         if altair_installed:
             c1 = self.probability_distribution_chart().to_json(indent=None)
-            c2 = self.adjustment_factor_chart().to_json(indent=None)
+            c2 = self.bayes_factor_chart().to_json(indent=None)
             c3 = self.lambda_iteration_chart().to_json(indent=None)
-            c4 = self.pi_iteration_chart().to_json(indent=None)
 
             if self.log_likelihood_exists:
-                c5 = self.ll_iteration_chart().to_json(indent=None)
+                c4 = self.ll_iteration_chart().to_json(indent=None)
             else:
-                c5 = ""
+                c4 = ""
 
-            c6 = self.adjustment_factor_history_charts().to_json(indent=None)
-            c7 = self.gamma_distribution_chart().to_json(indent=None)
+            c5 = self.bayes_factor_history_charts().to_json(indent=None)
+            c6 = self.gamma_distribution_chart().to_json(indent=None)
             
             with open(filename, "w") as f:
                 f.write(
@@ -560,27 +538,25 @@ class Params:
                         vegalite_version=alt.VEGALITE_VERSION,
                         vegaembed_version=alt.VEGAEMBED_VERSION,
                         spec1=c1,
-                        spec2=c7,
+                        spec2=c6,
                         spec3=c2,
                         spec4=c3,
-                        spec5=c5,
-                        spec6=c4,
-                        spec7=c6
+                        spec5=c4,
+                        spec6=c5
                     )
                 )
         else:
             c1 = json.dumps(self.probability_distribution_chart())
-            c2 = json.dumps(self.adjustment_factor_chart())
+            c2 = json.dumps(self.bayes_factor_chart())
             c3 = json.dumps(self.lambda_iteration_chart())
-            c4 = json.dumps(self.pi_iteration_chart())
 
             if self.log_likelihood_exists:
-                c5 = json.dumps(self.ll_iteration_chart())
+                c4 = json.dumps(self.ll_iteration_chart())
             else:
-                c5 = ""
+                c4 = ""
             
-            c6 = json.dumps(self.adjustment_factor_history_charts())
-            c7 = json.dumps(self.gamma_distribution_chart())
+            c5 = json.dumps(self.bayes_factor_history_charts())
+            c6 = json.dumps(self.gamma_distribution_chart())
             
             with open(filename, "w") as f:
                 f.write(
@@ -589,12 +565,11 @@ class Params:
                         vegalite_version="3.3.0",
                         vegaembed_version="4",
                         spec1=c1,
-                        spec2=c7,
+                        spec2=c6,
                         spec3=c2,
                         spec4=c3,
-                        spec5=c5,
-                        spec6=c4,
-                        spec7=c6
+                        spec5=c4,
+                        spec7=c5
                     )
                 )
 
