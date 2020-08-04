@@ -13,7 +13,6 @@ from .gammas import complete_settings_dict
 from .validate import _get_default_value
 from .chart_definitions import (
     lambda_iteration_chart_def,
-    pi_iteration_chart_def,
     probability_distribution_chart,
     gamma_distribution_chart_def,
     ll_iteration_chart_def,
@@ -399,23 +398,6 @@ class Params:
             print(field)
             field_value_to_probs(value)
 
-
-    def pi_iteration_chart(self):  # pragma: no cover
-
-        if self.real_params:
-            data = self._iteration_history_df_gammas()
-            data_real = self._convert_params_dict_to_dataframe(self.real_params, "real_param")
-            data.extend(data_real)
-        else:
-            data = self._iteration_history_df_gammas()
-
-        pi_iteration_chart_def["data"]["values"] = data
-
-        if altair_installed:
-            return alt.Chart.from_dict(pi_iteration_chart_def)
-        else:
-            return pi_iteration_chart_def
-
     def lambda_iteration_chart(self):  # pragma: no cover
         data = self._iteration_history_df_lambdas()
         if self.real_params:
@@ -540,15 +522,14 @@ class Params:
             c1 = self.probability_distribution_chart().to_json(indent=None)
             c2 = self.bayes_factor_chart().to_json(indent=None)
             c3 = self.lambda_iteration_chart().to_json(indent=None)
-            c4 = self.pi_iteration_chart().to_json(indent=None)
 
             if self.log_likelihood_exists:
-                c5 = self.ll_iteration_chart().to_json(indent=None)
+                c4 = self.ll_iteration_chart().to_json(indent=None)
             else:
-                c5 = ""
+                c4 = ""
 
-            c6 = self.bayes_factor_history_charts().to_json(indent=None)
-            c7 = self.gamma_distribution_chart().to_json(indent=None)
+            c5 = self.bayes_factor_history_charts().to_json(indent=None)
+            c6 = self.gamma_distribution_chart().to_json(indent=None)
             
             with open(filename, "w") as f:
                 f.write(
@@ -557,27 +538,25 @@ class Params:
                         vegalite_version=alt.VEGALITE_VERSION,
                         vegaembed_version=alt.VEGAEMBED_VERSION,
                         spec1=c1,
-                        spec2=c7,
+                        spec2=c6,
                         spec3=c2,
                         spec4=c3,
-                        spec5=c5,
-                        spec6=c4,
-                        spec7=c6
+                        spec5=c4,
+                        spec6=c5
                     )
                 )
         else:
             c1 = json.dumps(self.probability_distribution_chart())
             c2 = json.dumps(self.bayes_factor_chart())
             c3 = json.dumps(self.lambda_iteration_chart())
-            c4 = json.dumps(self.pi_iteration_chart())
 
             if self.log_likelihood_exists:
-                c5 = json.dumps(self.ll_iteration_chart())
+                c4 = json.dumps(self.ll_iteration_chart())
             else:
-                c5 = ""
+                c4 = ""
             
-            c6 = json.dumps(self.bayes_factor_history_charts())
-            c7 = json.dumps(self.gamma_distribution_chart())
+            c5 = json.dumps(self.bayes_factor_history_charts())
+            c6 = json.dumps(self.gamma_distribution_chart())
             
             with open(filename, "w") as f:
                 f.write(
@@ -586,12 +565,11 @@ class Params:
                         vegalite_version="3.3.0",
                         vegaembed_version="4",
                         spec1=c1,
-                        spec2=c7,
+                        spec2=c6,
                         spec3=c2,
                         spec4=c3,
-                        spec5=c5,
-                        spec6=c4,
-                        spec7=c6
+                        spec5=c4,
+                        spec7=c5
                     )
                 )
 

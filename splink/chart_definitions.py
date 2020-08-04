@@ -1,73 +1,3 @@
-pi_iteration_chart_def = {
-    "config": {
-        "view": {"width": 400, "height": 300},  # pragma: no cover
-        "mark": {"tooltip": None},
-        "title": {"anchor": "middle"},
-    },
-    "hconcat": [
-        {
-            "mark": "bar",
-            "encoding": {
-                "color": {"type": "nominal", "field": "value"},
-                "row": {
-                    "type": "nominal",
-                    "field": "column",
-                    "sort": {"field": "gamma"},
-                },
-                "tooltip": [
-                    {"type": "quantitative", "field": "probability"},
-                    {"type": "ordinal", "field": "iteration"},
-                    {"type": "nominal", "field": "column"},
-                    {"type": "nominal", "field": "value"},
-                ],
-                "x": {"type": "ordinal", "field": "iteration"},
-                "y": {
-                    "type": "quantitative",
-                    "aggregate": "sum",
-                    "axis": {"title": "𝛾 value"},
-                    "field": "probability",
-                },
-            },
-            "height": 150,
-            "resolve": {"scale": {"y": "independent"}},
-            "title": "Non Match",
-            "transform": [{"filter": "(datum.match === 0)"}],
-        },
-        {
-            "mark": "bar",
-            "encoding": {
-                "color": {"type": "nominal", "field": "value"},
-                "row": {
-                    "type": "nominal",
-                    "field": "column",
-                    "sort": {"field": "gamma"},
-                },
-                "tooltip": [
-                    {"type": "quantitative", "field": "probability"},
-                    {"type": "ordinal", "field": "iteration"},
-                    {"type": "nominal", "field": "column"},
-                    {"type": "nominal", "field": "value"},
-                ],
-                "x": {"type": "ordinal", "field": "iteration"},
-                "y": {
-                    "type": "quantitative",
-                    "aggregate": "sum",
-                    "axis": {"title": "𝛾 value"},
-                    "field": "probability",
-                },
-            },
-            "height": 150,
-            "resolve": {"scale": {"y": "independent"}},
-            "title": "Match",
-            "transform": [{"filter": "(datum.match === 1)"}],
-        },
-    ],
-    "data": {"values": None},
-    "title": "Probability distribution of comparison vector values by iteration number",
-    "$schema": "https://vega.github.io/schema/vega-lite/v3.4.0.json",
-}
-
-
 lambda_iteration_chart_def = {
     "config": {
         "view": {"width": 400, "height": 300},
@@ -141,7 +71,11 @@ probability_distribution_chart = {
                     {"type": "quantitative", "field": "probability", "format": ".4f"},
                     {"type": "ordinal", "field": "value"},
                 ],
-                "x": {"type": "quantitative", "field": "probability"},
+                "x": {
+                    "type": "quantitative", 
+                    "field": "probability",
+                    "axis": {"title": "proportion of non-matches"}
+                },
                 "y": {
                     "type": "nominal",
                     "axis": {"title": "𝛾 value"},
@@ -171,7 +105,11 @@ probability_distribution_chart = {
                     {"type": "quantitative", "field": "probability", "format": ".4f"},
                     {"type": "ordinal", "field": "value"},
                 ],
-                "x": {"type": "quantitative", "field": "probability"},
+                "x": {
+                    "type": "quantitative", 
+                    "field": "probability",
+                    "axis": {"title": "proportion of matches"}
+                },
                 "y": {
                     "type": "nominal",
                     "axis": {"title": "𝛾 value"},
@@ -207,7 +145,11 @@ gamma_distribution_chart_def = {
                     {"type": "quantitative", "field": "level_proportion", "format": ".4f"},
                     {"type": "ordinal", "field": "level"},
                 ],
-                "x": {"type": "quantitative", "field": "level_proportion"},
+                "x": {
+                    "type": "quantitative", 
+                    "field": "level_proportion", 
+                    "axis": {"title": "proportion of comparisons"}
+                },
                 "y": {
                     "type": "nominal",
                     "axis": {"title": "𝛾 value"},
@@ -281,8 +223,6 @@ multi_chart_template = """
 <div id="vis4"></div><div id="vis5"></div>
 <br/>
 <div id="vis6"></div>
-<br/>
-<div id="vis7"></div>
 
 
 
@@ -293,7 +233,6 @@ multi_chart_template = """
   vegaEmbed('#vis4', {spec4}).catch(console.error);
   vegaEmbed('#vis5', {spec5}).catch(console.error);
   vegaEmbed('#vis6', {spec6}).catch(console.error);
-  vegaEmbed('#vis7', {spec7}).catch(console.error);
 </script>
 </body>
 </html>
