@@ -54,19 +54,12 @@ def sql_gen_generate_adjusted_lambda(column_name, params, table_name="df_e"):
     m = params.params["π"][f"gamma_{column_name}"]["prob_dist_match"][f"level_{max_level}"]["probability"]
     u = params.params["π"][f"gamma_{column_name}"]["prob_dist_non_match"][f"level_{max_level}"]["probability"]
     
-    
+    # ensure average adj calculation doesnt divide by zero
     if ( math.isclose((m+u), 0.0, rel_tol=1e-9, abs_tol=0.0)):
         average_adjustment = 0.5
-        warnings.warn( f" Is most of column {column_name} or all of it comprised of NULL values??? "
-        " There are levels where no comparisons are found.This could happen when there are 0 occurrences of that gamma level. ")
-        
+        warnings.warn( f" Is most of column {column_name} or all of it comprised of NULL values??? There are levels where no comparisons are found.")
     else:
-        
         average_adjustment = m/(m+u)
-
-
-    
-    
 
     sql = f"""
     with temp_adj as
