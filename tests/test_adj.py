@@ -3,6 +3,7 @@ from splink import Splink
 import pandas as pd
 import pyspark.sql.functions as f
 import pyspark
+import warnings
 
 
 @pytest.fixture(scope="module")
@@ -108,6 +109,7 @@ def test_freq_adj_divzero(spark, sparkdf):
     sparkdf = sparkdf.withColumn("unique_id", f.monotonically_increasing_id())
     # create column weird in a way that could trigger a div by zero on the average adj calculation before the fix
     sparkdf = sparkdf.withColumn("weird",f.lit(None))
+    
     
     try:
         linker = Splink(settings, spark, df=sparkdf)
