@@ -2,6 +2,8 @@
 # https://github.com/moj-analytical-services/splink/pull/107
 
 import logging
+import math
+import warnings
 
 try:
     from pyspark.sql.dataframe import DataFrame
@@ -52,8 +54,13 @@ def sql_gen_generate_adjusted_lambda(column_name, params, table_name="df_e"):
     max_level = params.params["π"][f"gamma_{column_name}"]["num_levels"] - 1
     m = params.params["π"][f"gamma_{column_name}"]["prob_dist_match"][f"level_{max_level}"]["probability"]
     u = params.params["π"][f"gamma_{column_name}"]["prob_dist_non_match"][f"level_{max_level}"]["probability"]
-    average_adjustment = m/(m+u)
-
+    
+# ensure average adj calculation doesnt divide by zero (see issue 118)
+    if ( math.isclose((m+u), 0.0, rel_tol=1e-9, abs_tol=0.0)):
+        average_adjustment = 0.5
+        warnings.warn( f" Is most of column {column_name} or all of it comprised of NULL values??? There are levels where no comparisons are found.")
+    else:
+        average_adjustment = m/(m+u)
 
     sql = f"""
     with temp_adj as

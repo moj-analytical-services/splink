@@ -143,3 +143,6 @@ dmypy.json
 
 # gitignore exception for docs files (otherwise docs/build does not get saved in repo
 !docs/*
+
+# some files created by certain tests need to not be uploaded to the repo
+saved_model.json
