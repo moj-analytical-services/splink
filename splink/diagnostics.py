@@ -62,7 +62,7 @@ def vif_gammas(inputdata, sparksession, sampleratio=1.0):
 
         # round robin computation of r_squared and vif from the available vars
         train_t = inputdata.rdd.map(
-            lambda x: [Vectors.dense(x[2:i] + x[i + 1 :]), x[i]]
+            lambda x: [Vectors.dense(x[1:i] + x[i + 1 :]), x[i]]
         ).toDF(["features", "label"])
 
         lr = LinearRegression(featuresCol="features", labelCol="label")
