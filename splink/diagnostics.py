@@ -3,6 +3,8 @@ from pyspark.sql.session import SparkSession
 from pyspark.context import SparkContext, SparkConf
 from pyspark.sql import SQLContext
 
+from typing import Callable
+
 from pyspark.ml.regression import LinearRegression
 from pyspark.ml.linalg import DenseVector
 from pyspark.ml.linalg import Vectors
@@ -11,13 +13,40 @@ from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.sql.types import StructType, StructField, StringType, DoubleType, Row
 import pyspark.sql.functions as f
 from pyspark.sql.functions import when
+from .check_types import check_types
 
-
-def vif_gammas(inputdata, sparksession, sampleratio=1.0):
+@check_types 
+def vif_gammas(inputdata:DataFrame, spark : SparkSession, sampleratio: float =1.0):
+    
+    """splink diagnostic of multicollinearity in gamma values
+    
+    We want to check if  the gammas  of the input variables of the models we are using suffer from multicollinearity. 
+    Since the columns information is transformed into  gammas , and it is the information from the gammas 
+    which the model 'sees', therefore it is corelation on the gammas which is potentially problematic.
+    
+    
+    
+        Args:
+            inputdata (DataFrame): scored comparisons Spark DataFrame
+            
+            spark (SparkSession): SparkSession object
+            
+            sampleratio (float,optional) : Fraction of rows to sample, range [0.0, 1.0]. 
+            If 1.0 no sampling takes place
+            
+            
+        
+        Returns:
+            
+            (DataFrame) : Spark dataframe of the gamma variables Variance Inflation Factors (VIFs)
+            
+        
+        """
+    
     collist = []
     viflist = []
 
-    sc = sparksession.sparkContext
+    sc = spark.sparkContext
     sqlContext = SQLContext(sc)
 
     dfvariables = inputdata.columns
