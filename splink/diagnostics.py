@@ -14,10 +14,12 @@ from pyspark.sql.types import StructType, StructField, StringType, DoubleType, R
 import pyspark.sql.functions as f
 from pyspark.sql.functions import when
 from .check_types import check_types
+import warnings
 
-@check_types 
-def vif_gammas(inputdata:DataFrame, spark : SparkSession, sampleratio: float =1.0):
-    
+
+@check_types
+def vif_gammas(df_gammas: DataFrame, spark: SparkSession, sampleratio: float = 1.0):
+
     """splink diagnostic of multicollinearity in gamma values
     
     We want to check if  the gammas  of the input variables of the models we are using suffer from multicollinearity. 
@@ -27,7 +29,9 @@ def vif_gammas(inputdata:DataFrame, spark : SparkSession, sampleratio: float =1.
     
     
         Args:
-            inputdata (DataFrame): scored comparisons Spark DataFrame
+        
+            df_gammas (DataFrame): A dataframe of record comparisons containing gamma comaprisno values, 
+            e.g. as produced by the splink.gammas.add_gammas function
             
             spark (SparkSession): SparkSession object
             
@@ -42,14 +46,14 @@ def vif_gammas(inputdata:DataFrame, spark : SparkSession, sampleratio: float =1.
             
         
         """
-    
+
     collist = []
     viflist = []
 
     sc = spark.sparkContext
     sqlContext = SQLContext(sc)
 
-    dfvariables = inputdata.columns
+    dfvariables = df_gammas.columns
 
     # get gamma_ columms only
 
@@ -57,40 +61,41 @@ def vif_gammas(inputdata:DataFrame, spark : SparkSession, sampleratio: float =1.
 
     # if no gamma columns available exit function gracefully
     if gammaonly == []:
-        print("not any probability columns present")
+        warnings.warn("no gamma (agreement vector) columns available")
+
         emptyschema = StructType([StructField("", StringType(), True)])
         return sqlContext.createDataFrame([], emptyschema)
 
     # only keep gamma_ columns
-    inputdata = inputdata.select(gammaonly).sample(
+    df_gammas = df_gammas.select(gammaonly).sample(
         withReplacement=False, fraction=sampleratio, seed=42
     )
 
     # cast gamma_ columns to double in case they are not
-    inputdata = inputdata.select(*(f.col(c).cast("double") for c in inputdata.columns))
+    df_gammas = df_gammas.select(*(f.col(c).cast("double") for c in df_gammas.columns))
 
     # clamp values to either 0 or 1 or NULL in case of -1
 
     for gammacol in gammaonly:
-        inputdata = inputdata.withColumn(
+        df_gammas = df_gammas.withColumn(
             gammacol,
-            f.when(inputdata[gammacol] < 0.0, None)
-            .when(inputdata[gammacol] > 0.0, 1.0)
+            f.when(df_gammas[gammacol] < 0.0, None)
+            .when(df_gammas[gammacol] > 0.0, 1.0)
             .otherwise(0.0),
         )
 
     # drop any NULLs
-    inputdata = inputdata.na.drop()
+    df_gammas = df_gammas.na.drop()
     # add a dummy unused column in the start of the dataframe to make the round robin thing work on the vif calcs.
-    inputdata = inputdata.withColumn("_", f.lit("_")).select("_", *gammaonly)
-    vifcols = inputdata.columns
+    df_gammas = df_gammas.withColumn("_", f.lit("_")).select("_", *gammaonly)
+    vifcols = df_gammas.columns
 
     # VIF computation
 
     for i in range(1, len(vifcols)):
 
         # round robin computation of r_squared and vif from the available vars
-        train_t = inputdata.rdd.map(
+        train_t = df_gammas.rdd.map(
             lambda x: [Vectors.dense(x[1:i] + x[i + 1 :]), x[i]]
         ).toDF(["features", "label"])
 
@@ -99,7 +104,13 @@ def vif_gammas(inputdata:DataFrame, spark : SparkSession, sampleratio: float =1.
         predictions = lr_model.transform(train_t)
         evaluator = RegressionEvaluator(predictionCol="prediction", labelCol="label")
         r_sq = evaluator.evaluate(predictions, {evaluator.metricName: "r2"})
-        vif = 1.0 / (1.0 - r_sq)
+
+        if r_sq != 1.0:
+            vif = 1.0 / (1.0 - r_sq)
+        else:
+            cc = vifcols[i]
+            warnings.warn(f"variable {cc} is totally correlated/associated with another variable")
+            vif = None
 
         collist.append(vifcols[i])
         viflist.append(vif)
