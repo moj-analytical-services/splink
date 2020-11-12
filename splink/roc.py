@@ -3,6 +3,12 @@ from .settings import complete_settings_dict
 from functools import reduce
 from pyspark.sql import DataFrame
 
+altair_installed = True
+try:
+    import altair as alt
+except ImportError:
+    altair_installed = False
+
 
 def _sql_gen_unique_id_keygen(table, uid_col1, uid_col2):
 
@@ -80,12 +86,12 @@ def _categorise_scores_into_truth_cats(
 
     pred = f"(tf_adjusted_match_prob > {threshold_pred})"
 
-    actual = f"(clerical_match_score > {threshold_actual})"
+    actual = f"(clerical_match_score >= {threshold_actual})"
 
     sql = f"""
     select
     *,
-    {threshold_pred} as truth_threshold,
+    cast ({threshold_pred} as float) as truth_threshold,
     {actual} = 1.0 as P,
     {actual} = 0.0 as N,
     {pred} = 1.0 and {actual} = 1.0 as TP,
@@ -130,10 +136,12 @@ def _summarise_truth_cats(df_truth_cats, spark):
     *,
     P/row_count as P_rate,
     N/row_count as N_rate,
-    TP/row_count as TP_rate,
-    TN/row_count as TN_rate,
-    FP/row_count as FP_rate,
-    FN/row_count as FN_rate
+    TP/P as TP_rate,
+    TN/N as TN_rate,
+    FP/N as FP_rate,
+    FN/P as FN_rate,
+    TP/(TP+FP) as precision,
+    TP/(TP+FN) as recall
 
     from df_truth_cats
     """
@@ -162,6 +170,7 @@ def roc_table(df_labels, df_e, settings, spark, threshold_actual=0.5):
 
     percentiles = [x / 100 for x in range(0, 101)]
     thresholds = df_labels_results.stat.approxQuantile(score_colname, percentiles, 0.0)
+    thresholds.append(1.0)
     thresholds = sorted(set(thresholds))
 
     roc_dfs = []
@@ -174,3 +183,135 @@ def roc_table(df_labels, df_e, settings, spark, threshold_actual=0.5):
 
     all_roc_df = reduce(DataFrame.unionAll, roc_dfs)
     return all_roc_df
+
+
+def roc_chart(
+    df_labels,
+    df_e,
+    settings,
+    spark,
+    threshold_actual=0.5,
+    domain=None,
+    width=400,
+    height=400,
+):
+
+    roc_chart_def = {
+        "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+        "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
+        "data": {"name": "data-fadd0e93e9546856cbc745a99e65285d", "values": None},
+        "mark": {"type": "line", "clip": True, "point": True},
+        "encoding": {
+            "tooltip": [
+                {"type": "quantitative", "field": "truth_threshold"},
+                {"type": "quantitative", "field": "FP_rate"},
+                {"type": "quantitative", "field": "TP_rate"},
+                {"type": "quantitative", "field": "TP"},
+                {"type": "quantitative", "field": "TN"},
+                {"type": "quantitative", "field": "FP"},
+                {"type": "quantitative", "field": "FN"},
+            ],
+            "x": {
+                "type": "quantitative",
+                "field": "FP_rate",
+                "sort": ["-TP_rate"],
+                "title": "False Positive Rate amongst clerically reviewed records",
+            },
+            "y": {
+                "type": "quantitative",
+                "field": "TP_rate",
+                "sort": ["-FP_rate"],
+                "title": "True Positive Rate amongst clerically reviewed records",
+            },
+        },
+        "height": height,
+        "title": "Receiver operating characteristic curve",
+        "width": width,
+    }
+
+    if domain:
+        roc_chart_def["encoding"]["x"]["scale"]["domain"] = domain
+
+    data = roc_table(
+        df_labels, df_e, settings, spark, threshold_actual=threshold_actual
+    ).toPandas()
+
+    data = data.to_dict(orient="rows")
+
+    roc_chart_def["data"]["values"] = data
+
+    if altair_installed:
+        return alt.Chart.from_dict(roc_chart_def)
+    else:
+        return roc_chart_def
+
+
+def roc_chart(
+    df_labels,
+    df_e,
+    settings,
+    spark,
+    threshold_actual=0.5,
+    domain=None,
+    width=400,
+    height=400,
+):
+
+    roc_chart_def = {
+        "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+        "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
+        "data": {"name": "data-fadd0e93e9546856cbc745a99e65285d", "values": None},
+        "mark": {"type": "line", "clip": True, "point": True},
+        "encoding": {
+            "tooltip": [
+                {"type": "quantitative", "field": "truth_threshold"},
+                {"type": "quantitative", "field": "FP_rate"},
+                {"type": "quantitative", "field": "TP_rate"},
+                {"type": "quantitative", "field": "TP"},
+                {"type": "quantitative", "field": "TN"},
+                {"type": "quantitative", "field": "FP"},
+                {"type": "quantitative", "field": "FN"},
+            ],
+            "x": {
+                "type": "quantitative",
+                "field": "FP_rate",
+                "sort": ["-TP_rate"],
+                "title": "False Positive Rate amongst clerically reviewed records",
+            },
+            "y": {
+                "type": "quantitative",
+                "field": "TP_rate",
+                "sort": ["-FP_rate"],
+                "title": "True Positive Rate amongst clerically reviewed records",
+            },
+        },
+        "height": height,
+        "title": "Receiver operating characteristic curve",
+        "width": width,
+    }
+
+    if domain:
+        roc_chart_def["encoding"]["x"]["scale"]["domain"] = domain
+
+    data = roc_table(
+        df_labels, df_e, settings, spark, threshold_actual=threshold_actual
+    ).toPandas()
+
+    data = data.to_dict(orient="rows")
+
+    roc_chart_def["data"]["values"] = data
+
+    if altair_installed:
+        return alt.Chart.from_dict(roc_chart_def)
+    else:
+        return roc_chart_def
+
+
+# Y axis IS PRECISION which is TP/(TP+FP)
+# X axis IS RECALL  which is TP/(TP+FN)
+# Y axis IS PRECISION which is TP/(TP+FP)
+# X axis IS RECALL  which is TP/(TP+FN)
+# Y axis IS PRECISION which is TP/(TP+FP)
+# X axis IS RECALL  which is TP/(TP+FN)
+# Y axis IS PRECISION which is TP/(TP+FP)
+# X axis IS RECALL  which is TP/(TP+FN)
