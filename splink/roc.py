@@ -9,6 +9,13 @@ try:
 except ImportError:
     altair_installed = False
 
+try:
+    from pyspark.sql.dataframe import DataFrame
+    from pyspark.sql.session import SparkSession
+except ImportError:
+    DataFrame = None
+    SparkSession = None
+
 
 def _sql_gen_unique_id_keygen(table, uid_col1, uid_col2):
 
@@ -20,10 +27,22 @@ def _sql_gen_unique_id_keygen(table, uid_col1, uid_col2):
     """
 
 
+def _check_df_labels(df_labels, settings):
+
+    cols = df_labels.columns
+    colname = settings["unique_id_column_name"]
+
+    assert f"{colname}_l" in cols, f"{colname}_l should be a column in df_labels"
+    assert f"{colname}_r" in cols, f"{colname}_l should be a column in df_labels"
+    assert (
+        "clerical_match_score" in cols
+    ), f"clerical_match_score should be a column in df_labels"
+
+
 def _get_score_colname(settings):
     score_colname = "match_probability"
     for c in settings["comparison_columns"]:
-        if c["term_frequency_adjustments"]:
+        if c["term_frequency_adjustments"] is True:
             score_colname = "tf_adjusted_match_prob"
     return score_colname
 
@@ -36,6 +55,9 @@ def _join_labels_to_results(df_labels, df_e, settings, spark):
     # | id1         | id2         |                  0.9 |
     # | id1         | id3         |                  0.1 |
     settings = complete_settings_dict(settings, None)
+
+    _check_df_labels(df_labels, settings)
+
     uid_colname = settings["unique_id_column_name"]
 
     # If settings has tf_afjustments, use tf_adjusted_match_prob else use match_probability
@@ -79,12 +101,14 @@ def _join_labels_to_results(df_labels, df_e, settings, spark):
 
 
 def _categorise_scores_into_truth_cats(
-    df_e_with_labels, threshold_pred, spark, threshold_actual=0.5
+    df_e_with_labels, threshold_pred, settings, spark, threshold_actual=0.5
 ):
 
     df_e_with_labels.createOrReplaceTempView("df_e_with_labels")
 
-    pred = f"(tf_adjusted_match_prob > {threshold_pred})"
+    score_colname = _get_score_colname(settings)
+
+    pred = f"({score_colname} >= {threshold_pred})"
 
     actual = f"(clerical_match_score >= {threshold_actual})"
 
@@ -149,17 +173,77 @@ def _summarise_truth_cats(df_truth_cats, spark):
     return spark.sql(sql)
 
 
+# Join Splink's predictions to clerically labelled data and categorise
+#     rows by truth category (false positive, true positive etc.)
 def df_e_with_truth_categories(
-    df_labels, df_e, settings, threshold_pred, spark, threshold_actual=0.5
+    df_labels: DataFrame,
+    df_e: DataFrame,
+    settings: dict,
+    threshold_pred: float,
+    spark: SparkSession,
+    threshold_actual: float = 0.5,
 ):
+    """Join Splink's predictions to clerically labelled data and categorise
+    rows by truth category (false positive, true positive etc.)
+
+    Note that df_labels
+
+    Args:
+        df_labels (DataFrame): A dataframe of clerically labelled data
+            with ids that match the unique_id_column sepcified in the
+            splink settings object.  If the column is called unique_id
+            df_labels should look like:
+            | unique_id_l | unique_id_r | clerical_match_score |
+            |:------------|:------------|---------------------:|
+            | id1         | id2         |                  0.9 |
+            | id1         | id3         |                  0.1 |
+        df_e (DataFrame): Splink output of scored pairwise record comparisons
+        settings (dict): splink settings dictionary
+        threshold_pred (float): Threshold to use in categorising Splink predictions into
+            match or no match
+        spark (SparkSession): SparkSession object
+        threshold_actual (float, optional): Threshold to use in categorising clerical match
+            scores into match or no match. Defaults to 0.5.
+
+    Returns:
+        DataFrame: Dataframe of labels associated with truth category
+    """
     df_labels = _join_labels_to_results(df_labels, df_e, settings, spark)
     df_e_t = _categorise_scores_into_truth_cats(
-        df_labels, threshold_pred, spark, threshold_actual
+        df_labels, threshold_pred, settings, spark, threshold_actual
     )
     return df_e_t
 
 
-def roc_table(df_labels, df_e, settings, spark, threshold_actual=0.5):
+def roc_table(
+    df_labels: DataFrame,
+    df_e: DataFrame,
+    settings: dict,
+    spark: SparkSession,
+    threshold_actual: float = 0.5,
+):
+    """Create a table of the ROC space i.e. truth table statistics
+    for each discrimination threshold
+
+    Args:
+        df_labels (DataFrame): A dataframe of clerically labelled data
+            with ids that match the unique_id_column sepcified in the
+            splink settings object.  If the column is called unique_id
+            df_labels should look like:
+            | unique_id_l | unique_id_r | clerical_match_score |
+            |:------------|:------------|---------------------:|
+            | id1         | id2         |                  0.9 |
+            | id1         | id3         |                  0.1 |
+        df_e (DataFrame): Splink output of scored pairwise record comparisons
+        settings (dict): splink settings dictionary
+        spark (SparkSession): SparkSession object
+        threshold_actual (float, optional): Threshold to use in categorising clerical match
+            scores into match or no match. Defaults to 0.5.
+
+    Returns:
+        [type]: [description]
+    """
+
     df_labels_results = _join_labels_to_results(df_labels, df_e, settings, spark)
 
     # This is used repeatedly to generate the roc curve
@@ -169,14 +253,16 @@ def roc_table(df_labels, df_e, settings, spark, threshold_actual=0.5):
     score_colname = _get_score_colname(settings)
 
     percentiles = [x / 100 for x in range(0, 101)]
-    thresholds = df_labels_results.stat.approxQuantile(score_colname, percentiles, 0.0)
-    thresholds.append(1.0)
+
+    values_distinct = df_labels_results.select(score_colname).distinct()
+    thresholds = values_distinct.stat.approxQuantile(score_colname, percentiles, 0.0)
+    thresholds.append(1.01)
     thresholds = sorted(set(thresholds))
 
     roc_dfs = []
     for thres in thresholds:
         df_e_t = _categorise_scores_into_truth_cats(
-            df_labels_results, thres, spark, threshold_actual
+            df_labels_results, thres, settings, spark, threshold_actual
         )
         df_roc_row = _summarise_truth_cats(df_e_t, spark)
         roc_dfs.append(df_roc_row)
@@ -186,15 +272,36 @@ def roc_table(df_labels, df_e, settings, spark, threshold_actual=0.5):
 
 
 def roc_chart(
-    df_labels,
-    df_e,
-    settings,
-    spark,
-    threshold_actual=0.5,
-    domain=None,
-    width=400,
-    height=400,
+    df_labels: DataFrame,
+    df_e: DataFrame,
+    settings: dict,
+    spark: SparkSession,
+    threshold_actual: float = 0.5,
+    x_domain: list = None,
+    width: int = 400,
+    height: int = 400,
 ):
+    """Create a ROC chart from labelled data
+
+    Args:
+        df_labels (DataFrame): A dataframe of clerically labelled data
+            with ids that match the unique_id_column sepcified in the
+            splink settings object.  If the column is called unique_id
+            df_labels should look like:
+            | unique_id_l | unique_id_r | clerical_match_score |
+            |:------------|:------------|---------------------:|
+            | id1         | id2         |                  0.9 |
+            | id1         | id3         |                  0.1 |
+        df_e (DataFrame): Splink output of scored pairwise record comparisons
+        settings (dict): splink settings dictionary
+        spark (SparkSession): SparkSession object
+        threshold_actual (float, optional): Threshold to use in categorising clerical match
+            scores into match or no match. Defaults to 0.5.
+        x_domain (list, optional): Domain for x axis. Defaults to None.
+        width (int, optional):  Defaults to 400.
+        height (int, optional):  Defaults to 400.
+
+    """
 
     roc_chart_def = {
         "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
@@ -216,13 +323,13 @@ def roc_chart(
             "x": {
                 "type": "quantitative",
                 "field": "FP_rate",
-                "sort": ["-TP_rate"],
+                "sort": ["truth_threshold"],
                 "title": "False Positive Rate amongst clerically reviewed records",
             },
             "y": {
                 "type": "quantitative",
                 "field": "TP_rate",
-                "sort": ["-FP_rate"],
+                "sort": ["truth_threshold"],
                 "title": "True Positive Rate amongst clerically reviewed records",
             },
         },
@@ -231,12 +338,19 @@ def roc_chart(
         "width": width,
     }
 
-    if domain:
-        roc_chart_def["encoding"]["x"]["scale"]["domain"] = domain
-
     data = roc_table(
         df_labels, df_e, settings, spark, threshold_actual=threshold_actual
     ).toPandas()
+
+    if not x_domain:
+
+        f1 = data["FP_rate"] < 1.0
+        filtered = data[f1]
+        d1 = filtered["FP_rate"].max() * 1.5
+
+        x_domain = [0, d1]
+
+    roc_chart_def["encoding"]["x"]["scale"] = {"domain": x_domain}
 
     data = data.to_dict(orient="rows")
 
@@ -258,6 +372,27 @@ def precision_recall_chart(
     width=400,
     height=400,
 ):
+    """Create a precision recall chart from labelled data
+
+    Args:
+        df_labels (DataFrame): A dataframe of clerically labelled data
+            with ids that match the unique_id_column sepcified in the
+            splink settings object.  If the column is called unique_id
+            df_labels should look like:
+            | unique_id_l | unique_id_r | clerical_match_score |
+            |:------------|:------------|---------------------:|
+            | id1         | id2         |                  0.9 |
+            | id1         | id3         |                  0.1 |
+        df_e (DataFrame): Splink output of scored pairwise record comparisons
+        settings (dict): splink settings dictionary
+        spark (SparkSession): SparkSession object
+        threshold_actual (float, optional): Threshold to use in categorising clerical match
+            scores into match or no match. Defaults to 0.5.
+        x_domain (list, optional): Domain for x axis. Defaults to None.
+        width (int, optional):  Defaults to 400.
+        height (int, optional):  Defaults to 400.
+
+    """
 
     pr_chart_def = {
         "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
