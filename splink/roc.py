@@ -1,5 +1,8 @@
 from .settings import complete_settings_dict
 
+from functools import reduce
+from pyspark.sql import DataFrame
+
 
 def _sql_gen_unique_id_keygen(table, uid_col1, uid_col2):
 
@@ -16,6 +19,7 @@ def _get_score_colname(settings):
     for c in settings["comparison_columns"]:
         if c["term_frequency_adjustments"]:
             score_colname = "tf_adjusted_match_prob"
+    return score_colname
 
 
 def _join_labels_to_results(df_labels, df_e, settings, spark):
@@ -81,6 +85,7 @@ def _categorise_scores_into_truth_cats(
     sql = f"""
     select
     *,
+    {threshold_pred} as truth_threshold,
     {actual} = 1.0 as P,
     {actual} = 0.0 as N,
     {pred} = 1.0 and {actual} = 1.0 as TP,
@@ -96,13 +101,14 @@ def _categorise_scores_into_truth_cats(
     return spark.sql(sql)
 
 
-def _summarise_truth_cats(df_truth_cats, threshold_pred, spark):
+def _summarise_truth_cats(df_truth_cats, spark):
 
     df_truth_cats.createOrReplaceTempView("df_truth_cats")
 
     sql = """
 
     select
+    avg(truth_threshold) as truth_threshold,
     count(*) as row_count,
     sum(cast(P as int)) as P,
     sum(cast(N as int)) as N,
@@ -121,7 +127,6 @@ def _summarise_truth_cats(df_truth_cats, threshold_pred, spark):
     sql = f"""
 
     select
-    {threshold_pred} as threshold,
     *,
     P/row_count as P_rate,
     N/row_count as N_rate,
@@ -146,13 +151,26 @@ def df_e_with_truth_categories(
     return df_e_t
 
 
-def roc_table(df_labels, df_e, settings, spark):
-    df_labels = _join_labels_to_results(df_labels, df_e, settings, spark)
+def roc_table(df_labels, df_e, settings, spark, threshold_actual=0.5):
+    df_labels_results = _join_labels_to_results(df_labels, df_e, settings, spark)
 
     # This is used repeatedly to generate the roc curve
-    df_labels.persist()
+    df_labels_results.persist()
 
     # We want percentiles of score to compute
     score_colname = _get_score_colname(settings)
 
-    # df.stat.approxQuantile("Open_Rate",Array(0.25,0.50,0.75),0.0)
+    percentiles = [x / 100 for x in range(0, 101)]
+    thresholds = df_labels_results.stat.approxQuantile(score_colname, percentiles, 0.0)
+    thresholds = sorted(set(thresholds))
+
+    roc_dfs = []
+    for thres in thresholds:
+        df_e_t = _categorise_scores_into_truth_cats(
+            df_labels_results, thres, spark, threshold_actual
+        )
+        df_roc_row = _summarise_truth_cats(df_e_t, spark)
+        roc_dfs.append(df_roc_row)
+
+    all_roc_df = reduce(DataFrame.unionAll, roc_dfs)
+    return all_roc_df
