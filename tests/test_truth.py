@@ -3,7 +3,13 @@ import logging
 logger = logging.getLogger(__name__)
 from pyspark.sql import Row
 
-from splink.truth import df_e_with_truth_categories, truth_space_table
+from splink.truth import (
+    df_e_with_truth_categories,
+    truth_space_table,
+    roc_chart,
+    precision_recall_chart,
+)
+
 import pytest
 
 
@@ -73,3 +79,9 @@ def test_roc(spark):
 
     # Precision = TP/TP+FP
     assert row["precision"] == 0.0
+
+    # Check no errors from charting functions
+
+    df_roc = truth_space_table(df_labels, df_e, settings, spark)
+    roc_chart(df_labels, df_e, settings, spark)
+    precision_recall_chart(df_labels, df_e, settings, spark)
