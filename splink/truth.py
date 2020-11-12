@@ -239,7 +239,7 @@ def truth_space_table(
             scores into match or no match. Defaults to 0.5.
 
     Returns:
-        [type]: [description]
+        DataFrame: Table of 'truth space' i.e. truth categories for each threshold level
     """
 
     df_labels_results = _join_labels_to_results(df_labels, df_e, settings, spark)
