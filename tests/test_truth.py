@@ -3,7 +3,7 @@ import logging
 logger = logging.getLogger(__name__)
 from pyspark.sql import Row
 
-from splink.roc import df_e_with_truth_categories, roc_table
+from splink.truth import df_e_with_truth_categories, truth_space_table
 import pytest
 
 
@@ -53,7 +53,7 @@ def test_roc(spark):
     assert row["TP"] is False
     assert row["FP"] is True
 
-    df_roc = roc_table(df_labels, df_e, settings, spark)
+    df_roc = truth_space_table(df_labels, df_e, settings, spark)
     df_roc = df_roc.toPandas()
 
     # Note that our critiera are great than or equal to

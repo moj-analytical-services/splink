@@ -173,8 +173,6 @@ def _summarise_truth_cats(df_truth_cats, spark):
     return spark.sql(sql)
 
 
-# Join Splink's predictions to clerically labelled data and categorise
-#     rows by truth category (false positive, true positive etc.)
 def df_e_with_truth_categories(
     df_labels: DataFrame,
     df_e: DataFrame,
@@ -215,7 +213,7 @@ def df_e_with_truth_categories(
     return df_e_t
 
 
-def roc_table(
+def truth_space_table(
     df_labels: DataFrame,
     df_e: DataFrame,
     settings: dict,
@@ -338,7 +336,7 @@ def roc_chart(
         "width": width,
     }
 
-    data = roc_table(
+    data = truth_space_table(
         df_labels, df_e, settings, spark, threshold_actual=threshold_actual
     ).toPandas()
 
@@ -432,7 +430,7 @@ def precision_recall_chart(
     if domain:
         pr_chart_def["encoding"]["x"]["scale"]["domain"] = domain
 
-    data = roc_table(
+    data = truth_space_table(
         df_labels, df_e, settings, spark, threshold_actual=threshold_actual
     ).toPandas()
 
