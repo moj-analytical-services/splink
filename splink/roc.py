@@ -210,6 +210,8 @@ def roc_chart(
                 {"type": "quantitative", "field": "TN"},
                 {"type": "quantitative", "field": "FP"},
                 {"type": "quantitative", "field": "FN"},
+                {"type": "quantitative", "field": "precision"},
+                {"type": "quantitative", "field": "recall"},
             ],
             "x": {
                 "type": "quantitative",
@@ -246,7 +248,7 @@ def roc_chart(
         return roc_chart_def
 
 
-def roc_chart(
+def precision_recall_chart(
     df_labels,
     df_e,
     settings,
@@ -257,7 +259,7 @@ def roc_chart(
     height=400,
 ):
 
-    roc_chart_def = {
+    pr_chart_def = {
         "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
         "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
         "data": {"name": "data-fadd0e93e9546856cbc745a99e65285d", "values": None},
@@ -271,27 +273,29 @@ def roc_chart(
                 {"type": "quantitative", "field": "TN"},
                 {"type": "quantitative", "field": "FP"},
                 {"type": "quantitative", "field": "FN"},
+                {"type": "quantitative", "field": "precision"},
+                {"type": "quantitative", "field": "recall"},
             ],
             "x": {
                 "type": "quantitative",
-                "field": "FP_rate",
-                "sort": ["-TP_rate"],
-                "title": "False Positive Rate amongst clerically reviewed records",
+                "field": "recall",
+                "sort": ["-recall"],
+                "title": "Recall",
             },
             "y": {
                 "type": "quantitative",
-                "field": "TP_rate",
-                "sort": ["-FP_rate"],
-                "title": "True Positive Rate amongst clerically reviewed records",
+                "field": "precision",
+                "sort": ["-precision"],
+                "title": "Precision",
             },
         },
         "height": height,
-        "title": "Receiver operating characteristic curve",
+        "title": "Precision-recall curve",
         "width": width,
     }
 
     if domain:
-        roc_chart_def["encoding"]["x"]["scale"]["domain"] = domain
+        pr_chart_def["encoding"]["x"]["scale"]["domain"] = domain
 
     data = roc_table(
         df_labels, df_e, settings, spark, threshold_actual=threshold_actual
@@ -299,19 +303,9 @@ def roc_chart(
 
     data = data.to_dict(orient="rows")
 
-    roc_chart_def["data"]["values"] = data
+    pr_chart_def["data"]["values"] = data
 
     if altair_installed:
-        return alt.Chart.from_dict(roc_chart_def)
+        return alt.Chart.from_dict(pr_chart_def)
     else:
-        return roc_chart_def
-
-
-# Y axis IS PRECISION which is TP/(TP+FP)
-# X axis IS RECALL  which is TP/(TP+FN)
-# Y axis IS PRECISION which is TP/(TP+FP)
-# X axis IS RECALL  which is TP/(TP+FN)
-# Y axis IS PRECISION which is TP/(TP+FP)
-# X axis IS RECALL  which is TP/(TP+FN)
-# Y axis IS PRECISION which is TP/(TP+FP)
-# X axis IS RECALL  which is TP/(TP+FN)
+        return pr_chart_def
