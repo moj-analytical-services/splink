@@ -17,7 +17,29 @@ except ImportError:
     SparkSession = None
 
 
-def _sql_gen_unique_id_keygen(table, uid_col1, uid_col2):
+def _sql_gen_unique_id_keygen(table:str, uid_col1:str, uid_col2:str):
+    """Create a composite unique id for a pairwise comparisons
+    This is a concatenation of the unique id of each record
+    of the pairwise comparison.
+
+    The composite unique id is agnostic to the ordering
+    i.e. it treats:
+    unique_id_l = x, unique_id_r = y
+    and
+    unique_id_l = y, unique_id_r = x
+    to be equivalent.
+
+    This is necessarily because we cannot predict
+    which way round they will appear
+
+    Args:
+        table (str): name of table
+        uid_col1 (str): name of unique id col 1
+        uid_col2 (str): name of unique id col 2
+
+    Returns:
+        str: sql case expression that outputs the composite unique_id
+    """
 
     return f"""
     case
@@ -28,6 +50,8 @@ def _sql_gen_unique_id_keygen(table, uid_col1, uid_col2):
 
 
 def _check_df_labels(df_labels, settings):
+    """Check the df_labels provided contains the expected columns
+    """
 
     cols = df_labels.columns
     colname = settings["unique_id_column_name"]
@@ -54,6 +78,13 @@ def _join_labels_to_results(df_labels, df_e, settings, spark):
     # |:------------|:------------|---------------------:|
     # | id1         | id2         |                  0.9 |
     # | id1         | id3         |                  0.1 |
+
+    # df_e is a dataframe like
+    # | unique_id_l| unique_id_r| tf_adjusted_match_prob |
+    # |:-----------|:-----------|-----------------------:|
+    # | id1        | id2        |                   0.85 |
+    # | id1        | id3        |                   0.2  |
+    # | id2        | id3        |                   0.1  |
     settings = complete_settings_dict(settings, None)
 
     _check_df_labels(df_labels, settings)
@@ -103,6 +134,16 @@ def _join_labels_to_results(df_labels, df_e, settings, spark):
 def _categorise_scores_into_truth_cats(
     df_e_with_labels, threshold_pred, settings, spark, threshold_actual=0.5
 ):
+    """Take a dataframe with clerical labels and splink predictions and
+    label each row with truth categories (true positive, true negative etc)
+    """
+
+    # df_e_with_labels is a dataframe like
+    # |     unique_id_l   | unique_id_r   |   clerical_match_score |   tf_adjusted_match_prob |
+    # |:------------------|:--------------|-----------------------:|-------------------------:|
+    # | id1               | id2           |                    0.9 |                     0.85 |
+    # | id1               | id3           |                    0.1 |                     0.2  |
+
 
     df_e_with_labels.createOrReplaceTempView("df_e_with_labels")
 
@@ -196,6 +237,11 @@ def df_e_with_truth_categories(
             | id1         | id2         |                  0.9 |
             | id1         | id3         |                  0.1 |
         df_e (DataFrame): Splink output of scored pairwise record comparisons
+            | unique_id_l| unique_id_r| tf_adjusted_match_prob |
+            |:-----------|:-----------|-----------------------:|
+            | id1        | id2        |                   0.85 |
+            | id1        | id3        |                   0.2  |
+            | id2        | id3        |                   0.1  |
         settings (dict): splink settings dictionary
         threshold_pred (float): Threshold to use in categorising Splink predictions into
             match or no match
@@ -233,6 +279,11 @@ def truth_space_table(
             | id1         | id2         |                  0.9 |
             | id1         | id3         |                  0.1 |
         df_e (DataFrame): Splink output of scored pairwise record comparisons
+            | unique_id_l| unique_id_r| tf_adjusted_match_prob |
+            |:-----------|:-----------|-----------------------:|
+            | id1        | id2        |                   0.85 |
+            | id1        | id3        |                   0.2  |
+            | id2        | id3        |                   0.1  |
         settings (dict): splink settings dictionary
         spark (SparkSession): SparkSession object
         threshold_actual (float, optional): Threshold to use in categorising clerical match
@@ -291,6 +342,11 @@ def roc_chart(
             | id1         | id2         |                  0.9 |
             | id1         | id3         |                  0.1 |
         df_e (DataFrame): Splink output of scored pairwise record comparisons
+            | unique_id_l| unique_id_r| tf_adjusted_match_prob |
+            |:-----------|:-----------|-----------------------:|
+            | id1        | id2        |                   0.85 |
+            | id1        | id3        |                   0.2  |
+            | id2        | id3        |                   0.1  |
         settings (dict): splink settings dictionary
         spark (SparkSession): SparkSession object
         threshold_actual (float, optional): Threshold to use in categorising clerical match
@@ -382,6 +438,11 @@ def precision_recall_chart(
             | id1         | id2         |                  0.9 |
             | id1         | id3         |                  0.1 |
         df_e (DataFrame): Splink output of scored pairwise record comparisons
+            | unique_id_l| unique_id_r| tf_adjusted_match_prob |
+            |:-----------|:-----------|-----------------------:|
+            | id1        | id2        |                   0.85 |
+            | id1        | id3        |                   0.2  |
+            | id2        | id3        |                   0.1  |
         settings (dict): splink settings dictionary
         spark (SparkSession): SparkSession object
         threshold_actual (float, optional): Threshold to use in categorising clerical match
