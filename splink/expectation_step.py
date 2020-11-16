@@ -48,7 +48,7 @@ def run_expectation_step(df_with_gamma: DataFrame,
     df_with_gamma.createOrReplaceTempView("df_with_gamma")
     logger.debug(_format_sql(sql))
     df_with_gamma_probs = spark.sql(sql)
-    
+
     # This is optional because is slows down execution
     if compute_ll:
         ll = get_overall_log_likelihood(df_with_gamma_probs, params, spark)
@@ -113,6 +113,10 @@ def _sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
     for c in settings["additional_columns_to_retain"]:
         select_cols = _add_left_right(select_cols, c)
 
+    if 'blocking_rules' in settings:
+        if len(settings["blocking_rules"]) > 0:
+            select_cols['match_key'] = 'match_key'
+
     select_expr =  ", ".join(select_cols.values())
 
 
@@ -162,6 +166,10 @@ def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
 
     for c in settings["additional_columns_to_retain"]:
         select_cols = _add_left_right(select_cols, c)
+
+    if 'blocking_rules' in settings:
+        if len(settings["blocking_rules"]) > 0:
+            select_cols['match_key'] = 'match_key'
     return ", ".join(select_cols.values())
 
 def _sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_probs"):

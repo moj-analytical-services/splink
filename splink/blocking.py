@@ -43,7 +43,6 @@ def _get_columns_to_retain_blocking(settings):
 
     columns_to_retain = OrderedDict()
     columns_to_retain[settings["unique_id_column_name"]] = None
-
     for c in settings["comparison_columns"]:
         if "col_name" in c:
             columns_to_retain[c["col_name"]] = None
@@ -140,11 +139,12 @@ def _sql_gen_block_using_rules(
 
     sqls = []
     previous_rules =[]
-    for rule in blocking_rules:
+    for matchkey_number, rule in enumerate(blocking_rules):
         not_previous_rules_statement = _sql_gen_and_not_previous_rules(previous_rules)
         sql = f"""
         select
-        {sql_select_expr}
+        {sql_select_expr},
+        '{matchkey_number}' as match_key
         from {table_name_l} as l
         inner join {table_name_r} as r
         on

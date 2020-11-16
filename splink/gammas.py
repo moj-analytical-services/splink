@@ -59,6 +59,11 @@ def _get_select_expression_gammas(settings: dict):
     for c in settings["additional_columns_to_retain"]:
         cols_to_retain = _add_left_right(cols_to_retain, c)
 
+    if 'blocking_rules' in settings:
+        if len(settings["blocking_rules"]) > 0:
+            cols_to_retain['match_key'] = 'match_key'
+
+
     return ", ".join(cols_to_retain.values())
 
 
