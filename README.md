@@ -41,7 +41,7 @@ We also provide an interactive `splink` settings editor and example settings [he
 
 The statistical model behind `splink` is the same as that used in the R [fastLink package](https://github.com/kosukeimai/fastLink).  Accompanying the fastLink package is an [academic paper](http://imai.fas.harvard.edu/research/files/linkage.pdf) that describes this model.  This is the best place to start for users wanting to understand the theory about how `splink` works.
 
-You can read a short blog post about `splink` [here](https://robinlinacre.com/introducing_splink).
+You can read a short blog post about `splink` [here](https://robinlinacre.com/introducing_splink/).
 
 ## Videos
 
