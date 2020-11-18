@@ -421,7 +421,7 @@ def _leven_array(col_name):
 def _dmeta_array(col_name):
     # Is at least one true
     return f"""exists(
-    {_compare_pairwise_trasformed_combinations(col_name, "Dmetaphone")},
+    {_compare_pairwise_transformed_combinations(col_name, "Dmetaphone")},
     x -> x
     )
     """
