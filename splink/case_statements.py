@@ -19,7 +19,7 @@ def _check_jaro_registered(spark):
         f"The jaro_winkler_sim user definined function is not available in Spark "
         "Or you did not pass 'spark' (the SparkSession) into 'Params' "
         "Falling back to using levenshtein in the default string comparison functions "
-        "You can import these functions using the scala-udf-similarity-0.0.6.jar provided with Splink"
+        "You can import these functions using the scala-udf-similarity-0.0.7.jar provided with Splink"
     )
     return False
 
@@ -403,8 +403,9 @@ def _score_all_pairwise_combinations_distance(col_name, fn_name):
 def _compare_pairwise_trasformed_combinations(col_name, fn_name):
 
     return f"""
-        transform({_daexplode(col_name)},
-            x -> {fn_name}(x['_1']) = {fn_name}(x['_2']) )
+        transform(
+            {_daexplode(col_name)},
+            x -> {fn_name}(x['_1']) = {fn_name}(x['_2'])
             )
     """
 
@@ -433,7 +434,7 @@ def _size_intersect(col_name):
 def sql_gen_case_stmt_array_combinations_leven_3(
     col_name: str,
     threshold_1=1,
-    threshold_2=3,
+    threshold_2=2,
     gamma_col_name=None,
     zero_length_is_null=True,
 ):
@@ -455,8 +456,8 @@ def sql_gen_case_stmt_array_combinations_leven_3(
     when {col_name}_l is null or {col_name}_r is null then -1
     {zero_length_expr}
     when {_size_intersect(col_name)} >= 1 then 2
-    when {min_leven(col_name)} <= {threshold_1} then 2
-    when {min_leven(col_name)} <= {threshold_2} then 1
+    when array_min({_leven_array(col_name)}) <= {threshold_1} then 2
+    when array_min({_leven_array(col_name)}) <= {threshold_2} then 1
     else 0
     end
     """
@@ -468,8 +469,8 @@ def sql_gen_case_stmt_array_combinations_leven_3(
 
 def sql_gen_case_stmt_array_combinations_jaro_3(
     col_name: str,
-    threshold1=0.94,
-    threshold2=0.88,
+    threshold_1=0.94,
+    threshold_2=0.88,
     gamma_col_name=None,
     zero_length_is_null=True,
 ):
@@ -499,8 +500,8 @@ def sql_gen_case_stmt_array_combinations_jaro_3(
 
 def sql_gen_case_stmt_array_combinations_jaro_dmeta_4(
     col_name: str,
-    threshold1=0.94,
-    threshold2=0.88,
+    threshold_1=0.94,
+    threshold_2=0.88,
     gamma_col_name=None,
     zero_length_is_null=True,
 ):
@@ -515,7 +516,7 @@ def sql_gen_case_stmt_array_combinations_jaro_dmeta_4(
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     {zero_length_expr}
-    when {_size_intersect(col_name)} >= 1 then 2
+    when {_size_intersect(col_name)} >= 1 then 3
     when array_max({_jaro_winkler_array(col_name)}) > {threshold_1} then 3
     when {_dmeta_array(col_name)} then 2
     when array_max({_jaro_winkler_array(col_name)}) > {threshold_2} then 1
