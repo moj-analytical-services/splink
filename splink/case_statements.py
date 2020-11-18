@@ -400,7 +400,7 @@ def _score_all_pairwise_combinations_distance(col_name, fn_name):
     """
 
 
-def _compare_pairwise_trasformed_combinations(col_name, fn_name):
+def _compare_pairwise_transformed_combinations(col_name, fn_name):
 
     return f"""
         transform(
