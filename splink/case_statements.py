@@ -289,7 +289,7 @@ def _sql_gen_get_or_list(col_name, other_name_cols, threshold=0.94):
     return f"({ors_string})"
 
 
-def sql_gen_case_stmt_name_inversion_4(
+def sql_gen_gammas_name_inversion_4(
     col_name: str,
     other_name_cols: list,
     gamma_col_name=None,
