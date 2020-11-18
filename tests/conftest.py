@@ -4,7 +4,11 @@ import sqlite3
 import pandas as pd
 import copy
 
-from splink.blocking import _sql_gen_cartesian_block, _sql_gen_block_using_rules, _sql_gen_vertically_concatenate
+from splink.blocking import (
+    _sql_gen_cartesian_block,
+    _sql_gen_block_using_rules,
+    _sql_gen_vertically_concatenate,
+)
 from splink.gammas import _sql_gen_add_gammas, complete_settings_dict
 from splink.expectation_step import (
     _sql_gen_gamma_prob_columns,
@@ -13,6 +17,11 @@ from splink.expectation_step import (
 from splink.maximisation_step import _sql_gen_intermediate_pi_aggregate, _sql_gen_pi_df
 from splink.params import Params
 from splink.case_statements import sql_gen_case_smnt_strict_equality_2
+
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def data_into_table(data, table_name, con):
     cur = con.cursor()
@@ -33,24 +42,25 @@ def data_into_table(data, table_name, con):
         values = tuple(d.values())
         cur.execute(insert_statement, values)
 
-@pytest.fixture(scope='module')
+
+@pytest.fixture(scope="module")
 def link_dedupe_data():
 
-     # Create the database and the database table
+    # Create the database and the database table
     con = sqlite3.connect(":memory:")
     con.row_factory = sqlite3.Row
 
     data_l = [
-    {"unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
-    {"unique_id": 2, "surname": "Smith", "first_name": "John"}
+        {"unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
+        {"unique_id": 2, "surname": "Smith", "first_name": "John"},
     ]
 
     data_into_table(data_l, "df_l", con)
 
     data_r = [
-    {"unique_id": 7, "surname": "Linacre", "first_name": "Robin"},
-    {"unique_id": 8, "surname": "Smith", "first_name": "John"},
-    {"unique_id": 9, "surname": "Smith", "first_name": "Robin"}
+        {"unique_id": 7, "surname": "Linacre", "first_name": "Robin"},
+        {"unique_id": 8, "surname": "Smith", "first_name": "John"},
+        {"unique_id": 9, "surname": "Smith", "first_name": "Robin"},
     ]
 
     data_into_table(data_r, "df_r", con)
@@ -63,25 +73,25 @@ def link_dedupe_data():
     yield con
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def link_dedupe_data_repeat_ids():
 
-     # Create the database and the database table
+    # Create the database and the database table
     con = sqlite3.connect(":memory:")
     con.row_factory = sqlite3.Row
 
     data_l = [
-    {"unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
-    {"unique_id": 2, "surname": "Smith", "first_name": "John"},
-    {"unique_id": 3, "surname": "Smith", "first_name": "John"}
+        {"unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
+        {"unique_id": 2, "surname": "Smith", "first_name": "John"},
+        {"unique_id": 3, "surname": "Smith", "first_name": "John"},
     ]
 
     data_into_table(data_l, "df_l", con)
 
     data_r = [
-    {"unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
-    {"unique_id": 2, "surname": "Smith", "first_name": "John"},
-    {"unique_id": 3, "surname": "Smith", "first_name": "Robin"}
+        {"unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
+        {"unique_id": 2, "surname": "Smith", "first_name": "John"},
+        {"unique_id": 3, "surname": "Smith", "first_name": "Robin"},
     ]
 
     data_into_table(data_r, "df_r", con)
@@ -92,6 +102,7 @@ def link_dedupe_data_repeat_ids():
     df.to_sql("df", con, index=False)
 
     yield con
+
 
 @pytest.mark.filterwarnings("ignore:*")
 @pytest.fixture(scope="function")
@@ -122,7 +133,7 @@ def gamma_settings_1():
                 "u_probabilities": [0.5, 0.25, 0.25],
             },
         ],
-        "blocking_rules": []
+        "blocking_rules": [],
     }
     gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")
     yield gamma_settings
@@ -164,15 +175,15 @@ def sqlite_con_1(gamma_settings_1, params_1):
     one = cur.fetchone()
     columns = one.keys()
 
-    sql = _sql_gen_block_using_rules("dedupe_only", columns, rules, table_name_dedupe="test1")
+    sql = _sql_gen_block_using_rules(
+        "dedupe_only", columns, rules, table_name_dedupe="test1"
+    )
     df = pd.read_sql(sql, con)
     df = df.drop_duplicates(["unique_id_l", "unique_id_r"])
     df = df.sort_values(["unique_id_l", "unique_id_r"])
     df.to_sql("df_comparison1", con, index=False)
 
-    sql = _sql_gen_add_gammas(
-        gamma_settings_1, table_name="df_comparison1"
-    )
+    sql = _sql_gen_add_gammas(gamma_settings_1, table_name="df_comparison1")
 
     df = pd.read_sql(sql, con)
     df.to_sql("df_gammas1", con, index=False)
@@ -181,7 +192,9 @@ def sqlite_con_1(gamma_settings_1, params_1):
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_gamma_probs1", con, index=False)
 
-    sql = _sql_gen_expected_match_prob(params_1, gamma_settings_1, "df_with_gamma_probs1")
+    sql = _sql_gen_expected_match_prob(
+        params_1, gamma_settings_1, "df_with_gamma_probs1"
+    )
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_match_probability1", con, index=False)
 
@@ -200,8 +213,14 @@ def sqlite_con_1(gamma_settings_1, params_1):
     # Probability columns
     gamma_settings_it_2 = copy.deepcopy(gamma_settings_1)
     gamma_settings_it_2["proportion_of_matches"] = 0.540922141
-    gamma_settings_it_2["comparison_columns"][0]["m_probabilities"] = [0.087438272, 0.912561728]
-    gamma_settings_it_2["comparison_columns"][0]["u_probabilities"] = [0.441543191, 0.558456809]
+    gamma_settings_it_2["comparison_columns"][0]["m_probabilities"] = [
+        0.087438272,
+        0.912561728,
+    ]
+    gamma_settings_it_2["comparison_columns"][0]["u_probabilities"] = [
+        0.441543191,
+        0.558456809,
+    ]
     gamma_settings_it_2["comparison_columns"][1]["m_probabilities"] = [
         0.173315146,
         0.326240275,
@@ -213,9 +232,7 @@ def sqlite_con_1(gamma_settings_1, params_1):
         0.499476163,
     ]
 
-    params2 = Params(
-        gamma_settings_it_2, spark="supress_warnings"
-    )
+    params2 = Params(gamma_settings_it_2, spark="supress_warnings")
 
     params2._generate_param_dict()
 
@@ -223,7 +240,9 @@ def sqlite_con_1(gamma_settings_1, params_1):
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_gamma_probs1_it2", con, index=False)
 
-    sql = _sql_gen_expected_match_prob(params2, gamma_settings_it_2, "df_with_gamma_probs1_it2")
+    sql = _sql_gen_expected_match_prob(
+        params2, gamma_settings_it_2, "df_with_gamma_probs1_it2"
+    )
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_match_probability1_it2", con, index=False)
 
@@ -276,7 +295,7 @@ def gamma_settings_2():
                 "u_probabilities": [0.65, 0.35],
             },
         ],
-        "blocking_rules": []
+        "blocking_rules": [],
     }
 
     gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")
@@ -321,17 +340,17 @@ def sqlite_con_2(gamma_settings_2, params_2):
     df = df.sort_values(["unique_id_l", "unique_id_r"])
     df.to_sql("df_comparison2", con, index=False)
 
-    sql = _sql_gen_add_gammas(
-        gamma_settings_2, table_name="df_comparison2"
-    )
+    sql = _sql_gen_add_gammas(gamma_settings_2, table_name="df_comparison2")
     df = pd.read_sql(sql, con)
     df.to_sql("df_gammas2", con, index=False)
 
-    sql = _sql_gen_gamma_prob_columns(params_2, gamma_settings_2,"df_gammas2")
+    sql = _sql_gen_gamma_prob_columns(params_2, gamma_settings_2, "df_gammas2")
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_gamma_probs2", con, index=False)
 
-    sql = _sql_gen_expected_match_prob(params_2, gamma_settings_2, "df_with_gamma_probs2")
+    sql = _sql_gen_expected_match_prob(
+        params_2, gamma_settings_2, "df_with_gamma_probs2"
+    )
     df = pd.read_sql(sql, con)
     df.to_sql("df_with_match_probability2", con, index=False)
 
@@ -379,7 +398,7 @@ def sqlite_con_3():
 def gamma_settings_4():
     gamma_settings = {
         "link_type": "dedupe_only",
-        "proportion_of_matches":0.9,
+        "proportion_of_matches": 0.9,
         "comparison_columns": [
             {
                 "col_name": "col_2_levels",
@@ -397,7 +416,7 @@ def gamma_settings_4():
                 "case_expression": sql_gen_case_smnt_strict_equality_2("col_20_levels"),
             },
         ],
-        "blocking_rules": []
+        "blocking_rules": [],
     }
 
     gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")
@@ -469,7 +488,7 @@ def sqlite_con_4(gamma_settings_4):
 
     df_all = pd.concat([df_nm, df_m])
     df_all = df_all.reset_index()
-    df_all = df_all.rename(columns = {"index": "unique_id_l"})
+    df_all = df_all.rename(columns={"index": "unique_id_l"})
     df_all["unique_id_r"] = df_all["unique_id_l"]
 
     con = sqlite3.connect(":memory:")
@@ -477,12 +496,8 @@ def sqlite_con_4(gamma_settings_4):
 
     df_all.to_sql("df", con, index=False)
 
-
-
     yield con
 
-    
-    
 
 @pytest.fixture(scope="module")
 def spark():
@@ -497,8 +512,8 @@ def spark():
 
         conf.set("spark.sql.shuffle.partitions", "1")
         conf.set("spark.jars.ivy", "/home/jovyan/.ivy2/")
-        conf.set("spark.driver.extraClassPath", "jars/scala-udf-similarity-0.0.6.jar")
-        conf.set("spark.jars", "jars/scala-udf-similarity-0.0.6.jar")
+        conf.set("spark.driver.extraClassPath", "jars/scala-udf-similarity-0.0.7.jar")
+        conf.set("spark.jars", "jars/scala-udf-similarity-0.0.7.jar")
         conf.set("spark.driver.memory", "4g")
         conf.set("spark.sql.shuffle.partitions", "24")
 
@@ -519,7 +534,23 @@ def spark():
 
         for a, b, c in udfs:
             spark.udf.registerJavaFunction(a, "uk.gov.moj.dash.linkage." + b, c)
+
+        rt = types.ArrayType(
+            types.StructType(
+                [
+                    types.StructField("_1", types.StringType()),
+                    types.StructField("_2", types.StringType()),
+                ]
+            )
+        )
+
+        spark.udf.registerJavaFunction(
+            name="DualArrayExplode",
+            javaClassName="uk.gov.moj.dash.linkage.DualArrayExplode",
+            returnType=rt,
+        )
         SPARK_EXISTS = True
+
     except:
         SPARK_EXISTS = False
 
