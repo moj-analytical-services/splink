@@ -433,15 +433,18 @@ def _size_intersect(col_name):
 
 def sql_gen_case_stmt_array_combinations_leven_3(
     col_name: str,
-    threshold_1=1,
-    threshold_2=2,
+    threshold_1: int = 1,
+    threshold_2: int = 2,
     gamma_col_name=None,
     zero_length_is_null=True,
 ):
-    """Compare
+    """Compare all combinations of values in input arrays.  Gamma level 2 if minimum levenshtein score is <=
+    threshold_1.  Gamma level 1 if min score is  <= threshold_2.  Otherwise level 0
 
     Args:
-        col_name (str): The name of the column we want to generate a custom case expression for e.g. phone_number
+        col_name (str): The name of the column we want to generate a custom case expression for e.g. surname
+        threshold_1 (int, optional):  Defaults to 1.
+        threshold_2 (int, optional):  Defaults to 2.
         gamma_col_name (str, optional): . The name of the column, for the alias e.g. surname
         zero_length_is_null (bool, optional):  Whether to treat a zero length array as a null. Defaults to True.
     """
@@ -474,7 +477,16 @@ def sql_gen_case_stmt_array_combinations_jaro_3(
     gamma_col_name=None,
     zero_length_is_null=True,
 ):
-    """"""
+    """Compare all combinations of values in input arrays.  Gamma level 2 if max jaro_winkler score is >=
+    threshold_1.  Gamma level 1 if max score is  >= threshold_2.  Otherwise level 0
+
+    Args:
+        col_name (str): The name of the column we want to generate a custom case expression for e.g. surname
+        threshold_1 (int, optional):  Defaults to 0.94.
+        threshold_2 (int, optional):  Defaults to 0.88.
+        gamma_col_name (str, optional): . The name of the column, for the alias e.g. surname
+        zero_length_is_null (bool, optional):  Whether to treat a zero length array as a null. Defaults to True.
+    """
 
     zero_length_expr = ""
     if zero_length_is_null:
@@ -505,7 +517,19 @@ def sql_gen_case_stmt_array_combinations_jaro_dmeta_4(
     gamma_col_name=None,
     zero_length_is_null=True,
 ):
-    """"""
+    """Compare all combinations of values in input arrays.
+    Gamma level 3 if max jaro_winkler score is >= threshold_1
+    Gamma level 2 if there's at least one match on dmetaphone
+    Gamma level 1 if max jaro_winkler score is >= threshold_2
+    else Gamma level 0
+
+    Args:
+        col_name (str): The name of the column we want to generate a custom case expression for e.g. surname
+        threshold_1 (int, optional):  Defaults to 0.94.
+        threshold_2 (int, optional):  Defaults to 0.88.
+        gamma_col_name (str, optional): . The name of the column, for the alias e.g. surname
+        zero_length_is_null (bool, optional):  Whether to treat a zero length array as a null. Defaults to True.
+    """
 
     zero_length_expr = ""
     if zero_length_is_null:
