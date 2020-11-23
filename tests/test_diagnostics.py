@@ -1,7 +1,7 @@
 import pyspark.sql.functions as f
 import pandas as pd
 from splink.gammas import add_gammas
-from splink.diagnostics import vif_gammas
+from splink.diagnostics import vif_gammas, _splink_score_hist_df
 import pytest
 
 # For further info about this test see https://github.com/moj-analytical-services/splink/issues/132
@@ -54,3 +54,43 @@ def test_vif_fully_correlated(spark, gamma_settings_4, params_4, sqlite_con_4):
     res = vif_gammas(df_gammas, spark=spark, sampleratio=0.05).toPandas()
 
     assert res.vif.isnull().values.any() == True
+
+    
+    
+    
+def test_score_hist_adjusted(spark, gamma_settings_4, params_4, sqlite_con_4):
+
+    """
+    test that when input data has some columns that are fully correlated / associated function deals with it gracefully
+    """
+
+    dfpd = pd.read_sql("select * from df", sqlite_con_4)
+    df = spark.createDataFrame(dfpd)
+    df = df.withColumn("df_dummy", f.lit(1.0))
+    
+  
+
+    res = _splink_score_hist_df(df, spark=spark,adjusted="df_dummy")
+
+    assert isinstance(res, dict)
+    
+    assert all(value == 1.0 for value in res.values())
+    
+    
+    
+def test_score_hist_tf(spark, gamma_settings_4, params_4, sqlite_con_4):
+
+    """
+    test that when input data has some columns that are fully correlated / associated function deals with it gracefully
+    """
+
+    dfpd = pd.read_sql("select * from df", sqlite_con_4)
+    df = spark.createDataFrame(dfpd)
+    df = df.withColumn("tf_adjusted_match_prob", 1.0-(f.rand()/10) )
+    
+    
+  
+
+    res = _splink_score_hist_df(df, spark=spark)
+    
+    assert isinstance(res, dict)
