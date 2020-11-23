@@ -279,10 +279,10 @@ def sql_gen_case_stmt_numeric_perc_4(
         return c
 
 
-def _sql_gen_get_or_list(col_name, other_name_cols, threshold=0.94):
+def _sql_gen_get_or_list_jaro(col_name, other_name_cols, threshold=0.94):
     # Note the ifnull 1234 just ensures that if one of the other columns is null, the jaro score is lower than the threshold
     ors = [
-        f"jaro_winkler_sim({col_name}_l, ifnull({n}_r, '1234')) > {threshold}"
+        f"jaro_winkler_sim(ifnull({col_name}_l, '1234abcd5678'), ifnull({n}_r, '987pqrxyz654')) > {threshold}"
         for n in other_name_cols
     ]
     ors_string = " OR ".join(ors)
@@ -295,6 +295,7 @@ def sql_gen_gammas_name_inversion_4(
     gamma_col_name=None,
     threshold1=0.94,
     threshold2=0.88,
+    include_dmeta=False,
 ):
     """Generate a case expression which can handle name inversions where e.g. surname and forename are inverted
 
@@ -304,15 +305,24 @@ def sql_gen_gammas_name_inversion_4(
         gamma_col_name (str, optional): . The name of the column, for the alias e.g. surname
         threshold1 (float, optional): Jaro threshold for almost exact match. Defaults to 0.94.
         threshold2 (float, optional): Jaro threshold for close match Defaults to 0.88.
+        include_dmeta (bool, optional): Also allow a dmetaphone match at threshold2
 
     Returns:
         str: A sql string
     """
 
+    dmeta_statment = ""
+    if include_dmeta:
+        dmeta_statment = f"""
+        when Dmetaphone({col_name}_l) = Dmetaphone({col_name}_r) then 1
+        when DmetaphoneAlt({col_name}_l) = DmetaphoneAlt({col_name}_r) then 1
+        """
+
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold1} then 3
-    when {_sql_gen_get_or_list(col_name, other_name_cols, threshold1)} then 2
+    when {_sql_gen_get_or_list_jaro(col_name, other_name_cols, threshold1)} then 2
+    {dmeta_statment}
     when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold2} then 1
     else 0 end"""
     if gamma_col_name is not None:
