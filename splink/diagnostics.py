@@ -50,7 +50,6 @@ def vif_gammas(df_gammas: DataFrame, spark: SparkSession, sampleratio: float = 1
     collist = []
     viflist = []
 
-
     dfvariables = df_gammas.columns
 
     # get gamma_ columms only
@@ -107,7 +106,9 @@ def vif_gammas(df_gammas: DataFrame, spark: SparkSession, sampleratio: float = 1
             vif = 1.0 / (1.0 - r_sq)
         else:
             cc = vifcols[i]
-            warnings.warn(f"variable {cc} is totally correlated/associated with another variable")
+            warnings.warn(
+                f"variable {cc} is totally correlated/associated with another variable"
+            )
             vif = None
 
         collist.append(vifcols[i])
@@ -120,10 +121,14 @@ def vif_gammas(df_gammas: DataFrame, spark: SparkSession, sampleratio: float = 1
     return spark.createDataFrame(zip(collist, viflist), vifSchema)
 
 
-
-
 @check_types
-def _splink_score_hist_df(df_e: DataFrame,spark: SparkSession,percentiles=[0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95],adjusted = None,error: float = 0.1):
+def _splink_score_hist_df(
+    df_e: DataFrame,
+    spark: SparkSession,
+    percentiles=[0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95],
+    adjusted=None,
+    error: float = 0.1,
+):
     """splink score histogram diagnostic 
     
        Uses approxQuantile function.This method implements a variation of the Greenwald-Khanna algorithm (with some speed optimizations).
@@ -157,7 +162,12 @@ def _splink_score_hist_df(df_e: DataFrame,spark: SparkSession,percentiles=[0.05,
             
         
     """
-    if (adjusted == None):
-        return dict(zip(percentiles, df_e.approxQuantile("tf_adjusted_match_prob", percentiles, error)))
+    if adjusted == None:
+        return dict(
+            zip(
+                percentiles,
+                df_e.approxQuantile("tf_adjusted_match_prob", percentiles, error),
+            )
+        )
     else:
         return dict(zip(percentiles, df_e.approxQuantile(adjusted, percentiles, error)))
