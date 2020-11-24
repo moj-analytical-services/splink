@@ -2,6 +2,8 @@ from .settings import complete_settings_dict
 
 from functools import reduce
 from pyspark.sql import DataFrame
+import pyspark.sql.functions as f
+from pyspark.sql import Window
 
 altair_installed = True
 try:
@@ -17,10 +19,16 @@ except ImportError:
     SparkSession = None
 
 
-def _sql_gen_unique_id_keygen(table:str, uid_col1:str, uid_col2:str):
+def _sql_gen_unique_id_keygen(
+    table: str,
+    uid_col1: str,
+    uid_col2: str,
+    source_dataset1: str = None,
+    source_dataset2: str = None,
+):
     """Create a composite unique id for a pairwise comparisons
     This is a concatenation of the unique id of each record
-    of the pairwise comparison.
+    of the pairwise comparisons.
 
     The composite unique id is agnostic to the ordering
     i.e. it treats:
@@ -36,138 +44,255 @@ def _sql_gen_unique_id_keygen(table:str, uid_col1:str, uid_col2:str):
         table (str): name of table
         uid_col1 (str): name of unique id col 1
         uid_col2 (str): name of unique id col 2
+        source_dataset1 (str, optional): Name of source dataset column if exists. Defaults to None.
+        source_dataset2 (str, optional): [description]. Defaults to None.
 
     Returns:
         str: sql case expression that outputs the composite unique_id
     """
 
+    if source_dataset1:
+        concat_1 = f"concat({table}.{source_dataset1}, '_',{table}.{uid_col1})"
+        concat_2 = f"concat({table}.{source_dataset2}, '_',{table}.{uid_col2})"
+    else:
+        concat_1 = f"{table}.{uid_col1}"
+        concat_2 = f"{table}.{uid_col2}"
+
     return f"""
     case
-    when {table}.{uid_col1} > {table}.{uid_col2} then concat({table}.{uid_col2}, '-', {table}.{uid_col1})
-    else concat({table}.{uid_col1}, '-', {table}.{uid_col2})
+    when {concat_1} > {concat_2}
+        then concat({concat_2}, '-', {concat_1})
+    else concat({concat_1}, '-', {concat_2})
     end
     """
 
 
-def _check_df_labels(df_labels, settings):
-    """Check the df_labels provided contains the expected columns
+def _get_score_colname(df_e, score_colname=None):
+    if score_colname:
+        return score_colname
+    elif "tf_adjusted_match_prob" in df_e.columns:
+        return "tf_adjusted_match_prob"
+    elif "match_probability" in df_e.columns:
+        return "match_probability"
+    else:
+        raise ValueError("There doesn't appear to be a score column in df_e")
+
+
+def dedupe_splink_scores(
+    df_e_with_dupes: DataFrame,
+    unique_id_colname: str,
+    score_colname: str = None,
+    selection_fn: str = "abs_val",
+):
+    """Sometimes, multiple Splink jobs with different blocking rules are combined
+    into a single dataset of edges.  Sometimes,the same pair of nodes will be
+    scored multiple times, once by each job.  We need to deduplicate this dataset
+    so each pair of nodes appears only once
+
+    Args:
+        df_e_with_dupes (DataFrame): Dataframe with dupes
+        unique_id_colname (str): Unique id column name e.g. unique_id
+        score_colname (str, optional): Which column contains scores? If none, inferred from
+            df_e_with_dupes.columns. Defaults to None.
+        selection_fn (str, optional): Where we have several different scores for a given
+            pair of records, how do we decide the final score?
+            Options are 'abs_val' and 'mean'.
+            abs_val:  Take the value furthest from 0.5 i.e. the value that expresses most certainty
+            mean: Take the mean of all values
+            Defaults to 'abs_val'.
     """
 
-    cols = df_labels.columns
-    colname = settings["unique_id_column_name"]
+    # Looking in blocking.py, the position of unique ids
+    # (whether they appear in _l or _r) is guaranteed
+    # in blocking outputs so we don't need to worry about
+    # inversions
 
-    assert f"{colname}_l" in cols, f"{colname}_l should be a column in df_labels"
-    assert f"{colname}_r" in cols, f"{colname}_l should be a column in df_labels"
-    assert (
-        "clerical_match_score" in cols
-    ), f"clerical_match_score should be a column in df_labels"
+    # This is not the case for labelled data - hence the need
+    # _sql_gen_unique_id_keygen to join labels to df_e
+
+    possible_vals = ["abs_val", "mean"]
+    if selection_fn not in possible_vals:
+        raise ValueError(
+            f"selection function should be in {possible_vals}, you passed {selection_fn}"
+        )
+
+    score_colname = _get_score_colname(df_e_with_dupes, score_colname)
+
+    if selection_fn == "abs_val":
+        df_e_with_dupes = df_e_with_dupes.withColumn(
+            "absval", f.expr(f"0.5 - abs({score_colname})")
+        )
+
+        win_spec = Window.partitionBy(
+            [f"{unique_id_colname}_l", f"{unique_id_colname}_r"]
+        ).orderBy(f.col("absval").desc())
+        df_e_with_dupes = df_e_with_dupes.withColumn(
+            "ranking", f.row_number().over(win_spec)
+        )
+        df_e = df_e_with_dupes.filter(f.col("ranking") == 1)
+        df_e = df_e.drop("absval")
+        df_e = df_e.drop("ranking")
+
+    if selection_fn == "mean":
+
+        win_spec = Window.partitionBy(
+            [f"{unique_id_colname}_l", f"{unique_id_colname}_r"]
+        ).orderBy(f.col(score_colname).desc())
+
+        df_e_with_dupes = df_e_with_dupes.withColumn(
+            "ranking", f.row_number().over(win_spec)
+        )
+
+        df_e_with_dupes = df_e_with_dupes.withColumn(
+            score_colname,
+            f.avg(score_colname).over(
+                win_spec.rowsBetween(
+                    Window.unboundedPreceding, Window.unboundedFollowing
+                )
+            ),
+        )
+        df_e = df_e_with_dupes.filter(f.col("ranking") == 1)
+
+        df_e = df_e.drop("ranking")
+
+    return df_e
 
 
-def _get_score_colname(settings):
-    score_colname = "match_probability"
-    for c in settings["comparison_columns"]:
-        if c["term_frequency_adjustments"] is True:
-            score_colname = "tf_adjusted_match_prob"
-    return score_colname
+def labels_with_splink_scores(
+    df_labels,
+    df_e,
+    unique_id_colname,
+    spark,
+    score_colname=None,
+    join_on_source_dataset=False,
+    retain_all_cols=False,
+):
+    """Create a dataframe with clerical labels set against splink scores
 
+    Assumes uniqueness of pairs of identifiers in both datasets - e.g.
+    if you have duplicate clerical labels or splink scores, you should
+    deduplicate them first
 
-def _join_labels_to_results(df_labels, df_e, settings, spark):
+    Args:
+        df_labels:  a dataframe like:
+             | unique_id_l | unique_id_r | clerical_match_score |
+             |:------------|:------------|---------------------:|
+             | id1         | id2         |                  0.9 |
+             | id1         | id3         |                  0.1 |
+        df_e: a dataframe like
+             | unique_id_l| unique_id_r| tf_adjusted_match_prob |
+             |:-----------|:-----------|-----------------------:|
+             | id1        | id2        |                   0.85 |
+             | id1        | id3        |                   0.2  |
+             | id2        | id3        |                   0.1  |
+        unique_id_colname (str): Unique id column name e.g. unique_id
+        spark : SparkSession
+        score_colname (float, optional): Allows user to explicitly state the column name
+            in the Splink dataset containing the Splink score.  If none will be inferred
+        join_on_source_dataset (bool, optional): In certain scenarios (e.g. linking two tables), the IDs may be unique only within the input table
+            Where this is the case, you should include columns 'source_dataset_l' and 'source_dataset_r'
+            and set join_on_source_dataset=True, which will include the source dataset in the join key Defaults to False.
+        retain_all_cols (bool, optional): Retain all columns in input datasets. Defaults to False.
 
-    # df_labels is a dataframe like:
-    # | unique_id_l | unique_id_r | clerical_match_score |
-    # |:------------|:------------|---------------------:|
-    # | id1         | id2         |                  0.9 |
-    # | id1         | id3         |                  0.1 |
+    Returns:
+        DataFrame: Like:
+             |   unique_id_l |   unique_id_r |   clerical_match_score |   tf_adjusted_match_prob | found_by_blocking   |
+             |--------------:|--------------:|-----------------------:|-------------------------:|:--------------------|
+             |             0 |             1 |                      1 |                 0.999566 | True                |
+             |             0 |             2 |                      1 |                 0.999566 | True                |
+             |             0 |             3 |                      1 |                 0.999989 | True                |
 
-    # df_e is a dataframe like
-    # | unique_id_l| unique_id_r| tf_adjusted_match_prob |
-    # |:-----------|:-----------|-----------------------:|
-    # | id1        | id2        |                   0.85 |
-    # | id1        | id3        |                   0.2  |
-    # | id2        | id3        |                   0.1  |
-    settings = complete_settings_dict(settings, None)
+    """
+    score_colname = _get_score_colname(df_e, score_colname)
 
-    _check_df_labels(df_labels, settings)
-
-    uid_colname = settings["unique_id_column_name"]
-
-    # If settings has tf_afjustments, use tf_adjusted_match_prob else use match_probability
-    score_colname = _get_score_colname(settings)
-
-    # The join is trickier than it looks because there's no guarantee of which way around the two ids are
-    # it could be id1, id2 in df_labels and id2,id1 in df_e
-
-    uid_col_l = f"{uid_colname}_l"
-    uid_col_r = f"{uid_colname}_r"
+    uid_col_l = f"{unique_id_colname}_l"
+    uid_col_r = f"{unique_id_colname}_r"
 
     df_labels.createOrReplaceTempView("df_labels")
     df_e.createOrReplaceTempView("df_e")
 
-    sql = f"""
-    select
+    if join_on_source_dataset:
+        labels_key = _sql_gen_unique_id_keygen(
+            "df_labels", uid_col_l, uid_col_r, "source_dataset_l", "source_dataset_r"
+        )
+        df_e_key = _sql_gen_unique_id_keygen(
+            "df_e", uid_col_l, uid_col_r, "source_dataset_l", "source_dataset_r"
+        )
+        select_cols = f"""
+          df_e.source_dataset_l,
+          df_e.{uid_col_l},
+          df_e.source_dataset_r,
+          df_e.{uid_col_r}
+        """
+    else:
+        labels_key = _sql_gen_unique_id_keygen("df_labels", uid_col_l, uid_col_r)
+        df_e_key = _sql_gen_unique_id_keygen("df_e", uid_col_l, uid_col_r)
+        select_cols = f"""
 
-    df_labels.{uid_col_l},
-    df_labels.{uid_col_r},
-    clerical_match_score,
+          df_e.{uid_col_l},
 
-    case
-    when {score_colname} is null then 0
-    else {score_colname}
-    end as {score_colname},
+          df_e.{uid_col_r}
+        """
 
-    case
-    when {score_colname} is null then false
-    else true
-    end as found_by_blocking
+    if retain_all_cols:
+        cols1 = [f"df_e.{c} as df_e__{c}" for c in df_e.columns if c != score_colname]
+        cols2 = [
+            f"df_labels.{c} as df_labels__{c}"
+            for c in df_labels.columns
+            if c != "clerical_match_score"
+        ]
+        cols1.extend(cols2)
 
+        select_smt = ", ".join(cols1)
 
-    from df_labels
-    left join df_e
-    on {_sql_gen_unique_id_keygen('df_labels', uid_col_l, uid_col_r)}
-    = {_sql_gen_unique_id_keygen('df_e', uid_col_l, uid_col_r)}
+        sql = f"""
+        select
 
-    """
+        {select_smt},
+        clerical_match_score,
 
-    return spark.sql(sql)
+        case
+        when {score_colname} is null then 0
+        else {score_colname}
+        end as {score_colname},
 
-
-def _categorise_scores_into_truth_cats(
-    df_e_with_labels, threshold_pred, settings, spark, threshold_actual=0.5
-):
-    """Take a dataframe with clerical labels and splink predictions and
-    label each row with truth categories (true positive, true negative etc)
-    """
-
-    # df_e_with_labels is a dataframe like
-    # |     unique_id_l   | unique_id_r   |   clerical_match_score |   tf_adjusted_match_prob |
-    # |:------------------|:--------------|-----------------------:|-------------------------:|
-    # | id1               | id2           |                    0.9 |                     0.85 |
-    # | id1               | id3           |                    0.1 |                     0.2  |
+        case
+        when {score_colname} is null then false
+        else true
+        end as found_by_blocking
 
 
-    df_e_with_labels.createOrReplaceTempView("df_e_with_labels")
+        from df_labels
+        left join df_e
+        on {labels_key}
+        = {df_e_key}
 
-    score_colname = _get_score_colname(settings)
+        """
 
-    pred = f"({score_colname} >= {threshold_pred})"
+    else:
+        sql = f"""
+        select
 
-    actual = f"(clerical_match_score >= {threshold_actual})"
+        {select_cols},
+        clerical_match_score,
 
-    sql = f"""
-    select
-    *,
-    cast ({threshold_pred} as float) as truth_threshold,
-    {actual} = 1.0 as P,
-    {actual} = 0.0 as N,
-    {pred} = 1.0 and {actual} = 1.0 as TP,
-    {pred} = 0.0 and {actual} = 0.0 as TN,
-    {pred} = 1.0 and {actual} = 0.0 as FP,
-    {pred} = 0.0 and {actual} = 1.0 as FN
+        case
+        when {score_colname} is null then 0
+        else {score_colname}
+        end as {score_colname},
 
-    from
-    df_e_with_labels
+        case
+        when {score_colname} is null then false
+        else true
+        end as found_by_blocking
 
-    """
+
+        from df_labels
+        left join df_e
+        on {labels_key}
+        = {df_e_key}
+
+        """
 
     return spark.sql(sql)
 
@@ -215,12 +340,11 @@ def _summarise_truth_cats(df_truth_cats, spark):
 
 
 def df_e_with_truth_categories(
-    df_labels: DataFrame,
-    df_e: DataFrame,
-    settings: dict,
-    threshold_pred: float,
+    df_labels_with_splink_scores,
+    threshold_pred,
     spark: SparkSession,
     threshold_actual: float = 0.5,
+    score_colname: str = None,
 ):
     """Join Splink's predictions to clerically labelled data and categorise
     rows by truth category (false positive, true positive etc.)
@@ -228,90 +352,85 @@ def df_e_with_truth_categories(
     Note that df_labels
 
     Args:
-        df_labels (DataFrame): A dataframe of clerically labelled data
-            with ids that match the unique_id_column sepcified in the
-            splink settings object.  If the column is called unique_id
-            df_labels should look like:
-            | unique_id_l | unique_id_r | clerical_match_score |
-            |:------------|:------------|---------------------:|
-            | id1         | id2         |                  0.9 |
-            | id1         | id3         |                  0.1 |
-        df_e (DataFrame): Splink output of scored pairwise record comparisons
-            | unique_id_l| unique_id_r| tf_adjusted_match_prob |
-            |:-----------|:-----------|-----------------------:|
-            | id1        | id2        |                   0.85 |
-            | id1        | id3        |                   0.2  |
-            | id2        | id3        |                   0.1  |
-        settings (dict): splink settings dictionary
+        df_labels_with_splink_scores (DataFrame): A dataframe of labels and associated splink scores
+            usually the output of the truth.labels_with_splink_scores function
         threshold_pred (float): Threshold to use in categorising Splink predictions into
             match or no match
         spark (SparkSession): SparkSession object
         threshold_actual (float, optional): Threshold to use in categorising clerical match
             scores into match or no match. Defaults to 0.5.
+        score_colname (float, optional): Allows user to explicitly state the column name
+            in the Splink dataset containing the Splink score.  If none will be inferred
 
     Returns:
         DataFrame: Dataframe of labels associated with truth category
     """
-    df_labels = _join_labels_to_results(df_labels, df_e, settings, spark)
-    df_e_t = _categorise_scores_into_truth_cats(
-        df_labels, threshold_pred, settings, spark, threshold_actual
-    )
-    return df_e_t
+
+    df_labels_with_splink_scores.createOrReplaceTempView("df_labels_with_splink_scores")
+
+    score_colname = _get_score_colname(df_labels_with_splink_scores)
+
+    pred = f"({score_colname} >= {threshold_pred})"
+
+    actual = f"(clerical_match_score >= {threshold_actual})"
+
+    sql = f"""
+    select
+    *,
+    cast ({threshold_pred} as float) as truth_threshold,
+    {actual} = 1.0 as P,
+    {actual} = 0.0 as N,
+    {pred} = 1.0 and {actual} = 1.0 as TP,
+    {pred} = 0.0 and {actual} = 0.0 as TN,
+    {pred} = 1.0 and {actual} = 0.0 as FP,
+    {pred} = 0.0 and {actual} = 1.0 as FN
+
+    from
+    df_labels_with_splink_scores
+
+    """
+
+    return spark.sql(sql)
 
 
 def truth_space_table(
-    df_labels: DataFrame,
-    df_e: DataFrame,
-    settings: dict,
+    df_labels_with_splink_scores: DataFrame,
     spark: SparkSession,
     threshold_actual: float = 0.5,
+    score_colname: str = None,
 ):
     """Create a table of the ROC space i.e. truth table statistics
     for each discrimination threshold
 
     Args:
-        df_labels (DataFrame): A dataframe of clerically labelled data
-            with ids that match the unique_id_column sepcified in the
-            splink settings object.  If the column is called unique_id
-            df_labels should look like:
-            | unique_id_l | unique_id_r | clerical_match_score |
-            |:------------|:------------|---------------------:|
-            | id1         | id2         |                  0.9 |
-            | id1         | id3         |                  0.1 |
-        df_e (DataFrame): Splink output of scored pairwise record comparisons
-            | unique_id_l| unique_id_r| tf_adjusted_match_prob |
-            |:-----------|:-----------|-----------------------:|
-            | id1        | id2        |                   0.85 |
-            | id1        | id3        |                   0.2  |
-            | id2        | id3        |                   0.1  |
-        settings (dict): splink settings dictionary
-        spark (SparkSession): SparkSession object
+        df_labels_with_splink_scores (DataFrame): A dataframe of labels and associated splink scores
+            usually the output of the truth.labels_with_splink_scores function
         threshold_actual (float, optional): Threshold to use in categorising clerical match
             scores into match or no match. Defaults to 0.5.
+        score_colname (float, optional): Allows user to explicitly state the column name
+            in the Splink dataset containing the Splink score.  If none will be inferred
 
     Returns:
         DataFrame: Table of 'truth space' i.e. truth categories for each threshold level
     """
 
-    df_labels_results = _join_labels_to_results(df_labels, df_e, settings, spark)
-
     # This is used repeatedly to generate the roc curve
-    df_labels_results.persist()
+    df_labels_with_splink_scores.persist()
 
     # We want percentiles of score to compute
-    score_colname = _get_score_colname(settings)
+    score_colname = _get_score_colname(df_labels_with_splink_scores, score_colname)
 
     percentiles = [x / 100 for x in range(0, 101)]
 
-    values_distinct = df_labels_results.select(score_colname).distinct()
+    values_distinct = df_labels_with_splink_scores.select(score_colname).distinct()
     thresholds = values_distinct.stat.approxQuantile(score_colname, percentiles, 0.0)
     thresholds.append(1.01)
     thresholds = sorted(set(thresholds))
 
     roc_dfs = []
     for thres in thresholds:
-        df_e_t = _categorise_scores_into_truth_cats(
-            df_labels_results, thres, settings, spark, threshold_actual
+        df_e_t = df_e_with_truth_categories(
+            df_labels_with_splink_scores, thres, spark, threshold_actual, score_colname
         )
         df_roc_row = _summarise_truth_cats(df_e_t, spark)
         roc_dfs.append(df_roc_row)
@@ -321,9 +440,7 @@ def truth_space_table(
 
 
 def roc_chart(
-    df_labels: DataFrame,
-    df_e: DataFrame,
-    settings: dict,
+    df_labels_with_splink_scores: DataFrame,
     spark: SparkSession,
     threshold_actual: float = 0.5,
     x_domain: list = None,
@@ -333,21 +450,8 @@ def roc_chart(
     """Create a ROC chart from labelled data
 
     Args:
-        df_labels (DataFrame): A dataframe of clerically labelled data
-            with ids that match the unique_id_column sepcified in the
-            splink settings object.  If the column is called unique_id
-            df_labels should look like:
-            | unique_id_l | unique_id_r | clerical_match_score |
-            |:------------|:------------|---------------------:|
-            | id1         | id2         |                  0.9 |
-            | id1         | id3         |                  0.1 |
-        df_e (DataFrame): Splink output of scored pairwise record comparisons
-            | unique_id_l| unique_id_r| tf_adjusted_match_prob |
-            |:-----------|:-----------|-----------------------:|
-            | id1        | id2        |                   0.85 |
-            | id1        | id3        |                   0.2  |
-            | id2        | id3        |                   0.1  |
-        settings (dict): splink settings dictionary
+        df_labels_with_splink_scores (DataFrame): A dataframe of labels and associated splink scores
+            usually the output of the truth.labels_with_splink_scores function
         spark (SparkSession): SparkSession object
         threshold_actual (float, optional): Threshold to use in categorising clerical match
             scores into match or no match. Defaults to 0.5.
@@ -393,7 +497,7 @@ def roc_chart(
     }
 
     data = truth_space_table(
-        df_labels, df_e, settings, spark, threshold_actual=threshold_actual
+        df_labels_with_splink_scores, spark, threshold_actual=threshold_actual
     ).toPandas()
 
     if not x_domain:
@@ -406,7 +510,7 @@ def roc_chart(
 
     roc_chart_def["encoding"]["x"]["scale"] = {"domain": x_domain}
 
-    data = data.to_dict(orient="rows")
+    data = data.to_dict(orient="records")
 
     roc_chart_def["data"]["values"] = data
 
@@ -417,9 +521,7 @@ def roc_chart(
 
 
 def precision_recall_chart(
-    df_labels,
-    df_e,
-    settings,
+    df_labels_with_splink_scores,
     spark,
     threshold_actual=0.5,
     domain=None,
@@ -429,21 +531,8 @@ def precision_recall_chart(
     """Create a precision recall chart from labelled data
 
     Args:
-        df_labels (DataFrame): A dataframe of clerically labelled data
-            with ids that match the unique_id_column sepcified in the
-            splink settings object.  If the column is called unique_id
-            df_labels should look like:
-            | unique_id_l | unique_id_r | clerical_match_score |
-            |:------------|:------------|---------------------:|
-            | id1         | id2         |                  0.9 |
-            | id1         | id3         |                  0.1 |
-        df_e (DataFrame): Splink output of scored pairwise record comparisons
-            | unique_id_l| unique_id_r| tf_adjusted_match_prob |
-            |:-----------|:-----------|-----------------------:|
-            | id1        | id2        |                   0.85 |
-            | id1        | id3        |                   0.2  |
-            | id2        | id3        |                   0.1  |
-        settings (dict): splink settings dictionary
+        df_labels_with_splink_scores (DataFrame): A dataframe of labels and associated splink scores
+            usually the output of the truth.labels_with_splink_scores function
         spark (SparkSession): SparkSession object
         threshold_actual (float, optional): Threshold to use in categorising clerical match
             scores into match or no match. Defaults to 0.5.
@@ -492,10 +581,10 @@ def precision_recall_chart(
         pr_chart_def["encoding"]["x"]["scale"]["domain"] = domain
 
     data = truth_space_table(
-        df_labels, df_e, settings, spark, threshold_actual=threshold_actual
+        df_labels_with_splink_scores, spark, threshold_actual=threshold_actual
     ).toPandas()
 
-    data = data.to_dict(orient="rows")
+    data = data.to_dict(orient="records")
 
     pr_chart_def["data"]["values"] = data
 
