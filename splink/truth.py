@@ -164,34 +164,45 @@ def labels_with_splink_scores(
     unique_id_colname,
     spark,
     score_colname=None,
-    dedupe_splink_scores=False,
     join_on_source_dataset=False,
     retain_all_cols=False,
 ):
+    """Create a dataframe with clerical labels set against splink scores
 
-    # df_labels is a dataframe like:
-    # | unique_id_l | unique_id_r | clerical_match_score |
-    # |:------------|:------------|---------------------:|
-    # | id1         | id2         |                  0.9 |
-    # | id1         | id3         |                  0.1 |
+    Assumes uniqueness of pairs of identifiers in both datasets - e.g.
+    if you have duplicate clerical labels or splink scores, you should
+    deduplicate them first
 
-    # df_e is a dataframe like
-    # | unique_id_l| unique_id_r| tf_adjusted_match_prob |
-    # |:-----------|:-----------|-----------------------:|
-    # | id1        | id2        |                   0.85 |
-    # | id1        | id3        |                   0.2  |
-    # | id2        | id3        |                   0.1  |
+    Args:
+        df_labels:  a dataframe like:
+             | unique_id_l | unique_id_r | clerical_match_score |
+             |:------------|:------------|---------------------:|
+             | id1         | id2         |                  0.9 |
+             | id1         | id3         |                  0.1 |
+        df_e: a dataframe like
+             | unique_id_l| unique_id_r| tf_adjusted_match_prob |
+             |:-----------|:-----------|-----------------------:|
+             | id1        | id2        |                   0.85 |
+             | id1        | id3        |                   0.2  |
+             | id2        | id3        |                   0.1  |
+        unique_id_colname (str): Unique id column name e.g. unique_id
+        spark : SparkSession
+        score_colname (float, optional): Allows user to explicitly state the column name
+            in the Splink dataset containing the Splink score.  If none will be inferred
+        join_on_source_dataset (bool, optional): In certain scenarios (e.g. linking two tables), the IDs may be unique only within the input table
+            Where this is the case, you should include columns 'source_dataset_l' and 'source_dataset_r'
+            and set join_on_source_dataset=True, which will include the source dataset in the join key Defaults to False.
+        retain_all_cols (bool, optional): Retain all columns in input datasets. Defaults to False.
 
-    # In certain scenarios (e.g. linking two tables), the IDs may be unique only within the input table
-    # Where this is the case, you should include columns 'source_dataset_l' and 'source_dataset_r'
-    # and set join_on_source_dataset=True, which will include the source dataset in the join key
+    Returns:
+        DataFrame: Like:
+             |   unique_id_l |   unique_id_r |   clerical_match_score |   tf_adjusted_match_prob | found_by_blocking   |
+             |--------------:|--------------:|-----------------------:|-------------------------:|:--------------------|
+             |             0 |             1 |                      1 |                 0.999566 | True                |
+             |             0 |             2 |                      1 |                 0.999566 | True                |
+             |             0 |             3 |                      1 |                 0.999989 | True                |
 
-    # Returns as Spark dataframe like:
-    # |   unique_id_l |   unique_id_r |   clerical_match_score |   tf_adjusted_match_prob | found_by_blocking   |
-    # |--------------:|--------------:|-----------------------:|-------------------------:|:--------------------|
-    # |             0 |             1 |                      1 |                 0.999566 | True                |
-    # |             0 |             2 |                      1 |                 0.999566 | True                |
-    # |             0 |             3 |                      1 |                 0.999989 | True                |
+    """
     score_colname = _get_score_colname(df_e, score_colname)
 
     uid_col_l = f"{unique_id_colname}_l"
@@ -343,7 +354,6 @@ def df_e_with_truth_categories(
     Args:
         df_labels_with_splink_scores (DataFrame): A dataframe of labels and associated splink scores
             usually the output of the truth.labels_with_splink_scores function
-
         threshold_pred (float): Threshold to use in categorising Splink predictions into
             match or no match
         spark (SparkSession): SparkSession object
