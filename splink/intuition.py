@@ -68,8 +68,13 @@ def intuition_report(row_dict:dict, params:Params):
         d["gamma_col_name"] = gk
         d["gamma_value"] = row_dict[gk]
 
-        d["prob_m"] = float(row_dict[f"prob_{gk}_match"])
-        d["prob_nm"] = float(row_dict[f"prob_{gk}_non_match"])
+        if row_dict[gk] != -1:
+            d["prob_m"] = float(pi[gk]["prob_dist_match"][f"level_{row_dict[gk]}"]["probability"])
+            d["prob_nm"] = float(pi[gk]["prob_dist_non_match"][f"level_{row_dict[gk]}"]["probability"])
+        else:
+            d["prob_m"] = 1.0
+            d["prob_nm"] = 1.0
+
 
         d["bf"] = d["prob_m"]/d["prob_nm"]
 
