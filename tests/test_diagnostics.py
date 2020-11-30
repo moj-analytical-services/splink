@@ -2,7 +2,7 @@
 import pyspark.sql.functions as f
 import pandas as pd
 
-from splink.diagnostics import _splink_score_hist
+from splink.diagnostics import _splink_score_histogram
 import pytest
 
 
@@ -23,11 +23,11 @@ def test_score_hist_adjusted(spark, gamma_settings_4, params_4, sqlite_con_4):
     
   
 
-    res = _splink_score_hist(df, spark=spark,adjusted="df_dummy")
+    res = _splink_score_histogram(df, spark=spark,adjusted="df_dummy")
 
-    assert isinstance(res, dict)
-    
-    assert all(value == 1.0 for value in res.values())
+    assert all(value != None for value in res.count_rows.values)
+    assert isinstance(res, pd.DataFrame)
+    assert res.count_rows[7] != 0.0
     
     
     
@@ -44,6 +44,6 @@ def test_score_hist_tf(spark, gamma_settings_4, params_4, sqlite_con_4):
     
   
 
-    res = _splink_score_hist(df, spark=spark)
+    res = _splink_score_histogram(df, spark=spark)
     
-    assert isinstance(res, dict)
+    assert isinstance(res, pd.DataFrame)
