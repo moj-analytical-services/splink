@@ -55,5 +55,5 @@ def test_score_hist_splits(spark, gamma_settings_4, params_4, sqlite_con_4):
     res = _splink_score_histogram(df, spark=spark,splits=mysplits)
 
     assert isinstance(res, pd.DataFrame)
-    assert hm.count_rows.count() == 3
-    assert hm.count_rows.sum() == hm.count_rows.cumsum()[2]
+    assert res.count_rows.count() == 3
+    assert res.count_rows.sum() == res.count_rows.cumsum()[2]
