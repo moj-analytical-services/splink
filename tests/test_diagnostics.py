@@ -1,7 +1,12 @@
 import pyspark.sql.functions as f
 import pandas as pd
+import json
 
-from splink.diagnostics import _splink_score_histogram
+from splink.diagnostics import (
+    splink_score_histogram,
+    _calc_probability_density,
+    _create_probability_density_plot,
+)
 import pytest
 
 
@@ -16,7 +21,7 @@ def test_score_hist_score(spark, gamma_settings_4, params_4, sqlite_con_4):
     df = spark.createDataFrame(dfpd)
     df = df.withColumn("df_dummy", f.lit(1.0))
 
-    res = _splink_score_histogram(df, spark=spark, score_colname="df_dummy")
+    res = _calc_probability_density(df, spark=spark, score_colname="df_dummy")
 
     assert all(value != None for value in res.count_rows.values)
     assert isinstance(res, pd.DataFrame)
@@ -32,7 +37,7 @@ def test_score_hist_tf(spark, gamma_settings_4, params_4, sqlite_con_4):
     df = spark.createDataFrame(dfpd)
     df = df.withColumn("tf_adjusted_match_prob", 1.0 - (f.rand() / 10))
 
-    res = _splink_score_histogram(df, spark=spark)
+    res = _calc_probability_density(df, spark=spark)
 
     assert isinstance(res, pd.DataFrame)
 
@@ -51,7 +56,7 @@ def test_score_hist_splits(spark, gamma_settings_4, params_4, sqlite_con_4):
 
     mysplits = [0.3, 0.6]
 
-    res = _splink_score_histogram(df, spark=spark, splits=mysplits)
+    res = _calc_probability_density(df, spark=spark, buckets=mysplits)
 
     assert isinstance(res, pd.DataFrame)
     assert res.count_rows.count() == 3
@@ -71,8 +76,24 @@ def test_score_hist_intsplits(spark, gamma_settings_4, params_4, sqlite_con_4):
     df = spark.createDataFrame(dfpd)
     df = df.withColumn("tf_adjusted_match_prob", 1.0 - (f.rand() / 10))
 
-    res2 = _splink_score_histogram(df, spark=spark, splits=5)
-    
+    res2 = _calc_probability_density(df, spark=spark, buckets=5)
+
     assert res2.count_rows.count() == 5
     assert res2.binwidth.sum() == 1.0
     assert res2.normalised.sum() == 1.0
+
+
+def test_score_hist_output_json(spark, gamma_settings_4, params_4, sqlite_con_4):
+
+    """
+  
+    test chart exported as dictionary is in fact a valid dictionary
+    """
+
+    dfpd = pd.read_sql("select * from df", sqlite_con_4)
+    df = spark.createDataFrame(dfpd)
+    df = df.withColumn("tf_adjusted_match_prob", 1.0 - (f.rand() / 10))
+
+    res3 = _calc_probability_density(df, spark=spark, buckets=5)
+
+    assert isinstance(_create_probability_density_plot(res3).to_dict(), dict)

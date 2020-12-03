@@ -26,6 +26,10 @@ hist_def_dict = {
         "view": {"continuousHeight": 300, "continuousWidth": 400},
     },
     "data": {"values": None},
+    "height": 200,
+    "mark": "bar",
+    "title": "Estimated Probability Density",
+    "width": 700,
     "encoding": {
         "tooltip": [{"field": "count_rows", "title": "count", "type": "quantitative"}],
         "x": {
@@ -40,20 +44,18 @@ hist_def_dict = {
             "type": "quantitative",
             "axis": {"title": "Probability density"},
         },
-        "height": 200,
-        "mark": "bar",
-        "title": "Estimated Probability Density",
-        "width": 700,
     },
 }
 
 
 @check_types
-def _splink_score_histogram(
-    df_e: DataFrame, spark: SparkSession, splits=None, score_colname=None,
+def _calc_probability_density(
+    df_e: DataFrame, spark: SparkSession, buckets=None, score_colname=None,
 ):
 
-    """splink score histogram diagnostic 
+    """perform splink score histogram calculations / internal function 
+    
+    Compute a histogram using the provided buckets.
     
     
         Args:
@@ -66,7 +68,8 @@ def _splink_score_histogram(
             
             score_colname : is the score in another column? defaults to None
             
-            splits : list of splits for histogram bins. Has [0.05, 0.1, 0.25, 0.5, 0.75, 0.9, 0.95] for default
+            buckets : accepts either a list of split points or an integer number that is used to create equally spaced split points. 
+            It defaults to 100 equally spaced split points from 0.0 to 1.0
             
         
         Returns:
@@ -78,37 +81,37 @@ def _splink_score_histogram(
 
     # if splits a list then use it. if None... then create default. if integer then create equal bins
 
-    if isinstance(splits, int) and splits != 0:
-        splits = [(x / splits) for x in list(range(splits))]
-    elif splits == None:
-        splits = [(x / 100) for x in list(range(100))]
+    if isinstance(buckets, int) and buckets != 0:
+        buckets = [(x / buckets) for x in list(range(buckets))]
+    elif buckets == None:
+        buckets = [(x / 100) for x in list(range(100))]
 
     # ensure 0.0 and 1.0 are included in histogram
 
-    if splits[0] != 0:
-        splits = [0.0] + splits
+    if buckets[0] != 0:
+        buckets = [0.0] + buckets
 
-    if splits[-1] != 1.0:
-        splits = splits + [1.0]
+    if buckets[-1] != 1.0:
+        buckets = buckets + [1.0]
 
     # If score_colname is used then use that. if score_colname not used if tf_adjusted_match_prob exists it is used.
     # Otherwise match_probability is used or if that doesnt exit a warning is fired and function exits
 
     if score_colname:
-        hist = df_e.select(score_colname).rdd.flatMap(lambda x: x).histogram(splits)
+        hist = df_e.select(score_colname).rdd.flatMap(lambda x: x).histogram(buckets)
 
     elif "tf_adjusted_match_prob" in df_e.columns:
 
         hist = (
             df_e.select("tf_adjusted_match_prob")
             .rdd.flatMap(lambda x: x)
-            .histogram(splits)
+            .histogram(buckets)
         )
 
     elif "match_probability" in df_e.columns:
 
         hist = (
-            df_e.select("match_probability").rdd.flatMap(lambda x: x).histogram(splits)
+            df_e.select("match_probability").rdd.flatMap(lambda x: x).histogram(buckets)
         )
 
     else:
@@ -131,15 +134,15 @@ def _splink_score_histogram(
     return hist_df
 
 
-def create_diagnostic_plot(hist_df):
-    """splink score histogram diagnostic 
+def _create_probability_density_plot(hist_df):
+    """plot score histogram  
     
     
         Args:
     
         
-            hist_df (pandas DataFrame): A dataframe of record comparisons containing a splink score, 
-            as produced by the _splink_score_histogram function
+            hist_df (pandas DataFrame): A pandas dataframe of histogram bins 
+            as produced by the _calc_probability_density function
 
             
         
@@ -156,3 +159,43 @@ def create_diagnostic_plot(hist_df):
         return alt.Chart.from_dict(hist_def_dict)
     else:
         return hist_def_dict
+
+
+def splink_score_histogram(
+    df_e: DataFrame, spark: SparkSession, buckets=None, score_colname=None,
+):
+
+    """splink score histogram diagnostic plot public API function
+    
+    Compute a histogram using the provided buckets and plot the result.
+    
+    
+        Args:
+    
+        
+            df_e (DataFrame): A dataframe of record comparisons containing a splink score, 
+            e.g. as produced by the `get_scored_comparisons` function
+            
+            spark (SparkSession): SparkSession object
+            
+            score_colname : is the score in another column? defaults to None
+            
+            buckets : accepts either a list of split points or an integer number that is used to create equally spaced split points. 
+            It defaults to 100 equally spaced split points from 0.0 to 1.0
+            
+           
+         Returns:
+            
+           
+            if altair library is installed this function returns a histogram plot. if altair is not installed then the 
+            plot dictionary so it can be plotted in a different manner
+            
+           
+            
+    """
+
+    pd_df = _calc_probability_density(
+        df_e, spark=spark, buckets=buckets, score_colname=score_colname
+    )
+
+    return _create_probability_density_plot(pd_df)
