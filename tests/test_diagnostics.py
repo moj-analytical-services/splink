@@ -64,6 +64,10 @@ def test_score_hist_splits(spark, gamma_settings_4, params_4, sqlite_con_4):
     assert res.binwidth.sum() == 1.0
     assert res.normalised.sum() == 1.0
 
+    mysplits2 = [0.6, 0.3]
+
+    res2 = _calc_probability_density(df, spark=spark, buckets=mysplits2)
+
 
 def test_score_hist_intsplits(spark, gamma_settings_4, params_4, sqlite_con_4):
 
@@ -76,11 +80,11 @@ def test_score_hist_intsplits(spark, gamma_settings_4, params_4, sqlite_con_4):
     df = spark.createDataFrame(dfpd)
     df = df.withColumn("tf_adjusted_match_prob", 1.0 - (f.rand() / 10))
 
-    res2 = _calc_probability_density(df, spark=spark, buckets=5)
+    res3 = _calc_probability_density(df, spark=spark, buckets=5)
 
-    assert res2.count_rows.count() == 5
-    assert res2.binwidth.sum() == 1.0
-    assert res2.normalised.sum() == 1.0
+    assert res3.count_rows.count() == 5
+    assert res3.binwidth.sum() == 1.0
+    assert res3.normalised.sum() == 1.0
 
 
 def test_score_hist_output_json(spark, gamma_settings_4, params_4, sqlite_con_4):
@@ -100,12 +104,12 @@ def test_score_hist_output_json(spark, gamma_settings_4, params_4, sqlite_con_4)
     df = spark.createDataFrame(dfpd)
     df = df.withColumn("tf_adjusted_match_prob", 1.0 - (f.rand() / 10))
 
-    res3 = _calc_probability_density(df, spark=spark, buckets=5)
+    res4 = _calc_probability_density(df, spark=spark, buckets=5)
 
     if altair_installed:
-        assert isinstance(_create_probability_density_plot(res3).to_dict(), dict)
+        assert isinstance(_create_probability_density_plot(res4).to_dict(), dict)
     else:
-        assert isinstance(_create_probability_density_plot(res3), dict)
+        assert isinstance(_create_probability_density_plot(res4), dict)
 
 
 def test_prob_density(spark, gamma_settings_4, params_4, sqlite_con_4):
