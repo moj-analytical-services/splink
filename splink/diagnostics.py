@@ -188,7 +188,7 @@ def splink_score_histogram(
             
            
             if altair library is installed this function returns a histogram plot. if altair is not installed then the 
-            plot dictionary so it can be plotted in a different manner
+            then it returns the vega lite chart spec as a dictionary
             
            
             
