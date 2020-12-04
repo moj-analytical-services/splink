@@ -28,7 +28,7 @@ hist_def_dict = {
     "data": {"values": None},
     "height": 200,
     "mark": "bar",
-    "title": "Estimated Probability Density",
+    "title": "Histogram of splink scores",
     "width": 700,
     "encoding": {
         "tooltip": [{"field": "count_rows", "title": "count", "type": "quantitative"}],
@@ -42,7 +42,7 @@ hist_def_dict = {
         "y": {
             "field": "normalised",
             "type": "quantitative",
-            "axis": {"title": "Histogram of splink scores"},
+            "axis": {"title": "probability density"},
         },
     },
 }
@@ -93,7 +93,9 @@ def _calc_probability_density(
 
     if buckets[-1] != 1.0:
         buckets = buckets + [1.0]
-
+        
+        
+    
     # If score_colname is used then use that. if score_colname not used if tf_adjusted_match_prob exists it is used.
     # Otherwise match_probability is used or if that doesnt exit a warning is fired and function exits
 
