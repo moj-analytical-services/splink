@@ -67,6 +67,12 @@ def test_score_hist_splits(spark, gamma_settings_4, params_4, sqlite_con_4):
     mysplits2 = [0.6, 0.3]
 
     res2 = _calc_probability_density(df, spark=spark, buckets=mysplits2)
+    
+    assert isinstance(res2, pd.DataFrame)
+    assert res2.count_rows.count() == 3
+    assert res2.count_rows.sum() == res.count_rows.cumsum()[2]
+    assert res2.binwidth.sum() == 1.0
+    assert res2.normalised.sum() == 1.0
 
 
 def test_score_hist_intsplits(spark, gamma_settings_4, params_4, sqlite_con_4):
