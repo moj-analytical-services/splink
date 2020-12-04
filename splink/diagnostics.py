@@ -42,7 +42,7 @@ hist_def_dict = {
         "y": {
             "field": "normalised",
             "type": "quantitative",
-            "axis": {"title": "Probability density"},
+            "axis": {"title": "Histogram of splink scores"},
         },
     },
 }
