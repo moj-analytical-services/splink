@@ -23,9 +23,7 @@ hist_def_dict = {
     "title": "Histogram of splink scores",
     "width": 700,
     "encoding": {
-        "tooltip": [
-            {"field": "count_rows", "title": "count", "type": "quantitative"}
-        ],
+        "tooltip": [{"field": "count_rows", "title": "count", "type": "quantitative"}],
         "x": {
             "axis": {"title": "splink score"},
             "bin": "binned",
@@ -44,33 +42,27 @@ hist_def_dict = {
 
 @check_types
 def _calc_probability_density(
-    df_e: DataFrame, spark: SparkSession, buckets=None, score_colname=None,
+    df_e: DataFrame,
+    spark: SparkSession,
+    buckets=None,
+    score_colname=None,
 ):
 
-    """perform splink score histogram calculations / internal function 
-    
+    """perform splink score histogram calculations / internal function
+
     Compute a histogram using the provided buckets.
 
         Args:
-    
-
-            df_e (DataFrame): A dataframe of record comparisons containing a splink score, 
-            e.g. as produced by the .... function
-            
+            df_e (DataFrame): A dataframe of record comparisons containing a
+                splink score, e.g. as produced by the .... function
             spark (SparkSession): SparkSession object
-            
-            score_colname : is the score in another column? defaults to None
-            
-            buckets : accepts either a list of split points or an integer number that is used 
-            to create equally spaced split points.  It defaults to 100 equally spaced split points 
-            from 0.0 to 1.0
-            
-        
+            score_colname: is the score in another column? defaults to None
+            buckets: accepts either a list of split points or an integer number that is used
+                to create equally spaced split points.  It defaults to 100 equally
+                spaced split points from 0.0 to 1.0
+
         Returns:
-            
             (DataFrame) : pandas dataframe of histogram bins for appropriate splink score variable ready to be plotted.
-            
-        
     """
 
     # if splits a list then use it. if None... then create default. if integer then create equal bins
@@ -96,11 +88,7 @@ def _calc_probability_density(
     # Otherwise match_probability is used or if that doesnt exit a warning is fired and function exits
 
     if score_colname:
-        hist = (
-            df_e.select(score_colname)
-            .rdd.flatMap(lambda x: x)
-            .histogram(buckets)
-        )
+        hist = df_e.select(score_colname).rdd.flatMap(lambda x: x).histogram(buckets)
 
     elif "tf_adjusted_match_prob" in df_e.columns:
 
@@ -113,9 +101,7 @@ def _calc_probability_density(
     elif "match_probability" in df_e.columns:
 
         hist = (
-            df_e.select("match_probability")
-            .rdd.flatMap(lambda x: x)
-            .histogram(buckets)
+            df_e.select("match_probability").rdd.flatMap(lambda x: x).histogram(buckets)
         )
 
     else:
@@ -124,12 +110,8 @@ def _calc_probability_density(
     # get bucket from and to points
 
     hist[1].append(None)
-    hist_df = pd.DataFrame(
-        {"splink_score_bin_low": hist[0], "count_rows": hist[1]}
-    )
-    hist_df["splink_score_bin_high"] = hist_df["splink_score_bin_low"].shift(
-        -1
-    )
+    hist_df = pd.DataFrame({"splink_score_bin_low": hist[0], "count_rows": hist[1]})
+    hist_df["splink_score_bin_high"] = hist_df["splink_score_bin_low"].shift(-1)
     hist_df = hist_df.drop(hist_df.tail(1).index)
 
     # take into account the bin width
@@ -146,21 +128,14 @@ def _calc_probability_density(
 
 
 def _create_probability_density_plot(hist_df):
-    """plot score histogram  
+    """plot score histogram
 
-        Args:
-    
-        
-            hist_df (pandas DataFrame): A pandas dataframe of histogram bins 
+    Args:
+        hist_df (pandas DataFrame): A pandas dataframe of histogram bins
             as produced by the _calc_probability_density function
-
-            
-        
-        Returns:
-            
-            if altair is installed a plot. if altair is not installed
+    Returns:
+        if altair is installed a plot. if altair is not installed
             then it returns the vega lite chart spec as a dictionary
-          
     """
 
     data = hist_df.to_dict(orient="records")
@@ -173,35 +148,26 @@ def _create_probability_density_plot(hist_df):
 
 
 def splink_score_histogram(
-    df_e: DataFrame, spark: SparkSession, buckets=None, score_colname=None,
+    df_e: DataFrame,
+    spark: SparkSession,
+    buckets=None,
+    score_colname=None,
 ):
 
     """splink score histogram diagnostic plot public API function
-    
-    Compute a histogram using the provided buckets and plot the result.
-    
-    
-    Args:
 
-        df_e (DataFrame): A dataframe of record comparisons containing a splink score, 
-        e.g. as produced by the `get_scored_comparisons` function
-            
+    Compute a histogram using the provided buckets and plot the result.
+
+    Args:
+        df_e (DataFrame): A dataframe of record comparisons containing a splink score,
+            e.g. as produced by the `get_scored_comparisons` function
         spark (SparkSession): SparkSession object
-            
         score_colname : is the score in another column? defaults to None
-            
-        buckets : accepts either a list of split points or an integer number that is used to 
-        create equally spaced split points. It defaults to 100 equally spaced split points from 0.0 to 1.0
-            
-           
+        buckets : accepts either a list of split points or an integer number that is used to
+            create equally spaced split points. It defaults to 100 equally spaced split points from 0.0 to 1.0
      Returns:
-            
-           
         if altair library is installed this function returns a histogram plot. if altair is not installed
         then it returns the vega lite chart spec as a dictionary
-            
-           
-            
     """
 
     pd_df = _calc_probability_density(
