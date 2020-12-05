@@ -14,15 +14,14 @@ def test_score_hist_score(spark, gamma_settings_4, params_4, sqlite_con_4):
 
     """
     test that a dataframe gets processed when function is given a column name to take splink score from
-    
+
     """
 
     dfpd = pd.read_sql("select * from df", sqlite_con_4)
     df = spark.createDataFrame(dfpd)
     df = df.withColumn("df_dummy", f.lit(1.0))
-
     res = _calc_probability_density(df, spark=spark, score_colname="df_dummy")
-
+    res = pd.DataFrame(res)
     assert all(value != None for value in res.count_rows.values)
     assert isinstance(res, pd.DataFrame)
 
@@ -39,7 +38,7 @@ def test_score_hist_tf(spark, gamma_settings_4, params_4, sqlite_con_4):
 
     res = _calc_probability_density(df, spark=spark)
 
-    assert isinstance(res, pd.DataFrame)
+    assert isinstance(res, list)
 
 
 def test_score_hist_splits(spark, gamma_settings_4, params_4, sqlite_con_4):
@@ -47,7 +46,7 @@ def test_score_hist_splits(spark, gamma_settings_4, params_4, sqlite_con_4):
     """
     test that a dataframe gets processed with non-default splits list
     test binwidths and normalised probability densities sum up to 1.0
-    
+
     """
 
     dfpd = pd.read_sql("select * from df", sqlite_con_4)
@@ -57,8 +56,8 @@ def test_score_hist_splits(spark, gamma_settings_4, params_4, sqlite_con_4):
     mysplits = [0.3, 0.6]
 
     res = _calc_probability_density(df, spark=spark, buckets=mysplits)
+    res = pd.DataFrame(res)
 
-    assert isinstance(res, pd.DataFrame)
     assert res.count_rows.count() == 3
     assert res.count_rows.sum() == res.count_rows.cumsum()[2]
     assert res.binwidth.sum() == 1.0
@@ -67,7 +66,8 @@ def test_score_hist_splits(spark, gamma_settings_4, params_4, sqlite_con_4):
     mysplits2 = [0.6, 0.3]
 
     res2 = _calc_probability_density(df, spark=spark, buckets=mysplits2)
-    
+    res2 = pd.DataFrame(res2)
+
     assert isinstance(res2, pd.DataFrame)
     assert res2.count_rows.count() == 3
     assert res2.count_rows.sum() == res.count_rows.cumsum()[2]
@@ -78,16 +78,15 @@ def test_score_hist_splits(spark, gamma_settings_4, params_4, sqlite_con_4):
 def test_score_hist_intsplits(spark, gamma_settings_4, params_4, sqlite_con_4):
 
     """
-  
+
     test integer value in splits variable
     """
 
     dfpd = pd.read_sql("select * from df", sqlite_con_4)
     df = spark.createDataFrame(dfpd)
     df = df.withColumn("tf_adjusted_match_prob", 1.0 - (f.rand() / 10))
-
     res3 = _calc_probability_density(df, spark=spark, buckets=5)
-
+    res3 = pd.DataFrame(res3)
     assert res3.count_rows.count() == 5
     assert res3.binwidth.sum() == 1.0
     assert res3.normalised.sum() == 1.0
@@ -96,7 +95,7 @@ def test_score_hist_intsplits(spark, gamma_settings_4, params_4, sqlite_con_4):
 def test_score_hist_output_json(spark, gamma_settings_4, params_4, sqlite_con_4):
 
     """
-  
+
     test chart exported as dictionary is in fact a valid dictionary
     """
 
@@ -121,15 +120,16 @@ def test_score_hist_output_json(spark, gamma_settings_4, params_4, sqlite_con_4)
 def test_prob_density(spark, gamma_settings_4, params_4, sqlite_con_4):
 
     """
-  
-     a test that checks that probability density is computed correctly. 
-     explicitly define a dataframe with tf_adjusted_match_prob = [0.1, 0.3, 0.5, 0.7, 0.9] 
-     and make sure that the probability density is the correct value (0.2) with all 5 bins
-     
+
+    a test that checks that probability density is computed correctly.
+    explicitly define a dataframe with tf_adjusted_match_prob = [0.1, 0.3, 0.5, 0.7, 0.9]
+    and make sure that the probability density is the correct value (0.2) with all 5 bins
+
     """
 
     dfpd = pd.DataFrame([0.1, 0.3, 0.5, 0.7, 0.9], columns=["tf_adjusted_match_prob"])
     spdf = spark.createDataFrame(dfpd)
 
     res = _calc_probability_density(spdf, spark=spark, buckets=5)
+    res = pd.DataFrame(res)
     assert all(value == pytest.approx(0.2) for value in res.normalised.values)
