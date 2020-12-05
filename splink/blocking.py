@@ -15,18 +15,19 @@ from .check_types import check_types
 
 logger = logging.getLogger(__name__)
 
-def sql_gen_comparison_columns(columns:list) -> str:
+
+def sql_gen_comparison_columns(columns: list) -> str:
     """Build SQL expression that renames columns and sets them aside each other for comparisons
 
-    Args:
-        columns (list): [description]
+     Args:
+         columns (list): [description]
 
-   Examples:
-        >>> sql_gen_comparison_columns(["name", "dob"])
-        "name_l, name_r, dob_l, dob_r"
+    Examples:
+         >>> sql_gen_comparison_columns(["name", "dob"])
+         "name_l, name_r, dob_l, dob_r"
 
-    Returns:
-        SQL expression
+     Returns:
+         SQL expression
     """
 
     l = [f"l.{c} as {c}_l" for c in columns]
@@ -34,6 +35,7 @@ def sql_gen_comparison_columns(columns:list) -> str:
     both = zip(l, r)
     flat_list = [item for sublist in both for item in sublist]
     return ", ".join(flat_list)
+
 
 def _get_columns_to_retain_blocking(settings):
 
@@ -55,6 +57,7 @@ def _get_columns_to_retain_blocking(settings):
 
     return list(columns_to_retain.keys())
 
+
 def _sql_gen_and_not_previous_rules(previous_rules: list):
     if previous_rules:
         # Note the isnull function is important here - otherwise
@@ -66,7 +69,10 @@ def _sql_gen_and_not_previous_rules(previous_rules: list):
     else:
         return ""
 
-def _sql_gen_vertically_concatenate(columns_to_retain: list, table_name_l = "df_l", table_name_r = "df_r"):
+
+def _sql_gen_vertically_concatenate(
+    columns_to_retain: list, table_name_l="df_l", table_name_r="df_r"
+):
 
     retain = ", ".join(columns_to_retain)
 
@@ -80,6 +86,7 @@ def _sql_gen_vertically_concatenate(columns_to_retain: list, table_name_l = "df_
 
     return sql
 
+
 def _vertically_concatenate_datasets(df_l, df_r, settings, spark=None):
 
     columns_to_retain = _get_columns_to_retain_blocking(settings)
@@ -91,6 +98,7 @@ def _vertically_concatenate_datasets(df_l, df_r, settings, spark=None):
     df = spark.sql(sql)
     return df
 
+
 def _sql_gen_block_using_rules(
     link_type: str,
     columns_to_retain: list,
@@ -98,7 +106,7 @@ def _sql_gen_block_using_rules(
     unique_id_col: str = "unique_id",
     table_name_l: str = "df_l",
     table_name_r: str = "df_r",
-    table_name_dedupe: str = "df"
+    table_name_dedupe: str = "df",
 ):
     """Build a SQL statement that implements a list of blocking rules.
 
@@ -120,7 +128,7 @@ def _sql_gen_block_using_rules(
 
     # In both these cases the data is in a single table
     # (In the link_and_dedupe case the two tables have already been vertically concatenated)
-    if link_type in ['dedupe_only', 'link_and_dedupe']:
+    if link_type in ["dedupe_only", "link_and_dedupe"]:
         table_name_l = table_name_dedupe
         table_name_r = table_name_dedupe
 
@@ -134,11 +142,11 @@ def _sql_gen_block_using_rules(
     elif link_type == "dedupe_only":
         where_condition = f"where l.{unique_id_col} < r.{unique_id_col}"
     elif link_type == "link_and_dedupe":
-            # Where a record from left and right are being compared, you want the left record to end up in the _l fields,  and the right record to end up in _r fields.
-            where_condition = f"where (l._source_table < r._source_table) or (l.{unique_id_col} < r.{unique_id_col} and l._source_table = r._source_table)"
+        # Where a record from left and right are being compared, you want the left record to end up in the _l fields,  and the right record to end up in _r fields.
+        where_condition = f"where (l._source_table < r._source_table) or (l.{unique_id_col} < r.{unique_id_col} and l._source_table = r._source_table)"
 
     sqls = []
-    previous_rules =[]
+    previous_rules = []
     for matchkey_number, rule in enumerate(blocking_rules):
         not_previous_rules_statement = _sql_gen_and_not_previous_rules(previous_rules)
         sql = f"""
@@ -159,13 +167,14 @@ def _sql_gen_block_using_rules(
 
     return sql
 
+
 @check_types
 def block_using_rules(
     settings: dict,
     spark: SparkSession,
-    df_l: DataFrame=None,
-    df_r: DataFrame=None,
-    df: DataFrame=None
+    df_l: DataFrame = None,
+    df_r: DataFrame = None,
+    df: DataFrame = None,
 ):
     """Apply a series of blocking rules to create a dataframe of record comparisons. If no blocking rules provided, performs a cartesian join.
 
@@ -180,7 +189,7 @@ def block_using_rules(
         pyspark.sql.dataframe.DataFrame: A dataframe of each record comparison
     """
 
-    if "blocking_rules" not in settings or len(settings["blocking_rules"])==0:
+    if "blocking_rules" not in settings or len(settings["blocking_rules"]) == 0:
         return cartesian_block(settings, spark, df_l, df_r, df)
 
     link_type = settings["link_type"]
@@ -212,7 +221,6 @@ def block_using_rules(
     if link_type == "link_and_dedupe":
         df_concat.unpersist()
 
-
     return df_comparison
 
 
@@ -222,7 +230,7 @@ def _sql_gen_cartesian_block(
     unique_id_col: str = "unique_id",
     table_name_l: str = "df_l",
     table_name_r: str = "df_r",
-    table_name_dedupe: str = "df"
+    table_name_dedupe: str = "df",
 ):
     """Build a SQL statement that performs a cartesian join.
 
@@ -240,7 +248,7 @@ def _sql_gen_cartesian_block(
 
     # In both these cases the data is in a single table
     # (In the link_and_dedupe case the two tables have already been vertically concatenated)
-    if link_type in ['dedupe_only', 'link_and_dedupe']:
+    if link_type in ["dedupe_only", "link_and_dedupe"]:
         table_name_l = table_name_dedupe
         table_name_r = table_name_dedupe
 
@@ -254,12 +262,13 @@ def _sql_gen_cartesian_block(
     elif link_type == "dedupe_only":
         where_condition = f"where l.{unique_id_col} < r.{unique_id_col}"
     elif link_type == "link_and_dedupe":
-            # Where a record from left and right are being compared, you want the left record to end up in the _l fields,  and the right record to end up in _r fields.
-            where_condition = f"where (l._source_table < r._source_table) or (l.{unique_id_col} < r.{unique_id_col} and l._source_table = r._source_table)"
+        # Where a record from left and right are being compared, you want the left record to end up in the _l fields,  and the right record to end up in _r fields.
+        where_condition = f"where (l._source_table < r._source_table) or (l.{unique_id_col} < r.{unique_id_col} and l._source_table = r._source_table)"
 
     sql = f"""
     select
-    {sql_select_expr}
+    {sql_select_expr},
+    '0' as match_key
     from {table_name_l} as l
     cross join {table_name_r} as r
     {where_condition}
@@ -271,9 +280,9 @@ def _sql_gen_cartesian_block(
 def cartesian_block(
     settings: dict,
     spark: SparkSession,
-    df_l: DataFrame=None,
-    df_r: DataFrame=None,
-    df: DataFrame=None
+    df_l: DataFrame = None,
+    df_r: DataFrame = None,
+    df: DataFrame = None,
 ):
     """Apply a cartesian join to create a dataframe of record comparisons.
 
