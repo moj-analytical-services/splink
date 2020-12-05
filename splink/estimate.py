@@ -5,9 +5,11 @@ from .blocking import cartesian_block
 from .gammas import add_gammas
 from .maximisation_step import run_maximisation_step
 from .params import Params
+from .settings import complete_settings_dict
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
+from pyspark.sql.functions import lit
 
 
 def _num_target_rows_to_rows_to_sample(target_rows):
@@ -33,6 +35,7 @@ def estimate_u_values(
 
     # Do not modify settings object provided by user either
     settings = deepcopy(settings)
+    settings = complete_settings_dict(settings, spark)
 
     count_rows = df.count()
     sample_size = _num_target_rows_to_rows_to_sample(target_rows)
@@ -47,7 +50,7 @@ def estimate_u_values(
     df_comparison = cartesian_block(settings, spark, df=df_s)
     df_gammas = add_gammas(df_comparison, settings, spark)
 
-    df_e_product = df_gammas.withColumn("match_probability", f.lit(0.0))
+    df_e_product = df_gammas.withColumn("match_probability", lit(0.0))
 
     params = Params(settings, spark)
     run_maximisation_step(df_e_product, params, spark)
@@ -57,4 +60,4 @@ def estimate_u_values(
         u_probs = new_settings["comparison_columns"][i]["u_probabilities"]
         col["u_probabilities"] = u_probs
 
-    new_settings
+    return new_settings
