@@ -83,4 +83,4 @@ def estimate_u_values(
         u_probs = new_settings["comparison_columns"][i]["u_probabilities"]
         col["u_probabilities"] = u_probs
 
-    return new_settings
+    return orig_settings
