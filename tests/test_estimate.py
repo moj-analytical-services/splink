@@ -2,7 +2,6 @@ from pyspark.sql import Row
 from string import ascii_lowercase
 
 from splink.estimate import estimate_u_values
-from splink_data_generation.generate_data_exact import generate_df_gammas_exact
 from uuid import uuid4
 from splink.case_statements import sql_gen_case_smnt_strict_equality_2
 
