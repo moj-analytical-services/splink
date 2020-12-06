@@ -21,14 +21,16 @@ def _num_target_rows_to_rows_to_sample(target_rows):
     #     Solve t = n(n-1)/2 for n
     #     https://www.wolframalpha.com/input/?i=Solve%5Bt%3Dn+*+%28n+-+1%29+%2F+2%2C+n%5D
     sample_rows = 0.5 * ((8 * target_rows + 1) ** 0.5 + 1)
-    return math.ceil(sample_rows)
+    return sample_rows
 
 
 def estimate_u_values(
     settings: dict,
-    df: DataFrame,
     target_rows: int,
     spark: SparkSession,
+    df: DataFrame = None,
+    df_l: DataFrame = None,
+    df_r: DataFrame = None,
 ):
     # Preserve settings as provided
     orig_settings = deepcopy(settings)
@@ -37,17 +39,38 @@ def estimate_u_values(
     settings = deepcopy(settings)
     settings = complete_settings_dict(settings, spark)
 
-    count_rows = df.count()
-    sample_size = _num_target_rows_to_rows_to_sample(target_rows)
+    if settings["link_type"] == "dedupe_only":
 
-    proportion = sample_size / count_rows
+        count_rows = df.count()
+        sample_size = _num_target_rows_to_rows_to_sample(target_rows)
 
-    if proportion >= 1.0:
-        proportion = 1.0
+        proportion = sample_size / count_rows
 
-    df_s = df.sample(False, proportion)
+        if proportion >= 1.0:
+            proportion = 1.0
 
-    df_comparison = cartesian_block(settings, spark, df=df_s)
+        df_s = df.sample(False, proportion)
+        df_comparison = cartesian_block(settings, spark, df=df_s)
+
+    if settings["link_type"] in ("link_only", "link_and_dedupe"):
+
+        if settings["link_type"] == "link_only":
+            count_rows = df_r.count() + df_l.count()
+            sample_size = target_rows ** 0.5
+            proportion = sample_size / count_rows
+
+        if settings["link_type"] == "link_and_dedupe":
+            count_rows = df_r.count() + df_l.count()
+            sample_size = _num_target_rows_to_rows_to_sample(target_rows)
+            proportion = sample_size / count_rows
+
+        if proportion >= 1.0:
+            proportion = 1.0
+
+        df_r_s = df_r.sample(False, proportion)
+        df_l_s = df_l.sample(False, proportion)
+        df_comparison = cartesian_block(settings, spark, df_l=df_l_s, df_r=df_r_s)
+
     df_gammas = add_gammas(df_comparison, settings, spark)
 
     df_e_product = df_gammas.withColumn("match_probability", lit(0.0))

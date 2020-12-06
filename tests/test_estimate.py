@@ -6,6 +6,8 @@ from splink_data_generation.generate_data_exact import generate_df_gammas_exact
 from uuid import uuid4
 from splink.case_statements import sql_gen_case_smnt_strict_equality_2
 
+import pytest
+
 
 def test_u_estimate(spark):
 
@@ -35,9 +37,16 @@ def test_u_estimate(spark):
                 "case_expression": sql_gen_case_smnt_strict_equality_2("col_2"),
             },
         ],
-        "link_type": "dedupe_only",
+        "link_type": "link_only",
         "unique_id_column_name": "unique_id",
     }
 
-    set = estimate_u_values(settings, df, 1e10, spark)
-    print(set)
+    settings_with_u = estimate_u_values(settings, 1e10, spark, df_l=df, df_r=df)
+
+    u_probs_col_1 = settings_with_u["comparison_columns"][0]["u_probabilities"]
+
+    assert pytest.approx(u_probs_col_1) == [0.75, 0.25]
+
+    u_probs_col_2 = settings_with_u["comparison_columns"][1]["u_probabilities"]
+
+    assert pytest.approx(u_probs_col_2) == [0.95, 0.05]
