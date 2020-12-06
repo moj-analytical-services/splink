@@ -32,6 +32,30 @@ def estimate_u_values(
     df_l: DataFrame = None,
     df_r: DataFrame = None,
 ):
+    """Complete the `u_probabilities` section of the settings object
+    by directly estimating `u_probabilities` from raw data (i.e. without
+    the expectation maximisation algorithm).
+
+    This procedure takes a sample of the data and generates the cartesian
+    product of comparisons.  The validity of the u values rests on the
+    assumption that the probability of two comparison in the cartesian
+    product being a match is very low.  For large datasets, this is typically
+    true.
+
+    Args:
+        settings (dict): splink settings dictionary
+        target_rows (int): The number of rows to generate in the cartesian product.
+            If set too high, you can run out of memory.  Recommend settings to perhaps 1e7.
+        spark (SparkSession): SparkSession object
+        df_l (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
+        df_r (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
+        df (DataFrame, optional): The dataframe to dedupe. Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
+
+    Returns:
+        dict: The input splink settings dictionary with the `u_probabilities` completed with
+              the estimated values
+    """
+
     # Preserve settings as provided
     orig_settings = deepcopy(settings)
 
