@@ -41,7 +41,7 @@ def test_u_estimate(spark):
         "unique_id_column_name": "unique_id",
     }
 
-    settings_with_u = estimate_u_values(settings, 1e10, spark, df_l=df, df_r=df)
+    settings_with_u = estimate_u_values(settings, spark, df_l=df, df_r=df)
 
     u_probs_col_1 = settings_with_u["comparison_columns"][0]["u_probabilities"]
 

@@ -26,11 +26,11 @@ def _num_target_rows_to_rows_to_sample(target_rows):
 
 def estimate_u_values(
     settings: dict,
-    target_rows: int,
     spark: SparkSession,
     df: DataFrame = None,
     df_l: DataFrame = None,
     df_r: DataFrame = None,
+    target_rows: int = 1e6,
 ):
     """Complete the `u_probabilities` section of the settings object
     by directly estimating `u_probabilities` from raw data (i.e. without
@@ -44,12 +44,12 @@ def estimate_u_values(
 
     Args:
         settings (dict): splink settings dictionary
-        target_rows (int): The number of rows to generate in the cartesian product.
-            If set too high, you can run out of memory.  Recommend settings to perhaps 1e7.
         spark (SparkSession): SparkSession object
         df_l (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
         df_r (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
         df (DataFrame, optional): The dataframe to dedupe. Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
+        target_rows (int): The number of rows to generate in the cartesian product.
+            If set too high, you can run out of memory.  Default value 1e6. Recommend settings to perhaps 1e7.
 
     Returns:
         dict: The input splink settings dictionary with the `u_probabilities` completed with
