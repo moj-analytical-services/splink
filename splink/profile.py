@@ -1,12 +1,22 @@
 from copy import deepcopy
+import math
 
-_chart_spec = {
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.session import SparkSession
+
+altair_installed = True
+try:
+    import altair as alt
+except ImportError:
+    altair_installed = False
+
+_outer_chart_spec_freq = {
     "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
     "vconcat": [],
     "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
 }
 
-_inner_chart_spec = {
+_inner_chart_spec_freq = {
     "hconcat": [
         {
             "data": {"values": None},
@@ -48,8 +58,28 @@ _inner_chart_spec = {
 }
 
 
-def _get_df_freq(df, col_name, spark):
+def _get_df_freq(df, col_name, spark, explode_arrays=True):
+
+    data_types = dict(df.dtypes)
     df.createOrReplaceTempView("df")
+
+    if data_types[col_name].startswith("array"):
+        if explode_arrays:
+            sql = f"""
+            select explode({col_name}) as {col_name}
+            from df
+            """
+            df = spark.sql(sql)
+            df.createOrReplaceTempView("df")
+        else:
+            sql = f"""
+            select concat_ws(', ', {col_name}) as {col_name}
+            from df
+            where concat_ws(', ', {col_name}) != ''
+            """
+            df = spark.sql(sql)
+            df.createOrReplaceTempView("df")
+
     sql = f"""
     select {col_name} as value, count({col_name}) as count
     from df
@@ -99,22 +129,54 @@ def _get_top_n(df_freq, col_name, n=30):
     return rows_list
 
 
-def _get_inner_chart_spec(percentile_data, top_n_data, col_name):
+def _get_inner_chart_spec_freq(percentile_data, top_n_data, col_name):
 
-    iner = deepcopy(_chart_spec)
+    inner_spec = deepcopy(_inner_chart_spec_freq)
+    inner_spec["hconcat"][0]["data"]["values"] = percentile_data
+    inner_spec["hconcat"][0][
+        "title"
+    ] = f"Distribution of counts of values in column {col_name}"
+    inner_spec["hconcat"][1]["data"]["values"] = top_n_data
+    return inner_spec
 
 
-def freq_skew_chart(cols, df):
+def freq_skew_chart(
+    cols: list,
+    df: DataFrame,
+    spark: SparkSession,
+    top_n: int = 30,
+    explode_arrays: bool = True,
+):
+    """Create a chart of the frequency distribution of values in the given cols
+
+    Args:
+        cols (list): A list of columns to profile, e.g. ['first_name', 'surname']
+        df (DataFrame): A dataframe containing the data to profile, must contain columns
+            as specified in cols
+        spark (SparkSession): SparkSession object
+        top_n (int, optional): The number of most frequently occurring values to include
+            in the charts. Defaults to 30.
+        explode_arrays (bool, optional): Where array columns are specified, whether to
+            explode them.  When False, `concat_ws` is used . Defaults to True.
+
+    Returns:
+        if Altair is installed returns a plot of value frequencies. if not,
+        returns the vega lite chart spec as a dictionary
+    """
 
     inner_charts = []
     for col_name in cols:
-        df_freq = _get_df_freq(df, col_name)
+        df_freq = _get_df_freq(df, col_name, spark, explode_arrays=explode_arrays)
         percentile_rows = _get_percentiles(df_freq, col_name)
-        top_n_rows = _get_top_n(df_freq, col_name)
-        inner_chart = _get_inner_chart_spec(percentile_rows, top_n_rows, col_name)
+        top_n_rows = _get_top_n(df_freq, col_name, n=top_n)
+        inner_chart = _get_inner_chart_spec_freq(percentile_rows, top_n_rows, col_name)
         inner_charts.append(inner_chart)
 
-    return
+    outer_spec = deepcopy(_outer_chart_spec_freq)
 
+    outer_spec["vconcat"] = inner_charts
 
-freq_skew_chart(["first_name"], df)
+    if altair_installed:
+        return alt.Chart.from_dict(outer_spec)
+    else:
+        return outer_spec
