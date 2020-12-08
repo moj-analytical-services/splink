@@ -137,6 +137,8 @@ def _get_inner_chart_spec_freq(percentile_data, top_n_data, col_name):
         "title"
     ] = f"Distribution of counts of values in column {col_name}"
     inner_spec["hconcat"][1]["data"]["values"] = top_n_data
+    inner_spec["hconcat"][1]["title"] = f"Top {len(top_n_data)} values by value count"
+
     return inner_spec
 
 
