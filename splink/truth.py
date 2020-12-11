@@ -494,11 +494,11 @@ def truth_space_table(
     select
     *,
     {score_colname} as truth_threshold,
-    case when clerical_match_score > {threshold_actual} then 1
+    case when clerical_match_score >= {threshold_actual} then 1
     else 0
     end
     as c_P,
-    case when clerical_match_score > {threshold_actual} then 0
+    case when clerical_match_score >= {threshold_actual} then 0
     else 1
     end
     as c_N
@@ -588,7 +588,6 @@ def roc_chart(
     x_domain: list = None,
     width: int = 400,
     height: int = 400,
-    truth_space_fn=truth_space_table,
 ):
     """Create a ROC chart from labelled data
 
@@ -639,7 +638,7 @@ def roc_chart(
         "width": width,
     }
 
-    data = truth_space_fn(
+    data = truth_space_table(
         df_labels_with_splink_scores, spark, threshold_actual=threshold_actual
     ).toPandas()
 
