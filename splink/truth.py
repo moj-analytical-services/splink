@@ -393,7 +393,7 @@ def df_e_with_truth_categories(
     return spark.sql(sql)
 
 
-def truth_space_table_old(
+def _truth_space_table_old(
     df_labels_with_splink_scores: DataFrame,
     spark: SparkSession,
     threshold_actual: float = 0.5,
