@@ -91,3 +91,30 @@ chart = alt.Chart(chart_data).mark_bar().encode(
             anchor='middle'
         )
 chart
+
+
+
+
+def get_chart(percentile_data, top_n_data, col_name):
+
+    data = alt.Data(values=percentile_data)
+
+    c_left = alt.Chart(data).mark_line().encode(
+        x=alt.X('percentile:Q', sort='descending', title='Percentile'),
+        y=alt.Y('token_count:Q', title='Count of values'),
+    ).properties(
+        title=f'Distribution of counts of values in column {col_name}',
+
+    )
+
+    data = alt.Data(values=top_n_data)
+
+    c_right = alt.Chart(data).mark_bar().encode(
+        x=alt.X(f'value:N', sort='-y', title=None),
+        y=alt.Y('count:Q', title='Value count')
+    ).properties(
+    title='Top 20 values by value count',
+
+)
+
+    return alt.hconcat(c_left, c_right)
