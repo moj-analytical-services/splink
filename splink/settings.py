@@ -129,13 +129,15 @@ def _complete_case_expression(col_settings, spark):
         case_fn = _get_default_case_statement_fn(
             default_case_statements, data_type, levels
         )
-        col_settings["case_expression"] = case_fn(col_name_for_case_fn, col_name_for_case_fn)
-    else:
-        _check_no_obvious_problem_with_case_statement(
-            col_settings["case_expression"]
+        col_settings["case_expression"] = case_fn(
+            col_name_for_case_fn, col_name_for_case_fn
         )
+    else:
+        _check_no_obvious_problem_with_case_statement(col_settings["case_expression"])
         old_case_stmt = col_settings["case_expression"]
-        new_case_stmt = _add_as_gamma_to_case_statement(old_case_stmt, col_name_for_case_fn)
+        new_case_stmt = _add_as_gamma_to_case_statement(
+            old_case_stmt, col_name_for_case_fn
+        )
         col_settings["case_expression"] = new_case_stmt
 
 
@@ -147,9 +149,9 @@ def _complete_probabilities(col_settings: dict, setting_name: str):
         setting_name (str): Either 'm_probabilities' or 'u_probabilities'
 
     """
-    if setting_name == 'm_probabilities':
+    if setting_name == "m_probabilities":
         letter = "m"
-    elif setting_name == 'u_probabilities':
+    elif setting_name == "u_probabilities":
         letter = "u"
 
     if setting_name not in col_settings:
@@ -189,19 +191,20 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
         "retain_matching_columns",
         "retain_intermediate_calculation_columns",
         "max_iterations",
-        "proportion_of_matches"
+        "proportion_of_matches",
     ]
     for key in non_col_keys:
         if key not in settings_dict:
             settings_dict[key] = _get_default_value(key, is_column_setting=False)
 
     if "blocking_rules" in settings_dict:
-        if len(settings_dict["blocking_rules"])==0:
+        if len(settings_dict["blocking_rules"]) == 0:
             warnings.warn(
                 "You have not specified any blocking rules, meaning all comparisons between the "
                 "input dataset(s) will be generated and blocking will not be used."
                 "For large input datasets, this will generally be computationally intractable "
-                "because it will generate comparisons equal to the number of rows squared.")
+                "because it will generate comparisons equal to the number of rows squared."
+            )
 
     gamma_counter = 0
     c_cols = settings_dict["comparison_columns"]
@@ -214,6 +217,8 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
             "num_levels",
             "data_type",
             "term_frequency_adjustments",
+            "fix_u_probabilities",
+            "fix_m_probabilities",
         ]
 
         for key in keys_for_defaults:
@@ -229,4 +234,3 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
         gamma_counter += 1
 
     return settings_dict
-
