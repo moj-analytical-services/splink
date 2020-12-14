@@ -297,7 +297,7 @@ class Params:
             ].values():
                 level_value["probability"] = None
 
-    def _save_params_to_iteration_history(self):
+    def save_params_to_iteration_history(self):
         """
         Take current params and
         """
@@ -357,7 +357,7 @@ class Params:
         Reset values
         Then update the parameters from the dataframe
         """
-        self._save_params_to_iteration_history()
+
         self._reset_param_values_to_none()
         self._populate_params(lambda_value, pi_df_collected)
         self.iteration += 1
