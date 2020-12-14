@@ -21,7 +21,6 @@ from .chart_definitions import (
     multi_chart_template,
 )
 from .check_types import check_types
-import random
 import warnings
 
 altair_installed = True
@@ -55,12 +54,11 @@ class Params:
 
         self.iteration = 1
 
+        self.settings_original = copy.deepcopy(settings)
         self.settings = complete_settings_dict(settings, spark)
         self.params = {"λ": settings["proportion_of_matches"], "π": {}}
 
         self.log_likelihood_exists = False
-
-        self.real_params = None
 
         self._generate_param_dict()
 
@@ -70,6 +68,35 @@ class Params:
 
     def describe_gammas(self):
         return {k: i["desc"] for k, i in self.params["π"].items()}
+
+    def _col_dict_to_prob_dists(self, col_dict):
+
+        prob_dist_match = {}
+        prob_dist_non_match = {}
+
+        probs_m = col_dict["m_probabilities"]
+        probs_nm = col_dict["u_probabilities"]
+
+        s = sum(probs_m)
+        probs_m = [p / s for p in probs_m]
+
+        s = sum(probs_nm)
+        probs_nm = [p / s for p in probs_nm]
+
+        for level_num in range(col_dict["num_levels"]):
+            prob_dist_match[f"level_{level_num}"] = {
+                "value": level_num,
+                "probability": probs_m[level_num],
+            }
+            prob_dist_non_match[f"level_{level_num}"] = {
+                "value": level_num,
+                "probability": probs_nm[level_num],
+            }
+
+        return {
+            "prob_dist_match": prob_dist_match,
+            "prob_dist_non_match": prob_dist_non_match,
+        }
 
     def _generate_param_dict(self):
         """Uses the splink settings object to generate a parameter dictionary"""
@@ -99,32 +126,21 @@ class Params:
             num_levels = col_dict["num_levels"]
             self.params["π"][f"gamma_{col_name}"]["num_levels"] = num_levels
 
-            prob_dist_match = {}
-            prob_dist_non_match = {}
+            prob_dists = self._col_dict_to_prob_dists(col_dict)
 
-            probs_m = col_dict["m_probabilities"]
-            probs_nm = col_dict["u_probabilities"]
+            self.params["π"][f"gamma_{col_name}"].update(prob_dists)
 
-            s = sum(probs_m)
-            probs_m = [p / s for p in probs_m]
+            self.params["π"][f"gamma_{col_name}"]["fix_match_probs"] = col_dict[
+                "fix_m_probabilities"
+            ]
+            self.params["π"][f"gamma_{col_name}"]["fix_non_match_probs"] = col_dict[
+                "fix_u_probabilities"
+            ]
 
-            s = sum(probs_nm)
-            probs_nm = [p / s for p in probs_nm]
-
-            for level_num in range(num_levels):
-                prob_dist_match[f"level_{level_num}"] = {
-                    "value": level_num,
-                    "probability": probs_m[level_num],
-                }
-                prob_dist_non_match[f"level_{level_num}"] = {
-                    "value": level_num,
-                    "probability": probs_nm[level_num],
-                }
-
-            self.params["π"][f"gamma_{col_name}"]["prob_dist_match"] = prob_dist_match
-            self.params["π"][f"gamma_{col_name}"][
-                "prob_dist_non_match"
-            ] = prob_dist_non_match
+    def _get_col_from_original_settings(self, col_name):
+        for col in self.settings_original["comparison_columns"]:
+            if col["col_name"] == col_name:
+                return col
 
     def _set_pi_value(self, gamma_str, level_int, match_str, prob_float):
         """
@@ -289,6 +305,12 @@ class Params:
         if "log_likelihood" in self.params:
             self.log_likelihood_exists = True
 
+    def _get_settings_col_dict_from_pi_key(self, gamma_key):
+        col_name = gamma_key["column_name"]
+        for c in self.settings["comparison_columns"]:
+            if c["col_name"] == col_name:
+                return c
+
     def _populate_params(self, lambda_value, pi_df_collected):
         """
         Take results of sql query that computes updated values
@@ -303,6 +325,7 @@ class Params:
                 "prob_dist_match"
             ].items():
                 level_value["probability"] = 0
+
             for level_key, level_value in self.params["π"][gamma_str][
                 "prob_dist_non_match"
             ].items():
@@ -313,9 +336,19 @@ class Params:
             level_int = row_dict["gamma_value"]
             match_prob = row_dict["new_probability_match"]
             non_match_prob = row_dict["new_probability_non_match"]
+
             if level_int != -1:
                 self._set_pi_value(gamma_str, level_int, "match", match_prob)
                 self._set_pi_value(gamma_str, level_int, "non_match", non_match_prob)
+
+        # Where probabilities are fixed by user, set them to the original probabilities
+        for pi_item in self.params["π"].values():
+            settings_col_dict = self._get_settings_col_dict_from_pi_key(pi_item)
+            prob_dists = self._col_dict_to_prob_dists(settings_col_dict)
+            if pi_item["fix_match_probs"]:
+                pi_item["prob_dist_match"] = prob_dists["prob_dist_match"]
+            if pi_item["fix_non_match_probs"]:
+                pi_item["prob_dist_non_match"] = prob_dists["prob_dist_non_match"]
 
     def _update_params(self, lambda_value, pi_df_collected):
         """
@@ -333,6 +366,7 @@ class Params:
         p_dict["current_params"] = self.params
         p_dict["historical_params"] = self.param_history
         p_dict["settings"] = self.settings
+        p_dict["settings_original"] = self.settings_original
 
         return p_dict
 
@@ -412,8 +446,6 @@ class Params:
 
     def lambda_iteration_chart(self):  # pragma: no cover
         data = self._iteration_history_df_lambdas()
-        if self.real_params:
-            data.append({"λ": self.real_params["λ"], "iteration": "real_param"})
 
         lambda_iteration_chart_def["data"]["values"] = data
 
@@ -668,13 +700,19 @@ def load_params_from_json(path):
 def load_params_from_dict(param_dict):
 
     keys = set(param_dict.keys())
-    expected_keys = {"current_params", "settings", "historical_params"}
+    expected_keys = {
+        "current_params",
+        "settings_original",
+        "settings",
+        "historical_params",
+    }
 
     if keys == expected_keys:
         p = Params(settings=param_dict["settings"], spark=None)
 
         p.params = param_dict["current_params"]
         p.param_history = param_dict["historical_params"]
+        p.settings_original = param_dict["settings_original"]
     else:
         raise ValueError("Your saved params seem to be corrupted")
 

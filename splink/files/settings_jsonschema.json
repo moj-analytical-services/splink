@@ -234,6 +234,13 @@
             ],
             "minItems": 2
           },
+          "fix_m_probabilities": {
+            "$id": "#/properties/comparison_columns/items/properties/fix_m_probabilities",
+            "type": "boolean",
+            "default": false,
+            "title": "If true, prevent the m probabilities for this column being updated during iterations of the EM algorithm. ",
+            "description": " Warning: Setting this to true may prevent convergence"
+          },
           "u_probabilities": {
             "$id": "#/properties/comparison_columns/items/properties/u_probabilities",
             "type": "array",
@@ -251,6 +258,13 @@
               ]
             ],
             "minItems": 2
+          },
+          "fix_u_probabilities": {
+            "$id": "#/properties/comparison_columns/items/properties/fix_u_probabilities",
+            "type": "boolean",
+            "default": false,
+            "title": "If true, prevent the u probabilities for this column being updated during iterations of the EM algorithm. ",
+            "description": " Warning: Setting this to true may prevent convergence"
           },
           "term_frequency_adjustments": {
             "$id": "#/properties/comparison_columns/items/properties/term_frequency_adjusments",
