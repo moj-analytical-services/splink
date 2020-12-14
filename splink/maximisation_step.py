@@ -13,10 +13,10 @@ from .logging_utils import _format_sql
 from .params import Params
 
 
-def _sql_gen_new_lambda(table_name = "df_intermediate"):
+def _sql_gen_new_lambda(table_name="df_intermediate"):
 
     sql = f"""
-    select cast(sum(expected_num_matches)/sum(num_rows) as float) as new_lambda
+    select cast(sum(expected_num_matches)/sum(num_rows) as double) as new_lambda
     from {table_name}
     """
 
@@ -31,7 +31,7 @@ def _get_new_lambda(df_intermediate, spark):
     This can then be used in future iterations.
     """
     df_intermediate.createOrReplaceTempView("df_intermediate")
-    sql = _sql_gen_new_lambda(table_name = "df_intermediate")
+    sql = _sql_gen_new_lambda(table_name="df_intermediate")
 
     new_lambda = spark.sql(sql).collect()[0][0]
     logger.debug(_format_sql(sql))
@@ -65,8 +65,8 @@ def _sql_gen_pi_df(params, table_name="df_intermediate"):
     for gamma_str in params._gamma_cols:
         sql = f"""
         select {gamma_str} as gamma_value,
-        cast(sum(expected_num_matches)/(select sum(expected_num_matches) from {table_name} where {gamma_str} != -1) as float) as new_probability_match,
-        cast(sum(expected_num_non_matches)/(select sum(expected_num_non_matches) from {table_name} where {gamma_str} != -1) as float) as new_probability_non_match,
+        cast(sum(expected_num_matches)/(select sum(expected_num_matches) from {table_name} where {gamma_str} != -1) as double) as new_probability_match,
+        cast(sum(expected_num_non_matches)/(select sum(expected_num_non_matches) from {table_name} where {gamma_str} != -1) as double) as new_probability_non_match,
         '{gamma_str}' as gamma_col
         from {table_name}
         group by {gamma_str}
@@ -76,7 +76,6 @@ def _sql_gen_pi_df(params, table_name="df_intermediate"):
     sql = "\nunion all\n".join(sqls)
 
     return sql
-
 
 
 def _get_new_pi_df(df_intermediate, spark, params):
@@ -90,8 +89,7 @@ def _get_new_pi_df(df_intermediate, spark, params):
     return [l.asDict() for l in levels]
 
 
-
-def run_maximisation_step(df_e: DataFrame, params:Params, spark:SparkSession):
+def run_maximisation_step(df_e: DataFrame, params: Params, spark: SparkSession):
     """Compute new parameters and save them in the params object
 
     Note that the params object will be updated in-place by this function
@@ -110,7 +108,7 @@ def run_maximisation_step(df_e: DataFrame, params:Params, spark:SparkSession):
     df_intermediate.createOrReplaceTempView("df_intermediate")
     df_intermediate.persist()
 
-    new_lambda = _get_new_lambda(df_intermediate,  spark)
+    new_lambda = _get_new_lambda(df_intermediate, spark)
     pi_df_collected = _get_new_pi_df(df_intermediate, spark, params)
 
     params._update_params(new_lambda, pi_df_collected)

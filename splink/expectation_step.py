@@ -188,8 +188,8 @@ def _sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_pro
     denom_part = " * ".join([f"prob_{g}_non_match" for g in gamma_cols])
 
     λ = params.params["λ"]
-    castλ = f"cast({λ} as double)"
-    castoneminusλ = f"cast({1-λ} as double)"
+    castλ = f"{λ}D"
+    castoneminusλ = f"{1-λ}D"
     match_prob_expression = f"({castλ} * {numerator})/(( {castλ} * {numerator}) + ({castoneminusλ} * {denom_part})) as match_probability"
 
     select_expr = _column_order_df_e_select_expr(settings)
@@ -226,9 +226,9 @@ def _sql_gen_gamma_case_when(gamma_str, match, params):
     levels = params.params["π"][gamma_str][dist]
 
     case_statements = []
-    case_statements.append(f"WHEN {gamma_str} = -1 THEN cast(1 as double)")
+    case_statements.append(f"WHEN {gamma_str} = -1 THEN 1.0D")
     for level in levels.values():
-        case_stmt = f"when {gamma_str} = {level['value']} then cast({level['probability']:.35f} as double)"
+        case_stmt = f"when {gamma_str} = {level['value']} then {level['probability']}D"
         case_statements.append(case_stmt)
 
     case_statements = "\n".join(case_statements)
@@ -264,7 +264,7 @@ def _calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
     df_with_gamma_probs.createOrReplaceTempView("df_with_gamma_probs")
     sql = f"""
     select *,
-    cast({log_likelihood} as double) as  log_likelihood,
+    {log_likelihood}D as log_likelihood,
     {match_prob_expression}
 
     from df_with_gamma_probs

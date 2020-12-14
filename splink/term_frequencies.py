@@ -47,20 +47,27 @@ def sql_gen_bayes_string(probs):
     (  {probs_multiplied} + {inverse_probs_multiplied} )
     """
 
+
 # See https://github.com/moj-analytical-services/splink/pull/107
 def sql_gen_generate_adjusted_lambda(column_name, params, table_name="df_e"):
 
     # Get 'average' param for matching on this column
     max_level = params.params["π"][f"gamma_{column_name}"]["num_levels"] - 1
-    m = params.params["π"][f"gamma_{column_name}"]["prob_dist_match"][f"level_{max_level}"]["probability"]
-    u = params.params["π"][f"gamma_{column_name}"]["prob_dist_non_match"][f"level_{max_level}"]["probability"]
-    
-# ensure average adj calculation doesnt divide by zero (see issue 118)
-    if ( math.isclose((m+u), 0.0, rel_tol=1e-9, abs_tol=0.0)):
+    m = params.params["π"][f"gamma_{column_name}"]["prob_dist_match"][
+        f"level_{max_level}"
+    ]["probability"]
+    u = params.params["π"][f"gamma_{column_name}"]["prob_dist_non_match"][
+        f"level_{max_level}"
+    ]["probability"]
+
+    # ensure average adj calculation doesnt divide by zero (see issue 118)
+    if math.isclose((m + u), 0.0, rel_tol=1e-9, abs_tol=0.0):
         average_adjustment = 0.5
-        warnings.warn( f" Is most of column {column_name} or all of it comprised of NULL values??? There are levels where no comparisons are found.")
+        warnings.warn(
+            f" Is most of column {column_name} or all of it comprised of NULL values??? There are levels where no comparisons are found."
+        )
     else:
-        average_adjustment = m/(m+u)
+        average_adjustment = m / (m + u)
 
     sql = f"""
     with temp_adj as
@@ -132,13 +139,14 @@ def sql_gen_compute_final_group_membership_prob_from_adjustments(
 
 import warnings
 
+
 @check_types
 def make_adjustment_for_term_frequencies(
     df_e: DataFrame,
     params: Params,
     settings: dict,
     spark: SparkSession,
-    retain_adjustment_columns: bool = False
+    retain_adjustment_columns: bool = False,
 ):
 
     df_e.createOrReplaceTempView("df_e")
@@ -176,4 +184,3 @@ def make_adjustment_for_term_frequencies(
             df = df.drop(c + "_tf_adj")
 
     return df
-
