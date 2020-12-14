@@ -53,7 +53,7 @@ class Params:
 
         self.param_history = []
 
-        self.iteration = 1
+        self.iteration = 0
 
         self.settings_original = copy.deepcopy(settings)
         self.settings = complete_settings_dict(settings, spark)
@@ -262,14 +262,14 @@ class Params:
         data = []
         for it_num, param_value in enumerate(self.param_history):
             data.extend(self._convert_params_dict_to_dataframe(param_value, it_num))
-        data.extend(self._convert_params_dict_to_dataframe(self.params, it_num + 1))
+
         return data
 
     def _iteration_history_df_lambdas(self):
         data = []
         for it_num, param_value in enumerate(self.param_history):
             data.append({"λ": param_value["λ"], "iteration": it_num})
-        data.append({"λ": self.params["λ"], "iteration": it_num + 1})
+
         return data
 
     def _iteration_history_df_log_likelihood(self):
@@ -278,9 +278,7 @@ class Params:
             data.append(
                 {"log_likelihood": param_value["log_likelihood"], "iteration": it_num}
             )
-        data.append(
-            {"log_likelihood": self.params["log_likelihood"], "iteration": it_num + 1}
-        )
+
         return data
 
     def _reset_param_values_to_none(self):
@@ -297,7 +295,7 @@ class Params:
             ].values():
                 level_value["probability"] = None
 
-    def _save_params_to_iteration_history(self):
+    def save_params_to_iteration_history(self):
         """
         Take current params and
         """
@@ -357,10 +355,10 @@ class Params:
         Reset values
         Then update the parameters from the dataframe
         """
-        self._save_params_to_iteration_history()
+
         self._reset_param_values_to_none()
         self._populate_params(lambda_value, pi_df_collected)
-        self.iteration += 1
+
 
     def _to_dict(self):
         p_dict = {}

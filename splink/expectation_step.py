@@ -22,12 +22,15 @@ from .gammas import _add_left_right
 from .params import Params
 from .check_types import check_types
 
+
 @check_types
-def run_expectation_step(df_with_gamma: DataFrame,
-                         params: Params,
-                         settings: dict,
-                         spark: SparkSession,
-                         compute_ll=False):
+def run_expectation_step(
+    df_with_gamma: DataFrame,
+    params: Params,
+    settings: dict,
+    spark: SparkSession,
+    compute_ll=False,
+):
     """Run the expectation step of the EM algorithm described in the fastlink paper:
     http://imai.fas.harvard.edu/research/files/linkage.pdf
 
@@ -40,8 +43,7 @@ def run_expectation_step(df_with_gamma: DataFrame,
 
       Returns:
           DataFrame: Spark dataframe with a match_probability column
-      """
-
+    """
 
     sql = _sql_gen_gamma_prob_columns(params, settings)
 
@@ -63,6 +65,10 @@ def run_expectation_step(df_with_gamma: DataFrame,
     df_e = spark.sql(sql)
 
     df_e.createOrReplaceTempView("df_e")
+
+    params.save_params_to_iteration_history()
+    params.iteration += 1
+
     return df_e
 
 
@@ -79,7 +85,6 @@ def _sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
             alias = _case_when_col_alias(gamma_str, match)
             case_statement = _sql_gen_gamma_case_when(gamma_str, match, params)
             case_statements[alias] = case_statement
-
 
     # Column order for case statement.  We want orig_col_l, orig_col_r, gamma_orig_col, prob_gamma_u, prob_gamma_m
     select_cols = OrderedDict()
@@ -104,21 +109,24 @@ def _sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
 
             select_cols["gamma_" + col_name] = "gamma_" + col_name
 
-        select_cols[f"prob_gamma_{col_name}_non_match"] = case_statements[f"prob_gamma_{col_name}_non_match"]
-        select_cols[f"prob_gamma_{col_name}_match"] = case_statements[f"prob_gamma_{col_name}_match"]
+        select_cols[f"prob_gamma_{col_name}_non_match"] = case_statements[
+            f"prob_gamma_{col_name}_non_match"
+        ]
+        select_cols[f"prob_gamma_{col_name}_match"] = case_statements[
+            f"prob_gamma_{col_name}_match"
+        ]
 
-    if settings["link_type"] == 'link_and_dedupe':
+    if settings["link_type"] == "link_and_dedupe":
         select_cols = _add_left_right(select_cols, "_source_table")
 
     for c in settings["additional_columns_to_retain"]:
         select_cols = _add_left_right(select_cols, c)
 
-    if 'blocking_rules' in settings:
+    if "blocking_rules" in settings:
         if len(settings["blocking_rules"]) > 0:
-            select_cols['match_key'] = 'match_key'
+            select_cols["match_key"] = "match_key"
 
-    select_expr =  ", ".join(select_cols.values())
-
+    select_expr = ", ".join(select_cols.values())
 
     sql = f"""
     -- We use case statements for these lookups rather than joins for performance and simplicity
@@ -153,24 +161,25 @@ def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
             select_cols["gamma_" + col_name] = "gamma_" + col_name
 
         if settings["retain_intermediate_calculation_columns"]:
-            select_cols[f"prob_gamma_{col_name}_non_match"] = f"prob_gamma_{col_name}_non_match"
+            select_cols[
+                f"prob_gamma_{col_name}_non_match"
+            ] = f"prob_gamma_{col_name}_non_match"
             select_cols[f"prob_gamma_{col_name}_match"] = f"prob_gamma_{col_name}_match"
             if tf_adj_cols:
                 if col["term_frequency_adjustments"]:
-                    select_cols[col_name+"_tf_adj"] =  col_name+"_tf_adj"
+                    select_cols[col_name + "_tf_adj"] = col_name + "_tf_adj"
 
-
-
-    if settings["link_type"] == 'link_and_dedupe':
+    if settings["link_type"] == "link_and_dedupe":
         select_cols = _add_left_right(select_cols, "_source_table")
 
     for c in settings["additional_columns_to_retain"]:
         select_cols = _add_left_right(select_cols, c)
 
-    if 'blocking_rules' in settings:
+    if "blocking_rules" in settings:
         if len(settings["blocking_rules"]) > 0:
-            select_cols['match_key'] = 'match_key'
+            select_cols["match_key"] = "match_key"
     return ", ".join(select_cols.values())
+
 
 def _sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_probs"):
     gamma_cols = params._gamma_cols
@@ -178,7 +187,7 @@ def _sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_pro
     numerator = " * ".join([f"prob_{g}_match" for g in gamma_cols])
     denom_part = " * ".join([f"prob_{g}_non_match" for g in gamma_cols])
 
-    λ = params.params['λ']
+    λ = params.params["λ"]
     castλ = f"cast({λ} as double)"
     castoneminusλ = f"cast({1-λ} as double)"
     match_prob_expression = f"({castλ} * {numerator})/(( {castλ} * {numerator}) + ({castoneminusλ} * {denom_part})) as match_probability"
@@ -192,6 +201,7 @@ def _sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_pro
 
     return sql
 
+
 def _case_when_col_alias(gamma_str, match):
 
     if match == 1:
@@ -200,6 +210,7 @@ def _case_when_col_alias(gamma_str, match):
         name_suffix = "_non_match"
 
     return f"prob_{gamma_str}{name_suffix}"
+
 
 def _sql_gen_gamma_case_when(gamma_str, match, params):
     """
@@ -217,8 +228,8 @@ def _sql_gen_gamma_case_when(gamma_str, match, params):
     case_statements = []
     case_statements.append(f"WHEN {gamma_str} = -1 THEN cast(1 as double)")
     for level in levels.values():
-            case_stmt = f"when {gamma_str} = {level['value']} then cast({level['probability']:.35f} as double)"
-            case_statements.append(case_stmt)
+        case_stmt = f"when {gamma_str} = {level['value']} then cast({level['probability']:.35f} as double)"
+        case_statements.append(case_stmt)
 
     case_statements = "\n".join(case_statements)
 
@@ -238,7 +249,7 @@ def _calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
 
     gamma_cols = params._gamma_cols
 
-    λ = params.params['λ']
+    λ = params.params["λ"]
 
     match_prob = " * ".join([f"prob_{g}_match" for g in gamma_cols])
     match_prob = f"({λ} * {match_prob})"
