@@ -19,6 +19,7 @@ from .chart_definitions import (
     bayes_factor_chart_def,
     bayes_factor_history_chart_def,
     multi_chart_template,
+    pi_iteration_chart_def,
 )
 from .check_types import check_types
 import warnings
@@ -554,6 +555,17 @@ class Params:
             return alt.Chart.from_dict(combined_charts)
         else:
             return combined_charts
+
+    def pi_iteration_chart(self):  # pragma: no cover
+
+        data = self._iteration_history_df_gammas()
+
+        pi_iteration_chart_def["data"]["values"] = data
+
+        if altair_installed:
+            return alt.Chart.from_dict(pi_iteration_chart_def)
+        else:
+            return pi_iteration_chart_def
 
     def all_charts_write_html_file(
         self, filename="splink_charts.html", overwrite=False
