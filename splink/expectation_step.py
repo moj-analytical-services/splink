@@ -67,6 +67,7 @@ def run_expectation_step(
     df_e.createOrReplaceTempView("df_e")
 
     params.save_params_to_iteration_history()
+    params.iteration += 1
 
     return df_e
 
