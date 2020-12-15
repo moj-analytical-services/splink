@@ -74,11 +74,35 @@ _inner_chart_spec_freq = {
             },
             "title": "Top 20 values by value count",
         },
+        {
+            "data": {"values": None},
+            "mark": "bar",
+            "encoding": {
+                "x": {
+                    "type": "nominal",
+                    "field": "value",
+                    "sort": "-y",
+                    "title": None,
+                },
+                "y": {
+                    "type": "quantitative",
+                    "field": "value_count",
+                    "title": "Value count",
+                },
+                "tooltip": [
+                    {"field": "value", "type": "nominal"},
+                    {"field": "value_count", "type": "quantitative"},
+                    {"field": "total_non_null_rows", "type": "quantitative"},
+                    {"field": "total_rows_inc_nulls", "type": "quantitative"},
+                ],
+            },
+            "title": "Bottom 20 values by value count",
+        },
     ]
 }
 
 
-def _get_inner_chart_spec_freq(percentile_data, top_n_data, col_name):
+def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, col_name):
 
     inner_spec = deepcopy(_inner_chart_spec_freq)
 
@@ -97,8 +121,17 @@ def _get_inner_chart_spec_freq(percentile_data, top_n_data, col_name):
     ] = f"Distribution of counts of values in column {col_name}"
 
     inner_spec["hconcat"][0]["title"]["subtitle"] = sub
+
     inner_spec["hconcat"][1]["data"]["values"] = top_n_data
     inner_spec["hconcat"][1]["title"] = f"Top {len(top_n_data)} values by value count"
+
+    inner_spec["hconcat"][2]["data"]["values"] = bottom_n_data
+    inner_spec["hconcat"][2][
+        "title"
+    ] = f"Bottom {len(bottom_n_data)} values by value count"
+
+    max_val = top_n_data[0]["value_count"]
+    inner_spec["hconcat"][2]["encoding"]["y"]["scale"] = {"domain": [0, max_val]}
 
     return inner_spec
 
@@ -110,7 +143,7 @@ def _group_name(cols_or_exprs):
     return group_name
 
 
-def _non_array_group(cols_or_exprs, table_name, group_sort_order="desc"):
+def _non_array_group(cols_or_exprs, table_name):
     """
     Generate a sql expression that will yield a table with value counts grouped by the provided
     column expression e.g. "dmetaphone(name)" or combination of column expression
@@ -157,14 +190,14 @@ def _non_array_group(cols_or_exprs, table_name, group_sort_order="desc"):
     from {table_name}
     where {case_expr} is not null
     group by {case_expr}
-    order by group_name, count(*) {group_sort_order}
+    order by group_name, count(*) desc
     )
     """
 
     return sql
 
 
-def _array_group(col, df, spark, group_sort_order="desc"):
+def _array_group(col, df, spark):
     """
     Generate a sql expression that will yield a table with value counts grouped by the provided
     column expression e.g. "dmetaphone(name)" or combination of column expression
@@ -196,7 +229,7 @@ def _array_group(col, df, spark, group_sort_order="desc"):
     from df_exp
     where value is not null
     group by value, group_name
-    order by group_name, count(*) {group_sort_order}
+    order by group_name, count(*) desc
     """
 
     return spark.sql(sql)
@@ -280,7 +313,9 @@ def _get_df_percentiles(df_all_column_value_frequencies, spark):
     return df_percentiles
 
 
-def _get_df_top_n(df_all_column_value_frequencies, spark, limit=20):
+def _get_df_top_bottom_n(
+    df_all_column_value_frequencies, spark, limit=20, value_order="desc"
+):
     """Take df_all_column_value_frequencies and
     use limit statements to take only the top n values
     """
@@ -298,10 +333,14 @@ def _get_df_top_n(df_all_column_value_frequencies, spark, limit=20):
     (select *
     from df_all_column_value_frequencies
     where group_name = '{group_name}'
+    order by value_count {value_order}
     limit {limit})
     """
 
-    to_union = [sql.format(group_name=g, limit=limit) for g in group_names]
+    to_union = [
+        sql.format(group_name=g, limit=limit, value_order=value_order)
+        for g in group_names
+    ]
 
     sql = "\n union all \n".join(to_union)
 
@@ -353,12 +392,14 @@ def _collect_and_group_top_values(df_top):
     return top_n_groups
 
 
-def column_value_frequencies_chart(list_of_columns, df, spark, top_n=20):
-    column_combination_value_frequencies_chart(list_of_columns, df, spark, top_n)
+def column_value_frequencies_chart(list_of_columns, df, spark, top_n=20, bottom_n=10):
+    column_combination_value_frequencies_chart(
+        list_of_columns, df, spark, top_n, bottom_n
+    )
 
 
 def column_combination_value_frequencies_chart(
-    list_of_col_combinations, df, spark, top_n=20
+    list_of_col_combinations, df, spark, top_n=20, bottom_n=10
 ):
     df_acvf = _generate_df_all_column_value_frequencies(
         list_of_col_combinations, df, spark
@@ -366,16 +407,22 @@ def column_combination_value_frequencies_chart(
     df_acvf.persist()
 
     df_perc = _get_df_percentiles(df_acvf, spark)
-    df_top_n = _get_df_top_n(df_acvf, spark, top_n)
+    df_top_n = _get_df_top_bottom_n(df_acvf, spark, top_n)
+    df_bottom_n = _get_df_top_bottom_n(df_acvf, spark, bottom_n, value_order="asc")
 
     df_perc_collected = _collect_and_group_percentiles_df(df_perc)
     df_top_n_collected = _collect_and_group_top_values(df_top_n)
+    df_bottom_n_collected = _collect_and_group_top_values(df_bottom_n)
 
     inner_charts = []
     for col_name in df_top_n_collected.keys():
         top_n_rows = df_top_n_collected[col_name]
+        bottom_n_rows = df_bottom_n_collected[col_name]
+
         percentile_rows = df_perc_collected[col_name]
-        inner_chart = _get_inner_chart_spec_freq(percentile_rows, top_n_rows, col_name)
+        inner_chart = _get_inner_chart_spec_freq(
+            percentile_rows, top_n_rows, bottom_n_rows, col_name
+        )
         inner_charts.append(inner_chart)
 
     outer_spec = deepcopy(_outer_chart_spec_freq)
@@ -392,7 +439,7 @@ def array_column_value_frequencies_chart(list_of_array_cols, df, spark, top_n=20
     df_acvf.persist()
 
     df_perc = _get_df_percentiles(df_acvf, spark)
-    df_top_n = _get_df_top_n(df_acvf, spark, top_n)
+    df_top_n = _get_df_top_bottom_n(df_acvf, spark, top_n)
 
     df_perc_collected = _collect_and_group_percentiles_df(df_perc)
     df_top_n_collected = _collect_and_group_top_values(df_top_n)
