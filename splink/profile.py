@@ -4,6 +4,8 @@ import re
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
+from functools import reduce
+
 
 altair_installed = True
 try:
@@ -31,11 +33,11 @@ _inner_chart_spec_freq = {
                 },
                 "y": {
                     "type": "quantitative",
-                    "field": "token_count",
+                    "field": "value_count",
                     "title": "Count of values",
                 },
                 "tooltip": [
-                    {"field": "token_count", "type": "quantitative"},
+                    {"field": "value_count", "type": "quantitative"},
                     {"field": "percentile_ex_nulls", "type": "quantitative"},
                     {"field": "percentile_inc_nulls", "type": "quantitative"},
                     {"field": "total_non_null_rows", "type": "quantitative"},
@@ -43,7 +45,10 @@ _inner_chart_spec_freq = {
                     {"field": "proportion_of_non_null_rows", "type": "quantitative"},
                 ],
             },
-            "title": "Distribution of counts of values in column",
+            "title": {
+                "text": "Distribution of counts of values in column",
+                "subtitle": "Subtitle Text",
+            },
         },
         {
             "data": {"values": None},
@@ -57,12 +62,12 @@ _inner_chart_spec_freq = {
                 },
                 "y": {
                     "type": "quantitative",
-                    "field": "token_count",
+                    "field": "value_count",
                     "title": "Value count",
                 },
                 "tooltip": [
                     {"field": "value", "type": "nominal"},
-                    {"field": "token_count", "type": "quantitative"},
+                    {"field": "value_count", "type": "quantitative"},
                     {"field": "total_non_null_rows", "type": "quantitative"},
                     {"field": "total_rows_inc_nulls", "type": "quantitative"},
                 ],
@@ -73,9 +78,39 @@ _inner_chart_spec_freq = {
 }
 
 
-def _non_array_group(
-    cols_or_exprs, table_name, top_n_limit=None, group_sort_order="desc"
-):
+def _get_inner_chart_spec_freq(percentile_data, top_n_data, col_name):
+
+    inner_spec = deepcopy(_inner_chart_spec_freq)
+
+    total_rows_inc_nulls = percentile_data[0]["total_rows_inc_nulls"]
+    total_non_null_rows = percentile_data[0]["total_non_null_rows"]
+    perc = total_non_null_rows / total_rows_inc_nulls
+
+    sub = (
+        f"Of the {total_rows_inc_nulls} rows in the df, "
+        f"{total_non_null_rows} ({1-perc:,.1%}) are null for this column"
+    )
+    sub = sub.format(**percentile_data[0])
+    inner_spec["hconcat"][0]["data"]["values"] = percentile_data
+    inner_spec["hconcat"][0]["title"][
+        "text"
+    ] = f"Distribution of counts of values in column {col_name}"
+
+    inner_spec["hconcat"][0]["title"]["subtitle"] = sub
+    inner_spec["hconcat"][1]["data"]["values"] = top_n_data
+    inner_spec["hconcat"][1]["title"] = f"Top {len(top_n_data)} values by value count"
+
+    return inner_spec
+
+
+def _group_name(cols_or_exprs):
+    group_name = "_".join(cols_or_exprs)
+    group_name = re.sub(r"[^0-9a-zA-Z_\(\),]", " ", group_name)
+    group_name = re.sub("\s+", " ", group_name)
+    return group_name
+
+
+def _non_array_group(cols_or_exprs, table_name, group_sort_order="desc"):
     """
     Generate a sql expression that will yield a table with value counts grouped by the provided
     column expression e.g. "dmetaphone(name)" or combination of column expression
@@ -104,18 +139,12 @@ def _non_array_group(
     case when
     {null_exprs} then null
     else
-    concat_ws(' | ', {ws_cols})
+    concat_ws(', ', {ws_cols})
     end
     """
 
     # Group name will be the value which will identify this group in the final table
-    group_name = "_".join(cols_or_exprs)
-    group_name = re.sub("[^0-9a-zA-Z_]", " ", group_name)
-    group_name = re.sub("\s+", " ", group_name)
-
-    limit_expr = ""
-    if top_n_limit:
-        limit_expr = f"limit {top_n_limit}"
+    group_name = _group_name(cols_or_exprs)
 
     sql = f"""
     (
@@ -129,16 +158,51 @@ def _non_array_group(
     where {case_expr} is not null
     group by {case_expr}
     order by group_name, count(*) {group_sort_order}
-    {limit_expr}
     )
     """
 
     return sql
 
 
-def _generate_df_all_column_value_frequencies(
-    list_of_col_exprs, df, spark, top_n_limit=None
-):
+def _array_group(col, df, spark, group_sort_order="desc"):
+    """
+    Generate a sql expression that will yield a table with value counts grouped by the provided
+    column expression e.g. "dmetaphone(name)" or combination of column expression
+    (e.g. ["dmetaphone(first_name)" , "dmetaphone(surname)"]..
+
+    Where an array is provided, value counts will be grouped by the concatenation of
+    all the column expressions
+
+
+    """
+
+    # Group name will be the value which will identify this group in the final table
+    group_name = _group_name([col])
+    df.createOrReplaceTempView("df")
+    sql = f"""
+    with df_exp as (
+    select
+        explode(ifnull({col}, array(null))) as value,
+        "{group_name}" as group_name
+    from df
+    )
+
+    select
+        count(*) as value_count,
+        value,
+        group_name,
+        (select count(value) from df_exp) as total_non_null_rows,
+        (select count(*) from df_exp) as total_rows_inc_nulls
+    from df_exp
+    where value is not null
+    group by value, group_name
+    order by group_name, count(*) {group_sort_order}
+    """
+
+    return spark.sql(sql)
+
+
+def _generate_df_all_column_value_frequencies(list_of_col_exprs, df, spark):
     """
     Each element in list_of_col_exprs can be a list or a string
         If string, the contents should be a sql expression which
@@ -157,59 +221,93 @@ def _generate_df_all_column_value_frequencies(
     """
 
     df.createOrReplaceTempView("df")
-    to_union = [get_group_by_sql(c, "df", top_n_limit) for c in list_of_cols_or_exprs]
+
+    to_union = [_non_array_group(c, "df") for c in list_of_col_exprs]
     sql = "\n union all \n".join(to_union)
     return spark.sql(sql)
 
 
-def _get_df_percentiles(df_unioned_freqs, spark):
+def _generate_df_all_column_value_frequencies_array(list_of_array_cols, df, spark):
+
+    to_union = [_array_group(c, df, spark) for c in list_of_array_cols]
+    df = reduce(DataFrame.unionAll, to_union)
+    return df
+
+
+def _get_df_percentiles(df_all_column_value_frequencies, spark):
     """Take df_all_column_value_frequencies and
     turn it into the raw data needed for the percentile cahrt
     """
 
-    df_unioned_freqs.createOrReplaceTempView("df_unioned_freqs")
+    df_all_column_value_frequencies.createOrReplaceTempView(
+        "df_all_column_value_frequencies"
+    )
 
     sql = """
-    select sum(token_count) as sum_tokens_in_token_count_group, token_count, group_name,
+    select sum(value_count) as sum_tokens_in_value_count_group, value_count, group_name,
     first(total_non_null_rows) as total_non_null_rows,
     first(total_rows_inc_nulls) as total_rows_inc_nulls
-    from df_unioned_freqs
-    group by group_name, token_count
-    order by group_name, token_count desc
+    from df_all_column_value_frequencies
+    group by group_name, value_count
+    order by group_name, value_count desc
     """
-    df_total_in_token_counts = spark.sql(sql)
-    df_total_in_token_counts.createOrReplaceTempView("df_total_in_token_counts")
+    df_total_in_value_counts = spark.sql(sql)
+    df_total_in_value_counts.createOrReplaceTempView("df_total_in_value_counts")
 
     sql = """
-    select sum(sum_tokens_in_token_count_group) over (partition by group_name order by token_count desc) as token_count_cumsum,
-    sum_tokens_in_token_count_group, token_count, group_name,  total_non_null_rows, total_rows_inc_nulls
-    from df_total_in_token_counts
+    select sum(sum_tokens_in_value_count_group) over (partition by group_name order by value_count desc) as value_count_cumsum,
+    sum_tokens_in_value_count_group, value_count, group_name,  total_non_null_rows, total_rows_inc_nulls
+    from df_total_in_value_counts
 
 
     """
-    df_total_in_token_counts_cumulative = spark.sql(sql)
-    df_total_in_token_counts_cumulative.createOrReplaceTempView(
-        "df_total_in_token_counts_cumulative"
+    df_total_in_value_counts_cumulative = spark.sql(sql)
+    df_total_in_value_counts_cumulative.createOrReplaceTempView(
+        "df_total_in_value_counts_cumulative"
     )
 
     sql = """
     select
-    1 - (token_count_cumsum/total_non_null_rows) as percentile_ex_nulls,
-    1 - (token_count_cumsum/total_rows_inc_nulls) as percentile_inc_nulls,
+    1 - (value_count_cumsum/total_non_null_rows) as percentile_ex_nulls,
+    1 - (value_count_cumsum/total_rows_inc_nulls) as percentile_inc_nulls,
 
-    token_count, group_name, total_non_null_rows, total_rows_inc_nulls,
-    sum_tokens_in_token_count_group
-    from df_total_in_token_counts_cumulative
+    value_count, group_name, total_non_null_rows, total_rows_inc_nulls,
+    sum_tokens_in_value_count_group
+    from df_total_in_value_counts_cumulative
 
     """
     df_percentiles = spark.sql(sql)
     return df_percentiles
 
 
-def _get_df_top_n(limit):
+def _get_df_top_n(df_all_column_value_frequencies, spark, limit=20):
     """Take df_all_column_value_frequencies and
     use limit statements to take only the top n values
     """
+    df_all_column_value_frequencies.createOrReplaceTempView(
+        "df_all_column_value_frequencies"
+    )
+
+    sql = """
+    select distinct group_name
+    from df_all_column_value_frequencies
+    """
+    group_names = [r.group_name for r in spark.sql(sql).collect()]
+
+    sql = """
+    (select *
+    from df_all_column_value_frequencies
+    where group_name = '{group_name}'
+    limit {limit})
+    """
+
+    to_union = [sql.format(group_name=g, limit=limit) for g in group_names]
+
+    sql = "\n union all \n".join(to_union)
+
+    df = spark.sql(sql)
+
+    return df
 
 
 def _collect_and_group_percentiles_df(df_percentiles):
@@ -227,29 +325,87 @@ def _collect_and_group_percentiles_df(df_percentiles):
 
             # If we do not already have a row for 100th percentile
             if r["percentile_ex_nulls"] != 1.0:
-                first_row = {
-                    "percentile_inc_nulls": 1.0,
-                    "percentile_ex_nulls": 1.0,
-                    "token_count": r["token_count"],
-                }
+                first_row = deepcopy(r)
+                first_row["percentile_inc_nulls"] = 1.0
+                first_row["percentile_ex_nulls"] = 1.0
+
                 percentiles_groups[r["group_name"]].append(first_row)
 
         percentiles_groups[r["group_name"]].append(r)
         del r["group_name"]
         r["proportion_of_non_null_rows"] = (
-            r["sum_tokens_in_token_count_group"] / r["total_non_null_rows"]
+            r["sum_tokens_in_value_count_group"] / r["total_non_null_rows"]
         )
 
     return percentiles_groups
 
 
-def column_value_frequencies_chart(list_of_columns):
-    pass
+def _collect_and_group_top_values(df_top):
+    top_n_groups = {}
+    top_n_rows = [r.asDict() for r in df_top.collect()]
+    for r in top_n_rows:
+        if r["group_name"] not in top_n_groups:
+            top_n_groups[r["group_name"]] = []
+
+        top_n_groups[r["group_name"]].append(r)
+        del r["group_name"]
+
+    return top_n_groups
 
 
-def column_combination_value_frequencies_chart(list_of_col_combinations):
-    pass
+def column_value_frequencies_chart(list_of_columns, df, spark, top_n=20):
+    column_combination_value_frequencies_chart(list_of_columns, df, spark, top_n)
 
 
-def column_value_frequencies_chart(col_or_col_list):
-    pass
+def column_combination_value_frequencies_chart(
+    list_of_col_combinations, df, spark, top_n=20
+):
+    df_acvf = _generate_df_all_column_value_frequencies(
+        list_of_col_combinations, df, spark
+    )
+    df_acvf.persist()
+
+    df_perc = _get_df_percentiles(df_acvf, spark)
+    df_top_n = _get_df_top_n(df_acvf, spark, top_n)
+
+    df_perc_collected = _collect_and_group_percentiles_df(df_perc)
+    df_top_n_collected = _collect_and_group_top_values(df_top_n)
+
+    inner_charts = []
+    for col_name in df_top_n_collected.keys():
+        top_n_rows = df_top_n_collected[col_name]
+        percentile_rows = df_perc_collected[col_name]
+        inner_chart = _get_inner_chart_spec_freq(percentile_rows, top_n_rows, col_name)
+        inner_charts.append(inner_chart)
+
+    outer_spec = deepcopy(_outer_chart_spec_freq)
+
+    outer_spec["vconcat"] = inner_charts
+
+    return alt.Chart.from_dict(outer_spec)
+
+
+def array_column_value_frequencies_chart(list_of_array_cols, df, spark, top_n=20):
+    df_acvf = _generate_df_all_column_value_frequencies_array(
+        list_of_array_cols, df, spark
+    )
+    df_acvf.persist()
+
+    df_perc = _get_df_percentiles(df_acvf, spark)
+    df_top_n = _get_df_top_n(df_acvf, spark, top_n)
+
+    df_perc_collected = _collect_and_group_percentiles_df(df_perc)
+    df_top_n_collected = _collect_and_group_top_values(df_top_n)
+
+    inner_charts = []
+    for col_name in df_top_n_collected.keys():
+        top_n_rows = df_top_n_collected[col_name]
+        percentile_rows = df_perc_collected[col_name]
+        inner_chart = _get_inner_chart_spec_freq(percentile_rows, top_n_rows, col_name)
+        inner_charts.append(inner_chart)
+
+    outer_spec = deepcopy(_outer_chart_spec_freq)
+
+    outer_spec["vconcat"] = inner_charts
+
+    return alt.Chart.from_dict(outer_spec)
