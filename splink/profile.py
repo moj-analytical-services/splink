@@ -432,7 +432,9 @@ def column_combination_value_frequencies_chart(
     return alt.Chart.from_dict(outer_spec)
 
 
-def array_column_value_frequencies_chart(list_of_array_cols, df, spark, top_n=20):
+def array_column_value_frequencies_chart(
+    list_of_array_cols, df, spark, top_n=20, bottom_n=10
+):
     df_acvf = _generate_df_all_column_value_frequencies_array(
         list_of_array_cols, df, spark
     )
@@ -440,15 +442,20 @@ def array_column_value_frequencies_chart(list_of_array_cols, df, spark, top_n=20
 
     df_perc = _get_df_percentiles(df_acvf, spark)
     df_top_n = _get_df_top_bottom_n(df_acvf, spark, top_n)
+    df_bottom_n = _get_df_top_bottom_n(df_acvf, spark, bottom_n, value_order="asc")
 
     df_perc_collected = _collect_and_group_percentiles_df(df_perc)
     df_top_n_collected = _collect_and_group_top_values(df_top_n)
+    df_bottom_n_collected = _collect_and_group_top_values(df_bottom_n)
 
     inner_charts = []
     for col_name in df_top_n_collected.keys():
         top_n_rows = df_top_n_collected[col_name]
+        bottom_n_rows = df_bottom_n_collected[col_name]
         percentile_rows = df_perc_collected[col_name]
-        inner_chart = _get_inner_chart_spec_freq(percentile_rows, top_n_rows, col_name)
+        inner_chart = _get_inner_chart_spec_freq(
+            percentile_rows, top_n_rows, bottom_n_rows, col_name
+        )
         inner_charts.append(inner_chart)
 
     outer_spec = deepcopy(_outer_chart_spec_freq)
