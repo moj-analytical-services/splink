@@ -487,7 +487,7 @@ def _parse_blocking_rule(rule):
     return cols
 
 
-def parse_blocking_rules(rules):
+def blocking_rules_to_column_combinations(rules):
     column_combinations = [_parse_blocking_rule(r) for r in rules]
     column_combinations = [c for c in column_combinations if c is not None]
     return column_combinations
@@ -496,7 +496,7 @@ def parse_blocking_rules(rules):
 def value_frequencies_chart_from_blocking_rules(
     blocking_rules, df, spark, top_n=20, bottom_n=10
 ):
-    col_combinations = parse_blocking_rules(blocking_rules)
+    col_combinations = blocking_rules_to_column_combinations(blocking_rules)
     return column_combination_value_frequencies_chart(
         col_combinations, df, spark, top_n, bottom_n
     )
