@@ -463,3 +463,40 @@ def array_column_value_frequencies_chart(
     outer_spec["vconcat"] = inner_charts
 
     return alt.Chart.from_dict(outer_spec)
+
+
+def _parse_blocking_rule(rule):
+    rule = rule.lower()
+    rule = rule.strip()
+    rule = re.sub(r"\s+", " ", rule)
+    rule = re.sub(r"\s+", " ", rule)
+
+    cols = rule.split(" and ")
+
+    cols = [[cc.strip() for cc in c.split("=")] for c in cols]
+
+    # check symmetry, return none if not symmetric
+    for c in cols:
+        left = c[0].replace("r.", "l.")
+        right = c[1].replace("r.", "l.")
+        if left != right:
+            return None
+
+    cols = [c[0].replace("r.", "").replace("l.", "") for c in cols]
+
+    return cols
+
+
+def parse_blocking_rules(rules):
+    column_combinations = [_parse_blocking_rule(r) for r in rules]
+    column_combinations = [c for c in column_combinations if c is not None]
+    return column_combinations
+
+
+def value_frequencies_chart_from_blocking_rules(
+    blocking_rules, df, spark, top_n=20, bottom_n=10
+):
+    col_combinations = parse_blocking_rules(blocking_rules)
+    return column_combination_value_frequencies_chart(
+        col_combinations, df, spark, top_n, bottom_n
+    )
