@@ -140,7 +140,7 @@ def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, col_n
 def _group_name(cols_or_exprs):
     group_name = "_".join(cols_or_exprs)
     group_name = re.sub(r"[^0-9a-zA-Z_\(\),]", " ", group_name)
-    group_name = re.sub("\s+", " ", group_name)
+    group_name = re.sub(r"\s+", " ", group_name)
     return group_name
 
 
