@@ -1,6 +1,6 @@
-from copy import deepcopy
 import math
 import re
+from copy import deepcopy
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
@@ -10,6 +10,7 @@ from functools import reduce
 altair_installed = True
 try:
     import altair as alt
+    from altair import Chart
 except ImportError:
     altair_installed = False
 
@@ -393,7 +394,20 @@ def _collect_and_group_top_values(df_top):
 
 
 def column_value_frequencies_chart(list_of_columns, df, spark, top_n=20, bottom_n=10):
-    column_combination_value_frequencies_chart(
+    """Produce value frequency charts for the provided list of column names
+
+    Args:
+        list_of_col_combinations (list): A list of column names
+        df (DataFrame): Dataframe to profile
+        spark (SparkSession): SparkSession object
+        top_n (int, optional): Number of values with the highest frequencies to display. Defaults to 20.
+        bottom_n (int, optional): Number of values with the lowest frequencies to display. Defaults to 10.
+
+    Returns:
+        Chart: If Altair is installed, return a chart. If not,  then it returns the
+        vega lite chart spec as a dictionary
+    """
+    return column_combination_value_frequencies_chart(
         list_of_columns, df, spark, top_n, bottom_n
     )
 
@@ -401,6 +415,36 @@ def column_value_frequencies_chart(list_of_columns, df, spark, top_n=20, bottom_
 def column_combination_value_frequencies_chart(
     list_of_col_combinations, df, spark, top_n=20, bottom_n=10
 ):
+    """Produce value frequency charts for the provided list of column names, expressions, or
+    combinations thereof.
+
+    Each element in list_of_col_combinations can be a list or a string:
+        If string, the contents should be a sql expression which
+        is used in the group by to find value frequencies
+
+        If a list, each item in the list is a sql expression which
+        are then concatenated using concat_ws, and this is used
+        in the gropu by to find value frequencies
+
+    Example:
+    list_of_col_combinations = [
+        'first_name',
+        ['first_name', 'surname'],
+        ['dmetaphone(first_name), dmetaphone(surname)']
+    ]
+
+    Args:
+        list_of_col_combinations (list): A list of column names, expressions or
+          combinations thereof for columns of array type
+        df (DataFrame): Dataframe to profile
+        spark (SparkSession): SparkSession object
+        top_n (int, optional): Number of values with the highest frequencies to display. Defaults to 20.
+        bottom_n (int, optional): Number of values with the lowest frequencies to display. Defaults to 10.
+
+    Returns:
+        Chart: If Altair is installed, return a chart. If not,  then it returns the
+        vega lite chart spec as a dictionary
+    """
     df_acvf = _generate_df_all_column_value_frequencies(
         list_of_col_combinations, df, spark
     )
@@ -429,12 +473,28 @@ def column_combination_value_frequencies_chart(
 
     outer_spec["vconcat"] = inner_charts
 
-    return alt.Chart.from_dict(outer_spec)
+    if altair_installed:
+        return alt.Chart.from_dict(outer_spec)
+    else:
+        return outer_spec
 
 
 def array_column_value_frequencies_chart(
-    list_of_array_cols, df, spark, top_n=20, bottom_n=10
+    list_of_array_cols: list, df: DataFrame, spark: SparkSession, top_n=20, bottom_n=10
 ):
+    """Produce value frequency charts for the provided list of columns names
+
+    Args:
+        list_of_array_cols (list): A list of column names for columns of array type
+        df (DataFrame): Dataframe to profile
+        spark (SparkSession): SparkSession object
+        top_n (int, optional): Number of values with the highest frequencies to display. Defaults to 20.
+        bottom_n (int, optional): Number of values with the lowest frequencies to display. Defaults to 10.
+
+    Returns:
+        Chart: If Altair is installed, return a chart. If not,  then it returns the
+        vega lite chart spec as a dictionary
+    """
     df_acvf = _generate_df_all_column_value_frequencies_array(
         list_of_array_cols, df, spark
     )
@@ -462,7 +522,10 @@ def array_column_value_frequencies_chart(
 
     outer_spec["vconcat"] = inner_charts
 
-    return alt.Chart.from_dict(outer_spec)
+    if altair_installed:
+        return alt.Chart.from_dict(outer_spec)
+    else:
+        return outer_spec
 
 
 def _parse_blocking_rule(rule):
@@ -487,15 +550,41 @@ def _parse_blocking_rule(rule):
     return cols
 
 
-def blocking_rules_to_column_combinations(rules):
-    column_combinations = [_parse_blocking_rule(r) for r in rules]
+def blocking_rules_to_column_combinations(blocking_rules: list):
+    """Convert blocking rules as specified in a Splink settings dictionary
+    into a list of column combintions, the format needed to input into
+    column_combination_value_frequencies_chart
+
+    Args:
+        blocking_rules (list): A list of blocking rules as specified in a Splink
+            settings dictionary
+
+    Returns:
+        list: list of column combinations
+    """
+
+    column_combinations = [_parse_blocking_rule(r) for r in blocking_rules]
     column_combinations = [c for c in column_combinations if c is not None]
     return column_combinations
 
 
 def value_frequencies_chart_from_blocking_rules(
-    blocking_rules, df, spark, top_n=20, bottom_n=10
+    blocking_rules: list, df: DataFrame, spark: SparkSession, top_n=20, bottom_n=10
 ):
+    """Produce value frequency charts for the provided blocking rules
+
+    Args:
+        blocking_rules (list): A list of blocking rules as specified in a Splink
+            settings dictionary
+        df (DataFrame): Dataframe to profile
+        spark (SparkSession): SparkSession object
+        top_n (int, optional): Number of values with the highest frequencies to display. Defaults to 20.
+        bottom_n (int, optional): Number of values with the lowest frequencies to display. Defaults to 10.
+
+    Returns:
+        Chart: If Altair is installed, return a chart. If not,  then it returns the
+        vega lite chart spec as a dictionary
+    """
     col_combinations = blocking_rules_to_column_combinations(blocking_rules)
     return column_combination_value_frequencies_chart(
         col_combinations, df, spark, top_n, bottom_n
