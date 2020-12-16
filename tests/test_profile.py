@@ -1,5 +1,12 @@
 from pyspark.sql import Row
-from splink.profile import _get_top_n, _get_percentiles, _get_df_freq
+from splink.profile import (
+    _generate_df_all_column_value_frequencies,
+    _generate_df_all_column_value_frequencies_array,
+    _get_df_percentiles,
+    _get_df_top_bottom_n,
+    _collect_and_group_percentiles_df,
+    _collect_and_group_top_values,
+)
 from uuid import uuid4
 
 
@@ -24,42 +31,44 @@ def test_top_n(spark):
     df = spark.createDataFrame(Row(**x) for x in data_list)
     df.createOrReplaceTempView("df")
 
-    df_freq = _get_df_freq(df, "col_1", spark)
-    top_n = _get_top_n(df_freq, "col_1")
+    df_acvf = _generate_df_all_column_value_frequencies(["col_1", "col_2"], df, spark)
+    df_acvf.createOrReplaceTempView("df_acvf")
+    df_acvf = df_acvf.persist()
 
-    assert top_n[0]["count"] == 500
+    df_perc = _get_df_percentiles(df_acvf, spark)
+    df_top_n = _get_df_top_bottom_n(df_acvf, spark, 20)
+
+    percentiles_collected = _collect_and_group_percentiles_df(df_perc)
+    top_n_collected = _collect_and_group_top_values(df_top_n)
+
+    percentiles = percentiles_collected["col_1"]
+    top_n = top_n_collected["col_1"]
+
+    assert top_n[0]["value_count"] == 500
     assert top_n[0]["value"] == "robin"
-    assert top_n[1]["count"] == 200
+    assert top_n[1]["value_count"] == 200
     assert top_n[1]["value"] == "john"
 
-    # Percentiles starts with 0th percentile by freq (i.e. lowest freq)
-    percentiles = _get_percentiles(df_freq, "col_1")
-    # Reverse order
-    percentiles = percentiles[::-1]
+    assert percentiles[0]["percentile_ex_nulls"] == 1.0
+    assert percentiles[0]["value_count"] == 500
 
-    assert percentiles[0]["percentile"] == 1.0
-    assert percentiles[0]["token_count"] == 500
+    assert percentiles[1]["value_count"] == 500
+    assert percentiles[2]["value_count"] == 200
+    assert percentiles[-1]["value_count"] == 1
 
-    assert percentiles[1]["token_count"] == 200
-    assert percentiles[-2]["token_count"] == 1
+    percentiles = percentiles_collected["col_2"]
+    top_n = top_n_collected["col_2"]
 
-    df_freq = _get_df_freq(df, "col_2", spark, explode_arrays=True)
-    top_n = _get_top_n(df_freq, "col_2")
-    percentiles = _get_percentiles(df_freq, "col_2")
-
-    assert top_n[0]["count"] == 700
-    assert top_n[0]["value"] == "jones"
-    assert top_n[1]["count"] == 500
-    assert top_n[1]["value"] == "smith"
-
-    percentiles = percentiles[::-1]
-
-    assert percentiles[0]["percentile"] == 1.0
-    assert percentiles[0]["token_count"] == 700
-
-    df_freq = _get_df_freq(df, "col_2", spark, explode_arrays=False)
-    top_n = _get_top_n(df_freq, "col_2")
-    percentiles = _get_percentiles(df_freq, "col_2")
-
-    assert top_n[0]["count"] == 500
+    assert top_n[0]["value_count"] == 500
     assert top_n[0]["value"] == "smith, jones"
+
+    df_acvf = _generate_df_all_column_value_frequencies_array(["col_2"], df, spark)
+    df_acvf.createOrReplaceTempView("df_acvf")
+    df_acvf = df_acvf.persist()
+
+    df_top_n = _get_df_top_bottom_n(df_acvf, spark, 20)
+
+    top_n = _collect_and_group_top_values(df_top_n)["col_2"]
+
+    assert top_n[0]["value_count"] == 700
+    assert top_n[0]["value"] == "jones"
