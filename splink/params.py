@@ -307,8 +307,12 @@ class Params:
     def _get_settings_col_dict_from_pi_key(self, gamma_key):
         col_name = gamma_key["column_name"]
         for c in self.settings["comparison_columns"]:
-            if c["col_name"] == col_name:
-                return c
+            if "col_name" in c:
+                if c["col_name"] == col_name:
+                    return c
+            if "custom_name" in c:
+                if c["custom_name"] == col_name:
+                    return c
 
     def _populate_params(self, lambda_value, pi_df_collected):
         """
@@ -358,7 +362,6 @@ class Params:
 
         self._reset_param_values_to_none()
         self._populate_params(lambda_value, pi_df_collected)
-
 
     def _to_dict(self):
         p_dict = {}
