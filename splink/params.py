@@ -1,15 +1,10 @@
-import copy
+import copy import deepcopy
 import os
 import json
 
+from pyspark.sql.session import SparkSession
 
-try:
-    from pyspark.sql.session import SparkSession
-except ImportError:
-    SparkSession = None
-
-
-from .gammas import complete_settings_dict
+from .settings import complete_settings_dict
 from .validate import _get_default_value
 from .chart_definitions import (
     lambda_iteration_chart_def,
@@ -44,10 +39,10 @@ class Params:
     """
 
     def __init__(self, settings: dict, spark: SparkSession):
-        """[summary]
+        """
 
         Args:
-            settings (dict): A splink setting object
+            settings (dict): A splink setting dictionary
             spark (SparkSession): Your sparksession. Defaults to None.
         """
 
@@ -55,106 +50,59 @@ class Params:
 
         self.iteration = 0
 
-        self.settings_original = copy.deepcopy(settings)
-        self.settings = complete_settings_dict(settings, spark)
-        self.params = {"λ": settings["proportion_of_matches"], "π": {}}
+        # Settings is just a wrapper around the settings dict
+        #
+        self.settings_dict_original = deepcopy(settings)
+        self.settings_original = Settings(self.settings_dict_original)
+
+        settings_dict_completed = complete_settings_dict(deepcoy(settings), spark)
+        self.settings = Settings(settings_dict_completed)
+
+        self.params = Settings(deepcopy(settings_dict_completed))
 
         self.log_likelihood_exists = False
 
-        self._generate_param_dict()
 
-    @property
-    def _gamma_cols(self):
-        return self.params["π"].keys()
-
-    def describe_gammas(self):
-        return {k: i["desc"] for k, i in self.params["π"].items()}
-
-    def _col_dict_to_prob_dists(self, col_dict):
-
-        prob_dist_match = {}
-        prob_dist_non_match = {}
-
-        probs_m = col_dict["m_probabilities"]
-        probs_nm = col_dict["u_probabilities"]
-
-        s = sum(probs_m)
-        probs_m = [p / s for p in probs_m]
-
-        s = sum(probs_nm)
-        probs_nm = [p / s for p in probs_nm]
-
-        for level_num in range(col_dict["num_levels"]):
-            prob_dist_match[f"level_{level_num}"] = {
-                "value": level_num,
-                "probability": probs_m[level_num],
-            }
-            prob_dist_non_match[f"level_{level_num}"] = {
-                "value": level_num,
-                "probability": probs_nm[level_num],
-            }
-
-        return {
-            "prob_dist_match": prob_dist_match,
-            "prob_dist_non_match": prob_dist_non_match,
-        }
-
-    def _generate_param_dict(self):
-        """Uses the splink settings object to generate a parameter dictionary"""
-
-        for col_dict in self.settings["comparison_columns"]:
-            if "col_name" in col_dict:
-                col_name = col_dict["col_name"]
-            elif "custom_name" in col_dict:
-                col_name = col_dict["custom_name"]
-
-            i = col_dict["gamma_index"]
-
-            self.params["π"][f"gamma_{col_name}"] = {}
-            self.params["π"][f"gamma_{col_name}"]["gamma_index"] = i
-
-            self.params["π"][f"gamma_{col_name}"]["desc"] = f"Comparison of {col_name}"
-            self.params["π"][f"gamma_{col_name}"]["column_name"] = f"{col_name}"
-
-            if "custom_name" in col_dict:
-                self.params["π"][f"gamma_{col_name}"]["custom_comparison"] = True
-                self.params["π"][f"gamma_{col_name}"]["custom_columns_used"] = col_dict[
-                    "custom_columns_used"
-                ]
-            else:
-                self.params["π"][f"gamma_{col_name}"]["custom_comparison"] = False
-
-            num_levels = col_dict["num_levels"]
-            self.params["π"][f"gamma_{col_name}"]["num_levels"] = num_levels
-
-            prob_dists = self._col_dict_to_prob_dists(col_dict)
-
-            self.params["π"][f"gamma_{col_name}"].update(prob_dists)
-
-            self.params["π"][f"gamma_{col_name}"]["fix_match_probs"] = col_dict[
-                "fix_m_probabilities"
-            ]
-            self.params["π"][f"gamma_{col_name}"]["fix_non_match_probs"] = col_dict[
-                "fix_u_probabilities"
-            ]
-
-    def _get_col_from_original_settings(self, col_name):
-        for col in self.settings_original["comparison_columns"]:
-            if col["col_name"] == col_name:
-                return col
-
-    def _set_pi_value(self, gamma_str, level_int, match_str, prob_float):
+    def _populate_params(self, lambda_value, pi_df_collected):
         """
-        gamma_str e.g. gamma_0
-        level_int e.g. 1
-        match_str e.g. match or non_match
-        prob_float e.g. 0.5
-
+        Take results of sql query that computes updated values
+        and update parameters.
         """
-        this_g = self.params["π"][gamma_str]
-        this_g[f"prob_dist_{match_str}"][f"level_{level_int}"][
-            "probability"
-        ] = prob_float
+
+        self.params["proportion_of_matches"] = lambda_value
+
+        self.params
+        # Populate all values with 0 (we sometimes never see some values of gamma so everything breaks.)
+        for gamma_str in self.params["π"]:
+            for level_key, level_value in self.params["π"][gamma_str][
+                "prob_dist_match"
+            ].items():
+                level_value["probability"] = 0
+
+            for level_key, level_value in self.params["π"][gamma_str][
+                "prob_dist_non_match"
+            ].items():
+                level_value["probability"] = 0
+
+        for row_dict in pi_df_collected:
+            gamma_str = row_dict["gamma_col"]
+            level_int = row_dict["gamma_value"]
+            match_prob = row_dict["new_probability_match"]
+            non_match_prob = row_dict["new_probability_non_match"]
+
+            if level_int != -1:
+                self._set_pi_value(gamma_str, level_int, "match", match_prob)
+                self._set_pi_value(gamma_str, level_int, "non_match", non_match_prob)
+
+        # Where probabilities are fixed by user, set them to the original probabilities
+        for pi_item in self.params["π"].values():
+            settings_col_dict = self._get_settings_col_dict_from_pi_key(pi_item)
+            prob_dists = self._col_dict_to_prob_dists(settings_col_dict)
+            if pi_item["fix_match_probs"]:
+                pi_item["prob_dist_match"] = prob_dists["prob_dist_match"]
+            if pi_item["fix_non_match_probs"]:
+                pi_item["prob_dist_non_match"] = prob_dists["prob_dist_non_match"]
+
 
     @staticmethod
     def _convert_params_dict_to_dataframe(params, iteration_num=None):
@@ -304,54 +252,9 @@ class Params:
         if "log_likelihood" in self.params:
             self.log_likelihood_exists = True
 
-    def _get_settings_col_dict_from_pi_key(self, gamma_key):
-        col_name = gamma_key["column_name"]
-        for c in self.settings["comparison_columns"]:
-            if "col_name" in c:
-                if c["col_name"] == col_name:
-                    return c
-            if "custom_name" in c:
-                if c["custom_name"] == col_name:
-                    return c
 
-    def _populate_params(self, lambda_value, pi_df_collected):
-        """
-        Take results of sql query that computes updated values
-        and update parameters
-        """
 
-        self.params["λ"] = lambda_value
 
-        # Populate all values with 0 (we sometimes never see some values of gamma so everything breaks.)
-        for gamma_str in self.params["π"]:
-            for level_key, level_value in self.params["π"][gamma_str][
-                "prob_dist_match"
-            ].items():
-                level_value["probability"] = 0
-
-            for level_key, level_value in self.params["π"][gamma_str][
-                "prob_dist_non_match"
-            ].items():
-                level_value["probability"] = 0
-
-        for row_dict in pi_df_collected:
-            gamma_str = row_dict["gamma_col"]
-            level_int = row_dict["gamma_value"]
-            match_prob = row_dict["new_probability_match"]
-            non_match_prob = row_dict["new_probability_non_match"]
-
-            if level_int != -1:
-                self._set_pi_value(gamma_str, level_int, "match", match_prob)
-                self._set_pi_value(gamma_str, level_int, "non_match", non_match_prob)
-
-        # Where probabilities are fixed by user, set them to the original probabilities
-        for pi_item in self.params["π"].values():
-            settings_col_dict = self._get_settings_col_dict_from_pi_key(pi_item)
-            prob_dists = self._col_dict_to_prob_dists(settings_col_dict)
-            if pi_item["fix_match_probs"]:
-                pi_item["prob_dist_match"] = prob_dists["prob_dist_match"]
-            if pi_item["fix_non_match_probs"]:
-                pi_item["prob_dist_non_match"] = prob_dists["prob_dist_non_match"]
 
     def _update_params(self, lambda_value, pi_df_collected):
         """
