@@ -1,10 +1,10 @@
-import copy import deepcopy
+from copy import deepcopy
 import os
 import json
 
 from pyspark.sql.session import SparkSession
 
-from .settings import complete_settings_dict
+from .settings import Settings, complete_settings_dict
 from .validate import _get_default_value
 from .chart_definitions import (
     lambda_iteration_chart_def,
@@ -30,6 +30,24 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def _settings_to_dataframe(settings: Settings, iteration: int = None):
+    """
+    Convert the params dict into a dataframe.
+
+
+    [{'gamma': 'gamma_first_name',
+    'match': 1,
+    'value_of_gamma': 'level_0',
+    'probability': 0.1,
+    'value': 0,
+    'column': 'first_name',
+    'iteration': },
+    {}]
+    """
+
+    return settings.as_rows()
+
+
 class Params:
     """Stores the current model parameters (in self.params) and values for params for all previous iterations
 
@@ -51,8 +69,7 @@ class Params:
         self.iteration = 0
 
         # Settings is just a wrapper around the settings dict
-        #
-        self.settings_dict_original = deepcopy(settings)
+        settings_dict_original = deepcopy(settings)
         self.settings_original = Settings(self.settings_dict_original)
 
         settings_dict_completed = complete_settings_dict(deepcoy(settings), spark)
@@ -62,112 +79,30 @@ class Params:
 
         self.log_likelihood_exists = False
 
-
-    def _populate_params(self, lambda_value, pi_df_collected):
+    def _populate_params_from_maximisation_step(self, lambda_value, pi_df_collected):
         """
         Take results of sql query that computes updated values
         and update parameters.
+
+        df_pi_collected is like
+        gamma_value, new_probability_match, new_probability_non_match, gamma_col
         """
 
         self.params["proportion_of_matches"] = lambda_value
 
-        self.params
-        # Populate all values with 0 (we sometimes never see some values of gamma so everything breaks.)
-        for gamma_str in self.params["π"]:
-            for level_key, level_value in self.params["π"][gamma_str][
-                "prob_dist_match"
-            ].items():
-                level_value["probability"] = 0
-
-            for level_key, level_value in self.params["π"][gamma_str][
-                "prob_dist_non_match"
-            ].items():
-                level_value["probability"] = 0
+        self.params.reset_all_probabilities()
 
         for row_dict in pi_df_collected:
-            gamma_str = row_dict["gamma_col"]
+            name = row_dict["column_name"]  # gamma_col is the nam
             level_int = row_dict["gamma_value"]
             match_prob = row_dict["new_probability_match"]
             non_match_prob = row_dict["new_probability_non_match"]
 
-            if level_int != -1:
-                self._set_pi_value(gamma_str, level_int, "match", match_prob)
-                self._set_pi_value(gamma_str, level_int, "non_match", non_match_prob)
-
-        # Where probabilities are fixed by user, set them to the original probabilities
-        for pi_item in self.params["π"].values():
-            settings_col_dict = self._get_settings_col_dict_from_pi_key(pi_item)
-            prob_dists = self._col_dict_to_prob_dists(settings_col_dict)
-            if pi_item["fix_match_probs"]:
-                pi_item["prob_dist_match"] = prob_dists["prob_dist_match"]
-            if pi_item["fix_non_match_probs"]:
-                pi_item["prob_dist_non_match"] = prob_dists["prob_dist_non_match"]
-
-
-    @staticmethod
-    def _convert_params_dict_to_dataframe(params, iteration_num=None):
-        """
-        Convert the params dict into a dataframe
-
-        If iteration_num is specified, this will be turned into a column in the dataframe
-        """
-
-        data = []
-        for gamma_str, gamma_dict in params["π"].items():
-
-            for level_str, level_dict in gamma_dict["prob_dist_match"].items():
-                this_row = {}
-                if not iteration_num is None:
-                    this_row["iteration"] = iteration_num
-                this_row["gamma"] = gamma_str
-                this_row["match"] = 1
-                this_row["value_of_gamma"] = level_str
-                this_row["probability"] = level_dict["probability"]
-                this_row["value"] = level_dict["value"]
-                this_row["column"] = gamma_dict["column_name"]
-                data.append(this_row)
-
-            for level_str, level_dict in gamma_dict["prob_dist_non_match"].items():
-                this_row = {}
-                if not iteration_num is None:
-                    this_row["iteration"] = iteration_num
-                this_row["gamma"] = gamma_str
-                this_row["match"] = 0
-                this_row["value_of_gamma"] = level_str
-                this_row["probability"] = level_dict["probability"]
-                this_row["value"] = level_dict["value"]
-                this_row["column"] = gamma_dict["column_name"]
-                data.append(this_row)
-        return data
+            self.params.set_m_probability(name, level_int, match_prob, force=False)
+            self.params.set_u_probability(name, level_int, non_match_prob, force=False)
 
     def _convert_params_dict_to_bayes_factor_data(self):
-        """
-        Get the data needed for a chart that shows which comparison
-        vector values have the greatest effect on match probability
-        """
-        data = []
-        # Want to compare the u and m probabilities
-        lam = self.params["λ"]
-        pi = gk = self.params["π"]
-        gk = list(pi.keys())
-
-        for g in gk:
-            this_gamma = pi[g]
-            for l in range(this_gamma["num_levels"]):
-                row = {}
-                level = f"level_{l}"
-                row["level"] = l
-                row["column"] = this_gamma["column_name"]
-                row["m"] = this_gamma["prob_dist_match"][level]["probability"]
-                row["u"] = this_gamma["prob_dist_non_match"][level]["probability"]
-                row["level_proportion"] = row["m"] * lam + row["u"] * (1 - lam)
-                try:
-                    row["bayes_factor"] = row["m"] / row["u"]
-                except ZeroDivisionError:
-                    row["bayes_factor"] = None
-
-                data.append(row)
-        return data
+        pass
 
     def _convert_params_dict_to_bayes_factor_iteration_history(self):
         """
@@ -229,19 +164,12 @@ class Params:
 
         return data
 
-    def _reset_param_values_to_none(self):
+    def _reset_param_values(self):
         """
-        Reset λ and all probability values to None to ensure we
+        Reset λ and all probability values  to ensure we
         don't accidentally re-use old values
         """
-        self.params["λ"] = None
-        for gamma_str in self.params["π"]:
-            for level_value in self.params["π"][gamma_str]["prob_dist_match"].values():
-                level_value["probability"] = None
-            for level_value in self.params["π"][gamma_str][
-                "prob_dist_non_match"
-            ].values():
-                level_value["probability"] = None
+        self.params.reset_all_probabilities()
 
     def save_params_to_iteration_history(self):
         """
@@ -251,10 +179,6 @@ class Params:
         self.param_history.append(current_params)
         if "log_likelihood" in self.params:
             self.log_likelihood_exists = True
-
-
-
-
 
     def _update_params(self, lambda_value, pi_df_collected):
         """

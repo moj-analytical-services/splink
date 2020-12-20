@@ -1,9 +1,6 @@
 import pkg_resources
-try:
-    from jsonschema import validate, ValidationError
-    jsonschema_installed = True
-except:
-    jsonschema_installed = False
+
+from jsonschema import validate, ValidationError
 
 import json
 import copy
@@ -62,9 +59,6 @@ def validate_settings(settings_dict: dict):
     Returns:
         [type]: [description]
     """
-    if jsonschema_installed == False:
-        warnings.warn("Your settings dictionary has not been validated because jsonschema is not installed")
-        return None
 
     schema = _get_schema()
     exception_raised = False
@@ -98,4 +92,3 @@ def _get_default_value(key, is_column_setting):
         ]
     else:
         return schema["properties"][key]["default"]
-
