@@ -1,6 +1,3 @@
-import sys
-
-sys.path.insert(0, "/Users/robinlinacre/Documents/data_linking/splink")
 from splink.default_settings import complete_settings_dict
 from splink.validate import _get_default_value
 from copy import deepcopy
@@ -40,12 +37,17 @@ class ComparisonColumn:
         if "col_name" in cd:
             return [cd["col_name"]]
         elif "custom_name" in cd:
-            return [cd["custom_columns_used"]]
+            return cd["custom_columns_used"]
 
     @property
     def u_probabilities_normalised(self):
         cd = self.column_dict
         return _normalise_prob_list(cd["u_probabilities"])
+
+    @property
+    def m_probabilities_normalised(self):
+        cd = self.column_dict
+        return _normalise_prob_list(cd["m_probabilities"])
 
     @property
     def name(self):
@@ -60,9 +62,12 @@ class ComparisonColumn:
         return f"gamma_{self.name}"
 
     @property
-    def m_probabilities_normalised(self):
-        cd = self.column_dict
-        return _normalise_prob_list(cd["m_probabilities"])
+    def desc(self):
+        if self.custom_comparison:
+            cols_used_str = ", ".join(self.columns_used)
+            return f"Comparison of {self.name} using {cols_used_str}"
+        else:
+            return f"Comparison of {self.name}"
 
     def set_m_probability(self, level: int, prob: float, force: bool = False):
         cd = self.column_dict
@@ -154,19 +159,19 @@ class Settings:
         self.settings_dict = complete_settings_dict(self.settings_dict, spark)
 
     @property
-    def _comparison_col_dict_lookup(self):
+    def _comparison_column_lookup(self):
         sd = self.settings_dict
         lookup = {}
         for i, c in enumerate(sd["comparison_columns"]):
-            name = c.get("col_name", c.get("custom_name"))
             c["gamma_index"] = i
-            lookup[name] = c
+            cc = ComparisonColumn(c)
+            name = cc.name
+            lookup[name] = cc
         return lookup
 
     @property
     def comparison_columns(self):
-        sd = self.settings_dict
-        return [ComparisonColumn(c) for c in sd["comparison_columns"]]
+        return self._comparison_column_lookup.values()
 
     def get_comparison_column(self, col_name_or_custom_name):
         col_dict = self._comparison_col_dict_lookup["col_name_or_custom_name"]

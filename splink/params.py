@@ -70,9 +70,9 @@ class Params:
 
         # Settings is just a wrapper around the settings dict
         settings_dict_original = deepcopy(settings)
-        self.settings_original = Settings(self.settings_dict_original)
+        self.settings_original = Settings(settings_dict_original)
 
-        settings_dict_completed = complete_settings_dict(deepcoy(settings), spark)
+        settings_dict_completed = complete_settings_dict(deepcopy(settings), spark)
         self.settings = Settings(settings_dict_completed)
 
         self.params = Settings(deepcopy(settings_dict_completed))
@@ -464,65 +464,40 @@ class Params:
 
         p = self.params
         lines = []
-        lines.append(f"λ (proportion of matches) = {p['λ']}")
+        lines.append(f"λ (proportion of matches) = {p['proportion_of_matches']}")
 
-        for gamma_str, gamma_dict in p["π"].items():
+        for cc in p.comparison_columns:
             lines.append("------------------------------------")
-            lines.append(f"{gamma_str}: {gamma_dict['desc']}")
+            lines.append(f"{cc.gamma_column_name}: {cc.desc}")
             lines.append("")
 
-            last_level = list(gamma_dict["prob_dist_non_match"].keys())[-1]
+            m_probs = cc.m_probabilities_normalised
 
-            lines.append(f"Probability distribution of gamma values amongst matches:")
-            for level_key, level_value in gamma_dict["prob_dist_match"].items():
+            u_probs = cc.u_probabilities_normalised
 
-                value = level_value["value"]
+            for m_or_u in [("matches", m_probs), ("non_matches", u_probs)]:
+                lines.append(
+                    f"Probability distribution of gamma values amongst {m_or_u[0]}:"
+                )
+                for level_value, prob in enumerate(m_or_u[1]):
 
-                value_label = ""
-                if value == 0:
-                    value_label = (
-                        "(level represents lowest category of string similarity)"
+                    label_template = (
+                        "(level represents {high_low} category of similarity)"
                     )
+                    if level_value == 0:
+                        value_label = label_template.format(high_low="lowest")
+                    elif level_value == len(m_or_u[1]) - 1:
+                        value_label = label_template.format(high_low="highest")
+                    else:
+                        value_label = ""
 
-                if level_key == last_level:
-                    value_label = (
-                        "(level represents highest category of string similarity)"
-                    )
+                    if not prob:
+                        prob = "None"
+                    else:
+                        prob = f"{prob:4f}"
 
-                prob = level_value["probability"]
-                if not prob:
-                    prob = "None"
-                else:
-                    prob = f"{prob:4f}"
-
-                lines.append(f"    value {value}: {prob} {value_label}")
-            lines.append("")
-
-            lines.append(
-                f"Probability distribution of gamma values amongst non-matches:"
-            )
-            for level_key, level_value in gamma_dict["prob_dist_non_match"].items():
-
-                value = level_value["value"]
-
-                value_label = ""
-                if value == 0:
-                    value_label = (
-                        "(level represents lowest category of string similarity)"
-                    )
-
-                if level_key == last_level:
-                    value_label = (
-                        "(level represents highest category of string similarity)"
-                    )
-
-                prob = level_value["probability"]
-                if not prob:
-                    prob = "None"
-                else:
-                    prob = f"{prob:4f}"
-
-                lines.append(f"    value {value}: {prob} {value_label}")
+                    lines.append(f"    value {level_value}: {prob} {value_label}")
+                lines.append("")
 
         return "\n".join(lines)
 

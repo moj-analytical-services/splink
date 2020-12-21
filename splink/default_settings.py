@@ -1,7 +1,5 @@
 from pyspark.sql.session import SparkSession
 
-from .settings import _normalise_prob_list
-
 from splink.validate import validate_settings, _get_default_value
 from .case_statements import (
     _check_jaro_registered,
@@ -13,6 +11,8 @@ from .case_statements import (
     sql_gen_case_stmt_numeric_2,
     sql_gen_case_stmt_numeric_perc_3,
     sql_gen_case_stmt_numeric_perc_4,
+    _check_no_obvious_problem_with_case_statement,
+    _add_as_gamma_to_case_statement,
 )
 
 
@@ -66,12 +66,22 @@ def _get_default_probabilities(m_or_u, levels):
 
     # Note all m and u probabilities are automatically normalised to sum to 1
     default_m_u_probabilities = {
-        "m": {2: [1, 9], 3: [1, 2, 7], 4: [1, 1, 1, 7], 5: [0.33, 0.67, 1, 2, 6]},
-        "u": {2: [9, 1], 3: [7, 2, 1], 4: [7, 1, 1, 1], 5: [6, 2, 1, 0.33, 0.67]},
+        "m_probabilities": {
+            2: [1, 9],
+            3: [1, 2, 7],
+            4: [1, 1, 1, 7],
+            5: [0.33, 0.67, 1, 2, 6],
+        },
+        "u_probabilities": {
+            2: [9, 1],
+            3: [7, 2, 1],
+            4: [7, 1, 1, 1],
+            5: [6, 2, 1, 0.33, 0.67],
+        },
     }
 
     probabilities = default_m_u_probabilities[m_or_u][levels]
-    return _normalise_prob_list(probabilities)
+    return probabilities
 
 
 def _complete_case_expression(col_settings, spark):
@@ -109,14 +119,10 @@ def _complete_probabilities(col_settings: dict, setting_name: str):
         setting_name (str): Either 'm_probabilities' or 'u_probabilities'
 
     """
-    if setting_name == "m_probabilities":
-        letter = "m"
-    elif setting_name == "u_probabilities":
-        letter = "u"
 
     if setting_name not in col_settings:
         levels = col_settings["num_levels"]
-        probs = _get_default_probabilities(letter, levels)
+        probs = _get_default_probabilities(setting_name, levels)
         col_settings[setting_name] = probs
     else:
         levels = col_settings["num_levels"]
@@ -127,7 +133,7 @@ def _complete_probabilities(col_settings: dict, setting_name: str):
                 f"Number of {setting_name} provided is not equal to number of levels specified"
             )
 
-    col_settings[setting_name] = _normalise_prob_list(col_settings[setting_name])
+    col_settings[setting_name] = col_settings[setting_name]
 
 
 def complete_settings_dict(settings_dict: dict, spark: SparkSession):

@@ -1,4 +1,6 @@
 import pkg_resources
+from functools import lru_cache
+
 
 from jsonschema import validate, ValidationError
 
@@ -8,20 +10,15 @@ import warnings
 
 from .check_types import check_types
 
-# We probably don't want to read this json file every time we want to look in the dictionary
-SCHEMA_CACHE = None
 
-
+@lru_cache
 def _get_schema(setting_dict_should_be_complete=False):
-    if SCHEMA_CACHE is None:
-        with pkg_resources.resource_stream(
-            __name__, "files/settings_jsonschema.json"
-        ) as io:
-            schema = json.load(io)
-    else:
-        schema = SCHEMA_CACHE
+    with pkg_resources.resource_stream(
+        __name__, "files/settings_jsonschema.json"
+    ) as io:
+        schema = json.load(io)
 
-    if setting_dict_should_be_complete == False:
+    if not setting_dict_should_be_complete:
         return schema
 
     if setting_dict_should_be_complete:
@@ -41,9 +38,6 @@ def _get_schema(setting_dict_should_be_complete=False):
             "u_probabilities",
         ]
         return schema2
-
-
-SCHEMA_CACHE = _get_schema()
 
 
 @check_types

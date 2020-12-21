@@ -7,7 +7,6 @@ except ImportError:
     DataFrame = None
     SparkSession = None
 
-from splink.settings import complete_settings_dict
 from splink.validate import validate_settings
 from splink.params import Params, load_params_from_json
 from splink.case_statements import _check_jaro_registered
@@ -17,7 +16,10 @@ from splink.iterate import iterate
 from splink.expectation_step import run_expectation_step
 from splink.term_frequencies import make_adjustment_for_term_frequencies
 from splink.check_types import check_types
-from splink.break_lineage import default_break_lineage_blocked_comparisons, default_break_lineage_scored_comparisons
+from splink.break_lineage import (
+    default_break_lineage_blocked_comparisons,
+    default_break_lineage_scored_comparisons,
+)
 
 # For type hints. I use try except to ensure that the sql generation functions work even if spark does not exist
 try:
@@ -41,8 +43,8 @@ class Splink:
         df_r: DataFrame = None,
         df: DataFrame = None,
         save_state_fn: Callable = None,
-        break_lineage_blocked_comparisons: Callable = default_break_lineage_blocked_comparisons, 
-        break_lineage_scored_comparisons: Callable = default_break_lineage_scored_comparisons
+        break_lineage_blocked_comparisons: Callable = default_break_lineage_blocked_comparisons,
+        break_lineage_scored_comparisons: Callable = default_break_lineage_scored_comparisons,
     ):
         """splink data linker
 
@@ -64,12 +66,9 @@ class Splink:
         self.break_lineage_scored_comparisons = break_lineage_scored_comparisons
         _check_jaro_registered(spark)
 
-        settings = complete_settings_dict(settings, spark)
         validate_settings(settings)
-        self.settings = settings
-
         self.params = Params(settings, spark)
-
+        self.settings_dict = self.params.settings.settings_dict
         self.df_r = df_r
         self.df_l = df_l
         self.df = df
@@ -78,7 +77,7 @@ class Splink:
 
     def _check_args(self):
 
-        link_type = self.settings["link_type"]
+        link_type = self.settings_dict["link_type"]
 
         if link_type == "dedupe_only":
             check_1 = self.df_r is None
@@ -106,12 +105,12 @@ class Splink:
 
     def _get_df_comparison(self):
 
-        if self.settings["link_type"] == "dedupe_only":
-            return block_using_rules(self.settings, self.spark, df=self.df)
+        if self.settings_dict["link_type"] == "dedupe_only":
+            return block_using_rules(self.settings_dict, self.spark, df=self.df)
 
-        if self.settings["link_type"] in ("link_only", "link_and_dedupe"):
+        if self.settings_dict["link_type"] in ("link_only", "link_and_dedupe"):
             return block_using_rules(
-                self.settings, self.spark, df_l=self.df_l, df_r=self.df_r
+                self.settings_dict, self.spark, df_l=self.df_l, df_r=self.df_r
             )
 
     def manually_apply_fellegi_sunter_weights(self):
@@ -121,8 +120,10 @@ class Splink:
             DataFrame: A spark dataframe including a match probability column
         """
         df_comparison = self._get_df_comparison()
-        df_gammas = add_gammas(df_comparison, self.settings, self.spark)
-        return run_expectation_step(df_gammas, self.params, self.settings, self.spark)
+        df_gammas = add_gammas(df_comparison, self.settings_dict, self.spark)
+        return run_expectation_step(
+            df_gammas, self.params, self.settings_dict, self.spark
+        )
 
     def get_scored_comparisons(self):
         """Use the EM algorithm to estimate model parameters and return match probabilities.
@@ -135,19 +136,19 @@ class Splink:
 
         df_comparison = self._get_df_comparison()
 
-        df_gammas = add_gammas(df_comparison, self.settings, self.spark)
+        df_gammas = add_gammas(df_comparison, self.settings_dict, self.spark)
 
         df_gammas = self.break_lineage_blocked_comparisons(df_gammas, self.spark)
 
         df_e = iterate(
             df_gammas,
             self.params,
-            self.settings,
+            self.settings_dict,
             self.spark,
             compute_ll=False,
             save_state_fn=self.save_state_fn,
         )
-        
+
         # In case the user's break lineage function has persisted it
         df_gammas.unpersist()
 
@@ -172,12 +173,12 @@ class Splink:
         return make_adjustment_for_term_frequencies(
             df_e,
             self.params,
-            self.settings,
+            self.settings_dict,
             retain_adjustment_columns=True,
             spark=self.spark,
         )
 
-    def save_model_as_json(self, path:str, overwrite=False):
+    def save_model_as_json(self, path: str, overwrite=False):
         """Save model (settings, parameters and parameter history) as a json file so it can later be re-loaded using load_from_json
 
         Args:
@@ -187,14 +188,14 @@ class Splink:
         self.params.save_params_to_json_file(path, overwrite=overwrite)
 
 
-
-
-def load_from_json(path: str,
-        spark: SparkSession,
-        df_l: DataFrame = None,
-        df_r: DataFrame = None,
-        df: DataFrame = None,
-        save_state_fn: Callable = None):
+def load_from_json(
+    path: str,
+    spark: SparkSession,
+    df_l: DataFrame = None,
+    df_r: DataFrame = None,
+    df: DataFrame = None,
+    save_state_fn: Callable = None,
+):
     """Load a splink model from a json file which has previously been created using 'save_model_as_json'
 
     Args:
