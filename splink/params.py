@@ -6,16 +6,17 @@ from pyspark.sql.session import SparkSession
 
 from .settings import Settings, complete_settings_dict
 from .validate import _get_default_value
-from .chart_definitions import (
-    lambda_iteration_chart_def,
-    probability_distribution_chart,
-    gamma_distribution_chart_def,
-    ll_iteration_chart_def,
-    bayes_factor_chart_def,
-    bayes_factor_history_chart_def,
-    multi_chart_template,
-    pi_iteration_chart_def,
-)
+
+# from .chart_definitions import (
+#     lambda_iteration_chart_def,
+#     probability_distribution_chart,
+#     gamma_distribution_chart_def,
+#     ll_iteration_chart_def,
+#     bayes_factor_chart_def,
+#     bayes_factor_history_chart_def,
+#     multi_chart_template,
+#     pi_iteration_chart_def,
+# )
 from .check_types import check_types
 import warnings
 
@@ -73,7 +74,6 @@ class Params:
         self.settings_original = Settings(settings_dict_original)
 
         settings_dict_completed = complete_settings_dict(deepcopy(settings), spark)
-        self.settings = Settings(settings_dict_completed)
 
         self.params = Settings(deepcopy(settings_dict_completed))
 
@@ -88,10 +88,9 @@ class Params:
         gamma_value, new_probability_match, new_probability_non_match, gamma_col
         """
 
-        self.params["proportion_of_matches"] = lambda_value
-
         self.params.reset_all_probabilities()
 
+        self.params["proportion_of_matches"] = lambda_value
         for row_dict in pi_df_collected:
             name = row_dict["column_name"]  # gamma_col is the nam
             level_int = row_dict["gamma_value"]
@@ -101,84 +100,61 @@ class Params:
             self.params.set_m_probability(name, level_int, match_prob, force=False)
             self.params.set_u_probability(name, level_int, non_match_prob, force=False)
 
-    def _convert_params_dict_to_bayes_factor_data(self):
-        pass
+    def is_converged(self):
+        p_latest = self.params
+        p_previous = self.param_history[-1]
+        threshold = self.params["em_convergence"]
 
-    def _convert_params_dict_to_bayes_factor_iteration_history(self):
-        """
-        Get the data needed for a chart that shows which comparison
-        vector values have the greatest effect on match probability
-        """
-        data = []
+        diffs = []
 
-        pi = gk = self.params["π"]
-        gk = list(pi.keys())
+        change_lambda = abs(
+            p_latest["proportion_of_matches"] - p_previous["proportion_of_matches"]
+        )
+        diffs.append(
+            {"col_name": "proportion_of_matches", "diff": change_lambda, "level": ""}
+        )
 
-        for it_num, param_value in enumerate(self.param_history):
-            for g in gk:
-                pi = gk = self.param_history[it_num]["π"]
-                gk = list(pi.keys())
-                this_gamma = pi[g]
-                for l in range(this_gamma["num_levels"]):
-                    row = {}
-                    row["iteration"] = it_num
-                    level = f"level_{l}"
-                    row["level"] = l
-                    row["num_levels"] = this_gamma["num_levels"]
-                    row["column"] = this_gamma["column_name"]
-                    row["m"] = this_gamma["prob_dist_match"][level]["probability"]
-                    row["u"] = this_gamma["prob_dist_non_match"][level]["probability"]
-                    try:
-                        row["bayes_factor"] = row["m"] / row["u"]
-                    except ZeroDivisionError:
-                        row["bayes_factor"] = None
+        compare = zip(p_latest.comparison_columns, p_previous.comparison_columns)
+        for c_latest, c_previous in compare:
+            for m_or_u in ["m_probabilities", "u_probabilities"]:
+                for gamma_index in range(c_latest.num_levels):
+                    val_latest = c_latest[m_or_u][gamma_index]
+                    val_previous = c_previous[m_or_u][gamma_index]
+                    diff = abs(val_latest - val_previous)
+                    diffs.append(
+                        {"col_name": c_latest.name, "diff": diff, "level": gamma_index}
+                    )
 
-                    if it_num == len(self.param_history) - 1:
-                        row["final"] = True
-                    else:
-                        row["final"] = False
+        diffs = sorted(diffs, key=lambda x: x["diff"], reverse=True)
+        largest_diff = diffs[0]["diff"]
+        largest_diff_name = diffs[0]["col_name"]
+        largest_diff_level = diffs[0]["level"]
 
-                    data.append(row)
-        return data
+        if largest_diff_level != "":
+            level_info = f", level {largest_diff_level}"
+        else:
+            level_info = ""
+        logger.info(
+            f"The maximum change in parameters was {largest_diff} for key {largest_diff_name}{level_info}"
+        )
 
-    def _iteration_history_df_gammas(self):
-        data = []
-        for it_num, param_value in enumerate(self.param_history):
-            data.extend(self._convert_params_dict_to_dataframe(param_value, it_num))
-
-        return data
-
-    def _iteration_history_df_lambdas(self):
-        data = []
-        for it_num, param_value in enumerate(self.param_history):
-            data.append({"λ": param_value["λ"], "iteration": it_num})
-
-        return data
-
-    def _iteration_history_df_log_likelihood(self):
-        data = []
-        for it_num, param_value in enumerate(self.param_history):
-            data.append(
-                {"log_likelihood": param_value["log_likelihood"], "iteration": it_num}
-            )
-
-        return data
+        return largest_diff < threshold
 
     def save_params_to_iteration_history(self):
         """
         Take current params and
         """
         current_params = deepcopy(self.params.settings_dict)
-        self.param_history.append(current_params)
+
+        self.param_history.append(Settings(current_params))
         if "log_likelihood" in self.params.settings_dict:
             self.log_likelihood_exists = True
 
     def _to_dict(self):
         p_dict = {}
-        p_dict["current_params"] = self.params
-        p_dict["historical_params"] = self.param_history
-        p_dict["settings"] = self.settings
-        p_dict["settings_original"] = self.settings_original
+        p_dict["current_params"] = self.params.settings_dict
+        p_dict["historical_params"] = [s.settings_dict for s in self.param_history]
+        p_dict["settings_original"] = self.settings_original.settings_dict
 
         return p_dict
 
@@ -203,58 +179,42 @@ class Params:
             with open(path, "w") as f:
                 json.dump(d, f, indent=4)
 
-    def is_converged(self):
-        p_latest = self.params
-        p_previous = self.param_history[-1]
-        threshold = self.settings["em_convergence"]
+    #######################################################################################
+    # The rest of this module is just 'presentational' elements - charts, and __repr__ etc.
+    #######################################################################################
 
-        p_new = {
-            key: value
-            for key, value in _flatten_dict(p_latest).items()
-            if "_probability" in key.lower()
-        }
-        p_old = {
-            key: value
-            for key, value in _flatten_dict(p_previous).items()
-            if "_probability" in key.lower()
-        }
+    def _convert_params_dict_to_bayes_factor_data(self):
+        pass
 
-        diff = [abs(p_new[item] - p_old[item]) < threshold for item in p_new]
+    def _convert_params_dict_to_bayes_factor_iteration_history(self):
+        """
+        Get the data needed for a chart that shows which comparison
+        vector values have the greatest effect on match probability
+        """
+        pass
 
-        biggest_change = 0
-        biggest_change_key = ""
-        for key in p_new.keys():
-            new_change = abs(p_new[key] - p_old[key])
-            if new_change > biggest_change:
-                biggest_change = new_change
-                biggest_change_key = key
+    def _iteration_history_df_gammas(self):
+        data = []
+        for it_num, param_value in enumerate(self.param_history):
+            data.extend(self._convert_params_dict_to_dataframe(param_value, it_num))
 
-        logger.info(
-            f"The maximum change in parameters was {biggest_change} for key {biggest_change_key}"
-        )
+        return data
 
-        return all(diff)
+    def _iteration_history_df_lambdas(self):
+        data = []
+        for it_num, param_value in enumerate(self.param_history):
+            data.append({"λ": param_value["λ"], "iteration": it_num})
 
-    def get_settings_with_current_params(self):
-        return get_or_update_settings(self)
+        return data
 
-    ### The rest of this module is just 'presentational' elements - charts, and __repr__ etc.
+    def _iteration_history_df_log_likelihood(self):
+        data = []
+        for it_num, param_value in enumerate(self.param_history):
+            data.append(
+                {"log_likelihood": param_value["log_likelihood"], "iteration": it_num}
+            )
 
-    def _print_m_u_probs(self):
-        def field_value_to_probs(fv):
-            m_probs = []
-            for key, val in fv["prob_dist_match"].items():
-                m_probs.append(val["probability"])
-            u_probs = []
-            for key, val in fv["prob_dist_non_match"].items():
-                u_probs.append(val["probability"])
-
-            print(f'"m_probabilities": {m_probs},')
-            print(f'"u_probabilities": {u_probs}')
-
-        for field, value in self.params["π"].items():
-            print(field)
-            field_value_to_probs(value)
+        return data
 
     def lambda_iteration_chart(self):  # pragma: no cover
         data = self._iteration_history_df_lambdas()
@@ -450,7 +410,7 @@ class Params:
         lines.append(f"λ (proportion of matches) = {p['proportion_of_matches']}")
 
         previous_col = ""
-        for row in p.as_rows():
+        for row in p.m_u_as_rows():
             if row["column"] != previous_col:
                 lines.append("------------------------------------")
                 lines.append(f"Comparison of {row['column']}")
@@ -482,73 +442,19 @@ def load_params_from_json(path):
 def load_params_from_dict(param_dict):
 
     keys = set(param_dict.keys())
+
     expected_keys = {
         "current_params",
         "settings_original",
-        "settings",
         "historical_params",
     }
 
     if keys == expected_keys:
-        p = Params(settings=param_dict["settings"], spark=None)
+        p = Params(param_dict["current_params"], spark=None)
 
-        p.params = param_dict["current_params"]
-        p.param_history = param_dict["historical_params"]
-        p.settings_original = param_dict["settings_original"]
+        p.param_history = [Settings(p) for p in param_dict["historical_params"]]
+        p.settings_original = Settings(param_dict["settings_original"])
     else:
         raise ValueError("Your saved params seem to be corrupted")
 
     return p
-
-
-def _flatten_dict(dictionary, accumulator=None, parent_key=None, separator="_"):
-    if accumulator is None:
-        accumulator = {}
-    for k, v in dictionary.items():
-        k = f"{parent_key}{separator}{k}" if parent_key else k
-        if isinstance(v, dict):
-            _flatten_dict(dictionary=v, accumulator=accumulator, parent_key=k)
-            continue
-        accumulator[k] = v
-    return accumulator
-
-
-@check_types
-def get_or_update_settings(params: Params, settings: dict = None):
-
-    if not settings:
-        settings = params.settings
-
-    settings["proportion_of_matches"] = params.params["λ"]
-
-    for comp in settings["comparison_columns"]:
-        if "col_name" in comp.keys():
-            label = "gamma_" + comp["col_name"]
-        else:
-            label = "gamma_" + comp["custom_name"]
-
-        if "num_levels" in comp.keys():
-            num_levels = comp["num_levels"]
-        else:
-            num_levels = _get_default_value("num_levels", is_column_setting=True)
-
-        if label in params.params["π"].keys():
-            saved = params.params["π"][label]
-
-            if num_levels == saved["num_levels"]:
-                m_probs = [
-                    val["probability"] for key, val in saved["prob_dist_match"].items()
-                ]
-                u_probs = [
-                    val["probability"]
-                    for key, val in saved["prob_dist_non_match"].items()
-                ]
-
-                comp["m_probabilities"] = m_probs
-                comp["u_probabilities"] = u_probs
-            else:
-                warnings.warn(
-                    f"{label}: Saved m and u probabilities do not match the specified number of levels ({num_levels}) - default probabilities will be used"
-                )
-
-    return settings

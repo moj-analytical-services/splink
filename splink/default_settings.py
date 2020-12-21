@@ -2,7 +2,7 @@ from pyspark.sql.session import SparkSession
 
 from copy import deepcopy
 
-from splink.validate import validate_settings, _get_default_value
+from .validate import validate_settings, _get_default_value
 from .case_statements import (
     _check_jaro_registered,
     sql_gen_case_smnt_strict_equality_2,
@@ -17,7 +17,10 @@ from .case_statements import (
     _add_as_gamma_to_case_statement,
 )
 
-from .settings import _normalise_prob_list
+
+def _normalise_prob_list(prob_array: list):
+    sum_list = sum(prob_array)
+    return [i / sum_list for i in prob_array]
 
 
 def _get_default_case_statements_functions(spark):
@@ -85,7 +88,6 @@ def _get_default_probabilities(m_or_u, levels):
     }
 
     probabilities = default_m_u_probabilities[m_or_u][levels]
-    probabilities = _normalise_prob_list(probabilities)
     return probabilities
 
 

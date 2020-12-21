@@ -1,12 +1,7 @@
-from splink.default_settings import complete_settings_dict
-from splink.validate import _get_default_value
+from .default_settings import complete_settings_dict
+from .validate import _get_default_value
 from copy import deepcopy
 from math import log2
-
-
-def _normalise_prob_list(prob_array: list):
-    sum_list = sum(prob_array)
-    return [i / sum_list for i in prob_array]
 
 
 class ComparisonColumn:
@@ -62,6 +57,10 @@ class ComparisonColumn:
         else:
             raise ValueError("Length of m and u probs unequal")
 
+    @property
+    def max_gamma_index(self):
+        return self.num_levels - 1
+
     def set_m_probability(self, level: int, prob: float, force: bool = False):
         cd = self.column_dict
         fixed = self._dict_key_else_default_value("fix_m_probabilities")
@@ -80,10 +79,10 @@ class ComparisonColumn:
         fixed_u = self._dict_key_else_default_value("fix_u_probabilities")
         if not fixed_m or force:
             if "m_probablities" in cd:
-                del cd["m_probabilities"]
+                cd["m_probabilities"] = [None for c in cd["m_probabilities"]]
         if not fixed_u or force:
             if "u_probabilities" in cd:
-                del cd["u_probabilities"]
+                cd["u_probabilities"] = [None for c in cd["u_probabilities"]]
 
     def _level_as_dict(self, gamma_index, proportion_of_matches):
 
@@ -154,12 +153,7 @@ class Settings:
         return self._comparison_column_lookup.values()
 
     def get_comparison_column(self, col_name_or_custom_name):
-        col_dict = self._comparison_col_dict_lookup["col_name_or_custom_name"]
-        return ComparisonColumn(col_dict)
-
-    @property
-    def as_dict(self):
-        return self.settings_dict
+        return self._comparison_column_lookup[col_name_or_custom_name]
 
     def reset_all_probabilities(self, force: bool = False):
         sd = self.settings_dict
@@ -167,7 +161,7 @@ class Settings:
         for c in self.comparison_columns:
             c.reset_probabilities(force=force)
 
-    def as_rows(self):
+    def m_u_as_rows(self):
         """Convert to rows e.g. to use to plot
         in a chart"""
         rows = []
