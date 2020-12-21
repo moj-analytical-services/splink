@@ -6,17 +6,9 @@ from pyspark.sql.session import SparkSession
 
 from .settings import Settings, complete_settings_dict
 from .validate import _get_default_value
+from .charts import load_chart_definition, altair_if_installed_else_json
 
-# from .chart_definitions import (
-#     lambda_iteration_chart_def,
-#     probability_distribution_chart,
-#     gamma_distribution_chart_def,
-#     ll_iteration_chart_def,
-#     bayes_factor_chart_def,
-#     bayes_factor_history_chart_def,
-#     multi_chart_template,
-#     pi_iteration_chart_def,
-# )
+
 from .check_types import check_types
 import warnings
 
@@ -183,48 +175,37 @@ class Params:
     # The rest of this module is just 'presentational' elements - charts, and __repr__ etc.
     #######################################################################################
 
-    def _convert_params_dict_to_bayes_factor_data(self):
-        pass
+    def m_u_history_as_rows(self):
+        rows = []
+        for it_num, p in enumerate(self.param_history):
+            new_rows = p.m_u_as_rows()
+            for r in new_rows:
+                r["iteration"] = it_num
+            rows.extend(new_rows)
 
-    def _convert_params_dict_to_bayes_factor_iteration_history(self):
-        """
-        Get the data needed for a chart that shows which comparison
-        vector values have the greatest effect on match probability
-        """
-        pass
+    def lambda_history_as_rows(self):
+        rows = []
+        for it_num, p in enumerate(self.param_history):
+            rows.append({"λ": p["proportion_of_matches"], "iteration": it_num})
 
-    def _iteration_history_df_gammas(self):
-        data = []
-        for it_num, param_value in enumerate(self.param_history):
-            data.extend(self._convert_params_dict_to_dataframe(param_value, it_num))
+        return rows
 
-        return data
+    # def _iteration_history_df_log_likelihood(self):
+    #     data = []
+    #     for it_num, param_value in enumerate(self.param_history):
+    #         data.append(
+    #             {"log_likelihood": p["log_likelihood"], "iteration": it_num}
+    #         )
 
-    def _iteration_history_df_lambdas(self):
-        data = []
-        for it_num, param_value in enumerate(self.param_history):
-            data.append({"λ": param_value["λ"], "iteration": it_num})
-
-        return data
-
-    def _iteration_history_df_log_likelihood(self):
-        data = []
-        for it_num, param_value in enumerate(self.param_history):
-            data.append(
-                {"log_likelihood": param_value["log_likelihood"], "iteration": it_num}
-            )
-
-        return data
+    #     return data
 
     def lambda_iteration_chart(self):  # pragma: no cover
-        data = self._iteration_history_df_lambdas()
 
-        lambda_iteration_chart_def["data"]["values"] = data
-
-        if altair_installed:
-            return alt.Chart.from_dict(lambda_iteration_chart_def)
-        else:
-            return lambda_iteration_chart_def
+        chart_path = "lambda_iteration_chart_def.json"
+        chart = load_chart_definition(chart_path)
+        chart["data"]["values"] = self.lambda_history_as_rows()
+        print(chart)
+        return altair_if_installed_else_json(chart)
 
     def ll_iteration_chart(self):  # pragma: no cover
         if self.log_likelihood_exists:

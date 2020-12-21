@@ -1,0 +1,155 @@
+{
+    "config": {
+        "view": {
+            "width": 400,
+            "height": 300
+        },
+        "mark": {
+            "tooltip": null
+        },
+        "title": {
+            "anchor": "middle"
+        }
+    },
+    "hconcat": [
+        {
+            "mark": "bar",
+            "encoding": {
+                "color": {
+                    "type": "nominal",
+                    "field": "match",
+                    "scale": {
+                        "domain": [
+                            0,
+                            1
+                        ],
+                        "range": [
+                            "red",
+                            "green"
+                        ]
+                    }
+                },
+                "row": {
+                    "type": "nominal",
+                    "field": "column",
+                    "sort": {
+                        "field": "gamma"
+                    }
+                },
+                "tooltip": [
+                    {
+                        "type": "nominal",
+                        "field": "column"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "probability",
+                        "format": ".4f"
+                    },
+                    {
+                        "type": "ordinal",
+                        "field": "value"
+                    }
+                ],
+                "x": {
+                    "type": "quantitative",
+                    "field": "probability",
+                    "axis": {
+                        "title": "proportion of non-matches"
+                    }
+                },
+                "y": {
+                    "type": "nominal",
+                    "axis": {
+                        "title": "\ud835\udefe value"
+                    },
+                    "field": "value"
+                }
+            },
+            "resolve": {
+                "scale": {
+                    "y": "independent"
+                }
+            },
+            "transform": [
+                {
+                    "filter": "(datum.match === 0)"
+                }
+            ],
+            "width": 150,
+            "height": 50
+        },
+        {
+            "mark": "bar",
+            "encoding": {
+                "color": {
+                    "type": "nominal",
+                    "field": "match",
+                    "scale": {
+                        "domain": [
+                            0,
+                            1
+                        ],
+                        "range": [
+                            "red",
+                            "green"
+                        ]
+                    }
+                },
+                "row": {
+                    "type": "nominal",
+                    "field": "column",
+                    "sort": {
+                        "field": "gamma"
+                    }
+                },
+                "tooltip": [
+                    {
+                        "type": "nominal",
+                        "field": "column"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "probability",
+                        "format": ".4f"
+                    },
+                    {
+                        "type": "ordinal",
+                        "field": "value"
+                    }
+                ],
+                "x": {
+                    "type": "quantitative",
+                    "field": "probability",
+                    "axis": {
+                        "title": "proportion of matches"
+                    }
+                },
+                "y": {
+                    "type": "nominal",
+                    "axis": {
+                        "title": "\ud835\udefe value"
+                    },
+                    "field": "value"
+                }
+            },
+            "resolve": {
+                "scale": {
+                    "y": "independent"
+                }
+            },
+            "transform": [
+                {
+                    "filter": "(datum.match === 1)"
+                }
+            ],
+            "width": 150,
+            "height": 50
+        }
+    ],
+    "data": {
+        "values": null
+    },
+    "title": "Probability distribution of comparison vector values, m=0 and m=1",
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+}

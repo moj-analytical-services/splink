@@ -68,7 +68,7 @@ class Splink:
 
         validate_settings(settings)
         self.params = Params(settings, spark)
-        self.settings_dict = self.params.settings.settings_dict
+        self.settings_dict = self.params.params.settings_dict
         self.df_r = df_r
         self.df_l = df_l
         self.df = df

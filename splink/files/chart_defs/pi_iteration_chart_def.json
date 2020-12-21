@@ -1,0 +1,137 @@
+{
+    "config": {
+        "view": {
+            "width": 400,
+            "height": 300
+        },
+        "mark": {
+            "tooltip": null
+        },
+        "title": {
+            "anchor": "middle"
+        }
+    },
+    "hconcat": [
+        {
+            "mark": "bar",
+            "encoding": {
+                "color": {
+                    "type": "nominal",
+                    "field": "value"
+                },
+                "row": {
+                    "type": "nominal",
+                    "field": "column",
+                    "sort": {
+                        "field": "gamma"
+                    }
+                },
+                "tooltip": [
+                    {
+                        "type": "quantitative",
+                        "field": "probability"
+                    },
+                    {
+                        "type": "ordinal",
+                        "field": "iteration"
+                    },
+                    {
+                        "type": "nominal",
+                        "field": "column"
+                    },
+                    {
+                        "type": "nominal",
+                        "field": "value"
+                    }
+                ],
+                "x": {
+                    "type": "ordinal",
+                    "field": "iteration"
+                },
+                "y": {
+                    "type": "quantitative",
+                    "aggregate": "sum",
+                    "axis": {
+                        "title": "\ud835\udefe value"
+                    },
+                    "field": "probability"
+                }
+            },
+            "height": 150,
+            "resolve": {
+                "scale": {
+                    "y": "independent"
+                }
+            },
+            "title": "Non Match",
+            "transform": [
+                {
+                    "filter": "(datum.match === 0)"
+                }
+            ]
+        },
+        {
+            "mark": "bar",
+            "encoding": {
+                "color": {
+                    "type": "nominal",
+                    "field": "value"
+                },
+                "row": {
+                    "type": "nominal",
+                    "field": "column",
+                    "sort": {
+                        "field": "gamma"
+                    }
+                },
+                "tooltip": [
+                    {
+                        "type": "quantitative",
+                        "field": "probability"
+                    },
+                    {
+                        "type": "ordinal",
+                        "field": "iteration"
+                    },
+                    {
+                        "type": "nominal",
+                        "field": "column"
+                    },
+                    {
+                        "type": "nominal",
+                        "field": "value"
+                    }
+                ],
+                "x": {
+                    "type": "ordinal",
+                    "field": "iteration"
+                },
+                "y": {
+                    "type": "quantitative",
+                    "aggregate": "sum",
+                    "axis": {
+                        "title": "\ud835\udefe value"
+                    },
+                    "field": "probability"
+                }
+            },
+            "height": 150,
+            "resolve": {
+                "scale": {
+                    "y": "independent"
+                }
+            },
+            "title": "Match",
+            "transform": [
+                {
+                    "filter": "(datum.match === 1)"
+                }
+            ]
+        }
+    ],
+    "data": {
+        "values": null
+    },
+    "title": "Probability distribution of comparison vector values by iteration number",
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+}

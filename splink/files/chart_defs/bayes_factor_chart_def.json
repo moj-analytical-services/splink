@@ -1,0 +1,93 @@
+{
+    "config": {
+        "view": {
+            "width": 400,
+            "height": 300
+        },
+        "mark": {
+            "tooltip": null
+        },
+        "title": {
+            "anchor": "middle"
+        }
+    },
+    "data": {
+        "values": null
+    },
+    "mark": {
+        "type": "bar",
+        "clip": true
+    },
+    "encoding": {
+        "color": {
+            "type": "quantitative",
+            "field": "logk",
+            "title": "log2(K)",
+            "scale": {
+                "scheme": "redyellowgreen",
+                "domainMid": 0.0
+            }
+        },
+        "row": {
+            "type": "nominal",
+            "field": "column",
+            "sort": {
+                "field": "column"
+            }
+        },
+        "tooltip": [
+            {
+                "type": "nominal",
+                "field": "column"
+            },
+            {
+                "type": "quantitative",
+                "field": "bayes_factor",
+                "title": "Bayes factor, K"
+            },
+            {
+                "type": "quantitative",
+                "field": "logk",
+                "title": "log2(K)"
+            }
+        ],
+        "x": {
+            "type": "quantitative",
+            "axis": {
+                "title": "log2(Bayes factor, K = m/u)",
+                "values": [
+                    -10,
+                    -5,
+                    0,
+                    5,
+                    10
+                ]
+            },
+            "field": "logk",
+            "scale": {
+                "domain": [
+                    -10,
+                    10
+                ]
+            }
+        },
+        "y": {
+            "type": "nominal",
+            "field": "level"
+        }
+    },
+    "transform": [
+        {
+            "calculate": "(log(datum.bayes_factor) / log(2))",
+            "as": "logk"
+        }
+    ],
+    "height": 50,
+    "resolve": {
+        "scale": {
+            "y": "independent"
+        }
+    },
+    "title": "Influence of comparison vector values on match probability",
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+}

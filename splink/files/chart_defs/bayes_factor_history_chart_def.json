@@ -1,0 +1,206 @@
+{
+    "hconcat": [
+        {
+            "mark": "bar",
+            "encoding": {
+                "color": {
+                    "type": "quantitative",
+                    "field": "level",
+                    "scale": {
+                        "range": [
+                            "red",
+                            "orange",
+                            "green"
+                        ]
+                    }
+                },
+                "tooltip": [
+                    {
+                        "type": "nominal",
+                        "field": "column"
+                    },
+                    {
+                        "type": "ordinal",
+                        "field": "level"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "m"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "u"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "bayes_factor",
+                        "title": "Bayes factor, K"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "logk",
+                        "title": "log2(K)"
+                    }
+                ],
+                "x": {
+                    "type": "ordinal",
+                    "field": "level"
+                },
+                "y": {
+                    "type": "quantitative",
+                    "axis": {
+                        "title": "log2(Bayes factor, K = m/u)",
+                        "values": [
+                            -10,
+                            -5,
+                            -2,
+                            -1,
+                            0,
+                            1,
+                            2,
+                            5,
+                            10
+                        ]
+                    },
+                    "field": "logk"
+                }
+            },
+            "height": 150,
+            "selection": {
+                "selector190": {
+                    "type": "single",
+                    "on": "mouseover",
+                    "fields": [
+                        "level",
+                        "column"
+                    ]
+                }
+            },
+            "transform": [
+                {
+                    "calculate": "(log(datum.bayes_factor) / log(2))",
+                    "as": "logk"
+                },
+                {
+                    "filter": "(datum.final === true)"
+                }
+            ],
+            "width": 100
+        },
+        {
+            "layer": [
+                {
+                    "mark": "line",
+                    "encoding": {
+                        "color": {
+                            "type": "quantitative",
+                            "field": "level",
+                            "legend": {
+                                "tickCount": 2,
+                                "type": "symbol"
+                            },
+                            "scale": {
+                                "range": [
+                                    "red",
+                                    "orange",
+                                    "green"
+                                ]
+                            }
+                        },
+                        "opacity": {
+                            "condition": {
+                                "selection": {
+                                    "not": "selector190"
+                                },
+                                "value": 0.8
+                            },
+                            "value": 1
+                        },
+                        "size": {
+                            "condition": {
+                                "selection": {
+                                    "not": "selector190"
+                                },
+                                "value": 3
+                            },
+                            "value": 5
+                        },
+                        "tooltip": [
+                            {
+                                "type": "nominal",
+                                "field": "column"
+                            },
+                            {
+                                "type": "quantitative",
+                                "field": "iteration"
+                            },
+                            {
+                                "type": "ordinal",
+                                "field": "level"
+                            },
+                            {
+                                "type": "quantitative",
+                                "field": "m"
+                            },
+                            {
+                                "type": "quantitative",
+                                "field": "u"
+                            },
+                            {
+                                "type": "quantitative",
+                                "field": "bayes_factor",
+                                "title": "Bayes factor, K"
+                            },
+                            {
+                                "type": "quantitative",
+                                "field": "logk",
+                                "title": "log2(K)"
+                            }
+                        ],
+                        "x": {
+                            "type": "ordinal",
+                            "axis": {
+                                "title": "Iteration"
+                            },
+                            "field": "iteration"
+                        },
+                        "y": {
+                            "type": "quantitative",
+                            "axis": {
+                                "title": "log2(Bayes factor, K = m/u)",
+                                "values": [
+                                    -10,
+                                    -5,
+                                    -2,
+                                    -1,
+                                    0,
+                                    1,
+                                    2,
+                                    5,
+                                    10
+                                ]
+                            },
+                            "field": "logk"
+                        }
+                    },
+                    "transform": [
+                        {
+                            "calculate": "(log(datum.bayes_factor) / log(2))",
+                            "as": "logk"
+                        }
+                    ],
+                    "height": 150
+                }
+            ]
+        }
+    ],
+    "title": {
+        "text": null,
+        "orient": "top",
+        "dx": 200
+    },
+    "data": {
+        "values": null
+    },
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+}

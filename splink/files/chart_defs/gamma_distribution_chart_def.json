@@ -1,0 +1,65 @@
+{
+    "config": {
+        "view": {
+            "width": 400,
+            "height": 300
+        },
+        "mark": {
+            "tooltip": null
+        },
+        "title": {
+            "anchor": "middle"
+        }
+    },
+    "mark": "bar",
+    "encoding": {
+        "row": {
+            "type": "nominal",
+            "field": "column",
+            "sort": {
+                "field": "column"
+            }
+        },
+        "tooltip": [
+            {
+                "type": "nominal",
+                "field": "column"
+            },
+            {
+                "type": "quantitative",
+                "field": "level_proportion",
+                "format": ".4f"
+            },
+            {
+                "type": "ordinal",
+                "field": "level"
+            }
+        ],
+        "x": {
+            "type": "quantitative",
+            "field": "level_proportion",
+            "axis": {
+                "title": "proportion of comparisons"
+            }
+        },
+        "y": {
+            "type": "nominal",
+            "axis": {
+                "title": "\ud835\udefe value"
+            },
+            "field": "level"
+        }
+    },
+    "resolve": {
+        "scale": {
+            "y": "independent"
+        }
+    },
+    "width": 150,
+    "height": 50,
+    "data": {
+        "values": null
+    },
+    "title": "Distribution of (non-null) \ud835\udefe values",
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+}
