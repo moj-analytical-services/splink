@@ -220,39 +220,20 @@ class Params:
     #             "Log likelihood not calculated.  To calculate pass 'compute_ll=True' to iterate(). Note this causes algorithm to run more slowly because additional calculations are required."
     #         )
 
-    def probability_distribution_chart(self):  # pragma: no cover
-        chart_path = "probability_distribution_chart.json"
+    def gamma_distribution_chart(self):  # pragma: no cover
+        chart_path = "gamma_distribution_chart_def.json"
         chart = load_chart_definition(chart_path)
         chart["data"]["values"] = self.params.m_u_as_rows()
         return altair_if_installed_else_json(chart)
 
-    def gamma_distribution_chart(self):  # pragma: no cover
-        """
-        If altair is installed, returns the chart
-        Otherwise will return the chart spec as a dictionary
-        """
-        data = self._convert_params_dict_to_bayes_factor_data()
-
-        gamma_distribution_chart_def["data"]["values"] = data
-
-        if altair_installed:
-            return alt.Chart.from_dict(gamma_distribution_chart_def)
-        else:
-            return gamma_distribution_chart_def
-
     def bayes_factor_chart(self):  # pragma: no cover
-        """
-        If altair is installed, returns the chart
-        Otherwise will return the chart spec as a dictionary
-        """
-        data = self._convert_params_dict_to_bayes_factor_data()
+        chart_path = "bayes_factor_chart_def.json"
+        chart = load_chart_definition(chart_path)
+        chart["data"]["values"] = self.params.m_u_as_rows()
+        return altair_if_installed_else_json(chart)
 
-        bayes_factor_chart_def["data"]["values"] = data
-
-        if altair_installed:
-            return alt.Chart.from_dict(bayes_factor_chart_def)
-        else:
-            return bayes_factor_chart_def
+    def probability_distribution_chart(self):
+        return self.params.probability_distribution_chart()
 
     def bayes_factor_history_charts(self):
         """

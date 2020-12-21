@@ -27,12 +27,12 @@
             },
             {
                 "type": "quantitative",
-                "field": "level_proportion",
+                "field": "proportion",
                 "format": ".4f"
             },
             {
                 "type": "ordinal",
-                "field": "level"
+                "field": "value_of_gamma"
             }
         ],
         "x": {
@@ -47,7 +47,7 @@
             "axis": {
                 "title": "\ud835\udefe value"
             },
-            "field": "level"
+            "field": "value_of_gamma"
         }
     },
     "resolve": {

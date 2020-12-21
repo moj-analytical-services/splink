@@ -21,19 +21,23 @@
     "encoding": {
         "color": {
             "type": "quantitative",
-            "field": "logk",
-            "title": "log2(K)",
+            "field": "log2_bayes_factor",
             "scale": {
-                "scheme": "redyellowgreen",
-                "domainMid": 0.0
+                "range": [
+                    "red",
+                    "orange",
+                    "green"
+                ],
+                "domain": [
+                    -10,
+                    0,
+                    10
+                ]
             }
         },
         "row": {
             "type": "nominal",
-            "field": "column",
-            "sort": {
-                "field": "column"
-            }
+            "field": "column"
         },
         "tooltip": [
             {
@@ -41,14 +45,30 @@
                 "field": "column"
             },
             {
-                "type": "quantitative",
-                "field": "bayes_factor",
-                "title": "Bayes factor, K"
+                "type": "ordinal",
+                "field": "value_of_gamma"
             },
             {
                 "type": "quantitative",
-                "field": "logk",
-                "title": "log2(K)"
+                "field": "m_probability",
+                "format": ".4f"
+            },
+            {
+                "type": "quantitative",
+                "field": "bayes_factor",
+                "format": ".4f"
+            },
+            {
+                "type": "nominal",
+                "field": "level_proportion",
+                "title": "Percentage of record comparisons in this level",
+                "format": ".2%"
+            },
+            {
+                "type": "quantitative",
+                "field": "log2_bayes_factor",
+                "title": "log2(Bayes factor, K = m/u)",
+                "format": ".4f"
             }
         ],
         "x": {
@@ -63,7 +83,7 @@
                     10
                 ]
             },
-            "field": "logk",
+            "field": "log2_bayes_factor",
             "scale": {
                 "domain": [
                     -10,
@@ -73,7 +93,10 @@
         },
         "y": {
             "type": "nominal",
-            "field": "level"
+            "field": "value_of_gamma",
+            "axis": {
+                "title": null
+            }
         }
     },
     "transform": [

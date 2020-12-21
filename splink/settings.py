@@ -2,6 +2,7 @@ from .default_settings import complete_settings_dict
 from .validate import _get_default_value
 from copy import deepcopy
 from math import log2
+from .charts import load_chart_definition, altair_if_installed_else_json
 
 
 class ComparisonColumn:
@@ -180,3 +181,9 @@ class Settings:
     ):
         cc = self.get_comparison_column(name)
         cc.set_u_probability(level, prob, force)
+
+    def probability_distribution_chart(self):  # pragma: no cover
+        chart_path = "probability_distribution_chart.json"
+        chart = load_chart_definition(chart_path)
+        chart["data"]["values"] = self.m_u_as_rows()
+        return altair_if_installed_else_json(chart)
