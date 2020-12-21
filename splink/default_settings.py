@@ -1,5 +1,7 @@
 from pyspark.sql.session import SparkSession
 
+from copy import deepcopy
+
 from splink.validate import validate_settings, _get_default_value
 from .case_statements import (
     _check_jaro_registered,
@@ -14,6 +16,8 @@ from .case_statements import (
     _check_no_obvious_problem_with_case_statement,
     _add_as_gamma_to_case_statement,
 )
+
+from .settings import _normalise_prob_list
 
 
 def _get_default_case_statements_functions(spark):
@@ -81,6 +85,7 @@ def _get_default_probabilities(m_or_u, levels):
     }
 
     probabilities = default_m_u_probabilities[m_or_u][levels]
+    probabilities = _normalise_prob_list(probabilities)
     return probabilities
 
 
@@ -147,6 +152,7 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
     Returns:
         dict: A `splink` settings dictionary with all keys populated.
     """
+    settings_dict = deepcopy(settings_dict)
     validate_settings(settings_dict)
 
     # Complete non-column settings from their default values if not exist
@@ -196,5 +202,12 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
         _complete_case_expression(col_settings, spark)
         _complete_probabilities(col_settings, "m_probabilities")
         _complete_probabilities(col_settings, "u_probabilities")
+
+        col_settings["m_probabilities"] = _normalise_prob_list(
+            col_settings["m_probabilities"]
+        )
+        col_settings["u_probabilities"] = _normalise_prob_list(
+            col_settings["u_probabilities"]
+        )
 
     return settings_dict

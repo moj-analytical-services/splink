@@ -164,31 +164,14 @@ class Params:
 
         return data
 
-    def _reset_param_values(self):
-        """
-        Reset λ and all probability values  to ensure we
-        don't accidentally re-use old values
-        """
-        self.params.reset_all_probabilities()
-
     def save_params_to_iteration_history(self):
         """
         Take current params and
         """
-        current_params = copy.deepcopy(self.params)
+        current_params = deepcopy(self.params.settings_dict)
         self.param_history.append(current_params)
-        if "log_likelihood" in self.params:
+        if "log_likelihood" in self.params.settings_dict:
             self.log_likelihood_exists = True
-
-    def _update_params(self, lambda_value, pi_df_collected):
-        """
-        Save current value of parameters to iteration history
-        Reset values
-        Then update the parameters from the dataframe
-        """
-
-        self._reset_param_values_to_none()
-        self._populate_params(lambda_value, pi_df_collected)
 
     def _to_dict(self):
         p_dict = {}
@@ -466,38 +449,22 @@ class Params:
         lines = []
         lines.append(f"λ (proportion of matches) = {p['proportion_of_matches']}")
 
-        for cc in p.comparison_columns:
-            lines.append("------------------------------------")
-            lines.append(f"{cc.gamma_column_name}: {cc.desc}")
-            lines.append("")
-
-            m_probs = cc.m_probabilities_normalised
-
-            u_probs = cc.u_probabilities_normalised
-
-            for m_or_u in [("matches", m_probs), ("non_matches", u_probs)]:
-                lines.append(
-                    f"Probability distribution of gamma values amongst {m_or_u[0]}:"
-                )
-                for level_value, prob in enumerate(m_or_u[1]):
-
-                    label_template = (
-                        "(level represents {high_low} category of similarity)"
-                    )
-                    if level_value == 0:
-                        value_label = label_template.format(high_low="lowest")
-                    elif level_value == len(m_or_u[1]) - 1:
-                        value_label = label_template.format(high_low="highest")
-                    else:
-                        value_label = ""
-
-                    if not prob:
-                        prob = "None"
-                    else:
-                        prob = f"{prob:4f}"
-
-                    lines.append(f"    value {level_value}: {prob} {value_label}")
+        previous_col = ""
+        for row in p.as_rows():
+            if row["column"] != previous_col:
+                lines.append("------------------------------------")
+                lines.append(f"Comparison of {row['column']}")
                 lines.append("")
+            previous_col = row["column"]
+
+            lines.append(f"{row['value_of_gamma']}")
+            lines.append(
+                f"   Prob amongst matches:     {row['m_probability']*100:.3g}%"
+            )
+            lines.append(
+                f"   Prob amongst non-matches: {row['u_probability']*100:.3g}%"
+            )
+            lines.append(f"   Bayes factor:             {row['bayes_factor']:,.3g}")
 
         return "\n".join(lines)
 

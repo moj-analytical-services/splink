@@ -1,6 +1,7 @@
 from splink.default_settings import complete_settings_dict
 from splink.validate import _get_default_value
 from copy import deepcopy
+from math import log2
 
 
 def _normalise_prob_list(prob_array: list):
@@ -40,16 +41,6 @@ class ComparisonColumn:
             return cd["custom_columns_used"]
 
     @property
-    def u_probabilities_normalised(self):
-        cd = self.column_dict
-        return _normalise_prob_list(cd["u_probabilities"])
-
-    @property
-    def m_probabilities_normalised(self):
-        cd = self.column_dict
-        return _normalise_prob_list(cd["m_probabilities"])
-
-    @property
     def name(self):
         cd = self.column_dict
         if "custom_name" in cd:
@@ -58,16 +49,18 @@ class ComparisonColumn:
             return cd["col_name"]
 
     @property
-    def gamma_column_name(self):
+    def gamma_name(self):
         return f"gamma_{self.name}"
 
     @property
-    def desc(self):
-        if self.custom_comparison:
-            cols_used_str = ", ".join(self.columns_used)
-            return f"Comparison of {self.name} using {cols_used_str}"
+    def num_levels(self):
+        cd = self.column_dict
+        m_probs = cd["m_probabilities"]
+        u_probs = cd["u_probabilities"]
+        if len(m_probs) == len(u_probs):
+            return len(m_probs)
         else:
-            return f"Comparison of {self.name}"
+            raise ValueError("Length of m and u probs unequal")
 
     def set_m_probability(self, level: int, prob: float, force: bool = False):
         cd = self.column_dict
@@ -86,62 +79,46 @@ class ComparisonColumn:
         fixed_m = self._dict_key_else_default_value("fix_m_probabilities")
         fixed_u = self._dict_key_else_default_value("fix_u_probabilities")
         if not fixed_m or force:
-            del cd["m_probabilities"]
+            if "m_probablities" in cd:
+                del cd["m_probabilities"]
         if not fixed_u or force:
-            del cd["u_probabilities"]
+            if "u_probabilities" in cd:
+                del cd["u_probabilities"]
 
-    def _get_row_absolute(self, prob, gamma_index, match):
-        return {
-            "gamma": f"gamma_{self.name}",
-            "match": match,
-            "value_of_gamma": f"level_{gamma_index}",
-            "probability": prob,
-            "gamma_index": gamma_index,
-            "column": self.name,
-        }
+    def _level_as_dict(self, gamma_index, proportion_of_matches):
 
-    def _get_row_comparative(self, prob_m, prob_u, gamma_index, proportion_of_matches):
-        lam = proportion_of_matches
+        d = {}
+        m_prob = self["m_probabilities"][gamma_index]
+        u_prob = self["u_probabilities"][gamma_index]
 
-        row = {
-            "gamma": f"gamma_{self.name}",
-            "value_of_gamma": f"level_{gamma_index}",
-            "gamma_index": gamma_index,
-            "column": self.name,
-        }
+        d["gamma"] = f"gamma_{self.name}"
+        d["value_of_gamma"] = f"level_{gamma_index}"
+        d["m_probability"] = m_prob
+        d["u_probability"] = u_prob
+        d["gamma_index"] = gamma_index
+        d["column"] = self.name
+        d["max_gamma_index"] = self.num_levels - 1
 
-        row["level_proportion"] = prob_m * lam + prob_u * (1 - lam)
+        if proportion_of_matches:
+            lam = proportion_of_matches
+            d["level_proportion"] = m_prob * lam + u_prob * (1 - lam)
+        else:
+            d["level_proportion"] = None
+
         try:
-            row["bayes_factor"] = prob_m / prob_u
+            d["bayes_factor"] = m_prob / u_prob
+            d["log2_bayes_factor"] = log2(d["bayes_factor"])
         except ZeroDivisionError:
-            row["bayes_factor"] = None
-        return row
+            d["bayes_factor"] = None
+            d["log2_bayes_factor"] = None
+        return d
 
-    def as_rows_absolute(self):
-        """Convert to rows e.g. to use to plot
-        in a chart"""
-
-        rows = []
-        cd = self.column_dict
-        zipped = zip(cd["m_probabilities"], cd["u_probabilities"])
-
-        for gamma_index, (prob_m, prob_u) in enumerate(zipped):
-            r = self._get_row_absolute(prob_m, gamma_index, 1)
-            rows.append(r)
-            r = self._get_row_absolute(prob_u, gamma_index, 0)
-            rows.append(r)
-        return rows
-
-    def as_rows_comparative(self, proportion_of_matches):
+    def as_rows(self, proportion_of_matches=None):
         """Convert to rows e.g. to use to plot
         in a chart"""
         rows = []
-        cd = self.column_dict
-        zipped = zip(cd["m_probabilities"], cd["u_probabilities"])
-        for gamma_index, (prob_m, prob_u) in enumerate(zipped):
-            r = self._get_row_comparative(
-                prob_m, prob_u, gamma_index, proportion_of_matches
-            )
+        for gamma_index in range(self.num_levels):
+            r = self._level_as_dict(gamma_index, proportion_of_matches)
             rows.append(r)
         return rows
 
@@ -152,6 +129,9 @@ class Settings:
 
     def __getitem__(self, i):
         return self.settings_dict[i]
+
+    def __setitem__(self, key, value):
+        self.settings_dict[key] = value
 
     def complete_settings_dict(self, spark):
         """Complete all fields in the setting dictionary
@@ -187,20 +167,12 @@ class Settings:
         for c in self.comparison_columns:
             c.reset_probabilities(force=force)
 
-    def as_rows_absolute(self):
+    def as_rows(self):
         """Convert to rows e.g. to use to plot
         in a chart"""
         rows = []
         for c in self.comparison_columns:
-            rows.extend(c.as_rows_absolute())
-        return rows
-
-    def as_rows_comparative(self):
-        """Convert to rows e.g. to use to plot
-        in a chart"""
-        rows = []
-        for c in self.comparison_columns:
-            rows.extend(c.as_rows_comparative(self["proportion_of_matches"]))
+            rows.extend(c.as_rows(self["proportion_of_matches"]))
         return rows
 
     def set_m_probability(

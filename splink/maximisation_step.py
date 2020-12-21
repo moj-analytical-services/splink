@@ -48,8 +48,9 @@ def _sql_gen_intermediate_pi_aggregate(params, table_name="df_e"):
 
     Without this intermediate table, we'd be repeating these calculations multiple times.
     """
+    ccs = params.params.comparison_columns
 
-    gamma_cols_expr = ", ".join(params._gamma_cols)
+    gamma_cols_expr = ", ".join([cc.gamma_name for cc in ccs])
 
     sql = f"""
     select {gamma_cols_expr}, sum(match_probability) as expected_num_matches, sum(1- match_probability) as expected_num_non_matches, count(*) as num_rows
@@ -62,8 +63,8 @@ def _sql_gen_intermediate_pi_aggregate(params, table_name="df_e"):
 def _sql_gen_pi_df(params, table_name="df_intermediate"):
 
     sqls = []
-    for cc in params.comparison_columns:
-        gamma_column_name = cc.gamma_column_name
+    for cc in params.params.comparison_columns:
+        gamma_column_name = cc.gamma_name
         col_name = cc.name
         sql = f"""
         select
@@ -72,7 +73,7 @@ def _sql_gen_pi_df(params, table_name="df_intermediate"):
         cast(sum(expected_num_non_matches)/(select sum(expected_num_non_matches) from {table_name} where {gamma_column_name} != -1) as float) as new_probability_non_match,
         '{col_name}' as column_name
         from {table_name}
-        where gamma_column_name != -1,
+        where {gamma_column_name} != -1
         group by {gamma_column_name}
         """
         sqls.append(sql)
@@ -115,5 +116,5 @@ def run_maximisation_step(df_e: DataFrame, params: Params, spark: SparkSession):
     new_lambda = _get_new_lambda(df_intermediate, spark)
     pi_df_collected = _get_new_pi_df(df_intermediate, spark, params)
 
-    params._update_params(new_lambda, pi_df_collected)
+    params._populate_params_from_maximisation_step(new_lambda, pi_df_collected)
     df_intermediate.unpersist()

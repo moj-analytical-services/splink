@@ -80,10 +80,10 @@ def _sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
 
     # Get case statements
     case_statements = {}
-    for gamma_str in params._gamma_cols:
+    for cc in params.params.comparison_columns:
         for match in [0, 1]:
-            alias = _case_when_col_alias(gamma_str, match)
-            case_statement = _sql_gen_gamma_case_when(gamma_str, match, params)
+            alias = _case_when_col_alias(cc.gamma_name, match)
+            case_statement = _sql_gen_gamma_case_when(cc, match, params)
             case_statements[alias] = case_statement
 
     # Column order for case statement.  We want orig_col_l, orig_col_r, gamma_orig_col, prob_gamma_u, prob_gamma_m
@@ -182,12 +182,12 @@ def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
 
 
 def _sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_probs"):
-    gamma_cols = params._gamma_cols
+    ccs = params.params.comparison_columns
 
-    numerator = " * ".join([f"prob_{g}_match" for g in gamma_cols])
-    denom_part = " * ".join([f"prob_{g}_non_match" for g in gamma_cols])
+    numerator = " * ".join([f"prob_{cc.gamma_name}_match" for cc in ccs])
+    denom_part = " * ".join([f"prob_{cc.gamma_name}_non_match" for cc in ccs])
 
-    λ = params.params["λ"]
+    λ = params.params["proportion_of_matches"]
     castλ = f"cast({λ} as double)"
     castoneminusλ = f"cast({1-λ} as double)"
     match_prob_expression = f"({castλ} * {numerator})/(( {castλ} * {numerator}) + ({castoneminusλ} * {denom_part})) as match_probability"
@@ -212,28 +212,30 @@ def _case_when_col_alias(gamma_str, match):
     return f"prob_{gamma_str}{name_suffix}"
 
 
-def _sql_gen_gamma_case_when(gamma_str, match, params):
+def _sql_gen_gamma_case_when(comparison_column, match, params):
     """
     Create the case statements that look up the correct probabilities in the
     params dict for each gamma
     """
+    cc = comparison_column
 
     if match == 1:
-        dist = "prob_dist_match"
+        probs = cc["m_probabilities"]
     if match == 0:
-        dist = "prob_dist_non_match"
-
-    levels = params.params["π"][gamma_str][dist]
+        probs = cc["u_probabilities"]
 
     case_statements = []
-    case_statements.append(f"WHEN {gamma_str} = -1 THEN cast(1 as double)")
-    for level in levels.values():
-        case_stmt = f"when {gamma_str} = {level['value']} then cast({level['probability']:.35f} as double)"
+    case_statements.append(f"WHEN {cc.gamma_name} = -1 THEN cast(1 as double)")
+
+    for gamma_index, prob in enumerate(probs):
+        case_stmt = (
+            f"when {cc.gamma_name} = {gamma_index} then cast({prob:.15f} as double)"
+        )
         case_statements.append(case_stmt)
 
     case_statements = "\n".join(case_statements)
 
-    alias = _case_when_col_alias(gamma_str, match)
+    alias = _case_when_col_alias(cc.gamma_name, match)
 
     sql = f""" case \n{case_statements} \nend \nas {alias}"""
 
