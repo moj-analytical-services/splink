@@ -200,41 +200,31 @@ class Params:
     #     return data
 
     def lambda_iteration_chart(self):  # pragma: no cover
-
         chart_path = "lambda_iteration_chart_def.json"
         chart = load_chart_definition(chart_path)
         chart["data"]["values"] = self.lambda_history_as_rows()
-        print(chart)
         return altair_if_installed_else_json(chart)
 
-    def ll_iteration_chart(self):  # pragma: no cover
-        if self.log_likelihood_exists:
-            data = self._iteration_history_df_log_likelihood()
+    # def ll_iteration_chart(self):  # pragma: no cover
+    #     if self.log_likelihood_exists:
+    #         data = self._iteration_history_df_log_likelihood()
 
-            ll_iteration_chart_def["data"]["values"] = data
+    #         ll_iteration_chart_def["data"]["values"] = data
 
-            if altair_installed:
-                return alt.Chart.from_dict(ll_iteration_chart_def)
-            else:
-                return ll_iteration_chart_def
-        else:
-            raise Exception(
-                "Log likelihood not calculated.  To calculate pass 'compute_ll=True' to iterate(). Note this causes algorithm to run more slowly because additional calculations are required."
-            )
+    #         if altair_installed:
+    #             return alt.Chart.from_dict(ll_iteration_chart_def)
+    #         else:
+    #             return ll_iteration_chart_def
+    #     else:
+    #         raise Exception(
+    #             "Log likelihood not calculated.  To calculate pass 'compute_ll=True' to iterate(). Note this causes algorithm to run more slowly because additional calculations are required."
+    #         )
 
     def probability_distribution_chart(self):  # pragma: no cover
-        """
-        If altair is installed, returns the chart
-        Otherwise will return the chart spec as a dictionary
-        """
-        data = self._convert_params_dict_to_dataframe(self.params)
-
-        probability_distribution_chart["data"]["values"] = data
-
-        if altair_installed:
-            return alt.Chart.from_dict(probability_distribution_chart)
-        else:
-            return probability_distribution_chart
+        chart_path = "probability_distribution_chart.json"
+        chart = load_chart_definition(chart_path)
+        chart["data"]["values"] = self.params.m_u_as_rows()
+        return altair_if_installed_else_json(chart)
 
     def gamma_distribution_chart(self):  # pragma: no cover
         """

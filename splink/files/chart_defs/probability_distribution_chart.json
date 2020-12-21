@@ -4,9 +4,6 @@
             "width": 400,
             "height": 300
         },
-        "mark": {
-            "tooltip": null
-        },
         "title": {
             "anchor": "middle"
         }
@@ -15,45 +12,16 @@
         {
             "mark": "bar",
             "encoding": {
-                "color": {
-                    "type": "nominal",
-                    "field": "match",
-                    "scale": {
-                        "domain": [
-                            0,
-                            1
-                        ],
-                        "range": [
-                            "red",
-                            "green"
-                        ]
-                    }
-                },
                 "row": {
                     "type": "nominal",
                     "field": "column",
                     "sort": {
-                        "field": "gamma"
+                        "field": "gamma_index"
                     }
                 },
-                "tooltip": [
-                    {
-                        "type": "nominal",
-                        "field": "column"
-                    },
-                    {
-                        "type": "quantitative",
-                        "field": "probability",
-                        "format": ".4f"
-                    },
-                    {
-                        "type": "ordinal",
-                        "field": "value"
-                    }
-                ],
                 "x": {
                     "type": "quantitative",
-                    "field": "probability",
+                    "field": "u_probability",
                     "axis": {
                         "title": "proportion of non-matches"
                     }
@@ -63,7 +31,41 @@
                     "axis": {
                         "title": "\ud835\udefe value"
                     },
-                    "field": "value"
+                    "field": "value_of_gamma"
+                },
+                "tooltip": [
+                    {
+                        "type": "nominal",
+                        "field": "column"
+                    },
+                    {
+                        "type": "ordinal",
+                        "field": "value_of_gamma"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "u_probability",
+                        "format": ".4f"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "bayes_factor",
+                        "format": ".4f"
+                    },
+                    {
+                        "type": "nominal",
+                        "field": "level_proportion",
+                        "title": "Percentage of record comparisons in this level",
+                        "format": ".2%"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "log2_bayes_factor",
+                        "format": ".4f"
+                    }
+                ],
+                "color": {
+                    "value": "red"
                 }
             },
             "resolve": {
@@ -73,7 +75,7 @@
             },
             "transform": [
                 {
-                    "filter": "(datum.match === 0)"
+                    "filter": "(datum.bayes_factor != 'unnecessary filter2 due to vega lite issue 4680')"
                 }
             ],
             "width": 150,
@@ -82,45 +84,16 @@
         {
             "mark": "bar",
             "encoding": {
-                "color": {
-                    "type": "nominal",
-                    "field": "match",
-                    "scale": {
-                        "domain": [
-                            0,
-                            1
-                        ],
-                        "range": [
-                            "red",
-                            "green"
-                        ]
-                    }
-                },
                 "row": {
                     "type": "nominal",
                     "field": "column",
                     "sort": {
-                        "field": "gamma"
+                        "field": "gamma_index"
                     }
                 },
-                "tooltip": [
-                    {
-                        "type": "nominal",
-                        "field": "column"
-                    },
-                    {
-                        "type": "quantitative",
-                        "field": "probability",
-                        "format": ".4f"
-                    },
-                    {
-                        "type": "ordinal",
-                        "field": "value"
-                    }
-                ],
                 "x": {
                     "type": "quantitative",
-                    "field": "probability",
+                    "field": "m_probability",
                     "axis": {
                         "title": "proportion of matches"
                     }
@@ -130,7 +103,41 @@
                     "axis": {
                         "title": "\ud835\udefe value"
                     },
-                    "field": "value"
+                    "field": "value_of_gamma"
+                },
+                "tooltip": [
+                    {
+                        "type": "nominal",
+                        "field": "column"
+                    },
+                    {
+                        "type": "ordinal",
+                        "field": "value_of_gamma"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "m_probability",
+                        "format": ".4f"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "bayes_factor",
+                        "format": ".4f"
+                    },
+                    {
+                        "type": "nominal",
+                        "field": "level_proportion",
+                        "title": "Percentage of record comparisons in this level",
+                        "format": ".2%"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "log2_bayes_factor",
+                        "format": ".4f"
+                    }
+                ],
+                "color": {
+                    "value": "green"
                 }
             },
             "resolve": {
@@ -140,7 +147,7 @@
             },
             "transform": [
                 {
-                    "filter": "(datum.match === 1)"
+                    "filter": "(datum.bayes_factor != 'unnecessary filter due to vega lite issue 4680')"
                 }
             ],
             "width": 150,
@@ -150,6 +157,7 @@
     "data": {
         "values": null
     },
-    "title": "Probability distribution of comparison vector values, m=0 and m=1",
+    "transform": [],
+    "title": "Probability distributions of non-matches and matches ",
     "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
 }
