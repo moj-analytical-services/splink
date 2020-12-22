@@ -5,33 +5,46 @@
             "height": 300
         },
         "title": {
-            "anchor": "middle"
+            "anchor": "middle",
+            "offset": 10
+        },
+        "header": {
+            "title": null
         }
     },
     "hconcat": [
         {
             "mark": "bar",
+            "title": {
+                "text": "Non-matches",
+                "fontWeight": "normal"
+            },
             "encoding": {
                 "row": {
                     "type": "nominal",
                     "field": "column",
                     "sort": {
                         "field": "gamma_index"
+                    },
+                    "header": {
+                        "labelAngle": 0,
+                        "labelAnchor": "middle",
+                        "labelAlign": "left"
                     }
                 },
                 "x": {
                     "type": "quantitative",
                     "field": "u_probability",
                     "axis": {
-                        "title": "proportion of non-matches"
+                        "title": "proportion"
                     }
                 },
                 "y": {
                     "type": "nominal",
                     "axis": {
-                        "title": "\ud835\udefe value"
+                        "title": null
                     },
-                    "field": "value_of_gamma"
+                    "field": "level_name"
                 },
                 "tooltip": [
                     {
@@ -40,7 +53,7 @@
                     },
                     {
                         "type": "ordinal",
-                        "field": "value_of_gamma"
+                        "field": "level_name"
                     },
                     {
                         "type": "quantitative",
@@ -83,27 +96,34 @@
         },
         {
             "mark": "bar",
+            "title": {
+                "text": "Matches",
+                "fontWeight": "normal"
+            },
             "encoding": {
                 "row": {
                     "type": "nominal",
                     "field": "column",
                     "sort": {
                         "field": "gamma_index"
+                    },
+                    "header": {
+                        "labels": false
                     }
                 },
                 "x": {
                     "type": "quantitative",
                     "field": "m_probability",
                     "axis": {
-                        "title": "proportion of matches"
+                        "title": "proportion"
                     }
                 },
                 "y": {
                     "type": "nominal",
                     "axis": {
-                        "title": "\ud835\udefe value"
+                        "title": null
                     },
-                    "field": "value_of_gamma"
+                    "field": "level_name"
                 },
                 "tooltip": [
                     {
@@ -112,7 +132,7 @@
                     },
                     {
                         "type": "ordinal",
-                        "field": "value_of_gamma"
+                        "field": "level_name"
                     },
                     {
                         "type": "quantitative",

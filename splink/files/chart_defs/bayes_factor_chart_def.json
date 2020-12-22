@@ -9,6 +9,9 @@
         },
         "title": {
             "anchor": "middle"
+        },
+        "header": {
+            "title": null
         }
     },
     "data": {
@@ -40,6 +43,11 @@
             "field": "column",
             "sort": {
                 "field": "gamma_index"
+            },
+            "header": {
+                "labelAngle": 0,
+                "labelAnchor": "middle",
+                "labelAlign": "left"
             }
         },
         "tooltip": [
@@ -49,7 +57,7 @@
             },
             {
                 "type": "ordinal",
-                "field": "value_of_gamma"
+                "field": "level_name"
             },
             {
                 "type": "quantitative",
@@ -96,7 +104,7 @@
         },
         "y": {
             "type": "nominal",
-            "field": "value_of_gamma",
+            "field": "level_name",
             "axis": {
                 "title": null
             }

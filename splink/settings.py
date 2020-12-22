@@ -91,8 +91,8 @@ class ComparisonColumn:
         m_prob = self["m_probabilities"][gamma_index]
         u_prob = self["u_probabilities"][gamma_index]
 
-        d["gamma"] = f"gamma_{self.name}"
-        d["value_of_gamma"] = f"level_{gamma_index}"
+        d["gamma_column_name"] = f"gamma_{self.name}"
+        d["level_name"] = f"level_{gamma_index}"
         d["m_probability"] = m_prob
         d["u_probability"] = u_prob
         d["gamma_index"] = gamma_index

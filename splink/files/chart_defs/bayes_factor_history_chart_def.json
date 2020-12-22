@@ -21,7 +21,7 @@
                     },
                     {
                         "type": "ordinal",
-                        "field": "value_of_gamma"
+                        "field": "level_name"
                     },
                     {
                         "type": "quantitative",

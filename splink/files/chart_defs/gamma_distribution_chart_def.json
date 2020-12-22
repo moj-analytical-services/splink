@@ -9,6 +9,9 @@
         },
         "title": {
             "anchor": "middle"
+        },
+        "header": {
+            "title": null
         }
     },
     "mark": "bar",
@@ -18,6 +21,11 @@
             "field": "column",
             "sort": {
                 "field": "gamma_index"
+            },
+            "header": {
+                "labelAngle": 0,
+                "labelAnchor": "middle",
+                "labelAlign": "left"
             }
         },
         "tooltip": [
@@ -27,7 +35,7 @@
             },
             {
                 "type": "quantitative",
-                "field": "proportion",
+                "field": "level_proportion",
                 "format": ".4f"
             },
             {
@@ -45,9 +53,9 @@
         "y": {
             "type": "nominal",
             "axis": {
-                "title": "\ud835\udefe value"
+                "title": null
             },
-            "field": "value_of_gamma"
+            "field": "level_name"
         }
     },
     "resolve": {
@@ -60,6 +68,8 @@
     "data": {
         "values": null
     },
-    "title": "Distribution of (non-null) \ud835\udefe values",
+    "title": {
+        "text": "Proportion of (non-null) comparisons in each level"
+    },
     "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
 }
