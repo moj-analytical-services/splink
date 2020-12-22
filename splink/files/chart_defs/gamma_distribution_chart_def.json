@@ -17,7 +17,7 @@
             "type": "nominal",
             "field": "column",
             "sort": {
-                "field": "column"
+                "field": "gamma_index"
             }
         },
         "tooltip": [

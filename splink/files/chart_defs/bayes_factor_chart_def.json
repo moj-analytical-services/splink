@@ -37,7 +37,10 @@
         },
         "row": {
             "type": "nominal",
-            "field": "column"
+            "field": "column",
+            "sort": {
+                "field": "gamma_index"
+            }
         },
         "tooltip": [
             {
@@ -99,12 +102,6 @@
             }
         }
     },
-    "transform": [
-        {
-            "calculate": "(log(datum.bayes_factor) / log(2))",
-            "as": "logk"
-        }
-    ],
     "height": 50,
     "resolve": {
         "scale": {

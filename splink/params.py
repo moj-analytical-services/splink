@@ -147,29 +147,20 @@ class Params:
         p_dict["current_params"] = self.params.settings_dict
         p_dict["historical_params"] = [s.settings_dict for s in self.param_history]
         p_dict["settings_original"] = self.settings_original.settings_dict
+        p_dict["iteration"] = self.iteration
 
         return p_dict
 
-    def save_params_to_json_file(self, path=None, overwrite=False):
+    def save_params_to_json_file(self, path, overwrite=False):
 
-        proceed_with_write = False
-        if not path:
-            raise ValueError("Must provide a path to write to")
+        if os.path.isfile(path) and not overwrite:
+            raise ValueError(
+                f"The path {path} already exists. Please provide a different path."
+            )
 
-        if os.path.isfile(path):
-            if overwrite:
-                proceed_with_write = True
-            else:
-                raise ValueError(
-                    f"The path {path} already exists. Please provide a different path."
-                )
-        else:
-            proceed_with_write = True
-
-        if proceed_with_write:
-            d = self._to_dict()
-            with open(path, "w") as f:
-                json.dump(d, f, indent=4)
+        d = self._to_dict()
+        with open(path, "w") as f:
+            json.dump(d, f, indent=4)
 
     #######################################################################################
     # The rest of this module is just 'presentational' elements - charts, and __repr__ etc.
@@ -181,7 +172,10 @@ class Params:
             new_rows = p.m_u_as_rows()
             for r in new_rows:
                 r["iteration"] = it_num
+                r["final"] = it_num == self.iteration
+
             rows.extend(new_rows)
+        return rows
 
     def lambda_history_as_rows(self):
         rows = []
@@ -226,42 +220,33 @@ class Params:
         chart["data"]["values"] = self.params.m_u_as_rows()
         return altair_if_installed_else_json(chart)
 
-    def bayes_factor_chart(self):  # pragma: no cover
-        chart_path = "bayes_factor_chart_def.json"
-        chart = load_chart_definition(chart_path)
-        chart["data"]["values"] = self.params.m_u_as_rows()
-        return altair_if_installed_else_json(chart)
+    def bayes_factor_chart(self):
+        return self.params.bayes_factor_chart()
 
     def probability_distribution_chart(self):
         return self.params.probability_distribution_chart()
 
     def bayes_factor_history_charts(self):
-        """
-        If altair is installed, returns the chart
-        Otherwise will return the chart spec as a dictionary
-        """
+        chart_path = "bayes_factor_history_chart_def.json"
+        chart_template = load_chart_definition(chart_path)
+
         # Empty list of chart definitions
         chart_defs = []
 
         # Full iteration history
-        data = self._convert_params_dict_to_bayes_factor_iteration_history()
+        data = self.m_u_history_as_rows()
 
         # Create charts for each column
-        for col_dict in self.settings["comparison_columns"]:
+        for cc in self.params.comparison_columns:
 
-            # Get column name
-            if "col_name" in col_dict:
-                col_name = col_dict["col_name"]
-            elif "custom_name" in col_dict:
-                col_name = col_dict["custom_name"]
+            chart_def = deepcopy(chart_template)
 
-            chart_def = copy.deepcopy(bayes_factor_history_chart_def)
             # Assign iteration history to values of chart_def
-            chart_def["data"]["values"] = [d for d in data if d["column"] == col_name]
-            chart_def["title"]["text"] = col_name
+            chart_def["data"]["values"] = [d for d in data if d["column"] == cc.name]
+            chart_def["title"]["text"] = cc.name
             chart_def["hconcat"][1]["layer"][0]["encoding"]["color"]["legend"][
                 "tickCount"
-            ] = (col_dict["num_levels"] - 1)
+            ] = (cc.num_levels - 1)
             chart_defs.append(chart_def)
 
         combined_charts = {
@@ -271,24 +256,16 @@ class Params:
             "title": {"text": "Bayes factor iteration history", "anchor": "middle"},
             "vconcat": chart_defs,
             "resolve": {"scale": {"color": "independent"}},
-            "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+            "$schema": "https://vega.github.io/schema/vega-lite/v4.json",
         }
 
-        if altair_installed:
-            return alt.Chart.from_dict(combined_charts)
-        else:
-            return combined_charts
+        return altair_if_installed_else_json(combined_charts)
 
-    def pi_iteration_chart(self):  # pragma: no cover
-
-        data = self._iteration_history_df_gammas()
-
-        pi_iteration_chart_def["data"]["values"] = data
-
-        if altair_installed:
-            return alt.Chart.from_dict(pi_iteration_chart_def)
-        else:
-            return pi_iteration_chart_def
+    def m_u_probabilities_iteration_chart(self):  # pragma: no cover
+        chart_path = "m_u_iteration_chart_def.json"
+        chart = load_chart_definition(chart_path)
+        chart["data"]["values"] = self.m_u_history_as_rows()
+        return altair_if_installed_else_json(chart)
 
     def all_charts_write_html_file(
         self, filename="splink_charts.html", overwrite=False
@@ -399,6 +376,7 @@ def load_params_from_dict(param_dict):
         "current_params",
         "settings_original",
         "historical_params",
+        "iteration",
     }
 
     if keys == expected_keys:
@@ -406,6 +384,7 @@ def load_params_from_dict(param_dict):
 
         p.param_history = [Settings(p) for p in param_dict["historical_params"]]
         p.settings_original = Settings(param_dict["settings_original"])
+        p.iteration = param_dict["iteration"]
     else:
         raise ValueError("Your saved params seem to be corrupted")
 

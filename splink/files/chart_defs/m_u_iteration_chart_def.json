@@ -17,19 +17,19 @@
             "encoding": {
                 "color": {
                     "type": "nominal",
-                    "field": "value"
+                    "field": "value_of_gamma"
                 },
                 "row": {
                     "type": "nominal",
                     "field": "column",
                     "sort": {
-                        "field": "gamma"
+                        "field": "gamma_index"
                     }
                 },
                 "tooltip": [
                     {
                         "type": "quantitative",
-                        "field": "probability"
+                        "field": "u_probability"
                     },
                     {
                         "type": "ordinal",
@@ -41,7 +41,7 @@
                     },
                     {
                         "type": "nominal",
-                        "field": "value"
+                        "field": "value_of_gamma"
                     }
                 ],
                 "x": {
@@ -54,7 +54,7 @@
                     "axis": {
                         "title": "\ud835\udefe value"
                     },
-                    "field": "probability"
+                    "field": "u_probability"
                 }
             },
             "height": 150,
@@ -66,7 +66,7 @@
             "title": "Non Match",
             "transform": [
                 {
-                    "filter": "(datum.match === 0)"
+                    "filter": "(datum.iteration > -2)"
                 }
             ]
         },
@@ -75,19 +75,19 @@
             "encoding": {
                 "color": {
                     "type": "nominal",
-                    "field": "value"
+                    "field": "value_of_gamma"
                 },
                 "row": {
                     "type": "nominal",
                     "field": "column",
                     "sort": {
-                        "field": "gamma"
+                        "field": "gamma_index"
                     }
                 },
                 "tooltip": [
                     {
                         "type": "quantitative",
-                        "field": "probability"
+                        "field": "u_probability"
                     },
                     {
                         "type": "ordinal",
@@ -99,7 +99,7 @@
                     },
                     {
                         "type": "nominal",
-                        "field": "value"
+                        "field": "value_of_gamma"
                     }
                 ],
                 "x": {
@@ -112,7 +112,7 @@
                     "axis": {
                         "title": "\ud835\udefe value"
                     },
-                    "field": "probability"
+                    "field": "u_probability"
                 }
             },
             "height": 150,
@@ -124,7 +124,7 @@
             "title": "Match",
             "transform": [
                 {
-                    "filter": "(datum.match === 1)"
+                    "filter": "(datum.iteration > -1)"
                 }
             ]
         }

@@ -587,7 +587,3 @@ def test_main_api(spark, sqlite_con_1):
     params = linker.params
     row_dict = df_e.toPandas().sample(1).to_dict(orient="records")[0]
     print(intuition_report(row_dict, params))
-
-    linker.params._print_m_u_probs()
-
-

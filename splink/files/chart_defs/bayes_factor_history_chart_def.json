@@ -5,7 +5,7 @@
             "encoding": {
                 "color": {
                     "type": "quantitative",
-                    "field": "level",
+                    "field": "gamma_index",
                     "scale": {
                         "range": [
                             "red",
@@ -21,15 +21,15 @@
                     },
                     {
                         "type": "ordinal",
-                        "field": "level"
+                        "field": "value_of_gamma"
                     },
                     {
                         "type": "quantitative",
-                        "field": "m"
+                        "field": "m_probability"
                     },
                     {
                         "type": "quantitative",
-                        "field": "u"
+                        "field": "u_probability"
                     },
                     {
                         "type": "quantitative",
@@ -38,13 +38,13 @@
                     },
                     {
                         "type": "quantitative",
-                        "field": "logk",
+                        "field": "log2_bayes_factor",
                         "title": "log2(K)"
                     }
                 ],
                 "x": {
                     "type": "ordinal",
-                    "field": "level"
+                    "field": "gamma_index"
                 },
                 "y": {
                     "type": "quantitative",
@@ -62,7 +62,7 @@
                             10
                         ]
                     },
-                    "field": "logk"
+                    "field": "log2_bayes_factor"
                 }
             },
             "height": 150,
@@ -71,16 +71,12 @@
                     "type": "single",
                     "on": "mouseover",
                     "fields": [
-                        "level",
+                        "gamma_index",
                         "column"
                     ]
                 }
             },
             "transform": [
-                {
-                    "calculate": "(log(datum.bayes_factor) / log(2))",
-                    "as": "logk"
-                },
                 {
                     "filter": "(datum.final === true)"
                 }
@@ -94,7 +90,7 @@
                     "encoding": {
                         "color": {
                             "type": "quantitative",
-                            "field": "level",
+                            "field": "gamma_index",
                             "legend": {
                                 "tickCount": 2,
                                 "type": "symbol"
@@ -136,15 +132,15 @@
                             },
                             {
                                 "type": "ordinal",
-                                "field": "level"
+                                "field": "gamma_index"
                             },
                             {
                                 "type": "quantitative",
-                                "field": "m"
+                                "field": "m_probabilit"
                             },
                             {
                                 "type": "quantitative",
-                                "field": "u"
+                                "field": "u_probability"
                             },
                             {
                                 "type": "quantitative",
@@ -153,7 +149,7 @@
                             },
                             {
                                 "type": "quantitative",
-                                "field": "logk",
+                                "field": "log2_bayes_factor",
                                 "title": "log2(K)"
                             }
                         ],
@@ -180,15 +176,9 @@
                                     10
                                 ]
                             },
-                            "field": "logk"
+                            "field": "log2_bayes_factor"
                         }
                     },
-                    "transform": [
-                        {
-                            "calculate": "(log(datum.bayes_factor) / log(2))",
-                            "as": "logk"
-                        }
-                    ],
                     "height": 150
                 }
             ]
@@ -201,6 +191,5 @@
     },
     "data": {
         "values": null
-    },
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+    }
 }

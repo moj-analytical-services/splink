@@ -117,4 +117,5 @@ def run_maximisation_step(df_e: DataFrame, params: Params, spark: SparkSession):
     pi_df_collected = _get_new_pi_df(df_intermediate, spark, params)
 
     params._populate_params_from_maximisation_step(new_lambda, pi_df_collected)
+    params.iteration += 1
     df_intermediate.unpersist()

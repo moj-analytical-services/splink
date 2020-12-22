@@ -187,3 +187,9 @@ class Settings:
         chart = load_chart_definition(chart_path)
         chart["data"]["values"] = self.m_u_as_rows()
         return altair_if_installed_else_json(chart)
+
+    def bayes_factor_chart(self):  # pragma: no cover
+        chart_path = "bayes_factor_chart_def.json"
+        chart = load_chart_definition(chart_path)
+        chart["data"]["values"] = self.m_u_as_rows()
+        return altair_if_installed_else_json(chart)
