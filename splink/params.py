@@ -6,39 +6,21 @@ from pyspark.sql.session import SparkSession
 
 from .settings import Settings, complete_settings_dict
 from .validate import _get_default_value
-from .charts import load_chart_definition, altair_if_installed_else_json
+from .charts import (
+    load_chart_definition,
+    altair_if_installed_else_json,
+    _load_multi_chart_template,
+    _load_external_libs,
+    _make_json,
+)
 
 
 from .check_types import check_types
 import warnings
 
-altair_installed = True
-try:
-    import altair as alt
-except ImportError:
-    altair_installed = False
-
 import logging
 
 logger = logging.getLogger(__name__)
-
-
-def _settings_to_dataframe(settings: Settings, iteration: int = None):
-    """
-    Convert the params dict into a dataframe.
-
-
-    [{'gamma': 'gamma_first_name',
-    'match': 1,
-    'value_of_gamma': 'level_0',
-    'probability': 0.1,
-    'value': 0,
-    'column': 'first_name',
-    'iteration': },
-    {}]
-    """
-
-    return settings.as_rows()
 
 
 class Params:
@@ -271,66 +253,23 @@ class Params:
         self, filename="splink_charts.html", overwrite=False
     ):
 
-        if os.path.isfile(filename):
-            if not overwrite:
-                raise ValueError(
-                    f"The path {filename} already exists. Please provide a different path."
-                )
+        if os.path.isfile(filename) and not overwrite:
+            raise ValueError(
+                f"The path {filename} already exists. Please provide a different path."
+            )
 
-        if altair_installed:
-            c1 = self.probability_distribution_chart().to_json(indent=None)
-            c2 = self.bayes_factor_chart().to_json(indent=None)
-            c3 = self.lambda_iteration_chart().to_json(indent=None)
+        template = _load_multi_chart_template()
+        fmt_dict = _load_external_libs()
 
-            if self.log_likelihood_exists:
-                c4 = self.ll_iteration_chart().to_json(indent=None)
-            else:
-                c4 = ""
+        fmt_dict["c_prob_dist"] = _make_json(self.probability_distribution_chart())
+        fmt_dict["c_bayes_factor"] = _make_json(self.bayes_factor_chart())
+        fmt_dict["c_gamma_dist"] = _make_json(self.gamma_distribution_chart())
+        fmt_dict["c_lambda_it"] = _make_json(self.lambda_iteration_chart())
+        fmt_dict["c_bayes_factor_hist"] = _make_json(self.bayes_factor_history_charts())
+        fmt_dict["c_m_u_hist"] = _make_json(self.m_u_probabilities_iteration_chart())
 
-            c5 = self.bayes_factor_history_charts().to_json(indent=None)
-            c6 = self.gamma_distribution_chart().to_json(indent=None)
-
-            with open(filename, "w") as f:
-                f.write(
-                    multi_chart_template.format(
-                        vega_version=alt.VEGA_VERSION,
-                        vegalite_version=alt.VEGALITE_VERSION,
-                        vegaembed_version=alt.VEGAEMBED_VERSION,
-                        spec1=c1,
-                        spec2=c6,
-                        spec3=c2,
-                        spec4=c3,
-                        spec5=c4,
-                        spec6=c5,
-                    )
-                )
-        else:
-            c1 = json.dumps(self.probability_distribution_chart())
-            c2 = json.dumps(self.bayes_factor_chart())
-            c3 = json.dumps(self.lambda_iteration_chart())
-
-            if self.log_likelihood_exists:
-                c4 = json.dumps(self.ll_iteration_chart())
-            else:
-                c4 = ""
-
-            c5 = json.dumps(self.bayes_factor_history_charts())
-            c6 = json.dumps(self.gamma_distribution_chart())
-
-            with open(filename, "w") as f:
-                f.write(
-                    multi_chart_template.format(
-                        vega_version="5.17.0",
-                        vegalite_version="4.17.0",
-                        vegaembed_version="6",
-                        spec1=c1,
-                        spec2=c6,
-                        spec3=c2,
-                        spec4=c3,
-                        spec5=c4,
-                        spec6=c5,
-                    )
-                )
+        with open(filename, "w") as f:
+            f.write(template.format(**fmt_dict))
 
     def __repr__(self):  # pragma: no cover
 

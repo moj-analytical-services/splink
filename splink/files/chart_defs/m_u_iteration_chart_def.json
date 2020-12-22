@@ -1,9 +1,5 @@
 {
     "config": {
-        "view": {
-            "width": 400,
-            "height": 300
-        },
         "mark": {
             "tooltip": null
         },
@@ -65,11 +61,11 @@
                         "format": ".4f"
                     }
                 ],
-                "x": {
+                "y": {
                     "type": "ordinal",
                     "field": "iteration"
                 },
-                "y": {
+                "x": {
                     "type": "quantitative",
                     "aggregate": "sum",
                     "axis": {
@@ -78,7 +74,6 @@
                     "field": "u_probability"
                 }
             },
-            "height": 150,
             "resolve": {
                 "scale": {
                     "y": "independent"
@@ -139,11 +134,11 @@
                         "format": ".4f"
                     }
                 ],
-                "x": {
+                "y": {
                     "type": "ordinal",
                     "field": "iteration"
                 },
-                "y": {
+                "x": {
                     "type": "quantitative",
                     "aggregate": "sum",
                     "axis": {
@@ -152,7 +147,6 @@
                     "field": "u_probability"
                 }
             },
-            "height": 150,
             "resolve": {
                 "scale": {
                     "y": "independent"
