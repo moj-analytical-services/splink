@@ -34,42 +34,53 @@
                 "field": "column"
             },
             {
+                "type": "ordinal",
+                "field": "level_name"
+
+            {
+                    "type": "quantitative",
+                    "field": "bayes_factor",
+                    "format": ".4f"
+                },
+                {
+                    "type": "nominal",
+                    "field": "level_proportion",
+                    "title": "Percentage of record comparisons in this level",
+                    "format": ".2%"
+                },
+                {
+                    "type": "quantitative",
+                    "field": "log2_bayes_factor",
+                    "format": ".4f"
+                }
+            ],
+            "x": {
                 "type": "quantitative",
                 "field": "level_proportion",
-                "format": ".4f"
+                "axis": {
+                    "title": "proportion of comparisons"
+                }
             },
-            {
-                "type": "ordinal",
-                "field": "value_of_gamma"
-            }
-        ],
-        "x": {
-            "type": "quantitative",
-            "field": "level_proportion",
-            "axis": {
-                "title": "proportion of comparisons"
+            "y": {
+                "type": "nominal",
+                "axis": {
+                    "title": null
+                },
+                "field": "level_name"
             }
         },
-        "y": {
-            "type": "nominal",
-            "axis": {
-                "title": null
-            },
-            "field": "level_name"
-        }
-    },
-    "resolve": {
-        "scale": {
-            "y": "independent"
-        }
-    },
-    "width": 150,
-    "height": 50,
-    "data": {
-        "values": null
-    },
-    "title": {
-        "text": "Proportion of (non-null) comparisons in each level"
-    },
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
-}
+        "resolve": {
+            "scale": {
+                "y": "independent"
+            }
+        },
+        "width": 150,
+        "height": 50,
+        "data": {
+            "values": null
+        },
+        "title": {
+            "text": "Proportion of (non-null) comparisons in each level"
+        },
+        "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+    }

@@ -346,7 +346,7 @@ class Params:
                 lines.append("")
             previous_col = row["column"]
 
-            lines.append(f"{row['value_of_gamma']}")
+            lines.append(f"{row['level_name']}")
             lines.append(
                 f"   Prob amongst matches:     {row['m_probability']*100:.3g}%"
             )
