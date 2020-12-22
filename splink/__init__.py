@@ -125,7 +125,7 @@ class Splink:
             df_gammas, self.params, self.settings_dict, self.spark
         )
 
-    def get_scored_comparisons(self):
+    def get_scored_comparisons(self, compute_ll=False):
         """Use the EM algorithm to estimate model parameters and return match probabilities.
 
         Note: Does not compute term frequency adjustments.
@@ -145,7 +145,7 @@ class Splink:
             self.params,
             self.settings_dict,
             self.spark,
-            compute_ll=False,
+            compute_ll=compute_ll,
             save_state_fn=self.save_state_fn,
         )
 

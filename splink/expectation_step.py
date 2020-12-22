@@ -248,18 +248,17 @@ def _calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
     Likelihood is just ((1-lambda) * prob not match) * (lambda * prob match)
     """
 
-    gamma_cols = params._gamma_cols
+    cc = params.params.comparison_columns
+    λ = params.params["proportion_of_matches"]
 
-    λ = params.params["λ"]
-
-    match_prob = " * ".join([f"prob_{g}_match" for g in gamma_cols])
+    match_prob = " * ".join([f"prob_{c.gamma_name}_match" for c in cc])
     match_prob = f"({λ} * {match_prob})"
-    non_match_prob = " * ".join([f"prob_{g}_non_match" for g in gamma_cols])
+    non_match_prob = " * ".join([f"prob_{c.gamma_name}_non_match" for c in cc])
     non_match_prob = f"({1-λ} * {non_match_prob})"
     log_likelihood = f"ln({match_prob} + {non_match_prob})"
 
-    numerator = " * ".join([f"prob_{g}_match" for g in gamma_cols])
-    denom_part = " * ".join([f"prob_{g}_non_match" for g in gamma_cols])
+    numerator = " * ".join([f"prob_{c.gamma_name}_match" for c in cc])
+    denom_part = " * ".join([f"prob_{c.gamma_name}_non_match" for c in cc])
     match_prob_expression = f"({λ} * {numerator})/(( {λ} * {numerator}) + ({1 -λ} * {denom_part})) as match_probability"
 
     df_with_gamma_probs.createOrReplaceTempView("df_with_gamma_probs")

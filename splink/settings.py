@@ -122,6 +122,22 @@ class ComparisonColumn:
             rows.append(r)
         return rows
 
+    def __repr__(self):
+        lines = []
+        lines.append("------------------------------------")
+        lines.append(f"Comparison of {self.name}")
+        lines.append("")
+        for row in self.as_rows():
+            lines.append(f"{row['level_name']}")
+            lines.append(
+                f"   Prob amongst matches:     {row['m_probability']*100:.3g}%"
+            )
+            lines.append(
+                f"   Prob amongst non-matches: {row['u_probability']*100:.3g}%"
+            )
+            lines.append(f"   Bayes factor:             {row['bayes_factor']:,.3g}")
+        return "\n".join(lines)
+
 
 class Settings:
     def __init__(self, settings_dict):
@@ -186,6 +202,8 @@ class Settings:
         chart_path = "probability_distribution_chart.json"
         chart = load_chart_definition(chart_path)
         chart["data"]["values"] = self.m_u_as_rows()
+        chart["title"]["subtitle"] += f" {self['proportion_of_matches']:.3g}"
+
         return altair_if_installed_else_json(chart)
 
     def bayes_factor_chart(self):  # pragma: no cover
@@ -193,3 +211,13 @@ class Settings:
         chart = load_chart_definition(chart_path)
         chart["data"]["values"] = self.m_u_as_rows()
         return altair_if_installed_else_json(chart)
+
+    def __repr__(self):  # pragma: no cover
+
+        lines = []
+        lines.append(f"λ (proportion of matches) = {self['proportion_of_matches']}")
+
+        for c in self.comparison_columns:
+            lines.append(c.__repr__())
+
+        return "\n".join(lines)

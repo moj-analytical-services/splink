@@ -166,14 +166,13 @@ class Params:
 
         return rows
 
-    # def _iteration_history_df_log_likelihood(self):
-    #     data = []
-    #     for it_num, param_value in enumerate(self.param_history):
-    #         data.append(
-    #             {"log_likelihood": p["log_likelihood"], "iteration": it_num}
-    #         )
+    def ll_history_as_rows(self):
 
-    #     return data
+        rows = []
+        for it_num, p in enumerate(self.param_history):
+            rows.append({"log_likelihood": p["log_likelihood"], "iteration": it_num})
+
+        return rows
 
     def lambda_iteration_chart(self):  # pragma: no cover
         chart_path = "lambda_iteration_chart_def.json"
@@ -181,20 +180,16 @@ class Params:
         chart["data"]["values"] = self.lambda_history_as_rows()
         return altair_if_installed_else_json(chart)
 
-    # def ll_iteration_chart(self):  # pragma: no cover
-    #     if self.log_likelihood_exists:
-    #         data = self._iteration_history_df_log_likelihood()
-
-    #         ll_iteration_chart_def["data"]["values"] = data
-
-    #         if altair_installed:
-    #             return alt.Chart.from_dict(ll_iteration_chart_def)
-    #         else:
-    #             return ll_iteration_chart_def
-    #     else:
-    #         raise Exception(
-    #             "Log likelihood not calculated.  To calculate pass 'compute_ll=True' to iterate(). Note this causes algorithm to run more slowly because additional calculations are required."
-    #         )
+    def ll_iteration_chart(self):  # pragma: no cover
+        if self.log_likelihood_exists:
+            chart_path = "ll_iteration_chart_def.json"
+            chart = load_chart_definition(chart_path)
+            chart["data"]["values"] = self.ll_history_as_rows()
+            return altair_if_installed_else_json(chart)
+        else:
+            raise Exception(
+                "Log likelihood not calculated.  To calculate pass 'compute_ll=True' to get_scored_comparisons(). Note this causes algorithm to run more slowly because additional calculations are required."
+            )
 
     def gamma_distribution_chart(self):  # pragma: no cover
         chart_path = "gamma_distribution_chart_def.json"
@@ -267,34 +262,13 @@ class Params:
         fmt_dict["c_lambda_it"] = _make_json(self.lambda_iteration_chart())
         fmt_dict["c_bayes_factor_hist"] = _make_json(self.bayes_factor_history_charts())
         fmt_dict["c_m_u_hist"] = _make_json(self.m_u_probabilities_iteration_chart())
-
+        fmt_dict["proportion_of_matches"] = self.params["proportion_of_matches"]
         with open(filename, "w") as f:
             f.write(template.format(**fmt_dict))
 
     def __repr__(self):  # pragma: no cover
-
         p = self.params
-        lines = []
-        lines.append(f"λ (proportion of matches) = {p['proportion_of_matches']}")
-
-        previous_col = ""
-        for row in p.m_u_as_rows():
-            if row["column"] != previous_col:
-                lines.append("------------------------------------")
-                lines.append(f"Comparison of {row['column']}")
-                lines.append("")
-            previous_col = row["column"]
-
-            lines.append(f"{row['level_name']}")
-            lines.append(
-                f"   Prob amongst matches:     {row['m_probability']*100:.3g}%"
-            )
-            lines.append(
-                f"   Prob amongst non-matches: {row['u_probability']*100:.3g}%"
-            )
-            lines.append(f"   Bayes factor:             {row['bayes_factor']:,.3g}")
-
-        return "\n".join(lines)
+        return p.__repr__()
 
 
 def load_params_from_json(path):

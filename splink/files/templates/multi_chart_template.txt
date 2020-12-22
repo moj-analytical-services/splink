@@ -17,6 +17,7 @@
 
   <div class="row">
     <h2> Parameter estimtates </h2>
+    <p> Estimated percentage of comparisons which are matches: {proportion_of_matches:.2%} </p>
     <div id="vis_c_prob_dist"></div>
     <div id="vis_c_gamma_dist"></div>
     <div id="vis_c_bayes_factor"></div>
