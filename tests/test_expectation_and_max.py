@@ -26,7 +26,8 @@ def test_expectation_and_maximisation(spark):
                 "u_probabilities": [0.8, 0.2],
             },
             {
-                "col_name": "surname",
+                "custom_name": "surname",
+                "custom_columns_used": ["surname"],
                 "num_levels": 3,
                 "case_expression": """
                     case
