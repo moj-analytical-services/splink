@@ -99,7 +99,7 @@
       "type": "boolean",
       "title": "Retain intermediate calculation columns, such as the individual m and u probabilities associated with each column in `comparison_columns`",
       "description": "The algorithm will run faster and use less resources if this is set to false.",
-      "default": true,
+      "default": false,
       "examples": [
         false,
         true

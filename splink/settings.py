@@ -79,13 +79,14 @@ class ComparisonColumn:
         fixed_m = self._dict_key_else_default_value("fix_m_probabilities")
         fixed_u = self._dict_key_else_default_value("fix_u_probabilities")
         if not fixed_m or force:
-            if "m_probablities" in cd:
+            if "m_probabilities" in cd:
                 cd["m_probabilities"] = [None for c in cd["m_probabilities"]]
+
         if not fixed_u or force:
             if "u_probabilities" in cd:
                 cd["u_probabilities"] = [None for c in cd["u_probabilities"]]
 
-    def _level_as_dict(self, gamma_index, proportion_of_matches):
+    def level_as_dict(self, gamma_index, proportion_of_matches=None):
 
         d = {}
         m_prob = self["m_probabilities"][gamma_index]
@@ -118,7 +119,7 @@ class ComparisonColumn:
         in a chart"""
         rows = []
         for gamma_index in range(self.num_levels):
-            r = self._level_as_dict(gamma_index, proportion_of_matches)
+            r = self.level_as_dict(gamma_index, proportion_of_matches)
             rows.append(r)
         return rows
 
@@ -170,7 +171,13 @@ class Settings:
         return self._comparison_column_lookup.values()
 
     def get_comparison_column(self, col_name_or_custom_name):
-        return self._comparison_column_lookup[col_name_or_custom_name]
+        if col_name_or_custom_name in self._comparison_column_lookup:
+            return self._comparison_column_lookup[col_name_or_custom_name]
+        else:
+            raise KeyError(
+                f"You requested comparison column {col_name_or_custom_name}"
+                " but it does not exist in the settings object"
+            )
 
     def reset_all_probabilities(self, force: bool = False):
         sd = self.settings_dict

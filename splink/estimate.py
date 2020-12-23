@@ -101,7 +101,7 @@ def estimate_u_values(
 
     params = Params(settings, spark)
     run_maximisation_step(df_e_product, params, spark)
-    new_settings = params.get_settings_with_current_params()
+    new_settings = params.params.settings_dict
 
     for i, col in enumerate(orig_settings["comparison_columns"]):
         u_probs = new_settings["comparison_columns"][i]["u_probabilities"]

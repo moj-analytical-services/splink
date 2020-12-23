@@ -228,7 +228,7 @@ def _sql_gen_gamma_case_when(comparison_column, match, params):
 
     for gamma_index, prob in enumerate(probs):
         case_stmt = (
-            f"when {cc.gamma_name} = {gamma_index} then cast({prob:.15f} as double)"
+            f"when {cc.gamma_name} = {gamma_index} then cast({prob:.35f} as double)"
         )
         case_statements.append(case_stmt)
 

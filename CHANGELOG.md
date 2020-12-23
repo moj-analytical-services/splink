@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- MAKE SURE CASE STATEMENTS ARE CONSISTENTLY NAMED
+
 ## [1.0.0] - 2017-06-20
 ### Added
 - Charts now feature improved tooltips

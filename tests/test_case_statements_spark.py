@@ -4,10 +4,23 @@ from splink.case_statements import (
     sql_gen_case_stmt_array_intersect_2,
     sql_gen_case_stmt_array_intersect_3,
     sql_gen_case_stmt_array_combinations_leven_3,
+    sql_gen_gammas_case_stmt_jaro_2,
+    sql_gen_gammas_case_stmt_jaro_3,
+    sql_gen_gammas_case_stmt_jaro_4,
     sql_gen_case_stmt_array_combinations_jaro_3,
     sql_gen_case_stmt_array_combinations_jaro_dmeta_4,
+    sql_gen_case_stmt_levenshtein_3,
+    sql_gen_case_stmt_levenshtein_4,
     sql_gen_gammas_name_inversion_4,
+    _check_jaro_registered,
+    sql_gen_case_smnt_strict_equality_2,
+    sql_gen_case_stmt_numeric_abs_3,
+    sql_gen_case_stmt_numeric_abs_4,
+    sql_gen_case_stmt_numeric_perc_3,
+    sql_gen_case_stmt_numeric_perc_3,
+    sql_gen_case_stmt_numeric_perc_4,
 )
+import pytest
 
 
 def test_size_intersection(spark):
@@ -27,133 +40,80 @@ def test_size_intersection(spark):
     sql = f"""
     select
     {sql_gen_case_stmt_array_intersect_2("arr_comp")} as result_ai2_1,
-
-
     {sql_gen_case_stmt_array_intersect_2("arr_comp", zero_length_is_null=False)} as result_ai2_2,
-
-
     {sql_gen_case_stmt_array_intersect_3("arr_comp")} as result_ai3,
-
-
     {sql_gen_case_stmt_array_combinations_leven_3("arr_comp")} as result_l3_1,
-
     {sql_gen_case_stmt_array_combinations_leven_3("arr_comp", zero_length_is_null=False)} as result_l3_2,
-
     {sql_gen_case_stmt_array_combinations_jaro_3("arr_comp")} as result_j3,
-
     {sql_gen_case_stmt_array_combinations_jaro_dmeta_4("arr_comp")} as result_jd4
-
-
     from df
     """
 
     df_pd = spark.sql(sql).toPandas()
-
-    result = list(df_pd["result_ai2_1"])
-    expected = [1, 1, 0, 0, -1, -1]
-    assert result == expected
-
-    result = list(df_pd["result_ai2_2"])
-    expected = [1, 1, 0, 0, 0, -1]
-    assert result == expected
-
-    result = list(df_pd["result_ai3"])
-    expected = [2, 1, 0, 0, -1, -1]
-    assert result == expected
-
-    result = list(df_pd["result_l3_1"])
-    expected = [2, 2, 2, 1, -1, -1]
-    assert result == expected
-
-    result = list(df_pd["result_l3_2"])
-    expected = [2, 2, 2, 1, 0, -1]
-    assert result == expected
-
-    result = list(df_pd["result_j3"])
-    expected = [2, 2, 1, 1, -1, -1]
-    assert result == expected
-
-    result = list(df_pd["result_jd4"])
-    expected = [3, 3, 2, 1, -1, -1]
-    assert result == expected
+    assert list(df_pd["result_ai2_1"]) == [1, 1, 0, 0, -1, -1]
+    assert list(df_pd["result_ai2_2"]) == [1, 1, 0, 0, 0, -1]
+    assert list(df_pd["result_ai3"]) == [2, 1, 0, 0, -1, -1]
+    assert list(df_pd["result_l3_1"]) == [2, 2, 2, 1, -1, -1]
+    assert list(df_pd["result_l3_2"]) == [2, 2, 2, 1, 0, -1]
+    assert list(df_pd["result_j3"]) == [2, 2, 1, 1, -1, -1]
+    assert list(df_pd["result_jd4"]) == [3, 3, 2, 1, -1, -1]
 
 
 def test_name_inversion(spark):
 
     data_list = [
         {
-            "name_1_l": "john",
-            "name_1_r": "john",
-            "name_2_l": "richard",
-            "name_2_r": "richard",
-            "name_3_l": "michael",
-            "name_3_r": "michael",
-            "name_4_l": "smith",
-            "name_4_r": "smith",
+            "name_1": ("john", "john"),
+            "name_2": ("richard", "richard"),
+            "name_3": ("michael", "michael"),
+            "name_4": ("smith", "smith"),
         },
         {
-            "name_1_l": "richard",
-            "name_1_r": "john",
-            "name_2_l": "john",
-            "name_2_r": "richard",
-            "name_3_l": "michael",
-            "name_3_r": "michael",
-            "name_4_l": "smith",
-            "name_4_r": "smith",
+            "name_1": ("richard", "john"),
+            "name_2": ("john", "richard"),
+            "name_3": ("michael", "michael"),
+            "name_4": ("smith", "smith"),
         },
         {
-            "name_1_l": "jonathon",
-            "name_1_r": "richard",
-            "name_2_l": "richard",
-            "name_2_r": "jonathan",
-            "name_3_l": "michael",
-            "name_3_r": "michael",
-            "name_4_l": "smith",
-            "name_4_r": "smith",
+            "name_1": ("jonathon", "richard"),
+            "name_2": ("richard", "jonathan"),
+            "name_3": ("michael", "michael"),
+            "name_4": ("smith", "smith"),
         },
         {
-            "name_1_l": "caitlin",
-            "name_1_r": "michael",
-            "name_2_l": "richard",
-            "name_2_r": "richard",
-            "name_3_l": "michael",
-            "name_3_r": "smith",
-            "name_4_l": "smith",
-            "name_4_r": "katelyn",
+            "name_1": ("caitlin", "michael"),
+            "name_2": ("richard", "richard"),
+            "name_3": ("michael", "smith"),
+            "name_4": ("smith", "katelyn"),
         },
         {
-            "name_1_l": "john",
-            "name_1_r": "james",
-            "name_2_l": "richard",
-            "name_2_r": "richard",
-            "name_3_l": "michael",
-            "name_3_r": "michael",
-            "name_4_l": "smith",
-            "name_4_r": "smith",
+            "name_1": ("john", "james"),
+            "name_2": ("richard", "richard"),
+            "name_3": ("michael", "michael"),
+            "name_4": ("smith", "smith"),
         },
         {
-            "name_1_l": None,
-            "name_1_r": "james",
-            "name_2_l": "richard",
-            "name_2_r": "richard",
-            "name_3_l": "michael",
-            "name_3_r": "michael",
-            "name_4_l": "smith",
-            "name_4_r": "smith",
+            "name_1": (None, "james"),
+            "name_2": ("richard", "richard"),
+            "name_3": ("michael", "michael"),
+            "name_4": ("smith", "smith"),
         },
         {
-            "name_1_l": "richard",
-            "name_1_r": "john",
-            "name_2_l": "john",
-            "name_2_r": "richard",
-            "name_3_l": "michael",
-            "name_3_r": None,
-            "name_4_l": "smith",
-            "name_4_r": None,
+            "name_1": ("richard", "john"),
+            "name_2": ("john", "richard"),
+            "name_3": ("michael", None),
+            "name_4": ("smith", None),
         },
     ]
+    rows = []
+    for row in data_list:
+        comparison_row = {}
+        for key in row.keys():
+            comparison_row[f"{key}_l"] = row[key][0]
+            comparison_row[f"{key}_r"] = row[key][1]
+        rows.append(comparison_row)
 
-    df = spark.createDataFrame(Row(**x) for x in data_list)
+    df = spark.createDataFrame(Row(**x) for x in rows)
     df.createOrReplaceTempView("df")
 
     sql = f"""
@@ -171,3 +131,128 @@ def test_name_inversion(spark):
     result = list(df_pd["result_1"])
     expected = [3, 2, 2, 0, 0, -1, 2]
     assert result == expected
+
+
+def test_jaro_warning(spark):
+    assert _check_jaro_registered(spark) == True
+
+    spark.sql("drop temporary function jaro_winkler_sim")
+    with pytest.warns(UserWarning):
+        assert _check_jaro_registered(spark) == False
+    from pyspark.sql.types import DoubleType
+
+    spark.udf.registerJavaFunction(
+        "jaro_winkler_sim",
+        "uk.gov.moj.dash.linkage.JaroWinklerSimilarity",
+        DoubleType(),
+    )
+
+
+@pytest.fixture(scope="module")
+def str_comp_data(spark):
+
+    rows = [
+        {
+            "str_col_l": "these strings are equal",
+            "str_col_r": "these strings are equal",
+        },
+        {
+            "str_col_l": "these strings are almost equal",
+            "str_col_r": "these strings are almos equal",
+        },
+        {
+            "str_col_l": "these strings are almost equal",
+            "str_col_r": "not the same at all",
+        },
+        {"str_col_l": "these strings are almost equal", "str_col_r": None},
+        {"str_col_l": None, "str_col_r": None},
+    ]
+    df = spark.createDataFrame(Row(**x) for x in rows)
+    df.createOrReplaceTempView("str_comp")
+    return df
+
+
+def test_leven(spark, str_comp_data):
+    case_strict = sql_gen_case_smnt_strict_equality_2("str_col", "strict")
+    case_l3 = sql_gen_case_stmt_levenshtein_3("str_col", "leven_3")
+    case_l4 = sql_gen_case_stmt_levenshtein_4("str_col", "leven_4")
+    sql = f"""select
+                {case_strict},
+                {case_l3},
+                {case_l4}
+                from str_comp"""
+    df = spark.sql(sql).toPandas()
+
+    assert list(df["gamma_strict"]) == [1, 0, 0, -1, -1]
+    assert list(df["gamma_leven_3"]) == [2, 1, 0, -1, -1]
+    assert list(df["gamma_leven_4"]) == [3, 2, 0, -1, -1]
+
+
+def test_jaro(spark, str_comp_data):
+
+    jaro_2 = sql_gen_gammas_case_stmt_jaro_2("str_col", "jaro_2")
+    jaro_3 = sql_gen_gammas_case_stmt_jaro_3("str_col", "jaro_3")
+    jaro_4 = sql_gen_gammas_case_stmt_jaro_4("str_col", "jaro_4", threshold3=0.001)
+
+    sql = f"""select
+    {jaro_2},
+    {jaro_3},
+    {jaro_4}
+    from str_comp"""
+    df = spark.sql(sql).toPandas()
+
+    assert list(df["gamma_jaro_2"]) == [1, 1, 0, -1, -1]
+    assert list(df["gamma_jaro_3"]) == [2, 2, 0, -1, -1]
+    assert list(df["gamma_jaro_4"]) == [3, 3, 1, -1, -1]
+
+
+def test_numeric(spark):
+
+    rows = [
+        {"float_col_l": 1.0, "float_col_r": 1.0},
+        {"float_col_l": 100.0, "float_col_r": 99.9},
+        {"float_col_l": 100.0, "float_col_r": 90.1},
+        {"float_col_l": -100.0, "float_col_r": -85.1},
+        {"float_col_l": None, "float_col_r": -85.1},
+    ]
+
+    df = spark.createDataFrame(Row(**x) for x in rows)
+    df.createOrReplaceTempView("float_comp")
+
+    numeric_abs_3 = sql_gen_case_stmt_numeric_abs_3(
+        "float_col", gamma_col_name="numeric_abs_3", abs_amount=1
+    )
+    numeric_abs_4 = sql_gen_case_stmt_numeric_abs_4(
+        "float_col",
+        abs_amount_low=1,
+        abs_amount_high=10,
+        gamma_col_name="numeric_abs_4",
+    )
+    numeric_perc_3a = sql_gen_case_stmt_numeric_perc_3(
+        "float_col", per_diff=0.01, gamma_col_name="numeric_perc_3a"
+    )
+    numeric_perc_3b = sql_gen_case_stmt_numeric_perc_3(
+        "float_col", per_diff=0.20, gamma_col_name="numeric_perc_3b"
+    )
+
+    numeric_perc_4 = sql_gen_case_stmt_numeric_perc_4(
+        "float_col",
+        per_diff_low=0.01,
+        per_diff_high=0.1,
+        gamma_col_name="numeric_perc_4",
+    )
+
+    sql = f"""select
+    {numeric_abs_3},
+    {numeric_abs_4},
+    {numeric_perc_3a},
+    {numeric_perc_3b},
+    {numeric_perc_4}
+    from float_comp"""
+    df = spark.sql(sql).toPandas()
+
+    assert list(df["gamma_numeric_abs_3"]) == [2, 1, 0, 0, -1]
+    assert list(df["gamma_numeric_abs_4"]) == [3, 2, 1, 0, -1]
+    assert list(df["gamma_numeric_perc_3a"]) == [2, 1, 0, 0, -1]
+    assert list(df["gamma_numeric_perc_3b"]) == [2, 1, 1, 1, -1]
+    assert list(df["gamma_numeric_perc_4"]) == [3, 2, 1, 0, -1]

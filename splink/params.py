@@ -66,7 +66,7 @@ class Params:
 
         self.params["proportion_of_matches"] = lambda_value
         for row_dict in pi_df_collected:
-            name = row_dict["column_name"]  # gamma_col is the nam
+            name = row_dict["column_name"]
             level_int = row_dict["gamma_value"]
             match_prob = row_dict["new_probability_match"]
             non_match_prob = row_dict["new_probability_non_match"]
