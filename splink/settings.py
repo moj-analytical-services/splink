@@ -162,6 +162,7 @@ def _complete_probabilities(col_settings: dict, setting_name: str):
         levels = col_settings["num_levels"]
         probs = col_settings[setting_name]
 
+        # Check for m and u manually set to zero (https://github.com/moj-analytical-services/splink/issues/161)
         if not all(col_settings[setting_name]):
             if "custom_name" in col_settings:
                 col_name = col_settings["custom_name"]
