@@ -1,12 +1,8 @@
 import pytest
-import sqlite3
-import pandas as pd
+from pyspark.sql import Row
 
 from splink.blocking import block_using_rules
-
 from splink.default_settings import complete_settings_dict
-
-from pyspark.sql import Row
 
 
 @pytest.fixture(scope="module")
@@ -112,7 +108,7 @@ def test_link_only(spark, link_dedupe_data, link_dedupe_data_repeat_ids):
     assert list(df["unique_id_r"]) == [1, 2, 3, 1, 2, 3, 1, 2, 3]
 
 
-def test_link_dedupe(spark, link_dedupe_data):
+def test_link_dedupe(spark, link_dedupe_data, link_dedupe_data_repeat_ids):
 
     settings = {
         "link_type": "link_and_dedupe",
@@ -128,6 +124,74 @@ def test_link_dedupe(spark, link_dedupe_data):
 
     assert list(df["unique_id_l"]) == [1, 1, 2, 2, 7, 8]
     assert list(df["unique_id_r"]) == [7, 9, 8, 9, 9, 9]
+
+    df_l = link_dedupe_data_repeat_ids["df_l"]
+    df_r = link_dedupe_data_repeat_ids["df_r"]
+
+    df = block_using_rules(settings, spark, df_l=df_l, df_r=df_r)
+    df = df.toPandas()
+    df["u_l"] = df["unique_id_l"].astype(str) + df["_source_table_l"].str.slice(0, 1)
+    df["u_r"] = df["unique_id_r"].astype(str) + df["_source_table_r"].str.slice(0, 1)
+
+    df = df.sort_values(
+        ["_source_table_l", "_source_table_r", "unique_id_l", "unique_id_r"]
+    )
+
+    assert list(df["u_l"]) == ["2l", "1l", "1l", "2l", "2l", "3l", "3l", "1r", "2r"]
+    assert list(df["u_r"]) == ["3l", "1r", "3r", "2r", "3r", "2r", "3r", "3r", "3r"]
+
+    settings = {
+        "link_type": "link_and_dedupe",
+        "comparison_columns": [{"col_name": "first_name"}, {"col_name": "surname"}],
+        "blocking_rules": [],
+    }
+    settings = complete_settings_dict(settings, spark=spark)
+
+    df_l = link_dedupe_data_repeat_ids["df_l"]
+    df_r = link_dedupe_data_repeat_ids["df_r"]
+    df = block_using_rules(settings, spark, df_l=df_l, df_r=df_r)
+    df = df.toPandas()
+
+    df["u_l"] = df["unique_id_l"].astype(str) + df["_source_table_l"].str.slice(0, 1)
+    df["u_r"] = df["unique_id_r"].astype(str) + df["_source_table_r"].str.slice(0, 1)
+    df = df.sort_values(
+        ["_source_table_l", "unique_id_l", "_source_table_r", "unique_id_r"]
+    )
+
+    assert list(df["u_l"]) == [
+        "1l",
+        "1l",
+        "1l",
+        "1l",
+        "1l",
+        "2l",
+        "2l",
+        "2l",
+        "2l",
+        "3l",
+        "3l",
+        "3l",
+        "1r",
+        "1r",
+        "2r",
+    ]
+    assert list(df["u_r"]) == [
+        "2l",
+        "3l",
+        "1r",
+        "2r",
+        "3r",
+        "3l",
+        "1r",
+        "2r",
+        "3r",
+        "1r",
+        "2r",
+        "3r",
+        "2r",
+        "3r",
+        "3r",
+    ]
 
 
 def test_dedupe(spark, link_dedupe_data_repeat_ids):
