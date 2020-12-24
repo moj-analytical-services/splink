@@ -161,6 +161,18 @@ def _complete_probabilities(col_settings: dict, setting_name: str):
     else:
         levels = col_settings["num_levels"]
         probs = col_settings[setting_name]
+        
+        if not all(col_settings[setting_name]):
+            if "custom_name" in col_settings:
+                col_name = col_settings["custom_name"]
+            else:
+                col_name = col_settings["col_name"]
+            warnings.warn(
+                f"Your {setting_name} for {col_name} include zeroes.")
+                f"Where {letter}=0 for a given level, it remains fixed rather than being estimated")
+                "along with other model parameters, and all comparisons at this level")
+                f"are assigned a match score of {1. if letter=='u' else 0.}, regardless of other comparisons columns.")
+            )
 
         if len(probs) != levels:
             raise ValueError(
