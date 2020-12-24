@@ -105,6 +105,8 @@ def estimate_u_values(
 
     for i, col in enumerate(orig_settings["comparison_columns"]):
         u_probs = new_settings["comparison_columns"][i]["u_probabilities"]
+        # Ensure non-zero u
+        u_probs = [u or 1/target_rows for u in u_probs]
         col["u_probabilities"] = u_probs
 
     return orig_settings
