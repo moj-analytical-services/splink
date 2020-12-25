@@ -207,7 +207,6 @@ def load_from_json(
         save_state_fn (function, optional):  A function provided by the user that takes two arguments, params and settings, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
     """
     params = load_params_from_json(path)
-    settings = params.settings
-    linker = Splink(settings, spark, df_l, df_r, df, save_state_fn)
+    linker = Splink(params.params.settings_dict, spark, df_l, df_r, df, save_state_fn)
     linker.params = params
     return linker

@@ -17,7 +17,7 @@
                 "tooltip": [
                     {
                         "type": "nominal",
-                        "field": "column"
+                        "field": "column_name"
                     },
                     {
                         "type": "ordinal",
@@ -72,7 +72,7 @@
                     "on": "mouseover",
                     "fields": [
                         "gamma_index",
-                        "column"
+                        "column_name"
                     ]
                 }
             },
@@ -124,7 +124,7 @@
                         "tooltip": [
                             {
                                 "type": "nominal",
-                                "field": "column"
+                                "field": "column_name"
                             },
                             {
                                 "type": "quantitative",

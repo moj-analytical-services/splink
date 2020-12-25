@@ -219,7 +219,9 @@ class Params:
             chart_def = deepcopy(chart_template)
 
             # Assign iteration history to values of chart_def
-            chart_def["data"]["values"] = [d for d in data if d["column"] == cc.name]
+            chart_def["data"]["values"] = [
+                d for d in data if d["column_name"] == cc.name
+            ]
             chart_def["title"]["text"] = cc.name
             chart_def["hconcat"][1]["layer"][0]["encoding"]["color"]["legend"][
                 "tickCount"

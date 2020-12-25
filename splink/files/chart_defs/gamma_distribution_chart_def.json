@@ -18,7 +18,7 @@
     "encoding": {
         "row": {
             "type": "nominal",
-            "field": "column",
+            "field": "column_name",
             "sort": {
                 "field": "gamma_index"
             },
@@ -31,7 +31,7 @@
         "tooltip": [
             {
                 "type": "nominal",
-                "field": "column"
+                "field": "column_name"
             },
             {
                 "type": "ordinal",

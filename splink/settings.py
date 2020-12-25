@@ -62,6 +62,42 @@ class ComparisonColumn:
     def max_gamma_index(self):
         return self.num_levels - 1
 
+    def get_m_u_bayes_at_gamma_index(self, gamma_index):
+
+        # if -1 this indicates a null field
+        if gamma_index == -1:
+            m = 1
+            u = 1
+        else:
+            m = self["m_probabilities"][gamma_index]
+            u = self["u_probabilities"][gamma_index]
+        if u != 0:
+            bayes = m / u
+            log_2_bayes = log2(bayes)
+        else:
+            bayes = None
+            log_2_bayes = None
+        return {
+            "m_probability": m,
+            "u_probability": u,
+            "bayes_factor": bayes,
+            "log2_bayes_factor": log_2_bayes,
+        }
+
+    def describe_row_dict(self, row_dict, proportion_of_matches=None):
+
+        gamma_index = int(row_dict[self.gamma_name])
+        row_desc = self.level_as_dict(gamma_index, proportion_of_matches)
+
+        row_desc["value_l"] = ", ".join(
+            [str(row_dict[c + "_l"]) for c in self.columns_used]
+        )
+        row_desc["value_r"] = ", ".join(
+            [str(row_dict[c + "_r"]) for c in self.columns_used]
+        )
+
+        return row_desc
+
     def set_m_probability(self, level: int, prob: float, force: bool = False):
         cd = self.column_dict
         fixed = self._dict_key_else_default_value("fix_m_probabilities")
@@ -88,30 +124,23 @@ class ComparisonColumn:
 
     def level_as_dict(self, gamma_index, proportion_of_matches=None):
 
-        d = {}
-        m_prob = self["m_probabilities"][gamma_index]
-        u_prob = self["u_probabilities"][gamma_index]
+        d = self.get_m_u_bayes_at_gamma_index(gamma_index)
 
         d["gamma_column_name"] = f"gamma_{self.name}"
         d["level_name"] = f"level_{gamma_index}"
-        d["m_probability"] = m_prob
-        d["u_probability"] = u_prob
-        d["gamma_index"] = gamma_index
-        d["column"] = self.name
-        d["max_gamma_index"] = self.num_levels - 1
 
+        d["gamma_index"] = gamma_index
+        d["column_name"] = self.name
+        d["max_gamma_index"] = self.max_gamma_index
+        d["num_levels"] = self.num_levels
+
+        d["level_proportion"] = None
         if proportion_of_matches:
             lam = proportion_of_matches
-            d["level_proportion"] = m_prob * lam + u_prob * (1 - lam)
-        else:
-            d["level_proportion"] = None
+            m = d["m_probability"]
+            u = d["u_probability"]
+            d["level_proportion"] = m * lam + u * (1 - lam)
 
-        try:
-            d["bayes_factor"] = m_prob / u_prob
-            d["log2_bayes_factor"] = log2(d["bayes_factor"])
-        except ZeroDivisionError:
-            d["bayes_factor"] = None
-            d["log2_bayes_factor"] = None
         return d
 
     def as_rows(self, proportion_of_matches=None):
