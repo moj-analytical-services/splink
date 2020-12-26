@@ -1,0 +1,46 @@
+{
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+    "config": {
+        "title": {
+            "fontSize": 14
+        },
+        "view": {
+            "continuousHeight": 300,
+            "continuousWidth": 400
+        }
+    },
+    "data": {
+        "values": null
+    },
+    "height": 200,
+    "mark": "bar",
+    "title": "Histogram of splink scores",
+    "width": 700,
+    "encoding": {
+        "tooltip": [
+            {
+                "field": "count_rows",
+                "title": "count",
+                "type": "quantitative"
+            }
+        ],
+        "x": {
+            "axis": {
+                "title": "splink score"
+            },
+            "bin": "binned",
+            "field": "splink_score_bin_low",
+            "type": "quantitative"
+        },
+        "x2": {
+            "field": "splink_score_bin_high"
+        },
+        "y": {
+            "field": "normalised",
+            "type": "quantitative",
+            "axis": {
+                "title": "probability density"
+            }
+        }
+    }
+}

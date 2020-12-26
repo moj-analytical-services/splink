@@ -1,10 +1,5 @@
-# For type hints. Try except to ensure the sql_gen functions even if spark doesn't exist.
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-except ImportError:
-    DataFrame = None
-    SparkSession = None
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.session import SparkSession
 
 from .expectation_step import run_expectation_step
 from .maximisation_step import run_maximisation_step
@@ -16,14 +11,15 @@ import logging
 logger = logging.getLogger(__name__)
 from typing import Callable
 
+
 @check_types
 def iterate(
     df_gammas: DataFrame,
     params: Params,
     settings: dict,
     spark: SparkSession,
-    compute_ll:bool=False,
-    save_state_fn:Callable=None
+    compute_ll: bool = False,
+    save_state_fn: Callable = None,
 ):
     """Repeatedly run expectation and maximisation step until convergence or max itations is reached.
 

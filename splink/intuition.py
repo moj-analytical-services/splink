@@ -35,11 +35,7 @@ def intuition_report(row_dict: dict, params: Params):
     """
 
     lam = params.params["proportion_of_matches"]
-
     report = initial_template.format(lam=lam)
-
-    # Create dictionary to fill in template
-
     current_prob = lam
 
     for cc in params.params.comparison_columns:
@@ -75,11 +71,9 @@ def intuition_report(row_dict: dict, params: Params):
 
 
 def _get_bayes_factors(row_dict, params):
-
     bayes_factors = []
     lam = params.params["proportion_of_matches"]
     for cc in params.params.comparison_columns:
-
         row_desc = cc.describe_row_dict(row_dict, lam)
         bayes_factors.append(row_desc)
 

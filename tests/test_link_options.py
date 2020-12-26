@@ -157,41 +157,10 @@ def test_link_dedupe(spark, link_dedupe_data, link_dedupe_data_repeat_ids):
     df = df.sort_values(
         ["_source_table_l", "unique_id_l", "_source_table_r", "unique_id_r"]
     )
-
-    assert list(df["u_l"]) == [
-        "1l",
-        "1l",
-        "1l",
-        "1l",
-        "1l",
-        "2l",
-        "2l",
-        "2l",
-        "2l",
-        "3l",
-        "3l",
-        "3l",
-        "1r",
-        "1r",
-        "2r",
-    ]
-    assert list(df["u_r"]) == [
-        "2l",
-        "3l",
-        "1r",
-        "2r",
-        "3r",
-        "3l",
-        "1r",
-        "2r",
-        "3r",
-        "1r",
-        "2r",
-        "3r",
-        "2r",
-        "3r",
-        "3r",
-    ]
+    # fmt: off
+    assert list(df["u_l"]) == ["1l", "1l", "1l", "1l", "1l", "2l", "2l", "2l", "2l", "3l", "3l", "3l", "1r", "1r", "2r"]
+    assert list(df["u_r"]) == ["2l", "3l", "1r", "2r", "3r", "3l", "1r", "2r", "3r", "1r", "2r", "3r", "2r", "3r", "3r"]
+    # fmt: on
 
 
 def test_dedupe(spark, link_dedupe_data_repeat_ids):
