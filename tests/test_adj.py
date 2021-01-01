@@ -1,6 +1,14 @@
+import pytest
+import pandas as pd
+from pyspark.sql import functions as f
+
 from splink_data_generation.generate_data_random import generate_df_gammas_random
 from splink_data_generation.match_prob import add_match_prob
 from splink.default_settings import complete_settings_dict
+from splink.iterate import iterate
+from splink.params import Params
+from splink.term_frequencies import make_adjustment_for_term_frequencies
+from splink import Splink
 
 
 def _probabilities_from_freqs(freqs, m_gamma_0=0.05, u_gamma_0=0.5):
@@ -49,10 +57,12 @@ def test_term_frequency_adjustments(spark):
     # term frequency adjustments should adjust up the
     # robins but adjust down the johns
 
+    # We also expect that the tf adjusted match probability should be more accurate
+
     forename_probs = _probabilities_from_freqs([3, 2, 1])
     surname_probs = _probabilities_from_freqs([10, 5, 1])
 
-    settings = {
+    settings_true = {
         "link_type": "dedupe_only",
         "proportion_of_matches": 0.5,
         "comparison_columns": [
@@ -76,22 +86,23 @@ def test_term_frequency_adjustments(spark):
                 "u_probabilities": [19 / 20, 1 / 20],
             },
         ],
-        "em_convergence": 0.001,
     }
 
-    settings = complete_settings_dict(settings, spark)
+    settings_true = complete_settings_dict(settings_true, spark)
+
+    df = generate_df_gammas_random(10000, settings_true)
 
     # Create new binary columns that binarise the more granular gammas to 0 and 1
-    df = generate_df_gammas_random(10000, settings)
     df["gamma_forename_binary"] = df["gamma_forename"].where(
         df["gamma_forename"] == 0, 1
     )
+
     df["gamma_surname_binary"] = df["gamma_surname"].where(df["gamma_surname"] == 0, 1)
 
     # Populate non matches with random value
     # Then assign left and right values ased on the gamma values
-    df["forename_binary_l"] == df["unique_id_l"]
-    df["forename_binary_r"] == df["unique_id_r"]
+    df["forename_binary_l"] = df["unique_id_l"]
+    df["forename_binary_r"] = df["unique_id_r"]
 
     f1 = df["gamma_forename"] == 3
     df.loc[f1, "forename_binary_l"] = "Robin"
@@ -106,8 +117,8 @@ def test_term_frequency_adjustments(spark):
     df.loc[f1, "forename_binary_r"] = "John"
 
     # Populate non matches with random value
-    df["surname_binary_l"] == df["unique_id_l"]
-    df["surname_binary_r"] == df["unique_id_r"]
+    df["surname_binary_l"] = df["unique_id_l"]
+    df["surname_binary_r"] = df["unique_id_r"]
 
     f1 = df["gamma_surname"] == 3
     df.loc[f1, "surname_binary_l"] = "Linacre"
@@ -121,93 +132,123 @@ def test_term_frequency_adjustments(spark):
     df.loc[f1, "surname_binary_l"] = "Smith"
     df.loc[f1, "surname_binary_r"] = "Smith"
 
-    settings["comparison_columns"][1]["term_frequency_adjustments"] = True
+    # cat20
+    df["cat_20_l"] = df["unique_id_l"]
+    df["cat_20_r"] = df["unique_id_r"]
 
-    from splink import Splink
-    from splink.params import Params
-    from splink.iterate import iterate
-    from splink.term_frequencies import make_adjustment_for_term_frequencies
+    f1 = df["gamma_cat_20"] == 1
+    df.loc[f1, "cat_20_l"] = "a"
+    df.loc[f1, "cat_20_r"] = "a"
 
-    # We have table of gammas - need to work from there within splink
-    params = Params(settings, spark)
+    df = add_match_prob(df, settings_true)
+    df["match_probability"] = df["true_match_probability_l"]
 
-    df_e = iterate(df_gammas, params, settings, spark, compute_ll=False)
+    df_e = spark.createDataFrame(df)
 
-    df_e_adj = make_adjustment_for_term_frequencies(
-        df_e, params, settings, retain_adjustment_columns=True, spark=spark
+    def four_to_two(probs):
+        return [probs[0], sum(probs[1:])]
+
+    settings_binary = {
+        "link_type": "dedupe_only",
+        "proportion_of_matches": 0.5,
+        "comparison_columns": [
+            {
+                "col_name": "forename_binary",
+                "term_frequency_adjustments": True,
+                "num_levels": 2,
+                "m_probabilities": four_to_two(forename_probs["m_probabilities"]),
+                "u_probabilities": four_to_two(forename_probs["u_probabilities"]),
+            },
+            {
+                "col_name": "surname_binary",
+                "term_frequency_adjustments": True,
+                "num_levels": 2,
+                "m_probabilities": four_to_two(surname_probs["m_probabilities"]),
+                "u_probabilities": four_to_two(surname_probs["u_probabilities"]),
+            },
+            {
+                "col_name": "cat_20",
+                "m_probabilities": [0.2, 0.8],
+                "u_probabilities": [19 / 20, 1 / 20],
+            },
+        ],
+        "retain_intermediate_calculation_columns": True,
+        "max_iterations": 0,
+        "additional_columns_to_retain": ["true_match_probability"],
+    }
+
+    # Can't use linker = Splink() because we have df_gammas, not df
+    settings_binary = complete_settings_dict(settings_binary, spark)
+    params = Params(settings_binary, spark)
+    df_e = iterate(df_e, params, settings_binary, spark)
+
+    df_e = make_adjustment_for_term_frequencies(
+        df_e, params, settings_binary, spark, retain_adjustment_columns=True
     )
 
-    df_e_adj.createOrReplaceTempView("df_e_adj")
-    sql = """
-    select name_l, name_tf_adj,  count(*)
-    from df_e_adj
-    where name_l = name_r
-    group by name_l, name_tf_adj
-    order by name_l
-    """
-    df = spark.sql(sql).toPandas()
-    df = df.set_index("name_l")
-    df_dict = df.to_dict(orient="index")
-    assert df_dict["a"]["name_tf_adj"] < 0.5
+    df = df_e.toPandas()
 
-    assert df_dict["e"]["name_tf_adj"] > 0.5
-    assert (
-        df_dict["e"]["name_tf_adj"] > 0.6
-    )  # Arbitrary numbers, but we do expect a big uplift here
-    assert (
-        df_dict["e"]["name_tf_adj"] < 0.95
-    )  # Arbitrary numbers, but we do expect a big uplift here
+    #########
+    # Tests start here
+    #########
 
-    df_e_adj.createOrReplaceTempView("df_e_adj")
-    sql = """
-    select cat_12_l, cat_12_tf_adj,  count(*) as count
-    from df_e_adj
-    where cat_12_l = cat_12_r
-    group by cat_12_l, cat_12_tf_adj
-    order by cat_12_l
-    """
-    spark.sql(sql).toPandas()
-    df = spark.sql(sql).toPandas()
-    assert (
-        df["cat_12_tf_adj"].max() < 0.55
-    )  # Keep these loose because when generating random data anything can happen!
-    assert df["cat_12_tf_adj"].min() > 0.45
+    # Test that overall square error is better for tf adjusted match prob
+    df["e1"] = (df["match_probability"] - df["true_match_probability_l"]) ** 2
+    df["e2"] = (df["tf_adjusted_match_prob"] - df["true_match_probability_l"]) ** 2
+    assert df["e1"].sum() > df["e2"].sum()
 
-    # Test adjustments applied coorrectly when there is one
-    df_e_adj.createOrReplaceTempView("df_e_adj")
-    sql = """
-    select *
-    from df_e_adj
-    where name_l = name_r and cat_12_l != cat_12_r
-    limit 1
-    """
-    df = spark.sql(sql).toPandas()
-    df_dict = df.loc[0, :].to_dict()
+    # We expect Johns to be adjusted down...
+    f1 = df["forename_binary_l"] == "John"
+    df_filtered = df[f1]
+    adj = df_filtered["forename_binary_tf_adj"].mean()
+    assert adj < 0.5
 
-    def bayes(p1, p2):
-        return p1 * p2 / (p1 * p2 + (1 - p1) * (1 - p2))
+    # And Robins to be adjusted up
+    f1 = df["forename_binary_l"] == "Robin"
+    df_filtered = df[f1]
+    adj = df_filtered["forename_binary_tf_adj"].mean()
+    assert adj > 0.5
 
-    assert df_dict["tf_adjusted_match_prob"] == pytest.approx(
-        bayes(df_dict["match_probability"], df_dict["name_tf_adj"])
+    # We expect Smiths to be adjusted down...
+    f1 = df["surname_binary_l"] == "Smith"
+    df_filtered = df[f1]
+    adj = df_filtered["surname_binary_tf_adj"].mean()
+    assert adj < 0.5
+
+    # And Linacres to be adjusted up
+    f1 = df["surname_binary_l"] == "Linacre"
+    df_filtered = df[f1]
+    adj = df_filtered["surname_binary_tf_adj"].mean()
+    assert adj > 0.5
+
+    # Check adjustments are applied correctly
+
+    f1 = df["forename_binary_l"] == "Robin"
+    f2 = df["surname_binary_l"] == "Linacre"
+    df_filtered = df[f1 & f2]
+    row = df_filtered.head(1).to_dict(orient="records")[0]
+
+    prior = row["match_probability"]
+    posterior = row["tf_adjusted_match_prob"]
+
+    b1 = row["forename_binary_tf_adj"]
+    b2 = row["surname_binary_tf_adj"]
+
+    expected_post = (
+        prior * b1 * b2 / (prior * b1 * b2 + (1 - prior) * (1 - b1) * (1 - b2))
     )
+    assert posterior == pytest.approx(expected_post)
 
-    # Test adjustments applied coorrectly when there are multiple
-    df_e_adj.createOrReplaceTempView("df_e_adj")
-    sql = """
-    select *
-    from df_e_adj
-    where name_l = name_r and cat_12_l = cat_12_r
-    limit 1
-    """
-    df = spark.sql(sql).toPandas()
-    df_dict = df.loc[0, :].to_dict()
+    #  We expect match probability to be equal to tf_adjusted match probability in cases where surname and forename don't match
+    f1 = df["surname_binary_l"] != df["surname_binary_r"]
+    f2 = df["forename_binary_l"] != df["forename_binary_r"]
 
-    double_b = bayes(
-        bayes(df_dict["match_probability"], df_dict["name_tf_adj"]),
-        df_dict["cat_12_tf_adj"],
-    )
+    df_filtered = df[f1 & f2]
+    sum_difference = (
+        df_filtered["tf_adjusted_match_prob"] - df_filtered["match_probability"]
+    ).sum()
 
-    assert df_dict["tf_adjusted_match_prob"] == pytest.approx(double_b)
+    assert 0 == pytest.approx(sum_difference)
 
 
 @pytest.fixture(scope="module")
@@ -250,16 +291,17 @@ def test_freq_adj_divzero(spark, nulls_df):
             },
         ],
         "additional_columns_to_retain": ["unique_id"],
+        "max_iterations": 1,
     }
 
-    # create column weird in a way that could trigger a div by zero on the average adj calculation before the fix
+    # create column in a way that could trigger a div by zero on the average adj calculation before the fix
     nulls_df = nulls_df.withColumn("always_none", f.lit(None))
 
+    test_passing = True
     try:
         linker = Splink(settings, spark, df=nulls_df)
         linker.get_scored_comparisons()
-        notpassing = False
     except ZeroDivisionError:
-        notpassing = True
+        test_passing = False
 
-    assert notpassing is False
+    assert test_passing is True

@@ -11,8 +11,6 @@ from splink.gammas import add_gammas
 from splink.expectation_step import run_expectation_step
 from splink.params import Params
 
-from splink import Splink
-
 
 def test_expectation_and_maximisation(spark):
     settings = {
