@@ -1,5 +1,6 @@
 import pandas as pd
 import random
+import pytest
 
 from splink.diagnostics import (
     splink_score_histogram,
@@ -38,8 +39,8 @@ def test_score_hist_splits(spark, df):
 
     assert res.count_rows.count() == 3
     assert res.count_rows.sum() == res.count_rows.cumsum()[2]
-    assert res.binwidth.sum() == 1.0
-    assert res.normalised.sum() == 1.0
+    assert res.binwidth.sum() == pytest.approx(1.0)
+    assert res.normalised.sum() == pytest.approx(1.0)
 
     mysplits2 = [0.6, 0.3]
 
@@ -48,8 +49,8 @@ def test_score_hist_splits(spark, df):
 
     assert res2.count_rows.count() == 3
     assert res2.count_rows.sum() == res.count_rows.cumsum()[2]
-    assert res2.binwidth.sum() == 1.0
-    assert res2.normalised.sum() == 1.0
+    assert res2.binwidth.sum() == pytest.approx(1.0)
+    assert res2.normalised.sum() == pytest.approx(1.0)
 
 
 def test_score_hist_intsplits(spark, df):

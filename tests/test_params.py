@@ -5,7 +5,7 @@ import pytest
 
 
 @pytest.fixture(scope="module")
-def param_example():
+def param_example(spark):
 
     case_expr = """
     case
@@ -32,7 +32,7 @@ def param_example():
         "blocking_rules": [],
     }
 
-    params = Params(settings, spark="supress_warnings")
+    params = Params(settings, spark=spark)
 
     yield params
 
@@ -98,8 +98,7 @@ def test_update(param_example):
     param_example.params.reset_all_probabilities()
 
     assert (
-        param_example.params.get_comparison_column("fname")["m_probabilities"][0]
-        is None
+        param_example.params.get_comparison_column("fname")["m_probabilities"][0] is 0
     )
     param_example._populate_params_from_maximisation_step(0.2, pi_df_collected)
 
