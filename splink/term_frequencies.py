@@ -5,12 +5,8 @@ import logging
 import math
 import warnings
 
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-except ImportError:
-    DataFrame = None
-    SparkSession = None
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.session import SparkSession
 
 from .logging_utils import _format_sql
 from .expectation_step import _column_order_df_e_select_expr
@@ -135,18 +131,14 @@ def sql_gen_compute_final_group_membership_prob_from_adjustments(
     return sql
 
 
-import warnings
-
-
 @check_types
 def make_adjustment_for_term_frequencies(
     df_e: DataFrame,
     params: Params,
-    settings: dict,
     spark: SparkSession,
     retain_adjustment_columns: bool = False,
 ):
-
+    settings = params.params.settings_dict
     df_e.createOrReplaceTempView("df_e")
 
     term_freq_column_list = [

@@ -1,20 +1,10 @@
-"""
-In the expectation step we calculate the membership probabilities
-i.e. for each comparison, what is the probability that it's a member
-of group match = 0 and group match = 1
-"""
 from .logging_utils import _format_sql
 
 import logging
 from collections import OrderedDict
 
-# For type hints. Try except to ensure the sql_gen functions even if spark doesn't exist.
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-except ImportError:
-    DataFrame = None
-    SparkSession = None
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.session import SparkSession
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +17,6 @@ from .check_types import check_types
 def run_expectation_step(
     df_with_gamma: DataFrame,
     params: Params,
-    settings: dict,
     spark: SparkSession,
     compute_ll=False,
 ):
@@ -37,15 +26,13 @@ def run_expectation_step(
       Args:
           df_with_gamma (DataFrame): Spark dataframe with comparison vectors already populated
           params (Params): splink params object
-          settings (dict): splink settings dictionary
           spark (SparkSession): SparkSession
           compute_ll (bool, optional): Whether to compute the log likelihood. Degrades performance. Defaults to False.
 
       Returns:
           DataFrame: Spark dataframe with a match_probability column
     """
-
-    sql = _sql_gen_gamma_prob_columns(params, settings)
+    sql = _sql_gen_gamma_prob_columns(params)
 
     df_with_gamma.createOrReplaceTempView("df_with_gamma")
     logger.debug(_format_sql(sql))
@@ -58,7 +45,7 @@ def run_expectation_step(
         logger.info(message)
         params.params["log_likelihood"] = ll
 
-    sql = _sql_gen_expected_match_prob(params, settings)
+    sql = _sql_gen_expected_match_prob(params)
 
     logger.debug(_format_sql(sql))
     df_with_gamma_probs.createOrReplaceTempView("df_with_gamma_probs")
@@ -71,12 +58,12 @@ def run_expectation_step(
     return df_e
 
 
-def _sql_gen_gamma_prob_columns(params, settings, table_name="df_with_gamma"):
+def _sql_gen_gamma_prob_columns(params, table_name="df_with_gamma"):
     """
     For each row, look up the probability of observing the gamma value given the record
     is a match and non_match respectively
     """
-
+    settings = params.params.settings_dict
     # Get case statements
     case_statements = {}
     for cc in params.params.comparison_columns:
@@ -180,7 +167,8 @@ def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
     return ", ".join(select_cols.values())
 
 
-def _sql_gen_expected_match_prob(params, settings, table_name="df_with_gamma_probs"):
+def _sql_gen_expected_match_prob(params, table_name="df_with_gamma_probs"):
+    settings = params.params.settings_dict
     ccs = params.params.comparison_columns
 
     numerator = " * ".join([f"prob_{cc.gamma_name}_match" for cc in ccs])

@@ -1,17 +1,12 @@
 import logging
 from collections import OrderedDict
 
-# For type hints. Try except to ensure the sql_gen functions even if spark doesn't exist.
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-except ImportError:
-    DataFrame = None
-    SparkSession = None
-
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.session import SparkSession
 
 from .logging_utils import _format_sql
 from .check_types import check_types
+from .settings import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +35,6 @@ def sql_gen_comparison_columns(columns: list) -> str:
 def _get_columns_to_retain_blocking(settings):
 
     # Use ordered dict as an ordered set - i.e. to make sure we don't have duplicate cols to retain
-
     # That means we're only interested in the keys so we set values to None
 
     columns_to_retain = OrderedDict()

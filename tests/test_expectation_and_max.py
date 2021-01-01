@@ -64,7 +64,7 @@ def test_expectation_and_maximisation(spark):
     df_comparison = block_using_rules(params.params.settings_dict, spark, df=df_input)
     df_gammas = add_gammas(df_comparison, params.params.settings_dict, spark)
     df_gammas.persist()
-    df_e = run_expectation_step(df_gammas, params, params.params.settings_dict, spark)
+    df_e = run_expectation_step(df_gammas, params, spark)
     df_e = df_e.sort("unique_id_l", "unique_id_r")
 
     df_e.persist()
@@ -164,7 +164,7 @@ def test_expectation_and_maximisation(spark):
     # Test revised probabilities correctly used
     ################################################
 
-    df_e = run_expectation_step(df_gammas, params, params.params.settings_dict, spark)
+    df_e = run_expectation_step(df_gammas, params, spark)
     df_e = df_e.sort("unique_id_l", "unique_id_r")
     result_list = list(df_e.toPandas()["match_probability"])
 
@@ -209,13 +209,13 @@ def test_expectation_and_maximisation(spark):
     dir = tempfile.TemporaryDirectory()
     fname = os.path.join(dir.name, "params.json")
 
-    df_e = run_expectation_step(df_gammas, params, params.params.settings_dict, spark)
+    df_e = run_expectation_step(df_gammas, params, spark)
     params.save_params_to_json_file(fname)
 
     from splink.params import load_params_from_json
 
     p = load_params_from_json(fname)
 
-    df_e_2 = run_expectation_step(df_gammas, p, p.params.settings_dict, spark)
+    df_e_2 = run_expectation_step(df_gammas, p, spark)
 
     assert_frame_equal(df_e.toPandas(), df_e_2.toPandas())

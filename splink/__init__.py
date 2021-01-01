@@ -121,9 +121,7 @@ class Splink:
         """
         df_comparison = self._get_df_comparison()
         df_gammas = add_gammas(df_comparison, self.settings_dict, self.spark)
-        return run_expectation_step(
-            df_gammas, self.params, self.settings_dict, self.spark
-        )
+        return run_expectation_step(df_gammas, self.params, self.spark)
 
     def get_scored_comparisons(self, compute_ll=False):
         """Use the EM algorithm to estimate model parameters and return match probabilities.
@@ -143,7 +141,6 @@ class Splink:
         df_e = iterate(
             df_gammas,
             self.params,
-            self.settings_dict,
             self.spark,
             compute_ll=compute_ll,
             save_state_fn=self.save_state_fn,
@@ -173,7 +170,6 @@ class Splink:
         return make_adjustment_for_term_frequencies(
             df_e,
             self.params,
-            self.settings_dict,
             retain_adjustment_columns=True,
             spark=self.spark,
         )
@@ -204,7 +200,7 @@ def load_from_json(
         df_l (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
         df_r (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
         df (DataFrame, optional): The dataframe to dedupe. Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
-        save_state_fn (function, optional):  A function provided by the user that takes two arguments, params and settings, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
+        save_state_fn (function, optional):  A function provided by the user that takes one argument, params, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
     """
     params = load_params_from_json(path)
     linker = Splink(params.params.settings_dict, spark, df_l, df_r, df, save_state_fn)

@@ -17,10 +17,12 @@ from .validate import validate_settings, _get_default_value
 
 logger = logging.getLogger(__name__)
 
+
 def _add_left_right(columns_to_retain, name):
     columns_to_retain[name + "_l"] = name + "_l"
     columns_to_retain[name + "_r"] = name + "_r"
     return columns_to_retain
+
 
 def _get_select_expression_gammas(settings: dict):
     """Get a select expression which picks which columns to keep in df_gammas
@@ -52,17 +54,15 @@ def _get_select_expression_gammas(settings: dict):
                     cols_to_retain = _add_left_right(cols_to_retain, c2)
             cols_to_retain["gamma_" + custon_name] = col["case_expression"]
 
-
-    if settings["link_type"] == 'link_and_dedupe':
+    if settings["link_type"] == "link_and_dedupe":
         cols_to_retain = _add_left_right(cols_to_retain, "_source_table")
 
     for c in settings["additional_columns_to_retain"]:
         cols_to_retain = _add_left_right(cols_to_retain, c)
 
-    if 'blocking_rules' in settings:
+    if "blocking_rules" in settings:
         if len(settings["blocking_rules"]) > 0:
-            cols_to_retain['match_key'] = 'match_key'
-
+            cols_to_retain["match_key"] = "match_key"
 
     return ", ".join(cols_to_retain.values())
 
@@ -83,7 +83,6 @@ def _sql_gen_add_gammas(
         str: A SQL string
     """
 
-
     select_cols_expr = _get_select_expression_gammas(settings)
 
     sql = f"""
@@ -98,10 +97,10 @@ def _sql_gen_add_gammas(
 def add_gammas(
     df_comparison: DataFrame,
     settings_dict: dict,
-    spark:SparkSession,
+    spark: SparkSession,
     unique_id_col: str = "unique_id",
 ):
-    """ Compute the comparison vectors and add them to the dataframe.  See
+    """Compute the comparison vectors and add them to the dataframe.  See
     https://imai.fas.harvard.edu/research/files/linkage.pdf for more details of what is meant by comparison vectors
 
     Args:
@@ -113,7 +112,6 @@ def add_gammas(
     Returns:
         Spark dataframe: A dataframe containing new columns representing the gammas of the model
     """
-
 
     settings_dict = complete_settings_dict(settings_dict, spark)
 
