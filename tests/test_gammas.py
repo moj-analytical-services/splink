@@ -58,18 +58,16 @@ def test_add_gammas(db):
                                     else 0
                                     end
                                     as gamma_sname
-                                    """
+                                    """,
             },
         ],
         "blocking_rules": [],
-        "retain_matching_columns": False
+        "retain_matching_columns": False,
     }
 
     gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")
 
-    sql = _sql_gen_add_gammas(
-        gamma_settings, table_name="test2"
-    )
+    sql = _sql_gen_add_gammas(gamma_settings, table_name="test2")
     db.execute(sql)
     result = db.fetchall()
     result = [dict(r) for r in result]

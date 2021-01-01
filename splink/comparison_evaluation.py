@@ -32,4 +32,3 @@ def get_largest_blocks(blocking_rule, df, spark, limit=5):
     """
     df.createOrReplaceTempView("df")
     return spark.sql(sql)
-
