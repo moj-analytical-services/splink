@@ -1,13 +1,5 @@
 import re
 
-import logging
-from .params import Params
-
-from .maximisation_step import run_maximisation_step
-
-logger = logging.getLogger(__name__)
-from .logging_utils import _format_sql
-
 
 def get_largest_blocks(blocking_rule, df, spark, limit=5):
     """

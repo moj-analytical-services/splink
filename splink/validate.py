@@ -1,12 +1,10 @@
 import pkg_resources
 from functools import lru_cache
 
-
 from jsonschema import validate, ValidationError
 
 import json
 import copy
-import warnings
 
 from .check_types import check_types
 

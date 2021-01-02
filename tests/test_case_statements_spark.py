@@ -3,20 +3,20 @@ from pyspark.sql import Row
 from splink.case_statements import (
     sql_gen_case_stmt_array_intersect_2,
     sql_gen_case_stmt_array_intersect_3,
-    sql_gen_case_stmt_array_combinations_leven_3,
-    sql_gen_gammas_case_stmt_jaro_2,
-    sql_gen_gammas_case_stmt_jaro_3,
-    sql_gen_gammas_case_stmt_jaro_4,
+    sql_gen_case_stmt_array_combinations_leven_abs_3,
+    sql_gen_case_stmt_array_combinations_leven_rel_3,
+    sql_gen_case_stmt_case_stmt_jaro_2,
+    sql_gen_case_stmt_case_stmt_jaro_3,
+    sql_gen_case_stmt_case_stmt_jaro_4,
     sql_gen_case_stmt_array_combinations_jaro_3,
     sql_gen_case_stmt_array_combinations_jaro_dmeta_4,
-    sql_gen_case_stmt_levenshtein_3,
-    sql_gen_case_stmt_levenshtein_4,
-    sql_gen_gammas_name_inversion_4,
+    sql_gen_case_stmt_levenshtein_rel_3,
+    sql_gen_case_stmt_levenshtein_rel_4,
+    sql_gen_case_stmt_name_inversion_4,
     _check_jaro_registered,
     sql_gen_case_smnt_strict_equality_2,
     sql_gen_case_stmt_numeric_abs_3,
     sql_gen_case_stmt_numeric_abs_4,
-    sql_gen_case_stmt_numeric_perc_3,
     sql_gen_case_stmt_numeric_perc_3,
     sql_gen_case_stmt_numeric_perc_4,
 )
@@ -42,8 +42,8 @@ def test_size_intersection(spark):
     {sql_gen_case_stmt_array_intersect_2("arr_comp")} as result_ai2_1,
     {sql_gen_case_stmt_array_intersect_2("arr_comp", zero_length_is_null=False)} as result_ai2_2,
     {sql_gen_case_stmt_array_intersect_3("arr_comp")} as result_ai3,
-    {sql_gen_case_stmt_array_combinations_leven_3("arr_comp")} as result_l3_1,
-    {sql_gen_case_stmt_array_combinations_leven_3("arr_comp", zero_length_is_null=False)} as result_l3_2,
+    {sql_gen_case_stmt_array_combinations_leven_abs_3("arr_comp")} as result_l3_1,
+    {sql_gen_case_stmt_array_combinations_leven_abs_3("arr_comp", zero_length_is_null=False)} as result_l3_2,
     {sql_gen_case_stmt_array_combinations_jaro_3("arr_comp")} as result_j3,
     {sql_gen_case_stmt_array_combinations_jaro_dmeta_4("arr_comp")} as result_jd4
     from df
@@ -57,6 +57,49 @@ def test_size_intersection(spark):
     assert list(df_pd["result_l3_2"]) == [2, 2, 2, 1, 0, -1]
     assert list(df_pd["result_j3"]) == [2, 2, 1, 1, -1, -1]
     assert list(df_pd["result_jd4"]) == [3, 3, 2, 1, -1, -1]
+
+
+def test_leven_rel(spark):
+
+    data_list = [
+        {
+            "arr_comp_l": ["0123456789", "abcdefghij"],
+            "arr_comp_r": ["0123456789", "abcdefghij"],
+        },
+        {
+            "arr_comp_l": ["0123456789", "abcdefghij"],
+            "arr_comp_r": ["0123456789", "qrstuvwxyz"],
+        },
+        {
+            "arr_comp_l": ["012345678", "abcdefghij"],
+            "arr_comp_r": ["0123456789", "qrstuvwxyz"],
+        },
+        {
+            "arr_comp_l": ["01234567", "abcdefghij"],
+            "arr_comp_r": ["0123456789", "qrstuvwxyz"],
+        },
+        {
+            "arr_comp_l": ["01234", "abcdefghij"],
+            "arr_comp_r": ["0123456789", "qrstuvwxyz"],
+        },
+        {"arr_comp_l": ["0123456789", "abcdefghij"], "arr_comp_r": []},
+        {"arr_comp_l": ["0123456789", "abcdefghij"], "arr_comp_r": None},
+    ]
+    from splink.case_statements import _compare_pairwise_combinations_leven_prop
+
+    df = spark.createDataFrame(Row(**x) for x in data_list)
+    df.createOrReplaceTempView("df")
+
+    sql = f"""
+    select
+    {sql_gen_case_stmt_array_combinations_leven_rel_3("arr_comp", threshold1=0.15, threshold2=0.3)} as result
+    from df
+    """
+
+    df = spark.sql(sql)
+    df_pd = df.toPandas()
+
+    assert list(df_pd["result"]) == [2, 2, 2, 1, 0, -1, -1]
 
 
 def test_name_inversion(spark):
@@ -118,7 +161,7 @@ def test_name_inversion(spark):
 
     sql = f"""
     select
-    {sql_gen_gammas_name_inversion_4("name_1",["name_2","name_3","name_4"])} as result_1
+    {sql_gen_case_stmt_name_inversion_4("name_1",["name_2","name_3","name_4"])} as result_1
     from df
     """
 
@@ -174,8 +217,8 @@ def str_comp_data(spark):
 
 def test_leven(spark, str_comp_data):
     case_strict = sql_gen_case_smnt_strict_equality_2("str_col", "strict")
-    case_l3 = sql_gen_case_stmt_levenshtein_3("str_col", "leven_3")
-    case_l4 = sql_gen_case_stmt_levenshtein_4("str_col", "leven_4")
+    case_l3 = sql_gen_case_stmt_levenshtein_rel_3("str_col", "leven_3")
+    case_l4 = sql_gen_case_stmt_levenshtein_rel_4("str_col", "leven_4")
     sql = f"""select
                 {case_strict},
                 {case_l3},
@@ -190,9 +233,9 @@ def test_leven(spark, str_comp_data):
 
 def test_jaro(spark, str_comp_data):
 
-    jaro_2 = sql_gen_gammas_case_stmt_jaro_2("str_col", "jaro_2")
-    jaro_3 = sql_gen_gammas_case_stmt_jaro_3("str_col", "jaro_3")
-    jaro_4 = sql_gen_gammas_case_stmt_jaro_4("str_col", "jaro_4", threshold3=0.001)
+    jaro_2 = sql_gen_case_stmt_case_stmt_jaro_2("str_col", "jaro_2")
+    jaro_3 = sql_gen_case_stmt_case_stmt_jaro_3("str_col", "jaro_3")
+    jaro_4 = sql_gen_case_stmt_case_stmt_jaro_4("str_col", "jaro_4", threshold3=0.001)
 
     sql = f"""select
     {jaro_2},

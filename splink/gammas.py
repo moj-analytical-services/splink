@@ -3,13 +3,8 @@ import logging
 import re
 import warnings
 
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-except ImportError:
-    DataFrame = None
-    SparkSession = None
-
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.session import SparkSession
 from .check_types import check_types
 from .logging_utils import _format_sql
 from .settings import complete_settings_dict

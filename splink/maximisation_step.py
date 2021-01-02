@@ -1,12 +1,8 @@
 import logging
 
 # For type hints. Try except to ensure the sql_gen functions even if spark doesn't exist.
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-except ImportError:
-    DataFrame = None
-    SparkSession = None
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.session import SparkSession
 
 logger = logging.getLogger(__name__)
 from .logging_utils import _format_sql

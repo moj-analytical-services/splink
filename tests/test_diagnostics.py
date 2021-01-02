@@ -61,8 +61,8 @@ def test_score_hist_intsplits(spark, df):
     res3 = _calc_probability_density(df, spark=spark, buckets=5)
     res3 = pd.DataFrame(res3)
     assert res3.count_rows.count() == 5
-    assert res3.binwidth.sum() == 1.0
-    assert res3.normalised.sum() == 1.0
+    assert res3.binwidth.sum() == pytest.approx(1.0)
+    assert res3.normalised.sum() == pytest.approx(1.0)
 
 
 def test_score_hist_output_json(spark, df):

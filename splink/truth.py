@@ -4,19 +4,14 @@ from functools import reduce
 from pyspark.sql import DataFrame
 import pyspark.sql.functions as f
 from pyspark.sql import Window
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.session import SparkSession
 
 altair_installed = True
 try:
     import altair as alt
 except ImportError:
     altair_installed = False
-
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-except ImportError:
-    DataFrame = None
-    SparkSession = None
 
 
 def _sql_gen_unique_id_keygen(

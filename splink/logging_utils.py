@@ -1,11 +1,10 @@
-import logging
+from textwrap import dedent
 
 sqlparse_exists = True
 try:
     import sqlparse
 except ImportError:
     sqlparse_exists = False
-from textwrap import dedent
 
 
 def _format_sql(sql):

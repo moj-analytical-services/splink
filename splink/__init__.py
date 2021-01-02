@@ -1,12 +1,7 @@
 from typing import Callable
 
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-except ImportError:
-    DataFrame = None
-    SparkSession = None
-
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.session import SparkSession
 from splink.validate import validate_settings
 from splink.params import Params, load_params_from_json
 from splink.case_statements import _check_jaro_registered
