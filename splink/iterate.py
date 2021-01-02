@@ -1,3 +1,4 @@
+from typing import Callable
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
@@ -9,7 +10,6 @@ from .check_types import check_types
 import logging
 
 logger = logging.getLogger(__name__)
-from typing import Callable
 
 
 @check_types

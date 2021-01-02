@@ -1,4 +1,3 @@
-import math
 from copy import deepcopy
 
 from .blocking import cartesian_block

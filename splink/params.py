@@ -5,7 +5,6 @@ import json
 from pyspark.sql.session import SparkSession
 
 from .settings import Settings, complete_settings_dict
-from .validate import _get_default_value
 from .charts import (
     load_chart_definition,
     altair_if_installed_else_json,
@@ -13,10 +12,6 @@ from .charts import (
     _load_external_libs,
     _make_json,
 )
-
-
-from .check_types import check_types
-import warnings
 
 import logging
 

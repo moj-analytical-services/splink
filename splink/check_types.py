@@ -1,20 +1,4 @@
-"""
-**Functions**
-.. autofunction:: block_using_rules
-"""
-
 from typing import get_type_hints, Union
-
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-
-    spark_exists = True
-except ImportError:
-    DataFrame = None
-    SparkSession = None
-    spark_exists = False
-
 from functools import wraps
 
 

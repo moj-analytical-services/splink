@@ -144,7 +144,7 @@ def make_adjustment_for_term_frequencies(
     term_freq_column_list = [
         c["col_name"]
         for c in settings["comparison_columns"]
-        if c["term_frequency_adjustments"] == True
+        if c["term_frequency_adjustments"] is True
     ]
 
     if len(term_freq_column_list) == 0:

@@ -1,14 +1,12 @@
 from collections import OrderedDict
 import logging
-import re
-import warnings
+
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 from .check_types import check_types
 from .logging_utils import _format_sql
 from .settings import complete_settings_dict
-from .validate import validate_settings, _get_default_value
 
 logger = logging.getLogger(__name__)
 

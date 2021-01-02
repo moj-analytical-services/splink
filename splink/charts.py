@@ -1,5 +1,4 @@
 import pkgutil
-import os
 import json
 
 altair_installed = True

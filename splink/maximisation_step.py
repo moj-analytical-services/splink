@@ -1,12 +1,12 @@
 import logging
 
-# For type hints. Try except to ensure the sql_gen functions even if spark doesn't exist.
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
-logger = logging.getLogger(__name__)
 from .logging_utils import _format_sql
 from .params import Params
+
+logger = logging.getLogger(__name__)
 
 
 def _sql_gen_new_lambda(table_name="df_intermediate"):

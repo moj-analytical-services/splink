@@ -6,7 +6,6 @@ from pyspark.sql.session import SparkSession
 
 from .logging_utils import _format_sql
 from .check_types import check_types
-from .settings import Settings
 
 logger = logging.getLogger(__name__)
 
