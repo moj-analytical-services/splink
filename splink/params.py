@@ -83,7 +83,9 @@ class Params:
             {"col_name": "proportion_of_matches", "diff": change_lambda, "level": ""}
         )
 
-        compare = zip(p_latest.comparison_columns, p_previous.comparison_columns)
+        compare = zip(
+            p_latest.comparison_columns_list, p_previous.comparison_columns_list
+        )
         for c_latest, c_previous in compare:
             for m_or_u in ["m_probabilities", "u_probabilities"]:
                 for gamma_index in range(c_latest.num_levels):
@@ -209,7 +211,7 @@ class Params:
         data = self.m_u_history_as_rows()
 
         # Create charts for each column
-        for cc in self.params.comparison_columns:
+        for cc in self.params.comparison_columns_list:
 
             chart_def = deepcopy(chart_template)
 

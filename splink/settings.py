@@ -185,7 +185,7 @@ class Settings:
         self.settings_dict = complete_settings_dict(self.settings_dict, spark)
 
     @property
-    def _comparison_column_lookup(self):
+    def comparison_column_dict(self):
         sd = self.settings_dict
         lookup = {}
         for i, c in enumerate(sd["comparison_columns"]):
@@ -196,12 +196,12 @@ class Settings:
         return lookup
 
     @property
-    def comparison_columns(self):
-        return self._comparison_column_lookup.values()
+    def comparison_columns_list(self):
+        return list(self.comparison_column_dict.values())
 
     def get_comparison_column(self, col_name_or_custom_name):
-        if col_name_or_custom_name in self._comparison_column_lookup:
-            return self._comparison_column_lookup[col_name_or_custom_name]
+        if col_name_or_custom_name in self.comparison_column_dict:
+            return self.comparison_column_dict[col_name_or_custom_name]
         else:
             raise KeyError(
                 f"You requested comparison column {col_name_or_custom_name}"
@@ -211,14 +211,14 @@ class Settings:
     def reset_all_probabilities(self, force: bool = False):
         sd = self.settings_dict
         sd["proportion_of_matches"] = None
-        for c in self.comparison_columns:
+        for c in self.comparison_columns_list:
             c.reset_probabilities(force=force)
 
     def m_u_as_rows(self):
         """Convert to rows e.g. to use to plot
         in a chart"""
         rows = []
-        for c in self.comparison_columns:
+        for c in self.comparison_columns_list:
             rows.extend(c.as_rows(self["proportion_of_matches"]))
         return rows
 
@@ -253,7 +253,7 @@ class Settings:
         lines = []
         lines.append(f"λ (proportion of matches) = {self['proportion_of_matches']}")
 
-        for c in self.comparison_columns:
+        for c in self.comparison_columns_list:
             lines.append(c.__repr__())
 
         return "\n".join(lines)

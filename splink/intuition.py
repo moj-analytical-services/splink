@@ -38,7 +38,7 @@ def intuition_report(row_dict: dict, params: Params):
     report = initial_template.format(lam=lam)
     current_prob = lam
 
-    for cc in params.params.comparison_columns:
+    for cc in params.params.comparison_columns_list:
         d = cc.describe_row_dict(row_dict)
 
         bf = d["bayes_factor"]
@@ -73,7 +73,7 @@ def intuition_report(row_dict: dict, params: Params):
 def _get_bayes_factors(row_dict, params):
     bayes_factors = []
     lam = params.params["proportion_of_matches"]
-    for cc in params.params.comparison_columns:
+    for cc in params.params.comparison_columns_list:
         row_desc = cc.describe_row_dict(row_dict, lam)
         bayes_factors.append(row_desc)
 

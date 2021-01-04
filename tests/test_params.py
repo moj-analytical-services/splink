@@ -42,7 +42,7 @@ def test_prob_sum_one(param_example):
 
     p = param_example.params
 
-    for cc in p.comparison_columns:
+    for cc in p.comparison_columns_list:
         assert sum(cc["m_probabilities"]) == pytest.approx(1.0)
         assert sum(cc["u_probabilities"]) == pytest.approx(1.0)
 

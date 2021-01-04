@@ -66,7 +66,7 @@ def _sql_gen_gamma_prob_columns(params, table_name="df_with_gamma"):
     settings = params.params.settings_dict
     # Get case statements
     case_statements = {}
-    for cc in params.params.comparison_columns:
+    for cc in params.params.comparison_columns_list:
         for match in [0, 1]:
             alias = _case_when_col_alias(cc.gamma_name, match)
             case_statement = _sql_gen_gamma_case_when(cc, match, params)
@@ -169,7 +169,7 @@ def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
 
 def _sql_gen_expected_match_prob(params, table_name="df_with_gamma_probs"):
     settings = params.params.settings_dict
-    ccs = params.params.comparison_columns
+    ccs = params.params.comparison_columns_list
 
     numerator = " * ".join([f"prob_{cc.gamma_name}_match" for cc in ccs])
     denom_part = " * ".join([f"prob_{cc.gamma_name}_non_match" for cc in ccs])
@@ -236,7 +236,7 @@ def _calculate_log_likelihood_df(df_with_gamma_probs, params, spark):
     Likelihood is just ((1-lambda) * prob not match) * (lambda * prob match)
     """
 
-    cc = params.params.comparison_columns
+    cc = params.params.comparison_columns_list
     λ = params.params["proportion_of_matches"]
 
     match_prob = " * ".join([f"prob_{c.gamma_name}_match" for c in cc])

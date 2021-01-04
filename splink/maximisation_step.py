@@ -44,7 +44,7 @@ def _sql_gen_intermediate_pi_aggregate(params, table_name="df_e"):
 
     Without this intermediate table, we'd be repeating these calculations multiple times.
     """
-    ccs = params.params.comparison_columns
+    ccs = params.params.comparison_columns_list
 
     gamma_cols_expr = ", ".join([cc.gamma_name for cc in ccs])
 
@@ -59,7 +59,7 @@ def _sql_gen_intermediate_pi_aggregate(params, table_name="df_e"):
 def _sql_gen_pi_df(params, table_name="df_intermediate"):
 
     sqls = []
-    for cc in params.params.comparison_columns:
+    for cc in params.params.comparison_columns_list:
         gamma_column_name = cc.gamma_name
         col_name = cc.name
         sql = f"""
