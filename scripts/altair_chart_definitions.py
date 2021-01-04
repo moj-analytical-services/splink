@@ -114,3 +114,33 @@
 # )
 
 #     return alt.hconcat(c_left, c_right)
+
+# estimate comaprison
+# import altair as alt
+# from altair import datum
+# c = alt.Chart(df).mark_point(
+#     size=100,
+#     opacity=1,
+#     filled=True
+# ).encode(
+#     x='u_probability:Q',
+#     y=alt.Y('level_name:N',axis=alt.Axis(grid=True, title=None)),
+#     color=alt.Color('estimate_name:N'),
+#     row=alt.Row('column_name:N', title=None)
+# ).resolve_scale(y='independent'
+# ).properties(title= "Non-matches"
+# ).interactive()
+
+
+# c1 = c.transform_filter(
+#     datum.gamma_index != 1000000
+# )
+
+# c2 = c.encode(x='m_probability:Q' ).transform_filter(
+#     datum.gamma_index != 1000001
+# ).properties(title= "Matches")
+
+# chart = (c1 | c2).configure_title(anchor='middle')
+# chart = chart.properties(title='Comparison of parameter estimates between jobs')
+
+# chart

@@ -10,6 +10,8 @@ from copy import deepcopy
 from .settings import ComparisonColumn, Settings
 from .params import Params
 
+from splink.charts import load_chart_definition, altair_if_installed_else_json
+
 
 class CombineEstimates:
     def __init__(self, params_list: list, estimate_names: list):
@@ -112,12 +114,12 @@ class CombineEstimates:
         new_settings["blocking_rules"] = new_blocking_rules
         return new_settings
 
-    def summary_report(self, reduce_function=None):
+    def summary_report(self, reduce_function=None, summary_name="combined"):
 
         lines = []
         gathered = self.groups_of_comparison_columns_by_name()
 
-        combined_settings = self.get_combined_settings()
+        combined_settings = self.get_combined_settings(reduce_function=reduce_function)
         combined_settings = Settings(combined_settings)
 
         for cc_name, dict_of_ccs in gathered.items():
@@ -133,7 +135,8 @@ class CombineEstimates:
             cc = combined_settings.get_comparison_column(cc_name)
             m_probs = cc["m_probabilities"]
             m_probs = [f"{p:.4g}" for p in m_probs]
-            lines.append(f"        {'median value':<15}: {m_probs}")
+            summary = f"{summary_name} value:"
+            lines.append(f"        {summary:<15}: {m_probs}")
 
             lines.append(f"    u probabilities")
 
@@ -145,7 +148,8 @@ class CombineEstimates:
             cc = combined_settings.get_comparison_column(cc_name)
             m_probs = cc["u_probabilities"]
             m_probs = [f"{p:.4g}" for p in m_probs]
-            lines.append(f"        {'median value':<15}: {m_probs}")
+            summary = f"{summary_name} value:"
+            lines.append(f"        {summary:<15}: {m_probs}")
 
         return "\n".join(lines)
 
@@ -158,13 +162,18 @@ class CombineEstimates:
         gathered = self.groups_of_comparison_columns_by_name()
         for cc_name, dict_of_ccs in gathered.items():
             for estimate_name, cc in dict_of_ccs.items():
+                new_rows = cc.as_rows()
+                for r in new_rows:
+                    r["estimate_name"] = estimate_name
+                rows.extend(new_rows)
 
-                print(cc.as_rows())
-                break
-            break
-
-    def __repr__(self):
-        return self.summary_report()
+        return rows
 
     def comparison_chart(self):
-        pass
+        chart_def = load_chart_definition("compare_estimates.json")
+        chart_def["data"]["values"] = self.estimates_as_rows()
+
+        return altair_if_installed_else_json(chart_def)
+
+    def __repr__(self):
+        return self.summary_report(summary_name="median")
