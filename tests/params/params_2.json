@@ -1,0 +1,122 @@
+{
+    "current_params": {
+        "link_type": "dedupe_only",
+        "blocking_rules": [
+            "l.surname = r.surname"
+        ],
+        "comparison_columns": [
+            {
+                "col_name": "first_name",
+                "num_levels": 3,
+                "term_frequency_adjustments": true,
+                "gamma_index": 0,
+                "data_type": "string",
+                "fix_u_probabilities": false,
+                "fix_m_probabilities": false,
+                "case_expression": "case     when first_name_l is null or first_name_r is null then -1     when first_name_l = first_name_r then 2     when levenshtein(first_name_l, first_name_r)/((length(first_name_l) + length(first_name_r))/2) <= 0.3     then 1     else 0 end as gamma_first_name",
+                "m_probabilities": [
+                    0.16044087707996368,
+                    0.10043379664421082,
+                    0.7391253113746643
+                ],
+                "u_probabilities": [
+                    0.8890666365623474,
+                    0.017167216166853905,
+                    0.09376613795757294
+                ]
+            },
+            {
+                "col_name": "dob",
+                "gamma_index": 1,
+                "num_levels": 2,
+                "data_type": "string",
+                "term_frequency_adjustments": false,
+                "fix_u_probabilities": false,
+                "fix_m_probabilities": false,
+                "case_expression": "case     when dob_l is null or dob_r is null then -1     when dob_l = dob_r then 1     else 0 end as gamma_dob",
+                "m_probabilities": [
+                    0.2196924090385437,
+                    0.7803075909614563
+                ],
+                "u_probabilities": [
+                    0.9462423324584961,
+                    0.053757671266794205
+                ]
+            },
+            {
+                "col_name": "city",
+                "gamma_index": 2,
+                "num_levels": 2,
+                "data_type": "string",
+                "term_frequency_adjustments": false,
+                "fix_u_probabilities": false,
+                "fix_m_probabilities": false,
+                "case_expression": "case     when city_l is null or city_r is null then -1     when city_l = city_r then 1     else 0 end as gamma_city",
+                "m_probabilities": [
+                    0.1971837729215622,
+                    0.8028162121772766
+                ],
+                "u_probabilities": [
+                    0.8292710781097412,
+                    0.1707289218902588
+                ]
+            },
+            {
+                "col_name": "email",
+                "gamma_index": 3,
+                "num_levels": 2,
+                "data_type": "string",
+                "term_frequency_adjustments": false,
+                "fix_u_probabilities": false,
+                "fix_m_probabilities": false,
+                "case_expression": "case     when email_l is null or email_r is null then -1     when email_l = email_r then 1     else 0 end as gamma_email",
+                "m_probabilities": [
+                    0.1882050633430481,
+                    0.8117949366569519
+                ],
+                "u_probabilities": [
+                    0.9511935114860535,
+                    0.04880651459097862
+                ]
+            }
+        ],
+        "additional_columns_to_retain": [
+            "group"
+        ],
+        "em_convergence": 0.01,
+        "max_iterations": 1,
+        "unique_id_column_name": "unique_id",
+        "retain_matching_columns": true,
+        "retain_intermediate_calculation_columns": false,
+        "proportion_of_matches": 0.23544254899024963
+    },
+    "historical_params": [],
+    "settings_original": {
+        "link_type": "dedupe_only",
+        "blocking_rules": [
+            "l.surname = r.surname"
+        ],
+        "comparison_columns": [
+            {
+                "col_name": "first_name",
+                "num_levels": 3,
+                "term_frequency_adjustments": true
+            },
+            {
+                "col_name": "dob"
+            },
+            {
+                "col_name": "city"
+            },
+            {
+                "col_name": "email"
+            }
+        ],
+        "additional_columns_to_retain": [
+            "group"
+        ],
+        "em_convergence": 0.01,
+        "max_iterations": 1
+    },
+    "iteration": 1
+}

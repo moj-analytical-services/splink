@@ -1,0 +1,137 @@
+{
+    "config": {
+        "view": {
+            "continuousWidth": 400,
+            "continuousHeight": 300
+        },
+        "title": {
+            "anchor": "middle"
+        }
+    },
+    "hconcat": [
+        {
+            "mark": {
+                "type": "point",
+                "filled": true,
+                "opacity": 1,
+                "size": 100
+            },
+            "encoding": {
+                "color": {
+                    "type": "nominal",
+                    "field": "estimate_name"
+                },
+                "row": {
+                    "type": "nominal",
+                    "field": "column_name",
+                    "title": null
+                },
+                "x": {
+                    "type": "quantitative",
+                    "field": "u_probability",
+                    "scale": {
+                        "domain": [
+                            0,
+                            1
+                        ]
+                    }
+                },
+                "y": {
+                    "type": "nominal",
+                    "axis": {
+                        "grid": true,
+                        "title": null
+                    },
+                    "field": "level_name"
+                }
+            },
+            "resolve": {
+                "scale": {
+                    "y": "independent"
+                }
+            },
+            "selection": {
+                "selector076": {
+                    "type": "interval",
+                    "bind": "scales",
+                    "encodings": [
+                        "x",
+                        "y"
+                    ]
+                }
+            },
+            "title": "Non-matches",
+            "transform": [
+                {
+                    "filter": "(datum.gamma_index !== 1000000)"
+                }
+            ]
+        },
+        {
+            "mark": {
+                "type": "point",
+                "filled": true,
+                "opacity": 1,
+                "size": 100
+            },
+            "encoding": {
+                "color": {
+                    "type": "nominal",
+                    "field": "estimate_name"
+                },
+                "row": {
+                    "type": "nominal",
+                    "field": "column_name",
+                    "title": null
+                },
+                "x": {
+                    "type": "quantitative",
+                    "field": "m_probability",
+                    "scale": {
+                        "domain": [
+                            0,
+                            1
+                        ]
+                    }
+                },
+                "y": {
+                    "type": "nominal",
+                    "axis": {
+                        "grid": true,
+                        "title": null
+                    },
+                    "field": "level_name"
+                }
+            },
+            "resolve": {
+                "scale": {
+                    "y": "independent"
+                }
+            },
+            "selection": {
+                "selector076": {
+                    "type": "interval",
+                    "bind": "scales",
+                    "encodings": [
+                        "x",
+                        "y"
+                    ]
+                }
+            },
+            "title": "Matches",
+            "transform": [
+                {
+                    "filter": "(datum.gamma_index !== 1000001)"
+                }
+            ]
+        }
+    ],
+    "data": {
+        "values": []
+    },
+    "title": {
+        "text": "Comparison of parameter estimates between jobs",
+        "subtitle": "Use mousewheeel to zoom"
+    },
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json"
+}
