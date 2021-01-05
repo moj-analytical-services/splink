@@ -3,7 +3,7 @@ from typing import Callable
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 from splink.validate import validate_settings
-from splink.params import Params, load_params_from_json
+from splink.model import Model, load_model_from_json
 from splink.case_statements import _check_jaro_registered
 from splink.blocking import block_using_rules
 from splink.gammas import add_gammas
@@ -16,16 +16,9 @@ from splink.break_lineage import (
     default_break_lineage_scored_comparisons,
 )
 
-# For type hints. I use try except to ensure that the sql generation functions work even if spark does not exist
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
 
-    spark_exists = True
-except ImportError:
-    DataFrame = None
-    SparkSession = None
-    spark_exists = False
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.session import SparkSession
 
 
 class Splink:
@@ -62,8 +55,8 @@ class Splink:
         _check_jaro_registered(spark)
 
         validate_settings(settings)
-        self.params = Params(settings, spark)
-        self.settings_dict = self.params.params.settings_dict
+        self.model = Model(settings, spark)
+        self.settings_dict = self.model.current_settings_obj.settings_dict
         self.df_r = df_r
         self.df_l = df_l
         self.df = df
@@ -116,7 +109,7 @@ class Splink:
         """
         df_comparison = self._get_df_comparison()
         df_gammas = add_gammas(df_comparison, self.settings_dict, self.spark)
-        return run_expectation_step(df_gammas, self.params, self.spark)
+        return run_expectation_step(df_gammas, self.model, self.spark)
 
     def get_scored_comparisons(self, compute_ll=False):
         """Use the EM algorithm to estimate model parameters and return match probabilities.
@@ -135,7 +128,7 @@ class Splink:
 
         df_e = iterate(
             df_gammas,
-            self.params,
+            self.model,
             self.spark,
             compute_ll=compute_ll,
             save_state_fn=self.save_state_fn,
@@ -164,7 +157,7 @@ class Splink:
 
         return make_adjustment_for_term_frequencies(
             df_e,
-            self.params,
+            self.model,
             retain_adjustment_columns=True,
             spark=self.spark,
         )
@@ -176,7 +169,7 @@ class Splink:
             path (str): Path to the json file.
             overwrite (bool): Whether to overwrite the file if it exsits
         """
-        self.params.save_params_to_json_file(path, overwrite=overwrite)
+        self.model.save_params_to_json_file(path, overwrite=overwrite)
 
 
 def load_from_json(
@@ -197,7 +190,9 @@ def load_from_json(
         df (DataFrame, optional): The dataframe to dedupe. Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
         save_state_fn (function, optional):  A function provided by the user that takes one argument, params, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
     """
-    params = load_params_from_json(path)
-    linker = Splink(params.params.settings_dict, spark, df_l, df_r, df, save_state_fn)
-    linker.params = params
+    model = load_model_from_json(path)
+    linker = Splink(
+        model.current_settings_obj.settings_dict, spark, df_l, df_r, df, save_state_fn
+    )
+    linker.model = model
     return linker

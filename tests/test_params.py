@@ -1,11 +1,11 @@
-from splink.params import Params
+from splink.model import Model
 import pytest
 
 # Light testing at the moment.  Focus on aspects that could break main algo
 
 
 @pytest.fixture(scope="module")
-def param_example(spark):
+def model_example(spark):
 
     case_expr = """
     case
@@ -32,22 +32,22 @@ def param_example(spark):
         "blocking_rules": [],
     }
 
-    params = Params(settings, spark=spark)
+    model = Model(settings, spark=spark)
 
-    yield params
+    yield model
 
 
 # Test param updates
-def test_prob_sum_one(param_example):
+def test_prob_sum_one(model_example):
 
-    p = param_example.params
+    s = model_example.current_settings_obj
 
-    for cc in p.comparison_columns_list:
+    for cc in s.comparison_columns_list:
         assert sum(cc["m_probabilities"]) == pytest.approx(1.0)
         assert sum(cc["u_probabilities"]) == pytest.approx(1.0)
 
 
-def test_update(param_example):
+def test_update(model_example):
 
     pi_df_collected = [
         {
@@ -94,15 +94,19 @@ def test_update(param_example):
         },
     ]
 
-    param_example.save_params_to_iteration_history()
-    param_example.params.reset_all_probabilities()
+    model_example.save_settings_to_iteration_history()
+
+    model_example.current_settings_obj.reset_all_probabilities()
 
     assert (
-        param_example.params.get_comparison_column("fname")["m_probabilities"][0] is 0
+        model_example.current_settings_obj.get_comparison_column("fname")[
+            "m_probabilities"
+        ][0]
+        == 0
     )
-    param_example._populate_params_from_maximisation_step(0.2, pi_df_collected)
+    model_example._populate_model_from_maximisation_step(0.2, pi_df_collected)
 
-    new_params = param_example.params
+    new_settings = model_example.current_settings_obj
 
-    assert new_params.get_comparison_column("fname")["m_probabilities"][0] == 0.2
-    assert new_params.get_comparison_column("fname")["u_probabilities"][0] == 0.8
+    assert new_settings.get_comparison_column("fname")["m_probabilities"][0] == 0.2
+    assert new_settings.get_comparison_column("fname")["u_probabilities"][0] == 0.8

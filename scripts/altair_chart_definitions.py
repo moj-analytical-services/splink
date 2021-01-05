@@ -29,7 +29,7 @@
 #         )
 
 
-#                 data = params.convert_params_dict_to_data(params.params)
+#                 data = params.convert_params_dict_to_data(model.current_settings_obj)
 
 #         chart_data = alt.Data(values=data)
 #         chart = alt.Chart(chart_data).mark_bar().encode(

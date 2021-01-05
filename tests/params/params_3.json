@@ -1,5 +1,5 @@
 {
-    "current_params": {
+    "current_settings_dict": {
         "link_type": "dedupe_only",
         "blocking_rules": [
             "l.dob = r.dob"
@@ -92,8 +92,8 @@
         "retain_intermediate_calculation_columns": false,
         "proportion_of_matches": 0.5156759023666382
     },
-    "historical_params": [],
-    "settings_original": {
+    "historical_settings_dicts": [],
+    "original_settings_dict": {
         "link_type": "dedupe_only",
         "blocking_rules": [
             "l.dob = r.dob"

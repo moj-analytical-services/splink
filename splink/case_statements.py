@@ -17,7 +17,7 @@ def _check_jaro_registered(spark):
 
     warnings.warn(
         "The jaro_winkler_sim user definined function is not available in Spark "
-        "Or you did not pass 'spark' (the SparkSession) into 'Params' "
+        "Or you did not pass 'spark' (the SparkSession) into 'Model' "
         "Falling back to using levenshtein in the default string comparison functions "
         "You can import these functions using the scala-udf-similarity-0.0.7.jar provided with Splink"
     )

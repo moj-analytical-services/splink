@@ -4,18 +4,18 @@ from statistics import median
 import pytest
 
 from splink.combine_models import ModelCombiner
-from splink.params import Params, load_params_from_json
+from splink.model import Model, load_model_from_json
 from splink.settings import Settings
 
 logger = logging.getLevelName
 
 
 def test_api():
-    params_1 = load_params_from_json("tests/params/params_1.json")
-    params_2 = load_params_from_json("tests/params/params_2.json")
-    params_3 = load_params_from_json("tests/params/params_3.json")
+    model_1 = load_model_from_json("tests/params/params_1.json")
+    model_2 = load_model_from_json("tests/params/params_2.json")
+    model_3 = load_model_from_json("tests/params/params_3.json")
     mc = ModelCombiner(
-        [params_1, params_2, params_3],
+        [model_1, model_2, model_3],
         ["first name block", "surname block", "dob block"],
     )
     mc.get_combined_settings_dict()
@@ -87,9 +87,9 @@ def test_calc(spark):
         ],
     }
 
-    p1 = Params(settings_1, spark)
-    p2 = Params(settings_2, spark)
-    p3 = Params(settings_3, spark)
+    p1 = Model(settings_1, spark)
+    p2 = Model(settings_2, spark)
+    p3 = Model(settings_3, spark)
 
     mc = ModelCombiner([p1, p2, p3], ["forename block", "surname block", "dob block"])
 
@@ -127,7 +127,7 @@ def test_calc(spark):
         ],
     }
 
-    p4 = Params(settings_4_with_nulls, spark)
+    p4 = Model(settings_4_with_nulls, spark)
     mc = ModelCombiner(
         [p1, p2, p3, p4],
         ["forename block", "surname block", "dob block", "email_block"],

@@ -4,7 +4,7 @@ from pyspark.sql.session import SparkSession
 
 from .expectation_step import run_expectation_step
 from .maximisation_step import run_maximisation_step
-from .params import Params
+from .model import Model
 from .check_types import check_types
 
 import logging
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 @check_types
 def iterate(
     df_gammas: DataFrame,
-    params: Params,
+    model: Model,
     spark: SparkSession,
     compute_ll: bool = False,
     save_state_fn: Callable = None,
@@ -24,7 +24,7 @@ def iterate(
 
     Args:
         df_gammas (DataFrame): Spark dataframe including gamma columns
-        params (Params): The `splink` params object
+        model (Model): The `splink` model object
         spark (SparkSession): The SparkSession object
         log_iteration (bool, optional): Whether to write a message to the log after each iteration. Defaults to False.
         num_iterations (int, optional): The number of iterations to run. Defaults to 10.
@@ -34,23 +34,23 @@ def iterate(
     Returns:
         DataFrame: A spark dataframe including a match probability column
     """
-    settings = params.params.settings_dict
+    settings = model.current_settings_obj.settings_dict
     num_iterations = settings["max_iterations"]
     for i in range(num_iterations):
 
-        df_e = run_expectation_step(df_gammas, params, spark, compute_ll=compute_ll)
+        df_e = run_expectation_step(df_gammas, model, spark, compute_ll=compute_ll)
 
-        run_maximisation_step(df_e, params, spark)
+        run_maximisation_step(df_e, model, spark)
 
         logger.info(f"Iteration {i} complete")
 
         if save_state_fn:
-            save_state_fn(params)
-        if params.is_converged():
+            save_state_fn(model)
+        if model.is_converged():
             logger.info("EM algorithm has converged")
             break
 
     # The final version of df_e should align to the current parameters - i.e. those computed in the last max step
-    df_e = run_expectation_step(df_gammas, params, spark, compute_ll=compute_ll)
+    df_e = run_expectation_step(df_gammas, model, spark, compute_ll=compute_ll)
 
     return df_e

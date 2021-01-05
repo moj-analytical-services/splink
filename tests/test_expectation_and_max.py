@@ -9,7 +9,7 @@ from splink.maximisation_step import run_maximisation_step
 from splink.blocking import block_using_rules
 from splink.gammas import add_gammas
 from splink.expectation_step import run_expectation_step
-from splink.params import Params
+from splink.model import Model
 
 
 def test_expectation_and_maximisation(spark):
@@ -59,10 +59,14 @@ def test_expectation_and_maximisation(spark):
 
     df_input = spark.createDataFrame(Row(**x) for x in rows)
     df_input.persist()
-    params = Params(settings, spark)
+    params = Model(settings, spark)
 
-    df_comparison = block_using_rules(params.params.settings_dict, spark, df=df_input)
-    df_gammas = add_gammas(df_comparison, params.params.settings_dict, spark)
+    df_comparison = block_using_rules(
+        params.current_settings_obj.settings_dict, spark, df=df_input
+    )
+    df_gammas = add_gammas(
+        df_comparison, params.current_settings_obj.settings_dict, spark
+    )
     df_gammas.persist()
     df_e = run_expectation_step(df_gammas, params, spark)
     df_e = df_e.sort("unique_id_l", "unique_id_r")
@@ -138,7 +142,7 @@ def test_expectation_and_maximisation(spark):
 
     run_maximisation_step(df_e, params, spark)
 
-    new_lambda = params.params["proportion_of_matches"]
+    new_lambda = params.current_settings_obj["proportion_of_matches"]
 
     # See https://github.com/moj-analytical-services/splink/blob/master/tests/expectation_maximisation_test_answers.xlsx
     # for derivation of these numbers
@@ -152,7 +156,7 @@ def test_expectation_and_maximisation(spark):
         ["surname", 2, 0.500444578, 0.499476163],
     ]
 
-    settings_obj = params.params
+    settings_obj = params.current_settings_obj
 
     for r in rows:
         cc = settings_obj.get_comparison_column(r[0])
@@ -181,7 +185,7 @@ def test_expectation_and_maximisation(spark):
     assert result_list == pytest.approx(correct_list)
 
     run_maximisation_step(df_e, params, spark)
-    new_lambda = params.params["proportion_of_matches"]
+    new_lambda = params.current_settings_obj["proportion_of_matches"]
     assert new_lambda == pytest.approx(0.534993426)
 
     rows = [
@@ -192,7 +196,7 @@ def test_expectation_and_maximisation(spark):
         ["surname", 2, 0.396307958, 0.619298443],
     ]
 
-    settings_obj = params.params
+    settings_obj = params.current_settings_obj
 
     for r in rows:
         cc = settings_obj.get_comparison_column(r[0])
@@ -212,9 +216,9 @@ def test_expectation_and_maximisation(spark):
     df_e = run_expectation_step(df_gammas, params, spark)
     params.save_params_to_json_file(fname)
 
-    from splink.params import load_params_from_json
+    from splink.model import load_model_from_json
 
-    p = load_params_from_json(fname)
+    p = load_model_from_json(fname)
 
     df_e_2 = run_expectation_step(df_gammas, p, spark)
 

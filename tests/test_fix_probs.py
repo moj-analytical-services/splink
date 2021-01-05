@@ -53,11 +53,13 @@ def test_fix_u(spark):
     df_e = linker.get_scored_comparisons()
 
     # Want to check that the "u_probabilities" in the latest parameters are still 0.8, 0.2
-    mob = linker.params.params.get_comparison_column("mob")
+    mob = linker.model.current_settings_obj.get_comparison_column("mob")
     assert mob["u_probabilities"][0] == pytest.approx(0.8)
     assert mob["u_probabilities"][1] == pytest.approx(0.2)
 
-    first_name = mob = linker.params.params.get_comparison_column("first_name")
+    first_name = mob = linker.model.current_settings_obj.get_comparison_column(
+        "first_name"
+    )
     assert first_name["u_probabilities"][0] != pytest.approx(0.8)
     assert first_name["u_probabilities"][1] != pytest.approx(0.2)
 
@@ -83,7 +85,7 @@ def test_fix_u(spark):
     df_e = linker.get_scored_comparisons()
 
     # Want to check that the "u_probabilities" in the latest parameters are no longer 0.8, 0.2
-    mob = linker.params.params.get_comparison_column("mob")
+    mob = linker.model.current_settings_obj.get_comparison_column("mob")
     assert mob["u_probabilities"][0] != pytest.approx(0.8)
     assert mob["u_probabilities"][0] != pytest.approx(0.2)
 
@@ -110,10 +112,10 @@ def test_fix_u(spark):
 
     linker.get_scored_comparisons()
 
-    mob = linker.params.params.get_comparison_column("mob")
+    mob = linker.model.current_settings_obj.get_comparison_column("mob")
     assert mob["u_probabilities"][0] != pytest.approx(0.75)
     assert mob["u_probabilities"][1] != pytest.approx(0.25)
 
-    mob = linker.params.params.get_comparison_column("mob")
+    mob = linker.model.current_settings_obj.get_comparison_column("mob")
     assert mob["m_probabilities"][0] == pytest.approx(0.04)
     assert mob["m_probabilities"][1] == pytest.approx(0.96)

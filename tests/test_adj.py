@@ -6,7 +6,7 @@ from splink_data_generation.generate_data_random import generate_df_gammas_rando
 from splink_data_generation.match_prob import add_match_prob
 from splink.default_settings import complete_settings_dict
 from splink.iterate import iterate
-from splink.params import Params
+from splink.model import Model
 from splink.term_frequencies import make_adjustment_for_term_frequencies
 from splink import Splink
 
@@ -179,11 +179,11 @@ def test_term_frequency_adjustments(spark):
 
     # Can't use linker = Splink() because we have df_gammas, not df
     settings_binary = complete_settings_dict(settings_binary, spark)
-    params = Params(settings_binary, spark)
-    df_e = iterate(df_e, params, spark)
+    model = Model(settings_binary, spark)
+    df_e = iterate(df_e, model, spark)
 
     df_e = make_adjustment_for_term_frequencies(
-        df_e, params, spark, retain_adjustment_columns=True
+        df_e, model, spark, retain_adjustment_columns=True
     )
 
     df = df_e.toPandas()

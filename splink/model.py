@@ -18,7 +18,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class Params:
+class Model:
     """Stores the current model parameters (in self.params) and values for params for all previous iterations
 
     Attributes:
@@ -34,21 +34,21 @@ class Params:
             spark (SparkSession): Your sparksession. Defaults to None.
         """
 
-        self.param_history = []
+        self.historical_settings = []
 
         self.iteration = 0
 
         # Settings is just a wrapper around the settings dict
         settings_dict_original = deepcopy(settings)
-        self.settings_original = Settings(settings_dict_original)
+        self.original_settings_obj = Settings(settings_dict_original)
 
         settings_dict_completed = complete_settings_dict(deepcopy(settings), spark)
 
-        self.params = Settings(deepcopy(settings_dict_completed))
+        self.current_settings_obj = Settings(deepcopy(settings_dict_completed))
 
         self.log_likelihood_exists = False
 
-    def _populate_params_from_maximisation_step(self, lambda_value, pi_df_collected):
+    def _populate_model_from_maximisation_step(self, lambda_value, pi_df_collected):
         """
         Take results of sql query that computes updated values
         and update parameters.
@@ -57,22 +57,26 @@ class Params:
         gamma_value, new_probability_match, new_probability_non_match, gamma_col
         """
 
-        self.params.reset_all_probabilities()
+        self.current_settings_obj.reset_all_probabilities()
 
-        self.params["proportion_of_matches"] = lambda_value
+        self.current_settings_obj["proportion_of_matches"] = lambda_value
         for row_dict in pi_df_collected:
             name = row_dict["column_name"]
             level_int = row_dict["gamma_value"]
             match_prob = row_dict["new_probability_match"]
             non_match_prob = row_dict["new_probability_non_match"]
 
-            self.params.set_m_probability(name, level_int, match_prob, force=False)
-            self.params.set_u_probability(name, level_int, non_match_prob, force=False)
+            self.current_settings_obj.set_m_probability(
+                name, level_int, match_prob, force=False
+            )
+            self.current_settings_obj.set_u_probability(
+                name, level_int, non_match_prob, force=False
+            )
 
     def is_converged(self):
-        p_latest = self.params
-        p_previous = self.param_history[-1]
-        threshold = self.params["em_convergence"]
+        p_latest = self.current_settings_obj
+        p_previous = self.historical_settings[-1]
+        threshold = self.current_settings_obj["em_convergence"]
 
         diffs = []
 
@@ -111,21 +115,23 @@ class Params:
 
         return largest_diff < threshold
 
-    def save_params_to_iteration_history(self):
+    def save_settings_to_iteration_history(self):
         """
         Take current params and
         """
-        current_params = deepcopy(self.params.settings_dict)
+        current_params = deepcopy(self.current_settings_obj.settings_dict)
 
-        self.param_history.append(Settings(current_params))
-        if "log_likelihood" in self.params.settings_dict:
+        self.historical_settings.append(Settings(current_params))
+        if "log_likelihood" in self.current_settings_obj.settings_dict:
             self.log_likelihood_exists = True
 
     def _to_dict(self):
         p_dict = {}
-        p_dict["current_params"] = self.params.settings_dict
-        p_dict["historical_params"] = [s.settings_dict for s in self.param_history]
-        p_dict["settings_original"] = self.settings_original.settings_dict
+        p_dict["current_settings_dict"] = self.current_settings_obj.settings_dict
+        p_dict["historical_settings_dicts"] = [
+            s.settings_dict for s in self.historical_settings
+        ]
+        p_dict["original_settings_dict"] = self.original_settings_obj.settings_dict
         p_dict["iteration"] = self.iteration
 
         return p_dict
@@ -147,7 +153,7 @@ class Params:
 
     def m_u_history_as_rows(self):
         rows = []
-        for it_num, p in enumerate(self.param_history):
+        for it_num, p in enumerate(self.historical_settings):
             new_rows = p.m_u_as_rows()
             for r in new_rows:
                 r["iteration"] = it_num
@@ -158,7 +164,7 @@ class Params:
 
     def lambda_history_as_rows(self):
         rows = []
-        for it_num, p in enumerate(self.param_history):
+        for it_num, p in enumerate(self.historical_settings):
             rows.append({"λ": p["proportion_of_matches"], "iteration": it_num})
 
         return rows
@@ -166,7 +172,7 @@ class Params:
     def ll_history_as_rows(self):
 
         rows = []
-        for it_num, p in enumerate(self.param_history):
+        for it_num, p in enumerate(self.historical_settings):
             rows.append({"log_likelihood": p["log_likelihood"], "iteration": it_num})
 
         return rows
@@ -191,14 +197,14 @@ class Params:
     def gamma_distribution_chart(self):  # pragma: no cover
         chart_path = "gamma_distribution_chart_def.json"
         chart = load_chart_definition(chart_path)
-        chart["data"]["values"] = self.params.m_u_as_rows()
+        chart["data"]["values"] = self.current_settings_obj.m_u_as_rows()
         return altair_if_installed_else_json(chart)
 
     def bayes_factor_chart(self):
-        return self.params.bayes_factor_chart()
+        return self.current_settings_obj.bayes_factor_chart()
 
     def probability_distribution_chart(self):
-        return self.params.probability_distribution_chart()
+        return self.current_settings_obj.probability_distribution_chart()
 
     def bayes_factor_history_charts(self):
         chart_path = "bayes_factor_history_chart_def.json"
@@ -211,7 +217,7 @@ class Params:
         data = self.m_u_history_as_rows()
 
         # Create charts for each column
-        for cc in self.params.comparison_columns_list:
+        for cc in self.current_settings_obj.comparison_columns_list:
 
             chart_def = deepcopy(chart_template)
 
@@ -261,42 +267,46 @@ class Params:
         fmt_dict["c_lambda_it"] = _make_json(self.lambda_iteration_chart())
         fmt_dict["c_bayes_factor_hist"] = _make_json(self.bayes_factor_history_charts())
         fmt_dict["c_m_u_hist"] = _make_json(self.m_u_probabilities_iteration_chart())
-        fmt_dict["proportion_of_matches"] = self.params["proportion_of_matches"]
+        fmt_dict["proportion_of_matches"] = self.current_settings_obj[
+            "proportion_of_matches"
+        ]
         with open(filename, "w") as f:
             f.write(template.format(**fmt_dict))
 
     def __repr__(self):  # pragma: no cover
-        p = self.params
+        p = self.current_settings_obj
         return p.__repr__()
 
 
-def load_params_from_json(path):
+def load_model_from_json(path):
     # Load params
     with open(path, "r") as f:
         params_from_json = json.load(f)
 
-    p = load_params_from_dict(params_from_json)
+    p = load_model_from_dict(params_from_json)
 
     return p
 
 
-def load_params_from_dict(param_dict):
+def load_model_from_dict(model_dict):
 
-    keys = set(param_dict.keys())
+    keys = set(model_dict.keys())
 
     expected_keys = {
-        "current_params",
-        "settings_original",
-        "historical_params",
+        "current_settings_dict",
+        "historical_settings_dicts",
+        "original_settings_dict",
         "iteration",
     }
 
     if keys == expected_keys:
-        p = Params(param_dict["current_params"], spark=None)
+        p = Model(model_dict["current_settings_dict"], spark=None)
 
-        p.param_history = [Settings(p) for p in param_dict["historical_params"]]
-        p.settings_original = Settings(param_dict["settings_original"])
-        p.iteration = param_dict["iteration"]
+        p.historical_settings = [
+            Settings(s) for s in model_dict["historical_settings_dicts"]
+        ]
+        p.original_settings_obj = Settings(model_dict["original_settings_dict"])
+        p.iteration = model_dict["iteration"]
     else:
         raise ValueError("Your saved params seem to be corrupted")
 

@@ -4,7 +4,7 @@ from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
 from .logging_utils import _format_sql
-from .params import Params
+from .model import Model
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def _get_new_lambda(df_intermediate, spark):
     return new_lambda
 
 
-def _sql_gen_intermediate_pi_aggregate(params, table_name="df_e"):
+def _sql_gen_intermediate_pi_aggregate(model, table_name="df_e"):
     """
     This intermediate step is calculated for efficiency purposes.
 
@@ -44,7 +44,7 @@ def _sql_gen_intermediate_pi_aggregate(params, table_name="df_e"):
 
     Without this intermediate table, we'd be repeating these calculations multiple times.
     """
-    ccs = params.params.comparison_columns_list
+    ccs = model.current_settings_obj.comparison_columns_list
 
     gamma_cols_expr = ", ".join([cc.gamma_name for cc in ccs])
 
@@ -56,10 +56,10 @@ def _sql_gen_intermediate_pi_aggregate(params, table_name="df_e"):
     return sql
 
 
-def _sql_gen_pi_df(params, table_name="df_intermediate"):
+def _sql_gen_pi_df(model, table_name="df_intermediate"):
 
     sqls = []
-    for cc in params.params.comparison_columns_list:
+    for cc in model.current_settings_obj.comparison_columns_list:
         gamma_column_name = cc.gamma_name
         col_name = cc.name
         sql = f"""
@@ -90,18 +90,18 @@ def _get_new_pi_df(df_intermediate, spark, params):
     return [l.asDict() for l in levels]
 
 
-def run_maximisation_step(df_e: DataFrame, params: Params, spark: SparkSession):
-    """Compute new parameters and save them in the params object
+def run_maximisation_step(df_e: DataFrame, model: Model, spark: SparkSession):
+    """Compute new parameters and save them in the model object
 
-    Note that the params object will be updated in-place by this function
+    Note that the model object will be updated in-place by this function
 
     Args:
         df_e (DataFrame): the result of the expectation step
-        params (Params): splink Params object
+        model (Model): splink Model object
         spark (SparkSession): The spark session
     """
 
-    sql = _sql_gen_intermediate_pi_aggregate(params)
+    sql = _sql_gen_intermediate_pi_aggregate(model)
 
     df_e.createOrReplaceTempView("df_e")
     df_intermediate = spark.sql(sql)
@@ -110,8 +110,8 @@ def run_maximisation_step(df_e: DataFrame, params: Params, spark: SparkSession):
     df_intermediate.persist()
 
     new_lambda = _get_new_lambda(df_intermediate, spark)
-    pi_df_collected = _get_new_pi_df(df_intermediate, spark, params)
+    pi_df_collected = _get_new_pi_df(df_intermediate, spark, model)
 
-    params._populate_params_from_maximisation_step(new_lambda, pi_df_collected)
-    params.iteration += 1
+    model._populate_model_from_maximisation_step(new_lambda, pi_df_collected)
+    model.iteration += 1
     df_intermediate.unpersist()

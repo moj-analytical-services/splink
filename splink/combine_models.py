@@ -34,10 +34,10 @@ def _format_probs_for_report(probs):
 
 
 class ModelCombiner:
-    def __init__(self, params_list: list, estimate_names: list):
+    def __init__(self, model_list: list, estimate_names: list):
 
-        self.settings_list = [p.params for p in params_list]
-        self.named_settings_dict = dict(zip(estimate_names, self.settings_list))
+        self.settings_obj_list = [m.current_settings_obj for m in model_list]
+        self.named_settings_dict = dict(zip(estimate_names, self.settings_obj_list))
 
     def _groups_of_comparison_columns_by_name(self):
         """
@@ -45,15 +45,15 @@ class ModelCombiner:
         contains a settings dict
 
         If the input data is:
-        Params list element 1:  Estimate name 'forename blocking'
+        Model list element 1:  Estimate name 'forename blocking'
             Comparison columns: [surname, dob, email]
-        Params list element 2:  Estimate name 'surname blocking'
+        Model list element 2:  Estimate name 'surname blocking'
             Comparison columns: [forename, dob, email]
-        Params list element 3:  Estimate name 'dob blocking'
+        Model list element 3:  Estimate name 'dob blocking'
             Comparison columns: [forename, surname, email]
 
         We want to group by comparison column name, respecting the fact
-        that not all params have all comparison columns
+        that not all models have all comparison columns
 
         This function gives you back a dict in the form:
         {
@@ -113,7 +113,7 @@ class ModelCombiner:
 
     def get_combined_settings_dict(self, aggregate_function=None):
 
-        new_settings = deepcopy(self.settings_list[0].settings_dict)
+        new_settings = deepcopy(self.settings_obj_list[0].settings_dict)
 
         new_comparison_columns = []
         gathered = self._groups_of_comparison_columns_by_name()
@@ -128,7 +128,7 @@ class ModelCombiner:
         new_settings["comparison_columns"] = new_comparison_columns
 
         new_blocking_rules = []
-        for settings_dict in self.settings_list:
+        for settings_dict in self.settings_obj_list:
             new_blocking_rules.extend(settings_dict["blocking_rules"])
 
         new_settings["blocking_rules"] = new_blocking_rules

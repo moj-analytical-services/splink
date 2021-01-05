@@ -10,7 +10,7 @@ from pyspark.sql.session import SparkSession
 
 from .logging_utils import _format_sql
 from .expectation_step import _column_order_df_e_select_expr
-from .params import Params
+from .model import Model
 from .check_types import check_types
 
 logger = logging.getLogger(__name__)
@@ -45,10 +45,10 @@ def sql_gen_bayes_string(probs):
 
 
 # See https://github.com/moj-analytical-services/splink/pull/107
-def sql_gen_generate_adjusted_lambda(column_name, params, table_name="df_e"):
+def sql_gen_generate_adjusted_lambda(column_name, model, table_name="df_e"):
 
     # Get 'average' param for matching on this column
-    cc = params.params.get_comparison_column(column_name)
+    cc = model.current_settings_obj.get_comparison_column(column_name)
     max_level = cc.max_gamma_index
 
     m = cc["m_probabilities"][max_level]
@@ -134,11 +134,11 @@ def sql_gen_compute_final_group_membership_prob_from_adjustments(
 @check_types
 def make_adjustment_for_term_frequencies(
     df_e: DataFrame,
-    params: Params,
+    model: Model,
     spark: SparkSession,
     retain_adjustment_columns: bool = False,
 ):
-    settings = params.params.settings_dict
+    settings = model.current_settings_obj.settings_dict
     df_e.createOrReplaceTempView("df_e")
 
     term_freq_column_list = [
@@ -152,7 +152,7 @@ def make_adjustment_for_term_frequencies(
 
     # Generate a lookup table for each column with 'term specific' lambdas.
     for c in term_freq_column_list:
-        sql = sql_gen_generate_adjusted_lambda(c, params)
+        sql = sql_gen_generate_adjusted_lambda(c, model)
         logger.debug(_format_sql(sql))
         lookup = spark.sql(sql)
         lookup.persist()

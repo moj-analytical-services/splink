@@ -3,7 +3,7 @@ from copy import deepcopy
 from .blocking import cartesian_block
 from .gammas import add_gammas
 from .maximisation_step import run_maximisation_step
-from .params import Params
+from .model import Model
 from .settings import complete_settings_dict
 
 from pyspark.sql.dataframe import DataFrame
@@ -98,9 +98,9 @@ def estimate_u_values(
 
     df_e_product = df_gammas.withColumn("match_probability", lit(0.0))
 
-    params = Params(settings, spark)
-    run_maximisation_step(df_e_product, params, spark)
-    new_settings = params.params.settings_dict
+    model = Model(settings, spark)
+    run_maximisation_step(df_e_product, model, spark)
+    new_settings = model.current_settings_obj.settings_dict
 
     for i, col in enumerate(orig_settings["comparison_columns"]):
         u_probs = new_settings["comparison_columns"][i]["u_probabilities"]

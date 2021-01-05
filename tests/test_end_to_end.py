@@ -61,7 +61,7 @@ def test_splink_converges_to_known_params(spark):
 
     df_e, linker = estimate(df, settings, spark)
 
-    estimated_settings = linker.params.params.settings_dict
+    estimated_settings = linker.model.current_settings_obj.settings_dict
 
     cc_actual = settings_for_data_generation["comparison_columns"]
     cc_estimated = estimated_settings["comparison_columns"]
@@ -73,7 +73,7 @@ def test_splink_converges_to_known_params(spark):
 
     true_ll = sum(df["true_log_likelihood_l"])
 
-    df_ll = _calculate_log_likelihood_df(df_e, linker.params, spark).toPandas()
+    df_ll = _calculate_log_likelihood_df(df_e, linker.model, spark).toPandas()
     estimated_ll = df_ll["log_likelihood"].sum()
     assert true_ll == pytest.approx(estimated_ll, abs=0.001)
 
@@ -111,7 +111,7 @@ def test_splink_does_not_converge_away_from_correct_params(spark):
 
     df_e, linker = estimate(df, settings, spark)
 
-    estimated_settings = linker.params.params.settings_dict
+    estimated_settings = linker.model.current_settings_obj.settings_dict
     print(estimated_settings)
 
     cc_actual = actual_settings["comparison_columns"]
@@ -150,7 +150,7 @@ def test_main_api(spark):
     linker_2 = load_from_json("saved_model.json", spark=spark, df=df)
     df_e = linker_2.get_scored_comparisons()
 
-    params = linker.params
+    model = linker.model
     row_dict = df_e.toPandas().sample(1).to_dict(orient="records")[0]
-    intuition_report(row_dict, params)
-    bayes_factor_chart(row_dict, params)
+    intuition_report(row_dict, model)
+    bayes_factor_chart(row_dict, model)
