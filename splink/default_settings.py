@@ -182,7 +182,6 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
                 "because it will generate comparisons equal to the number of rows squared."
             )
 
-    gamma_counter = 0
     c_cols = settings_dict["comparison_columns"]
     for gamma_index, col_settings in enumerate(c_cols):
 
@@ -207,11 +206,24 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
         _complete_probabilities(col_settings, "m_probabilities")
         _complete_probabilities(col_settings, "u_probabilities")
 
-        col_settings["m_probabilities"] = _normalise_prob_list(
-            col_settings["m_probabilities"]
-        )
-        col_settings["u_probabilities"] = _normalise_prob_list(
-            col_settings["u_probabilities"]
-        )
+        if None not in col_settings["m_probabilities"]:
+            col_settings["m_probabilities"] = _normalise_prob_list(
+                col_settings["m_probabilities"]
+            )
+        else:
+            warnings.warn(
+                "Your m probabilities contain a None value "
+                "so could not be normalised to 1"
+            )
+
+        if None not in col_settings["u_probabilities"]:
+            col_settings["u_probabilities"] = _normalise_prob_list(
+                col_settings["u_probabilities"]
+            )
+        else:
+            warnings.warn(
+                "Your u probabilities contain a None value "
+                "so could not be normalised to 1"
+            )
 
     return settings_dict
