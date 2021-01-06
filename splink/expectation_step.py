@@ -10,10 +10,10 @@ logger = logging.getLogger(__name__)
 
 from .gammas import _add_left_right
 from .model import Model
-from .check_types import check_types
+from typeguard import typechecked
 
 
-@check_types
+@typechecked
 def run_expectation_step(
     df_with_gamma: DataFrame,
     model: Model,
@@ -75,6 +75,7 @@ def _sql_gen_gamma_prob_columns(model, table_name="df_with_gamma"):
     # Column order for case statement.  We want orig_col_l, orig_col_r, gamma_orig_col, prob_gamma_u, prob_gamma_m
     select_cols = OrderedDict()
     select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
+    select_cols = _add_left_right(select_cols, settings["source_dataset_column_name"])
 
     for col in settings["comparison_columns"]:
         if "col_name" in col:
@@ -102,14 +103,11 @@ def _sql_gen_gamma_prob_columns(model, table_name="df_with_gamma"):
             f"prob_gamma_{col_name}_match"
         ]
 
-    if settings["link_type"] == "link_and_dedupe":
-        select_cols = _add_left_right(select_cols, "_source_table")
-
     for c in settings["additional_columns_to_retain"]:
         select_cols = _add_left_right(select_cols, c)
 
     if "blocking_rules" in settings:
-        if len(settings["blocking_rules"]) > 0:
+        if len(settings["blocking_rules"]) > 1:
             select_cols["match_key"] = "match_key"
 
     select_expr = ", ".join(select_cols.values())
@@ -126,8 +124,9 @@ def _sql_gen_gamma_prob_columns(model, table_name="df_with_gamma"):
 def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
     # Column order for case statement.  We want orig_col_l, orig_col_r, gamma_orig_col, prob_gamma_u, prob_gamma_m
     select_cols = OrderedDict()
-    select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
 
+    select_cols = _add_left_right(select_cols, settings["source_dataset_column_name"])
+    select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
     for col in settings["comparison_columns"]:
         if "col_name" in col:
             col_name = col["col_name"]
@@ -155,14 +154,11 @@ def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
                 if col["term_frequency_adjustments"]:
                     select_cols[col_name + "_tf_adj"] = col_name + "_tf_adj"
 
-    if settings["link_type"] == "link_and_dedupe":
-        select_cols = _add_left_right(select_cols, "_source_table")
-
     for c in settings["additional_columns_to_retain"]:
         select_cols = _add_left_right(select_cols, c)
 
     if "blocking_rules" in settings:
-        if len(settings["blocking_rules"]) > 0:
+        if len(settings["blocking_rules"]) > 1:
             select_cols["match_key"] = "match_key"
     return ", ".join(select_cols.values())
 

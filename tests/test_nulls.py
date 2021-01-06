@@ -6,7 +6,7 @@ from splink import Splink
 def test_nulls(spark):
 
     settings = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "proportion_of_matches": 0.1,
         "comparison_columns": [
             {

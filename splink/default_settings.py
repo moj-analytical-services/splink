@@ -12,7 +12,7 @@ from .case_statements import (
     sql_gen_case_stmt_levenshtein_rel_4,
     sql_gen_case_stmt_case_stmt_jaro_3,
     sql_gen_case_stmt_case_stmt_jaro_4,
-    sql_gen_case_stmt_numeric_2,
+    sql_gen_case_stmt_numeric_float_equality_2,
     sql_gen_case_stmt_numeric_perc_3,
     sql_gen_case_stmt_numeric_perc_4,
     _check_no_obvious_problem_with_case_statement,
@@ -31,7 +31,7 @@ def _get_default_case_statements_functions(spark):
         "string": {},
     }
 
-    default_case_stmts["numeric"][2]: sql_gen_case_stmt_numeric_2
+    default_case_stmts["numeric"][2]: sql_gen_case_stmt_numeric_float_equality_2
     default_case_stmts["numeric"][3]: sql_gen_case_stmt_numeric_perc_3
     default_case_stmts["numeric"][4]: sql_gen_case_stmt_numeric_perc_4
 
@@ -161,7 +161,9 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
 
     # Complete non-column settings from their default values if not exist
     non_col_keys = [
+        "link_type",
         "em_convergence",
+        "source_dataset_column_name",
         "unique_id_column_name",
         "additional_columns_to_retain",
         "retain_matching_columns",

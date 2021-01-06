@@ -16,9 +16,8 @@ def _check_jaro_registered(spark):
             return True
 
     warnings.warn(
-        "The jaro_winkler_sim user definined function is not available in Spark "
+        "Custom string comparison functions such as jaro_winkler_sim are available in Spark "
         "Or you did not pass 'spark' (the SparkSession) into 'Model' "
-        "Falling back to using levenshtein in the default string comparison functions "
         "You can import these functions using the scala-udf-similarity-0.0.7.jar provided with Splink"
     )
     return False
@@ -83,7 +82,7 @@ def sql_gen_case_smnt_strict_equality_2(col_name, gamma_col_name=None):
 # Administrative Records
 
 
-def sql_gen_case_stmt_case_stmt_jaro_2(col_name, gamma_col_name=None, threshold=0.94):
+def sql_gen_case_stmt_case_stmt_jaro_2(col_name, threshold, gamma_col_name=None):
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold} then 1
@@ -93,7 +92,7 @@ def sql_gen_case_stmt_case_stmt_jaro_2(col_name, gamma_col_name=None, threshold=
 
 
 def sql_gen_case_stmt_case_stmt_jaro_3(
-    col_name, gamma_col_name=None, threshold1=0.94, threshold2=0.88
+    col_name, gamma_col_name=None, threshold1=1.0, threshold2=0.88
 ):
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
@@ -105,7 +104,7 @@ def sql_gen_case_stmt_case_stmt_jaro_3(
 
 
 def sql_gen_case_stmt_case_stmt_jaro_4(
-    col_name, gamma_col_name=None, threshold1=0.94, threshold2=0.88, threshold3=0.7
+    col_name, gamma_col_name=None, threshold1=1.0, threshold2=0.88, threshold3=0.7
 ):
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
@@ -117,37 +116,41 @@ def sql_gen_case_stmt_case_stmt_jaro_4(
     return _add_as_gamma_to_case_statement(c, gamma_col_name)
 
 
-# levenshtein fallbacks for if string similarity jar isn't available
-def sql_gen_case_stmt_levenshtein_rel_3(col_name, gamma_col_name=None, threshold=0.3):
+def sql_gen_case_stmt_levenshtein_rel_3(
+    col_name, gamma_col_name=None, threshold1=0.0, threshold2=0.3
+):
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
-    when {col_name}_l = {col_name}_r then 2
-    when levenshtein({col_name}_l, {col_name}_r)/((length({col_name}_l) + length({col_name}_r))/2) <= {threshold}
-    then 1
+    when levenshtein({col_name}_l, {col_name}_r)/((length({col_name}_l) + length({col_name}_r))/2) <= {threshold1} then 2
+    when levenshtein({col_name}_l, {col_name}_r)/((length({col_name}_l) + length({col_name}_r))/2) <= {threshold2} then 1
     else 0 end"""
 
     return _add_as_gamma_to_case_statement(c, gamma_col_name)
 
 
-def sql_gen_case_stmt_levenshtein_abs_3(col_name, gamma_col_name=None, threshold=2):
+def sql_gen_case_stmt_levenshtein_abs_3(
+    col_name, gamma_col_name=None, threshold1=0, threshold2=2
+):
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when {col_name}_l = {col_name}_r then 2
-    when levenshtein({col_name}_l, {col_name}_r) <= {threshold} then 1
+    when levenshtein({col_name}_l, {col_name}_r) <= {threshold1} then 2
+    when levenshtein({col_name}_l, {col_name}_r) <= {threshold2} then 1
     else 0 end"""
 
     return _add_as_gamma_to_case_statement(c, gamma_col_name)
 
 
 def sql_gen_case_stmt_levenshtein_rel_4(
-    col_name, gamma_col_name=None, threshold1=0.2, threshold2=0.4
+    col_name, gamma_col_name=None, threshold1=0.0, threshold2=0.2, threshold3=0.4
 ):
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when {col_name}_l = {col_name}_r then 3
-    when levenshtein({col_name}_l, {col_name}_r)/((length({col_name}_l) + length({col_name}_r))/2) <= {threshold1}
-    then 2
+    when levenshtein({col_name}_l, {col_name}_r)/((length({col_name}_l) + length({col_name}_r))/2) <= {threshold1} then 3
     when levenshtein({col_name}_l, {col_name}_r)/((length({col_name}_l) + length({col_name}_r))/2) <= {threshold2}
+    then 2
+    when levenshtein({col_name}_l, {col_name}_r)/((length({col_name}_l) + length({col_name}_r))/2) <= {threshold3}
     then 1
     else 0 end"""
 
@@ -155,13 +158,14 @@ def sql_gen_case_stmt_levenshtein_rel_4(
 
 
 def sql_gen_case_stmt_levenshtein_abs_4(
-    col_name, gamma_col_name=None, threshold1=2, threshold2=1
+    col_name, gamma_col_name=None, threshold1=0, threshold2=1, threshold3=2
 ):
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when {col_name}_l = {col_name}_r then 3
-    when levenshtein({col_name}_l, {col_name}_r) <= {threshold1} then 2
-    when levenshtein({col_name}_l, {col_name}_r) <= {threshold2} then 1
+    when levenshtein({col_name}_l, {col_name}_r) <= {threshold1} then 3
+    when levenshtein({col_name}_l, {col_name}_r) <= {threshold2} then 2
+    when levenshtein({col_name}_l, {col_name}_r) <= {threshold3} then 1
     else 0 end"""
 
     return _add_as_gamma_to_case_statement(c, gamma_col_name)
@@ -183,7 +187,7 @@ def _sql_gen_abs_diff(col1, col2):
     return f"(abs({col1} - {col2}))"
 
 
-def sql_gen_case_stmt_numeric_2(col_name, gamma_col_name=None):
+def sql_gen_case_stmt_numeric_float_equality_2(col_name, gamma_col_name=None):
 
     col1 = f"{col_name}_l"
     col2 = f"{col_name}_r"
@@ -282,7 +286,7 @@ def sql_gen_case_stmt_numeric_perc_4(
     return _add_as_gamma_to_case_statement(c, gamma_col_name)
 
 
-def _sql_gen_get_or_list_jaro(col_name, other_name_cols, threshold=0.94):
+def _sql_gen_get_or_list_jaro(col_name, other_name_cols, threshold=1.0):
     # Note the ifnull 1234 just ensures that if one of the other columns is null,
     # the jaro score is lower than the threshold
     ors = [
@@ -297,7 +301,7 @@ def sql_gen_case_stmt_name_inversion_4(
     col_name: str,
     other_name_cols: list,
     gamma_col_name=None,
-    threshold1=0.94,
+    threshold1=1.0,
     threshold2=0.88,
     include_dmeta=False,
 ):
@@ -307,7 +311,7 @@ def sql_gen_case_stmt_name_inversion_4(
         col_name (str): The name of the column we want to generate a custom case expression for e.g. surname
         other_name_cols (list): The name of the other columns that contain names e.g. forename1, forename2
         gamma_col_name (str, optional): . The name of the column, for the alias e.g. surname
-        threshold1 (float, optional): Jaro threshold for almost exact match. Defaults to 0.94.
+        threshold1 (float, optional): Jaro threshold for almost exact match. Defaults to 1.0.
         threshold2 (float, optional): Jaro threshold for close match Defaults to 0.88.
         include_dmeta (bool, optional): Also allow a dmetaphone match at threshold2
 
@@ -450,7 +454,7 @@ def _size_intersect(col_name):
 
 def sql_gen_case_stmt_array_combinations_leven_abs_3(
     col_name: str,
-    threshold1: int = 1,
+    threshold1: int = 0,
     threshold2: int = 2,
     gamma_col_name=None,
     zero_length_is_null=True,
@@ -487,7 +491,7 @@ def sql_gen_case_stmt_array_combinations_leven_abs_3(
 
 def sql_gen_case_stmt_array_combinations_leven_rel_3(
     col_name: str,
-    threshold1: float = 0.05,
+    threshold1: float = 0.0,
     threshold2: float = 0.1,
     gamma_col_name=None,
     zero_length_is_null=True,
@@ -525,7 +529,7 @@ def sql_gen_case_stmt_array_combinations_leven_rel_3(
 
 def sql_gen_case_stmt_array_combinations_jaro_3(
     col_name: str,
-    threshold1=0.94,
+    threshold1=1.0,
     threshold2=0.88,
     gamma_col_name=None,
     zero_length_is_null=True,
@@ -535,7 +539,7 @@ def sql_gen_case_stmt_array_combinations_jaro_3(
 
     Args:
         col_name (str): The name of the column we want to generate a custom case expression for e.g. surname
-        threshold1 (int, optional):  Defaults to 0.94.
+        threshold1 (int, optional):  Defaults to 1.
         threshold2 (int, optional):  Defaults to 0.88.
         gamma_col_name (str, optional): . The name of the column, for the alias e.g. surname
         zero_length_is_null (bool, optional):  Whether to treat a zero length array as a null. Defaults to True.
@@ -563,7 +567,7 @@ def sql_gen_case_stmt_array_combinations_jaro_3(
 
 def sql_gen_case_stmt_array_combinations_jaro_dmeta_4(
     col_name: str,
-    threshold1=0.94,
+    threshold1=1.0,
     threshold2=0.88,
     gamma_col_name=None,
     zero_length_is_null=True,
@@ -576,7 +580,7 @@ def sql_gen_case_stmt_array_combinations_jaro_dmeta_4(
 
     Args:
         col_name (str): The name of the column we want to generate a custom case expression for e.g. surname
-        threshold1 (int, optional):  Defaults to 0.94.
+        threshold1 (int, optional):  Defaults to 1.0.
         threshold2 (int, optional):  Defaults to 0.88.
         gamma_col_name (str, optional): . The name of the column, for the alias e.g. surname
         zero_length_is_null (bool, optional):  Whether to treat a zero length array as a null. Defaults to True.

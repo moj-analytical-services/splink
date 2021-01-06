@@ -4,7 +4,7 @@ import logging
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
-from .check_types import check_types
+from typeguard import typechecked
 from .logging_utils import _format_sql
 from .settings import complete_settings_dict
 
@@ -30,6 +30,9 @@ def _get_select_expression_gammas(settings: dict):
     # Use ordered dict as an ordered set - i.e. to make sure we don't have duplicate cols to retain
 
     cols_to_retain = OrderedDict()
+    cols_to_retain = _add_left_right(
+        cols_to_retain, settings["source_dataset_column_name"]
+    )
     cols_to_retain = _add_left_right(cols_to_retain, settings["unique_id_column_name"])
 
     for col in settings["comparison_columns"]:
@@ -47,9 +50,6 @@ def _get_select_expression_gammas(settings: dict):
                     cols_to_retain = _add_left_right(cols_to_retain, c2)
             cols_to_retain["gamma_" + custon_name] = col["case_expression"]
 
-    if settings["link_type"] == "link_and_dedupe":
-        cols_to_retain = _add_left_right(cols_to_retain, "_source_table")
-
     for c in settings["additional_columns_to_retain"]:
         cols_to_retain = _add_left_right(cols_to_retain, c)
 
@@ -62,7 +62,6 @@ def _get_select_expression_gammas(settings: dict):
 
 def _sql_gen_add_gammas(
     settings: dict,
-    unique_id_col: str = "unique_id",
     table_name: str = "df_comparison",
 ):
     """Build SQL statement that adds gamma columns to the comparison dataframe
@@ -86,7 +85,7 @@ def _sql_gen_add_gammas(
     return sql
 
 
-@check_types
+@typechecked
 def add_gammas(
     df_comparison: DataFrame,
     settings_dict: dict,
@@ -100,7 +99,6 @@ def add_gammas(
         df_comparison (spark dataframe): A Spark dataframe containing record comparisons, with records compared using the convention col_name_l, col_name_r
         settings_dict (dict): The `splink` settings dictionary
         spark (Spark session): The Spark session object
-        unique_id_col (str, optional): Name of the unique id column. Defaults to "unique_id".
 
     Returns:
         Spark dataframe: A dataframe containing new columns representing the gammas of the model
@@ -108,10 +106,7 @@ def add_gammas(
 
     settings_dict = complete_settings_dict(settings_dict, spark)
 
-    sql = _sql_gen_add_gammas(
-        settings_dict,
-        unique_id_col=unique_id_col,
-    )
+    sql = _sql_gen_add_gammas(settings_dict)
 
     logger.debug(_format_sql(sql))
     df_comparison.createOrReplaceTempView("df_comparison")

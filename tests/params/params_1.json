@@ -1,6 +1,6 @@
 {
     "current_settings_dict": {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "blocking_rules": [
             "l.first_name = r.first_name"
         ],
@@ -92,7 +92,7 @@
     },
     "historical_settings_dicts": [],
     "original_settings_dict": {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "blocking_rules": [
             "l.first_name = r.first_name"
         ],

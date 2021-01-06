@@ -5,14 +5,14 @@ from pyspark.sql.session import SparkSession
 from .expectation_step import run_expectation_step
 from .maximisation_step import run_maximisation_step
 from .model import Model
-from .check_types import check_types
+from typeguard import typechecked
 
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-@check_types
+@typechecked
 def iterate(
     df_gammas: DataFrame,
     model: Model,

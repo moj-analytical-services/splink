@@ -4,12 +4,12 @@ import warnings
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
-from .check_types import check_types
+from typeguard import typechecked
 
 from .charts import load_chart_definition, altair_if_installed_else_json
 
 
-@check_types
+@typechecked
 def _calc_probability_density(
     df_e: DataFrame,
     spark: SparkSession,

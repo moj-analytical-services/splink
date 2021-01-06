@@ -25,7 +25,7 @@ def test_api():
 
 def test_calc(spark):
     settings_1 = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "blocking_rules": ["l.forename = r.forename"],
         "comparison_columns": [
             {
@@ -44,7 +44,7 @@ def test_calc(spark):
     }
 
     settings_2 = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "blocking_rules": ["l.surname = r.surname"],
         "comparison_columns": [
             {
@@ -63,7 +63,7 @@ def test_calc(spark):
     }
 
     settings_3 = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "blocking_rules": ["l.dob = r.dob"],
         "comparison_columns": [
             {
@@ -109,7 +109,7 @@ def test_calc(spark):
     assert len(settings_dict["blocking_rules"]) == 3
 
     settings_4_with_nulls = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "blocking_rules": ["l.email = r.email"],
         "comparison_columns": [
             {

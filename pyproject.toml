@@ -11,6 +11,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.6"
 jsonschema = "^3.2"
+typeguard = "^2.10.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.3"

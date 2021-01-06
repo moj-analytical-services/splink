@@ -14,7 +14,7 @@ from splink.model import Model
 
 def test_expectation_and_maximisation(spark):
     settings = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "proportion_of_matches": 0.4,
         "comparison_columns": [
             {

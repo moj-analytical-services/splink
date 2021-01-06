@@ -29,7 +29,7 @@ def test_fix_u(spark):
     df = spark.createDataFrame(Row(**x) for x in df)
 
     settings = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "proportion_of_matches": 0.1,
         "comparison_columns": [
             {
@@ -64,7 +64,7 @@ def test_fix_u(spark):
     assert first_name["u_probabilities"][1] != pytest.approx(0.2)
 
     settings = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "proportion_of_matches": 0.1,
         "comparison_columns": [
             {
@@ -90,7 +90,7 @@ def test_fix_u(spark):
     assert mob["u_probabilities"][0] != pytest.approx(0.2)
 
     settings = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "proportion_of_matches": 0.1,
         "comparison_columns": [
             {

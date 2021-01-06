@@ -1,6 +1,6 @@
 {
     "current_settings_dict": {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "blocking_rules": [
             "l.dob = r.dob"
         ],
@@ -94,7 +94,7 @@
     },
     "historical_settings_dicts": [],
     "original_settings_dict": {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "blocking_rules": [
             "l.dob = r.dob"
         ],

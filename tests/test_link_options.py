@@ -166,7 +166,7 @@ def test_link_dedupe(spark, link_dedupe_data, link_dedupe_data_repeat_ids):
 def test_dedupe(spark, link_dedupe_data_repeat_ids):
     # This tests checks that we only get one result when a comparison is hit by multiple blocking rules
     settings = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "comparison_columns": [{"col_name": "first_name"}, {"col_name": "surname"}],
         "blocking_rules": ["l.first_name = r.first_name", "l.surname = r.surname"],
     }

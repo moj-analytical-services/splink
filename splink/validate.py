@@ -6,7 +6,7 @@ from jsonschema import validate, ValidationError
 import json
 import copy
 
-from .check_types import check_types
+from typeguard import typechecked
 
 
 @lru_cache
@@ -38,7 +38,7 @@ def _get_schema(setting_dict_should_be_complete=False):
         return schema2
 
 
-@check_types
+@typechecked
 def validate_settings(settings_dict: dict):
     """Validate a splink settings object against its jsonschema
 

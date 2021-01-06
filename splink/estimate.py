@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from .blocking import cartesian_block
+from .blocking import block_using_rules
 from .gammas import add_gammas
 from .maximisation_step import run_maximisation_step
 from .model import Model
@@ -60,6 +60,7 @@ def estimate_u_values(
 
     # Do not modify settings object provided by user either
     settings = deepcopy(settings)
+    settings["blocking_rules"] = []
     settings = complete_settings_dict(settings, spark)
 
     if settings["link_type"] == "dedupe_only":
@@ -73,7 +74,7 @@ def estimate_u_values(
             proportion = 1.0
 
         df_s = df.sample(False, proportion)
-        df_comparison = cartesian_block(settings, spark, df=df_s)
+        df_comparison = block_using_rules(settings, spark, df=df_s)
 
     if settings["link_type"] in ("link_only", "link_and_dedupe"):
 
@@ -92,7 +93,7 @@ def estimate_u_values(
 
         df_r_s = df_r.sample(False, proportion)
         df_l_s = df_l.sample(False, proportion)
-        df_comparison = cartesian_block(settings, spark, df_l=df_l_s, df_r=df_r_s)
+        df_comparison = block_using_rules(settings, spark, df_l=df_l_s, df_r=df_r_s)
 
     df_gammas = add_gammas(df_comparison, settings, spark)
 

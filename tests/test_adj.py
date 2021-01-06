@@ -63,7 +63,7 @@ def test_term_frequency_adjustments(spark):
     surname_probs = _probabilities_from_freqs([10, 5, 1])
 
     settings_true = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "proportion_of_matches": 0.5,
         "comparison_columns": [
             {
@@ -149,7 +149,7 @@ def test_term_frequency_adjustments(spark):
         return [probs[0], sum(probs[1:])]
 
     settings_binary = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "proportion_of_matches": 0.5,
         "comparison_columns": [
             {
@@ -270,7 +270,7 @@ def test_freq_adj_divzero(spark, nulls_df):
     # create settings object that requests term_freq_adjustments on column 'weird'
 
     settings = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "blocking_rules": [
             "l.surname = r.surname",
         ],

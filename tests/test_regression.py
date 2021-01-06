@@ -19,7 +19,7 @@ def test_tiny_numbers(spark):
     # Regression test, see https://github.com/moj-analytical-services/splink/issues/48
 
     settings = {
-        "link_type": "dedupe_only",
+        "link_type": "link_and_dedupe",
         "proportion_of_matches": 0.4,
         "comparison_columns": [
             {

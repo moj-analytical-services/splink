@@ -11,7 +11,7 @@ from pyspark.sql.session import SparkSession
 from .logging_utils import _format_sql
 from .expectation_step import _column_order_df_e_select_expr
 from .model import Model
-from .check_types import check_types
+from typeguard import typechecked
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +131,7 @@ def sql_gen_compute_final_group_membership_prob_from_adjustments(
     return sql
 
 
-@check_types
+@typechecked
 def make_adjustment_for_term_frequencies(
     df_e: DataFrame,
     model: Model,
