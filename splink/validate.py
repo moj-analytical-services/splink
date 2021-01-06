@@ -84,3 +84,31 @@ def _get_default_value(key, is_column_setting):
         ]
     else:
         return schema["properties"][key]["default"]
+
+
+def validate_input_datasets(df, completed_settings_obj):
+    """Check that the input datasets contain the columns needed to run the model
+
+    Args:
+        df (DataFrame): Dataframe to be used in splink - either the original df, or the concatenation of the input list of dfs
+        completed_settings_obj (Settings): Settings object
+    """
+    cols_present = set(df.columns)
+
+    cols_needed = set()
+
+    s = completed_settings_obj
+    cols_needed.add(s["unique_id_column_name"])
+    cols_needed.add(s["source_dataset_column_name"])
+
+    for cc in s.comparison_columns_list:
+        cols_needed.update(cc.input_cols_used)
+
+    required_cols_not_present = cols_needed - cols_present
+    if len(required_cols_not_present):
+        raise ValueError(
+            f"Cannot find columns {required_cols_not_present} "
+            "For Splink to be work with the settings provided, "
+            "your input dataframes must  include the following columns "
+            f"{cols_needed}"
+        )

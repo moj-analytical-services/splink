@@ -62,6 +62,14 @@ class ComparisonColumn:
     def max_gamma_index(self):
         return self.num_levels - 1
 
+    @property
+    def input_cols_used(self):
+        cd = self.column_dict
+        if "custom_name" in cd:
+            return cd["custom_columns_used"]
+        elif "col_name" in cd:
+            return [cd["col_name"]]
+
     def get_m_u_bayes_at_gamma_index(self, gamma_index):
 
         # if -1 this indicates a null field

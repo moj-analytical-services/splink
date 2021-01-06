@@ -3,7 +3,7 @@ from typeguard import typechecked
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
-from splink.validate import validate_settings
+from splink.validate import validate_settings, validate_input_datasets
 from splink.model import Model, load_model_from_json
 from splink.case_statements import _check_jaro_registered
 from splink.blocking import block_using_rules
@@ -63,6 +63,7 @@ class Splink:
             dfs = df_or_dfs
 
         self.df = vertically_concatenate_datasets(dfs)
+        validate_input_datasets(self.df, self.model.current_settings_obj)
         self.save_state_fn = save_state_fn
 
     def manually_apply_fellegi_sunter_weights(self):
@@ -139,8 +140,8 @@ class Splink:
 @typechecked
 def load_from_json(
     path: str,
-    spark: SparkSession,
     df_or_dfs: Union[DataFrame, List[DataFrame]],
+    spark: SparkSession,
     save_state_fn: Callable = None,
 ):
     """Load a splink model from a json file which has previously been created using 'save_model_as_json'
@@ -152,8 +153,9 @@ def load_from_json(
         save_state_fn (function, optional):  A function provided by the user that takes one argument, params, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
     """
     model = load_model_from_json(path)
+    df_or_dfs = add_source_dataset_column_if_safe(df_or_dfs, model)
     linker = Splink(
-        model.current_settings_obj.settings_dict, spark, df_or_dfs, save_state_fn
+        model.current_settings_obj.settings_dict, df_or_dfs, spark, save_state_fn
     )
     linker.model = model
     return linker

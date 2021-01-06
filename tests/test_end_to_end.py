@@ -108,11 +108,12 @@ def test_splink_does_not_converge_away_from_correct_params(spark):
     df = generate_df_gammas_exact(settings)
     df = add_match_prob(df, settings)
     df = add_log_likelihood(df, settings)
+    df["source_dataset_l"] = "df"
+    df["source_dataset_r"] = "df"
 
-    df_e, linker = estimate(df, settings, spark)
+    df_e, linker = estimate(df, actual_settings, spark)
 
     estimated_settings = linker.model.current_settings_obj.settings_dict
-    print(estimated_settings)
 
     cc_actual = actual_settings["comparison_columns"]
     cc_estimated = estimated_settings["comparison_columns"]
@@ -146,7 +147,7 @@ def test_main_api(spark):
     linker = Splink(settings, df, spark)
     df_e = linker.get_scored_comparisons()
     linker.save_model_as_json("saved_model.json", overwrite=True)
-    linker_2 = load_from_json("saved_model.json", spark=spark, df=df)
+    linker_2 = load_from_json("saved_model.json", df, spark=spark)
     df_e = linker_2.get_scored_comparisons()
 
     model = linker.model
