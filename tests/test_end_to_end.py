@@ -81,7 +81,7 @@ def test_splink_converges_to_known_params(spark):
 def test_splink_does_not_converge_away_from_correct_params(spark):
     settings = {
         "proportion_of_matches": 0.5,
-        "link_type": "link_and_dedupe",
+        "link_type": "dedupe_only",
         "comparison_columns": [
             {
                 "col_name": "col_1",
@@ -108,12 +108,10 @@ def test_splink_does_not_converge_away_from_correct_params(spark):
     df = generate_df_gammas_exact(settings)
     df = add_match_prob(df, settings)
     df = add_log_likelihood(df, settings)
-    df["source_dataset_l"] = "df"
-    df["source_dataset_r"] = "df"
 
-    df_e, linker = estimate(df, actual_settings, spark)
+    df_e, model = estimate(df, actual_settings, spark)
 
-    estimated_settings = linker.model.current_settings_obj.settings_dict
+    estimated_settings = model.current_settings_obj.settings_dict
 
     cc_actual = actual_settings["comparison_columns"]
     cc_estimated = estimated_settings["comparison_columns"]
@@ -139,6 +137,7 @@ def test_main_api(spark):
     df = spark.createDataFrame(Row(**x) for x in rows)
 
     settings = {
+        "link_type": "dedupe_only",
         "comparison_columns": [{"col_name": "surname"}, {"col_name": "mob"}],
         "blocking_rules": ["l.mob = r.mob", "l.surname = r.surname"],
         "max_iterations": 1,

@@ -3,21 +3,23 @@ from pyspark.sql import Row
 
 from splink.blocking import block_using_rules
 from splink.default_settings import complete_settings_dict
+from splink.vertically_concat import vertically_concatenate_datasets
 
 
 @pytest.fixture(scope="module")
 def link_dedupe_data(spark):
-
+    # fmt: off
     data_l = [
-        {"unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
-        {"unique_id": 2, "surname": "Smith", "first_name": "John"},
+        { "source_dataset": "l", "unique_id": 1, "surname": "Linacre", "first_name": "Robin", },
+        { "source_dataset": "l", "unique_id": 2, "surname": "Smith", "first_name": "John", },
     ]
 
     data_r = [
-        {"unique_id": 7, "surname": "Linacre", "first_name": "Robin"},
-        {"unique_id": 8, "surname": "Smith", "first_name": "John"},
-        {"unique_id": 9, "surname": "Smith", "first_name": "Robin"},
+        { "source_dataset": "r", "unique_id": 7, "surname": "Linacre", "first_name": "Robin", },
+        { "source_dataset": "r", "unique_id": 8, "surname": "Smith", "first_name": "John", },
+        { "source_dataset": "r", "unique_id": 9, "surname": "Smith", "first_name": "Robin", },
     ]
+    # fmt: on
 
     df_l = spark.createDataFrame(Row(**x) for x in data_l)
     df_r = spark.createDataFrame(Row(**x) for x in data_r)
@@ -30,17 +32,19 @@ def link_dedupe_data(spark):
 @pytest.fixture(scope="module")
 def link_dedupe_data_repeat_ids(spark):
 
+    # fmt: off
     data_l = [
-        {"unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
-        {"unique_id": 2, "surname": "Smith", "first_name": "John"},
-        {"unique_id": 3, "surname": "Smith", "first_name": "John"},
+        {"source_dataset": "l", "unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
+        {"source_dataset": "l", "unique_id": 2, "surname": "Smith", "first_name": "John"},
+        {"source_dataset": "l", "unique_id": 3, "surname": "Smith", "first_name": "John"},
     ]
 
     data_r = [
-        {"unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
-        {"unique_id": 2, "surname": "Smith", "first_name": "John"},
-        {"unique_id": 3, "surname": "Smith", "first_name": "Robin"},
+        {"source_dataset": "r", "unique_id": 1, "surname": "Linacre", "first_name": "Robin"},
+        {"source_dataset": "r", "unique_id": 2, "surname": "Smith", "first_name": "John"},
+        {"source_dataset": "r", "unique_id": 3, "surname": "Smith", "first_name": "Robin"},
     ]
+    # fmt: on
 
     df_l = spark.createDataFrame(Row(**x) for x in data_l)
     df_r = spark.createDataFrame(Row(**x) for x in data_r)
@@ -59,7 +63,8 @@ def test_no_blocking(spark, link_dedupe_data):
     settings = complete_settings_dict(settings, spark)
     df_l = link_dedupe_data["df_l"]
     df_r = link_dedupe_data["df_r"]
-    df_comparison = block_using_rules(settings, spark, df_l=df_l, df_r=df_r)
+    df = vertically_concatenate_datasets([df_l, df_r])
+    df_comparison = block_using_rules(settings, df, spark)
     df = df_comparison.toPandas()
     df = df.sort_values(["unique_id_l", "unique_id_r"])
 
@@ -77,7 +82,8 @@ def test_link_only(spark, link_dedupe_data, link_dedupe_data_repeat_ids):
     settings = complete_settings_dict(settings, spark)
     df_l = link_dedupe_data["df_l"]
     df_r = link_dedupe_data["df_r"]
-    df_comparison = block_using_rules(settings, spark, df_l=df_l, df_r=df_r)
+    df = vertically_concatenate_datasets([df_l, df_r])
+    df_comparison = block_using_rules(settings, df, spark)
     df = df_comparison.toPandas()
     df = df.sort_values(["unique_id_l", "unique_id_r"])
 
@@ -86,7 +92,8 @@ def test_link_only(spark, link_dedupe_data, link_dedupe_data_repeat_ids):
 
     df_l = link_dedupe_data_repeat_ids["df_l"]
     df_r = link_dedupe_data_repeat_ids["df_r"]
-    df_comparison = block_using_rules(settings, spark, df_l=df_l, df_r=df_r)
+    df = vertically_concatenate_datasets([df_l, df_r])
+    df_comparison = block_using_rules(settings, df, spark)
     df = df_comparison.toPandas()
     df = df.sort_values(["unique_id_l", "unique_id_r"])
 
@@ -99,8 +106,8 @@ def test_link_only(spark, link_dedupe_data, link_dedupe_data_repeat_ids):
         "blocking_rules": [],
     }
     settings = complete_settings_dict(settings, spark)
-
-    df_comparison = block_using_rules(settings, spark, df_l=df_l, df_r=df_r)
+    df = vertically_concatenate_datasets([df_l, df_r])
+    df_comparison = block_using_rules(settings, df, spark)
     df = df_comparison.toPandas()
     df = df.sort_values(["unique_id_l", "unique_id_r"])
 
@@ -118,7 +125,8 @@ def test_link_dedupe(spark, link_dedupe_data, link_dedupe_data_repeat_ids):
     settings = complete_settings_dict(settings, spark=spark)
     df_l = link_dedupe_data["df_l"]
     df_r = link_dedupe_data["df_r"]
-    df_comparison = block_using_rules(settings, spark, df_l=df_l, df_r=df_r)
+    df = vertically_concatenate_datasets([df_l, df_r])
+    df_comparison = block_using_rules(settings, df, spark)
     df = df_comparison.toPandas()
     df = df.sort_values(["unique_id_l", "unique_id_r"])
 
@@ -127,14 +135,14 @@ def test_link_dedupe(spark, link_dedupe_data, link_dedupe_data_repeat_ids):
 
     df_l = link_dedupe_data_repeat_ids["df_l"]
     df_r = link_dedupe_data_repeat_ids["df_r"]
-
-    df = block_using_rules(settings, spark, df_l=df_l, df_r=df_r)
+    df = vertically_concatenate_datasets([df_l, df_r])
+    df = block_using_rules(settings, df, spark)
     df = df.toPandas()
-    df["u_l"] = df["unique_id_l"].astype(str) + df["_source_table_l"].str.slice(0, 1)
-    df["u_r"] = df["unique_id_r"].astype(str) + df["_source_table_r"].str.slice(0, 1)
+    df["u_l"] = df["unique_id_l"].astype(str) + df["source_dataset_l"].str.slice(0, 1)
+    df["u_r"] = df["unique_id_r"].astype(str) + df["source_dataset_r"].str.slice(0, 1)
 
     df = df.sort_values(
-        ["_source_table_l", "_source_table_r", "unique_id_l", "unique_id_r"]
+        ["source_dataset_l", "source_dataset_r", "unique_id_l", "unique_id_r"]
     )
 
     assert list(df["u_l"]) == ["2l", "1l", "1l", "2l", "2l", "3l", "3l", "1r", "2r"]
@@ -149,13 +157,14 @@ def test_link_dedupe(spark, link_dedupe_data, link_dedupe_data_repeat_ids):
 
     df_l = link_dedupe_data_repeat_ids["df_l"]
     df_r = link_dedupe_data_repeat_ids["df_r"]
-    df = block_using_rules(settings, spark, df_l=df_l, df_r=df_r)
+    df = vertically_concatenate_datasets([df_l, df_r])
+    df = block_using_rules(settings, df, spark)
     df = df.toPandas()
 
-    df["u_l"] = df["unique_id_l"].astype(str) + df["_source_table_l"].str.slice(0, 1)
-    df["u_r"] = df["unique_id_r"].astype(str) + df["_source_table_r"].str.slice(0, 1)
+    df["u_l"] = df["unique_id_l"].astype(str) + df["source_dataset_l"].str.slice(0, 1)
+    df["u_r"] = df["unique_id_r"].astype(str) + df["source_dataset_r"].str.slice(0, 1)
     df = df.sort_values(
-        ["_source_table_l", "unique_id_l", "_source_table_r", "unique_id_r"]
+        ["source_dataset_l", "unique_id_l", "source_dataset_r", "unique_id_r"]
     )
     # fmt: off
     assert list(df["u_l"]) == ["1l", "1l", "1l", "1l", "1l", "2l", "2l", "2l", "2l", "3l", "3l", "3l", "1r", "1r", "2r"]
@@ -166,13 +175,13 @@ def test_link_dedupe(spark, link_dedupe_data, link_dedupe_data_repeat_ids):
 def test_dedupe(spark, link_dedupe_data_repeat_ids):
     # This tests checks that we only get one result when a comparison is hit by multiple blocking rules
     settings = {
-        "link_type": "link_and_dedupe",
+        "link_type": "dedupe_only",
         "comparison_columns": [{"col_name": "first_name"}, {"col_name": "surname"}],
         "blocking_rules": ["l.first_name = r.first_name", "l.surname = r.surname"],
     }
     settings = complete_settings_dict(settings, spark=None)
     df_l = link_dedupe_data_repeat_ids["df_l"]
-    df = block_using_rules(settings, spark, df=df_l)
+    df = block_using_rules(settings, df_l, spark)
     df = df.toPandas()
 
     df = df.sort_values(["unique_id_l", "unique_id_r"])

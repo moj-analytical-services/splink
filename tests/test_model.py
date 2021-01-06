@@ -17,7 +17,7 @@ def model_example(spark):
     """
 
     settings = {
-        "link_type": "link_and_dedupe",
+        "link_type": "dedupe_only",
         "proportion_of_matches": 0.2,
         "comparison_columns": [
             {"col_name": "fname"},

@@ -19,7 +19,7 @@ def test_tiny_numbers(spark):
     # Regression test, see https://github.com/moj-analytical-services/splink/issues/48
 
     settings = {
-        "link_type": "link_and_dedupe",
+        "link_type": "dedupe_only",
         "proportion_of_matches": 0.4,
         "comparison_columns": [
             {
@@ -39,7 +39,7 @@ def test_tiny_numbers(spark):
         ],
     }
 
-    linker = Splink(settings, spark, df=df)
+    linker = Splink(settings, df, spark)
     df_e = linker.manually_apply_fellegi_sunter_weights()
     df = df_e.toPandas()
     assert df["match_probability"].min() > 0.0

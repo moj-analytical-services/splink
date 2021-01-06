@@ -75,7 +75,10 @@ def _sql_gen_gamma_prob_columns(model, table_name="df_with_gamma"):
     # Column order for case statement.  We want orig_col_l, orig_col_r, gamma_orig_col, prob_gamma_u, prob_gamma_m
     select_cols = OrderedDict()
     select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
-    select_cols = _add_left_right(select_cols, settings["source_dataset_column_name"])
+    if settings["link_type"] != "dedupe_only":
+        select_cols = _add_left_right(
+            select_cols, settings["source_dataset_column_name"]
+        )
 
     for col in settings["comparison_columns"]:
         if "col_name" in col:
@@ -124,8 +127,10 @@ def _sql_gen_gamma_prob_columns(model, table_name="df_with_gamma"):
 def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
     # Column order for case statement.  We want orig_col_l, orig_col_r, gamma_orig_col, prob_gamma_u, prob_gamma_m
     select_cols = OrderedDict()
-
-    select_cols = _add_left_right(select_cols, settings["source_dataset_column_name"])
+    if settings["link_type"] != "dedupe_only":
+        select_cols = _add_left_right(
+            select_cols, settings["source_dataset_column_name"]
+        )
     select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
     for col in settings["comparison_columns"]:
         if "col_name" in col:

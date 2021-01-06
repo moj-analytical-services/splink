@@ -14,7 +14,7 @@ from splink.model import Model
 
 def test_expectation_and_maximisation(spark):
     settings = {
-        "link_type": "link_and_dedupe",
+        "link_type": "dedupe_only",
         "proportion_of_matches": 0.4,
         "comparison_columns": [
             {
@@ -62,7 +62,7 @@ def test_expectation_and_maximisation(spark):
     params = Model(settings, spark)
 
     df_comparison = block_using_rules(
-        params.current_settings_obj.settings_dict, spark, df=df_input
+        params.current_settings_obj.settings_dict, df_input, spark
     )
     df_gammas = add_gammas(
         df_comparison, params.current_settings_obj.settings_dict, spark

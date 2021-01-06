@@ -99,7 +99,8 @@ def validate_input_datasets(df, completed_settings_obj):
 
     s = completed_settings_obj
     cols_needed.add(s["unique_id_column_name"])
-    cols_needed.add(s["source_dataset_column_name"])
+    if completed_settings_obj["link_type"] != "dedupe_only":
+        cols_needed.add(s["source_dataset_column_name"])
 
     for cc in s.comparison_columns_list:
         cols_needed.update(cc.input_cols_used)
@@ -112,3 +113,13 @@ def validate_input_datasets(df, completed_settings_obj):
             "your input dataframes must  include the following columns "
             f"{cols_needed}"
         )
+
+
+def validate_link_type(df_or_dfs, settings):
+    if type(df_or_dfs) == list:
+        if "link_type" in settings:
+            if settings["link_type"] == "dedupe_only":
+                raise ValueError(
+                    "If you provide a list of dfs, link_type must be "
+                    "link_only or link_and_dedupe, not dedupe_only"
+                )

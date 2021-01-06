@@ -3,7 +3,11 @@ from typeguard import typechecked
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
-from splink.validate import validate_settings, validate_input_datasets
+from splink.validate import (
+    validate_settings,
+    validate_input_datasets,
+    validate_link_type,
+)
 from splink.model import Model, load_model_from_json
 from splink.case_statements import _check_jaro_registered
 from splink.blocking import block_using_rules
@@ -13,7 +17,6 @@ from splink.expectation_step import run_expectation_step
 from splink.term_frequencies import make_adjustment_for_term_frequencies
 from splink.vertically_concat import (
     vertically_concatenate_datasets,
-    add_source_dataset_column_if_safe,
 )
 from splink.break_lineage import (
     default_break_lineage_blocked_comparisons,
@@ -51,10 +54,9 @@ class Splink:
         _check_jaro_registered(spark)
 
         validate_settings(settings)
+        validate_link_type(df_or_dfs, settings)
         self.model = Model(settings, spark)
         self.settings_dict = self.model.current_settings_obj.settings_dict
-
-        df_or_dfs = add_source_dataset_column_if_safe(df_or_dfs, self.model)
 
         # dfs is a list of dfs irrespective of whether input was a df or list of dfs
         if type(df_or_dfs) == DataFrame:
@@ -153,7 +155,7 @@ def load_from_json(
         save_state_fn (function, optional):  A function provided by the user that takes one argument, params, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
     """
     model = load_model_from_json(path)
-    df_or_dfs = add_source_dataset_column_if_safe(df_or_dfs, model)
+
     linker = Splink(
         model.current_settings_obj.settings_dict, df_or_dfs, spark, save_state_fn
     )

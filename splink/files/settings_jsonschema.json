@@ -24,6 +24,7 @@
       ],
       "default": "link_and_dedupe",
       "enum": [
+        "dedupe_only",
         "link_only",
         "link_and_dedupe"
       ]

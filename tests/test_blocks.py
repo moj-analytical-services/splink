@@ -32,7 +32,7 @@ def test_blocking_rules_sql_gen(db):
     rules = ["l.surname = r.surname", "l.first_name = r.first_name"]
 
     sql = _sql_gen_block_using_rules(
-        "dedupe_only", columns, rules, table_name_dedupe="test"
+        "dedupe_only", columns, rules, table_name="test", source_dataset_col=None
     )
 
     db.execute(sql)

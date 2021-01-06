@@ -30,9 +30,10 @@ def _get_select_expression_gammas(settings: dict):
     # Use ordered dict as an ordered set - i.e. to make sure we don't have duplicate cols to retain
 
     cols_to_retain = OrderedDict()
-    cols_to_retain = _add_left_right(
-        cols_to_retain, settings["source_dataset_column_name"]
-    )
+    if settings["link_type"] != "dedupe_only":
+        cols_to_retain = _add_left_right(
+            cols_to_retain, settings["source_dataset_column_name"]
+        )
     cols_to_retain = _add_left_right(cols_to_retain, settings["unique_id_column_name"])
 
     for col in settings["comparison_columns"]:

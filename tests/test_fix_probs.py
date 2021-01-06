@@ -6,11 +6,6 @@ from splink import Splink
 
 
 def test_fix_u(spark):
-    settings = {
-        "link_type": "link_only",
-        "comparison_columns": [{"col_name": "first_name"}, {"col_name": "surname"}],
-        "blocking_rules": [],
-    }
 
     # We expect u on the cartesian product of MoB to be around 1/12
     df = [
@@ -29,7 +24,7 @@ def test_fix_u(spark):
     df = spark.createDataFrame(Row(**x) for x in df)
 
     settings = {
-        "link_type": "link_and_dedupe",
+        "link_type": "dedupe_only",
         "proportion_of_matches": 0.1,
         "comparison_columns": [
             {
@@ -48,7 +43,7 @@ def test_fix_u(spark):
         "max_iterations": 1,
     }
 
-    linker = Splink(settings, spark, df=df)
+    linker = Splink(settings, df, spark)
 
     df_e = linker.get_scored_comparisons()
 
@@ -64,7 +59,7 @@ def test_fix_u(spark):
     assert first_name["u_probabilities"][1] != pytest.approx(0.2)
 
     settings = {
-        "link_type": "link_and_dedupe",
+        "link_type": "dedupe_only",
         "proportion_of_matches": 0.1,
         "comparison_columns": [
             {
@@ -80,7 +75,7 @@ def test_fix_u(spark):
         "max_iterations": 1,
     }
 
-    linker = Splink(settings, spark, df=df)
+    linker = Splink(settings, df, spark)
 
     df_e = linker.get_scored_comparisons()
 
@@ -90,7 +85,7 @@ def test_fix_u(spark):
     assert mob["u_probabilities"][0] != pytest.approx(0.2)
 
     settings = {
-        "link_type": "link_and_dedupe",
+        "link_type": "dedupe_only",
         "proportion_of_matches": 0.1,
         "comparison_columns": [
             {
@@ -108,7 +103,7 @@ def test_fix_u(spark):
         "max_iterations": 1,
     }
 
-    linker = Splink(settings, spark, df=df)
+    linker = Splink(settings, df, spark)
 
     linker.get_scored_comparisons()
 

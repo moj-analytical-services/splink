@@ -39,7 +39,8 @@ def _get_columns_to_retain_blocking(settings):
 
     columns_to_retain = OrderedDict()
     columns_to_retain[settings["unique_id_column_name"]] = None
-    columns_to_retain[settings["source_dataset_column_name"]] = None
+    if settings["link_type"] != "dedupe_only":
+        columns_to_retain[settings["source_dataset_column_name"]] = None
     for c in settings["comparison_columns"]:
         if "col_name" in c:
             columns_to_retain[c["col_name"]] = None
@@ -71,10 +72,14 @@ def _sql_gen_composite_unique_id(source_dataset_colname, unique_id_colname, l_or
 
 def _sql_gen_where_condition(link_type, source_dataset_col, unique_id_col):
 
-    id_expr_l = _sql_gen_composite_unique_id(source_dataset_col, unique_id_col, "l")
-    id_expr_r = _sql_gen_composite_unique_id(source_dataset_col, unique_id_col, "r")
+    if source_dataset_col:
+        id_expr_l = _sql_gen_composite_unique_id(source_dataset_col, unique_id_col, "l")
+        id_expr_r = _sql_gen_composite_unique_id(source_dataset_col, unique_id_col, "r")
+    else:
+        id_expr_l = f"l.{unique_id_col}"
+        id_expr_r = f"r.{unique_id_col}"
 
-    if link_type == "link_and_dedupe":
+    if link_type in ["link_and_dedupe", "dedupe_only"]:
         where_condition = f"where {id_expr_l} < {id_expr_r}"
     elif link_type == "link_only":
         where_condition = f"where {id_expr_l} < {id_expr_r} and l.{source_dataset_col} != r.{source_dataset_col}"
@@ -185,7 +190,10 @@ def block_using_rules(settings: dict, df: DataFrame, spark: SparkSession):
     df.createOrReplaceTempView("df")
     columns_to_retain = _get_columns_to_retain_blocking(settings)
     unique_id_col = settings["unique_id_column_name"]
-    source_dataset_col = settings["source_dataset_column_name"]
+    if settings["link_type"] == "dedupe_only":
+        source_dataset_col = None
+    else:
+        source_dataset_col = settings["source_dataset_column_name"]
     link_type = settings["link_type"]
 
     if "blocking_rules" not in settings or len(settings["blocking_rules"]) == 0:

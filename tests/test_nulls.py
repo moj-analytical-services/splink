@@ -6,7 +6,7 @@ from splink import Splink
 def test_nulls(spark):
 
     settings = {
-        "link_type": "link_and_dedupe",
+        "link_type": "dedupe_only",
         "proportion_of_matches": 0.1,
         "comparison_columns": [
             {
@@ -37,7 +37,7 @@ def test_nulls(spark):
 
     df = spark.createDataFrame(Row(**x) for x in rows)
 
-    linker = Splink(settings, spark, df=df)
+    linker = Splink(settings, df, spark)
 
     df_e = linker.manually_apply_fellegi_sunter_weights()
     df = df_e.toPandas()
