@@ -10,8 +10,8 @@ from .case_statements import (
     sql_gen_case_smnt_strict_equality_2,
     sql_gen_case_stmt_levenshtein_rel_3,
     sql_gen_case_stmt_levenshtein_rel_4,
-    sql_gen_case_stmt_case_stmt_jaro_3,
-    sql_gen_case_stmt_case_stmt_jaro_4,
+    sql_gen_case_stmt_jaro_3,
+    sql_gen_case_stmt_jaro_4,
     sql_gen_case_stmt_numeric_float_equality_2,
     sql_gen_case_stmt_numeric_perc_3,
     sql_gen_case_stmt_numeric_perc_4,
@@ -39,8 +39,8 @@ def _get_default_case_statements_functions(spark):
 
     if jaro_exists:
         default_case_stmts["string"][2] = sql_gen_case_smnt_strict_equality_2
-        default_case_stmts["string"][3] = sql_gen_case_stmt_case_stmt_jaro_3
-        default_case_stmts["string"][4] = sql_gen_case_stmt_case_stmt_jaro_4
+        default_case_stmts["string"][3] = sql_gen_case_stmt_jaro_3
+        default_case_stmts["string"][4] = sql_gen_case_stmt_jaro_4
 
     else:
         default_case_stmts["string"][2] = sql_gen_case_smnt_strict_equality_2

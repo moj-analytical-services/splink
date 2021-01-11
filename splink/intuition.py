@@ -12,14 +12,25 @@ col_template = [
     ("{column_name}_r:", "{value_r}"),
     ("Comparison has:", "{num_levels} levels"),
     ("Level for this comparison:", "{gamma_column_name} = {gamma_index}"),
-    ("Amongst matches, m = P(level|match):", "{m_probability:.4g}"),
-    ("Amongst non matches, u = P(level|non-match):", "{u_probability:.4g}"),
+    ("m probability = P(level|match):", "{m_probability:.4g}"),
+    ("u probability = P(level|non-match):", "{u_probability:.4g}"),
     ("Bayes factor = m/u:", "{bayes_factor:.4g}"),
     ("New probability of match (updated belief):", "{updated_belief:.4g}"),
 ]
 
 end_template = """
 Final probability of match = {final:.4g}
+
+Reminder:
+
+The m probability for a given level is the proportion of matches which are in this level.
+We would generally expect the highest similarity level to have the largest proportion of matches.
+For example, we would expect first name field to match exactly amongst most matching records, except where nicknames, aliases or typos have occurred.
+For a comparison column that changes through time, like address, we may expect a lower proportion of comparisons to be in the highest similarity level.
+
+The u probability for a given level is the proportion of non-matches which are in this level.
+We would generally expect the lowest similarity level to have the highest proportion of non-matches, but the magnitude depends on the cardinality of the field.
+For example, we would expect that in the vast majority of non-matching records, the date of birth field would not match.  However, we would expect it to be common for gender to match amongst non-matches.
 """
 
 

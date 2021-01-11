@@ -1,7 +1,7 @@
 import sqlite3
 
 import pandas as pd
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 import pytest
 
 from splink.gammas import _sql_gen_add_gammas, complete_settings_dict

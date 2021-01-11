@@ -5,9 +5,9 @@ from splink.case_statements import (
     sql_gen_case_stmt_array_intersect_3,
     sql_gen_case_stmt_array_combinations_leven_abs_3,
     sql_gen_case_stmt_array_combinations_leven_rel_3,
-    sql_gen_case_stmt_case_stmt_jaro_2,
-    sql_gen_case_stmt_case_stmt_jaro_3,
-    sql_gen_case_stmt_case_stmt_jaro_4,
+    sql_gen_case_stmt_jaro_2,
+    sql_gen_case_stmt_jaro_3,
+    sql_gen_case_stmt_jaro_4,
     sql_gen_case_stmt_array_combinations_jaro_3,
     sql_gen_case_stmt_array_combinations_jaro_dmeta_4,
     sql_gen_case_stmt_levenshtein_rel_3,
@@ -42,10 +42,10 @@ def test_size_intersection(spark):
     {sql_gen_case_stmt_array_intersect_2("arr_comp")} as result_ai2_1,
     {sql_gen_case_stmt_array_intersect_2("arr_comp", zero_length_is_null=False)} as result_ai2_2,
     {sql_gen_case_stmt_array_intersect_3("arr_comp")} as result_ai3,
-    {sql_gen_case_stmt_array_combinations_leven_abs_3("arr_comp")} as result_l3_1,
-    {sql_gen_case_stmt_array_combinations_leven_abs_3("arr_comp", zero_length_is_null=False)} as result_l3_2,
-    {sql_gen_case_stmt_array_combinations_jaro_3("arr_comp")} as result_j3,
-    {sql_gen_case_stmt_array_combinations_jaro_dmeta_4("arr_comp")} as result_jd4
+    {sql_gen_case_stmt_array_combinations_leven_abs_3("arr_comp", threshold1=1)} as result_l3_1,
+    {sql_gen_case_stmt_array_combinations_leven_abs_3("arr_comp", threshold1=1,zero_length_is_null=False)} as result_l3_2,
+    {sql_gen_case_stmt_array_combinations_jaro_3("arr_comp",threshold1=0.94)} as result_j3,
+    {sql_gen_case_stmt_array_combinations_jaro_dmeta_4("arr_comp",threshold1=0.94)} as result_jd4
     from df
     """
 
@@ -161,7 +161,7 @@ def test_name_inversion(spark):
 
     sql = f"""
     select
-    {sql_gen_case_stmt_name_inversion_4("name_1",["name_2","name_3","name_4"])} as result_1
+    {sql_gen_case_stmt_name_inversion_4("name_1",["name_2","name_3","name_4"], threshold1=0.94)} as result_1
     from df
     """
 
@@ -233,9 +233,13 @@ def test_leven(spark, str_comp_data):
 
 def test_jaro(spark, str_comp_data):
 
-    jaro_2 = sql_gen_case_stmt_case_stmt_jaro_2("str_col", "jaro_2")
-    jaro_3 = sql_gen_case_stmt_case_stmt_jaro_3("str_col", "jaro_3")
-    jaro_4 = sql_gen_case_stmt_case_stmt_jaro_4("str_col", "jaro_4", threshold3=0.001)
+    jaro_2 = sql_gen_case_stmt_jaro_2("str_col", 0.94, "jaro_2")
+    jaro_3 = sql_gen_case_stmt_jaro_3(
+        "str_col", "jaro_3", threshold1=0.94, threshold2=0.88
+    )
+    jaro_4 = sql_gen_case_stmt_jaro_4(
+        "str_col", "jaro_4", threshold1=0.94, threshold2=0.88, threshold3=0.001
+    )
 
     sql = f"""select
     {jaro_2},

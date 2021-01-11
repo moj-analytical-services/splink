@@ -82,7 +82,7 @@ def sql_gen_case_smnt_strict_equality_2(col_name, gamma_col_name=None):
 # Administrative Records
 
 
-def sql_gen_case_stmt_case_stmt_jaro_2(col_name, threshold, gamma_col_name=None):
+def sql_gen_case_stmt_jaro_2(col_name, threshold, gamma_col_name=None):
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
     when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold} then 1
@@ -91,7 +91,7 @@ def sql_gen_case_stmt_case_stmt_jaro_2(col_name, threshold, gamma_col_name=None)
     return _add_as_gamma_to_case_statement(c, gamma_col_name)
 
 
-def sql_gen_case_stmt_case_stmt_jaro_3(
+def sql_gen_case_stmt_jaro_3(
     col_name, gamma_col_name=None, threshold1=1.0, threshold2=0.88
 ):
     c = f"""case
@@ -103,7 +103,7 @@ def sql_gen_case_stmt_case_stmt_jaro_3(
     return _add_as_gamma_to_case_statement(c, gamma_col_name)
 
 
-def sql_gen_case_stmt_case_stmt_jaro_4(
+def sql_gen_case_stmt_jaro_4(
     col_name, gamma_col_name=None, threshold1=1.0, threshold2=0.88, threshold3=0.7
 ):
     c = f"""case
