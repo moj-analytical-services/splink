@@ -85,7 +85,7 @@ def sql_gen_case_smnt_strict_equality_2(col_name, gamma_col_name=None):
 def sql_gen_case_stmt_jaro_2(col_name, threshold, gamma_col_name=None):
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
-    when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold} then 1
+    when jaro_winkler_sim({col_name}_l, {col_name}_r) >= {threshold} then 1
     else 0 end"""
 
     return _add_as_gamma_to_case_statement(c, gamma_col_name)
@@ -96,8 +96,8 @@ def sql_gen_case_stmt_jaro_3(
 ):
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
-    when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold1} then 2
-    when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold2} then 1
+    when jaro_winkler_sim({col_name}_l, {col_name}_r) >= {threshold1} then 2
+    when jaro_winkler_sim({col_name}_l, {col_name}_r) >= {threshold2} then 1
     else 0 end"""
 
     return _add_as_gamma_to_case_statement(c, gamma_col_name)
@@ -108,9 +108,9 @@ def sql_gen_case_stmt_jaro_4(
 ):
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
-    when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold1} then 3
-    when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold2} then 2
-    when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold3} then 1
+    when jaro_winkler_sim({col_name}_l, {col_name}_r) >= {threshold1} then 3
+    when jaro_winkler_sim({col_name}_l, {col_name}_r) >= {threshold2} then 2
+    when jaro_winkler_sim({col_name}_l, {col_name}_r) >= {threshold3} then 1
     else 0 end"""
 
     return _add_as_gamma_to_case_statement(c, gamma_col_name)
@@ -290,7 +290,7 @@ def _sql_gen_get_or_list_jaro(col_name, other_name_cols, threshold=1.0):
     # Note the ifnull 1234 just ensures that if one of the other columns is null,
     # the jaro score is lower than the threshold
     ors = [
-        f"jaro_winkler_sim(ifnull({col_name}_l, '1234abcd5678'), ifnull({n}_r, '987pqrxyz654')) > {threshold}"
+        f"jaro_winkler_sim(ifnull({col_name}_l, '1234abcd5678'), ifnull({n}_r, '987pqrxyz654')) >= {threshold}"
         for n in other_name_cols
     ]
     ors_string = " OR ".join(ors)
@@ -328,10 +328,10 @@ def sql_gen_case_stmt_name_inversion_4(
 
     c = f"""case
     when {col_name}_l is null or {col_name}_r is null then -1
-    when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold1} then 3
+    when jaro_winkler_sim({col_name}_l, {col_name}_r) >= {threshold1} then 3
     when {_sql_gen_get_or_list_jaro(col_name, other_name_cols, threshold1)} then 2
     {dmeta_statment}
-    when jaro_winkler_sim({col_name}_l, {col_name}_r) > {threshold2} then 1
+    when jaro_winkler_sim({col_name}_l, {col_name}_r) >= {threshold2} then 1
     else 0 end"""
 
     return _add_as_gamma_to_case_statement(c, gamma_col_name)
@@ -555,8 +555,8 @@ def sql_gen_case_stmt_array_combinations_jaro_3(
     when {col_name}_l is null or {col_name}_r is null then -1
     {zero_length_expr}
     when {_size_intersect(col_name)} >= 1 then 2
-    when array_max({_jaro_winkler_array(col_name)}) > {threshold1} then 2
-    when array_max({_jaro_winkler_array(col_name)}) > {threshold2} then 1
+    when array_max({_jaro_winkler_array(col_name)}) >= {threshold1} then 2
+    when array_max({_jaro_winkler_array(col_name)}) >= {threshold2} then 1
     else 0
     end
 
@@ -596,9 +596,9 @@ def sql_gen_case_stmt_array_combinations_jaro_dmeta_4(
     when {col_name}_l is null or {col_name}_r is null then -1
     {zero_length_expr}
     when {_size_intersect(col_name)} >= 1 then 3
-    when array_max({_jaro_winkler_array(col_name)}) > {threshold1} then 3
+    when array_max({_jaro_winkler_array(col_name)}) >= {threshold1} then 3
     when {_dmeta_array(col_name)} then 2
-    when array_max({_jaro_winkler_array(col_name)}) > {threshold2} then 1
+    when array_max({_jaro_winkler_array(col_name)}) >= {threshold2} then 1
     else 0
     end
 

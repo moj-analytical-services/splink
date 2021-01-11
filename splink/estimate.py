@@ -7,6 +7,7 @@ from .model import Model
 from .settings import complete_settings_dict
 from .vertically_concat import vertically_concatenate_datasets
 
+import warnings
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
@@ -30,6 +31,7 @@ def estimate_u_values(
     df_or_dfs: DataFrame,
     spark: SparkSession,
     target_rows: int = 1e6,
+    fix_u_probabilities=False,
 ):
     """Complete the `u_probabilities` section of the settings object
     by directly estimating `u_probabilities` from raw data (i.e. without
@@ -61,7 +63,10 @@ def estimate_u_values(
 
     # For the purpoes of estimating u values, we will not use any blocking
     settings["blocking_rules"] = []
-    settings = complete_settings_dict(settings, spark)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        settings = complete_settings_dict(settings, spark)
 
     if type(df_or_dfs) == DataFrame:
         dfs = [df_or_dfs]
@@ -83,18 +88,23 @@ def estimate_u_values(
         proportion = 1.0
 
     df_s = df.sample(False, proportion)
-    df_comparison = block_using_rules(settings, df_s, spark)
 
-    df_gammas = add_gammas(df_comparison, settings, spark)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df_comparison = block_using_rules(settings, df_s, spark)
 
-    df_e_product = df_gammas.withColumn("match_probability", lit(0.0))
+        df_gammas = add_gammas(df_comparison, settings, spark)
 
-    model = Model(settings, spark)
-    run_maximisation_step(df_e_product, model, spark)
-    new_settings = model.current_settings_obj.settings_dict
+        df_e_product = df_gammas.withColumn("match_probability", lit(0.0))
 
-    for i, col in enumerate(orig_settings["comparison_columns"]):
-        u_probs = new_settings["comparison_columns"][i]["u_probabilities"]
-        col["u_probabilities"] = u_probs
+        model = Model(settings, spark)
+        run_maximisation_step(df_e_product, model, spark)
+        new_settings = model.current_settings_obj.settings_dict
 
-    return orig_settings
+        for i, col in enumerate(orig_settings["comparison_columns"]):
+            u_probs = new_settings["comparison_columns"][i]["u_probabilities"]
+            col["u_probabilities"] = u_probs
+            if fix_u_probabilities:
+                col["fix_u_probabilities"] = True
+
+        return orig_settings

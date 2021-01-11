@@ -180,7 +180,7 @@
     "transform": [],
     "title": {
         "text": "Probability distributions of non-matches and matches ",
-        "subtitle": "Esimtated proportion of matches \u03BB = "
+        "subtitle": "Estimated proportion of matches \u03BB = "
     },
     "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
 }

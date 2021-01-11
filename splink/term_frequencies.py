@@ -58,7 +58,7 @@ def sql_gen_generate_adjusted_lambda(column_name, model, table_name="df_e"):
     if math.isclose((m + u), 0.0, rel_tol=1e-9, abs_tol=0.0):
         average_adjustment = 0.5
         warnings.warn(
-            f" Is most of column {column_name} or all of it comprised of NULL values??? There are levels where no comparisons are found."
+            f"There were no comparisons in column {column_name} which were in the highest level of similarity, so no adjustment could be made"
         )
     else:
         average_adjustment = m / (m + u)

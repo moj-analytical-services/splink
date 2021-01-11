@@ -305,3 +305,32 @@ def test_freq_adj_divzero(spark, nulls_df):
         test_passing = False
 
     assert test_passing is True
+
+
+def test_temp(spark):
+    df = spark.read.parquet(
+        "/Users/robinlinacre/Documents/data_linking/splink_demos/data/fake_1000.parquet"
+    )
+
+    settings = {
+        "link_type": "dedupe_only",
+        "blocking_rules": ["l.surname = r.surname"],
+        "comparison_columns": [
+            {
+                "col_name": "first_name",
+                "num_levels": 3,
+                "term_frequency_adjustments": True,
+            },
+            {"col_name": "dob"},
+            {"col_name": "city"},
+            {"col_name": "email"},
+        ],
+        "additional_columns_to_retain": ["group"],
+        "em_convergence": 0.01,
+        "max_iterations": 10,
+    }
+
+    from splink import Splink
+
+    linker = Splink(settings, df, spark)
+    df_e = linker.get_scored_comparisons()

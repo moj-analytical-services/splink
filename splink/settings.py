@@ -168,12 +168,14 @@ class ComparisonColumn:
         for row in self.as_rows():
             lines.append(f"{row['level_name']}")
             lines.append(
-                f"   Prob amongst matches:     {row['m_probability']*100:.3g}%"
+                f"   Proportion in level amongst matches:       {row['m_probability']*100:.3g}%"
             )
             lines.append(
-                f"   Prob amongst non-matches: {row['u_probability']*100:.3g}%"
+                f"   Proportion in level amongst non-matches:   {row['u_probability']*100:.3g}%"
             )
-            lines.append(f"   Bayes factor:             {row['bayes_factor']:,.3g}")
+            lines.append(
+                f"   Bayes factor:                              {row['bayes_factor']:,.3g}"
+            )
         return "\n".join(lines)
 
 
@@ -259,7 +261,7 @@ class Settings:
     def __repr__(self):  # pragma: no cover
 
         lines = []
-        lines.append(f"λ (proportion of matches) = {self['proportion_of_matches']}")
+        lines.append(f"λ (proportion of matches) = {self['proportion_of_matches']:.4g}")
 
         for c in self.comparison_columns_list:
             lines.append(c.__repr__())

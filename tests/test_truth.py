@@ -139,7 +139,7 @@ def test_join(spark):
     df_labels = spark.createDataFrame(Row(**x) for x in df_labels)
 
     df_labels_with_splink_scores = labels_with_splink_scores(
-        df_labels, df_e, "person_id", spark, join_on_source_dataset=True
+        df_labels, df_e, "person_id", spark, source_dataset_colname="source_dataset"
     )
 
     df_pd = df_labels_with_splink_scores.toPandas()
