@@ -1,4 +1,4 @@
-import statistics
+from statistics import harmonic_mean
 from copy import deepcopy
 
 from splink.charts import load_chart_definition, altair_if_installed_else_json
@@ -33,11 +33,51 @@ def _format_probs_for_report(probs):
     return f"{probs_as_strings}"
 
 
-class ModelCombiner:
-    def __init__(self, model_list: list, estimate_names: list):
+def _zip_m_and_u_probabilities(cc_estimates: list):
+    """Groups together the different estimates of the same parameter.
 
-        self.settings_obj_list = [m.current_settings_obj for m in model_list]
-        self.named_settings_dict = dict(zip(estimate_names, self.settings_obj_list))
+    e.g. turns:
+    [{"m_probabilities":[ma0,ma1],{"m_probabilities":[ua0,ua1],...},
+        {"m_probabilities":[mb0,mb1],{"m_probabilities":[ub0,ub1],...}]
+
+    into
+
+    {"zipped_m": [(ma0,mb0), (ma1, mb1)],
+        "zipped_u": [(ua0,ub0), (ua1, ub1)]}
+    """
+
+    zipped_m_probs = zip(*[cc["m_probabilities"] for cc in cc_estimates])
+    zipped_u_probs = zip(*[cc["u_probabilities"] for cc in cc_estimates])
+    return {"zipped_m": zipped_m_probs, "zipped_u": zipped_u_probs}
+
+
+def combine_cc_estimates(cc_estimates: list, aggregate_function=harmonic_mean):
+    """cc_estimates is a list of the different estaimtes for a single comparison column
+    e.g. all of the different comparison columns for forename from params_list
+    """
+
+    zipped = _zip_m_and_u_probabilities(cc_estimates)
+
+    m_probs = _apply_aggregate_function(zipped["zipped_m"], aggregate_function)
+    u_probs = _apply_aggregate_function(zipped["zipped_u"], aggregate_function)
+
+    cc = deepcopy(cc_estimates[0].column_dict)
+    cc["m_probabilities"] = m_probs
+    cc["u_probabilities"] = u_probs
+    return cc
+
+
+class ModelCombiner:
+    def __init__(self, input_dicts: list):
+
+        self.input_dicts = input_dicts
+        self.named_settings_dict = {}
+        for i in input_dicts:
+            name = i["name"]
+            settings = i["model"].current_settings_obj
+            self.named_settings_dict[name] = settings
+
+        self.settings_obj_list = list(self.named_settings_dict.values())
 
     def _groups_of_comparison_columns_by_name(self):
         """
@@ -76,42 +116,7 @@ class ModelCombiner:
                 combined_cc[cc_name][estimate_name] = cc
         return combined_cc
 
-    def _zip_m_and_u_probabilities(self, cc_estimates: list):
-        """Groups together the different estimates of the same parameter.
-
-        e.g. turns:
-        [{"m_probabilities":[ma0,ma1],{"m_probabilities":[ua0,ua1],...},
-         {"m_probabilities":[mb0,mb1],{"m_probabilities":[ub0,ub1],...}]
-
-        into
-
-        {"zipped_m": [(ma0,mb0), (ma1, mb1)],
-         "zipped_u": [(ua0,ub0), (ua1, ub1)]}
-        """
-
-        zipped_m_probs = zip(*[cc["m_probabilities"] for cc in cc_estimates])
-        zipped_u_probs = zip(*[cc["u_probabilities"] for cc in cc_estimates])
-        return {"zipped_m": zipped_m_probs, "zipped_u": zipped_u_probs}
-
-    def _combine_estimates_single_cc(self, cc_estimates: list, aggregate_function=None):
-        """cc_estimates is a list of the different estaimtes for a single comparison column
-        e.g. all of the different comparison columns for forename from params_list
-        """
-
-        if aggregate_function is None:
-            aggregate_function = statistics.median
-
-        zipped = self._zip_m_and_u_probabilities(cc_estimates)
-
-        m_probs = _apply_aggregate_function(zipped["zipped_m"], aggregate_function)
-        u_probs = _apply_aggregate_function(zipped["zipped_u"], aggregate_function)
-
-        cc = deepcopy(cc_estimates[0].column_dict)
-        cc["m_probabilities"] = m_probs
-        cc["u_probabilities"] = u_probs
-        return cc
-
-    def get_combined_settings_dict(self, aggregate_function=None):
+    def get_combined_settings_dict(self, aggregate_function=harmonic_mean):
 
         new_settings = deepcopy(self.settings_obj_list[0].settings_dict)
 
@@ -122,7 +127,7 @@ class ModelCombiner:
         for dict_of_ccs in gathered.values():
             ccs = list(dict_of_ccs.values())
             # Take the average of each parameter estimates
-            combined = self._combine_estimates_single_cc(ccs, aggregate_function)
+            combined = combine_cc_estimates(ccs, aggregate_function)
             new_comparison_columns.append(combined)
 
         new_settings["comparison_columns"] = new_comparison_columns
@@ -132,9 +137,49 @@ class ModelCombiner:
             new_blocking_rules.extend(settings_dict["blocking_rules"])
 
         new_settings["blocking_rules"] = new_blocking_rules
+
+        global_lambdas = []
+        for input_dict in self.input_dicts:
+            # If key exists, use in computation of global lambda
+            # else ignore
+            if "comparison_columns_for_global_lambda" in input_dict:
+                gl = self._estimate_global_lambda_from_blocking_specific_lambda(
+                    input_dict
+                )
+                global_lambdas.append(gl)
+        if len(global_lambdas) > 0:
+            global_lambda = aggregate_function(global_lambdas)
+        else:
+            global_lambda = None
+
+        new_settings["proportion_of_matches"] = global_lambda
+
         return new_settings
 
-    def summary_report(self, aggregate_function=None, summary_name="combined"):
+    def _estimate_global_lambda_from_blocking_specific_lambda(self, model_dict):
+
+        bayes_factor = 1
+        for cc in model_dict["comparison_columns_for_global_lambda"]:
+            m = cc["m_probabilities"][-1]
+            u = cc["u_probabilities"][-1]
+            b = m / u
+            bayes_factor = bayes_factor * b
+
+        # https://observablehq.com/@robinl/conditional-independence-and-repeated-application-of-bay
+        # https://www.wolframalpha.com/input/?i=solve%5Bm%3Db*%CE%BB%2F%28b*%CE%BB+%2B+%281-%CE%BB%29%29%5D
+        blocking_specific_lambda = model_dict["model"].current_settings_obj[
+            "proportion_of_matches"
+        ]
+
+        global_lambda = blocking_specific_lambda / (
+            bayes_factor
+            + blocking_specific_lambda
+            - bayes_factor * blocking_specific_lambda
+        )
+
+        return global_lambda
+
+    def summary_report(self, aggregate_function=harmonic_mean, summary_name="combined"):
 
         lines = []
         gathered = self._groups_of_comparison_columns_by_name()
@@ -194,4 +239,6 @@ class ModelCombiner:
         return altair_if_installed_else_json(chart_def)
 
     def __repr__(self):
-        return self.summary_report(summary_name="median")
+        return self.summary_report(
+            summary_name="harmonic_mean", aggregate_function=harmonic_mean
+        )
