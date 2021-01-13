@@ -3,6 +3,7 @@ from .validate import _get_default_value
 from copy import deepcopy
 from math import log2
 from .charts import load_chart_definition, altair_if_installed_else_json
+import warnings
 
 
 class ComparisonColumn:
@@ -243,6 +244,43 @@ class Settings:
     ):
         cc = self.get_comparison_column(name)
         cc.set_u_probability(level, prob, force)
+
+    def overwrite_m_u_probs_from_other_settings_dict(
+        self, incoming_settings_dict, overwrite_m=True, overwrite_u=True
+    ):
+        """Overwrite the m and u probabilities with
+        the values from another settings dict where comparison column exists
+        in this settings object
+        """
+        incoming_settings_obj = Settings(incoming_settings_dict)
+
+        for cc_incoming in incoming_settings_obj.comparison_columns_list:
+            if cc_incoming.name in self.comparison_column_dict:
+                cc_existing = self.get_comparison_column(cc_incoming.name)
+
+                if overwrite_m:
+                    cc_existing.column_dict["m_probabilities"] = cc_incoming[
+                        "m_probabilities"
+                    ]
+
+                if overwrite_u:
+                    cc_existing.column_dict["u_probabilities"] = cc_incoming[
+                        "u_probabilities"
+                    ]
+
+    def remove_comparison_column(self, name):
+        removed = False
+        new_ccs = []
+        for cc in self.comparison_columns_list:
+            if cc.name != name:
+                new_ccs.append(cc.column_dict)
+            else:
+                removed = True
+        self.settings_dict["comparison_columns"] = new_ccs
+        if not removed:
+            warnings.warn(
+                f"Could not find a column named {name}, comparison columns have not been changed"
+            )
 
     def probability_distribution_chart(self):  # pragma: no cover
         chart_path = "probability_distribution_chart.json"

@@ -45,8 +45,8 @@ def estimate_u_values(
 
     Args:
         settings (dict): splink settings dictionary
+        df_or_dfs (DataFrame or list of DataFrames, optional):
         spark (SparkSession): SparkSession object
-        df (DataFrame, optional): The dataframe to dedupe. Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
         target_rows (int): The number of rows to generate in the cartesian product.
             If set too high, you can run out of memory.  Default value 1e6. Recommend settings to perhaps 1e7.
 
