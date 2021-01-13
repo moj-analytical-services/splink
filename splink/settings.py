@@ -3,7 +3,6 @@ from .validate import _get_default_value
 from copy import deepcopy
 from math import log2
 from .charts import load_chart_definition, altair_if_installed_else_json
-import warnings
 
 
 class ComparisonColumn:
@@ -278,9 +277,7 @@ class Settings:
                 removed = True
         self.settings_dict["comparison_columns"] = new_ccs
         if not removed:
-            warnings.warn(
-                f"Could not find a column named {name}, comparison columns have not been changed"
-            )
+            raise ValueError(f"Could not find a column named {name}")
 
     def probability_distribution_chart(self):  # pragma: no cover
         chart_path = "probability_distribution_chart.json"
