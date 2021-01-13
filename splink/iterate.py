@@ -53,4 +53,9 @@ def iterate(
     # The final version of df_e should align to the current parameters - i.e. those computed in the last max step
     df_e = run_expectation_step(df_gammas, model, spark, compute_ll=compute_ll)
 
+    # The expectation step adds the current params to history, so this is needed to output a final
+    # version of charts/params.
+    if save_state_fn:
+        save_state_fn(model)
+
     return df_e
