@@ -9,7 +9,7 @@ import copy
 from typeguard import typechecked
 
 
-@lru_cache
+@lru_cache()
 def _get_schema(setting_dict_should_be_complete=False):
     with pkg_resources.resource_stream(
         __name__, "files/settings_jsonschema.json"
