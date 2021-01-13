@@ -23,6 +23,12 @@ def test_overwrite():
                 "m_probabilities": [0.1, 0.9],
                 "u_probabilities": [0.8, 0.2],
             },
+            {
+                "col_name": "gender",
+                "num_levels": 2,
+                "m_probabilities": [0.1, 0.9],
+                "u_probabilities": [0.8, 0.2],
+            },
         ],
     }
 
@@ -41,6 +47,7 @@ def test_overwrite():
                 "m_probabilities": [0.2, 0.2, 0.6],
                 "u_probabilities": [0.6, 0.2, 0.2],
             },
+            {"col_name": "gender", "num_levels": 2},
             {
                 "col_name": "other",
                 "num_levels": 2,
@@ -63,7 +70,11 @@ def test_overwrite():
     assert cc["m_probabilities"][1] == 0.2
     assert cc["u_probabilities"][0] == 0.6
 
-    expected_names = set(["mob", "surname", "first_name"])
+    cc = settings_obj.get_comparison_column("gender")
+    assert cc["m_probabilities"][1] == 0.9
+    assert cc["u_probabilities"][0] == 0.8
+
+    expected_names = set(["mob", "surname", "first_name", "gender"])
     actual_names = set(settings_obj.comparison_column_dict.keys())
     assert expected_names == actual_names
 

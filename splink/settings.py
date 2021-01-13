@@ -258,14 +258,16 @@ class Settings:
                 cc_existing = self.get_comparison_column(cc_incoming.name)
 
                 if overwrite_m:
-                    cc_existing.column_dict["m_probabilities"] = cc_incoming[
-                        "m_probabilities"
-                    ]
+                    if "m_probabilities" in cc_incoming.column_dict:
+                        cc_existing.column_dict["m_probabilities"] = cc_incoming[
+                            "m_probabilities"
+                        ]
 
                 if overwrite_u:
-                    cc_existing.column_dict["u_probabilities"] = cc_incoming[
-                        "u_probabilities"
-                    ]
+                    if "u_probabilities" in cc_incoming.column_dict:
+                        cc_existing.column_dict["u_probabilities"] = cc_incoming[
+                            "u_probabilities"
+                        ]
 
     def remove_comparison_column(self, name):
         removed = False
