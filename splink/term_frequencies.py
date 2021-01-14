@@ -143,8 +143,8 @@ def make_adjustment_for_term_frequencies(
     # Running a maximisation step will eliminate errors cause by global parameters
     # being used in blocked jobs
     for cc in model.current_settings_obj.comparison_columns_list:
-        cc["fix_m_probabilities"] = False
-        cc["fix_u_probabilities"] = False
+        cc.column_dict["fix_m_probabilities"] = False
+        cc.column_dict["fix_u_probabilities"] = False
     run_maximisation_step(df_e, model, spark)
 
     settings = model.current_settings_obj.settings_dict
