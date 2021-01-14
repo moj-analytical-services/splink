@@ -81,7 +81,10 @@ class ComparisonColumn:
             u = self["u_probabilities"][gamma_index]
         if u != 0 and m is not None and u is not None:
             bayes = m / u
-            log_2_bayes = log2(bayes)
+            if m != 0:
+                log_2_bayes = log2(bayes)
+            else:
+                log_2_bayes = None
         else:
             bayes = None
             log_2_bayes = None
