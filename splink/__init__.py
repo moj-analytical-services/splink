@@ -112,7 +112,7 @@ class Splink:
 
         return df_e_adj
 
-    def _make_term_frequency_adjustments(self, df_e: DataFrame):
+    def make_term_frequency_adjustments(self, df_e: DataFrame):
         """Take the outputs of 'get_scored_comparisons' and make term frequency adjustments on designated columns in the settings dictionary
 
         Args:

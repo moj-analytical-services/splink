@@ -144,7 +144,7 @@
                     "axis": {
                         "title": "proportion"
                     },
-                    "field": "u_probability"
+                    "field": "m_probability"
                 }
             },
             "resolve": {
