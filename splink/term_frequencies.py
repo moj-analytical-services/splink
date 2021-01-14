@@ -11,6 +11,7 @@ from pyspark.sql.session import SparkSession
 from .logging_utils import _format_sql
 from .expectation_step import _column_order_df_e_select_expr
 from .model import Model
+from .maximisation_step import run_maximisation_step
 from typeguard import typechecked
 
 logger = logging.getLogger(__name__)
@@ -138,6 +139,11 @@ def make_adjustment_for_term_frequencies(
     spark: SparkSession,
     retain_adjustment_columns: bool = False,
 ):
+
+    # Running a maximisation step will eliminate errors cause by global parameters
+    # being used in blocked jobs
+    run_maximisation_step(df_e, model, spark)
+
     settings = model.current_settings_obj.settings_dict
     df_e.createOrReplaceTempView("df_e")
 
