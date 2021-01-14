@@ -4,6 +4,7 @@
 import logging
 import math
 import warnings
+from copy import deepcopy
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
@@ -142,9 +143,13 @@ def make_adjustment_for_term_frequencies(
 
     # Running a maximisation step will eliminate errors cause by global parameters
     # being used in blocked jobs
+
+    old_settings = deepcopy(model.current_settings_obj.settings_dict)
+
     for cc in model.current_settings_obj.comparison_columns_list:
         cc.column_dict["fix_m_probabilities"] = False
         cc.column_dict["fix_u_probabilities"] = False
+
     run_maximisation_step(df_e, model, spark)
 
     settings = model.current_settings_obj.settings_dict
@@ -181,5 +186,8 @@ def make_adjustment_for_term_frequencies(
     if not retain_adjustment_columns:
         for c in term_freq_column_list:
             df = df.drop(c + "_tf_adj")
+
+    # Restore original settings
+    model.current_settings_obj.settings_dict = old_settings
 
     return df
