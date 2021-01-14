@@ -106,7 +106,7 @@ class Splink:
 
         df_e = self.break_lineage_scored_comparisons(df_e, self.spark)
 
-        df_e_adj = self._make_term_frequency_adjustments(df_e)
+        df_e_adj = self.make_term_frequency_adjustments(df_e)
 
         df_e.unpersist()
 
