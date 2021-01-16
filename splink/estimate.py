@@ -64,6 +64,10 @@ def estimate_u_values(
     # For the purpoes of estimating u values, we will not use any blocking
     settings["blocking_rules"] = []
 
+    # Minimise the columns that are needed for the calculation
+    settings["retain_matching_columns"] = False
+    settings["retain_intermediate_calculation_columns"] = False
+
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         settings = complete_settings_dict(settings, spark)
