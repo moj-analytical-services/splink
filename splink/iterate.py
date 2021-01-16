@@ -23,7 +23,7 @@ def iterate(
     """Repeatedly run expectation and maximisation step until convergence or max itations is reached.
 
     Args:
-        df_gammas (DataFrame): Spark dataframe including gamma columns
+        df_gammas (DataFrame): Spark dataframe including gamma columns (i.e. after blocking and add_gammas has been applied)
         model (Model): The `splink` model object
         spark (SparkSession): The SparkSession object
         log_iteration (bool, optional): Whether to write a message to the log after each iteration. Defaults to False.

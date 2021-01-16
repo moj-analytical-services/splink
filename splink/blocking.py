@@ -181,7 +181,7 @@ def block_using_rules(settings: dict, df: DataFrame, spark: SparkSession):
 
     Args:
         settings (dict): A splink settings dictionary
-        df (DataFrame): Spark dataframe to block
+        df (DataFrame): Spark dataframe to block - if linking multiple datasets, assumes dataframes have already been vertically concatenated
         spark (SparkSession): The pyspark.sql.session.SparkSession
 
     Returns:

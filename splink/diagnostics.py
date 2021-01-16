@@ -23,7 +23,7 @@ def _calc_probability_density(
 
         Args:
             df_e (DataFrame): A dataframe of record comparisons containing a
-                splink score, e.g. as produced by the .... function
+                splink score, e.g. as produced by the expectation step
             spark (SparkSession): SparkSession object
             score_colname: is the score in another column? defaults to None
             buckets: accepts either a list of split points or an integer number that is used
