@@ -13,6 +13,7 @@ from .logging_utils import _format_sql
 from .expectation_step import _column_order_df_e_select_expr
 from .model import Model
 from .maximisation_step import run_maximisation_step
+from .gammas import _retain_source_dataset_column
 from typeguard import typechecked
 
 logger = logging.getLogger(__name__)
@@ -112,14 +113,16 @@ def sql_gen_add_adjumentments_to_df_e(term_freq_column_list):
 
 
 def sql_gen_compute_final_group_membership_prob_from_adjustments(
-    term_freq_column_list, settings, table_name="df_e_adj"
+    term_freq_column_list, settings, retain_source_dataset_col, table_name="df_e_adj"
 ):
 
     term_freq_column_list = [c + "_tf_adj" for c in term_freq_column_list]
     term_freq_column_list.insert(0, "match_probability")
     tf_adjusted_match_prob_expr = sql_gen_bayes_string(term_freq_column_list)
 
-    select_expr = _column_order_df_e_select_expr(settings, tf_adj_cols=True)
+    select_expr = _column_order_df_e_select_expr(
+        settings, retain_source_dataset_col, tf_adj_cols=True
+    )
 
     sql = f"""
     select
@@ -144,16 +147,7 @@ def make_adjustment_for_term_frequencies(
     # Running a maximisation step will eliminate errors cause by global parameters
     # being used in blocked jobs
 
-    old_settings = deepcopy(model.current_settings_obj.settings_dict)
-
-    for cc in model.current_settings_obj.comparison_columns_list:
-        cc.column_dict["fix_m_probabilities"] = False
-        cc.column_dict["fix_u_probabilities"] = False
-
-    run_maximisation_step(df_e, model, spark)
-
     settings = model.current_settings_obj.settings_dict
-    df_e.createOrReplaceTempView("df_e")
 
     term_freq_column_list = [
         c["col_name"]
@@ -163,6 +157,17 @@ def make_adjustment_for_term_frequencies(
 
     if len(term_freq_column_list) == 0:
         return df_e
+
+    retain_source_dataset_col = _retain_source_dataset_column(settings, df_e)
+    df_e.createOrReplaceTempView("df_e")
+
+    old_settings = deepcopy(model.current_settings_obj.settings_dict)
+
+    for cc in model.current_settings_obj.comparison_columns_list:
+        cc.column_dict["fix_m_probabilities"] = False
+        cc.column_dict["fix_u_probabilities"] = False
+
+    run_maximisation_step(df_e, model, spark)
 
     # Generate a lookup table for each column with 'term specific' lambdas.
     for c in term_freq_column_list:
@@ -179,7 +184,7 @@ def make_adjustment_for_term_frequencies(
     df_e_adj.createOrReplaceTempView("df_e_adj")
 
     sql = sql_gen_compute_final_group_membership_prob_from_adjustments(
-        term_freq_column_list, settings
+        term_freq_column_list, settings, retain_source_dataset_col
     )
     logger.debug(_format_sql(sql))
     df = spark.sql(sql)

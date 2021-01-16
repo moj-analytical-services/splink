@@ -1,5 +1,5 @@
 import logging
-from collections import OrderedDict
+from .ordered_set import OrderedSet
 
 from typeguard import typechecked
 
@@ -32,26 +32,39 @@ def sql_gen_comparison_columns(columns: list) -> str:
     return ", ".join(flat_list)
 
 
-def _get_columns_to_retain_blocking(settings):
+def _retain_source_dataset_column(settings_dict, df):
+    # Want to retain source dataset column in all cases
+    # except when link type is dedupe only
+    # and the column does not exist in the data
+    if settings_dict["link_type"] != "dedupe_only":
+        return True
 
-    # Use ordered dict as an ordered set - i.e. to make sure we don't have duplicate cols to retain
-    # That means we're only interested in the keys so we set values to None
+    source_dataset_colname = settings_dict.get(
+        "source_dataset_column_name", "source_dataset"
+    )
+    if source_dataset_colname in df.columns:
+        return True
+    else:
+        return False
 
-    columns_to_retain = OrderedDict()
-    columns_to_retain[settings["unique_id_column_name"]] = None
-    if settings["link_type"] != "dedupe_only":
-        columns_to_retain[settings["source_dataset_column_name"]] = None
-    for c in settings["comparison_columns"]:
+
+def _get_columns_to_retain_blocking(settings_dict, df):
+
+    columns_to_retain = OrderedSet()
+    columns_to_retain.add(settings_dict["unique_id_column_name"])
+    if _retain_source_dataset_column(settings_dict, df):
+        columns_to_retain.add(settings_dict["source_dataset_column_name"])
+    for c in settings_dict["comparison_columns"]:
         if "col_name" in c:
-            columns_to_retain[c["col_name"]] = None
+            columns_to_retain.add(c["col_name"])
         if "custom_columns_used" in c:
             for c2 in c["custom_columns_used"]:
-                columns_to_retain[c2] = None
+                columns_to_retain.add(c2)
 
-    for c in settings["additional_columns_to_retain"]:
-        columns_to_retain[c] = None
+    for c in settings_dict["additional_columns_to_retain"]:
+        columns_to_retain.add(c)
 
-    return list(columns_to_retain.keys())
+    return columns_to_retain.as_list()
 
 
 def _sql_gen_and_not_previous_rules(previous_rules: list):
@@ -188,7 +201,7 @@ def block_using_rules(settings: dict, df: DataFrame, spark: SparkSession):
         pyspark.sql.dataframe.DataFrame: A dataframe of each record comparison
     """
     df.createOrReplaceTempView("df")
-    columns_to_retain = _get_columns_to_retain_blocking(settings)
+    columns_to_retain = _get_columns_to_retain_blocking(settings, df)
     unique_id_col = settings["unique_id_column_name"]
     if settings["link_type"] == "dedupe_only":
         source_dataset_col = None

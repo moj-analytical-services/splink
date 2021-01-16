@@ -188,3 +188,26 @@ def test_dedupe(spark, link_dedupe_data_repeat_ids):
 
     assert list(df["unique_id_l"]) == [2]
     assert list(df["unique_id_r"]) == [3]
+
+    # Is the source dataset column retained if it exists?
+    assert "source_dataset_l" in list(df.columns)
+
+    df_l = link_dedupe_data_repeat_ids["df_l"]
+    df_l = df_l.drop("source_dataset")
+
+    df = block_using_rules(settings, df_l, spark)
+
+    # Is the source dataset column excluded if it doesn't exist?
+    assert "source_dataset_l" not in list(df.columns)
+
+    # Is the source datasetcolumn included if it has a different name?
+    df_l = link_dedupe_data_repeat_ids["df_l"]
+    df_l = df_l.withColumnRenamed("source_dataset", "source_ds")
+
+    settings["source_dataset_column_name"] = "source_ds"
+
+    df = block_using_rules(settings, df_l, spark)
+
+    # Is the source dataset column excluded if it doesn't exist?
+    assert "source_ds_l" in list(df.columns)
+    assert "source_dataset_l" not in list(df.columns)

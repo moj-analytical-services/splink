@@ -1,46 +1,50 @@
-import sqlite3
-
 import pandas as pd
 from pandas.testing import assert_frame_equal
 import pytest
 
-from splink.gammas import _sql_gen_add_gammas, complete_settings_dict
+from splink.gammas import add_gammas
+from pyspark.sql import Row
+from pyspark.sql.functions import lit
 
 
-@pytest.fixture(scope="module")
-def db():
-    # Create the database and the database table
-    con = sqlite3.connect(":memory:")
-    con.row_factory = sqlite3.Row
-    cur = con.cursor()
-    cur.execute("create table test1 (fname_l, fname_r)")
-    cur.execute("insert into test1 values (?, ?)", ("robin", "robin"))
-    cur.execute("insert into test1 values (?, ?)", ("robin", "john"))
+def test_add_gammas(spark):
 
-    cur.execute(
-        "create table test2 (unique_id_l, unique_id_r, fname_l, fname_r, sname_l, sname_r)"
-    )
-    cur.execute(
-        "insert into test2 values (?, ?, ?, ?, ?, ?)",
-        (1, 2, "robin", "robin", "linacre", "linacre"),
-    )
-    cur.execute(
-        "insert into test2 values (?, ?, ?, ?, ?, ?)",
-        (3, 4, "robin", "robin", "linacrr", "linacre"),
-    )
-    cur.execute(
-        "insert into test2 values (?, ?, ?, ?, ?, ?)",
-        (5, 6, None, None, None, "linacre"),
-    )
-    cur.execute(
-        "insert into test2 values (?, ?, ?, ?, ?, ?)",
-        (7, 8, "robin", "julian", "linacre", "smith"),
-    )
+    rows = [
+        {
+            "unique_id_l": 1,
+            "unique_id_r": 2,
+            "fname_l": "robin",
+            "fname_r": "robin",
+            "sname_l": "linacre",
+            "sname_r": "linacre",
+        },
+        {
+            "unique_id_l": 3,
+            "unique_id_r": 4,
+            "fname_l": "robin",
+            "fname_r": "robin",
+            "sname_l": "linacrr",
+            "sname_r": "linacre",
+        },
+        {
+            "unique_id_l": 5,
+            "unique_id_r": 6,
+            "fname_l": None,
+            "fname_r": None,
+            "sname_l": None,
+            "sname_r": "linacre",
+        },
+        {
+            "unique_id_l": 7,
+            "unique_id_r": 8,
+            "fname_l": "robin",
+            "fname_r": "julian",
+            "sname_l": "linacre",
+            "sname_r": "smith",
+        },
+    ]
 
-    yield cur
-
-
-def test_add_gammas(db):
+    df = spark.createDataFrame(Row(**x) for x in rows)
 
     gamma_settings = {
         "link_type": "dedupe_only",
@@ -65,12 +69,7 @@ def test_add_gammas(db):
         "retain_matching_columns": False,
     }
 
-    gamma_settings = complete_settings_dict(gamma_settings, spark="supress_warnings")
-
-    sql = _sql_gen_add_gammas(gamma_settings, table_name="test2")
-    db.execute(sql)
-    result = db.fetchall()
-    result = [dict(r) for r in result]
+    df_gammas = add_gammas(df, gamma_settings, spark)
 
     correct_answer = [
         {"unique_id_l": 1, "unique_id_r": 2, "gamma_fname": 1, "gamma_sname": 2},
@@ -81,17 +80,18 @@ def test_add_gammas(db):
 
     pd_correct = pd.DataFrame(correct_answer)
     pd_correct = pd_correct.sort_values(["unique_id_l", "unique_id_r"])
-    pd_result = pd.DataFrame(result)
+    pd_correct = pd_correct.astype(int)
+    pd_result = df_gammas.toPandas()
     pd_result = pd_result.sort_values(["unique_id_l", "unique_id_r"])
+    pd_result = pd_result.astype(int)
 
     assert_frame_equal(pd_correct, pd_result)
 
     gamma_settings["retain_matching_columns"] = True
-    sql = _sql_gen_add_gammas(gamma_settings, table_name="test2")
+    df_gammas = add_gammas(df, gamma_settings, spark)
 
-    db.execute(sql)
-    result = db.fetchone()
-    col_names = list(dict(result).keys())
+    result = df_gammas.toPandas()
+    col_names = list(result.columns)
     correct_col_names = [
         "unique_id_l",
         "unique_id_r",
@@ -102,4 +102,28 @@ def test_add_gammas(db):
         "sname_r",
         "gamma_sname",
     ]
+    assert col_names == correct_col_names
+
+    # With source datset
+    gamma_settings["source_dataset_column_name"] = "source_ds"
+    df = df.withColumn("source_ds_l", lit("ds"))
+    df = df.withColumn("source_ds_r", lit("ds"))
+
+    df_gammas = add_gammas(df, gamma_settings, spark)
+
+    result = df_gammas.toPandas()
+    col_names = list(result.columns)
+    correct_col_names = [
+        "source_ds_l",
+        "unique_id_l",
+        "source_ds_r",
+        "unique_id_r",
+        "fname_l",
+        "fname_r",
+        "gamma_fname",
+        "sname_l",
+        "sname_r",
+        "gamma_sname",
+    ]
+
     assert col_names == correct_col_names

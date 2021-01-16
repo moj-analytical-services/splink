@@ -1,16 +1,22 @@
-from .logging_utils import _format_sql
-
 import logging
-from collections import OrderedDict
+
+from typeguard import typechecked
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 
-logger = logging.getLogger(__name__)
+from .logging_utils import _format_sql
 
-from .gammas import _add_left_right
+from .gammas import (
+    _add_left_right,
+    _retain_source_dataset_column,
+    _add_unique_id_and_source_dataset,
+)
 from .model import Model
-from typeguard import typechecked
+from .ordered_set import OrderedSet
+from .settings import ComparisonColumn
+
+logger = logging.getLogger(__name__)
 
 
 @typechecked
@@ -25,14 +31,19 @@ def run_expectation_step(
 
       Args:
           df_with_gamma (DataFrame): Spark dataframe with comparison vectors already populated
-          model (Model): splink model object
+          model (Model): splink Model object
           spark (SparkSession): SparkSession
           compute_ll (bool, optional): Whether to compute the log likelihood. Degrades performance. Defaults to False.
 
       Returns:
           DataFrame: Spark dataframe with a match_probability column
     """
-    sql = _sql_gen_gamma_prob_columns(model)
+
+    retain_source_dataset = _retain_source_dataset_column(
+        model.current_settings_obj.settings_dict, df_with_gamma
+    )
+
+    sql = _sql_gen_gamma_prob_columns(model, retain_source_dataset)
 
     df_with_gamma.createOrReplaceTempView("df_with_gamma")
     logger.debug(_format_sql(sql))
@@ -45,7 +56,7 @@ def run_expectation_step(
         logger.info(message)
         model.current_settings_obj["log_likelihood"] = ll
 
-    sql = _sql_gen_expected_match_prob(model)
+    sql = _sql_gen_expected_match_prob(model, retain_source_dataset)
 
     logger.debug(_format_sql(sql))
     df_with_gamma_probs.createOrReplaceTempView("df_with_gamma_probs")
@@ -58,13 +69,17 @@ def run_expectation_step(
     return df_e
 
 
-def _sql_gen_gamma_prob_columns(model, table_name="df_with_gamma"):
+def _sql_gen_gamma_prob_columns(
+    model: Model, retain_source_dataset_col: bool, table_name="df_with_gamma"
+):
     """
     For each row, look up the probability of observing the gamma value given the record
     is a match and non_match respectively
     """
     settings = model.current_settings_obj.settings_dict
-    # Get case statements
+
+    # Dictionary of case statements - these will be used in the list of columsn
+    # in the SQL 'select' statement
     case_statements = {}
     for cc in model.current_settings_obj.comparison_columns_list:
         for match in [0, 1]:
@@ -72,48 +87,31 @@ def _sql_gen_gamma_prob_columns(model, table_name="df_with_gamma"):
             case_statement = _sql_gen_gamma_case_when(cc, match)
             case_statements[alias] = case_statement
 
-    # Column order for case statement.  We want orig_col_l, orig_col_r, gamma_orig_col, prob_gamma_u, prob_gamma_m
-    select_cols = OrderedDict()
-    select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
-    if settings["link_type"] != "dedupe_only":
-        select_cols = _add_left_right(
-            select_cols, settings["source_dataset_column_name"]
-        )
+    select_cols = OrderedSet()
+    uid = settings["unique_id_column_name"]
+    sds = settings["source_dataset_column_name"]
+    select_cols = _add_unique_id_and_source_dataset(
+        select_cols, uid, sds, retain_source_dataset_col
+    )
 
     for col in settings["comparison_columns"]:
-        if "col_name" in col:
-            col_name = col["col_name"]
-            if settings["retain_matching_columns"]:
-                select_cols = _add_left_right(select_cols, col_name)
-            if col["term_frequency_adjustments"]:
+        cc = ComparisonColumn(col)
+        if settings["retain_matching_columns"] or col["term_frequency_adjustments"]:
+            for col_name in cc.columns_used:
                 select_cols = _add_left_right(select_cols, col_name)
 
-            select_cols["gamma_" + col_name] = "gamma_" + col_name
-
-        if "custom_name" in col:
-            col_name = col["custom_name"]
-
-            if settings["retain_matching_columns"]:
-                for c2 in col["custom_columns_used"]:
-                    select_cols = _add_left_right(select_cols, c2)
-
-            select_cols["gamma_" + col_name] = "gamma_" + col_name
-
-        select_cols[f"prob_gamma_{col_name}_non_match"] = case_statements[
-            f"prob_gamma_{col_name}_non_match"
-        ]
-        select_cols[f"prob_gamma_{col_name}_match"] = case_statements[
-            f"prob_gamma_{col_name}_match"
-        ]
+        select_cols.add("gamma_" + cc.name)
+        select_cols.add(case_statements[f"prob_gamma_{cc.name}_non_match"])
+        select_cols.add(case_statements[f"prob_gamma_{cc.name}_match"])
 
     for c in settings["additional_columns_to_retain"]:
         select_cols = _add_left_right(select_cols, c)
 
     if "blocking_rules" in settings:
         if len(settings["blocking_rules"]) > 1:
-            select_cols["match_key"] = "match_key"
+            select_cols.add("match_key")
 
-    select_expr = ", ".join(select_cols.values())
+    select_expr = ", ".join(select_cols)
 
     sql = f"""
     -- We use case statements for these lookups rather than joins for performance and simplicity
@@ -124,51 +122,46 @@ def _sql_gen_gamma_prob_columns(model, table_name="df_with_gamma"):
     return sql
 
 
-def _column_order_df_e_select_expr(settings, tf_adj_cols=False):
+def _column_order_df_e_select_expr(
+    settings, retain_source_dataset_col, tf_adj_cols=False
+):
     # Column order for case statement.  We want orig_col_l, orig_col_r, gamma_orig_col, prob_gamma_u, prob_gamma_m
-    select_cols = OrderedDict()
-    if settings["link_type"] != "dedupe_only":
-        select_cols = _add_left_right(
-            select_cols, settings["source_dataset_column_name"]
-        )
-    select_cols = _add_left_right(select_cols, settings["unique_id_column_name"])
+    select_cols = OrderedSet()
+    uid = settings["unique_id_column_name"]
+    sds = settings["source_dataset_column_name"]
+    select_cols = _add_unique_id_and_source_dataset(
+        select_cols, uid, sds, retain_source_dataset_col
+    )
+
     for col in settings["comparison_columns"]:
-        if "col_name" in col:
-            col_name = col["col_name"]
 
-            # Note adding cols is idempotent so don't need to worry about adding twice
-            if settings["retain_matching_columns"]:
+        cc = ComparisonColumn(col)
+        if settings["retain_matching_columns"] or col["term_frequency_adjustments"]:
+            for col_name in cc.columns_used:
                 select_cols = _add_left_right(select_cols, col_name)
-            if col["term_frequency_adjustments"]:
-                select_cols = _add_left_right(select_cols, col_name)
-            select_cols["gamma_" + col_name] = "gamma_" + col_name
 
-        if "custom_name" in col:
-            col_name = col["custom_name"]
-            if settings["retain_matching_columns"]:
-                for c2 in col["custom_columns_used"]:
-                    select_cols = _add_left_right(select_cols, c2)
-            select_cols["gamma_" + col_name] = "gamma_" + col_name
+        select_cols.add("gamma_" + cc.name)
 
         if settings["retain_intermediate_calculation_columns"]:
-            select_cols[
-                f"prob_gamma_{col_name}_non_match"
-            ] = f"prob_gamma_{col_name}_non_match"
-            select_cols[f"prob_gamma_{col_name}_match"] = f"prob_gamma_{col_name}_match"
+            select_cols.add(f"prob_gamma_{col_name}_non_match")
+            select_cols.add(f"prob_gamma_{col_name}_match")
+
             if tf_adj_cols:
                 if col["term_frequency_adjustments"]:
-                    select_cols[col_name + "_tf_adj"] = col_name + "_tf_adj"
+                    select_cols.add(col_name + "_tf_adj")
 
     for c in settings["additional_columns_to_retain"]:
         select_cols = _add_left_right(select_cols, c)
 
     if "blocking_rules" in settings:
         if len(settings["blocking_rules"]) > 1:
-            select_cols["match_key"] = "match_key"
-    return ", ".join(select_cols.values())
+            select_cols.add("match_key")
+    return ", ".join(select_cols)
 
 
-def _sql_gen_expected_match_prob(model, table_name="df_with_gamma_probs"):
+def _sql_gen_expected_match_prob(
+    model, retain_source_dataset, table_name="df_with_gamma_probs"
+):
     settings = model.current_settings_obj.settings_dict
     ccs = model.current_settings_obj.comparison_columns_list
 
@@ -180,7 +173,7 @@ def _sql_gen_expected_match_prob(model, table_name="df_with_gamma_probs"):
     castoneminusλ = f"cast({1-λ} as double)"
     match_prob_expression = f"({castλ} * {numerator})/(( {castλ} * {numerator}) + ({castoneminusλ} * {denom_part})) as match_probability"
 
-    select_expr = _column_order_df_e_select_expr(settings)
+    select_expr = _column_order_df_e_select_expr(settings, retain_source_dataset)
 
     sql = f"""
     select {match_prob_expression}, {select_expr}
