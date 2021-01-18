@@ -147,12 +147,12 @@ def _column_order_df_e_select_expr(
         select_cols.add("gamma_" + cc.name)
 
         if settings["retain_intermediate_calculation_columns"]:
-            select_cols.add(f"prob_gamma_{col_name}_non_match")
-            select_cols.add(f"prob_gamma_{col_name}_match")
+            select_cols.add(f"prob_gamma_{cc.name}_non_match")
+            select_cols.add(f"prob_gamma_{cc.name}_match")
 
             if tf_adj_cols:
                 if col["term_frequency_adjustments"]:
-                    select_cols.add(col_name + "_tf_adj")
+                    select_cols.add(cc.name + "_tf_adj")
 
     for c in settings["additional_columns_to_retain"]:
         select_cols = _add_left_right(select_cols, c)
