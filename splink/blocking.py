@@ -1,5 +1,6 @@
 import logging
 from .ordered_set import OrderedSet
+from .settings import ComparisonColumn
 
 from typeguard import typechecked
 
@@ -54,12 +55,10 @@ def _get_columns_to_retain_blocking(settings_dict, df):
     columns_to_retain.add(settings_dict["unique_id_column_name"])
     if _retain_source_dataset_column(settings_dict, df):
         columns_to_retain.add(settings_dict["source_dataset_column_name"])
-    for c in settings_dict["comparison_columns"]:
-        if "col_name" in c:
-            columns_to_retain.add(c["col_name"])
-        if "custom_columns_used" in c:
-            for c2 in c["custom_columns_used"]:
-                columns_to_retain.add(c2)
+    for col in settings_dict["comparison_columns"]:
+        cc = ComparisonColumn(col)
+        for col_name in cc.columns_used:
+            columns_to_retain.add(col_name)
 
     for c in settings_dict["additional_columns_to_retain"]:
         columns_to_retain.add(c)

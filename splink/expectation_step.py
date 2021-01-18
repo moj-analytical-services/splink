@@ -96,9 +96,11 @@ def _sql_gen_gamma_prob_columns(
 
     for col in settings["comparison_columns"]:
         cc = ComparisonColumn(col)
-        if settings["retain_matching_columns"] or col["term_frequency_adjustments"]:
+        if settings["retain_matching_columns"]:
             for col_name in cc.columns_used:
                 select_cols = _add_left_right(select_cols, col_name)
+        if col["term_frequency_adjustments"]:
+            select_cols = _add_left_right(select_cols, cc.name)
 
         select_cols.add("gamma_" + cc.name)
         select_cols.add(case_statements[f"prob_gamma_{cc.name}_non_match"])
@@ -136,9 +138,11 @@ def _column_order_df_e_select_expr(
     for col in settings["comparison_columns"]:
 
         cc = ComparisonColumn(col)
-        if settings["retain_matching_columns"] or col["term_frequency_adjustments"]:
+        if settings["retain_matching_columns"]:
             for col_name in cc.columns_used:
                 select_cols = _add_left_right(select_cols, col_name)
+        if col["term_frequency_adjustments"]:
+            select_cols = _add_left_right(select_cols, cc.name)
 
         select_cols.add("gamma_" + cc.name)
 

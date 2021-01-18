@@ -14,6 +14,7 @@ from .expectation_step import _column_order_df_e_select_expr
 from .model import Model
 from .maximisation_step import run_maximisation_step
 from .gammas import _retain_source_dataset_column
+from .settings import Settings
 from typeguard import typechecked
 
 logger = logging.getLogger(__name__)
@@ -150,9 +151,9 @@ def make_adjustment_for_term_frequencies(
     settings = model.current_settings_obj.settings_dict
 
     term_freq_column_list = [
-        c["col_name"]
-        for c in settings["comparison_columns"]
-        if c["term_frequency_adjustments"] is True
+        cc.name
+        for cc in model.current_settings_obj.comparison_columns_list
+        if cc["term_frequency_adjustments"] is True
     ]
 
     if len(term_freq_column_list) == 0:

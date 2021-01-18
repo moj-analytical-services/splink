@@ -6,7 +6,7 @@ from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 from typeguard import typechecked
 from .logging_utils import _format_sql
-from .settings import complete_settings_dict
+from .settings import complete_settings_dict, ComparisonColumn
 from .ordered_set import OrderedSet
 
 logger = logging.getLogger(__name__)
@@ -54,18 +54,13 @@ def _get_select_expression_gammas(settings: dict, retain_source_dataset_col: boo
     )
 
     for col in settings["comparison_columns"]:
-        if "col_name" in col:
-            col_name = col["col_name"]
-            if settings["retain_matching_columns"]:
+        cc = ComparisonColumn(col)
+        if settings["retain_matching_columns"]:
+            for col_name in cc.columns_used:
                 select_columns = _add_left_right(select_columns, col_name)
-            if col["term_frequency_adjustments"]:
-                select_columns = _add_left_right(select_columns, col_name)
-            select_columns.add(col["case_expression"])
-        if "custom_name" in col:
-            if settings["retain_matching_columns"]:
-                for c2 in col["custom_columns_used"]:
-                    select_columns = _add_left_right(select_columns, c2)
-            select_columns.add(col["case_expression"])
+        if col["term_frequency_adjustments"]:
+            select_columns = _add_left_right(select_columns, cc.name)
+        select_columns.add(col["case_expression"])
 
     for c in settings["additional_columns_to_retain"]:
         select_columns = _add_left_right(select_columns, c)
