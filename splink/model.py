@@ -136,7 +136,7 @@ class Model:
 
         return p_dict
 
-    def save_params_to_json_file(self, path, overwrite=False):
+    def save_model_to_json_file(self, path, overwrite=False):
 
         if os.path.isfile(path) and not overwrite:
             raise ValueError(

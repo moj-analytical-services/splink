@@ -309,7 +309,7 @@ def test_global_lambda_calc(spark):
 # s_fn["proportion_of_matches"] = df_fn["true_match_probability_l"].mean()
 # df_e_fn, model_fn = estimate(df_fn, s_fn, spark, compute_ll=False)
 
-# model_fn.save_params_to_json_file("model_fn.json", overwrite=True)
+# model_fn.save_model_to_json_file("model_fn.json", overwrite=True)
 
 
 # s_sn = deepcopy(settings)
@@ -321,7 +321,7 @@ def test_global_lambda_calc(spark):
 # s_sn["proportion_of_matches"] = df_sn["true_match_probability_l"].mean()
 # df_e_sn, model_sn = estimate(df_sn, s_sn, spark, compute_ll=False)
 
-# model_sn.save_params_to_json_file("model_sn.json", overwrite=True)
+# model_sn.save_model_to_json_file("model_sn.json", overwrite=True)
 
 # s_dob = deepcopy(settings)
 # s_dob["comparison_columns"] = [c for c in s_dob["comparison_columns"] if c["col_name"] not in ["dob", "first_name"]]

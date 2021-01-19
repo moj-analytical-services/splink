@@ -134,7 +134,7 @@ class Splink:
             path (str): Path to the json file.
             overwrite (bool): Whether to overwrite the file if it exsits
         """
-        self.model.save_params_to_json_file(path, overwrite=overwrite)
+        self.model.save_model_to_json_file(path, overwrite=overwrite)
 
 
 @typechecked

@@ -214,7 +214,7 @@ def test_expectation_and_maximisation(spark):
     fname = os.path.join(dir.name, "params.json")
 
     df_e = run_expectation_step(df_gammas, params, spark)
-    params.save_params_to_json_file(fname)
+    params.save_model_to_json_file(fname)
 
     from splink.model import load_model_from_json
 
