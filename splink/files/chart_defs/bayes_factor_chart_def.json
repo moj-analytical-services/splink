@@ -1,0 +1,121 @@
+{
+    "config": {
+        "view": {
+            "width": 400,
+            "height": 300
+        },
+        "mark": {
+            "tooltip": null
+        },
+        "title": {
+            "anchor": "middle"
+        },
+        "header": {
+            "title": null
+        }
+    },
+    "data": {
+        "values": null
+    },
+    "mark": {
+        "type": "bar",
+        "clip": true
+    },
+    "encoding": {
+        "color": {
+            "type": "quantitative",
+            "field": "log2_bayes_factor",
+            "scale": {
+                "range": [
+                    "red",
+                    "orange",
+                    "green"
+                ],
+                "domain": [
+                    -10,
+                    0,
+                    10
+                ]
+            }
+        },
+        "row": {
+            "type": "nominal",
+            "field": "column_name",
+            "sort": {
+                "field": "gamma_index"
+            },
+            "header": {
+                "labelAngle": 0,
+                "labelAnchor": "middle",
+                "labelAlign": "left"
+            }
+        },
+        "tooltip": [
+            {
+                "type": "nominal",
+                "field": "column_name"
+            },
+            {
+                "type": "ordinal",
+                "field": "level_name"
+            },
+            {
+                "type": "quantitative",
+                "field": "m_probability",
+                "format": ".4f"
+            },
+            {
+                "type": "quantitative",
+                "field": "bayes_factor",
+                "format": ".4f"
+            },
+            {
+                "type": "nominal",
+                "field": "level_proportion",
+                "title": "Percentage of record comparisons in this level",
+                "format": ".2%"
+            },
+            {
+                "type": "quantitative",
+                "field": "log2_bayes_factor",
+                "title": "log2(Bayes factor, K = m/u)",
+                "format": ".4f"
+            }
+        ],
+        "x": {
+            "type": "quantitative",
+            "axis": {
+                "title": "log2(Bayes factor, K = m/u)",
+                "values": [
+                    -10,
+                    -5,
+                    0,
+                    5,
+                    10
+                ]
+            },
+            "field": "log2_bayes_factor",
+            "scale": {
+                "domain": [
+                    -10,
+                    10
+                ]
+            }
+        },
+        "y": {
+            "type": "nominal",
+            "field": "level_name",
+            "axis": {
+                "title": null
+            }
+        }
+    },
+    "height": 50,
+    "resolve": {
+        "scale": {
+            "y": "independent"
+        }
+    },
+    "title": "Influence of comparison vector values on match probability",
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+}

@@ -5,8 +5,7 @@
   "type": "object",
   "title": "Splink settings",
   "required": [
-    "comparison_columns",
-    "link_type"
+    "comparison_columns"
   ],
   "additionalProperties": false,
   "properties": {
@@ -17,13 +16,13 @@
     "link_type": {
       "$id": "#/properties/link_type",
       "type": "string",
-      "title": "The type of data linking task - `dedupe_only`, `link_only` or `link_and_dedupe`.  Required.",
-      "description": "- When `dedupe_only`, the user provides a single input dataframe, and `splink` tries to find duplicate entries\n- When `link_only`, the user provides two dataframes, and `splink` tries to find a link between the two.  It makes no attempt to deduplicate datasets so this is best used when at datasets contain no duplicates.\n- When `link_and_dedupe`, the user provides two dataframes, and `splink` simultanouesly links and dedupes the dataframes.",
+      "title": "The type of data linking task -  `link_and_dedupe` or `link_only`.  Required.",
+      "description": "- When `link_and_dedupe`, `splink` finds links within and between input datasets.  If  single dataset is provided, it will be deduped. - When `link_only`,  `splink` finds links between datasets, but does not attempt to deduplicate the datasets (it does not try and find links within each input dataset.)",
       "examples": [
-        "dedupe_only",
         "link_only",
         "link_and_dedupe"
       ],
+      "default": "link_and_dedupe",
       "enum": [
         "dedupe_only",
         "link_only",
@@ -83,6 +82,17 @@
         "pk"
       ]
     },
+    "source_dataset_column_name": {
+      "$id": "#/properties/source_dataset_column_name",
+      "type": "string",
+      "title": "The name of the column in the input dataset representing the source dataset",
+      "description": "Where we are linking datasets, we can't guarantee that the unique id column is globally unique across datasets, so we combine it with a source_dataset column",
+      "default": "source_dataset",
+      "examples": [
+        "source_dataset",
+        "dataset_name"
+      ]
+    },
     "retain_matching_columns": {
       "$id": "#/properties/retain_matching_columns",
       "type": "boolean",
@@ -99,7 +109,7 @@
       "type": "boolean",
       "title": "Retain intermediate calculation columns, such as the individual m and u probabilities associated with each column in `comparison_columns`",
       "description": "The algorithm will run faster and use less resources if this is set to false.",
-      "default": true,
+      "default": false,
       "examples": [
         false,
         true

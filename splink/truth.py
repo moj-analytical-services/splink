@@ -1,22 +1,14 @@
-from .settings import complete_settings_dict
-
 from functools import reduce
-from pyspark.sql import DataFrame
 import pyspark.sql.functions as f
 from pyspark.sql import Window
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.session import SparkSession
 
 altair_installed = True
 try:
     import altair as alt
 except ImportError:
     altair_installed = False
-
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-except ImportError:
-    DataFrame = None
-    SparkSession = None
 
 
 def _sql_gen_unique_id_keygen(
@@ -164,7 +156,7 @@ def labels_with_splink_scores(
     unique_id_colname,
     spark,
     score_colname=None,
-    join_on_source_dataset=False,
+    source_dataset_colname=None,
     retain_all_cols=False,
 ):
     """Create a dataframe with clerical labels set against splink scores
@@ -189,8 +181,7 @@ def labels_with_splink_scores(
         spark : SparkSession
         score_colname (float, optional): Allows user to explicitly state the column name
             in the Splink dataset containing the Splink score.  If none will be inferred
-        join_on_source_dataset (bool, optional): In certain scenarios (e.g. linking two tables), the IDs may be unique only within the input table
-            Where this is the case, you should include columns 'source_dataset_l' and 'source_dataset_r'
+        source_dataset_colname (str, optional): if your datasets contain a source_dataset column, what name is it?
             and set join_on_source_dataset=True, which will include the source dataset in the join key Defaults to False.
         retain_all_cols (bool, optional): Retain all columns in input datasets. Defaults to False.
 
@@ -211,27 +202,27 @@ def labels_with_splink_scores(
     df_labels.createOrReplaceTempView("df_labels")
     df_e.createOrReplaceTempView("df_e")
 
-    if join_on_source_dataset:
+    if source_dataset_colname:
+        source_ds_col_l = f"{source_dataset_colname}_l"
+        source_ds_col_r = f"{source_dataset_colname}_r"
         labels_key = _sql_gen_unique_id_keygen(
-            "df_labels", uid_col_l, uid_col_r, "source_dataset_l", "source_dataset_r"
+            "df_labels", uid_col_l, uid_col_r, source_ds_col_l, source_ds_col_r
         )
         df_e_key = _sql_gen_unique_id_keygen(
-            "df_e", uid_col_l, uid_col_r, "source_dataset_l", "source_dataset_r"
+            "df_e", uid_col_l, uid_col_r, source_ds_col_l, source_ds_col_r
         )
         select_cols = f"""
-          df_e.source_dataset_l,
-          df_e.{uid_col_l},
-          df_e.source_dataset_r,
-          df_e.{uid_col_r}
+          coalesce(df_e.{source_ds_col_l},df_labels.{source_ds_col_l}) as {source_ds_col_l},
+          coalesce(df_e.{uid_col_l},df_labels.{uid_col_l}) as {uid_col_l},
+          coalesce(df_e.{source_ds_col_r},df_labels.{source_ds_col_r}) as {source_ds_col_r},
+          coalesce(df_e.{uid_col_r},df_labels.{uid_col_r}) as {uid_col_r}
         """
     else:
         labels_key = _sql_gen_unique_id_keygen("df_labels", uid_col_l, uid_col_r)
         df_e_key = _sql_gen_unique_id_keygen("df_e", uid_col_l, uid_col_r)
         select_cols = f"""
-
-          df_e.{uid_col_l},
-
-          df_e.{uid_col_r}
+          coalesce(df_e.{uid_col_l},df_labels.{uid_col_l}) as {uid_col_l},
+          coalesce(df_e.{uid_col_r},df_labels.{uid_col_r}) as {uid_col_r}
         """
 
     if retain_all_cols:
@@ -293,7 +284,6 @@ def labels_with_splink_scores(
         = {df_e_key}
 
         """
-
     return spark.sql(sql)
 
 
@@ -632,6 +622,13 @@ def roc_chart(
                 "sort": ["truth_threshold"],
                 "title": "True Positive Rate amongst clerically reviewed records",
             },
+        },
+        "selection": {
+            "selector076": {
+                "type": "interval",
+                "bind": "scales",
+                "encodings": ["x"],
+            }
         },
         "height": height,
         "title": "Receiver operating characteristic curve",

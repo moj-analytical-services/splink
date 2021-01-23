@@ -1,0 +1,36 @@
+{
+    "config": {
+        "mark": {
+            "tooltip": null
+        }
+    },
+    "data": {
+        "values": null
+    },
+    "mark": "bar",
+    "encoding": {
+        "x": {
+            "type": "ordinal",
+            "field": "iteration"
+        },
+        "y": {
+            "type": "quantitative",
+            "axis": {
+                "title": "\u03bb (estimated proportion of matches)"
+            },
+            "field": "\u03bb"
+        },
+        "tooltip": [
+            {
+                "type": "quantitative",
+                "field": "\u03bb"
+            },
+            {
+                "type": "ordinal",
+                "field": "iteration"
+            }
+        ]
+    },
+    "title": "Estiamted proportion of matches by iteration",
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+}

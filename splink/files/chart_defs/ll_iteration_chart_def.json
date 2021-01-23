@@ -1,0 +1,36 @@
+{
+    "config": {
+        "mark": {
+            "tooltip": null
+        }
+    },
+    "data": {
+        "values": null
+    },
+    "mark": "bar",
+    "encoding": {
+        "x": {
+            "type": "ordinal",
+            "field": "iteration"
+        },
+        "y": {
+            "type": "quantitative",
+            "axis": {
+                "title": "Log likelihood by iteration number"
+            },
+            "field": "log_likelihood"
+        },
+        "tooltip": [
+            {
+                "type": "quantitative",
+                "field": "log_likelihood"
+            },
+            {
+                "type": "ordinal",
+                "field": "iteration"
+            }
+        ]
+    },
+    "title": "Log likelihood value by iteration",
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+}

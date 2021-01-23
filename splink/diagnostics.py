@@ -4,45 +4,12 @@ import warnings
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
-from .check_types import check_types
+from typeguard import typechecked
+
+from .charts import load_chart_definition, altair_if_installed_else_json
 
 
-altair_installed = True
-try:
-    import altair as alt
-except ImportError:
-    altair_installed = False
-
-hist_def_dict = {
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
-    "config": {
-        "title": {"fontSize": 14},
-        "view": {"continuousHeight": 300, "continuousWidth": 400},
-    },
-    "data": {"values": None},
-    "height": 200,
-    "mark": "bar",
-    "title": "Histogram of splink scores",
-    "width": 700,
-    "encoding": {
-        "tooltip": [{"field": "count_rows", "title": "count", "type": "quantitative"}],
-        "x": {
-            "axis": {"title": "splink score"},
-            "bin": "binned",
-            "field": "splink_score_bin_low",
-            "type": "quantitative",
-        },
-        "x2": {"field": "splink_score_bin_high"},
-        "y": {
-            "field": "normalised",
-            "type": "quantitative",
-            "axis": {"title": "probability density"},
-        },
-    },
-}
-
-
-@check_types
+@typechecked
 def _calc_probability_density(
     df_e: DataFrame,
     spark: SparkSession,
@@ -56,7 +23,7 @@ def _calc_probability_density(
 
         Args:
             df_e (DataFrame): A dataframe of record comparisons containing a
-                splink score, e.g. as produced by the .... function
+                splink score, e.g. as produced by the expectation step
             spark (SparkSession): SparkSession object
             score_colname: is the score in another column? defaults to None
             buckets: accepts either a list of split points or an integer number that is used
@@ -71,7 +38,7 @@ def _calc_probability_density(
 
     if isinstance(buckets, int) and buckets != 0:
         buckets = [(x / buckets) for x in list(range(buckets))]
-    elif buckets == None:
+    elif buckets is None:
         buckets = [(x / 100) for x in list(range(100))]
 
     # ensure 0.0 and 1.0 are included in histogram
@@ -89,25 +56,13 @@ def _calc_probability_density(
     # If score_colname is used then use that. if score_colname not used if tf_adjusted_match_prob exists it is used.
     # Otherwise match_probability is used or if that doesnt exit a warning is fired and function exits
 
-    if score_colname:
-        hist = df_e.select(score_colname).rdd.flatMap(lambda x: x).histogram(buckets)
+    if not score_colname:
+        if "tf_adjusted_match_prob" in df_e.columns:
+            score_colname = "tf_adjusted_match_prob"
+        elif "match_probability" in df_e.columns:
+            score_colname = "match_probability"
 
-    elif "tf_adjusted_match_prob" in df_e.columns:
-
-        hist = (
-            df_e.select("tf_adjusted_match_prob")
-            .rdd.flatMap(lambda x: x)
-            .histogram(buckets)
-        )
-
-    elif "match_probability" in df_e.columns:
-
-        hist = (
-            df_e.select("match_probability").rdd.flatMap(lambda x: x).histogram(buckets)
-        )
-
-    else:
-        warnings.warn("Cannot find score column")
+    hist = df_e.select(score_colname).rdd.flatMap(lambda x: x).histogram(buckets)
 
     # get bucket from and to points
     bin_low = hist[0]
@@ -148,12 +103,10 @@ def _create_probability_density_plot(data):
             then it returns the vega lite chart spec as a dictionary
     """
 
+    hist_def_dict = load_chart_definition("score_histogram.json")
     hist_def_dict["data"]["values"] = data
 
-    if altair_installed:
-        return alt.Chart.from_dict(hist_def_dict)
-    else:
-        return hist_def_dict
+    return altair_if_installed_else_json(hist_def_dict)
 
 
 def splink_score_histogram(

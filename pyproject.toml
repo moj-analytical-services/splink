@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splink"
-version = "0.4.2"
+version = "1.0.0"
 description = "Implementation in Apache Spark of the EM algorithm to estimate parameters of Fellegi-Sunter's canonical model of record linkage."
 authors = ["Robin Linacre <robinlinacre@hotmail.com>", "Sam Lindsay", "Theodore Manassis"]
 license = "MIT"
@@ -11,10 +11,12 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.6"
 jsonschema = "^3.2"
+typeguard = "^2.10.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.3"
-pandas = "^0.25.3"
+pandas = "^1.0.0"
+splink-data-generation = "^0.2.1"
 
 [build-system]
 requires = ["poetry>=0.12"]

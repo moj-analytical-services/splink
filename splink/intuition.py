@@ -1,133 +1,101 @@
-from .chart_definitions import bayes_factor_chart_def
-from .params import Params
+from .model import Model
 
-altair_installed = True
-try:
-    import altair as alt
-except ImportError:
-    altair_installed = False
-
+from .charts import load_chart_definition, altair_if_installed_else_json
 
 initial_template = """
-Initial probability of match (prior) = λ = {lam}
+Initial probability of match (prior) = λ = {lam:.4g}
 """
 
-col_template = """
-Comparison of {col_name}.  Values are:
-{col_name}_l: {value_l}
-{col_name}_r: {value_r}
-Comparison has {num_levels} levels
-𝛾 for this comparison = {gamma_col_name} = {gamma_value}
-Amongst matches, m = P(𝛾|match) = {prob_m}
-Amongst non matches, u = P(𝛾|non-match) = {prob_nm}
-Bayes factor = m/u = {bf}
-New probability of match (updated belief): {updated_belief}
-"""
+col_template = [
+    ("Comparison of {column_name}.  Values are:", ""),
+    ("{column_name}_l:", "{value_l}"),
+    ("{column_name}_r:", "{value_r}"),
+    ("Comparison has:", "{num_levels} levels"),
+    ("Level for this comparison:", "{gamma_column_name} = {gamma_index}"),
+    ("m probability = P(level|match):", "{m_probability:.4g}"),
+    ("u probability = P(level|non-match):", "{u_probability:.4g}"),
+    ("Bayes factor = m/u:", "{bayes_factor:.4g}"),
+    ("New probability of match (updated belief):", "{updated_belief:.4g}"),
+]
 
 end_template = """
-Final probability of match = {final}
+Final probability of match = {final:.4g}
+
+Reminder:
+
+The m probability for a given level is the proportion of matches which are in this level.
+We would generally expect the highest similarity level to have the largest proportion of matches.
+For example, we would expect first name field to match exactly amongst most matching records, except where nicknames, aliases or typos have occurred.
+For a comparison column that changes through time, like address, we may expect a lower proportion of comparisons to be in the highest similarity level.
+
+The u probability for a given level is the proportion of non-matches which are in this level.
+We would generally expect the lowest similarity level to have the highest proportion of non-matches, but the magnitude depends on the cardinality of the field.
+For example, we would expect that in the vast majority of non-matching records, the date of birth field would not match.  However, we would expect it to be common for gender to match amongst non-matches.
 """
 
 
-def intuition_report(row_dict:dict, params:Params):
+def intuition_report(row_dict: dict, model: Model):
     """Generate a text summary of a row in the comparison table which explains how the match_probability was computed
 
     Args:
         row_dict (dict): A python dictionary representing the comparison row
-        params (Params): splink params object
+        model (Model): splink Model object
 
     Returns:
         string: The intuition report
     """
 
-    pi = params.params["π"]
-    lam = params.params["λ"]
-
+    lam = model.current_settings_obj["proportion_of_matches"]
     report = initial_template.format(lam=lam)
+    current_prob = lam
 
-    gamma_keys = pi.keys() # gamma_0, gamma_1 etc.
+    for cc in model.current_settings_obj.comparison_columns_list:
+        d = cc.describe_row_dict(row_dict)
 
-    # Create dictionary to fill in template
-    d = {}
-    d["current_p"] = lam
+        bf = d["bayes_factor"]
 
-    for gk in gamma_keys:
-
-        col_params = pi[gk]
-
-        d["col_name"] = col_params["column_name"]
-        col_name = d["col_name"]
-        if pi[gk]["custom_comparison"] == False:
-            d["value_l"] = row_dict[col_name + "_l"]
-            d["value_r"] = row_dict[col_name + "_r"]
-        else:
-            d["value_l"] = ", ".join([str(row_dict[c + "_l"]) for c in pi[gk]["custom_columns_used"] ])
-            d["value_r"] = ", ".join([str(row_dict[c + "_r"]) for c in pi[gk]["custom_columns_used"] ])
-        d["num_levels"] = col_params["num_levels"]
-
-        d["gamma_col_name"] = gk
-        d["gamma_value"] = row_dict[gk]
-
-        if row_dict[gk] != -1:
-            d["prob_m"] = float(pi[gk]["prob_dist_match"][f"level_{row_dict[gk]}"]["probability"])
-            d["prob_nm"] = float(pi[gk]["prob_dist_non_match"][f"level_{row_dict[gk]}"]["probability"])
-        else:
-            d["prob_m"] = 1.0
-            d["prob_nm"] = 1.0
-
-
-        d["bf"] = d["prob_m"]/d["prob_nm"]
-
-        # Update belief
-        bf = d["bf"]
-        current_prob = d["current_p"]
-
-        a = bf*current_prob
-        new_p = a/(a + (1-current_prob))
+        a = bf * current_prob
+        new_p = a / (a + (1 - current_prob))
         d["updated_belief"] = new_p
-        d["current_p"] = new_p
+        current_prob = new_p
 
-        col_report = col_template.format(**d)
+        col_report = []
+        col_report.append("------")
+        for (blurb, value) in col_template:
+            blurb_fmt = blurb.format(**d)
 
+            value_fmt = value.format(**d)
+            col_report.append(f"{blurb_fmt:<50} {value_fmt}")
+        col_report.append("\n")
+        col_report = "\n".join(col_report)
         report += col_report
 
     report += end_template.format(final=new_p)
 
+    if len(model.current_settings_obj["blocking_rules"]) > 1:
+        match_key = int(row_dict["match_key"])
+        br = model.current_settings_obj["blocking_rules"][match_key]
+        br = f"\nThis comparison was generated by the blocking rule: {br}"
+        report += br
+
     return report
 
-def _get_bayes_factors(row_dict, params):
 
-    pi = params.params["π"]
-
-    gamma_keys = pi.keys() # gamma_0, gamma_1 etc.
-
-    bayes_factors  = []
-
-
-    for gk in gamma_keys:
-
-        col_params = pi[gk]
-
-        column = col_params["column_name"]
-
-        prob_m = float(row_dict[f"prob_{gk}_match"])
-        prob_nm = float(row_dict[f"prob_{gk}_non_match"])
-
-        bf = prob_m/prob_nm
-
-        bayes_factors.append({"gamma": gk,"column": column, "bayes_factor": bf})
+def _get_bayes_factors(row_dict, model):
+    bayes_factors = []
+    lam = model.current_settings_obj["proportion_of_matches"]
+    for cc in model.current_settings_obj.comparison_columns_list:
+        row_desc = cc.describe_row_dict(row_dict, lam)
+        bayes_factors.append(row_desc)
 
     return bayes_factors
 
-def bayes_factor_chart(row_dict, params):
 
-    bayes_factor_chart_def["data"]["values"] = _get_bayes_factors(row_dict, params)
-    bayes_factor_chart_def["encoding"]["y"]["field"] = "column"
+def bayes_factor_chart(row_dict, model):
+    chart_path = "bayes_factor_chart_def.json"
+    bayes_factor_chart_def = load_chart_definition(chart_path)
+    bayes_factor_chart_def["data"]["values"] = _get_bayes_factors(row_dict, model)
+    bayes_factor_chart_def["encoding"]["y"]["field"] = "column_name"
     del bayes_factor_chart_def["encoding"]["row"]
-    del bayes_factor_chart_def["height"]
 
-    if altair_installed:
-        return alt.Chart.from_dict(bayes_factor_chart_def)
-    else:
-        return bayes_factor_chart_def
-
+    return altair_if_installed_else_json(bayes_factor_chart_def)

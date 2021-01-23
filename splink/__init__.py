@@ -1,60 +1,49 @@
-from typing import Callable
+from typing import Callable, Union, List
+from typeguard import typechecked
 
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-except ImportError:
-    DataFrame = None
-    SparkSession = None
-
-from splink.settings import complete_settings_dict
-from splink.validate import validate_settings
-from splink.params import Params, load_params_from_json
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.session import SparkSession
+from splink.validate import (
+    validate_settings,
+    validate_input_datasets,
+    validate_link_type,
+)
+from splink.model import Model, load_model_from_json
 from splink.case_statements import _check_jaro_registered
 from splink.blocking import block_using_rules
 from splink.gammas import add_gammas
 from splink.iterate import iterate
 from splink.expectation_step import run_expectation_step
 from splink.term_frequencies import make_adjustment_for_term_frequencies
-from splink.check_types import check_types
-from splink.break_lineage import default_break_lineage_blocked_comparisons, default_break_lineage_scored_comparisons
-
-# For type hints. I use try except to ensure that the sql generation functions work even if spark does not exist
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-
-    spark_exists = True
-except ImportError:
-    DataFrame = None
-    SparkSession = None
-    spark_exists = False
+from splink.vertically_concat import (
+    vertically_concatenate_datasets,
+)
+from splink.break_lineage import (
+    default_break_lineage_blocked_comparisons,
+    default_break_lineage_scored_comparisons,
+)
 
 
+@typechecked
 class Splink:
-    @check_types
     def __init__(
         self,
         settings: dict,
+        df_or_dfs: Union[DataFrame, List[DataFrame]],
         spark: SparkSession,
-        df_l: DataFrame = None,
-        df_r: DataFrame = None,
-        df: DataFrame = None,
         save_state_fn: Callable = None,
-        break_lineage_blocked_comparisons: Callable = default_break_lineage_blocked_comparisons, 
-        break_lineage_scored_comparisons: Callable = default_break_lineage_scored_comparisons
+        break_lineage_blocked_comparisons: Callable = default_break_lineage_blocked_comparisons,
+        break_lineage_scored_comparisons: Callable = default_break_lineage_scored_comparisons,
     ):
-        """splink data linker
+        """Splink data linker
 
         Provides easy access to the core user-facing functinoality of splink
 
         Args:
             settings (dict): splink settings dictionary
+            df_or_dfs (Union[DataFrame, List[DataFrame]]): Either a single Spark dataframe to dedupe, or a list of Spark dataframe to link and or dedupe. Where `link_type` is `dedupe_only`, should be a single dataframe to dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, show be a list of dfs.  Requires conformant dataframes (i.e. they must have same columns)
             spark (SparkSession): SparkSession object
-            df_l (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
-            df_r (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
-            df (DataFrame, optional): The dataframe to dedupe. Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
-            save_state_fn (function, optional):  A function provided by the user that takes two arguments, params and settings, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
+            save_state_fn (function, optional):  A function provided by the user that takes one arguments, model (i.e. a Model from splink.model), and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
             break_lineage_blocked_comparisons (function, optional): Large jobs will likely run into memory errors unless the lineage is broken after blocking.  This is a user-provided function that takes one argument - df - and allows the user to break lineage.  For example, the function might save df to the AWS s3 file system, and then reload it from the saved files.
             break_lineage_scored_comparisons (function, optional): Large jobs will likely run into memory errors unless the lineage is broken after comparisons are scored and before term frequency adjustments.  This is a user-provided function that takes one argument - df - and allows the user to break lineage.  For example, the function might save df to the AWS s3 file system, and then reload it from the saved files.
         """
@@ -64,55 +53,20 @@ class Splink:
         self.break_lineage_scored_comparisons = break_lineage_scored_comparisons
         _check_jaro_registered(spark)
 
-        settings = complete_settings_dict(settings, spark)
         validate_settings(settings)
-        self.settings = settings
+        validate_link_type(df_or_dfs, settings)
+        self.model = Model(settings, spark)
+        self.settings_dict = self.model.current_settings_obj.settings_dict
 
-        self.params = Params(settings, spark)
+        # dfs is a list of dfs irrespective of whether input was a df or list of dfs
+        if type(df_or_dfs) == DataFrame:
+            dfs = [df_or_dfs]
+        else:
+            dfs = df_or_dfs
 
-        self.df_r = df_r
-        self.df_l = df_l
-        self.df = df
+        self.df = vertically_concatenate_datasets(dfs)
+        validate_input_datasets(self.df, self.model.current_settings_obj)
         self.save_state_fn = save_state_fn
-        self._check_args()
-
-    def _check_args(self):
-
-        link_type = self.settings["link_type"]
-
-        if link_type == "dedupe_only":
-            check_1 = self.df_r is None
-            check_2 = self.df_l is None
-            check_3 = isinstance(self.df, DataFrame)
-
-            if not all([check_1, check_2, check_3]):
-                raise ValueError(
-                    "For link_type = 'dedupe_only', you must pass a single Spark dataframe to Splink using the df argument. "
-                    "The df_l and df_r arguments should be omitted or set to None. "
-                    "e.g. linker = Splink(settings, spark, df=my_df)"
-                )
-
-        if link_type in ["link_only", "link_and_dedupe"]:
-            check_1 = isinstance(self.df_l, DataFrame)
-            check_2 = isinstance(self.df_r, DataFrame)
-            check_3 = self.df is None
-
-            if not all([check_1, check_2, check_3]):
-                raise ValueError(
-                    f"For link_type = '{link_type}', you must pass two Spark dataframes to Splink using the df_l and df_r argument. "
-                    "The df argument should be omitted or set to None. "
-                    "e.g. linker = Splink(settings, spark, df_l=my_first_df, df_r=df_to_link_to_first_one)"
-                )
-
-    def _get_df_comparison(self):
-
-        if self.settings["link_type"] == "dedupe_only":
-            return block_using_rules(self.settings, self.spark, df=self.df)
-
-        if self.settings["link_type"] in ("link_only", "link_and_dedupe"):
-            return block_using_rules(
-                self.settings, self.spark, df_l=self.df_l, df_r=self.df_r
-            )
 
     def manually_apply_fellegi_sunter_weights(self):
         """Compute match probabilities from m and u probabilities specified in the splink settings object
@@ -120,46 +74,43 @@ class Splink:
         Returns:
             DataFrame: A spark dataframe including a match probability column
         """
-        df_comparison = self._get_df_comparison()
-        df_gammas = add_gammas(df_comparison, self.settings, self.spark)
-        return run_expectation_step(df_gammas, self.params, self.settings, self.spark)
+        df_comparison = block_using_rules(self.settings_dict, self.df, self.spark)
+        df_gammas = add_gammas(df_comparison, self.settings_dict, self.spark)
+        return run_expectation_step(df_gammas, self.model, self.spark)
 
-    def get_scored_comparisons(self):
+    def get_scored_comparisons(self, compute_ll=False):
         """Use the EM algorithm to estimate model parameters and return match probabilities.
-
-        Note: Does not compute term frequency adjustments.
 
         Returns:
             DataFrame: A spark dataframe including a match probability column
         """
 
-        df_comparison = self._get_df_comparison()
+        df_comparison = block_using_rules(self.settings_dict, self.df, self.spark)
 
-        df_gammas = add_gammas(df_comparison, self.settings, self.spark)
+        df_gammas = add_gammas(df_comparison, self.settings_dict, self.spark)
 
         df_gammas = self.break_lineage_blocked_comparisons(df_gammas, self.spark)
 
         df_e = iterate(
             df_gammas,
-            self.params,
-            self.settings,
+            self.model,
             self.spark,
-            compute_ll=False,
+            compute_ll=compute_ll,
             save_state_fn=self.save_state_fn,
         )
-        
+
         # In case the user's break lineage function has persisted it
         df_gammas.unpersist()
 
         df_e = self.break_lineage_scored_comparisons(df_e, self.spark)
 
-        df_e_adj = self._make_term_frequency_adjustments(df_e)
+        df_e_adj = self.make_term_frequency_adjustments(df_e)
 
         df_e.unpersist()
 
         return df_e_adj
 
-    def _make_term_frequency_adjustments(self, df_e: DataFrame):
+    def make_term_frequency_adjustments(self, df_e: DataFrame):
         """Take the outputs of 'get_scored_comparisons' and make term frequency adjustments on designated columns in the settings dictionary
 
         Args:
@@ -171,42 +122,43 @@ class Splink:
 
         return make_adjustment_for_term_frequencies(
             df_e,
-            self.params,
-            self.settings,
+            self.model,
             retain_adjustment_columns=True,
             spark=self.spark,
         )
 
-    def save_model_as_json(self, path:str, overwrite=False):
+    def save_model_as_json(self, path: str, overwrite=False):
         """Save model (settings, parameters and parameter history) as a json file so it can later be re-loaded using load_from_json
 
         Args:
             path (str): Path to the json file.
             overwrite (bool): Whether to overwrite the file if it exsits
         """
-        self.params.save_params_to_json_file(path, overwrite=overwrite)
+        self.model.save_model_to_json_file(path, overwrite=overwrite)
 
 
-
-
-def load_from_json(path: str,
-        spark: SparkSession,
-        df_l: DataFrame = None,
-        df_r: DataFrame = None,
-        df: DataFrame = None,
-        save_state_fn: Callable = None):
+@typechecked
+def load_from_json(
+    path: str,
+    df_or_dfs: Union[DataFrame, List[DataFrame]],
+    spark: SparkSession,
+    save_state_fn: Callable = None,
+):
     """Load a splink model from a json file which has previously been created using 'save_model_as_json'
 
     Args:
         path (string): path to json file created using Splink.save_model_as_json
         spark (SparkSession): SparkSession object
-        df_l (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
-        df_r (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
         df (DataFrame, optional): The dataframe to dedupe. Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
-        save_state_fn (function, optional):  A function provided by the user that takes two arguments, params and settings, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
+        save_state_fn (function, optional):  A function provided by the user that takes one argument, params, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
+
+    Returns:
+        splink.model.Model
     """
-    params = load_params_from_json(path)
-    settings = params.settings
-    linker = Splink(settings, spark, df_l, df_r, df, save_state_fn)
-    linker.params = params
+    model = load_model_from_json(path)
+
+    linker = Splink(
+        model.current_settings_obj.settings_dict, df_or_dfs, spark, save_state_fn
+    )
+    linker.model = model
     return linker

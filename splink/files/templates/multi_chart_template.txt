@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8"/>
+  <script>{vega}</script>
+  <script>{vega-lite}</script>
+  <script>{vega-embed}</script>
+  <style>
+    .chart-wrapper  {{
+        height: auto !important
+      }}
+  </style>
+</head>
+
+<body>
+
+  <div class="row">
+    <h2> Parameter estimtates </h2>
+    <p> Estimated percentage of comparisons which are matches: {proportion_of_matches:.2%} </p>
+    <div id="vis_c_prob_dist"></div>
+    <div id="vis_c_gamma_dist"></div>
+    <div id="vis_c_bayes_factor"></div>
+  </div>
+
+  <h2> Iteration history </h2>
+  <div class="row">
+     <div id="vis_c_lambda_it"></div>
+  </div>
+  <div class="row">
+    <div id="vis_c_bayes_factor_hist"></div>
+  </div>
+
+  <div class="row">
+     <div id="vis_c_m_u_hist"></div>
+  </div>
+
+
+
+
+  <script type="text/javascript">
+    vegaEmbed('#vis_c_prob_dist', {c_prob_dist}).catch(console.error);
+    vegaEmbed('#vis_c_gamma_dist', {c_gamma_dist}).catch(console.error);
+    vegaEmbed('#vis_c_bayes_factor', {c_bayes_factor}).catch(console.error);
+    vegaEmbed('#vis_c_lambda_it', {c_lambda_it}).catch(console.error);
+    vegaEmbed('#vis_c_bayes_factor_hist', {c_bayes_factor_hist}).catch(console.error);
+    vegaEmbed('#vis_c_m_u_hist', {c_m_u_hist}).catch(console.error);
+
+  </script>
+</body>
+
+</html>

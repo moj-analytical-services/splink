@@ -1,0 +1,195 @@
+{
+    "hconcat": [
+        {
+            "mark": "bar",
+            "encoding": {
+                "color": {
+                    "type": "quantitative",
+                    "field": "gamma_index",
+                    "scale": {
+                        "range": [
+                            "red",
+                            "orange",
+                            "green"
+                        ]
+                    }
+                },
+                "tooltip": [
+                    {
+                        "type": "nominal",
+                        "field": "column_name"
+                    },
+                    {
+                        "type": "ordinal",
+                        "field": "level_name"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "m_probability"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "u_probability"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "bayes_factor",
+                        "title": "Bayes factor, K"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "log2_bayes_factor",
+                        "title": "log2(K)"
+                    }
+                ],
+                "x": {
+                    "type": "ordinal",
+                    "field": "gamma_index"
+                },
+                "y": {
+                    "type": "quantitative",
+                    "axis": {
+                        "title": "log2(Bayes factor, K = m/u)",
+                        "values": [
+                            -10,
+                            -5,
+                            -2,
+                            -1,
+                            0,
+                            1,
+                            2,
+                            5,
+                            10
+                        ]
+                    },
+                    "field": "log2_bayes_factor"
+                }
+            },
+            "height": 150,
+            "selection": {
+                "selector190": {
+                    "type": "single",
+                    "on": "mouseover",
+                    "fields": [
+                        "gamma_index",
+                        "column_name"
+                    ]
+                }
+            },
+            "transform": [
+                {
+                    "filter": "(datum.final === true)"
+                }
+            ],
+            "width": 100
+        },
+        {
+            "layer": [
+                {
+                    "mark": "line",
+                    "encoding": {
+                        "color": {
+                            "type": "quantitative",
+                            "field": "gamma_index",
+                            "legend": {
+                                "tickCount": 2,
+                                "type": "symbol"
+                            },
+                            "scale": {
+                                "range": [
+                                    "red",
+                                    "orange",
+                                    "green"
+                                ]
+                            }
+                        },
+                        "opacity": {
+                            "condition": {
+                                "selection": {
+                                    "not": "selector190"
+                                },
+                                "value": 0.8
+                            },
+                            "value": 1
+                        },
+                        "size": {
+                            "condition": {
+                                "selection": {
+                                    "not": "selector190"
+                                },
+                                "value": 3
+                            },
+                            "value": 5
+                        },
+                        "tooltip": [
+                            {
+                                "type": "nominal",
+                                "field": "column_name"
+                            },
+                            {
+                                "type": "quantitative",
+                                "field": "iteration"
+                            },
+                            {
+                                "type": "ordinal",
+                                "field": "gamma_index"
+                            },
+                            {
+                                "type": "quantitative",
+                                "field": "m_probabilit"
+                            },
+                            {
+                                "type": "quantitative",
+                                "field": "u_probability"
+                            },
+                            {
+                                "type": "quantitative",
+                                "field": "bayes_factor",
+                                "title": "Bayes factor, K"
+                            },
+                            {
+                                "type": "quantitative",
+                                "field": "log2_bayes_factor",
+                                "title": "log2(K)"
+                            }
+                        ],
+                        "x": {
+                            "type": "ordinal",
+                            "axis": {
+                                "title": "Iteration"
+                            },
+                            "field": "iteration"
+                        },
+                        "y": {
+                            "type": "quantitative",
+                            "axis": {
+                                "title": "log2(Bayes factor, K = m/u)",
+                                "values": [
+                                    -10,
+                                    -5,
+                                    -2,
+                                    -1,
+                                    0,
+                                    1,
+                                    2,
+                                    5,
+                                    10
+                                ]
+                            },
+                            "field": "log2_bayes_factor"
+                        }
+                    },
+                    "height": 150
+                }
+            ]
+        }
+    ],
+    "title": {
+        "text": null,
+        "orient": "top",
+        "dx": 200
+    },
+    "data": {
+        "values": null
+    }
+}

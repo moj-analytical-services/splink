@@ -4,18 +4,18 @@
 import logging
 import math
 import warnings
+from copy import deepcopy
 
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-except ImportError:
-    DataFrame = None
-    SparkSession = None
+from pyspark.sql.dataframe import DataFrame
+from pyspark.sql.session import SparkSession
 
 from .logging_utils import _format_sql
 from .expectation_step import _column_order_df_e_select_expr
-from .params import Params
-from .check_types import check_types
+from .model import Model
+from .maximisation_step import run_maximisation_step
+from .gammas import _retain_source_dataset_column
+from .settings import Settings
+from typeguard import typechecked
 
 logger = logging.getLogger(__name__)
 
@@ -47,20 +47,25 @@ def sql_gen_bayes_string(probs):
     (  {probs_multiplied} + {inverse_probs_multiplied} )
     """
 
+
 # See https://github.com/moj-analytical-services/splink/pull/107
-def sql_gen_generate_adjusted_lambda(column_name, params, table_name="df_e"):
+def sql_gen_generate_adjusted_lambda(column_name, model, table_name="df_e"):
 
     # Get 'average' param for matching on this column
-    max_level = params.params["π"][f"gamma_{column_name}"]["num_levels"] - 1
-    m = params.params["π"][f"gamma_{column_name}"]["prob_dist_match"][f"level_{max_level}"]["probability"]
-    u = params.params["π"][f"gamma_{column_name}"]["prob_dist_non_match"][f"level_{max_level}"]["probability"]
-    
-# ensure average adj calculation doesnt divide by zero (see issue 118)
-    if ( math.isclose((m+u), 0.0, rel_tol=1e-9, abs_tol=0.0)):
+    cc = model.current_settings_obj.get_comparison_column(column_name)
+    max_level = cc.max_gamma_index
+
+    m = cc["m_probabilities"][max_level]
+    u = cc["u_probabilities"][max_level]
+
+    # ensure average adj calculation doesnt divide by zero (see issue 118)
+    if math.isclose((m + u), 0.0, rel_tol=1e-9, abs_tol=0.0):
         average_adjustment = 0.5
-        warnings.warn( f" Is most of column {column_name} or all of it comprised of NULL values??? There are levels where no comparisons are found.")
+        warnings.warn(
+            f"There were no comparisons in column {column_name} which were in the highest level of similarity, so no adjustment could be made"
+        )
     else:
-        average_adjustment = m/(m+u)
+        average_adjustment = m / (m + u)
 
     sql = f"""
     with temp_adj as
@@ -109,14 +114,16 @@ def sql_gen_add_adjumentments_to_df_e(term_freq_column_list):
 
 
 def sql_gen_compute_final_group_membership_prob_from_adjustments(
-    term_freq_column_list, settings, table_name="df_e_adj"
+    term_freq_column_list, settings, retain_source_dataset_col, table_name="df_e_adj"
 ):
 
     term_freq_column_list = [c + "_tf_adj" for c in term_freq_column_list]
     term_freq_column_list.insert(0, "match_probability")
     tf_adjusted_match_prob_expr = sql_gen_bayes_string(term_freq_column_list)
 
-    select_expr = _column_order_df_e_select_expr(settings, tf_adj_cols=True)
+    select_expr = _column_order_df_e_select_expr(
+        settings, retain_source_dataset_col, tf_adj_cols=True
+    )
 
     sql = f"""
     select
@@ -130,31 +137,42 @@ def sql_gen_compute_final_group_membership_prob_from_adjustments(
     return sql
 
 
-import warnings
-
-@check_types
+@typechecked
 def make_adjustment_for_term_frequencies(
     df_e: DataFrame,
-    params: Params,
-    settings: dict,
+    model: Model,
     spark: SparkSession,
-    retain_adjustment_columns: bool = False
+    retain_adjustment_columns: bool = False,
 ):
 
-    df_e.createOrReplaceTempView("df_e")
+    # Running a maximisation step will eliminate errors cause by global parameters
+    # being used in blocked jobs
+
+    settings = model.current_settings_obj.settings_dict
 
     term_freq_column_list = [
-        c["col_name"]
-        for c in settings["comparison_columns"]
-        if c["term_frequency_adjustments"] == True
+        cc.name
+        for cc in model.current_settings_obj.comparison_columns_list
+        if cc["term_frequency_adjustments"] is True
     ]
 
     if len(term_freq_column_list) == 0:
         return df_e
 
+    retain_source_dataset_col = _retain_source_dataset_column(settings, df_e)
+    df_e.createOrReplaceTempView("df_e")
+
+    old_settings = deepcopy(model.current_settings_obj.settings_dict)
+
+    for cc in model.current_settings_obj.comparison_columns_list:
+        cc.column_dict["fix_m_probabilities"] = False
+        cc.column_dict["fix_u_probabilities"] = False
+
+    run_maximisation_step(df_e, model, spark)
+
     # Generate a lookup table for each column with 'term specific' lambdas.
     for c in term_freq_column_list:
-        sql = sql_gen_generate_adjusted_lambda(c, params)
+        sql = sql_gen_generate_adjusted_lambda(c, model)
         logger.debug(_format_sql(sql))
         lookup = spark.sql(sql)
         lookup.persist()
@@ -167,7 +185,7 @@ def make_adjustment_for_term_frequencies(
     df_e_adj.createOrReplaceTempView("df_e_adj")
 
     sql = sql_gen_compute_final_group_membership_prob_from_adjustments(
-        term_freq_column_list, settings
+        term_freq_column_list, settings, retain_source_dataset_col
     )
     logger.debug(_format_sql(sql))
     df = spark.sql(sql)
@@ -175,5 +193,7 @@ def make_adjustment_for_term_frequencies(
         for c in term_freq_column_list:
             df = df.drop(c + "_tf_adj")
 
-    return df
+    # Restore original settings
+    model.current_settings_obj.settings_dict = old_settings
 
+    return df

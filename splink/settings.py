@@ -1,249 +1,309 @@
-from collections import OrderedDict
-import warnings
+from .default_settings import complete_settings_dict
+from .validate import _get_default_value
+from copy import deepcopy
+from math import log2
+from .charts import load_chart_definition, altair_if_installed_else_json
 
 
-try:
-    from pyspark.sql.dataframe import DataFrame
-    from pyspark.sql.session import SparkSession
-except ImportError:
-    DataFrame = None
-    SparkSession = None
+class ComparisonColumn:
+    def __init__(self, column_dict):
+        self.column_dict = column_dict
 
+    def __getitem__(self, i):
+        return self.column_dict[i]
 
-from .case_statements import (
-    _check_jaro_registered,
-    _check_no_obvious_problem_with_case_statement,
-    _add_as_gamma_to_case_statement,
-    sql_gen_case_smnt_strict_equality_2,
-    sql_gen_case_stmt_levenshtein_3,
-    sql_gen_case_stmt_levenshtein_4,
-    sql_gen_gammas_case_stmt_jaro_2,
-    sql_gen_gammas_case_stmt_jaro_3,
-    sql_gen_gammas_case_stmt_jaro_4,
-    sql_gen_case_stmt_numeric_2,
-    sql_gen_case_stmt_numeric_perc_3,
-    sql_gen_case_stmt_numeric_perc_4,
-)
+    def _dict_key_else_default_value(self, key):
+        cd = self.column_dict
 
+        if key in cd:
+            return cd[key]
+        else:
+            return _get_default_value(key, True)
 
-from .validate import validate_settings, _get_default_value
+    @property
+    def custom_comparison(self):
+        cd = self.column_dict
+        if "custom_name" in cd:
+            return True
+        elif "col_name" in cd:
+            return False
 
+    @property
+    def columns_used(self):
+        cd = self.column_dict
+        if "col_name" in cd:
+            return [cd["col_name"]]
+        elif "custom_name" in cd:
+            return cd["custom_columns_used"]
 
-def _normalise_prob_list(prob_array: list):
-    sum_list = sum(prob_array)
-    return [i / sum_list for i in prob_array]
+    @property
+    def name(self):
+        cd = self.column_dict
+        if "custom_name" in cd:
+            return cd["custom_name"]
+        elif "col_name" in cd:
+            return cd["col_name"]
 
+    @property
+    def gamma_name(self):
+        return f"gamma_{self.name}"
 
-def _get_default_case_statements_functions(spark):
-    default_case_statements = {
-        "numeric": {
-            2: sql_gen_case_stmt_numeric_2,
-            3: sql_gen_case_stmt_numeric_perc_3,
-            4: sql_gen_case_stmt_numeric_perc_3,
-        },
-        "string": {},
-    }
+    @property
+    def num_levels(self):
+        cd = self.column_dict
+        m_probs = cd["m_probabilities"]
+        u_probs = cd["u_probabilities"]
+        if len(m_probs) == len(u_probs):
+            return len(m_probs)
+        else:
+            raise ValueError("Length of m and u probs unequal")
 
-    jaro_exists = _check_jaro_registered(spark)
+    @property
+    def max_gamma_index(self):
+        return self.num_levels - 1
 
-    if jaro_exists:
-        default_case_statements["string"][2] = sql_gen_gammas_case_stmt_jaro_2
-        default_case_statements["string"][3] = sql_gen_gammas_case_stmt_jaro_3
-        default_case_statements["string"][4] = sql_gen_gammas_case_stmt_jaro_4
+    @property
+    def input_cols_used(self):
+        cd = self.column_dict
+        if "custom_name" in cd:
+            return cd["custom_columns_used"]
+        elif "col_name" in cd:
+            return [cd["col_name"]]
 
-    else:
-        default_case_statements["string"][2] = sql_gen_case_smnt_strict_equality_2
-        default_case_statements["string"][3] = sql_gen_case_stmt_levenshtein_3
-        default_case_statements["string"][4] = sql_gen_case_stmt_levenshtein_4
+    def get_m_u_bayes_at_gamma_index(self, gamma_index):
 
-    return default_case_statements
-
-
-def _get_columns_to_retain_df_e(settings):
-
-    # Use ordered dict as an ordered set - i.e. to make sure we don't have duplicate cols to retain
-
-    columns_to_retain = OrderedDict()
-    columns_to_retain[settings["unique_id_column_name"]] = None
-
-    if settings["retain_matching_columns"]:
-        for c in settings["comparison_columns"]:
-            if c["col_is_in_input_df"]:
-                columns_to_retain[c["col_name"]] = None
-
-    for c in settings["comparison_columns"]:
-        if c["term_frequency_adjustments"]:
-            columns_to_retain[c["col_name"]]
-
-    for c in settings["additional_columns_to_retain"]:
-        columns_to_retain[c] = None
-
-    return columns_to_retain.keys()
-
-
-def _get_default_case_statement_fn(default_statements, data_type, levels):
-    if data_type not in ["string", "numeric"]:
-        raise ValueError(
-            f"No default case statement available for data type {data_type}, "
-            "please specify a custom case_expression"
-        )
-    if levels > 4:
-        raise ValueError(
-            f"No default case statement available when levels > 4, "
-            "please specify a custom 'case_expression' within your settings dictionary"
-        )
-    return default_statements[data_type][levels]
-
-
-def _get_probabilities(m_or_u, levels):
-
-    if levels > 4:
-        raise ValueError(
-            f"No default m and u probabilities available when levels > 4, "
-            "please specify custom values for 'm_probabilities' and 'u_probabilities' "
-            "within your settings dictionary"
-        )
-
-    # Note all m and u probabilities are automatically normalised to sum to 1
-    default_m_u_probabilities = {
-        "m": {2: [1, 9], 3: [1, 2, 7], 4: [1, 1, 1, 7]},
-        "u": {2: [9, 1], 3: [7, 2, 1], 4: [7, 1, 1, 1]},
-    }
-
-    probabilities = default_m_u_probabilities[m_or_u][levels]
-    return _normalise_prob_list(probabilities)
-
-
-def _complete_case_expression(col_settings, spark):
-
-    default_case_statements = _get_default_case_statements_functions(spark)
-    levels = col_settings["num_levels"]
-
-    if "custom_name" in col_settings:
-        col_name_for_case_fn = col_settings["custom_name"]
-    else:
-        col_name_for_case_fn = col_settings["col_name"]
-
-    if "case_expression" not in col_settings:
-        data_type = col_settings["data_type"]
-        case_fn = _get_default_case_statement_fn(
-            default_case_statements, data_type, levels
-        )
-        col_settings["case_expression"] = case_fn(
-            col_name_for_case_fn, col_name_for_case_fn
-        )
-    else:
-        _check_no_obvious_problem_with_case_statement(col_settings["case_expression"])
-        old_case_stmt = col_settings["case_expression"]
-        new_case_stmt = _add_as_gamma_to_case_statement(
-            old_case_stmt, col_name_for_case_fn
-        )
-        col_settings["case_expression"] = new_case_stmt
-
-
-def _complete_probabilities(col_settings: dict, setting_name: str):
-    """
-
-    Args:
-        col_settings (dict): Column settings dictionary
-        setting_name (str): Either 'm_probabilities' or 'u_probabilities'
-
-    """
-    if setting_name == "m_probabilities":
-        letter = "m"
-    elif setting_name == "u_probabilities":
-        letter = "u"
-
-    if setting_name not in col_settings:
-        levels = col_settings["num_levels"]
-        probs = _get_probabilities(letter, levels)
-        col_settings[setting_name] = probs
-    else:
-        levels = col_settings["num_levels"]
-        probs = col_settings[setting_name]
-
-        # Check for m and u manually set to zero (https://github.com/moj-analytical-services/splink/issues/161)
-        if not all(col_settings[setting_name]):
-            if "custom_name" in col_settings:
-                col_name = col_settings["custom_name"]
+        # if -1 this indicates a null field
+        if gamma_index == -1:
+            m = 1
+            u = 1
+        else:
+            m = self["m_probabilities"][gamma_index]
+            u = self["u_probabilities"][gamma_index]
+        if u != 0 and m is not None and u is not None:
+            bayes = m / u
+            if m != 0:
+                log_2_bayes = log2(bayes)
             else:
-                col_name = col_settings["col_name"]
-            warnings.warn(
-                f"Your {setting_name} for {col_name} include zeroes."
-                f"Where {letter}=0 for a given level, it remains fixed rather than being estimated"
-                "along with other model parameters, and all comparisons at this level"
-                f"are assigned a match score of {1. if letter=='u' else 0.}, regardless of other comparisons columns."
-                )
+                log_2_bayes = None
+        else:
+            bayes = None
+            log_2_bayes = None
+        return {
+            "m_probability": m,
+            "u_probability": u,
+            "bayes_factor": bayes,
+            "log2_bayes_factor": log_2_bayes,
+        }
 
-        if len(probs) != levels:
-            raise ValueError(
-                f"Number of {setting_name} provided is not equal to number of levels specified"
+    def describe_row_dict(self, row_dict, proportion_of_matches=None):
+
+        gamma_index = int(row_dict[self.gamma_name])
+        row_desc = self.level_as_dict(gamma_index, proportion_of_matches)
+
+        row_desc["value_l"] = ", ".join(
+            [str(row_dict[c + "_l"]) for c in self.columns_used]
+        )
+        row_desc["value_r"] = ", ".join(
+            [str(row_dict[c + "_r"]) for c in self.columns_used]
+        )
+
+        return row_desc
+
+    def set_m_probability(self, level: int, prob: float, force: bool = False):
+        cd = self.column_dict
+        fixed = self._dict_key_else_default_value("fix_m_probabilities")
+        if not fixed or force:
+            cd["m_probabilities"][level] = prob
+
+    def set_u_probability(self, level: int, prob: float, force: bool = False):
+        cd = self.column_dict
+        fixed = self._dict_key_else_default_value("fix_u_probabilities")
+        if not fixed or force:
+            cd["u_probabilities"][level] = prob
+
+    def reset_probabilities(self, force: bool = False):
+        cd = self.column_dict
+        fixed_m = self._dict_key_else_default_value("fix_m_probabilities")
+        fixed_u = self._dict_key_else_default_value("fix_u_probabilities")
+        if not fixed_m or force:
+            if "m_probabilities" in cd:
+                cd["m_probabilities"] = [0 for c in cd["m_probabilities"]]
+
+        if not fixed_u or force:
+            if "u_probabilities" in cd:
+                cd["u_probabilities"] = [0 for c in cd["u_probabilities"]]
+
+    def level_as_dict(self, gamma_index, proportion_of_matches=None):
+
+        d = self.get_m_u_bayes_at_gamma_index(gamma_index)
+
+        d["gamma_column_name"] = f"gamma_{self.name}"
+        d["level_name"] = f"level_{gamma_index}"
+
+        d["gamma_index"] = gamma_index
+        d["column_name"] = self.name
+        d["max_gamma_index"] = self.max_gamma_index
+        d["num_levels"] = self.num_levels
+
+        d["level_proportion"] = None
+        if proportion_of_matches:
+            lam = proportion_of_matches
+            m = d["m_probability"]
+            u = d["u_probability"]
+            d["level_proportion"] = m * lam + u * (1 - lam)
+
+        return d
+
+    def as_rows(self, proportion_of_matches=None):
+        """Convert to rows e.g. to use to plot
+        in a chart"""
+        rows = []
+        for gamma_index in range(self.num_levels):
+            r = self.level_as_dict(gamma_index, proportion_of_matches)
+            rows.append(r)
+        return rows
+
+    def __repr__(self):
+        lines = []
+        lines.append("------------------------------------")
+        lines.append(f"Comparison of {self.name}")
+        lines.append("")
+        for row in self.as_rows():
+            lines.append(f"{row['level_name']}")
+            lines.append(
+                f"   Proportion in level amongst matches:       {row['m_probability']*100:.3g}%"
+            )
+            lines.append(
+                f"   Proportion in level amongst non-matches:   {row['u_probability']*100:.3g}%"
+            )
+            lines.append(
+                f"   Bayes factor:                              {row['bayes_factor']:,.3g}"
+            )
+        return "\n".join(lines)
+
+
+class Settings:
+    def __init__(self, settings_dict):
+        self.settings_dict = deepcopy(settings_dict)
+
+    def __getitem__(self, i):
+        return self.settings_dict[i]
+
+    def __setitem__(self, key, value):
+        self.settings_dict[key] = value
+
+    def complete_settings_dict(self, spark):
+        """Complete all fields in the setting dictionary
+        taking values from defaults"""
+        self.settings_dict = complete_settings_dict(self.settings_dict, spark)
+
+    @property
+    def comparison_column_dict(self):
+        sd = self.settings_dict
+        lookup = {}
+        for i, c in enumerate(sd["comparison_columns"]):
+            c["gamma_index"] = i
+            cc = ComparisonColumn(c)
+            name = cc.name
+            lookup[name] = cc
+        return lookup
+
+    @property
+    def comparison_columns_list(self):
+        return list(self.comparison_column_dict.values())
+
+    def get_comparison_column(self, col_name_or_custom_name):
+        if col_name_or_custom_name in self.comparison_column_dict:
+            return self.comparison_column_dict[col_name_or_custom_name]
+        else:
+            raise KeyError(
+                f"You requested comparison column {col_name_or_custom_name}"
+                " but it does not exist in the settings object"
             )
 
-    col_settings[setting_name] = _normalise_prob_list(col_settings[setting_name])
+    def reset_all_probabilities(self, force: bool = False):
+        sd = self.settings_dict
+        sd["proportion_of_matches"] = None
+        for c in self.comparison_columns_list:
+            c.reset_probabilities(force=force)
 
+    def m_u_as_rows(self):
+        """Convert to rows e.g. to use to plot
+        in a chart"""
+        rows = []
+        for c in self.comparison_columns_list:
+            rows.extend(c.as_rows(self["proportion_of_matches"]))
+        return rows
 
-def complete_settings_dict(settings_dict: dict, spark: SparkSession):
-    """Auto-populate any missing settings from the settings dictionary using the 'sensible defaults' that
-    are specified in the json schema (./splink/files/settings_jsonschema.json)
+    def set_m_probability(
+        self, name: str, level: int, prob: float, force: bool = False
+    ):
+        cc = self.get_comparison_column(name)
+        cc.set_m_probability(level, prob, force)
 
-    Args:
-        settings_dict (dict): The settings dictionary
-        spark: The SparkSession
+    def set_u_probability(
+        self, name: str, level: int, prob: float, force: bool = False
+    ):
+        cc = self.get_comparison_column(name)
+        cc.set_u_probability(level, prob, force)
 
-    Returns:
-        dict: A `splink` settings dictionary with all keys populated.
-    """
-    validate_settings(settings_dict)
+    def overwrite_m_u_probs_from_other_settings_dict(
+        self, incoming_settings_dict, overwrite_m=True, overwrite_u=True
+    ):
+        """Overwrite the m and u probabilities with
+        the values from another settings dict where comparison column exists
+        in this settings object
+        """
+        incoming_settings_obj = Settings(incoming_settings_dict)
 
-    # Complete non-column settings from their default values if not exist
-    non_col_keys = [
-        "em_convergence",
-        "unique_id_column_name",
-        "additional_columns_to_retain",
-        "retain_matching_columns",
-        "retain_intermediate_calculation_columns",
-        "max_iterations",
-        "proportion_of_matches",
-    ]
-    for key in non_col_keys:
-        if key not in settings_dict:
-            settings_dict[key] = _get_default_value(key, is_column_setting=False)
+        for cc_incoming in incoming_settings_obj.comparison_columns_list:
+            if cc_incoming.name in self.comparison_column_dict:
+                cc_existing = self.get_comparison_column(cc_incoming.name)
 
-    if "blocking_rules" in settings_dict:
-        if len(settings_dict["blocking_rules"]) == 0:
-            warnings.warn(
-                "You have not specified any blocking rules, meaning all comparisons between the "
-                "input dataset(s) will be generated and blocking will not be used."
-                "For large input datasets, this will generally be computationally intractable "
-                "because it will generate comparisons equal to the number of rows squared."
-            )
+                if overwrite_m:
+                    if "m_probabilities" in cc_incoming.column_dict:
+                        cc_existing.column_dict["m_probabilities"] = cc_incoming[
+                            "m_probabilities"
+                        ]
 
-    gamma_counter = 0
-    c_cols = settings_dict["comparison_columns"]
-    for gamma_counter, col_settings in enumerate(c_cols):
+                if overwrite_u:
+                    if "u_probabilities" in cc_incoming.column_dict:
+                        cc_existing.column_dict["u_probabilities"] = cc_incoming[
+                            "u_probabilities"
+                        ]
 
-        col_settings["gamma_index"] = gamma_counter
+    def remove_comparison_column(self, name):
+        removed = False
+        new_ccs = []
+        for cc in self.comparison_columns_list:
+            if cc.name != name:
+                new_ccs.append(cc.column_dict)
+            else:
+                removed = True
+        self.settings_dict["comparison_columns"] = new_ccs
+        if not removed:
+            raise ValueError(f"Could not find a column named {name}")
 
-        # Populate non-existing keys from defaults
-        keys_for_defaults = [
-            "num_levels",
-            "data_type",
-            "term_frequency_adjustments",
-            "fix_u_probabilities",
-            "fix_m_probabilities",
-        ]
+    def probability_distribution_chart(self):  # pragma: no cover
+        chart_path = "probability_distribution_chart.json"
+        chart = load_chart_definition(chart_path)
+        chart["data"]["values"] = self.m_u_as_rows()
+        chart["title"]["subtitle"] += f" {self['proportion_of_matches']:.3g}"
 
-        for key in keys_for_defaults:
-            if key not in col_settings:
-                default = _get_default_value(key, is_column_setting=True)
-                col_settings[key] = default
+        return altair_if_installed_else_json(chart)
 
-        # Doesn't need assignment because we're modify the col_settings dictionary
-        _complete_case_expression(col_settings, spark)
-        _complete_probabilities(col_settings, "m_probabilities")
-        _complete_probabilities(col_settings, "u_probabilities")
+    def bayes_factor_chart(self):  # pragma: no cover
+        chart_path = "bayes_factor_chart_def.json"
+        chart = load_chart_definition(chart_path)
+        chart["data"]["values"] = self.m_u_as_rows()
+        return altair_if_installed_else_json(chart)
 
-        gamma_counter += 1
+    def __repr__(self):  # pragma: no cover
 
-    return settings_dict
+        lines = []
+        lines.append(f"λ (proportion of matches) = {self['proportion_of_matches']:.4g}")
+
+        for c in self.comparison_columns_list:
+            lines.append(c.__repr__())
+
+        return "\n".join(lines)

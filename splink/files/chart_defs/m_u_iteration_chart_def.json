@@ -1,0 +1,168 @@
+{
+    "config": {
+        "mark": {
+            "tooltip": null
+        },
+        "title": {
+            "anchor": "middle"
+        },
+        "header": {
+            "title": null
+        }
+    },
+    "hconcat": [
+        {
+            "mark": "bar",
+            "encoding": {
+                "color": {
+                    "type": "nominal",
+                    "field": "level_name"
+                },
+                "row": {
+                    "type": "nominal",
+                    "field": "column_name",
+                    "sort": {
+                        "field": "gamma_index"
+                    },
+                    "header": {
+                        "labelAngle": 0,
+                        "labelAnchor": "middle",
+                        "labelAlign": "left"
+                    }
+                },
+                "tooltip": [
+                    {
+                        "type": "nominal",
+                        "field": "column_name"
+                    },
+                    {
+                        "type": "ordinal",
+                        "field": "level_name"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "m_probability",
+                        "format": ".4f"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "bayes_factor",
+                        "format": ".4f"
+                    },
+                    {
+                        "type": "nominal",
+                        "field": "level_proportion",
+                        "title": "Percentage of record comparisons in this level",
+                        "format": ".2%"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "log2_bayes_factor",
+                        "format": ".4f"
+                    }
+                ],
+                "y": {
+                    "type": "ordinal",
+                    "field": "iteration"
+                },
+                "x": {
+                    "type": "quantitative",
+                    "aggregate": "sum",
+                    "axis": {
+                        "title": "proportion"
+                    },
+                    "field": "u_probability"
+                }
+            },
+            "resolve": {
+                "scale": {
+                    "y": "independent"
+                }
+            },
+            "title": "Non Match",
+            "transform": [
+                {
+                    "filter": "(datum.iteration > -2)"
+                }
+            ]
+        },
+        {
+            "mark": "bar",
+            "encoding": {
+                "color": {
+                    "type": "nominal",
+                    "field": "level_name"
+                },
+                "row": {
+                    "type": "nominal",
+                    "field": "column_name",
+                    "sort": {
+                        "field": "gamma_index"
+                    },
+                    "header": {
+                        "labels": false
+                    }
+                },
+                "tooltip": [
+                    {
+                        "type": "nominal",
+                        "field": "column_name"
+                    },
+                    {
+                        "type": "ordinal",
+                        "field": "level_name"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "m_probability",
+                        "format": ".4f"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "bayes_factor",
+                        "format": ".4f"
+                    },
+                    {
+                        "type": "nominal",
+                        "field": "level_proportion",
+                        "title": "Percentage of record comparisons in this level",
+                        "format": ".2%"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "log2_bayes_factor",
+                        "format": ".4f"
+                    }
+                ],
+                "y": {
+                    "type": "ordinal",
+                    "field": "iteration"
+                },
+                "x": {
+                    "type": "quantitative",
+                    "aggregate": "sum",
+                    "axis": {
+                        "title": "proportion"
+                    },
+                    "field": "m_probability"
+                }
+            },
+            "resolve": {
+                "scale": {
+                    "y": "independent"
+                }
+            },
+            "title": "Match",
+            "transform": [
+                {
+                    "filter": "(datum.iteration > -1)"
+                }
+            ]
+        }
+    ],
+    "data": {
+        "values": null
+    },
+    "title": "Probability distribution of comparison vector values by iteration number",
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+}

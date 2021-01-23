@@ -1,11 +1,13 @@
-import math
 from copy import deepcopy
 
-from .blocking import cartesian_block
+from .blocking import block_using_rules
 from .gammas import add_gammas
 from .maximisation_step import run_maximisation_step
-from .params import Params
+from .model import Model
 from .settings import complete_settings_dict
+from .vertically_concat import vertically_concatenate_datasets
+
+import warnings
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
@@ -26,11 +28,10 @@ def _num_target_rows_to_rows_to_sample(target_rows):
 
 def estimate_u_values(
     settings: dict,
+    df_or_dfs: DataFrame,
     spark: SparkSession,
-    df: DataFrame = None,
-    df_l: DataFrame = None,
-    df_r: DataFrame = None,
     target_rows: int = 1e6,
+    fix_u_probabilities=False,
 ):
     """Complete the `u_probabilities` section of the settings object
     by directly estimating `u_probabilities` from raw data (i.e. without
@@ -44,10 +45,8 @@ def estimate_u_values(
 
     Args:
         settings (dict): splink settings dictionary
+        df_or_dfs (DataFrame or list of DataFrames, optional):
         spark (SparkSession): SparkSession object
-        df_l (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
-        df_r (DataFrame, optional): A dataframe to link/dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, one of the two dataframes to link. Should be ommitted `link_type` is `dedupe_only`.
-        df (DataFrame, optional): The dataframe to dedupe. Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
         target_rows (int): The number of rows to generate in the cartesian product.
             If set too high, you can run out of memory.  Default value 1e6. Recommend settings to perhaps 1e7.
 
@@ -61,52 +60,58 @@ def estimate_u_values(
 
     # Do not modify settings object provided by user either
     settings = deepcopy(settings)
-    settings = complete_settings_dict(settings, spark)
 
-    if settings["link_type"] == "dedupe_only":
+    # For the purpoes of estimating u values, we will not use any blocking
+    settings["blocking_rules"] = []
 
-        count_rows = df.count()
+    # Minimise the columns that are needed for the calculation
+    settings["retain_matching_columns"] = False
+    settings["retain_intermediate_calculation_columns"] = False
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        settings = complete_settings_dict(settings, spark)
+
+    if type(df_or_dfs) == DataFrame:
+        dfs = [df_or_dfs]
+    else:
+        dfs = df_or_dfs
+
+    df = vertically_concatenate_datasets(dfs)
+
+    count_rows = df.count()
+    if settings["link_type"] in ["dedupe_only", "link_and_dedupe"]:
         sample_size = _num_target_rows_to_rows_to_sample(target_rows)
-
         proportion = sample_size / count_rows
 
-        if proportion >= 1.0:
-            proportion = 1.0
+    if settings["link_type"] == "link_only":
+        sample_size = target_rows ** 0.5
+        proportion = sample_size / count_rows
 
-        df_s = df.sample(False, proportion)
-        df_comparison = cartesian_block(settings, spark, df=df_s)
+    if proportion >= 1.0:
+        proportion = 1.0
 
-    if settings["link_type"] in ("link_only", "link_and_dedupe"):
+    df_s = df.sample(False, proportion)
 
-        if settings["link_type"] == "link_only":
-            count_rows = df_r.count() + df_l.count()
-            sample_size = target_rows ** 0.5
-            proportion = sample_size / count_rows
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df_comparison = block_using_rules(settings, df_s, spark)
 
-        if settings["link_type"] == "link_and_dedupe":
-            count_rows = df_r.count() + df_l.count()
-            sample_size = _num_target_rows_to_rows_to_sample(target_rows)
-            proportion = sample_size / count_rows
+        df_gammas = add_gammas(df_comparison, settings, spark)
 
-        if proportion >= 1.0:
-            proportion = 1.0
+        df_e_product = df_gammas.withColumn("match_probability", lit(0.0))
 
-        df_r_s = df_r.sample(False, proportion)
-        df_l_s = df_l.sample(False, proportion)
-        df_comparison = cartesian_block(settings, spark, df_l=df_l_s, df_r=df_r_s)
+        model = Model(settings, spark)
+        run_maximisation_step(df_e_product, model, spark)
+        new_settings = model.current_settings_obj.settings_dict
 
-    df_gammas = add_gammas(df_comparison, settings, spark)
+        for i, col in enumerate(orig_settings["comparison_columns"]):
+            u_probs = new_settings["comparison_columns"][i]["u_probabilities"]
+            # Ensure non-zero u (https://github.com/moj-analytical-services/splink/issues/161)
+            u_probs = [u or 1 / target_rows for u in u_probs]
 
-    df_e_product = df_gammas.withColumn("match_probability", lit(0.0))
+            col["u_probabilities"] = u_probs
+            if fix_u_probabilities:
+                col["fix_u_probabilities"] = True
 
-    params = Params(settings, spark)
-    run_maximisation_step(df_e_product, params, spark)
-    new_settings = params.get_settings_with_current_params()
-
-    for i, col in enumerate(orig_settings["comparison_columns"]):
-        u_probs = new_settings["comparison_columns"][i]["u_probabilities"]
-        # Ensure non-zero u (https://github.com/moj-analytical-services/splink/issues/161)
-        u_probs = [u or 1/target_rows for u in u_probs]
-        col["u_probabilities"] = u_probs
-
-    return orig_settings
+        return orig_settings

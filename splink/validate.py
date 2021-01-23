@@ -1,30 +1,22 @@
 import pkg_resources
-try:
-    from jsonschema import validate, ValidationError
-    jsonschema_installed = True
-except:
-    jsonschema_installed = False
+from functools import lru_cache
+
+from jsonschema import validate, ValidationError
 
 import json
 import copy
-import warnings
 
-from .check_types import check_types
-
-# We probably don't want to read this json file every time we want to look in the dictionary
-SCHEMA_CACHE = None
+from typeguard import typechecked
 
 
+@lru_cache()
 def _get_schema(setting_dict_should_be_complete=False):
-    if SCHEMA_CACHE is None:
-        with pkg_resources.resource_stream(
-            __name__, "files/settings_jsonschema.json"
-        ) as io:
-            schema = json.load(io)
-    else:
-        schema = SCHEMA_CACHE
+    with pkg_resources.resource_stream(
+        __name__, "files/settings_jsonschema.json"
+    ) as io:
+        schema = json.load(io)
 
-    if setting_dict_should_be_complete == False:
+    if not setting_dict_should_be_complete:
         return schema
 
     if setting_dict_should_be_complete:
@@ -46,10 +38,7 @@ def _get_schema(setting_dict_should_be_complete=False):
         return schema2
 
 
-SCHEMA_CACHE = _get_schema()
-
-
-@check_types
+@typechecked
 def validate_settings(settings_dict: dict):
     """Validate a splink settings object against its jsonschema
 
@@ -62,9 +51,6 @@ def validate_settings(settings_dict: dict):
     Returns:
         [type]: [description]
     """
-    if jsonschema_installed == False:
-        warnings.warn("Your settings dictionary has not been validated because jsonschema is not installed")
-        return None
 
     schema = _get_schema()
     exception_raised = False
@@ -99,3 +85,41 @@ def _get_default_value(key, is_column_setting):
     else:
         return schema["properties"][key]["default"]
 
+
+def validate_input_datasets(df, completed_settings_obj):
+    """Check that the input datasets contain the columns needed to run the model
+
+    Args:
+        df (DataFrame): Dataframe to be used in splink - either the original df, or the concatenation of the input list of dfs
+        completed_settings_obj (Settings): Settings object
+    """
+    cols_present = set(df.columns)
+
+    cols_needed = set()
+
+    s = completed_settings_obj
+    cols_needed.add(s["unique_id_column_name"])
+    if completed_settings_obj["link_type"] != "dedupe_only":
+        cols_needed.add(s["source_dataset_column_name"])
+
+    for cc in s.comparison_columns_list:
+        cols_needed.update(cc.input_cols_used)
+
+    required_cols_not_present = cols_needed - cols_present
+    if len(required_cols_not_present):
+        raise ValueError(
+            f"Cannot find columns {required_cols_not_present} "
+            "For Splink to be work with the settings provided, "
+            "your input dataframes must  include the following columns "
+            f"{cols_needed}"
+        )
+
+
+def validate_link_type(df_or_dfs, settings):
+    if type(df_or_dfs) == list:
+        if "link_type" in settings:
+            if settings["link_type"] == "dedupe_only":
+                raise ValueError(
+                    "If you provide a list of dfs, link_type must be "
+                    "link_only or link_and_dedupe, not dedupe_only"
+                )
