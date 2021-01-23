@@ -143,6 +143,12 @@ def _complete_probabilities(col_settings: dict, setting_name: str):
                 col_name = col_settings["custom_name"]
             else:
                 col_name = col_settings["col_name"]
+
+            if setting_name == "m_probabilities":
+                letter = "m"
+            elif setting_name == "u_probabilities":
+                letter = "u"
+
             warnings.warn(
                 f"Your {setting_name} for {col_name} include zeroes. "
                 f"Where {letter}=0 for a given level, it remains fixed rather than being estimated "
