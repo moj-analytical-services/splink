@@ -1,12 +1,10 @@
 name: continuous-integration-workflow.yml
 
 on:
-  pull_request
+  pull_request:
   push:
     branches:
-      master
-
-
+      - master
 
 jobs:
   build:
