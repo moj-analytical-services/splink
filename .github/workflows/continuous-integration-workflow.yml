@@ -1,8 +1,8 @@
 name: continuous-integration-workflow.yml
 
 on:
-  - pull_request
-  - push:
+  pull_request
+  push:
     branches:
       master
 
