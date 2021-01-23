@@ -1,6 +1,6 @@
 FROM mamonu/moj-spark-jovyan:baseenv
 
-RUN pip install pytest pytest-cov poetry coveralls
+RUN pip install pytest pytest-cov poetry coveralls splink-data-generation
 
 ADD . /myfiles
 WORKDIR /myfiles
