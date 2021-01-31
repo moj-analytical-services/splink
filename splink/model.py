@@ -157,7 +157,7 @@ class Model:
             new_rows = p.m_u_as_rows()
             for r in new_rows:
                 r["iteration"] = it_num
-                r["final"] = it_num == self.iteration
+                r["final"] = it_num == self.iteration - 1
 
             rows.extend(new_rows)
         return rows

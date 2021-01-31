@@ -12,8 +12,8 @@
         {
             "mark": {
                 "type": "point",
-                "filled": true,
-                "opacity": 1,
+                "filled": false,
+                "opacity": 0.7,
                 "size": 100
             },
             "encoding": {
@@ -43,6 +43,18 @@
                         "title": null
                     },
                     "field": "level_name"
+                },
+                "shape": {
+                    "type": "nominal",
+                    "field": "estimate_name",
+                    "scale": {
+                        "range": [
+                            "circle",
+                            "square",
+                            "triangle",
+                            "diamond"
+                        ]
+                    }
                 }
             },
             "resolve": {
@@ -70,8 +82,8 @@
         {
             "mark": {
                 "type": "point",
-                "filled": true,
-                "opacity": 1,
+                "filled": false,
+                "opacity": 0.7,
                 "size": 100
             },
             "encoding": {
@@ -101,6 +113,19 @@
                         "title": null
                     },
                     "field": "level_name"
+                },
+                "shape": {
+                    "type": "nominal",
+                    "field": "estimate_name",
+                    "scale": {
+                        "range": [
+                            "circle",
+                            "square",
+                            "triangle",
+                            "diamond",
+                            "cross"
+                        ]
+                    }
                 }
             },
             "resolve": {

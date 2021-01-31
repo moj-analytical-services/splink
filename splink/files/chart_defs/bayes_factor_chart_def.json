@@ -21,6 +21,15 @@
         "type": "bar",
         "clip": true
     },
+    "selection": {
+        "selector076": {
+            "type": "interval",
+            "bind": "scales",
+            "encodings": [
+                "x"
+            ]
+        }
+    },
     "encoding": {
         "color": {
             "type": "quantitative",
@@ -116,6 +125,9 @@
             "y": "independent"
         }
     },
-    "title": "Influence of comparison vector values on match probability",
+    "title": {
+        "text": "Influence of comparison vector values on match probability",
+        "subtitle": "Use mousewheeel to zoom"
+    },
     "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
 }

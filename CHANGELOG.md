@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 
+## [1.0.1] - 2020-01-31
+
+### Changed
+
+- Added mousewheel zoom to bayes factor chart
+- Added mousewheel zoom to splink score histogram
+- Update estimate comparison chart to use different shapes for different estimates, making it possible to distinguish overlapping symbols
+
+### Fixed
+
+- m and u history charts now display barchart correctly
 
 ## [1.0.0] - 2020-01-20
 ### Added
