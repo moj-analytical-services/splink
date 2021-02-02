@@ -24,8 +24,34 @@
                 "row": {
                     "type": "nominal",
                     "field": "column_name",
-                    "title": null
+                    "title": null,
+                    "sort": {
+                        "field": "gamma_index"
+                    },
+                    "header": {
+                        "labelAngle": 0,
+                        "labelAnchor": "middle",
+                        "labelAlign": "left"
+                    }
                 },
+                "tooltip": [
+                    {
+                        "type": "nominal",
+                        "field": "column_name"
+                    },
+                    {
+                        "type": "nominal",
+                        "field": "estimate_name"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "m_probability"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "u_probability"
+                    }
+                ],
                 "x": {
                     "type": "quantitative",
                     "field": "u_probability",
@@ -94,8 +120,32 @@
                 "row": {
                     "type": "nominal",
                     "field": "column_name",
-                    "title": null
+                    "title": null,
+                    "sort": {
+                        "field": "gamma_index"
+                    },
+                    "header": {
+                        "labels": false
+                    }
                 },
+                "tooltip": [
+                    {
+                        "type": "nominal",
+                        "field": "column_name"
+                    },
+                    {
+                        "type": "nominal",
+                        "field": "estimate_name"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "m_probability"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "u_probability"
+                    }
+                ],
                 "x": {
                     "type": "quantitative",
                     "field": "m_probability",
