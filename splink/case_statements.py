@@ -1,4 +1,5 @@
 import warnings
+import re
 
 
 def _check_jaro_registered(spark):
@@ -23,8 +24,31 @@ def _check_jaro_registered(spark):
     return False
 
 
+def _find_last_end_position(case_statement):
+    # Since we're only interested in the position, case shouldn't matter.    stmt = case_statement.lower()
+    case_statement = case_statement.lower()
+    # we want to look for the final end that's delimited by whitespace (e.g. not as lender_name or something like that)
+    regex = re.compile(r"\send\s?")
+    try:
+        m = list(re.finditer(regex, case_statement))[-1]
+    except IndexError:
+        raise ValueError(
+            "Your case statement {case_statement} appears to be malformatted - there's no END. "
+            f"Statement is {case_statement}"
+        )
+    start, end = m.span()
+
+    return end
+
+
 def _add_as_gamma_to_case_statement(case_statement: str, gamma_col_name):
     """As the correct column alias to the case statement if it does not exist
+
+    If the case statement ends with no alias (case when....end) then adds it:
+        case when...end as gamma_col_name
+
+    If the case statement ends with an alias (case when...end as mycol) it replaces it:
+        case when...end as gamma_col_name
 
     Args:
         case_statement (str): Original case statement
@@ -35,16 +59,15 @@ def _add_as_gamma_to_case_statement(case_statement: str, gamma_col_name):
     if gamma_col_name is None:
         return case_statement
 
-    sl = case_statement.lower()
     # What we're trying to do is distinguish between 'case when end as gamma_blah' from case when end
-    sl = sl.replace("\n", " ").replace("\r", "")
-    sl = sl.strip()
-    # Only need to do anything if the last non-blank string is not ' end'
-    if sl[-4:] != " end":
+    case_statement = case_statement.strip()
+
+    # Strip out current alias if exists
+    if case_statement[-4:].lower() != " end":
         # The case statement has a 'end as gamma blah'
-        last_end_index = sl.rfind(" end ")
-        sl = sl[: last_end_index + 5]
-    return f"{sl} as gamma_{gamma_col_name}"
+        last_end_index = _find_last_end_position(case_statement)
+        case_statement = case_statement[:last_end_index]
+    return f"{case_statement} as gamma_{gamma_col_name}"
 
 
 def _check_no_obvious_problem_with_case_statement(case_statement):
