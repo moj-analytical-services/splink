@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.3] - 2020-02-04
+
+### Fixed
+
+- Bug whereby Splink lowercased case expressions, see [here](https://github.com/moj-analytical-services/splink/issues/174)
 ## [1.0.2] - 2020-02-02
 
 ### Changed
