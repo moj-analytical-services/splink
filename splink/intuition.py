@@ -2,6 +2,9 @@ from .model import Model
 
 from .charts import load_chart_definition, altair_if_installed_else_json
 
+import pandas as pd
+from math import log2
+
 initial_template = """
 Initial probability of match (prior) = λ = {lam:.4g}
 """
@@ -99,3 +102,38 @@ def bayes_factor_chart(row_dict, model):
     del bayes_factor_chart_def["encoding"]["row"]
 
     return altair_if_installed_else_json(bayes_factor_chart_def)
+
+def bayes_factor_intuition_chart(row_dict, model):
+    chart_path = "bayes_factor_intuition_chart_def.json"
+    bayes_factor_intuition_chart_def = load_chart_definition(chart_path)
+    
+    data = _get_bayes_factors(row_dict, model)
+
+    # Get initial and final bayes factors
+    lam = model.current_settings_obj["proportion_of_matches"]
+    bf_init = lam/(1-lam)
+    bf_final = sum([d['log2_bayes_factor'] for d in data]) + log2(bf_init)  
+
+    # Sort records in descending order of influence
+    # with start and end positions added
+    df = pd.DataFrame(data)\
+        .sort_values(by="log2_bayes_factor", key=abs, ascending=False)\
+        .reset_index(drop=True)\
+        .append({
+            'bayes_factor': 2**bf_final, 
+            'log2_bayes_factor': bf_final, 
+            'column_name': 'Final score'
+        }, 
+        ignore_index=True
+    )
+    df = pd.DataFrame({
+            'bayes_factor': bf_init, 
+            'log2_bayes_factor': log2(bf_init), 
+            'column_name': 'Prior lambda'
+        }, 
+        index=[0]
+    ).append(df, ignore_index=True).reset_index() 
+    
+    bayes_factor_intuition_chart_def["data"]["values"] = df.to_dict('records')
+
+    return altair_if_installed_else_json(bayes_factor_intuition_chart_def)
