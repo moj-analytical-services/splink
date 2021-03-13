@@ -219,5 +219,7 @@ def normalise_probabilities(settings_dict: dict):
     for col_settings in c_cols:
         for p in ["m_probabilities", "u_probabilities"]:
             if p in col_settings:
-                col_settings[p] = _normalise_prob_list(col_settings[p])
+                if None not in col_settings[p]:
+                    if sum(col_settings[p]) != 0:
+                        col_settings[p] = _normalise_prob_list(col_settings[p])
     return settings_dict
