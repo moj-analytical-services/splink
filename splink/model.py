@@ -95,7 +95,10 @@ class Model:
                 for gamma_index in range(c_latest.num_levels):
                     val_latest = c_latest[m_or_u][gamma_index]
                     val_previous = c_previous[m_or_u][gamma_index]
-                    diff = abs(val_latest - val_previous)
+                    if val_latest is not None:
+                        diff = abs(val_latest - val_previous)
+                    else:
+                        diff = 0
                     diffs.append(
                         {"col_name": c_latest.name, "diff": diff, "level": gamma_index}
                     )

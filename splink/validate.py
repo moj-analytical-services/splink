@@ -1,6 +1,6 @@
 import pkg_resources
 from functools import lru_cache
-
+import math
 from jsonschema import validate, ValidationError
 
 import json
@@ -39,7 +39,7 @@ def _get_schema(setting_dict_should_be_complete=False):
 
 
 @typechecked
-def validate_settings(settings_dict: dict):
+def validate_settings_against_schema(settings_dict: dict):
     """Validate a splink settings object against its jsonschema
 
     Args:
@@ -75,7 +75,7 @@ def validate_settings(settings_dict: dict):
         raise ValidationError(message)
 
 
-def _get_default_value(key, is_column_setting):
+def get_default_value_from_schema(key, is_column_setting):
     schema = _get_schema()
 
     if is_column_setting:
@@ -123,3 +123,34 @@ def validate_link_type(df_or_dfs, settings):
                     "If you provide a list of dfs, link_type must be "
                     "link_only or link_and_dedupe, not dedupe_only"
                 )
+
+
+def validate_probabilities(settings_dict):
+    from .settings import Settings
+
+    settings_obj = Settings(settings_dict)
+
+    for cc in settings_obj.comparison_columns_list:
+
+        for mu_probabilities in ["m_probabilities", "u_probabilities"]:
+
+            if mu_probabilities in cc.column_dict:
+                if None in cc[mu_probabilities]:
+                    raise ValueError(
+                        f"Your {mu_probabilities} for {cc.name} contain None "
+                        "They should all be populated and sum to 1"
+                    )
+
+                sum_p = sum(cc[mu_probabilities])
+
+                if not math.isclose(sum_p, 1.0, rel_tol=1e-9, abs_tol=0.0):
+                    raise ValueError(
+                        f"Your {mu_probabilities} for {cc.name} do not sum to 1 "
+                        "They should all be populated and sum to 1"
+                    )
+
+                if len(cc[mu_probabilities]) != cc["num_levels"]:
+                    raise ValueError(
+                        f"Number of probs provided in {mu_probabilities}  in {cc.name} "
+                        "is not equal to number of levels specified"
+                    )

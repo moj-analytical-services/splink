@@ -59,11 +59,17 @@ def sql_gen_generate_adjusted_lambda(column_name, model, table_name="df_e"):
     u = cc["u_probabilities"][max_level]
 
     # ensure average adj calculation doesnt divide by zero (see issue 118)
-    if math.isclose((m + u), 0.0, rel_tol=1e-9, abs_tol=0.0):
+
+    is_none = m is None or u is None
+
+    no_adjust = is_none or math.isclose((m + u), 0.0, rel_tol=1e-9, abs_tol=0.0)
+
+    if no_adjust:
         average_adjustment = 0.5
         warnings.warn(
             f"There were no comparisons in column {column_name} which were in the highest level of similarity, so no adjustment could be made"
         )
+
     else:
         average_adjustment = m / (m + u)
 

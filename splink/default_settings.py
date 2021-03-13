@@ -4,8 +4,8 @@ from pyspark.sql.session import SparkSession
 
 from copy import deepcopy
 
+from .validate import get_default_value_from_schema
 
-from .validate import validate_settings, _get_default_value
 from .case_statements import (
     _check_jaro_registered,
     sql_gen_case_smnt_strict_equality_2,
@@ -67,9 +67,9 @@ def _get_default_case_statement_fn(default_statements, data_type, levels):
 
 def _get_default_probabilities(m_or_u, levels):
 
-    if levels > 5:
+    if levels > 6:
         raise ValueError(
-            f"No default m and u probabilities available when levels > 4, "
+            f"No default m and u probabilities available when levels > 6, "
             "please specify custom values for 'm_probabilities' and 'u_probabilities' "
             "within your settings dictionary"
         )
@@ -77,16 +77,18 @@ def _get_default_probabilities(m_or_u, levels):
     # Note all m and u probabilities are automatically normalised to sum to 1
     default_m_u_probabilities = {
         "m_probabilities": {
-            2: [1, 9],
-            3: [1, 2, 7],
-            4: [1, 1, 1, 7],
-            5: [0.33, 0.67, 1, 2, 6],
+            2: _normalise_prob_list([1, 9]),
+            3: _normalise_prob_list([1, 2, 7]),
+            4: _normalise_prob_list([1, 1, 1, 7]),
+            5: _normalise_prob_list([0.33, 0.67, 1, 2, 6]),
+            6: _normalise_prob_list([0.33, 0.67, 1, 2, 3, 6]),
         },
         "u_probabilities": {
-            2: [9, 1],
-            3: [7, 2, 1],
-            4: [7, 1, 1, 1],
-            5: [6, 2, 1, 0.33, 0.67],
+            2: _normalise_prob_list([9, 1]),
+            3: _normalise_prob_list([7, 2, 1]),
+            4: _normalise_prob_list([7, 1, 1, 1]),
+            5: _normalise_prob_list([6, 2, 1, 0.33, 0.67]),
+            6: _normalise_prob_list([6, 3, 2, 1, 0.33, 0.67]),
         },
     }
 
@@ -121,55 +123,19 @@ def _complete_case_expression(col_settings, spark):
         col_settings["case_expression"] = new_case_stmt
 
 
-def _complete_probabilities(cc, setting_name: str):
+def _complete_probabilities(col_settings: dict, mu_probabilities: str):
     """
 
     Args:
-        cc (ComparisonColumn): ComparisonColumn
-        setting_name (str): Either 'm_probabilities' or 'u_probabilities'
+        col_settings (dict): Column settings dictionary
+        mu_probabilities (str): Either 'm_probabilities' or 'u_probabilities'
 
     """
 
-    if setting_name not in cc.column_dict:
-        levels = cc["num_levels"]
-        probs = _get_default_probabilities(setting_name, levels)
-        cc.column_dict[setting_name] = probs
-
-    # Normalise probabilities if possible
-    if None in cc.column_dict[setting_name]:
-        warnings.warn(
-            "Your m probabilities contain a None value "
-            "so could not be normalised to 1"
-        )
-    elif sum(cc.column_dict[setting_name]) == 0:
-        raise ValueError(
-            f"Your {setting_name} for {cc.name } sum to zero and cannot be used "
-            "They should sum to 1"
-        )
-    else:
-        cc.column_dict[setting_name] = _normalise_prob_list(
-            cc.column_dict[setting_name]
-        )
-
-    # Check for m and u manually set to zero (https://github.com/moj-analytical-services/splink/issues/161)
-    if 0 in cc.column_dict[setting_name]:
-
-        if setting_name == "m_probabilities":
-            letter = "m"
-        elif setting_name == "u_probabilities":
-            letter = "u"
-
-        warnings.warn(
-            f"Your {setting_name} for {cc.name} include zeroes. "
-            f"Where {letter}=0 for a given level, it remains fixed rather than being estimated "
-            "along with other model parameters, and all comparisons at this level "
-            f"are assigned a match score of {1. if letter=='u' else 0.}, regardless of other comparisons columns."
-        )
-
-    if len(probs) != levels:
-        raise ValueError(
-            f"Number of {setting_name} provided is not equal to number of levels specified"
-        )
+    if mu_probabilities not in col_settings:
+        levels = col_settings["num_levels"]
+        probs = _get_default_probabilities(mu_probabilities, levels)
+        col_settings[mu_probabilities] = probs
 
 
 def complete_settings_dict(settings_dict: dict, spark: SparkSession):
@@ -184,7 +150,6 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
         dict: A `splink` settings dictionary with all keys populated.
     """
     settings_dict = deepcopy(settings_dict)
-    validate_settings(settings_dict)
 
     # Complete non-column settings from their default values if not exist
     non_col_keys = [
@@ -200,7 +165,9 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
     ]
     for key in non_col_keys:
         if key not in settings_dict:
-            settings_dict[key] = _get_default_value(key, is_column_setting=False)
+            settings_dict[key] = get_default_value_from_schema(
+                key, is_column_setting=False
+            )
 
     if "blocking_rules" in settings_dict:
         if len(settings_dict["blocking_rules"]) == 0:
@@ -211,9 +178,8 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
                 "because it will generate comparisons equal to the number of rows squared."
             )
 
-    settings_obj = Settings(settings_dict)
-    # c_cols = settings_dict["comparison_columns"]
-    for gamma_index, cc in enumerate(settings_obj.comparison_columns_list):
+    c_cols = settings_dict["comparison_columns"]
+    for gamma_index, col_settings in enumerate(c_cols):
 
         # Gamma index refers to the position in the comparison vector
         # i.e. it's a counter for comparison columns
@@ -229,13 +195,29 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
         ]
 
         for key in keys_for_defaults:
-            if key not in cc.column_dict:
-                default = _get_default_value(key, is_column_setting=True)
-                cc.column_dict[key] = default
+            if key not in col_settings:
+                default = get_default_value_from_schema(key, is_column_setting=True)
+                col_settings[key] = default
 
         # Doesn't need assignment because we're modify the col_settings dictionary
-        _complete_case_expression(cc.column_dict, spark)
-        _complete_probabilities(cc.columns_dict, "m_probabilities")
-        _complete_probabilities(cc.column_dict, "u_probabilities")
+        _complete_case_expression(col_settings, spark)
+        _complete_probabilities(col_settings, "m_probabilities")
+        _complete_probabilities(col_settings, "u_probabilities")
 
+    return settings_dict
+
+
+def normalise_probabilities(settings_dict: dict):
+    """Normalise all probabilities in a settings dictionary to sum
+    to one, of possible
+
+    Args:
+        settings_dict (dict): Splink settings dictionary
+    """
+
+    c_cols = settings_dict["comparison_columns"]
+    for col_settings in c_cols:
+        for p in ["m_probabilities", "u_probabilities"]:
+            if p in col_settings:
+                col_settings[p] = _normalise_prob_list(col_settings[p])
     return settings_dict

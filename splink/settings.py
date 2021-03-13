@@ -1,5 +1,5 @@
 from .default_settings import complete_settings_dict
-from .validate import _get_default_value
+from .validate import get_default_value_from_schema
 from copy import deepcopy
 from math import log2
 from .charts import load_chart_definition, altair_if_installed_else_json
@@ -18,7 +18,7 @@ class ComparisonColumn:
         if key in cd:
             return cd[key]
         else:
-            return _get_default_value(key, True)
+            return get_default_value_from_schema(key, True)
 
     @property
     def custom_comparison(self):
