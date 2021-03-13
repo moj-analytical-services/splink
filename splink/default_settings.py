@@ -4,6 +4,7 @@ from pyspark.sql.session import SparkSession
 
 from copy import deepcopy
 
+
 from .validate import validate_settings, _get_default_value
 from .case_statements import (
     _check_jaro_registered,
@@ -120,48 +121,55 @@ def _complete_case_expression(col_settings, spark):
         col_settings["case_expression"] = new_case_stmt
 
 
-def _complete_probabilities(col_settings: dict, setting_name: str):
+def _complete_probabilities(cc, setting_name: str):
     """
 
     Args:
-        col_settings (dict): Column settings dictionary
+        cc (ComparisonColumn): ComparisonColumn
         setting_name (str): Either 'm_probabilities' or 'u_probabilities'
 
     """
 
-    if setting_name not in col_settings:
-        levels = col_settings["num_levels"]
+    if setting_name not in cc.column_dict:
+        levels = cc["num_levels"]
         probs = _get_default_probabilities(setting_name, levels)
-        col_settings[setting_name] = probs
+        cc.column_dict[setting_name] = probs
+
+    # Normalise probabilities if possible
+    if None in cc.column_dict[setting_name]:
+        warnings.warn(
+            "Your m probabilities contain a None value "
+            "so could not be normalised to 1"
+        )
+    elif sum(cc.column_dict[setting_name]) == 0:
+        raise ValueError(
+            f"Your {setting_name} for {cc.name } sum to zero and cannot be used "
+            "They should sum to 1"
+        )
     else:
-        levels = col_settings["num_levels"]
-        probs = col_settings[setting_name]
+        cc.column_dict[setting_name] = _normalise_prob_list(
+            cc.column_dict[setting_name]
+        )
 
-        # Check for m and u manually set to zero (https://github.com/moj-analytical-services/splink/issues/161)
-        if not all(col_settings[setting_name]):
-            if "custom_name" in col_settings:
-                col_name = col_settings["custom_name"]
-            else:
-                col_name = col_settings["col_name"]
+    # Check for m and u manually set to zero (https://github.com/moj-analytical-services/splink/issues/161)
+    if 0 in cc.column_dict[setting_name]:
 
-            if setting_name == "m_probabilities":
-                letter = "m"
-            elif setting_name == "u_probabilities":
-                letter = "u"
+        if setting_name == "m_probabilities":
+            letter = "m"
+        elif setting_name == "u_probabilities":
+            letter = "u"
 
-            warnings.warn(
-                f"Your {setting_name} for {col_name} include zeroes. "
-                f"Where {letter}=0 for a given level, it remains fixed rather than being estimated "
-                "along with other model parameters, and all comparisons at this level "
-                f"are assigned a match score of {1. if letter=='u' else 0.}, regardless of other comparisons columns."
-            )
+        warnings.warn(
+            f"Your {setting_name} for {cc.name} include zeroes. "
+            f"Where {letter}=0 for a given level, it remains fixed rather than being estimated "
+            "along with other model parameters, and all comparisons at this level "
+            f"are assigned a match score of {1. if letter=='u' else 0.}, regardless of other comparisons columns."
+        )
 
-        if len(probs) != levels:
-            raise ValueError(
-                f"Number of {setting_name} provided is not equal to number of levels specified"
-            )
-
-    col_settings[setting_name] = col_settings[setting_name]
+    if len(probs) != levels:
+        raise ValueError(
+            f"Number of {setting_name} provided is not equal to number of levels specified"
+        )
 
 
 def complete_settings_dict(settings_dict: dict, spark: SparkSession):
@@ -203,9 +211,12 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
                 "because it will generate comparisons equal to the number of rows squared."
             )
 
-    c_cols = settings_dict["comparison_columns"]
-    for gamma_index, col_settings in enumerate(c_cols):
+    settings_obj = Settings(settings_dict)
+    # c_cols = settings_dict["comparison_columns"]
+    for gamma_index, cc in enumerate(settings_obj.comparison_columns_list):
 
+        # Gamma index refers to the position in the comparison vector
+        # i.e. it's a counter for comparison columns
         col_settings["gamma_index"] = gamma_index
 
         # Populate non-existing keys from defaults
@@ -218,33 +229,13 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
         ]
 
         for key in keys_for_defaults:
-            if key not in col_settings:
+            if key not in cc.column_dict:
                 default = _get_default_value(key, is_column_setting=True)
-                col_settings[key] = default
+                cc.column_dict[key] = default
 
         # Doesn't need assignment because we're modify the col_settings dictionary
-        _complete_case_expression(col_settings, spark)
-        _complete_probabilities(col_settings, "m_probabilities")
-        _complete_probabilities(col_settings, "u_probabilities")
-
-        if None not in col_settings["m_probabilities"]:
-            col_settings["m_probabilities"] = _normalise_prob_list(
-                col_settings["m_probabilities"]
-            )
-        else:
-            warnings.warn(
-                "Your m probabilities contain a None value "
-                "so could not be normalised to 1"
-            )
-
-        if None not in col_settings["u_probabilities"]:
-            col_settings["u_probabilities"] = _normalise_prob_list(
-                col_settings["u_probabilities"]
-            )
-        else:
-            warnings.warn(
-                "Your u probabilities contain a None value "
-                "so could not be normalised to 1"
-            )
+        _complete_case_expression(cc.column_dict, spark)
+        _complete_probabilities(cc.columns_dict, "m_probabilities")
+        _complete_probabilities(cc.column_dict, "u_probabilities")
 
     return settings_dict

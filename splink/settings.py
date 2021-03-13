@@ -127,11 +127,11 @@ class ComparisonColumn:
         fixed_u = self._dict_key_else_default_value("fix_u_probabilities")
         if not fixed_m or force:
             if "m_probabilities" in cd:
-                cd["m_probabilities"] = [0 for c in cd["m_probabilities"]]
+                cd["m_probabilities"] = [None for c in cd["m_probabilities"]]
 
         if not fixed_u or force:
             if "u_probabilities" in cd:
-                cd["u_probabilities"] = [0 for c in cd["u_probabilities"]]
+                cd["u_probabilities"] = [None for c in cd["u_probabilities"]]
 
     def level_as_dict(self, gamma_index, proportion_of_matches=None):
 
