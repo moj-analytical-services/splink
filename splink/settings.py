@@ -150,7 +150,11 @@ class ComparisonColumn:
             lam = proportion_of_matches
             m = d["m_probability"]
             u = d["u_probability"]
-            d["level_proportion"] = m * lam + u * (1 - lam)
+            # Check they both not None
+            if m and u:
+                d["level_proportion"] = m * lam + u * (1 - lam)
+            else:
+                d["level_proportion"] = None
 
         return d
 
