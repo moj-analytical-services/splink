@@ -81,6 +81,8 @@ class Splink:
         """
         df_comparison = block_using_rules(self.settings_dict, self.df, self.spark)
         df_gammas = add_gammas(df_comparison, self.settings_dict, self.spark)
+        # see https://github.com/moj-analytical-services/splink/issues/187
+        df_gammas = self.break_lineage_blocked_comparisons(df_gammas, self.spark)
         return run_expectation_step(df_gammas, self.model, self.spark)
 
     def get_scored_comparisons(self, compute_ll=False):
