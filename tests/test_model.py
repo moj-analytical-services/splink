@@ -102,7 +102,7 @@ def test_update(model_example):
         model_example.current_settings_obj.get_comparison_column("fname")[
             "m_probabilities"
         ][0]
-        == 0
+        is None
     )
     model_example._populate_model_from_maximisation_step(0.2, pi_df_collected)
 
