@@ -52,9 +52,7 @@ def test_fix_u(spark):
     assert mob["u_probabilities"][0] == pytest.approx(0.8)
     assert mob["u_probabilities"][1] == pytest.approx(0.2)
 
-    first_name = mob = linker.model.current_settings_obj.get_comparison_column(
-        "first_name"
-    )
+    first_name = linker.model.current_settings_obj.get_comparison_column("first_name")
     assert first_name["u_probabilities"][0] != pytest.approx(0.8)
     assert first_name["u_probabilities"][1] != pytest.approx(0.2)
 
