@@ -31,9 +31,9 @@ def _get_default_case_statements_functions(spark):
         "string": {},
     }
 
-    default_case_stmts["numeric"][2]: sql_gen_case_stmt_numeric_float_equality_2
-    default_case_stmts["numeric"][3]: sql_gen_case_stmt_numeric_perc_3
-    default_case_stmts["numeric"][4]: sql_gen_case_stmt_numeric_perc_4
+    default_case_stmts["numeric"][2] = sql_gen_case_stmt_numeric_float_equality_2
+    default_case_stmts["numeric"][3] = sql_gen_case_stmt_numeric_perc_3
+    default_case_stmts["numeric"][4] = sql_gen_case_stmt_numeric_perc_4
 
     jaro_exists = _check_jaro_registered(spark)
 
