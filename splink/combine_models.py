@@ -56,8 +56,6 @@ def _zip_m_and_u_probabilities(cc_estimates: list):
     zipped_u_probs = zip(*[cc["u_probabilities"] for cc in cc_estimates])
     zipped_u_probs = _filter_nones(zipped_u_probs)
 
-    print({"zipped_m": zipped_m_probs, "zipped_u": zipped_u_probs})
-
     return {"zipped_m": zipped_m_probs, "zipped_u": zipped_u_probs}
 
 
@@ -248,7 +246,9 @@ class ModelCombiner:
 
         return altair_if_installed_else_json(chart_def)
 
-    def __repr__(self):
-        return self.summary_report(
-            summary_name="harmonic_mean", aggregate_function=harmonic_mean
+    def _repr_pretty_(self, p, cycle):
+        p.text(
+            self.summary_report(
+                summary_name="harmonic_mean", aggregate_function=harmonic_mean
+            )
         )

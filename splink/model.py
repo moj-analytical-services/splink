@@ -276,9 +276,9 @@ class Model:
         with open(filename, "w") as f:
             f.write(template.format(**fmt_dict))
 
-    def __repr__(self):  # pragma: no cover
-        p = self.current_settings_obj
-        return p.__repr__()
+    def _repr_pretty_(self, p, cycle):  # pragma: no cover
+
+        return p.pretty(self.current_settings_obj)
 
 
 def load_model_from_json(path):

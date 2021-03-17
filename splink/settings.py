@@ -167,23 +167,30 @@ class ComparisonColumn:
             rows.append(r)
         return rows
 
-    def __repr__(self):
-        lines = []
-        lines.append("------------------------------------")
-        lines.append(f"Comparison of {self.name}")
-        lines.append("")
+    def _repr_pretty_(self, p, cycle):
+
+        p.text("------------------------------------")
+        p.break_()
+        p.text(f"Comparison of {self.name}")
+        p.break_()
         for row in self.as_rows():
-            lines.append(f"{row['level_name']}")
-            lines.append(
-                f"   Proportion in level amongst matches:       {row['m_probability']*100:.3g}%"
+            p.text(f"{row['level_name']}")
+            p.break_()
+            value_m = (
+                f"{row['m_probability']*100:.3g}%" if row["m_probability"] else "None"
             )
-            lines.append(
-                f"   Proportion in level amongst non-matches:   {row['u_probability']*100:.3g}%"
+            p.text(f"   Proportion in level amongst matches:       {value_m}")
+            p.break_()
+            value_u = (
+                f"{row['u_probability']*100:.3g}%" if row["u_probability"] else "None"
             )
-            lines.append(
-                f"   Bayes factor:                              {row['bayes_factor']:,.3g}"
+            p.text(f"   Proportion in level amongst non-matches:   {value_u}%")
+            p.break_()
+            value_b = (
+                f"{row['bayes_factor']*100:.3g}%" if row["bayes_factor"] else "None"
             )
-        return "\n".join(lines)
+            p.text(f"   Bayes factor:                              {value_b}")
+            p.break_()
 
 
 class Settings:
@@ -302,12 +309,16 @@ class Settings:
         chart["data"]["values"] = self.m_u_as_rows()
         return altair_if_installed_else_json(chart)
 
-    def __repr__(self):  # pragma: no cover
-
-        lines = []
-        lines.append(f"λ (proportion of matches) = {self['proportion_of_matches']:.4g}")
-
-        for c in self.comparison_columns_list:
-            lines.append(c.__repr__())
-
-        return "\n".join(lines)
+    def _repr_pretty_(self, p, cycle):  # pragma: no cover
+        if cycle:
+            p.text("ComparisonColumn()")
+        else:
+            value = (
+                f"{self['proportion_of_matches']:.4g}"
+                if self["proportion_of_matches"]
+                else "None"
+            )
+            p.text(f"λ (proportion of matches) = {value}")
+            for c in self.comparison_columns_list:
+                p.break_()
+                p.pretty(c)
