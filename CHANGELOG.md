@@ -6,13 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.5]
 
+### Fixed
+
+- Bug that meant default numerical case statements were not available.  See [here](https://github.com/moj-analytical-services/splink/issues/189).  Thanks to [geobetts](https://github.com/geobetts)
+
 ### Changed
 
 - `m` and `u` probabilities are now reset to `None` rather than `0`  in EM iteration when they cannot be estimated
 
+
 ## [1.0.3] - 2020-02-04
 
-### Fixed
+
 
 - Bug whereby Splink lowercased case expressions, see [here](https://github.com/moj-analytical-services/splink/issues/174)
 ## [1.0.2] - 2020-02-02
