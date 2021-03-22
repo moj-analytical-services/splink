@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `m` and `u` probabilities are now reset to `None` rather than `0`  in EM iteration when they cannot be estimated
-
+- Now use `_repr_pretty_` so that objects display nicely in Jupyter Lab rather than `__repr__`, which had been interfering with the interpretatino of stack trace errors
 
 ## [1.0.3] - 2020-02-04
 
