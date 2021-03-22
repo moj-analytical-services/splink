@@ -1,4 +1,5 @@
 from copy import deepcopy
+from splink.default_settings import normalise_probabilities, _normalise_prob_list
 
 from .blocking import block_using_rules
 from .gammas import add_gammas
@@ -109,9 +110,9 @@ def estimate_u_values(
             u_probs = new_settings["comparison_columns"][i]["u_probabilities"]
             # Ensure non-zero u (https://github.com/moj-analytical-services/splink/issues/161)
             u_probs = [u or 1 / target_rows for u in u_probs]
-
+            u_probs = _normalise_prob_list(u_probs)
             col["u_probabilities"] = u_probs
             if fix_u_probabilities:
                 col["fix_u_probabilities"] = True
 
-        return orig_settings
+    return orig_settings

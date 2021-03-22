@@ -16,8 +16,6 @@ def _apply_aggregate_function(zipped_probs, aggregate_function):
                 "The aggregation function produced an error when "
                 f"operating on the following data: {probs_list}. "
                 "The result of this aggreation has been set to None. "
-                "You may wish to provide a aggreation function that is robust to nulls "
-                "or check why there's a None in your parameter estimates. "
                 f"The error was {e}"
             )
             reduced = None
@@ -31,6 +29,13 @@ def _format_probs_for_report(probs):
     except TypeError:
         probs_as_strings = [f"{p}" for p in probs]
     return f"{probs_as_strings}"
+
+
+def _filter_nones(list_of_lists):
+    def filter_none(sublist):
+        return [item for item in sublist if item is not None]
+
+    return [filter_none(sublist) for sublist in list_of_lists]
 
 
 def _zip_m_and_u_probabilities(cc_estimates: list):
@@ -47,7 +52,10 @@ def _zip_m_and_u_probabilities(cc_estimates: list):
     """
 
     zipped_m_probs = zip(*[cc["m_probabilities"] for cc in cc_estimates])
+    zipped_m_probs = _filter_nones(zipped_m_probs)
     zipped_u_probs = zip(*[cc["u_probabilities"] for cc in cc_estimates])
+    zipped_u_probs = _filter_nones(zipped_u_probs)
+
     return {"zipped_m": zipped_m_probs, "zipped_u": zipped_u_probs}
 
 
@@ -238,7 +246,9 @@ class ModelCombiner:
 
         return altair_if_installed_else_json(chart_def)
 
-    def __repr__(self):
-        return self.summary_report(
-            summary_name="harmonic_mean", aggregate_function=harmonic_mean
+    def _repr_pretty_(self, p, cycle):
+        p.text(
+            self.summary_report(
+                summary_name="harmonic_mean", aggregate_function=harmonic_mean
+            )
         )

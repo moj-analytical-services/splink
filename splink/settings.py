@@ -1,5 +1,5 @@
 from .default_settings import complete_settings_dict
-from .validate import _get_default_value
+from .validate import get_default_value_from_schema
 from copy import deepcopy
 from math import log2
 from .charts import load_chart_definition, altair_if_installed_else_json
@@ -18,7 +18,7 @@ class ComparisonColumn:
         if key in cd:
             return cd[key]
         else:
-            return _get_default_value(key, True)
+            return get_default_value_from_schema(key, True)
 
     @property
     def custom_comparison(self):
@@ -127,11 +127,11 @@ class ComparisonColumn:
         fixed_u = self._dict_key_else_default_value("fix_u_probabilities")
         if not fixed_m or force:
             if "m_probabilities" in cd:
-                cd["m_probabilities"] = [0 for c in cd["m_probabilities"]]
+                cd["m_probabilities"] = [None for c in cd["m_probabilities"]]
 
         if not fixed_u or force:
             if "u_probabilities" in cd:
-                cd["u_probabilities"] = [0 for c in cd["u_probabilities"]]
+                cd["u_probabilities"] = [None for c in cd["u_probabilities"]]
 
     def level_as_dict(self, gamma_index, proportion_of_matches=None):
 
@@ -150,7 +150,11 @@ class ComparisonColumn:
             lam = proportion_of_matches
             m = d["m_probability"]
             u = d["u_probability"]
-            d["level_proportion"] = m * lam + u * (1 - lam)
+            # Check they both not None
+            if m and u:
+                d["level_proportion"] = m * lam + u * (1 - lam)
+            else:
+                d["level_proportion"] = None
 
         return d
 
@@ -163,23 +167,30 @@ class ComparisonColumn:
             rows.append(r)
         return rows
 
-    def __repr__(self):
-        lines = []
-        lines.append("------------------------------------")
-        lines.append(f"Comparison of {self.name}")
-        lines.append("")
+    def _repr_pretty_(self, p, cycle):
+
+        p.text("------------------------------------")
+        p.break_()
+        p.text(f"Comparison of {self.name}")
+        p.break_()
         for row in self.as_rows():
-            lines.append(f"{row['level_name']}")
-            lines.append(
-                f"   Proportion in level amongst matches:       {row['m_probability']*100:.3g}%"
+            p.text(f"{row['level_name']}")
+            p.break_()
+            value_m = (
+                f"{row['m_probability']*100:.3g}%" if row["m_probability"] else "None"
             )
-            lines.append(
-                f"   Proportion in level amongst non-matches:   {row['u_probability']*100:.3g}%"
+            p.text(f"   Proportion in level amongst matches:       {value_m}")
+            p.break_()
+            value_u = (
+                f"{row['u_probability']*100:.3g}%" if row["u_probability"] else "None"
             )
-            lines.append(
-                f"   Bayes factor:                              {row['bayes_factor']:,.3g}"
+            p.text(f"   Proportion in level amongst non-matches:   {value_u}%")
+            p.break_()
+            value_b = (
+                f"{row['bayes_factor']*100:.3g}%" if row["bayes_factor"] else "None"
             )
-        return "\n".join(lines)
+            p.text(f"   Bayes factor:                              {value_b}")
+            p.break_()
 
 
 class Settings:
@@ -298,12 +309,16 @@ class Settings:
         chart["data"]["values"] = self.m_u_as_rows()
         return altair_if_installed_else_json(chart)
 
-    def __repr__(self):  # pragma: no cover
-
-        lines = []
-        lines.append(f"λ (proportion of matches) = {self['proportion_of_matches']:.4g}")
-
-        for c in self.comparison_columns_list:
-            lines.append(c.__repr__())
-
-        return "\n".join(lines)
+    def _repr_pretty_(self, p, cycle):  # pragma: no cover
+        if cycle:
+            p.text("ComparisonColumn()")
+        else:
+            value = (
+                f"{self['proportion_of_matches']:.4g}"
+                if self["proportion_of_matches"]
+                else "None"
+            )
+            p.text(f"λ (proportion of matches) = {value}")
+            for c in self.comparison_columns_list:
+                p.break_()
+                p.pretty(c)

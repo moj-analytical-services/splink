@@ -95,7 +95,10 @@ class Model:
                 for gamma_index in range(c_latest.num_levels):
                     val_latest = c_latest[m_or_u][gamma_index]
                     val_previous = c_previous[m_or_u][gamma_index]
-                    diff = abs(val_latest - val_previous)
+                    if val_latest is not None:
+                        diff = abs(val_latest - val_previous)
+                    else:
+                        diff = 0
                     diffs.append(
                         {"col_name": c_latest.name, "diff": diff, "level": gamma_index}
                     )
@@ -273,9 +276,9 @@ class Model:
         with open(filename, "w") as f:
             f.write(template.format(**fmt_dict))
 
-    def __repr__(self):  # pragma: no cover
-        p = self.current_settings_obj
-        return p.__repr__()
+    def _repr_pretty_(self, p, cycle):  # pragma: no cover
+
+        return p.pretty(self.current_settings_obj)
 
 
 def load_model_from_json(path):

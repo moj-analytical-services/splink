@@ -4,9 +4,10 @@ from typeguard import typechecked
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 from splink.validate import (
-    validate_settings,
+    validate_settings_against_schema,
     validate_input_datasets,
     validate_link_type,
+    validate_probabilities,
 )
 from splink.model import Model, load_model_from_json
 from splink.case_statements import _check_jaro_registered
@@ -22,6 +23,8 @@ from splink.break_lineage import (
     default_break_lineage_blocked_comparisons,
     default_break_lineage_scored_comparisons,
 )
+
+from splink.default_settings import normalise_probabilities
 
 
 @typechecked
@@ -53,11 +56,13 @@ class Splink:
         self.break_lineage_scored_comparisons = break_lineage_scored_comparisons
         _check_jaro_registered(spark)
 
-        validate_settings(settings)
+        validate_settings_against_schema(settings)
         validate_link_type(df_or_dfs, settings)
+
         self.model = Model(settings, spark)
         self.settings_dict = self.model.current_settings_obj.settings_dict
-
+        self.settings_dict = normalise_probabilities(self.settings_dict)
+        validate_probabilities(self.settings_dict)
         # dfs is a list of dfs irrespective of whether input was a df or list of dfs
         if type(df_or_dfs) == DataFrame:
             dfs = [df_or_dfs]
@@ -76,6 +81,8 @@ class Splink:
         """
         df_comparison = block_using_rules(self.settings_dict, self.df, self.spark)
         df_gammas = add_gammas(df_comparison, self.settings_dict, self.spark)
+        # see https://github.com/moj-analytical-services/splink/issues/187
+        df_gammas = self.break_lineage_blocked_comparisons(df_gammas, self.spark)
         return run_expectation_step(df_gammas, self.model, self.spark)
 
     def get_scored_comparisons(self, compute_ll=False):

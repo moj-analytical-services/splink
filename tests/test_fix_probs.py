@@ -52,11 +52,9 @@ def test_fix_u(spark):
     assert mob["u_probabilities"][0] == pytest.approx(0.8)
     assert mob["u_probabilities"][1] == pytest.approx(0.2)
 
-    first_name = mob = linker.model.current_settings_obj.get_comparison_column(
-        "first_name"
-    )
-    assert first_name["u_probabilities"][0] != pytest.approx(0.8)
-    assert first_name["u_probabilities"][1] != pytest.approx(0.2)
+    first_name = linker.model.current_settings_obj.get_comparison_column("first_name")
+    assert first_name["u_probabilities"][0] != 0.8
+    assert first_name["u_probabilities"][1] != 0.2
 
     settings = {
         "link_type": "dedupe_only",
@@ -81,8 +79,8 @@ def test_fix_u(spark):
 
     # Want to check that the "u_probabilities" in the latest parameters are no longer 0.8, 0.2
     mob = linker.model.current_settings_obj.get_comparison_column("mob")
-    assert mob["u_probabilities"][0] != pytest.approx(0.8)
-    assert mob["u_probabilities"][0] != pytest.approx(0.2)
+    assert mob["u_probabilities"][0] != 0.8
+    assert mob["u_probabilities"][0] != 0.2
 
     settings = {
         "link_type": "dedupe_only",
@@ -108,8 +106,8 @@ def test_fix_u(spark):
     linker.get_scored_comparisons()
 
     mob = linker.model.current_settings_obj.get_comparison_column("mob")
-    assert mob["u_probabilities"][0] != pytest.approx(0.75)
-    assert mob["u_probabilities"][1] != pytest.approx(0.25)
+    assert mob["u_probabilities"][0] != 0.75
+    assert mob["u_probabilities"][1] != 0.25
 
     mob = linker.model.current_settings_obj.get_comparison_column("mob")
     assert mob["m_probabilities"][0] == pytest.approx(0.04)

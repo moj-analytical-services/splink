@@ -190,11 +190,12 @@ def test_average_calc_m_u(spark):
         # "comparison_columns_for_global_lambda": [dob_cc],
     }
 
-    mc = ModelCombiner([dict1, dict2, dict3, dict4])
+    mc = ModelCombiner([dict4])
 
     with pytest.warns(UserWarning):
         settings_dict = mc.get_combined_settings_dict(median)
 
+    mc = ModelCombiner([dict1, dict2, dict3, dict4])
     settings = Settings(settings_dict)
     forename = settings.get_comparison_column("forename")
     actual = forename["m_probabilities"][0]
