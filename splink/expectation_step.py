@@ -86,6 +86,9 @@ def _sql_gen_gamma_prob_columns(
             alias = _case_when_col_alias(cc.gamma_name, match)
             case_statement = _sql_gen_gamma_case_when(cc, match)
             case_statements[alias] = case_statement
+        case_statements[f"bf_gamma_{cc.name}"] = _sql_gen_bayes_factors(cc)
+        if cc.term_frequency_adjustments:
+            case_statements[f"bf_tf_adj_{cc.name}"] = _sql_gen_bayes_factors(cc, tf_adj=True)
 
     select_cols = OrderedSet()
     uid = settings["unique_id_column_name"]
@@ -101,10 +104,12 @@ def _sql_gen_gamma_prob_columns(
                 select_cols = _add_left_right(select_cols, col_name)
         if col["term_frequency_adjustments"]:
             select_cols = _add_left_right(select_cols, cc.name)
+            select_cols.add(case_statements[f"bf_tf_adj_{cc.name}"])
 
         select_cols.add("gamma_" + cc.name)
         select_cols.add(case_statements[f"prob_gamma_{cc.name}_non_match"])
         select_cols.add(case_statements[f"prob_gamma_{cc.name}_match"])
+        select_cols.add(case_statements[f"bf_gamma_{cc.name}"])
 
     for c in settings["additional_columns_to_retain"]:
         select_cols = _add_left_right(select_cols, c)
@@ -144,15 +149,16 @@ def _column_order_df_e_select_expr(
         if col["term_frequency_adjustments"]:
             select_cols = _add_left_right(select_cols, cc.name)
 
-        select_cols.add("gamma_" + cc.name)
+        select_cols.add(f"gamma_{cc.name}")
 
         if settings["retain_intermediate_calculation_columns"]:
             select_cols.add(f"prob_gamma_{cc.name}_non_match")
             select_cols.add(f"prob_gamma_{cc.name}_match")
+            select_cols.add(f"bf_gamma_{cc.name}")
 
             if tf_adj_cols:
                 if col["term_frequency_adjustments"]:
-                    select_cols.add(cc.name + "_tf_adj")
+                    select_cols.add(f"bf_tf_adj_{cc.name}")
 
     for c in settings["additional_columns_to_retain"]:
         select_cols = _add_left_right(select_cols, c)
@@ -169,18 +175,20 @@ def _sql_gen_expected_match_prob(
     settings = model.current_settings_obj.settings_dict
     ccs = model.current_settings_obj.comparison_columns_list
 
-    numerator = " * ".join([f"prob_{cc.gamma_name}_match" for cc in ccs])
-    denom_part = " * ".join([f"prob_{cc.gamma_name}_non_match" for cc in ccs])
-
     λ = model.current_settings_obj["proportion_of_matches"]
-    castλ = f"cast({λ} as double)"
-    castoneminusλ = f"cast({1-λ} as double)"
-    match_prob_expression = f"({castλ} * {numerator})/(( {castλ} * {numerator}) + ({castoneminusλ} * {denom_part})) as match_probability"
 
-    select_expr = _column_order_df_e_select_expr(settings, retain_source_dataset)
+    bayes_factor = " * ".join([f"bf_{cc.gamma_name}" for cc in ccs])
+    match_prob_expression = f"( {λ}D * {bayes_factor} ) / ( ({λ}D * {bayes_factor}) + {1-λ}D ) as match_probability"
+
+    tf_adjustments = " * ".join([f"bf_tf_adj_{cc.name}" for cc in ccs if cc.term_frequency_adjustments])
+    
+    bayes_factor = f"{bayes_factor} * {tf_adjustments}"
+    tf_adj_match_prob_expression = f"( {λ}D * {bayes_factor} ) / ( ({λ}D * {bayes_factor}) + {1-λ}D ) as tf_adjusted_match_prob"
+
+    select_expr = _column_order_df_e_select_expr(settings, retain_source_dataset, tf_adj_cols=True)
 
     sql = f"""
-    select {match_prob_expression}, {select_expr}
+    select {tf_adj_match_prob_expression}, {match_prob_expression}, {select_expr}
     from {table_name}
     """
 
@@ -210,12 +218,12 @@ def _sql_gen_gamma_case_when(comparison_column, match):
         probs = cc["u_probabilities"]
 
     case_statements = []
-    case_statements.append(f"WHEN {cc.gamma_name} = -1 THEN cast(1 as double)")
+    case_statements.append(f"WHEN {cc.gamma_name} = -1 THEN 1.0D")
 
     for gamma_index, prob in enumerate(probs):
         if prob is not None:
             case_stmt = (
-                f"when {cc.gamma_name} = {gamma_index} then cast({prob:.35f} as double)"
+                f"when {cc.gamma_name} = {gamma_index} then {prob}D"
             )
         else:
             case_stmt = f"when {cc.gamma_name} = {gamma_index} then null"
@@ -225,6 +233,52 @@ def _sql_gen_gamma_case_when(comparison_column, match):
     case_statements = "\n".join(case_statements)
 
     alias = _case_when_col_alias(cc.gamma_name, match)
+
+    sql = f""" case \n{case_statements} \nend \nas {alias}"""
+
+    return sql.strip()
+
+def _sql_gen_bayes_factors(comparison_column, tf_adj=False):
+    """
+    Create the case statements that look up the correct probabilities in the
+    model dict for each gamma to calculate Bayes factors (m / u) and additional
+    term frequency Bayes factors (u / (term frequency))
+    """
+    cc = comparison_column
+
+    case_statements = []
+    case_statements.append(f"when {cc.gamma_name} = -1 then 1.0D")
+
+    if not tf_adj:
+        alias = f"bf_{cc.gamma_name}"
+        bfs = [m / u for m, u in zip(cc["m_probabilities"], cc["u_probabilities"])]
+    
+        for gamma_index, bf in enumerate(bfs):
+            if bf is not None:
+                case_stmt = (
+                    f"when {cc.gamma_name} = {gamma_index} then {bf}D"
+                )
+            else:
+                case_stmt = f"when {cc.gamma_name} = {gamma_index} then 1"
+
+            case_statements.append(case_stmt)
+    else:
+        alias = f"bf_tf_adj_{cc.name}"
+        probs = cc["u_probabilities"]
+        tf_weights = cc["tf_adjustment_weights"]
+
+        for gamma_index, (u, weight) in enumerate(zip(probs, tf_weights)):
+            if u is not None:
+                bf_tf = f"{u}D / greatest(tf_{cc.name}_l, tf_{cc.name}_r)"
+                case_stmt = (
+                    f"when {cc.gamma_name} = {gamma_index} then power({bf_tf}, {weight}D)"
+                )
+            else:
+                case_stmt = f"when {cc.gamma_name} = {gamma_index} then 1"
+
+            case_statements.append(case_stmt)
+
+    case_statements = "\n".join(case_statements)
 
     sql = f""" case \n{case_statements} \nend \nas {alias}"""
 
@@ -247,16 +301,20 @@ def _calculate_log_likelihood_df(df_with_gamma_probs, model, spark):
     non_match_prob = f"({1-λ} * {non_match_prob})"
     log_likelihood = f"ln({match_prob} + {non_match_prob})"
 
-    numerator = " * ".join([f"prob_{c.gamma_name}_match" for c in cc])
-    denom_part = " * ".join([f"prob_{c.gamma_name}_non_match" for c in cc])
-    match_prob_expression = f"({λ} * {numerator})/(( {λ} * {numerator}) + ({1 -λ} * {denom_part})) as match_probability"
+    bayes_factor = " * ".join([f"bf_{cc.gamma_name}" for cc in ccs])
+    match_prob_expression = f"( {λ}D * {bayes_factor} ) / ( ({λ}D * {bayes_factor}) + {1-λ}D ) as match_probability"
+
+    tf_adjustments = " * ".join([f"bf_tf_adj_{cc.name}" for cc in ccs if cc.term_frequency_adjustments])
+    
+    bayes_factor = f"{bayes_factor} * {tf_adjustments}"
+    tf_adj_match_prob_expression = f"( {λ}D * {bayes_factor} ) / ( ({λ}D * {bayes_factor}) + {1-λ}D ) as tf_adjusted_match_prob"
 
     df_with_gamma_probs.createOrReplaceTempView("df_with_gamma_probs")
     sql = f"""
     select *,
-    cast({log_likelihood} as double) as  log_likelihood,
-    {match_prob_expression}
-
+    cast({log_likelihood} as double) as log_likelihood,
+    {match_prob_expression},
+    {tf_adj_match_prob_expression}
     from df_with_gamma_probs
     """
     logger.debug(_format_sql(sql))

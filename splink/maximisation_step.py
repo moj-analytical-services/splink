@@ -49,7 +49,7 @@ def _sql_gen_intermediate_pi_aggregate(model, table_name="df_e"):
     gamma_cols_expr = ", ".join([cc.gamma_name for cc in ccs])
 
     sql = f"""
-    select {gamma_cols_expr}, sum(match_probability) as expected_num_matches, sum(1- match_probability) as expected_num_non_matches, count(*) as num_rows
+    select {gamma_cols_expr}, sum(tf_adjusted_match_prob) as expected_num_matches, sum(1- tf_adjusted_match_prob) as expected_num_non_matches, count(*) as num_rows
     from {table_name}
     group by {gamma_cols_expr}
     """

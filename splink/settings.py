@@ -70,6 +70,12 @@ class ComparisonColumn:
         elif "col_name" in cd:
             return [cd["col_name"]]
 
+    @property
+    def term_frequency_adjustments(self):
+        cd = self.column_dict
+        return  cd["term_frequency_adjustments"]
+
+
     def get_m_u_bayes_at_gamma_index(self, gamma_index):
 
         # if -1 this indicates a null field

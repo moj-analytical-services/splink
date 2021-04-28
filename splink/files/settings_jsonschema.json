@@ -281,7 +281,13 @@
             "type": "boolean",
             "default": false,
             "title": "Whether ex post term frequency adjustments should be made to match scores for this column",
-            "description": "For some columns such as first name, the value of first name is important due to the distribution of values being non-uniform.  For instance, a match on 'linacre' contains more information than a match on 'smith. If this is set to true, a term frequency adjustment is made to account for these difference.  For details of how this works, see [here](https://static.cambridge.org/content/id/urn:cambridge.org:id:article:S0003055418000783/resource/name/S0003055418000783sup001.pdf) page 7"
+            "description": "For some columns such as first name, the value of first name is important due to the distribution of values being non-uniform.  For instance, a match on 'linacre' contains more information than a match on 'smith'. If this is set to true, a term frequency adjustment is made to account for these difference."
+          },
+          "tf_adjustment_weights": {
+            "$id": "#/properties/comparison_columns/items/properties/tf_adjusment_weights",
+            "type": "array",
+            "title": "An array of weights to apply to term frequency adjustments for each level gamma level. ",
+            "description": "The first weight given corresponds to level 0 (least similar) and the last corresponds to level n (most similar). By default, the full term frequency adjustment (weight=1) is made to the top level only, and no term frequency is applied to other levels (weight=0)."
           },
           "gamma_index": {
             "$id": "#/properties/comparison_columns/items/properties/gamma_index",

@@ -113,11 +113,11 @@ class Splink:
 
         df_e = self.break_lineage_scored_comparisons(df_e, self.spark)
 
-        df_e_adj = self.make_term_frequency_adjustments(df_e)
+        #df_e_adj = self.make_term_frequency_adjustments(df_e)
 
-        df_e.unpersist()
+        #df_e.unpersist()
 
-        return df_e_adj
+        return df_e
 
     def make_term_frequency_adjustments(self, df_e: DataFrame):
         """Take the outputs of 'get_scored_comparisons' and make term frequency adjustments on designated columns in the settings dictionary
