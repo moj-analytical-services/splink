@@ -15,7 +15,7 @@ from splink.blocking import block_using_rules
 from splink.gammas import add_gammas
 from splink.iterate import iterate
 from splink.expectation_step import run_expectation_step
-from splink.term_frequencies import make_adjustment_for_term_frequencies
+from splink.term_frequencies import make_adjustment_for_term_frequencies, add_term_frequencies
 from splink.vertically_concat import (
     vertically_concatenate_datasets,
 )
@@ -92,7 +92,9 @@ class Splink:
             DataFrame: A spark dataframe including a match probability column
         """
 
-        df_comparison = block_using_rules(self.settings_dict, self.df, self.spark)
+        df_with_tf = add_term_frequencies(self.df, self.settings_dict, self.spark)
+
+        df_comparison = block_using_rules(self.settings_dict, df_with_tf, self.spark)
 
         df_gammas = add_gammas(df_comparison, self.settings_dict, self.spark)
 

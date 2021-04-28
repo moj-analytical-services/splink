@@ -60,6 +60,7 @@ def _get_select_expression_gammas(settings: dict, retain_source_dataset_col: boo
                 select_columns = _add_left_right(select_columns, col_name)
         if col["term_frequency_adjustments"]:
             select_columns = _add_left_right(select_columns, cc.name)
+            select_columns = _add_left_right(select_columns, f"tf_{cc.name}")
         select_columns.add(col["case_expression"])
 
     for c in settings["additional_columns_to_retain"]:

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def _sql_gen_new_lambda(table_name="df_intermediate"):
 
     sql = f"""
-    select cast(sum(expected_num_matches)/sum(num_rows) as float) as new_lambda
+    select cast(sum(expected_num_matches)/sum(num_rows) as double) as new_lambda
     from {table_name}
     """
 
@@ -65,8 +65,8 @@ def _sql_gen_pi_df(model, table_name="df_intermediate"):
         sql = f"""
         select
         {gamma_column_name} as gamma_value,
-        cast(sum(expected_num_matches)/(select sum(expected_num_matches) from {table_name} where {gamma_column_name} != -1) as float) as new_probability_match,
-        cast(sum(expected_num_non_matches)/(select sum(expected_num_non_matches) from {table_name} where {gamma_column_name} != -1) as float) as new_probability_non_match,
+        cast(sum(expected_num_matches)/(select sum(expected_num_matches) from {table_name} where {gamma_column_name} != -1) as double) as new_probability_match,
+        cast(sum(expected_num_non_matches)/(select sum(expected_num_non_matches) from {table_name} where {gamma_column_name} != -1) as double) as new_probability_non_match,
         '{col_name}' as column_name
         from {table_name}
         where {gamma_column_name} != -1
