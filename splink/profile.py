@@ -108,11 +108,12 @@ def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, col_n
 
     total_rows_inc_nulls = percentile_data[0]["total_rows_inc_nulls"]
     total_non_null_rows = percentile_data[0]["total_non_null_rows"]
+    distinct_value_count = percentile_data[0]["distinct_value_count"]
     perc = total_non_null_rows / total_rows_inc_nulls
 
     sub = (
-        f"Of the {total_rows_inc_nulls} rows in the df, "
-        f"{total_non_null_rows} ({1-perc:,.1%}) are null for this column"
+        f"In this col, {total_rows_inc_nulls*(1-perc):,.0f} values ({1-perc:,.1%}) are null and there are "
+        f"{distinct_value_count} distinct values"
     )
     sub = sub.format(**percentile_data[0])
     inner_spec["hconcat"][0]["data"]["values"] = percentile_data
@@ -183,10 +184,13 @@ def _non_array_group(cols_or_exprs, table_name):
     (
     select
         count(*) as value_count,
+
         {case_expr} as value,
         "{group_name}" as group_name,
         (select count({case_expr}) from {table_name}) as total_non_null_rows,
-        (select count(*) from {table_name}) as total_rows_inc_nulls
+        (select count(*) from {table_name}) as total_rows_inc_nulls,
+        (select count(distinct {case_expr}) from {table_name}) as distinct_value_count
+
     from {table_name}
     where {case_expr} is not null
     group by {case_expr}
@@ -225,7 +229,8 @@ def _array_group(col, df, spark):
         value,
         group_name,
         (select count(value) from df_exp) as total_non_null_rows,
-        (select count(*) from df_exp) as total_rows_inc_nulls
+        (select count(*) from df_exp) as total_rows_inc_nulls,
+        (select count(distinct value) from df_exp) as distinct_value_count
     from df_exp
     where value is not null
     group by value, group_name
@@ -279,7 +284,8 @@ def _get_df_percentiles(df_all_column_value_frequencies, spark):
     sql = """
     select sum(value_count) as sum_tokens_in_value_count_group, value_count, group_name,
     first(total_non_null_rows) as total_non_null_rows,
-    first(total_rows_inc_nulls) as total_rows_inc_nulls
+    first(total_rows_inc_nulls) as total_rows_inc_nulls,
+    first(distinct_value_count) as distinct_value_count
     from df_all_column_value_frequencies
     group by group_name, value_count
     order by group_name, value_count desc
@@ -289,7 +295,7 @@ def _get_df_percentiles(df_all_column_value_frequencies, spark):
 
     sql = """
     select sum(sum_tokens_in_value_count_group) over (partition by group_name order by value_count desc) as value_count_cumsum,
-    sum_tokens_in_value_count_group, value_count, group_name,  total_non_null_rows, total_rows_inc_nulls
+    sum_tokens_in_value_count_group, value_count, group_name,  total_non_null_rows, total_rows_inc_nulls, distinct_value_count
     from df_total_in_value_counts
 
 
@@ -305,7 +311,7 @@ def _get_df_percentiles(df_all_column_value_frequencies, spark):
     1 - (value_count_cumsum/total_rows_inc_nulls) as percentile_inc_nulls,
 
     value_count, group_name, total_non_null_rows, total_rows_inc_nulls,
-    sum_tokens_in_value_count_group
+    sum_tokens_in_value_count_group, distinct_value_count
     from df_total_in_value_counts_cumulative
 
     """
