@@ -101,6 +101,7 @@ def estimate_u_values(
         df_gammas = add_gammas(df_comparison, settings, spark)
 
         df_e_product = df_gammas.withColumn("match_probability", lit(0.0))
+        df_e_product = df_gammas.withColumn("tf_adjusted_match_prob", lit(0.0))
 
         model = Model(settings, spark)
         run_maximisation_step(df_e_product, model, spark)

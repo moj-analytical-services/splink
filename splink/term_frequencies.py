@@ -19,6 +19,9 @@ from typeguard import typechecked
 
 logger = logging.getLogger(__name__)
 
+#############################
+# OLD TF ADJUSTMENT METHOD
+#############################
 
 def sql_gen_bayes_string(probs):
     """Convenience function for computing an updated probability using bayes' rule
@@ -225,7 +228,7 @@ def sql_gen_term_frequencies(column_name, table_name="df"):
 
 
 def _sql_gen_add_term_frequencies(
-    settings: dict,
+    model: Model,
     table_name: str = "df"
 ):
     """Build SQL statement that adds gamma columns to the comparison dataframe
@@ -237,8 +240,11 @@ def _sql_gen_add_term_frequencies(
     Returns:
         str: A SQL string
     """
+    
+    cc_dict = model.current_settings_obj.comparison_column_dict
 
-    cols = [cc["col_name"] for cc in settings["comparison_columns"] if cc["term_frequency_adjustments"]]
+    cols = [name for name, cc in cc_dict.items() if cc.term_frequency_adjustments]
+    #cols = [cc.name for cc in settings["comparison_columns"] if cc["term_frequency_adjustments"]]
     tf_tables = ", ".join([f"tf_{col} as ({sql_gen_term_frequencies(col, table_name)})" for col in cols])
 
     tf_cols = ", ".join(f"tf_{col}.tf_{col}" for col in cols) 
@@ -260,7 +266,7 @@ def _sql_gen_add_term_frequencies(
 
 def add_term_frequencies(
     df: DataFrame,
-    settings_dict: dict,
+    model: Model,
     spark: SparkSession
 ):
     """Compute the term frequencies of the required columns and add to the dataframe.  
@@ -274,9 +280,7 @@ def add_term_frequencies(
         of the corresponding values
     """
 
-    settings_dict = complete_settings_dict(settings_dict, spark)
-
-    sql = _sql_gen_add_term_frequencies(settings_dict, "df")
+    sql = _sql_gen_add_term_frequencies(model, "df")
 
     logger.debug(_format_sql(sql))
     df.createOrReplaceTempView("df")

@@ -64,7 +64,9 @@ class Model:
             name = row_dict["column_name"]
             level_int = row_dict["gamma_value"]
             match_prob = row_dict["new_probability_match"]
-            non_match_prob = row_dict["new_probability_non_match"]
+### NOT SURE ABOUT HOW TO DEAL WITH THIS SO FOR NOW I'M JUST MAKING 
+### SURE U-PROBS EXIST FOR ALL LEVELS WITH SOME MINIMAL VALUE...
+            non_match_prob = row_dict["new_probability_non_match"] or 1e-10
 
             self.current_settings_obj.set_m_probability(
                 name, level_int, match_prob, force=False

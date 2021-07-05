@@ -70,6 +70,7 @@ class Splink:
             dfs = df_or_dfs
 
         self.df = vertically_concatenate_datasets(dfs)
+        self.df = add_term_frequencies(self.df, self.model, self.spark)
         validate_input_datasets(self.df, self.model.current_settings_obj)
         self.save_state_fn = save_state_fn
 
@@ -92,10 +93,8 @@ class Splink:
             DataFrame: A spark dataframe including a match probability column
         """
 
-        df_with_tf = add_term_frequencies(self.df, self.settings_dict, self.spark)
-
-        df_comparison = block_using_rules(self.settings_dict, df_with_tf, self.spark)
-
+        df_comparison = block_using_rules(self.settings_dict, self.df, self.spark)
+        
         df_gammas = add_gammas(df_comparison, self.settings_dict, self.spark)
 
         df_gammas = self.break_lineage_blocked_comparisons(df_gammas, self.spark)
