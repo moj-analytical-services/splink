@@ -1,5 +1,5 @@
 from copy import deepcopy
-from splink.default_settings import normalise_probabilities, _normalise_prob_list
+from splink.default_settings import _normalise_prob_list
 
 from .blocking import block_using_rules
 from .gammas import add_gammas

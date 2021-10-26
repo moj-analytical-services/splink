@@ -17,9 +17,10 @@ def _check_jaro_registered(spark):
             return True
 
     warnings.warn(
-        "Custom string comparison functions such as jaro_winkler_sim are available in Spark "
-        "Or you did not pass 'spark' (the SparkSession) into 'Model' "
-        "You can import these functions using the scala-udf-similarity-0.0.7.jar provided with Splink"
+        "Custom string comparison functions such as jaro_winkler_sim are available in"
+        " Spark Or you did not pass 'spark' (the SparkSession) into 'Model' You can"
+        " import these functions using the scala-udf-similarity-0.0.7.jar provided with"
+        " Splink"
     )
     return False
 
@@ -33,8 +34,8 @@ def _find_last_end_position(case_statement):
         m = list(re.finditer(regex, case_statement))[-1]
     except IndexError:
         raise ValueError(
-            "Your case statement {case_statement} appears to be malformatted - there's no END. "
-            f"Statement is {case_statement}"
+            "Your case statement {case_statement} appears to be malformatted -"
+            f" there's no END. Statement is {case_statement}"
         )
     start, end = m.span()
 
@@ -313,7 +314,8 @@ def _sql_gen_get_or_list_jaro(col_name, other_name_cols, threshold=1.0):
     # Note the ifnull 1234 just ensures that if one of the other columns is null,
     # the jaro score is lower than the threshold
     ors = [
-        f"jaro_winkler_sim(ifnull({col_name}_l, '1234abcd5678'), ifnull({n}_r, '987pqrxyz654')) >= {threshold}"
+        f"jaro_winkler_sim(ifnull({col_name}_l, '1234abcd5678'), ifnull({n}_r,"
+        f" '987pqrxyz654')) >= {threshold}"
         for n in other_name_cols
     ]
     ors_string = " OR ".join(ors)

@@ -44,11 +44,23 @@ class Splink:
 
         Args:
             settings (dict): splink settings dictionary
-            df_or_dfs (Union[DataFrame, List[DataFrame]]): Either a single Spark dataframe to dedupe, or a list of Spark dataframe to link and or dedupe. Where `link_type` is `dedupe_only`, should be a single dataframe to dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, show be a list of dfs.  Requires conformant dataframes (i.e. they must have same columns)
+            df_or_dfs (Union[DataFrame, List[DataFrame]]): Either a single Spark dataframe to dedupe, or a list of
+                Spark dataframes to link and or dedupe. Where `link_type` is `dedupe_only`, should be a single dataframe
+                to dedupe. Where `link_type` is `link_only` or `link_and_dedupe`, show be a list of dfs.  Requires
+                conformant dataframes (i.e. they must have same columns)
             spark (SparkSession): SparkSession object
-            save_state_fn (function, optional):  A function provided by the user that takes one arguments, model (i.e. a Model from splink.model), and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
-            break_lineage_blocked_comparisons (function, optional): Large jobs will likely run into memory errors unless the lineage is broken after blocking.  This is a user-provided function that takes one argument - df - and allows the user to break lineage.  For example, the function might save df to the AWS s3 file system, and then reload it from the saved files.
-            break_lineage_scored_comparisons (function, optional): Large jobs will likely run into memory errors unless the lineage is broken after comparisons are scored and before term frequency adjustments.  This is a user-provided function that takes one argument - df - and allows the user to break lineage.  For example, the function might save df to the AWS s3 file system, and then reload it from the saved files.
+            save_state_fn (function, optional):  A function provided by the user that takes one arguments, model (i.e.
+                a Model from splink.model), and is executed each iteration.  This is a hook that allows the user to save
+                the state between iterations, which is mostly useful for very large jobs which may need to be restarted
+                from where they left off if they fail.
+            break_lineage_blocked_comparisons (function, optional): Large jobs will likely run into memory errors
+                unless the lineage is broken after blocking.  This is a user-provided function that takes one argument
+                - df - and allows the user to break lineage.  For example, the function might save df to the AWS s3
+                file system, and then reload it from the saved files.
+            break_lineage_scored_comparisons (function, optional): Large jobs will likely run into memory errors unless
+                the lineage is broken after comparisons are scored and before term frequency adjustments.  This is a
+                user-provided function that takes one argument - df - and allows the user to break lineage.  For
+                example, the function might save df to the AWS s3 file system, and then reload it from the saved files.
         """
 
         self.spark = spark
@@ -116,7 +128,8 @@ class Splink:
         return df_e
 
     def save_model_as_json(self, path: str, overwrite=False):
-        """Save model (settings, parameters and parameter history) as a json file so it can later be re-loaded using load_from_json
+        """Save model (settings, parameters and parameter history) as a json file so it can later be re-loaded
+        using load_from_json
 
         Args:
             path (str): Path to the json file.
@@ -137,8 +150,11 @@ def load_from_json(
     Args:
         path (string): path to json file created using Splink.save_model_as_json
         spark (SparkSession): SparkSession object
-        df (DataFrame, optional): The dataframe to dedupe. Where `link_type` is `dedupe_only`, the dataframe to dedupe. Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
-        save_state_fn (function, optional):  A function provided by the user that takes one argument, params, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
+        df (DataFrame, optional): The dataframe to dedupe. Where `link_type` is `dedupe_only`, the dataframe to dedupe.
+            Should be ommitted `link_type` is `link_only` or `link_and_dedupe`.
+        save_state_fn (function, optional):  A function provided by the user that takes one argument, params, and is
+            executed each iteration.  This is a hook that allows the user to save the state between iterations, which
+            is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
 
     Returns:
         splink.model.Model
