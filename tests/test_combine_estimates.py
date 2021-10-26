@@ -308,7 +308,7 @@ def test_global_lambda_calc(spark):
 
 # df_fn = df[df["gamma_first_name"] == 1].copy()
 # s_fn["proportion_of_matches"] = df_fn["true_match_probability_l"].mean()
-# df_e_fn, model_fn = estimate(df_fn, s_fn, spark, compute_ll=False)
+# df_e_fn, model_fn = estimate(df_fn, s_fn, spark)
 
 # model_fn.save_model_to_json_file("model_fn.json", overwrite=True)
 
@@ -320,7 +320,7 @@ def test_global_lambda_calc(spark):
 
 # df_sn = df[df["gamma_surname"] == 1].copy()
 # s_sn["proportion_of_matches"] = df_sn["true_match_probability_l"].mean()
-# df_e_sn, model_sn = estimate(df_sn, s_sn, spark, compute_ll=False)
+# df_e_sn, model_sn = estimate(df_sn, s_sn, spark)
 
 # model_sn.save_model_to_json_file("model_sn.json", overwrite=True)
 
@@ -333,7 +333,7 @@ def test_global_lambda_calc(spark):
 # filter2=df["gamma_first_name"] == 1
 # df_dob = df[filter1 & filter2 ].copy()
 # s_dob["proportion_of_matches"] = df_dob["true_match_probability_l"].mean()
-# df_e_dob, model_dob = estimate(df_dob, s_dob, spark, compute_ll=False)
+# df_e_dob, model_dob = estimate(df_dob, s_dob, spark)
 
 # from splink.combine_models import ModelCombiner, combine_cc_estimates
 

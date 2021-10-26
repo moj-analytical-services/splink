@@ -17,8 +17,8 @@ def spark():
         conf = SparkConf()
 
         conf.set("spark.jars.ivy", "/home/jovyan/.ivy2/")
-        conf.set("spark.driver.extraClassPath", "jars/scala-udf-similarity-0.0.7.jar")
-        conf.set("spark.jars", "jars/scala-udf-similarity-0.0.7.jar")
+        conf.set("spark.driver.extraClassPath", "jars/scala-udf-similarity-0.0.9.jar")
+        conf.set("spark.jars", "jars/scala-udf-similarity-0.0.9.jar")
         conf.set("spark.driver.memory", "4g")
         conf.set("spark.sql.shuffle.partitions", "12")
 

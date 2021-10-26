@@ -17,7 +17,7 @@ def iterate(
     df_gammas: DataFrame,
     model: Model,
     spark: SparkSession,
-    compute_ll: bool = False,
+
     save_state_fn: Callable = None,
 ):
     """Repeatedly run expectation and maximisation step until convergence or max itations is reached.
@@ -28,7 +28,7 @@ def iterate(
         spark (SparkSession): The SparkSession object
         log_iteration (bool, optional): Whether to write a message to the log after each iteration. Defaults to False.
         num_iterations (int, optional): The number of iterations to run. Defaults to 10.
-        compute_ll (bool, optional): Whether to compute the log likelihood.  This is not necessary and significantly degrades performance. Defaults to False.
+
         save_state_fn (function, optional):  A function provided by the user that takes one arguments, params, and is executed each iteration.  This is a hook that allows the user to save the state between iterations, which is mostly useful for very large jobs which may need to be restarted from where they left off if they fail.
 
     Returns:
@@ -38,7 +38,7 @@ def iterate(
     num_iterations = settings["max_iterations"]
     for i in range(num_iterations):
 
-        df_e = run_expectation_step(df_gammas, model, spark, compute_ll=compute_ll)
+        df_e = run_expectation_step(df_gammas, model, spark)
 
         run_maximisation_step(df_e, model, spark)
 
@@ -51,7 +51,7 @@ def iterate(
             break
 
     # The final version of df_e should align to the current parameters - i.e. those computed in the last max step
-    df_e = run_expectation_step(df_gammas, model, spark, compute_ll=compute_ll)
+    df_e = run_expectation_step(df_gammas, model, spark)
 
     # The expectation step adds the current params to history, so this is needed to output a final
     # version of charts/params.

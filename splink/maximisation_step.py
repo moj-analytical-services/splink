@@ -48,8 +48,12 @@ def _sql_gen_intermediate_pi_aggregate(model, table_name="df_e"):
 
     gamma_cols_expr = ", ".join([cc.gamma_name for cc in ccs])
 
+    if model.current_settings_obj.any_cols_have_tf_adjustments:
+        score_col = "tf_adjusted_match_prob"
+    else:
+        score_col = "match_probability"
     sql = f"""
-    select {gamma_cols_expr}, sum(tf_adjusted_match_prob) as expected_num_matches, sum(1- tf_adjusted_match_prob) as expected_num_non_matches, count(*) as num_rows
+    select {gamma_cols_expr}, sum({score_col}) as expected_num_matches, sum(1- {score_col}) as expected_num_non_matches, count(*) as num_rows
     from {table_name}
     group by {gamma_cols_expr}
     """

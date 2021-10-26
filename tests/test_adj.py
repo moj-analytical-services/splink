@@ -7,11 +7,10 @@ from splink_data_generation.match_prob import add_match_prob
 from splink.default_settings import complete_settings_dict
 from splink.iterate import iterate
 from splink.model import Model
-from splink.term_frequencies import make_adjustment_for_term_frequencies
 from splink import Splink
 
 
-def _probabilities_from_freqs(freqs, m_gamma_0=0.05, u_gamma_0=0.5):
+def _probabilities_from_freqs(freqs, m_gamma_0=0.05):
     """Very roughly come up with some plausible u probabilities
     for given frequencies
 
@@ -29,11 +28,17 @@ def _probabilities_from_freqs(freqs, m_gamma_0=0.05, u_gamma_0=0.5):
     m_probs = [f * adj for f in m_probs]
     m_probs.insert(0, m_gamma_0)
 
-    u_probs = [f * f for f in freqs]
-    u_probs = [f / sum(u_probs) for f in u_probs]
-    adj = 1 - u_gamma_0
-    u_probs = [f * adj for f in u_probs]
-    u_probs.insert(0, u_gamma_0)
+    # Amongst truly non-matching records, what's the probability you observe a match on john?
+    # 36 possibilities
+    #   9/36 are john
+    #   4/36 are matt
+    #   1/36 are robin
+    #   22/36 do not match
+
+    sum_freqs_sq = sum(freqs) ** 2
+    u_probs = [f ** 2 / sum_freqs_sq for f in freqs]
+    remainder = 1 - sum(u_probs)
+    u_probs.insert(0, remainder)
 
     return {
         "m_probabilities": m_probs,
@@ -61,6 +66,15 @@ def test_term_frequency_adjustments(spark):
 
     forename_probs = _probabilities_from_freqs([3, 2, 1])
     surname_probs = _probabilities_from_freqs([10, 5, 1])
+
+    from pyspark.sql.functions import col, create_map, lit
+    from itertools import chain
+
+    tf_forename = {"Robin": 1 / 6, "Matt": 2 / 6, "John": 3 / 6}
+    tf_surname = {"Linacre": 1 / 16, "Hughes": 5 / 16, "Smith": 10 / 16}
+
+    forename_mapping = create_map([lit(x) for x in chain(*tf_forename.items())])
+    surname_mapping = create_map([lit(x) for x in chain(*tf_surname.items())])
 
     settings_true = {
         "link_type": "dedupe_only",
@@ -180,11 +194,32 @@ def test_term_frequency_adjustments(spark):
     # Can't use linker = Splink() because we have df_gammas, not df
     settings_binary = complete_settings_dict(settings_binary, spark)
     model = Model(settings_binary, spark)
-    df_e = iterate(df_e, model, spark)
 
-    df_e = make_adjustment_for_term_frequencies(
-        df_e, model, spark, retain_adjustment_columns=True
+    # Need to populate term frequencies despite not having the underlying data
+    # Note tfs of random data (names other than robin, matt john)
+    # don't matter because they are never used
+    df_e = (
+        df_e.withColumn(
+            "tf_forename_binary_l", forename_mapping[f.col("forename_binary_l")]
+        )
+        .withColumn(
+            "tf_forename_binary_r", forename_mapping[f.col("forename_binary_r")]
+        )
+        .withColumn("tf_surname_binary_l", surname_mapping[f.col("surname_binary_l")])
+        .withColumn("tf_surname_binary_r", surname_mapping[f.col("surname_binary_r")])
     )
+
+    df_e = df_e.fillna(
+        1,
+        subset=[
+            "tf_forename_binary_l",
+            "tf_forename_binary_r",
+            "tf_surname_binary_l",
+            "tf_surname_binary_r",
+        ],
+    )
+
+    df_e = iterate(df_e, model, spark)
 
     df = df_e.toPandas()
 
@@ -200,26 +235,26 @@ def test_term_frequency_adjustments(spark):
     # We expect Johns to be adjusted down...
     f1 = df["forename_binary_l"] == "John"
     df_filtered = df[f1]
-    adj = df_filtered["forename_binary_tf_adj"].mean()
-    assert adj < 0.5
+    adj = df_filtered["bf_tf_adj_forename_binary"].mean()
+    assert adj <= 1.0
 
     # And Robins to be adjusted up
     f1 = df["forename_binary_l"] == "Robin"
     df_filtered = df[f1]
-    adj = df_filtered["forename_binary_tf_adj"].mean()
-    assert adj > 0.5
+    adj = df_filtered["bf_tf_adj_forename_binary"].mean()
+    assert adj > 1.0
 
     # We expect Smiths to be adjusted down...
     f1 = df["surname_binary_l"] == "Smith"
     df_filtered = df[f1]
-    adj = df_filtered["surname_binary_tf_adj"].mean()
-    assert adj < 0.5
+    adj = df_filtered["bf_tf_adj_surname_binary"].mean()
+    assert adj < 1.0
 
     # And Linacres to be adjusted up
     f1 = df["surname_binary_l"] == "Linacre"
     df_filtered = df[f1]
-    adj = df_filtered["surname_binary_tf_adj"].mean()
-    assert adj > 0.5
+    adj = df_filtered["bf_tf_adj_surname_binary"].mean()
+    assert adj > 1.0
 
     # Check adjustments are applied correctly
 
@@ -231,12 +266,11 @@ def test_term_frequency_adjustments(spark):
     prior = row["match_probability"]
     posterior = row["tf_adjusted_match_prob"]
 
-    b1 = row["forename_binary_tf_adj"]
-    b2 = row["surname_binary_tf_adj"]
+    b1 = row["bf_tf_adj_forename_binary"]
+    b2 = row["bf_tf_adj_surname_binary"]
 
-    expected_post = (
-        prior * b1 * b2 / (prior * b1 * b2 + (1 - prior) * (1 - b1) * (1 - b2))
-    )
+    expected_post_bf = (prior / (1 - prior)) * b1 * b2
+    expected_post = expected_post_bf / (1 + expected_post_bf)
     assert posterior == pytest.approx(expected_post)
 
     #  We expect match probability to be equal to tf_adjusted match probability in cases where surname and forename don't match
@@ -249,59 +283,3 @@ def test_term_frequency_adjustments(spark):
     ).sum()
 
     assert 0 == pytest.approx(sum_difference)
-
-
-@pytest.fixture(scope="module")
-def nulls_df(spark):
-
-    data = [
-        {"unique_id": 1, "surname": "smith", "firstname": "john"},
-        {"unique_id": 2, "surname": "smith", "firstname": "john"},
-        {"unique_id": 3, "surname": "smithe", "firstname": "john"},
-    ]
-
-    dfpd = pd.DataFrame(data)
-    df = spark.createDataFrame(dfpd)
-    yield df
-
-
-def test_freq_adj_divzero(spark, nulls_df):
-
-    # create settings object that requests term_freq_adjustments on column 'weird'
-
-    settings = {
-        "link_type": "dedupe_only",
-        "blocking_rules": [
-            "l.surname = r.surname",
-        ],
-        "comparison_columns": [
-            {
-                "col_name": "firstname",
-                "num_levels": 3,
-            },
-            {
-                "col_name": "surname",
-                "num_levels": 3,
-                "term_frequency_adjustments": True,
-            },
-            {
-                "col_name": "always_none",
-                "num_levels": 3,
-                "term_frequency_adjustments": True,
-            },
-        ],
-        "additional_columns_to_retain": ["unique_id"],
-        "max_iterations": 1,
-    }
-
-    # create column in a way that could trigger a div by zero on the average adj calculation before the fix
-    nulls_df = nulls_df.withColumn("always_none", f.lit(None))
-
-    test_passing = True
-    try:
-        linker = Splink(settings, nulls_df, spark)
-        linker.get_scored_comparisons()
-    except ZeroDivisionError:
-        test_passing = False
-
-    assert test_passing is True
