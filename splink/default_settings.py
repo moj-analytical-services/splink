@@ -138,6 +138,19 @@ def _complete_probabilities(col_settings: dict, mu_probabilities: str):
         col_settings[mu_probabilities] = probs
 
 
+def _complete_tf_adjustment_weights(col_settings: dict):
+
+    if "tf_adjustment_weights" in col_settings:
+        if not all(0.0 <= w <= 1.0 for w in col_settings["tf_adjustment_weights"]):
+            raise ValueError(
+                f"All values of 'tf_adjustment_weights' must be between 0 and 1"
+            )
+    else:
+        weights = [0.0] * col_settings["num_levels"]
+        weights[-1] = 1.0  
+        col_settings["tf_adjustment_weights"] = weights
+
+
 def complete_settings_dict(settings_dict: dict, spark: SparkSession):
     """Auto-populate any missing settings from the settings dictionary using the 'sensible defaults' that
     are specified in the json schema (./splink/files/settings_jsonschema.json)
@@ -203,6 +216,7 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
         _complete_case_expression(col_settings, spark)
         _complete_probabilities(col_settings, "m_probabilities")
         _complete_probabilities(col_settings, "u_probabilities")
+        _complete_tf_adjustment_weights(col_settings)
 
     return settings_dict
 

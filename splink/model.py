@@ -46,8 +46,6 @@ class Model:
 
         self.current_settings_obj = Settings(deepcopy(settings_dict_completed))
 
-        self.log_likelihood_exists = False
-
     def _populate_model_from_maximisation_step(self, lambda_value, pi_df_collected):
         """
         Take results of sql query that computes updated values
@@ -64,7 +62,9 @@ class Model:
             name = row_dict["column_name"]
             level_int = row_dict["gamma_value"]
             match_prob = row_dict["new_probability_match"]
-            non_match_prob = row_dict["new_probability_non_match"]
+            ### NOT SURE ABOUT HOW TO DEAL WITH THIS SO FOR NOW I'M JUST MAKING
+            ### SURE U-PROBS EXIST FOR ALL LEVELS WITH SOME MINIMAL VALUE...
+            non_match_prob = row_dict["new_probability_non_match"] or 1e-10
 
             self.current_settings_obj.set_m_probability(
                 name, level_int, match_prob, force=False
@@ -125,8 +125,6 @@ class Model:
         current_params = deepcopy(self.current_settings_obj.settings_dict)
 
         self.historical_settings.append(Settings(current_params))
-        if "log_likelihood" in self.current_settings_obj.settings_dict:
-            self.log_likelihood_exists = True
 
     def _to_dict(self):
         p_dict = {}
@@ -172,30 +170,11 @@ class Model:
 
         return rows
 
-    def ll_history_as_rows(self):
-
-        rows = []
-        for it_num, p in enumerate(self.historical_settings):
-            rows.append({"log_likelihood": p["log_likelihood"], "iteration": it_num})
-
-        return rows
-
     def lambda_iteration_chart(self):  # pragma: no cover
         chart_path = "lambda_iteration_chart_def.json"
         chart = load_chart_definition(chart_path)
         chart["data"]["values"] = self.lambda_history_as_rows()
         return altair_if_installed_else_json(chart)
-
-    def ll_iteration_chart(self):  # pragma: no cover
-        if self.log_likelihood_exists:
-            chart_path = "ll_iteration_chart_def.json"
-            chart = load_chart_definition(chart_path)
-            chart["data"]["values"] = self.ll_history_as_rows()
-            return altair_if_installed_else_json(chart)
-        else:
-            raise Exception(
-                "Log likelihood not calculated.  To calculate pass 'compute_ll=True' to get_scored_comparisons(). Note this causes algorithm to run more slowly because additional calculations are required."
-            )
 
     def gamma_distribution_chart(self):  # pragma: no cover
         chart_path = "gamma_distribution_chart_def.json"

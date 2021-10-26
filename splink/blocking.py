@@ -59,6 +59,8 @@ def _get_columns_to_retain_blocking(settings_dict, df):
         cc = ComparisonColumn(col)
         for col_name in cc.columns_used:
             columns_to_retain.add(col_name)
+        if cc["term_frequency_adjustments"] and f"tf_{cc.name}" in df.columns:
+            columns_to_retain.add(f"tf_{cc.name}")
 
     for c in settings_dict["additional_columns_to_retain"]:
         columns_to_retain.add(c)

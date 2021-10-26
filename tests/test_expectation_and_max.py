@@ -79,38 +79,16 @@ def test_expectation_and_maximisation(spark):
 
     df = df_e.toPandas()
     cols_to_keep = [
-        "prob_gamma_mob_match",
-        "prob_gamma_mob_non_match",
-        "prob_gamma_surname_match",
-        "prob_gamma_surname_non_match",
+        "bf_gamma_mob",
+        "bf_gamma_surname",
     ]
     pd_df_result = df[cols_to_keep][:4]
 
     df_correct = [
-        {
-            "prob_gamma_mob_match": 0.9,
-            "prob_gamma_mob_non_match": 0.2,
-            "prob_gamma_surname_match": 0.7,
-            "prob_gamma_surname_non_match": 0.25,
-        },
-        {
-            "prob_gamma_mob_match": 0.9,
-            "prob_gamma_mob_non_match": 0.2,
-            "prob_gamma_surname_match": 0.2,
-            "prob_gamma_surname_non_match": 0.25,
-        },
-        {
-            "prob_gamma_mob_match": 0.9,
-            "prob_gamma_mob_non_match": 0.2,
-            "prob_gamma_surname_match": 0.2,
-            "prob_gamma_surname_non_match": 0.25,
-        },
-        {
-            "prob_gamma_mob_match": 0.1,
-            "prob_gamma_mob_non_match": 0.8,
-            "prob_gamma_surname_match": 0.7,
-            "prob_gamma_surname_non_match": 0.25,
-        },
+        {"bf_gamma_mob": 0.9 / 0.2, "bf_gamma_surname": 0.7 / 0.25},
+        {"bf_gamma_mob": 0.9 / 0.2, "bf_gamma_surname": 0.2 / 0.25},
+        {"bf_gamma_mob": 0.9 / 0.2, "bf_gamma_surname": 0.2 / 0.25},
+        {"bf_gamma_mob": 0.1 / 0.8, "bf_gamma_surname": 0.7 / 0.25},
     ]
 
     pd_df_correct = pd.DataFrame(df_correct)

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def _sql_gen_new_lambda(table_name="df_intermediate"):
 
     sql = f"""
-    select cast(sum(expected_num_matches)/sum(num_rows) as float) as new_lambda
+    select cast(sum(expected_num_matches)/sum(num_rows) as double) as new_lambda
     from {table_name}
     """
 
@@ -48,8 +48,12 @@ def _sql_gen_intermediate_pi_aggregate(model, table_name="df_e"):
 
     gamma_cols_expr = ", ".join([cc.gamma_name for cc in ccs])
 
+    if model.current_settings_obj.any_cols_have_tf_adjustments:
+        score_col = "tf_adjusted_match_prob"
+    else:
+        score_col = "match_probability"
     sql = f"""
-    select {gamma_cols_expr}, sum(match_probability) as expected_num_matches, sum(1- match_probability) as expected_num_non_matches, count(*) as num_rows
+    select {gamma_cols_expr}, sum({score_col}) as expected_num_matches, sum(1- {score_col}) as expected_num_non_matches, count(*) as num_rows
     from {table_name}
     group by {gamma_cols_expr}
     """
@@ -65,8 +69,8 @@ def _sql_gen_pi_df(model, table_name="df_intermediate"):
         sql = f"""
         select
         {gamma_column_name} as gamma_value,
-        cast(sum(expected_num_matches)/(select sum(expected_num_matches) from {table_name} where {gamma_column_name} != -1) as float) as new_probability_match,
-        cast(sum(expected_num_non_matches)/(select sum(expected_num_non_matches) from {table_name} where {gamma_column_name} != -1) as float) as new_probability_non_match,
+        cast(sum(expected_num_matches)/(select sum(expected_num_matches) from {table_name} where {gamma_column_name} != -1) as double) as new_probability_match,
+        cast(sum(expected_num_non_matches)/(select sum(expected_num_non_matches) from {table_name} where {gamma_column_name} != -1) as double) as new_probability_non_match,
         '{col_name}' as column_name
         from {table_name}
         where {gamma_column_name} != -1
