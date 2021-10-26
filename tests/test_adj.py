@@ -202,10 +202,6 @@ def test_term_frequency_adjustments(spark):
 
     df_e = iterate(df_e, model, spark)
 
-    #     df_e = make_adjustment_for_term_frequencies(
-    #         df_e, model, spark, retain_adjustment_columns=True
-    #     )
-
     df = df_e.toPandas()
 
     #########

@@ -1,4 +1,5 @@
 [flake8]
+ignore = E501
 max-line-length = 120
 max-complexity = 10
 count = True
@@ -6,6 +7,7 @@ show-source = True
 statistics = True
 # ignore E203 because it disagrees with PEP8 and Black
 ignore = E203
+
 # potential to only check a specific list of rules not covered by Black
 # select = E9, F63, F7, F82
 exclude =
