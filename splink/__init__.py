@@ -15,7 +15,7 @@ from splink.blocking import block_using_rules
 from splink.gammas import add_gammas
 from splink.iterate import iterate
 from splink.expectation_step import run_expectation_step
-from splink.term_frequencies import make_adjustment_for_term_frequencies, add_term_frequencies
+from splink.term_frequencies import add_term_frequencies
 from splink.vertically_concat import (
     vertically_concatenate_datasets,
 )
@@ -86,7 +86,7 @@ class Splink:
         df_gammas = self.break_lineage_blocked_comparisons(df_gammas, self.spark)
         return run_expectation_step(df_gammas, self.model, self.spark)
 
-    def get_scored_comparisons(self, compute_ll=False):
+    def get_scored_comparisons(self):
         """Use the EM algorithm to estimate model parameters and return match probabilities.
 
         Returns:
@@ -94,7 +94,7 @@ class Splink:
         """
 
         df_comparison = block_using_rules(self.settings_dict, self.df, self.spark)
-        
+
         df_gammas = add_gammas(df_comparison, self.settings_dict, self.spark)
 
         df_gammas = self.break_lineage_blocked_comparisons(df_gammas, self.spark)
@@ -103,7 +103,6 @@ class Splink:
             df_gammas,
             self.model,
             self.spark,
-            compute_ll=compute_ll,
             save_state_fn=self.save_state_fn,
         )
 
@@ -112,28 +111,9 @@ class Splink:
 
         df_e = self.break_lineage_scored_comparisons(df_e, self.spark)
 
-        #df_e_adj = self.make_term_frequency_adjustments(df_e)
-
-        #df_e.unpersist()
+        df_e.unpersist()
 
         return df_e
-
-    def make_term_frequency_adjustments(self, df_e: DataFrame):
-        """Take the outputs of 'get_scored_comparisons' and make term frequency adjustments on designated columns in the settings dictionary
-
-        Args:
-            df_e (DataFrame): A dataframe produced by the get_scored_comparisons method
-
-        Returns:
-            DataFrame: A spark dataframe including a column with term frequency adjusted match probabilities
-        """
-
-        return make_adjustment_for_term_frequencies(
-            df_e,
-            self.model,
-            retain_adjustment_columns=True,
-            spark=self.spark,
-        )
 
     def save_model_as_json(self, path: str, overwrite=False):
         """Save model (settings, parameters and parameter history) as a json file so it can later be re-loaded using load_from_json

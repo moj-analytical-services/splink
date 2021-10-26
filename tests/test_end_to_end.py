@@ -1,11 +1,11 @@
 from splink import Splink, load_from_json
 from pyspark.sql import Row
 from splink.intuition import intuition_report, bayes_factor_chart
-from splink.expectation_step import _calculate_log_likelihood_df
+
 
 from splink_data_generation.generate_data_exact import generate_df_gammas_exact
 from splink_data_generation.match_prob import add_match_prob
-from splink_data_generation.log_likelihood import add_log_likelihood
+
 from splink_data_generation.estimate_splink import estimate
 
 import pytest
@@ -37,7 +37,6 @@ def test_splink_converges_to_known_params(spark):
 
     df = generate_df_gammas_exact(settings_for_data_generation)
     df = add_match_prob(df, settings_for_data_generation)
-    df = add_log_likelihood(df, settings_for_data_generation)
 
     # Now use Splink to estimate the params from the data
     settings = {
@@ -71,12 +70,6 @@ def test_splink_converges_to_known_params(spark):
         for p in ["m_probabilities", "u_probabilities"]:
             assert col_actual[p] == pytest.approx(col_estimated[p], abs=0.001)
 
-    true_ll = sum(df["true_log_likelihood_l"])
-
-    df_ll = _calculate_log_likelihood_df(df_e, linker.model, spark).toPandas()
-    estimated_ll = df_ll["log_likelihood"].sum()
-    assert true_ll == pytest.approx(estimated_ll, abs=0.001)
-
 
 def test_splink_does_not_converge_away_from_correct_params(spark):
     settings = {
@@ -107,7 +100,6 @@ def test_splink_does_not_converge_away_from_correct_params(spark):
 
     df = generate_df_gammas_exact(settings)
     df = add_match_prob(df, settings)
-    df = add_log_likelihood(df, settings)
 
     df_e, model = estimate(df, actual_settings, spark)
 

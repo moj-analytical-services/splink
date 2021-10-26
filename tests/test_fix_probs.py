@@ -18,7 +18,7 @@ def test_fix_u(spark):
         {"unique_id": 7, "mob": "7", "first_name": "g", "surname": "g"},
         {"unique_id": 9, "mob": "9", "first_name": "h", "surname": "h"},
         {"unique_id": 10, "mob": "10", "first_name": "i", "surname": "i"},
-        {"unique_id": 10, "mob": "10", "first_name": "i", "surname": "i"},
+        {"unique_id": 11, "mob": "10", "first_name": "i", "surname": "i"},
     ]
 
     df = spark.createDataFrame(Row(**x) for x in df)
