@@ -223,13 +223,17 @@ def _sql_gen_bayes_factors(comparison_column, tf_adj=False):
 
     if not tf_adj:
         alias = f"bf_{cc.gamma_name}"
-        bfs = [m / u for m, u in zip(cc["m_probabilities"], cc["u_probabilities"])]
+        # This will fail if any of the values are null
+        # If the values are null, this means that the value never occurs in the dataset
+        # We can set the bf to null in this case
 
-        for gamma_index, bf in enumerate(bfs):
-            if bf is not None:
-                case_stmt = f"when {cc.gamma_name} = {gamma_index} then {bf}D"
+        m_u_zip = zip(cc["m_probabilities"], cc["u_probabilities"])
+
+        for gamma_index, (m, u) in enumerate(m_u_zip):
+            if m is None or u is None:
+                case_stmt = f"when {cc.gamma_name} = {gamma_index} then null"
             else:
-                case_stmt = f"when {cc.gamma_name} = {gamma_index} then 1"
+                case_stmt = f"when {cc.gamma_name} = {gamma_index} then {m/u}D"
 
             case_statements.append(case_stmt)
     else:
@@ -242,6 +246,9 @@ def _sql_gen_bayes_factors(comparison_column, tf_adj=False):
 
         u_prob_exact = cc["u_probabilities"][-1]
         tf_weights = cc["tf_adjustment_weights"]
+
+        case_stmt = f"when tf_{cc.name}_l is null or tf_{cc.name}_r is null then null"
+        case_statements.append(case_stmt)
 
         for gamma_index, weight in enumerate(tf_weights):
             if u_prob_exact is not None:

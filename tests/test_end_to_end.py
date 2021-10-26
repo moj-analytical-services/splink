@@ -15,7 +15,7 @@ from copy import deepcopy
 @pytest.mark.skip(reason="This is a very long running test of iteration")
 def test_splink_converges_to_known_params(spark):
     settings_for_data_generation = {
-        "link_type": "link_and_dedupe",
+        "link_type": "dedupe_only",
         "comparison_columns": [
             {
                 "col_name": "col_1",
@@ -40,7 +40,7 @@ def test_splink_converges_to_known_params(spark):
 
     # Now use Splink to estimate the params from the data
     settings = {
-        "link_type": "link_and_dedupe",
+        "link_type": "dedupe_only",
         "comparison_columns": [
             {
                 "col_name": "col_1",
@@ -58,9 +58,9 @@ def test_splink_converges_to_known_params(spark):
         "retain_intermediate_calculation_columns": True,
     }
 
-    df_e, linker = estimate(df, settings, spark)
+    df_e, model = estimate(df, settings, spark)
 
-    estimated_settings = linker.model.current_settings_obj.settings_dict
+    estimated_settings = model.current_settings_obj.settings_dict
 
     cc_actual = settings_for_data_generation["comparison_columns"]
     cc_estimated = estimated_settings["comparison_columns"]

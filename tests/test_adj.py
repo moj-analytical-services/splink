@@ -10,7 +10,7 @@ from splink.model import Model
 from splink import Splink
 
 
-def _probabilities_from_freqs(freqs, m_gamma_0=0.05, u_gamma_0=0.5):
+def _probabilities_from_freqs(freqs, m_gamma_0=0.05):
     """Very roughly come up with some plausible u probabilities
     for given frequencies
 
@@ -28,11 +28,17 @@ def _probabilities_from_freqs(freqs, m_gamma_0=0.05, u_gamma_0=0.5):
     m_probs = [f * adj for f in m_probs]
     m_probs.insert(0, m_gamma_0)
 
-    u_probs = [f * f for f in freqs]
-    u_probs = [f / sum(u_probs) for f in u_probs]
-    adj = 1 - u_gamma_0
-    u_probs = [f * adj for f in u_probs]
-    u_probs.insert(0, u_gamma_0)
+    # Amongst truly non-matching records, what's the probability you observe a match on john?
+    # 36 possibilities
+    #   9/36 are john
+    #   4/36 are matt
+    #   1/36 are robin
+    #   22/36 do not match
+
+    sum_freqs_sq = sum(freqs) ** 2
+    u_probs = [f ** 2 / sum_freqs_sq for f in freqs]
+    remainder = 1 - sum(u_probs)
+    u_probs.insert(0, remainder)
 
     return {
         "m_probabilities": m_probs,
@@ -189,6 +195,9 @@ def test_term_frequency_adjustments(spark):
     settings_binary = complete_settings_dict(settings_binary, spark)
     model = Model(settings_binary, spark)
 
+    # Need to populate term frequencies despite not having the underlying data
+    # Note tfs of random data (names other than robin, matt john)
+    # don't matter because they are never used
     df_e = (
         df_e.withColumn(
             "tf_forename_binary_l", forename_mapping[f.col("forename_binary_l")]
@@ -198,6 +207,16 @@ def test_term_frequency_adjustments(spark):
         )
         .withColumn("tf_surname_binary_l", surname_mapping[f.col("surname_binary_l")])
         .withColumn("tf_surname_binary_r", surname_mapping[f.col("surname_binary_r")])
+    )
+
+    df_e = df_e.fillna(
+        1,
+        subset=[
+            "tf_forename_binary_l",
+            "tf_forename_binary_r",
+            "tf_surname_binary_l",
+            "tf_surname_binary_r",
+        ],
     )
 
     df_e = iterate(df_e, model, spark)
@@ -250,9 +269,8 @@ def test_term_frequency_adjustments(spark):
     b1 = row["bf_tf_adj_forename_binary"]
     b2 = row["bf_tf_adj_surname_binary"]
 
-    expected_post = (
-        prior * b1 * b2 / (prior * b1 * b2 + (1 - prior) * (1 - b1) * (1 - b2))
-    )
+    expected_post_bf = (prior / (1 - prior)) * b1 * b2
+    expected_post = expected_post_bf / (1 + expected_post_bf)
     assert posterior == pytest.approx(expected_post)
 
     #  We expect match probability to be equal to tf_adjusted match probability in cases where surname and forename don't match
