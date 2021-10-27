@@ -89,7 +89,6 @@ def _sql_gen_gamma_bf_columns(
                 select_cols = _add_left_right(select_cols, col_name)
 
         if col["term_frequency_adjustments"]:
-            select_cols = _add_left_right(select_cols, cc.name)
             select_cols.add(case_statements[f"bf_tf_adj_{cc.name}"])
 
         select_cols.add("gamma_" + cc.name)
@@ -131,8 +130,6 @@ def _column_order_df_e_select_expr(
         if settings["retain_matching_columns"]:
             for col_name in cc.columns_used:
                 select_cols = _add_left_right(select_cols, col_name)
-        if col["term_frequency_adjustments"]:
-            select_cols = _add_left_right(select_cols, cc.name)
 
         select_cols.add(f"gamma_{cc.name}")
 
@@ -150,6 +147,7 @@ def _column_order_df_e_select_expr(
     if "blocking_rules" in settings:
         if len(settings["blocking_rules"]) > 1:
             select_cols.add("match_key")
+
     return ", ".join(select_cols)
 
 
