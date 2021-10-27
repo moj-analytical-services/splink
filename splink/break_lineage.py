@@ -30,9 +30,3 @@ def default_break_lineage_blocked_comparisons(df_gammas, spark):
     df_gammas = cutLineage(df_gammas)
     df_gammas.persist()
     return df_gammas
-
-
-def default_break_lineage_scored_comparisons(df_e, spark):
-    df_e = cutLineage(df_e)
-    df_e.persist()
-    return df_e
