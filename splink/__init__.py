@@ -19,10 +19,7 @@ from splink.term_frequencies import add_term_frequencies
 from splink.vertically_concat import (
     vertically_concatenate_datasets,
 )
-from splink.break_lineage import (
-    default_break_lineage_blocked_comparisons,
-    default_break_lineage_scored_comparisons,
-)
+from splink.break_lineage import default_break_lineage_blocked_comparisons
 
 from splink.default_settings import normalise_probabilities
 
@@ -36,7 +33,6 @@ class Splink:
         spark: SparkSession,
         save_state_fn: Callable = None,
         break_lineage_blocked_comparisons: Callable = default_break_lineage_blocked_comparisons,
-        break_lineage_scored_comparisons: Callable = default_break_lineage_scored_comparisons,
     ):
         """Splink data linker
 
@@ -57,15 +53,12 @@ class Splink:
                 unless the lineage is broken after blocking.  This is a user-provided function that takes one argument
                 - df - and allows the user to break lineage.  For example, the function might save df to the AWS s3
                 file system, and then reload it from the saved files.
-            break_lineage_scored_comparisons (function, optional): Large jobs will likely run into memory errors unless
-                the lineage is broken after comparisons are scored and before term frequency adjustments.  This is a
-                user-provided function that takes one argument - df - and allows the user to break lineage.  For
-                example, the function might save df to the AWS s3 file system, and then reload it from the saved files.
+
         """
 
         self.spark = spark
         self.break_lineage_blocked_comparisons = break_lineage_blocked_comparisons
-        self.break_lineage_scored_comparisons = break_lineage_scored_comparisons
+
         _check_jaro_registered(spark)
 
         validate_settings_against_schema(settings)
@@ -120,10 +113,6 @@ class Splink:
 
         # In case the user's break lineage function has persisted it
         df_gammas.unpersist()
-
-        df_e = self.break_lineage_scored_comparisons(df_e, self.spark)
-
-        df_e.unpersist()
 
         return df_e
 

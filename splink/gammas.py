@@ -32,7 +32,9 @@ def _add_unique_id_and_source_dataset(
     return cols_set
 
 
-def _get_select_expression_gammas(settings: dict, retain_source_dataset_col: bool, retain_tf_cols: bool):
+def _get_select_expression_gammas(
+    settings: dict, retain_source_dataset_col: bool, retain_tf_cols: bool
+):
     """Get a select expression which picks which columns to keep in df_gammas
 
     Args:
@@ -60,7 +62,6 @@ def _get_select_expression_gammas(settings: dict, retain_source_dataset_col: boo
             for col_name in cc.columns_used:
                 select_columns = _add_left_right(select_columns, col_name)
         if col["term_frequency_adjustments"]:
-            select_columns = _add_left_right(select_columns, cc.name)
             if retain_tf_cols:
                 select_columns = _add_left_right(select_columns, f"tf_{cc.name}")
         select_columns.add(col["case_expression"])
@@ -90,19 +91,21 @@ def _retain_source_dataset_column(settings_dict, df):
     else:
         return False
 
+
 def _retain_tf_columns(settings_dict, df):
     # If all necessary TF columns are in the data,
     # make sure they are retained
     tf_cols = [
-        f"tf_{cc['col_name']}" if "col_name" in cc else f"tf_{cc['custom_name']}" 
-         for cc in settings_dict["comparison_columns"] 
-         if cc["term_frequency_adjustments"]
+        f"tf_{cc['col_name']}" if "col_name" in cc else f"tf_{cc['custom_name']}"
+        for cc in settings_dict["comparison_columns"]
+        if cc["term_frequency_adjustments"]
     ]
 
     cols = OrderedSet()
     [_add_left_right(cols, c) for c in tf_cols]
-    
+
     return all([col in df.columns for col in cols])
+
 
 def _sql_gen_add_gammas(
     settings: dict,
@@ -122,7 +125,9 @@ def _sql_gen_add_gammas(
 
     retain_source_dataset = _retain_source_dataset_column(settings, df_comparison)
     retain_tf_cols = _retain_tf_columns(settings, df_comparison)
-    select_cols_expr = _get_select_expression_gammas(settings, retain_source_dataset, retain_tf_cols)
+    select_cols_expr = _get_select_expression_gammas(
+        settings, retain_source_dataset, retain_tf_cols
+    )
 
     sql = f"""
     select {select_cols_expr}
