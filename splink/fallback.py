@@ -11,12 +11,14 @@ def jc_sim_py(str1, str2):
 
     k = 2  # default k in stringutil is 2 so leaving it like that for compatibility
 
-    # break strings into list of rolling k chars
+    # break strings into sets of rolling k-char syllables
     a = set([str1[i : i + 1] for i in range(len(str1) - k + 1)])
     b = set([str2[i : i + 1] for i in range(len(str2) - k + 1)])
 
     # calculate instersection of two sets
     c = a.intersection(b)
+
+    # return Jaccard similarity
     return float(len(c)) / (len(a) + len(b) - len(c))
 
 
