@@ -5,6 +5,10 @@ def jc_sim_py(str1, str2):
     """
     Jaccard`similarity calculated exactly as in stringutils.similarity.Jaccard in Apache Commons
     """
+
+    if not str1 or not str2:
+        return 0.0
+
     k = 2  # default k in stringutil is 2 so leaving it like that for compatibility
 
     # break strings into list of rolling k chars
