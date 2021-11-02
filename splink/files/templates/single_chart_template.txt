@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<meta charset="utf-8"/>
+  <script>{vega}</script>
+  <script>{vega-lite}</script>
+  <script>{vega-embed}</script>
+  <style>
+    .chart-wrapper  {{
+        height: auto !important
+      }}
+  </style>
+</head>
+
+<body>
+
+
+    <div id="mychart"></div>
+
+
+
+
+  <script type="text/javascript">
+
+    vegaEmbed('#mychart', {mychart}).catch(console.error);
+
+  </script>
+</body>
+
+</html>
