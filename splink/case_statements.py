@@ -19,10 +19,26 @@ def _check_jaro_registered(spark):
     warnings.warn(
         "Custom string comparison functions such as jaro_winkler_sim are available in"
         " Spark Or you did not pass 'spark' (the SparkSession) into 'Model' You can"
-        " import these functions using the scala-udf-similarity-0.0.7.jar provided with"
+        " import these functions using the scala-udf-similarity-0.0.9.jar provided with"
         " Splink"
     )
     return False
+
+
+def _get_spark_jars_string():
+    """
+    Outputs the exact string needed in the sparkSession config variable `spark.jars`
+    In order to use the custom functions in the spark-udf-similarity-0.0.9.jar
+
+    """
+
+    import splink
+
+    message = "you will need to set it by adding .config('spark.jars','"
+    jarstr = splink.__file__[0:-11] + "jars/scala-udf-similarity-0.0.9.jar"
+    thx = "') to your sparkSession configuration. "
+
+    return message + jarstr + thx
 
 
 def _find_last_end_position(case_statement):
