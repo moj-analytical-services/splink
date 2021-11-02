@@ -17,10 +17,10 @@ def _check_jaro_registered(spark):
             return True
 
     warnings.warn(
-        "Custom string comparison functions such as jaro_winkler_sim are available in"
-        " Spark Or you did not pass 'spark' (the SparkSession) into 'Model' You can"
+        "\n Custom string comparison functions such as jaro_winkler_sim are available in Spark"
+        "\n Or you did not pass 'spark' (the SparkSession) into 'Model' \n You can"
         " import these functions using the scala-udf-similarity-0.0.9.jar provided with"
-        " Splink"
+        " Splink.\n" + _get_spark_jars_string()
     )
     return False
 
