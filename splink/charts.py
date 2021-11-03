@@ -1,5 +1,6 @@
 import pkgutil
 import json
+import os
 
 altair_installed = True
 try:
@@ -49,3 +50,23 @@ def _make_json(chart_or_dict):
         return chart_or_dict.to_json(indent=None)
     else:
         return json.dumps(chart_or_dict)
+
+
+def save_offline_chart(altair_chart, filename="my_chart.html", overwrite=False):
+
+    if os.path.isfile(filename) and not overwrite:
+        raise ValueError(
+            f"The path {filename} already exists. Please provide a different path."
+        )
+
+    # get altair chart as json
+    altair_chart_json = _make_json(altair_chart)
+    path = "files/templates/single_chart_template.txt"
+    template = pkgutil.get_data(__name__, path).decode("utf-8")
+
+    fmt_dict = _load_external_libs()
+
+    fmt_dict["mychart"] = _make_json(altair_chart)
+
+    with open(filename, "w") as f:
+        f.write(template.format(**fmt_dict))
