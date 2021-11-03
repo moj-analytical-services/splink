@@ -17,12 +17,45 @@ def _check_jaro_registered(spark):
             return True
 
     warnings.warn(
-        "Custom string comparison functions such as jaro_winkler_sim are available in"
-        " Spark Or you did not pass 'spark' (the SparkSession) into 'Model' You can"
-        " import these functions using the scala-udf-similarity-0.0.7.jar provided with"
-        " Splink"
+        "\n\nCustom string comparison functions such as jaro_winkler_sim are not available in Spark\n"
+        "Or you did not pass 'spark' (the SparkSession) into 'Model' \n"
+        "You can import these functions using the scala-udf-similarity-0.0.9.jar provided with"
+        " Splink.\n" + _get_spark_jars_string()
     )
     return False
+
+
+def _get_spark_jars_string():
+    """
+    Outputs the exact string needed in the sparkSession config variable `spark.jars`
+    In order to use the custom functions in the spark-udf-similarity-0.0.9.jar
+
+    """
+
+    import splink
+
+    path = splink.__file__[0:-11] + "jars/scala-udf-similarity-0.0.9.jar"
+
+    message = (
+        "You will need to add it by correctly configuring your spark config\n"
+        "For example in Spark 2.4.5\n"
+        "\n"
+        "from pyspark.sql import SparkSession, types\n"
+        "from pyspark.context import SparkConf, SparkContext\n"
+        f"conf.set('spark.driver.extraClassPath', '{path}'') # Not needed in spark 3\n"
+        f"conf.set('spark.jars', '{path}'')\n"
+        "spark.udf.registerJavaFunction('jaro_winkler_sim','uk.gov.moj.dash.linkage.JaroWinklerSimilarity',types.DoubleType())\n"
+        "sc = SparkContext.getOrCreate(conf=conf)\n"
+        "spark = SparkSession(sc)\n"
+        "\n"
+        "Alternatively, for Jaro Winkler, you can register a less efficient"
+        " Python implementation using\n"
+        "\n"
+        "from splink.jar_fallback import jc_sim_py\n"
+        "spark.udf.register('jaro_winkler_sim', jc_sim_py)\n"
+    )
+
+    return message
 
 
 def _find_last_end_position(case_statement):
