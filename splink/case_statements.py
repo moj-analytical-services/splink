@@ -17,9 +17,9 @@ def _check_jaro_registered(spark):
             return True
 
     warnings.warn(
-        "\n Custom string comparison functions such as jaro_winkler_sim are available in Spark"
-        "\n Or you did not pass 'spark' (the SparkSession) into 'Model' \n You can"
-        " import these functions using the scala-udf-similarity-0.0.9.jar provided with"
+        "\n\nCustom string comparison functions such as jaro_winkler_sim are not available in Spark\n"
+        "Or you did not pass 'spark' (the SparkSession) into 'Model' \n"
+        "You can import these functions using the scala-udf-similarity-0.0.9.jar provided with"
         " Splink.\n" + _get_spark_jars_string()
     )
     return False
@@ -34,11 +34,28 @@ def _get_spark_jars_string():
 
     import splink
 
-    message = "you will need to set it by adding .config('spark.jars','"
-    jarstr = splink.__file__[0:-11] + "jars/scala-udf-similarity-0.0.9.jar"
-    thx = "') to your sparkSession configuration. "
+    path = splink.__file__[0:-11] + "jars/scala-udf-similarity-0.0.9.jar"
 
-    return message + jarstr + thx
+    message = (
+        "You will need to add it by correctly configuring your spark config\n"
+        "For example in Spark 2.4.5\n"
+        "\n"
+        "from pyspark.sql import SparkSession, types\n"
+        "from pyspark.context import SparkConf, SparkContext\n"
+        f"conf.set('spark.driver.extraClassPath', '{path}'') # Not needed in spark 3\n"
+        f"conf.set('spark.jars', '{path}'')\n"
+        "spark.udf.registerJavaFunction('jaro_winkler_sim','uk.gov.moj.dash.linkage.JaroWinklerSimilarity',types.DoubleType())\n"
+        "sc = SparkContext.getOrCreate(conf=conf)\n"
+        "spark = SparkSession(sc)\n"
+        "\n"
+        "Alternatively, for Jaro Winkler, you can register a less efficient"
+        " Python implementation using\n"
+        "\n"
+        "from splink.jar_fallback import jc_sim_py\n"
+        "spark.udf.register('jaro_winkler_sim', jc_sim_py)\n"
+    )
+
+    return message
 
 
 def _find_last_end_position(case_statement):
