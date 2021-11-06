@@ -92,7 +92,7 @@ def test_prob_density(spark, df):
     and make sure that the probability density is the correct value (0.2) with all 5 bins
     """
 
-    dfpd = pd.DataFrame([0.1, 0.3, 0.5, 0.7, 0.9], columns=["tf_adjusted_match_prob"])
+    dfpd = pd.DataFrame([0.1, 0.3, 0.5, 0.7, 0.9], columns=["match_probability"])
     spdf = spark.createDataFrame(dfpd)
 
     res = _calc_probability_density(spdf, spark=spark, buckets=5)

@@ -64,8 +64,6 @@ def _sql_gen_unique_id_keygen(
 def _get_score_colname(df_e, score_colname=None):
     if score_colname:
         return score_colname
-    elif "tf_adjusted_match_prob" in df_e.columns:
-        return "tf_adjusted_match_prob"
     elif "match_probability" in df_e.columns:
         return "match_probability"
     else:
@@ -174,7 +172,7 @@ def labels_with_splink_scores(
              | id1         | id2         |                  0.9 |
              | id1         | id3         |                  0.1 |
         df_e: a dataframe like
-             | unique_id_l| unique_id_r| tf_adjusted_match_prob |
+             | unique_id_l| unique_id_r| match_probability      |
              |:-----------|:-----------|-----------------------:|
              | id1        | id2        |                   0.85 |
              | id1        | id3        |                   0.2  |
@@ -189,7 +187,7 @@ def labels_with_splink_scores(
 
     Returns:
         DataFrame: Like:
-             |   unique_id_l |   unique_id_r |   clerical_match_score |   tf_adjusted_match_prob | found_by_blocking   |
+             |   unique_id_l |   unique_id_r |   clerical_match_score |   match_probability      | found_by_blocking   |
              |--------------:|--------------:|-----------------------:|-------------------------:|:--------------------|
              |             0 |             1 |                      1 |                 0.999566 | True                |
              |             0 |             2 |                      1 |                 0.999566 | True                |

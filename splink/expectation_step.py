@@ -159,51 +159,32 @@ def _sql_gen_expected_match_prob(
 
     λ = model.current_settings_obj["proportion_of_matches"]
 
-    bayes_factor = " * ".join([f"bf_{cc.gamma_name}" for cc in ccs])
+    bf_cols = [f"bf_{cc.gamma_name}" for cc in ccs]
+    bf_tf_adj_cols = [
+        f"bf_tf_adj_{cc.name}" for cc in ccs if cc.term_frequency_adjustments
+    ]
+    bf_cols.extend(bf_tf_adj_cols)
+
+    bayes_factor = " * ".join(bf_cols)
     bayes_factor = f"{λ}D/ (1-{λ}D) * {bayes_factor}"
 
     select_expr = _column_order_df_e_select_expr(
         settings, retain_source_dataset, tf_adj_cols=True
     )
 
-    if model.current_settings_obj.any_cols_have_tf_adjustments:
-        bf_tf_adjustments = " * ".join(
-            [f"bf_tf_adj_{cc.name}" for cc in ccs if cc.term_frequency_adjustments]
-        )
-
-        bayes_factor_tf_adjusted = f"{bayes_factor} * {bf_tf_adjustments}"
-
-        sql = f"""
-        with df_with_overall_bf as (
-            select
-                *,
-                {bayes_factor} as __bf,
-                {bayes_factor_tf_adjusted} as __bf_tf_adj
-            from {table_name} )
-
+    sql = f"""
+    with df_with_overall_bf as (
         select
-            __bf_tf_adj/(1+__bf_tf_adj) as tf_adjusted_match_prob,
-            log2(__bf_tf_adj) as tf_adjusted_match_weight,
-            __bf/(1+__bf) as match_probability,
-            log2(__bf) as match_weight,
-            {select_expr}
-        from df_with_overall_bf
-        """
+            *,
+            {bayes_factor} as __bf
+        from {table_name} )
 
-    else:
-        sql = f"""
-        with df_with_overall_bf as (
-            select
-                *,
-                {bayes_factor} as __bf
-            from {table_name} )
-
-        select
-            log2(__bf) as match_weight,
-            (__bf/(1+__bf)) as match_probability,
-            {select_expr}
-        from df_with_overall_bf
-        """
+    select
+        log2(__bf) as match_weight,
+        (__bf/(1+__bf)) as match_probability,
+        {select_expr}
+    from df_with_overall_bf
+    """
 
     return sql
 

@@ -8,6 +8,7 @@ from splink.default_settings import complete_settings_dict
 from splink.iterate import iterate
 from splink.model import Model
 from splink import Splink
+from copy import deepcopy
 
 
 def _probabilities_from_freqs(freqs, m_gamma_0=0.05):
@@ -157,12 +158,13 @@ def test_term_frequency_adjustments(spark):
     df = add_match_prob(df, settings_true)
     df["match_probability"] = df["true_match_probability_l"]
 
-    df_e = spark.createDataFrame(df)
+    df_e_no_tf = spark.createDataFrame(df)
+    df_e_tf = spark.createDataFrame(df)
 
     def four_to_two(probs):
         return [probs[0], sum(probs[1:])]
 
-    settings_binary = {
+    settings_binary_tf = {
         "link_type": "dedupe_only",
         "proportion_of_matches": 0.5,
         "comparison_columns": [
@@ -191,15 +193,23 @@ def test_term_frequency_adjustments(spark):
         "additional_columns_to_retain": ["true_match_probability"],
     }
 
+    settings_binary_no_tf = deepcopy(settings_binary_tf)
+    settings_binary_no_tf["comparison_columns"][0]["term_frequency_adjustments"] = False
+    settings_binary_no_tf["comparison_columns"][1]["term_frequency_adjustments"] = False
+    settings_binary_no_tf["comparison_columns"][2]["term_frequency_adjustments"] = False
+
     # Can't use linker = Splink() because we have df_gammas, not df
-    settings_binary = complete_settings_dict(settings_binary, spark)
-    model = Model(settings_binary, spark)
+    settings_binary_tf = complete_settings_dict(settings_binary_tf, spark)
+    model_tf = Model(settings_binary_tf, spark)
+
+    settings_binary_no_tf = complete_settings_dict(settings_binary_no_tf, spark)
+    model_no_tf = Model(settings_binary_no_tf, spark)
 
     # Need to populate term frequencies despite not having the underlying data
     # Note tfs of random data (names other than robin, matt john)
     # don't matter because they are never used
-    df_e = (
-        df_e.withColumn(
+    df_e_tf = (
+        df_e_tf.withColumn(
             "tf_forename_binary_l", forename_mapping[f.col("forename_binary_l")]
         )
         .withColumn(
@@ -209,7 +219,7 @@ def test_term_frequency_adjustments(spark):
         .withColumn("tf_surname_binary_r", surname_mapping[f.col("surname_binary_r")])
     )
 
-    df_e = df_e.fillna(
+    df_e_tf = df_e_tf.fillna(
         1,
         subset=[
             "tf_forename_binary_l",
@@ -219,67 +229,103 @@ def test_term_frequency_adjustments(spark):
         ],
     )
 
-    df_e = iterate(df_e, model, spark)
+    df_e_tf = iterate(df_e_tf, model_tf, spark)
 
-    df = df_e.toPandas()
+    df_tf = df_e_tf.toPandas()
+
+    df_e_no_tf = (
+        df_e_no_tf.withColumn(
+            "tf_forename_binary_l", forename_mapping[f.col("forename_binary_l")]
+        )
+        .withColumn(
+            "tf_forename_binary_r", forename_mapping[f.col("forename_binary_r")]
+        )
+        .withColumn("tf_surname_binary_l", surname_mapping[f.col("surname_binary_l")])
+        .withColumn("tf_surname_binary_r", surname_mapping[f.col("surname_binary_r")])
+    )
+
+    df_e_no_tf = df_e_no_tf.fillna(
+        1,
+        subset=[
+            "tf_forename_binary_l",
+            "tf_forename_binary_r",
+            "tf_surname_binary_l",
+            "tf_surname_binary_r",
+        ],
+    )
+
+    df_e_no_tf = iterate(df_e_no_tf, model_no_tf, spark)
+
+    df_no_tf = df_e_no_tf.toPandas()
 
     #########
     # Tests start here
     #########
 
     # Test that overall square error is better for tf adjusted match prob
-    df["e1"] = (df["match_probability"] - df["true_match_probability_l"]) ** 2
-    df["e2"] = (df["tf_adjusted_match_prob"] - df["true_match_probability_l"]) ** 2
-    assert df["e1"].sum() > df["e2"].sum()
+    df_no_tf["e1"] = (
+        df_no_tf["match_probability"] - df_no_tf["true_match_probability_l"]
+    ) ** 2
+    df_tf["e2"] = (df_tf["match_probability"] - df_tf["true_match_probability_l"]) ** 2
+    assert df_no_tf["e1"].sum() > df_tf["e2"].sum()
 
     # We expect Johns to be adjusted down...
-    f1 = df["forename_binary_l"] == "John"
-    df_filtered = df[f1]
+    f1 = df_tf["forename_binary_l"] == "John"
+    df_filtered = df_tf[f1]
     adj = df_filtered["bf_tf_adj_forename_binary"].mean()
     assert adj <= 1.0
 
     # And Robins to be adjusted up
-    f1 = df["forename_binary_l"] == "Robin"
-    df_filtered = df[f1]
+    f1 = df_tf["forename_binary_l"] == "Robin"
+    df_filtered = df_tf[f1]
     adj = df_filtered["bf_tf_adj_forename_binary"].mean()
     assert adj > 1.0
 
     # We expect Smiths to be adjusted down...
-    f1 = df["surname_binary_l"] == "Smith"
-    df_filtered = df[f1]
+    f1 = df_tf["surname_binary_l"] == "Smith"
+    df_filtered = df_tf[f1]
     adj = df_filtered["bf_tf_adj_surname_binary"].mean()
     assert adj < 1.0
 
     # And Linacres to be adjusted up
-    f1 = df["surname_binary_l"] == "Linacre"
-    df_filtered = df[f1]
+    f1 = df_tf["surname_binary_l"] == "Linacre"
+    df_filtered = df_tf[f1]
     adj = df_filtered["bf_tf_adj_surname_binary"].mean()
     assert adj > 1.0
 
     # Check adjustments are applied correctly
 
-    f1 = df["forename_binary_l"] == "Robin"
-    f2 = df["surname_binary_l"] == "Linacre"
-    df_filtered = df[f1 & f2]
-    row = df_filtered.head(1).to_dict(orient="records")[0]
+    f1 = df_tf["forename_binary_l"] == "Robin"
+    f2 = df_tf["surname_binary_l"] == "Linacre"
+    df_filtered = df_tf[f1 & f2]
+    row_tf = df_filtered.head(1).to_dict(orient="records")[0]
 
-    prior = row["match_probability"]
-    posterior = row["tf_adjusted_match_prob"]
+    f1 = df_no_tf["forename_binary_l"] == "Robin"
+    f2 = df_no_tf["surname_binary_l"] == "Linacre"
+    df_filtered = df_no_tf[f1 & f2]
+    row_no_tf = df_filtered.head(1).to_dict(orient="records")[0]
 
-    b1 = row["bf_tf_adj_forename_binary"]
-    b2 = row["bf_tf_adj_surname_binary"]
+    prior = row_no_tf["match_probability"]
+    posterior = row_tf["match_probability"]
+
+    b1 = row_tf["bf_tf_adj_forename_binary"]
+    b2 = row_tf["bf_tf_adj_surname_binary"]
 
     expected_post_bf = (prior / (1 - prior)) * b1 * b2
     expected_post = expected_post_bf / (1 + expected_post_bf)
     assert posterior == pytest.approx(expected_post)
 
     #  We expect match probability to be equal to tf_adjusted match probability in cases where surname and forename don't match
-    f1 = df["surname_binary_l"] != df["surname_binary_r"]
-    f2 = df["forename_binary_l"] != df["forename_binary_r"]
+    f1 = df_tf["surname_binary_l"] != df_tf["surname_binary_r"]
+    f2 = df_tf["forename_binary_l"] != df_tf["forename_binary_r"]
+    df_filtered_tf = df[f1 & f2]
 
-    df_filtered = df[f1 & f2]
+    f1 = df_no_tf["surname_binary_l"] != df_no_tf["surname_binary_r"]
+    f2 = df_no_tf["forename_binary_l"] != df_no_tf["forename_binary_r"]
+    df_filtered_no_tf = df[f1 & f2]
+
     sum_difference = (
-        df_filtered["tf_adjusted_match_prob"] - df_filtered["match_probability"]
+        df_filtered_tf["match_probability"] - df_filtered_no_tf["match_probability"]
     ).sum()
 
     assert 0 == pytest.approx(sum_difference)
