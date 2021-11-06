@@ -94,21 +94,21 @@ def test_join(spark):
             "person_id_l": 1,
             "source_dataset_r": "t2",
             "person_id_r": 1,
-            "tf_adjusted_match_prob": 0.0,
+            "match_probability": 0.0,
         },
         {
             "source_dataset_l": "t1",
             "person_id_l": 1,
             "source_dataset_r": "t2",
             "person_id_r": 2,
-            "tf_adjusted_match_prob": 0.4,
+            "match_probability": 0.4,
         },
         {
             "source_dataset_l": "t2",
             "person_id_l": 1,
             "source_dataset_r": "t1",
             "person_id_r": 2,
-            "tf_adjusted_match_prob": 1.0,
+            "match_probability": 1.0,
         },
     ]
     df_e = spark.createDataFrame(Row(**x) for x in df_e)
@@ -151,7 +151,7 @@ def test_join(spark):
 
     row = df_pd[f1 & f2 & f3 & f4].to_dict(orient="records")[0]
 
-    assert pytest.approx(row["tf_adjusted_match_prob"]) == 0.0
+    assert pytest.approx(row["match_probability"]) == 0.0
     assert pytest.approx(row["clerical_match_score"]) == 0.1
 
     f1 = df_pd["source_dataset_l"] == "t2"
@@ -161,7 +161,7 @@ def test_join(spark):
 
     row = df_pd[f1 & f2 & f3 & f4].to_dict(orient="records")[0]
 
-    assert pytest.approx(row["tf_adjusted_match_prob"]) == 1.0
+    assert pytest.approx(row["match_probability"]) == 1.0
     assert pytest.approx(row["clerical_match_score"]) == 0.45
 
 

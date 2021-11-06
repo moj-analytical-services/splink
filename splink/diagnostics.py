@@ -14,7 +14,7 @@ def _calc_probability_density(
     df_e: DataFrame,
     spark: SparkSession,
     buckets=None,
-    score_colname=None,
+    score_colname="match_probability",
 ):
 
     """perform splink score histogram calculations / internal function
@@ -25,7 +25,7 @@ def _calc_probability_density(
             df_e (DataFrame): A dataframe of record comparisons containing a
                 splink score, e.g. as produced by the expectation step
             spark (SparkSession): SparkSession object
-            score_colname: is the score in another column? defaults to None
+            score_colname: is the score in another column? defaults to match_probability
             buckets: accepts either a list of split points or an integer number that is used
                 to create equally spaced split points.  It defaults to 100 equally
                 spaced split points from 0.0 to 1.0
@@ -52,15 +52,6 @@ def _calc_probability_density(
     # ensure bucket splits are in ascending order
 
     buckets.sort()
-
-    # If score_colname is used then use that. if score_colname not used if tf_adjusted_match_prob exists it is used.
-    # Otherwise match_probability is used or if that doesnt exit a warning is fired and function exits
-
-    if not score_colname:
-        if "tf_adjusted_match_prob" in df_e.columns:
-            score_colname = "tf_adjusted_match_prob"
-        elif "match_probability" in df_e.columns:
-            score_colname = "match_probability"
 
     hist = df_e.select(score_colname).rdd.flatMap(lambda x: x).histogram(buckets)
 
