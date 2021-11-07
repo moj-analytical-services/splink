@@ -52,7 +52,17 @@ def _make_json(chart_or_dict):
         return json.dumps(chart_or_dict)
 
 
-def save_offline_chart(altair_chart, filename="my_chart.html", overwrite=False):
+iframe_message = """
+To view in Jupyter you can use the following command:
+
+from IPython.display import IFrame
+IFrame(src="./{filename}", width=1000, height=500)
+"""
+
+
+def save_offline_chart(
+    altair_chart, filename="my_chart.html", overwrite=False, print_msg=True
+):
 
     if os.path.isfile(filename) and not overwrite:
         raise ValueError(
@@ -60,7 +70,6 @@ def save_offline_chart(altair_chart, filename="my_chart.html", overwrite=False):
         )
 
     # get altair chart as json
-    altair_chart_json = _make_json(altair_chart)
     path = "files/templates/single_chart_template.txt"
     template = pkgutil.get_data(__name__, path).decode("utf-8")
 
@@ -70,3 +79,7 @@ def save_offline_chart(altair_chart, filename="my_chart.html", overwrite=False):
 
     with open(filename, "w") as f:
         f.write(template.format(**fmt_dict))
+
+    if print_msg:
+        print(f"Chart saved to {filename}")
+        print(iframe_message.format(filename=filename))
