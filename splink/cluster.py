@@ -28,18 +28,25 @@ To use this function, Spark needs access to the `graphframes` jar.
 
 For Spark 2.4.5 suggested code is:
 
-from pyspark.context import SparkContext, SparkConf
 from pyspark.sql import SparkSession
 
-conf = SparkConf()
-conf.set('spark.jars.packages', 'graphframes:graphframes:0.6.0-spark2.3-s_2.11')
-# Alternatively if no internet access download package and use
-# conf.set('spark.jars', 'jars/graphframes-0.8.0-spark3.0-s_2.12.jar')
-# conf.set('spark.driver.extraClassPath', './jars/graphframes-0.8.0-spark3.0-s_2.12.jar') # Spark 2.x only
+spark = (SparkSession
+   .builder
+   .appName("my_app")
+   .config('spark.jars.packages', 'graphframes:graphframes:0.6.0-spark2.3-s_2.11')
+   .getOrCreate()
+   )
 
-sc = SparkContext.getOrCreate(conf=conf)
-sc.setCheckpointDir("temp_graphframes/")
-spark = SparkSession(sc)
+spark.sparkContext.setCheckpointDir("graphframes_tempdir/")
+
+# Alternatively if no internet access you need to download the jar AND its dependencies and point Spark to the
+# location of the jars in your filesystem:
+# config('spark.driver.extraClassPath', 'jars/graphframes-0.6.0-spark2.3-s_2.11.jar,jars/scala-logging-api_2.11-2.1.2.jar,jars/scala-logging-slf4j_2.11-2.1.2.jar') # Spark 2.x only
+# config('spark.jars', 'jars/graphframes-0.6.0-spark2.3-s_2.11.jar,jars/scala-logging-api_2.11-2.1.2.jar,jars/scala-logging-slf4j_2.11-2.1.2.jar')
+
+Note extraClassPath is needed on spark 2.x only.
+
+You can find these jars, for example, here https://github.com/moj-analytical-services/splink_graph/tree/master/jars
 
 You can find a list of jars corresponding to different versions of Spark here:
 https://mvnrepository.com/artifact/graphframes/graphframes?repo=spark-packages
