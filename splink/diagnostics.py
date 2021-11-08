@@ -57,11 +57,17 @@ def _calc_probability_density(
     if isinstance(buckets, int) and buckets != 0:
         buckets = _equal_spaced_buckets(buckets, extent)
     elif buckets is None:
-        buckets = buckets = _equal_spaced_buckets(100, extent)
-
-    # ensure bucket splits are in ascending order
+        buckets = _equal_spaced_buckets(100, extent)
 
     buckets.sort()
+
+    # ensure bucket splits are in ascending order
+    if score_colname == "match_probability":
+        if buckets[0] != 0:
+            buckets = [0.0] + buckets
+
+        if buckets[-1] != 1.0:
+            buckets = buckets + [1.0]
 
     hist = df_e.select(score_colname).rdd.flatMap(lambda x: x).histogram(buckets)
 
