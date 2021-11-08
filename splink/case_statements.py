@@ -1,5 +1,6 @@
 import warnings
 import re
+from .jar_location import similarity_jar_location
 
 
 def _check_jaro_registered(spark):
@@ -32,9 +33,7 @@ def _get_spark_jars_string():
 
     """
 
-    import splink
-
-    path = splink.__file__[0:-11] + "jars/scala-udf-similarity-0.0.9.jar"
+    path = similarity_jar_location()
 
     message = (
         "You will need to add it by correctly configuring your spark config\n"
