@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1]
+
+### Added
+
+* Add function that outputs the full path to the similarity jar by @RobinL in https://github.com/moj-analytical-services/splink/pull/237
+
+### Changed
+* Allow match weight to be used in the diagnostic histogram by @RobinL in https://github.com/moj-analytical-services/splink/pull/239
+
 ## [2.0.0]
 
 ### Changed
