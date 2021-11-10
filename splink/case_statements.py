@@ -50,8 +50,8 @@ def _get_spark_jars_string():
         "Alternatively, for Jaro Winkler, you can register a less efficient"
         " Python implementation using\n"
         "\n"
-        "from splink.jar_fallback import jc_sim_py\n"
-        "spark.udf.register('jaro_winkler_sim', jc_sim_py)\n"
+        "from splink.jar_fallback import jw_sim_py\n"
+        "spark.udf.register('jaro_winkler_sim', jw_sim_py)\n"
     )
 
     return message
