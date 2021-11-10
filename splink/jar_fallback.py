@@ -1,27 +1,6 @@
 import math
 
 
-def jc_sim_py(str1, str2):
-    """
-    Jaccard`similarity calculated exactly as in stringutils.similarity jaccard in Apache Commons
-    """
-
-    if not str1 or not str2:
-        return 0.0
-
-    k = 2  # default k in stringutil is 2 so leaving it like that for compatibility
-
-    # break strings into sets of rolling k-char syllables
-    a = set([str1[i : i + 1] for i in range(len(str1) - k + 1)])
-    b = set([str2[i : i + 1] for i in range(len(str2) - k + 1)])
-
-    # calculate instersection of two sets
-    c = a.intersection(b)
-
-    # return Jaccard similarity
-    return float(len(c)) / (len(a) + len(b) - len(c))
-
-
 def jw_sim_py(
     first,
     second,  # modification from original to not use other imput parameters
