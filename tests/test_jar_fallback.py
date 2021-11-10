@@ -1,5 +1,5 @@
 import pytest
-from splink.jar_fallback import jw_sim_py, jc_sim_py
+from splink.jar_fallback import jw_sim_py
 
 
 def test_fallback_jw_nodata():
