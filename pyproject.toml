@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "splink"
-version = "2.0.1"
-description = "Implementation in Apache Spark of the EM algorithm to estimate parameters of Fellegi-Sunter's canonical model of record linkage."
+version = "2.0.2"
+description = "Implementation of Fellegi-Sunter's canonical model of record linkage in Apache Spark, including EM algorithm to estimate parameters"
 authors = ["Robin Linacre <robinlinacre@hotmail.com>", "Sam Lindsay", "Theodore Manassis"]
 license = "MIT"
 homepage = "https://github.com/moj-analytical-services/splink"
