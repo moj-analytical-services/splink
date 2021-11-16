@@ -55,13 +55,26 @@ def estimate_m_from_labels(
     else:
         use_source_dataset = True
 
+    source_dataset_colname = settings_complete["source_dataset_column_name"]
+    uid_colname = settings_complete["unique_id_column_name"]
+
     if use_connected_components:
         df_gammas = _get_comparisons_using_connected_components(
-            df_nodes, labels, settings_complete, use_source_dataset
+            df_nodes,
+            labels,
+            settings_complete,
+            use_source_dataset,
+            source_dataset_colname,
+            uid_colname,
         )
     else:
         df_gammas = _get_comparisons_using_joins(
-            df_nodes, labels, settings_complete, use_source_dataset
+            df_nodes,
+            labels,
+            settings_complete,
+            use_source_dataset,
+            source_dataset_colname,
+            uid_colname,
         )
 
     df_e = df_gammas.withColumn("match_probability", lit(1.0))
@@ -86,20 +99,25 @@ def estimate_m_from_labels(
 
 
 def _get_comparisons_using_connected_components(
-    df_nodes, df_labels, settings_complete, use_source_dataset
+    df_nodes,
+    df_labels,
+    settings_complete,
+    use_source_dataset,
+    source_dataset_colname,
+    uid_colname,
 ):
     from graphframes import GraphFrame
 
     spark = df_nodes.sql_ctx.sparkSession
 
     if use_source_dataset:
-        uid_node = "concat(source_dataset, '-__-',unique_id) as id"
-        uid_r = "concat(source_dataset_l, '-__-',unique_id_l) as src"
-        uid_l = "concat(source_dataset_r, '-__-',unique_id_r) as dst"
+        uid_node = f"concat({source_dataset_colname}, '-__-',{uid_colname}) as id"
+        uid_r = f"concat({source_dataset_colname}_l, '-__-',{uid_colname}_l) as src"
+        uid_l = f"concat({source_dataset_colname}_r, '-__-',{uid_colname}_r) as dst"
     else:
-        uid_node = "unique_id as id"
-        uid_r = "unique_id_l as src"
-        uid_l = "unique_id_r as dst"
+        uid_node = f"{uid_colname} as id"
+        uid_r = f"{uid_colname}_l as src"
+        uid_l = f"{uid_colname}_r as dst"
 
     cc_nodes = df_nodes.selectExpr(uid_node)
     edges = df_labels.selectExpr(uid_l, uid_r)
@@ -111,9 +129,11 @@ def _get_comparisons_using_connected_components(
     cc.createOrReplaceTempView("cc")
 
     if use_source_dataset:
-        join_col_expr = "concat(df_nodes.source_dataset, '-__-',df_nodes.unique_id)"
+        join_col_expr = (
+            f"concat(df_nodes.{source_dataset_colname}, '-__-',df_nodes.{uid_colname})"
+        )
     else:
-        join_col_expr = "df_nodes.unique_id"
+        join_col_expr = f"df_nodes.{uid_colname}"
 
     sql = f"""
     select df_nodes.*, cc.component as cluster
@@ -133,10 +153,17 @@ def _get_comparisons_using_connected_components(
 
 
 def _get_comparisons_using_joins(
-    df_nodes, df_labels, settings_complete, use_source_dataset
+    df_nodes,
+    df_labels,
+    settings_complete,
+    use_source_dataset,
+    source_dataset_colname,
+    uid_colname,
 ):
     spark = df_nodes.sql_ctx.sparkSession
-    df_labels = lower_id_to_left_hand_side(df_labels)
+    df_labels = lower_id_to_left_hand_side(
+        df_labels, source_dataset_colname, uid_colname
+    )
 
     df_nodes.createOrReplaceTempView("df_nodes")
     df_labels.createOrReplaceTempView("df_labels")
@@ -151,18 +178,18 @@ def _get_comparisons_using_joins(
         select {sql_select_expr}, '0' as match_key
         from df_nodes as l
         inner join df_labels
-            on l.source_dataset = df_labels.source_dataset_l and l.unique_id = df_labels.unique_id_l
+            on l.{source_dataset_colname} = df_labels.{source_dataset_colname}_l and l.{uid_colname} = df_labels.{uid_colname}_l
         inner join df_nodes as r
-            on r.source_dataset = df_labels.source_dataset_r and r.unique_id = df_labels.unique_id_r
+            on r.{source_dataset_colname} = df_labels.{source_dataset_colname}_r and r.{uid_colname} = df_labels.{uid_colname}_r
         """
     else:
         sql = f"""
         select {sql_select_expr}, '0' as match_key
         from df_nodes as l
         inner join df_labels
-            on l.unique_id = df_labels.unique_id_l
+            on l.{uid_colname} = df_labels.{uid_colname}_l
         inner join df_nodes as r
-            on r.unique_id = df_labels.unique_id_r
+            on r.{uid_colname} = df_labels.{uid_colname}_r
         """
 
     df_comparison = spark.sql(sql)
