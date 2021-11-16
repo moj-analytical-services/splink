@@ -1,0 +1,35 @@
+{
+  "config": {
+    "view": {
+      "width": 400,
+      "height": 300
+    }
+  },
+  "data": {
+    "values": null
+  },
+  "mark": "bar",
+  "encoding": {
+    "x": {
+      "type": "nominal",
+      "field": "cc",
+      "sort": {
+        "field": "sum_gam",
+        "op": "sum",
+        "order": "ascending"
+      },
+      "title": "gammas"
+    },
+    "y": {
+      "type": "quantitative",
+      "field": "count",
+      "scale": {
+        "constant": 10,
+        "type": "symlog"
+      },
+      "title": "count"
+    }
+  },
+  "width": 1000,
+  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json"
+}
