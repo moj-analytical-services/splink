@@ -152,10 +152,7 @@ def splink_score_histogram(
     return _create_probability_density_plot(rows)
 
 
-def comparison_vector_distribution(
-    df_gammas: DataFrame,
-    sort_by_colname=None,
-):
+def comparison_vector_distribution(df_gammas, sort_by_colname=None):
 
     spark = df_gammas.sql_ctx.sparkSession
 
@@ -184,24 +181,40 @@ def comparison_vector_distribution(
     order by {cols_expr}
     """
 
-    gammas_counts = spark.sql(sql).toPandas()
+    gamma_counts = spark.sql(sql)
+    return gamma_counts
+
+
+def comparison_vector_distribution_chart(
+    df_gammas: DataFrame, sort_by_colname=None, symlog=True, symlog_constant=40
+):
+
+    gamma_counts = comparison_vector_distribution(
+        df_gammas, sort_by_colname=sort_by_colname
+    )
+    gamma_counts = gamma_counts.toPandas()
 
     hist_def_dict = load_chart_definition("gamma_histogram.json")
-    hist_def_dict["data"]["values"] = gammas_counts.to_dict(orient="records")
+    hist_def_dict["data"]["values"] = gamma_counts.to_dict(orient="records")
 
-    tt = [{"field": "count", "type": "quantitative"}]
+    if not symlog:
+        del hist_def_dict["encoding"]["y"]["scale"]
+    else:
+        hist_def_dict["encoding"]["y"]["scale"]["constant"] = symlog_constant
+
+    tooltips = [{"field": "count", "type": "quantitative"}]
 
     if sort_by_colname:
         score_tt = {"field": sort_by_colname, "type": "quantitative"}
     else:
         score_tt = {"field": "sum_gam", "type": "quantitative"}
 
-    tt.append(score_tt)
-
+    tooltips.append(score_tt)
+    g_cols = [c for c in df_gammas.columns if c.startswith("gamma_")]
     g_tts = [{"field": c, "type": "nominal"} for c in g_cols]
-    tt.extend(g_tts)
+    tooltips.extend(g_tts)
 
-    hist_def_dict["encoding"]["tooltip"] = tt
+    hist_def_dict["encoding"]["tooltip"] = tooltips
 
     if sort_by_colname:
         hist_def_dict["encoding"]["x"]["sort"]["field"] = sort_by_colname
