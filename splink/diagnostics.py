@@ -1,5 +1,5 @@
 from functools import reduce
-from copy import copy
+from copy import copy, deepcopy
 import warnings
 
 from pyspark.sql.dataframe import DataFrame
@@ -7,6 +7,11 @@ from pyspark.sql.session import SparkSession
 from typeguard import typechecked
 
 from .charts import load_chart_definition, altair_if_installed_else_json
+from .settings import complete_settings_dict, Settings
+from .vertically_concat import vertically_concatenate_datasets
+from .blocking import block_using_rules
+from .gammas import add_gammas
+from .estimate import _num_target_rows_to_rows_to_sample
 
 
 def _equal_spaced_buckets(num_buckets, extent):
@@ -175,7 +180,7 @@ def comparison_vector_distribution(df_gammas, sort_by_colname=None):
         sort_col_expr = f", avg({sort_by_colname}) as {sort_by_colname}"
 
     sql = f"""
-    select {cols_expr}, concat_ws(',', {cols_expr}) as cc, {sum_gams} as sum_gam, count(*) as count {sort_col_expr}
+    select {cols_expr}, concat_ws(',', {cols_expr}) as concat_gam, {sum_gams} as sum_gam, count(*) as count {sort_col_expr}
     from df_gammas
     group by {cols_expr}
     order by {cols_expr}
@@ -220,3 +225,93 @@ def comparison_vector_distribution_chart(
         hist_def_dict["encoding"]["x"]["sort"]["field"] = sort_by_colname
 
     return altair_if_installed_else_json(hist_def_dict)
+
+
+def _melted_comparison_vector_distribution(cvd):
+
+    cvd = cvd.toPandas().reset_index()
+    cvd = cvd.rename(columns={"index": "comparison_vector_uid"})
+
+    # Pivot cvd2 from wide format to long format on gamma cols
+    all_cols = cvd.columns.tolist()
+    index_cols = [c for c in all_cols if not c.startswith("gamma_")]
+
+    cvd_melted = cvd.melt(id_vars=index_cols).sort_values("comparison_vector_uid")
+    cvd_melted = cvd_melted.rename(columns={"value": "gamma_value"})
+    return cvd_melted
+
+
+def estimate_null_proportions(
+    settings: dict,
+    df_or_dfs: DataFrame,
+    target_rows: int = 1e6,
+):
+
+    # Do not modify settings object provided by user either
+    settings = deepcopy(settings)
+
+    # For the purpoes of estimating u values, we will not use any blocking
+    settings["blocking_rules"] = []
+
+    # Minimise the columns that are needed for the calculation
+    settings["retain_matching_columns"] = False
+    settings["retain_intermediate_calculation_columns"] = False
+
+    if type(df_or_dfs) == DataFrame:
+        dfs = [df_or_dfs]
+    else:
+        dfs = df_or_dfs
+
+    spark = dfs[0].sql_ctx.sparkSession
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        settings = complete_settings_dict(settings, spark)
+
+    df = vertically_concatenate_datasets(dfs)
+
+    count_rows = df.count()
+    if settings["link_type"] in ["dedupe_only", "link_and_dedupe"]:
+        sample_size = _num_target_rows_to_rows_to_sample(target_rows)
+        proportion = sample_size / count_rows
+
+    if settings["link_type"] == "link_only":
+        sample_size = target_rows ** 0.5
+        proportion = sample_size / count_rows
+
+    if proportion >= 1.0:
+        proportion = 1.0
+
+    df_s = df.sample(False, proportion)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        df_comparison = block_using_rules(settings, df_s, spark)
+
+        df_gammas = add_gammas(df_comparison, settings, spark)
+
+    settings_obj = Settings(settings)
+
+    gamma_cols = [cc.gamma_name for cc in settings_obj.comparison_columns_list]
+
+    sql_template = """
+
+    select count(*)/(select count(*) from df_gammas) as count, {gamma_name} as gamma_value, '{gamma_name}' as colname
+    from df_gammas
+    group by {gamma_name}
+    """
+
+    sqls = [sql_template.format(gamma_name=c) for c in gamma_cols]
+
+    unions = " UNION ALL ".join(sqls)
+
+    df_gammas.createOrReplaceTempView("df_gammas")
+    sql = f"""
+
+    with unions as ({unions})
+
+    select * from unions where gamma_value = -1
+
+
+    """
+    return spark.sql(sql)
