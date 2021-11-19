@@ -158,14 +158,30 @@ def splink_score_histogram(
     return _create_probability_density_plot(rows)
 
 
-def comparison_vector_distribution(df_gammas, sort_by_colname=None):
+def comparison_vector_distribution(df_gammas):
+    """Generate a pandas dataframe containing the
+    distribution of counts of distinct comparison vectors
+    in df_gammas or df_e.
+
+    If df_e is provided, the average match_probability
+    and match_weight will be output for each comparison vector.
+
+    Args:
+        df_gammas (DataFrame): A dataframe of record comparisons
+    """
 
     spark = df_gammas.sql_ctx.sparkSession
 
-    g_cols = [c for c in df_gammas.columns if c.startswith("gamma_")]
-    sel_cols = g_cols
-    if sort_by_colname:
-        sel_cols = g_cols + [sort_by_colname]
+    df_gamma_cols = df_gammas.columns
+
+    g_cols = [c for c in df_gamma_cols if c.startswith("gamma_")]
+    sel_cols = g_cols.copy()
+
+    if "match_probability" in df_gamma_cols:
+        sel_cols.append("match_probability")
+    if "match_weight" in df_gamma_cols:
+        sel_cols.append("match_weight")
+
     df_gammas = df_gammas.select(sel_cols)
 
     cols_expr = ", ".join([f'"{c}"' for c in g_cols])
@@ -176,12 +192,18 @@ def comparison_vector_distribution(df_gammas, sort_by_colname=None):
     case_tem = "(case when {g} = -1 then 0 when {g} = 0 then -1 else {g} end)"
     sum_gams = " + ".join([case_tem.format(g=c) for c in g_cols])
 
-    sort_col_expr = ""
-    if sort_by_colname:
-        sort_col_expr = f", avg({sort_by_colname}) as {sort_by_colname}"
+    score_col_expr = []
+    if "match_probability" in df_gamma_cols:
+        score_col_expr.append(f"avg(match_probability) as match_probability")
+    if "match_weight" in df_gamma_cols:
+        score_col_expr.append(f"avg(match_weight) as match_weight")
+    if score_col_expr:
+        score_col_expr = ", " + ", ".join(score_col_expr)
+    else:
+        score_col_expr = ""
 
     sql = f"""
-    select {cols_expr}, concat_ws(',', {cols_expr}) as gam_concat, {sum_gams} as sum_gam, count(*) as count {sort_col_expr}
+    select {cols_expr}, concat_ws(',', {cols_expr}) as gam_concat, {sum_gams} as sum_gam, count(*) as count {score_col_expr}
     from df_gammas
     group by {cols_expr}
     order by {cols_expr}
@@ -192,6 +214,18 @@ def comparison_vector_distribution(df_gammas, sort_by_colname=None):
     gamma_counts["proportion_of_comparisons"] = (
         gamma_counts["count"] / gamma_counts["count"].sum()
     )
+
+    gamma_counts = gamma_counts.sort_values("sum_gam")
+    if "match_probability" in gamma_counts.columns:
+        gamma_counts = gamma_counts.sort_values("match_probability")
+
+    if "match_weight" in gamma_counts.columns:
+        gamma_counts = gamma_counts.sort_values("match_weight")
+
+    gamma_counts["cumulative_comparisons"] = gamma_counts[
+        "proportion_of_comparisons"
+    ].cumsum()
+
     return gamma_counts
 
 
@@ -211,9 +245,15 @@ COLOUR_ENCODING_MATCH_WEIGHT = {
 }
 
 
-def comparison_vector_distribution_chart(
-    cvd_df, sort_by_colname=None, symlog=True, symlog_constant=40
-):
+def comparison_vector_distribution_chart(cvd_df, symlog=True, symlog_constant=40):
+    """Generate an Altair chart from the comparison vector distribution
+    produced by splink.diagnostics.comparison_vector_distribution()
+
+    Args:
+        cvd_df (pandas.DataFrame): Output of splink.diagnostics.comparison_vector_distribution()
+        symlog (bool, optional): If true, y axis is symlog. Defaults to True.
+        symlog_constant (int, optional): Symlog constant if symlog set to True. Defaults to 40.
+    """
 
     hist_def_dict = load_chart_definition("gamma_histogram.json")
     hist_def_dict["data"]["values"] = cvd_df.to_dict(orient="records")
@@ -227,26 +267,38 @@ def comparison_vector_distribution_chart(
         {"field": "gam_concat", "type": "nominal"},
         {"field": "count", "type": "quantitative"},
         {"field": "proportion_of_comparisons", "type": "quantitative", "format": ".2%"},
+        {"field": "cumulative_comparisons", "type": "quantitative", "format": ".2%"},
     ]
 
-    if sort_by_colname:
-        score_tt = {"field": sort_by_colname, "type": "quantitative"}
-    else:
-        score_tt = {"field": "sum_gam", "type": "quantitative"}
+    cvd_columns = list(cvd_df.columns)
+    score_tts = []
+    if "match_probability" in cvd_columns:
+        score_tts.append(
+            {"field": "match_probability", "type": "quantitative", "format": ".2%"}
+        )
+    if "match_weight" in cvd_columns:
+        score_tts.append(
+            {"field": "match_weight", "type": "quantitative", "format": ".2f"}
+        )
+    if len(score_tts) == 0:
+        score_tts.append({"field": "sum_gam", "type": "quantitative"})
 
-    tooltips.append(score_tt)
+    tooltips.extend(score_tts)
     g_cols = [c for c in cvd_df.columns if c.startswith("gamma_")]
     g_tts = [{"field": c, "type": "nominal"} for c in g_cols]
     tooltips.extend(g_tts)
 
     hist_def_dict["encoding"]["tooltip"] = tooltips
 
-    if sort_by_colname:
-        hist_def_dict["encoding"]["x"]["sort"]["field"] = sort_by_colname
-    if sort_by_colname == "match_probability":
-        hist_def_dict["encoding"]["color"] = COLOUR_ENCODING_MATCH_PROB
-    if sort_by_colname == "match_weight":
+    hist_def_dict["encoding"]["x"]["sort"]["field"] = "sum_gam"
+
+    if "match_weight" in cvd_columns:
         hist_def_dict["encoding"]["color"] = COLOUR_ENCODING_MATCH_WEIGHT
+        hist_def_dict["encoding"]["x"]["sort"]["field"] = "match_weight"
+
+    if "match_probability" in cvd_columns:
+        hist_def_dict["encoding"]["color"] = COLOUR_ENCODING_MATCH_PROB
+        hist_def_dict["encoding"]["x"]["sort"]["field"] = "match_probability"
 
     return altair_if_installed_else_json(hist_def_dict)
 
@@ -301,6 +353,21 @@ def _m_u_table_with_null_adjustment(null_props, settings, spark):
 
 
 def get_theoretical_comparison_vector_distribution(df_gammas, actual_cvd, settings):
+    """Generate a pandas dataframe containing the distribution of
+    distinct comparison vectors that would be expected
+    from the m and u values in the settings object if the assumptions
+    of the fellegi sunter model held (i.e. conditional independence
+    of comparison vector values given match status).
+    Only produces output for the patterns of comparison vectors
+    in df_gammas
+
+    If df_e is provided, the average match_probability
+    and match_weight will be output for each comparison vector.
+
+    Args:
+        df_gammas (DataFrame): A dataframe of record comparisons
+    """
+
     spark = df_gammas.sql_ctx.sparkSession
 
     settings_obj = Settings(settings)
@@ -313,6 +380,7 @@ def get_theoretical_comparison_vector_distribution(df_gammas, actual_cvd, settin
     total_cvs = actual_cvd["count"].sum()
     cvd_melted = _melted_comparison_vector_distribution(actual_cvd)
 
+    # df gammas is needed to estimate the proportion of record comparisons that are null
     null_props = estimate_proportion_of_null_comparisons(df_gammas, settings)
     m_u_lookup = _m_u_table_with_null_adjustment(null_props, settings, spark)
 
@@ -353,6 +421,16 @@ def get_theoretical_comparison_vector_distribution(df_gammas, actual_cvd, settin
     final = final.drop(
         ["comparison_vector_uid", "m_probability", "u_probability"], axis=1
     )
+
+    final = final.sort_values("sum_gam")
+    if "match_probability" in final.columns:
+        final = final.sort_values("match_probability")
+
+    if "match_weight" in final.columns:
+        final = final.sort_values("match_weight")
+
+    final["cumulative_comparisons"] = final["proportion_of_comparisons"].cumsum()
+
     return final
 
 
@@ -399,6 +477,15 @@ def estimate_proportion_of_null_comparisons(
 
 
 def compare_actual_and_theoretical_cvd(actual_cvd, theoretical_cvd):
+    """Compare actual to theoretical distribution
+
+    Args:
+        actual_cvd: Output of comparison_vector_distribution()
+        theoretical_cvd: Output of  get_theoretical_comparison_vector_distribution()
+
+    Returns:
+        Pandas dataframe comparing actual to theoretical distribution
+    """
     theoretical_cvd = theoretical_cvd[["gam_concat", "count"]].copy()
     theoretical_cvd = theoretical_cvd.rename(columns={"count": "count_theoretical"})
 
@@ -413,8 +500,16 @@ def compare_actual_and_theoretical_cvd(actual_cvd, theoretical_cvd):
 
 
 def comparison_vector_comparison_chart(
-    cvd_comparison_df, sort_by_colname=None, symlog=True, symlog_constant=40
+    cvd_comparison_df, symlog=True, symlog_constant=40
 ):
+    """Generate an Altair chart that compares actual
+    to theoretical distribution
+
+    Args:
+        cvd_df (pandas.DataFrame): Output of splink.diagnostics.compare_actual_and_theoretical_cvd()
+        symlog (bool, optional): If true, y axis is symlog. Defaults to True.
+        symlog_constant (int, optional): Symlog constant if symlog set to True. Defaults to 40.
+    """
 
     hist_def_dict = load_chart_definition("gamma_histogram.json")
     hist_def_dict["data"]["values"] = cvd_comparison_df.to_dict(orient="records")
@@ -432,26 +527,34 @@ def comparison_vector_comparison_chart(
         {"field": "count_diff", "type": "quantitative"},
     ]
 
-    if sort_by_colname:
-        score_tt = {"field": sort_by_colname, "type": "quantitative"}
-    else:
-        score_tt = {"field": "sum_gam", "type": "quantitative"}
+    cvd_columns = list(cvd_comparison_df.columns)
 
-    tooltips.append(score_tt)
+    score_tts = []
+    if "match_probability" in cvd_columns:
+        score_tts.append(
+            {"field": "match_probability", "type": "quantitative", "format": ".2%"}
+        )
+    if "match_weight" in cvd_columns:
+        score_tts.append(
+            {"field": "match_weight", "type": "quantitative", "format": ".2f"}
+        )
+    if len(score_tts) == 0:
+        score_tts.append({"field": "sum_gam", "type": "quantitative"})
+
+    tooltips.extend(score_tts)
     g_cols = [c for c in cvd_comparison_df.columns if c.startswith("gamma_")]
     g_tts = [{"field": c, "type": "nominal"} for c in g_cols]
     tooltips.extend(g_tts)
 
     hist_def_dict["encoding"]["tooltip"] = tooltips
 
-    if sort_by_colname:
-        hist_def_dict["encoding"]["x"]["sort"]["field"] = sort_by_colname
+    hist_def_dict["encoding"]["x"]["sort"]["field"] = "sum_gam"
 
-    if sort_by_colname:
-        hist_def_dict["encoding"]["x"]["sort"]["field"] = sort_by_colname
-    if sort_by_colname == "match_probability":
-        hist_def_dict["encoding"]["color"] = COLOUR_ENCODING_MATCH_PROB
-    if sort_by_colname == "match_weight":
+    if "match_weight" in cvd_columns:
         hist_def_dict["encoding"]["color"] = COLOUR_ENCODING_MATCH_WEIGHT
+        hist_def_dict["encoding"]["x"]["sort"]["field"] = "match_weight"
+    if "match_probability" in cvd_columns:
+        hist_def_dict["encoding"]["color"] = COLOUR_ENCODING_MATCH_PROB
+        hist_def_dict["encoding"]["x"]["sort"]["field"] = "match_probability"
 
     return altair_if_installed_else_json(hist_def_dict)
