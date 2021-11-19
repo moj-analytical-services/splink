@@ -1,6 +1,7 @@
 from functools import reduce
 from copy import copy, deepcopy
 import warnings
+import pandas as pd
 
 from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
@@ -180,34 +181,32 @@ def comparison_vector_distribution(df_gammas, sort_by_colname=None):
         sort_col_expr = f", avg({sort_by_colname}) as {sort_by_colname}"
 
     sql = f"""
-    select {cols_expr}, concat_ws(',', {cols_expr}) as concat_gam, {sum_gams} as sum_gam, count(*) as count {sort_col_expr}
+    select {cols_expr}, concat_ws(',', {cols_expr}) as gam_concat, {sum_gams} as sum_gam, count(*) as count {sort_col_expr}
     from df_gammas
     group by {cols_expr}
     order by {cols_expr}
     """
 
     gamma_counts = spark.sql(sql)
-    return gamma_counts
+    return gamma_counts.toPandas()
 
 
 def comparison_vector_distribution_chart(
-    df_gammas: DataFrame, sort_by_colname=None, symlog=True, symlog_constant=40
+    cvd_df, sort_by_colname=None, symlog=True, symlog_constant=40
 ):
 
-    gamma_counts = comparison_vector_distribution(
-        df_gammas, sort_by_colname=sort_by_colname
-    )
-    gamma_counts = gamma_counts.toPandas()
-
     hist_def_dict = load_chart_definition("gamma_histogram.json")
-    hist_def_dict["data"]["values"] = gamma_counts.to_dict(orient="records")
+    hist_def_dict["data"]["values"] = cvd_df.to_dict(orient="records")
 
     if not symlog:
         del hist_def_dict["encoding"]["y"]["scale"]
     else:
         hist_def_dict["encoding"]["y"]["scale"]["constant"] = symlog_constant
 
-    tooltips = [{"field": "count", "type": "quantitative"}]
+    tooltips = [
+        {"field": "gam_concat", "type": "nominal"},
+        {"field": "count", "type": "quantitative"},
+    ]
 
     if sort_by_colname:
         score_tt = {"field": sort_by_colname, "type": "quantitative"}
@@ -215,7 +214,7 @@ def comparison_vector_distribution_chart(
         score_tt = {"field": "sum_gam", "type": "quantitative"}
 
     tooltips.append(score_tt)
-    g_cols = [c for c in df_gammas.columns if c.startswith("gamma_")]
+    g_cols = [c for c in cvd_df.columns if c.startswith("gamma_")]
     g_tts = [{"field": c, "type": "nominal"} for c in g_cols]
     tooltips.extend(g_tts)
 
@@ -229,7 +228,7 @@ def comparison_vector_distribution_chart(
 
 def _melted_comparison_vector_distribution(cvd):
 
-    cvd = cvd.toPandas().reset_index()
+    cvd = cvd.reset_index()
     cvd = cvd.rename(columns={"index": "comparison_vector_uid"})
 
     # Pivot cvd2 from wide format to long format on gamma cols
@@ -237,58 +236,103 @@ def _melted_comparison_vector_distribution(cvd):
     index_cols = [c for c in all_cols if not c.startswith("gamma_")]
 
     cvd_melted = cvd.melt(id_vars=index_cols).sort_values("comparison_vector_uid")
-    cvd_melted = cvd_melted.rename(columns={"value": "gamma_value"})
+    cvd_melted = cvd_melted.rename(
+        columns={"value": "gam_val", "variable": "gam_colname"}
+    )
     return cvd_melted
 
 
-def estimate_null_proportions(
+def _m_u_table_with_null_adjustment(null_props, settings, spark):
+    settings_obj = Settings(settings)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        settings_obj.complete_settings_dict(spark)
+    out_data = []
+    for cc in settings_obj.comparison_columns_list:
+        gam_name = cc.gamma_name
+        null_prop = null_props[gam_name]
+        populated_prop = 1 - null_prop
+        row = {
+            "gam_val": -1,
+            "gam_colname": gam_name,
+            "m_probability": null_prop,
+            "u_probability": null_prop,
+        }
+        out_data.append(row)
+        for row in cc.as_rows():
+            m = row["m_probability"]
+            u = row["u_probability"]
+            gam_val = row["gamma_index"]
+
+            row = {
+                "gam_val": gam_val,
+                "gam_colname": gam_name,
+                "m_probability": m * populated_prop,
+                "u_probability": u * populated_prop,
+            }
+            out_data.append(row)
+    prob_lookup = pd.DataFrame(out_data)
+    return prob_lookup
+
+
+def get_theoretical_comparison_vector_distribution(df_gammas, actual_cvd, settings):
+    spark = df_gammas.sql_ctx.sparkSession
+
+    settings_obj = Settings(settings)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        settings_obj.complete_settings_dict(spark)
+
+    lam = settings_obj["proportion_of_matches"]
+
+    total_cvs = actual_cvd["count"].sum()
+    cvd_melted = _melted_comparison_vector_distribution(actual_cvd)
+
+    null_props = estimate_proportion_of_null_comparisons(df_gammas, settings)
+    m_u_lookup = _m_u_table_with_null_adjustment(null_props, settings, spark)
+
+    df_cvd_with_m_u = cvd_melted.merge(
+        m_u_lookup,
+        left_on=["gam_colname", "gam_val"],
+        right_on=["gam_colname", "gam_val"],
+    )
+
+    gamma_cols = df_gammas.columns
+    actual_cvd_cols = list(actual_cvd.columns)
+
+    index_cols = ["comparison_vector_uid", "gam_concat", "sum_gam"]
+
+    if "match_weight" in gamma_cols and "match_weight" in actual_cvd_cols:
+        index_cols.append("match_weight")
+    if "match_probability" in gamma_cols and "match_probability" in actual_cvd_cols:
+        index_cols.append("match_probability")
+
+    pt1 = df_cvd_with_m_u.pivot_table(
+        index=index_cols,
+        values=["u_probability", "m_probability"],
+        aggfunc=pd.Series.product,
+    )
+    pt1["prob"] = (1 - lam) * pt1["u_probability"] + lam * pt1["m_probability"]
+
+    pt2 = df_cvd_with_m_u.pivot_table(
+        index=index_cols, columns="gam_colname", values="gam_val", aggfunc="mean"
+    )
+
+    final = pt1.join(pt2).reset_index()
+    final["prob"] = final["prob"] / final["prob"].sum()
+    final["count"] = final["prob"] * total_cvs
+    final = final.drop(
+        ["comparison_vector_uid", "m_probability", "u_probability"], axis=1
+    )
+    return final
+
+
+def estimate_proportion_of_null_comparisons(
+    df_gammas: DataFrame,
     settings: dict,
-    df_or_dfs: DataFrame,
-    target_rows: int = 1e6,
 ):
 
-    # Do not modify settings object provided by user either
-    settings = deepcopy(settings)
-
-    # For the purpoes of estimating u values, we will not use any blocking
-    settings["blocking_rules"] = []
-
-    # Minimise the columns that are needed for the calculation
-    settings["retain_matching_columns"] = False
-    settings["retain_intermediate_calculation_columns"] = False
-
-    if type(df_or_dfs) == DataFrame:
-        dfs = [df_or_dfs]
-    else:
-        dfs = df_or_dfs
-
-    spark = dfs[0].sql_ctx.sparkSession
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        settings = complete_settings_dict(settings, spark)
-
-    df = vertically_concatenate_datasets(dfs)
-
-    count_rows = df.count()
-    if settings["link_type"] in ["dedupe_only", "link_and_dedupe"]:
-        sample_size = _num_target_rows_to_rows_to_sample(target_rows)
-        proportion = sample_size / count_rows
-
-    if settings["link_type"] == "link_only":
-        sample_size = target_rows ** 0.5
-        proportion = sample_size / count_rows
-
-    if proportion >= 1.0:
-        proportion = 1.0
-
-    df_s = df.sample(False, proportion)
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        df_comparison = block_using_rules(settings, df_s, spark)
-
-        df_gammas = add_gammas(df_comparison, settings, spark)
+    spark = df_gammas.sql_ctx.sparkSession
 
     settings_obj = Settings(settings)
 
@@ -296,7 +340,7 @@ def estimate_null_proportions(
 
     sql_template = """
 
-    select count(*)/(select count(*) from df_gammas) as count, {gamma_name} as gamma_value, '{gamma_name}' as colname
+    select count(*)/(select count(*) from df_gammas) as proportion, {gamma_name} as gam_val, '{gamma_name}' as gam_colname
     from df_gammas
     group by {gamma_name}
     """
@@ -310,8 +354,68 @@ def estimate_null_proportions(
 
     with unions as ({unions})
 
-    select * from unions where gamma_value = -1
-
+    select proportion as null_proportion, gam_colname from unions where gam_val = -1
 
     """
-    return spark.sql(sql)
+    null_tab = spark.sql(sql).toPandas()
+    null_proportions = null_tab.set_index("gam_colname").to_dict(orient="index")
+
+    result = {k: v["null_proportion"] for k, v in null_proportions.items()}
+
+    for c in gamma_cols:
+        if c not in result:
+            result[c] = 0.0
+
+    return result
+
+
+def compare_actual_and_theoretical_cvd(actual_cvd, theoretical_cvd):
+    theoretical_cvd = theoretical_cvd[["gam_concat", "count"]].copy()
+    theoretical_cvd = theoretical_cvd.rename(columns={"count": "count_theoretical"})
+
+    actual_cvd = actual_cvd.rename(columns={"count": "count_actual"})
+
+    merged = actual_cvd.merge(
+        theoretical_cvd, left_on="gam_concat", right_on="gam_concat"
+    )
+
+    merged["count_diff"] = merged["count_actual"] - merged["count_theoretical"]
+    return merged
+
+
+def comparison_vector_comparison_chart(
+    cvd_comparison_df, sort_by_colname=None, symlog=True, symlog_constant=40
+):
+
+    hist_def_dict = load_chart_definition("gamma_histogram.json")
+    hist_def_dict["data"]["values"] = cvd_comparison_df.to_dict(orient="records")
+    hist_def_dict["encoding"]["y"]["field"] = "count_diff"
+
+    if not symlog:
+        del hist_def_dict["encoding"]["y"]["scale"]
+    else:
+        hist_def_dict["encoding"]["y"]["scale"]["constant"] = symlog_constant
+
+    tooltips = [
+        {"field": "gam_concat", "type": "nominal"},
+        {"field": "count_actual", "type": "quantitative"},
+        {"field": "count_theoretical", "type": "quantitative"},
+        {"field": "count_diff", "type": "quantitative"},
+    ]
+
+    if sort_by_colname:
+        score_tt = {"field": sort_by_colname, "type": "quantitative"}
+    else:
+        score_tt = {"field": "sum_gam", "type": "quantitative"}
+
+    tooltips.append(score_tt)
+    g_cols = [c for c in cvd_comparison_df.columns if c.startswith("gamma_")]
+    g_tts = [{"field": c, "type": "nominal"} for c in g_cols]
+    tooltips.extend(g_tts)
+
+    hist_def_dict["encoding"]["tooltip"] = tooltips
+
+    if sort_by_colname:
+        hist_def_dict["encoding"]["x"]["sort"]["field"] = sort_by_colname
+
+    return altair_if_installed_else_json(hist_def_dict)
