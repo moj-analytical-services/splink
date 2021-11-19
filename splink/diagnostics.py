@@ -189,7 +189,9 @@ def comparison_vector_distribution(df_gammas, sort_by_colname=None):
 
     gamma_counts = spark.sql(sql)
     gamma_counts = gamma_counts.toPandas()
-    gamma_counts["prob"] = gamma_counts["count"] / gamma_counts["count"].sum()
+    gamma_counts["proportion_of_comparisons"] = (
+        gamma_counts["count"] / gamma_counts["count"].sum()
+    )
     return gamma_counts
 
 
@@ -224,7 +226,7 @@ def comparison_vector_distribution_chart(
     tooltips = [
         {"field": "gam_concat", "type": "nominal"},
         {"field": "count", "type": "quantitative"},
-        {"field": "prob", "type": "quantitative", "format": ".2%"},
+        {"field": "proportion_of_comparisons", "type": "quantitative", "format": ".2%"},
     ]
 
     if sort_by_colname:
@@ -335,15 +337,19 @@ def get_theoretical_comparison_vector_distribution(df_gammas, actual_cvd, settin
         values=["u_probability", "m_probability"],
         aggfunc=pd.Series.product,
     )
-    pt1["prob"] = (1 - lam) * pt1["u_probability"] + lam * pt1["m_probability"]
+    pt1["proportion_of_comparisons"] = (1 - lam) * pt1["u_probability"] + lam * pt1[
+        "m_probability"
+    ]
 
     pt2 = df_cvd_with_m_u.pivot_table(
         index=index_cols, columns="gam_colname", values="gam_val", aggfunc="mean"
     )
 
     final = pt1.join(pt2).reset_index()
-    final["prob"] = final["prob"] / final["prob"].sum()
-    final["count"] = final["prob"] * total_cvs
+    final["proportion_of_comparisons"] = (
+        final["proportion_of_comparisons"] / final["proportion_of_comparisons"].sum()
+    )
+    final["count"] = final["proportion_of_comparisons"] * total_cvs
     final = final.drop(
         ["comparison_vector_uid", "m_probability", "u_probability"], axis=1
     )
