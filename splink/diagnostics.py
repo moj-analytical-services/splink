@@ -191,6 +191,22 @@ def comparison_vector_distribution(df_gammas, sort_by_colname=None):
     return gamma_counts.toPandas()
 
 
+COLOUR_ENCODING_MATCH_PROB = {
+    "type": "quantitative",
+    "field": "match_probability",
+    "scale": {"range": ["red", "orange", "green"], "domain": [0, 0.5, 1]},
+}
+
+COLOUR_ENCODING_MATCH_WEIGHT = {
+    "type": "quantitative",
+    "field": "match_weight",
+    "scale": {
+        "range": ["red", "red", "orange", "green", "green"],
+        "domain": [-100, -10, 0, 10, 100],
+    },
+}
+
+
 def comparison_vector_distribution_chart(
     cvd_df, sort_by_colname=None, symlog=True, symlog_constant=40
 ):
@@ -222,6 +238,10 @@ def comparison_vector_distribution_chart(
 
     if sort_by_colname:
         hist_def_dict["encoding"]["x"]["sort"]["field"] = sort_by_colname
+    if sort_by_colname == "match_probability":
+        hist_def_dict["encoding"]["color"] = COLOUR_ENCODING_MATCH_PROB
+    if sort_by_colname == "match_weight":
+        hist_def_dict["encoding"]["color"] = COLOUR_ENCODING_MATCH_WEIGHT
 
     return altair_if_installed_else_json(hist_def_dict)
 
@@ -417,5 +437,12 @@ def comparison_vector_comparison_chart(
 
     if sort_by_colname:
         hist_def_dict["encoding"]["x"]["sort"]["field"] = sort_by_colname
+
+    if sort_by_colname:
+        hist_def_dict["encoding"]["x"]["sort"]["field"] = sort_by_colname
+    if sort_by_colname == "match_probability":
+        hist_def_dict["encoding"]["color"] = COLOUR_ENCODING_MATCH_PROB
+    if sort_by_colname == "match_weight":
+        hist_def_dict["encoding"]["color"] = COLOUR_ENCODING_MATCH_WEIGHT
 
     return altair_if_installed_else_json(hist_def_dict)
