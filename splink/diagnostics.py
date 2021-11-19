@@ -188,7 +188,9 @@ def comparison_vector_distribution(df_gammas, sort_by_colname=None):
     """
 
     gamma_counts = spark.sql(sql)
-    return gamma_counts.toPandas()
+    gamma_counts = gamma_counts.toPandas()
+    gamma_counts["prob"] = gamma_counts["count"] / gamma_counts["count"].sum()
+    return gamma_counts
 
 
 COLOUR_ENCODING_MATCH_PROB = {
@@ -222,6 +224,7 @@ def comparison_vector_distribution_chart(
     tooltips = [
         {"field": "gam_concat", "type": "nominal"},
         {"field": "count", "type": "quantitative"},
+        {"field": "prob", "type": "quantitative", "format": ".2%"},
     ]
 
     if sort_by_colname:
