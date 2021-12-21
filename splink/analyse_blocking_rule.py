@@ -241,10 +241,39 @@ def get_num_comparisons_from_blocking_rule(df, blocking_rule, splink_settings):
 
 
 
+def get_largest_group(df, join_cols):
+
+    sel_expr = ", ".join(join_cols)
+    concat_expr = f"concat({sel_expr})"
+    spark = df.sql_ctx.sparkSession
+
+    df.createOrReplaceTempView("df")
+
+    sql = f"""
 
 
+        SELECT {concat_expr} as concat_expr, {sel_expr},
+        count(*) * count(*) as num_comparisons
+    FROM df
+    where {concat_expr} is not null
+    GROUP BY {concat_expr}, {sel_expr}
+    ORDER BY count(*) desc
+    limit 1
 
-def analyse_blocking_rule(df, blocking_rule, splink_settings, compute_exact_comparisons=False, compute_exact_limit=1e9, compute_largest_block=True):
+
+    """
+
+    collected = spark.sql(sql).collect()
+    largest_group_comparisons = collected[0]["num_comparisons"]
+    largest_group_concat = collected[0]["concat_expr"]
+    return {
+        "largest_group_expr": largest_group_concat,
+        "num_comparisons_generated_in_largest_group": largest_group_comparisons,
+
+    }
+
+
+def analyse_blocking_rule(df, blocking_rule, splink_settings, compute_exact_comparisons=False, compute_exact_limit=1e9, compute_largest_group=True):
     spark = df.sql_ctx.sparkSession
     splink_settings = deepcopy(splink_settings)
     splink_settings["additional_columns_to_retain"] = []
@@ -259,14 +288,25 @@ def analyse_blocking_rule(df, blocking_rule, splink_settings, compute_exact_comp
         if balanced_join:
             total_comparisons_generated = get_total_comparisons_from_join_columns_that_will_be_hash_partitioned(df, jcl)
             parsed["total_comparisons_generated_before_filter_applied"] = total_comparisons_generated
+            if  compute_largest_group:
+                group_stats = get_largest_group(df, jcl)
+                parsed = {**parsed, **group_stats}
         else:
-            parsed["total_comparisons_generated_before_filter_applied"] = "Join columns include invesions, so cannot be computed"
+            msg = "Join columns include invesions, so cannot be computed"
+            parsed["total_comparisons_generated_before_filter_applied"] = msg
             total_comparisons_generated = 1
+            if  compute_largest_group:
+                parsed["largest_group_expr"]=  msg
+                parsed["num_comparisons_generated_in_largest_group"]: msg
+
 
     if parsed["join_strategy"] == 'Cartesian':
         raw_count = df.count()
         total_comparisons_generated = raw_count * raw_count
         parsed["total_comparisons_generated_before_filter_applied"] = total_comparisons_generated
+        if  compute_largest_group:
+                parsed["largest_group_expr"]=  "Cartesian join so not groups"
+                parsed["num_comparisons_generated_in_largest_group"] = "Cartesian join so not groups"
 
     if compute_exact_comparisons and total_comparisons_generated<compute_exact_limit:
         splink_settings["blocking_rules"] = [blocking_rule]
