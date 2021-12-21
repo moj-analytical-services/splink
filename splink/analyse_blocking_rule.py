@@ -19,7 +19,7 @@ def get_queryplan_text(df, blocking_rule, splink_settings):
     else:
         source_dataset_col = splink_settings["source_dataset_column_name"]
 
-    unique_id_col = splink_settings["unique_id_col"]
+    unique_id_col = splink_settings["unique_id_column_name"]
 
     join_filter = _sql_gen_where_condition(link_type, source_dataset_col, unique_id_col)
 
@@ -185,6 +185,7 @@ def get_total_comparisons_from_join_columns_that_will_be_hash_partitioned(df, jo
     spark = df.sql_ctx.sparkSession
 
     df.createOrReplaceTempView("df")
+
     sql = f"""
     with
     block_groups as (
@@ -244,27 +245,31 @@ def get_num_comparisons_from_blocking_rule(df, blocking_rule, splink_settings):
 
 
 def analyse_blocking_rule(df, blocking_rule, splink_settings, compute_exact_comparisons=False, compute_exact_limit=1e9, compute_largest_block=True):
-
+    spark = df.sql_ctx.sparkSession
+    splink_settings = deepcopy(splink_settings)
+    splink_settings["additional_columns_to_retain"] = []
     queryplan_text = get_queryplan_text(df, blocking_rule, splink_settings)
     parsed = parse_join_line(get_join_line(queryplan_text))
 
-    if parse_join_line["join_strategy"] == 'SortMergeJoin':
+    if parsed["join_strategy"] == 'SortMergeJoin':
 
         jcl = parsed["join_hashpartition_columns_left"]
         jcr = parsed["join_hashpartition_columns_right"]
         balanced_join = (jcl == jcr)
         if balanced_join:
-            total_comparisons_generated = get_total_comparisons_from_join_columns_that_will_be_hash_partitioned(df, hp_cols)
+            total_comparisons_generated = get_total_comparisons_from_join_columns_that_will_be_hash_partitioned(df, jcl)
             parsed["comparisons_generated_before_filter_applied"] = total_comparisons_generated
         else:
             parsed["comparisons_generated_before_filter_applied"] = "Join columns include invesions, so cannot be computed"
+            total_comparisons_generated = 1
 
-
-    if parse_join_line["join_strategy"] == 'Cartesian':
+    if parsed["join_strategy"] == 'Cartesian':
         raw_count = df.count()
-        parsed["comparisons_generated_before_filter_applied"] = raw_count * raw_count
+        total_comparisons_generated = raw_count * raw_count
+        parsed["comparisons_generated_before_filter_applied"] = total_comparisons_generated
 
     if compute_exact_comparisons and total_comparisons_generated<compute_exact_limit:
+        splink_settings["blocking_rules"] = [blocking_rule]
         blocked = block_using_rules(splink_settings, df, spark)
         total_with_filters = blocked.count()
         parsed["total_comparisons_after_filters_applied"] = total_with_filters
