@@ -258,23 +258,23 @@ def analyse_blocking_rule(df, blocking_rule, splink_settings, compute_exact_comp
         balanced_join = (jcl == jcr)
         if balanced_join:
             total_comparisons_generated = get_total_comparisons_from_join_columns_that_will_be_hash_partitioned(df, jcl)
-            parsed["comparisons_generated_before_filter_applied"] = total_comparisons_generated
+            parsed["total_comparisons_generated_before_filter_applied"] = total_comparisons_generated
         else:
-            parsed["comparisons_generated_before_filter_applied"] = "Join columns include invesions, so cannot be computed"
+            parsed["total_comparisons_generated_before_filter_applied"] = "Join columns include invesions, so cannot be computed"
             total_comparisons_generated = 1
 
     if parsed["join_strategy"] == 'Cartesian':
         raw_count = df.count()
         total_comparisons_generated = raw_count * raw_count
-        parsed["comparisons_generated_before_filter_applied"] = total_comparisons_generated
+        parsed["total_comparisons_generated_before_filter_applied"] = total_comparisons_generated
 
     if compute_exact_comparisons and total_comparisons_generated<compute_exact_limit:
         splink_settings["blocking_rules"] = [blocking_rule]
         blocked = block_using_rules(splink_settings, df, spark)
         total_with_filters = blocked.count()
-        parsed["total_comparisons_after_filters_applied"] = total_with_filters
+        parsed["total_comparisons_generated_after_filters_applied"] = total_with_filters
     else:
-        parsed["total_comparisons_after_filters_applied"] = "Not computed, set compute_exact_comparisons=True to compute."
+        parsed["total_comparisons_generated_after_filters_applied"] = "Not computed, set compute_exact_comparisons=True to compute."
 
     return parsed
 
