@@ -216,7 +216,7 @@ def _get_largest_group(df, join_cols):
     largest_group_concat = collected[0]["concat_ws_expr"]
     return {
         "largest_group_expr": largest_group_concat,
-        "num_comparisons_generated_in_largest_group": largest_group_comparisons,
+        "comparisons_generated_in_largest_group_before_filter_applied": largest_group_comparisons,
     }
 
 
@@ -261,7 +261,9 @@ def analyse_blocking_rule(
             total_comparisons_generated = 1
             if compute_largest_group:
                 results_dict["largest_group_expr"] = None
-                results_dict["num_comparisons_generated_in_largest_group"] = None
+                results_dict[
+                    "comparisons_generated_in_largest_group_before_filter_applied"
+                ] = None
 
     if results_dict["join_strategy"] == "Cartesian":
         raw_count = df.count()
@@ -271,7 +273,9 @@ def analyse_blocking_rule(
         ] = total_comparisons_generated
         if compute_largest_group:
             results_dict["largest_group_expr"] = None
-            results_dict["num_comparisons_generated_in_largest_group"] = None
+            results_dict[
+                "comparisons_generated_in_largest_group_before_filter_applied"
+            ] = None
             metric_message += "Blocking rule results in Cartesian join so largest groups not applicable.\n"
 
     if compute_exact_comparisons and total_comparisons_generated < compute_exact_limit:
@@ -303,7 +307,7 @@ def analyse_blocking_rule(
         "total_comparisons_generated_before_filter_applied",
         "total_comparisons_generated_after_filters_applied",
         "largest_group_expr",
-        "num_comparisons_generated_in_largest_group",
+        "comparisons_generated_in_largest_group_before_filter_applied",
         "message",
         "join_strategy",
         "join_type",

@@ -36,7 +36,10 @@ def _get_default_case_statements_functions(spark):
     default_case_stmts["numeric"][3] = sql_gen_case_stmt_numeric_perc_3
     default_case_stmts["numeric"][4] = sql_gen_case_stmt_numeric_perc_4
 
-    jaro_exists = _check_jaro_registered(spark)
+    if spark:
+        jaro_exists = _check_jaro_registered(spark)
+    else:
+        jaro_exists = False
 
     if jaro_exists:
         default_case_stmts["string"][2] = sql_gen_case_smnt_strict_equality_2
@@ -147,7 +150,7 @@ def _complete_tf_adjustment_weights(col_settings: dict):
             )
     else:
         weights = [0.0] * col_settings["num_levels"]
-        weights[-1] = 1.0  
+        weights[-1] = 1.0
         col_settings["tf_adjustment_weights"] = weights
 
 
