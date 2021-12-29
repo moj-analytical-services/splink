@@ -78,11 +78,13 @@ def parse_case_statement(sql):
     return _parse_top_level_case_statement_from_sql(tree)
 
 
-def generate_sql_from_parsed_dict(parsed_dict):
+def generate_sql_from_parsed_dict(parsed_dict, col_name=None):
     sql = "CASE\n"
     for value in parsed_dict.values():
         sql_expr = value["sql_expr"]
         sql += f"    {sql_expr}\n"
 
     sql += "END"
+    if col_name:
+        sql += f" AS gamma_{col_name}"
     return sql
