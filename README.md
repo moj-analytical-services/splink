@@ -26,7 +26,7 @@ The statistical model behind `splink` is the same as that used in the R [fastLin
 
 ## Installation
 
-`splink` is a Python package. It uses the Spark Python API to execute data linking jobs in a Spark cluster. It has been tested in Apache Spark 2.3 and 2.4.
+`splink` is a Python package. It uses the Spark Python API to execute data linking jobs in a Spark cluster. It has been tested in Apache Spark 2.3, 2.4 and 3.1.
 
 Install splink using:
 
