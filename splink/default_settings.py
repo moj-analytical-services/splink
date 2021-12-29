@@ -20,6 +20,8 @@ from .case_statements import (
     _add_as_gamma_to_case_statement,
 )
 
+from .parse_case_statement import parse_case_statement
+
 
 def _normalise_prob_list(prob_array: list):
     sum_list = sum(prob_array)
@@ -101,6 +103,9 @@ def _get_default_probabilities(m_or_u, levels):
 
 def _complete_case_expression(col_settings, spark):
 
+    if "comparison_levels" in col_settings:
+        return col_settings
+
     default_case_statements = _get_default_case_statements_functions(spark)
     levels = col_settings["num_levels"]
 
@@ -152,6 +157,12 @@ def _complete_tf_adjustment_weights(col_settings: dict):
         weights = [0.0] * col_settings["num_levels"]
         weights[-1] = 1.0
         col_settings["tf_adjustment_weights"] = weights
+
+
+def _complete_comparison_levels(col_settings):
+    if "comparison_levels" not in col_settings:
+        case_expression = col_settings["case_expression"]
+        col_settings["comparison_levels"] = parse_case_statement(case_expression)
 
 
 def complete_settings_dict(settings_dict: dict, spark: SparkSession):
@@ -220,6 +231,8 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
         _complete_probabilities(col_settings, "m_probabilities")
         _complete_probabilities(col_settings, "u_probabilities")
         _complete_tf_adjustment_weights(col_settings)
+
+        _complete_comparison_levels(col_settings)
 
     return settings_dict
 
