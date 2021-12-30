@@ -15,6 +15,12 @@ def get_columns_used_from_sql(sql):
     return list(column_names)
 
 
+def get_columns_used_from_sql_without_l_r_suffix(sql):
+    cols = get_columns_used_from_sql(sql)
+    cols = [re.sub(r"_L$|_R$", "", c, flags=re.IGNORECASE) for c in cols]
+    return list(set(cols))
+
+
 def _tree_is_alias(syntax_tree):
     return type(syntax_tree) is Alias
 

@@ -20,7 +20,11 @@ from .case_statements import (
     _add_as_gamma_to_case_statement,
 )
 
-from .parse_case_statement import parse_case_statement
+from .parse_case_statement import (
+    parse_case_statement,
+    generate_sql_from_parsed_dict,
+    get_columns_used_from_sql_without_l_r_suffix,
+)
 
 
 def _normalise_prob_list(prob_array: list):
@@ -105,6 +109,8 @@ def _complete_case_expression(col_settings, spark):
 
     if "comparison_levels" in col_settings:
         return col_settings
+    if "case_expression" in col_settings:
+        return col_settings
 
     default_case_statements = _get_default_case_statements_functions(spark)
     levels = col_settings["num_levels"]
@@ -164,6 +170,79 @@ def _complete_comparison_levels(col_settings):
         case_expression = col_settings["case_expression"]
         col_settings["comparison_levels"] = parse_case_statement(case_expression)
 
+    if "case_expression" not in col_settings:
+        cl = col_settings["comparison_levels"]
+        col_settings["case_expression"] = generate_sql_from_parsed_dict(cl)
+
+    if "-1" not in col_settings["comparison_levels"].keys():
+
+        warnings.warn(
+            "No -1 level found in case statement."
+            " You usually want to use -1 as the level for the null value."
+            " e.g. WHEN col_l is null or col_r is null then -1"
+            f" Case statement is:\n {col_settings['case_expression']}."
+        )
+
+
+def _complete_num_levels(col_settings):
+    comparison_levels = col_settings["comparison_levels"]
+    cl_keys = comparison_levels.keys()
+    cl_keys = [k for k in cl_keys if str(k) != "-1"]
+    expected_num_levels = len(cl_keys)
+
+    if "num_levels" not in col_settings:
+        col_settings["num_levels"] = expected_num_levels
+    else:
+        num_levels_user = col_settings["num_levels"]
+        if "col_name" in col_settings:
+            col_name = col_settings["col_name"]
+        if "custom_name" in col_settings:
+            col_name = col_settings["custom_name"]
+        else:
+            col_name = ""
+
+        if num_levels_user != expected_num_levels:
+            warnings.warn(
+                f"The number of levels observed in the case statement for {col_name} is {expected_num_levels} "
+                f" but the number of levels specified in the settings dictionary is {num_levels_user}."
+            )
+
+
+def _complete_col_name(col_settings):
+
+    if "custom_name" in col_settings:
+        return
+
+    if "col_name" in col_settings:
+        return
+
+    sql = generate_sql_from_parsed_dict(col_settings["comparison_levels"])
+    sql_cols = get_columns_used_from_sql_without_l_r_suffix(sql)
+    if len(sql_cols) == 1:
+        col_settings["col_name"] = sql_cols[0]
+    else:
+        col_settings["custom_name"] = "_".join(sql_cols)
+    return col_settings
+
+
+def _complete_custom_columns(col_settings):
+
+    if "col_name" in col_settings:
+        return
+
+    if "custom_name" in col_settings:
+        sql = generate_sql_from_parsed_dict(col_settings["comparison_levels"])
+        sql_cols = get_columns_used_from_sql_without_l_r_suffix(sql)
+        if "columns_used" in col_settings:
+            if set(sql_cols) != set(col_settings["columns_used"]):
+                warnings.warn(
+                    f"The columns used in the case statement are {sql_cols} but the columns "
+                    f"specified in the settings dictionary are {col_settings['columns_used']}"
+                )
+        else:
+            col_settings["columns_used"] = sql_cols
+    return col_settings
+
 
 def complete_settings_dict(settings_dict: dict, spark: SparkSession):
     """Auto-populate any missing settings from the settings dictionary using the 'sensible defaults' that
@@ -214,7 +293,6 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
 
         # Populate non-existing keys from defaults
         keys_for_defaults = [
-            "num_levels",
             "data_type",
             "term_frequency_adjustments",
             "fix_u_probabilities",
@@ -226,13 +304,27 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
                 default = get_default_value_from_schema(key, is_column_setting=True)
                 col_settings[key] = default
 
+        # Populate default value for num levels only if case_expression or comparison_levels is not specified
+        skip_if_present = set(["case_expression", "comparison_levels", "num_levels"])
+        keys = set(col_settings.keys())
+        intersect = keys.intersection(skip_if_present)
+        if len(intersect) == 0:
+            default = get_default_value_from_schema(
+                "num_levels", is_column_setting=True
+            )
+            col_settings["num_levels"] = default
+
         # Doesn't need assignment because we're modify the col_settings dictionary
+
         _complete_case_expression(col_settings, spark)
+
+        _complete_comparison_levels(col_settings)
+        _complete_col_name(col_settings)
+        _complete_custom_columns(col_settings)
+        _complete_num_levels(col_settings)
         _complete_probabilities(col_settings, "m_probabilities")
         _complete_probabilities(col_settings, "u_probabilities")
         _complete_tf_adjustment_weights(col_settings)
-
-        _complete_comparison_levels(col_settings)
 
     return settings_dict
 
