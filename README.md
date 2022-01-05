@@ -54,6 +54,11 @@ The best documentation is currently a series of demonstrations notebooks in the 
 - Computing quality metrics associated with groups (clusters) of linked records
 - Automatically identifying possible false positive links in clusters
 
+
+### Splink Comparison Viewer
+
+[`splink_comparison_viewer`](https://github.com/moj-analytical-services/splink_comparison_viewer) produces interactive dashboards that help you rapidly understand and quality assure the outputs of record linkage.    A tutorial video is available [here](https://www.youtube.com/watch?v=DNvCMqjipis).
+
 ### Splink Cluster Studio
 
 [`splink_cluster_studio`](http://github.com/moj-analytical-services/splink_cluster_studio) creates an interactive html dashboard from Splink output that allows you to visualise and analyse a sample of clusters from your record linkage. The repo is [here](http://github.com/moj-analytical-services/splink_cluster_studio).
