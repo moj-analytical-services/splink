@@ -57,7 +57,7 @@ def _get_top_level_case(sql):
 
 def _parse_top_level_case_statement_from_sql(top_level_case_tree):
 
-    parsed_dict = {}
+    parsed_case_expr = []
 
     ifs = top_level_case_tree.args["ifs"]
     for i in ifs:
@@ -68,14 +68,14 @@ def _parse_top_level_case_statement_from_sql(top_level_case_tree):
 
         sql = re.sub(r"^CASE ", "", sql)
         sql = re.sub(r" END$", "", sql)
-        parsed_dict[lit] = {"sql_expr": sql, "label": lit}
+        parsed_case_expr.append({"sql_expr": sql, "label": lit})
 
     if top_level_case_tree.args.get("default") is not None:
         lit = top_level_case_tree.args.get("default").sql("spark", pretty=True)
         sql = f"ELSE {lit}"
-        parsed_dict[lit] = {"sql_expr": sql, "label": lit}
+        parsed_case_expr.append({"sql_expr": sql, "label": lit})
 
-    return parsed_dict
+    return parsed_case_expr
 
 
 def parse_case_statement(sql):
@@ -84,9 +84,9 @@ def parse_case_statement(sql):
     return _parse_top_level_case_statement_from_sql(tree)
 
 
-def generate_sql_from_parsed_dict(parsed_dict, col_name=None):
+def generate_sql_from_parsed_case_expr(parsed_case_expr, col_name=None):
     sql = "CASE\n"
-    for value in parsed_dict.values():
+    for value in parsed_case_expr:
         sql_expr = value["sql_expr"]
         sql += f"    {sql_expr}\n"
 

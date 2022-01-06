@@ -71,7 +71,20 @@
       },
       {
         "type": "quantitative",
+        "field": "u_probability",
+        "format": ".4f"
+      },
+      {
+        "type": "quantitative",
         "field": "bayes_factor",
+        "title": "Bayes factor = m/u",
+        "format": ".4f"
+      },
+
+      {
+        "type": "quantitative",
+        "field": "log2_bayes_factor",
+        "title": "Match weight = log2(m/u)",
         "format": ".4f"
       },
       {
@@ -79,18 +92,12 @@
         "field": "level_proportion",
         "title": "Percentage of non-null comparisons in this level",
         "format": ".2%"
-      },
-      {
-        "type": "quantitative",
-        "field": "log2_bayes_factor",
-        "title": "Match weight - log2(m/u)",
-        "format": ".4f"
       }
     ],
     "x": {
       "type": "quantitative",
       "axis": {
-        "title": "Match weight - log2(m/u)",
+        "title": "Match weight = log2(m/u)",
         "values": [-10, -5, 0, 5, 10]
       },
       "field": "log2_bayes_factor",

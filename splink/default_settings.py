@@ -22,7 +22,7 @@ from .case_statements import (
 
 from .parse_case_statement import (
     parse_case_statement,
-    generate_sql_from_parsed_dict,
+    generate_sql_from_parsed_case_expr,
     get_columns_used_from_sql_without_l_r_suffix,
 )
 
@@ -174,9 +174,13 @@ def _complete_comparison_levels(col_settings):
 
     if "case_expression" not in col_settings:
         cl = col_settings["comparison_levels"]
-        col_settings["case_expression"] = generate_sql_from_parsed_dict(cl)
+        col_settings["case_expression"] = generate_sql_from_parsed_case_expr(cl)
 
-    if "-1" not in col_settings["comparison_levels"].keys():
+    from splink.settings import ComparisonColumn
+
+    cc = ComparisonColumn(col_settings)
+    keys = cc.comparison_levels_dict.keys()
+    if "-1" not in keys:
 
         warnings.warn(
             "No -1 level found in case statement."
@@ -194,7 +198,7 @@ def _complete_col_name(col_settings):
     if "col_name" in col_settings:
         return
 
-    sql = generate_sql_from_parsed_dict(col_settings["comparison_levels"])
+    sql = generate_sql_from_parsed_case_expr(col_settings["comparison_levels"])
     sql_cols = get_columns_used_from_sql_without_l_r_suffix(sql)
     if len(sql_cols) == 1:
         col_settings["col_name"] = sql_cols[0]
@@ -209,7 +213,7 @@ def _complete_custom_columns(col_settings):
         return col_settings
 
     if "custom_name" in col_settings:
-        sql = generate_sql_from_parsed_dict(col_settings["comparison_levels"])
+        sql = generate_sql_from_parsed_case_expr(col_settings["comparison_levels"])
         sql_cols = get_columns_used_from_sql_without_l_r_suffix(sql)
         if "columns_used" in col_settings:
             if set(sql_cols) != set(col_settings["columns_used"]):
@@ -299,8 +303,10 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
         _complete_comparison_levels(col_settings)
         _complete_col_name(col_settings)
         _complete_custom_columns(col_settings)
+
         _complete_probabilities(col_settings, "m_probabilities")
         _complete_probabilities(col_settings, "u_probabilities")
+
         _complete_tf_adjustment_weights(col_settings)
 
     return settings_dict

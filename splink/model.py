@@ -4,7 +4,8 @@ import json
 
 from pyspark.sql.session import SparkSession
 
-from .settings import Settings, complete_settings_dict
+from .settings import Settings
+from .default_settings import complete_settings_dict
 from .charts import (
     load_chart_definition,
     altair_if_installed_else_json,

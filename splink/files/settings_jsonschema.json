@@ -151,27 +151,25 @@
           },
           "comparison_levels": {
             "$id": "#/properties/comparison_columns/items/properties/comparison_levels",
-            "type": "object",
+            "type": "array",
             "title": "Comparison levels, specified in order of evaluation, each with a sql_expr representing a branch of a case expression",
             "description": "Can be used instead of case_expression. Allows user to associate a human-readable label with each level of similarity",
-            "patternProperties": {
-              "^-?\\d{1,3}$": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "sql_expr": {
-                    "id": "sql_expr",
-                    "type": "string",
-                    "examples": ["WHEN forename_l = forename_r THEN 1"]
-                  },
-                  "label": {
-                    "id": "label",
-                    "type": "string",
-                    "examples": ["exact match on forename"]
-                  }
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "sql_expr": {
+                  "id": "sql_expr",
+                  "type": "string",
+                  "examples": ["WHEN forename_l = forename_r THEN 1"]
                 },
-                "required": ["sql_expr", "label"]
-              }
+                "label": {
+                  "id": "label",
+                  "type": "string",
+                  "examples": ["exact match on forename"]
+                }
+              },
+              "required": ["sql_expr", "label"]
             },
             "examples": [
               {
