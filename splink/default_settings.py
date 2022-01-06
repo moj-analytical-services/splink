@@ -1,5 +1,5 @@
 import warnings
-
+from splink.settings import ComparisonColumn
 from pyspark.sql.session import SparkSession
 
 from copy import deepcopy
@@ -107,13 +107,12 @@ def _get_default_probabilities(m_or_u, levels):
 
 def _complete_case_expression(col_settings, spark):
 
-    if "comparison_levels" in col_settings:
-        return col_settings
-    if "case_expression" in col_settings:
+    cc = ComparisonColumn(col_settings)
+    if cc.has_case_expression_or_comparison_levels:
         return col_settings
 
     default_case_statements = _get_default_case_statements_functions(spark)
-    levels = col_settings["num_levels"]
+    levels = cc.num_levels
 
     if "custom_name" in col_settings:
         col_name_for_case_fn = col_settings["custom_name"]
@@ -147,7 +146,8 @@ def _complete_probabilities(col_settings: dict, mu_probabilities: str):
     """
 
     if mu_probabilities not in col_settings:
-        levels = col_settings["num_levels"]
+        cc = ComparisonColumn(col_settings)
+        levels = cc.num_levels
         probs = _get_default_probabilities(mu_probabilities, levels)
         col_settings[mu_probabilities] = probs
 
@@ -160,7 +160,9 @@ def _complete_tf_adjustment_weights(col_settings: dict):
                 f"All values of 'tf_adjustment_weights' must be between 0 and 1"
             )
     else:
-        weights = [0.0] * col_settings["num_levels"]
+        cc = ComparisonColumn(col_settings)
+
+        weights = [0.0] * cc.num_levels
         weights[-1] = 1.0
         col_settings["tf_adjustment_weights"] = weights
 
@@ -184,30 +186,6 @@ def _complete_comparison_levels(col_settings):
         )
 
 
-def _complete_num_levels(col_settings):
-    comparison_levels = col_settings["comparison_levels"]
-    cl_keys = comparison_levels.keys()
-    cl_keys = [k for k in cl_keys if str(k) != "-1"]
-    expected_num_levels = len(cl_keys)
-
-    if "num_levels" not in col_settings:
-        col_settings["num_levels"] = expected_num_levels
-    else:
-        num_levels_user = col_settings["num_levels"]
-        if "col_name" in col_settings:
-            col_name = col_settings["col_name"]
-        if "custom_name" in col_settings:
-            col_name = col_settings["custom_name"]
-        else:
-            col_name = ""
-
-        if num_levels_user != expected_num_levels:
-            warnings.warn(
-                f"The number of levels observed in the case statement for {col_name} is {expected_num_levels} "
-                f" but the number of levels specified in the settings dictionary is {num_levels_user}."
-            )
-
-
 def _complete_col_name(col_settings):
 
     if "custom_name" in col_settings:
@@ -228,7 +206,7 @@ def _complete_col_name(col_settings):
 def _complete_custom_columns(col_settings):
 
     if "col_name" in col_settings:
-        return
+        return col_settings
 
     if "custom_name" in col_settings:
         sql = generate_sql_from_parsed_dict(col_settings["comparison_levels"])
@@ -240,7 +218,7 @@ def _complete_custom_columns(col_settings):
                     f"specified in the settings dictionary are {col_settings['columns_used']}"
                 )
         else:
-            col_settings["columns_used"] = sql_cols
+            col_settings["custom_columns_used"] = sql_cols
     return col_settings
 
 
@@ -321,7 +299,6 @@ def complete_settings_dict(settings_dict: dict, spark: SparkSession):
         _complete_comparison_levels(col_settings)
         _complete_col_name(col_settings)
         _complete_custom_columns(col_settings)
-        _complete_num_levels(col_settings)
         _complete_probabilities(col_settings, "m_probabilities")
         _complete_probabilities(col_settings, "u_probabilities")
         _complete_tf_adjustment_weights(col_settings)

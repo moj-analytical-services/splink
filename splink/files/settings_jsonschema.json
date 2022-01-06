@@ -92,19 +92,6 @@
         "$id": "#/properties/comparison_columns/items",
         "type": "object",
         "title": "A comparison of input column(s) that is used for probabalistic matching",
-        "oneOf": [
-          {
-            "required": ["col_name"]
-          },
-          {
-            "required": [
-              "custom_name",
-              "custom_columns_used",
-              "case_expression",
-              "num_levels"
-            ]
-          }
-        ],
         "additionalProperties": false,
         "properties": {
           "col_name": {

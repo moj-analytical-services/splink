@@ -1,13 +1,126 @@
-from .default_settings import complete_settings_dict
 from .validate import get_default_value_from_schema
 from copy import deepcopy
 from math import log2
 from .charts import load_chart_definition, altair_if_installed_else_json
 
 
+class ComparisonLevel:
+    def __init__(self, level_dict, comparison_column_obj=None, settings_obj=None):
+        self.level_dict = level_dict
+        self.comparison_column = comparison_column_obj
+        self.settings = settings_obj
+
+    def __getitem__(self, i):
+        return self.level_dict[i]
+
+    @property
+    def is_null(self):
+        vector_value = self.level_dict.get("comparison_vector_value")
+        if vector_value:
+            if str(vector_value) == "-1":
+                return True
+            else:
+                return False
+        else:
+            return None
+
+    @property
+    def not_null(self):
+        if self.is_null is None:
+            return None
+        return not self.is_null
+
+    @property
+    def has_m_u(self):
+
+        if self.is_null:
+            return True
+
+        m = self.level_dict.get("m_probability")
+        u = self.level_dict.get("u_probability")
+
+        if m and u:
+            return True
+
+        return False
+
+    @property
+    def m(self):
+        if self.is_null:
+            return 1
+
+        if "m_probability" in self.level_dict:
+            return self.level_dict["m_probability"]
+        return None
+
+    @property
+    def u(self):
+        if self.is_null:
+            return 1
+
+        if "u_probability" in self.level_dict:
+            return self.level_dict["u_probability"]
+        return None
+
+    @property
+    def bayes_factor(self):
+        if self.has_m_u and self.u != 0:
+            return self.m / self.u
+        else:
+            return None
+
+    @property
+    def log2_bayes_factor(self):
+        bf = self.bayes_factor
+        if bf and self.m != 0:
+            return log2(bf)
+
+    @property
+    def gamma_index(self):
+        if "gamma_index" in self.level_dict:
+            return self.level_dict["gamma_index"]
+        else:
+            return None
+
+    @property
+    def proportion_of_nonnull_records_in_level(self):
+
+        if self.settings:
+            sd = self.settings.settings_dict
+            lam = sd.get("proportion_of_matches")
+
+        if lam and self.has_m_u:
+            return self.m * lam + self.u * (1 - lam)
+        else:
+            return None
+
+    def as_dict(self):
+
+        d = {}
+        d["label"] = self["label"]
+        d["sql_expr"] = self["sql_expr"]
+
+        d["gamma_column_name"] = f"gamma_{self.comparison_column.name}"
+
+        d["gamma_index"] = self.gamma_index
+        d["column_name"] = self.comparison_column.name
+        d["num_levels"] = self.comparison_column.num_levels
+
+        d["m_probability"] = self.m
+        d["u_probability"] = self.u
+        d["bayes_factor"] = self.bayes_factor
+        d["log2_bayes_factor"] = self.log2_bayes_factor
+
+        d["level_proportion"] = self.proportion_of_nonnull_records_in_level
+        d["is_null"] = self.is_null
+
+        return d
+
+
 class ComparisonColumn:
-    def __init__(self, column_dict):
+    def __init__(self, column_dict, settings_obj=None):
         self.column_dict = column_dict
+        self.settings_obj = settings_obj
 
     def __getitem__(self, i):
         return self.column_dict[i]
@@ -45,22 +158,32 @@ class ComparisonColumn:
             return cd["col_name"]
 
     @property
+    def has_case_expression_or_comparison_levels(self):
+        cd = self.column_dict
+        if "case_expression" in cd:
+            return True
+        elif "comparison_levels" in cd:
+            return True
+        else:
+            return False
+
+    @property
     def gamma_name(self):
         return f"gamma_{self.name}"
 
     @property
     def num_levels(self):
         cd = self.column_dict
-        m_probs = cd["m_probabilities"]
-        u_probs = cd["u_probabilities"]
-        if len(m_probs) == len(u_probs):
-            return len(m_probs)
-        else:
-            raise ValueError("Length of m and u probs unequal")
-
-    @property
-    def max_gamma_index(self):
-        return self.num_levels - 1
+        if type(cd) is not dict:
+            a = 1
+        if "comparison_levels" in cd:
+            comparison_levels_keys = cd["comparison_levels"].keys()
+            comparison_levels_keys = [
+                k for k in comparison_levels_keys if str(k) != "-1"
+            ]
+            return len(comparison_levels_keys)
+        if "num_levels" in cd:
+            return cd["num_levels"]
 
     @property
     def input_cols_used(self):
@@ -70,41 +193,71 @@ class ComparisonColumn:
         elif "col_name" in cd:
             return [cd["col_name"]]
 
+    def _attach_m_u_to_comparison_levels(self, comparison_levels):
+
+        m_probabilities = self.column_dict.get("m_probabilities")
+        if m_probabilities:
+            counter = 0
+            for level in comparison_levels.values():
+                cl = ComparisonLevel(level)
+                if cl.not_null:
+                    level["m_probability"] = m_probabilities[counter]
+                    counter += 1
+
+        u_probabilities = self.column_dict.get("u_probabilities")
+        if u_probabilities:
+            counter = 0
+            for level in comparison_levels.values():
+                cl = ComparisonLevel(level)
+                if cl.not_null:
+                    level["u_probability"] = u_probabilities[counter]
+                    counter += 1
+        return comparison_levels
+
+    def _attach_gamma_index_to_comparison_levels(self, comparison_levels):
+        counter = 0
+        for level in comparison_levels.values():
+            cl = ComparisonLevel(level)
+            if cl.not_null:
+                level["gamma_index"] = counter
+                counter += 1
+            else:
+                level["gamma_index"] = -1
+
+        return comparison_levels
+
+    @property
+    def comparison_levels(self):
+        cd = self.column_dict
+
+        if "comparison_levels" not in cd:
+            return None
+
+        comparison_levels = deepcopy(cd["comparison_levels"])
+
+        for key, item in comparison_levels.items():
+            item["comparison_vector_value"] = key
+
+        comparison_levels = self._attach_gamma_index_to_comparison_levels(
+            comparison_levels
+        )
+        comparison_levels = self._attach_m_u_to_comparison_levels(comparison_levels)
+
+        return [
+            ComparisonLevel(l, self, self.settings_obj)
+            for l in comparison_levels.values()
+        ]
+
     @property
     def term_frequency_adjustments(self):
         cd = self.column_dict
-        return  cd["term_frequency_adjustments"]
+        return cd["term_frequency_adjustments"]
 
+    def df_e_row_intuition_dict(self, row_dict):
 
-    def get_m_u_bayes_at_gamma_index(self, gamma_index):
-
-        # if -1 this indicates a null field
-        if gamma_index == -1:
-            m = 1
-            u = 1
-        else:
-            m = self["m_probabilities"][gamma_index]
-            u = self["u_probabilities"][gamma_index]
-        if u != 0 and m is not None and u is not None:
-            bayes = m / u
-            if m != 0:
-                log_2_bayes = log2(bayes)
-            else:
-                log_2_bayes = None
-        else:
-            bayes = None
-            log_2_bayes = None
-        return {
-            "m_probability": m,
-            "u_probability": u,
-            "bayes_factor": bayes,
-            "log2_bayes_factor": log_2_bayes,
-        }
-
-    def describe_row_dict(self, row_dict, proportion_of_matches=None):
-
-        gamma_index = int(row_dict[self.gamma_name])
-        row_desc = self.level_as_dict(gamma_index, proportion_of_matches)
+        gamma_value = int(row_dict[self.gamma_name])
+        cl = self.comparison_levels[gamma_value]
+        row_desc = cl.as_dict()
 
         row_desc["value_l"] = ", ".join(
             [str(row_dict[c + "_l"]) for c in self.columns_used]
@@ -114,6 +267,34 @@ class ComparisonColumn:
         )
 
         return row_desc
+
+    # {'m_probability': 0.08666918311339589,
+    #   'u_probability': 0.9911783408115926,
+    #   'bayes_factor': 0.08744055387896166,
+    #   'log2_bayes_factor': -3.5155536502024596,
+    #   'gamma_column_name': 'gamma_surname',
+    #   'level_name': 'level_0',
+    #   'gamma_index': 0,
+    #   'column_name': 'surname',
+    #   'max_gamma_index': 2,
+    #   'num_levels': 3,
+    #   'level_proportion': 0.6871442103248377,
+    #   'value_l': 'Wright',
+    #   'value_r': 'Sahw'},
+    # def describe_row_dict(self, row_dict, proportion_of_matches=None):
+
+    #     # Get
+    #     gamma_index = int(row_dict[self.gamma_name])
+    #     row_desc = self.level_as_dict(gamma_index, proportion_of_matches)
+
+    #     row_desc["value_l"] = ", ".join(
+    #         [str(row_dict[c + "_l"]) for c in self.columns_used]
+    #     )
+    #     row_desc["value_r"] = ", ".join(
+    #         [str(row_dict[c + "_r"]) for c in self.columns_used]
+    #     )
+
+    #     return row_desc
 
     def set_m_probability(self, level: int, prob: float, force: bool = False):
         cd = self.column_dict
@@ -139,37 +320,13 @@ class ComparisonColumn:
             if "u_probabilities" in cd:
                 cd["u_probabilities"] = [None for c in cd["u_probabilities"]]
 
-    def level_as_dict(self, gamma_index, proportion_of_matches=None):
-
-        d = self.get_m_u_bayes_at_gamma_index(gamma_index)
-
-        d["gamma_column_name"] = f"gamma_{self.name}"
-        d["level_name"] = f"level_{gamma_index}"
-
-        d["gamma_index"] = gamma_index
-        d["column_name"] = self.name
-        d["max_gamma_index"] = self.max_gamma_index
-        d["num_levels"] = self.num_levels
-
-        d["level_proportion"] = None
-        if proportion_of_matches:
-            lam = proportion_of_matches
-            m = d["m_probability"]
-            u = d["u_probability"]
-            # Check they both not None
-            if m and u:
-                d["level_proportion"] = m * lam + u * (1 - lam)
-            else:
-                d["level_proportion"] = None
-
-        return d
-
     def as_rows(self, proportion_of_matches=None):
         """Convert to rows e.g. to use to plot
         in a chart"""
         rows = []
-        for gamma_index in range(self.num_levels):
-            r = self.level_as_dict(gamma_index, proportion_of_matches)
+        # This should iterate over the `comparison_levels` dict
+        for comparison_level in self.comparison_levels:
+            r = comparison_level.as_dict(self, proportion_of_matches)
             rows.append(r)
         return rows
 
@@ -212,15 +369,17 @@ class Settings:
     def complete_settings_dict(self, spark):
         """Complete all fields in the setting dictionary
         taking values from defaults"""
+        from .default_settings import complete_settings_dict
+
         self.settings_dict = complete_settings_dict(self.settings_dict, spark)
 
     @property
     def comparison_column_dict(self):
         sd = self.settings_dict
         lookup = {}
-        for i, c in enumerate(sd["comparison_columns"]):
-            c["gamma_index"] = i
-            cc = ComparisonColumn(c)
+        for c in sd["comparison_columns"]:
+
+            cc = ComparisonColumn(c, self)
             name = cc.name
             lookup[name] = cc
         return lookup
@@ -252,8 +411,8 @@ class Settings:
         """Convert to rows e.g. to use to plot
         in a chart"""
         rows = []
-        for c in self.comparison_columns_list:
-            rows.extend(c.as_rows(self["proportion_of_matches"]))
+        for cc in self.comparison_columns_list:
+            rows.extend(cc.as_rows())
         return rows
 
     def set_m_probability(
@@ -316,7 +475,9 @@ class Settings:
     def bayes_factor_chart(self):  # pragma: no cover
         chart_path = "bayes_factor_chart_def.json"
         chart = load_chart_definition(chart_path)
-        chart["data"]["values"] = self.m_u_as_rows()
+        rows = self.m_u_as_rows()
+        rows = [r for r in rows if not r["is_null"]]
+        chart["data"]["values"] = rows
         return altair_if_installed_else_json(chart)
 
     def _repr_pretty_(self, p, cycle):  # pragma: no cover

@@ -87,7 +87,6 @@
               {"type": "nominal", "field": "value_l", "title": "Value (L)"},
               {"type": "nominal", "field": "value_r", "title": "Value (R)"},
               {"type": "nominal", "field": "gamma_index", "title": "Gamma level"},
-              {"type": "nominal", "field": "max_gamma_index", "title": "Max gamma level"},
               {"type": "quantitative", "field": "bayes_factor", "format":".3r", "title": "Bayes factor"},
               {"type": "quantitative", "field": "log2_bayes_factor", "format":".3r", "title": "log2(Bayes factor)"},
               {"type": "quantitative", "field": "prob", "format":".3r", "title":"Adjusted match score"}
