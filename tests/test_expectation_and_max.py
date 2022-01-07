@@ -138,7 +138,8 @@ def test_expectation_and_maximisation(spark):
 
     for r in rows:
         cc = settings_obj.get_comparison_column(r[0])
-        level_dict = cc.level_as_dict(r[1])
+        cl = cc.comparison_levels_dict[str(r[1])]
+        level_dict = cl.as_dict()
         assert level_dict["m_probability"] == pytest.approx(r[2])
         assert level_dict["u_probability"] == pytest.approx(r[3])
 
@@ -178,7 +179,8 @@ def test_expectation_and_maximisation(spark):
 
     for r in rows:
         cc = settings_obj.get_comparison_column(r[0])
-        level_dict = cc.level_as_dict(r[1])
+        cl = cc.comparison_levels_dict[str(r[1])]
+        level_dict = cl.as_dict()
         assert level_dict["m_probability"] == pytest.approx(r[2])
         assert level_dict["u_probability"] == pytest.approx(r[3])
 

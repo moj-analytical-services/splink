@@ -1,5 +1,4 @@
 import pytest
-import pandas as pd
 from pyspark.sql import functions as f
 
 from splink_data_generation.generate_data_random import generate_df_gammas_random
@@ -7,7 +6,6 @@ from splink_data_generation.match_prob import add_match_prob
 from splink.default_settings import complete_settings_dict
 from splink.iterate import iterate
 from splink.model import Model
-from splink import Splink
 from copy import deepcopy
 
 

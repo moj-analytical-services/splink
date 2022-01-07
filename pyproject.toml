@@ -17,7 +17,7 @@ sqlglot = "^1.16.1"
 [tool.poetry.dev-dependencies]
 pytest = "^5.3"
 pandas = "^1.0.0"
-splink-data-generation = "^0.2.1"
+splink-data-generation = "^1.0.1"
 
 [build-system]
 requires = ["poetry>=0.12"]

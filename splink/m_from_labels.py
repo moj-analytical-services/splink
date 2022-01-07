@@ -9,6 +9,7 @@ from splink.gammas import add_gammas
 from splink.maximisation_step import run_maximisation_step
 from splink.model import Model
 from splink.cluster import _check_graphframes_installation
+from splink.default_settings import complete_settings_dict
 
 
 def estimate_m_from_labels(
@@ -46,8 +47,6 @@ def estimate_m_from_labels(
         _check_graphframes_installation(spark)
 
     df_nodes = vertically_concatenate_datasets(dfs)
-
-    from splink.settings import complete_settings_dict
 
     settings_complete = complete_settings_dict(settings, spark)
     if settings_complete["link_type"] == "dedupe_only":
