@@ -53,7 +53,7 @@ def intuition_report(row_dict: dict, model: Model):
     current_prob = lam
 
     for cc in model.current_settings_obj.comparison_columns_list:
-        d = cc.describe_row_dict(row_dict)
+        d = cc.df_e_row_intuition_dict(row_dict)
 
         bf = d["bayes_factor"]
 

@@ -68,12 +68,12 @@ def _parse_top_level_case_statement_from_sql(top_level_case_tree):
 
         sql = re.sub(r"^CASE ", "", sql)
         sql = re.sub(r" END$", "", sql)
-        parsed_case_expr.append({"sql_expr": sql, "label": lit})
+        parsed_case_expr.append({"sql_expr": sql, "label": f"level_{lit}"})
 
     if top_level_case_tree.args.get("default") is not None:
         lit = top_level_case_tree.args.get("default").sql("spark", pretty=True)
         sql = f"ELSE {lit}"
-        parsed_case_expr.append({"sql_expr": sql, "label": lit})
+        parsed_case_expr.append({"sql_expr": sql, "label": f"level_{lit}"})
 
     return parsed_case_expr
 

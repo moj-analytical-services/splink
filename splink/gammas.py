@@ -69,7 +69,6 @@ def _get_select_expression_gammas(
         case_expr = generate_sql_from_parsed_case_expr(
             col["comparison_levels"], cc.name
         )
-        print(case_expr)
         select_columns.add(case_expr)
 
     for c in settings["additional_columns_to_retain"]:
