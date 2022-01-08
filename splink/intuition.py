@@ -107,9 +107,11 @@ def bayes_factor_intuition_chart(row_dict, model):
 
     # Sort records in descending order of influence
     # with start and end positions added
+    df = pd.DataFrame(data)
+    df["abs_log2_bayes_factor"] = abs(df["log2_bayes_factor"])
     df = (
-        pd.DataFrame(data)
-        .sort_values(by="log2_bayes_factor", key=abs, ascending=False)
+        df.sort_values(by="abs_log2_bayes_factor", ascending=False)
+        .drop("abs_log2_bayes_factor", axis=1)
         .reset_index(drop=True)
         .append(
             {
