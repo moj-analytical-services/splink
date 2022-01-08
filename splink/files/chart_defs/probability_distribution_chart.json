@@ -44,7 +44,10 @@
                     "axis": {
                         "title": null
                     },
-                    "field": "level_name"
+                    "field": "label",
+                    "sort": {
+                        "field": "gamma_index"
+                    }
                 },
                 "tooltip": [
                     {
@@ -123,7 +126,10 @@
                     "axis": {
                         "title": null
                     },
-                    "field": "level_name"
+                    "field": "label",
+                    "sort": {
+                        "field": "gamma_index"
+                    }
                 },
                 "tooltip": [
                     {

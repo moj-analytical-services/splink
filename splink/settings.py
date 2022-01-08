@@ -399,12 +399,14 @@ class Settings:
         for c in self.comparison_columns_list:
             c.reset_probabilities(force=force)
 
-    def m_u_as_rows(self):
+    def m_u_as_rows(self, drop_null=True):
         """Convert to rows e.g. to use to plot
         in a chart"""
         rows = []
         for cc in self.comparison_columns_list:
             rows.extend(cc.as_rows())
+        if drop_null:
+            rows = [r for r in rows if not r["is_null"]]
         return rows
 
     def set_m_probability(
@@ -468,7 +470,7 @@ class Settings:
         chart_path = "bayes_factor_chart_def.json"
         chart = load_chart_definition(chart_path)
         rows = self.m_u_as_rows()
-        rows = [r for r in rows if not r["is_null"]]
+
         chart["data"]["values"] = rows
         return altair_if_installed_else_json(chart)
 
