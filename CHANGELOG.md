@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0]
+
+### Added
+
+- `sql_expr` now added to tooltips on bayes factor chart, displaying the SQL expression for each comparison level
+- Warnings to the user if they don't include a null level in their case expression, custom columns is different to cols used in case expression,
+- `splink` now parses `case_expression` to auto-populate `num_levels` or `col_name` or `custom_columns_used`. The user may still provide this information, but is no longer required to.
+
+Note that Splink now has a depedency on `sqlglot`, a no-dependency SQL parser.
+
 ## [2.0.4]
 
 ### Added

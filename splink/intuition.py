@@ -53,7 +53,7 @@ def intuition_report(row_dict: dict, model: Model):
     current_prob = lam
 
     for cc in model.current_settings_obj.comparison_columns_list:
-        d = cc.describe_row_dict(row_dict)
+        d = cc.df_e_row_intuition_dict(row_dict)
 
         bf = d["bayes_factor"]
 
@@ -86,54 +86,55 @@ def intuition_report(row_dict: dict, model: Model):
 
 def _get_bayes_factors(row_dict, model):
     bayes_factors = []
-    lam = model.current_settings_obj["proportion_of_matches"]
+
     for cc in model.current_settings_obj.comparison_columns_list:
-        row_desc = cc.describe_row_dict(row_dict, lam)
+        row_desc = cc.df_e_row_intuition_dict(row_dict)
         bayes_factors.append(row_desc)
 
     return bayes_factors
 
 
-def bayes_factor_chart(row_dict, model):
-    chart_path = "bayes_factor_chart_def.json"
-    bayes_factor_chart_def = load_chart_definition(chart_path)
-    bayes_factor_chart_def["data"]["values"] = _get_bayes_factors(row_dict, model)
-    bayes_factor_chart_def["encoding"]["y"]["field"] = "column_name"
-    del bayes_factor_chart_def["encoding"]["row"]
-
-    return altair_if_installed_else_json(bayes_factor_chart_def)
-
 def bayes_factor_intuition_chart(row_dict, model):
     chart_path = "bayes_factor_intuition_chart_def.json"
     bayes_factor_intuition_chart_def = load_chart_definition(chart_path)
-    
+
     data = _get_bayes_factors(row_dict, model)
 
     # Get initial and final bayes factors
     lam = model.current_settings_obj["proportion_of_matches"]
-    bf_init = lam/(1-lam)
-    bf_final = sum([d['log2_bayes_factor'] for d in data]) + log2(bf_init)  
+    bf_init = lam / (1 - lam)
+    bf_final = sum([d["log2_bayes_factor"] for d in data]) + log2(bf_init)
 
     # Sort records in descending order of influence
     # with start and end positions added
-    df = pd.DataFrame(data)\
-        .sort_values(by="log2_bayes_factor", key=abs, ascending=False)\
-        .reset_index(drop=True)\
-        .append({
-            'bayes_factor': 2**bf_final, 
-            'log2_bayes_factor': bf_final, 
-            'column_name': 'Final score'
-        }, 
-        ignore_index=True
+    df = pd.DataFrame(data)
+    df["abs_log2_bayes_factor"] = abs(df["log2_bayes_factor"])
+    df = (
+        df.sort_values(by="abs_log2_bayes_factor", ascending=False)
+        .drop("abs_log2_bayes_factor", axis=1)
+        .reset_index(drop=True)
+        .append(
+            {
+                "bayes_factor": 2 ** bf_final,
+                "log2_bayes_factor": bf_final,
+                "column_name": "Final score",
+            },
+            ignore_index=True,
+        )
     )
-    df = pd.DataFrame({
-            'bayes_factor': bf_init, 
-            'log2_bayes_factor': log2(bf_init), 
-            'column_name': 'Prior lambda'
-        }, 
-        index=[0]
-    ).append(df, ignore_index=True).reset_index() 
-    
-    bayes_factor_intuition_chart_def["data"]["values"] = df.to_dict('records')
+    df = (
+        pd.DataFrame(
+            {
+                "bayes_factor": bf_init,
+                "log2_bayes_factor": log2(bf_init),
+                "column_name": "Prior lambda",
+            },
+            index=[0],
+        )
+        .append(df, ignore_index=True)
+        .reset_index()
+    )
+
+    bayes_factor_intuition_chart_def["data"]["values"] = df.to_dict("records")
 
     return altair_if_installed_else_json(bayes_factor_intuition_chart_def)

@@ -6,8 +6,10 @@ from pyspark.sql.dataframe import DataFrame
 from pyspark.sql.session import SparkSession
 from typeguard import typechecked
 from .logging_utils import _format_sql
-from .settings import complete_settings_dict, ComparisonColumn
+from .settings import ComparisonColumn
+from .default_settings import complete_settings_dict
 from .ordered_set import OrderedSet
+from .parse_case_statement import generate_sql_from_parsed_case_expr
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +66,10 @@ def _get_select_expression_gammas(
         if col["term_frequency_adjustments"]:
             if retain_tf_cols:
                 select_columns = _add_left_right(select_columns, f"tf_{cc.name}")
-        select_columns.add(col["case_expression"])
+        case_expr = generate_sql_from_parsed_case_expr(
+            col["comparison_levels"], cc.name
+        )
+        select_columns.add(case_expr)
 
     for c in settings["additional_columns_to_retain"]:
         select_columns = _add_left_right(select_columns, c)

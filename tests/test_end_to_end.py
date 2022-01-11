@@ -1,6 +1,6 @@
 from splink import Splink, load_from_json
 from pyspark.sql import Row
-from splink.intuition import intuition_report, bayes_factor_chart
+from splink.intuition import intuition_report, bayes_factor_intuition_chart
 
 
 from splink_data_generation.generate_data_exact import generate_df_gammas_exact
@@ -144,4 +144,4 @@ def test_main_api(spark):
     model = linker.model
     row_dict = df_e.toPandas().sample(1).to_dict(orient="records")[0]
     intuition_report(row_dict, model)
-    bayes_factor_chart(row_dict, model)
+    bayes_factor_intuition_chart(row_dict, model)

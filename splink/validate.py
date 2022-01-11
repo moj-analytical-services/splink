@@ -30,7 +30,6 @@ def _get_schema(setting_dict_should_be_complete=False):
 
         schema2["comparison_columns"]["items"]["required"] = [
             "col_name",
-            "num_levels",
             "case_expression",
             "m_probabilities",
             "u_probabilities",
@@ -149,7 +148,9 @@ def validate_probabilities(settings_dict):
                         "They should all be populated and sum to 1"
                     )
 
-                if len(cc[mu_probabilities]) != cc["num_levels"]:
+                num_levels = cc.num_levels
+
+                if len(cc[mu_probabilities]) != num_levels:
                     raise ValueError(
                         f"Number of probs provided in {mu_probabilities}  in {cc.name} "
                         "is not equal to number of levels specified"

@@ -5,7 +5,7 @@ from .blocking import block_using_rules
 from .gammas import add_gammas
 from .maximisation_step import run_maximisation_step
 from .model import Model
-from .settings import complete_settings_dict
+from .default_settings import complete_settings_dict
 from .vertically_concat import vertically_concatenate_datasets
 
 import warnings

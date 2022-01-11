@@ -36,7 +36,7 @@ class Splink:
     ):
         """Splink data linker
 
-        Provides easy access to the core user-facing functinoality of splink
+        Provides easy access to the core user-facing functionality of splink
 
         Args:
             settings (dict): splink settings dictionary
