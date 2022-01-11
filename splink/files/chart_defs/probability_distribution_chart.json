@@ -70,6 +70,10 @@
                     },
                     {
                         "type": "nominal",
+                        "field": "sql_expr"
+                    },
+                    {
+                        "type": "nominal",
                         "field": "level_proportion",
                         "title": "Percentage of record comparisons in this level",
                         "format": ".2%"
@@ -149,6 +153,10 @@
                         "type": "quantitative",
                         "field": "bayes_factor",
                         "format": ".4f"
+                    },
+                    {
+                        "type": "nominal",
+                        "field": "sql_expr"
                     },
                     {
                         "type": "nominal",
