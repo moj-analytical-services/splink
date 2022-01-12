@@ -183,11 +183,19 @@ def _complete_comparison_levels(col_settings):
     if "-1" not in keys:
 
         warnings.warn(
-            "No -1 level found in case statement."
+            "\nNo -1 level found in case statement."
             " You usually want to use -1 as the level for the null value."
             " e.g. WHEN col_l is null or col_r is null then -1"
             f" Case statement is:\n {col_settings['case_expression']}."
         )
+
+    if "num_levels" in col_settings:
+        if col_settings["num_levels"] != cc.num_levels:
+            warnings.warn(
+                f"\nnum_levels specified in settings is {col_settings['num_levels']}, "
+                f"but the number of levels in the case statement excluding the null level is {cc.num_levels}"
+                f"\nCase statement is:\n {col_settings['case_expression']}."
+            )
 
 
 def _complete_col_name(col_settings):
