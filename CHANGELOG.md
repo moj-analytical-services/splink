@@ -5,7 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0]
+## 2.1.3
+
+### Fixed
+
+Versions of sqlglot before 1.18.0 could not parse the spark sql `left` and `right` functions - see [here](https://github.com/tobymao/sqlglot/issues/58).
+
+As a result, if `left` or `right` are used in the user's custom sql case expressions, Splink will produce an error.
+
+This release bumps the version in the requirement to fix this problem.
+
+## 2.1.0
 
 ### Added
 
@@ -15,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Note that Splink now has a depedency on `sqlglot`, a no-dependency SQL parser.
 
-## [2.0.4]
+## 2.0.4
 
 ### Added
 
@@ -23,7 +33,7 @@ Note that Splink now has a depedency on `sqlglot`, a no-dependency SQL parser.
 
 **Full Changelog**: https://github.com/moj-analytical-services/splink/compare/v2.0.3...v2.0.4
 
-## [2.0.3]
+## 2.0.3
 
 ### Added
 
@@ -31,13 +41,13 @@ Note that Splink now has a depedency on `sqlglot`, a no-dependency SQL parser.
 
 **Full Changelog**: https://github.com/moj-analytical-services/splink/compare/v2.0.2...v2.0.3
 
-## [2.0.2]
+## 2.0.2
 
 ### Added
 
 - Add function to compute m values from labelled data by @RobinL in https://github.com/moj-analytical-services/splink/pull/248
 
-## [2.0.1]
+## 2.0.1
 
 ### Added
 
@@ -47,7 +57,7 @@ Note that Splink now has a depedency on `sqlglot`, a no-dependency SQL parser.
 
 - Allow match weight to be used in the diagnostic histogram by @RobinL in https://github.com/moj-analytical-services/splink/pull/239
 
-## [2.0.0]
+## 2.0.0
 
 ### Changed
 
@@ -67,7 +77,7 @@ Note that Splink now has a depedency on `sqlglot`, a no-dependency SQL parser.
 
 - Since term frequency adjustments are no longer an ex-post step, there's no longer a need for them to be calculated separately. Splink therefore no longer outputs `tf_adjusted_match_prob`. Instead, TF adjustments are included within `match_probability`
 
-## [1.0.5]
+## 1.0.5
 
 ### Fixed
 
@@ -78,17 +88,17 @@ Note that Splink now has a depedency on `sqlglot`, a no-dependency SQL parser.
 - `m` and `u` probabilities are now reset to `None` rather than `0` in EM iteration when they cannot be estimated
 - Now use `_repr_pretty_` so that objects display nicely in Jupyter Lab rather than `__repr__`, which had been interfering with the interpretatino of stack trace errors
 
-## [1.0.3] - 2020-02-04
+## 1.0.3 - 2020-02-04
 
 - Bug whereby Splink lowercased case expressions, see [here](https://github.com/moj-analytical-services/splink/issues/174)
 
-## [1.0.2] - 2020-02-02
+## 1.0.2 - 2020-02-02
 
 ### Changed
 
 - Improve estimate comparison charts, including tooltips and better labels
 
-## [1.0.1] - 2020-01-31
+## 1.0.1 - 2020-01-31
 
 ### Changed
 
@@ -100,7 +110,7 @@ Note that Splink now has a depedency on `sqlglot`, a no-dependency SQL parser.
 
 - m and u history charts now display barchart correctly
 
-## [1.0.0] - 2020-01-20
+## 1.0.0 - 2020-01-20
 
 ### Added
 
