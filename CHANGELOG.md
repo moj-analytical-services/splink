@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+SQLGlot produces SQL in the wrong dialect in some instances. See [issue 269](https://github.com/moj-analytical-services/splink/issues/269)
+
+## 2.1.3
+
+### Fixed
+
 Versions of sqlglot before 1.18.0 could not parse the spark sql `left` and `right` functions - see [here](https://github.com/tobymao/sqlglot/issues/58).
 
 As a result, if `left` or `right` are used in the user's custom sql case expressions, Splink will produce an error.
