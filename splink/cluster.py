@@ -82,9 +82,15 @@ def _check_graphframes_installation(spark):
         if key in config_keys:
             if "graphframes" in value:
                 graphframe_jar_registered = True
+                
+    databricks_backend = False
+    for key, value in all_config:
+        if "databricks" in key:
+            databricks_backend = True
 
     if not graphframe_jar_registered:
-        raise Exception(graphframes_jar_missing_message)
+        if not databricks_backend:
+            raise Exception(graphframes_jar_missing_message)
 
     from pyspark.sql import Row
 
