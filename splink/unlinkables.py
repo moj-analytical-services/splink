@@ -13,7 +13,13 @@ from .gammas import _sql_gen_add_gammas
 from .iterate import iterate
 from .charts import altair_if_installed_else_json, load_chart_definition
 
-def self_link(linker: Splink):
+def _self_link(linker: Splink):
+    """Return a DataFrame of edges between every record in linker.df and itself
+    (i.e. the highest possible splink score for each record)
+
+    Args:
+        linker (Splink): A Splink data linker
+    """    
 
     # Take df and settings from Splink object
     df = linker.df
@@ -57,8 +63,23 @@ def self_link(linker: Splink):
 
     return df_e
 
-def unlinkables_chart(df_self: DataFrame, spark: SparkSession, x_col="match_weight", source_dataset=None):
+def unlinkables_chart(linker: Splink, x_col="match_weight", source_dataset=None):
+    """Generate a chart displaying the proportion of records that are "unlinkable"
+    for a given splink score threshold and model parameters. These are records that,
+    even when compared with themselves, do not contain enough information to confirm
+    a match.
 
+    Args:
+        linker (Splink): A Splink data linker
+        x_col (str, optional): The column name to use as the x-axis in the chart.
+            This can be either the "match_weight" or "match_probability" columns. 
+            Defaults to "match_weight".
+        source_dataset (str, optional): Name of the source dataset (used in chart 
+            title). Defaults to None.
+    """    
+
+    df_self = _self_link(linker)
+    
     if x_col not in ["match_weight", "match_probability"]:
         raise ValueError(
             f"{x_col} must be 'match_weight' (default) or 'match_probability'."
