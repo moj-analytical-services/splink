@@ -11,7 +11,7 @@ from .model import Model
 from .validate import validate_input_datasets
 from .gammas import _sql_gen_add_gammas
 from .iterate import iterate
-from .charts import altair_if_installed_else_json
+from .charts import altair_if_installed_else_json, load_chart_definition
 
 def self_link(linker: Splink):
 
@@ -33,6 +33,7 @@ def self_link(linker: Splink):
     df.createOrReplaceTempView("df")
 
     columns_to_retain = _get_columns_to_retain_blocking(settings, df)
+    columns_to_retain.remove(settings["source_dataset_column_name"])
 
     # Fudge df_comparisons (because block_using_rules doesn't quite work)
     sql = f"""select
@@ -43,7 +44,9 @@ def self_link(linker: Splink):
         on {settings['blocking_rules'][0]}
     """
 
-    df_comparison = spark.sql(sql)
+    df_comparison = spark.sql(sql)\
+        .withColumn("source_dataset_l", f.lit("l"))\
+        .withColumn("source_dataset_r", f.lit("r"))
     df_comparison.createOrReplaceTempView("df_comparison")
 
     sql = _sql_gen_add_gammas(settings, df_comparison)
