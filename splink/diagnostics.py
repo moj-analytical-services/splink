@@ -122,7 +122,7 @@ def splink_score_histogram(
     df_e: DataFrame,
     spark: SparkSession,
     buckets=None,
-    score_colname=None,
+    score_colname="match_weight",
     symmetric=True,
 ):
 
@@ -134,7 +134,7 @@ def splink_score_histogram(
         df_e (DataFrame): A dataframe of record comparisons containing a splink score,
             e.g. as produced by the `get_scored_comparisons` function
         spark (SparkSession): SparkSession object
-        score_colname : is the score in another column? defaults to None
+        score_colname : is the score in another column? defaults to match_weight.  also try match_probability
         buckets : accepts either a list of split points or an integer number that is used to
             create equally spaced split points. It defaults to 100 equally spaced split points from 0.0 to 1.0
         symmetric : if True then the histogram is symmetric
