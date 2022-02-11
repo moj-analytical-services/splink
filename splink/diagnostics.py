@@ -122,7 +122,7 @@ def splink_score_histogram(
     df_e: DataFrame,
     spark: SparkSession,
     buckets=None,
-    score_colname=match_weight,
+    score_colname="match_weight",
     symmetric=True,
 ):
 
