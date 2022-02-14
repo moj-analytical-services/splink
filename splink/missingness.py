@@ -33,7 +33,7 @@ def missingness_chart(df):
     
     # Add data to JSON chart definition
     # Probably needs changing
-    missingness_chart_def["data"]["values"] = pd_nulls
+    missingness_chart_def["data"]["values"] = pd_nulls.to_dict('records')
 
     
     return altair_if_installed_else_json(missingness_chart_def)
