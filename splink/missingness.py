@@ -32,7 +32,6 @@ def missingness_chart(df):
     
     
     # Add data to JSON chart definition
-    # Probably needs changing
     missingness_chart_def["data"]["values"] = pd_nulls.to_dict('records')
 
     
