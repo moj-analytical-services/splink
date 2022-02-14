@@ -1,1 +1,67 @@
-{"config": {"view": {"continuousWidth": 400, "continuousHeight": 300}, "axis": {"labelFontSize": 11}}, "layer": [{"mark": "bar", "encoding": {"x": {"type": "nominal", "axis": {"title": ""}, "field": "variable", "sort": "-y"}, "y": {"type": "quantitative", "axis": {"title": "Count of nulls"}, "field": "value"}}, "title": "Missingness per column out of 957979 records"}, {"mark": {"type": "text", "baseline": "bottom"}, "encoding": {"text": {"type": "nominal", "field": "percentage"}, "x": {"type": "nominal", "axis": {"title": ""}, "field": "variable", "sort": "-y"}, "y": {"type": "quantitative", "axis": {"title": "Count of nulls"}, "field": "value"}}, "title": "Missingness per column out of 957979 records"}], "data": {"name": "data-f68398e4875f66da67b56676e5ac6879"}, "width": 1250, "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json", "datasets": {"data-f68398e4875f66da67b56676e5ac6879": [{"variable": "offender_id", "value": 0, "record_count": 957979, "percentage": "0.0%"}, {"variable": "name_soundslike", "value": 18761, "record_count": 957979, "percentage": "2.0%"}, {"variable": "pnc", "value": 18754, "record_count": 957979, "percentage": "2.0%"}, {"variable": "merge_pnc_number", "value": 843611, "record_count": 957979, "percentage": "88.1%"}, {"variable": "pnc_id", "value": 80485, "record_count": 957979, "percentage": "8.4%"}, {"variable": "delius_crn", "value": 226054, "record_count": 957979, "percentage": "23.6%"}, {"variable": "nomis_offender_id_display", "value": 522562, "record_count": 957979, "percentage": "54.5%"}, {"variable": "cro_number", "value": 465276, "record_count": 957979, "percentage": "48.6%"}, {"variable": "nomis_offender_id", "value": 535165, "record_count": 957979, "percentage": "55.9%"}, {"variable": "nomis_estimated_offender_id_high", "value": 576104, "record_count": 957979, "percentage": "60.1%"}, {"variable": "nomis_estimated_offender_id_low", "value": 576104, "record_count": 957979, "percentage": "60.1%"}, {"variable": "person_id", "value": 0, "record_count": 957979, "percentage": "0.0%"}, {"variable": "source_dataset", "value": 0, "record_count": 957979, "percentage": "0.0%"}, {"variable": "commit_hash", "value": 0, "record_count": 957979, "percentage": "0.0%"}, {"variable": "lat_lng_as_struct", "value": 276921, "record_count": 957979, "percentage": "28.9%"}, {"variable": "surname_std", "value": 18764, "record_count": 957979, "percentage": "2.0%"}, {"variable": "forename1_std", "value": 18779, "record_count": 957979, "percentage": "2.0%"}, {"variable": "forename2_std", "value": 595197, "record_count": 957979, "percentage": "62.1%"}, {"variable": "forename3_std", "value": 920084, "record_count": 957979, "percentage": "96.0%"}, {"variable": "forename4_std", "value": 955550, "record_count": 957979, "percentage": "99.7%"}, {"variable": "forename5_std", "value": 957300, "record_count": 957979, "percentage": "99.9%"}, {"variable": "ethnicity_std", "value": 320472, "record_count": 957979, "percentage": "33.5%"}, {"variable": "outward_postcode_std", "value": 265834, "record_count": 957979, "percentage": "27.7%"}, {"variable": "inward_postcode_std", "value": 265843, "record_count": 957979, "percentage": "27.8%"}, {"variable": "dob_std", "value": 18822, "record_count": 957979, "percentage": "2.0%"}, {"variable": "gender_std", "value": 75455, "record_count": 957979, "percentage": "7.9%"}, {"variable": "dob_year_month", "value": 18822, "record_count": 957979, "percentage": "2.0%"}, {"variable": "dob_month_day", "value": 18822, "record_count": 957979, "percentage": "2.0%"}, {"variable": "dob_year_day", "value": 18822, "record_count": 957979, "percentage": "2.0%"}, {"variable": "surname_dm", "value": 18764, "record_count": 957979, "percentage": "2.0%"}, {"variable": "forename1_dm", "value": 18779, "record_count": 957979, "percentage": "2.0%"}, {"variable": "forename2_dm", "value": 595197, "record_count": 957979, "percentage": "62.1%"}, {"variable": "forename3_dm", "value": 920084, "record_count": 957979, "percentage": "96.0%"}]}}
+{
+    "config": {
+        "view": {
+            "continuousWidth": 400,
+            "continuousHeight": 300
+        },
+        "axis": {
+            "labelFontSize": 11
+        }
+    },
+    "layer": [
+        {
+            "mark": "bar",
+            "encoding": {
+                "x": {
+                    "type": "nominal",
+                    "axis": {
+                        "title": ""
+                    },
+                    "field": "variable",
+                    "sort": "-y"
+                },
+                "y": {
+                    "type": "quantitative",
+                    "axis": {
+                        "title": "Count of nulls"
+                    },
+                    "field": "value"
+                }
+            },
+            "title": "Missingness per column out of 957979 records"
+        },
+        {
+            "mark": {
+                "type": "text",
+                "baseline": "bottom"
+            },
+            "encoding": {
+                "text": {
+                    "type": "nominal",
+                    "field": "percentage"
+                },
+                "x": {
+                    "type": "nominal",
+                    "axis": {
+                        "title": ""
+                    },
+                    "field": "variable",
+                    "sort": "-y"
+                },
+                "y": {
+                    "type": "quantitative",
+                    "axis": {
+                        "title": "Count of nulls"
+                    },
+                    "field": "value"
+                }
+            },
+            "title": "Missingness per column out of 957979 records"
+        }
+    ],
+    "data": {
+        "name": "data-f68398e4875f66da67b56676e5ac6879"
+    },
+    "width": 1250,
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json"
+}
