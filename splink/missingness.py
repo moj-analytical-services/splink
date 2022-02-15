@@ -33,6 +33,10 @@ def missingness_chart(df: DataFrame):
     
     # Add data to JSON chart definition
     missingness_chart_def["data"]["values"] = pd_nulls.to_dict("records")
+    
+    # Update chart title
+    # Update JSON file definition
+    missingness_chart_def["layer"]["title"] = ""
 
     
     return altair_if_installed_else_json(missingness_chart_def)
