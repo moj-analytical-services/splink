@@ -89,10 +89,10 @@ A 'best practices and performance tuning' tutorial can be found [here](https://w
 
 ## How to make changes to Splink
 
-(Steps 5 onwards for contributors only)
+(Steps 5 onwards for repo admins only)
 
 1. Raise new issue or target existing issue
-2. Create new branch (usually off master)
+2. Create new branch (usually off master).  Or fork for external contributors.
 3. Make changes, commit and push to GitHub
 4. Make pull request, referencing the issue
 5. Wait for tests to pass
