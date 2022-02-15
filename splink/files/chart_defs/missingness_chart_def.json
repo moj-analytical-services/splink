@@ -28,7 +28,7 @@
                     "field": "value"
                 }
             },
-            "title": "Missingness per column out of 957979 records"
+            "title": ""
         },
         {
             "mark": {
@@ -56,11 +56,11 @@
                     "field": "value"
                 }
             },
-            "title": "Missingness per column out of 957979 records"
+            "title": ""
         }
     ],
     "data": {
-        "name": "data-f68398e4875f66da67b56676e5ac6879"
+        "name": "data-0e7bce5a1d2f132e282789d6ef7780fe"
     },
     "width": 1250,
     "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json"

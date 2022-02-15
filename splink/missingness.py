@@ -26,8 +26,8 @@ def missingness_chart(df: DataFrame):
     pd_nulls = df_nulls.toPandas()
     pd_nulls = pd.melt(pd_nulls)
     
-    pd_nulls["record_count"] = df.count()
-    pd_nulls["percentage"] = round(pd_nulls['value']*100/pd_nulls["record_count"], 1)
+    record_count = df.count()
+    pd_nulls["percentage"] = round(pd_nulls['value']*100/record_count, 1)
     pd_nulls["percentage"] = pd_nulls['percentage'].astype(str) + "%"
     
     
@@ -35,8 +35,8 @@ def missingness_chart(df: DataFrame):
     missingness_chart_def["data"]["values"] = pd_nulls.to_dict("records")
     
     # Update chart title
-    # Update JSON file definition
-    missingness_chart_def["layer"]["title"] = ""
-
+    for c in missingness_chart_def["layer"]:
+        c["title"] = "Missingness per column out of {} records".format(record_count)
+   
     
     return altair_if_installed_else_json(missingness_chart_def)
