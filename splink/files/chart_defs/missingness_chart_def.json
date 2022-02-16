@@ -1,0 +1,72 @@
+{
+    "config": {
+        "view": {
+            "continuousWidth": 400,
+            "continuousHeight": 300,
+            "width": 400
+        },
+        "axis": {
+            "labelFontSize": 11
+        }
+    },
+    "title": "",
+    "layer": [
+        {
+            "mark": "bar",
+            "encoding": {
+                "color": {
+                    "type": "quantitative",
+                    "field": "percentage",
+                    "legend": {
+                        "format": ".0%"
+                    },
+                    "scale": {
+                        "range": "heatmap"
+                    },
+                    "title": "Missingness"
+                },
+                "tooltip": [
+                    {
+                        "type": "nominal",
+                        "field": "variable",
+                        "title": "Column"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "value",
+                        "format": ".0f",
+                        "title": "Count of nulls"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "percentage",
+                        "format": ".2%",
+                        "title": "Percentage of nulls"
+                    }
+                ],
+                "x": {
+                    "type": "quantitative",
+                    "axis": {
+                        "format": "%",
+                        "title": "Percentage of nulls"
+                    },
+                    "field": "percentage"
+                },
+                "y": {
+                    "type": "nominal",
+                    "axis": {
+                        "title": ""
+                    },
+                    "field": "variable",
+                    "sort": "-x"
+                }
+            },
+            "title": ""
+        }
+    ],
+    "data": {
+        "values": "",
+        "name": "data-0e7bce5a1d2f132e282789d6ef7780fe"
+    },
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json"
+}
