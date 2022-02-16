@@ -4,7 +4,7 @@ import sqlglot
 from pandas import DataFrame as pd_DataFrame
 
 import duckdb
-from splink3.linker import Linker, SplinkDataFrame
+from splink.linker import Linker, SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ class DuckDBInMemoryLinker(Linker):
 
         output = self.con.query(sql).to_df()
 
-        # from splink3.format_sql import format_sql
+        # from splink.format_sql import format_sql
 
         # print(output_table_name)
         # try:

@@ -1,6 +1,6 @@
 import sqlglot
 
-from splink3.linker import Linker, SplinkDataFrame
+from splink.linker import Linker, SplinkDataFrame
 from math import pow, log2
 from rapidfuzz.levenshtein import distance
 

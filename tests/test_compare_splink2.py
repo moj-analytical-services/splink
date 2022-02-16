@@ -1,9 +1,9 @@
 import pytest
-from splink3.comparison import Comparison
-from splink3.misc import bayes_factor_to_prob, prob_to_bayes_factor
-from splink3.duckdb.duckdb_linker import DuckDBInMemoryLinker
-from splink3.spark.spark_linker import SparkLinker
-from splink3.sqlite.sqlite_linker import SQLiteLinker
+from splink.comparison import Comparison
+from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
+from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
+from splink.spark.spark_linker import SparkLinker
+from splink.sqlite.sqlite_linker import SQLiteLinker
 
 import pandas as pd
 
@@ -402,7 +402,7 @@ def test_lambda():
 
     linker.settings_obj.match_weights_chart()
 
-    # from splink3.misc import bayes_factor_to_prob, prob_to_bayes_factor
+    # from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 
     # The model that blocks on DOB has proportion of matches of 0.588699831556479
 

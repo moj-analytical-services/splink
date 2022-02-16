@@ -1,4 +1,4 @@
-from splink3.parse_sql import get_columns_used_from_sql
+from splink.parse_sql import get_columns_used_from_sql
 
 from .charts import m_u_values_chart, match_weights_chart
 from .comparison import Comparison

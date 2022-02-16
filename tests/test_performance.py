@@ -2,11 +2,11 @@
 # %autoreload 2
 from copy import deepcopy
 from splink3 import comparison_level
-from splink3.comparison import Comparison
-from splink3.comparison_level import ComparisonLevel
-from splink3.misc import bayes_factor_to_prob, prob_to_bayes_factor
-from splink3.duckdb.duckdb_linker import DuckDBInMemoryLinker
-from splink3.sqlite.sqlite_linker import SQLiteLinker
+from splink.comparison import Comparison
+from splink.comparison_level import ComparisonLevel
+from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
+from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
+from splink.sqlite.sqlite_linker import SQLiteLinker
 import math
 import pandas as pd
 from IPython.display import display
@@ -16,9 +16,9 @@ import sys
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
-from splink3.comparison_library import exact_match, levenshtein
+from splink.comparison_library import exact_match, levenshtein
 
-from splink3.comparison_levels_library import (
+from splink.comparison_levels_library import (
     exact_match_level,
     else_level,
     levenshtein_level,

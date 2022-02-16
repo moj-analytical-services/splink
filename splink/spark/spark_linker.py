@@ -1,6 +1,6 @@
 from pyspark.sql import DataFrame as sp_DataFrame
 
-from splink3.linker import Linker, SplinkDataFrame
+from splink.linker import Linker, SplinkDataFrame
 
 
 class SparkDataframe(SplinkDataFrame):
