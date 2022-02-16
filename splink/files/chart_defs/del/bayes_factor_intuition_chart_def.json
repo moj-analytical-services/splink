@@ -1,0 +1,236 @@
+{
+  "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
+  "title": {
+    "text": "Bayes factor intuition chart",
+    "subtitle": "How each comparison column contributes to the final match score"
+  },
+      "transform": [
+        {"filter": "(datum.bayes_factor !== 1.0)"},
+        {
+          "window": [
+            {"op": "sum", "field": "log2_bayes_factor", "as": "sum"},
+            {"op": "lead", "field": "column_name", "as": "lead"}
+          ],
+          "frame": [null, 0]
+        },
+        {
+          "calculate": "datum.column_name === \"Final score\" ? datum.sum - datum.log2_bayes_factor : datum.sum",
+          "as": "sum"
+        },
+        {
+          "calculate": "datum.lead === null ? datum.column_name : datum.lead",
+          "as": "lead"
+        },
+        {
+          "calculate": "datum.column_name === \"Final score\" || datum.column_name === \"Prior lambda\" ? 0 : datum.sum - datum.log2_bayes_factor",
+          "as": "previous_sum"
+        },
+        {
+          "calculate": "datum.sum > datum.previous_sum ? datum.column_name : \"\"",
+          "as": "top_label"
+        },
+        {
+          "calculate": "datum.sum < datum.previous_sum ? datum.column_name : \"\"",
+          "as": "bottom_label"
+        },
+        {
+          "calculate": "datum.sum > datum.previous_sum ? datum.sum : datum.previous_sum",
+          "as": "sum_top"
+        },
+        {
+          "calculate": "datum.sum < datum.previous_sum ? datum.sum : datum.previous_sum",
+          "as": "sum_bottom"
+        },
+        {"calculate": "(datum.sum + datum.previous_sum) / 2", "as": "center"},
+        {
+          "calculate": "(datum.log2_bayes_factor > 0 ? \"+\" : \"\") + datum.log2_bayes_factor",
+          "as": "text_log2_bayes_factor"
+        },
+        {"calculate": "datum.sum < datum.previous_sum ? 4 : -4", "as": "dy"},
+        {
+          "calculate": "datum.sum < datum.previous_sum ? \"top\" : \"bottom\"",
+          "as": "baseline"
+        },
+        {"calculate": "1. / (1 + pow(2, -1.*datum.sum))", "as": "prob"},
+        {"calculate": "0*datum.sum", "as": "zero"}
+      ],
+  "layer": [
+    {
+      "layer": [        
+        {
+          "mark": "rule",
+          "encoding": {
+            "y": {"field":"zero", "type":"quantitative"},
+            "size": {"value": 0.5},
+            "color": {"value": "black"}      
+          }
+        },
+        { 
+          "mark": {"type": "bar", "width": 60},
+          "encoding": {
+            "color": {
+              "condition": {
+                "value": "red",
+                "test": "(datum.log2_bayes_factor < 0)"
+              },
+              "value": "green"
+            },
+            "opacity": {
+              "condition": {
+                "value": 1,
+                "test": "datum.column_name == 'Prior lambda' || datum.column_name == 'Final score'"
+              },
+              "value": 0.5
+            },
+            "tooltip": [
+              {"type": "nominal", "field": "column_name", "title": "Comparison column"},
+              {"type": "nominal", "field": "value_l", "title": "Value (L)"},
+              {"type": "nominal", "field": "value_r", "title": "Value (R)"},
+              {"type": "nominal", "field": "label", "title": "Level label"},
+              {"type": "nominal", "field": "sql_expr", "title": "SQL for level"},
+              {"type": "nominal", "field": "gamma_index", "title": "Comparison vector value"},
+              {"type": "quantitative", "field": "bayes_factor", "format":".3r", "title": "Bayes factor"},
+              {"type": "quantitative", "field": "log2_bayes_factor", "format":".3r", "title": "log2(Bayes factor)"},
+              {"type": "quantitative", "field": "prob", "format":".3r", "title":"Adjusted match score"}
+            ],
+            "x": {
+              "type": "nominal",
+              "axis": {
+                "labelExpr": "datum.value == 'Prior lambda' || datum.value == 'Final score' ? '' : datum.value",
+                "labelAngle": -20, 
+                "labelAlign": "center", 
+                "labelPadding": 10,
+                "title": "Column", 
+                "grid": true, 
+                "tickBand": "extent"
+                },
+              "field": "column_name",
+              "sort": null
+            },
+            "y": {
+              "type": "quantitative",
+              "axis": {
+                "grid": false,
+                "orient": "left",
+                "title": "log2(Bayes factor)"
+              },
+              "field": "previous_sum"
+            },
+            "y2": {"field": "sum"}
+          }
+        },
+        {
+          "mark": {"type": "text", "fontWeight": "bold"},
+          "encoding": {
+            "color": {"value": "white"},
+            "text": {
+              "condition": {
+                "type": "nominal",
+                "field": "log2_bayes_factor",
+                "format": ".2f",
+                "test": "abs(datum.log2_bayes_factor) > 1"
+              },
+              "value": ""
+            },
+            "x": {
+              "type": "nominal",
+              "axis": {"labelAngle": 0, "title": "Column"},
+              "field": "column_name",
+              "sort": null
+            },
+            "y": {
+              "type": "quantitative",
+              "axis": {"orient": "left"},
+              "field": "center"
+            }
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "baseline": "bottom",
+            "dy": -5,
+            "fontWeight": "bold"
+          },
+          "encoding": {
+            "color": {"value": "black"},
+            "text": {
+              "condition": {
+                "type": "nominal",
+                "field": "top_label",
+                "test": "abs(datum.log2_bayes_factor) > 1"
+              },
+              "value": ""
+            },
+            "x": {
+              "type": "nominal",
+              "axis": {"labelAngle": 0, "title": "Column"},
+              "field": "column_name",
+              "sort": null
+            },
+            "y": {"type": "quantitative", "field": "sum_top"}
+          }
+        },
+        {
+          "mark": {
+            "type": "text",
+            "baseline": "top",
+            "dy": 5,
+            "fontWeight": "bold"
+          },
+          "encoding": {
+            "color": {"value": "black"},
+            "text": {
+              "condition": {
+                "type": "nominal",
+                "field": "bottom_label",
+                "test": "abs(datum.log2_bayes_factor) > 1"
+              },
+              "value": ""
+            },
+            "x": {
+              "type": "nominal",
+              "axis": {"labelAngle": 0, "title": "Column"},
+              "field": "column_name",
+              "sort": null
+            },
+            "y": {"type": "quantitative", "field": "sum_bottom"}
+          }
+        }
+      ]
+    },
+    {
+      "mark": {
+        "type": "rule",
+        "color": "black",
+        "strokeWidth": 2,
+        "x2Offset": 30,
+        "xOffset": -30
+      },
+      "encoding": {
+        "x": {
+          "type": "nominal",
+          "axis": {"labelAngle": 0, "title": "Column"},
+          "field": "column_name",
+          "sort": null
+        },
+        "x2": {"field": "lead"},
+        "y": {
+          "type": "quantitative",
+          "axis": {
+            "labelExpr": "format(1 / (1 + pow(2, -1*datum.value)), '.2r')",
+            "orient": "right",
+            "title": "Probability"
+          },
+          "field": "sum",
+          "scale": {"zero": false}
+        }
+      }
+    }
+  ],
+  "height": 450,
+  "resolve": {"axis": {"y": "independent"}},
+  "width": {"step": 75},
+  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+  "data": {"values": null}
+}

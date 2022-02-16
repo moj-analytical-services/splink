@@ -1,0 +1,211 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Splink settings",
+  "required": ["link_type", "comparisons"],
+  "additionalProperties": false,
+  "properties": {
+    "link_type": {
+      "type": "string",
+      "title": "The type of data linking task.  Required.",
+      "description": "- When `link_and_dedupe`, `splink` finds links within and between input datasets.  If  single dataset is provided, it will be deduped. - When `link_only`,  `splink` finds links between datasets, but does not attempt to deduplicate the datasets (it does not try and find links within each input dataset.)",
+      "examples": ["link_only", "link_and_dedupe"],
+      "enum": ["dedupe_only", "link_only", "link_and_dedupe"]
+    },
+    "proportion_of_matches": {
+      "type": "number",
+      "title": "The proportion of record comparisons thought to be matches",
+      "description": "This provides the initial value (prior) from which the EM algorithm will start iterating",
+      "default": 0.001,
+      "minimum": 0,
+      "maximum": 1,
+      "examples": [0.3, 0.1, 0.9]
+    },
+    "em_convergence": {
+      "type": "number",
+      "title": "Convergence tolerance for the EM algorithm",
+      "description": "The algorithm will stop converging when the maximum of the change in model parameters between iterations is below this value",
+      "default": 0.0001,
+      "examples": [0.0001, 0.00001, 1e-6],
+      "maximum": 0.05,
+      "minimum": 1e-12
+    },
+    "max_iterations": {
+      "type": "number",
+      "title": "The maximum number of iterations to run even if convergence has not been reached",
+      "description": "Set this value to zero if you do not want to use the EM algorithm and just want to score matches from values you have manually specified in the `m_probabilities` and `u_probabilities` arrays",
+      "default": 25,
+      "examples": [20, 150],
+      "maximum": 500,
+      "minimum": 0
+    },
+    "unique_id_column_name": {
+      "type": "string",
+      "title": "The name of the column in the input dataset representing a unique id",
+      "description": "For linking tasks, ids must be unique to each dataset being linked, and do not need to be globally unique across these two datasets",
+      "default": "unique_id",
+      "examples": ["unique_id", "id", "pk"]
+    },
+    "source_dataset_column_name": {
+      "type": "string",
+      "title": "The name of the column in the input dataset representing the source dataset",
+      "description": "Where we are linking datasets, we can't guarantee that the unique id column is globally unique across datasets, so we combine it with a source_dataset column.  Usually, this is created by Splink for the user",
+      "default": "source_dataset",
+      "examples": ["source_dataset", "dataset_name"]
+    },
+    "retain_matching_columns": {
+      "type": "boolean",
+      "title": "If set to true, each column used by the `comparisons` sql expressions will be retained in output datasets",
+      "description": "This is helpful so that the user can inspect matches, but once the comparison vector (gamma) columns are computed, this information is not actually needed by the algorithm.  The algorithm will run faster and use less resources if this is set to false.",
+      "default": true,
+      "examples": [false, true]
+    },
+    "retain_intermediate_calculation_columns": {
+      "type": "boolean",
+      "title": "Retain intermediate calculation columns, such as the bayes factors associated with each column in `comparisons`",
+      "description": "The algorithm will run faster and use less resources if this is set to false.",
+      "default": false,
+      "examples": [false, true]
+    },
+    "comparisons": {
+      "type": "array",
+      "title": "A list specifying how records should be compared for probabalistic matching",
+      "description": "Comparisons between the values in these columns will be used to determine match scores",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "title": "A comparison of input column(s) that is used for probabalistic matching",
+        "additionalProperties": false,
+        "properties": {
+          "column_name": {
+            "type": "string",
+            "title": "The name used to refer to this column in the output dataset.  Most useful to describe comparison columns that use multiple input columns.  e.g. a location column that uses postcode and town may be named location",
+            "description": "For a comparison column that uses a single input column, e.g. first_name, this will be set first_name. For comparison columns that use multiple columns, if left blank, this will be set to the concatenation of columns used.",
+            "examples": ["first_name", "surname"]
+          },
+          "comparison_levels": {
+            "type": "array",
+            "title": "Comparison levels specify how input values should be compared.  Each level corresponds to an assessment of similarity, such as exact match, jaro winkler match, one side of the match being null, etc",
+            "description": "Each comparison level represents a branch of a SQL case expression. They are specified in order of evaluation, each with a sql_condition that represents the branch of a case expression",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "sql_condition": {
+                  "title": "A branch of a SQL case expression without WHEN and THEN e.g. 'jaro_winkler_sim(surname_l, surname_r) > 0.88'",
+                  "type": "string",
+                  "examples": [
+                    "forename_l = forename_r",
+                    "jaro_winkler_sim(surname_l, surname_r) > 0.88"
+                  ]
+                },
+                "label_for_charts": {
+                  "title": "A label for this comparson level, which will appear on charts as a reminder of what the level represts",
+                  "type": "string",
+                  "examples": ["exact", "postcode exact"]
+                },
+                "u_probability": {
+                  "title": "the u probability for this comparison level - i.e. the proportion of records that match this level amongst truly non-matching records",
+                  "type": "number",
+                  "examples": [0.9]
+                },
+                "m_probability": {
+                  "title": "the m probability for this comparison level - i.e. the proportion of records that match this level amongst truly matching records",
+                  "type": "number",
+                  "examples": [0.1]
+                },
+                "is_null_level": {
+                  "title": "If true, m and u values will not be estimated and instead the match weight will be zero for this column.  See treatment of nulls here on page 356, quote '. Under this MAR assumption, we can simply ignore missing data.': https://imai.fas.harvard.edu/research/files/linkage.pdf",
+                  "type": "boolean",
+                  "default": false
+                },
+                "tf_adjustment_column": {
+                  "title": "Make term frequency adjustments for this comparison level using this input column",
+                  "type": "string",
+                  "examples": ["first_name", "postcode"],
+                  "default": null
+                },
+                "tf_adjustment_weight": {
+                  "title": "Make term frequency adjustments using this weight. A weight of 1.0 is a full adjustment.  A weight of 0.0 is no adjustment.  A weight of 0.5 is a half adjustment",
+                  "type": "number",
+                  "default": 1.0,
+                  "examples": ["first_name", "postcode"]
+                }
+              },
+              "required": ["sql_condition"]
+            },
+            "examples": [
+              {
+                "sql_condition": "first_name_l IS NULL OR first_name_r IS NULL",
+                "label": "null",
+                "null_level": true
+              },
+              {
+                "sql_condition": "first_name_l = first_name_r",
+                "label": "exact_match",
+                "tf_adjustment_column": "first_name"
+              },
+              {
+                "sql_condition": "ELSE",
+                "label": "else"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "blocking_rules_to_generate_predictions": {
+      "type": "array",
+      "title": "A list of one or more blocking rules to apply. A cartesian join is applied if `blocking_rules` is empty or not supplied.",
+      "description": "Each rule is a SQL expression representing the blocking rule, which will be used to create a join.  The left table is aliased with `l` and the right table is aliased with `r`. For example, if you want to block on a `first_name` column, the blocking rule would be `l.first_name = r.first_name`.  Note that splink deduplicates the comparisons generated by the blocking rules. If empty or not supplied, all comparisons between the input dataset(s) will be generated and blocking will not be used. For large input datasets, this will generally be computationally intractable because it will generate comparisons equal to the number of rows squared.",
+      "default": [],
+      "examples": [
+        [
+          "l.first_name = r.first_name AND l.surname = r.surname",
+          "l.dob = r.dob"
+        ]
+      ],
+      "items": {
+        "type": "string",
+        "title": "Each item in the array is a SQL expression represing a left join ON condition",
+        "default": [],
+        "examples": [
+          [
+            "l.first_name = r.first_name AND l.surname = r.surname",
+            "l.dob = r.dob"
+          ]
+        ]
+      }
+    },
+    "additional_columns_to_retain": {
+      "type": "array",
+      "title": "A list of columns not being used in the probabalistic matching comparisons that you want to include in your results.",
+      "description": "A common example is if the user has labelled data (training data) and wishes to retain the labels in the outputs",
+      "default": [],
+      "examples": ["label", "col2"],
+      "items": {
+        "type": "string",
+        "title": "Individual strings representing other columns to retain",
+        "examples": ["group", "an_other_column"]
+      }
+    },
+    "bayes_factor_column_prefix": {
+      "type": "string",
+      "title": "The prefix to use for the columns that will be created to store the bayes factors",
+      "default": "bf_",
+      "examples": ["bf_", "__bf__"]
+    },
+    "term_frequency_adjustment_column_prefix": {
+      "type": "string",
+      "title": "The prefix to use for the columns that will be created to store the term frequency adjustments",
+      "default": "tf_",
+      "examples": ["tf_", "__tf__"]
+    },
+    "comparison_vector_value_column_prefix": {
+      "type": "string",
+      "title": "The prefix to use for the columns that will be created to store the comparison vector values",
+      "default": "gamma_",
+      "examples": ["gamma_", "__gamma__"]
+    }
+  }
+}

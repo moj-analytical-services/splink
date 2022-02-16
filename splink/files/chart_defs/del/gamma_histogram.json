@@ -1,0 +1,39 @@
+{
+  "config": {
+    "view": {
+      "width": 400,
+      "height": 300
+    }
+  },
+  "data": {
+    "values": null
+  },
+  "mark": "bar",
+  "encoding": {
+    "x": {
+      "type": "nominal",
+      "field": "gam_concat",
+      "sort": {
+        "field": "sum_gam",
+        "op": "sum",
+        "order": "ascending"
+      },
+      "title": "Comparison vector value"
+    },
+    "y": {
+      "type": "quantitative",
+      "field": "count",
+      "scale": {
+        "constant": 40,
+        "type": "symlog"
+      },
+      "title": "count"
+    }
+  },
+  "title": {
+    "text": "Count of comparison vector values",
+    "subtitle": "Hover over bars for gamma value"
+  },
+  "width": 1000,
+  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json"
+}

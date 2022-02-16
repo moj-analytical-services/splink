@@ -1,0 +1,90 @@
+{
+    "config": {
+        "view": {
+            "width": 400,
+            "height": 300
+        },
+        "mark": {
+            "tooltip": null
+        },
+        "title": {
+            "anchor": "middle"
+        },
+        "header": {
+            "title": null
+        }
+    },
+    "mark": "bar",
+    "encoding": {
+        "row": {
+            "type": "nominal",
+            "field": "column_name",
+            "sort": {
+                "field": "gamma_index"
+            },
+            "header": {
+                "labelAngle": 0,
+                "labelAnchor": "middle",
+                "labelAlign": "left"
+            }
+        },
+        "tooltip": [
+            {
+                "type": "nominal",
+                "field": "column_name"
+            },
+            {
+                "type": "ordinal",
+                "field": "level_name"
+            },
+            {
+                "type": "nominal",
+                "field": "level_proportion",
+                "title": "Percentage of record comparisons in this level",
+                "format": ".2%"
+            },
+            {
+                "type": "quantitative",
+                "field": "bayes_factor",
+                "format": ".4f"
+            },
+            {
+                "type": "nominal",
+                "field": "sql_expr"
+            },
+            {
+                "type": "quantitative",
+                "field": "log2_bayes_factor",
+                "format": ".4f"
+            }
+        ],
+        "x": {
+            "type": "quantitative",
+            "field": "level_proportion",
+            "axis": {
+                "title": "proportion of comparisons"
+            }
+        },
+        "y": {
+            "type": "nominal",
+            "axis": {
+                "title": null
+            },
+            "field": "level_name"
+        }
+    },
+    "resolve": {
+        "scale": {
+            "y": "independent"
+        }
+    },
+    "width": 150,
+    "height": 50,
+    "data": {
+        "values": null
+    },
+    "title": {
+        "text": "Proportion of (non-null) comparisons in each level"
+    },
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+}

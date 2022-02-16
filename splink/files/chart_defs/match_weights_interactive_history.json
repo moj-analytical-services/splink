@@ -1,0 +1,150 @@
+{
+  "config": {
+    "view": {
+      "width": 400,
+      "height": 50
+    },
+    "mark": {
+      "tooltip": null
+    },
+    "title": {
+      "anchor": "middle"
+    },
+    "header": {
+      "title": null
+    }
+  },
+  "params": [
+    {
+      "name": "iteration_number",
+      "value": 0,
+      "bind": {
+        "input": "range",
+        "min": 0,
+        "max": 10,
+        "step": 1
+      },
+      "description": "Filter by the interation number"
+    }
+  ],
+  "data": {
+    "values": null
+  },
+  "transform": [
+    {
+      "filter": "(datum.iteration == iteration_number)"
+    }
+  ],
+  "mark": {
+    "type": "bar",
+    "clip": true
+  },
+  "selection": {
+    "zoom_selector": {
+      "type": "interval",
+      "bind": "scales",
+      "encodings": ["x"]
+    }
+  },
+  "encoding": {
+    "color": {
+      "type": "quantitative",
+      "field": "log2_bayes_factor",
+      "title": "Match weight",
+      "scale": {
+        "range": ["red", "orange", "green"],
+        "domain": [-10, 0, 10]
+      }
+    },
+    "row": {
+      "type": "nominal",
+      "field": "comparison_name",
+      "sort": {
+        "field": "comparison_sort_order"
+      },
+      "header": {
+        "labelAngle": 0,
+        "labelAnchor": "middle",
+        "labelAlign": "left"
+      }
+    },
+    "tooltip": [
+      {
+        "type": "nominal",
+        "field": "comparison_name",
+        "title": "Comparison name"
+      },
+      {
+        "type": "ordinal",
+        "field": "label_for_charts",
+        "title": "Label"
+      },
+      {
+        "type": "nominal",
+        "field": "sql_condition",
+        "title": "SQL condition"
+      },
+      {
+        "type": "quantitative",
+        "field": "m_probability",
+        "format": ".4f",
+        "title": "M probability"
+      },
+      {
+        "type": "quantitative",
+        "field": "u_probability",
+        "format": ".4f",
+        "title": "U probability"
+      },
+      {
+        "type": "quantitative",
+        "field": "bayes_factor",
+        "title": "Bayes factor = m/u",
+        "format": ",.4f"
+      },
+      {
+        "type": "quantitative",
+        "field": "log2_bayes_factor",
+        "title": "Match weight = log2(m/u)",
+        "format": ",.4f"
+      },
+      {
+        "type": "nominal",
+        "field": "bayes_factor_description",
+        "title": "Match weight description"
+      }
+    ],
+    "x": {
+      "type": "quantitative",
+      "axis": {
+        "title": "Match weight = log2(m/u)",
+        "values": [-10, -5, 0, 5, 10]
+      },
+      "field": "log2_bayes_factor",
+      "scale": {
+        "domain": [-10, 10]
+      }
+    },
+    "y": {
+      "type": "nominal",
+      "field": "label_for_charts",
+      "axis": {
+        "title": null
+      },
+      "sort": {
+        "field": "comparison_vector_value",
+        "order": "descending"
+      }
+    }
+  },
+  "resolve": {
+    "scale": {
+      "y": "independent"
+    }
+  },
+  "title": {
+    "text": "Influence of levels (comparison vector values) on match probability",
+    "subtitle": "Use mousewheeel to zoom"
+  },
+  "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+}
