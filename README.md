@@ -87,6 +87,20 @@ You can find a short video introducing `splink` and running though an introducto
 
 A 'best practices and performance tuning' tutorial can be found [here](https://www.youtube.com/watch?v=HzcqrRvXhCE).
 
+## How to make changes to Splink
+
+(Steps 5 onwards for repo admins only)
+
+1. Raise new issue or target existing issue
+2. Create new branch (usually off master).  Or fork for external contributors.
+3. Make changes, commit and push to GitHub
+4. Make pull request, referencing the issue
+5. Wait for tests to pass
+6. Review pull request
+7. Bump Splink version in [pyproject.toml](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml) and update [CHANGELOG.md](https://github.com/moj-analytical-services/splink/blob/master/CHANGELOG.md) as part of pull request
+8. Merge
+9. Release on PyPI and create new tag
+
 ## Acknowledgements
 
 We are very grateful to [ADR UK](https://www.adruk.org/) (Administrative Data Research UK) for providing funding for this work as part of the [Data First](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) project.
