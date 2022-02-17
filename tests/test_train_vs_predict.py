@@ -165,7 +165,7 @@ def test_train_vs_predict():
     The global version has the param estimate of first_name 'reveresed out'
     """
 
-    df = pd.read_parquet("./tests/datasets/fake_1000_from_splink_demos.parquet")
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings_dict["blocking_rules_to_generate_predictions"] = ["l.surname = r.surname"]
     linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})

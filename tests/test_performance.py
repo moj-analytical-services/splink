@@ -174,7 +174,7 @@ settings_dict = {
 
 def run_splink3():
     print("hi there")
-    df = pd.read_parquet("./tests/datasets/fake_1000_from_splink_demos.parquet")
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
 
