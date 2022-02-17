@@ -7,7 +7,7 @@ import pandas as pd
 
 
 def missingness_chart(df: DataFrame):
-        """Produce bar chart of missingness in standardised nodes
+    """Produce bar chart of missingness in standardised nodes
     Args:
         df (DataFrame): Input Spark dataframe
     Returns:
