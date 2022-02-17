@@ -155,11 +155,11 @@ settings_dict = {
 
 def test_splink_2_predict():
 
-    df = pd.read_parquet("./tests/datasets/fake_1000_from_splink_demos.parquet")
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
 
-    expected_record = pd.read_parquet("tests/datasets/splink2_479_vs_481.parquet")
+    expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
 
     df_e = linker.predict()
     f1 = df_e["unique_id_l"] == 479
@@ -184,7 +184,7 @@ def test_splink_2_predict_spark():
     sc = SparkContext.getOrCreate(conf=conf)
     spark = SparkSession(sc)
 
-    df = spark.read.parquet("./tests/datasets/fake_1000_from_splink_demos.parquet")
+    df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df})
 
@@ -192,7 +192,7 @@ def test_splink_2_predict_spark():
     f1 = df_e["unique_id_l"] == 479
     f2 = df_e["unique_id_r"] == 481
     actual_record = df_e[f1 & f2]
-    expected_record = pd.read_parquet("tests/datasets/splink2_479_vs_481.parquet")
+    expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
 
     expected_match_weight = expected_record["match_weight"].iloc[0]
     actual_match_weight = actual_record["match_weight"].iloc[0]
@@ -205,7 +205,7 @@ def test_splink_2_predict_sqlite():
     import sqlite3
 
     con = sqlite3.connect(":memory:")
-    df = pd.read_parquet("./tests/datasets/fake_1000_from_splink_demos.parquet")
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df.to_sql("fake_data_1", con, if_exists="replace")
 
     linker = SQLiteLinker(
@@ -219,7 +219,7 @@ def test_splink_2_predict_sqlite():
     f1 = df_e["unique_id_l"] == 479
     f2 = df_e["unique_id_r"] == 481
     actual_record = df_e[f1 & f2]
-    expected_record = pd.read_parquet("tests/datasets/splink2_479_vs_481.parquet")
+    expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
 
     expected_match_weight = expected_record["match_weight"].iloc[0]
     actual_match_weight = actual_record["match_weight"].iloc[0]
@@ -231,13 +231,13 @@ def test_splink_2_predict_sqlite():
 
 def test_splink_2_em_fixed_u():
 
-    df = pd.read_parquet("./tests/datasets/fake_1000_from_splink_demos.parquet")
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
 
     # Check lambda history is the same
-    expected_prop_history = pd.read_parquet(
-        "tests/datasets/splink2_proportion_of_matches_history_fixed_u.parquet"
+    expected_prop_history = pd.read_csv(
+        "tests/datasets/splink2_proportion_of_matches_history_fixed_u.csv"
     )
 
     training_session = linker.train_m_using_expectation_maximisation(
@@ -253,9 +253,7 @@ def test_splink_2_em_fixed_u():
         assert r["proportion_of_matches"] == pytest.approx(r["λ"])
 
     # Check history of m probabilities is the same for a column
-    expected_m_u_history = pd.read_parquet(
-        "tests/datasets/splink2_m_u_history_fixed_u.parquet"
-    )
+    expected_m_u_history = pd.read_csv("tests/datasets/splink2_m_u_history_fixed_u.csv")
     f1 = expected_m_u_history["gamma_column_name"] == "gamma_first_name"
     f2 = expected_m_u_history["comparison_vector_value"] == "1"
     expected_first_name_level_1_m = expected_m_u_history[f1 & f2]
@@ -278,13 +276,13 @@ def test_splink_2_em_fixed_u():
 
 def test_splink_2_em_no_fix():
 
-    df = pd.read_parquet("./tests/datasets/fake_1000_from_splink_demos.parquet")
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
 
     # Check lambda history is the same
-    expected_prop_history = pd.read_parquet(
-        "tests/datasets/splink2_proportion_of_matches_history_no_fix.parquet"
+    expected_prop_history = pd.read_csv(
+        "tests/datasets/splink2_proportion_of_matches_history_no_fix.csv"
     )
 
     training_session = linker.train_m_and_u_using_expectation_maximisation(
@@ -300,9 +298,7 @@ def test_splink_2_em_no_fix():
         assert r["proportion_of_matches"] == pytest.approx(r["λ"])
 
     # Check history of m probabilities is the same for a column
-    expected_m_u_history = pd.read_parquet(
-        "tests/datasets/splink2_m_u_history_no_fix.parquet"
-    )
+    expected_m_u_history = pd.read_csv("tests/datasets/splink2_m_u_history_no_fix.csv")
     f1 = expected_m_u_history["gamma_column_name"] == "gamma_first_name"
     f2 = expected_m_u_history["comparison_vector_value"] == "1"
     expected_first_name_level_1_m = expected_m_u_history[f1 & f2]
@@ -349,7 +345,7 @@ def test_lambda():
         "max_iterations": 10,
         "em_convergence": 0.000000001,
     }
-    df = pd.read_parquet("./tests/datasets/fake_1000_from_splink_demos.parquet")
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
 
@@ -432,7 +428,7 @@ def test_lambda():
 
 # spark = get_spark()
 
-# df = spark.read.parquet("data/fake_1000.parquet")
+# df = spark.read.csv("data/fake_1000.csv")
 
 
 # case_expr = """
@@ -475,14 +471,14 @@ def test_lambda():
 # df_e = linker.manually_apply_fellegi_sunter_weights()
 
 # df_e_pd = df_e.filter("unique_id_l = 479").filter("unique_id_r = 481").toPandas()
-# df_e_pd.to_parquet("splink2_479_vs_481.parquet", index=False)
+# df_e_pd.to_csv("splink2_479_vs_481.csv", index=False)
 
 # linker = Splink(settings, df, spark)
 # df_e = linker.get_scored_comparisons()
 # model = linker.model
 
 # df = pd.DataFrame(model.m_u_history_as_rows())
-# df.to_parquet("splink2_m_u_history.parquet", index=False)
+# df.to_csv("splink2_m_u_history.csv", index=False)
 
 # df2 = pd.DataFrame(model.lambda_history_as_rows())
 

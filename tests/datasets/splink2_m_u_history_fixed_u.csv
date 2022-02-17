@@ -1,0 +1,28 @@
+label,sql_expr,gamma_column_name,level_name,gamma_index,comparison_vector_value,column_name,num_levels,m_probability,u_probability,bayes_factor,log2_bayes_factor,level_proportion,is_null,iteration,final
+level_2,WHEN first_name_l = first_name_r THEN 2,gamma_first_name,level_2,2,2,first_name,3,0.7,0.1,6.999999999999999,2.8073549220576037,0.27999999999999997,False,0,False
+level_1,"WHEN LEVENSHTEIN(first_name_l, first_name_r) <= 2 THEN 1",gamma_first_name,level_1,1,1,first_name,3,0.2,0.1,2.0,1.0,0.13,False,0,False
+level_0,ELSE 0,gamma_first_name,level_0,0,0,first_name,3,0.1,0.8,0.125,-3.0,0.59,False,0,False
+level_1,WHEN dob_l = dob_r THEN 1,gamma_dob,level_1,1,1,dob,2,0.9,0.1,9.0,3.169925001442312,0.34,False,0,False
+level_0,ELSE 0,gamma_dob,level_0,0,0,dob,2,0.1,0.9,0.11111111111111112,-3.169925001442312,0.66,False,0,False
+level_1,WHEN city_l = city_r THEN 1,gamma_city,level_1,1,1,city,2,0.9,0.1,9.0,3.169925001442312,0.34,False,0,False
+level_0,ELSE 0,gamma_city,level_0,0,0,city,2,0.1,0.9,0.11111111111111112,-3.169925001442312,0.66,False,0,False
+level_1,WHEN email_l = email_r THEN 1,gamma_email,level_1,1,1,email,2,0.9,0.1,9.0,3.169925001442312,0.34,False,0,False
+level_0,ELSE 0,gamma_email,level_0,0,0,email,2,0.1,0.9,0.11111111111111112,-3.169925001442312,0.66,False,0,False
+level_2,WHEN first_name_l = first_name_r THEN 2,gamma_first_name,level_2,2,2,first_name,3,0.743459884860577,0.1,7.43459884860577,2.894254900348919,0.2665345600587057,False,1,True
+level_1,"WHEN LEVENSHTEIN(first_name_l, first_name_r) <= 2 THEN 1",gamma_first_name,level_1,1,1,first_name,3,0.1422119783401823,0.1,1.4221197834018229,0.5080429865056831,0.11092492851145344,False,1,True
+level_0,ELSE 0,gamma_first_name,level_0,0,0,first_name,3,0.11432813679924039,0.8,0.14291017099905048,-2.8068194973639717,0.6225405114298407,False,1,True
+level_1,WHEN dob_l = dob_r THEN 1,gamma_dob,level_1,1,1,dob,2,0.7476822432659779,0.1,7.4768224326597785,2.902425270830018,0.2676273532786062,False,1,True
+level_0,ELSE 0,gamma_dob,level_0,0,0,dob,2,0.2523177567340221,0.9,0.28035306303780233,-1.8346832626243978,0.7323726467213937,False,1,True
+level_1,WHEN city_l = city_r THEN 1,gamma_city,level_1,1,1,city,2,0.7691720105584972,0.1,7.691720105584971,2.943306265325829,0.2731891435720277,False,1,True
+level_0,ELSE 0,gamma_city,level_0,0,0,city,2,0.23082798944150287,0.9,0.2564755438238921,-1.9631068304044639,0.7268108564279723,False,1,True
+level_1,WHEN email_l = email_r THEN 1,gamma_email,level_1,1,1,email,2,0.7831383404613944,0.1,7.831383404613944,2.969267180400749,0.2768037847652665,False,1,True
+level_0,ELSE 0,gamma_email,level_0,0,0,email,2,0.21686165953860576,0.9,0.2409573994873397,-2.053149989846905,0.7231962152347334,False,1,True
+level_2,WHEN first_name_l = first_name_r THEN 2,gamma_first_name,level_2,2,2,first_name,3,0.7459410675398278,0.1,7.459410675398278,2.899061656048236,0.28240285527393205,False,2,False
+level_1,"WHEN LEVENSHTEIN(first_name_l, first_name_r) <= 2 THEN 1",gamma_first_name,level_1,1,1,first_name,3,0.13468402611428465,0.1,1.3468402611428465,0.42957875345591773,0.10979418357736029,False,2,False
+level_0,ELSE 0,gamma_first_name,level_0,0,0,first_name,3,0.1193749063458875,0.8,0.14921863293235937,-2.7445003986997953,0.6078029611487077,False,2,False
+level_1,WHEN dob_l = dob_r THEN 1,gamma_dob,level_1,1,1,dob,2,0.6970868884144127,0.1,6.970868884144126,2.801338492064882,0.26860725965020216,False,2,False
+level_0,ELSE 0,gamma_dob,level_0,0,0,dob,2,0.30291311158558737,0.9,0.33657012398398595,-1.5710209749428683,0.7313927403497978,False,2,False
+level_1,WHEN city_l = city_r THEN 1,gamma_city,level_1,1,1,city,2,0.740093597465456,0.1,7.400935974654559,2.8877077356879455,0.2807516284185835,False,2,False
+level_0,ELSE 0,gamma_city,level_0,0,0,city,2,0.259906402534544,0.9,0.2887848917050489,-1.7919328278435729,0.7192483715814165,False,2,False
+level_1,WHEN email_l = email_r THEN 1,gamma_email,level_1,1,1,email,2,0.7382906765914359,0.1,7.382906765914359,2.8841889397440603,0.2802425139934754,False,2,False
+level_0,ELSE 0,gamma_email,level_0,0,0,email,2,0.26170932340856395,0.9,0.2907881371206266,-1.7819596800532955,0.7197574860065246,False,2,False
