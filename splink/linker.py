@@ -1,6 +1,9 @@
 import logging
 from copy import copy, deepcopy
 from statistics import median
+import re
+from string import ascii_lowercase
+from itertools import chain
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
@@ -60,9 +63,20 @@ class Linker:
         self._validate_input_dfs()
         self.em_training_sessions = []
 
-        df_dict = vertically_concatente(self.input_dfs, self.execute_sql)
-        df_dict = self._add_term_frequencies(df_dict, False)
-        self.input_dfs = {**self.input_dfs, **df_dict}
+        self.sql_tracker = {}  # track cached tables
+        self.cache_queries = [
+            "__splink__df_concat",
+            "__splink__df_concat_with_tf",
+            "__splink__df_blocked"
+            ]
+
+        sql_pipeline = vertically_concatente(self.input_dfs, self.generate_sql)
+        sql_pipeline = self._add_term_frequencies(
+            df_cols=list(chain([df.columns.to_list()
+                                for df in input_tables.values()])),
+            sql_pipeline=sql_pipeline
+        )
+        self.test = sql_pipeline  # here for testing
 
     def __deepcopy__(self, memo):
         new_linker = copy(self)
@@ -84,6 +98,12 @@ class Linker:
             d[renamed] = self._df_as_obj(renamed, df_value)
         return d
 
+    def _generate_sql_pipeline(self, table_name):
+        """
+        Re-generate a pipeline. Should only be used on named tables.
+        """
+        return {"sql_pipe": f"SELECT * FROM '{table_name}'", "prev_dfs": [table_name]}
+
     def execute_sql(sql, df_dict, output_table_name):
         pass
 
@@ -104,24 +124,30 @@ class Linker:
         df_dict = block_using_rules(self.settings_obj, self.input_dfs, self.execute_sql)
         return df_dict
 
-    def _add_term_frequencies(self, df_dict, return_df_as_value=True):
+    def _add_term_frequencies(self, df_cols, sql_pipeline):
 
+        # edit... actually, this might be ok???
+        # if we just pass if there are no TF cols, then that should be fine...
         if not self.settings_obj._term_frequency_columns:
             sql = "select * from __splink__df_concat"
-            return self.execute_sql(sql, df_dict, "__splink__df_concat_with_tf")
+            return self.generate_sql(
+                sql, sql_pipeline,
+                "__splink__df_concat_with_tf"
+            )
 
         # Want to return tf tables as a dict of tables.
-        tf_dict = term_frequencies_dict(
-            self.settings_obj, df_dict, self.input_tf_tables, self.execute_sql
+        sql_pipeline = term_frequencies_dict(
+            self.settings_obj, sql_pipeline,
+            self.input_tf_tables, self.generate_sql
         )
 
-        df_dict = {**df_dict, **tf_dict}
-
-        df_dict = join_tf_to_input_df(self.settings_obj, df_dict, self.execute_sql)
-        if return_df_as_value:
-            return df_dict["__splink__df_concat_with_tf"].df_value
-        else:
-            return df_dict
+        # df_dict = {**df_dict, **tf_dict}
+        # df_cols = self.con.query("SELECT * FROM __splink__df_concat").columns  # edit at some point as this is silly
+        out = join_tf_to_input_df(
+            self.settings_obj, df_cols,
+            sql_pipeline, self.generate_sql
+        )
+        return out
 
     def comparison_vectors(self, return_df_as_value=True):
         df_dict = self._blocked_comparisons(return_df_as_value=False)
@@ -255,3 +281,21 @@ class Linker:
 
     def execute_sql(self):
         pass
+
+    def combine_sql_queries(self, sql_pipeline):
+        """
+        Converts a given list of SQL queries into a singular query,
+        bound together by WITH statements.
+        Allows the backend SQL engine to perform optimisation steps where appropriate.
+        """
+
+        sql = sql_pipeline["sql_pipe"].split(":")
+        table = sql_pipeline["prev_dfs"]
+
+        if len(table)==0:
+            return sql[0]
+
+        sql_list = [f"{t} AS ({s})" for s, t in zip(sql, table)]
+        sql_string = f'WITH {", ".join(sql_list)} SELECT * FROM {table[-1]}'
+
+        return sql_string
