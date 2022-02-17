@@ -12,7 +12,6 @@ def missingness_chart(df: DataFrame):
         df (DataFrame): Input Spark dataframe
     Returns:
         Bar chart of missingness
-
     """
     # Load JSON definition of missingness chart
     chart_path = "missingness_chart_def.json"
