@@ -72,11 +72,8 @@ class Linker:
 
         sql_pipeline = vertically_concatente(self.input_dfs, self.generate_sql)
         sql_pipeline = self._add_term_frequencies(
-            df_cols=list(chain([df.columns.to_list()
-                                for df in input_tables.values()])),
             sql_pipeline=sql_pipeline
         )
-        self.test = sql_pipeline  # here for testing
 
     def __deepcopy__(self, memo):
         new_linker = copy(self)
@@ -102,7 +99,7 @@ class Linker:
         """
         Re-generate a pipeline. Should only be used on named tables.
         """
-        return {"sql_pipe": f"SELECT * FROM '{table_name}'", "prev_dfs": [table_name]}
+        return {"sql_pipe": f"SELECT * FROM '{self.sql_tracker[table_name][0]}'", "prev_dfs": [table_name]}
 
     def execute_sql(sql, df_dict, output_table_name):
         pass
@@ -111,24 +108,21 @@ class Linker:
         for df in self.input_dfs.values():
             df.validate()
 
-    def deterministic_link(self, return_df_as_value=True):
+    def deterministic_link(self):
 
-        df_dict = block_using_rules(self.settings_obj, self.input_dfs, self.execute_sql)
-        if return_df_as_value:
-            return df_dict["__splink__df_blocked"].df_value
-        else:
-            return df_dict
+        sql_pipeline = block_using_rules(self.settings_obj, sql_pipeline, self.execute_sql)
+        return sql_pipeline  # this needs to be execute
 
-    def _blocked_comparisons(self, return_df_as_value=True):
+    def _blocked_comparisons(self, sql_pipeline):
 
-        df_dict = block_using_rules(self.settings_obj, self.input_dfs, self.execute_sql)
-        return df_dict
+        sql_pipeline = block_using_rules(self.settings_obj, sql_pipeline, self.generate_sql)
+        return sql_pipeline
 
-    def _add_term_frequencies(self, df_cols, sql_pipeline):
+    def _add_term_frequencies(self, sql_pipeline):
 
         # edit... actually, this might be ok???
         # if we just pass if there are no TF cols, then that should be fine...
-        if not self.settings_obj._term_frequency_columns:
+        if not self.settings_obj._term_frequency_columns:  # test
             sql = "select * from __splink__df_concat"
             return self.generate_sql(
                 sql, sql_pipeline,
@@ -142,23 +136,20 @@ class Linker:
         )
 
         # df_dict = {**df_dict, **tf_dict}
-        # df_cols = self.con.query("SELECT * FROM __splink__df_concat").columns  # edit at some point as this is silly
+        df_cols = self.con.query(f"SELECT * FROM '{self.sql_tracker['__splink__df_concat'][0]}'").columns  # edit at some point as this is silly
         out = join_tf_to_input_df(
             self.settings_obj, df_cols,
             sql_pipeline, self.generate_sql
         )
         return out
 
-    def comparison_vectors(self, return_df_as_value=True):
-        df_dict = self._blocked_comparisons(return_df_as_value=False)
-        df_dict = compute_comparison_vector_values(
-            self.settings_obj, df_dict, self.execute_sql
+    def comparison_vectors(self, sql_pipeline):
+        sql_pipeline = self._blocked_comparisons(sql_pipeline)
+        sql_pipeline = compute_comparison_vector_values(
+            self.settings_obj, sql_pipeline, self.generate_sql
         )
 
-        if return_df_as_value:
-            return df_dict["__splink__df_comparison_vectors"].df_value
-        else:
-            return df_dict
+        return sql_pipeline
 
     def train_u_using_random_sampling(self, target_rows):
 
@@ -271,13 +262,11 @@ class Linker:
         )
 
     def predict(self, return_df_as_value=True):
-        df_dict = self.comparison_vectors(return_df_as_value=False)
-        df_dict = predict(self.settings_obj, df_dict, self.execute_sql)
+        sql_pipeline = self._generate_sql_pipeline("__splink__df_concat_with_tf")
+        sql_pipeline = self.comparison_vectors(sql_pipeline)
+        sql_pipeline = predict(self.settings_obj, sql_pipeline, self.generate_sql)
 
-        if return_df_as_value:
-            return df_dict["__splink__df_predict"].df_value
-        else:
-            return df_dict
+        return self.new_execute_sql(sql_pipeline)
 
     def execute_sql(self):
         pass
