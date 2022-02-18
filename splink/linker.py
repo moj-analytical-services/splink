@@ -95,7 +95,7 @@ class Linker:
             d[renamed] = self._df_as_obj(renamed, df_value)
         return d
 
-    def _generate_sql_pipeline(self, table_name):
+    def _initialise_sql_pipeline(self, table_name):
         """
         Re-generate a pipeline. Should only be used on named tables.
         """
@@ -110,8 +110,9 @@ class Linker:
 
     def deterministic_link(self):
 
-        sql_pipeline = block_using_rules(self.settings_obj, sql_pipeline, self.execute_sql)
-        return sql_pipeline  # this needs to be execute
+        sql_pipeline = self._initialise_sql_pipeline("__splink__df_concat_with_tf")
+        sql_pipeline = block_using_rules(self.settings_obj, sql_pipeline, self.generate_sql)
+        return self.new_execute_sql(sql_pipeline)  # this needs to be execute
 
     def _blocked_comparisons(self, sql_pipeline):
 
@@ -153,7 +154,8 @@ class Linker:
 
     def train_u_using_random_sampling(self, target_rows):
 
-        estimate_u_values(self, self.input_dfs, target_rows)
+        sql_pipeline = self._initialise_sql_pipeline("__splink__df_concat")
+        estimate_u_values(self, sql_pipeline, target_rows, self.new_execute_sql)
         self.populate_m_u_from_trained_values()
 
     def train_m_from_label_column(self, label_colname):
@@ -181,7 +183,8 @@ class Linker:
             comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,
         )
 
-        em_training_session.train()
+        sql_pipeline = self._initialise_sql_pipeline("__splink__df_concat_with_tf")
+        em_training_session.train(sql_pipeline)
 
         self.populate_m_u_from_trained_values()
 
@@ -262,7 +265,7 @@ class Linker:
         )
 
     def predict(self, return_df_as_value=True):
-        sql_pipeline = self._generate_sql_pipeline("__splink__df_concat_with_tf")
+        sql_pipeline = self._initialise_sql_pipeline("__splink__df_concat_with_tf")
         sql_pipeline = self.comparison_vectors(sql_pipeline)
         sql_pipeline = predict(self.settings_obj, sql_pipeline, self.generate_sql)
 
