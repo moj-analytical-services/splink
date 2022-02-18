@@ -84,15 +84,15 @@ class DuckDBInMemoryLinker(Linker):
             else:
                 self.sql_tracker.setdefault(output_table_name,[]).append(sql_hash)  # log hash
                 sql_to_run = self.combine_sql_queries(sql_pipeline)
-                out = self.con.query(sql_to_run).to_df()  # improve at some point...
+                out = self.con.query(sql_to_run).to_df()  # execute and copy table instead? - might speed things up
                 self.con.register(sql_hash, out)
-                self._duck_write_to_parquet(sql_hash, f"{self.tmp_filepath}/{sql_hash}")  # export to parquet
+                # self._duck_write_to_parquet(sql_hash, f"{self.tmp_filepath}/{sql_hash}")  # export to parquet
                 sql_pipeline = {"sql_pipe": f"SELECT * FROM '{sql_hash}'", "prev_dfs": [output_table_name]}  # update our pipeline dict
 
 
-        print("----")
-        print(output_table_name)
-        print(sql)
+        # print("----")
+        # print(output_table_name)
+        # print(sql)
 
         return(sql_pipeline)
 
