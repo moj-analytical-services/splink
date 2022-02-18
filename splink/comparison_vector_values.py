@@ -6,7 +6,7 @@ from .settings import Settings
 logger = logging.getLogger(__name__)
 
 
-def compute_comparison_vector_values(settings_obj: Settings, df_dict, execute_sql):
+def compute_comparison_vector_values(settings_obj: Settings, sql_pipeline, generate_sql):
     """Compute the comparison vectors and add them to the dataframe.  See
     https://imai.fas.harvard.edu/research/files/linkage.pdf for more details of what is meant by comparison vectors
 
@@ -25,4 +25,4 @@ def compute_comparison_vector_values(settings_obj: Settings, df_dict, execute_sq
 
     logger.debug("\n" + sql)
 
-    return execute_sql(sql, df_dict, "__splink__df_comparison_vectors")
+    return generate_sql(sql, sql_pipeline, "__splink__df_comparison_vectors")
