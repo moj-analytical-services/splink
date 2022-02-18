@@ -76,13 +76,13 @@ class EMTrainingSession:
         self.lambda_history = []
         self.add_iteration()
 
-    def train(self):
+    def train(self, sql_pipeline):
 
-        df_dict = self.training_linker.comparison_vectors(return_df_as_value=False)
+        df_dict = self.training_linker.comparison_vectors(sql_pipeline)
 
         # Compute the new parameters, populating the paramters in the copied settings object
         # At this stage, we do not overwrite any of the parameters in the original (main) setting object
-        expectation_maximisation(self, df_dict, self.training_linker.execute_sql)
+        expectation_maximisation(self, sql_pipeline, self.training_linker.generate_sql)
 
         training_desc = f"EM, blocked on: {self.blocking_rule_for_training}"
 
