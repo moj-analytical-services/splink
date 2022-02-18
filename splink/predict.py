@@ -7,7 +7,7 @@ from .settings import Settings
 logger = logging.getLogger(__name__)
 
 
-def predict(settings_obj: Settings, df_dict, execute_sql):
+def predict(settings_obj: Settings, sql_pipeline, generate_sql):
 
     # table is called '__splink__df_comparison_vectors'
 
@@ -19,7 +19,7 @@ def predict(settings_obj: Settings, df_dict, execute_sql):
     from __splink__df_comparison_vectors
     """
 
-    df_dict = execute_sql(sql, df_dict, "__splink__df_match_weight_parts")
+    sql_pipeline = generate_sql(sql, sql_pipeline, "__splink__df_match_weight_parts")
 
     select_cols = settings_obj._columns_to_select_for_predict
     select_cols_expr = ",".join(select_cols)
@@ -44,8 +44,8 @@ def predict(settings_obj: Settings, df_dict, execute_sql):
     from __splink__df_match_weight_parts
     """
 
-    df_dict = execute_sql(sql, df_dict, "__splink__df_predict")
+    sql_pipeline = generate_sql(sql, sql_pipeline, "__splink__df_predict")
 
     logger.debug("\n" + sql)
 
-    return df_dict
+    return sql_pipeline
