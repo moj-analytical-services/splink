@@ -17,8 +17,10 @@ def _num_target_rows_to_rows_to_sample(target_rows):
     return sample_rows
 
 
-def estimate_u_values(linker, df_dict, target_rows):
-
+def estimate_u_values(linker, sql_pipeline, target_rows, execute_sql):
+    import time
+    t = time.time()
+    start = time.time()
     original_settings_object = linker.settings_obj
     settings_obj = deepcopy(linker.settings_obj)
     settings_obj._retain_matching_columns = False
@@ -26,14 +28,19 @@ def estimate_u_values(linker, df_dict, target_rows):
     for cc in settings_obj.comparisons:
         for cl in cc.comparison_levels:
             cl._level_dict["tf_adjustment_column"] = None
+    print("--- Settings stuff... %s seconds ---" % (time.time() - t))
+    t = time.time()
 
-    sql = """
+    # might not even need to the linker.sql_tracker stuff...
+    sql = f"""
     select count(*) as count
-    from __splink__df_concat
+    from '{linker.sql_tracker["__splink__df_concat"][0]}'
     """
-    result = linker.execute_sql(sql, df_dict, "__splink__df_concat_count")
-    result = result["__splink__df_concat_count"].as_record_dict()
-    count_rows = result[0]["count"]
+
+    result = linker.con.execute(sql).fetch_df()
+    count_rows = result["count"][0]
+    print("--- Count Rows... %s seconds ---" % (time.time() - t))
+    t = time.time()
 
     if settings_obj._link_type in ["dedupe_only", "link_and_dedupe"]:
         sample_size = _num_target_rows_to_rows_to_sample(target_rows)
@@ -49,31 +56,42 @@ def estimate_u_values(linker, df_dict, target_rows):
     if sample_size > count_rows:
         sample_size = count_rows
 
+    # might not even need to tweak this...
     sql = f"""
     select *
-    from __splink__df_concat
+    from "__splink__df_concat"
     {linker.random_sample_sql(proportion, sample_size)}
     """
 
-    df_dict = linker.execute_sql(
-        sql, df_dict, "__splink__df_concat_with_tf", transpile=False
+    # do we need assignment here...?
+    # sql_pipeline = linker.generate_sql(
+    #     sql, sql_pipeline, "__splink__df_concat_with_tf", transpile=False
+    # )
+    linker.generate_sql(
+        sql, sql_pipeline, "__splink__df_concat_with_tf", transpile=False
     )
     settings_obj._blocking_rules_to_generate_predictions = []
+    print("--- Generate __splink__df_concat_with_tf... %s seconds ---" % (time.time() - t))
+    t = time.time()
 
-    df_dict = block_using_rules(settings_obj, df_dict, linker.execute_sql)
+    sql_pipeline = block_using_rules(settings_obj, sql_pipeline, linker.generate_sql)
 
-    df_dict = compute_comparison_vector_values(
-        settings_obj, df_dict, linker.execute_sql
+    sql_pipeline = compute_comparison_vector_values(
+        settings_obj, sql_pipeline, linker.generate_sql
     )
+    print("--- compute_comparison_vector_values... %s seconds ---" % (time.time() - t))
+    t = time.time()
 
     sql = """
     select *, 0.0D as match_probability
     from __splink__df_comparison_vectors
     """
-    df_dict = linker.execute_sql(sql, df_dict, "__splink__df_predict")
+    sql_pipeline = linker.generate_sql(sql, sql_pipeline, "__splink__df_predict")
 
-    df_dict = _compute_new_parameters(settings_obj, df_dict, linker.execute_sql)
-    param_records = df_dict["__splink__df_new_params"].as_record_dict()
+    sql_pipeline = _compute_new_parameters(settings_obj, sql_pipeline, linker.generate_sql)
+    param_records = execute_sql(sql_pipeline).to_dict(orient="records")
+    print("--- execute_sql... %s seconds ---" % (time.time() - t))
+    t = time.time()
 
     m_u_records = [
         r for r in param_records if r["comparison_name"] != "_proportion_of_matches"
@@ -87,3 +105,5 @@ def estimate_u_values(linker, df_dict, target_rows):
         cl.add_trained_u_probability(
             record["u_probability"], "estimate u by random sampling"
         )
+    print("--- For loop... %s seconds ---" % (time.time() - t))
+    print("--- Total... %s seconds ---" % (time.time() - start))
