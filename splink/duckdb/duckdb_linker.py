@@ -74,6 +74,7 @@ class DuckDBInMemoryLinker(Linker):
 
         sql_pipeline["sql_pipe"] = ":".join(filter(lambda x: len(x) > 0,
                                             [sql_pipeline["sql_pipe"], sql]))
+        sql_pipeline["prev_dfs"].append(output_table_name)
 
         # clean this up when we get the time...
         if output_table_name in self.cache_queries:
@@ -87,9 +88,6 @@ class DuckDBInMemoryLinker(Linker):
                 self.con.register(sql_hash, out)
                 self._duck_write_to_parquet(sql_hash, f"{self.tmp_filepath}/{sql_hash}")  # export to parquet
                 sql_pipeline = {"sql_pipe": f"SELECT * FROM '{sql_hash}'", "prev_dfs": [output_table_name]}  # update our pipeline dict
-        else:
-            # add to our output table list if we're not loading from the cache
-            sql_pipeline["prev_dfs"].append(output_table_name)
 
 
         print("----")
