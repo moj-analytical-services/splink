@@ -29,7 +29,7 @@ def estimate_u_values(linker, df_dict, target_rows):
 
     sql = """
     select count(*) as count
-    from __splink__df_concat
+    from __splink__df_concat_with_tf
     """
     result = linker.execute_sql(sql, df_dict, "__splink__df_concat_count")
     result = result["__splink__df_concat_count"].as_record_dict()
@@ -51,13 +51,10 @@ def estimate_u_values(linker, df_dict, target_rows):
 
     sql = f"""
     select *
-    from __splink__df_concat
+    from __splink__df_concat_with_tf
     {linker.random_sample_sql(proportion, sample_size)}
     """
 
-    df_dict = linker.execute_sql(
-        sql, df_dict, "__splink__df_concat_with_tf", transpile=False
-    )
     settings_obj._blocking_rules_to_generate_predictions = []
 
     df_dict = block_using_rules(settings_obj, df_dict, linker.execute_sql)
