@@ -77,23 +77,23 @@ class DuckDBInMemoryLinker(Linker):
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
 
-        sql_pipeline["sql_pipe"] = ":".join(filter(lambda x: len(x) > 0,
-                                            [sql_pipeline["sql_pipe"], sql]))
+        sql_pipeline["sql_pipe"].append(sql)
         sql_pipeline["prev_dfs"].append(output_table_name)
 
         # clean this up when we get the time...
+        # should probably be a method - run_caching or something...
         if output_table_name in self.cache_queries:
-            sql_hash = hashlib.sha256(sql_pipeline["sql_pipe"].encode()).hexdigest()
+            sql_hash = hashlib.sha256("".join(sql_pipeline["sql_pipe"]).encode()).hexdigest()
             if sql_hash in self.sql_tracker.get(output_table_name, "false"):
                 print("Loading from cache!")
-                return {"sql_pipe": f"SELECT * FROM '{sql_hash}'", "prev_dfs": [output_table_name]}  # update our pipeline dict
+                return {"sql_pipe": [f"SELECT * FROM '{sql_hash}'"], "prev_dfs": [output_table_name]}  # update our pipeline dict
             else:
                 self.sql_tracker.setdefault(output_table_name,[]).append(sql_hash)  # log hash
                 sql_to_run = self.combine_sql_queries(sql_pipeline)
                 out = self.con.query(sql_to_run).to_df()  # execute and copy table instead? - might speed things up
                 self.con.register(sql_hash, out)
                 # self._duck_write_to_parquet(sql_hash, f"{self.tmp_filepath}/{sql_hash}")  # export to parquet
-                sql_pipeline = {"sql_pipe": f"SELECT * FROM '{sql_hash}'", "prev_dfs": [output_table_name]}  # update our pipeline dict
+                sql_pipeline = {"sql_pipe": [f"SELECT * FROM '{sql_hash}'"], "prev_dfs": [output_table_name]}  # update our pipeline dict
 
 
         # print("----")
@@ -103,9 +103,7 @@ class DuckDBInMemoryLinker(Linker):
         return(sql_pipeline)
 
     def execute_sql(self, sql_pipeline):
-        """
-        Temp method name while I move things around!
-        """
+        "Execute our sql_pipeline"
         sql_to_run = self.combine_sql_queries(sql_pipeline)
         return self.con.query(sql_to_run).to_df()
 

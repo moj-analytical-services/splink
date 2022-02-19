@@ -99,7 +99,7 @@ class Linker:
         """
         Re-generate a pipeline. Should only be used on named tables.
         """
-        return {"sql_pipe": f"SELECT * FROM '{self.sql_tracker[table_name][0]}'", "prev_dfs": [table_name]}
+        return {"sql_pipe": [f"SELECT * FROM '{self.sql_tracker[table_name][0]}'"], "prev_dfs": [table_name]}
 
     def execute_sql(sql, df_dict, output_table_name):
         pass
@@ -290,7 +290,7 @@ class Linker:
         Allows the backend SQL engine to perform optimisation steps where appropriate.
         """
 
-        sql = sql_pipeline["sql_pipe"].split(":")
+        sql = sql_pipeline["sql_pipe"]
         table = sql_pipeline["prev_dfs"]
 
         if len(table)==0:

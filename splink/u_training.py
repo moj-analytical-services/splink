@@ -37,7 +37,7 @@ def estimate_u_values(linker, sql_pipeline, target_rows):
     from '{linker.sql_tracker["__splink__df_concat"][0]}'
     """
 
-    result = linker.execute_sql({"sql_pipe": sql, "prev_dfs": ["__splink__df_concat"]})
+    result = linker.execute_sql({"sql_pipe": [sql], "prev_dfs": ["__splink__df_concat"]})
     count_rows = result["count"][0]
     print("--- Count Rows... %s seconds ---" % (time.time() - t))
     t = time.time()
