@@ -84,7 +84,8 @@ class DuckDBInMemoryLinker(Linker):
         # clean this up when we get the time...
         if output_table_name in self.cache_queries:
             sql_hash = hashlib.sha256(sql_pipeline["sql_pipe"].encode()).hexdigest()
-            if sql_hash in self.sql_tracker:
+            if sql_hash in self.sql_tracker.get(output_table_name, "false"):
+                print("Loading from cache!")
                 return {"sql_pipe": f"SELECT * FROM '{sql_hash}'", "prev_dfs": [output_table_name]}  # update our pipeline dict
             else:
                 self.sql_tracker.setdefault(output_table_name,[]).append(sql_hash)  # log hash
