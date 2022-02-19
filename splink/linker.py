@@ -112,7 +112,7 @@ class Linker:
 
         sql_pipeline = self._initialise_sql_pipeline("__splink__df_concat_with_tf")
         sql_pipeline = block_using_rules(self.settings_obj, sql_pipeline, self.generate_sql)
-        return self.new_execute_sql(sql_pipeline)  # this needs to be execute
+        return self.execute_sql(sql_pipeline)  # this needs to be execute
 
     def _blocked_comparisons(self, sql_pipeline):
 
@@ -155,12 +155,13 @@ class Linker:
     def train_u_using_random_sampling(self, target_rows):
 
         sql_pipeline = self._initialise_sql_pipeline("__splink__df_concat")
-        estimate_u_values(self, sql_pipeline, target_rows, self.new_execute_sql)
+        estimate_u_values(self, sql_pipeline, target_rows)
         self.populate_m_u_from_trained_values()
 
     def train_m_from_label_column(self, label_colname):
-
-        estimate_m_values_from_label_column(self, self.input_dfs, label_colname)
+        # migrate pls...
+        sql_pipeline = self._initialise_sql_pipeline("__splink__df_concat")
+        estimate_m_values_from_label_column(self, sql_pipeline, label_colname)
         self.populate_m_u_from_trained_values()
 
     def train_m_using_expectation_maximisation(
@@ -183,12 +184,20 @@ class Linker:
             comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,
         )
 
+        import time
+        t = time.time()
         sql_pipeline = self._initialise_sql_pipeline("__splink__df_concat_with_tf")
         em_training_session.train(sql_pipeline)
+        print("--- Train... %s seconds ---" % (time.time() - t))
+        t = time.time()
 
         self.populate_m_u_from_trained_values()
+        print("--- Populate_m_u stuff... %s seconds ---" % (time.time() - t))
+        t = time.time()
 
         self.populate_proportion_of_matches_from_trained_values()
+        print("--- populate_proportion... %s seconds ---" % (time.time() - t))
+        t = time.time()
 
         return em_training_session
 
@@ -269,7 +278,7 @@ class Linker:
         sql_pipeline = self.comparison_vectors(sql_pipeline)
         sql_pipeline = predict(self.settings_obj, sql_pipeline, self.generate_sql)
 
-        return self.new_execute_sql(sql_pipeline)
+        return self.execute_sql(sql_pipeline)
 
     def execute_sql(self):
         pass
