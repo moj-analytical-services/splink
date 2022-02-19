@@ -1,7 +1,8 @@
 name: Python Example with pytest
 on:
   pull_request:
-    branch: splink3
+    branches:
+      - splink3
 
 permissions:
   contents: write
