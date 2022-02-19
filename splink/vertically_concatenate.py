@@ -25,4 +25,4 @@ def vertically_concatente(df_dict, generate_sql):
     sql = format_sql(sql)
     logger.debug("\n" + sql)
 
-    return generate_sql(sql, {"sql_pipe": "", "prev_dfs": []}, "__splink__df_concat")
+    return generate_sql(sql, {"sql_pipe": [], "prev_dfs": []}, "__splink__df_concat")
