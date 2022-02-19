@@ -1,28 +1,14 @@
-# %load_ext autoreload
-# %autoreload 2
-from copy import deepcopy
-from splink3 import comparison_level
-from splink.comparison import Comparison
-from splink.comparison_level import ComparisonLevel
-from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
+import pytest
+
 from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
+from splink.spark.spark_linker import SparkLinker
 from splink.sqlite.sqlite_linker import SQLiteLinker
-import math
 import pandas as pd
-from IPython.display import display
 
 import logging
 import sys
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
-
-from splink.comparison_library import exact_match, levenshtein
-
-from splink.comparison_levels_library import (
-    exact_match_level,
-    else_level,
-    levenshtein_level,
-)
 
 
 first_name_cc = {
@@ -172,7 +158,7 @@ settings_dict = {
 }
 
 
-def run_splink3():
+def duckdb_performance():
     print("hi there")
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -180,10 +166,70 @@ def run_splink3():
 
     linker.train_u_using_random_sampling(target_rows=1e6)
 
-    linker.train_m_using_expectation_maximisation("l.surname = r.surname")
+    blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
+    linker.train_m_using_expectation_maximisation(blocking_rule)
+
+    blocking_rule = "l.dob = r.dob"
+    linker.train_m_using_expectation_maximisation(blocking_rule)
 
     linker.predict()
 
 
-def test_my_stuff(benchmark):
-    result = benchmark(run_splink3)
+def test_duckdb(benchmark):
+    benchmark(duckdb_performance)
+
+
+def spark_performance(df):
+
+    linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df})
+
+    blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
+    linker.train_m_using_expectation_maximisation(blocking_rule)
+
+    blocking_rule = "l.dob = r.dob"
+    linker.train_m_using_expectation_maximisation(blocking_rule)
+
+    df = linker.predict().toPandas()
+
+
+@pytest.mark.benchmark(min_rounds=1)
+def test_spark(benchmark):
+    from pyspark.context import SparkContext, SparkConf
+    from pyspark.sql import SparkSession
+
+    conf = SparkConf()
+    conf.set("spark.driver.memory", "4g")
+    conf.set("spark.sql.shuffle.partitions", "8")
+    sc = SparkContext.getOrCreate(conf=conf)
+    spark = SparkSession(sc)
+
+    df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=True)
+    benchmark(spark_performance, df=df)
+
+
+def sqlite_performance():
+    import sqlite3
+
+    con = sqlite3.connect(":memory:")
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df.to_sql("input_df_tablename", con)
+
+    linker = SQLiteLinker(
+        settings_dict,
+        input_tables={"mydf": "input_df_tablename"},
+        sqlite_connection=con,
+    )
+
+    linker.train_u_using_random_sampling(target_rows=1e6)
+
+    blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
+    linker.train_m_using_expectation_maximisation(blocking_rule)
+
+    blocking_rule = "l.dob = r.dob"
+    linker.train_m_using_expectation_maximisation(blocking_rule)
+    linker.predict()
+    pd.read_sql("SELECT * FROM __splink__df_predict", con)
+
+
+def test_sqlite(benchmark):
+    benchmark(sqlite_performance)

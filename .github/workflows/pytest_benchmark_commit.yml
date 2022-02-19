@@ -1,0 +1,38 @@
+name: Python Example with pytest
+on:
+  push:
+    branches:
+      - splink3
+
+permissions:
+  contents: write
+  deployments: write
+  pull-requests: write
+
+jobs:
+  benchmark:
+    name: Run pytest-benchmark benchmark example
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Run benchmark and commit results
+        run: |
+          pip install -r benchmarking/requirements.txt
+          pytest benchmarking/test_performance.py --benchmark-min-rounds=5 --benchmark-json benchmarking/output.json
+          python benchmarking/combine_benchmarks_timeseries.py
+          git config --global user.email "actions@users.noreply.github.com"
+          git config --global user.name "robin"
+          git add -A -f benchmarking/time_series.json
+          git commit -m "Updated benchmarks timeseries" || exit 0
+          git push
+
+      - uses: harupy/comment-on-pr@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          filename: benchmark_comment_markdown.md

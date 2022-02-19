@@ -2,7 +2,7 @@ import sqlglot
 
 from splink.linker import Linker, SplinkDataFrame
 from math import pow, log2
-from rapidfuzz.levenshtein import distance
+from rapidfuzz.distance.Levenshtein import distance
 
 
 def dict_factory(cursor, row):
