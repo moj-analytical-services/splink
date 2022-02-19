@@ -55,6 +55,11 @@ class DuckDBInMemoryLinker(Linker):
     def _df_as_obj(self, df_name, df_value):
         return DuckDBInMemoryLinkerDataFrame(df_name, df_value, self)
 
+    def _construct_df_dict(self, df_name, df_value):
+        """Helper function to more easily construct our df_dict objects."""
+        output_obj = self._df_as_obj(df_name, df_value)
+        return {df_name: output_obj}
+
     def register_input_tables(self, input_tables):
         [self.con.register(k, v) for k, v in input_tables.items()]
 
@@ -96,12 +101,25 @@ class DuckDBInMemoryLinker(Linker):
 
         return(sql_pipeline)
 
-    def new_execute_sql(self, sql_pipeline):
+    def execute_sql(self, sql_pipeline):
         """
         Temp method name while I move things around!
         """
         sql_to_run = self.combine_sql_queries(sql_pipeline)
-        return self.con.execute(sql_to_run).fetch_df()
+        return self.con.query(sql_to_run).to_df()
+
+    def materialise_df_obj(self, sql, df_dict: dict, output_table_name=None, transpile=True):
+        if transpile:
+            sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
+
+        for df_obj in df_dict.values():
+            table_name = df_obj.df_name
+            df = df_obj.df_value
+            self.con.register(table_name, df)
+        output = self.con.query(sql).to_df()
+
+        output_obj = self._df_as_obj(output_table_name, output)
+        return {output_table_name: output_obj}
 
     def random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:

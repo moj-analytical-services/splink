@@ -17,7 +17,7 @@ def _num_target_rows_to_rows_to_sample(target_rows):
     return sample_rows
 
 
-def estimate_u_values(linker, sql_pipeline, target_rows, execute_sql):
+def estimate_u_values(linker, sql_pipeline, target_rows):
     import time
     t = time.time()
     start = time.time()
@@ -37,7 +37,7 @@ def estimate_u_values(linker, sql_pipeline, target_rows, execute_sql):
     from '{linker.sql_tracker["__splink__df_concat"][0]}'
     """
 
-    result = linker.con.execute(sql).fetch_df()
+    result = linker.execute_sql({"sql_pipe": sql, "prev_dfs": ["__splink__df_concat"]})
     count_rows = result["count"][0]
     print("--- Count Rows... %s seconds ---" % (time.time() - t))
     t = time.time()
@@ -63,16 +63,12 @@ def estimate_u_values(linker, sql_pipeline, target_rows, execute_sql):
     {linker.random_sample_sql(proportion, sample_size)}
     """
 
-    # do we need assignment here...?
-    # sql_pipeline = linker.generate_sql(
-    #     sql, sql_pipeline, "__splink__df_concat_with_tf", transpile=False
-    # )
     linker.generate_sql(
         sql, sql_pipeline, "__splink__df_concat_with_tf", transpile=False
     )
 
     settings_obj._blocking_rules_to_generate_predictions = []
-    print("--- Generate __splink__df_concat_with_tf... %s seconds ---" % (time.time() - t))
+    print("--- Generate __splink__df_concat_with_tf_2... %s seconds ---" % (time.time() - t))
     t = time.time()
 
     sql_pipeline = block_using_rules(settings_obj, sql_pipeline, linker.generate_sql)
@@ -90,7 +86,7 @@ def estimate_u_values(linker, sql_pipeline, target_rows, execute_sql):
     sql_pipeline = linker.generate_sql(sql, sql_pipeline, "__splink__df_predict")
 
     sql_pipeline = _compute_new_parameters(settings_obj, sql_pipeline, linker.generate_sql)
-    param_records = execute_sql(sql_pipeline).to_dict(orient="records")
+    param_records = linker.execute_sql(sql_pipeline).to_dict(orient="records")
     print("--- execute_sql... %s seconds ---" % (time.time() - t))
     t = time.time()
 
