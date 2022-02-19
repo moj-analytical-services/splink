@@ -22,7 +22,7 @@ jobs:
           python-version: 3.9
       - name: Run benchmark and commit results
         run: |
-          pip install -r requirements.txt
+          pip install -r benchmarking/requirements.txt
           pytest benchmarking/test_performance.py --benchmark-min-rounds=2 --benchmark-json benchmarking/output.json -k 'test_sqlite or test_duckdb'
           python benchmarking/combine_benchmarks_timeseries.py
 
