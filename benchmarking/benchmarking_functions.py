@@ -103,11 +103,19 @@ def get_markdown_tables(timeseries_df, cpu):
         if len(table) == 0:
             return ""
 
+        prop_change = ""
+        if len(table) == 2:
+            previous_min = table["stats_min"].iloc[0]
+            this_min = table["stats_min"].iloc[0]
+            prop_change = (this_min - previous_min) / previous_min
+            prop_change = prop_change - 1
+            prop_change = f"Percentage change: {prop_change:.1%}\n"
+
         name = table["name_of_test"].iloc[0]
         table = table.drop("name_of_test", axis=1)
         table = table.drop("datetime", axis=1)
         md = table.to_markdown()
-        return f"### {name}\n\n{md}\n\n"
+        return f"### Test: {name}\n\n{prop_change}{md}\n\n"
 
     mds = timeseries_df.groupby("name_of_test").apply(add_to_markdown)
     return " ".join(mds)

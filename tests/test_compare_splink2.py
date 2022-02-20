@@ -2,7 +2,7 @@ import pytest
 from splink.comparison import Comparison
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
-from splink.spark.spark_linker import SparkLinker
+
 from splink.sqlite.sqlite_linker import SQLiteLinker
 
 import pandas as pd
@@ -177,6 +177,8 @@ def test_splink_2_predict_spark():
 
     from pyspark.context import SparkContext, SparkConf
     from pyspark.sql import SparkSession
+
+    from splink.spark.spark_linker import SparkLinker
 
     conf = SparkConf()
     conf.set("spark.driver.memory", "12g")
@@ -362,7 +364,7 @@ def test_lambda():
     )
     actual_prop_history = pd.DataFrame(training_session.lambda_history_records)
 
-    linker.settings_obj.match_weights_chart()
+    # linker.settings_obj.match_weights_chart()
     actual_prop_history
 
     #########
@@ -396,7 +398,7 @@ def test_lambda():
         "l.first_name = r.first_name and l.surname = r.surname"
     )
 
-    linker.settings_obj.match_weights_chart()
+    # linker.settings_obj.match_weights_chart()
 
     # from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 
