@@ -88,7 +88,7 @@ def get_latest(df, cpu):
 def get_markdown_tables(timeseries_df, cpu):
     def add_to_markdown(df):
 
-        df1 = get_latest_on_branch(df, "main", cpu)
+        df1 = get_latest_on_branch(df, "splink3", cpu)
         df2 = get_latest(df, cpu)
 
         table = pd.concat([df1, df2])
@@ -109,7 +109,7 @@ def get_markdown_tables(timeseries_df, cpu):
             this_min = table["stats_min"].iloc[0]
             prop_change = (this_min - previous_min) / previous_min
             prop_change = prop_change - 1
-            prop_change = f"Percentage change: {prop_change:.1%}\n"
+            prop_change = f"Percentage change: {prop_change:.1%}\n\n"
 
         name = table["name_of_test"].iloc[0]
         table = table.drop("name_of_test", axis=1)

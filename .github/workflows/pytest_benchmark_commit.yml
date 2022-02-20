@@ -71,10 +71,5 @@ jobs:
           git commit -m "Updated benchmarks timeseries" || exit 0
           git push
 
-      - uses: harupy/comment-on-pr@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          filename: benchmark_comment_markdown.md
 
 
