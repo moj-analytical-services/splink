@@ -19,6 +19,14 @@ jobs:
         with:
           python-version: 3.9
       #----------------------------------------------
+      #  -- save a few section by caching poetry --
+      #----------------------------------------------
+      - name: Load cached Poetry installation
+        uses: actions/cache@v2
+        with:
+          path: ~/.local  # the path depends on the OS
+          key: poetry-0  # increment to reset cache
+      #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
       - name: Install Poetry
