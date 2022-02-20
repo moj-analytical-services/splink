@@ -11,12 +11,13 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.7"
 jsonschema = "^3.2"
-typeguard = "^2.10.0"
 pandas = "^1.0.0"
 duckdb = "^0.3.2"
 sqlglot = "1.23.1"
-rapidfuzz = "^2.0.2"
+pyspark = "^3.2.1"
 altair = "^4.2.0"
+rapidfuzz = "^2.0.3"
+
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0"
