@@ -4,25 +4,65 @@ on:
     branches:
       - splink3
 
-permissions:
-  contents: write
-  deployments: write
-  pull-requests: write
-
 jobs:
-  benchmark:
-    name: Run pytest-benchmark benchmark example
+  test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-      - uses: actions/setup-python@v2
+      #----------------------------------------------
+      #       check-out repo and set-up python
+      #----------------------------------------------
+      - name: Check out repository
+        uses: actions/checkout@v2
+      - name: Set up python
+        id: setup-python
+        uses: actions/setup-python@v2
         with:
           python-version: 3.9
-      - name: Run benchmark and commit results
+          ref: ${{ github.event.pull_request.head.ref }}
+      #----------------------------------------------
+      #  -- save a few section by caching poetry --
+      #----------------------------------------------
+      - name: Load cached Poetry installation
+        uses: actions/cache@v2
+        with:
+          path: ~/.local  # the path depends on the OS
+          key: poetry-0  # increment to reset cache
+      #----------------------------------------------
+      #  -----  install & configure poetry  -----
+      #----------------------------------------------
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      #----------------------------------------------
+      #       load cached venv if cache exists
+      #----------------------------------------------
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-01
+      #----------------------------------------------
+      # install dependencies if cache does not exist
+      #----------------------------------------------
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+      #----------------------------------------------
+      # install your root project, if required
+      #----------------------------------------------
+      - name: Install library
+        run: poetry install --no-interaction
+      #----------------------------------------------
+      #              run benchmarks and comment
+      #----------------------------------------------
+      - name: Run benchmark and comment
         run: |
-          pip install -r benchmarking/requirements.txt
+          source .venv/bin/activate
           pytest benchmarking/test_performance.py --benchmark-min-rounds=5 --benchmark-json benchmarking/output.json
           python benchmarking/combine_benchmarks_timeseries.py
           git config --global user.email "actions@users.noreply.github.com"
@@ -36,3 +76,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           filename: benchmark_comment_markdown.md
+
+
