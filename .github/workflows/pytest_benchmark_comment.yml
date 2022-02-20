@@ -62,6 +62,7 @@ jobs:
       #----------------------------------------------
       - name: Run benchmark and comment
         run: |
+          source .venv/bin/activate
           pytest benchmarking/test_performance.py --benchmark-min-rounds=2 --benchmark-json benchmarking/output.json -k 'test_sqlite or test_duckdb'
           python benchmarking/combine_benchmarks_timeseries.py
       - uses: harupy/comment-on-pr@master
