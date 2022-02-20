@@ -13,12 +13,14 @@ jobs:
       #----------------------------------------------
       - name: Check out repository
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v2
         with:
           python-version: 3.9
-          ref: ${{ github.event.pull_request.head.ref }}
+
       #----------------------------------------------
       #  -- save a few section by caching poetry --
       #----------------------------------------------
