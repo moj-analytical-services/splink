@@ -109,7 +109,7 @@ def get_markdown_tables(timeseries_df, cpu):
             this_min = table["stats_min"].iloc[0]
             prop_change = (this_min - previous_min) / previous_min
             prop_change = prop_change - 1
-            prop_change = f"Percentage change: {prop_change:.1%}\n\n"
+            prop_change = f"Percentage change: {prop_change:.1%}\n"
 
         name = table["name_of_test"].iloc[0]
         table = table.drop("name_of_test", axis=1)
