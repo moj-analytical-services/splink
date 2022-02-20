@@ -15,7 +15,6 @@ typeguard = "^2.10.0"
 pandas = "^1.0.0"
 duckdb = "^0.3.2"
 sqlglot = "1.23.1"
-pyspark = "3.1.2"
 rapidfuzz = "^2.0.2"
 altair = "^4.2.0"
 
@@ -24,7 +23,6 @@ pytest = "^7.0"
 pytest-benchmark = "^3.4.1"
 tabulate = "0.8.9"
 lzstring = "1.0.4"
-ipykernel = "^6.9.1"
 
 
 [build-system]
