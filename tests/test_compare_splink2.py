@@ -2,7 +2,7 @@ import pytest
 from splink.comparison import Comparison
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
-from splink.spark.spark_linker import SparkLinker
+
 from splink.sqlite.sqlite_linker import SQLiteLinker
 
 import pandas as pd
@@ -177,6 +177,8 @@ def test_splink_2_predict_spark():
 
     from pyspark.context import SparkContext, SparkConf
     from pyspark.sql import SparkSession
+
+    from splink.spark.spark_linker import SparkLinker
 
     conf = SparkConf()
     conf.set("spark.driver.memory", "12g")

@@ -2,7 +2,7 @@ import pytest
 from splink.comparison import Comparison
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
-from splink.spark.spark_linker import SparkLinker
+
 
 import pandas as pd
 
