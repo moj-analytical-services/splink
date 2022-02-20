@@ -1,4 +1,4 @@
-name: Python Example with pytest
+name: Benchmark comment
 on:
   pull_request:
     branches:
