@@ -99,9 +99,7 @@ class SQLiteLinker(Linker):
         # import pandas as pd
 
         # df = pd.read_sql(f"select * from {output_table_name} limit 2", self.con)
-        # from ..format_sql import format_sql
 
-        # print(format_sql(sql))
         # print(output_table_name)
         # display(df)
 
@@ -112,6 +110,6 @@ class SQLiteLinker(Linker):
         if proportion == 1.0:
             return ""
 
-        return (
-            f"where id IN (SELECT id FROM table ORDER BY RANDOM() LIMIT {sample_size})"
-        )
+        sample_size = int(sample_size)
+
+        return f"where unique_id IN (SELECT unique_id FROM __splink__df_concat_with_tf ORDER BY RANDOM() LIMIT {sample_size})"
