@@ -67,8 +67,8 @@ jobs:
           source .venv/bin/activate
           pytest benchmarking/test_performance.py  --benchmark-json benchmarking/output.json -k 'test_2_rounds_1k_sqlite or test_2_rounds_1k_duckdb'
           python benchmarking/combine_benchmarks_timeseries.py
-      - uses: harupy/comment-on-pr@master
+      - uses: NejcZdovc/comment-pr@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          filename: benchmark_comment_markdown.md
+          file: benchmark_comment_markdown.md
