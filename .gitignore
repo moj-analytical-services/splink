@@ -1,5 +1,7 @@
 .benchmarks/
 try_*.py
+.github/workflows/benchmark_comment_markdown.md
+benchmarking/output.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
