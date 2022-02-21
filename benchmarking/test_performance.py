@@ -173,12 +173,12 @@ def duckdb_performance(df, target_rows=1e6):
     linker.predict()
 
 
-def test_1k_duckdb(benchmark):
+def test_2_round_1k_duckdb(benchmark):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     benchmark.pedantic(
         duckdb_performance,
         kwargs={"df": df, "target_rows": 1e6},
-        rounds=1,
+        rounds=2,
         iterations=1,
         warmup_rounds=0,
     )
@@ -242,7 +242,7 @@ def sqlite_performance(con, target_rows=1e6):
     pd.read_sql("SELECT * FROM __splink__df_predict", con)
 
 
-def test_1k_sqlite(benchmark):
+def test_2_rounds_1k_sqlite(benchmark):
     import sqlite3
 
     con = sqlite3.connect(":memory:")
