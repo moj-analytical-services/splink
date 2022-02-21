@@ -40,7 +40,7 @@ def estimate_u_values(linker, df_dict, target_rows):
         proportion = sample_size / count_rows
 
     if settings_obj._link_type == "link_only":
-        sample_size = target_rows ** 0.5
+        sample_size = target_rows**0.5
         proportion = sample_size / count_rows
 
     if proportion >= 1.0:
@@ -55,9 +55,15 @@ def estimate_u_values(linker, df_dict, target_rows):
     {linker.random_sample_sql(proportion, sample_size)}
     """
 
+    df_dict = linker.execute_sql(
+        sql, df_dict, "__splink__df_concat_with_tf_sample", transpile=False
+    )
+
     settings_obj._blocking_rules_to_generate_predictions = []
 
-    df_dict = block_using_rules(settings_obj, df_dict, linker.execute_sql)
+    df_dict = block_using_rules(
+        settings_obj, df_dict, linker.execute_sql, "__splink__df_concat_with_tf_sample"
+    )
 
     df_dict = compute_comparison_vector_values(
         settings_obj, df_dict, linker.execute_sql

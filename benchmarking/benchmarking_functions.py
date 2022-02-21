@@ -70,17 +70,21 @@ def format_timeseries_data_table(df_timeseries):
     return df_timeseries
 
 
-def get_latest_on_branch(df, branch, cpu):
+def get_latest_on_branch(df, branch, cpu=None):
     f1 = df["commit_info_branch"] == branch
-    f2 = df["machine_info_cpu_brand_raw"] == cpu
-    df = df[f1 & f2]
+    df = df[f1]
+    if cpu:
+        f2 = df["machine_info_cpu_brand_raw"] == cpu
+        df = df[f2]
+
     df = df.sort_values("datetime", ascending=True)
     return df.tail(1)
 
 
 def get_latest(df, cpu):
-    f1 = df["machine_info_cpu_brand_raw"] == cpu
-    df = df[f1]
+    if cpu:
+        f1 = df["machine_info_cpu_brand_raw"] == cpu
+        df = df[f1]
     df = df.sort_values("datetime", ascending=True)
     return df.tail(1)
 
@@ -88,8 +92,8 @@ def get_latest(df, cpu):
 def get_markdown_tables(timeseries_df, cpu):
     def add_to_markdown(df):
 
-        df1 = get_latest_on_branch(df, "splink3", cpu)
-        df2 = get_latest(df, cpu)
+        df1 = get_latest_on_branch(df, "splink3", cpu=None)
+        df2 = get_latest(df, cpu=None)
 
         table = pd.concat([df1, df2])
         len1 = len(table)
@@ -106,9 +110,8 @@ def get_markdown_tables(timeseries_df, cpu):
         prop_change = ""
         if len(table) == 2:
             previous_min = table["stats_min"].iloc[0]
-            this_min = table["stats_min"].iloc[0]
+            this_min = table["stats_min"].iloc[1]
             prop_change = (this_min - previous_min) / previous_min
-            prop_change = prop_change - 1
             prop_change = f"Percentage change: {prop_change:.1%}\n"
 
         name = table["name_of_test"].iloc[0]

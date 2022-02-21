@@ -39,7 +39,9 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
-def block_using_rules(settings_obj, df_dict, execute_sql):
+def block_using_rules(
+    settings_obj, df_dict, execute_sql, input_tablename="__splink__df_concat_with_tf"
+):
 
     columns_to_select = settings_obj._columns_to_select_for_blocking
     sql_select_expr = ", ".join(columns_to_select)
@@ -73,8 +75,8 @@ def block_using_rules(settings_obj, df_dict, execute_sql):
         select
         {sql_select_expr}
         , '{matchkey_number}' as match_key
-        from __splink__df_concat_with_tf as l
-        inner join __splink__df_concat_with_tf as r
+        from {input_tablename} as l
+        inner join {input_tablename} as r
         on
         {rule}
         {not_previous_rules_statement}
