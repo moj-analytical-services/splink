@@ -173,7 +173,7 @@ def duckdb_performance(df, target_rows=1e6):
     linker.predict()
 
 
-def test_2_round_1k_duckdb(benchmark):
+def test_2_rounds_1k_duckdb(benchmark):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     benchmark.pedantic(
         duckdb_performance,
