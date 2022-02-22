@@ -184,20 +184,22 @@ def test_2_rounds_1k_duckdb(benchmark):
     )
 
 
-def test_20k_duckdb(benchmark):
+def test_10_rounds_20k_duckdb(benchmark):
     df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
     benchmark.pedantic(
         duckdb_performance,
         kwargs={"df": df, "target_rows": 3e6},
-        rounds=1,
+        rounds=10,
         iterations=1,
         warmup_rounds=0,
     )
 
 
-def spark_performance(df):
+def spark_performance(df, target_rows):
 
     linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df})
+
+    linker.train_u_using_random_sampling(target_rows=target_rows)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.train_m_using_expectation_maximisation(blocking_rule)
@@ -208,18 +210,29 @@ def spark_performance(df):
     df = linker.predict().toPandas()
 
 
-def test_spark(benchmark):
+# conf.set("spark.default.parallelism", "8")
+def test_3_rounds_20k_spark(benchmark):
     from pyspark.context import SparkContext, SparkConf
     from pyspark.sql import SparkSession
 
     conf = SparkConf()
-    conf.set("spark.driver.memory", "4g")
+    conf.set("spark.driver.memory", "12g")
     conf.set("spark.sql.shuffle.partitions", "8")
+    conf.set("spark.default.parallelism", "8")
+
     sc = SparkContext.getOrCreate(conf=conf)
     spark = SparkSession(sc)
 
-    df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=True)
-    benchmark(spark_performance, df=df)
+    # df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=True)
+    df = spark.read.csv("./benchmarking/fake_20000_from_splink_demos.csv", header=True)
+
+    benchmark.pedantic(
+        spark_performance,
+        kwargs={"df": df, "target_rows": 3e6},
+        rounds=3,
+        iterations=1,
+        warmup_rounds=0,
+    )
 
 
 def sqlite_performance(con, target_rows=1e6):
@@ -258,7 +271,7 @@ def test_2_rounds_1k_sqlite(benchmark):
     )
 
 
-def test_20k_sqlite(benchmark):
+def test_10_rounds_20k_sqlite(benchmark):
     import sqlite3
 
     con = sqlite3.connect(":memory:")
@@ -268,7 +281,7 @@ def test_20k_sqlite(benchmark):
     benchmark.pedantic(
         sqlite_performance,
         kwargs={"con": con, "target_rows": 3e6},
-        rounds=1,
+        rounds=10,
         iterations=1,
         warmup_rounds=0,
     )

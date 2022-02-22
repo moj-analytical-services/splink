@@ -1,2 +1,2 @@
-pytest benchmarking/test_performance.py  --benchmark-json benchmarking/output.json -k 'test_2_rounds_1k_sqlite or test_2_rounds_1k_duckdb'
+pytest benchmarking/test_performance.py  --benchmark-json benchmarking/output.json -k 'test_10_rounds_20k_sqlite or test_10_rounds_20k_duckdb or test_3_rounds_20k_spark'
 python benchmarking/combine_benchmarks_timeseries.py
