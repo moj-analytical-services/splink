@@ -120,6 +120,10 @@ def get_markdown_tables(timeseries_df, cpu):
         md = table.to_markdown()
         return f"### Test: {name}\n\n{prop_change}{md}\n\n"
 
+    f1 = timeseries_df["name_of_test"].isin(
+        ["test_2_rounds_1k_duckdb", "test_2_rounds_1k_sqlite"]
+    )
+    timeseries_df = timeseries_df[f1]
     mds = timeseries_df.groupby("name_of_test").apply(add_to_markdown)
     return " ".join(mds)
 
