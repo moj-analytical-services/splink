@@ -6,7 +6,7 @@ from .settings import Settings
 logger = logging.getLogger(__name__)
 
 
-def _compute_new_parameters(settings_obj: Settings, df_dict, execute_sql):
+def compute_new_parameters(settings_obj: Settings):
     """compute m and u from results of predict"""
 
     sql_template = """
@@ -18,7 +18,7 @@ def _compute_new_parameters(settings_obj: Settings, df_dict, execute_sql):
     where {gamma_column} != -1
     group by {gamma_column}
     """
-    sqls = [
+    union_sqls = [
         sql_template.format(
             gamma_column=cc.gamma_column_name,
             comparison_name=cc.comparison_name,
@@ -34,11 +34,11 @@ def _compute_new_parameters(settings_obj: Settings, df_dict, execute_sql):
            "_proportion_of_matches" as comparison_name
     from __splink__df_predict
     """
-    sqls.append(sql)
+    union_sqls.append(sql)
 
-    sql = " union all ".join(sqls)
+    sql = " union all ".join(union_sqls)
 
-    return execute_sql(sql, df_dict, "__splink__df_new_params")
+    return sql
 
 
 def maximisation_step(

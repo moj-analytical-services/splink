@@ -2,7 +2,7 @@ from copy import deepcopy
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
-from .maximisation_step import _compute_new_parameters
+from .maximisation_step import compute_new_parameters
 
 
 def _num_target_rows_to_rows_to_sample(target_rows):
@@ -17,7 +17,7 @@ def _num_target_rows_to_rows_to_sample(target_rows):
     return sample_rows
 
 
-def estimate_u_values(linker, df_dict, target_rows):
+def estimate_u_values(linker, target_rows):
 
     original_settings_object = linker.settings_obj
     settings_obj = deepcopy(linker.settings_obj)
@@ -31,8 +31,8 @@ def estimate_u_values(linker, df_dict, target_rows):
     select count(*) as count
     from __splink__df_concat_with_tf
     """
-    result = linker.execute_sql(sql, df_dict, "__splink__df_concat_count")
-    result = result["__splink__df_concat_count"].as_record_dict()
+    dataframe = linker.sql_to_dataframe(sql, "__splink__df_concat_count")
+    result = dataframe.as_record_dict()
     count_rows = result[0]["count"]
 
     if settings_obj._link_type in ["dedupe_only", "link_and_dedupe"]:
@@ -55,28 +55,34 @@ def estimate_u_values(linker, df_dict, target_rows):
     {linker.random_sample_sql(proportion, sample_size)}
     """
 
-    df_dict = linker.execute_sql(
-        sql, df_dict, "__splink__df_concat_with_tf_sample", transpile=False
+    sample_df = linker.execute_sql(
+        sql,
+        "__splink__df_concat_with_tf_sample",
+        "__splink__df_concat_with_tf_sample",
+        transpile=False,
     )
 
     settings_obj._blocking_rules_to_generate_predictions = []
 
-    df_dict = block_using_rules(
-        settings_obj, df_dict, linker.execute_sql, "__splink__df_concat_with_tf_sample"
-    )
+    sql = block_using_rules(settings_obj, "__splink__df_concat_with_tf_sample")
+    linker.enqueue_sql(sql, "__splink__df_blocked")
 
-    df_dict = compute_comparison_vector_values(
-        settings_obj, df_dict, linker.execute_sql
-    )
+    sql = compute_comparison_vector_values(settings_obj)
+
+    linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
     sql = """
     select *, 0.0D as match_probability
     from __splink__df_comparison_vectors
     """
-    df_dict = linker.execute_sql(sql, df_dict, "__splink__df_predict")
+    linker.enqueue_sql(sql, "__splink__df_predict")
 
-    df_dict = _compute_new_parameters(settings_obj, df_dict, linker.execute_sql)
-    param_records = df_dict["__splink__df_new_params"].as_record_dict()
+    sql = compute_new_parameters(settings_obj)
+    linker.enqueue_sql(sql, "__splink__df_new_params")
+
+    df_params = linker.execute_sql_pipeline()
+
+    param_records = df_params.as_record_dict()
 
     m_u_records = [
         r for r in param_records if r["comparison_name"] != "_proportion_of_matches"

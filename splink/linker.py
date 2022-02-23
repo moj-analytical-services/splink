@@ -158,7 +158,7 @@ class Linker:
 
     def train_u_using_random_sampling(self, target_rows):
 
-        estimate_u_values(self, self.input_dfs, target_rows)
+        estimate_u_values(self, target_rows)
         self.populate_m_u_from_trained_values()
 
     def train_m_from_label_column(self, label_colname):
