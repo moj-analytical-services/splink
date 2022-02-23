@@ -187,13 +187,14 @@ def test_splink_2_predict_spark():
     sc = SparkContext.getOrCreate(conf=conf)
     spark = SparkSession(sc)
 
-    df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=True)
 
     linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df})
 
-    df_e = linker.predict().toPandas()
-    f1 = df_e["unique_id_l"] == 479
-    f2 = df_e["unique_id_r"] == 481
+    df_e = linker.predict().as_pandas_dataframe()
+    print(len(df_e))
+    f1 = df_e["unique_id_l"] == "479"
+    f2 = df_e["unique_id_r"] == "481"
     actual_record = df_e[f1 & f2]
     expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
 

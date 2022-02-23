@@ -207,10 +207,10 @@ def spark_performance(df, target_rows):
     blocking_rule = "l.dob = r.dob"
     linker.train_m_using_expectation_maximisation(blocking_rule)
 
-    df = linker.predict().toPandas()
+    df = linker.predict()
+    df.as_pandas_dataframe()
 
 
-# conf.set("spark.default.parallelism", "8")
 def test_3_rounds_20k_spark(benchmark):
     from pyspark.context import SparkContext, SparkConf
     from pyspark.sql import SparkSession
