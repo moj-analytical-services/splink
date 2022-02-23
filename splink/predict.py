@@ -7,9 +7,9 @@ from .settings import Settings
 logger = logging.getLogger(__name__)
 
 
-def predict(settings_obj: Settings, df_dict, execute_sql):
+def predict(settings_obj: Settings):
 
-    # table is called '__splink__df_comparison_vectors'
+    sqls = []
 
     select_cols = settings_obj._columns_to_select_for_bayes_factor_parts
     select_cols_expr = ",".join(select_cols)
@@ -19,7 +19,11 @@ def predict(settings_obj: Settings, df_dict, execute_sql):
     from __splink__df_comparison_vectors
     """
 
-    df_dict = execute_sql(sql, df_dict, "__splink__df_match_weight_parts")
+    sql = {
+        "sql": sql,
+        "output_table_name": "__splink__df_match_weight_parts",
+    }
+    sqls.append(sql)
 
     select_cols = settings_obj._columns_to_select_for_predict
     select_cols_expr = ",".join(select_cols)
@@ -44,8 +48,10 @@ def predict(settings_obj: Settings, df_dict, execute_sql):
     from __splink__df_match_weight_parts
     """
 
-    df_dict = execute_sql(sql, df_dict, "__splink__df_predict")
+    sql = {
+        "sql": sql,
+        "output_table_name": "__splink__df_predict",
+    }
+    sqls.append(sql)
 
-    logger.debug("\n" + sql)
-
-    return df_dict
+    return sqls

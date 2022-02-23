@@ -10,24 +10,26 @@ logger = logging.getLogger(__name__)
 
 
 class DuckDBInMemoryLinkerDataFrame(SplinkDataFrame):
-    def __init__(self, df_name, df_value, duckdb_linker):
-        super().__init__(df_name, df_value)
+    def __init__(self, templated_name, physical_name, duckdb_linker):
+        super().__init__(templated_name, physical_name)
         self.duckdb_linker = duckdb_linker
 
     @property
     def columns(self):
-        return list(self.df_value.columns)
+        d = self.as_record_dict(1)[0]
+
+        return list(d.keys())
 
     def validate(self):
-        if not type(self.df_value) is pd_DataFrame:
-            raise ValueError(
-                f"{self.df_name} is not a pandas dataframe.\n"
-                "DuckDB In Memory Linker requires input data"
-                " to be pandas dataframes",
-            )
+        pass
 
-    def as_record_dict(self):
-        return self.df_value.to_dict(orient="records")
+    def as_record_dict(self, limit=None):
+
+        sql = f"select * from {self.physical_name}"
+        if limit:
+            sql += f" limit {limit}"
+
+        return self.duckdb_linker.con.query(sql).to_df().to_dict(orient="records")
 
 
 class DuckDBInMemoryLinker(Linker):
@@ -36,37 +38,30 @@ class DuckDBInMemoryLinker(Linker):
         con = duckdb.connect(database=":memory:")
         self.con = con
 
+        for templated_name, df in input_tables.items():
+            # Make a table with this name
+            con.register(templated_name, df)
+            input_tables[templated_name] = templated_name
+
+        for templated_name, df in tf_tables.items():
+            # Make a table with this name
+            con.register(templated_name, df)
+            tf_tables[templated_name] = templated_name
+
         super().__init__(settings_dict, input_tables, tf_tables)
 
     def _df_as_obj(self, df_name, df_value):
         return DuckDBInMemoryLinkerDataFrame(df_name, df_value, self)
 
-    def execute_sql(self, sql, df_dict: dict, output_table_name=None, transpile=True):
+    def execute_sql(self, sql, templated_name, physical_name, transpile=True):
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
-        for df_obj in df_dict.values():
-            table_name = df_obj.df_name
-            df = df_obj.df_value
-            self.con.register(table_name, df)
-
-        # print("-------------")
-        # print("-------------")
 
         output = self.con.query(sql).to_df()
 
-        # from splink.format_sql import format_sql
+        self.con.register(physical_name, output)
 
-        # print(output_table_name)
-        # try:
-        #     display(output.head(8))
-        # except:
-        #     print(output.head(1).T)
-
-        # print(sql)
-        # print(f"as {output_table_name}")
-
-        output_obj = self._df_as_obj(output_table_name, output)
-        return {output_table_name: output_obj}
+        return DuckDBInMemoryLinkerDataFrame(templated_name, physical_name, self)
 
     def random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
