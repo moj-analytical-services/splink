@@ -1,10 +1,5 @@
-# %load_ext autoreload
-# %autoreload 2
-from copy import deepcopy
-from splink import comparison_level
-from splink.comparison import Comparison
-from splink.comparison_level import ComparisonLevel
-from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
+import pytest
+
 from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
 from splink.spark.spark_linker import SparkLinker
 from splink.sqlite.sqlite_linker import SQLiteLinker
@@ -163,9 +158,7 @@ settings_dict = {
 }
 
 
-def run_splink3():
-    print("hi there")
-    df = pd.read_parquet("./data/fake_1000_from_splink_demos.parquet")
+def duckdb_performance(df, target_rows=1e6):
 
     linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
 

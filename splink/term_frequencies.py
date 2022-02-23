@@ -13,7 +13,7 @@ def colname_to_tf_tablename(colname):
     return f"__splink__df_tf_{colname}"
 
 
-def sql_gen_term_frequencies(column_name, table_name="__splink__df_concat"): # table_name = "__FROM_OBJ__"):
+def sql_gen_term_frequencies(column_name, table_name="__splink__df_concat"):
 
     tf_col_name = escape_column(f"tf_{column_name}")
     col_name = escape_column(column_name)
@@ -30,9 +30,11 @@ def sql_gen_term_frequencies(column_name, table_name="__splink__df_concat"): # t
     return sql
 
 
-def join_tf_to_input_df(settings_obj, df_cols, sql_pipeline, generate_sql):
+def join_tf_to_input_df(settings_obj, df_dict, execute_sql):
 
     tf_cols = settings_obj._term_frequency_columns
+
+    df_cols = df_dict["__splink__df_concat"].columns
 
     select_cols = []
     for df_col in df_cols:
@@ -62,10 +64,10 @@ def join_tf_to_input_df(settings_obj, df_cols, sql_pipeline, generate_sql):
     sql = format_sql(sql)
     logger.debug("\n" + sql)
 
-    return generate_sql(sql, sql_pipeline, "__splink__df_concat_with_tf")
+    return execute_sql(sql, df_dict, "__splink__df_concat_with_tf")
 
 
-def term_frequencies_dict(settings_obj, sql_pipeline, user_provided_tf_dict, generate_sql):
+def term_frequencies_dict(settings_obj, df_dict, user_provided_tf_dict, execute_sql):
     """Compute the term frequencies of the required columns and add to the dataframe.
 
     Returns:
@@ -81,6 +83,7 @@ def term_frequencies_dict(settings_obj, sql_pipeline, user_provided_tf_dict, gen
             sql = sql_gen_term_frequencies(tf_col)
             sql = format_sql(sql)
             logger.debug("\n" + sql)
-            sql_pipeline = generate_sql(sql, sql_pipeline, f"__splink__df_tf_{tf_col}")
+            tf_df = execute_sql(sql, df_dict, f"__splink__df_tf_{tf_col}")
+            output_dict = {**output_dict, **tf_df}
 
-    return sql_pipeline
+    return output_dict

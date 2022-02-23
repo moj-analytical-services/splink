@@ -5,7 +5,7 @@ from .format_sql import format_sql
 logger = logging.getLogger(__name__)
 
 
-def vertically_concatente(df_dict, generate_sql):
+def vertically_concatente(df_dict, execute_sql):
 
     # Use column order from first table in dict
     df_obj = next(iter(df_dict.values()))
@@ -25,4 +25,4 @@ def vertically_concatente(df_dict, generate_sql):
     sql = format_sql(sql)
     logger.debug("\n" + sql)
 
-    return generate_sql(sql, {"sql_pipe": [], "prev_dfs": []}, "__splink__df_concat")
+    return execute_sql(sql, df_dict, "__splink__df_concat")

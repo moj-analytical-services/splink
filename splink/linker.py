@@ -1,9 +1,6 @@
 import logging
 from copy import copy, deepcopy
 from statistics import median
-import re
-from string import ascii_lowercase
-from itertools import chain
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
@@ -63,17 +60,9 @@ class Linker:
         self._validate_input_dfs()
         self.em_training_sessions = []
 
-        self.sql_tracker = {}  # track cached tables
-        self.cache_queries = [
-            "__splink__df_concat",
-            "__splink__df_concat_with_tf",
-            "__splink__df_blocked"
-            ]
-
-        sql_pipeline = vertically_concatente(self.input_dfs, self.generate_sql)
-        sql_pipeline = self._add_term_frequencies(
-            sql_pipeline=sql_pipeline
-        )
+        df_dict = vertically_concatente(self.input_dfs, self.execute_sql)
+        df_dict = self._add_term_frequencies(df_dict, False)
+        self.input_dfs = {**self.input_dfs, **df_dict}
 
     def __deepcopy__(self, memo):
         new_linker = copy(self)
@@ -95,12 +84,6 @@ class Linker:
             d[renamed] = self._df_as_obj(renamed, df_value)
         return d
 
-    def _initialise_sql_pipeline(self, table_name):
-        """
-        Re-generate a pipeline. Should only be used on named tables.
-        """
-        return {"sql_pipe": [f"SELECT * FROM '{self.sql_tracker[table_name][0]}'"], "prev_dfs": [table_name]}
-
     def execute_sql(sql, df_dict, output_table_name):
         pass
 
@@ -108,60 +91,57 @@ class Linker:
         for df in self.input_dfs.values():
             df.validate()
 
-    def deterministic_link(self):
+    def deterministic_link(self, return_df_as_value=True):
 
-        sql_pipeline = self._initialise_sql_pipeline("__splink__df_concat_with_tf")
-        sql_pipeline = block_using_rules(self.settings_obj, sql_pipeline, self.generate_sql)
-        return self.execute_sql(sql_pipeline)  # this needs to be execute
+        df_dict = block_using_rules(self.settings_obj, self.input_dfs, self.execute_sql)
+        if return_df_as_value:
+            return df_dict["__splink__df_blocked"].df_value
+        else:
+            return df_dict
 
-    def _blocked_comparisons(self, sql_pipeline):
+    def _blocked_comparisons(self, return_df_as_value=True):
 
-        sql_pipeline = block_using_rules(self.settings_obj, sql_pipeline, self.generate_sql)
-        return sql_pipeline
+        df_dict = block_using_rules(self.settings_obj, self.input_dfs, self.execute_sql)
+        return df_dict
 
-    def _add_term_frequencies(self, sql_pipeline):
+    def _add_term_frequencies(self, df_dict, return_df_as_value=True):
 
-        # edit... actually, this might be ok???
-        # if we just pass if there are no TF cols, then that should be fine...
-        if not self.settings_obj._term_frequency_columns:  # test
+        if not self.settings_obj._term_frequency_columns:
             sql = "select * from __splink__df_concat"
-            return self.generate_sql(
-                sql, sql_pipeline,
-                "__splink__df_concat_with_tf"
-            )
+            return self.execute_sql(sql, df_dict, "__splink__df_concat_with_tf")
 
         # Want to return tf tables as a dict of tables.
-        sql_pipeline = term_frequencies_dict(
-            self.settings_obj, sql_pipeline,
-            self.input_tf_tables, self.generate_sql
+        tf_dict = term_frequencies_dict(
+            self.settings_obj, df_dict, self.input_tf_tables, self.execute_sql
         )
 
-        # df_dict = {**df_dict, **tf_dict}
-        df_cols = self.con.query(f"SELECT * FROM '{self.sql_tracker['__splink__df_concat'][0]}'").columns  # edit at some point as this is silly
-        out = join_tf_to_input_df(
-            self.settings_obj, df_cols,
-            sql_pipeline, self.generate_sql
-        )
-        return out
+        df_dict = {**df_dict, **tf_dict}
 
-    def comparison_vectors(self, sql_pipeline):
-        sql_pipeline = self._blocked_comparisons(sql_pipeline)
-        sql_pipeline = compute_comparison_vector_values(
-            self.settings_obj, sql_pipeline, self.generate_sql
+        df_dict = join_tf_to_input_df(self.settings_obj, df_dict, self.execute_sql)
+        if return_df_as_value:
+            return df_dict["__splink__df_concat_with_tf"].df_value
+        else:
+            return df_dict
+
+    def comparison_vectors(self, return_df_as_value=True):
+        df_dict = self._blocked_comparisons(return_df_as_value=False)
+        df_dict = compute_comparison_vector_values(
+            self.settings_obj, df_dict, self.execute_sql
         )
 
-        return sql_pipeline
+        if return_df_as_value:
+            return df_dict["__splink__df_comparison_vectors"].df_value
+        else:
+            return df_dict
 
     def train_u_using_random_sampling(self, target_rows):
 
-        sql_pipeline = self._initialise_sql_pipeline("__splink__df_concat")
-        estimate_u_values(self, sql_pipeline, target_rows)
+        estimate_u_values(self, self.input_dfs, target_rows)
         self.populate_m_u_from_trained_values()
 
     def train_m_from_label_column(self, label_colname):
-        # migrate pls...
-        sql_pipeline = self._initialise_sql_pipeline("__splink__df_concat")
-        estimate_m_values_from_label_column(self, sql_pipeline, label_colname)
+
+        estimate_m_values_from_label_column(self, self.input_dfs, label_colname)
         self.populate_m_u_from_trained_values()
 
     def train_m_using_expectation_maximisation(
@@ -184,20 +164,11 @@ class Linker:
             comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,
         )
 
-        import time
-        t = time.time()
-        sql_pipeline = self._initialise_sql_pipeline("__splink__df_concat_with_tf")
-        em_training_session.train(sql_pipeline)
-        print("--- Train... %s seconds ---" % (time.time() - t))
-        t = time.time()
+        em_training_session.train()
 
         self.populate_m_u_from_trained_values()
-        print("--- Populate_m_u stuff... %s seconds ---" % (time.time() - t))
-        t = time.time()
 
         self.populate_proportion_of_matches_from_trained_values()
-        print("--- populate_proportion... %s seconds ---" % (time.time() - t))
-        t = time.time()
 
         return em_training_session
 
@@ -274,29 +245,13 @@ class Linker:
         )
 
     def predict(self, return_df_as_value=True):
-        sql_pipeline = self._initialise_sql_pipeline("__splink__df_concat_with_tf")
-        sql_pipeline = self.comparison_vectors(sql_pipeline)
-        sql_pipeline = predict(self.settings_obj, sql_pipeline, self.generate_sql)
+        df_dict = self.comparison_vectors(return_df_as_value=False)
+        df_dict = predict(self.settings_obj, df_dict, self.execute_sql)
 
-        return self.execute_sql(sql_pipeline)
+        if return_df_as_value:
+            return df_dict["__splink__df_predict"].df_value
+        else:
+            return df_dict
 
     def execute_sql(self):
         pass
-
-    def combine_sql_queries(self, sql_pipeline):
-        """
-        Converts a given list of SQL queries into a singular query,
-        bound together by WITH statements.
-        Allows the backend SQL engine to perform optimisation steps where appropriate.
-        """
-
-        sql = sql_pipeline["sql_pipe"]
-        table = sql_pipeline["prev_dfs"]
-
-        if len(table)==0:
-            return sql[0]
-
-        sql_list = [f"{t} AS ({s})" for s, t in zip(sql, table)]
-        sql_string = f'WITH {", ".join(sql_list)} SELECT * FROM {table[-1]}'
-
-        return sql_string

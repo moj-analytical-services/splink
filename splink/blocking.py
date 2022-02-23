@@ -39,7 +39,9 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
-def block_using_rules(settings_obj, sql_pipeline, generate_sql):
+def block_using_rules(
+    settings_obj, df_dict, execute_sql, input_tablename="__splink__df_concat_with_tf"
+):
 
     columns_to_select = settings_obj._columns_to_select_for_blocking
     sql_select_expr = ", ".join(columns_to_select)
@@ -92,4 +94,4 @@ def block_using_rules(settings_obj, sql_pipeline, generate_sql):
 
     logger.debug("\n" + sql)
 
-    return generate_sql(sql, sql_pipeline, "__splink__df_blocked")
+    return execute_sql(sql, df_dict, "__splink__df_blocked")

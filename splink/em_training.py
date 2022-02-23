@@ -76,26 +76,13 @@ class EMTrainingSession:
         self.lambda_history = []
         self.add_iteration()
 
-    def train(self, sql_pipeline):
+    def train(self):
 
-        import time
-        t = time.time()
-
-        sql_pipeline = self.training_linker.comparison_vectors(sql_pipeline)
-        # construct a df dictionary object from our pipeline
-        df_dict = self.training_linker._construct_df_dict(
-            "__splink__df_comparison_vectors",
-            self.training_linker.execute_sql(sql_pipeline)
-            ) # clean this up later...
-        print("--- training_linker... %s seconds ---" % (time.time() - t))
-        t = time.time()
+        df_dict = self.training_linker.comparison_vectors(return_df_as_value=False)
 
         # Compute the new parameters, populating the paramters in the copied settings object
         # At this stage, we do not overwrite any of the parameters in the original (main) setting object
-        # expectation_maximisation(self, sql_pipeline, self.training_linker.generate_sql, self.training_linker.execute_sql)
-        expectation_maximisation(self, df_dict, self.training_linker.materialise_df_obj)
-        print("--- expectation_maximisation... %s seconds ---" % (time.time() - t))
-        t = time.time()
+        expectation_maximisation(self, df_dict, self.training_linker.execute_sql)
 
         training_desc = f"EM, blocked on: {self.blocking_rule_for_training}"
 
@@ -117,11 +104,8 @@ class EMTrainingSession:
                         orig_cl.add_trained_u_probability(
                             cl.u_probability, training_desc
                         )
-        print("--- For loop... %s seconds ---" % (time.time() - t))
-        t = time.time()
-        self.original_linker.em_training_sessions.append(self)
-        print("--- original_linker... %s seconds ---" % (time.time() - t))
 
+        self.original_linker.em_training_sessions.append(self)
 
     def add_iteration(self):
 
