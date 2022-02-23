@@ -64,8 +64,17 @@ class SparkLinker(Linker):
         spark_df = self.spark.sql(sql)
 
         # Break lineage
-        spark_df.write.mode("overwrite").parquet(f"./tmp_spark/{physical_name}")
-        spark_df = self.spark.read.parquet(f"./tmp_spark/{physical_name}")
+        # spark_df.write.mode("overwrite").parquet(f"./tmp_spark/{physical_name}")
+        # spark_df = self.spark.read.parquet(f"./tmp_spark/{physical_name}")
+        # Only persist if templated_name = pyhsical_name
+        if templated_name == physical_name:
+            print(f"persisted {templated_name}")
+            spark_df.persist()
+        if templated_name == "__splink__df_comparison_vectors":
+            spark_df.persist()
+            print(f"persisted {templated_name}")
+
+        spark_df.persist()
 
         spark_df.createOrReplaceTempView(physical_name)
 
