@@ -41,15 +41,9 @@ def compute_new_parameters(settings_obj: Settings):
     return sql
 
 
-def maximisation_step(
-    em_training_session,
-    df_dict,
-    execute_sql,
-):
+def maximisation_step(em_training_session, param_records):
 
     settings_obj = em_training_session.settings_obj
-    df_dict = _compute_new_parameters(settings_obj, df_dict, execute_sql)
-    param_records = df_dict["__splink__df_new_params"].as_record_dict()
 
     m_u_records = []
     for r in param_records:
@@ -76,22 +70,25 @@ def maximisation_step(
     # Dump current comparsion columns to training settion
     em_training_session.add_iteration()
 
-    return df_dict
 
-
-def expectation_maximisation(em_training_session, df_dict, execute_sql):
+def expectation_maximisation(em_training_session, df_comparison_vector_values):
 
     settings_obj = em_training_session.settings_obj
+    linker = em_training_session.original_linker
 
     max_iterations = settings_obj._max_iterations
     em_convergece = settings_obj._em_convergence
     for i in range(max_iterations):
-        df_dict = predict(settings_obj, df_dict, execute_sql)
-        maximisation_step(
-            em_training_session,
-            df_dict,
-            execute_sql,
-        )
+        sqls = predict(settings_obj)
+        for sql in sqls:
+            linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        sql = compute_new_parameters(settings_obj)
+        linker.enqueue_sql(sql, "__splink__df_new_params")
+        df_params = linker.execute_sql_pipeline([df_comparison_vector_values])
+        param_records = df_params.as_record_dict()
+
+        maximisation_step(em_training_session, param_records)
         max_change_dict = (
             em_training_session.max_change_in_parameters_comparison_levels()
         )

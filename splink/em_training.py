@@ -78,11 +78,11 @@ class EMTrainingSession:
 
     def train(self):
 
-        df_dict = self.training_linker.comparison_vectors(return_df_as_value=False)
+        cvv = self.training_linker._comparison_vectors()
 
         # Compute the new parameters, populating the paramters in the copied settings object
         # At this stage, we do not overwrite any of the parameters in the original (main) setting object
-        expectation_maximisation(self, df_dict, self.training_linker.execute_sql)
+        expectation_maximisation(self, cvv)
 
         training_desc = f"EM, blocked on: {self.blocking_rule_for_training}"
 

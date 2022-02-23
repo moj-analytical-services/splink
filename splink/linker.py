@@ -45,6 +45,10 @@ class SplinkDataFrame:
     def random_sample_sql(percent):
         pass
 
+    @property
+    def physical_and_template_names_equal(self):
+        return self.templated_name == self.physical_name
+
     def as_record_dict(self):
         pass
 
@@ -266,7 +270,15 @@ class Linker:
             comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,
         )
 
-    def predict(self, return_df_as_value=True):
+    def _comparison_vectors(self):
+        sql = block_using_rules(self.settings_obj)
+        self.enqueue_sql(sql, "__splink__df_blocked")
+
+        sql = compute_comparison_vector_values(self.settings_obj)
+        self.enqueue_sql(sql, "__splink__df_comparison_vectors")
+        return self.execute_sql_pipeline([])
+
+    def predict(self):
 
         sql = block_using_rules(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_blocked")
