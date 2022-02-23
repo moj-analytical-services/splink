@@ -296,6 +296,3 @@ class Linker:
 
         predictions = self.execute_sql_pipeline([])
         return predictions
-
-    def execute_sql(self):
-        pass
