@@ -2,7 +2,7 @@ from copy import deepcopy
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
-from .maximisation_step import _compute_new_parameters
+from .maximisation_step import compute_new_parameters
 
 
 def estimate_m_values_from_label_column(linker, df_dict, label_colname):

@@ -177,7 +177,7 @@ def test_train_vs_predict():
     expected = training_session.settings_obj._proportion_of_matches
 
     # We expect the proportion of matches to be the same as for a predict
-    df = linker.predict()
+    df = linker.predict().as_pandas_dataframe()
     actual = df["match_probability"].mean()
 
     # Will not be exactly equal because expected represents the proportion of matches

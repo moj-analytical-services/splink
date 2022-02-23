@@ -1,6 +1,7 @@
 import logging
 from copy import copy, deepcopy
 from statistics import median
+import hashlib
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
@@ -8,13 +9,11 @@ from .em_training import EMTrainingSession
 from .misc import bayes_factor_to_prob, escape_columns, prob_to_bayes_factor
 from .predict import predict
 from .settings import Settings
-from .term_frequencies import (
-    colname_to_tf_tablename,
-    join_tf_to_input_df,
-    term_frequencies_dict,
-)
+from .term_frequencies import term_frequencies
+
 from .m_training import estimate_m_values_from_label_column
 from .u_training import estimate_u_values
+from .pipeline import SQLPipeline
 
 from .vertically_concatenate import vertically_concatente
 
@@ -27,9 +26,9 @@ class SplinkDataFrame:
     depending on whether it's a spark dataframe, sqlite table etc.
     """
 
-    def __init__(self, df_name, df_value):
-        self.df_name = df_name
-        self.df_value = df_value
+    def __init__(self, templated_name, physical_name):
+        self.templated_name = templated_name
+        self.physical_name = physical_name
 
     @property
     def columns(self):
@@ -46,8 +45,17 @@ class SplinkDataFrame:
     def random_sample_sql(percent):
         pass
 
+    @property
+    def physical_and_template_names_equal(self):
+        return self.templated_name == self.physical_name
+
     def as_record_dict(self):
         pass
+
+    def as_pandas_dataframe(self):
+        import pandas as pd
+
+        return pd.DataFrame(self.as_record_dict())
 
 
 class Linker:
@@ -55,14 +63,71 @@ class Linker:
         self.settings_dict = settings_dict
 
         self.settings_obj = Settings(settings_dict)
+
+        # self.named_cache = {name: DataFrame(name, value)}
+        self.named_cache = {}
+
+        # self.hashed_cache = {hash: DataFrame(name, value)}
+        self.hashed_cache = {}
+
+        self.pipeline = SQLPipeline()
+
         self.input_dfs = self._get_input_dataframe_dict(input_tables)
         self.input_tf_tables = self._get_input_tf_dict(tf_tables)
         self._validate_input_dfs()
         self.em_training_sessions = []
 
-        df_dict = vertically_concatente(self.input_dfs, self.execute_sql)
-        df_dict = self._add_term_frequencies(df_dict, False)
-        self.input_dfs = {**self.input_dfs, **df_dict}
+        sql = vertically_concatente(self.input_dfs)
+        self.enqueue_sql(sql, "__splink__df_concat")
+
+        sqls = term_frequencies(self.settings_obj, self.input_tf_tables)
+        for sql in sqls:
+            self.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        self.execute_sql_pipeline(materialise_as_hash=False)
+
+    def enqueue_sql(self, sql, output_table_name):
+        self.pipeline.enqueue_sql(sql, output_table_name)
+
+    def execute_sql_pipeline(self, input_dataframes=[], materialise_as_hash=True):
+        sql_gen = self.pipeline._generate_pipeline(input_dataframes)
+
+        output_tablename_templated = self.pipeline.queue[-1].output_table_name
+
+        dataframe = self.sql_to_dataframe(
+            sql_gen, output_tablename_templated, materialise_as_hash
+        )
+        return dataframe
+
+    def sql_to_dataframe(
+        self, sql, output_tablename_templated, materialise_as_hash=True
+    ):
+
+        self.pipeline.reset()
+
+        if output_tablename_templated in self.named_cache:
+            print(f"Returning named cache {output_tablename_templated}")
+            return self.named_cache[output_tablename_templated]
+
+        hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
+        # Ensure hash is valid sql table name
+        hash = "a_" + hash
+        if hash in self.hashed_cache:
+            print(f"Returning hashed cache {hash}")
+            return self.hashed_cache[hash]
+
+        print(f"Executing sql with hashed value {hash}")
+
+        if materialise_as_hash:
+            dataframe = self.execute_sql(sql, output_tablename_templated, hash)
+            self.hashed_cache[hash] = dataframe
+        else:
+            dataframe = self.execute_sql(
+                sql, output_tablename_templated, output_tablename_templated
+            )
+            self.named_cache[output_tablename_templated] = dataframe
+
+        return dataframe
 
     def __deepcopy__(self, memo):
         new_linker = copy(self)
@@ -99,44 +164,9 @@ class Linker:
         else:
             return df_dict
 
-    def _blocked_comparisons(self, return_df_as_value=True):
-
-        df_dict = block_using_rules(self.settings_obj, self.input_dfs, self.execute_sql)
-        return df_dict
-
-    def _add_term_frequencies(self, df_dict, return_df_as_value=True):
-
-        if not self.settings_obj._term_frequency_columns:
-            sql = "select * from __splink__df_concat"
-            return self.execute_sql(sql, df_dict, "__splink__df_concat_with_tf")
-
-        # Want to return tf tables as a dict of tables.
-        tf_dict = term_frequencies_dict(
-            self.settings_obj, df_dict, self.input_tf_tables, self.execute_sql
-        )
-
-        df_dict = {**df_dict, **tf_dict}
-
-        df_dict = join_tf_to_input_df(self.settings_obj, df_dict, self.execute_sql)
-        if return_df_as_value:
-            return df_dict["__splink__df_concat_with_tf"].df_value
-        else:
-            return df_dict
-
-    def comparison_vectors(self, return_df_as_value=True):
-        df_dict = self._blocked_comparisons(return_df_as_value=False)
-        df_dict = compute_comparison_vector_values(
-            self.settings_obj, df_dict, self.execute_sql
-        )
-
-        if return_df_as_value:
-            return df_dict["__splink__df_comparison_vectors"].df_value
-        else:
-            return df_dict
-
     def train_u_using_random_sampling(self, target_rows):
 
-        estimate_u_values(self, self.input_dfs, target_rows)
+        estimate_u_values(self, target_rows)
         self.populate_m_u_from_trained_values()
 
     def train_m_from_label_column(self, label_colname):
@@ -244,14 +274,28 @@ class Linker:
             comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,
         )
 
-    def predict(self, return_df_as_value=True):
-        df_dict = self.comparison_vectors(return_df_as_value=False)
-        df_dict = predict(self.settings_obj, df_dict, self.execute_sql)
+    def _comparison_vectors(self):
+        sql = block_using_rules(self.settings_obj)
+        self.enqueue_sql(sql, "__splink__df_blocked")
 
-        if return_df_as_value:
-            return df_dict["__splink__df_predict"].df_value
-        else:
-            return df_dict
+        sql = compute_comparison_vector_values(self.settings_obj)
+        self.enqueue_sql(sql, "__splink__df_comparison_vectors")
+        return self.execute_sql_pipeline([])
+
+    def predict(self):
+
+        sql = block_using_rules(self.settings_obj)
+        self.enqueue_sql(sql, "__splink__df_blocked")
+
+        sql = compute_comparison_vector_values(self.settings_obj)
+        self.enqueue_sql(sql, "__splink__df_comparison_vectors")
+
+        sqls = predict(self.settings_obj)
+        for sql in sqls:
+            self.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        predictions = self.execute_sql_pipeline([])
+        return predictions
 
     def execute_sql(self):
         pass

@@ -1,4 +1,5 @@
 .benchmarks/
+tmp_spark/
 try_*.py
 .github/workflows/benchmark_comment_markdown.md
 benchmarking/output.json
