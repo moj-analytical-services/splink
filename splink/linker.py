@@ -52,6 +52,11 @@ class SplinkDataFrame:
     def as_record_dict(self):
         pass
 
+    def as_pandas_dataframe(self):
+        import pandas as pd
+
+        return pd.DataFrame(self.as_record_dict())
+
 
 class Linker:
     def __init__(self, settings_dict, input_tables, tf_tables={}):

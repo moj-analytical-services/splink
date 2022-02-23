@@ -161,7 +161,8 @@ def test_splink_2_predict():
 
     expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
 
-    df_e = linker.predict()
+    df_e = linker.predict().as_pandas_dataframe()
+
     f1 = df_e["unique_id_l"] == 479
     f2 = df_e["unique_id_r"] == 481
     actual_record = df_e[f1 & f2]
@@ -216,8 +217,8 @@ def test_splink_2_predict_sqlite():
         sqlite_connection=con,
     )
 
-    table_name = linker.predict()
-    df_e = pd.read_sql(f"SELECT * FROM {table_name}", con)
+    df_e = linker.predict().as_pandas_dataframe()
+
     f1 = df_e["unique_id_l"] == 479
     f2 = df_e["unique_id_r"] == 481
     actual_record = df_e[f1 & f2]
@@ -351,7 +352,7 @@ def test_lambda():
 
     linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
 
-    ma = linker.predict()
+    ma = linker.predict().as_pandas_dataframe()
     print(len(ma))
 
     f1 = ma["unique_id_l"] == 924
