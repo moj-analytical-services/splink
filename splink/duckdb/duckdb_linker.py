@@ -57,9 +57,12 @@ class DuckDBInMemoryLinker(Linker):
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
 
-        output = self.con.query(sql).to_df()
-
-        self.con.register(physical_name, output)
+        sql = f"""
+        CREATE TABLE IF NOT EXISTS {physical_name}
+        AS
+        ({sql})
+        """
+        output = self.con.execute(sql).fetch_df()
 
         return DuckDBInMemoryLinkerDataFrame(templated_name, physical_name, self)
 
