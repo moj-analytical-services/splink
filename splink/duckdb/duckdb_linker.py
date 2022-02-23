@@ -50,8 +50,8 @@ class DuckDBInMemoryLinker(Linker):
 
         super().__init__(settings_dict, input_tables, tf_tables)
 
-    def _df_as_obj(self, df_name, df_value):
-        return DuckDBInMemoryLinkerDataFrame(df_name, df_value, self)
+    def _df_as_obj(self, templated_name, physical_name):
+        return DuckDBInMemoryLinkerDataFrame(templated_name, physical_name, self)
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
         if transpile:

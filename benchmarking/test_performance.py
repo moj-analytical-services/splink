@@ -251,8 +251,8 @@ def sqlite_performance(con, target_rows=1e6):
 
     blocking_rule = "l.dob = r.dob"
     linker.train_m_using_expectation_maximisation(blocking_rule)
-    linker.predict()
-    pd.read_sql("SELECT * FROM __splink__df_predict", con)
+    df = linker.predict()
+    df.as_record_dict()
 
 
 def test_2_rounds_1k_sqlite(benchmark):
