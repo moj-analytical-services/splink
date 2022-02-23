@@ -98,7 +98,6 @@ class Linker:
         self, sql, output_tablename_templated, materialise_as_hash=True
     ):
 
-        # Reset pipeline
         self.pipeline.reset()
 
         if output_tablename_templated in self.named_cache:
