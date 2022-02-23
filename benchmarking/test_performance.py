@@ -151,8 +151,8 @@ settings_dict = {
         email_cc,
         city_cc,
     ],
-    "retain_matching_columns": True,
-    "retain_intermediate_calculation_columns": True,
+    "retain_matching_columns": False,
+    "retain_intermediate_calculation_columns": False,
     "additional_columns_to_retain": ["group"],
     "max_iterations": 10,
 }
@@ -170,7 +170,8 @@ def duckdb_performance(df, target_rows=1e6):
     blocking_rule = "l.dob = r.dob"
     linker.train_m_using_expectation_maximisation(blocking_rule)
 
-    linker.predict()
+    df = linker.predict()
+    df.as_pandas_dataframe()
 
 
 def test_2_rounds_1k_duckdb(benchmark):
