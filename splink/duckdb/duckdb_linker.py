@@ -1,4 +1,7 @@
 import logging
+import shutil
+import uuid
+import os
 
 import sqlglot
 from pandas import DataFrame as pd_DataFrame
@@ -31,13 +34,12 @@ class DuckDBInMemoryLinkerDataFrame(SplinkDataFrame):
 
         return self.duckdb_linker.con.query(sql).to_df().to_dict(orient="records")
 
-
-class DuckDBInMemoryLinker(Linker):
+class DuckDBLinker(Linker):
     def __init__(self, settings_dict, input_tables, tf_tables={}):
 
-        con = duckdb.connect(database=":memory:")
-        self.con = con
+        super().__init__(settings_dict, input_tables, tf_tables)
 
+    def log_input_tables(self, con, input_tables, tf_tables):
         for templated_name, df in input_tables.items():
             # Make a table with this name
             con.register(templated_name, df)
@@ -47,8 +49,6 @@ class DuckDBInMemoryLinker(Linker):
             # Make a table with this name
             con.register(templated_name, df)
             tf_tables[templated_name] = templated_name
-
-        super().__init__(settings_dict, input_tables, tf_tables)
 
     def _df_as_obj(self, templated_name, physical_name):
         return DuckDBInMemoryLinkerDataFrame(templated_name, physical_name, self)
@@ -71,3 +71,31 @@ class DuckDBInMemoryLinker(Linker):
             return ""
         percent = proportion * 100
         return f"USING SAMPLE {percent}% (bernoulli)"
+
+
+class DuckDBInMemoryLinker(DuckDBLinker):
+    def __init__(self, settings_dict, input_tables, tf_tables={}):
+
+        con = duckdb.connect(database=":memory:")
+        self.con = con
+
+        self.log_input_tables(con, input_tables, tf_tables)
+
+        super().__init__(settings_dict, input_tables, tf_tables)
+
+class DuckDBonDiskLinker(DuckDBLinker):
+    def __init__(self, settings_dict, input_tables, tf_tables={}):
+
+        tmp_filepath = "temp_db"
+        if not os.path.exists(tmp_filepath):
+            os.mkdir(tmp_filepath)
+        else:
+            shutil.rmtree(tmp_filepath)
+            os.mkdir(tmp_filepath)
+
+        con = duckdb.connect(database=f"{tmp_filepath}/{uuid.uuid4().hex}.duckdb", read_only=False)
+        self.con = con
+
+        self.log_input_tables(con, input_tables, tf_tables)
+
+        super().__init__(settings_dict, input_tables, tf_tables)
