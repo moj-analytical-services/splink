@@ -1,6 +1,6 @@
 import pytest
 
-from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
+from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker, DuckDBonDiskLinker
 from splink.spark.spark_linker import SparkLinker
 from splink.sqlite.sqlite_linker import SQLiteLinker
 import pandas as pd
@@ -195,6 +195,41 @@ def test_10_rounds_20k_duckdb(benchmark):
         warmup_rounds=0,
     )
 
+def duckdb_on_disk_performance(df, target_rows=1e6):
+
+    linker = DuckDBonDiskLinker(settings_dict, input_tables={"fake_data_1": df})
+
+    linker.train_u_using_random_sampling(target_rows=target_rows)
+
+    blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
+    linker.train_m_using_expectation_maximisation(blocking_rule)
+
+    blocking_rule = "l.dob = r.dob"
+    linker.train_m_using_expectation_maximisation(blocking_rule)
+
+    df = linker.predict()
+    df.as_pandas_dataframe()
+
+
+def test_2_rounds_1k_duckdb_on_disk_performance(benchmark):
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    benchmark.pedantic(
+        duckdb_on_disk_performance,
+        kwargs={"df": df, "target_rows": 1e6},
+        rounds=2,
+        iterations=1,
+        warmup_rounds=0,
+    )
+
+def test_10_rounds_20k_duckdb_on_disk_performance(benchmark):
+    df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
+    benchmark.pedantic(
+        duckdb_on_disk_performance,
+        kwargs={"df": df, "target_rows": 3e6},
+        rounds=10,
+        iterations=1,
+        warmup_rounds=0,
+    )
 
 def spark_performance(df, target_rows):
 
