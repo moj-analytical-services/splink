@@ -3,6 +3,7 @@ tmp_spark/
 try_*.py
 .github/workflows/benchmark_comment_markdown.md
 benchmarking/output.json
+benchmarking/synthetic_data_all.parquet
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
