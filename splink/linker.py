@@ -13,6 +13,8 @@ from .term_frequencies import (
     term_frequencies,
     sql_gen_term_frequencies,
     colname_to_tf_tablename,
+    link_only_split,
+    join_tf_to_input_df,
 )
 
 from .m_training import estimate_m_values_from_label_column
@@ -88,6 +90,17 @@ class Linker:
         if materialise:
             self.execute_sql_pipeline(materialise_as_hash=False)
 
+        if self.settings_obj._link_type == "link_only":
+            if not materialise:
+                self.execute_sql_pipeline(materialise_as_hash=False)
+            for df in self.input_dfs.values():
+                sql = link_only_split(df.physical_name, self.settings_obj)
+                self.sql_to_dataframe(
+                    sql,
+                    f"__splink__{df.templated_name}_with_tf",
+                    materialise_as_hash=False,
+                )
+
     def compute_tf_table(self, column_name):
         sql = vertically_concatente(self.input_dfs)
         self.enqueue_sql(sql, "__splink__df_concat")
@@ -127,6 +140,8 @@ class Linker:
             return self._df_as_obj(output_tablename_templated, hash)
 
         print(f"Executing sql with hashed value {hash}")
+
+        # print(sql)
 
         if materialise_as_hash:
             dataframe = self.execute_sql(sql, output_tablename_templated, hash)
@@ -171,7 +186,7 @@ class Linker:
 
     def deterministic_link(self, return_df_as_value=True):
 
-        df_dict = block_using_rules(self.settings_obj, self.input_dfs, self.execute_sql)
+        df_dict = block_using_rules(self)
         if return_df_as_value:
             return df_dict["__splink__df_blocked"].df_value
         else:
@@ -293,7 +308,7 @@ class Linker:
         # materialisation of anything
         self._initialise_df_concat_with_tf(materialise=False)
 
-        sql = block_using_rules(self.settings_obj)
+        sql = block_using_rules(self)
         self.enqueue_sql(sql, "__splink__df_blocked")
 
         sql = compute_comparison_vector_values(self.settings_obj)
@@ -304,4 +319,30 @@ class Linker:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
         predictions = self.execute_sql_pipeline([])
+        return predictions
+
+    def incremental_link(self, new_records_table):
+
+        link_type_old = self.settings_obj._link_type
+        self.settings_obj._link_type = "link_only"
+
+        sql = join_tf_to_input_df(self.settings_obj)
+        sql = sql.replace("__splink__df_concat", new_records_table)
+        self.enqueue_sql(sql, new_records_table + "_with_tf")
+
+        sql = block_using_rules(
+            self,
+            incremental_tablename=new_records_table + "_with_tf",
+        )
+        self.enqueue_sql(sql, "__splink__df_blocked")
+
+        sql = compute_comparison_vector_values(self.settings_obj)
+        self.enqueue_sql(sql, "__splink__df_comparison_vectors")
+
+        sqls = predict(self.settings_obj)
+        for sql in sqls:
+            self.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        predictions = self.execute_sql_pipeline([])
+        self.settings_obj._link_type = link_type_old
         return predictions

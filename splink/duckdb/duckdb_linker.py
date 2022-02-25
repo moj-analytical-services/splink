@@ -62,7 +62,7 @@ class DuckDBInMemoryLinker(Linker):
         AS
         ({sql})
         """
-        output = self.con.execute(sql).fetch_df()
+        self.con.execute(sql)
 
         return DuckDBInMemoryLinkerDataFrame(templated_name, physical_name, self)
 
@@ -79,3 +79,7 @@ class DuckDBInMemoryLinker(Linker):
         except RuntimeError:
             return False
         return True
+
+    def list_tables(self):
+        sql = "PRAGMA show_tables;"
+        return self.con.execute(sql).fetch_df()
