@@ -245,7 +245,7 @@ def sqlite_performance(con, target_rows=1e6):
         sqlite_connection=con,
     )
 
-    linker.train_u_using_random_sampling(target_rows=1e6)
+    linker.train_u_using_random_sampling(target_rows=target_rows)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.train_m_using_expectation_maximisation(blocking_rule)
@@ -259,13 +259,15 @@ def sqlite_performance(con, target_rows=1e6):
 def test_2_rounds_1k_sqlite(benchmark):
     import sqlite3
 
-    con = sqlite3.connect(":memory:")
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df.to_sql("input_df_tablename", con)
+    def setup():
+        con = sqlite3.connect(":memory:")
+        df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+        df.to_sql("input_df_tablename", con)
+        return (con,), {"target_rows": 1e6}
 
     benchmark.pedantic(
         sqlite_performance,
-        kwargs={"con": con, "target_rows": 1e6},
+        setup=setup,
         rounds=2,
         iterations=1,
         warmup_rounds=0,
@@ -275,13 +277,15 @@ def test_2_rounds_1k_sqlite(benchmark):
 def test_10_rounds_20k_sqlite(benchmark):
     import sqlite3
 
-    con = sqlite3.connect(":memory:")
-    df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
-    df.to_sql("input_df_tablename", con)
+    def setup():
+        con = sqlite3.connect(":memory:")
+        df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
+        df.to_sql("input_df_tablename", con)
+        return (con,), {"target_rows": 3e6}
 
     benchmark.pedantic(
         sqlite_performance,
-        kwargs={"con": con, "target_rows": 3e6},
+        setup=setup,
         rounds=10,
         iterations=1,
         warmup_rounds=0,
