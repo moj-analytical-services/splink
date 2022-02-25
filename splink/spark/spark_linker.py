@@ -86,3 +86,10 @@ class SparkLinker(Linker):
             return ""
         percent = proportion * 100
         return f" TABLESAMPLE ({percent} PERCENT) "
+
+    def table_exists_in_database(self, table_name):
+        tables = self.spark.catalog.listTables()
+        for t in tables:
+            if t.name == table_name:
+                return True
+        return False
