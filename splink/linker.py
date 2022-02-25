@@ -122,7 +122,6 @@ class Linker:
             dataframe = self.execute_sql(sql, output_tablename_templated, hash)
             self.hashed_cache[hash] = dataframe
         else:
-            print(sql)
             dataframe = self.execute_sql(
                 sql, output_tablename_templated, output_tablename_templated
             )
