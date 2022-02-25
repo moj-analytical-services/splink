@@ -1,6 +1,4 @@
 import logging
-import shutil
-import uuid
 import os
 
 import sqlglot
@@ -8,6 +6,8 @@ from pandas import DataFrame as pd_DataFrame
 
 import duckdb
 from splink.linker import Linker, SplinkDataFrame
+
+from splink.misc import create_temp_folder, create_db_folder
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,20 @@ class DuckDBInMemoryLinkerDataFrame(SplinkDataFrame):
         return self.duckdb_linker.con.query(sql).to_df().to_dict(orient="records")
 
 class DuckDBLinker(Linker):
-    def __init__(self, settings_dict, input_tables, tf_tables={}):
+    def __init__(self, settings_dict, input_tables, tf_tables={}, connection=":memory:"):
+
+        if connection == ":temporary:":
+            tmp_folder = create_temp_folder()
+            con = duckdb.connect(database=f"{tmp_folder.name}/linker.duckdb", read_only=False)
+        else:
+            if connection != ":memory:":
+                create_db_folder(filepath=connection, file_ext=".duckdb")
+
+            con = duckdb.connect(database=connection)
+
+        self.con = con
+
+        self.log_input_tables(con, input_tables, tf_tables)
 
         super().__init__(settings_dict, input_tables, tf_tables)
 
@@ -72,30 +85,3 @@ class DuckDBLinker(Linker):
         percent = proportion * 100
         return f"USING SAMPLE {percent}% (bernoulli)"
 
-
-class DuckDBInMemoryLinker(DuckDBLinker):
-    def __init__(self, settings_dict, input_tables, tf_tables={}):
-
-        con = duckdb.connect(database=":memory:")
-        self.con = con
-
-        self.log_input_tables(con, input_tables, tf_tables)
-
-        super().__init__(settings_dict, input_tables, tf_tables)
-
-class DuckDBonDiskLinker(DuckDBLinker):
-    def __init__(self, settings_dict, input_tables, tf_tables={}):
-
-        tmp_filepath = "temp_db"
-        if not os.path.exists(tmp_filepath):
-            os.mkdir(tmp_filepath)
-        else:
-            shutil.rmtree(tmp_filepath)
-            os.mkdir(tmp_filepath)
-
-        con = duckdb.connect(database=f"{tmp_filepath}/{uuid.uuid4().hex}.duckdb", read_only=False)
-        self.con = con
-
-        self.log_input_tables(con, input_tables, tf_tables)
-
-        super().__init__(settings_dict, input_tables, tf_tables)
