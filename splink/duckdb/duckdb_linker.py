@@ -12,7 +12,7 @@ from splink.misc import create_temp_folder, create_db_folder
 logger = logging.getLogger(__name__)
 
 
-class DuckDBInMemoryLinkerDataFrame(SplinkDataFrame):
+class DuckDBLinkerDataFrame(SplinkDataFrame):
     def __init__(self, templated_name, physical_name, duckdb_linker):
         super().__init__(templated_name, physical_name)
         self.duckdb_linker = duckdb_linker
@@ -64,7 +64,7 @@ class DuckDBLinker(Linker):
             tf_tables[templated_name] = templated_name
 
     def _df_as_obj(self, templated_name, physical_name):
-        return DuckDBInMemoryLinkerDataFrame(templated_name, physical_name, self)
+        return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
         if transpile:
@@ -77,7 +77,7 @@ class DuckDBLinker(Linker):
         """
         output = self.con.execute(sql).fetch_df()
 
-        return DuckDBInMemoryLinkerDataFrame(templated_name, physical_name, self)
+        return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
     def random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
