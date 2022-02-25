@@ -127,7 +127,6 @@ class Linker:
             return self._df_as_obj(output_tablename_templated, hash)
 
         print(f"Executing sql with hashed value {hash}")
-        print(sql)
 
         if materialise_as_hash:
             dataframe = self.execute_sql(sql, output_tablename_templated, hash)
