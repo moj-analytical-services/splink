@@ -1,5 +1,6 @@
 import logging
 import os
+import uuid
 
 import sqlglot
 from pandas import DataFrame as pd_DataFrame
@@ -39,7 +40,7 @@ class DuckDBLinker(Linker):
 
         if connection == ":temporary:":
             tmp_folder = create_temp_folder()
-            con = duckdb.connect(database=f"{tmp_folder.name}/linker.duckdb", read_only=False)
+            con = duckdb.connect(database=f"{tmp_folder.name}/{uuid.uuid4().hex}.duckdb", read_only=False)
         else:
             if connection != ":memory:":
                 create_db_folder(filepath=connection, file_ext=".duckdb")
