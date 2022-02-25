@@ -9,7 +9,11 @@ from .em_training import EMTrainingSession
 from .misc import bayes_factor_to_prob, escape_columns, prob_to_bayes_factor
 from .predict import predict
 from .settings import Settings
-from .term_frequencies import term_frequencies
+from .term_frequencies import (
+    term_frequencies,
+    sql_gen_term_frequencies,
+    colname_to_tf_tablename,
+)
 
 from .m_training import estimate_m_values_from_label_column
 from .u_training import estimate_u_values
@@ -64,27 +68,32 @@ class Linker:
 
         self.settings_obj = Settings(settings_dict)
 
-        # self.named_cache = {name: DataFrame(name, value)}
-        self.named_cache = {}
-
-        # self.hashed_cache = {hash: DataFrame(name, value)}
-        self.hashed_cache = {}
-
         self.pipeline = SQLPipeline()
 
         self.input_dfs = self._get_input_dataframe_dict(input_tables)
-        self.input_tf_tables = self._get_input_tf_dict(tf_tables)
+
         self._validate_input_dfs()
         self.em_training_sessions = []
 
+    def _initialise_df_concat_with_tf(self, materialise=True):
+        if self.table_exists_in_database("__splink__df_concat_with_tf"):
+            return
         sql = vertically_concatente(self.input_dfs)
         self.enqueue_sql(sql, "__splink__df_concat")
 
-        sqls = term_frequencies(self.settings_obj, self.input_tf_tables)
+        sqls = term_frequencies(self)
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        self.execute_sql_pipeline(materialise_as_hash=False)
+        if materialise:
+            self.execute_sql_pipeline(materialise_as_hash=False)
+
+    def compute_tf_table(self, column_name):
+        sql = vertically_concatente(self.input_dfs)
+        self.enqueue_sql(sql, "__splink__df_concat")
+        sql = sql_gen_term_frequencies(column_name)
+        self.enqueue_sql(sql, colname_to_tf_tablename(column_name))
+        return self.execute_sql_pipeline(materialise_as_hash=False)
 
     def enqueue_sql(self, sql, output_table_name):
         self.pipeline.enqueue_sql(sql, output_table_name)
@@ -105,27 +114,26 @@ class Linker:
 
         self.pipeline.reset()
 
-        if output_tablename_templated in self.named_cache:
-            print(f"Returning named cache {output_tablename_templated}")
-            return self.named_cache[output_tablename_templated]
+        if self.table_exists_in_database(output_tablename_templated):
+            return self._df_as_obj(
+                output_tablename_templated, output_tablename_templated
+            )
 
         hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
         # Ensure hash is valid sql table name
-        hash = "a_" + hash
-        if hash in self.hashed_cache:
-            print(f"Returning hashed cache {hash}")
-            return self.hashed_cache[hash]
+        hash = "__splink__" + hash
+
+        if self.table_exists_in_database(hash):
+            return self._df_as_obj(output_tablename_templated, hash)
 
         print(f"Executing sql with hashed value {hash}")
 
         if materialise_as_hash:
             dataframe = self.execute_sql(sql, output_tablename_templated, hash)
-            self.hashed_cache[hash] = dataframe
         else:
             dataframe = self.execute_sql(
                 sql, output_tablename_templated, output_tablename_templated
             )
-            self.named_cache[output_tablename_templated] = dataframe
 
         return dataframe
 
@@ -152,6 +160,11 @@ class Linker:
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
         raise NotImplementedError(f"execute_sql not implemented for {type(self)}")
 
+    def table_exists_in_database(self, table_name):
+        raise NotImplementedError(
+            f"table_exists_in_database not implemented for {type(self)}"
+        )
+
     def _validate_input_dfs(self):
         for df in self.input_dfs.values():
             df.validate()
@@ -165,12 +178,12 @@ class Linker:
             return df_dict
 
     def train_u_using_random_sampling(self, target_rows):
-
+        self._initialise_df_concat_with_tf(materialise=True)
         estimate_u_values(self, target_rows)
         self.populate_m_u_from_trained_values()
 
     def train_m_from_label_column(self, label_colname):
-
+        self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_values_from_label_column(self, self.input_dfs, label_colname)
         self.populate_m_u_from_trained_values()
 
@@ -183,7 +196,7 @@ class Linker:
         fix_u_probabilities=True,
         fix_m_probabilities=False,
     ):
-
+        self._initialise_df_concat_with_tf(materialise=True)
         em_training_session = EMTrainingSession(
             self,
             blocking_rule,
@@ -274,15 +287,11 @@ class Linker:
             comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,
         )
 
-    def _comparison_vectors(self):
-        sql = block_using_rules(self.settings_obj)
-        self.enqueue_sql(sql, "__splink__df_blocked")
-
-        sql = compute_comparison_vector_values(self.settings_obj)
-        self.enqueue_sql(sql, "__splink__df_comparison_vectors")
-        return self.execute_sql_pipeline([])
-
     def predict(self):
+
+        # If the user only calls predict, it runs as a single pipeline with no
+        # materialisation of anything
+        self._initialise_df_concat_with_tf(materialise=False)
 
         sql = block_using_rules(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_blocked")

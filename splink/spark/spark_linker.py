@@ -64,9 +64,7 @@ class SparkLinker(Linker):
         spark_df = self.spark.sql(sql)
 
         # Break lineage
-        # spark_df.write.mode("overwrite").parquet(f"./tmp_spark/{physical_name}")
-        # spark_df = self.spark.read.parquet(f"./tmp_spark/{physical_name}")
-        # Only persist if templated_name = pyhsical_name
+
         if templated_name == physical_name:
             print(f"persisted {templated_name}")
             spark_df.persist()
@@ -86,3 +84,10 @@ class SparkLinker(Linker):
             return ""
         percent = proportion * 100
         return f" TABLESAMPLE ({percent} PERCENT) "
+
+    def table_exists_in_database(self, table_name):
+        tables = self.spark.catalog.listTables()
+        for t in tables:
+            if t.name == table_name:
+                return True
+        return False

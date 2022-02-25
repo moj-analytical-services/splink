@@ -8,6 +8,8 @@ from .charts import (
 from .maximisation_step import expectation_maximisation
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .parse_sql import get_columns_used_from_sql
+from .blocking import block_using_rules
+from .comparison_vector_values import compute_comparison_vector_values
 
 
 class EMTrainingSession:
@@ -76,9 +78,18 @@ class EMTrainingSession:
         self.lambda_history = []
         self.add_iteration()
 
+    def _comparison_vectors(self):
+
+        sql = block_using_rules(self.settings_obj)
+        self.original_linker.enqueue_sql(sql, "__splink__df_blocked")
+
+        sql = compute_comparison_vector_values(self.settings_obj)
+        self.original_linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
+        return self.original_linker.execute_sql_pipeline([])
+
     def train(self):
 
-        cvv = self.training_linker._comparison_vectors()
+        cvv = self._comparison_vectors()
 
         # Compute the new parameters, populating the paramters in the copied settings object
         # At this stage, we do not overwrite any of the parameters in the original (main) setting object
