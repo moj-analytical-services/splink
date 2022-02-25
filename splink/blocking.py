@@ -34,19 +34,13 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
         where_condition = f"where {id_expr_l} < {id_expr_r}"
     elif link_type == "link_only":
         source_dataset_col = unique_id_cols[0]
-        # where_condition = f"where {id_expr_l} < {id_expr_r}"
-        # where_condition = f"where l.unique_id < {id_expr_r}"
-        where_condition = " and true "
-    elif link_type == "link_only_more_than_two":
-        source_dataset_col = unique_id_cols[0]
-        where_condition = f"where {id_expr_l} < {id_expr_r} and l.{source_dataset_col.name} != r.{source_dataset_col.name}"
+        where_condition = f"where {id_expr_l} < {id_expr_r} and l.{source_dataset_col} != r.{source_dataset_col}"
 
     return where_condition
 
 
-def block_using_rules(linker, incremental_tablename=None):
+def block_using_rules(settings_obj, input_tablename="__splink__df_concat_with_tf"):
 
-    settings_obj = linker.settings_obj
     columns_to_select = settings_obj._columns_to_select_for_blocking
     sql_select_expr = ", ".join(columns_to_select)
     where_condition = _sql_gen_where_condition(
@@ -72,19 +66,6 @@ def block_using_rules(linker, incremental_tablename=None):
     if not blocking_rules:
         blocking_rules = ["true"]
 
-    if settings_obj._link_type == "link_only" and not incremental_tablename:
-        name_left = list(linker.input_dfs.values())[0].physical_name
-        name_right = list(linker.input_dfs.values())[1].physical_name
-        input_tablename_l = f"__splink__{name_left}_with_tf"
-        input_tablename_r = f"__splink__{name_right}_with_tf"
-    else:
-        input_tablename_l = "__splink__df_concat_with_tf"
-        input_tablename_r = "__splink__df_concat_with_tf"
-
-    if incremental_tablename:
-        input_tablename_l = "__splink__df_concat_with_tf"
-        input_tablename_r = incremental_tablename
-
     for matchkey_number, rule in enumerate(blocking_rules):
         not_previous_rules_statement = _sql_gen_and_not_previous_rules(previous_rules)
 
@@ -92,8 +73,8 @@ def block_using_rules(linker, incremental_tablename=None):
         select
         {sql_select_expr}
         , '{matchkey_number}' as match_key
-        from {input_tablename_l} as l
-        inner join {input_tablename_r} as r
+        from {input_tablename} as l
+        inner join {input_tablename} as r
         on
         {rule}
         {not_previous_rules_statement}

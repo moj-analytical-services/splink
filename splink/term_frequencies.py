@@ -94,13 +94,3 @@ def term_frequencies(linker):
     sqls.append(sql)
 
     return sqls
-
-
-def link_only_split(df_name, settings_obj):
-    source_dataset_col = settings_obj._source_dataset_column_name
-
-    sql = f"""
-    select * from __splink__df_concat_with_tf
-    where {source_dataset_col} = '{df_name}'
-    """
-    return sql

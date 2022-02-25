@@ -64,7 +64,7 @@ def estimate_u_values(linker, target_rows):
 
     settings_obj._blocking_rules_to_generate_predictions = []
 
-    sql = block_using_rules(linker, "__splink__df_concat_with_tf_sample")
+    sql = block_using_rules(settings_obj, "__splink__df_concat_with_tf_sample")
     linker.enqueue_sql(sql, "__splink__df_blocked")
 
     sql = compute_comparison_vector_values(settings_obj)
