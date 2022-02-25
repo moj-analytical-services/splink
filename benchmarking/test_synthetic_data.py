@@ -224,7 +224,7 @@ def test_3_rounds_1m_duckdb(benchmark):
     )
 
 
-def spark_performance(df, target_rows):
+def spark_performance(df, target_rows=1e6):
 
     linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df})
 
@@ -245,20 +245,27 @@ def test_3_rounds_100k_spark(benchmark):
     from pyspark.context import SparkContext, SparkConf
     from pyspark.sql import SparkSession
 
-    conf = SparkConf()
-    conf.set("spark.driver.memory", "12g")
-    conf.set("spark.sql.shuffle.partitions", "8")
-    conf.set("spark.default.parallelism", "8")
+    def setup():
+        conf = SparkConf()
+        conf.set("spark.driver.memory", "12g")
+        conf.set("spark.sql.shuffle.partitions", "8")
+        conf.set("spark.default.parallelism", "8")
 
-    sc = SparkContext.getOrCreate(conf=conf)
-    spark = SparkSession(sc)
+        sc = SparkContext.getOrCreate(conf=conf)
+        spark = SparkSession(sc)
 
-    df = spark.read.parquet("./benchmarking/synthetic_data_all.parquet")
-    df = df.limit(100_000)
+        for table in spark.catalog.listTables():
+            if table.isTemporary:
+                spark.catalog.dropTempView(table.name)
+
+        df = spark.read.parquet("./benchmarking/synthetic_data_all.parquet")
+        df = df.limit(100_000)
+
+        return (df,), {"target_rows": 2e6}
 
     benchmark.pedantic(
         spark_performance,
-        kwargs={"df": df, "target_rows": 2e6},
+        setup=setup,
         rounds=3,
         iterations=1,
         warmup_rounds=0,
@@ -270,20 +277,27 @@ def test_3_rounds_300k_spark(benchmark):
     from pyspark.context import SparkContext, SparkConf
     from pyspark.sql import SparkSession
 
-    conf = SparkConf()
-    conf.set("spark.driver.memory", "12g")
-    conf.set("spark.sql.shuffle.partitions", "8")
-    conf.set("spark.default.parallelism", "8")
+    def setup():
+        conf = SparkConf()
+        conf.set("spark.driver.memory", "12g")
+        conf.set("spark.sql.shuffle.partitions", "8")
+        conf.set("spark.default.parallelism", "8")
 
-    sc = SparkContext.getOrCreate(conf=conf)
-    spark = SparkSession(sc)
+        sc = SparkContext.getOrCreate(conf=conf)
+        spark = SparkSession(sc)
 
-    df = spark.read.parquet("./benchmarking/synthetic_data_all.parquet")
-    df = df.limit(300_000)
+        for table in spark.catalog.listTables():
+            if table.isTemporary:
+                spark.catalog.dropTempView(table.name)
+
+        df = spark.read.parquet("./benchmarking/synthetic_data_all.parquet")
+        df = df.limit(300_000)
+
+        return (df,), {"target_rows": 2e6}
 
     benchmark.pedantic(
         spark_performance,
-        kwargs={"df": df, "target_rows": 2e6},
+        setup=setup,
         rounds=3,
         iterations=1,
         warmup_rounds=0,
@@ -295,19 +309,26 @@ def test_3_rounds_1m_spark(benchmark):
     from pyspark.context import SparkContext, SparkConf
     from pyspark.sql import SparkSession
 
-    conf = SparkConf()
-    conf.set("spark.driver.memory", "12g")
-    conf.set("spark.sql.shuffle.partitions", "8")
-    conf.set("spark.default.parallelism", "8")
+    def setup():
+        conf = SparkConf()
+        conf.set("spark.driver.memory", "12g")
+        conf.set("spark.sql.shuffle.partitions", "8")
+        conf.set("spark.default.parallelism", "8")
 
-    sc = SparkContext.getOrCreate(conf=conf)
-    spark = SparkSession(sc)
+        sc = SparkContext.getOrCreate(conf=conf)
+        spark = SparkSession(sc)
 
-    df = spark.read.parquet("./benchmarking/synthetic_data_all.parquet")
+        for table in spark.catalog.listTables():
+            if table.isTemporary:
+                spark.catalog.dropTempView(table.name)
+
+        df = spark.read.parquet("./benchmarking/synthetic_data_all.parquet")
+
+        return (df,), {"target_rows": 10e6}
 
     benchmark.pedantic(
         spark_performance,
-        kwargs={"df": df, "target_rows": 10e6},
+        setup=setup,
         rounds=3,
         iterations=1,
         warmup_rounds=0,

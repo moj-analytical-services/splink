@@ -121,7 +121,7 @@ class Linker:
 
         hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
         # Ensure hash is valid sql table name
-        hash = "a_" + hash
+        hash = "__splink__" + hash
 
         if self.table_exists_in_database(hash):
             return self._df_as_obj(output_tablename_templated, hash)
