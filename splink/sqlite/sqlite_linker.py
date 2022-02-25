@@ -77,12 +77,6 @@ class SQLiteLinker(Linker):
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
-        drop_sql = f"""
-        drop table if exists {physical_name};
-        """
-
-        self.con.execute(drop_sql)
-
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="sqlite")[0]
 
