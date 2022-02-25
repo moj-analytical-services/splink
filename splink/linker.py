@@ -149,8 +149,8 @@ class Linker:
             d[renamed] = self._df_as_obj(renamed, df_value)
         return d
 
-    def execute_sql(sql, df_dict, output_table_name):
-        pass
+    def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+        raise NotImplementedError(f"execute_sql not implemented for {type(self)}")
 
     def _validate_input_dfs(self):
         for df in self.input_dfs.values():
