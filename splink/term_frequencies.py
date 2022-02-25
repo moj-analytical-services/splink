@@ -60,7 +60,7 @@ def join_tf_to_input_df(settings_obj):
     return sql
 
 
-def term_frequencies(settings_obj, user_provided_tf_dict):
+def term_frequencies(linker):
     """Compute the term frequencies of the required columns and add to the dataframe.
 
     Returns:
@@ -68,6 +68,7 @@ def term_frequencies(settings_obj, user_provided_tf_dict):
         of the corresponding values
     """
 
+    settings_obj = linker.settings_obj
     tf_cols = settings_obj._term_frequency_columns
 
     if not tf_cols:
@@ -75,7 +76,9 @@ def term_frequencies(settings_obj, user_provided_tf_dict):
 
     sqls = []
     for tf_col in tf_cols:
-        if colname_to_tf_tablename(tf_col) not in user_provided_tf_dict:
+        tf_table_name = colname_to_tf_tablename(tf_col)
+
+        if not linker.table_exists_in_database(tf_table_name):
             sql = sql_gen_term_frequencies(tf_col)
             sql = {
                 "sql": sql,

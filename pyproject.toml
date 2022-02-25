@@ -26,6 +26,7 @@ tabulate = "0.8.9"
 lzstring = "1.0.4"
 black = "^22.1.0"
 flake8 = "^4.0.1"
+pyarrow = "^7.0.0"
 
 
 [build-system]

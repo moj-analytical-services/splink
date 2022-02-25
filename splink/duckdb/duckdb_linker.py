@@ -60,8 +60,8 @@ class DuckDBLinker(Linker):
 
         for templated_name, df in tf_tables.items():
             # Make a table with this name
+            templated_name = "__splink__df_" + templated_name
             con.register(templated_name, df)
-            tf_tables[templated_name] = templated_name
 
     def _df_as_obj(self, templated_name, physical_name):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
@@ -85,3 +85,10 @@ class DuckDBLinker(Linker):
         percent = proportion * 100
         return f"USING SAMPLE {percent}% (bernoulli)"
 
+    def table_exists_in_database(self, table_name):
+        sql = f"PRAGMA table_info('{table_name}');"
+        try:
+            self.con.execute(sql)
+        except RuntimeError:
+            return False
+        return True

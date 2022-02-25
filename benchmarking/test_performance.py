@@ -231,7 +231,7 @@ def test_10_rounds_20k_duckdb_on_disk_performance(benchmark):
         warmup_rounds=0,
     )
 
-def spark_performance(df, target_rows):
+def spark_performance(df, target_rows=1e6):
 
     linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df})
 
@@ -251,20 +251,27 @@ def test_3_rounds_20k_spark(benchmark):
     from pyspark.context import SparkContext, SparkConf
     from pyspark.sql import SparkSession
 
-    conf = SparkConf()
-    conf.set("spark.driver.memory", "12g")
-    conf.set("spark.sql.shuffle.partitions", "8")
-    conf.set("spark.default.parallelism", "8")
+    def setup():
+        conf = SparkConf()
+        conf.set("spark.driver.memory", "12g")
+        conf.set("spark.sql.shuffle.partitions", "8")
+        conf.set("spark.default.parallelism", "8")
 
-    sc = SparkContext.getOrCreate(conf=conf)
-    spark = SparkSession(sc)
+        sc = SparkContext.getOrCreate(conf=conf)
+        spark = SparkSession(sc)
 
-    # df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=True)
-    df = spark.read.csv("./benchmarking/fake_20000_from_splink_demos.csv", header=True)
+        for table in spark.catalog.listTables():
+            if table.isTemporary:
+                spark.catalog.dropTempView(table.name)
+
+        df = spark.read.csv(
+            "./benchmarking/fake_20000_from_splink_demos.csv", header=True
+        )
+        return (df,), {"target_rows": 1e6}
 
     benchmark.pedantic(
         spark_performance,
-        kwargs={"df": df, "target_rows": 3e6},
+        setup=setup,
         rounds=3,
         iterations=1,
         warmup_rounds=0,
@@ -280,7 +287,7 @@ def sqlite_performance(con, target_rows=1e6):
         sqlite_connection=con,
     )
 
-    linker.train_u_using_random_sampling(target_rows=1e6)
+    linker.train_u_using_random_sampling(target_rows=target_rows)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.train_m_using_expectation_maximisation(blocking_rule)
@@ -294,13 +301,15 @@ def sqlite_performance(con, target_rows=1e6):
 def test_2_rounds_1k_sqlite(benchmark):
     import sqlite3
 
-    con = sqlite3.connect(":memory:")
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    df.to_sql("input_df_tablename", con)
+    def setup():
+        con = sqlite3.connect(":memory:")
+        df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+        df.to_sql("input_df_tablename", con)
+        return (con,), {"target_rows": 1e6}
 
     benchmark.pedantic(
         sqlite_performance,
-        kwargs={"con": con, "target_rows": 1e6},
+        setup=setup,
         rounds=2,
         iterations=1,
         warmup_rounds=0,
@@ -310,13 +319,15 @@ def test_2_rounds_1k_sqlite(benchmark):
 def test_10_rounds_20k_sqlite(benchmark):
     import sqlite3
 
-    con = sqlite3.connect(":memory:")
-    df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
-    df.to_sql("input_df_tablename", con)
+    def setup():
+        con = sqlite3.connect(":memory:")
+        df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
+        df.to_sql("input_df_tablename", con)
+        return (con,), {"target_rows": 3e6}
 
     benchmark.pedantic(
         sqlite_performance,
-        kwargs={"con": con, "target_rows": 3e6},
+        setup=setup,
         rounds=10,
         iterations=1,
         warmup_rounds=0,

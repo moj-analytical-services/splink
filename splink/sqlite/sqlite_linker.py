@@ -77,12 +77,6 @@ class SQLiteLinker(Linker):
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
-        drop_sql = f"""
-        drop table if exists {physical_name};
-        """
-
-        self.con.execute(drop_sql)
-
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="sqlite")[0]
 
@@ -103,3 +97,14 @@ class SQLiteLinker(Linker):
         sample_size = int(sample_size)
 
         return f"where unique_id IN (SELECT unique_id FROM __splink__df_concat_with_tf ORDER BY RANDOM() LIMIT {sample_size})"
+
+    def table_exists_in_database(self, table_name):
+        sql = f"PRAGMA table_info('{table_name}');"
+
+        rec = self.con.execute(sql).fetchone()
+        if not rec:
+            print(f"table {table_name} does not exist")
+            return False
+        else:
+            print(f"table {table_name} exists")
+            return True
