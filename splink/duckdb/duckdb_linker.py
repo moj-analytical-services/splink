@@ -79,3 +79,10 @@ class DuckDBInMemoryLinker(Linker):
         except RuntimeError:
             return False
         return True
+
+    def records_to_table(self, records, as_table_name):
+        for r in records:
+            r["source_dataset"] = "incremental_records"
+
+        df = pd_DataFrame(records)
+        self.con.register(as_table_name, df)

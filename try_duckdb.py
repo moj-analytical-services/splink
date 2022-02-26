@@ -8,7 +8,7 @@ from try_settings import settings_dict
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-settings_dict["max_iterations"] = 2
+
 linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
 
 

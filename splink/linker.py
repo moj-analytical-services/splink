@@ -13,6 +13,7 @@ from .term_frequencies import (
     term_frequencies,
     sql_gen_term_frequencies,
     colname_to_tf_tablename,
+    join_tf_to_input_df,
 )
 
 from .m_training import estimate_m_values_from_label_column
@@ -108,6 +109,9 @@ class Linker:
     def two_dataset_link_only(self):
         # Two dataset link only join is a special case where an inner join of the two datasets
         # is much more efficient than self-joining the vertically concatenation of all input datasets
+        if self.incremental_linkage_mode:
+            return True
+
         if len(self.input_dfs) == 2 and self.settings_obj._link_type == "link_only":
             return True
         else:
@@ -190,11 +194,14 @@ class Linker:
 
         if materialise_as_hash:
             dataframe = self.execute_sql(sql, output_tablename_templated, hash)
-            print(f"Executing sql with hashed value {hash} materialised as {hash}")
+            print(
+                f"Executing SQL for {output_tablename_templated} materialised as {hash}"
+            )
         else:
             print(
-                f"Executing sql with hashed value {hash} materialised as {output_tablename_templated}"
+                f"Executing SQL for {output_tablename_templated} materialised as {output_tablename_templated}"
             )
+
             dataframe = self.execute_sql(
                 sql, output_tablename_templated, output_tablename_templated
             )
@@ -368,4 +375,48 @@ class Linker:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
         predictions = self.execute_sql_pipeline([])
+        return predictions
+
+    def records_to_table(records, as_table_name):
+        # Create table in database containing records
+        # Probably quite difficult to implement correctly
+        # Due to data type issues.
+        raise NotImplementedError
+
+    def incremental_link(self, records, blocking_rules=None):
+
+        original_blocking_rules = (
+            self.settings_obj._blocking_rules_to_generate_predictions
+        )
+        original_link_type = self.settings_obj._link_type
+
+        self.records_to_table(records, "__splink__df_incremental")
+        self = deepcopy(self)
+        if blocking_rules:
+            self.settings_obj._blocking_rules_to_generate_predictions = blocking_rules
+        self.settings_obj._link_type = "link_only"
+        self.incremental_linkage_mode = True
+
+        sql = join_tf_to_input_df(self.settings_obj)
+        sql = sql.replace("__splink__df_concat", "__splink__df_incremental")
+        self.enqueue_sql(sql, "__splink__df_incremental_with_tf")
+
+        sql = block_using_rules(self)
+        self.enqueue_sql(sql, "__splink__df_blocked")
+
+        sql = compute_comparison_vector_values(self.settings_obj)
+        self.enqueue_sql(sql, "__splink__df_comparison_vectors")
+
+        sqls = predict(self.settings_obj)
+        for sql in sqls:
+            self.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        predictions = self.execute_sql_pipeline([])
+
+        self.settings_obj._blocking_rules_to_generate_predictions = (
+            original_blocking_rules
+        )
+        self.settings_obj._link_type = original_link_type
+        self.incremental_linkage_mode = False
+
         return predictions
