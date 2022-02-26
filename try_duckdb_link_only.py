@@ -7,12 +7,19 @@ from try_settings import settings_dict
 
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
+# df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
 
-df_main = df
-df_new = df[:1].copy()
+df = df.reset_index()
+df["side"] = df.index % 2
 
-linker = DuckDBInMemoryLinker(settings_dict, input_tables={"main": df_main})
+df_left = df[df["side"] == 0]
+df_right = df[df["side"] == 1]
+
+settings_dict["link_type"] = "link_only"
+
+linker = DuckDBInMemoryLinker(
+    settings_dict, input_tables={"df_left": df_left, "df_right": df_right}
+)
 
 
 # Train it as a dedupe job.
@@ -24,6 +31,7 @@ linker = DuckDBInMemoryLinker(settings_dict, input_tables={"main": df_main})
 
 # linker.list_tables()
 linker.train_u_using_random_sampling(target_rows=1e6)
+linker.settings_obj.match_weights_chart()
 
 blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
 linker.train_m_using_expectation_maximisation(blocking_rule)
@@ -31,36 +39,28 @@ linker.train_m_using_expectation_maximisation(blocking_rule)
 blocking_rule = "l.dob = r.dob"
 linker.train_m_using_expectation_maximisation(blocking_rule)
 df = linker.predict()
+df.as_pandas_dataframe()
+
+linker.settings_obj.match_weights_chart()
+# df_pd = df.as_pandas_dataframe()
+# df_pd.sort_values(["unique_id_l", "unique_id_r"])
+# df_new["source_dataset"] = "df_new"
 
 
-df_pd = df.as_pandas_dataframe()
-df_pd.sort_values(["unique_id_l", "unique_id_r"])
-df_new["source_dataset"] = "df_new"
+# linker.con.register("__splink__new", df_new)
 
 
-linker.con.register("__splink__new", df_new)
+# linker.compute_tf_table("first_name")
+# linker.compute_tf_table("city")
 
 
-linker.compute_tf_table("first_name")
-linker.compute_tf_table("city")
+# linker.con.execute(sql)
+# print(linker.con.fetchall())
+# import time
 
-# Probably no need for this, they're created automatically.
-sql = """
-CREATE INDEX first_name_idx ON __splink__df_concat_with_tf (first_name);
-CREATE INDEX surname_idx ON __splink__df_concat_with_tf (surname);
-CREATE INDEX dob_idx ON __splink__df_concat_with_tf (dob);
+# start_time = time.time()
 
-CREATE INDEX tf_first_name_idx ON __splink__df_tf_first_name (first_name);
-CREATE INDEX tf_city_idx ON __splink__df_tf_city (city);
-
-"""
-linker.con.execute(sql)
-print(linker.con.fetchall())
-import time
-
-start_time = time.time()
-
-df = linker.incremental_link("__splink__new").as_pandas_dataframe()
-df
-print("--- %s seconds ---" % (time.time() - start_time))
-linker.list_tables()
+# df = linker.incremental_link("__splink__new").as_pandas_dataframe()
+# df
+# print("--- %s seconds ---" % (time.time() - start_time))
+# linker.list_tables()

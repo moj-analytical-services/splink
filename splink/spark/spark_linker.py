@@ -60,7 +60,6 @@ class SparkLinker(Linker):
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
-        # print(sql)
         spark_df = self.spark.sql(sql)
 
         # Break lineage

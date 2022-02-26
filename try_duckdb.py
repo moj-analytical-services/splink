@@ -18,6 +18,7 @@ linker.train_m_using_expectation_maximisation(blocking_rule)
 
 blocking_rule = "l.dob = r.dob"
 linker.train_m_using_expectation_maximisation(blocking_rule)
+
 df = linker.predict()
 
 df_pd = df.as_pandas_dataframe()

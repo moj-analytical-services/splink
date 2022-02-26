@@ -35,16 +35,25 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     elif link_type == "link_only":
         source_dataset_col = unique_id_cols[0]
         where_condition = f"where {id_expr_l} < {id_expr_r} and l.{source_dataset_col} != r.{source_dataset_col}"
+    elif link_type == "two_dataset_link_only":
+        where_condition = f"where true"
 
     return where_condition
 
 
-def block_using_rules(settings_obj, input_tablename="__splink__df_concat_with_tf"):
+def block_using_rules(linker):
+
+    settings_obj = linker.settings_obj
 
     columns_to_select = settings_obj._columns_to_select_for_blocking
     sql_select_expr = ", ".join(columns_to_select)
+
+    link_type = settings_obj._link_type
+
+    if linker.two_dataset_link_only:
+        link_type = "two_dataset_link_only"
     where_condition = _sql_gen_where_condition(
-        settings_obj._link_type, settings_obj._unique_id_columns
+        link_type, settings_obj._unique_id_columns
     )
 
     sqls = []
@@ -73,8 +82,8 @@ def block_using_rules(settings_obj, input_tablename="__splink__df_concat_with_tf
         select
         {sql_select_expr}
         , '{matchkey_number}' as match_key
-        from {input_tablename} as l
-        inner join {input_tablename} as r
+        from {linker._input_tablename_l} as l
+        inner join {linker._input_tablename_r} as r
         on
         {rule}
         {not_previous_rules_statement}

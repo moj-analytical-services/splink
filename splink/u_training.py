@@ -19,6 +19,8 @@ def _num_target_rows_to_rows_to_sample(target_rows):
 
 def estimate_u_values(linker, target_rows):
 
+    linker.train_u_using_random_sample_mode = True
+
     original_settings_object = linker.settings_obj
     settings_obj = deepcopy(linker.settings_obj)
     settings_obj._retain_matching_columns = False
@@ -54,8 +56,8 @@ def estimate_u_values(linker, target_rows):
     from __splink__df_concat_with_tf
     {linker.random_sample_sql(proportion, sample_size)}
     """
-
-    sample_df = linker.execute_sql(
+    print(sql)
+    linker.execute_sql(
         sql,
         "__splink__df_concat_with_tf_sample",
         "__splink__df_concat_with_tf_sample",
@@ -64,7 +66,7 @@ def estimate_u_values(linker, target_rows):
 
     settings_obj._blocking_rules_to_generate_predictions = []
 
-    sql = block_using_rules(settings_obj, "__splink__df_concat_with_tf_sample")
+    sql = block_using_rules(linker)
     linker.enqueue_sql(sql, "__splink__df_blocked")
 
     sql = compute_comparison_vector_values(settings_obj)
@@ -96,3 +98,5 @@ def estimate_u_values(linker, target_rows):
         cl.add_trained_u_probability(
             record["u_probability"], "estimate u by random sampling"
         )
+
+    linker.train_u_using_random_sample_mode = False
