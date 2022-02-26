@@ -19,7 +19,7 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
         f"l.{label_colname} = r.{label_colname}"
     ]
 
-    df_dict = block_using_rules(settings_obj, df_dict, linker.execute_sql)
+    df_dict = block_using_rules(linker)
 
     df_dict = compute_comparison_vector_values(
         settings_obj, df_dict, linker.execute_sql

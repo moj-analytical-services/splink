@@ -169,17 +169,14 @@ settings_dict = {
     "retain_matching_columns": False,
     "retain_intermediate_calculation_columns": False,
     "additional_columns_to_retain": ["cluster"],
-    "max_iterations": 10,
+    "max_iterations": 2,
 }
 
 
-df = pd.read_parquet("./benchmarking/synthetic_data_all.parquet")
+df_orig = pd.read_parquet("./benchmarking/synthetic_data_all.parquet")
 
 
-df_main = df
-df_new = df[:10].copy()
-
-linker = DuckDBInMemoryLinker(settings_dict, input_tables={"main": df_main})
+linker = DuckDBInMemoryLinker(settings_dict, input_tables={"main": df_orig})
 
 
 # Train it as a dedupe job.
@@ -189,7 +186,9 @@ linker = DuckDBInMemoryLinker(settings_dict, input_tables={"main": df_main})
 # table and 'main' as the right table of a link_only.
 
 
-# linker.list_tables()
+linker.compute_tf_table("full_name")
+linker.compute_tf_table("postcode")
+linker.compute_tf_table("occupation")
 linker.train_u_using_random_sampling(target_rows=1e6)
 
 linker.train_m_using_expectation_maximisation("l.full_name = r.full_name")
@@ -197,27 +196,26 @@ linker.train_m_using_expectation_maximisation("l.full_name = r.full_name")
 linker.train_m_using_expectation_maximisation(
     "l.dob = r.dob and substr(l.postcode,1,2) = substr(r.postcode,1,2)"
 )
-df = linker.predict()
 
 
-df_pd = df.as_pandas_dataframe()
+new_records = df_orig[:1].to_dict(orient="records")
 
-
-df_new["source_dataset"] = "df_new"
-
-
-linker.con.register("__splink__new", df_new)
-
-
-linker.compute_tf_table("full_name")
-linker.compute_tf_table("postcode")
-linker.compute_tf_table("occupation")
+linker.settings_obj._retain_intermediate_calculation_columns = True
+linker.settings_obj._retain_matching_columns = True
 
 import time
 
 start_time = time.time()
 
-df = linker.incremental_link("__splink__new").as_pandas_dataframe()
-df
+
+# df = linker.incremental_link(
+#     new_records, blocking_rules=["l.dob = r.dob"], match_weight_threshold=-4
+# )
+df = linker.incremental_link(new_records, match_weight_threshold=-8)
 print("--- %s seconds ---" % (time.time() - start_time))
-df
+df_waterfall = df.as_pandas_dataframe()
+
+
+from splink.charts import waterfall_chart
+
+waterfall_chart(df_waterfall.to_dict(orient="records"), linker.settings_obj)

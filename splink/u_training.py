@@ -20,7 +20,11 @@ def _num_target_rows_to_rows_to_sample(target_rows):
 def estimate_u_values(linker, target_rows):
 
     original_settings_object = linker.settings_obj
-    settings_obj = deepcopy(linker.settings_obj)
+    training_linker = deepcopy(linker)
+
+    training_linker.train_u_using_random_sample_mode = True
+
+    settings_obj = training_linker.settings_obj
     settings_obj._retain_matching_columns = False
     settings_obj._retain_intermediate_calculation_columns = False
     for cc in settings_obj.comparisons:
@@ -31,7 +35,7 @@ def estimate_u_values(linker, target_rows):
     select count(*) as count
     from __splink__df_concat_with_tf
     """
-    dataframe = linker.sql_to_dataframe(sql, "__splink__df_concat_count")
+    dataframe = training_linker.sql_to_dataframe(sql, "__splink__df_concat_count")
     result = dataframe.as_record_dict()
     count_rows = result[0]["count"]
 
@@ -52,10 +56,10 @@ def estimate_u_values(linker, target_rows):
     sql = f"""
     select *
     from __splink__df_concat_with_tf
-    {linker.random_sample_sql(proportion, sample_size)}
+    {training_linker.random_sample_sql(proportion, sample_size)}
     """
-
-    sample_df = linker.execute_sql(
+    print(sql)
+    training_linker.execute_sql(
         sql,
         "__splink__df_concat_with_tf_sample",
         "__splink__df_concat_with_tf_sample",
@@ -64,23 +68,23 @@ def estimate_u_values(linker, target_rows):
 
     settings_obj._blocking_rules_to_generate_predictions = []
 
-    sql = block_using_rules(settings_obj, "__splink__df_concat_with_tf_sample")
-    linker.enqueue_sql(sql, "__splink__df_blocked")
+    sql = block_using_rules(training_linker)
+    training_linker.enqueue_sql(sql, "__splink__df_blocked")
 
     sql = compute_comparison_vector_values(settings_obj)
 
-    linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
+    training_linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
     sql = """
     select *, 0.0D as match_probability
     from __splink__df_comparison_vectors
     """
-    linker.enqueue_sql(sql, "__splink__df_predict")
+    training_linker.enqueue_sql(sql, "__splink__df_predict")
 
     sql = compute_new_parameters(settings_obj)
-    linker.enqueue_sql(sql, "__splink__df_new_params")
+    training_linker.enqueue_sql(sql, "__splink__df_new_params")
 
-    df_params = linker.execute_sql_pipeline()
+    df_params = training_linker.execute_sql_pipeline()
 
     param_records = df_params.as_record_dict()
 
@@ -96,3 +100,5 @@ def estimate_u_values(linker, target_rows):
         cl.add_trained_u_probability(
             record["u_probability"], "estimate u by random sampling"
         )
+
+    training_linker.train_u_using_random_sample_mode = False

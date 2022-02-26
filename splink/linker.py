@@ -13,6 +13,7 @@ from .term_frequencies import (
     term_frequencies,
     sql_gen_term_frequencies,
     colname_to_tf_tablename,
+    join_tf_to_input_df,
 )
 
 from .m_training import estimate_m_values_from_label_column
@@ -75,6 +76,47 @@ class Linker:
         self._validate_input_dfs()
         self.em_training_sessions = []
 
+        self.incremental_linkage_mode = False
+        self.train_u_using_random_sample_mode = False
+
+    @property
+    def _input_tablename_l(self):
+
+        if self.incremental_linkage_mode:
+            return "__splink__df_concat_with_tf"
+
+        if self.train_u_using_random_sample_mode:
+            return "__splink__df_concat_with_tf_sample"
+
+        if self.two_dataset_link_only:
+            return "__splink_df_concat_with_tf_left"
+        return "__splink__df_concat_with_tf"
+
+    @property
+    def _input_tablename_r(self):
+
+        if self.incremental_linkage_mode:
+            return "__splink__df_incremental_with_tf"
+
+        if self.train_u_using_random_sample_mode:
+            return "__splink__df_concat_with_tf_sample"
+
+        if self.two_dataset_link_only:
+            return "__splink_df_concat_with_tf_right"
+        return "__splink__df_concat_with_tf"
+
+    @property
+    def two_dataset_link_only(self):
+        # Two dataset link only join is a special case where an inner join of the two datasets
+        # is much more efficient than self-joining the vertically concatenation of all input datasets
+        if self.incremental_linkage_mode:
+            return True
+
+        if len(self.input_dfs) == 2 and self.settings_obj._link_type == "link_only":
+            return True
+        else:
+            return False
+
     def _initialise_df_concat_with_tf(self, materialise=True):
         if self.table_exists_in_database("__splink__df_concat_with_tf"):
             return
@@ -85,8 +127,30 @@ class Linker:
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        if materialise:
+        if self.two_dataset_link_only:
+            # If we do not materialise __splink_df_concat_with_tf
+            # we'd have to run all the code up to this point twice
             self.execute_sql_pipeline(materialise_as_hash=False)
+
+            source_dataset_col = self.settings_obj._source_dataset_column_name
+            df_l, df_r = list(self.input_dfs.values())
+
+            sql = f"""
+            select * from __splink__df_concat_with_tf
+            where {source_dataset_col} = '{df_l.templated_name}'
+            """
+            self.enqueue_sql(sql, "__splink_df_concat_with_tf_left")
+            self.execute_sql_pipeline(materialise_as_hash=False)
+
+            sql = f"""
+            select * from __splink__df_concat_with_tf
+            where {source_dataset_col} = '{df_r.templated_name}'
+            """
+            self.enqueue_sql(sql, "__splink_df_concat_with_tf_right")
+            self.execute_sql_pipeline(materialise_as_hash=False)
+        else:
+            if materialise:
+                self.execute_sql_pipeline(materialise_as_hash=False)
 
     def compute_tf_table(self, column_name):
         sql = vertically_concatente(self.input_dfs)
@@ -126,11 +190,18 @@ class Linker:
         if self.table_exists_in_database(hash):
             return self._df_as_obj(output_tablename_templated, hash)
 
-        print(f"Executing sql with hashed value {hash}")
+        # print(sql)
 
         if materialise_as_hash:
             dataframe = self.execute_sql(sql, output_tablename_templated, hash)
+            print(
+                f"Executing SQL for {output_tablename_templated} materialised as {hash}"
+            )
         else:
+            print(
+                f"Executing SQL for {output_tablename_templated} materialised as {output_tablename_templated}"
+            )
+
             dataframe = self.execute_sql(
                 sql, output_tablename_templated, output_tablename_templated
             )
@@ -171,7 +242,7 @@ class Linker:
 
     def deterministic_link(self, return_df_as_value=True):
 
-        df_dict = block_using_rules(self.settings_obj, self.input_dfs, self.execute_sql)
+        df_dict = block_using_rules(self)
         if return_df_as_value:
             return df_dict["__splink__df_blocked"].df_value
         else:
@@ -293,7 +364,7 @@ class Linker:
         # materialisation of anything
         self._initialise_df_concat_with_tf(materialise=False)
 
-        sql = block_using_rules(self.settings_obj)
+        sql = block_using_rules(self)
         self.enqueue_sql(sql, "__splink__df_blocked")
 
         sql = compute_comparison_vector_values(self.settings_obj)
@@ -304,4 +375,55 @@ class Linker:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
         predictions = self.execute_sql_pipeline([])
+        return predictions
+
+    def records_to_table(records, as_table_name):
+        # Create table in database containing records
+        # Probably quite difficult to implement correctly
+        # Due to data type issues.
+        raise NotImplementedError
+
+    def incremental_link(self, records, blocking_rules=None, match_weight_threshold=-4):
+
+        original_blocking_rules = (
+            self.settings_obj._blocking_rules_to_generate_predictions
+        )
+        original_link_type = self.settings_obj._link_type
+
+        self.records_to_table(records, "__splink__df_incremental")
+
+        if blocking_rules is not None:
+            self.settings_obj._blocking_rules_to_generate_predictions = blocking_rules
+        self.settings_obj._link_type = "link_only"
+        self.incremental_linkage_mode = True
+
+        sql = join_tf_to_input_df(self.settings_obj)
+        sql = sql.replace("__splink__df_concat", "__splink__df_incremental")
+        self.enqueue_sql(sql, "__splink__df_incremental_with_tf")
+
+        sql = block_using_rules(self)
+        self.enqueue_sql(sql, "__splink__df_blocked")
+
+        sql = compute_comparison_vector_values(self.settings_obj)
+        self.enqueue_sql(sql, "__splink__df_comparison_vectors")
+
+        sqls = predict(self.settings_obj)
+        for sql in sqls:
+            self.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        sql = f"""
+        select * from __splink__df_predict
+        where match_weight > {match_weight_threshold}
+        """
+
+        self.enqueue_sql(sql, "__splink_incremental_predictions")
+
+        predictions = self.execute_sql_pipeline([])
+
+        self.settings_obj._blocking_rules_to_generate_predictions = (
+            original_blocking_rules
+        )
+        self.settings_obj._link_type = original_link_type
+        self.incremental_linkage_mode = False
+
         return predictions

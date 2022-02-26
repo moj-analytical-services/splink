@@ -80,12 +80,12 @@ class EMTrainingSession:
 
     def _comparison_vectors(self):
 
-        sql = block_using_rules(self.settings_obj)
-        self.original_linker.enqueue_sql(sql, "__splink__df_blocked")
+        sql = block_using_rules(self.training_linker)
+        self.training_linker.enqueue_sql(sql, "__splink__df_blocked")
 
         sql = compute_comparison_vector_values(self.settings_obj)
-        self.original_linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
-        return self.original_linker.execute_sql_pipeline([])
+        self.training_linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
+        return self.training_linker.execute_sql_pipeline([])
 
     def train(self):
 
