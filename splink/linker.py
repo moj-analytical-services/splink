@@ -190,7 +190,7 @@ class Linker:
         if self.table_exists_in_database(hash):
             return self._df_as_obj(output_tablename_templated, hash)
 
-        print(sql)
+        # print(sql)
 
         if materialise_as_hash:
             dataframe = self.execute_sql(sql, output_tablename_templated, hash)
@@ -383,7 +383,7 @@ class Linker:
         # Due to data type issues.
         raise NotImplementedError
 
-    def incremental_link(self, records, blocking_rules=None):
+    def incremental_link(self, records, blocking_rules=None, match_weight_threshold=-4):
 
         original_blocking_rules = (
             self.settings_obj._blocking_rules_to_generate_predictions
@@ -391,8 +391,8 @@ class Linker:
         original_link_type = self.settings_obj._link_type
 
         self.records_to_table(records, "__splink__df_incremental")
-        self = deepcopy(self)
-        if blocking_rules:
+
+        if blocking_rules is not None:
             self.settings_obj._blocking_rules_to_generate_predictions = blocking_rules
         self.settings_obj._link_type = "link_only"
         self.incremental_linkage_mode = True
@@ -410,6 +410,13 @@ class Linker:
         sqls = predict(self.settings_obj)
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        sql = f"""
+        select * from __splink__df_predict
+        where match_weight > {match_weight_threshold}
+        """
+
+        self.enqueue_sql(sql, "__splink_incremental_predictions")
 
         predictions = self.execute_sql_pipeline([])
 
