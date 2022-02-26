@@ -5,18 +5,19 @@ import pandas as pd
 
 from try_settings import settings_dict
 
+
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-
+settings_dict["max_iterations"] = 2
 linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
 
 
 linker.train_u_using_random_sampling(target_rows=1e6)
-linker.settings_obj.match_weights_chart()
 
 
 blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
 linker.train_m_using_expectation_maximisation(blocking_rule)
+
 
 blocking_rule = "l.dob = r.dob"
 linker.train_m_using_expectation_maximisation(blocking_rule)
