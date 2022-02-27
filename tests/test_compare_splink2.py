@@ -1,7 +1,7 @@
 import pytest
 from splink.comparison import Comparison
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
-from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
+from splink.duckdb.duckdb_linker import DuckDBLinker
 
 from splink.sqlite.sqlite_linker import SQLiteLinker
 
@@ -157,7 +157,7 @@ def test_splink_2_predict():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
 
     expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
 
@@ -237,7 +237,7 @@ def test_splink_2_em_fixed_u():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
 
     # Check lambda history is the same
     expected_prop_history = pd.read_csv(
@@ -282,7 +282,7 @@ def test_splink_2_em_no_fix():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
 
     # Check lambda history is the same
     expected_prop_history = pd.read_csv(
@@ -351,7 +351,7 @@ def test_lambda():
     }
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
 
     ma = linker.predict().as_pandas_dataframe()
     print(len(ma))

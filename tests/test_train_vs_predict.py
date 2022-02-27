@@ -1,7 +1,7 @@
 import pytest
 from splink.comparison import Comparison
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
-from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
+from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 import pandas as pd
@@ -168,7 +168,7 @@ def test_train_vs_predict():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings_dict["blocking_rules_to_generate_predictions"] = ["l.surname = r.surname"]
-    linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
 
     training_session = linker.train_m_and_u_using_expectation_maximisation(
         "l.surname = r.surname"

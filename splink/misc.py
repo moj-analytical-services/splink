@@ -1,3 +1,8 @@
+import os
+import uuid
+import tempfile
+
+
 def dedupe_preserving_order(list_of_items):
     return list(dict.fromkeys(list_of_items))
 

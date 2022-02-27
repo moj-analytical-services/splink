@@ -1,15 +1,18 @@
 import logging
-
+import os
+import tempfile
+import uuid
 import sqlglot
-from pandas import DataFrame as pd_DataFrame
+
 
 import duckdb
 from splink.linker import Linker, SplinkDataFrame
 
+
 logger = logging.getLogger(__name__)
 
 
-class DuckDBInMemoryLinkerDataFrame(SplinkDataFrame):
+class DuckDBLinkerDataFrame(SplinkDataFrame):
     def __init__(self, templated_name, physical_name, duckdb_linker):
         super().__init__(templated_name, physical_name)
         self.duckdb_linker = duckdb_linker
@@ -32,12 +35,31 @@ class DuckDBInMemoryLinkerDataFrame(SplinkDataFrame):
         return self.duckdb_linker.con.query(sql).to_df().to_dict(orient="records")
 
 
-class DuckDBInMemoryLinker(Linker):
-    def __init__(self, settings_dict, input_tables, tf_tables={}):
+class DuckDBLinker(Linker):
+    def __init__(
+        self, settings_dict, input_tables, tf_tables={}, connection=":memory:"
+    ):
 
-        con = duckdb.connect(database=":memory:")
+        if connection == ":memory:":
+            con = duckdb.connect(database=connection)
+
+        else:
+            if connection == ":temporary:":
+
+                tdir = tempfile.TemporaryDirectory()
+                fname = uuid.uuid4().hex[:7]
+                path = os.path.join(tdir.name, f"{fname}.duckdb")
+                con = duckdb.connect(database=path, read_only=False)
+            else:
+                con = duckdb.connect(database=connection)
+
         self.con = con
 
+        self.log_input_tables(con, input_tables, tf_tables)
+
+        super().__init__(settings_dict, input_tables, tf_tables)
+
+    def log_input_tables(self, con, input_tables, tf_tables):
         for templated_name, df in input_tables.items():
             # Make a table with this name
             con.register(templated_name, df)
@@ -48,10 +70,8 @@ class DuckDBInMemoryLinker(Linker):
             templated_name = "__splink__df_" + templated_name
             con.register(templated_name, df)
 
-        super().__init__(settings_dict, input_tables)
-
     def _df_as_obj(self, templated_name, physical_name):
-        return DuckDBInMemoryLinkerDataFrame(templated_name, physical_name, self)
+        return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
         if transpile:
@@ -64,7 +84,7 @@ class DuckDBInMemoryLinker(Linker):
         """
         output = self.con.execute(sql).fetch_df()
 
-        return DuckDBInMemoryLinkerDataFrame(templated_name, physical_name, self)
+        return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
     def random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:

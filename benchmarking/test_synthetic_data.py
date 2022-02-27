@@ -1,4 +1,4 @@
-from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
+from splink.duckdb.duckdb_linker import DuckDBLinker
 
 from splink.spark.spark_linker import SparkLinker
 import pandas as pd
@@ -169,7 +169,7 @@ settings_dict = {
 
 
 def duckdb_performance(df, target_rows):
-    linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
 
     linker.train_u_using_random_sampling(target_rows=target_rows)
 
