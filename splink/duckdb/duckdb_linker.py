@@ -74,11 +74,16 @@ class DuckDBLinker(Linker):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+
+        drop_sql = f"""
+        DROP TABLE IF EXISTS {physical_name}"""
+        self.con.execute(drop_sql)
+
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
 
         sql = f"""
-        CREATE TABLE IF NOT EXISTS {physical_name}
+        CREATE TABLE {physical_name}
         AS
         ({sql})
         """
@@ -102,7 +107,9 @@ class DuckDBLinker(Linker):
 
     def records_to_table(self, records, as_table_name):
         for r in records:
-            r["source_dataset"] = "incremental_records"
+            r["source_dataset"] = as_table_name
 
-        df = pd_DataFrame(records)
+        import pandas as pd
+
+        df = pd.DataFrame(records)
         self.con.register(as_table_name, df)

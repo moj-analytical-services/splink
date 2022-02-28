@@ -1,11 +1,5 @@
-from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
+from splink.duckdb.duckdb_linker import DuckDBLinker
 from try_settings import settings_dict
-import pandas as pd
-
-
-from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
-
-from splink.spark.spark_linker import SparkLinker
 import pandas as pd
 
 
@@ -176,7 +170,9 @@ settings_dict = {
 df_orig = pd.read_parquet("./benchmarking/synthetic_data_all.parquet")
 
 
-linker = DuckDBInMemoryLinker(settings_dict, input_tables={"main": df_orig})
+linker = DuckDBLinker(
+    settings_dict, input_tables={"main": df_orig}, connection="1m.duckdb"
+)
 
 
 # Train it as a dedupe job.
@@ -198,6 +194,10 @@ linker.train_m_using_expectation_maximisation(
 )
 
 
+linker = DuckDBLinker(settings_dict, input_tables={}, connection="1m.duckdb")
+import pandas as pd
+
+df_orig = pd.read_parquet("./benchmarking/synthetic_data_all.parquet")
 new_records = df_orig[:1].to_dict(orient="records")
 
 linker.settings_obj._retain_intermediate_calculation_columns = True
@@ -208,10 +208,10 @@ import time
 start_time = time.time()
 
 
-# df = linker.incremental_link(
-#     new_records, blocking_rules=["l.dob = r.dob"], match_weight_threshold=-4
-# )
-df = linker.incremental_link(new_records, match_weight_threshold=-8)
+df = linker.incremental_link(
+    new_records, blocking_rules=["l.dob = r.dob"], match_weight_threshold=-4
+)
+# df = linker.incremental_link(new_records, match_weight_threshold=-8)
 print("--- %s seconds ---" % (time.time() - start_time))
 df_waterfall = df.as_pandas_dataframe()
 

@@ -2,6 +2,7 @@ import logging
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
+import uuid
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
@@ -78,12 +79,16 @@ class Linker:
 
         self.incremental_linkage_mode = False
         self.train_u_using_random_sample_mode = False
+        self.compare_two_records_mode = False
 
     @property
     def _input_tablename_l(self):
 
         if self.incremental_linkage_mode:
             return "__splink__df_concat_with_tf"
+
+        if self.compare_two_records_mode:
+            return "__splink__compare_two_records_left_with_tf"
 
         if self.train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
@@ -98,6 +103,9 @@ class Linker:
         if self.incremental_linkage_mode:
             return "__splink__df_incremental_with_tf"
 
+        if self.compare_two_records_mode:
+            return "__splink__compare_two_records_right_with_tf"
+
         if self.train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
 
@@ -110,6 +118,9 @@ class Linker:
         # Two dataset link only join is a special case where an inner join of the two datasets
         # is much more efficient than self-joining the vertically concatenation of all input datasets
         if self.incremental_linkage_mode:
+            return True
+
+        if self.compare_two_records_mode:
             return True
 
         if len(self.input_dfs) == 2 and self.settings_obj._link_type == "link_only":
@@ -162,46 +173,42 @@ class Linker:
     def enqueue_sql(self, sql, output_table_name):
         self.pipeline.enqueue_sql(sql, output_table_name)
 
-    def execute_sql_pipeline(self, input_dataframes=[], materialise_as_hash=True):
+    def execute_sql_pipeline(
+        self, input_dataframes=[], materialise_as_hash=True, use_cache=True
+    ):
         sql_gen = self.pipeline._generate_pipeline(input_dataframes)
 
         output_tablename_templated = self.pipeline.queue[-1].output_table_name
 
         dataframe = self.sql_to_dataframe(
-            sql_gen, output_tablename_templated, materialise_as_hash
+            sql_gen, output_tablename_templated, materialise_as_hash, use_cache
         )
         return dataframe
 
     def sql_to_dataframe(
-        self, sql, output_tablename_templated, materialise_as_hash=True
+        self, sql, output_tablename_templated, materialise_as_hash=True, use_cache=True
     ):
 
         self.pipeline.reset()
-
-        if self.table_exists_in_database(output_tablename_templated):
-            return self._df_as_obj(
-                output_tablename_templated, output_tablename_templated
-            )
 
         hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
         # Ensure hash is valid sql table name
         hash = "__splink__" + hash
 
-        if self.table_exists_in_database(hash):
-            return self._df_as_obj(output_tablename_templated, hash)
+        if use_cache:
+            if self.table_exists_in_database(output_tablename_templated):
+                return self._df_as_obj(
+                    output_tablename_templated, output_tablename_templated
+                )
+
+            if self.table_exists_in_database(hash):
+                return self._df_as_obj(output_tablename_templated, hash)
 
         # print(sql)
 
         if materialise_as_hash:
             dataframe = self.execute_sql(sql, output_tablename_templated, hash)
-            print(
-                f"Executing SQL for {output_tablename_templated} materialised as {hash}"
-            )
         else:
-            print(
-                f"Executing SQL for {output_tablename_templated} materialised as {output_tablename_templated}"
-            )
-
             dataframe = self.execute_sql(
                 sql, output_tablename_templated, output_tablename_templated
             )
@@ -411,7 +418,9 @@ class Linker:
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
+        ran = uuid.uuid4().hex
         sql = f"""
+        -- {ran}
         select * from __splink__df_predict
         where match_weight > {match_weight_threshold}
         """
@@ -425,5 +434,59 @@ class Linker:
         )
         self.settings_obj._link_type = original_link_type
         self.incremental_linkage_mode = False
+
+        return predictions
+
+    def compare_two_records(self, record_1, record_2):
+        original_blocking_rules = (
+            self.settings_obj._blocking_rules_to_generate_predictions
+        )
+        original_link_type = self.settings_obj._link_type
+
+        self.compare_two_records_mode = True
+        self.settings_obj._blocking_rules_to_generate_predictions = []
+
+        self.records_to_table([record_1], "__splink__compare_two_records_left")
+        self.records_to_table([record_2], "__splink__compare_two_records_right")
+
+        sql_join_tf = join_tf_to_input_df(self.settings_obj)
+        sql_join_tf = sql_join_tf.replace(
+            "__splink__df_concat", "__splink__compare_two_records_left"
+        )
+        self.enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
+        df_left = self.execute_sql_pipeline(use_cache=False)
+
+        sql_join_tf = sql_join_tf.replace(
+            "__splink__compare_two_records_left", "__splink__compare_two_records_right"
+        )
+        self.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
+        df_right = self.execute_sql_pipeline(use_cache=False)
+
+        sql = block_using_rules(self)
+        self.enqueue_sql(sql, "__splink__df_blocked")
+
+        sql = compute_comparison_vector_values(self.settings_obj)
+        self.enqueue_sql(sql, "__splink__df_comparison_vectors")
+
+        sqls = predict(self.settings_obj)
+        for sql in sqls:
+            self.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        ran = uuid.uuid4().hex
+        sql = f"""
+        -- {ran}
+        select * from __splink__df_predict
+
+        """
+
+        self.enqueue_sql(sql, "__splink_two_records_predictions")
+
+        predictions = self.execute_sql_pipeline([df_left, df_right])
+
+        self.settings_obj._blocking_rules_to_generate_predictions = (
+            original_blocking_rules
+        )
+        self.settings_obj._link_type = original_link_type
+        self.compare_two_records_mode = False
 
         return predictions

@@ -1,10 +1,3 @@
-import pytest
-
-from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
-from splink.spark.spark_linker import SparkLinker
-from splink.sqlite.sqlite_linker import SQLiteLinker
-import pandas as pd
-
 import logging
 import sys
 
