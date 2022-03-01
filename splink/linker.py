@@ -65,7 +65,7 @@ class SplinkDataFrame:
 
 
 class Linker:
-    def __init__(self, settings_dict, input_tables, tf_tables={}):
+    def __init__(self, settings_dict, input_tables):
         self.settings_dict = settings_dict
 
         self.settings_obj = Settings(settings_dict)

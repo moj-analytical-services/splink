@@ -36,9 +36,7 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
 
 
 class DuckDBLinker(Linker):
-    def __init__(
-        self, settings_dict, input_tables, tf_tables={}, connection=":memory:"
-    ):
+    def __init__(self, settings_dict, input_tables, connection=":memory:"):
 
         if connection == ":memory:":
             con = duckdb.connect(database=connection)
@@ -55,20 +53,21 @@ class DuckDBLinker(Linker):
 
         self.con = con
 
-        self.log_input_tables(con, input_tables, tf_tables)
+        self.register_input_tables(con, input_tables)
 
-        super().__init__(settings_dict, input_tables, tf_tables)
+        super().__init__(settings_dict, input_tables)
 
-    def log_input_tables(self, con, input_tables, tf_tables):
+    def register_input_tables(self, con, input_tables):
+
         for templated_name, df in input_tables.items():
-            # Make a table with this name
-            con.register(templated_name, df)
-            input_tables[templated_name] = templated_name
+            # Check pandas dataframe
+            if type(df).__name__ == "DataFrame":
+                db_tablename = f"__splink__{templated_name}"
+                con.register(db_tablename, df)
+                input_tables[db_tablename] = db_tablename
 
-        for templated_name, df in tf_tables.items():
-            # Make a table with this name
-            templated_name = "__splink__df_" + templated_name
-            con.register(templated_name, df)
+            if type(df) == str:
+                input_tables[templated_name] = templated_name
 
     def _df_as_obj(self, templated_name, physical_name):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
