@@ -1,6 +1,6 @@
 import sqlglot
 from sqlglot.errors import ParseError
-from sqlglot.expressions import Case, Column, Alias
+from sqlglot.expressions import Case, Column, Alias, Bracket
 import re
 
 
