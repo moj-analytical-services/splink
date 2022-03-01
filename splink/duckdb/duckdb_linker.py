@@ -46,9 +46,9 @@ class DuckDBLinker(Linker):
         else:
             if connection == ":temporary:":
 
-                tdir = tempfile.TemporaryDirectory()
+                self.tdir = tempfile.TemporaryDirectory(dir=".")
                 fname = uuid.uuid4().hex[:7]
-                path = os.path.join(tdir.name, f"{fname}.duckdb")
+                path = os.path.join(self.tdir.name, f"{fname}.duckdb")
                 con = duckdb.connect(database=path, read_only=False)
             else:
                 con = duckdb.connect(database=connection)
