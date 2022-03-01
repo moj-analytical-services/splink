@@ -21,7 +21,7 @@ def bayes_factor_to_prob(bf):
     return bf / (1 + bf)
 
 def create_temp_folder():
-    return TemporaryDirectory()
+    return TemporaryDirectory(dir=".")
 
 def create_db_folder(filepath, file_ext):
     file_extension = os.path.splitext(filepath)[1]
