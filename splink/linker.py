@@ -418,16 +418,14 @@ class Linker:
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        ran = uuid.uuid4().hex
         sql = f"""
-        -- {ran}
         select * from __splink__df_predict
         where match_weight > {match_weight_threshold}
         """
 
         self.enqueue_sql(sql, "__splink_incremental_predictions")
 
-        predictions = self.execute_sql_pipeline([])
+        predictions = self.execute_sql_pipeline(use_cache=False)
 
         self.settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
@@ -454,13 +452,11 @@ class Linker:
             "__splink__df_concat", "__splink__compare_two_records_left"
         )
         self.enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
-        df_left = self.execute_sql_pipeline(use_cache=False)
 
         sql_join_tf = sql_join_tf.replace(
             "__splink__compare_two_records_left", "__splink__compare_two_records_right"
         )
         self.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
-        df_right = self.execute_sql_pipeline(use_cache=False)
 
         sql = block_using_rules(self)
         self.enqueue_sql(sql, "__splink__df_blocked")
@@ -472,16 +468,7 @@ class Linker:
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        ran = uuid.uuid4().hex
-        sql = f"""
-        -- {ran}
-        select * from __splink__df_predict
-
-        """
-
-        self.enqueue_sql(sql, "__splink_two_records_predictions")
-
-        predictions = self.execute_sql_pipeline([df_left, df_right])
+        predictions = self.execute_sql_pipeline(use_cache=False)
 
         self.settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
