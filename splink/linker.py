@@ -77,14 +77,14 @@ class Linker:
         self._validate_input_dfs()
         self.em_training_sessions = []
 
-        self.incremental_linkage_mode = False
+        self.find_new_matches_mode = False
         self.train_u_using_random_sample_mode = False
         self.compare_two_records_mode = False
 
     @property
     def _input_tablename_l(self):
 
-        if self.incremental_linkage_mode:
+        if self.find_new_matches_mode:
             return "__splink__df_concat_with_tf"
 
         if self.compare_two_records_mode:
@@ -100,7 +100,7 @@ class Linker:
     @property
     def _input_tablename_r(self):
 
-        if self.incremental_linkage_mode:
+        if self.find_new_matches_mode:
             return "__splink__df_new_records_with_tf"
 
         if self.compare_two_records_mode:
@@ -117,7 +117,7 @@ class Linker:
     def two_dataset_link_only(self):
         # Two dataset link only join is a special case where an inner join of the two datasets
         # is much more efficient than self-joining the vertically concatenation of all input datasets
-        if self.incremental_linkage_mode:
+        if self.find_new_matches_mode:
             return True
 
         if self.compare_two_records_mode:
@@ -404,7 +404,7 @@ class Linker:
         if blocking_rules is not None:
             self.settings_obj._blocking_rules_to_generate_predictions = blocking_rules
         self.settings_obj._link_type = "link_only"
-        self.incremental_linkage_mode = True
+        self.find_new_matches_mode = True
 
         sql = join_tf_to_input_df(self.settings_obj)
         sql = sql.replace("__splink__df_concat", "__splink__df_new_records")
@@ -425,7 +425,7 @@ class Linker:
         where match_weight > {match_weight_threshold}
         """
 
-        self.enqueue_sql(sql, "__splink_incremental_predictions")
+        self.enqueue_sql(sql, "__splink_find_matches_predictions")
 
         predictions = self.execute_sql_pipeline(use_cache=False)
 
@@ -433,7 +433,7 @@ class Linker:
             original_blocking_rules
         )
         self.settings_obj._link_type = original_link_type
-        self.incremental_linkage_mode = False
+        self.find_new_matches_mode = False
 
         return predictions
 
