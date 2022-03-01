@@ -139,10 +139,18 @@ def m_u_values_interactive_history_chart(records, as_dict=False):
     return vegalite_or_json(chart, as_dict=as_dict)
 
 
-def waterfall_chart(records, settings_obj, as_dict=False):
+def waterfall_chart(
+    records,
+    settings_obj,
+    filter_nulls=True,
+    as_dict=False,
+):
     data = records_to_waterfall_data(records, settings_obj)
     chart_path = "match_weights_waterfall.json"
     chart = load_chart_definition(chart_path)
     chart["data"]["values"] = data
     chart["params"][0]["bind"]["max"] = len(records) - 1
+    if filter_nulls:
+        chart["transform"].insert(1, {"filter": "(datum.bayes_factor !== 1.0)"})
+
     return vegalite_or_json(chart, as_dict=as_dict)
