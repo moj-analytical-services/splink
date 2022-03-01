@@ -101,7 +101,7 @@ class Linker:
     def _input_tablename_r(self):
 
         if self.incremental_linkage_mode:
-            return "__splink__df_incremental_with_tf"
+            return "__splink__df_new_records_with_tf"
 
         if self.compare_two_records_mode:
             return "__splink__compare_two_records_right_with_tf"
@@ -390,14 +390,16 @@ class Linker:
         # Due to data type issues.
         raise NotImplementedError
 
-    def incremental_link(self, records, blocking_rules=None, match_weight_threshold=-4):
+    def find_matches_to_new_records(
+        self, records, blocking_rules=None, match_weight_threshold=-4
+    ):
 
         original_blocking_rules = (
             self.settings_obj._blocking_rules_to_generate_predictions
         )
         original_link_type = self.settings_obj._link_type
 
-        self.records_to_table(records, "__splink__df_incremental")
+        self.records_to_table(records, "__splink__df_new_records")
 
         if blocking_rules is not None:
             self.settings_obj._blocking_rules_to_generate_predictions = blocking_rules
@@ -405,8 +407,8 @@ class Linker:
         self.incremental_linkage_mode = True
 
         sql = join_tf_to_input_df(self.settings_obj)
-        sql = sql.replace("__splink__df_concat", "__splink__df_incremental")
-        self.enqueue_sql(sql, "__splink__df_incremental_with_tf")
+        sql = sql.replace("__splink__df_concat", "__splink__df_new_records")
+        self.enqueue_sql(sql, "__splink__df_new_records_with_tf")
 
         sql = block_using_rules(self)
         self.enqueue_sql(sql, "__splink__df_blocked")

@@ -175,13 +175,6 @@ linker = DuckDBLinker(
 )
 
 
-# Train it as a dedupe job.
-# If you were to do that, the left hand table would be '__splink__df_concat_with_tf'
-
-# It needs a 'link_incremental' method that treats ''__splink__df_concat_with_tf'' as the left
-# table and 'main' as the right table of a link_only.
-
-
 linker.compute_tf_table("full_name")
 linker.compute_tf_table("postcode")
 linker.compute_tf_table("occupation")
@@ -208,10 +201,10 @@ import time
 start_time = time.time()
 
 
-df = linker.incremental_link(
+df = linker.find_matches_to_new_records(
     new_records, blocking_rules=["l.dob = r.dob"], match_weight_threshold=-4
 )
-# df = linker.incremental_link(new_records, match_weight_threshold=-8)
+
 print("--- %s seconds ---" % (time.time() - start_time))
 df_waterfall = df.as_pandas_dataframe()
 

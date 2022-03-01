@@ -19,7 +19,6 @@
   },
   "transform": [
     { "filter": "(datum.record_number == record_number)" },
-    { "filter": "(datum.bayes_factor !== 1.0)" },
 
     {
       "window": [
