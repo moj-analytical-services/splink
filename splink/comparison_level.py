@@ -356,12 +356,15 @@ class ComparisonLevel:
             # In this case rather than taking the greater of the two, we take
             # whichever value exists
             sql = f"""
-            WHEN  {gamma_colname_value_is_this_level} and {tf_adjustment_exists}
-            THEN
-            POW(
-                {u_prob_exact_match}D / GREATEST({coalesce_l_r},{coalesce_r_l}),
-                {self.tf_adjustment_weight}D
-            )
+            WHEN  {gamma_colname_value_is_this_level}
+                CASE WHEN {tf_adjustment_exists}
+                THEN
+                POW(
+                    {u_prob_exact_match}D / GREATEST({coalesce_l_r},{coalesce_r_l}),
+                    {self.tf_adjustment_weight}D
+                )
+                ELSE 1D
+                END
             """
         return dedent(sql).strip()
 
