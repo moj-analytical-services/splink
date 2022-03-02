@@ -1,3 +1,6 @@
+from copy import deepcopy
+
+
 class SQLTask:
     def __init__(self, sql, output_table_name):
         self.sql = sql
@@ -12,16 +15,22 @@ class SQLPipeline:
         sql_task = SQLTask(sql, output_table_name)
         self.queue.append(sql_task)
 
-    def _generate_pipeline(self, input_dataframes):
+    def _generate_pipeline_parts(self, input_dataframes):
 
+        parts = deepcopy(self.queue)
         for df in input_dataframes:
             if not df.physical_and_template_names_equal:
                 sql = f"select * from {df.physical_name}"
                 task = SQLTask(sql, df.templated_name)
-                self.queue.insert(0, task)
+                parts.insert(0, task)
+        return parts
 
-        with_parts = self.queue[:-1]
-        last_part = self.queue[-1]
+    def _generate_pipeline(self, input_dataframes):
+
+        parts = self._generate_pipeline_parts(input_dataframes)
+
+        with_parts = parts[:-1]
+        last_part = parts[-1]
 
         with_parts = [f"{p.output_table_name} as ({p.sql})" for p in with_parts]
         with_parts = ", \n".join(with_parts)
