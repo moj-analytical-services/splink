@@ -1,7 +1,7 @@
 from pyspark.sql import DataFrame as sp_DataFrame
 from pyspark.sql import Row
-from splink.linker import Linker, SplinkDataFrame
-from term_frequencies import colname_to_tf_tablename
+from ..linker import Linker, SplinkDataFrame
+from ..term_frequencies import colname_to_tf_tablename
 
 
 class SparkDataframe(SplinkDataFrame):
