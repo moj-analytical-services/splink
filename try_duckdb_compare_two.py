@@ -22,8 +22,15 @@ blocking_rule = "l.dob = r.dob"
 linker.train_m_using_expectation_maximisation(blocking_rule)
 
 
-linker.compute_tf_table("first_name")
+df = linker.compute_tf_table("first_name")
+df.as_pandas_dataframe()
 linker.compute_tf_table("city")
+
+linker.names_of_tables_created_by_splink
+linker.con.execute("pragma show_tables").fetch_df()
+linker.delete_tables_created_by_splink_from_db()
+linker.names_of_tables_created_by_splink
+linker.con.execute("pragma show_tables").fetch_df()
 
 
 record_1 = {
@@ -47,3 +54,8 @@ record_2 = {
 }
 
 linker.compare_two_records(record_1, record_2).as_pandas_dataframe()
+
+
+linker.con.execute("pragma show_tables").fetch_df()
+linker.con.execute("select * from __splink__df_concat_with_tf limit 2").fetch_df()
+d = linker.input_dfs["input_df"]

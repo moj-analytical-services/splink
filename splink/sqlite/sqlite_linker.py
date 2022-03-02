@@ -108,3 +108,8 @@ class SQLiteLinker(Linker):
         else:
             print(f"table {table_name} exists")
             return True
+
+    def delete_table_from_database(self, name):
+        drop_sql = f"""
+        DROP TABLE IF EXISTS {name}"""
+        self.con.execute(drop_sql)
