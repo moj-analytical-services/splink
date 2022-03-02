@@ -245,11 +245,11 @@ class Linker:
         if self.debug_mode:
             print(format_sql(sql))
 
-            df_pd = dataframe.as_pandas_dataframe().head(5)
+            df_pd = dataframe.as_pandas_dataframe().head(10)
             try:
-                display(df_pd.head())
+                display(df_pd)
             except:
-                print(df_pd.head())
+                print(df_pd)
 
         return dataframe
 
