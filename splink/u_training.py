@@ -58,10 +58,9 @@ def estimate_u_values(linker, target_rows):
     from __splink__df_concat_with_tf
     {training_linker.random_sample_sql(proportion, sample_size)}
     """
-    print(sql)
-    training_linker.execute_sql(
+
+    df_sample = training_linker.sql_to_dataframe(
         sql,
-        "__splink__df_concat_with_tf_sample",
         "__splink__df_concat_with_tf_sample",
         transpile=False,
     )
@@ -84,7 +83,7 @@ def estimate_u_values(linker, target_rows):
     sql = compute_new_parameters(settings_obj)
     training_linker.enqueue_sql(sql, "__splink__df_new_params")
 
-    df_params = training_linker.execute_sql_pipeline()
+    df_params = training_linker.execute_sql_pipeline([df_sample])
 
     param_records = df_params.as_record_dict()
 

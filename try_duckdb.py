@@ -1,4 +1,4 @@
-from splink.duckdb.duckdb_linker import DuckDBInMemoryLinker
+from splink.duckdb.duckdb_linker import DuckDBLinker
 from try_settings import settings_dict
 import pandas as pd
 
@@ -9,7 +9,7 @@ from try_settings import settings_dict
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
 
-linker = DuckDBInMemoryLinker(settings_dict, input_tables={"fake_data_1": df})
+linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
 
 
 linker.train_u_using_random_sampling(target_rows=1e6)
