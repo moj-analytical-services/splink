@@ -11,7 +11,7 @@ def get_columns_used_from_sql(sql):
         subtree = tup[0]
         if type(subtree) is Column:
             column_names.add(subtree.sql())
-        elif type(subtree) is Bracket:
+        elif type(subtree) is Bracket and subtree.text("this") not in ('','x'):
             column_names.add(subtree.text("this"))
 
     return list(column_names)
