@@ -43,31 +43,28 @@ class DuckDBLinker(Linker):
 
         else:
             if connection == ":temporary:":
-
-                self.tdir = tempfile.TemporaryDirectory(dir=".")
+                self.temp_dir = tempfile.TemporaryDirectory(dir=".")
                 fname = uuid.uuid4().hex[:7]
-                path = os.path.join(self.tdir.name, f"{fname}.duckdb")
+                path = os.path.join(self.temp_dir.name, f"{fname}.duckdb")
                 con = duckdb.connect(database=path, read_only=False)
             else:
                 con = duckdb.connect(database=connection)
 
         self.con = con
 
-        self.register_input_tables(con, input_tables)
-
-        super().__init__(settings_dict, input_tables)
-
-    def register_input_tables(self, con, input_tables):
+        # If inputted tables are pandas dataframes, register them against the db
+        input_tables_new = {}
 
         for templated_name, df in input_tables.items():
-            # Check pandas dataframe
             if type(df).__name__ == "DataFrame":
                 db_tablename = f"__splink__{templated_name}"
                 con.register(db_tablename, df)
-                input_tables[db_tablename] = db_tablename
+                input_tables_new[db_tablename] = db_tablename
+            else:
+                input_tables_new[templated_name] = templated_name
+        input_tables = input_tables_new
 
-            if type(df) == str:
-                input_tables[templated_name] = templated_name
+        super().__init__(settings_dict, input_tables)
 
     def _df_as_obj(self, templated_name, physical_name):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
@@ -112,3 +109,8 @@ class DuckDBLinker(Linker):
 
         df = pd.DataFrame(records)
         self.con.register(as_table_name, df)
+
+    def delete_table_from_database(self, name):
+        drop_sql = f"""
+        DROP TABLE IF EXISTS {name}"""
+        self.con.execute(drop_sql)

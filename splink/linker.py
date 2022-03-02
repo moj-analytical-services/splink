@@ -77,6 +77,8 @@ class Linker:
         self._validate_input_dfs()
         self.em_training_sessions = []
 
+        self.names_of_tables_created_by_splink = []
+
         self.find_new_matches_mode = False
         self.train_u_using_random_sample_mode = False
         self.compare_two_records_mode = False
@@ -186,7 +188,12 @@ class Linker:
         return dataframe
 
     def sql_to_dataframe(
-        self, sql, output_tablename_templated, materialise_as_hash=True, use_cache=True
+        self,
+        sql,
+        output_tablename_templated,
+        materialise_as_hash=True,
+        use_cache=True,
+        transpile=True,
     ):
 
         self.pipeline.reset()
@@ -207,12 +214,18 @@ class Linker:
         # print(sql)
 
         if materialise_as_hash:
-            dataframe = self.execute_sql(sql, output_tablename_templated, hash)
+            dataframe = self.execute_sql(
+                sql, output_tablename_templated, hash, transpile=transpile
+            )
         else:
             dataframe = self.execute_sql(
-                sql, output_tablename_templated, output_tablename_templated
+                sql,
+                output_tablename_templated,
+                output_tablename_templated,
+                transpile=transpile,
             )
 
+        self.names_of_tables_created_by_splink.append(dataframe.physical_name)
         return dataframe
 
     def __deepcopy__(self, memo):
@@ -479,3 +492,27 @@ class Linker:
         self.compare_two_records_mode = False
 
         return predictions
+
+    def delete_tables_created_by_splink_from_db(
+        self, retain_term_frequency=True, retain_df_concat_with_tf=True
+    ):
+        tables_remaining = []
+        for name in self.names_of_tables_created_by_splink:
+            # Only delete tables explicitly marked as having been created by splink
+            if "__splink__" not in name:
+                tables_remaining.append(name)
+                continue
+            if name == "__splink__df_concat_with_tf":
+                if retain_df_concat_with_tf:
+                    tables_remaining.append(name)
+                else:
+                    self.delete_table_from_database(name)
+            elif name.startswith("__splink__df_tf_"):
+                if retain_term_frequency:
+                    tables_remaining.append(name)
+                else:
+                    self.delete_table_from_database(name)
+            else:
+                self.delete_table_from_database(name)
+
+        self.names_of_tables_created_by_splink = tables_remaining
