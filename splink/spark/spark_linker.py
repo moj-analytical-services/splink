@@ -1,6 +1,7 @@
 from pyspark.sql import DataFrame as sp_DataFrame
-
+from pyspark.sql import Row
 from splink.linker import Linker, SplinkDataFrame
+from term_frequencies import colname_to_tf_tablename
 
 
 class SparkDataframe(SplinkDataFrame):
@@ -36,22 +37,16 @@ class SparkDataframe(SplinkDataFrame):
 # These classes want to be as minimal as possible
 # dealing with only the backend-specific logic
 class SparkLinker(Linker):
-    def __init__(self, settings_dict, input_tables, tf_tables={}):
+    def __init__(self, settings_dict, input_tables):
         df = next(iter(input_tables.values()))
 
         self.spark = df.sql_ctx.sparkSession
 
         for templated_name, df in input_tables.items():
-            # Make a table with this name
-            df.createOrReplaceTempView(templated_name)
+            db_tablename = f"__splink__{templated_name}"
 
-            input_tables[templated_name] = templated_name
-
-        for templated_name, df in tf_tables.items():
-            # Make a table with this name
-
-            df.createOrReplaceTempView(templated_name)
-            tf_tables[templated_name] = templated_name
+            df.createOrReplaceTempView(db_tablename)
+            input_tables[templated_name] = db_tablename
 
         super().__init__(settings_dict, input_tables)
 
@@ -62,16 +57,14 @@ class SparkLinker(Linker):
 
         spark_df = self.spark.sql(sql)
 
-        # Break lineage
-
-        if templated_name == physical_name:
-            print(f"persisted {templated_name}")
+        if templated_name in (
+            "__splink__df_comparison_vectors",
+            "__splink__df_concat_with_tf",
+        ):
             spark_df.persist()
-        if templated_name == "__splink__df_comparison_vectors":
-            spark_df.persist()
-            print(f"persisted {templated_name}")
-
-        spark_df.persist()
+        if templated_name.startswith("__splink__df_tf_"):
+            if physical_name.startswith("__splink__df_tf_"):
+                spark_df.persist()
 
         spark_df.createOrReplaceTempView(physical_name)
 
@@ -90,3 +83,10 @@ class SparkLinker(Linker):
             if t.name == table_name:
                 return True
         return False
+
+    def records_to_table(self, records, as_table_name):
+        df = self.spark.createDataFrame(Row(**x) for x in records)
+        df.createOrReplaceTempView(as_table_name)
+
+    def register_tf_table(self, df, col_name):
+        df.createOrReplaceTempView(colname_to_tf_tablename(col_name))

@@ -59,7 +59,7 @@ class DuckDBLinker(Linker):
             if type(df).__name__ == "DataFrame":
                 db_tablename = f"__splink__{templated_name}"
                 con.register(db_tablename, df)
-                input_tables_new[db_tablename] = db_tablename
+                input_tables_new[templated_name] = db_tablename
             else:
                 input_tables_new[templated_name] = templated_name
         input_tables = input_tables_new
