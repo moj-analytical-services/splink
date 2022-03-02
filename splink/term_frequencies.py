@@ -72,7 +72,12 @@ def term_frequencies(linker):
     tf_cols = settings_obj._term_frequency_columns
 
     if not tf_cols:
-        return "select * from __splink__df_concat"
+        return [
+            {
+                "sql": "select * from __splink__df_concat",
+                "output_table_name": "__splink__df_concat_with_tf",
+            }
+        ]
 
     sqls = []
     for tf_col in tf_cols:

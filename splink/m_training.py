@@ -8,7 +8,8 @@ from .maximisation_step import compute_new_parameters
 def estimate_m_values_from_label_column(linker, df_dict, label_colname):
 
     original_settings_object = linker.settings_obj
-    settings_obj = deepcopy(linker.settings_obj)
+    training_linker = deepcopy(linker)
+    settings_obj = training_linker.settings_obj
     settings_obj._retain_matching_columns = False
     settings_obj._retain_intermediate_calculation_columns = False
     for cc in settings_obj.comparisons:
@@ -19,22 +20,24 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
         f"l.{label_colname} = r.{label_colname}"
     ]
 
-    df_dict = block_using_rules(linker)
+    sql = block_using_rules(training_linker)
+    training_linker.enqueue_sql(sql, "__splink__df_blocked")
 
-    df_dict = compute_comparison_vector_values(
-        settings_obj, df_dict, linker.execute_sql
-    )
+    sql = compute_comparison_vector_values(settings_obj)
+
+    training_linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
     sql = """
     select *, 1.0D as match_probability
     from __splink__df_comparison_vectors
     """
-    df_dict = linker.execute_sql(sql, df_dict, "__splink__df_predict")
+    training_linker.enqueue_sql(sql, "__splink__df_predict")
 
-    df_dict = _compute_new_parameters(settings_obj, df_dict, linker.execute_sql)
-    param_records = df_dict["__splink__df_new_params"].as_record_dict()
+    sql = compute_new_parameters(settings_obj)
+    training_linker.enqueue_sql(sql, "__splink__df_new_params")
 
-    param_records = df_dict["__splink__df_new_params"].as_record_dict()
+    df_params = training_linker.execute_sql_pipeline()
+    param_records = df_params.as_record_dict()
 
     m_u_records = [
         r for r in param_records if r["comparison_name"] != "_proportion_of_matches"
