@@ -2,7 +2,7 @@ import logging
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
-import uuid
+from .format_sql import format_sql
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
@@ -82,6 +82,8 @@ class Linker:
         self.find_new_matches_mode = False
         self.train_u_using_random_sample_mode = False
         self.compare_two_records_mode = False
+
+        self.debug_mode = False
 
     @property
     def _input_tablename_l(self):
@@ -178,14 +180,27 @@ class Linker:
     def execute_sql_pipeline(
         self, input_dataframes=[], materialise_as_hash=True, use_cache=True
     ):
-        sql_gen = self.pipeline._generate_pipeline(input_dataframes)
+        if not self.debug_mode:
+            sql_gen = self.pipeline._generate_pipeline(input_dataframes)
 
-        output_tablename_templated = self.pipeline.queue[-1].output_table_name
+            output_tablename_templated = self.pipeline.queue[-1].output_table_name
 
-        dataframe = self.sql_to_dataframe(
-            sql_gen, output_tablename_templated, materialise_as_hash, use_cache
-        )
-        return dataframe
+            dataframe = self.sql_to_dataframe(
+                sql_gen, output_tablename_templated, materialise_as_hash, use_cache
+            )
+            return dataframe
+        else:
+            for task in self.pipeline._generate_pipeline_parts(input_dataframes):
+                output_tablename = task.output_table_name
+                sql = task.sql
+                print("------")
+                print(f"--------Creating table: {output_tablename}--------")
+
+                dataframe = self.sql_to_dataframe(
+                    sql, output_tablename, materialise_as_hash=False, use_cache=False
+                )
+
+            return dataframe
 
     def sql_to_dataframe(
         self,
@@ -226,6 +241,16 @@ class Linker:
             )
 
         self.names_of_tables_created_by_splink.append(dataframe.physical_name)
+
+        if self.debug_mode:
+            print(format_sql(sql))
+
+            df_pd = dataframe.as_pandas_dataframe().head(5)
+            try:
+                display(df_pd.head())
+            except:
+                print(df_pd.head())
+
         return dataframe
 
     def __deepcopy__(self, memo):
