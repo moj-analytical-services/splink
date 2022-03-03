@@ -3,6 +3,7 @@ import os
 import tempfile
 import uuid
 import sqlglot
+from tempfile import TemporaryDirectory
 
 
 import duckdb
@@ -36,7 +37,7 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
 
 
 class DuckDBLinker(Linker):
-    def __init__(self, settings_dict, input_tables, connection=":memory:"):
+    def __init__(self, settings_dict, input_tables={}, connection=":memory:"):
 
         if connection == ":memory:":
             con = duckdb.connect(database=connection)
@@ -114,3 +115,15 @@ class DuckDBLinker(Linker):
         drop_sql = f"""
         DROP TABLE IF EXISTS {name}"""
         self.con.execute(drop_sql)
+
+    def export_to_duckdb_file(self, output_path, delete_intermediate_tables=False):
+        """
+        https://stackoverflow.com/questions/66027598/how-to-vacuum-reduce-file-size-on-duckdb
+        """
+        if delete_intermediate_tables:
+            self.delete_tables_created_by_splink_from_db()
+        with TemporaryDirectory() as tmpdir:
+            self.con.execute(f"EXPORT DATABASE '{tmpdir}' (FORMAT PARQUET);")
+            new_con = duckdb.connect(database=output_path)
+            new_con.execute(f"IMPORT DATABASE '{tmpdir}'")
+            new_con.close()

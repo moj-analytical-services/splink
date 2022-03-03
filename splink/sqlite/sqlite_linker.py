@@ -61,8 +61,8 @@ class SQLiteDataFrame(SplinkDataFrame):
 
 
 class SQLiteLinker(Linker):
-    def __init__(self, settings_dict, input_tables, sqlite_connection):
-        self.con = sqlite_connection
+    def __init__(self, settings_dict, input_tables={}, connection=":memory:"):
+        self.con = connection
         self.con.row_factory = dict_factory
         self.con.create_function("log2", 1, log2)
         self.con.create_function("pow", 2, pow)
