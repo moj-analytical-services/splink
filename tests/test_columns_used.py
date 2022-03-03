@@ -39,3 +39,11 @@ def test_get_columns_used():
             "cities",
         ]
     )
+
+    sql_5 = """
+    ARRAY_MIN(TRANSFORM(LATLONGEXPLODE(lat_lng_arr_uncommon_l, lat_lng_arr_uncommon_r), (x) -> (CAST(ATAN2(SQRT((POW(SIN(RADIANS(x['place2']['lat'] - x['place1']['lat'])) / 2, 2) + COS(RADIANS(x['place1']['lat'])) * COS(RADIANS(x['place2']['lat'])) * POW(SIN(RADIANS(x['place2']['long'] - x['place1']['long']) / 2), 2))), SQRT(-1 * (POW(SIN(RADIANS(x['place2']['lat'] - x['place1']['lat'])) / 2, 2) + COS(RADIANS(x['place1']['lat'])) * COS(RADIANS(x['place2']['lat'])) * POW(SIN(RADIANS(x['place2']['long'] - x['place1']['long']) / 2), 2)) + 1)) * 12742 AS FLOAT)))) < 5
+    """
+
+    assert set(get_columns_used_from_sql(sql_5)) == set(
+        ["lat_lng_arr_uncommon_l", "lat_lng_arr_uncommon_r"]
+    )
