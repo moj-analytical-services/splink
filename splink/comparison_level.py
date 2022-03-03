@@ -4,12 +4,13 @@ from statistics import median
 from textwrap import dedent
 from typing import TYPE_CHECKING
 
+import warnings
 import sqlglot
 from sqlglot.expressions import EQ, Column, Identifier
 
 from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
-from .misc import dedupe_preserving_order
+from .misc import dedupe_preserving_order, normalise, interpolate
 from .parse_sql import get_columns_used_from_sql
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -101,24 +102,47 @@ class ComparisonLevel:
     def m_probability(self):
         if self.is_null_level:
             return None
+        if self._m_probability == "level not observed in training dataset":
+            return 1e-6
+        if self._m_probability is None:
+            vals = normalise(interpolate(0.05, 0.95, self.comparison.num_levels))
+            self._m_probability = vals[self.comparison_vector_value]
         return self._m_probability
 
     @m_probability.setter
     def m_probability(self, value):
         if self.is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
+
+        if value == "level not observed in training dataset":
+            cc_n = self.comparison.comparison_name
+            cl_n = self.label_for_charts
+            warnings.warn(
+                f"Level  {cl_n} on  comparison {cc_n} not observed in dataset, unable to train value"
+            )
         self._m_probability = value
 
     @property
     def u_probability(self):
         if self.is_null_level:
             return None
+        if self._u_probability == "level not observed in training dataset":
+            return 1e-6
+        if self._u_probability is None:
+            vals = normalise(interpolate(0.95, 0.05, self.comparison.num_levels))
+            self._u_probability = vals[self.comparison_vector_value]
         return self._u_probability
 
     @u_probability.setter
     def u_probability(self, value):
         if self.is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
+        if value == "level not observed in training dataset":
+            cc_n = self.comparison.comparison_name
+            cl_n = self.label_for_charts
+            warnings.warn(
+                f"Level  {cl_n} on  comparison {cc_n} not observed in dataset, unable to train value"
+            )
         self._u_probability = value
 
     @property
@@ -272,8 +296,7 @@ class ComparisonLevel:
         if self.is_else_level:
             return False
 
-        sqls = self.sql_condition.upper().split("AND")
-        sql = re.split(r"and", self.sql_condition, flags=re.IGNORECASE)
+        sqls = re.split(r" and ", self.sql_condition, flags=re.IGNORECASE)
         for sql in sqls:
             if not _is_exact_match(sql):
                 return False
@@ -282,7 +305,7 @@ class ComparisonLevel:
     @property
     def exact_match_colnames(self):
 
-        sqls = re.split(r"and", self.sql_condition, flags=re.IGNORECASE)
+        sqls = re.split(r" and ", self.sql_condition, flags=re.IGNORECASE)
         for sql in sqls:
             if not _is_exact_match(sql):
                 raise ValueError(
