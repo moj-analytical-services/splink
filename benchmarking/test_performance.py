@@ -288,8 +288,8 @@ def sqlite_performance(con, target_rows=1e6):
     print("**** running sqlite benchmark ***")
     linker = SQLiteLinker(
         settings_dict,
+        connection=con,
         input_tables={"mydf": "input_df_tablename"},
-        sqlite_connection=con,
     )
 
     linker.train_u_using_random_sampling(target_rows=target_rows)
