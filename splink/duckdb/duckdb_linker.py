@@ -125,5 +125,5 @@ class DuckDBLinker(Linker):
         with TemporaryDirectory() as tmpdir:
             self.con.execute(f"EXPORT DATABASE '{tmpdir}' (FORMAT PARQUET);")
             new_con = duckdb.connect(database=output_path)
-            new_con.execute(f"IMPORT DATABASE '{tmpdir}'")
+            new_con.execute(f"IMPORT DATABASE '{tmpdir}';")
             new_con.close()
