@@ -62,10 +62,16 @@ def maximisation_step(em_training_session, param_records):
         cl = cc.get_comparison_level_by_comparison_vector_value(gamma_val)
 
         if not em_training_session._training_fix_m_probabilities:
-            cl.m_probability = record["m_probability"]
+            if record["m_probability"] is None:
+                cl.m_probability = "level not observed in training dataset"
+            else:
+                cl.m_probability = record["m_probability"]
 
         if not em_training_session._training_fix_u_probabilities:
-            cl.u_probability = record["u_probability"]
+            if record["u_probability"] is None:
+                cl.u_probability = "level not observed in training dataset"
+            else:
+                cl.u_probability = record["u_probability"]
 
     # Dump current comparsion columns to training settion
     em_training_session.add_iteration()

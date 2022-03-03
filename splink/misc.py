@@ -16,3 +16,14 @@ def prob_to_bayes_factor(prob):
 
 def bayes_factor_to_prob(bf):
     return bf / (1 + bf)
+
+
+def interpolate(start, end, num_elements):
+    steps = num_elements - 1
+    step = (end - start) / steps
+    vals = [start + (i * step) for i in range(0, num_elements)]
+    return vals
+
+
+def normalise(vals):
+    return [v / sum(vals) for v in vals]

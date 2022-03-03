@@ -8,17 +8,6 @@ if TYPE_CHECKING:
     from .settings import Settings
 
 
-def _interpolate(start, end, num_elements):
-    steps = num_elements - 1
-    step = (end - start) / steps
-    vals = [start + (i * step) for i in range(0, num_elements)]
-    return vals
-
-
-def _normalise(vals):
-    return [v / sum(vals) for v in vals]
-
-
 class Comparison:
     def __init__(self, comparison_dict, settings_obj: "Settings" = None):
 
@@ -248,20 +237,6 @@ class Comparison:
             record = {**record, **cl.as_detailed_record}
             records.append(record)
         return records
-
-    def populate_starting_m_values(self):
-        vals = _normalise(_interpolate(0.05, 0.95, self.num_levels))
-        for cl in self.comparison_levels:
-            if not cl.is_null_level:
-                val = vals.pop()
-                cl.m_probability = val
-
-    def populate_starting_u_values(self):
-        vals = _normalise(_interpolate(0.95, 0.05, self.num_levels))
-        for cl in self.comparison_levels:
-            if not cl.is_null_level:
-                val = vals.pop()
-                cl.u_probability = val
 
     def get_comparison_level_by_comparison_vector_value(self, value):
         for cl in self.comparison_levels:

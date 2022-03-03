@@ -10,12 +10,12 @@ def exact_match_level(col_name, m_probability=None, term_frequency_adjustments=F
     d = {
         "sql_condition": f"{col_name}_l = {col_name}_r",
         "label_for_charts": "exact_match",
-        "m_probability": m_probability,
     }
-    if term_frequency_adjustments:
-        d["tf_adjustment_column"] = col_name
     if m_probability:
         d["m_probability"] = m_probability
+    if term_frequency_adjustments:
+        d["tf_adjustment_column"] = col_name
+
     return d
 
 
