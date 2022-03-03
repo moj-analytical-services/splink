@@ -70,8 +70,8 @@ def test_splink_2_predict_sqlite():
 
     linker = SQLiteLinker(
         settings_dict,
+        connection=con,
         input_tables={"fake_data_1": "fake_data_1"},
-        sqlite_connection=con,
     )
 
     df_e = linker.predict().as_pandas_dataframe()

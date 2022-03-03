@@ -37,7 +37,7 @@ class SparkDataframe(SplinkDataFrame):
 # These classes want to be as minimal as possible
 # dealing with only the backend-specific logic
 class SparkLinker(Linker):
-    def __init__(self, settings_dict, input_tables):
+    def __init__(self, settings_dict, input_tables={}):
         df = next(iter(input_tables.values()))
 
         self.spark = df.sql_ctx.sparkSession
