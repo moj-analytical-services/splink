@@ -14,16 +14,8 @@ def get_columns_used_from_sql(sql):
             path[subtree.depth] = type(subtree)
         if Lambda in path.values():
             continue
-        if type(subtree) is Column:
-            if retain_table_prefix:
-                column_names.add(subtree.sql())
-            else:
-                column_names.add(subtree.this.sql())
-        if type(subtree) is Bracket:
-            if retain_table_prefix:
-                column_names.add(subtree.sql())
-            else:
-                column_names.add(subtree.this.sql())
+        if type(subtree) in (Column, Bracket):
+            column_names.add(subtree.this.sql())
     return list(column_names)
 
 
