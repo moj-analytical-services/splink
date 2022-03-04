@@ -1,19 +1,29 @@
 import sqlglot
 from sqlglot.errors import ParseError
-from sqlglot.expressions import Case, Column, Alias, Bracket
+from sqlglot.expressions import Case, Column, Alias, Bracket, Lambda
 import re
 
 
 def get_columns_used_from_sql(sql):
     column_names = set()
     syntax_tree = sqlglot.parse_one(sql, read="spark")
+    path = {}
     for tup in syntax_tree.walk():
         subtree = tup[0]
+        if hasattr(subtree, "depth"):
+            path[subtree.depth] = type(subtree)
+        if Lambda in path.values():
+            continue
         if type(subtree) is Column:
-            column_names.add(subtree.sql())
-        elif type(subtree) is Bracket and subtree.text("this") not in ('','x'):
-            column_names.add(subtree.text("this"))
-
+            if retain_table_prefix:
+                column_names.add(subtree.sql())
+            else:
+                column_names.add(subtree.this.sql())
+        if type(subtree) is Bracket:
+            if retain_table_prefix:
+                column_names.add(subtree.sql())
+            else:
+                column_names.add(subtree.this.sql())
     return list(column_names)
 
 
