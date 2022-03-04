@@ -2,48 +2,58 @@ from splink.parse_case_statement import get_columns_used_from_sql
 
 
 def test_get_columns_used():
-    sql_1 = """
+
+    sql = """
+    jaro_winkler_sim(surname_l, surname_r) > 0.99 or
+    substr(surname_l || initial_l ,1,2) = substr(surname_r || initial_r,1,2)
+    """
+
+    assert set(get_columns_used_from_sql(sql)) == set(
+        ["surname_l", "surname_r", "initial_l", "initial_r"]
+    )
+
+    sql = """
     lat_lng_uncommon_l['lat'] - lat_lng_uncommon_r['lat']
     """
-    assert set(get_columns_used_from_sql(sql_1)) == set(
+    assert set(get_columns_used_from_sql(sql)) == set(
         [
             "lat_lng_uncommon_l",
             "lat_lng_uncommon_r",
         ]
     )
 
-    sql_2 = """
+    sql = """
     transform(latlongexplode(lat_lng_arr_uncommon_l,lat_lng_arr_uncommon_r ),
     x -> sin(radians(x['place2']['lat'] - x['place1']['lat'])) )
     """
 
-    assert set(get_columns_used_from_sql(sql_2)) == set(
+    assert set(get_columns_used_from_sql(sql)) == set(
         [
             "lat_lng_arr_uncommon_l",
             "lat_lng_arr_uncommon_r",
         ]
     )
 
-    sql_3 = "AGGREGATE(cities, 0, (x, y) -> x + length(y))"
+    sql = "AGGREGATE(cities, 0, (x, y) -> x + length(y))"
 
-    assert set(get_columns_used_from_sql(sql_3)) == set(
+    assert set(get_columns_used_from_sql(sql)) == set(
         [
             "cities",
         ]
     )
 
-    sql_4 = "AGGREGATE(cities, 0, x ->  length(x['a']))"
+    sql = "AGGREGATE(cities, 0, x ->  length(x['a']))"
 
-    assert set(get_columns_used_from_sql(sql_4)) == set(
+    assert set(get_columns_used_from_sql(sql)) == set(
         [
             "cities",
         ]
     )
 
-    sql_5 = """
+    sql = """
     ARRAY_MIN(TRANSFORM(LATLONGEXPLODE(lat_lng_arr_uncommon_l, lat_lng_arr_uncommon_r), (x) -> (CAST(ATAN2(SQRT((POW(SIN(RADIANS(x['place2']['lat'] - x['place1']['lat'])) / 2, 2) + COS(RADIANS(x['place1']['lat'])) * COS(RADIANS(x['place2']['lat'])) * POW(SIN(RADIANS(x['place2']['long'] - x['place1']['long']) / 2), 2))), SQRT(-1 * (POW(SIN(RADIANS(x['place2']['lat'] - x['place1']['lat'])) / 2, 2) + COS(RADIANS(x['place1']['lat'])) * COS(RADIANS(x['place2']['lat'])) * POW(SIN(RADIANS(x['place2']['long'] - x['place1']['long']) / 2), 2)) + 1)) * 12742 AS FLOAT)))) < 5
     """
 
-    assert set(get_columns_used_from_sql(sql_5)) == set(
+    assert set(get_columns_used_from_sql(sql)) == set(
         ["lat_lng_arr_uncommon_l", "lat_lng_arr_uncommon_r"]
     )
