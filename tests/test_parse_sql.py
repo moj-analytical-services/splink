@@ -5,7 +5,7 @@ def test_get_columns_used():
 
     sql = """
     jaro_winkler_sim(surname_l, surname_r) > 0.99 or
-    substr(surname_l || initial_l ,1,2) = substr(surname_r || initial_r,1,2)
+    substr(mytable.surname_l || initial_l ,1,2) = substr(surname_r || initial_r,1,2)
     """
 
     assert set(get_columns_used_from_sql(sql)) == set(
@@ -13,7 +13,7 @@ def test_get_columns_used():
     )
 
     sql = """
-    lat_lng_uncommon_l['lat'] - lat_lng_uncommon_r['lat']
+    lat_lng_uncommon_l['lat'] - mytable.lat_lng_uncommon_r['lat']
     """
     assert set(get_columns_used_from_sql(sql)) == set(
         [

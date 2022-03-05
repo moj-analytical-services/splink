@@ -15,7 +15,10 @@ def get_columns_used_from_sql(sql):
         if Lambda in path.values():
             continue
         if type(subtree) in (Column, Bracket):
-            column_names.add(subtree.this.sql())
+            col = subtree.text("this")
+            if col.strip() != "":
+                column_names.add(col)
+
     return list(column_names)
 
 
