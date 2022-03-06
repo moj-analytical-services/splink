@@ -2,7 +2,6 @@ import logging
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
-from .format_sql import format_sql
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
@@ -120,8 +119,9 @@ class Linker:
 
     @property
     def two_dataset_link_only(self):
-        # Two dataset link only join is a special case where an inner join of the two datasets
-        # is much more efficient than self-joining the vertically concatenation of all input datasets
+        # Two dataset link only join is a special case where an inner join of the
+        # two datasets is much more efficient than self-joining the vertically
+        # concatenation of all input datasets
         if self.find_new_matches_mode:
             return True
 
@@ -260,8 +260,10 @@ class Linker:
 
             df_pd = dataframe.as_pandas_dataframe()
             try:
+                from IPython.display import display
+
                 display(df_pd)
-            except:
+            except ModuleNotFoundError:
                 print(df_pd)
 
         return dataframe
@@ -333,7 +335,7 @@ class Linker:
             fix_m_probabilities=fix_m_probabilities,
             fix_proportion_of_matches=fix_proportion_of_matches,
             comparisons_to_deactivate=comparisons_to_deactivate,
-            comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,
+            comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa
         )
 
         em_training_session.train()
@@ -379,11 +381,13 @@ class Linker:
 
         if not global_prop_matches_fully_trained:
             print(
-                f"Proportion of matches not fully trained, current estimates are {prop_matches_estimates}"
+                "Proportion of matches not fully trained, "
+                f"current estimates are {prop_matches_estimates}"
             )
         else:
             print(
-                f"Proportion of matches can now be estimated, estimates are {prop_matches_estimates}"
+                "Proportion of matches can now be estimated, "
+                f"estimates are {prop_matches_estimates}"
             )
 
         self.settings_obj._proportion_of_matches = median(prop_matches_estimates)
@@ -413,7 +417,7 @@ class Linker:
             comparisons_to_deactivate=comparisons_to_deactivate,
             fix_u_probabilities=fix_u_probabilities,
             fix_m_probabilities=fix_m_probabilities,
-            comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,
+            comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa
         )
 
     def predict(self):

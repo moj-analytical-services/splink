@@ -118,7 +118,8 @@ class ComparisonLevel:
             cc_n = self.comparison.comparison_name
             cl_n = self.label_for_charts
             warnings.warn(
-                f"Level  {cl_n} on  comparison {cc_n} not observed in dataset, unable to train value"
+                f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
+                "unable to train value"
             )
         self._m_probability = value
 
@@ -141,19 +142,28 @@ class ComparisonLevel:
             cc_n = self.comparison.comparison_name
             cl_n = self.label_for_charts
             warnings.warn(
-                f"Level  {cl_n} on  comparison {cc_n} not observed in dataset, unable to train value"
+                f"Level {cl_n} on  comparison {cc_n} not observed in dataset, "
+                "unable to train value"
             )
         self._u_probability = value
 
     @property
     def m_probability_description(self):
         if self.m_probability is not None:
-            return f"Amongst truly matching record comparisons, {self.m_probability:.2%} of records are in the {self.label_for_charts.lower()} comparison level"
+            return (
+                "Amongst truly matching record comparisons, "
+                f"{self.m_probability:.2%} of records are in the "
+                f"{self.label_for_charts.lower()} comparison level"
+            )
 
     @property
     def u_probability_description(self):
         if self.u_probability is not None:
-            return f"Amongst truly non-matching record comparisons, {self.u_probability:.2%} of records are in the {self.label_for_charts.lower()} comparison level"
+            return (
+                "Amongst truly non-matching record comparisons, "
+                f"{self.u_probability:.2%} of records are in the "
+                f"{self.label_for_charts.lower()} comparison level"
+            )
 
     def add_trained_u_probability(self, val, desc="no description given"):
         self.trained_u_probabilities.append({"u_probability": val, "description": desc})
@@ -199,7 +209,10 @@ class ComparisonLevel:
 
     @property
     def bayes_factor_description(self):
-        text = f"If comparison level is `{self.label_for_charts.lower()}` then comparison is"
+        text = (
+            f"If comparison level is `{self.label_for_charts.lower()}` "
+            "then comparison is"
+        )
         if self.bayes_factor >= 1.0:
             return f"{text} {self.bayes_factor:,.2f} times more likely to be a match"
         else:
@@ -252,7 +265,8 @@ class ComparisonLevel:
         for c in cols:
 
             # We could have tf adjustments for surname on a dmeta_surname column
-            # If so, we want to set the tf adjustments against the surname col, not the dmeta_surname one
+            # If so, we want to set the tf adjustments against the surname col,
+            # not the dmeta_surname one
             if c == self.tf_adjustment_input_column_name:
                 input_cols.append(
                     InputColumn(c, tf_adjustments=True, settings_obj=self.settings_obj)
@@ -334,9 +348,9 @@ class ComparisonLevel:
             if colnames[0] == self.tf_adjustment_input_column_name:
                 return level.u_probability
         raise ValueError(
-            f"Could not find exact match level for {self.tf_adjustment_input_col_name}.\n"
-            "An exact match level is required to make a term frequency adjustment on a "
-            "comparison level that is not an exact match."
+            f"Could not find exact match level for {self.tf_adjustment_input_col_name}."
+            "\nAn exact match level is required to make a term frequency adjustment "
+            "on a comparison level that is not an exact match."
         )
 
     @property
@@ -451,4 +465,7 @@ class ComparisonLevel:
     def __repr__(self):
         sql = self.sql_condition
         sql = (sql[:75] + "...") if len(sql) > 75 else sql
-        return f"<ComparisonLevel {self.label_for_charts} with match weight {self.bayes_factor:,.2} and SQL: {sql}>"
+        return (
+            f"<ComparisonLevel {self.label_for_charts} with "
+            "match weight {self.bayes_factor:,.2} and SQL: {sql}>"
+        )

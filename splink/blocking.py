@@ -31,12 +31,15 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     id_expr_r = _sql_gen_composite_unique_id(unique_id_cols, "r")
 
     if link_type == "two_dataset_link_only":
-        where_condition = f" where true "
+        where_condition = " where true "
     elif link_type in ["link_and_dedupe", "dedupe_only"]:
         where_condition = f"where {id_expr_l} < {id_expr_r}"
     elif link_type == "link_only":
         source_dataset_col = unique_id_cols[0]
-        where_condition = f"where {id_expr_l} < {id_expr_r} and l.{source_dataset_col.name} != r.{source_dataset_col.name}"
+        where_condition = (
+            f"where {id_expr_l} < {id_expr_r} "
+            f"and l.{source_dataset_col.name} != r.{source_dataset_col.name}"
+        )
 
     return where_condition
 

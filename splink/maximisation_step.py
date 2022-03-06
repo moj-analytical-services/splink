@@ -11,8 +11,13 @@ def compute_new_parameters(settings_obj: Settings):
 
     sql_template = """
     select {gamma_column} as comparison_vector_value,
-           sum(match_probability)/(select sum(match_probability) from __splink__df_predict where {gamma_column} != -1) as m_probability,
-           sum(1 - match_probability)/(select sum(1 - match_probability) from __splink__df_predict where {gamma_column} != -1) as u_probability,
+
+           sum(match_probability)/(select sum(match_probability)
+            from __splink__df_predict where {gamma_column} != -1) as m_probability,
+
+           sum(1 - match_probability)/(select sum(1 - match_probability)
+            from __splink__df_predict where {gamma_column} != -1) as u_probability,
+
            "{comparison_name}" as comparison_name
     from __splink__df_predict
     where {gamma_column} != -1

@@ -75,27 +75,27 @@ def _comparison_records(record_as_dict, comparison):
 
     if cc.has_tf_adjustments:
         waterfall_record_2 = deepcopy(waterfall_record)
-        try:
+
+        if cl.tf_adjustment_input_column is not None:
             waterfall_record_2["value_l"] = str(
                 record_as_dict[cl.tf_adjustment_input_column.name_l.replace("`", "")]
             )
-        except:
-            waterfall_record_2["value_l"] = ""
-
-        try:
             waterfall_record_2["value_r"] = str(
                 record_as_dict[cl.tf_adjustment_input_column.name_r.replace("`", "")]
             )
-        except:
+        else:
+            waterfall_record_2["value_l"] = ""
             waterfall_record_2["value_r"] = ""
+
         waterfall_record_2["column_name"] = "tf_" + cc.comparison_name
         waterfall_record_2["term_frequency_adjustment"] = True
         waterfall_record_2["bayes_factor"] = 1.0
         waterfall_record_2["log2_bayes_factor"] = math.log2(1.0)
         if cl.has_tf_adjustments:
-            waterfall_record_2[
-                "label_for_charts"
-            ] = f"Term freq adjustment on {cl.tf_adjustment_input_column.input_name} with weight {cl.tf_adjustment_weight}"
+            waterfall_record_2["label_for_charts"] = (
+                f"Term freq adjustment on {cl.tf_adjustment_input_column.input_name} "
+                "with weight {cl.tf_adjustment_weight}"
+            )
             bf = record_as_dict[cc.bf_tf_adj_column_name]
             waterfall_record_2["bayes_factor"] = bf
             waterfall_record_2["log2_bayes_factor"] = math.log2(bf)
@@ -103,7 +103,10 @@ def _comparison_records(record_as_dict, comparison):
             waterfall_record_2["u_probability"] = None
             waterfall_record["bayes_factor_description"] = None
 
-            text = f"Term frequency adjustment on {cl.tf_adjustment_input_column.input_name} makes comparison "
+            text = (
+                "Term frequency adjustment on "
+                f"{cl.tf_adjustment_input_column.input_name} makes comparison"
+            )
             if bf >= 1.0:
                 text = f"{text} {bf:,.2f} times more likely to be a match"
             else:

@@ -84,7 +84,7 @@ class DuckDBLinker(Linker):
         AS
         ({sql})
         """
-        output = self.con.execute(sql).fetch_df()
+        self.con.execute(sql).fetch_df()
 
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 

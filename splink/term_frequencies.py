@@ -61,12 +61,6 @@ def join_tf_to_input_df(settings_obj):
 
 
 def term_frequencies(linker):
-    """Compute the term frequencies of the required columns and add to the dataframe.
-
-    Returns:
-        Spark dataframe: A dataframe containing new columns representing the term frequencies
-        of the corresponding values
-    """
 
     settings_obj = linker.settings_obj
     tf_cols = settings_obj._term_frequency_columns

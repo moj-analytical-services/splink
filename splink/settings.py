@@ -182,19 +182,21 @@ class Settings:
         self, blocking_rule
     ):
         """
-        If we block on (say) first name and surname, then all blocked comparisons are guaranteed to
-        have a match on first name and surname
+        If we block on (say) first name and surname, then all blocked comparisons are
+        guaranteed to have a match on first name and surname
 
-        The proportion of matches must be adjusted for the fact this is a subset of the comparisons
+        The proportion of matches must be adjusted for the fact this is a subset of the
+        comparisons
 
-        To correctly adjust, we need to find one or more comparison levels corresponding to the blocking rule
-        and use their bayes factor
+        To correctly adjust, we need to find one or more comparison levels corresponding
+        to the blocking rule and use their bayes factor
 
-        In the example, we need to find a comparison level for an exact match on first name, and one for an
-        exact match on surname
+        In the example, we need to find a comparison level for an exact match on first
+        name, and one for an exact match on surname
 
-        Or alternatively (and preferably, to avoid correlation issues), a comparison level for an exact match
-        on first_name AND surname.   i.e. a single level for exact match on full name
+        Or alternatively (and preferably, to avoid correlation issues), a comparison
+        level for an exact match on first_name AND surname.   i.e. a single level for
+        exact match on full name
 
         """
         blocking_exact_match_columns = set(get_columns_used_from_sql(blocking_rule))
@@ -207,8 +209,10 @@ class Settings:
                 if cl.is_exact_match:
                     exact_comparison_levels.append(cl)
 
-        # Where exact match on multiple columns exists, use that instaed of individual exact match columns
-        # So for example, if we have a param estimate for exact match on first name AND surname, prefer that
+        # Where exact match on multiple columns exists, use that instaed of individual
+        # exact match columns
+        # So for example, if we have a param estimate for exact match on first name AND
+        # surname, prefer that
         # over individual estimtes for exact match first name and surname.
         exact_comparison_levels.sort(key=lambda x: -len(x.exact_match_colnames))
 
