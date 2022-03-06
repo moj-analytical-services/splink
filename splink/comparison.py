@@ -246,4 +246,7 @@ class Comparison:
         raise ValueError(f"No comparison level with comparison vector value {value}")
 
     def __repr__(self):
-        return f"<ComparisonColumn {self.comparison_name} with {self.num_levels} levels at {hex(id(self))}>"
+        return (
+            f"<ComparisonColumn {self.comparison_name} with "
+            "{self.num_levels} levels at {hex(id(self))}>"
+        )

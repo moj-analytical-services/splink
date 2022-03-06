@@ -96,7 +96,10 @@ class SQLiteLinker(Linker):
 
         sample_size = int(sample_size)
 
-        return f"where unique_id IN (SELECT unique_id FROM __splink__df_concat_with_tf ORDER BY RANDOM() LIMIT {sample_size})"
+        return (
+            "where unique_id IN (SELECT unique_id FROM __splink__df_concat_with_tf"
+            f" ORDER BY RANDOM() LIMIT {sample_size})"
+        )
 
     def table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"

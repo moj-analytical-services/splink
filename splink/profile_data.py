@@ -30,7 +30,8 @@ def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, col_n
     perc = total_non_null_rows / total_rows_inc_nulls
 
     sub = (
-        f"In this col, {total_rows_inc_nulls*(1-perc):,.0f} values ({1-perc:,.1%}) are null and there are "
+        f"In this col, {total_rows_inc_nulls*(1-perc):,.0f} values "
+        f"({1-perc:,.1%}) are null and there are "
         f"{distinct_value_count} distinct values"
     )
     sub = sub.format(**percentile_data[0])

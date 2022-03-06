@@ -8,7 +8,8 @@ logger = logging.getLogger(__name__)
 
 def compute_comparison_vector_values(settings_obj: Settings):
     """Compute the comparison vectors and add them to the dataframe.  See
-    https://imai.fas.harvard.edu/research/files/linkage.pdf for more details of what is meant by comparison vectors
+    https://imai.fas.harvard.edu/research/files/linkage.pdf for more details of what is
+    meant by comparison vectors
 
     """
 

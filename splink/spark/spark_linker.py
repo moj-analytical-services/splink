@@ -1,4 +1,3 @@
-from pyspark.sql import DataFrame as sp_DataFrame
 from pyspark.sql import Row
 from ..linker import Linker, SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename

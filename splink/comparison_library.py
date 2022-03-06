@@ -41,6 +41,6 @@ def levenshtein(
                 distance_threshold=distance_threshold,
                 m_probability=m_probability_leven,
             ),
-            cl.else_level(col_name, m_probability=m_probability_else),
+            cl.else_level(m_probability=m_probability_else),
         ]
     }

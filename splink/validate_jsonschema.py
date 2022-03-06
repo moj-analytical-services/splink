@@ -55,13 +55,17 @@ def validate_settings_against_schema(settings_dict: dict):
             error_in += f"The comparison is: {json.dumps(comparison)}\n\n"
 
         if error_in == "":
-            error_in = "The error is in the main settings object, not in the comparison columns or levels."
+            error_in = (
+                "The error is in the main settings object, not in the "
+                "comparison columns or levels."
+            )
 
         message = (
             f"There was at least one error in your settings dictionary.\n\n"
             f"The first error was:   {e.message}\n\n"
             f"The path to the error is:\n     {json.dumps(path)}\n\n"
-            f"The part of your settings dictionary containing this error is:\n     {json.dumps(e.instance)}\n"
+            f"The part of your settings dictionary containing this error is:\n"
+            f"{json.dumps(e.instance)}\n"
             f"{error_in}\n"
         )
         raise ValueError(message)
