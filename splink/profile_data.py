@@ -67,9 +67,9 @@ def _get_df_percentiles():
     select sum(value_count) as sum_tokens_in_value_count_group,
     value_count,
     group_name,
-    first(total_non_null_rows) as total_non_null_rows,
-    first(total_rows_inc_nulls) as total_rows_inc_nulls,
-    first(distinct_value_count) as distinct_value_count
+    max(total_non_null_rows) as total_non_null_rows,
+    max(total_rows_inc_nulls) as total_rows_inc_nulls,
+    max(distinct_value_count) as distinct_value_count
     from df_all_column_value_frequencies
     group by group_name, value_count
     order by group_name, value_count desc
@@ -108,6 +108,7 @@ def _get_df_percentiles():
 def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
 
     sql = """
+    select * from
     (select *
     from df_all_column_value_frequencies
     where group_name = '{group_name}'
@@ -132,6 +133,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
     sqls = []
     for col_or_expr in cols_or_exprs:
         sql = f"""
+        select * from
         (select
             count(*) as value_count,
             '{col_or_expr}' as group_name,

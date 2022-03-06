@@ -2,8 +2,8 @@ import pytest
 
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.duckdb.duckdb_linker import DuckDBLinker
-from copy import deepcopy
 from splink.sqlite.sqlite_linker import SQLiteLinker
+from splink.spark.spark_linker import SparkLinker
 
 import pandas as pd
 
@@ -30,22 +30,10 @@ def test_splink_2_predict():
     assert expected_match_weight == pytest.approx(actual_match_weight)
 
 
-def test_splink_2_predict_spark():
+# @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
+def test_splink_2_predict_spark(df_spark):
 
-    from pyspark.context import SparkContext, SparkConf
-    from pyspark.sql import SparkSession
-
-    from splink.spark.spark_linker import SparkLinker
-
-    conf = SparkConf()
-    conf.set("spark.driver.memory", "12g")
-    conf.set("spark.sql.shuffle.partitions", "8")
-    sc = SparkContext.getOrCreate(conf=conf)
-    spark = SparkSession(sc)
-
-    df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=True)
-
-    linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df_spark})
 
     df_e = linker.predict().as_pandas_dataframe()
     print(len(df_e))
