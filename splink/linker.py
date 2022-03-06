@@ -555,6 +555,8 @@ class Linker:
 
         self.names_of_tables_created_by_splink = tables_remaining
 
-    def column_frequency_chart(self, column_expressions):
+    def column_frequency_chart(self, column_expressions, top_n=10, bottom_n=10):
         self._initialise_df_concat_with_tf()
-        return column_frequency_chart(self, column_expressions)
+        return column_frequency_chart(
+            self, column_expressions, top_n=top_n, bottom_n=bottom_n
+        )

@@ -1,5 +1,4 @@
 import sqlite3
-import pytest
 import pandas as pd
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
@@ -17,7 +16,9 @@ def test_profile_using_duckdb():
     )
 
     linker.column_frequency_chart(
-        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]
+        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
+        top_n=15,
+        bottom_n=5,
     )
 
 
