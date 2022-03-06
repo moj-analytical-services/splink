@@ -1,7 +1,6 @@
 import re
 from copy import deepcopy
 from .charts import vegalite_or_json, load_chart_definition
-from itertools import groupby
 
 
 def _group_name(cols_or_exprs):
@@ -94,8 +93,10 @@ def _get_df_percentiles():
 
     sql = """
     select
-    1 - (cast(value_count_cumsum as float)/total_non_null_rows) as percentile_ex_nulls,
-    1 - (cast(value_count_cumsum as float)/total_rows_inc_nulls) as percentile_inc_nulls,
+    1 - (cast(value_count_cumsum as float)/total_non_null_rows)
+        as percentile_ex_nulls,
+    1 - (cast(value_count_cumsum as float)/total_rows_inc_nulls)
+        as percentile_inc_nulls,
     value_count, group_name, total_non_null_rows, total_rows_inc_nulls,
     sum_tokens_in_value_count_group, distinct_value_count
     from df_total_in_value_counts_cumulative
@@ -140,7 +141,8 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
             {col_or_expr} as value,
             (select count({col_or_expr}) from {table_name}) as total_non_null_rows,
             (select count(*) from {table_name}) as total_rows_inc_nulls,
-            (select count(distinct {col_or_expr}) from {table_name}) as distinct_value_count
+            (select count(distinct {col_or_expr}) from {table_name})
+                as distinct_value_count
 
         from {table_name}
         where {col_or_expr} is not null
@@ -164,7 +166,7 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
     return percentile_rows
 
 
-def column_frequency_chart(linker, column_expressions):
+def column_frequency_chart(linker, column_expressions, top_n=10, bottom_n=10):
     if type(column_expressions) == str:
         column_expressions = [column_expressions]
     linker._initialise_df_concat_with_tf()
@@ -183,12 +185,12 @@ def column_frequency_chart(linker, column_expressions):
     df_percentiles = linker.execute_sql_pipeline([df_raw], transpile=False)
     percentile_rows_all = df_percentiles.as_record_dict()
 
-    sql = _get_df_top_bottom_n(column_expressions, 10, "desc")
+    sql = _get_df_top_bottom_n(column_expressions, top_n, "desc")
     linker.enqueue_sql(sql, "df_top_n")
     df_top_n = linker.execute_sql_pipeline([df_raw], transpile=False)
     top_n_rows_all = df_top_n.as_record_dict()
 
-    sql = _get_df_top_bottom_n(column_expressions, 10, "asc")
+    sql = _get_df_top_bottom_n(column_expressions, bottom_n, "asc")
     linker.enqueue_sql(sql, "df_bottom_n")
     df_bottom_n = linker.execute_sql_pipeline([df_raw], transpile=False)
     bottom_n_rows_all = df_bottom_n.as_record_dict()
