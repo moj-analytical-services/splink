@@ -1,0 +1,21 @@
+name: Release Package on PyPi
+on:
+  push:
+    tags:
+      - "v*.*.*"
+jobs:
+  poetry-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+      - name: Install Poetry
+        run: |
+          curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+          echo "$HOME/.poetry/bin" >> $GITHUB_PATH
+      - name: Publish to Pypi
+        env:
+          TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        run: poetry publish --build -u __token__ -p $TOKEN
