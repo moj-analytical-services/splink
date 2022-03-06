@@ -20,8 +20,9 @@ def exact_match_level(col_name, m_probability=None, term_frequency_adjustments=F
 
 
 def levenshtein_level(col_name, distance_threshold, m_probability=None):
+    sql_cond = f"levenshtein({col_name}_l, {col_name}_r) <= {distance_threshold}"
     d = {
-        "sql_condition": f"levenshtein({col_name}_l, {col_name}_r) <= {distance_threshold}",
+        "sql_condition": sql_cond,
         "label_for_charts": f"Levenstein <= {distance_threshold}",
     }
     if m_probability:
@@ -31,7 +32,6 @@ def levenshtein_level(col_name, distance_threshold, m_probability=None):
 
 
 def else_level(
-    col_name=None,
     m_probability=None,
 ):
     d = {
