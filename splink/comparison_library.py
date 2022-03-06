@@ -15,7 +15,7 @@ def exact_match(
                 term_frequency_adjustments=term_frequency_adjustments,
                 m_probability=m_probability_exact_match,
             ),
-            cl.else_level(col_name, m_probability=m_probability_else),
+            cl.else_level(m_probability=m_probability_else),
         ]
     }
 
