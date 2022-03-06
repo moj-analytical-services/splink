@@ -1,0 +1,80 @@
+{
+  "hconcat": [
+    {
+      "data": { "values": null },
+      "mark": { "type": "line", "interpolate": "step-after" },
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "field": "percentile_ex_nulls",
+          "sort": "descending",
+          "title": "Percentile"
+        },
+        "y": {
+          "type": "quantitative",
+          "field": "value_count",
+          "title": "Count of values"
+        },
+        "tooltip": [
+          { "field": "value_count", "type": "quantitative" },
+          { "field": "percentile_ex_nulls", "type": "quantitative" },
+          { "field": "percentile_inc_nulls", "type": "quantitative" },
+          { "field": "total_non_null_rows", "type": "quantitative" },
+          { "field": "total_rows_inc_nulls", "type": "quantitative" }
+        ]
+      },
+      "title": {
+        "text": "Distribution of counts of values in column",
+        "subtitle": "Subtitle Text"
+      }
+    },
+    {
+      "data": { "values": null },
+      "mark": "bar",
+      "encoding": {
+        "x": {
+          "type": "nominal",
+          "field": "value",
+          "sort": "-y",
+          "title": null
+        },
+        "y": {
+          "type": "quantitative",
+          "field": "value_count",
+          "title": "Value count"
+        },
+        "tooltip": [
+          { "field": "value", "type": "nominal" },
+          { "field": "value_count", "type": "quantitative" },
+          { "field": "total_non_null_rows", "type": "quantitative" },
+          { "field": "total_rows_inc_nulls", "type": "quantitative" }
+        ]
+      },
+      "title": "Top 20 values by value count"
+    },
+    {
+      "data": { "values": [] },
+      "mark": "bar",
+      "encoding": {
+        "x": {
+          "type": "nominal",
+          "field": "value",
+          "sort": "-y",
+          "title": null
+        },
+        "y": {
+          "type": "quantitative",
+          "field": "value_count",
+          "title": "Value count"
+        },
+        "tooltip": [
+          { "field": "value", "type": "nominal" },
+          { "field": "value_count", "type": "quantitative" },
+          { "field": "total_non_null_rows", "type": "quantitative" },
+          { "field": "total_rows_inc_nulls", "type": "quantitative" }
+        ]
+      },
+      "title": "Bottom 20 values by value count"
+    }
+  ]
+}

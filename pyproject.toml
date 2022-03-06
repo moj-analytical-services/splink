@@ -32,3 +32,8 @@ pyarrow = "^7.0.0"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+
+[flake8]
+max-line-length = 88
+extend-ignore = ["E203"]

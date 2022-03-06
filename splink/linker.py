@@ -16,6 +16,7 @@ from .term_frequencies import (
     colname_to_tf_tablename,
     join_tf_to_input_df,
 )
+from .profile_data import column_frequency_chart
 
 from .m_training import estimate_m_values_from_label_column
 from .u_training import estimate_u_values
@@ -178,7 +179,11 @@ class Linker:
         self.pipeline.enqueue_sql(sql, output_table_name)
 
     def execute_sql_pipeline(
-        self, input_dataframes=[], materialise_as_hash=True, use_cache=True
+        self,
+        input_dataframes=[],
+        materialise_as_hash=True,
+        use_cache=True,
+        transpile=True,
     ):
         if not self.debug_mode:
             sql_gen = self.pipeline._generate_pipeline(input_dataframes)
@@ -186,7 +191,11 @@ class Linker:
             output_tablename_templated = self.pipeline.queue[-1].output_table_name
 
             dataframe = self.sql_to_dataframe(
-                sql_gen, output_tablename_templated, materialise_as_hash, use_cache
+                sql_gen,
+                output_tablename_templated,
+                materialise_as_hash,
+                use_cache,
+                transpile,
             )
             return dataframe
         else:
@@ -197,7 +206,11 @@ class Linker:
                 print(f"--------Creating table: {output_tablename}--------")
 
                 dataframe = self.sql_to_dataframe(
-                    sql, output_tablename, materialise_as_hash=False, use_cache=False
+                    sql,
+                    output_tablename,
+                    materialise_as_hash=False,
+                    use_cache=False,
+                    transpile=transpile,
                 )
 
             return dataframe
@@ -226,7 +239,8 @@ class Linker:
             if self.table_exists_in_database(hash):
                 return self._df_as_obj(output_tablename_templated, hash)
 
-        # print(sql)
+        if self.debug_mode:
+            print(sql)
 
         if materialise_as_hash:
             dataframe = self.execute_sql(
@@ -243,9 +257,8 @@ class Linker:
         self.names_of_tables_created_by_splink.append(dataframe.physical_name)
 
         if self.debug_mode:
-            print(format_sql(sql))
 
-            df_pd = dataframe.as_pandas_dataframe().head(10)
+            df_pd = dataframe.as_pandas_dataframe()
             try:
                 display(df_pd)
             except:
@@ -541,3 +554,9 @@ class Linker:
                 self.delete_table_from_database(name)
 
         self.names_of_tables_created_by_splink = tables_remaining
+
+    def column_frequency_chart(self, column_expressions, top_n=10, bottom_n=10):
+        self._initialise_df_concat_with_tf()
+        return column_frequency_chart(
+            self, column_expressions, top_n=top_n, bottom_n=bottom_n
+        )
