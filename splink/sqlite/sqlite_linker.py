@@ -103,10 +103,8 @@ class SQLiteLinker(Linker):
 
         rec = self.con.execute(sql).fetchone()
         if not rec:
-            print(f"table {table_name} does not exist")
             return False
         else:
-            print(f"table {table_name} exists")
             return True
 
     def delete_table_from_database(self, name):
