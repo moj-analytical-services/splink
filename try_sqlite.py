@@ -17,18 +17,33 @@ df.to_sql("input_df_tablename", con)
 linker = SQLiteLinker(
     settings_dict,
     input_tables={"mydf": "input_df_tablename"},
-    sqlite_connection=con,
+    connection=con,
 )
 
-linker.train_u_using_random_sampling(target_rows=1e6)
-
-blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
-linker.train_m_using_expectation_maximisation(blocking_rule)
-
-blocking_rule = "l.dob = r.dob"
-linker.train_m_using_expectation_maximisation(blocking_rule)
-df = linker.predict()
+linker.column_frequency_chart(
+    ["first_name", "surname", "first_name || surname"], top_n=2, bottom_n=3
+)
 
 
-df.as_pandas_dataframe()
-df_pd.sort_values(["unique_id_l", "unique_id_r"])
+# linker.train_u_using_random_sampling(target_rows=1e6)
+
+# blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
+# linker.train_m_using_expectation_maximisation(blocking_rule)
+
+# blocking_rule = "l.dob = r.dob"
+# linker.train_m_using_expectation_maximisation(blocking_rule)
+# df = linker.predict()
+
+
+# df.as_pandas_dataframe()
+
+# linker.names_of_tables_created_by_splink
+# linker.con.execute("pragma show_tables").fetch_df()
+# linker.delete_tables_created_by_splink_from_db()
+# linker.names_of_tables_created_by_splink
+# linker.con.execute("pragma show_tables").fetch_df()
+
+
+# cursor = linker.con.cursor()
+# cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
+# print(cursor.fetchall())

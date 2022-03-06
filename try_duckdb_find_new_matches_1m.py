@@ -186,8 +186,11 @@ linker.train_m_using_expectation_maximisation(
     "l.dob = r.dob and substr(l.postcode,1,2) = substr(r.postcode,1,2)"
 )
 
+linker.export_to_duckdb_file("1m_smaller.duckdb")
 
-linker = DuckDBLinker(settings_dict, input_tables={}, connection="1m.duckdb")
+linker.con.close()
+
+linker = DuckDBLinker(settings_dict, input_tables={}, connection="1m_smaller.duckdb")
 import pandas as pd
 
 df_orig = pd.read_parquet("./benchmarking/synthetic_data_all.parquet")
