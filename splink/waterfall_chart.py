@@ -75,19 +75,18 @@ def _comparison_records(record_as_dict, comparison):
 
     if cc.has_tf_adjustments:
         waterfall_record_2 = deepcopy(waterfall_record)
-        try:
+
+        if cl.tf_adjustment_input_column is not None:
             waterfall_record_2["value_l"] = str(
                 record_as_dict[cl.tf_adjustment_input_column.name_l.replace("`", "")]
             )
-        except:
-            waterfall_record_2["value_l"] = ""
-
-        try:
             waterfall_record_2["value_r"] = str(
                 record_as_dict[cl.tf_adjustment_input_column.name_r.replace("`", "")]
             )
-        except:
+        else:
+            waterfall_record_2["value_l"] = ""
             waterfall_record_2["value_r"] = ""
+
         waterfall_record_2["column_name"] = "tf_" + cc.comparison_name
         waterfall_record_2["term_frequency_adjustment"] = True
         waterfall_record_2["bayes_factor"] = 1.0

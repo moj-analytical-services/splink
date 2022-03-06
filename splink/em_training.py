@@ -38,7 +38,7 @@ class EMTrainingSession:
                 comparison_levels_to_reverse_blocking_rule
             )
         else:
-            self.comparison_levels_to_reverse_blocking_rule = self.original_settings_obj._get_comparison_levels_corresponding_to_training_blocking_rule(
+            self.comparison_levels_to_reverse_blocking_rule = self.original_settings_obj._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
                 blocking_rule_for_training
             )
 
@@ -91,8 +91,9 @@ class EMTrainingSession:
 
         cvv = self._comparison_vectors()
 
-        # Compute the new parameters, populating the paramters in the copied settings object
-        # At this stage, we do not overwrite any of the parameters in the original (main) setting object
+        # Compute the new params, populating the paramters in the copied settings object
+        # At this stage, we do not overwrite any of the parameters
+        # in the original (main) setting object
         expectation_maximisation(self, cvv)
 
         training_desc = f"EM, blocked on: {self.blocking_rule_for_training}"
@@ -141,7 +142,7 @@ class EMTrainingSession:
 
         comp_levels = self.comparison_levels_to_reverse_blocking_rule
         if not comp_levels:
-            comp_levels = self.original_settings_obj._get_comparison_levels_corresponding_to_training_blocking_rule(
+            comp_levels = self.original_settings_obj._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
                 self.blocking_rule_for_training
             )
 
@@ -190,16 +191,16 @@ class EMTrainingSession:
     def max_change_message(self, max_change_dict):
         message = "Largest change in params was"
         if max_change_dict["max_change_type"] == "proportion_of_matches":
-            message = f"{message} {max_change_dict['max_change_value']:,.3g} in proportion_of_matches"
+            message = (
+                f"{message} {max_change_dict['max_change_value']:,.3g} in "
+                "proportion_of_matches"
+            )
         else:
-            m_u = max_change_dict["max_change_type"]
-            cl = max_change_dict["current_comparison_level"]
 
-            cc_name = cl.comparison.comparison_name
-            cl_label = cl.label_for_charts
-            level_text = f"{cc_name}, level `{cl_label}`"
-
-            message = f"{message} {max_change_dict['max_change_value']:,.3g} in the {m_u} of {level_text}"
+            message = (
+                f"{message} {max_change_dict['max_change_value']:,.3g} in "
+                "the {m_u} of {level_text}"
+            )
 
         return message
 
@@ -264,4 +265,7 @@ class EMTrainingSession:
         deactivated_cols = ", ".join(
             [cc.comparison_name for cc in self.comparisons_to_deactivate]
         )
-        return f"<EMTrainingSession, blocking on {self.blocking_rule_for_training}, deactivating comparisons {deactivated_cols}>"
+        return (
+            f"<EMTrainingSession, blocking on {self.blocking_rule_for_training}, "
+            f"deactivating comparisons {deactivated_cols}>"
+        )
