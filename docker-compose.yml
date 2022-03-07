@@ -1,0 +1,14 @@
+# docker compose file
+version: "3.9"
+services:
+    ms_sql_server:
+        image: mcr.microsoft.com/mssql/server:2019-latest
+        container_name: ms_sql_server
+        restart: unless-stopped
+        ports:
+            - "1433:1433"
+        environment:
+            - ACCEPT_EULA=Y
+            - SA_PASSWORD=12345
+            - MSSQL_PID=Developer
+            - MSSQL_AGENT_ENABLED=True
