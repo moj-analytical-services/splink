@@ -15,7 +15,7 @@ def test_profile_using_duckdb():
         settings_dict, input_tables={"fake_data_1": df}, connection=":memory:"
     )
 
-    linker.column_frequency_chart(
+    linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
         top_n=15,
         bottom_n=5,
@@ -35,7 +35,7 @@ def test_profile_using_sqlite():
         input_tables={"fake_data_1": "fake_data_1"},
     )
 
-    linker.column_frequency_chart(["first_name", "surname", "first_name || surname"])
+    linker.profile_columns(["first_name", "surname", "first_name || surname"])
 
 
 # @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
@@ -43,6 +43,6 @@ def test_profile_using_spark(df_spark):
 
     linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df_spark})
 
-    linker.column_frequency_chart(
+    linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]
     )

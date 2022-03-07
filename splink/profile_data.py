@@ -167,14 +167,18 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
     return percentile_rows
 
 
-def column_frequency_chart(linker, column_expressions, top_n=10, bottom_n=10):
+def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
+
+    input_tablename = "__splink__df_concat_with_tf"
+    if not linker.table_exists_in_database("__splink__df_concat_with_tf"):
+        # Initialise __splink__df_concat
+        linker._initialise_df_concat()
+        input_tablename = "__splink__df_concat"
+
     if type(column_expressions) == str:
         column_expressions = [column_expressions]
-    linker._initialise_df_concat_with_tf()
 
-    sql = _col_or_expr_frequencies_raw_data_sql(
-        column_expressions, "__splink__df_concat_with_tf"
-    )
+    sql = _col_or_expr_frequencies_raw_data_sql(column_expressions, input_tablename)
 
     linker.enqueue_sql(sql, "df_all_column_value_frequencies")
     df_raw = linker.execute_sql_pipeline(materialise_as_hash=True, transpile=False)
