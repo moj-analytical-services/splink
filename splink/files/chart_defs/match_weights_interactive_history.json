@@ -143,7 +143,7 @@
     }
   },
   "title": {
-    "text": "Influence of levels (comparison vector values) on match probability",
+    "text": "Influence of comparison levels on match probability",
     "subtitle": "Use mousewheeel to zoom"
   },
   "$schema": "https://vega.github.io/schema/vega-lite/v4.json"

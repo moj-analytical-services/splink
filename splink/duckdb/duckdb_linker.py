@@ -37,7 +37,7 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
 
 
 class DuckDBLinker(Linker):
-    def __init__(self, settings_dict, input_tables={}, connection=":memory:"):
+    def __init__(self, settings_dict=None, input_tables={}, connection=":memory:"):
 
         if connection == ":memory:":
             con = duckdb.connect(database=connection)

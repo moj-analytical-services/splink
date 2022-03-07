@@ -15,7 +15,7 @@ from .term_frequencies import (
     colname_to_tf_tablename,
     join_tf_to_input_df,
 )
-from .profile_data import column_frequency_chart
+from .profile_data import profile_columns
 
 from .m_training import estimate_m_values_from_label_column
 from .u_training import estimate_u_values
@@ -65,11 +65,9 @@ class SplinkDataFrame:
 
 
 class Linker:
-    def __init__(self, settings_dict, input_tables={}):
-        self.settings_dict = settings_dict
+    def __init__(self, settings_dict=None, input_tables={}):
 
-        self.settings_obj = Settings(settings_dict)
-
+        self.settings = settings_dict
         self.pipeline = SQLPipeline()
 
         self.input_dfs = self._get_input_dataframe_dict(input_tables)
@@ -84,6 +82,18 @@ class Linker:
         self.compare_two_records_mode = False
 
         self.debug_mode = False
+
+    @property
+    def settings(self):
+        return self.settings_obj
+
+    @settings.setter
+    def settings(self, settings_dict):
+        self.settings_dict = settings_dict
+        if settings_dict is None:
+            self.settings_obj = None
+        else:
+            self.settings_obj = Settings(settings_dict)
 
     @property
     def _input_tablename_l(self):
@@ -132,6 +142,11 @@ class Linker:
             return True
         else:
             return False
+
+    def _initialise_df_concat(self, materialise=True):
+        sql = vertically_concatente(self.input_dfs)
+        self.enqueue_sql(sql, "__splink__df_concat")
+        self.execute_sql_pipeline(materialise_as_hash=False)
 
     def _initialise_df_concat_with_tf(self, materialise=True):
         if self.table_exists_in_database("__splink__df_concat_with_tf"):
@@ -559,8 +574,6 @@ class Linker:
 
         self.names_of_tables_created_by_splink = tables_remaining
 
-    def column_frequency_chart(self, column_expressions, top_n=10, bottom_n=10):
-        self._initialise_df_concat_with_tf()
-        return column_frequency_chart(
-            self, column_expressions, top_n=top_n, bottom_n=bottom_n
-        )
+    def profile_columns(self, column_expressions, top_n=10, bottom_n=10):
+
+        return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
