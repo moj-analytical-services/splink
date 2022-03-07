@@ -27,6 +27,7 @@ class EMTrainingSession:
         self.original_settings_obj = linker.settings_obj
         self.original_linker = linker
         self.training_linker = deepcopy(linker)
+        self.training_linker.settings_obj._tsql = linker.settings_obj._tsql
 
         self.settings_obj = self.training_linker.settings_obj
 

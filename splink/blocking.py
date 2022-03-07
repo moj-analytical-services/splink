@@ -4,15 +4,28 @@ from .format_sql import format_sql
 
 logger = logging.getLogger(__name__)
 
+def create_null_clauses(rule: str):
+    return " OR ".join(f"{p.strip()} IS NULL"
+            for p in rule.split("="))
 
-def _sql_gen_and_not_previous_rules(previous_rules: list):
+def _sql_gen_and_not_previous_rules(previous_rules: list, tsql=False):
     if previous_rules:
         # Note the isnull function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
-        or_clauses = [f"ifnull(({r}), false)" for r in previous_rules]
+
+        # this tsql will likely fall over if you introduce a harder sql
+        # statement as one of our comparison levels
+        if tsql:
+            or_clauses = [f"ifnull(({r}), false)" for r in previous_rules]
+            or_clauses = [f"{r} OR {create_null_clauses(r)}" for
+                                        r in previous_rules]
+        else:
+            or_clauses = [f"ifnull(({r}), false)" for r in previous_rules]
+
         previous_rules = " OR ".join(or_clauses)
-        return f"AND NOT ({previous_rules})"
+        return f"AND NOT {previous_rules}" if tsql else f"""AND NOT
+                                                ({previous_rules})"""
     else:
         return ""
 
@@ -31,7 +44,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     id_expr_r = _sql_gen_composite_unique_id(unique_id_cols, "r")
 
     if link_type == "two_dataset_link_only":
-        where_condition = f" where true "
+        where_condition = f" where 1=1 "
     elif link_type in ["link_and_dedupe", "dedupe_only"]:
         where_condition = f"where {id_expr_l} < {id_expr_r}"
     elif link_type == "link_only":
@@ -73,10 +86,13 @@ def block_using_rules(linker):
     # you create a cartesian product, rather than having separate code
     # that generates a cross join for the case of no blocking rules
     if not blocking_rules:
-        blocking_rules = ["true"]
+        blocking_rules = ["1=1"]
 
     for matchkey_number, rule in enumerate(blocking_rules):
-        not_previous_rules_statement = _sql_gen_and_not_previous_rules(previous_rules)
+        not_previous_rules_statement = _sql_gen_and_not_previous_rules(
+            previous_rules,
+            settings_obj._tsql
+        )
 
         sql = f"""
         select

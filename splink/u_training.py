@@ -21,6 +21,7 @@ def estimate_u_values(linker, target_rows):
 
     original_settings_object = linker.settings_obj
     training_linker = deepcopy(linker)
+    training_linker.settings_obj._tsql = original_settings_object._tsql  # temp fix
 
     training_linker.train_u_using_random_sample_mode = True
 

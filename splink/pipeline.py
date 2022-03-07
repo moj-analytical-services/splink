@@ -25,7 +25,7 @@ class SQLPipeline:
                 parts.insert(0, task)
         return parts
 
-    def _generate_pipeline(self, input_dataframes):
+    def _generate_pipeline(self, input_dataframes, tsql):
 
         parts = self._generate_pipeline_parts(input_dataframes)
 
@@ -36,6 +36,10 @@ class SQLPipeline:
         with_parts = ", \n".join(with_parts)
         if with_parts:
             with_parts = f"WITH {with_parts} "
+
+        if tsql:
+            last_part.sql = f"query_output as ({last_part.sql}) select * from query_output"
+            last_part.sql = f", {last_part.sql}" if with_parts else f"with {last_part.sql}"
 
         final_sql = with_parts + last_part.sql
 

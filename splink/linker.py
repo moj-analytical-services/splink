@@ -65,10 +65,10 @@ class SplinkDataFrame:
 
 
 class Linker:
-    def __init__(self, settings_dict, input_tables):
+    def __init__(self, settings_dict, input_tables, tsql=False):
         self.settings_dict = settings_dict
 
-        self.settings_obj = Settings(settings_dict)
+        self.settings_obj = Settings(settings_dict, tsql)
 
         self.pipeline = SQLPipeline()
 
@@ -181,7 +181,10 @@ class Linker:
         self, input_dataframes=[], materialise_as_hash=True, use_cache=True
     ):
         if not self.debug_mode:
-            sql_gen = self.pipeline._generate_pipeline(input_dataframes)
+            sql_gen = self.pipeline._generate_pipeline(
+                input_dataframes,
+                self.settings_obj._tsql
+            )
 
             output_tablename_templated = self.pipeline.queue[-1].output_table_name
 

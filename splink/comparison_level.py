@@ -355,12 +355,25 @@ class ComparisonLevel:
 
             # In this case rather than taking the greater of the two, we take
             # whichever value exists
+            if self.settings_obj._tsql:
+                pwr = "POWER"
+                greatest_clause = f"""
+                (CASE
+                    WHEN {coalesce_l_r} >= {coalesce_r_l}
+                    THEN {coalesce_l_r}
+                    ELSE {coalesce_r_l}
+                END)
+                    """
+            else:
+                pwr = "POW"
+                greatest_clause = f"GREATEST({coalesce_l_r},{coalesce_r_l})"
+
             sql = f"""
             WHEN  {gamma_colname_value_is_this_level} then
                 (CASE WHEN {tf_adjustment_exists}
                 THEN
-                POW(
-                    {u_prob_exact_match}D / GREATEST({coalesce_l_r},{coalesce_r_l}),
+                {pwr}(
+                    {u_prob_exact_match}D / {greatest_clause},
                     {self.tf_adjustment_weight}D
                 )
                 ELSE 1D

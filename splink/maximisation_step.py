@@ -9,10 +9,11 @@ logger = logging.getLogger(__name__)
 def compute_new_parameters(settings_obj: Settings):
     """compute m and u from results of predict"""
 
+    # 0.00000000001 to avoid divide by 0 error
     sql_template = """
     select {gamma_column} as comparison_vector_value,
-           sum(match_probability)/(select sum(match_probability) from __splink__df_predict where {gamma_column} != -1) as m_probability,
-           sum(1 - match_probability)/(select sum(1 - match_probability) from __splink__df_predict where {gamma_column} != -1) as u_probability,
+           sum(match_probability)/(select sum(match_probability)+00000000001 from __splink__df_predict where {gamma_column} != -1) as m_probability,
+           sum(1 - match_probability)/(select sum(1 - match_probability)+00000000001 from __splink__df_predict where {gamma_column} != -1) as u_probability,
            "{comparison_name}" as comparison_name
     from __splink__df_predict
     where {gamma_column} != -1
@@ -71,7 +72,10 @@ def maximisation_step(em_training_session, param_records):
     em_training_session.add_iteration()
 
 
-def expectation_maximisation(em_training_session, df_comparison_vector_values):
+def expectation_maximisation(
+        em_training_session,
+        df_comparison_vector_values,
+    ):
 
     settings_obj = em_training_session.settings_obj
     linker = em_training_session.original_linker
