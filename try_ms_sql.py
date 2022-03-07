@@ -1,5 +1,3 @@
-import os
-os.chdir("/Users/thomashepworth/py-data-linking/splink_persist")
 from splink.mssql.mssql_linker import MSSQLLinker
 from try_settings import settings_dict
 import pandas as pd
