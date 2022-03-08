@@ -4,6 +4,7 @@ from sqlalchemy.engine import reflection
 from sqlalchemy import create_engine
 
 from splink.linker import Linker, SplinkDataFrame
+from splink.sql_functions import levenstein_sql
 
 class MSSQLDataFrame(SplinkDataFrame):
     def __init__(self, templated_name, physical_name, mssql_linker, tsql=True):
@@ -28,16 +29,15 @@ class MSSQLDataFrame(SplinkDataFrame):
 
         return pd.read_sql(sql, self.mssql_linker).to_dict(orient="records")  # requires sqlalchemy
 
+def MSSQLConnection(
+        server,
+        database,
+        username="",
+        password="",
+        driver="ODBC Driver 17 for SQL Server"
+    ):
 
-class MSSQLLinker(Linker):
-    def __init__(self, settings_dict, input_tables, tf_tables={}):
-
-        server = '127.0.0.1'
-        database = 'TestEnv'
-        username = 'sa'
-        password = '12345'
-
-        driver = 'DRIVER={ODBC Driver 17 for SQL Server};SERVER='+f"{server};DATABASE={database};"
+        driver = 'DRIVER={'+driver+'};SERVER='+f"{server};DATABASE={database};"
         if username:
             driver+=f"UID={username};"
         if password:
@@ -45,10 +45,16 @@ class MSSQLLinker(Linker):
 
         engine = create_engine("mssql+pyodbc:///?odbc_connect=%s" % driver)
         engine.connect()
+        return engine
 
-        self.con = engine
 
-        # self.con.create_function("greatest", 2, max)
+class MSSQLLinker(Linker):
+    def __init__(self, settings_dict, mssql_connection, input_tables, tf_tables={}):
+
+        self.con = mssql_connection
+        # add any sql functions we require
+        self.add_sql_function("dbo.LEVENSHTEIN", levenstein_sql)
+
         self.log_input_tables(self.con, input_tables, tf_tables)
         super().__init__(settings_dict, input_tables, tsql=True)
         self.debug_mode=False  # set to true to force run each individual SQL statement
@@ -69,8 +75,14 @@ class MSSQLLinker(Linker):
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
+        # translation_dict = {
+        #     "POW": "POWER",
+        #     "LEVENSHTEIN": "dbo.LEVENSHTEIN",
+        #     " = ": " LIKE " # might want to impose stricter settings for tsql
+        # }
         translation_dict = {
-            "POW": "POWER"
+            "POW": "POWER",
+            "LEVENSHTEIN": "dbo.LEVENSHTEIN",
         }
 
         drop_sql = f"""
@@ -122,3 +134,8 @@ class MSSQLLinker(Linker):
         tmp_con.execute(sql)
         tmp_con.commit()
         tmp_con.close()
+
+    def add_sql_function(self, function_name, function):
+        drop_sql = f"DROP FUNCTION IF EXISTS {function_name}"
+        self.run_sql(drop_sql)
+        self.run_sql(function)
