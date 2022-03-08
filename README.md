@@ -99,7 +99,7 @@ A 'best practices and performance tuning' tutorial can be found [here](https://w
 6. Review pull request
 7. Bump Splink version in [pyproject.toml](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml) and update [CHANGELOG.md](https://github.com/moj-analytical-services/splink/blob/master/CHANGELOG.md) as part of pull request
 8. Merge
-9. Release on PyPI and create new tag
+9. Create tagged release on Github.  This will trigger autopublish to PyPi
 
 ## Acknowledgements
 
