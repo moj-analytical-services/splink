@@ -9,7 +9,7 @@ from .validate_jsonschema import validate_settings_against_schema
 
 
 class Settings:
-    def __init__(self, settings_dict):
+    def __init__(self, settings_dict, tsql=False):
 
         validate_settings_against_schema(settings_dict)
         self._settings_dict = settings_dict
@@ -42,6 +42,7 @@ class Settings:
         self._bf_prefix = s_else_d("bayes_factor_column_prefix")
         self._tf_prefix = s_else_d("term_frequency_adjustment_column_prefix")
         self._blocking_rule_for_training = None
+        self._tsql = tsql
 
     def __deepcopy__(self, memo):
         cc = Settings(self.as_dict)
