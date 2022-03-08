@@ -1,4 +1,4 @@
-from splink.mssql.mssql_linker import MSSQLLinker
+from splink.mssql.mssql_linker import MSSQLLinker, MSSQLConnection
 from try_settings import settings_dict
 import pandas as pd
 
@@ -14,8 +14,15 @@ df_right = df[df["side"] == 1]
 
 settings_dict["link_type"] = "link_only"
 
+ms_con = MSSQLConnection(
+    server = "127.0.0.1",
+    database = 'TestEnv',
+    username = 'sa',
+    password = 'qq5SHUz8jLtpDM82'
+)
+
 linker = MSSQLLinker(
-    settings_dict, input_tables={"df_left": df_left, "df_right": df_right}
+    settings_dict, ms_con, input_tables={"df_left": df_left, "df_right": df_right}
 )
 
 linker.train_u_using_random_sampling(target_rows=1e6)
