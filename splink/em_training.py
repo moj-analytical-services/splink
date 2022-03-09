@@ -190,12 +190,18 @@ class EMTrainingSession:
 
     def max_change_message(self, max_change_dict):
         message = "Largest change in params was"
+
         if max_change_dict["max_change_type"] == "proportion_of_matches":
             message = (
                 f"{message} {max_change_dict['max_change_value']:,.3g} in "
                 "proportion_of_matches"
             )
         else:
+            cl = max_change_dict["current_comparison_level"]
+            m_u = max_change_dict["max_change_type"]
+            cc_name = cl.comparison.comparison_name
+            cl_label = cl.label_for_charts
+            level_text = f"{cc_name}, level `{cl_label}`"
 
             message = (
                 f"{message} {max_change_dict['max_change_value']:,.3g} in "
