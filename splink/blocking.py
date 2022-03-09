@@ -6,7 +6,14 @@ logger = logging.getLogger(__name__)
 
 
 def create_null_clauses(rule: str):
-    return " OR ".join(f"{p.strip()} IS NULL" for p in rule.split("="))
+    return f"""
+    0 =
+        case
+            when ({rule})
+            then 1
+            else 0
+        end
+    """
 
 
 def _sql_gen_and_not_previous_rules(previous_rules: list):
@@ -14,10 +21,8 @@ def _sql_gen_and_not_previous_rules(previous_rules: list):
         # Note the isnull function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
-        or_clauses = [f"ifnull(({r}), false)" for r in previous_rules]
-        or_clauses = [f"{r} OR {create_null_clauses(r)}" for r in previous_rules]
-        previous_rules = " OR ".join(or_clauses)
-
+        or_clauses = [create_null_clauses(r) for r in previous_rules]
+        previous_rules = " or ".join(or_clauses)
         return f"AND NOT {previous_rules}"
     else:
         return ""
