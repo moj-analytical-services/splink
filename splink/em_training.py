@@ -199,7 +199,7 @@ class EMTrainingSession:
 
             message = (
                 f"{message} {max_change_dict['max_change_value']:,.3g} in "
-                "the {m_u} of {level_text}"
+                f"the {m_u} of {level_text}"
             )
 
         return message
