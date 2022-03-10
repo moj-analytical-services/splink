@@ -247,6 +247,6 @@ class Comparison:
 
     def __repr__(self):
         return (
-            f"<ComparisonColumn {self.comparison_name} with "
-            "{self.num_levels} levels at {hex(id(self))}>"
+            f"<Comparison {self.comparison_name} with "
+            f"{self.num_levels} levels at {hex(id(self))}>"
         )
