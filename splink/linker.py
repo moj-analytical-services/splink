@@ -3,6 +3,8 @@ from copy import copy, deepcopy
 from statistics import median
 import hashlib
 
+from splink.lower_id_on_lhs import lower_id_to_left_hand_side
+
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
 from .em_training import EMTrainingSession
@@ -22,6 +24,7 @@ from .u_training import estimate_u_values
 from .pipeline import SQLPipeline
 
 from .vertically_concatenate import vertically_concatente
+from .m_from_labels import estimate_m_from_pairwise_labels
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +82,7 @@ class Linker:
 
         self.find_new_matches_mode = False
         self.train_u_using_random_sample_mode = False
+        self.train_m_from_pairwise_labels_mode = False
         self.compare_two_records_mode = False
 
         self.debug_mode = False
@@ -113,6 +117,9 @@ class Linker:
         if self.train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
 
+        if self.train_m_from_pairwise_labels_mode:
+            return "__splink__df_concat_with_tf"
+
         if self.two_dataset_link_only:
             return "__splink_df_concat_with_tf_left"
         return "__splink__df_concat_with_tf"
@@ -128,6 +135,9 @@ class Linker:
 
         if self.train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
+
+        if self.train_m_from_pairwise_labels_mode:
+            return "__splink__labels_prepared_for_joining"
 
         if self.two_dataset_link_only:
             return "__splink_df_concat_with_tf_right"
@@ -583,3 +593,7 @@ class Linker:
     def profile_columns(self, column_expressions, top_n=10, bottom_n=10):
 
         return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
+
+    def train_m_from_pairwise_labels(self, table_name):
+        self._initialise_df_concat_with_tf(materialise=True)
+        estimate_m_from_pairwise_labels(self, table_name)
