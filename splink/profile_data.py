@@ -205,6 +205,7 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
         percentile_rows = [
             p for p in percentile_rows_all if p["group_name"] == expression
         ]
+        percentile_rows = _add_100_percentile_to_df_percentiles(percentile_rows)
         top_n_rows = [p for p in top_n_rows_all if p["group_name"] == expression]
         bottom_n_rows = [p for p in bottom_n_rows_all if p["group_name"] == expression]
 
