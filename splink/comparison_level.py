@@ -467,5 +467,5 @@ class ComparisonLevel:
         sql = (sql[:75] + "...") if len(sql) > 75 else sql
         return (
             f"<ComparisonLevel {self.label_for_charts} with "
-            "match weight {self.bayes_factor:,.2} and SQL: {sql}>"
+            f"match weight {self.bayes_factor:,.2} and SQL: {sql}>"
         )
