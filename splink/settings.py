@@ -42,6 +42,7 @@ class Settings:
         self._bf_prefix = s_else_d("bayes_factor_column_prefix")
         self._tf_prefix = s_else_d("term_frequency_adjustment_column_prefix")
         self._blocking_rule_for_training = None
+        self._training_mode = False
 
     def __deepcopy__(self, memo):
         cc = Settings(self.as_dict)

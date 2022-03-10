@@ -29,6 +29,9 @@ class EMTrainingSession:
         self.training_linker = deepcopy(linker)
 
         self.settings_obj = self.training_linker.settings_obj
+        self.settings_obj._retain_matching_columns = False
+        self.settings_obj._retain_intermediate_calculation_columns = False
+        self.settings_obj._training_mode = True
 
         self.settings_obj._blocking_rule_for_training = blocking_rule_for_training
         self.blocking_rule_for_training = blocking_rule_for_training

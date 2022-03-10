@@ -27,6 +27,7 @@ def estimate_u_values(linker, target_rows):
     settings_obj = training_linker.settings_obj
     settings_obj._retain_matching_columns = False
     settings_obj._retain_intermediate_calculation_columns = False
+    settings_obj._training_mode = True
     for cc in settings_obj.comparisons:
         for cl in cc.comparison_levels:
             cl._level_dict["tf_adjustment_column"] = None
@@ -99,5 +100,3 @@ def estimate_u_values(linker, target_rows):
         cl.add_trained_u_probability(
             record["u_probability"], "estimate u by random sampling"
         )
-
-    training_linker.train_u_using_random_sample_mode = False

@@ -191,10 +191,13 @@ class Comparison:
         output_cols = []
         for col in input_cols:
             if self.settings_obj._retain_matching_columns:
-
                 output_cols.extend(col.names_l_r)
 
-        output_cols.append(self.gamma_column_name)
+        if (
+            self.settings_obj._training_mode
+            or self.settings_obj._retain_matching_columns
+        ):
+            output_cols.append(self.gamma_column_name)
 
         for col in input_cols:
             if self.settings_obj._retain_intermediate_calculation_columns:
@@ -202,7 +205,7 @@ class Comparison:
 
                     output_cols.extend(col.tf_name_l_r)
 
-        output_cols.extend(self.match_weight_columns_to_multiply)
+                output_cols.extend(self.match_weight_columns_to_multiply)
 
         return dedupe_preserving_order(output_cols)
 
