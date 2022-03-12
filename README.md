@@ -4,7 +4,12 @@
 ![issues-status](https://img.shields.io/github/issues-raw/moj-analytical-services/splink)
 ![python-version-dependency](https://img.shields.io/badge/python-%3E%3D3.6-blue)
 
-# splink: Probabilistic record linkage and deduplication at scale
+✨✨ **Note to new users:** ✨✨
+
+Version 3 of Splink is in development that will make it simpler and more intuitive to use.  It also removes the need for PySpark for smaller data linkages of up to around 1 million records.  You can try it by installing a [pre-release](https://pypi.org/project/splink/#history), or in the new demos [here](https://github.com/moj-analytical-services/splink_demos/tree/splink3_demos).  For new users, it may make sense to work with the new version, because it is quicker to learn.  However, note that the new code is not yet fully tested.
+
+
+# Splink: Probabilistic record linkage and deduplication at scale
 
 `splink` implements Fellegi-Sunter's canonical model of record linkage in Apache Spark, including the EM algorithm to estimate parameters of the model.
 
