@@ -82,7 +82,7 @@ class Linker:
 
         self.find_new_matches_mode = False
         self.train_u_using_random_sample_mode = False
-        self.train_m_from_pairwise_labels_mode = False
+
         self.compare_two_records_mode = False
 
         self.debug_mode = False
@@ -117,9 +117,6 @@ class Linker:
         if self.train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
 
-        if self.train_m_from_pairwise_labels_mode:
-            return "__splink__df_concat_with_tf"
-
         if self.two_dataset_link_only:
             return "__splink_df_concat_with_tf_left"
         return "__splink__df_concat_with_tf"
@@ -135,9 +132,6 @@ class Linker:
 
         if self.train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
-
-        if self.train_m_from_pairwise_labels_mode:
-            return "__splink__labels_prepared_for_joining"
 
         if self.two_dataset_link_only:
             return "__splink_df_concat_with_tf_right"
