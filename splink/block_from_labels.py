@@ -21,7 +21,7 @@ def block_from_labels(linker, table_name):
     sql_select_expr = ", ".join(columns_to_select)
 
     sql = f"""
-    select {sql_select_expr} from
+    select {sql_select_expr}, 'from_labels' as match_key from
     __splink__labels_prepared_for_joining as df_labels
     inner join __splink__df_concat_with_tf as l
     on l.{source_dataset_col} = df_labels.{source_dataset_col}_l and
