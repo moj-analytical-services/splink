@@ -9,6 +9,10 @@ from splink.comparison_library import exact_match
 
 from basic_settings import settings_dict
 
+from splink.block_from_labels import block_from_labels
+from splink.comparison_vector_values import compute_comparison_vector_values
+from splink.predict import predict
+
 
 def test_scored_labels():
 
@@ -47,7 +51,24 @@ def test_scored_labels():
     linker._initialise_df_concat_with_tf()
     linker.con.register("labels", df_labels)
 
-    df_scores_labels = predict_scores_for_labels(linker, "labels")
+    sqls = block_from_labels(linker, "labels")
+
+    for sql in sqls:
+        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+    sql = compute_comparison_vector_values(linker.settings_obj)
+
+    linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
+
+    sqls = predict(linker.settings_obj)
+
+    for sql in sqls:
+        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+    sql = predict_scores_for_labels(linker, "labels")
+    linker.enqueue_sql(sql, "__splink__labels_with_predictions")
+    df_scores_labels = linker.execute_sql_pipeline()
+
     df_scores_labels = df_scores_labels.as_pandas_dataframe()
     df_scores_labels.sort_values(["unique_id_l", "unique_id_r"], inplace=True)
 
