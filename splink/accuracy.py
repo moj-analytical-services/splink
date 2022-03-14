@@ -44,26 +44,10 @@ def predict_scores_for_labels(linker, labels_tablename):
     return sql
 
 
-def truth_space_table(linker, labels_tablename, threshold_actual=0.5):
-    sqls = block_from_labels(linker, labels_tablename)
-
-    for sql in sqls:
-        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
-
-    sql = compute_comparison_vector_values(linker.settings_obj)
-
-    linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
-
-    sqls = predict(linker.settings_obj)
-
-    for sql in sqls:
-        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
-
-    sql = predict_scores_for_labels(linker, labels_tablename)
-    linker.enqueue_sql(sql, "__splink__labels_with_predictions")
+def truth_space_table_from_labels_with_predictions(threshold_actual=0.5):
 
     # c_P and c_N are clerical positive and negative, respectively
-
+    sqls = []
     sql = f"""
     select
     *,
@@ -80,7 +64,8 @@ def truth_space_table(linker, labels_tablename, threshold_actual=0.5):
     order by match_weight
     """
 
-    linker.enqueue_sql(sql, "__splink__labels_with_pos_neg")
+    sql = {"sql": sql, "output_table_name": "__splink__labels_with_pos_neg"}
+    sqls.append(sql)
 
     sql = """
     select truth_threshold, count(*) as num_records_in_row, sum(c_P) as c_P, sum(c_N) as c_N
@@ -90,7 +75,8 @@ def truth_space_table(linker, labels_tablename, threshold_actual=0.5):
     order by truth_threshold
     """
 
-    linker.enqueue_sql(sql, "__splink__labels_with_pos_neg_grouped")
+    sql = {"sql": sql, "output_table_name": "__splink__labels_with_pos_neg_grouped"}
+    sqls.append(sql)
 
     sql = """
     select
@@ -109,7 +95,11 @@ def truth_space_table(linker, labels_tablename, threshold_actual=0.5):
     order by  truth_threshold
     """
 
-    linker.enqueue_sql(sql, "__splink__labels_with_pos_neg_grouped_with_stats")
+    sql = {
+        "sql": sql,
+        "output_table_name": "__splink__labels_with_pos_neg_grouped_with_stats",
+    }
+    sqls.append(sql)
 
     sql = """
     select
@@ -127,7 +117,11 @@ def truth_space_table(linker, labels_tablename, threshold_actual=0.5):
     from __splink__labels_with_pos_neg_grouped_with_stats
     """
 
-    linker.enqueue_sql(sql, "__splink__labels_with_pos_neg_grouped_with_truth_stats")
+    sql = {
+        "sql": sql,
+        "output_table_name": "__splink__labels_with_pos_neg_grouped_with_truth_stats",
+    }
+    sqls.append(sql)
 
     sql = """
     select
@@ -150,7 +144,34 @@ def truth_space_table(linker, labels_tablename, threshold_actual=0.5):
     from __splink__labels_with_pos_neg_grouped_with_truth_stats
     """
 
-    linker.enqueue_sql(sql, "__splink__truth_space_table")
+    sql = {"sql": sql, "output_table_name": "__splink__truth_space_table"}
+    sqls.append(sql)
+    return sqls
+
+
+def truth_space_table(linker, labels_tablename, threshold_actual=0.5):
+    sqls = block_from_labels(linker, labels_tablename)
+
+    for sql in sqls:
+        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+    sql = compute_comparison_vector_values(linker.settings_obj)
+
+    linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
+
+    sqls = predict(linker.settings_obj)
+
+    for sql in sqls:
+        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+    sql = predict_scores_for_labels(linker, labels_tablename)
+    linker.enqueue_sql(sql, "__splink__labels_with_predictions")
+
+    # c_P and c_N are clerical positive and negative, respectively
+    sqls = truth_space_table_from_labels_with_predictions(threshold_actual)
+
+    for sql in sqls:
+        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
 
     df_truth_space_table = linker.execute_sql_pipeline()
 
