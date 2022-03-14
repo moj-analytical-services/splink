@@ -4,6 +4,7 @@ from statistics import median
 import hashlib
 
 from splink.lower_id_on_lhs import lower_id_to_left_hand_side
+from .charts import roc_chart
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
@@ -25,6 +26,7 @@ from .pipeline import SQLPipeline
 
 from .vertically_concatenate import vertically_concatente
 from .m_from_labels import estimate_m_from_pairwise_labels
+from .accuracy import truth_space_table
 
 logger = logging.getLogger(__name__)
 
@@ -591,3 +593,8 @@ class Linker:
     def train_m_from_pairwise_labels(self, table_name):
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_from_pairwise_labels(self, table_name)
+
+    def roc_from_labels(self, labels_tablename):
+        df_truth_space = truth_space_table(self, labels_tablename)
+        recs = df_truth_space.as_record_dict()
+        return roc_chart(recs)

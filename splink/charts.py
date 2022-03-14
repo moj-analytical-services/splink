@@ -157,3 +157,18 @@ def waterfall_chart(
         chart["transform"].insert(1, {"filter": "(datum.bayes_factor !== 1.0)"})
 
     return vegalite_or_json(chart, as_dict=as_dict)
+
+
+def roc_chart(records, height=400, width=400, as_dict=False):
+    chart_path = "roc.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["data"]["values"] = records
+
+    # If 'roc_label' not in records, remove colour coding
+    # This is for if you want to compare roc curves
+    r = records[0]
+    if "roc_label" not in r.keys():
+        del chart["encoding"]["color"]
+
+    return vegalite_or_json(chart, as_dict=as_dict)
