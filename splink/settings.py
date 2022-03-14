@@ -105,9 +105,6 @@ class Settings:
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.l_r_names_as_l_r)
 
-        # if self._needs_matchkey_column:
-        #     cols.append("match_key")
-
         return cols
 
     @property

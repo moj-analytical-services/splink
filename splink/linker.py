@@ -4,6 +4,7 @@ from statistics import median
 import hashlib
 
 from splink.lower_id_on_lhs import lower_id_to_left_hand_side
+from .charts import roc_chart
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
@@ -25,6 +26,7 @@ from .pipeline import SQLPipeline
 
 from .vertically_concatenate import vertically_concatente
 from .m_from_labels import estimate_m_from_pairwise_labels
+from .accuracy import truth_space_table
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +84,7 @@ class Linker:
 
         self.find_new_matches_mode = False
         self.train_u_using_random_sample_mode = False
-        self.train_m_from_pairwise_labels_mode = False
+
         self.compare_two_records_mode = False
 
         self.debug_mode = False
@@ -117,9 +119,6 @@ class Linker:
         if self.train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
 
-        if self.train_m_from_pairwise_labels_mode:
-            return "__splink__df_concat_with_tf"
-
         if self.two_dataset_link_only:
             return "__splink_df_concat_with_tf_left"
         return "__splink__df_concat_with_tf"
@@ -135,9 +134,6 @@ class Linker:
 
         if self.train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
-
-        if self.train_m_from_pairwise_labels_mode:
-            return "__splink__labels_prepared_for_joining"
 
         if self.two_dataset_link_only:
             return "__splink_df_concat_with_tf_right"
@@ -597,3 +593,8 @@ class Linker:
     def train_m_from_pairwise_labels(self, table_name):
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_from_pairwise_labels(self, table_name)
+
+    def roc_from_labels(self, labels_tablename):
+        df_truth_space = truth_space_table(self, labels_tablename)
+        recs = df_truth_space.as_record_dict()
+        return roc_chart(recs)
