@@ -8,7 +8,8 @@ full_name_cc = {
     "column_name": "full_name",
     "comparison_levels": [
         {
-            "sql_condition": "full_name_l IS NULL OR full_name_r IS NULL or length(full_name_l) < 2 or length(full_name_r) < 2",
+            "sql_condition": """full_name_l IS NULL OR full_name_r IS NULL
+            or length(full_name_l) < 2 or length(full_name_r) < 2""",
             "label_for_charts": "Comparison includes null",
             "is_null_level": True,
         },

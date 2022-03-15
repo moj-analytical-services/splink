@@ -241,9 +241,11 @@ def test_lambda():
     # bf = prob_to_bayes_factor(0.588699831556479)
     # bf2 = 1.6321361225311535
     # p = bayes_factor_to_prob(bf/bf2)
-    # 0.46722294374907014  (same result from _estimate_global_lambda_from_blocking_specific_lambda in Splink2)
+    # 0.46722294374907014  (same result from
+    # _estimate_global_lambda_from_blocking_specific_lambda in Splink2)
 
-    # The model that blocks on surname and first name has a proportion of matches of 0.5876227881218818
+    # The model that blocks on surname and first name has a proportion of matches
+    # of 0.5876227881218818
     # The first name comparison column has bf of 71.435024344641
     # The surname comparison column has bf of 8.378038065716774
 
