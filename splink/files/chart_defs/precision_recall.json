@@ -1,8 +1,6 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
-  "title": "Receiver operating characteristic curve",
-  "height": 600,
-  "width": 600,
+  "title": "Precision-recall curve",
   "data": { "values": [] },
   "mark": { "type": "line", "clip": true, "point": true },
   "encoding": {
@@ -19,26 +17,19 @@
     ],
     "x": {
       "type": "quantitative",
-      "field": "FP_rate",
-      "sort": ["truth_threshold"],
-      "title": "False Positive Rate amongst clerically reviewed records"
+      "field": "recall",
+      "sort": ["-recall"],
+      "title": "Recall"
     },
     "y": {
       "type": "quantitative",
-      "field": "TP_rate",
-      "sort": ["truth_threshold"],
-      "title": "True Positive Rate amongst clerically reviewed records"
+      "field": "precision",
+      "sort": ["-precision"],
+      "title": "Precision"
     },
     "color": {
       "type": "nominal",
       "field": "curve_label"
-    }
-  },
-  "selection": {
-    "selector076": {
-      "type": "interval",
-      "bind": "scales",
-      "encodings": ["x"]
     }
   }
 }

@@ -3,8 +3,7 @@ from copy import copy, deepcopy
 from statistics import median
 import hashlib
 
-from splink.lower_id_on_lhs import lower_id_to_left_hand_side
-from .charts import roc_chart
+from .charts import precision_recall_chart, roc_chart
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
@@ -598,3 +597,11 @@ class Linker:
         df_truth_space = truth_space_table(self, labels_tablename)
         recs = df_truth_space.as_record_dict()
         return roc_chart(recs)
+
+    def precision_recall_from_labels(self, labels_tablename):
+        df_truth_space = truth_space_table(self, labels_tablename)
+        recs = df_truth_space.as_record_dict()
+        return precision_recall_chart(recs)
+
+    def truth_space_table(self, labels_tablename):
+        return truth_space_table(self, labels_tablename)
