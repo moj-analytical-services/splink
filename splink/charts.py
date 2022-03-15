@@ -165,10 +165,31 @@ def roc_chart(records, height=400, width=400, as_dict=False):
 
     chart["data"]["values"] = records
 
-    # If 'roc_label' not in records, remove colour coding
+    # If 'curve_label' not in records, remove colour coding
     # This is for if you want to compare roc curves
     r = records[0]
-    if "roc_label" not in r.keys():
+    if "curve_label" not in r.keys():
         del chart["encoding"]["color"]
+
+    chart["height"] = height
+    chart["width"] = width
+
+    return vegalite_or_json(chart, as_dict=as_dict)
+
+
+def precision_recall_chart(records, height=400, width=400, as_dict=False):
+    chart_path = "precision_recall.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["data"]["values"] = records
+
+    # If 'curve_label' not in records, remove colour coding
+    # This is for if you want to compare roc curves
+    r = records[0]
+    if "curve_label" not in r.keys():
+        del chart["encoding"]["color"]
+
+    chart["height"] = height
+    chart["width"] = width
 
     return vegalite_or_json(chart, as_dict=as_dict)
