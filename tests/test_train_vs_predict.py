@@ -36,6 +36,7 @@ def test_train_vs_predict():
 
     # Will not be exactly equal because expected represents the proportion of matches
     # in the final iteration of training, before m and u were updated for the final time
-    # Set em_comvergence to be very tiny and max iterations very high to get them arbitrarily close
+    # Set em_comvergence to be very tiny and max iterations very high to get them
+    # arbitrarily close
 
     assert expected == pytest.approx(actual, abs=0.01)
