@@ -68,7 +68,11 @@ def truth_space_table_from_labels_with_predictions(threshold_actual=0.5):
     sqls.append(sql)
 
     sql = """
-    select truth_threshold, count(*) as num_records_in_row, sum(c_P) as c_P, sum(c_N) as c_N
+    select
+        truth_threshold,
+        count(*) as num_records_in_row,
+        sum(c_P) as c_P,
+        sum(c_N) as c_N
     from
     __splink__labels_with_pos_neg
     group by truth_threshold
@@ -87,9 +91,13 @@ def truth_space_table_from_labels_with_predictions(threshold_actual=0.5):
 
     (select sum(c_P) from __splink__labels_with_pos_neg_grouped) as total_clerical_P,
     (select sum(c_N) from __splink__labels_with_pos_neg_grouped) as total_clerical_N,
-    (select sum(num_records_in_row) from __splink__labels_with_pos_neg_grouped) as row_count,
 
-    -num_records_in_row + sum(num_records_in_row) over (order by truth_threshold) as N_labels,
+    (select sum(num_records_in_row) from __splink__labels_with_pos_neg_grouped)
+        as row_count,
+
+    -num_records_in_row + sum(num_records_in_row) over (order by truth_threshold)
+        as N_labels,
+
     sum(num_records_in_row) over (order by truth_threshold desc) as P_labels
     from __splink__labels_with_pos_neg_grouped
     order by  truth_threshold
