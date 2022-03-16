@@ -193,3 +193,15 @@ def precision_recall_chart(records, height=400, width=400, as_dict=False):
     chart["width"] = width
 
     return vegalite_or_json(chart, as_dict=as_dict)
+
+
+def match_weight_histogram(records, height=250, width=500, as_dict=False):
+    chart_path = "match_weight_histogram.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["data"]["values"] = records
+
+    chart["height"] = height
+    chart["width"] = width
+
+    return vegalite_or_json(chart, as_dict=as_dict)
