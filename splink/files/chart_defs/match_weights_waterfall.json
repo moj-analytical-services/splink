@@ -1,4 +1,9 @@
 {
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.2.0.json",
+  "height": 450,
+  "resolve": { "axis": { "y": "independent" } },
+  "width": { "step": 75 },
+  "data": { "values": [] },
   "config": { "view": { "continuousWidth": 400, "continuousHeight": 300 } },
   "params": [
     {
@@ -292,10 +297,5 @@
         }
       }
     }
-  ],
-  "height": 450,
-  "resolve": { "axis": { "y": "independent" } },
-  "width": { "step": 75 },
-  "$schema": "https://vega.github.io/schema/vega-lite/v5.2.0.json",
-  "data": { "values": null }
+  ]
 }
