@@ -3,7 +3,7 @@ from copy import copy, deepcopy
 from statistics import median
 import hashlib
 
-from .charts import precision_recall_chart, roc_chart
+from .charts import match_weight_histogram, precision_recall_chart, roc_chart
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
@@ -26,6 +26,8 @@ from .pipeline import SQLPipeline
 from .vertically_concatenate import vertically_concatente
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .accuracy import truth_space_table
+
+from .match_weight_histogram import histogram_data
 
 logger = logging.getLogger(__name__)
 
@@ -605,3 +607,8 @@ class Linker:
 
     def truth_space_table(self, labels_tablename):
         return truth_space_table(self, labels_tablename)
+
+    def match_weight_histogram(self, df_predict, target_bins=30, width=600, height=250):
+        df = histogram_data(self, df_predict, target_bins)
+        recs = df.as_record_dict()
+        return match_weight_histogram(recs, width=width, height=height)
