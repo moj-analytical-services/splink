@@ -159,7 +159,7 @@ def waterfall_chart(
     return vegalite_or_json(chart, as_dict=as_dict)
 
 
-def roc_chart(records, height=400, width=400, as_dict=False):
+def roc_chart(records, width=400, height=400, as_dict=False):
     chart_path = "roc.json"
     chart = load_chart_definition(chart_path)
 
@@ -177,7 +177,7 @@ def roc_chart(records, height=400, width=400, as_dict=False):
     return vegalite_or_json(chart, as_dict=as_dict)
 
 
-def precision_recall_chart(records, height=400, width=400, as_dict=False):
+def precision_recall_chart(records, width=400, height=400, as_dict=False):
     chart_path = "precision_recall.json"
     chart = load_chart_definition(chart_path)
 
@@ -195,7 +195,7 @@ def precision_recall_chart(records, height=400, width=400, as_dict=False):
     return vegalite_or_json(chart, as_dict=as_dict)
 
 
-def match_weight_histogram(records, height=250, width=500, as_dict=False):
+def match_weight_histogram(records, width=500, height=250, as_dict=False):
     chart_path = "match_weight_histogram.json"
     chart = load_chart_definition(chart_path)
 
