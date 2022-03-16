@@ -611,4 +611,4 @@ class Linker:
     def match_weight_histogram(self, df_predict, target_bins=30, width=600, height=250):
         df = histogram_data(self, df_predict, target_bins)
         recs = df.as_record_dict()
-        return match_weight_histogram(recs, height=height, width=width)
+        return match_weight_histogram(recs, width=width, height=height)
