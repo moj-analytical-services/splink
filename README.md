@@ -88,9 +88,7 @@ You can read a short blog post about `splink` [here](https://robinlinacre.com/in
 
 ## Videos
 
-You can find a short video introducing `splink` and running though an introductory demo [here](https://www.youtube.com/watch?v=_8lV2Lbd6Xs&feature=youtu.be&t=1295).
-
-A 'best practices and performance tuning' tutorial can be found [here](https://www.youtube.com/watch?v=HzcqrRvXhCE).
+You can find an introductory video showcasing Splink's features and running through an demo of functionality [here](https://www.youtube.com/watch?v=msz3T741KQI).  
 
 ## How to make changes to Splink
 
