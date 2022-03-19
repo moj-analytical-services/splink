@@ -4,7 +4,8 @@ from sqlalchemy.engine import reflection
 from sqlalchemy import create_engine
 
 from splink.linker import Linker, SplinkDataFrame
-from splink.sql_functions import levenstein_sql
+from splink.sql_functions import levenstein_sql, levenstein_sql_max
+from splink.sql_transform.mssql_transform import _refactor_levenshtein, MSSQL
 
 class MSSQLDataFrame(SplinkDataFrame):
     def __init__(self, templated_name, physical_name, mssql_linker, tsql=True):
@@ -49,15 +50,17 @@ def MSSQLConnection(
 
 
 class MSSQLLinker(Linker):
-    def __init__(self, settings_dict, mssql_connection, input_tables, tf_tables={}):
+    def __init__(self, settings_dict, mssql_connection, input_tables, tf_tables={}, schema_prefix="splink"):
 
         self.con = mssql_connection
         # add any sql functions we require
-        self.add_sql_function("dbo.LEVENSHTEIN", levenstein_sql)
+        # self.add_sql_function("dbo.LEVENSHTEIN", levenstein_sql)
+        self.add_sql_function("dbo.LEVENSHTEIN", levenstein_sql_max)
 
         self.log_input_tables(self.con, input_tables, tf_tables)
         super().__init__(settings_dict, input_tables, tsql=True)
         self.debug_mode=False  # set to true to force run each individual SQL statement
+        self.schema_prefix = schema_prefix
 
     def log_input_tables(self, con, input_tables, tf_tables):
         for templated_name, df in input_tables.items():
@@ -75,24 +78,14 @@ class MSSQLLinker(Linker):
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
-        # translation_dict = {
-        #     "POW": "POWER",
-        #     "LEVENSHTEIN": "dbo.LEVENSHTEIN",
-        #     " = ": " LIKE " # might want to impose stricter settings for tsql
-        # }
-        translation_dict = {
-            "POW": "POWER",
-            "LEVENSHTEIN": "dbo.LEVENSHTEIN",
-        }
-
         drop_sql = f"""
         DROP TABLE IF EXISTS {physical_name}"""
         self.run_sql(drop_sql)
 
         if transpile:
-            sql = sqlglot.transpile(sql, read="spark", write="sqlite")[0]
+            sql = sqlglot.transpile(sql, read="spark", write="mssql")[0]
 
-        # print(sql)
+
         print(f"===== {physical_name} =====")
         if self.debug_mode:
             sql = f"""
@@ -106,9 +99,7 @@ class MSSQLLinker(Linker):
                 sql.rsplit(sep, 1)
             )
 
-        # translate anything not already converted from sqlite -> t-sql
-        for k, v in translation_dict.items():
-            sql = sql.replace(k, v)
+        # print(sql)
 
         self.run_sql(sql)
         output_obj = self._df_as_obj(templated_name, physical_name)
@@ -136,6 +127,7 @@ class MSSQLLinker(Linker):
         tmp_con.close()
 
     def add_sql_function(self, function_name, function):
+        # rm drop function when code is finalised
         drop_sql = f"DROP FUNCTION IF EXISTS {function_name}"
         self.run_sql(drop_sql)
         self.run_sql(function)
