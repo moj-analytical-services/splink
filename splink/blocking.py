@@ -4,28 +4,26 @@ from .format_sql import format_sql
 
 logger = logging.getLogger(__name__)
 
+
 def create_null_clauses(rule: str):
-    return " OR ".join(f"{p.strip()} IS NULL"
-            for p in rule.split("="))
+    return f"""
+    0 =
+        case
+            when ({rule})
+            then 1
+            else 0
+        end
+    """
+
 
 def _sql_gen_and_not_previous_rules(previous_rules: list, tsql=False):
     if previous_rules:
         # Note the isnull function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
-
-        # this tsql will likely fall over if you introduce a harder sql
-        # statement as one of our comparison levels
-        if tsql:
-            or_clauses = [f"ifnull(({r}), false)" for r in previous_rules]
-            or_clauses = [f"{r} OR {create_null_clauses(r)}" for
-                                        r in previous_rules]
-        else:
-            or_clauses = [f"ifnull(({r}), false)" for r in previous_rules]
-
-        previous_rules = " OR ".join(or_clauses)
-        return f"AND NOT {previous_rules}" if tsql else f"""AND NOT
-                                                ({previous_rules})"""
+        or_clauses = [create_null_clauses(r) for r in previous_rules]
+        previous_rules = " or ".join(or_clauses)
+        return f"AND NOT {previous_rules}"
     else:
         return ""
 
@@ -89,10 +87,7 @@ def block_using_rules(linker):
         blocking_rules = ["1=1"]
 
     for matchkey_number, rule in enumerate(blocking_rules):
-        not_previous_rules_statement = _sql_gen_and_not_previous_rules(
-            previous_rules,
-            settings_obj._tsql
-        )
+        not_previous_rules_statement = _sql_gen_and_not_previous_rules(previous_rules)
 
         sql = f"""
         select

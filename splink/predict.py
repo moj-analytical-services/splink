@@ -38,17 +38,10 @@ def predict(settings_obj: Settings):
     bayes_factor_expr = " * ".join(mult)
     bayes_factor_expr = f"{bayes_factor}D * {bayes_factor_expr}"
 
-    if settings_obj._tsql:
-        log_expr = f"log({bayes_factor_expr}, 2)"
-    else:
-        log_expr = f"log2({bayes_factor_expr})"
-
     sql = f"""
     select
-    {log_expr} as match_weight,
+    log2({bayes_factor_expr}) as match_weight,
     (({bayes_factor_expr})/(1+({bayes_factor_expr}))) as match_probability,
-
-
     {select_cols_expr}
     from __splink__df_match_weight_parts
     """
