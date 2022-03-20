@@ -21,7 +21,7 @@
     "tooltip": [
       {
         "field": "count_rows",
-        "title": "count",
+        "title": "Count in bin",
         "type": "quantitative"
       }
     ],
