@@ -23,9 +23,6 @@ df["side"] = df.index % 2
 df_left = df[df["side"] == 0]
 df_right = df[df["side"] == 1]
 
-# df_left.surname = df_left.surname.str.strip()
-# df_right.surname = df_right.surname.str.strip()
-
 settings_dict["link_type"] = "link_only"
 
 ms_con = MSSQLConnection(
@@ -36,7 +33,7 @@ ms_con = MSSQLConnection(
 )
 
 linker = MSSQLLinker(
-    settings_dict, ms_con, input_tables={"df_left": df_left, "df_right": df_right}
+    settings_dict, ms_con, input_tables={"df_left": df_left, "df_right": df_right}, schema = ""
 )
 
 linker.train_u_using_random_sampling(target_rows=1e6)
