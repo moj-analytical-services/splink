@@ -14,7 +14,7 @@
   "mark": "bar",
   "title": {
     "text": "Histogram of match weights",
-    "subtitle": "Use mousewheeel to zoom"
+    "subtitle": "Use mousewheel to zoom"
   },
 
   "encoding": {

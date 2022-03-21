@@ -144,7 +144,7 @@
   },
   "title": {
     "text": "Influence of comparison levels on match weight",
-    "subtitle": "Use mousewheeel to zoom"
+    "subtitle": "Use mousewheel to zoom"
   },
   "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
 }
