@@ -32,8 +32,17 @@ ms_con = MSSQLConnection(
     password = 'qq5SHUz8jLtpDM82'
 )
 
+# linker = MSSQLLinker(
+#     settings_dict, ms_con, input_tables={"df_left": df_left, "df_right": df_right}, schema = ""
+# )
+
+df_left.to_sql("df_left", ms_con, if_exists='replace', index=False)
+df_right.to_sql("df_right", ms_con, if_exists='replace', index=False)
+
 linker = MSSQLLinker(
-    settings_dict, ms_con, input_tables={"df_left": df_left, "df_right": df_right}, schema = ""
+    settings_dict, ms_con,
+    input_tables={"test_left": "df_left", "test_right": "df_right"},
+    schema = ""
 )
 
 linker.train_u_using_random_sampling(target_rows=1e6)
