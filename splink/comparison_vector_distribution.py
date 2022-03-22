@@ -1,6 +1,3 @@
-from typing import Collection
-
-
 def comparison_vector_distribution_sql(linker):
 
     gamma_columns = [c.gamma_column_name for c in linker.settings_obj.comparisons]
@@ -14,6 +11,8 @@ def comparison_vector_distribution_sql(linker):
     select {gam_concat} as gam_concat,
     {sum_gam} as sum_gam,
     count(*) as count_rows_in_comparison_vector_group,
+    cast(count(*) as float)
+        /(select count(*) from __splink__df_predict) as proportion_of_comparisons,
     {groupby_cols}
     from __splink__df_predict
     group by {groupby_cols}
@@ -22,6 +21,9 @@ def comparison_vector_distribution_sql(linker):
 
     return sql
 
+
+#   proportion_of_comparisons: 0.0005186722
+#   cumulative_comparisons: 0.0005186722
 
 #   gamma_surname_std: 0
 #   gamma_forename1_std: 0
