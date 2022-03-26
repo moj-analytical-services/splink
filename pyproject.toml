@@ -17,6 +17,7 @@ sqlglot = "1.23.1"
 pyspark = "^3.2.1"
 altair = "^4.2.0"
 rapidfuzz = "^2.0.3"
+Jinja2 = "^3.0.3"
 
 
 [tool.poetry.dev-dependencies]

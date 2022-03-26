@@ -232,6 +232,18 @@ class Comparison:
         }
 
     @property
+    def as_completed_dict(self):
+        return {
+            "column_name": self.comparison_name,
+            "comparison_levels": [
+                cl.as_completed_dict for cl in self.comparison_levels
+            ],
+            "input_columns_used_by_case_statement": [
+                c.input_name for c in self.input_columns_used_by_case_statement
+            ],
+        }
+
+    @property
     def as_detailed_records(self):
         records = []
         for cl in self.comparison_levels:

@@ -436,6 +436,12 @@ class ComparisonLevel:
         return output
 
     @property
+    def as_completed_dict(self):
+        comp_dict = self.as_dict
+        comp_dict["comparison_vector_value"] = self.comparison_vector_value
+        return comp_dict
+
+    @property
     def as_detailed_record(self):
         "A detailed representation of this level to describe it in charting outputs"
         output = {}

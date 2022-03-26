@@ -28,6 +28,11 @@ from .m_from_labels import estimate_m_from_pairwise_labels
 from .accuracy import truth_space_table
 
 from .match_weight_histogram import histogram_data
+from .comparison_vector_distribution import comparison_vector_distribution_sql
+from .splink_comparison_viewer import (
+    comparison_viewer_table,
+    render_splink_comparison_viewer_html,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -612,3 +617,22 @@ class Linker:
         df = histogram_data(self, df_predict, target_bins)
         recs = df.as_record_dict()
         return match_weight_histogram(recs, width=width, height=height)
+
+    def splink_comparison_viewer(
+        self, df_predict, out_path, overwrite=False, num_example_rows=2
+    ):
+        svd_sql = comparison_vector_distribution_sql(self)
+        self.enqueue_sql(svd_sql, "__splink__df_comparison_vector_distribution")
+
+        sqls = comparison_viewer_table(self, num_example_rows)
+        for sql in sqls:
+            self.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        df = self.execute_sql_pipeline([df_predict])
+
+        render_splink_comparison_viewer_html(
+            df.as_record_dict(),
+            self.settings_obj.as_completed_dict,
+            out_path,
+            overwrite,
+        )
