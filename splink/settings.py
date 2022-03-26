@@ -242,6 +242,14 @@ class Settings:
         }
         return {**self._settings_dict, **current_settings}
 
+    @property
+    def as_completed_dict(self):
+        current_settings = {
+            "comparisons": [cc.as_completed_dict for cc in self.comparisons],
+            "proportion_of_matches": self._proportion_of_matches,
+        }
+        return {**self._settings_dict, **current_settings}
+
     def match_weights_chart(self):
         records = self._parameters_as_detailed_records
 
