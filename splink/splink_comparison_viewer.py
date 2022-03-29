@@ -19,7 +19,11 @@ def row_examples(linker, example_rows_per_category=2):
     gam_concat = " || ',' || ".join(gamma_columns)
 
     sql = f"""
-    select *, {uid_expr} as rec_comparison_id, {gam_concat} as gam_concat
+    select
+        *,
+        {uid_expr} as rec_comparison_id,
+        {gam_concat} as gam_concat,
+        random() as rand_order
     from __splink__df_predict
     """
 
@@ -31,7 +35,8 @@ def row_examples(linker, example_rows_per_category=2):
 
     sql = """
     select *,
-        ROW_NUMBER() OVER (PARTITION BY gam_concat) AS row_example_index
+        ROW_NUMBER() OVER (PARTITION BY gam_concat order by rand_order)
+            AS row_example_index
     from __splink__df_predict_with_row_id
     """
 
@@ -57,6 +62,9 @@ def row_examples(linker, example_rows_per_category=2):
     return sqls
 
 
+# def row_examples_correlated_subquery()
+
+
 def comparison_viewer_table(linker, example_rows_per_category=2):
 
     sqls = row_examples(linker, example_rows_per_category)
@@ -80,7 +88,7 @@ def comparison_viewer_table(linker, example_rows_per_category=2):
     sqls.append(sql)
     return sqls
 
-    # Correlated subquey approach does not work in DuckDB
+    # Correlated subquey approach to getting row examples does not work in DuckDB
     # since the limit keyword doesn't seem to work as expected
 
     # sql = f"""
