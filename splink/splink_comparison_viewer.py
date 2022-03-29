@@ -19,7 +19,11 @@ def row_examples(linker, example_rows_per_category=2):
     gam_concat = " || ',' || ".join(gamma_columns)
 
     sql = f"""
-    select *, {uid_expr} as rec_comparison_id, {gam_concat} as gam_concat, random() as rand_order
+    select
+        *,
+        {uid_expr} as rec_comparison_id,
+        {gam_concat} as gam_concat,
+        random() as rand_order
     from __splink__df_predict
     """
 
@@ -31,7 +35,8 @@ def row_examples(linker, example_rows_per_category=2):
 
     sql = """
     select *,
-        ROW_NUMBER() OVER (PARTITION BY gam_concat order by rand_order) AS row_example_index
+        ROW_NUMBER() OVER (PARTITION BY gam_concat order by rand_order)
+            AS row_example_index
     from __splink__df_predict_with_row_id
     """
 
