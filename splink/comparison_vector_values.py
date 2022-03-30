@@ -1,6 +1,5 @@
 import logging
 
-from .format_sql import format_sql
 from .settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -21,9 +20,5 @@ def compute_comparison_vector_values(settings_obj: Settings):
     select {select_cols_expr}
     from __splink__df_blocked
     """
-
-    sql = format_sql(sql)
-
-    logger.debug("\n" + sql)
 
     return sql

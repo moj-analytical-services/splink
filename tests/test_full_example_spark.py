@@ -24,8 +24,4 @@ def test_full_example_spark(df_spark):
 
     df_predict = linker.predict()
 
-    spark = df_spark.sql_ctx.sparkSession
-
-    spark.catalog.cacheTable(df_predict.physical_name)
-
     linker.splink_comparison_viewer(df_predict, "test_scv2.html", True, 2)

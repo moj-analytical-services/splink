@@ -1,8 +1,16 @@
 import sqlglot
 
-from splink.linker import Linker, SplinkDataFrame
+import logging
 from math import pow, log2
 from rapidfuzz.distance.Levenshtein import distance
+
+
+from ..logging_messages import execute_sql_logging_message_info
+
+
+from ..linker import Linker, SplinkDataFrame
+
+logger = logging.getLogger(__name__)
 
 
 def dict_factory(cursor, row):
@@ -79,6 +87,9 @@ class SQLiteLinker(Linker):
 
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="sqlite")[0]
+
+        logger.info(execute_sql_logging_message_info(templated_name, physical_name))
+        logger.debug(sql)
 
         sql = f"""
         create table {physical_name}
