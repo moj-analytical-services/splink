@@ -10,7 +10,7 @@ def _sql_gen_and_not_previous_rules(previous_rules: list):
         # Note the isnull function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
-        or_clauses = [f"ifnull(({r}), false)" for r in previous_rules]
+        or_clauses = [f"coalesce(({r}), false)" for r in previous_rules]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
     else:
