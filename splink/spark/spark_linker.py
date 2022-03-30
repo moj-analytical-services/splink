@@ -3,7 +3,7 @@ import re
 from pyspark.sql import Row
 from ..linker import Linker, SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
-from ...logging_messages import execute_sql_logging_message_info, log_sql
+from ..logging_messages import execute_sql_logging_message_info, log_sql
 
 logger = logging.getLogger(__name__)
 
