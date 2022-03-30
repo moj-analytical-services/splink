@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 
 import duckdb
 from splink.linker import Linker, SplinkDataFrame
-from splink.logging_messages import execute_sql_logging_message_info
+from splink.logging_messages import execute_sql_logging_message_info, log_sql
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +78,8 @@ class DuckDBLinker(Linker):
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
+        # In the case of a table already existing in the database,
+        # execute sql is only reached if the user has explicitly turned off the cache
         drop_sql = f"""
         DROP TABLE IF EXISTS {physical_name}"""
         self.con.execute(drop_sql)
@@ -86,7 +88,7 @@ class DuckDBLinker(Linker):
             sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
 
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.log(5, sql)
+        logger.log(5, log_sql(sql))
 
         sql = f"""
         CREATE TABLE {physical_name}
