@@ -40,7 +40,9 @@ def vegalite_or_json(chart_dict, as_dict=False):
     if altair_installed:
         if not as_dict:
             try:
-                return vegalite(chart_dict)
+                # Display chart then return its spec
+                vegalite(chart_dict)
+                return chart_dict
             except ModuleNotFoundError:
                 return chart_dict
 

@@ -225,8 +225,7 @@ class Linker:
         use_cache=True,
         transpile=True,
     ):
-        # In debug mode, we do not pipeline the sql and print the
-        # results of each part of the pipeline
+
         if not self.debug_mode:
             sql_gen = self.pipeline._generate_pipeline(input_dataframes)
 
@@ -241,6 +240,8 @@ class Linker:
             )
             return dataframe
         else:
+            # In debug mode, we do not pipeline the sql and print the
+            # results of each part of the pipeline
             for task in self.pipeline._generate_pipeline_parts(input_dataframes):
                 output_tablename = task.output_table_name
                 sql = task.sql
@@ -273,12 +274,18 @@ class Linker:
         hash = "__splink__" + hash
 
         if use_cache:
+
             if self.table_exists_in_database(output_tablename_templated):
+                logger.debug(f"Using table {output_tablename_templated}")
                 return self._df_as_obj(
                     output_tablename_templated, output_tablename_templated
                 )
 
             if self.table_exists_in_database(hash):
+                logger.debug(
+                    f"Using cache for {output_tablename_templated}"
+                    f" with physical name {hash}"
+                )
                 return self._df_as_obj(output_tablename_templated, hash)
 
         if self.debug_mode:

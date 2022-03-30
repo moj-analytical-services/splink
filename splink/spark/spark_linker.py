@@ -3,7 +3,7 @@ import re
 from pyspark.sql import Row
 from ..linker import Linker, SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
-from ..logging_messages import execute_sql_logging_message_info
+from ..logging_messages import execute_sql_logging_message_info, log_sql
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +99,7 @@ class SparkLinker(Linker):
 
         spark_df = self.spark.sql(sql)
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.log(5, sql)
+        logger.log(5, log_sql(sql))
         spark_df = self._break_lineage(spark_df, templated_name)
 
         spark_df.createOrReplaceTempView(physical_name)

@@ -5,7 +5,7 @@ from math import pow, log2
 from rapidfuzz.distance.Levenshtein import distance
 
 
-from ..logging_messages import execute_sql_logging_message_info
+from ..logging_messages import execute_sql_logging_message_info, log_sql
 
 
 from ..linker import Linker, SplinkDataFrame
@@ -95,7 +95,7 @@ class SQLiteLinker(Linker):
             sql = sqlglot.transpile(sql, read="spark", write="sqlite")[0]
 
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.log(5, sql)
+        logger.log(5, log_sql(sql))
 
         sql = f"""
         create table {physical_name}
