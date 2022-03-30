@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 
 import duckdb
 from splink.linker import Linker, SplinkDataFrame
-
+from splink.logging_messages import execute_sql_logging_message_info
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +78,9 @@ class DuckDBLinker(Linker):
 
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
+
+        logger.info(execute_sql_logging_message_info(templated_name, physical_name))
+        logger.debug(sql)
 
         sql = f"""
         CREATE TABLE {physical_name}

@@ -1,7 +1,5 @@
 import logging
 
-from .format_sql import format_sql
-
 logger = logging.getLogger(__name__)
 
 
@@ -99,9 +97,5 @@ def block_using_rules(linker):
 
     if not settings_obj._needs_matchkey_column:
         sql = sql.replace(", '0' as match_key", "")
-
-    sql = format_sql(sql)
-
-    logger.debug("\n" + sql)
 
     return sql

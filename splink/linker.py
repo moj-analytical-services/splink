@@ -218,6 +218,8 @@ class Linker:
         use_cache=True,
         transpile=True,
     ):
+        # In debug mode, we do not pipeline the sql and print the
+        # results of each part of the pipeline
         if not self.debug_mode:
             sql_gen = self.pipeline._generate_pipeline(input_dataframes)
 

@@ -1,6 +1,11 @@
+import logging
+import re
 from pyspark.sql import Row
 from ..linker import Linker, SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
+from ..logging_messages import execute_sql_logging_message_info
+
+logger = logging.getLogger(__name__)
 
 
 class SparkDataframe(SplinkDataFrame):
@@ -32,14 +37,25 @@ class SparkDataframe(SplinkDataFrame):
 
         return self.spark_linker.spark.sql(sql).toPandas()
 
+    def as_spark_dataframe(self):
+        return self.spark_linker.spark.table(self.physical_name)
+
 
 # These classes want to be as minimal as possible
 # dealing with only the backend-specific logic
 class SparkLinker(Linker):
-    def __init__(self, settings_dict=None, input_tables={}):
+    def __init__(
+        self,
+        settings_dict=None,
+        input_tables={},
+        break_lineage_method="persist",
+        persist_level=None,
+    ):
         df = next(iter(input_tables.values()))
 
         self.spark = df.sql_ctx.sparkSession
+        self.break_lineage_method = break_lineage_method
+        self.persist_level = persist_level
 
         for templated_name, df in input_tables.items():
             db_tablename = f"__splink__{templated_name}"
@@ -52,18 +68,38 @@ class SparkLinker(Linker):
     def _df_as_obj(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
 
+    def _break_lineage(self, spark_df, templated_name):
+
+        regex_to_persist = [
+            r"__splink__df_comparison_vectors",
+            r"__splink__df_concat_with_tf",
+            r"__splink__df_predict",
+            r"__splink__df_tf_.+",
+        ]
+
+        if re.match(r"|".join(regex_to_persist), templated_name):
+
+            if self.break_lineage_method == "persist":
+                if self.persist_level is None:
+                    spark_df = spark_df.persist()
+                else:
+                    spark_df = spark_df.persist(self.persist_level)
+                logger.info(f"persisted {templated_name}")
+            elif self.break_lineage_method == "checkpoint":
+                spark_df = spark_df.checkpoint()
+                logger.info(f"checkpointed {templated_name}")
+            else:
+                raise ValueError(
+                    f"Unknown break_lineage_method: {self.break_lineage_method}"
+                )
+        return spark_df
+
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
         spark_df = self.spark.sql(sql)
-
-        if templated_name in (
-            "__splink__df_comparison_vectors",
-            "__splink__df_concat_with_tf",
-        ):
-            spark_df.persist()
-        if templated_name.startswith("__splink__df_tf_"):
-            if physical_name.startswith("__splink__df_tf_"):
-                spark_df.persist()
+        logger.info(execute_sql_logging_message_info(templated_name, physical_name))
+        logger.debug(sql)
+        spark_df = self._break_lineage(spark_df, templated_name)
 
         spark_df.createOrReplaceTempView(physical_name)
 
