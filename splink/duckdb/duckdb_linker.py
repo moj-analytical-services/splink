@@ -37,7 +37,13 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
 
 
 class DuckDBLinker(Linker):
-    def __init__(self, settings_dict=None, input_tables={}, connection=":memory:"):
+    def __init__(
+        self,
+        settings_dict=None,
+        input_tables={},
+        connection=":memory:",
+        set_up_basic_logging=True,
+    ):
 
         if connection == ":memory:":
             con = duckdb.connect(database=connection)
@@ -65,7 +71,7 @@ class DuckDBLinker(Linker):
                 input_tables_new[templated_name] = templated_name
         input_tables = input_tables_new
 
-        super().__init__(settings_dict, input_tables)
+        super().__init__(settings_dict, input_tables, set_up_basic_logging)
 
     def _df_as_obj(self, templated_name, physical_name):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
@@ -79,8 +85,8 @@ class DuckDBLinker(Linker):
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
 
-        logger.info(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.debug(sql)
+        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
+        logger.log(5, sql)
 
         sql = f"""
         CREATE TABLE {physical_name}

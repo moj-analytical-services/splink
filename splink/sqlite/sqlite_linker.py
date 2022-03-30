@@ -69,7 +69,13 @@ class SQLiteDataFrame(SplinkDataFrame):
 
 
 class SQLiteLinker(Linker):
-    def __init__(self, settings_dict=None, input_tables={}, connection=":memory:"):
+    def __init__(
+        self,
+        settings_dict=None,
+        input_tables={},
+        connection=":memory:",
+        set_up_basic_logging=True,
+    ):
         self.con = connection
         self.con.row_factory = dict_factory
         self.con.create_function("log2", 1, log2)
@@ -78,7 +84,7 @@ class SQLiteLinker(Linker):
 
         self.con.create_function("greatest", 2, max)
 
-        super().__init__(settings_dict, input_tables)
+        super().__init__(settings_dict, input_tables, set_up_basic_logging)
 
     def _df_as_obj(self, templated_name, physical_name):
         return SQLiteDataFrame(templated_name, physical_name, self)
@@ -88,8 +94,8 @@ class SQLiteLinker(Linker):
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="sqlite")[0]
 
-        logger.info(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.debug(sql)
+        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
+        logger.log(5, sql)
 
         sql = f"""
         create table {physical_name}
