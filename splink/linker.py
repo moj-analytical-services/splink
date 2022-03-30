@@ -76,7 +76,7 @@ class SplinkDataFrame:
 
 
 class Linker:
-    def __init__(self, settings_dict=None, input_tables={}):
+    def __init__(self, settings_dict=None, input_tables={}, set_up_basic_logging=True):
 
         self.pipeline = SQLPipeline()
         self.initialise_settings(settings_dict)
@@ -94,6 +94,13 @@ class Linker:
         self.compare_two_records_mode = False
 
         self.debug_mode = False
+
+        if set_up_basic_logging:
+            logging.basicConfig(
+                format="%(message)s",
+            )
+            splink_logger = logging.getLogger("splink")
+            splink_logger.setLevel(logging.INFO)
 
     @property
     def settings_obj(self):

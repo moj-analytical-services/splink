@@ -50,6 +50,7 @@ class SparkLinker(Linker):
         input_tables={},
         break_lineage_method="persist",
         persist_level=None,
+        set_up_basic_logging=True,
     ):
         df = next(iter(input_tables.values()))
 
@@ -63,7 +64,7 @@ class SparkLinker(Linker):
             df.createOrReplaceTempView(db_tablename)
             input_tables[templated_name] = db_tablename
 
-        super().__init__(settings_dict, input_tables)
+        super().__init__(settings_dict, input_tables, set_up_basic_logging)
 
     def _df_as_obj(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
@@ -84,10 +85,10 @@ class SparkLinker(Linker):
                     spark_df = spark_df.persist()
                 else:
                     spark_df = spark_df.persist(self.persist_level)
-                logger.info(f"persisted {templated_name}")
+                logger.debug(f"persisted {templated_name}")
             elif self.break_lineage_method == "checkpoint":
                 spark_df = spark_df.checkpoint()
-                logger.info(f"checkpointed {templated_name}")
+                logger.debug(f"checkpointed {templated_name}")
             else:
                 raise ValueError(
                     f"Unknown break_lineage_method: {self.break_lineage_method}"
@@ -97,8 +98,8 @@ class SparkLinker(Linker):
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
         spark_df = self.spark.sql(sql)
-        logger.info(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.debug(sql)
+        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
+        logger.log(5, sql)
         spark_df = self._break_lineage(spark_df, templated_name)
 
         spark_df.createOrReplaceTempView(physical_name)
