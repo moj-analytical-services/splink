@@ -57,8 +57,7 @@ class AWSLinker(Linker):
         # Deletes the table in the db, but not the object on s3,
         # which needs to be manually deleted at present
         # We can adjust this to be manually cleaned, but it presents
-        # a potential area for concern for users (actively deleting from aws accounts)
-        # might represent a bit of a security concern
+        # a potential area for concern for users (actively deleting from aws s3 buckets)
         self.delete_table_from_database(physical_name)
         
 #         if transpile:
