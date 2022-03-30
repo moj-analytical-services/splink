@@ -56,7 +56,7 @@ class AWSLinker(Linker):
         # We can adjust this to be manually cleaned, but it presents
         # a potential area for concern for users (actively deleting from aws accounts)
         # might represent a bit of a security concern
-#         self.delete_table_from_database(physical_name)
+        self.delete_table_from_database(physical_name)
         
 #         if transpile:
 #             sql = sqlglot.transpile(sql, read="spark", write="presto")[0]
@@ -66,8 +66,6 @@ class AWSLinker(Linker):
 #         output_obj = self._df_as_obj(templated_name, physical_name)
 #         return output_obj
 
-        self.delete_table_from_database(physical_name)
-        
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="presto")[0]
         print(f"===== Creating {physical_name} =====")
