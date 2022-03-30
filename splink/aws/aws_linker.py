@@ -23,8 +23,11 @@ class AWSDataFrame(SplinkDataFrame):
     def as_record_dict(self, limit=None):
         sql = f"""
         select *
-        from {self.physical_name};
+        from {self.physical_name}
         """
+        if limit:
+            sql += f" limit {limit}"
+
         out_df = wr.athena.read_sql_query(
             sql=sql, 
             database=self.aws_linker.database_name,
@@ -69,6 +72,7 @@ class AWSLinker(Linker):
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="presto")[0]
         print(f"===== Creating {physical_name} =====")
+#         print(sql)
         t = time.time()
         self.create_table(sql, physical_name=physical_name)
         print(f"Creation took {time.time()-t} seconds")
