@@ -173,10 +173,14 @@ class ComparisonLevel:
 
     @property
     def u_is_trained(self):
+        if self.is_null_level:
+            return True
         return len(self.trained_u_probabilities) > 0
 
     @property
     def m_is_trained(self):
+        if self.is_null_level:
+            return True
         return len(self.trained_m_probabilities) > 0
 
     @property

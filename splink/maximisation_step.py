@@ -89,7 +89,7 @@ def expectation_maximisation(em_training_session, df_comparison_vector_values):
 
     max_iterations = settings_obj._max_iterations
     em_convergece = settings_obj._em_convergence
-    for i in range(max_iterations):
+    for i in range(1, max_iterations + 1):
         sqls = predict(settings_obj)
         for sql in sqls:
             linker.enqueue_sql(sql["sql"], sql["output_table_name"])
@@ -103,8 +103,8 @@ def expectation_maximisation(em_training_session, df_comparison_vector_values):
         max_change_dict = (
             em_training_session.max_change_in_parameters_comparison_levels()
         )
-        print(f"Iteration {i}: {max_change_dict['message']}")
+        logger.info(f"Iteration {i}: {max_change_dict['message']}")
 
         if max_change_dict["max_abs_change_value"] < em_convergece:
             break
-    print(f"EM converged after {i} iterations")
+    logger.info(f"EM converged after {i} iterations")

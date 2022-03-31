@@ -406,7 +406,6 @@ class Linker:
                 em_training_session.comparison_levels_to_reverse_blocking_rule
             )
 
-            global_prop_matches_fully_trained = True
             for reverse_level in reverse_levels:
 
                 # Get comparison level on current settings obj
@@ -422,22 +421,12 @@ class Linker:
                     bf = cl.trained_m_median / cl.trained_u_median
                 else:
                     bf = cl.bayes_factor
-                    global_prop_matches_fully_trained = False
 
                 training_lambda_bf = training_lambda_bf / bf
             p = bayes_factor_to_prob(training_lambda_bf)
             prop_matches_estimates.append(p)
 
-        if not global_prop_matches_fully_trained:
-            print(
-                "Proportion of matches not fully trained, "
-                f"current estimates are {prop_matches_estimates}"
-            )
-        else:
-            print(
-                "Proportion of matches can now be estimated, "
-                f"estimates are {prop_matches_estimates}"
-            )
+        self.settings_obj.columns_without_estimated_parameters_message()
 
         self.settings_obj._proportion_of_matches = median(prop_matches_estimates)
 
@@ -446,10 +435,11 @@ class Linker:
 
         for cc in ccs:
             for cl in cc.comparison_levels:
-                if cl.u_is_trained:
-                    cl.u_probability = cl.trained_u_median
-                if cl.m_is_trained:
-                    cl.m_probability = cl.trained_m_median
+                if not cl.is_null_level:
+                    if cl.u_is_trained:
+                        cl.u_probability = cl.trained_u_median
+                    if cl.m_is_trained:
+                        cl.m_probability = cl.trained_m_median
 
     def train_m_and_u_using_expectation_maximisation(
         self,
