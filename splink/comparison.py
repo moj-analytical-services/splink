@@ -244,6 +244,14 @@ class Comparison:
         }
 
     @property
+    def m_is_trained(self):
+        return all(cl.m_is_trained for cl in self.comparison_levels)
+
+    @property
+    def u_is_trained(self):
+        return all(cl.u_is_trained for cl in self.comparison_levels)
+
+    @property
     def as_detailed_records(self):
         records = []
         for cl in self.comparison_levels:

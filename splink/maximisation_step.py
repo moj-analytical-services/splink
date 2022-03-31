@@ -89,7 +89,7 @@ def expectation_maximisation(em_training_session, df_comparison_vector_values):
 
     max_iterations = settings_obj._max_iterations
     em_convergece = settings_obj._em_convergence
-    for i in range(max_iterations):
+    for i in range(1, max_iterations + 1):
         sqls = predict(settings_obj)
         for sql in sqls:
             linker.enqueue_sql(sql["sql"], sql["output_table_name"])

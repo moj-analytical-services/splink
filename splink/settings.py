@@ -1,4 +1,6 @@
-from splink.parse_sql import get_columns_used_from_sql
+import logging
+
+from .parse_sql import get_columns_used_from_sql
 
 from .charts import m_u_values_chart, match_weights_chart
 from .comparison import Comparison
@@ -6,6 +8,8 @@ from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
 from .misc import dedupe_preserving_order
 from .validate_jsonschema import validate_settings_against_schema
+
+logger = logging.getLogger(__name__)
 
 
 class Settings:
@@ -258,3 +262,32 @@ class Settings:
     def m_u_values_chart(self):
         records = self._parameters_as_detailed_records
         return m_u_values_chart(records)
+
+    def columns_without_estimated_parameters_message(self):
+        message_lines = []
+        for c in self.comparisons:
+            if not c.m_is_trained and not c.u_is_trained:
+                message_lines.append(
+                    f"{c.comparison_name} (no estimates for m or u values)"
+                )
+            elif not c.m_is_trained:
+                message_lines.append(f"{c.comparison_name} (no estimate for m values)")
+            elif not c.u_is_trained:
+                message_lines.append(f"{c.comparison_name} (no estimats for u values)")
+
+        if len(message_lines) == 0:
+            message = (
+                "Your model is fully trained. All comparisons have at least "
+                "one estimate for their  m and u values, and the global proportion of "
+                "matches can be estimated."
+            )
+        else:
+            message = "Your model is not yet fully trained. Missing estimates for:"
+            message_lines.insert(0, message)
+            message_lines.append(
+                "This means that the"
+                " global proportion of matches cannot yet be estimated."
+            )
+            message = "\n".join(message_lines)
+
+        logger.info(message)
