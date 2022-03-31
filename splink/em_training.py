@@ -1,15 +1,14 @@
 from copy import deepcopy
+import logging
 
-from .charts import (
-    m_u_values_interactive_history_chart,
-    match_weights_interactive_history_chart,
-    proportion_of_matches_iteration_chart,
-)
 from .maximisation_step import expectation_maximisation
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .parse_sql import get_columns_used_from_sql
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
+
+
+logger = logging.getLogger(__name__)
 
 
 class EMTrainingSession:
@@ -67,7 +66,7 @@ class EMTrainingSession:
         cc_names_to_deactivate = [
             cc.comparison_name for cc in comparisons_to_deactivate
         ]
-        self.comparisons_to_deactivate = comparisons_to_deactivate
+        self.comparisons_that_cannot_be_estimated = comparisons_to_deactivate
 
         filtered_ccs = [
             cc
@@ -76,12 +75,25 @@ class EMTrainingSession:
         ]
 
         self.settings_obj.comparisons = filtered_ccs
+        self.comparisons_that_can_be_estimated = filtered_ccs
 
         self.comparison_level_history = []
         self.lambda_history = []
         self.add_iteration()
 
+    def _training_log_message(self):
+        not_estimated = ", ".join(
+            [cc.comparison_name for cc in self.comparisons_that_cannot_be_estimated]
+        )
+
+        estimated = ", ".join(
+            [cc.comparison_name for cc in self.comparisons_that_can_be_estimated]
+        )
+
+        logger.info(f"Esimtated: {estimated}" f"Not estimated: {not_estimated}")
+
     def _comparison_vectors(self):
+        logger.info(self._training_log_message())
 
         sql = block_using_rules(self.training_linker)
         self.training_linker.enqueue_sql(sql, "__splink__df_blocked")
@@ -272,7 +284,7 @@ class EMTrainingSession:
 
     def __repr__(self):
         deactivated_cols = ", ".join(
-            [cc.comparison_name for cc in self.comparisons_to_deactivate]
+            [cc.comparison_name for cc in self.comparisons_that_cannot_be_estimated]
         )
         return (
             f"<EMTrainingSession, blocking on {self.blocking_rule_for_training}, "

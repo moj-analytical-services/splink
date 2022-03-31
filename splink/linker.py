@@ -429,12 +429,12 @@ class Linker:
             prop_matches_estimates.append(p)
 
         if not global_prop_matches_fully_trained:
-            print(
+            logger.info(
                 "Proportion of matches not fully trained, "
                 f"current estimates are {prop_matches_estimates}"
             )
         else:
-            print(
+            logger.info(
                 "Proportion of matches can now be estimated, "
                 f"estimates are {prop_matches_estimates}"
             )
