@@ -239,6 +239,16 @@ class Settings:
         return output
 
     @property
+    def _parameter_estimates_as_records(self):
+        output = []
+        for i, cc in enumerate(self.comparisons):
+            records = cc.parameter_estimates_as_records
+            for r in records:
+                r["comparison_sort_order"] = i
+            output.extend(records)
+        return output
+
+    @property
     def as_dict(self):
         current_settings = {
             "comparisons": [cc.as_dict for cc in self.comparisons],

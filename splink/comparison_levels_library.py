@@ -9,7 +9,7 @@ def null_level(col_name):
 def exact_match_level(col_name, m_probability=None, term_frequency_adjustments=False):
     d = {
         "sql_condition": f"{col_name}_l = {col_name}_r",
-        "label_for_charts": "exact_match",
+        "label_for_charts": "Exact match",
     }
     if m_probability:
         d["m_probability"] = m_probability

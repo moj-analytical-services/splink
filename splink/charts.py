@@ -207,3 +207,12 @@ def match_weight_histogram(records, width=500, height=250, as_dict=False):
     chart["width"] = width
 
     return vegalite_or_json(chart, as_dict=as_dict)
+
+
+def parameter_estimate_comparisons(records, as_dict=False):
+    chart_path = "parameter_estimate_comparisons.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["data"]["values"] = records
+
+    return vegalite_or_json(chart, as_dict=as_dict)
