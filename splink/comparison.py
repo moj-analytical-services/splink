@@ -261,6 +261,17 @@ class Comparison:
             records.append(record)
         return records
 
+    @property
+    def parameter_estimates_as_records(self):
+        records = []
+        for cl in self.comparison_levels:
+            new_records = cl.parameter_estimates_as_records
+            for r in new_records:
+                r["comparison_name"] = self.comparison_name
+            records.extend(new_records)
+
+        return records
+
     def get_comparison_level_by_comparison_vector_value(self, value):
         for cl in self.comparison_levels:
 

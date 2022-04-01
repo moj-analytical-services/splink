@@ -3,7 +3,12 @@ from copy import copy, deepcopy
 from statistics import median
 import hashlib
 
-from .charts import match_weight_histogram, precision_recall_chart, roc_chart
+from .charts import (
+    match_weight_histogram,
+    precision_recall_chart,
+    roc_chart,
+    parameter_estimate_comparisons,
+)
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
@@ -641,4 +646,9 @@ class Linker:
             self.settings_obj.as_completed_dict,
             out_path,
             overwrite,
+        )
+
+    def parameter_estimate_comparisons(self):
+        return parameter_estimate_comparisons(
+            self.settings_obj._parameter_estimates_as_records
         )
