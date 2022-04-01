@@ -1,59 +1,56 @@
 {
-  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.2.0.json",
   "title": {
     "text": "Comparison of parameter estimates between jobs",
     "subtitle": "Use mousewheeel to zoom"
   },
-  "data": { "values": [] },
+  "data": {
+    "values": []
+  },
+  "params": [
+    {
+      "name": "toggleProb",
+      "bind": { "input": "checkbox" }
+    }
+  ],
   "config": {
     "view": { "continuousWidth": 400, "continuousHeight": 300 },
     "title": { "anchor": "middle" }
   },
   "mark": { "type": "point", "filled": false, "opacity": 0.7, "size": 100 },
   "encoding": {
-    "color": { "type": "nominal", "field": "estimate_name" },
+    "color": { "type": "nominal", "field": "estimate_description" },
     "row": {
       "type": "nominal",
-      "field": "column_name",
+      "field": "comparison_name",
       "header": {
         "labelAlign": "left",
         "labelAnchor": "middle",
         "labelAngle": 0
       },
-      "sort": { "field": "gamma_index" },
-      "title": null
+      "sort": { "field": "comparison_sort_order" }
     },
-    "column": {
-      "type": "nominal",
-      "field": "m_or_u"
-    },
+    "column": { "type": "nominal", "field": "m_or_u" },
     "shape": {
       "type": "nominal",
-      "field": "estimate_name",
+      "field": "estimate_description",
       "scale": { "range": ["circle", "square", "triangle", "diamond"] }
     },
     "tooltip": [
-      { "type": "nominal", "field": "column_name" },
-      { "type": "nominal", "field": "estimate_name" },
-      { "type": "quantitative", "field": "m_probability" },
-      { "type": "quantitative", "field": "u_probability" }
+      { "type": "nominal", "field": "comparison_name" },
+      { "type": "nominal", "field": "estimate_description" },
+      { "type": "quantitative", "field": "estimated_probability" }
     ],
     "x": {
       "type": "quantitative",
-      "field": "u_probability",
+      "field": "estimated_probability",
       "scale": { "domain": [0, 1] }
     },
     "y": {
       "type": "nominal",
       "axis": { "grid": true, "title": null },
-      "field": "level_name"
-    }
-  },
-  "selection": {
-    "selector076": {
-      "type": "interval",
-      "bind": "scales",
-      "encodings": ["x", "y"]
+      "field": "comparison_level_label",
+      "sort": { "field": "comparison_vector_value", "order": "descending" }
     }
   }
 }
