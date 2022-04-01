@@ -278,7 +278,7 @@ class Settings:
         if len(message_lines) == 0:
             message = (
                 "Your model is fully trained. All comparisons have at least "
-                "one estimate for their  m and u values, and the global proportion of "
+                "one estimate for their m and u values, and the global proportion of "
                 "matches can be estimated."
             )
         else:
