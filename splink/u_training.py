@@ -1,8 +1,11 @@
+import logging
 from copy import deepcopy
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
 from .maximisation_step import compute_new_parameters
+
+logger = logging.getLogger(__name__)
 
 
 def _num_target_rows_to_rows_to_sample(target_rows):
@@ -100,3 +103,8 @@ def estimate_u_values(linker, target_rows):
         cl.add_trained_u_probability(
             record["u_probability"], "estimate u by random sampling"
         )
+
+    logger.info(
+        "Trained u using random sampling: "
+        "u values have now been estimated for all comparisons"
+    )

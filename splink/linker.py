@@ -393,6 +393,8 @@ class Linker:
 
         self.populate_proportion_of_matches_from_trained_values()
 
+        self.settings_obj.columns_without_estimated_parameters_message()
+
         return em_training_session
 
     def populate_proportion_of_matches_from_trained_values(self):
@@ -425,8 +427,6 @@ class Linker:
                 training_lambda_bf = training_lambda_bf / bf
             p = bayes_factor_to_prob(training_lambda_bf)
             prop_matches_estimates.append(p)
-
-        self.settings_obj.columns_without_estimated_parameters_message()
 
         self.settings_obj._proportion_of_matches = median(prop_matches_estimates)
 
