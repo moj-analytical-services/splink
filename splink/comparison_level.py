@@ -522,24 +522,7 @@ class ComparisonLevel:
     def validate(self):
         self._validate_sql()
 
-    @property
-    def not_trained_messages(self):
 
-        msgs = []
-
-        cname = self.comparison.comparison_name
-        lname = self.label_for_charts
-        header = f"Comparison: '{cname}' level: '{lname}':\n"
-
-        msg_template = "{header}    {m_or_u} value will use default value of: {val:.3f}"
-
-        if not self.m_is_trained:
-            val = self.m_probability
-            msgs.append(msg_template.format(header=header, m_or_u="m", val=val))
-        if not self.u_is_trained:
-            msgs.append(msg_template.format(header=header, m_or_u="u", val=val))
-
-        return msgs
 
     def __repr__(self):
         sql = self.sql_condition

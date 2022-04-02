@@ -260,6 +260,10 @@ class Comparison:
         return all(cl.u_is_trained for cl in self.comparison_levels)
 
     @property
+    def is_trained(self):
+        return self.m_is_trained and self.u_is_trained
+
+    @property
     def as_detailed_records(self):
         records = []
         for cl in self.comparison_levels:
@@ -295,7 +299,18 @@ class Comparison:
 
     @property
     def not_trained_messages(self):
-        messages = []
-        for cl in self.comparison_levels:
-            messages.extend(cl.not_trained_messages)
-        return messages
+
+        msgs = []
+
+        cname = self.comparison_name
+
+        header = f"Comparison: '{cname}':\n"
+
+        msg_template = "{header}    {m_or_u} values not fully trained"
+
+        if not self.m_is_trained:
+            msgs.append(msg_template.format(header=header, m_or_u="m"))
+        if not self.u_is_trained:
+            msgs.append(msg_template.format(header=header, m_or_u="u"))
+
+        return msgs

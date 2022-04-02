@@ -302,6 +302,10 @@ class Settings:
 
         logger.info(message)
 
+    @property
+    def is_fully_trained(self):
+        return all([c.is_trained for c in self.comparisons])
+
     def not_trained_messages(self):
         messages = []
         for c in self.comparisons:

@@ -2,6 +2,7 @@ import logging
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
+import warnings
 
 from .charts import (
     match_weight_histogram,
@@ -663,11 +664,15 @@ class Linker:
 
     def _predict_warning(self):
 
-        msg = (
-            "Warning:  You have called predict(), but there are some parameter "
-            " estimates which have neither been estimated or specified.  To produce "
-            "predictions the following parameters will use default values:"
-        )
-        messages = self.settings_obj.not_trained_messages()
-        log_message = "\n".join([msg] + messages)
-        logger.info(log_message)
+        if not self.settings_obj.is_fully_trained:
+            msg = (
+                "You have called predict(), but there are some parameter "
+                "estimates which have neither been estimated or specified in your "
+                "settings dictionary.  To produce predictions the following"
+                " untrained trained parameters will use default values."
+            )
+            messages = self.settings_obj.not_trained_messages()
+
+            warn_message = "\n".join([msg] + messages)
+
+            warnings.warn(warn_message)
