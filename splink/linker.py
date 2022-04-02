@@ -648,7 +648,15 @@ class Linker:
             overwrite,
         )
 
-    def parameter_estimate_comparisons(self):
-        return parameter_estimate_comparisons(
-            self.settings_obj._parameter_estimates_as_records
-        )
+    def parameter_estimate_comparisons(self, include_m=True, include_u=True):
+        records = self.settings_obj._parameter_estimates_as_records
+
+        to_retain = []
+        if include_m:
+            to_retain.append("m")
+        if include_u:
+            to_retain.append("u")
+
+        records = [r for r in records if r["m_or_u"] in to_retain]
+
+        return parameter_estimate_comparisons(records)
