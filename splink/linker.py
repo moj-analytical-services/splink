@@ -424,7 +424,7 @@ class Linker:
                     reverse_level.comparison_vector_value
                 )
 
-                if cl.is_trained:
+                if cl.has_estimated_values:
                     bf = cl.trained_m_median / cl.trained_u_median
                 else:
                     bf = cl.bayes_factor
@@ -441,9 +441,9 @@ class Linker:
         for cc in ccs:
             for cl in cc.comparison_levels:
                 if not cl.is_null_level:
-                    if cl.u_is_trained:
+                    if cl.has_estimated_u_values:
                         cl.u_probability = cl.trained_u_median
-                    if cl.m_is_trained:
+                    if cl.has_estimated_m_values:
                         cl.m_probability = cl.trained_m_median
 
     def train_m_and_u_using_expectation_maximisation(
@@ -660,3 +660,14 @@ class Linker:
         records = [r for r in records if r["m_or_u"] in to_retain]
 
         return parameter_estimate_comparisons(records)
+
+    def _predict_warning(self):
+
+        msg = (
+            "Warning:  You have called predict(), but there are some parameter "
+            " estimates which have neither been estimated or specified.  To produce "
+            "predictions the following parameters will use default values:"
+        )
+        messages = self.settings_obj.not_trained_messages()
+        log_message = "\n".join([msg] + messages)
+        logger.info(log_message)

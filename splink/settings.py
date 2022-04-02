@@ -301,3 +301,9 @@ class Settings:
             message = "\n".join(message_lines)
 
         logger.info(message)
+
+    def not_trained_messages(self):
+        messages = []
+        for c in self.comparisons:
+            messages.extend(c.not_trained_messages)
+        return messages

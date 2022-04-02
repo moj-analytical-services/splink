@@ -244,6 +244,14 @@ class Comparison:
         }
 
     @property
+    def has_estimated_m_values(self):
+        return all(cl.has_estimated_m_values for cl in self.comparison_levels)
+
+    @property
+    def has_estimated_u_values(self):
+        return all(cl.has_estimated_u_values for cl in self.comparison_levels)
+
+    @property
     def m_is_trained(self):
         return all(cl.m_is_trained for cl in self.comparison_levels)
 
@@ -284,3 +292,10 @@ class Comparison:
             f"<Comparison {self.comparison_name} with "
             f"{self.num_levels} levels at {hex(id(self))}>"
         )
+
+    @property
+    def not_trained_messages(self):
+        messages = []
+        for cl in self.comparison_levels:
+            messages.extend(cl.not_trained_messages)
+        return messages
