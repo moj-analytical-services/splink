@@ -522,8 +522,6 @@ class ComparisonLevel:
     def validate(self):
         self._validate_sql()
 
-
-
     def __repr__(self):
         sql = self.sql_condition
         sql = (sql[:75] + "...") if len(sql) > 75 else sql
