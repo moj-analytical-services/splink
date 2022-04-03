@@ -105,6 +105,6 @@ def estimate_u_values(linker, target_rows):
         )
 
     logger.info(
-        "Trained u using random sampling: "
+        "Trained m probabilities using random sampling - "
         "u values have now been estimated for all comparisons"
     )
