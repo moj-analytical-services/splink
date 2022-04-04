@@ -1,10 +1,11 @@
+import os
 from splink.duckdb.duckdb_linker import DuckDBLinker
 import pandas as pd
 
 from basic_settings import get_settings_dict
 
 
-def test_full_example_duckdb():
+def test_full_example_duckdb(tmp_path):
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
@@ -26,7 +27,9 @@ def test_full_example_duckdb():
 
     df_predict = linker.predict()
 
-    linker.splink_comparison_viewer(df_predict, "test_scv_duckdb.html", True, 2)
+    linker.splink_comparison_viewer(
+        df_predict, os.path.join(tmp_path, "test_scv_duckdb.html"), True, 2
+    )
 
     df_predict.as_pandas_dataframe()
 

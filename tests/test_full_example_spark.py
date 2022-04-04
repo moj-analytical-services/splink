@@ -1,10 +1,12 @@
+import os
+
 from splink.spark.spark_linker import SparkLinker
 
 
 from basic_settings import get_settings_dict
 
 
-def test_full_example_spark(df_spark):
+def test_full_example_spark(df_spark, tmp_path):
     settings_dict = get_settings_dict()
     linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df_spark})
 
@@ -24,4 +26,6 @@ def test_full_example_spark(df_spark):
 
     df_predict = linker.predict()
 
-    linker.splink_comparison_viewer(df_predict, "test_scv2.html", True, 2)
+    linker.splink_comparison_viewer(
+        df_predict, os.path.join(tmp_path, "test_scv_spark.html"), True, 2
+    )
