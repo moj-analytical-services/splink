@@ -29,7 +29,7 @@ from .m_training import estimate_m_values_from_label_column
 from .u_training import estimate_u_values
 from .pipeline import SQLPipeline
 
-from .vertically_concatenate import vertically_concatente
+from .vertically_concatenate import vertically_concatente_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .accuracy import truth_space_table
 
@@ -72,13 +72,13 @@ class SplinkDataFrame:
     def physical_and_template_names_equal(self):
         return self.templated_name == self.physical_name
 
-    def as_record_dict(self):
+    def as_record_dict(self, limit=None):
         pass
 
-    def as_pandas_dataframe(self):
+    def as_pandas_dataframe(self, limit=None):
         import pandas as pd
 
-        return pd.DataFrame(self.as_record_dict())
+        return pd.DataFrame(self.as_record_dict(limit=limit))
 
 
 class Linker:
@@ -175,14 +175,14 @@ class Linker:
             return False
 
     def _initialise_df_concat(self, materialise=True):
-        sql = vertically_concatente(self.input_dfs)
+        sql = vertically_concatente_sql(self)
         self.enqueue_sql(sql, "__splink__df_concat")
         self.execute_sql_pipeline(materialise_as_hash=False)
 
     def _initialise_df_concat_with_tf(self, materialise=True):
         if self.table_exists_in_database("__splink__df_concat_with_tf"):
             return
-        sql = vertically_concatente(self.input_dfs)
+        sql = vertically_concatente_sql(self)
         self.enqueue_sql(sql, "__splink__df_concat")
 
         sqls = term_frequencies(self)
@@ -215,7 +215,7 @@ class Linker:
                 self.execute_sql_pipeline(materialise_as_hash=False)
 
     def compute_tf_table(self, column_name):
-        sql = vertically_concatente(self.input_dfs)
+        sql = vertically_concatente_sql(self)
         self.enqueue_sql(sql, "__splink__df_concat")
         sql = sql_gen_term_frequencies(column_name)
         self.enqueue_sql(sql, colname_to_tf_tablename(column_name))
@@ -354,6 +354,13 @@ class Linker:
     def _validate_input_dfs(self):
         for df in self.input_dfs.values():
             df.validate()
+
+        if self.settings_obj._link_type == "dedupe_only":
+            if len(self.input_dfs) > 1:
+                raise ValueError(
+                    'If link_type = "dedupe only" then input tables must contain',
+                    "only a single input table",
+                )
 
     def deterministic_link(self, return_df_as_value=True):
 

@@ -1,19 +1,19 @@
 from splink.sqlite.sqlite_linker import SQLiteLinker
 import sqlite3
-
+import os
 
 import pandas as pd
 
-from basic_settings import settings_dict
+from basic_settings import get_settings_dict
 
 
-def test_full_example_sqlite():
+def test_full_example_sqlite(tmp_path):
 
     con = sqlite3.connect(":memory:")
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     df.to_sql("input_df_tablename", con)
-
+    settings_dict = get_settings_dict()
     linker = SQLiteLinker(
         settings_dict,
         input_tables={"fake_data_1": "input_df_tablename"},
@@ -34,4 +34,6 @@ def test_full_example_sqlite():
 
     df_predict = linker.predict()
 
-    linker.splink_comparison_viewer(df_predict, "test_scv_sqlite.html", True, 2)
+    linker.splink_comparison_viewer(
+        df_predict, os.path.join(tmp_path, "test_scv_sqlite.html"), True, 2
+    )

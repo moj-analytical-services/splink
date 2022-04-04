@@ -8,7 +8,7 @@ def row_examples(linker, example_rows_per_category=2):
 
     sqls = []
 
-    uid_cols = linker.settings_obj._unique_id_columns
+    uid_cols = linker.settings_obj._unique_id_input_columns
     uid_cols_l = [uid_col.name_l for uid_col in uid_cols]
     uid_cols_r = [uid_col.name_r for uid_col in uid_cols]
     uid_cols = uid_cols_l + uid_cols_r

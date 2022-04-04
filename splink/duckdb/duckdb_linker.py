@@ -35,6 +35,13 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
 
         return self.duckdb_linker.con.query(sql).to_df().to_dict(orient="records")
 
+    def as_pandas_dataframe(self, limit=None):
+        sql = f"select * from {self.physical_name}"
+        if limit:
+            sql += f" limit {limit}"
+
+        return self.duckdb_linker.con.query(sql).to_df()
+
 
 class DuckDBLinker(Linker):
     def __init__(
