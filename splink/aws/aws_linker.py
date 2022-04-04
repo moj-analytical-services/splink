@@ -43,6 +43,7 @@ class AWSLinker(Linker):
                  output_bucket: str,
                  database_name: str,
                  input_tables={},
+                 schema = "",
                 ):
         self.boto3_session = boto3_session
         self.database_name = database_name
@@ -60,14 +61,6 @@ class AWSLinker(Linker):
         # a potential area for concern for users (actively deleting from aws s3 buckets)
         self.delete_table_from_database(physical_name)
         
-#         if transpile:
-#             sql = sqlglot.transpile(sql, read="spark", write="presto")[0]
-#         print(f"===== Creating {physical_name} =====")
-#         self.create_table(sql, physical_name=physical_name)
-
-#         output_obj = self._df_as_obj(templated_name, physical_name)
-#         return output_obj
-
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="presto")[0]
         print(f"===== Creating {physical_name} =====")
