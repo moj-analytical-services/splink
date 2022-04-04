@@ -98,6 +98,8 @@ class Linker:
 
         self.compare_two_records_mode = False
 
+        self.schema = ""
+
         self.debug_mode = False
 
         if set_up_basic_logging:
@@ -172,6 +174,11 @@ class Linker:
             return True
         else:
             return False
+
+    def _create_schema(self, table_name):
+        if self.schema:
+            return f"{self.schema}.{table_name}"
+        return table_name
 
     def _initialise_df_concat(self, materialise=True):
         sql = vertically_concatente(self.input_dfs)
