@@ -49,7 +49,6 @@ def test_full_example_duckdb():
     df_labels = df_labels.drop(
         ["group_l", "group_r", "source_dataset_l", "source_dataset_r", "merge"], axis=1
     )
-    df_labels
 
     linker.con.register("labels", df_labels)
     # Finish create labels
