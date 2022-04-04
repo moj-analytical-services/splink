@@ -18,8 +18,8 @@ from .misc import bayes_factor_to_prob, escape_columns, prob_to_bayes_factor
 from .predict import predict
 from .settings import Settings
 from .term_frequencies import (
-    term_frequencies,
-    sql_gen_term_frequencies,
+    compute_all_term_frequencies_sqls,
+    term_frequencies_for_single_column_sql,
     colname_to_tf_tablename,
     join_tf_to_input_df,
 )
@@ -185,7 +185,7 @@ class Linker:
         sql = vertically_concatente_sql(self)
         self.enqueue_sql(sql, "__splink__df_concat")
 
-        sqls = term_frequencies(self)
+        sqls = compute_all_term_frequencies_sqls(self)
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -217,7 +217,7 @@ class Linker:
     def compute_tf_table(self, column_name):
         sql = vertically_concatente_sql(self)
         self.enqueue_sql(sql, "__splink__df_concat")
-        sql = sql_gen_term_frequencies(column_name)
+        sql = term_frequencies_for_single_column_sql(column_name)
         self.enqueue_sql(sql, colname_to_tf_tablename(column_name))
         return self.execute_sql_pipeline(materialise_as_hash=False)
 
