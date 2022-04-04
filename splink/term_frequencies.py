@@ -60,7 +60,7 @@ def join_tf_to_input_df(settings_obj):
     return sql
 
 
-def term_frequencies(linker):
+def term_frequencies_sqls(linker):
 
     settings_obj = linker.settings_obj
     tf_cols = settings_obj._term_frequency_columns

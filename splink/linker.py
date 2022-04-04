@@ -17,8 +17,8 @@ from .em_training import EMTrainingSession
 from .misc import bayes_factor_to_prob, escape_columns, prob_to_bayes_factor
 from .predict import predict
 from .settings import Settings
-from .term_frequencies import (
-    term_frequencies,
+from .term_frequencies_sqls import (
+    term_frequencies_sqls,
     sql_gen_term_frequencies,
     colname_to_tf_tablename,
     join_tf_to_input_df,
@@ -185,7 +185,7 @@ class Linker:
         sql = vertically_concatente_sql(self)
         self.enqueue_sql(sql, "__splink__df_concat")
 
-        sqls = term_frequencies(self)
+        sqls = term_frequencies_sqls(self)
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
