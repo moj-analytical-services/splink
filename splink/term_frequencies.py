@@ -12,7 +12,9 @@ def colname_to_tf_tablename(colname):
     return f"__splink__df_tf_{colname}"
 
 
-def sql_gen_term_frequencies(column_name, table_name="__splink__df_concat"):
+def term_frequencies_for_single_column_sql(
+    column_name, table_name="__splink__df_concat"
+):
 
     tf_col_name = escape_column(f"tf_{column_name}")
     col_name = escape_column(column_name)
@@ -60,7 +62,7 @@ def join_tf_to_input_df(settings_obj):
     return sql
 
 
-def term_frequencies_sqls(linker):
+def compute_all_term_frequencies_sqls(linker):
 
     settings_obj = linker.settings_obj
     tf_cols = settings_obj._term_frequency_columns
@@ -78,7 +80,7 @@ def term_frequencies_sqls(linker):
         tf_table_name = colname_to_tf_tablename(tf_col)
 
         if not linker.table_exists_in_database(tf_table_name):
-            sql = sql_gen_term_frequencies(tf_col)
+            sql = term_frequencies_for_single_column_sql(tf_col)
             sql = {
                 "sql": sql,
                 "output_table_name": colname_to_tf_tablename(tf_col),
