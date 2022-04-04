@@ -34,7 +34,7 @@ class Settings:
         self._em_convergence = s_else_d("em_convergence")
         self._max_iterations = s_else_d("max_iterations")
         self._unique_id_column_name = s_else_d("unique_id_column_name")
-        self._source_dataset_column_name = s_else_d("source_dataset_column_name")
+
         self._retain_matching_columns = s_else_d("retain_matching_columns")
         self._retain_intermediate_calculation_columns = s_else_d(
             "retain_intermediate_calculation_columns"
@@ -64,20 +64,29 @@ class Settings:
         return [InputColumn(c, tf_adjustments=False, settings_obj=self) for c in cols]
 
     @property
-    def _unique_id_columns(self):
+    def _source_dataset_column_name_is_required(self):
+        return self._link_type != "dedupe_only"
+
+    @property
+    def _source_dataset_column_name(self):
+        if self._source_dataset_column_name_is_required:
+            s_else_d = self.from_settings_dict_else_default
+            return s_else_d("source_dataset_column_name")
+        else:
+            return None
+
+    @property
+    def _unique_id_input_columns(self):
         cols = []
 
-        if self._link_type != "dedupe_only":
+        if self._source_dataset_column_name_is_required:
             col = InputColumn(
                 self._source_dataset_column_name,
-                tf_adjustments=False,
                 settings_obj=self,
             )
             cols.append(col)
 
-        col = InputColumn(
-            self._unique_id_column_name, tf_adjustments=False, settings_obj=self
-        )
+        col = InputColumn(self._unique_id_column_name, settings_obj=self)
         cols.append(col)
 
         return cols
@@ -98,9 +107,9 @@ class Settings:
     def _columns_to_select_for_blocking(self):
         cols = []
 
-        for uid_col in self._unique_id_columns:
+        for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.l_name_as_l)
-        for uid_col in self._unique_id_columns:
+        for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.r_name_as_r)
 
         for cc in self.comparisons:
@@ -115,9 +124,9 @@ class Settings:
     def _columns_to_select_for_comparison_vector_values(self):
         cols = []
 
-        for uid_col in self._unique_id_columns:
+        for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_l)
-        for uid_col in self._unique_id_columns:
+        for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
@@ -136,9 +145,9 @@ class Settings:
     def _columns_to_select_for_bayes_factor_parts(self):
         cols = []
 
-        for uid_col in self._unique_id_columns:
+        for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_l)
-        for uid_col in self._unique_id_columns:
+        for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
@@ -157,9 +166,9 @@ class Settings:
     def _columns_to_select_for_predict(self):
         cols = []
 
-        for uid_col in self._unique_id_columns:
+        for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_l)
-        for uid_col in self._unique_id_columns:
+        for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_r)
 
         for cc in self.comparisons:

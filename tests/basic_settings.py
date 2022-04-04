@@ -129,7 +129,7 @@ glo = bayes_factor_to_prob(prob_to_bayes_factor(0.3) / bf_for_first_name)
 
 settings_dict = {
     "proportion_of_matches": glo,
-    "link_type": "link_and_dedupe",
+    "link_type": "dedupe_only",
     "blocking_rules_to_generate_predictions": [
         "l.surname = r.surname",
     ],
