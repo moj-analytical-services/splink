@@ -5,7 +5,7 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 
 import pandas as pd
 
-from basic_settings import settings_dict
+from basic_settings import get_settings_dict
 
 
 def test_train_vs_predict():
@@ -20,7 +20,7 @@ def test_train_vs_predict():
     """
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
+    settings_dict = get_settings_dict()
     settings_dict["blocking_rules_to_generate_predictions"] = ["l.surname = r.surname"]
     linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
 

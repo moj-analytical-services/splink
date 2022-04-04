@@ -7,7 +7,7 @@ from splink.accuracy import (
 )
 from splink.comparison_library import exact_match
 
-from basic_settings import settings_dict
+from basic_settings import get_settings_dict
 
 from splink.block_from_labels import block_from_labels
 from splink.comparison_vector_values import compute_comparison_vector_values
@@ -194,7 +194,7 @@ def test_roc_chart_dedupe_only():
     df_labels = df_labels.drop(
         ["group_l", "group_r", "source_dataset_l", "source_dataset_r", "merge"], axis=1
     )
-
+    settings_dict = get_settings_dict()
     linker = DuckDBLinker(
         settings_dict, input_tables={"fake_data_1": df}, connection=":memory:"
     )
@@ -226,7 +226,7 @@ def test_roc_chart_link_and_dedupe():
     ).astype(float)
 
     df_labels = df_labels.drop(["group_l", "group_r", "merge"], axis=1)
-
+    settings_dict = get_settings_dict()
     settings_dict["link_type"] = "link_and_dedupe"
     linker = DuckDBLinker(
         settings_dict, input_tables={"fake_data_1": df}, connection=":memory:"

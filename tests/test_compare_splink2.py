@@ -7,13 +7,13 @@ from splink.spark.spark_linker import SparkLinker
 
 import pandas as pd
 
-from basic_settings import settings_dict
+from basic_settings import get_settings_dict
 
 
 def test_splink_2_predict():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
+    settings_dict = get_settings_dict()
     linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
 
     expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
@@ -32,7 +32,7 @@ def test_splink_2_predict():
 
 # @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
 def test_splink_2_predict_spark(df_spark):
-
+    settings_dict = get_settings_dict()
     linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df_spark})
 
     df_e = linker.predict().as_pandas_dataframe()
@@ -55,7 +55,7 @@ def test_splink_2_predict_sqlite():
     con = sqlite3.connect(":memory:")
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df.to_sql("fake_data_1", con, if_exists="replace")
-
+    settings_dict = get_settings_dict()
     linker = SQLiteLinker(
         settings_dict,
         connection=con,
@@ -80,7 +80,7 @@ def test_splink_2_predict_sqlite():
 def test_splink_2_em_fixed_u():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
+    settings_dict = get_settings_dict()
     linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
 
     # Check lambda history is the same
@@ -125,7 +125,7 @@ def test_splink_2_em_fixed_u():
 def test_splink_2_em_no_fix():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
+    settings_dict = get_settings_dict()
     linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
 
     # Check lambda history is the same
@@ -170,7 +170,7 @@ def test_splink_2_em_no_fix():
 def test_lambda():
 
     # Needs precisely 10 EM iterations
-
+    settings_dict = get_settings_dict()
     settings_dict["max_iterations"] = 10
     settings_dict["em_convergence"] = 1e-10
 

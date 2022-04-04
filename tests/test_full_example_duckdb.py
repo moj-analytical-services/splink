@@ -1,13 +1,13 @@
 from splink.duckdb.duckdb_linker import DuckDBLinker
 import pandas as pd
 
-from basic_settings import settings_dict
+from basic_settings import get_settings_dict
 
 
 def test_full_example_duckdb():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
+    settings_dict = get_settings_dict()
     linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
 
     linker.profile_columns(

@@ -1,11 +1,11 @@
 from splink.spark.spark_linker import SparkLinker
 
 
-from basic_settings import settings_dict
+from basic_settings import get_settings_dict
 
 
 def test_full_example_spark(df_spark):
-
+    settings_dict = get_settings_dict()
     linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df_spark})
 
     linker.profile_columns(
