@@ -65,6 +65,3 @@ def test_m_train():
     assert cl_lev.m_probability == 2 / 4
     cl_no = cc_name.get_comparison_level_by_comparison_vector_value(0)
     assert cl_no.m_probability == 1 / 4
-    assert linker_pairwise.settings_obj._blocking_rules_to_generate_predictions == [
-        "l.name = r.name"
-    ]

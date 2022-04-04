@@ -1,0 +1,35 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+  "title": "Precision-recall curve",
+  "data": { "values": [] },
+  "mark": { "type": "line", "clip": true, "point": true },
+  "encoding": {
+    "tooltip": [
+      { "type": "quantitative", "field": "truth_threshold", "format": ".4f" },
+      { "type": "quantitative", "field": "FP_rate", "format": ".4f" },
+      { "type": "quantitative", "field": "TP_rate", "format": ".4f" },
+      { "type": "quantitative", "field": "TP", "format": ",.0f" },
+      { "type": "quantitative", "field": "TN", "format": ",.0f" },
+      { "type": "quantitative", "field": "FP", "format": ",.0f" },
+      { "type": "quantitative", "field": "FN", "format": ",.0f" },
+      { "type": "quantitative", "field": "precision", "format": ".4f" },
+      { "type": "quantitative", "field": "recall", "format": ".4f" }
+    ],
+    "x": {
+      "type": "quantitative",
+      "field": "recall",
+      "sort": ["-recall"],
+      "title": "Recall"
+    },
+    "y": {
+      "type": "quantitative",
+      "field": "precision",
+      "sort": ["-precision"],
+      "title": "Precision"
+    },
+    "color": {
+      "type": "nominal",
+      "field": "curve_label"
+    }
+  }
+}

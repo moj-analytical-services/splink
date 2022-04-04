@@ -8,7 +8,7 @@ from tempfile import TemporaryDirectory
 
 import duckdb
 from splink.linker import Linker, SplinkDataFrame
-
+from splink.logging_messages import execute_sql_logging_message_info, log_sql
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +37,14 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
 
 
 class DuckDBLinker(Linker):
-    def __init__(self, settings_dict=None, input_tables={}, connection=":memory:"):
+    def __init__(
+        self,
+        settings_dict=None,
+        input_tables={},
+        connection=":memory:",
+        set_up_basic_logging=True,
+        schema="",
+    ):
 
         if connection == ":memory:":
             con = duckdb.connect(database=connection)
@@ -65,19 +72,29 @@ class DuckDBLinker(Linker):
                 input_tables_new[templated_name] = templated_name
         input_tables = input_tables_new
 
-        super().__init__(settings_dict, input_tables)
+        super().__init__(settings_dict, input_tables, set_up_basic_logging)
+        self.schema = schema
+        if schema:
+            self.con.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
 
     def _df_as_obj(self, templated_name, physical_name):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
+        physical_name = self._create_schema(physical_name)
+
+        # In the case of a table already existing in the database,
+        # execute sql is only reached if the user has explicitly turned off the cache
         drop_sql = f"""
         DROP TABLE IF EXISTS {physical_name}"""
         self.con.execute(drop_sql)
 
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
+
+        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
+        logger.log(5, log_sql(sql))
 
         sql = f"""
         CREATE TABLE {physical_name}

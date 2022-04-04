@@ -20,6 +20,4 @@ def vertically_concatente(df_dict):
         sqls_to_union.append(sql)
     sql = " UNION ALL ".join(sqls_to_union)
 
-    logger.debug("\n" + sql)
-
     return sql

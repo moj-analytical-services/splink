@@ -189,4 +189,8 @@ def chart_to_markdown(alt_chart):
     x = lzstring.LZString()
     compressed = x.compressToEncodedURIComponent(cj)
 
-    return f"**Click [here](https://vega.github.io/editor/#/url/vega-lite/{compressed}) for vega lite time series charts**"
+    return (
+        f"**Click [here]"
+        f"(https://vega.github.io/editor/#/url/vega-lite/{compressed})"
+        "for vega lite time series charts**"
+    )

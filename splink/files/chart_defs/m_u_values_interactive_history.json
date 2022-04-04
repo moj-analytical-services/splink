@@ -121,7 +121,7 @@
       },
       "transform": [
         {
-          "filter": "(datum.bayes_factor != 'unnecessary filter due to vega lite issue 4680')"
+          "filter": "(datum.bayes_factor != 'no-op filter due to vega lite issue 4680')"
         }
       ],
       "width": 150,
@@ -220,7 +220,7 @@
       },
       "transform": [
         {
-          "filter": "(datum.bayes_factor != 'unnecessary filter2 due to vega lite issue 4680')"
+          "filter": "(datum.bayes_factor != 'no-op filter2 due to vega lite issue 4680')"
         }
       ],
       "width": 150,

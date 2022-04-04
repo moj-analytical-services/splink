@@ -16,7 +16,7 @@
     "mark": "bar",
     "title": {
         "text": "Histogram of splink scores",
-        "subtitle": "Use mousewheeel to zoom"
+        "subtitle": "Use mousewheel to zoom"
     },
     "width": 700,
     "encoding": {

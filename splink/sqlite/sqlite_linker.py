@@ -1,8 +1,16 @@
 import sqlglot
 
-from splink.linker import Linker, SplinkDataFrame
+import logging
 from math import pow, log2
 from rapidfuzz.distance.Levenshtein import distance
+
+
+from ..logging_messages import execute_sql_logging_message_info, log_sql
+
+
+from ..linker import Linker, SplinkDataFrame
+
+logger = logging.getLogger(__name__)
 
 
 def dict_factory(cursor, row):
@@ -61,7 +69,13 @@ class SQLiteDataFrame(SplinkDataFrame):
 
 
 class SQLiteLinker(Linker):
-    def __init__(self, settings_dict=None, input_tables={}, connection=":memory:"):
+    def __init__(
+        self,
+        settings_dict=None,
+        input_tables={},
+        connection=":memory:",
+        set_up_basic_logging=True,
+    ):
         self.con = connection
         self.con.row_factory = dict_factory
         self.con.create_function("log2", 1, log2)
@@ -70,7 +84,7 @@ class SQLiteLinker(Linker):
 
         self.con.create_function("greatest", 2, max)
 
-        super().__init__(settings_dict, input_tables)
+        super().__init__(settings_dict, input_tables, set_up_basic_logging)
 
     def _df_as_obj(self, templated_name, physical_name):
         return SQLiteDataFrame(templated_name, physical_name, self)
@@ -79,6 +93,9 @@ class SQLiteLinker(Linker):
 
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="sqlite")[0]
+
+        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
+        logger.log(5, log_sql(sql))
 
         sql = f"""
         create table {physical_name}

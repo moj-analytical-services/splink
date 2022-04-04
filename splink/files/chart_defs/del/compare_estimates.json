@@ -206,7 +206,7 @@
     },
     "title": {
         "text": "Comparison of parameter estimates between jobs",
-        "subtitle": "Use mousewheeel to zoom"
+        "subtitle": "Use mousewheel to zoom"
     },
     "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json"
 }

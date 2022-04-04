@@ -1,0 +1,54 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+  "config": {
+    "title": {
+      "fontSize": 14
+    }
+  },
+  "data": {
+    "values": []
+  },
+  "height": 200,
+  "width": 200,
+
+  "mark": "bar",
+  "title": {
+    "text": "Histogram of match weights",
+    "subtitle": "Use mousewheel to zoom"
+  },
+
+  "encoding": {
+    "tooltip": [
+      {
+        "field": "count_rows",
+        "title": "Count in bin",
+        "type": "quantitative"
+      }
+    ],
+    "x": {
+      "axis": {
+        "title": "Match weight"
+      },
+      "bin": "binned",
+      "field": "splink_score_bin_low",
+      "type": "quantitative"
+    },
+    "x2": {
+      "field": "splink_score_bin_high"
+    },
+    "y": {
+      "field": "count_rows",
+      "type": "quantitative",
+      "axis": {
+        "title": "Count of record comparisons in bin"
+      }
+    }
+  },
+  "selection": {
+    "selector076": {
+      "type": "interval",
+      "bind": "scales",
+      "encodings": ["y"]
+    }
+  }
+}

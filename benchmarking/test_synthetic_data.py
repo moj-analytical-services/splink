@@ -8,7 +8,8 @@ full_name_cc = {
     "column_name": "full_name",
     "comparison_levels": [
         {
-            "sql_condition": "full_name_l IS NULL OR full_name_r IS NULL or length(full_name_l) < 2 or length(full_name_r) < 2",
+            "sql_condition": """full_name_l IS NULL OR full_name_r IS NULL
+            or length(full_name_l) < 2 or length(full_name_r) < 2""",
             "label_for_charts": "Comparison includes null",
             "is_null_level": True,
         },
@@ -226,7 +227,11 @@ def test_3_rounds_1m_duckdb(benchmark):
 
 def spark_performance(df, target_rows=1e6):
 
-    linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = SparkLinker(
+        settings_dict,
+        input_tables={"fake_data_1": df},
+        # break_lineage_method="checkpoint",
+    )
 
     linker.train_u_using_random_sampling(target_rows=target_rows)
 
@@ -252,6 +257,7 @@ def test_3_rounds_100k_spark(benchmark):
         conf.set("spark.default.parallelism", "8")
 
         sc = SparkContext.getOrCreate(conf=conf)
+        sc.setCheckpointDir("./tmp/splink_checkpoints")
         spark = SparkSession(sc)
 
         for table in spark.catalog.listTables():
@@ -316,6 +322,7 @@ def test_3_rounds_1m_spark(benchmark):
         conf.set("spark.default.parallelism", "8")
 
         sc = SparkContext.getOrCreate(conf=conf)
+        sc.setCheckpointDir("./tmp/splink_checkpoints")
         spark = SparkSession(sc)
 
         for table in spark.catalog.listTables():

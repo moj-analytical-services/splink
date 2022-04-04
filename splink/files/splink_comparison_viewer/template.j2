@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+
+<title>Splink comparison viewer</title>
+<meta name="description" content="desc" />
+
+<style>{{custom_css}}</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+
+<script>{{vega}}</script>
+<script>{{vegalite}}</script>
+<script>{{embed}}</script>
+
+<script>{{svu_text}} </script>
+
+
+<script>
+
+ comparison_vector_data = {{comparison_vector_data}};
+
+ splink_settings = {{splink_settings}};
+
+
+</script>
+
+<div id="outer_container">
+
+    <h2>Splink comparison viewer</h2>
+
+    <div id="controls">
+
+        <div id="observablehq-show_edge_comparison_type"></div>
+        <div id="observablehq-sort_bars_option"></div>
+        <div id="observablehq-gamma_filters"></div>
+        <div id="observablehq-filter_count"></div>
+
+    </div>
+    <div id="observablehq-comparison_vector_distribution_chart"></div>
+
+    <div id="observablehq-nothing_selected_message"></div>
+    <div id="observablehq-example_index"></div>
+    <div id="observablehq-compairson_non_null_table"></div>
+    <div id="observablehq-comparison_columns_table"></div>
+    <div id="observablehq-waterfall_chart"></div>
+
+
+<script type="module">
+
+{% if bundle_observable_notebook %}
+
+new splink_vis_utils.Runtime().module(splink_vis_utils.define_comparison, name => {
+
+{% else %}
+
+import define from "https://api.observablehq.com/d/c43e4e0aeb54d263@486.js?v=3";
+new splink_vis_utils.Runtime().module(define, name => {
+
+{% endif %}
+
+if (name === "viewof show_edge_comparison_type") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-show_edge_comparison_type"));
+if (name === "viewof comparison_vector_distribution_chart") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-comparison_vector_distribution_chart"));
+
+
+if (name === "viewof sort_bars_option") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-sort_bars_option"));
+if (name === "viewof gamma_filters") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-gamma_filters"));
+if (name === "viewof filter_count") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-filter_count"));
+
+if (name === "viewof example_index") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-example_index"));
+
+
+if (name === "nothing_selected_message") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-nothing_selected_message"));
+if (name === "compairson_non_null_table") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-compairson_non_null_table"));
+if (name === "comparison_columns_table") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-comparison_columns_table"));
+if (name === "waterfall_chart") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-waterfall_chart"));
+
+
+
+});
+</script>
+
+</body>
+</html>

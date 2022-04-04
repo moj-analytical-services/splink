@@ -40,7 +40,9 @@ def vegalite_or_json(chart_dict, as_dict=False):
     if altair_installed:
         if not as_dict:
             try:
-                return vegalite(chart_dict)
+                # Display chart then return its spec
+                vegalite(chart_dict)
+                return chart_dict
             except ModuleNotFoundError:
                 return chart_dict
 
@@ -155,5 +157,62 @@ def waterfall_chart(
     chart["params"][0]["bind"]["max"] = len(records) - 1
     if filter_nulls:
         chart["transform"].insert(1, {"filter": "(datum.bayes_factor !== 1.0)"})
+
+    return vegalite_or_json(chart, as_dict=as_dict)
+
+
+def roc_chart(records, width=400, height=400, as_dict=False):
+    chart_path = "roc.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["data"]["values"] = records
+
+    # If 'curve_label' not in records, remove colour coding
+    # This is for if you want to compare roc curves
+    r = records[0]
+    if "curve_label" not in r.keys():
+        del chart["encoding"]["color"]
+
+    chart["height"] = height
+    chart["width"] = width
+
+    return vegalite_or_json(chart, as_dict=as_dict)
+
+
+def precision_recall_chart(records, width=400, height=400, as_dict=False):
+    chart_path = "precision_recall.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["data"]["values"] = records
+
+    # If 'curve_label' not in records, remove colour coding
+    # This is for if you want to compare roc curves
+    r = records[0]
+    if "curve_label" not in r.keys():
+        del chart["encoding"]["color"]
+
+    chart["height"] = height
+    chart["width"] = width
+
+    return vegalite_or_json(chart, as_dict=as_dict)
+
+
+def match_weight_histogram(records, width=500, height=250, as_dict=False):
+    chart_path = "match_weight_histogram.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["data"]["values"] = records
+
+    chart["height"] = height
+    chart["width"] = width
+
+    return vegalite_or_json(chart, as_dict=as_dict)
+
+
+def parameter_estimate_comparisons(records, as_dict=False):
+    chart_path = "parameter_estimate_comparisons.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["data"]["values"] = records
 
     return vegalite_or_json(chart, as_dict=as_dict)

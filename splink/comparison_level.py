@@ -166,17 +166,25 @@ class ComparisonLevel:
             )
 
     def add_trained_u_probability(self, val, desc="no description given"):
-        self.trained_u_probabilities.append({"u_probability": val, "description": desc})
+        self.trained_u_probabilities.append(
+            {"probability": val, "description": desc, "m_or_u": "u"}
+        )
 
     def add_trained_m_probability(self, val, desc="no description given"):
-        self.trained_m_probabilities.append({"m_probability": val, "description": desc})
+        self.trained_m_probabilities.append(
+            {"probability": val, "description": desc, "m_or_u": "m"}
+        )
 
     @property
     def u_is_trained(self):
+        if self.is_null_level:
+            return True
         return len(self.trained_u_probabilities) > 0
 
     @property
     def m_is_trained(self):
+        if self.is_null_level:
+            return True
         return len(self.trained_m_probabilities) > 0
 
     @property
@@ -185,11 +193,11 @@ class ComparisonLevel:
 
     @property
     def trained_m_median(self):
-        return median([r["m_probability"] for r in self.trained_m_probabilities])
+        return median([r["probability"] for r in self.trained_m_probabilities])
 
     @property
     def trained_u_median(self):
-        return median([r["u_probability"] for r in self.trained_u_probabilities])
+        return median([r["probability"] for r in self.trained_u_probabilities])
 
     @property
     def bayes_factor(self):
@@ -436,6 +444,12 @@ class ComparisonLevel:
         return output
 
     @property
+    def as_completed_dict(self):
+        comp_dict = self.as_dict
+        comp_dict["comparison_vector_value"] = self.comparison_vector_value
+        return comp_dict
+
+    @property
     def as_detailed_record(self):
         "A detailed representation of this level to describe it in charting outputs"
         output = {}
@@ -463,6 +477,31 @@ class ComparisonLevel:
         output["bayes_factor_description"] = self.bayes_factor_description
 
         return output
+
+    @property
+    def parameter_estimates_as_records(self):
+
+        output_records = []
+
+        cl_record = self.as_detailed_record
+        trained_values = self.trained_u_probabilities + self.trained_m_probabilities
+        for trained_value in trained_values:
+            record = {}
+            record["m_or_u"] = trained_value["m_or_u"]
+            p = trained_value["probability"]
+            record["estimated_probability"] = p
+            record["estimate_description"] = trained_value["description"]
+            if p is not None and p > 0.0:
+                record["estimated_probability_as_log_odds"] = math.log2(p / (1 - p))
+            else:
+                record["estimated_probability_as_log_odds"] = None
+
+            record["sql_condition"] = cl_record["sql_condition"]
+            record["comparison_level_label"] = cl_record["label_for_charts"]
+            record["comparison_vector_value"] = cl_record["comparison_vector_value"]
+            output_records.append(record)
+
+        return output_records
 
     def validate(self):
         self._validate_sql()

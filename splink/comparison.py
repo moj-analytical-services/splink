@@ -232,6 +232,26 @@ class Comparison:
         }
 
     @property
+    def as_completed_dict(self):
+        return {
+            "column_name": self.comparison_name,
+            "comparison_levels": [
+                cl.as_completed_dict for cl in self.comparison_levels
+            ],
+            "input_columns_used_by_case_statement": [
+                c.input_name for c in self.input_columns_used_by_case_statement
+            ],
+        }
+
+    @property
+    def m_is_trained(self):
+        return all(cl.m_is_trained for cl in self.comparison_levels)
+
+    @property
+    def u_is_trained(self):
+        return all(cl.u_is_trained for cl in self.comparison_levels)
+
+    @property
     def as_detailed_records(self):
         records = []
         for cl in self.comparison_levels:
@@ -239,6 +259,17 @@ class Comparison:
             record["comparison_name"] = self.comparison_name
             record = {**record, **cl.as_detailed_record}
             records.append(record)
+        return records
+
+    @property
+    def parameter_estimates_as_records(self):
+        records = []
+        for cl in self.comparison_levels:
+            new_records = cl.parameter_estimates_as_records
+            for r in new_records:
+                r["comparison_name"] = self.comparison_name
+            records.extend(new_records)
+
         return records
 
     def get_comparison_level_by_comparison_vector_value(self, value):

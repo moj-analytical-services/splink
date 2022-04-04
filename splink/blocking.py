@@ -1,7 +1,5 @@
 import logging
 
-from .format_sql import format_sql
-
 logger = logging.getLogger(__name__)
 
 
@@ -44,7 +42,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
-def block_using_rules(linker):
+def block_using_rules(linker, schema=False):
 
     settings_obj = linker.settings_obj
 
@@ -81,12 +79,20 @@ def block_using_rules(linker):
     for matchkey_number, rule in enumerate(blocking_rules):
         not_previous_rules_statement = _sql_gen_and_not_previous_rules(previous_rules)
 
+        # only add the schema prefix if we're doing m training
+        if schema:
+            table_l = linker._create_schema(linker._input_tablename_l)
+            table_r = linker._create_schema(linker._input_tablename_r)
+        else:
+            table_l = linker._input_tablename_l
+            table_r = linker._input_tablename_r
+
         sql = f"""
         select
         {sql_select_expr}
         , '{matchkey_number}' as match_key
-        from {linker._input_tablename_l} as l
-        inner join {linker._input_tablename_r} as r
+        from {table_l} as l
+        inner join {table_r} as r
         on
         {rule}
         {not_previous_rules_statement}
@@ -99,9 +105,5 @@ def block_using_rules(linker):
 
     if not settings_obj._needs_matchkey_column:
         sql = sql.replace(", '0' as match_key", "")
-
-    sql = format_sql(sql)
-
-    logger.debug("\n" + sql)
 
     return sql

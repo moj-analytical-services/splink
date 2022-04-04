@@ -64,7 +64,7 @@ def lower_id_to_left_hand_side(
     Returns:
         df: a dataframe with the columns _l and _r swapped in the case where
             the unique_id_r < unique_id_l
-    """
+    """  # noqa
 
     cols = df.columns
 

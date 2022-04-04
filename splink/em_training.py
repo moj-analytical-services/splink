@@ -1,15 +1,18 @@
 from copy import deepcopy
+import logging
 
-from .charts import (
-    m_u_values_interactive_history_chart,
-    match_weights_interactive_history_chart,
-    proportion_of_matches_iteration_chart,
-)
 from .maximisation_step import expectation_maximisation
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .parse_sql import get_columns_used_from_sql
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
+from .charts import (
+    m_u_values_interactive_history_chart,
+    match_weights_interactive_history_chart,
+    proportion_of_matches_iteration_chart,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class EMTrainingSession:
@@ -67,7 +70,7 @@ class EMTrainingSession:
         cc_names_to_deactivate = [
             cc.comparison_name for cc in comparisons_to_deactivate
         ]
-        self.comparisons_to_deactivate = comparisons_to_deactivate
+        self.comparisons_that_cannot_be_estimated = comparisons_to_deactivate
 
         filtered_ccs = [
             cc
@@ -76,14 +79,44 @@ class EMTrainingSession:
         ]
 
         self.settings_obj.comparisons = filtered_ccs
+        self.comparisons_that_can_be_estimated = filtered_ccs
 
         self.comparison_level_history = []
         self.lambda_history = []
         self.add_iteration()
 
-    def _comparison_vectors(self):
+    def _training_log_message(self):
+        not_estimated = ", ".join(
+            [cc.comparison_name for cc in self.comparisons_that_cannot_be_estimated]
+        )
 
-        sql = block_using_rules(self.training_linker)
+        estimated = ", ".join(
+            [cc.comparison_name for cc in self.comparisons_that_can_be_estimated]
+        )
+
+        if self._training_fix_m_probabilities and self._training_fix_u_probabilities:
+            raise ValueError("Can't train model if you fix both m and u probabilites")
+        elif self._training_fix_u_probabilities:
+            mu = "m probabilities"
+        elif self._training_fix_m_probabilities:
+            mu = "u probabilities"
+        else:
+            mu = "m and u probabilities"
+
+        logger.info(
+            "----- Starting EM training session -----\n"
+            f"Training the {mu} of the model by blocking on: "
+            f"{self.blocking_rule_for_training}\n"
+            "Parameter estimates will be made for the following comparison: "
+            f"{estimated}\n"
+            f"Parameter estimates cannot be made for the following comparison"
+            f" since they are used in the blocking rules: {not_estimated}"
+        )
+
+    def _comparison_vectors(self):
+        self._training_log_message()
+
+        sql = block_using_rules(self.training_linker, schema=True)
         self.training_linker.enqueue_sql(sql, "__splink__df_blocked")
 
         sql = compute_comparison_vector_values(self.settings_obj)
@@ -272,7 +305,7 @@ class EMTrainingSession:
 
     def __repr__(self):
         deactivated_cols = ", ".join(
-            [cc.comparison_name for cc in self.comparisons_to_deactivate]
+            [cc.comparison_name for cc in self.comparisons_that_cannot_be_estimated]
         )
         return (
             f"<EMTrainingSession, blocking on {self.blocking_rule_for_training}, "

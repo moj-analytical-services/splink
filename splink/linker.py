@@ -3,7 +3,12 @@ from copy import copy, deepcopy
 from statistics import median
 import hashlib
 
-from splink.lower_id_on_lhs import lower_id_to_left_hand_side
+from .charts import (
+    match_weight_histogram,
+    precision_recall_chart,
+    roc_chart,
+    parameter_estimate_comparisons,
+)
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
@@ -25,6 +30,14 @@ from .pipeline import SQLPipeline
 
 from .vertically_concatenate import vertically_concatente
 from .m_from_labels import estimate_m_from_pairwise_labels
+from .accuracy import truth_space_table
+
+from .match_weight_histogram import histogram_data
+from .comparison_vector_distribution import comparison_vector_distribution_sql
+from .splink_comparison_viewer import (
+    comparison_viewer_table,
+    render_splink_comparison_viewer_html,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +81,7 @@ class SplinkDataFrame:
 
 
 class Linker:
-    def __init__(self, settings_dict=None, input_tables={}):
+    def __init__(self, settings_dict=None, input_tables={}, set_up_basic_logging=True):
 
         self.pipeline = SQLPipeline()
         self.initialise_settings(settings_dict)
@@ -82,10 +95,19 @@ class Linker:
 
         self.find_new_matches_mode = False
         self.train_u_using_random_sample_mode = False
-        self.train_m_from_pairwise_labels_mode = False
+
         self.compare_two_records_mode = False
 
+        self.schema = ""
+
         self.debug_mode = False
+
+        if set_up_basic_logging:
+            logging.basicConfig(
+                format="%(message)s",
+            )
+            splink_logger = logging.getLogger("splink")
+            splink_logger.setLevel(logging.INFO)
 
     @property
     def settings_obj(self):
@@ -117,9 +139,6 @@ class Linker:
         if self.train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
 
-        if self.train_m_from_pairwise_labels_mode:
-            return "__splink__df_concat_with_tf"
-
         if self.two_dataset_link_only:
             return "__splink_df_concat_with_tf_left"
         return "__splink__df_concat_with_tf"
@@ -135,9 +154,6 @@ class Linker:
 
         if self.train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
-
-        if self.train_m_from_pairwise_labels_mode:
-            return "__splink__labels_prepared_for_joining"
 
         if self.two_dataset_link_only:
             return "__splink_df_concat_with_tf_right"
@@ -158,6 +174,11 @@ class Linker:
             return True
         else:
             return False
+
+    def _create_schema(self, table_name):
+        if self.schema:
+            return f"{self.schema}.{table_name}"
+        return table_name
 
     def _initialise_df_concat(self, materialise=True):
         sql = vertically_concatente(self.input_dfs)
@@ -216,6 +237,7 @@ class Linker:
         use_cache=True,
         transpile=True,
     ):
+
         if not self.debug_mode:
             sql_gen = self.pipeline._generate_pipeline(input_dataframes)
 
@@ -230,6 +252,8 @@ class Linker:
             )
             return dataframe
         else:
+            # In debug mode, we do not pipeline the sql and print the
+            # results of each part of the pipeline
             for task in self.pipeline._generate_pipeline_parts(input_dataframes):
                 output_tablename = task.output_table_name
                 sql = task.sql
@@ -262,12 +286,18 @@ class Linker:
         hash = "__splink__" + hash
 
         if use_cache:
+
             if self.table_exists_in_database(output_tablename_templated):
+                logger.debug(f"Using table {output_tablename_templated}")
                 return self._df_as_obj(
                     output_tablename_templated, output_tablename_templated
                 )
 
             if self.table_exists_in_database(hash):
+                logger.debug(
+                    f"Using cache for {output_tablename_templated}"
+                    f" with physical name {hash}"
+                )
                 return self._df_as_obj(output_tablename_templated, hash)
 
         if self.debug_mode:
@@ -375,6 +405,8 @@ class Linker:
 
         self.populate_proportion_of_matches_from_trained_values()
 
+        self.settings_obj.columns_without_estimated_parameters_message()
+
         return em_training_session
 
     def populate_proportion_of_matches_from_trained_values(self):
@@ -388,7 +420,6 @@ class Linker:
                 em_training_session.comparison_levels_to_reverse_blocking_rule
             )
 
-            global_prop_matches_fully_trained = True
             for reverse_level in reverse_levels:
 
                 # Get comparison level on current settings obj
@@ -404,22 +435,10 @@ class Linker:
                     bf = cl.trained_m_median / cl.trained_u_median
                 else:
                     bf = cl.bayes_factor
-                    global_prop_matches_fully_trained = False
 
                 training_lambda_bf = training_lambda_bf / bf
             p = bayes_factor_to_prob(training_lambda_bf)
             prop_matches_estimates.append(p)
-
-        if not global_prop_matches_fully_trained:
-            print(
-                "Proportion of matches not fully trained, "
-                f"current estimates are {prop_matches_estimates}"
-            )
-        else:
-            print(
-                "Proportion of matches can now be estimated, "
-                f"estimates are {prop_matches_estimates}"
-            )
 
         self.settings_obj._proportion_of_matches = median(prop_matches_estimates)
 
@@ -428,10 +447,11 @@ class Linker:
 
         for cc in ccs:
             for cl in cc.comparison_levels:
-                if cl.u_is_trained:
-                    cl.u_probability = cl.trained_u_median
-                if cl.m_is_trained:
-                    cl.m_probability = cl.trained_m_median
+                if not cl.is_null_level:
+                    if cl.u_is_trained:
+                        cl.u_probability = cl.trained_u_median
+                    if cl.m_is_trained:
+                        cl.m_probability = cl.trained_m_median
 
     def train_m_and_u_using_expectation_maximisation(
         self,
@@ -597,3 +617,45 @@ class Linker:
     def train_m_from_pairwise_labels(self, table_name):
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_from_pairwise_labels(self, table_name)
+
+    def roc_from_labels(self, labels_tablename):
+        df_truth_space = truth_space_table(self, labels_tablename)
+        recs = df_truth_space.as_record_dict()
+        return roc_chart(recs)
+
+    def precision_recall_from_labels(self, labels_tablename):
+        df_truth_space = truth_space_table(self, labels_tablename)
+        recs = df_truth_space.as_record_dict()
+        return precision_recall_chart(recs)
+
+    def truth_space_table(self, labels_tablename):
+        return truth_space_table(self, labels_tablename)
+
+    def match_weight_histogram(self, df_predict, target_bins=30, width=600, height=250):
+        df = histogram_data(self, df_predict, target_bins)
+        recs = df.as_record_dict()
+        return match_weight_histogram(recs, width=width, height=height)
+
+    def splink_comparison_viewer(
+        self, df_predict, out_path, overwrite=False, num_example_rows=2
+    ):
+        svd_sql = comparison_vector_distribution_sql(self)
+        self.enqueue_sql(svd_sql, "__splink__df_comparison_vector_distribution")
+
+        sqls = comparison_viewer_table(self, num_example_rows)
+        for sql in sqls:
+            self.enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        df = self.execute_sql_pipeline([df_predict])
+
+        render_splink_comparison_viewer_html(
+            df.as_record_dict(),
+            self.settings_obj.as_completed_dict,
+            out_path,
+            overwrite,
+        )
+
+    def parameter_estimate_comparisons(self):
+        return parameter_estimate_comparisons(
+            self.settings_obj._parameter_estimates_as_records
+        )

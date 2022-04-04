@@ -1,8 +1,11 @@
+import logging
 from copy import deepcopy
 
 from .blocking import block_using_rules
 from .comparison_vector_values import compute_comparison_vector_values
 from .maximisation_step import compute_new_parameters
+
+logger = logging.getLogger(__name__)
 
 
 def _num_target_rows_to_rows_to_sample(target_rows):
@@ -32,9 +35,9 @@ def estimate_u_values(linker, target_rows):
         for cl in cc.comparison_levels:
             cl._level_dict["tf_adjustment_column"] = None
 
-    sql = """
+    sql = f"""
     select count(*) as count
-    from __splink__df_concat_with_tf
+    from {linker._create_schema("__splink__df_concat_with_tf")}
     """
     dataframe = training_linker.sql_to_dataframe(sql, "__splink__df_concat_count")
     result = dataframe.as_record_dict()
@@ -56,7 +59,7 @@ def estimate_u_values(linker, target_rows):
 
     sql = f"""
     select *
-    from __splink__df_concat_with_tf
+    from {linker._create_schema("__splink__df_concat_with_tf")}
     {training_linker.random_sample_sql(proportion, sample_size)}
     """
 
@@ -100,3 +103,8 @@ def estimate_u_values(linker, target_rows):
         cl.add_trained_u_probability(
             record["u_probability"], "estimate u by random sampling"
         )
+
+    logger.info(
+        "Trained u using random sampling: "
+        "u values have now been estimated for all comparisons"
+    )
