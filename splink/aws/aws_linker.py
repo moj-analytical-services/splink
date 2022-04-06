@@ -47,14 +47,16 @@ class AWSDataFrame(SplinkDataFrame):
 class AWSLinker(Linker):
     def __init__(self, settings_dict: dict,
                  boto3_session: boto3.session.Session,
-                 output_bucket: str,
                  database_name: str,
-                 input_tables={},
-                 schema=""):
+                 output_bucket: str,
+                 folder_in_bucket_for_outputs="",
+                 input_tables={},):
         self.boto3_session = boto3_session
         self.database_name = database_name
-        self.boto_utils = boto_utils(boto3_session, output_bucket)
+        self.boto_utils = boto_utils(boto3_session, output_bucket, folder_in_bucket_for_outputs)
         super().__init__(settings_dict, input_tables)
+        
+        print(f"Writing splink outputs to {self.boto_utils.s3_output}")
 
     def _df_as_obj(self, templated_name, physical_name):
         return AWSDataFrame(templated_name, physical_name, self)
