@@ -11,7 +11,7 @@ from .charts import (
     parameter_estimate_comparisons,
 )
 
-from .blocking import block_using_rules
+from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .em_training import EMTrainingSession
 from .misc import bayes_factor_to_prob, escape_columns, prob_to_bayes_factor
@@ -364,7 +364,7 @@ class Linker:
 
     def deterministic_link(self, return_df_as_value=True):
 
-        df_dict = block_using_rules(self)
+        df_dict = block_using_rules_sql(self)
         if return_df_as_value:
             return df_dict["__splink__df_blocked"].df_value
         else:
@@ -478,7 +478,7 @@ class Linker:
         # materialisation of anything
         self._initialise_df_concat_with_tf(materialise=False)
 
-        sql = block_using_rules(self)
+        sql = block_using_rules_sql(self)
         self.enqueue_sql(sql, "__splink__df_blocked")
 
         sql = compute_comparison_vector_values_sql(self.settings_obj)
@@ -517,7 +517,7 @@ class Linker:
         sql = sql.replace("__splink__df_concat", "__splink__df_new_records")
         self.enqueue_sql(sql, "__splink__df_new_records_with_tf")
 
-        sql = block_using_rules(self)
+        sql = block_using_rules_sql(self)
         self.enqueue_sql(sql, "__splink__df_blocked")
 
         sql = compute_comparison_vector_values_sql(self.settings_obj)
@@ -567,7 +567,7 @@ class Linker:
         )
         self.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
-        sql = block_using_rules(self)
+        sql = block_using_rules_sql(self)
         self.enqueue_sql(sql, "__splink__df_blocked")
 
         sql = compute_comparison_vector_values_sql(self.settings_obj)

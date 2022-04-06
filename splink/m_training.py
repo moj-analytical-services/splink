@@ -1,6 +1,6 @@
 from copy import deepcopy
 
-from .blocking import block_using_rules
+from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .maximisation_step import compute_new_parameters
 
@@ -20,7 +20,7 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
         f"l.{label_colname} = r.{label_colname}"
     ]
 
-    sql = block_using_rules(training_linker)
+    sql = block_using_rules_sql(training_linker)
     training_linker.enqueue_sql(sql, "__splink__df_blocked")
 
     sql = compute_comparison_vector_values_sql(settings_obj)
