@@ -13,7 +13,7 @@ from .charts import (
 
 from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
-from .em_training import EMTrainingSession
+from .em_training_session import EMTrainingSession
 from .misc import bayes_factor_to_prob, escape_columns, prob_to_bayes_factor
 from .predict import predict
 from .settings import Settings
@@ -71,6 +71,26 @@ class SplinkDataFrame:
     @property
     def physical_and_template_names_equal(self):
         return self.templated_name == self.physical_name
+
+    def _check_drop_table_created_by_splink(self, force_non_splink_table=False):
+
+        if not self.physical_name.startswith("__splink__"):
+            if not force_non_splink_table:
+                raise ValueError(
+                    f"You've asked to drop table {self.physical_name} from your "
+                    "database which is not a table created by Splink.  If you really "
+                    "want to drop this table, you can do so by setting "
+                    "force_non_splink_table=True"
+                )
+        logger.debug(
+            f"Dropping table with templated name {self.templated_name} and "
+            f"physical name {self.physical_name}"
+        )
+
+    def drop_table_from_database(self, force_non_splink_table=False):
+        raise NotImplementedError(
+            "Drop table from database not implemented for this linker"
+        )
 
     def as_record_dict(self, limit=None):
         pass
@@ -277,7 +297,7 @@ class Linker:
 
         hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
         # Ensure hash is valid sql table name
-        hash = "__splink__" + hash
+        hash = f"{output_tablename_templated}_{hash}"
 
         if use_cache:
 

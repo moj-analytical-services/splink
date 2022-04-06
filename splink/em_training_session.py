@@ -1,7 +1,7 @@
 from copy import deepcopy
 import logging
 
-from .maximisation_step import expectation_maximisation
+from .expectation_maximisation import expectation_maximisation
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .parse_sql import get_columns_used_from_sql
 from .blocking import block_using_rules_sql

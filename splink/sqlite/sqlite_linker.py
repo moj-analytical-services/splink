@@ -59,6 +59,15 @@ class SQLiteDataFrame(SplinkDataFrame):
                 " sqlite table that exists in the provided db."
             )
 
+    def drop_table_from_database(self, force_non_splink_table=False):
+
+        self._check_drop_table_created_by_splink(force_non_splink_table)
+
+        drop_sql = f"""
+        DROP TABLE IF EXISTS {self.physical_name}"""
+        cur = self.sqlite_linker.con.cursor()
+        cur.execute(drop_sql)
+
     def as_record_dict(self, limit=None):
         sql = f"""
         select *
