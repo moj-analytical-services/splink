@@ -13,7 +13,11 @@ class AWSDataFrame(SplinkDataFrame):
 
     @property
     def columns(self):
-        d = self.as_record_dict(1)[0]
+        t = self.get_schema_info(self.physical_name)
+        d = wr.catalog.get_table_types(
+            database=t[0],
+            table=t[1]
+        )
 
         return list(d.keys())
 
@@ -35,6 +39,11 @@ class AWSDataFrame(SplinkDataFrame):
             keep_files = False,
         )
         return out_df.to_dict(orient="records")
+    
+    def get_schema_info(self, input_table):
+        t = input_table.split(".")
+        return t if len(t)>1 else [self.aws_linker.database_name, self.physical_name]
+        
 
 
 class AWSLinker(Linker):
