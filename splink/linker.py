@@ -12,7 +12,7 @@ from .charts import (
 )
 
 from .blocking import block_using_rules
-from .comparison_vector_values import compute_comparison_vector_values
+from .comparison_vector_values import compute_comparison_vector_values_sql
 from .em_training import EMTrainingSession
 from .misc import bayes_factor_to_prob, escape_columns, prob_to_bayes_factor
 from .predict import predict
@@ -481,7 +481,7 @@ class Linker:
         sql = block_using_rules(self)
         self.enqueue_sql(sql, "__splink__df_blocked")
 
-        sql = compute_comparison_vector_values(self.settings_obj)
+        sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict(self.settings_obj)
@@ -520,7 +520,7 @@ class Linker:
         sql = block_using_rules(self)
         self.enqueue_sql(sql, "__splink__df_blocked")
 
-        sql = compute_comparison_vector_values(self.settings_obj)
+        sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict(self.settings_obj)
@@ -570,7 +570,7 @@ class Linker:
         sql = block_using_rules(self)
         self.enqueue_sql(sql, "__splink__df_blocked")
 
-        sql = compute_comparison_vector_values(self.settings_obj)
+        sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict(self.settings_obj)

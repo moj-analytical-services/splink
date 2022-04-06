@@ -1,4 +1,4 @@
-from .comparison_vector_values import compute_comparison_vector_values
+from .comparison_vector_values import compute_comparison_vector_values_sql
 from .maximisation_step import compute_new_parameters
 from .block_from_labels import block_from_labels
 
@@ -10,7 +10,7 @@ def estimate_m_from_pairwise_labels(linker, table_name):
     for sql in sqls:
         linker.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    sql = compute_comparison_vector_values(linker.settings_obj)
+    sql = compute_comparison_vector_values_sql(linker.settings_obj)
 
     linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
 

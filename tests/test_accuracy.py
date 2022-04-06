@@ -10,7 +10,7 @@ from splink.comparison_library import exact_match
 from basic_settings import get_settings_dict
 
 from splink.block_from_labels import block_from_labels
-from splink.comparison_vector_values import compute_comparison_vector_values
+from splink.comparison_vector_values import compute_comparison_vector_values_sql
 from splink.predict import predict
 
 
@@ -56,7 +56,7 @@ def test_scored_labels():
     for sql in sqls:
         linker.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    sql = compute_comparison_vector_values(linker.settings_obj)
+    sql = compute_comparison_vector_values_sql(linker.settings_obj)
 
     linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
