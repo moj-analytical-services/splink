@@ -42,7 +42,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
-def block_using_rules(linker):
+def block_using_rules_sql(linker):
 
     settings_obj = linker.settings_obj
 

@@ -1,8 +1,8 @@
 import logging
 from copy import deepcopy
 
-from .blocking import block_using_rules
-from .comparison_vector_values import compute_comparison_vector_values
+from .blocking import block_using_rules_sql
+from .comparison_vector_values import compute_comparison_vector_values_sql
 from .maximisation_step import compute_new_parameters
 
 logger = logging.getLogger(__name__)
@@ -71,10 +71,10 @@ def estimate_u_values(linker, target_rows):
 
     settings_obj._blocking_rules_to_generate_predictions = []
 
-    sql = block_using_rules(training_linker)
+    sql = block_using_rules_sql(training_linker)
     training_linker.enqueue_sql(sql, "__splink__df_blocked")
 
-    sql = compute_comparison_vector_values(settings_obj)
+    sql = compute_comparison_vector_values_sql(settings_obj)
 
     training_linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
