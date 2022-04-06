@@ -3,7 +3,7 @@ from copy import deepcopy
 
 from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
-from .maximisation_step import compute_new_parameters
+from .expectation_maximisation import compute_new_parameters
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +41,7 @@ def estimate_u_values(linker, target_rows):
     """
     dataframe = training_linker.sql_to_dataframe(sql, "__splink__df_concat_count")
     result = dataframe.as_record_dict()
+    dataframe.drop_table_from_database()
     count_rows = result[0]["count"]
 
     if settings_obj._link_type in ["dedupe_only", "link_and_dedupe"]:
@@ -90,6 +91,8 @@ def estimate_u_values(linker, target_rows):
     df_params = training_linker.execute_sql_pipeline([df_sample])
 
     param_records = df_params.as_record_dict()
+    df_params.drop_table_from_database()
+    df_sample.drop_table_from_database()
 
     m_u_records = [
         r for r in param_records if r["comparison_name"] != "_proportion_of_matches"

@@ -31,6 +31,13 @@ class SparkDataframe(SplinkDataFrame):
 
         return self.spark_linker.spark.sql(sql).toPandas().to_dict(orient="records")
 
+    def drop_table_from_database(self, force_non_splink_table=False):
+
+        # Spark, in general, does not persist its results to disk
+        # There is a whitelist of dataframes to either perist() or checkpoint()
+        # But there's no real need to clean these up, so we'll just do nothing
+        pass
+
     def as_pandas_dataframe(self):
 
         sql = f"select * from {self.physical_name}"
