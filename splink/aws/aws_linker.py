@@ -4,7 +4,6 @@ import awswrangler as wr
 import boto3
 from splink.aws.aws_utils import boto_utils
 
-import time
 
 class AWSDataFrame(SplinkDataFrame):
     def __init__(self, templated_name, physical_name, aws_linker):
@@ -33,67 +32,57 @@ class AWSDataFrame(SplinkDataFrame):
             sql += f" limit {limit}"
 
         out_df = wr.athena.read_sql_query(
-            sql=sql, 
+            sql=sql,
             database=self.aws_linker.database_name,
             s3_output=self.aws_linker.boto_utils.s3_output,
-            keep_files = False,
+            keep_files=False,
         )
         return out_df.to_dict(orient="records")
-    
+
     def get_schema_info(self, input_table):
         t = input_table.split(".")
-        return t if len(t)>1 else [self.aws_linker.database_name, self.physical_name]
-        
+        return t if len(t) > 1 else [self.aws_linker.database_name, self.physical_name]
 
 
 class AWSLinker(Linker):
     def __init__(self, settings_dict: dict,
-                 boto3_session: boto3.session.Session, 
+                 boto3_session: boto3.session.Session,
                  output_bucket: str,
                  database_name: str,
                  input_tables={},
-                 schema = "",
-                ):
+                 schema=""):
         self.boto3_session = boto3_session
         self.database_name = database_name
         self.boto_utils = boto_utils(boto3_session, output_bucket)
         super().__init__(settings_dict, input_tables)
 
-        
     def _df_as_obj(self, templated_name, physical_name):
         return AWSDataFrame(templated_name, physical_name, self)
 
-    
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
-        
+
         # Deletes the table in the db, but not the object on s3,
         # which needs to be manually deleted at present
         # We can adjust this to be manually cleaned, but it presents
         # a potential area for concern for users (actively deleting from aws s3 buckets)
         self.delete_table_from_database(physical_name)
-        
+
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="presto")[0]
-        print(f"===== Creating {physical_name} =====")
-#         print(sql)
-        t = time.time()
         self.create_table(sql, physical_name=physical_name)
-        print(f"Creation took {time.time()-t} seconds")
-        
+
         output_obj = self._df_as_obj(templated_name, physical_name)
         return output_obj
 
-    
     def random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
         return f" TABLESAMPLE BERNOULLI ({percent})"
 
-
     def table_exists_in_database(self, table_name):
         rec = wr.catalog.does_table_exist(
-            database=self.database_name, 
+            database=self.database_name,
             table=table_name,
             boto3_session=self.boto3_session
         )
@@ -102,14 +91,13 @@ class AWSLinker(Linker):
         else:
             return True
 
-        
     def create_table(self, sql, physical_name):
         database = self.database_name
         wr.athena.create_ctas_table(
             sql=sql,
-            database=database, # adjust this later for added flexibility
+            database=database,
             ctas_table=physical_name,
-            ctas_database=database, # change to edit where we write (defaults to your current db)
+            ctas_database=database,
             storage_format="parquet",
             write_compression="snappy",
             boto3_session=self.boto3_session,
@@ -117,7 +105,6 @@ class AWSLinker(Linker):
             wait=True,
         )
 
-        
     def delete_table_from_database(self, table):
         wr.catalog.delete_table_if_exists(
             database=self.database_name,
