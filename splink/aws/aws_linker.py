@@ -59,9 +59,11 @@ class AWSLinker(Linker):
         self.boto_utils = boto_utils(boto3_session, output_bucket)
         super().__init__(settings_dict, input_tables)
 
+        
     def _df_as_obj(self, templated_name, physical_name):
         return AWSDataFrame(templated_name, physical_name, self)
 
+    
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
         
         # Deletes the table in the db, but not the object on s3,
@@ -81,16 +83,13 @@ class AWSLinker(Linker):
         output_obj = self._df_as_obj(templated_name, physical_name)
         return output_obj
 
+    
     def random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
             return ""
+        percent = proportion * 100
+        return f" TABLESAMPLE BERNOULLI ({percent})"
 
-        sample_size = int(sample_size)
-
-        return (
-            "where unique_id IN (SELECT unique_id FROM __splink__df_concat_with_tf"
-            f" ORDER BY RANDOM() LIMIT {sample_size})"
-        )
 
     def table_exists_in_database(self, table_name):
         rec = wr.catalog.does_table_exist(
@@ -103,6 +102,7 @@ class AWSLinker(Linker):
         else:
             return True
 
+        
     def create_table(self, sql, physical_name):
         database = self.database_name
         wr.athena.create_ctas_table(
@@ -117,6 +117,7 @@ class AWSLinker(Linker):
             wait=True,
         )
 
+        
     def delete_table_from_database(self, table):
         wr.catalog.delete_table_if_exists(
             database=self.database_name,
