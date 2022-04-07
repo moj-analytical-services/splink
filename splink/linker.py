@@ -105,7 +105,12 @@ class Linker:
     def __init__(self, settings_dict=None, input_tables={}, set_up_basic_logging=True):
 
         self.pipeline = SQLPipeline()
-        self.initialise_settings(settings_dict)
+
+        self.settings_dict = settings_dict
+        if settings_dict is None:
+            self._settings_obj = None
+        else:
+            self._settings_obj = Settings(settings_dict)
 
         self.input_dfs = self._get_input_dataframe_dict(input_tables)
 
@@ -141,10 +146,8 @@ class Linker:
 
     def initialise_settings(self, settings_dict):
         self.settings_dict = settings_dict
-        if settings_dict is None:
-            self._settings_obj = None
-        else:
-            self._settings_obj = Settings(settings_dict)
+        self._settings_obj = Settings(settings_dict)
+        self._validate_input_dfs()
 
     @property
     def _input_tablename_l(self):
@@ -375,12 +378,13 @@ class Linker:
         for df in self.input_dfs.values():
             df.validate()
 
-        if self.settings_obj._link_type == "dedupe_only":
-            if len(self.input_dfs) > 1:
-                raise ValueError(
-                    'If link_type = "dedupe only" then input tables must contain',
-                    "only a single input table",
-                )
+        if self._settings_obj is not None:
+            if self.settings_obj._link_type == "dedupe_only":
+                if len(self.input_dfs) > 1:
+                    raise ValueError(
+                        'If link_type = "dedupe only" then input tables must contain'
+                        "only a single input table",
+                    )
 
     def deterministic_link(self, return_df_as_value=True):
 
@@ -530,7 +534,7 @@ class Linker:
 
         if blocking_rules is not None:
             self.settings_obj._blocking_rules_to_generate_predictions = blocking_rules
-        self.settings_obj._link_type = "link_only"
+        self.settings_obj._link_type = "link_only_find_matches_to_new_records"
         self.find_new_matches_mode = True
 
         sql = join_tf_to_input_df(self.settings_obj)
