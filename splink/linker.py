@@ -145,6 +145,7 @@ class Linker:
             self._settings_obj = None
         else:
             self._settings_obj = Settings(settings_dict)
+            self._validate_input_dfs()
 
     @property
     def _input_tablename_l(self):
@@ -379,7 +380,7 @@ class Linker:
             if self.settings_obj._link_type == "dedupe_only":
                 if len(self.input_dfs) > 1:
                     raise ValueError(
-                        'If link_type = "dedupe only" then input tables must contain',
+                        'If link_type = "dedupe only" then input tables must contain'
                         "only a single input table",
                     )
 
@@ -531,7 +532,7 @@ class Linker:
 
         if blocking_rules is not None:
             self.settings_obj._blocking_rules_to_generate_predictions = blocking_rules
-        self.settings_obj._link_type = "link_only"
+        self.settings_obj._link_type = "link_only_find_matches_to_new_records"
         self.find_new_matches_mode = True
 
         sql = join_tf_to_input_df(self.settings_obj)
