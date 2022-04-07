@@ -375,12 +375,13 @@ class Linker:
         for df in self.input_dfs.values():
             df.validate()
 
-        if self.settings_obj._link_type == "dedupe_only":
-            if len(self.input_dfs) > 1:
-                raise ValueError(
-                    'If link_type = "dedupe only" then input tables must contain',
-                    "only a single input table",
-                )
+        if self._settings_obj is not None:
+            if self.settings_obj._link_type == "dedupe_only":
+                if len(self.input_dfs) > 1:
+                    raise ValueError(
+                        'If link_type = "dedupe only" then input tables must contain',
+                        "only a single input table",
+                    )
 
     def deterministic_link(self, return_df_as_value=True):
 
