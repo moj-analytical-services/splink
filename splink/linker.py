@@ -105,7 +105,12 @@ class Linker:
     def __init__(self, settings_dict=None, input_tables={}, set_up_basic_logging=True):
 
         self.pipeline = SQLPipeline()
-        self.initialise_settings(settings_dict)
+
+        self.settings_dict = settings_dict
+        if settings_dict is None:
+            self._settings_obj = None
+        else:
+            self._settings_obj = Settings(settings_dict)
 
         self.input_dfs = self._get_input_dataframe_dict(input_tables)
 
@@ -141,11 +146,8 @@ class Linker:
 
     def initialise_settings(self, settings_dict):
         self.settings_dict = settings_dict
-        if settings_dict is None:
-            self._settings_obj = None
-        else:
-            self._settings_obj = Settings(settings_dict)
-            self._validate_input_dfs()
+        self._settings_obj = Settings(settings_dict)
+        self._validate_input_dfs()
 
     @property
     def _input_tablename_l(self):
