@@ -95,7 +95,8 @@ class DuckDBLinker(Linker):
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
 
-        logger.debug(execute_sql_logging_message_info(templated_name, self._create_schema(physical_name)))
+        logger.debug(execute_sql_logging_message_info(templated_name,
+                                                      self._create_schema(physical_name)))
         logger.log(5, log_sql(sql))
 
         sql = f"""
