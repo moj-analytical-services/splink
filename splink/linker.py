@@ -98,7 +98,7 @@ class Linker:
 
         self.compare_two_records_mode = False
 
-        self.schema = ""
+        self.output_schema = ""
 
         self.debug_mode = False
 
@@ -175,9 +175,9 @@ class Linker:
         else:
             return False
 
-    def _create_schema(self, table_name):
-        if self.schema:
-            return f"{self.schema}.{table_name}"
+    def _prepend_schema_to_table_name(self, table_name):
+        if self.output_schema:
+            return f"{self.output_schema}.{table_name}"
         return table_name
 
     def _initialise_df_concat(self, materialise=True):

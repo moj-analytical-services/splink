@@ -43,7 +43,7 @@ class DuckDBLinker(Linker):
         input_tables={},
         connection=":memory:",
         set_up_basic_logging=True,
-        schema="",
+        output_schema="",
     ):
 
         if connection == ":memory:":
@@ -73,10 +73,10 @@ class DuckDBLinker(Linker):
         input_tables = input_tables_new
 
         super().__init__(settings_dict, input_tables, set_up_basic_logging)
-        if schema:
+        if output_schema:
             self.con.execute(f"""
-            CREATE SCHEMA IF NOT EXISTS {schema};
-            SET schema '{schema}';
+            CREATE SCHEMA IF NOT EXISTS {output_schema};
+            SET schema '{output_schema}';
             """)
 
     def _df_as_obj(self, templated_name, physical_name):
@@ -95,7 +95,7 @@ class DuckDBLinker(Linker):
 
         logger.debug(execute_sql_logging_message_info(
             templated_name,
-            self._create_schema(physical_name)))
+            self._prepend_schema_to_table_name(physical_name)))
         logger.log(5, log_sql(sql))
 
         sql = f"""
