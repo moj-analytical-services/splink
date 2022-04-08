@@ -35,7 +35,7 @@ def estimate_u_values(linker, target_rows):
         for cl in cc.comparison_levels:
             cl._level_dict["tf_adjustment_column"] = None
 
-    sql = f"""
+    sql = """
     select count(*) as count
     from __splink__df_concat_with_tf
     """
