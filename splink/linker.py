@@ -2,6 +2,7 @@ import logging
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
+import warnings
 
 from .charts import (
     match_weight_histogram,
@@ -10,15 +11,15 @@ from .charts import (
     parameter_estimate_comparisons,
 )
 
-from .blocking import block_using_rules
-from .comparison_vector_values import compute_comparison_vector_values
-from .em_training import EMTrainingSession
+from .blocking import block_using_rules_sql
+from .comparison_vector_values import compute_comparison_vector_values_sql
+from .em_training_session import EMTrainingSession
 from .misc import bayes_factor_to_prob, escape_columns, prob_to_bayes_factor
 from .predict import predict
 from .settings import Settings
 from .term_frequencies import (
-    term_frequencies,
-    sql_gen_term_frequencies,
+    compute_all_term_frequencies_sqls,
+    term_frequencies_for_single_column_sql,
     colname_to_tf_tablename,
     join_tf_to_input_df,
 )
@@ -28,7 +29,7 @@ from .m_training import estimate_m_values_from_label_column
 from .u_training import estimate_u_values
 from .pipeline import SQLPipeline
 
-from .vertically_concatenate import vertically_concatente
+from .vertically_concatenate import vertically_concatente_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .accuracy import truth_space_table
 
@@ -70,7 +71,22 @@ class SplinkDataFrame:
     @property
     def physical_and_template_names_equal(self):
         return self.templated_name == self.physical_name
-    
+
+    def _check_drop_table_created_by_splink(self, force_non_splink_table=False):
+
+        if not self.physical_name.startswith("__splink__"):
+            if not force_non_splink_table:
+                raise ValueError(
+                    f"You've asked to drop table {self.physical_name} from your "
+                    "database which is not a table created by Splink.  If you really "
+                    "want to drop this table, you can do so by setting "
+                    "force_non_splink_table=True"
+                )
+        logger.debug(
+            f"Dropping table with templated name {self.templated_name} and "
+            f"physical name {self.physical_name}"
+        )
+
     def _check_drop_table_created_by_splink(self, force_non_splink_table=False):
 
         if not self.physical_name.startswith("__splink__"):
@@ -90,14 +106,14 @@ class SplinkDataFrame:
         raise NotImplementedError(
             "Drop table from database not implemented for this linker"
         )
-        
-    def as_record_dict(self):
+
+    def as_record_dict(self, limit=None):
         pass
 
-    def as_pandas_dataframe(self):
+    def as_pandas_dataframe(self, limit=None):
         import pandas as pd
 
-        return pd.DataFrame(self.as_record_dict())
+        return pd.DataFrame(self.as_record_dict(limit=limit))
 
 
 class Linker:
@@ -201,17 +217,17 @@ class Linker:
         return table_name
 
     def _initialise_df_concat(self, materialise=True):
-        sql = vertically_concatente(self.input_dfs)
+        sql = vertically_concatente_sql(self)
         self.enqueue_sql(sql, "__splink__df_concat")
         self.execute_sql_pipeline(materialise_as_hash=False)
 
     def _initialise_df_concat_with_tf(self, materialise=True):
         if self.table_exists_in_database("__splink__df_concat_with_tf"):
             return
-        sql = vertically_concatente(self.input_dfs)
+        sql = vertically_concatente_sql(self)
         self.enqueue_sql(sql, "__splink__df_concat")
 
-        sqls = term_frequencies(self)
+        sqls = compute_all_term_frequencies_sqls(self)
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -241,9 +257,9 @@ class Linker:
                 self.execute_sql_pipeline(materialise_as_hash=False)
 
     def compute_tf_table(self, column_name):
-        sql = vertically_concatente(self.input_dfs)
+        sql = vertically_concatente_sql(self)
         self.enqueue_sql(sql, "__splink__df_concat")
-        sql = sql_gen_term_frequencies(column_name)
+        sql = term_frequencies_for_single_column_sql(column_name)
         self.enqueue_sql(sql, colname_to_tf_tablename(column_name))
         return self.execute_sql_pipeline(materialise_as_hash=False)
 
@@ -303,7 +319,7 @@ class Linker:
 
         hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
         # Ensure hash is valid sql table name
-        hash = "__splink__" + hash
+        hash = f"{output_tablename_templated}_{hash}"
 
         if use_cache:
 
@@ -381,9 +397,16 @@ class Linker:
         for df in self.input_dfs.values():
             df.validate()
 
+        if self.settings_obj._link_type == "dedupe_only":
+            if len(self.input_dfs) > 1:
+                raise ValueError(
+                    'If link_type = "dedupe only" then input tables must contain',
+                    "only a single input table",
+                )
+
     def deterministic_link(self, return_df_as_value=True):
 
-        df_dict = block_using_rules(self)
+        df_dict = block_using_rules_sql(self)
         if return_df_as_value:
             return df_dict["__splink__df_blocked"].df_value
         else:
@@ -451,7 +474,7 @@ class Linker:
                     reverse_level.comparison_vector_value
                 )
 
-                if cl.is_trained:
+                if cl.has_estimated_values:
                     bf = cl.trained_m_median / cl.trained_u_median
                 else:
                     bf = cl.bayes_factor
@@ -468,9 +491,9 @@ class Linker:
         for cc in ccs:
             for cl in cc.comparison_levels:
                 if not cl.is_null_level:
-                    if cl.u_is_trained:
+                    if cl.has_estimated_u_values:
                         cl.u_probability = cl.trained_u_median
-                    if cl.m_is_trained:
+                    if cl.has_estimated_m_values:
                         cl.m_probability = cl.trained_m_median
 
     def train_m_and_u_using_expectation_maximisation(
@@ -497,10 +520,10 @@ class Linker:
         # materialisation of anything
         self._initialise_df_concat_with_tf(materialise=False)
 
-        sql = block_using_rules(self)
+        sql = block_using_rules_sql(self)
         self.enqueue_sql(sql, "__splink__df_blocked")
 
-        sql = compute_comparison_vector_values(self.settings_obj)
+        sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict(self.settings_obj)
@@ -536,10 +559,10 @@ class Linker:
         sql = sql.replace("__splink__df_concat", "__splink__df_new_records")
         self.enqueue_sql(sql, "__splink__df_new_records_with_tf")
 
-        sql = block_using_rules(self)
+        sql = block_using_rules_sql(self)
         self.enqueue_sql(sql, "__splink__df_blocked")
 
-        sql = compute_comparison_vector_values(self.settings_obj)
+        sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict(self.settings_obj)
@@ -586,10 +609,10 @@ class Linker:
         )
         self.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
-        sql = block_using_rules(self)
+        sql = block_using_rules_sql(self)
         self.enqueue_sql(sql, "__splink__df_blocked")
 
-        sql = compute_comparison_vector_values(self.settings_obj)
+        sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict(self.settings_obj)
@@ -675,7 +698,30 @@ class Linker:
             overwrite,
         )
 
-    def parameter_estimate_comparisons(self):
-        return parameter_estimate_comparisons(
-            self.settings_obj._parameter_estimates_as_records
-        )
+    def parameter_estimate_comparisons(self, include_m=True, include_u=True):
+        records = self.settings_obj._parameter_estimates_as_records
+
+        to_retain = []
+        if include_m:
+            to_retain.append("m")
+        if include_u:
+            to_retain.append("u")
+
+        records = [r for r in records if r["m_or_u"] in to_retain]
+
+        return parameter_estimate_comparisons(records)
+
+    def _predict_warning(self):
+
+        if not self.settings_obj.is_fully_trained:
+            msg = (
+                "You have called predict(), but there are some parameter "
+                "estimates which have neither been estimated or specified in your "
+                "settings dictionary.  To produce predictions the following"
+                " untrained trained parameters will use default values."
+            )
+            messages = self.settings_obj.not_trained_messages()
+
+            warn_message = "\n".join([msg] + messages)
+
+            warnings.warn(warn_message)

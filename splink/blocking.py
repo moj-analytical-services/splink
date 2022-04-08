@@ -42,7 +42,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
-def block_using_rules(linker, schema=False):
+def block_using_rules_sql(linker):
 
     settings_obj = linker.settings_obj
 
@@ -54,7 +54,7 @@ def block_using_rules(linker, schema=False):
     if linker.two_dataset_link_only:
         link_type = "two_dataset_link_only"
     where_condition = _sql_gen_where_condition(
-        link_type, settings_obj._unique_id_columns
+        link_type, settings_obj._unique_id_input_columns
     )
 
     sqls = []

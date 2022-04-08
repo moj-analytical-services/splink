@@ -106,7 +106,7 @@ class ComparisonLevel:
             return 1e-6
         if self._m_probability is None:
             vals = normalise(interpolate(0.05, 0.95, self.comparison.num_levels))
-            self._m_probability = vals[self.comparison_vector_value]
+            return vals[self.comparison_vector_value]
         return self._m_probability
 
     @m_probability.setter
@@ -131,7 +131,7 @@ class ComparisonLevel:
             return 1e-6
         if self._u_probability is None:
             vals = normalise(interpolate(0.95, 0.05, self.comparison.num_levels))
-            self._u_probability = vals[self.comparison_vector_value]
+            return vals[self.comparison_vector_value]
         return self._u_probability
 
     @u_probability.setter
@@ -176,20 +176,20 @@ class ComparisonLevel:
         )
 
     @property
-    def u_is_trained(self):
+    def has_estimated_u_values(self):
         if self.is_null_level:
             return True
         return len(self.trained_u_probabilities) > 0
 
     @property
-    def m_is_trained(self):
+    def has_estimated_m_values(self):
         if self.is_null_level:
             return True
         return len(self.trained_m_probabilities) > 0
 
     @property
-    def is_trained(self):
-        return self.m_is_trained and self.u_is_trained
+    def has_estimated_values(self):
+        return self.has_estimated_m_values and self.has_estimated_u_values
 
     @property
     def trained_m_median(self):
@@ -198,6 +198,22 @@ class ComparisonLevel:
     @property
     def trained_u_median(self):
         return median([r["probability"] for r in self.trained_u_probabilities])
+
+    @property
+    def m_is_trained(self):
+        if self.is_null_level:
+            return True
+        return self._m_probability is not None
+
+    @property
+    def u_is_trained(self):
+        if self.is_null_level:
+            return True
+        return self._u_probability is not None
+
+    @property
+    def is_trained(self):
+        return self.m_is_trained and self.u_is_trained
 
     @property
     def bayes_factor(self):

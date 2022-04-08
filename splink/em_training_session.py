@@ -1,11 +1,11 @@
 from copy import deepcopy
 import logging
 
-from .maximisation_step import expectation_maximisation
+from .expectation_maximisation import expectation_maximisation
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .parse_sql import get_columns_used_from_sql
-from .blocking import block_using_rules
-from .comparison_vector_values import compute_comparison_vector_values
+from .blocking import block_using_rules_sql
+from .comparison_vector_values import compute_comparison_vector_values_sql
 from .charts import (
     m_u_values_interactive_history_chart,
     match_weights_interactive_history_chart,
@@ -116,10 +116,10 @@ class EMTrainingSession:
     def _comparison_vectors(self):
         self._training_log_message()
 
-        sql = block_using_rules(self.training_linker, schema=True)
+        sql = block_using_rules_sql(self.training_linker)
         self.training_linker.enqueue_sql(sql, "__splink__df_blocked")
 
-        sql = compute_comparison_vector_values(self.settings_obj)
+        sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.training_linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
         return self.training_linker.execute_sql_pipeline([])
 

@@ -7,10 +7,10 @@ from splink.accuracy import (
 )
 from splink.comparison_library import exact_match
 
-from basic_settings import settings_dict
+from basic_settings import get_settings_dict
 
 from splink.block_from_labels import block_from_labels
-from splink.comparison_vector_values import compute_comparison_vector_values
+from splink.comparison_vector_values import compute_comparison_vector_values_sql
 from splink.predict import predict
 
 
@@ -56,7 +56,7 @@ def test_scored_labels():
     for sql in sqls:
         linker.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    sql = compute_comparison_vector_values(linker.settings_obj)
+    sql = compute_comparison_vector_values_sql(linker.settings_obj)
 
     linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
@@ -172,7 +172,8 @@ def test_truth_space_table():
     assert row["precision"] == 0.0
 
 
-def test_roc_chart():
+def test_roc_chart_dedupe_only():
+    # No source_dataset required in labels
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(10)
 
@@ -190,6 +191,43 @@ def test_roc_chart():
         df_labels["group_l"] == df_labels["group_r"]
     ).astype(float)
 
+    df_labels = df_labels.drop(
+        ["group_l", "group_r", "source_dataset_l", "source_dataset_r", "merge"], axis=1
+    )
+    settings_dict = get_settings_dict()
+    linker = DuckDBLinker(
+        settings_dict, input_tables={"fake_data_1": df}, connection=":memory:"
+    )
+
+    linker._initialise_df_concat_with_tf()
+
+    linker.con.register("labels", df_labels)
+
+    linker.roc_from_labels("labels")
+
+
+def test_roc_chart_link_and_dedupe():
+    # Source dataset required in labels
+
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(10)
+
+    df["source_dataset"] = "fake_data_1"
+    df["merge"] = 1
+
+    df_l = df[["unique_id", "source_dataset", "group", "merge"]].copy()
+    df_r = df_l.copy()
+
+    df_labels = df_l.merge(df_r, on="merge", suffixes=("_l", "_r"))
+    f1 = df_labels["unique_id_l"] < df_labels["unique_id_r"]
+    df_labels = df_labels[f1]
+
+    df_labels["clerical_match_score"] = (
+        df_labels["group_l"] == df_labels["group_r"]
+    ).astype(float)
+
+    df_labels = df_labels.drop(["group_l", "group_r", "merge"], axis=1)
+    settings_dict = get_settings_dict()
+    settings_dict["link_type"] = "link_and_dedupe"
     linker = DuckDBLinker(
         settings_dict, input_tables={"fake_data_1": df}, connection=":memory:"
     )
