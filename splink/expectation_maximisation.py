@@ -99,6 +99,8 @@ def expectation_maximisation(em_training_session, df_comparison_vector_values):
         df_params = linker.execute_sql_pipeline([df_comparison_vector_values])
         param_records = df_params.as_record_dict()
 
+        df_params.drop_table_from_database()
+
         maximisation_step(em_training_session, param_records)
         max_change_dict = (
             em_training_session.max_change_in_parameters_comparison_levels()

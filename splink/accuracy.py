@@ -1,5 +1,5 @@
 from .block_from_labels import block_from_labels
-from .comparison_vector_values import compute_comparison_vector_values
+from .comparison_vector_values import compute_comparison_vector_values_sql
 from .predict import predict
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
 
@@ -18,15 +18,15 @@ def predict_scores_for_labels(linker, labels_tablename):
     else:
         br_col = " 1=1 "
 
-    if len(linker.settings_obj._unique_id_columns) == 1:
+    if linker.settings_obj._source_dataset_column_name_is_required:
         join_conditions = f"""
+            pred.{sds_col}_l = lab.{sds_col}_l and
+            pred.{sds_col}_r = lab.{sds_col}_r and
             pred.{uid_col}_l = lab.{uid_col}_l and
             pred.{uid_col}_r = lab.{uid_col}_r
         """
     else:
         join_conditions = f"""
-            pred.{sds_col}_l = lab.{sds_col}_l and
-            pred.{sds_col}_r = lab.{sds_col}_r and
             pred.{uid_col}_l = lab.{uid_col}_l and
             pred.{uid_col}_r = lab.{uid_col}_r
         """
@@ -163,7 +163,7 @@ def truth_space_table(linker, labels_tablename, threshold_actual=0.5):
     for sql in sqls:
         linker.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    sql = compute_comparison_vector_values(linker.settings_obj)
+    sql = compute_comparison_vector_values_sql(linker.settings_obj)
 
     linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
 

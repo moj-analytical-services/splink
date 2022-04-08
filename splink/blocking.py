@@ -8,7 +8,7 @@ def _sql_gen_and_not_previous_rules(previous_rules: list):
         # Note the isnull function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
-        or_clauses = [f"ifnull(({r}), false)" for r in previous_rules]
+        or_clauses = [f"coalesce(({r}), false)" for r in previous_rules]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
     else:
@@ -42,7 +42,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
-def block_using_rules(linker):
+def block_using_rules_sql(linker):
 
     settings_obj = linker.settings_obj
 
@@ -54,7 +54,7 @@ def block_using_rules(linker):
     if linker.two_dataset_link_only:
         link_type = "two_dataset_link_only"
     where_condition = _sql_gen_where_condition(
-        link_type, settings_obj._unique_id_columns
+        link_type, settings_obj._unique_id_input_columns
     )
 
     sqls = []
