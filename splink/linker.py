@@ -15,7 +15,7 @@ from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .em_training_session import EMTrainingSession
 from .misc import bayes_factor_to_prob, escape_columns, prob_to_bayes_factor
-from .predict import predict
+from .predict import predict_from_comparison_vectors_sql
 from .settings import Settings
 from .term_frequencies import (
     compute_all_term_frequencies_sqls,
@@ -300,29 +300,29 @@ class Linker:
 
         hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
         # Ensure hash is valid sql table name
-        hash = f"{output_tablename_templated}_{hash}"
+        table_name_hash = f"{output_tablename_templated}_{hash}"
 
         if use_cache:
 
             if self.table_exists_in_database(output_tablename_templated):
-                logger.debug(f"Using table {output_tablename_templated}")
+                logger.debug(f"Using existing table {output_tablename_templated}")
                 return self._df_as_obj(
                     output_tablename_templated, output_tablename_templated
                 )
 
-            if self.table_exists_in_database(hash):
+            if self.table_exists_in_database(table_name_hash):
                 logger.debug(
                     f"Using cache for {output_tablename_templated}"
-                    f" with physical name {hash}"
+                    f" with physical name {table_name_hash}"
                 )
-                return self._df_as_obj(output_tablename_templated, hash)
+                return self._df_as_obj(output_tablename_templated, table_name_hash)
 
         if self.debug_mode:
             print(sql)
 
         if materialise_as_hash:
             dataframe = self.execute_sql(
-                sql, output_tablename_templated, hash, transpile=transpile
+                sql, output_tablename_templated, table_name_hash, transpile=transpile
             )
         else:
             dataframe = self.execute_sql(
@@ -508,7 +508,7 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict(self.settings_obj)
+        sqls = predict_from_comparison_vectors_sql(self.settings_obj)
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -547,7 +547,7 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict(self.settings_obj)
+        sqls = predict_from_comparison_vectors_sql(self.settings_obj)
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -597,7 +597,7 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict(self.settings_obj)
+        sqls = predict_from_comparison_vectors_sql(self.settings_obj)
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 

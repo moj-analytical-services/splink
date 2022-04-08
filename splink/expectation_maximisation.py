@@ -1,6 +1,6 @@
 import logging
 
-from .predict import predict
+from .predict import predict_from_comparison_vectors_sql
 from .settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -90,7 +90,7 @@ def expectation_maximisation(em_training_session, df_comparison_vector_values):
     max_iterations = settings_obj._max_iterations
     em_convergece = settings_obj._em_convergence
     for i in range(1, max_iterations + 1):
-        sqls = predict(settings_obj)
+        sqls = predict_from_comparison_vectors_sql(settings_obj)
         for sql in sqls:
             linker.enqueue_sql(sql["sql"], sql["output_table_name"])
 
