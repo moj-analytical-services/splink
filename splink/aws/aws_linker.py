@@ -22,6 +22,31 @@ class AWSDataFrame(SplinkDataFrame):
 
     def validate(self):
         pass
+    
+    def drop_table_from_database(self, force_non_splink_table=False):
+        
+        self._check_drop_folder_created_by_splink()
+        self._check_drop_table_created_by_splink(force_non_splink_table)
+        self.aws_linker.drop_table_from_database_if_exists(self.physical_name)
+        self.aws_linker.drop_s3_data(self.physical_name)
+        
+    
+    def _check_drop_folder_created_by_splink(self):
+        filepath = f"{self.aws_linker.boto_utils.s3_output}"
+        filepath = filepath.split("/")[:-1]
+        # validate that the write path is valid
+        c = ["splink_warehouse", 
+             self.aws_linker.boto_utils.session_id, 
+             self.physical_name] == filepath
+        if not c:
+            if not force_non_splink_table:
+                raise ValueError(
+                    f"You've asked to drop data housed under the filepath 
+                    f"{self.aws_linker.boto_utils.s3_output}/{self.physical_name} 
+                    "from your s3 output bucket, which is not a folder created by Splink. "
+                    "If you really want to delete this data, you can do so by setting "
+                    "force_non_splink_table=True."
+                )
 
     def as_record_dict(self, limit=None):
         sql = f"""
@@ -42,7 +67,7 @@ class AWSDataFrame(SplinkDataFrame):
     def get_schema_info(self, input_table):
         t = input_table.split(".")
         return t if len(t) > 1 else [self.aws_linker.database_name, self.physical_name]
-
+    
 
 class AWSLinker(Linker):
     def __init__(self, settings_dict: dict,
@@ -67,7 +92,7 @@ class AWSLinker(Linker):
         # which needs to be manually deleted at present
         # We can adjust this to be manually cleaned, but it presents
         # a potential area for concern for users (actively deleting from aws s3 buckets)
-        self.delete_table_from_database(physical_name)
+        self.drop_table_from_database_if_exists(physical_name)
 
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="presto")[0]
@@ -107,9 +132,15 @@ class AWSLinker(Linker):
             wait=True,
         )
 
-    def delete_table_from_database(self, table):
+    def drop_table_from_database_if_exists(self, table):
         wr.catalog.delete_table_if_exists(
             database=self.database_name,
             table=table,
             boto3_session=self.boto3_session
+        )
+    
+    def drop_s3_data(self, physical_name):
+        wr.s3.delete_objects(
+            boto3_session=self.boto3_session,
+            path=f"{self.boto_utils.s3_output}/{physical_name}"
         )
