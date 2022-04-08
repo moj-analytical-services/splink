@@ -58,6 +58,7 @@ class DuckDBLinker(Linker):
         input_tables={},
         connection=":memory:",
         set_up_basic_logging=True,
+        schema="",
     ):
 
         if connection == ":memory:":
@@ -87,11 +88,16 @@ class DuckDBLinker(Linker):
         input_tables = input_tables_new
 
         super().__init__(settings_dict, input_tables, set_up_basic_logging)
+        self.schema = schema
+        if schema:
+            self.con.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
 
     def _df_as_obj(self, templated_name, physical_name):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+
+        physical_name = self._create_schema(physical_name)
 
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache

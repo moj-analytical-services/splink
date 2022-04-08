@@ -8,7 +8,7 @@ def _sql_gen_and_not_previous_rules(previous_rules: list):
         # Note the isnull function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
-        or_clauses = [f"ifnull(({r}), false)" for r in previous_rules]
+        or_clauses = [f"coalesce(({r}), false)" for r in previous_rules]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
     else:
@@ -79,12 +79,20 @@ def block_using_rules_sql(linker):
     for matchkey_number, rule in enumerate(blocking_rules):
         not_previous_rules_statement = _sql_gen_and_not_previous_rules(previous_rules)
 
+        # only add the schema prefix if we're doing m training
+        if schema:
+            table_l = linker._create_schema(linker._input_tablename_l)
+            table_r = linker._create_schema(linker._input_tablename_r)
+        else:
+            table_l = linker._input_tablename_l
+            table_r = linker._input_tablename_r
+
         sql = f"""
         select
         {sql_select_expr}
         , '{matchkey_number}' as match_key
-        from {linker._input_tablename_l} as l
-        inner join {linker._input_tablename_r} as r
+        from {table_l} as l
+        inner join {table_r} as r
         on
         {rule}
         {not_previous_rules_statement}
