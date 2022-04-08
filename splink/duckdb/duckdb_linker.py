@@ -79,8 +79,6 @@ class DuckDBLinker(Linker):
             SET schema '{schema}';
             """)
 
-            print("Schema set to {schema}.\n")
-
     def _df_as_obj(self, templated_name, physical_name):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
