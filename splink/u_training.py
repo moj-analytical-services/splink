@@ -37,7 +37,7 @@ def estimate_u_values(linker, target_rows):
 
     sql = f"""
     select count(*) as count
-    from {linker._create_schema("__splink__df_concat_with_tf")}
+    from __splink__df_concat_with_tf
     """
     dataframe = training_linker.sql_to_dataframe(sql, "__splink__df_concat_count")
     result = dataframe.as_record_dict()
@@ -59,7 +59,7 @@ def estimate_u_values(linker, target_rows):
 
     sql = f"""
     select *
-    from {linker._create_schema("__splink__df_concat_with_tf")}
+    from __splink__df_concat_with_tf
     {training_linker.random_sample_sql(proportion, sample_size)}
     """
 

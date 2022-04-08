@@ -116,7 +116,7 @@ class EMTrainingSession:
     def _comparison_vectors(self):
         self._training_log_message()
 
-        sql = block_using_rules(self.training_linker, schema=True)
+        sql = block_using_rules(self.training_linker)
         self.training_linker.enqueue_sql(sql, "__splink__df_blocked")
 
         sql = compute_comparison_vector_values(self.settings_obj)
