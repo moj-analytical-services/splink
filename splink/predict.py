@@ -7,7 +7,7 @@ from .settings import Settings
 logger = logging.getLogger(__name__)
 
 
-def predict(settings_obj: Settings):
+def predict_from_comparison_vectors_sql(settings_obj: Settings):
 
     sqls = []
 

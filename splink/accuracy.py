@@ -1,6 +1,6 @@
 from .block_from_labels import block_from_labels
 from .comparison_vector_values import compute_comparison_vector_values_sql
-from .predict import predict
+from .predict import predict_from_comparison_vectors_sql
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
 
 
@@ -167,7 +167,7 @@ def truth_space_table(linker, labels_tablename, threshold_actual=0.5):
 
     linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-    sqls = predict(linker.settings_obj)
+    sqls = predict_from_comparison_vectors_sql(linker.settings_obj)
 
     for sql in sqls:
         linker.enqueue_sql(sql["sql"], sql["output_table_name"])
