@@ -25,27 +25,40 @@ class AWSDataFrame(SplinkDataFrame):
     
     def drop_table_from_database(self, force_non_splink_table=False):
         
-        self._check_drop_folder_created_by_splink()
+        self._check_drop_folder_created_by_splink(force_non_splink_table)
         self._check_drop_table_created_by_splink(force_non_splink_table)
         self.aws_linker.drop_table_from_database_if_exists(self.physical_name)
-        self.aws_linker.drop_s3_data(self.physical_name)
+        self.aws_linker.delete_table_from_s3(path=f"{self.aws_linker.boto_utils.s3_output}{self.physical_name}")
+        self.aws_linker.delete_metadata_from_s3(self.physical_name)
         
     
-    def _check_drop_folder_created_by_splink(self):
-        filepath = f"{self.aws_linker.boto_utils.s3_output}"
-        filepath = filepath.split("/")[:-1]
+    def _check_drop_folder_created_by_splink(self, force_non_splink_table=False):
+        
+        filepath = self.aws_linker.boto_utils.s3_output
+        filepath = filepath.split("/")[-3:-1]
         # validate that the write path is valid
-        c = ["splink_warehouse", 
-             self.aws_linker.boto_utils.session_id, 
-             self.physical_name] == filepath
-        if not c:
+        valid_path = [
+            self.aws_linker.boto_utils.temp_database_name_prefix, 
+            self.aws_linker.boto_utils.session_id
+            ] == filepath
+        if not valid_path:
             if not force_non_splink_table:
                 raise ValueError(
-                    f"You've asked to drop data housed under the filepath 
-                    f"{self.aws_linker.boto_utils.s3_output}/{self.physical_name} 
+                    f"You've asked to drop data housed under the filepath "
+                    f"{self.aws_linker.boto_utils.s3_output} "
                     "from your s3 output bucket, which is not a folder created by Splink. "
                     "If you really want to delete this data, you can do so by setting "
                     "force_non_splink_table=True."
+                )
+        
+        # validate that the ctas_query_info is for the given table we're interacting with
+        if self.aws_linker.ctas_query_info[self.physical_name]["ctas_table"] != self.physical_name:
+            raise ValueError(
+                    f"The table {self.physical_name} you're attempting to delete "
+                    "does not match the table assigned to the underlying metadata on s3. "
+                    "To prevent any data being incorrectly deleted from s3, "
+                    "please use wr.s3.delete_objects if you still wish to delete "
+                    "this table."
                 )
 
     def as_record_dict(self, limit=None):
@@ -79,6 +92,7 @@ class AWSLinker(Linker):
         self.boto3_session = boto3_session
         self.database_name = database_name
         self.boto_utils = boto_utils(boto3_session, output_bucket, folder_in_bucket_for_outputs)
+        self.ctas_query_info = {}
         super().__init__(settings_dict, input_tables)
         
         print(f"Writing splink outputs to {self.boto_utils.s3_output}")
@@ -93,10 +107,13 @@ class AWSLinker(Linker):
         # We can adjust this to be manually cleaned, but it presents
         # a potential area for concern for users (actively deleting from aws s3 buckets)
         self.drop_table_from_database_if_exists(physical_name)
-
+        
+        print(f"====== Creating table {physical_name} ======")
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="presto")[0]
-        self.create_table(sql, physical_name=physical_name)
+        query_metadata = self.create_table(sql, physical_name=physical_name)
+        # append our metadata locations
+        self.ctas_query_info = {**self.ctas_query_info, **{physical_name: query_metadata}}
 
         output_obj = self._df_as_obj(templated_name, physical_name)
         return output_obj
@@ -120,7 +137,7 @@ class AWSLinker(Linker):
 
     def create_table(self, sql, physical_name):
         database = self.database_name
-        wr.athena.create_ctas_table(
+        ctas_metadata = wr.athena.create_ctas_table(
             sql=sql,
             database=database,
             ctas_table=physical_name,
@@ -131,6 +148,7 @@ class AWSLinker(Linker):
             s3_output=self.boto_utils.s3_output,
             wait=True,
         )
+        return(ctas_metadata)
 
     def drop_table_from_database_if_exists(self, table):
         wr.catalog.delete_table_if_exists(
@@ -139,8 +157,16 @@ class AWSLinker(Linker):
             boto3_session=self.boto3_session
         )
     
-    def drop_s3_data(self, physical_name):
+    def delete_table_from_s3(self, path):
         wr.s3.delete_objects(
             boto3_session=self.boto3_session,
-            path=f"{self.boto_utils.s3_output}/{physical_name}"
+            path=path
         )
+        
+    def delete_metadata_from_s3(self, physical_name):
+        metadata = self.ctas_query_info[physical_name]
+        metadata_urls = [
+            f'{metadata["ctas_query_metadata"].output_location}.metadata',  # metadata output location
+            metadata["ctas_query_metadata"].manifest_location  # manifest location
+        ]
+        self.delete_table_from_s3(metadata_urls)

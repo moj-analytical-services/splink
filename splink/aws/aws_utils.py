@@ -20,7 +20,7 @@ class boto_utils:
         self.session_id = uuid4().hex[:10]
 
         # specify some additional prefixes
-        self.temp_database_name_prefix = "__splink__temp__"
+        self.temp_database_name_prefix = "splink_warehouse"
         self.user_id, self.s3_output = self.get_user_id_and_table_dir()
         self.temp_db_name = self.get_database_name_from_userid()
 
@@ -30,7 +30,7 @@ class boto_utils:
         sts_resp = sts_client.get_caller_identity()
         out_path = os.path.join(
             "s3://", self.bucket, self.folder_in_bucket_for_outputs, 
-            "splink_warehouse", self.session_id)
+            self.temp_database_name_prefix, self.session_id)
         if out_path[-1] != "/":
             out_path += "/"
 
