@@ -28,9 +28,7 @@ class AWSDataFrame(SplinkDataFrame):
         self._check_drop_folder_created_by_splink(force_non_splink_table)
         self._check_drop_table_created_by_splink(force_non_splink_table)
         self.aws_linker.drop_table_from_database_if_exists(self.physical_name)
-        self.aws_linker.delete_table_from_s3(path=f"{self.aws_linker.boto_utils.s3_output}{self.physical_name}")
-        self.aws_linker.delete_metadata_from_s3(self.physical_name)
-        
+        self.aws_linker.delete_table_from_s3(self.physical_name)
     
     def _check_drop_folder_created_by_splink(self, force_non_splink_table=False):
         
@@ -157,16 +155,20 @@ class AWSLinker(Linker):
             boto3_session=self.boto3_session
         )
     
-    def delete_table_from_s3(self, path):
-        wr.s3.delete_objects(
-            boto3_session=self.boto3_session,
-            path=path
-        )
-        
-    def delete_metadata_from_s3(self, physical_name):
+    def delete_table_from_s3(self, physical_name):
+        path = f"{self.boto_utils.s3_output}{physical_name}/"
         metadata = self.ctas_query_info[physical_name]
         metadata_urls = [
             f'{metadata["ctas_query_metadata"].output_location}.metadata',  # metadata output location
             metadata["ctas_query_metadata"].manifest_location  # manifest location
         ]
-        self.delete_table_from_s3(metadata_urls)
+        # delete our folder
+        wr.s3.delete_objects(
+            boto3_session=self.boto3_session,
+            path=path
+        )
+        # delete our metadata
+        wr.s3.delete_objects(
+            boto3_session=self.boto3_session,
+            path=metadata_urls
+        )
