@@ -93,8 +93,6 @@ class AWSLinker(Linker):
         self.ctas_query_info = {}
         super().__init__(settings_dict, input_tables)
         
-        print(f"Writing splink outputs to {self.boto_utils.s3_output}")
-
     def _df_as_obj(self, templated_name, physical_name):
         return AWSDataFrame(templated_name, physical_name, self)
 
@@ -106,7 +104,6 @@ class AWSLinker(Linker):
         # a potential area for concern for users (actively deleting from aws s3 buckets)
         self.drop_table_from_database_if_exists(physical_name)
         
-        print(f"====== Creating table {physical_name} ======")
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="presto")[0]
         query_metadata = self.create_table(sql, physical_name=physical_name)
