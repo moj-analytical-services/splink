@@ -9,7 +9,12 @@ def test_full_example_duckdb(tmp_path):
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(
+        settings_dict,
+        input_tables={"fake_data_1": df},
+        connection=os.path.join(tmp_path, "duckdb.db"),
+        output_schema="splink_in_duckdb",
+    )
 
     linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]
