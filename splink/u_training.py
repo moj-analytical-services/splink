@@ -101,7 +101,7 @@ def estimate_u_values(linker, target_rows):
 
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
     for cc in original_settings_obj.comparisons:
-        for cl in cc.comparison_levels_excluding_nulls:
+        for cl in cc.comparison_levels_excluding_null:
 
             try:
                 u_probability = m_u_records_lookup[cc.comparison_name][
