@@ -65,6 +65,7 @@ def maximisation_step(em_training_session, param_records):
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
     for cc in settings_obj.comparisons:
         for cl in cc.comparison_levels_excluding_null:
+            # TODO:  LOGGING SHOULD NOT HAPPEN HERE
 
             if not em_training_session._training_fix_m_probabilities:
 

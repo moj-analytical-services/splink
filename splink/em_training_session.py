@@ -144,6 +144,7 @@ class EMTrainingSession:
                 orig_cl = orig_cc.get_comparison_level_by_comparison_vector_value(
                     cl.comparison_vector_value
                 )
+                # TODO:  HERE'S WHERE THE LOGGING SHOULD HAPPEN
                 if not self._training_fix_m_probabilities:
                     orig_cl.add_trained_m_probability(cl.m_probability, training_desc)
                 if not self._training_fix_u_probabilities:
