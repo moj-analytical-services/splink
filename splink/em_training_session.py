@@ -146,9 +146,34 @@ class EMTrainingSession:
                 )
                 # TODO:  HERE'S WHERE THE LOGGING SHOULD HAPPEN
                 if not self._training_fix_m_probabilities:
-                    orig_cl.add_trained_m_probability(cl.m_probability, training_desc)
+                    not_observed = "level not observed in training dataset"
+                    if cl._m_probability == not_observed:
+                        orig_cl.add_trained_m_probability(not_observed, training_desc)
+                        logger.info(
+                            f"m probability not trained for {cc.comparison_name} - "
+                            f"{cl.label_for_charts} (comparison vector value: "
+                            f"{cl.comparison_vector_value}). This usually means the "
+                            "comparison level was never observed in the training data."
+                        )
+                    else:
+                        orig_cl.add_trained_m_probability(
+                            cl.m_probability, training_desc
+                        )
+
                 if not self._training_fix_u_probabilities:
-                    orig_cl.add_trained_u_probability(cl.u_probability, training_desc)
+                    not_observed = "level not observed in training dataset"
+                    if cl._u_probability == not_observed:
+                        orig_cl.add_trained_u_probability(not_observed, training_desc)
+                        logger.info(
+                            f"u probability not trained for {cc.comparison_name} - "
+                            f"{cl.label_for_charts} (comparison vector value: "
+                            f"{cl.comparison_vector_value}). This usually means the "
+                            "comparison level was never observed in the training data."
+                        )
+                    else:
+                        orig_cl.add_trained_u_probability(
+                            cl.u_probability, training_desc
+                        )
 
         self.original_linker.em_training_sessions.append(self)
 

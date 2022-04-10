@@ -77,12 +77,12 @@ def maximisation_step(em_training_session, param_records):
                 except KeyError:
                     m_probability = "level not observed in training dataset"
 
-                    logger.info(
-                        f"m probability not trained for {cc.comparison_name} - "
-                        f"{cl.label_for_charts} (comparison vector value: "
-                        f"{cl.comparison_vector_value}). This usually means the "
-                        "comparison level was never observed in the training data."
-                    )
+                    # logger.info(
+                    #     f"m probability not trained for {cc.comparison_name} - "
+                    #     f"{cl.label_for_charts} (comparison vector value: "
+                    #     f"{cl.comparison_vector_value}). This usually means the "
+                    #     "comparison level was never observed in the training data."
+                    # )
                 cl.m_probability = m_probability
 
             if not em_training_session._training_fix_u_probabilities:
@@ -95,12 +95,12 @@ def maximisation_step(em_training_session, param_records):
                 except KeyError:
                     u_probability = "level not observed in training dataset"
 
-                    logger.info(
-                        f"u probability not trained for {cc.comparison_name} - "
-                        f"{cl.label_for_charts} (comparison vector value: "
-                        f"{cl.comparison_vector_value}). This usually means the "
-                        "comparison level was never observed in the training data."
-                    )
+                    # logger.info(
+                    #     f"u probability not trained for {cc.comparison_name} - "
+                    #     f"{cl.label_for_charts} (comparison vector value: "
+                    #     f"{cl.comparison_vector_value}). This usually means the "
+                    #     "comparison level was never observed in the training data."
+                    # )
 
                 cl.u_probability = u_probability
 

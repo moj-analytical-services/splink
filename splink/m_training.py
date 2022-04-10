@@ -11,6 +11,7 @@ logger = logging.getLogger(__name__)
 
 def estimate_m_values_from_label_column(linker, df_dict, label_colname):
 
+    original_settings_object = linker.settings_obj
     training_linker = deepcopy(linker)
     settings_obj = training_linker.settings_obj
     settings_obj._retain_matching_columns = False
@@ -46,7 +47,7 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
         r for r in param_records if r["comparison_name"] != "_proportion_of_matches"
     ]
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
-    for cc in settings_obj.comparisons:
+    for cc in original_settings_object.comparisons:
         for cl in cc.comparison_levels_excluding_null:
 
             try:
@@ -55,7 +56,7 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
                 ]["m_probability"]
 
             except KeyError:
-                m_probability = ("no value found for this level in m_u_records",)
+                m_probability = ("level not observed in training dataset",)
 
                 logger.info(
                     f"m probability not trained for {cc.comparison_name} - "

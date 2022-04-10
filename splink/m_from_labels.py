@@ -46,7 +46,7 @@ def estimate_m_from_pairwise_labels(linker, table_name):
                 m_probability = record["m_probability"]
 
             except KeyError:
-                m_probability = ("no value found for this level in m_u_records",)
+                m_probability = ("level not observed in training dataset",)
 
                 logger.info(
                     f"m probability not trained for {cc.comparison_name} - "

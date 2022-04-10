@@ -406,6 +406,8 @@ class Linker:
         estimate_u_values(self, target_rows)
         self.populate_m_u_from_trained_values()
 
+        self.settings_obj.columns_without_estimated_parameters_message()
+
     def train_m_from_label_column(self, label_colname):
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_values_from_label_column(self, self.input_dfs, label_colname)
@@ -478,12 +480,11 @@ class Linker:
         ccs = self.settings_obj.comparisons
 
         for cc in ccs:
-            for cl in cc.comparison_levels:
-                if not cl.is_null_level:
-                    if cl.has_estimated_u_values:
-                        cl.u_probability = cl.trained_u_median
-                    if cl.has_estimated_m_values:
-                        cl.m_probability = cl.trained_m_median
+            for cl in cc.comparison_levels_excluding_null:
+                if cl.has_estimated_u_values:
+                    cl.u_probability = cl.trained_u_median
+                if cl.has_estimated_m_values:
+                    cl.m_probability = cl.trained_m_median
 
     def train_m_and_u_using_expectation_maximisation(
         self,
