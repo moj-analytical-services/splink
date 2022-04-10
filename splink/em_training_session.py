@@ -139,19 +139,15 @@ class EMTrainingSession:
             orig_cc = self.original_settings_obj._get_comparison_by_name(
                 cc.comparison_name
             )
-            for cl in cc.comparison_levels:
-                if not cl.is_null_level:
-                    orig_cl = orig_cc.get_comparison_level_by_comparison_vector_value(
-                        cl.comparison_vector_value
-                    )
-                    if not self._training_fix_m_probabilities:
-                        orig_cl.add_trained_m_probability(
-                            cl.m_probability, training_desc
-                        )
-                    if not self._training_fix_u_probabilities:
-                        orig_cl.add_trained_u_probability(
-                            cl.u_probability, training_desc
-                        )
+            for cl in cc.comparison_levels_excluding_null:
+
+                orig_cl = orig_cc.get_comparison_level_by_comparison_vector_value(
+                    cl.comparison_vector_value
+                )
+                if not self._training_fix_m_probabilities:
+                    orig_cl.add_trained_m_probability(cl.m_probability, training_desc)
+                if not self._training_fix_u_probabilities:
+                    orig_cl.add_trained_u_probability(cl.u_probability, training_desc)
 
         self.original_linker.em_training_sessions.append(self)
 
@@ -250,7 +246,7 @@ class EMTrainingSession:
 
         previous_iteration = self.comparison_level_history[-2]
         this_iteration = self.comparison_level_history[-1]
-        max_change = 0
+        max_change = -0.1
 
         max_change_levels = {
             "previous_iteration": None,

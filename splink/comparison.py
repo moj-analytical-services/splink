@@ -41,6 +41,10 @@ class Comparison:
         return cc
 
     @property
+    def comparison_levels_excluding_null(self):
+        return [cl for cl in self.comparison_levels if not cl.is_null_level]
+
+    @property
     def gamma_prefix(self):
         return self.settings_obj._gamma_prefix
 

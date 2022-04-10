@@ -1,13 +1,16 @@
 from copy import deepcopy
+import logging
 
 from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import compute_new_parameters
+from .misc import m_u_records_to_lookup_dict
+
+logger = logging.getLogger(__name__)
 
 
 def estimate_m_values_from_label_column(linker, df_dict, label_colname):
 
-    original_settings_object = linker.settings_obj
     training_linker = deepcopy(linker)
     settings_obj = training_linker.settings_obj
     settings_obj._retain_matching_columns = False
@@ -42,12 +45,25 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
     m_u_records = [
         r for r in param_records if r["comparison_name"] != "_proportion_of_matches"
     ]
+    m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
+    for cc in settings_obj.comparisons:
+        for cl in cc.comparison_levels_excluding_null:
 
-    for record in m_u_records:
-        cc = original_settings_object._get_comparison_by_name(record["comparison_name"])
-        gamma_val = record["comparison_vector_value"]
-        cl = cc.get_comparison_level_by_comparison_vector_value(gamma_val)
+            try:
+                m_probability = m_u_records_lookup[cc.comparison_name][
+                    cl.comparison_vector_value
+                ]["m_probability"]
 
-        cl.add_trained_m_probability(
-            record["m_probability"], "estimate m from label column"
-        )
+            except KeyError:
+                m_probability = ("no value found for this level in m_u_records",)
+
+                logger.info(
+                    f"m probability not trained for {cc.comparison_name} - "
+                    f"{cl.label_for_charts} (comparison vector value: "
+                    f"{cl.comparison_vector_value}). This usually means the "
+                    "comparison level was never observed in the training data."
+                )
+            cl.add_trained_m_probability(
+                m_probability,
+                "estimate m from label column",
+            )

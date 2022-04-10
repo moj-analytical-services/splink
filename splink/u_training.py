@@ -4,6 +4,7 @@ from copy import deepcopy
 from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import compute_new_parameters
+from .misc import m_u_records_to_lookup_dict
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,6 @@ def _num_target_rows_to_rows_to_sample(target_rows):
 
 def estimate_u_values(linker, target_rows):
 
-    original_settings_object = linker.settings_obj
     training_linker = deepcopy(linker)
 
     training_linker.train_u_using_random_sample_mode = True
@@ -98,16 +98,27 @@ def estimate_u_values(linker, target_rows):
         r for r in param_records if r["comparison_name"] != "_proportion_of_matches"
     ]
 
-    for record in m_u_records:
-        cc = original_settings_object._get_comparison_by_name(record["comparison_name"])
-        gamma_val = record["comparison_vector_value"]
-        cl = cc.get_comparison_level_by_comparison_vector_value(gamma_val)
+    m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
+    for cc in settings_obj.comparisons:
+        for cl in cc.comparison_levels_excluding_null:
 
-        cl.add_trained_u_probability(
-            record["u_probability"], "estimate u by random sampling"
-        )
+            try:
+                u_probability = m_u_records_lookup[cc.comparison_name][
+                    cl.comparison_vector_value
+                ]["u_probability"]
 
-    logger.info(
-        "Trained m probabilities using random sampling - "
-        "u values have now been estimated for all comparisons"
-    )
+            except KeyError:
+                u_probability = "no value found for this level in m_u_records"
+
+                logger.info(
+                    f"u probability not trained for {cc.comparison_name} - "
+                    f"{cl.label_for_charts} (comparison vector value: "
+                    f"{cl.comparison_vector_value}). This usually means the "
+                    "comparison level was never observed in the training data."
+                )
+            cl.add_trained_u_probability(
+                u_probability,
+                "estimate u by random sampling",
+            )
+
+    logger.info("Trained u probabilities using random sampling")
