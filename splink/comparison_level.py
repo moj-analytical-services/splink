@@ -1,6 +1,6 @@
 import math
 import re
-from statistics import median, variance
+from statistics import median
 from textwrap import dedent
 from typing import TYPE_CHECKING
 

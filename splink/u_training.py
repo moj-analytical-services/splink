@@ -101,26 +101,25 @@ def estimate_u_values(linker, target_rows):
 
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
     for cc in original_settings_obj.comparisons:
-        for cl in cc.comparison_levels:
-            if not cl.is_null_level:
+        for cl in cc.comparison_levels_excluding_nulls:
 
-                try:
-                    u_probability = m_u_records_lookup[cc.comparison_name][
-                        cl.comparison_vector_value
-                    ]["u_probability"]
+            try:
+                u_probability = m_u_records_lookup[cc.comparison_name][
+                    cl.comparison_vector_value
+                ]["u_probability"]
 
-                except KeyError:
-                    u_probability = "level not observed in training dataset"
+            except KeyError:
+                u_probability = "level not observed in training dataset"
 
-                    logger.info(
-                        f"u probability not trained for {cc.comparison_name} - "
-                        f"{cl.label_for_charts} (comparison vector value: "
-                        f"{cl.comparison_vector_value}). This usually means the "
-                        "comparison level was never observed in the training data."
-                    )
-                cl.add_trained_u_probability(
-                    u_probability,
-                    "estimate u by random sampling",
+                logger.info(
+                    f"u probability not trained for {cc.comparison_name} - "
+                    f"{cl.label_for_charts} (comparison vector value: "
+                    f"{cl.comparison_vector_value}). This usually means the "
+                    "comparison level was never observed in the training data."
                 )
+            cl.add_trained_u_probability(
+                u_probability,
+                "estimate u by random sampling",
+            )
 
     logger.info("Trained u probabilities using random sampling")

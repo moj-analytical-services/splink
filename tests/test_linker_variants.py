@@ -62,12 +62,10 @@ def dfs():
     }
 
 
-# @pytest.mark.parametrize("input_name,input_tables", dfs().items())
-# def test_link_type(input_name, input_tables):
-def test_link_type():
-    # link_type, test_name = input_name.split("__")
-    link_type = "dedupe_only"
-    test_name = "pass"
+@pytest.mark.parametrize("input_name,input_tables", dfs().items())
+def test_link_type(input_name, input_tables):
+    link_type, test_name = input_name.split("__")
+
     input_tables = dfs()["dedupe_only__pass"]
     settings = {
         "proportion_of_matches": 0.01,
