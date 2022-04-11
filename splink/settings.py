@@ -295,7 +295,7 @@ class Settings:
             elif not c.m_is_trained:
                 message_lines.append(f"{c.comparison_name} (no estimate for m values)")
             elif not c.u_is_trained:
-                message_lines.append(f"{c.comparison_name} (no estimats for u values)")
+                message_lines.append(f"{c.comparison_name} (no estimates for u values)")
 
         if len(message_lines) == 0:
             message = (
