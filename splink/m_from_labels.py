@@ -2,7 +2,7 @@ import logging
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import compute_new_parameters
 from .block_from_labels import block_from_labels
-from .misc import m_u_records_to_lookup_dict
+from .m_u_records_to_parameters import m_u_records_to_lookup_dict
 
 logger = logging.getLogger(__name__)
 

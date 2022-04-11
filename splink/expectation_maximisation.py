@@ -2,7 +2,7 @@ import logging
 
 from .predict import predict_from_comparison_vectors_sql
 from .settings import Settings
-from .misc import m_u_records_to_lookup_dict
+from .m_u_records_to_parameters import m_u_records_to_lookup_dict
 
 logger = logging.getLogger(__name__)
 
