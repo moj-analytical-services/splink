@@ -36,7 +36,7 @@ class AWSDataFrame(SplinkDataFrame):
         filepath = filepath.split("/")[-3:-1]
         # validate that the write path is valid
         valid_path = [
-            self.aws_linker.boto_utils.temp_database_name_prefix, 
+            self.aws_linker.boto_utils.s3_output_name_prefix, 
             self.aws_linker.boto_utils.session_id
             ] == filepath
         if not valid_path:
@@ -52,11 +52,11 @@ class AWSDataFrame(SplinkDataFrame):
         # validate that the ctas_query_info is for the given table we're interacting with
         if self.aws_linker.ctas_query_info[self.physical_name]["ctas_table"] != self.physical_name:
             raise ValueError(
-                    f"The table {self.physical_name} you're attempting to delete "
-                    "does not match the table assigned to the underlying metadata on s3. "
-                    "To prevent any data being incorrectly deleted from s3, "
-                    "please use wr.s3.delete_objects if you still wish to delete "
-                    "this table."
+                    f"The table - {self.physical_name} - you're attempting to delete "
+                    "does not match the recorded metadata on s3. To prevent "
+                    "any tables becoming corrupted on s3, this run will be terminated."
+                    " Please retry the link/dedupe job and report the issue if this "
+                    "error persists."
                 )
 
     def as_record_dict(self, limit=None):
@@ -69,7 +69,7 @@ class AWSDataFrame(SplinkDataFrame):
 
         out_df = wr.athena.read_sql_query(
             sql=sql,
-            database=self.aws_linker.database_name,
+            database=self.aws_linker.output_schema,
             s3_output=self.aws_linker.boto_utils.s3_output,
             keep_files=False,
         )
@@ -77,35 +77,42 @@ class AWSDataFrame(SplinkDataFrame):
 
     def get_schema_info(self, input_table):
         t = input_table.split(".")
-        return t if len(t) > 1 else [self.aws_linker.database_name, self.physical_name]
+        return t if len(t) > 1 else [self.aws_linker.output_schema, self.physical_name]
     
 
 class AWSLinker(Linker):
     def __init__(self, settings_dict: dict,
                  boto3_session: boto3.session.Session,
-                 database_name: str,
+                 output_schema: str,
                  output_bucket: str,
                  folder_in_bucket_for_outputs="",
                  input_tables={},):
         self.boto3_session = boto3_session
-        self.database_name = database_name
         self.boto_utils = boto_utils(boto3_session, output_bucket, folder_in_bucket_for_outputs)
         self.ctas_query_info = {}
         super().__init__(settings_dict, input_tables)
+        self.output_schema = output_schema
         
     def _df_as_obj(self, templated_name, physical_name):
         return AWSDataFrame(templated_name, physical_name, self)
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
-        # Deletes the table in the db, but not the object on s3,
-        # which needs to be manually deleted at present
-        # We can adjust this to be manually cleaned, but it presents
-        # a potential area for concern for users (actively deleting from aws s3 buckets)
+        # Deletes the table in the db, but not the object on s3.
+        # This needs to be removed manually (full s3 path provided)
         self.drop_table_from_database_if_exists(physical_name)
         
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="presto")[0]
+            
+#         logger.debug(
+#             execute_sql_logging_message_info(
+#                 templated_name, self._prepend_schema_to_table_name(physical_name)
+#             )
+#         )
+#         logger.log(5, log_sql(sql))
+        
+        # create our table on athena and extract the metadata information
         query_metadata = self.create_table(sql, physical_name=physical_name)
         # append our metadata locations
         self.ctas_query_info = {**self.ctas_query_info, **{physical_name: query_metadata}}
@@ -121,7 +128,7 @@ class AWSLinker(Linker):
 
     def table_exists_in_database(self, table_name):
         rec = wr.catalog.does_table_exist(
-            database=self.database_name,
+            database=self.output_schema,
             table=table_name,
             boto3_session=self.boto3_session
         )
@@ -131,7 +138,7 @@ class AWSLinker(Linker):
             return True
 
     def create_table(self, sql, physical_name):
-        database = self.database_name
+        database = self.output_schema
         ctas_metadata = wr.athena.create_ctas_table(
             sql=sql,
             database=database,
@@ -147,7 +154,7 @@ class AWSLinker(Linker):
 
     def drop_table_from_database_if_exists(self, table):
         wr.catalog.delete_table_if_exists(
-            database=self.database_name,
+            database=self.output_schema,
             table=table,
             boto3_session=self.boto3_session
         )
@@ -169,3 +176,5 @@ class AWSLinker(Linker):
             boto3_session=self.boto3_session,
             path=metadata_urls
         )
+        
+        self.ctas_query_info.pop(physical_name)
