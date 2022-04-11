@@ -4,7 +4,10 @@ import logging
 from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import compute_new_parameters
-from .m_u_records_to_parameters import m_u_records_to_lookup_dict
+from .m_u_records_to_parameters import (
+    m_u_records_to_lookup_dict,
+    append_m_probability_to_comparison_level_trained_probabilities,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,22 +52,6 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
     for cc in original_settings_object.comparisons:
         for cl in cc.comparison_levels_excluding_null:
-
-            try:
-                m_probability = m_u_records_lookup[cc.comparison_name][
-                    cl.comparison_vector_value
-                ]["m_probability"]
-
-            except KeyError:
-                m_probability = ("level not observed in training dataset",)
-
-                logger.info(
-                    f"m probability not trained for {cc.comparison_name} - "
-                    f"{cl.label_for_charts} (comparison vector value: "
-                    f"{cl.comparison_vector_value}). This usually means the "
-                    "comparison level was never observed in the training data."
-                )
-            cl.add_trained_m_probability(
-                m_probability,
-                "estimate m from label column",
+            append_m_probability_to_comparison_level_trained_probabilities(
+                cl, m_u_records_lookup, "estimate m from label column"
             )
