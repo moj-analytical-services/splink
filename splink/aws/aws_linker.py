@@ -58,11 +58,11 @@ class AWSDataFrame(SplinkDataFrame):
         # validate that the ctas_query_info is for the given table we're interacting with
         if self.aws_linker.ctas_query_info[self.physical_name]["ctas_table"] != self.physical_name:
             raise ValueError(
-                    f"The table - {self.physical_name} - you're attempting to delete "
-                    "does not match the recorded metadata on s3. To prevent "
-                    "any tables becoming corrupted on s3, this run will be terminated."
-                    " Please retry the link/dedupe job and report the issue if this "
-                    "error persists."
+                    f"The recorded metadata for {self.physical_name} that you're "
+                    "attempting to delete does not match the recorded metadata on s3. "
+                    "To prevent any tables becoming corrupted on s3, this run will be "
+                    "terminated. Please retry the link/dedupe job and report the issue "
+                    "if this error persists."
                 )
 
     def as_record_dict(self, limit=None):
