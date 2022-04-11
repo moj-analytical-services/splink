@@ -1,5 +1,11 @@
 import sqlglot
 from splink.linker import Linker, SplinkDataFrame
+import logging
+from splink.logging_messages import execute_sql_logging_message_info, log_sql
+
+logger = logging.getLogger(__name__)
+
+# import utils for communicating with aws
 import awswrangler as wr
 import boto3
 from splink.aws.aws_utils import boto_utils
@@ -105,12 +111,12 @@ class AWSLinker(Linker):
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="presto")[0]
             
-#         logger.debug(
-#             execute_sql_logging_message_info(
-#                 templated_name, self._prepend_schema_to_table_name(physical_name)
-#             )
-#         )
-#         logger.log(5, log_sql(sql))
+        logger.debug(
+            execute_sql_logging_message_info(
+                templated_name, self._prepend_schema_to_table_name(physical_name)
+            )
+        )
+        logger.log(5, log_sql(sql))
         
         # create our table on athena and extract the metadata information
         query_metadata = self.create_table(sql, physical_name=physical_name)
