@@ -47,6 +47,31 @@ def compute_new_parameters(settings_obj: Settings):
     return sql
 
 
+def populate_m_u_from_lookup(em_training_session, comparison_level, m_u_records_lookup):
+    cl = comparison_level
+    c = comparison_level.comparison
+    if not em_training_session._training_fix_m_probabilities:
+        try:
+            m_probability = m_u_records_lookup[c.comparison_name][
+                cl.comparison_vector_value
+            ]["m_probability"]
+
+        except KeyError:
+            m_probability = "level not observed in training dataset"
+        cl.m_probability = m_probability
+
+    if not em_training_session._training_fix_u_probabilities:
+        try:
+            u_probability = m_u_records_lookup[c.comparison_name][
+                cl.comparison_vector_value
+            ]["u_probability"]
+
+        except KeyError:
+            u_probability = "level not observed in training dataset"
+
+        cl.u_probability = u_probability
+
+
 def maximisation_step(em_training_session, param_records):
 
     settings_obj = em_training_session.settings_obj
@@ -65,27 +90,7 @@ def maximisation_step(em_training_session, param_records):
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
     for cc in settings_obj.comparisons:
         for cl in cc.comparison_levels_excluding_null:
-
-            if not em_training_session._training_fix_m_probabilities:
-                try:
-                    m_probability = m_u_records_lookup[cc.comparison_name][
-                        cl.comparison_vector_value
-                    ]["m_probability"]
-
-                except KeyError:
-                    m_probability = "level not observed in training dataset"
-                cl.m_probability = m_probability
-
-            if not em_training_session._training_fix_u_probabilities:
-                try:
-                    u_probability = m_u_records_lookup[cc.comparison_name][
-                        cl.comparison_vector_value
-                    ]["u_probability"]
-
-                except KeyError:
-                    u_probability = "level not observed in training dataset"
-
-                cl.u_probability = u_probability
+            populate_m_u_from_lookup(em_training_session, cl, m_u_records_lookup)
 
     em_training_session.add_iteration()
 
