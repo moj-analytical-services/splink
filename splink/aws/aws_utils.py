@@ -21,9 +21,9 @@ class boto_utils:
 
         # specify some additional prefixes
         self.s3_output_name_prefix = "splink_warehouse"
-        self.s3_output = self.get_user_id_and_table_dir()
+        self.s3_output = self.get_table_dir()
 
-    def get_user_id_and_table_dir(self):
+    def get_table_dir(self):
 
         out_path = os.path.join(
             "s3://", self.bucket, self.folder_in_bucket_for_outputs, 
