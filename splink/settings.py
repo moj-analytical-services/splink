@@ -291,6 +291,14 @@ class Settings:
             msg = c.is_trained_message
             if msg is not None:
                 message_lines.append(c.is_trained_message)
+            if not c.m_is_trained and not c.u_is_trained:
+                message_lines.append(
+                    f"{c.comparison_name} (no estimates for m or u values)"
+                )
+            elif not c.m_is_trained:
+                message_lines.append(f"{c.comparison_name} (no estimate for m values)")
+            elif not c.u_is_trained:
+                message_lines.append(f"{c.comparison_name} (no estimates for u values)")
 
         if len(message_lines) == 0:
             message = (
