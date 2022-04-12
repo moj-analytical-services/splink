@@ -288,28 +288,23 @@ class Settings:
     def columns_without_estimated_parameters_message(self):
         message_lines = []
         for c in self.comparisons:
-            if not c.m_is_trained and not c.u_is_trained:
-                message_lines.append(
-                    f"{c.comparison_name} (no estimates for m or u values)"
-                )
-            elif not c.m_is_trained:
-                message_lines.append(f"{c.comparison_name} (no estimate for m values)")
-            elif not c.u_is_trained:
-                message_lines.append(f"{c.comparison_name} (no estimates for u values)")
+            msg = c.is_trained_message
+            if msg is not None:
+                message_lines.append(c.is_trained_message)
 
         if len(message_lines) == 0:
             message = (
                 "Your model is fully trained. All comparisons have at least "
-                "one estimate for their m and u values, and the global proportion of "
-                "matches can be estimated."
+                "one estimate for their m and u values"
+                #  and the global proportion of " "matches can be estimated."
             )
         else:
             message = "Your model is not yet fully trained. Missing estimates for:"
             message_lines.insert(0, message)
-            message_lines.append(
-                "This means that the"
-                " global proportion of matches cannot yet be estimated."
-            )
+            # message_lines.append(
+            #     "This means that the"
+            #     " global proportion of matches cannot yet be estimated."
+            # )
             message = "\n".join(message_lines)
 
         logger.info(message)
