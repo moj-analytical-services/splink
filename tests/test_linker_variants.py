@@ -98,3 +98,19 @@ def test_link_type(input_name, input_tables):
     linker.train_m_using_expectation_maximisation(blocking_rule)
 
     linker.predict()
+
+    record_1 = {
+        "id": 1,
+        "first_name": "George",
+        "surname": "Smith",
+        "dob": "1957-02-17",
+    }
+
+    record_2 = {
+        "id": 2,
+        "first_name": "George",
+        "surname": "Smith",
+        "dob": "1957-02-17",
+    }
+
+    df_two = linker.compare_two_records(record_1, record_2)
