@@ -66,7 +66,7 @@ def dfs():
 def test_link_type(input_name, input_tables):
     link_type, test_name = input_name.split("__")
 
-    input_tables = dfs()["dedupe_only__pass"]
+    input_tables = dfs()[input_name]
     settings = {
         "proportion_of_matches": 0.01,
         "unique_id_column_name": "id",
