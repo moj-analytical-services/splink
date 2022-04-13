@@ -521,7 +521,7 @@ def sql_gen_case_stmt_array_combinations_leven_abs_3(
 
     Args:
         col_name (str): The name of the column we want to generate a custom case expression for e.g. surname
-        threshold1 (int, optional):  Defaults to 1.
+        threshold1 (int, optional):  Defaults to 0.
         threshold2 (int, optional):  Defaults to 2.
         gamma_col_name (str, optional): . The name of the column, for the alias e.g. surname
         zero_length_is_null (bool, optional):  Whether to treat a zero length array as a null. Defaults to True.
@@ -559,7 +559,7 @@ def sql_gen_case_stmt_array_combinations_leven_rel_3(
 
     Args:
         col_name (str): The name of the column we want to generate a custom case expression for e.g. surname
-        threshold1 (int, optional):  Defaults to 0.05 (i.e. 5%)
+        threshold1 (int, optional):  Defaults to 0.0 (i.e. 0%)
         threshold2 (int, optional):  Defaults to 0.1 (i.e. 10%)
         gamma_col_name (str, optional): . The name of the column, for the alias e.g. surname
         zero_length_is_null (bool, optional):  Whether to treat a zero length array as a null. Defaults to True.
