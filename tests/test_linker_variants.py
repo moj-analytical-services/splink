@@ -113,4 +113,4 @@ def test_link_type(input_name, input_tables):
         "dob": "1957-02-17",
     }
 
-    df_two = linker.compare_two_records(record_1, record_2)
+    linker.compare_two_records(record_1, record_2)
