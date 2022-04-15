@@ -114,3 +114,7 @@ def test_link_type(input_name, input_tables):
     }
 
     linker.compare_two_records(record_1, record_2)
+
+    linker.find_matches_to_new_records(
+        [record_1], blocking_rules=[]
+    ).as_pandas_dataframe()
