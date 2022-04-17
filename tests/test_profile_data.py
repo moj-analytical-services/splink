@@ -22,6 +22,18 @@ def test_profile_using_duckdb():
     )
 
 
+def test_profile_using_duckdb_no_settings():
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    linker = DuckDBLinker(input_tables={"fake_data_1": df}, connection=":memory:")
+
+    linker.profile_columns(
+        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
+        top_n=15,
+        bottom_n=5,
+    )
+
+
 def test_profile_using_sqlite():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 

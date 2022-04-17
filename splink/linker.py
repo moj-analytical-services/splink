@@ -15,7 +15,7 @@ from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .em_training_session import EMTrainingSession
 from .misc import bayes_factor_to_prob, escape_columns, prob_to_bayes_factor
-from .predict import predict
+from .predict import predict_from_comparison_vectors_sql
 from .settings import Settings
 from .term_frequencies import (
     compute_all_term_frequencies_sqls,
@@ -120,7 +120,12 @@ class Linker:
     def __init__(self, settings_dict=None, input_tables={}, set_up_basic_logging=True):
 
         self.pipeline = SQLPipeline()
-        self.initialise_settings(settings_dict)
+
+        self.settings_dict = settings_dict
+        if settings_dict is None:
+            self._settings_obj = None
+        else:
+            self._settings_obj = Settings(settings_dict)
 
         self.input_dfs = self._get_input_dataframe_dict(input_tables)
 
@@ -134,7 +139,7 @@ class Linker:
 
         self.compare_two_records_mode = False
 
-        self.schema = ""
+        self.output_schema = ""
 
         self.debug_mode = False
 
@@ -158,10 +163,8 @@ class Linker:
 
     def initialise_settings(self, settings_dict):
         self.settings_dict = settings_dict
-        if settings_dict is None:
-            self._settings_obj = None
-        else:
-            self._settings_obj = Settings(settings_dict)
+        self._settings_obj = Settings(settings_dict)
+        self._validate_input_dfs()
 
     @property
     def _input_tablename_l(self):
@@ -211,9 +214,9 @@ class Linker:
         else:
             return False
 
-    def _create_schema(self, table_name):
-        if self.schema:
-            return f"{self.schema}.{table_name}"
+    def _prepend_schema_to_table_name(self, table_name):
+        if self.output_schema:
+            return f"{self.output_schema}.{table_name}"
         return table_name
 
     def _initialise_df_concat(self, materialise=True):
@@ -237,7 +240,12 @@ class Linker:
             self.execute_sql_pipeline(materialise_as_hash=False)
 
             source_dataset_col = self.settings_obj._source_dataset_column_name
-            df_l, df_r = list(self.input_dfs.values())
+            # Need df_l to be the one with the lowest id to preeserve the property
+            # that the left dataset is the one with the lowest concatenated id
+            keys = self.input_dfs.keys()
+            keys = list(sorted(keys))
+            df_l = self.input_dfs[keys[0]]
+            df_r = self.input_dfs[keys[1]]
 
             sql = f"""
             select * from __splink__df_concat_with_tf
@@ -319,29 +327,29 @@ class Linker:
 
         hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
         # Ensure hash is valid sql table name
-        hash = f"{output_tablename_templated}_{hash}"
+        table_name_hash = f"{output_tablename_templated}_{hash}"
 
         if use_cache:
 
             if self.table_exists_in_database(output_tablename_templated):
-                logger.debug(f"Using table {output_tablename_templated}")
+                logger.debug(f"Using existing table {output_tablename_templated}")
                 return self._df_as_obj(
                     output_tablename_templated, output_tablename_templated
                 )
 
-            if self.table_exists_in_database(hash):
+            if self.table_exists_in_database(table_name_hash):
                 logger.debug(
                     f"Using cache for {output_tablename_templated}"
-                    f" with physical name {hash}"
+                    f" with physical name {table_name_hash}"
                 )
-                return self._df_as_obj(output_tablename_templated, hash)
+                return self._df_as_obj(output_tablename_templated, table_name_hash)
 
         if self.debug_mode:
             print(sql)
 
         if materialise_as_hash:
             dataframe = self.execute_sql(
-                sql, output_tablename_templated, hash, transpile=transpile
+                sql, output_tablename_templated, table_name_hash, transpile=transpile
             )
         else:
             dataframe = self.execute_sql(
@@ -397,12 +405,13 @@ class Linker:
         for df in self.input_dfs.values():
             df.validate()
 
-        if self.settings_obj._link_type == "dedupe_only":
-            if len(self.input_dfs) > 1:
-                raise ValueError(
-                    'If link_type = "dedupe only" then input tables must contain',
-                    "only a single input table",
-                )
+        if self._settings_obj is not None:
+            if self.settings_obj._link_type == "dedupe_only":
+                if len(self.input_dfs) > 1:
+                    raise ValueError(
+                        'If link_type = "dedupe only" then input tables must contain'
+                        "only a single input table",
+                    )
 
     def deterministic_link(self, return_df_as_value=True):
 
@@ -416,6 +425,8 @@ class Linker:
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_u_values(self, target_rows)
         self.populate_m_u_from_trained_values()
+
+        self.settings_obj.columns_without_estimated_parameters_message()
 
     def train_m_from_label_column(self, label_colname):
         self._initialise_df_concat_with_tf(materialise=True)
@@ -489,12 +500,11 @@ class Linker:
         ccs = self.settings_obj.comparisons
 
         for cc in ccs:
-            for cl in cc.comparison_levels:
-                if not cl.is_null_level:
-                    if cl.has_estimated_u_values:
-                        cl.u_probability = cl.trained_u_median
-                    if cl.has_estimated_m_values:
-                        cl.m_probability = cl.trained_m_median
+            for cl in cc.comparison_levels_excluding_null:
+                if cl.has_estimated_u_values:
+                    cl.u_probability = cl.trained_u_median
+                if cl.has_estimated_m_values:
+                    cl.m_probability = cl.trained_m_median
 
     def train_m_and_u_using_expectation_maximisation(
         self,
@@ -526,7 +536,7 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict(self.settings_obj)
+        sqls = predict_from_comparison_vectors_sql(self.settings_obj)
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -552,7 +562,7 @@ class Linker:
 
         if blocking_rules is not None:
             self.settings_obj._blocking_rules_to_generate_predictions = blocking_rules
-        self.settings_obj._link_type = "link_only"
+        self.settings_obj._link_type = "link_only_find_matches_to_new_records"
         self.find_new_matches_mode = True
 
         sql = join_tf_to_input_df(self.settings_obj)
@@ -565,7 +575,7 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict(self.settings_obj)
+        sqls = predict_from_comparison_vectors_sql(self.settings_obj)
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -615,7 +625,7 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict(self.settings_obj)
+        sqls = predict_from_comparison_vectors_sql(self.settings_obj)
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 

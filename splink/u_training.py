@@ -5,6 +5,11 @@ from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import compute_new_parameters
 
+from .m_u_records_to_parameters import (
+    m_u_records_to_lookup_dict,
+    append_u_probability_to_comparison_level_trained_probabilities,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -22,7 +27,7 @@ def _num_target_rows_to_rows_to_sample(target_rows):
 
 def estimate_u_values(linker, target_rows):
 
-    original_settings_object = linker.settings_obj
+    original_settings_obj = linker.settings_obj
     training_linker = deepcopy(linker)
 
     training_linker.train_u_using_random_sample_mode = True
@@ -98,16 +103,11 @@ def estimate_u_values(linker, target_rows):
         r for r in param_records if r["comparison_name"] != "_proportion_of_matches"
     ]
 
-    for record in m_u_records:
-        cc = original_settings_object._get_comparison_by_name(record["comparison_name"])
-        gamma_val = record["comparison_vector_value"]
-        cl = cc.get_comparison_level_by_comparison_vector_value(gamma_val)
+    m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
+    for c in original_settings_obj.comparisons:
+        for cl in c.comparison_levels_excluding_null:
+            append_u_probability_to_comparison_level_trained_probabilities(
+                cl, m_u_records_lookup, "estimate u by random sampling"
+            )
 
-        cl.add_trained_u_probability(
-            record["u_probability"], "estimate u by random sampling"
-        )
-
-    logger.info(
-        "Trained m probabilities using random sampling - "
-        "u values have now been estimated for all comparisons"
-    )
+    logger.info("Trained u probabilities using random sampling")

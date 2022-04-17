@@ -11,7 +11,16 @@ def vertically_concatente_sql(linker):
 
     select_columns_sql = ", ".join(columns)
 
-    if linker.settings_obj._source_dataset_column_name_is_required:
+    # For data profiling, we need to vertically concat
+    # but user may not have provided a settings dict yet
+    if linker._settings_obj is None:
+        source_dataset_col_req = True
+    else:
+        source_dataset_col_req = (
+            linker.settings_obj._source_dataset_column_name_is_required
+        )
+
+    if source_dataset_col_req:
         sqls_to_union = []
         for df_obj in linker.input_dfs.values():
             sql = f"""

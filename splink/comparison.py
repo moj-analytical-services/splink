@@ -41,6 +41,10 @@ class Comparison:
         return cc
 
     @property
+    def comparison_levels_excluding_null(self):
+        return [cl for cl in self.comparison_levels if not cl.is_null_level]
+
+    @property
     def gamma_prefix(self):
         return self.settings_obj._gamma_prefix
 
@@ -252,16 +256,44 @@ class Comparison:
         return all(cl.has_estimated_u_values for cl in self.comparison_levels)
 
     @property
-    def m_is_trained(self):
+    def all_m_are_trained(self):
         return all(cl.m_is_trained for cl in self.comparison_levels)
 
     @property
-    def u_is_trained(self):
+    def all_u_are_trained(self):
         return all(cl.u_is_trained for cl in self.comparison_levels)
 
     @property
+    def some_m_are_trained(self):
+        return any(cl.m_is_trained for cl in self.comparison_levels_excluding_null)
+
+    @property
+    def some_u_are_trained(self):
+        return any(cl.u_is_trained for cl in self.comparison_levels_excluding_null)
+
+    @property
+    def is_trained_message(self):
+        messages = []
+        if self.all_m_are_trained and self.all_u_are_trained:
+            return None
+
+        if not self.some_u_are_trained:
+            messages.append("no u values are trained")
+        elif self.some_u_are_trained and not self.all_u_are_trained:
+            messages.append("some u values are not trained")
+
+        if not self.some_m_are_trained:
+            messages.append("no m values are trained.")
+        elif self.some_m_are_trained and not self.all_m_are_trained:
+            messages.append("some m values are not trained")
+
+        message = ", ".join(messages)
+        message = f"{self.comparison_name}: {message}"
+        return message
+
+    @property
     def is_trained(self):
-        return self.m_is_trained and self.u_is_trained
+        return self.all_m_are_trained and self.all_u_are_trained
 
     @property
     def as_detailed_records(self):
@@ -308,9 +340,9 @@ class Comparison:
 
         msg_template = "{header}    {m_or_u} values not fully trained"
 
-        if not self.m_is_trained:
+        if not self.all_m_are_trained:
             msgs.append(msg_template.format(header=header, m_or_u="m"))
-        if not self.u_is_trained:
+        if not self.all_u_are_trained:
             msgs.append(msg_template.format(header=header, m_or_u="u"))
 
         return msgs

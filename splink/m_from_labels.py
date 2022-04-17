@@ -1,6 +1,14 @@
+import logging
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import compute_new_parameters
 from .block_from_labels import block_from_labels
+from .m_u_records_to_parameters import (
+    m_u_records_to_lookup_dict,
+    append_m_probability_to_comparison_level_trained_probabilities,
+)
+
+
+logger = logging.getLogger(__name__)
 
 
 def estimate_m_from_pairwise_labels(linker, table_name):
@@ -31,12 +39,11 @@ def estimate_m_from_pairwise_labels(linker, table_name):
         r for r in param_records if r["comparison_name"] != "_proportion_of_matches"
     ]
 
-    for record in m_u_records:
-        cc = linker.settings_obj._get_comparison_by_name(record["comparison_name"])
-        gamma_val = record["comparison_vector_value"]
-        cl = cc.get_comparison_level_by_comparison_vector_value(gamma_val)
+    m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
+    for cc in linker.settings_obj.comparisons:
+        for cl in cc.comparison_levels_excluding_null:
+            append_m_probability_to_comparison_level_trained_probabilities(
+                cl, m_u_records_lookup, "estimate m from pairwise labels"
+            )
 
-        cl.add_trained_m_probability(
-            record["m_probability"], "estimate m from pairwise labels"
-        )
     linker.populate_m_u_from_trained_values()

@@ -139,16 +139,38 @@ class EMTrainingSession:
             orig_cc = self.original_settings_obj._get_comparison_by_name(
                 cc.comparison_name
             )
-            for cl in cc.comparison_levels:
-                if not cl.is_null_level:
-                    orig_cl = orig_cc.get_comparison_level_by_comparison_vector_value(
-                        cl.comparison_vector_value
-                    )
-                    if not self._training_fix_m_probabilities:
+            for cl in cc.comparison_levels_excluding_null:
+
+                orig_cl = orig_cc.get_comparison_level_by_comparison_vector_value(
+                    cl.comparison_vector_value
+                )
+                # TODO:  HERE'S WHERE THE LOGGING SHOULD HAPPEN
+                if not self._training_fix_m_probabilities:
+                    not_observed = "level not observed in training dataset"
+                    if cl._m_probability == not_observed:
+                        orig_cl.add_trained_m_probability(not_observed, training_desc)
+                        logger.info(
+                            f"m probability not trained for {cc.comparison_name} - "
+                            f"{cl.label_for_charts} (comparison vector value: "
+                            f"{cl.comparison_vector_value}). This usually means the "
+                            "comparison level was never observed in the training data."
+                        )
+                    else:
                         orig_cl.add_trained_m_probability(
                             cl.m_probability, training_desc
                         )
-                    if not self._training_fix_u_probabilities:
+
+                if not self._training_fix_u_probabilities:
+                    not_observed = "level not observed in training dataset"
+                    if cl._u_probability == not_observed:
+                        orig_cl.add_trained_u_probability(not_observed, training_desc)
+                        logger.info(
+                            f"u probability not trained for {cc.comparison_name} - "
+                            f"{cl.label_for_charts} (comparison vector value: "
+                            f"{cl.comparison_vector_value}). This usually means the "
+                            "comparison level was never observed in the training data."
+                        )
+                    else:
                         orig_cl.add_trained_u_probability(
                             cl.u_probability, training_desc
                         )
@@ -250,7 +272,7 @@ class EMTrainingSession:
 
         previous_iteration = self.comparison_level_history[-2]
         this_iteration = self.comparison_level_history[-1]
-        max_change = 0
+        max_change = -0.1
 
         max_change_levels = {
             "previous_iteration": None,

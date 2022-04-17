@@ -114,13 +114,6 @@ class ComparisonLevel:
         if self.is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
 
-        if value == "level not observed in training dataset":
-            cc_n = self.comparison.comparison_name
-            cl_n = self.label_for_charts
-            warnings.warn(
-                f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
-                "unable to train value"
-            )
         self._m_probability = value
 
     @property
@@ -166,11 +159,13 @@ class ComparisonLevel:
             )
 
     def add_trained_u_probability(self, val, desc="no description given"):
+
         self.trained_u_probabilities.append(
             {"probability": val, "description": desc, "m_or_u": "u"}
         )
 
     def add_trained_m_probability(self, val, desc="no description given"):
+
         self.trained_m_probabilities.append(
             {"probability": val, "description": desc, "m_or_u": "m"}
         )
@@ -179,13 +174,17 @@ class ComparisonLevel:
     def has_estimated_u_values(self):
         if self.is_null_level:
             return True
-        return len(self.trained_u_probabilities) > 0
+        vals = [r["probability"] for r in self.trained_u_probabilities]
+        vals = [v for v in vals if isinstance(v, (int, float))]
+        return len(vals) > 0
 
     @property
     def has_estimated_m_values(self):
         if self.is_null_level:
             return True
-        return len(self.trained_m_probabilities) > 0
+        vals = [r["probability"] for r in self.trained_m_probabilities]
+        vals = [v for v in vals if isinstance(v, (int, float))]
+        return len(vals) > 0
 
     @property
     def has_estimated_values(self):
@@ -193,23 +192,39 @@ class ComparisonLevel:
 
     @property
     def trained_m_median(self):
-        return median([r["probability"] for r in self.trained_m_probabilities])
+        vals = [r["probability"] for r in self.trained_m_probabilities]
+        vals = [v for v in vals if isinstance(v, (int, float))]
+        if len(vals) == 0:
+            return None
+        return median(vals)
 
     @property
     def trained_u_median(self):
-        return median([r["probability"] for r in self.trained_u_probabilities])
+        vals = [r["probability"] for r in self.trained_u_probabilities]
+        vals = [v for v in vals if isinstance(v, (int, float))]
+        if len(vals) == 0:
+            return None
+        return median(vals)
 
     @property
     def m_is_trained(self):
         if self.is_null_level:
             return True
-        return self._m_probability is not None
+        if self._m_probability == "level not observed in data":
+            return False
+        if self._m_probability is None:
+            return False
+        return True
 
     @property
     def u_is_trained(self):
         if self.is_null_level:
             return True
-        return self._u_probability is not None
+        if self._u_probability == "level not observed in data":
+            return False
+        if self._u_probability is None:
+            return False
+        return True
 
     @property
     def is_trained(self):
