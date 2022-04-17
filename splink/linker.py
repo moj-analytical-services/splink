@@ -225,7 +225,12 @@ class Linker:
             self.execute_sql_pipeline(materialise_as_hash=False)
 
             source_dataset_col = self.settings_obj._source_dataset_column_name
-            df_l, df_r = list(self.input_dfs.values())
+            # Need df_l to be the one with the lowest id to preeserve the property
+            # that the left dataset is the one with the lowest concatenated id
+            keys = self.input_dfs.keys()
+            keys = list(sorted(keys))
+            df_l = self.input_dfs[keys[0]]
+            df_r = self.input_dfs[keys[1]]
 
             sql = f"""
             select * from __splink__df_concat_with_tf
