@@ -130,6 +130,13 @@
                   "type": "number",
                   "default": 1.0,
                   "examples": ["first_name", "postcode"]
+                },
+                "tf_minimum_u_value": {
+                  "title": "Where the term frequency adjustment implies a u value below this value, use this minimum value instead",
+                  "description": "This prevents excessive weight being assigned to very unusual terms, such as a collision on a typo",
+                  "type": "number",
+                  "default": 0.0,
+                  "examples": [1e-3, 1e-9]
                 }
               },
               "required": ["sql_condition"]

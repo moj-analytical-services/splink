@@ -65,6 +65,8 @@ class ComparisonLevel:
             "tf_adjustment_weight"
         )
 
+        self.tf_minimum_u_value = self.level_dict_val_else_default("tf_minimum_u_value")
+
         # Private values controlled with getter/setter
         self._m_probability = self._level_dict.get("m_probability")
         self._u_probability = self._level_dict.get("u_probability")
@@ -425,6 +427,7 @@ class ComparisonLevel:
 
             tf_adjustment_exists = f"{coalesce_l_r} is not null"
             u_prob_exact_match = self.u_probability_corresponding_to_exact_match
+
             # Using coalesce protects against one of the tf adjustments being null
             # Which would happen if the user provided their own tf adjustment table
             # That didn't contain some of the values in this data
@@ -439,8 +442,11 @@ class ComparisonLevel:
                     {u_prob_exact_match}D /
                 (CASE
                     WHEN {coalesce_l_r} >= {coalesce_r_l}
-                    THEN {coalesce_l_r}
-                    ELSE {coalesce_r_l}
+                    AND {coalesce_l_r} > {self.tf_minimum_u_value}D
+                        THEN {coalesce_l_r}
+                    WHEN {coalesce_r_l}  > {self.tf_minimum_u_value}D
+                        THEN {coalesce_r_l}
+                    ELSE {self.tf_minimum_u_value}D
                 END),
                     {self.tf_adjustment_weight}D
                 )
