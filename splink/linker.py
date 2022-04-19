@@ -6,6 +6,7 @@ import warnings
 
 from .charts import (
     match_weight_histogram,
+    missingness_chart,
     precision_recall_chart,
     roc_chart,
     parameter_estimate_comparisons,
@@ -24,6 +25,7 @@ from .term_frequencies import (
     join_tf_to_input_df,
 )
 from .profile_data import profile_columns
+from .missingness import missingness_data
 
 from .m_training import estimate_m_values_from_label_column
 from .u_training import estimate_u_values
@@ -705,6 +707,10 @@ class Linker:
         records = [r for r in records if r["m_or_u"] in to_retain]
 
         return parameter_estimate_comparisons(records)
+
+    def missingness_chart(self, input_dataset=None):
+        records = missingness_data(self, input_dataset)
+        return missingness_chart(records, input_dataset)
 
     def _predict_warning(self):
 

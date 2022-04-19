@@ -171,7 +171,6 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
 
     input_tablename = "__splink__df_concat_with_tf"
     if not linker.table_exists_in_database("__splink__df_concat_with_tf"):
-        # Initialise __splink__df_concat
         linker._initialise_df_concat()
         input_tablename = "__splink__df_concat"
 
