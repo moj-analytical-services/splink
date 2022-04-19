@@ -446,7 +446,7 @@ class ComparisonLevel:
             else:
                 # This sql works correctly even when the tf_minimum_u_value is 0.0
                 # but is less efficient to execute, hence the above if statement
-                divisor_sql = """
+                divisor_sql = f"""
                 (CASE
                     WHEN {coalesce_l_r} >= {coalesce_r_l}
                     AND {coalesce_l_r} > {self.tf_minimum_u_value}D
