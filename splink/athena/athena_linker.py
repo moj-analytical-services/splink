@@ -3,12 +3,12 @@ from splink.linker import Linker, SplinkDataFrame
 import logging
 from splink.logging_messages import execute_sql_logging_message_info, log_sql
 
-logger = logging.getLogger(__name__)
-
 # import utils for communicating with athena
 import athenawrangler as wr
 import boto3
 from splink.athena.athena_utils import boto_utils
+
+logger = logging.getLogger(__name__)
 
 
 class AthenaDataFrame(SplinkDataFrame):
@@ -177,8 +177,10 @@ class AthenaLinker(Linker):
         path = f"{self.boto_utils.s3_output}{physical_name}/"
         metadata = self.ctas_query_info[physical_name]
         metadata_urls = [
-            f'{metadata["ctas_query_metadata"].output_location}.metadata',  # metadata output location
-            metadata["ctas_query_metadata"].manifest_location,  # manifest location
+            # metadata output location
+            f'{metadata["ctas_query_metadata"].output_location}.metadata',
+            # manifest location
+            metadata["ctas_query_metadata"].manifest_location,
         ]
         # delete our folder
         wr.s3.delete_objects(boto3_session=self.boto3_session, path=path)
