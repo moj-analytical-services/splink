@@ -4,7 +4,7 @@ import logging
 from splink.logging_messages import execute_sql_logging_message_info, log_sql
 
 # import utils for communicating with athena
-import athenawrangler as wr
+import awswrangler as wr
 import boto3
 from splink.athena.athena_utils import boto_utils
 
