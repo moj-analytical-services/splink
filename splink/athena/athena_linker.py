@@ -65,8 +65,8 @@ class AthenaDataFrame(SplinkDataFrame):
                 "terminated. Please retry the link/dedupe job and report the issue "
                 "if this error persists."
             )
-
-    def as_record_dict(self, limit=None):
+    
+    def as_pandas_dataframe(self, limit=None):
         sql = f"""
         select *
         from {self.physical_name}
@@ -79,7 +79,12 @@ class AthenaDataFrame(SplinkDataFrame):
             database=self.athena_linker.output_schema,
             s3_output=self.athena_linker.boto_utils.s3_output,
             keep_files=False,
+            ctas_approach=True,
         )
+        return out_df
+    
+    def as_record_dict(self, limit=None):
+        out_df = self.as_pandas_dataframe(limit)
         return out_df.to_dict(orient="records")
 
     def get_schema_info(self, input_table):
