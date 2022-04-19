@@ -434,12 +434,19 @@ class ComparisonLevel:
 
             # In this case rather than taking the greater of the two, we take
             # whichever value exists
-            sql = f"""
-            WHEN  {gamma_colname_value_is_this_level} then
-                (CASE WHEN {tf_adjustment_exists}
-                THEN
-                POW(
-                    {u_prob_exact_match}D /
+
+            if self.tf_minimum_u_value == 0.0:
+                divisor_sql = f"""
+                (CASE
+                    WHEN {coalesce_l_r} >= {coalesce_r_l}
+                    THEN {coalesce_l_r}
+                    ELSE {coalesce_r_l}
+                END)
+                """
+            else:
+                # This sql works correctly even when the tf_minimum_u_value is 0.0
+                # but is less efficient to execute, hence the above if statement
+                divisor_sql = """
                 (CASE
                     WHEN {coalesce_l_r} >= {coalesce_r_l}
                     AND {coalesce_l_r} > {self.tf_minimum_u_value}D
@@ -447,7 +454,15 @@ class ComparisonLevel:
                     WHEN {coalesce_r_l}  > {self.tf_minimum_u_value}D
                         THEN {coalesce_r_l}
                     ELSE {self.tf_minimum_u_value}D
-                END),
+                END)
+                """
+
+            sql = f"""
+            WHEN  {gamma_colname_value_is_this_level} then
+                (CASE WHEN {tf_adjustment_exists}
+                THEN
+                POW(
+                    {u_prob_exact_match}D /{divisor_sql},
                     {self.tf_adjustment_weight}D
                 )
                 ELSE 1D
