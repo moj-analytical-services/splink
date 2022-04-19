@@ -145,7 +145,7 @@ def get_settings_dict():
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
-        "additional_columns_to_retain": ["group"],
+        "additional_columns_to_retain": ["cluster"],
         "em_convergence": 0.001,
         "max_iterations": 20,
     }
