@@ -4,12 +4,12 @@ from uuid import uuid4
 
 
 class boto_utils:
-
     def __init__(
-        self, 
-        boto3_session: boto3.session.Session, 
-        output_bucket: str, 
-        folder_in_bucket_for_outputs: str):
+        self,
+        boto3_session: boto3.session.Session,
+        output_bucket: str,
+        folder_in_bucket_for_outputs: str,
+    ):
 
         if not type(boto3_session) == boto3.session.Session:
             raise ValueError("Please enter a valid boto3 session object.")
@@ -26,8 +26,12 @@ class boto_utils:
     def get_table_dir(self):
 
         out_path = os.path.join(
-            "s3://", self.bucket, self.folder_in_bucket_for_outputs, 
-            self.s3_output_name_prefix, self.session_id)
+            "s3://",
+            self.bucket,
+            self.folder_in_bucket_for_outputs,
+            self.s3_output_name_prefix,
+            self.session_id,
+        )
         if out_path[-1] != "/":
             out_path += "/"
 
