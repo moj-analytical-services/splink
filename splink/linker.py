@@ -87,21 +87,6 @@ class SplinkDataFrame:
             f"physical name {self.physical_name}"
         )
 
-    def _check_drop_table_created_by_splink(self, force_non_splink_table=False):
-
-        if not self.physical_name.startswith("__splink__"):
-            if not force_non_splink_table:
-                raise ValueError(
-                    f"You've asked to drop table {self.physical_name} from your "
-                    "database which is not a table created by Splink.  If you really "
-                    "want to drop this table, you can do so by setting "
-                    "force_non_splink_table=True"
-                )
-        logger.debug(
-            f"Dropping table with templated name {self.templated_name} and "
-            f"physical name {self.physical_name}"
-        )
-
     def drop_table_from_database(self, force_non_splink_table=False):
         raise NotImplementedError(
             "Drop table from database not implemented for this linker"
