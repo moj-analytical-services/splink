@@ -46,13 +46,14 @@ class AthenaDataFrame(SplinkDataFrame):
             if not force_non_splink_table:
                 raise ValueError(
                     f"You've asked to drop data housed under the filepath "
-                    f"{self.athena_linker.boto_utils.s3_output} "
-                    "from your s3 output bucket, which is not a folder created by Splink. "
-                    "If you really want to delete this data, you can do so by setting "
-                    "force_non_splink_table=True."
+                    f"{self.athena_linker.boto_utils.s3_output} from your "
+                    "s3 output bucket, which is not a folder created by "
+                    "Splink. If you really want to delete this data, you "
+                    "can do so by setting force_non_splink_table=True."
                 )
 
-        # validate that the ctas_query_info is for the given table we're interacting with
+        # validate that the ctas_query_info is for the given table
+        # we're interacting with
         if (
             self.athena_linker.ctas_query_info[self.physical_name]["ctas_table"]
             != self.physical_name
