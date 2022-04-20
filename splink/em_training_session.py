@@ -107,9 +107,9 @@ class EMTrainingSession:
             "----- Starting EM training session -----\n"
             f"Training the {mu} of the model by blocking on: "
             f"{self.blocking_rule_for_training}\n"
-            "Parameter estimates will be made for the following comparison: "
+            "Parameter estimates will be made for the following comparison(s): "
             f"{estimated}\n"
-            f"Parameter estimates cannot be made for the following comparison"
+            f"Parameter estimates cannot be made for the following comparison(s)"
             f" since they are used in the blocking rules: {not_estimated}"
         )
 
