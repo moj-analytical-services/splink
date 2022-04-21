@@ -127,6 +127,7 @@ def match_weights_interactive_history_chart(records, as_dict=False):
         max_iteration = max(r["iteration"], max_iteration)
 
     chart["params"][0]["bind"]["max"] = max_iteration
+    chart["params"][0]["value"] = max_iteration
     return vegalite_or_json(chart, as_dict=as_dict)
 
 
@@ -141,6 +142,7 @@ def m_u_values_interactive_history_chart(records, as_dict=False):
         max_iteration = max(r["iteration"], max_iteration)
 
     chart["params"][0]["bind"]["max"] = max_iteration
+    chart["params"][0]["value"] = max_iteration
     return vegalite_or_json(chart, as_dict=as_dict)
 
 
