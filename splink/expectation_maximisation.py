@@ -102,6 +102,7 @@ def expectation_maximisation(em_training_session, df_comparison_vector_values):
 
     max_iterations = settings_obj._max_iterations
     em_convergece = settings_obj._em_convergence
+    logger.info("")  # newline
     for i in range(1, max_iterations + 1):
         sqls = predict_from_comparison_vectors_sql(settings_obj)
         for sql in sqls:
@@ -122,4 +123,4 @@ def expectation_maximisation(em_training_session, df_comparison_vector_values):
 
         if max_change_dict["max_abs_change_value"] < em_convergece:
             break
-    logger.info(f"EM converged after {i} iterations")
+    logger.info(f"\nEM converged after {i} iterations")

@@ -86,13 +86,15 @@ class EMTrainingSession:
         self.add_iteration()
 
     def _training_log_message(self):
-        not_estimated = ", ".join(
-            [cc.comparison_name for cc in self.comparisons_that_cannot_be_estimated]
-        )
+        not_estimated = [
+            cc.comparison_name for cc in self.comparisons_that_cannot_be_estimated
+        ]
+        not_estimated = "".join([f"\n    - {cc}" for cc in not_estimated])
 
-        estimated = ", ".join(
-            [cc.comparison_name for cc in self.comparisons_that_can_be_estimated]
-        )
+        estimated = [
+            cc.comparison_name for cc in self.comparisons_that_can_be_estimated
+        ]
+        estimated = "".join([f"\n    - {cc}" for cc in estimated])
 
         if self._training_fix_m_probabilities and self._training_fix_u_probabilities:
             raise ValueError("Can't train model if you fix both m and u probabilites")
@@ -104,12 +106,12 @@ class EMTrainingSession:
             mu = "m and u probabilities"
 
         logger.info(
-            "----- Starting EM training session -----\n"
-            f"Training the {mu} of the model by blocking on: "
-            f"{self.blocking_rule_for_training}\n"
-            "Parameter estimates will be made for the following comparison(s): "
+            "\n----- Starting EM training session -----\n\n"
+            f"Training the {mu} of the model by blocking on:\n"
+            f"{self.blocking_rule_for_training}\n\n"
+            "Parameter estimates will be made for the following comparison(s):"
             f"{estimated}\n"
-            f"Parameter estimates cannot be made for the following comparison(s)"
+            "\nParameter estimates cannot be made for the following comparison(s)"
             f" since they are used in the blocking rules: {not_estimated}"
         )
 

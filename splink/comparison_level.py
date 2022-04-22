@@ -3,8 +3,9 @@ import re
 from statistics import median
 from textwrap import dedent
 from typing import TYPE_CHECKING
+import logging
 
-import warnings
+
 import sqlglot
 from sqlglot.expressions import EQ, Column, Identifier
 
@@ -13,9 +14,12 @@ from .input_column import InputColumn
 from .misc import dedupe_preserving_order, normalise, interpolate
 from .parse_sql import get_columns_used_from_sql
 
+
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from .settings import Settings
+
+logger = logging.getLogger(__name__)
 
 
 def _is_exact_match(sql):
@@ -115,6 +119,14 @@ class ComparisonLevel:
     def m_probability(self, value):
         if self.is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
+        if value == "level not observed in training dataset":
+            cc_n = self.comparison.comparison_name
+            cl_n = self.label_for_charts
+            logger.warn(
+                "\nWARNING:\n"
+                f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
+                "unable to train m value"
+            )
 
         self._m_probability = value
 
@@ -136,9 +148,10 @@ class ComparisonLevel:
         if value == "level not observed in training dataset":
             cc_n = self.comparison.comparison_name
             cl_n = self.label_for_charts
-            warnings.warn(
-                f"Level {cl_n} on  comparison {cc_n} not observed in dataset, "
-                "unable to train value"
+            logger.warn(
+                "\nWARNING:\n"
+                f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
+                "unable to train u value"
             )
         self._u_probability = value
 
