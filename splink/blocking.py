@@ -17,8 +17,8 @@ def _sql_gen_and_not_previous_rules(previous_rules: list):
 
 def _sql_gen_composite_unique_id(unique_id_cols, l_or_r):
     if len(unique_id_cols) == 1:
-        return f"{l_or_r}.{unique_id_cols[0].name}"
-    cols = [f"{l_or_r}.{c.name}" for c in unique_id_cols]
+        return f"{l_or_r}.{unique_id_cols[0].name()}"
+    cols = [f"{l_or_r}.{c.name()}" for c in unique_id_cols]
 
     return " || '-__-' || ".join(cols)
 
@@ -36,7 +36,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
         source_dataset_col = unique_id_cols[0]
         where_condition = (
             f"where {id_expr_l} < {id_expr_r} "
-            f"and l.{source_dataset_col.name} != r.{source_dataset_col.name}"
+            f"and l.{source_dataset_col.name()} != r.{source_dataset_col.name()}"
         )
 
     return where_condition

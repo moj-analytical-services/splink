@@ -111,15 +111,15 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.l_name_as_l)
+            cols.append(uid_col.l_name_as_l())
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.r_name_as_r)
+            cols.append(uid_col.r_name_as_r())
 
         for cc in self.comparisons:
             cols.extend(cc.columns_to_select_for_blocking)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.l_r_names_as_l_r)
+            cols.extend(add_col.l_r_names_as_l_r())
 
         return cols
 
@@ -128,15 +128,15 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_l)
+            cols.append(uid_col.name_l())
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_r)
+            cols.append(uid_col.name_r())
 
         for cc in self.comparisons:
             cols.extend(cc.columns_to_select_for_comparison_vector_values)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.names_l_r)
+            cols.extend(add_col.names_l_r())
 
         if self._needs_matchkey_column:
             cols.append("match_key")
@@ -149,15 +149,15 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_l)
+            cols.append(uid_col.name_l())
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_r)
+            cols.append(uid_col.name_r())
 
         for cc in self.comparisons:
             cols.extend(cc.columns_to_select_for_bayes_factor_parts)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.names_l_r)
+            cols.extend(add_col.names_l_r())
 
         if self._needs_matchkey_column:
             cols.append("match_key")
@@ -170,15 +170,15 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_l)
+            cols.append(uid_col.name_l())
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_r)
+            cols.append(uid_col.name_r())
 
         for cc in self.comparisons:
             cols.extend(cc.columns_to_select_for_predict)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.names_l_r)
+            cols.extend(add_col.names_l_r())
 
         if self._needs_matchkey_column:
             cols.append("match_key")

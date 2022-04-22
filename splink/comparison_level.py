@@ -339,8 +339,8 @@ class ComparisonLevel:
         cols = self.input_columns_used_by_sql_condition
 
         for c in cols:
-            output_cols.extend(c.l_r_names_as_l_r)
-            output_cols.extend(c.l_r_tf_names_as_l_r)
+            output_cols.extend(c.l_r_names_as_l_r())
+            output_cols.extend(c.l_r_tf_names_as_l_r())
 
         return dedupe_preserving_order(output_cols)
 
@@ -435,8 +435,12 @@ class ComparisonLevel:
         else:
             tf_adj_col = self.tf_adjustment_input_column
 
-            coalesce_l_r = f"coalesce({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r})"
-            coalesce_r_l = f"coalesce({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l})"
+            coalesce_l_r = (
+                f"coalesce({tf_adj_col.tf_name_l()}, {tf_adj_col.tf_name_r()})"
+            )
+            coalesce_r_l = (
+                f"coalesce({tf_adj_col.tf_name_r()}, {tf_adj_col.tf_name_l()})"
+            )
 
             tf_adjustment_exists = f"{coalesce_l_r} is not null"
             u_prob_exact_match = self.u_probability_corresponding_to_exact_match
