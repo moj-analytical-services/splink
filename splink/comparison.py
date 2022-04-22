@@ -283,12 +283,12 @@ class Comparison:
             messages.append("some u values are not trained")
 
         if not self.some_m_are_trained:
-            messages.append("no m values are trained.")
+            messages.append("no m values are trained")
         elif self.some_m_are_trained and not self.all_m_are_trained:
             messages.append("some m values are not trained")
 
         message = ", ".join(messages)
-        message = f"{self.comparison_name}: {message}"
+        message = f"    - {self.comparison_name} ({message})."
         return message
 
     @property

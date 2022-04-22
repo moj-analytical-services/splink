@@ -2,7 +2,6 @@ import logging
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
-import warnings
 
 from .charts import (
     match_weight_histogram,
@@ -528,6 +527,7 @@ class Linker:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
         predictions = self.execute_sql_pipeline([])
+        self._predict_warning()
         return predictions
 
     def records_to_table(records, as_table_name):
@@ -716,6 +716,7 @@ class Linker:
 
         if not self.settings_obj.is_fully_trained:
             msg = (
+                "\n -- WARNING --\n"
                 "You have called predict(), but there are some parameter "
                 "estimates which have neither been estimated or specified in your "
                 "settings dictionary.  To produce predictions the following"
@@ -725,4 +726,4 @@ class Linker:
 
             warn_message = "\n".join([msg] + messages)
 
-            warnings.warn(warn_message)
+            logger.warn(warn_message)
