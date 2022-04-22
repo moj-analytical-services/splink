@@ -1,14 +1,23 @@
+from .input_column import InputColumn
+
+
 def missingness_sqls(columns, input_tablename):
 
     sqls = []
     col_template = """
                 select
-                    count({col_name}) as non_null_count,
+                    count({col_name_escaped}) as non_null_count,
                     '{col_name}' as column_name
                 from {input_tablename}"""
+
+    columns = [InputColumn(col_name) for col_name in columns]
     selects = [
-        col_template.format(col_name=col_name, input_tablename=input_tablename)
-        for col_name in columns
+        col_template.format(
+            col_name_escaped=col.name(),
+            col_name=col.name(escape=False),
+            input_tablename=input_tablename,
+        )
+        for col in columns
     ]
 
     sql = " union all ".join(selects)

@@ -135,14 +135,14 @@ class Comparison:
         output_cols = []
         for col in input_cols:
             if self.settings_obj._retain_matching_columns:
-                output_cols.extend(col.names_l_r)
+                output_cols.extend(col.names_l_r())
 
         output_cols.append(self.case_statement)
 
         for col in input_cols:
 
             if self.has_tf_adjustments:
-                output_cols.extend(col.tf_name_l_r)
+                output_cols.extend(col.tf_name_l_r())
 
         return dedupe_preserving_order(output_cols)
 
@@ -157,7 +157,7 @@ class Comparison:
         for col in input_cols:
             if self.settings_obj._retain_matching_columns:
 
-                output_cols.extend(col.names_l_r)
+                output_cols.extend(col.names_l_r())
 
         output_cols.append(self.gamma_column_name)
 
@@ -166,7 +166,7 @@ class Comparison:
             if self.has_tf_adjustments:
                 if self.settings_obj._retain_intermediate_calculation_columns:
 
-                    output_cols.extend(col.tf_name_l_r)
+                    output_cols.extend(col.tf_name_l_r())
 
         # Bayes factor case when statement
         sqls = [cl.bayes_factor_sql for cl in self.comparison_levels]
@@ -195,7 +195,7 @@ class Comparison:
         output_cols = []
         for col in input_cols:
             if self.settings_obj._retain_matching_columns:
-                output_cols.extend(col.names_l_r)
+                output_cols.extend(col.names_l_r())
 
         if (
             self.settings_obj._training_mode
@@ -207,7 +207,7 @@ class Comparison:
             if self.settings_obj._retain_intermediate_calculation_columns:
                 if self.has_tf_adjustments:
 
-                    output_cols.extend(col.tf_name_l_r)
+                    output_cols.extend(col.tf_name_l_r())
 
                 output_cols.extend(self.match_weight_columns_to_multiply)
 

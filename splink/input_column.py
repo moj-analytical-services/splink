@@ -2,6 +2,13 @@ from .default_from_jsonschema import default_value_from_schema
 from .misc import escape_column
 
 
+def escape_if_requested(col, escape=True):
+    if escape:
+        return escape_column(col)
+    else:
+        return col
+
+
 class InputColumn:
     def __init__(self, name, tf_adjustments=False, settings_obj=None):
 
@@ -44,40 +51,32 @@ class InputColumn:
             "_tf_prefix", "term_frequency_adjustment_column_prefix"
         )
 
-    @property
-    def name(self):
-        return escape_column(self.input_name)
+    def name(self, escape=True):
+        return escape_if_requested(self.input_name, escape)
 
-    @property
-    def name_l(self):
-        return escape_column(f"{self.input_name}_l")
+    def name_l(self, escape=True):
+        return escape_if_requested(f"{self.input_name}_l", escape)
 
-    @property
-    def name_r(self):
-        return escape_column(f"{self.input_name}_r")
+    def name_r(self, escape=True):
+        return escape_if_requested(f"{self.input_name}_r", escape)
 
-    @property
-    def names_l_r(self):
-        return [self.name_l, self.name_r]
+    def names_l_r(self, escape=True):
+        return [self.name_l(escape), self.name_r(escape)]
 
-    @property
-    def l_name_as_l(self):
-        return f"l.{self.name} as {self.name_l}"
+    def l_name_as_l(self, escape=True):
+        return f"l.{self.name(escape)} as {self.name_l(escape)}"
 
-    @property
-    def r_name_as_r(self):
-        return f"r.{self.name} as {self.name_r}"
+    def r_name_as_r(self, escape=True):
+        return f"r.{self.name(escape)} as {self.name_r(escape)}"
 
-    @property
-    def l_r_names_as_l_r(self):
-        return [self.l_name_as_l, self.r_name_as_r]
+    def l_r_names_as_l_r(self, escape=True):
+        return [self.l_name_as_l(escape), self.r_name_as_r(escape)]
 
-    @property
-    def bf_name(self):
+    def bf_name(self, escape=True):
         bf_prefix = self.from_settings_obj_else_default(
             "_bf_prefix", "bayes_factor_column_prefix"
         )
-        return escape_column(f"{bf_prefix}{self.input_name}")
+        return escape_if_requested(f"{bf_prefix}{self.input_name}", escape)
 
     @property
     def has_tf_adjustment(self):
@@ -86,48 +85,41 @@ class InputColumn:
                 return True
         return False
 
-    @property
-    def _tf_name_unesc(self):
+    def tf_name(self, escape=True):
+
         tf_prefix = self.from_settings_obj_else_default(
             "_tf_prefix", "term_frequency_adjustment_column_prefix"
         )
-        return f"{tf_prefix}{self.input_name}"
 
-    @property
-    def tf_name(self):
-        if self.has_tf_adjustment:
-            return escape_column(self._tf_name_unesc)
+        name = f"{tf_prefix}{self.input_name}"
 
-    @property
-    def tf_name_l(self):
         if self.has_tf_adjustment:
-            return escape_column(f"{self._tf_name_unesc}_l")
+            return escape_if_requested(name, escape)
 
-    @property
-    def tf_name_r(self):
+    def tf_name_l(self, escape=True):
         if self.has_tf_adjustment:
-            return escape_column(f"{self._tf_name_unesc}_r")
+            return escape_if_requested(f"{self.tf_name(escape=False)}_l", escape)
 
-    @property
-    def tf_name_l_r(self):
+    def tf_name_r(self, escape=True):
         if self.has_tf_adjustment:
-            return [self.tf_name_l, self.tf_name_r]
+            return escape_if_requested(f"{self.tf_name(escape=False)}_r", escape)
+
+    def tf_name_l_r(self, escape=True):
+        if self.has_tf_adjustment:
+            return [self.tf_name_l(escape), self.tf_name_r(escape)]
         else:
             return []
 
-    @property
-    def l_tf_name_as_l(self):
+    def l_tf_name_as_l(self, escape=True):
         if self.has_tf_adjustment:
-            return f"l.{self.tf_name} as {self.tf_name_l}"
+            return f"l.{self.tf_name(escape)} as {self.tf_name_l(escape)}"
 
-    @property
-    def r_tf_name_as_r(self):
+    def r_tf_name_as_r(self, escape=True):
         if self.has_tf_adjustment:
-            return f"r.{self.tf_name} as {self.tf_name_r}"
+            return f"r.{self.tf_name(escape)} as {self.tf_name_r(escape)}"
 
-    @property
-    def l_r_tf_names_as_l_r(self):
+    def l_r_tf_names_as_l_r(self, escape=True):
         if self.has_tf_adjustment:
-            return [self.l_tf_name_as_l, self.r_tf_name_as_r]
+            return [self.l_tf_name_as_l(escape), self.r_tf_name_as_r(escape)]
         else:
             return []

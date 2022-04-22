@@ -60,8 +60,8 @@ def _comparison_records(record_as_dict, comparison):
     waterfall_record["u_probability"] = cl.u_probability
     waterfall_record["bayes_factor_description"] = cl.bayes_factor_description
     input_cols_used = cc.input_columns_used_by_case_statement
-    input_cols_l = [ic.name_l.replace("`", "") for ic in input_cols_used]
-    input_cols_r = [ic.name_r.replace("`", "") for ic in input_cols_used]
+    input_cols_l = [ic.name_l(escape=False) for ic in input_cols_used]
+    input_cols_r = [ic.name_r(escape=False) for ic in input_cols_used]
     waterfall_record["value_l"] = ", ".join(
         [str(record_as_dict[n]) for n in input_cols_l]
     )
@@ -78,10 +78,10 @@ def _comparison_records(record_as_dict, comparison):
 
         if cl.tf_adjustment_input_column is not None:
             waterfall_record_2["value_l"] = str(
-                record_as_dict[cl.tf_adjustment_input_column.name_l.replace("`", "")]
+                record_as_dict[cl.tf_adjustment_input_column.name_l(escape=False)]
             )
             waterfall_record_2["value_r"] = str(
-                record_as_dict[cl.tf_adjustment_input_column.name_r.replace("`", "")]
+                record_as_dict[cl.tf_adjustment_input_column.name_r(escape=False)]
             )
         else:
             waterfall_record_2["value_l"] = ""
