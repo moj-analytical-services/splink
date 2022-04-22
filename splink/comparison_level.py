@@ -399,10 +399,11 @@ class ComparisonLevel:
             colnames = level.exact_match_colnames
             if len(colnames) != 1:
                 continue
-            if colnames[0] == self.tf_adjustment_input_column_name:
+            if colnames[0] == self.tf_adjustment_input_column_name.lower():
                 return level.u_probability
         raise ValueError(
-            f"Could not find exact match level for {self.tf_adjustment_input_col_name}."
+            "Could not find an exact match level for "
+            f"{self.tf_adjustment_input_column_name}."
             "\nAn exact match level is required to make a term frequency adjustment "
             "on a comparison level that is not an exact match."
         )
