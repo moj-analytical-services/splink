@@ -103,7 +103,7 @@ class DuckDBLinker(Linker):
 
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
-        delete_table_from_database(physical_name)
+        self.delete_table_from_database(physical_name)
 
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
