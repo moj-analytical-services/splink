@@ -91,9 +91,9 @@ class DuckDBLinker(Linker):
         if output_schema:
             self.con.execute(
                 f"""
-            CREATE SCHEMA IF NOT EXISTS {output_schema};
-            SET schema '{output_schema}';
-            """
+                    CREATE SCHEMA IF NOT EXISTS {output_schema};
+                    SET schema '{output_schema}';
+                """
             )
 
     def _df_as_obj(self, templated_name, physical_name):
@@ -103,9 +103,7 @@ class DuckDBLinker(Linker):
 
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
-        drop_sql = f"""
-        DROP TABLE IF EXISTS {physical_name}"""
-        self.con.execute(drop_sql)
+        delete_table_from_database(physical_name)
 
         if transpile:
             sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
