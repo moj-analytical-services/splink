@@ -13,8 +13,24 @@ def get_columns_used_from_sql(sql, dialect="spark", retain_table_prefix=False):
         if Lambda in path.values():
             continue
         if type(subtree) in (Column, Bracket):
-            if retain_table_prefix:
-                column_names.add(subtree.sql())
+
+            if subtree.find(Bracket) and type(subtree) == Column:
+                # Column with bracket in it
+                table = subtree.table
+                column = subtree.this.this.this
+            elif type(subtree.parent) != Column and type(subtree) == Column:
+                # Plain column
+                table = subtree.table
+
+                column = subtree.this.this
             else:
-                column_names.add(subtree.this.sql())
+                # Plain bracket
+                table = None
+                column = subtree.this.this
+
+            if retain_table_prefix and table is not None:
+                column_names.add(f"{table.this}.{column}")
+            else:
+                column_names.add(column)
+
     return list(column_names)
