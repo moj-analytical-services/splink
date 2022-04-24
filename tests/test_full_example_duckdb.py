@@ -1,4 +1,6 @@
 import os
+
+from altair.vegalite.v4.schema.core import Orient
 from splink.duckdb.duckdb_linker import DuckDBLinker
 import pandas as pd
 
@@ -37,7 +39,9 @@ def test_full_example_duckdb(tmp_path):
         df_predict, os.path.join(tmp_path, "test_scv_duckdb.html"), True, 2
     )
 
-    df_predict.as_pandas_dataframe()
+    df_e = df_predict.as_pandas_dataframe(limit=5)
+    records = df_e.to_dict(orient="records")
+    linker.waterfall_chart(records)
 
     # Create labels
     df_10 = df.head(10).copy()
