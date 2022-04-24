@@ -9,6 +9,7 @@ from .charts import (
     precision_recall_chart,
     roc_chart,
     parameter_estimate_comparisons,
+    waterfall_chart,
 )
 
 from .blocking import block_using_rules_sql
@@ -675,6 +676,9 @@ class Linker:
         df = histogram_data(self, df_predict, target_bins)
         recs = df.as_record_dict()
         return match_weight_histogram(recs, width=width, height=height)
+
+    def waterfall_chart(self, records, filter_nulls=True, as_dict=False):
+        return waterfall_chart(records, self.settings_obj, filter_nulls, as_dict)
 
     def splink_comparison_viewer(
         self, df_predict, out_path, overwrite=False, num_example_rows=2
