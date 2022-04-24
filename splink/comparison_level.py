@@ -295,7 +295,7 @@ class ComparisonLevel:
             return True
 
         try:
-            sqlglot.parse_one(sql)
+            sqlglot.parse_one(sql, read="spark")
         except sqlglot.ParseError as e:
             raise ValueError(f"Error parsing sql_statement:\n{sql}") from e
 

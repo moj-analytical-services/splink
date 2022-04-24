@@ -54,14 +54,14 @@ class Comparison:
 
     @property
     def bf_column_name(self):
-        return f"{self.settings_obj._bf_prefix}{self.comparison_name}"
+        return f"{self.settings_obj._bf_prefix}{self.comparison_name}".replace(" ", "_")
 
     @property
     def bf_tf_adj_column_name(self):
         bf = self.settings_obj._bf_prefix
         tf = self.settings_obj._tf_prefix
         cc_name = self.comparison_name
-        return f"{bf}{tf}adj_{cc_name}"
+        return f"{bf}{tf}adj_{cc_name}".replace(" ", "_")
 
     @property
     def has_tf_adjustments(self):
@@ -108,7 +108,7 @@ class Comparison:
 
     @property
     def gamma_column_name(self):
-        return f"{self.gamma_prefix}{self.comparison_name}"
+        return f"{self.gamma_prefix}{self.comparison_name}".replace(" ", "_")
 
     @property
     def tf_adjustment_input_col_names(self):

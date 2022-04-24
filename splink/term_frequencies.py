@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def colname_to_tf_tablename(colname):
+    colname = colname.replace(" ", "_")
     return f"__splink__df_tf_{colname}"
 
 
