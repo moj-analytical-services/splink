@@ -55,7 +55,7 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: |
           poetry install --no-interaction --no-root
-          poetry install pyspark==3.2.1
+          poetry add pyspark==3.2.1
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
