@@ -50,7 +50,9 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
+        run: |
+          sed -i 's/sqlglot = "1.23.1"/sqlglot = "1.23.1" \npyspark = "^3.2.1"/' ./pyproject.toml
+          poetry install --no-interaction --no-root
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
