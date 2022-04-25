@@ -18,4 +18,6 @@ jobs:
       - name: Publish to Pypi
         env:
           TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-        run: poetry publish --build -u __token__ -p $TOKEN
+        run: |
+          sed -i '/pyspark/d' ./pyproject.toml
+          poetry publish --build -u __token__ -p $TOKEN
