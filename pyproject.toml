@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splink"
-version = "3.0.0.dev06"
+version = "3.0.0.dev07"
 description = "Implementation of Fellegi-Sunter's canonical model of record linkage in Apache Spark, including EM algorithm to estimate parameters"
 authors = ["Robin Linacre <robinlinacre@hotmail.com>", "Sam Lindsay", "Theodore Manassis"]
 license = "MIT"
@@ -14,7 +14,6 @@ jsonschema = "^3.2"
 pandas = "^1.0.0"
 duckdb = "^0.3.2"
 sqlglot = "1.23.1"
-pyspark = "^3.2.1"
 altair = "^4.2.0"
 rapidfuzz = "^2.0.3"
 Jinja2 = "^3.0.3"
