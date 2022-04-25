@@ -44,14 +44,26 @@ def predict_scores_for_labels(linker, labels_tablename):
     return sql
 
 
-def truth_space_table_from_labels_with_predictions(threshold_actual=0.5):
+def truth_space_table_from_labels_with_predictions(
+    threshold_actual=0.5, match_weight_round_to_nearest=None
+):
+
+    # Round to match_weight_round_to_nearest.
+    # e.g. if it's 0.25, 1.27 gets rounded to 1.25
+    if match_weight_round_to_nearest is not None:
+        truth_thres_expr = f"""
+            cast({match_weight_round_to_nearest} as float) *
+            (round(match_weight/{match_weight_round_to_nearest}))
+        """
+    else:
+        truth_thres_expr = "match_weight"
 
     # c_P and c_N are clerical positive and negative, respectively
     sqls = []
     sql = f"""
     select
     *,
-    match_weight as truth_threshold,
+    {truth_thres_expr} as truth_threshold,
     case when clerical_match_score >= {threshold_actual} then 1
     else 0
     end
@@ -157,7 +169,9 @@ def truth_space_table_from_labels_with_predictions(threshold_actual=0.5):
     return sqls
 
 
-def truth_space_table(linker, labels_tablename, threshold_actual=0.5):
+def truth_space_table(
+    linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
+):
     sqls = block_from_labels(linker, labels_tablename)
 
     for sql in sqls:
@@ -176,7 +190,9 @@ def truth_space_table(linker, labels_tablename, threshold_actual=0.5):
     linker.enqueue_sql(sql, "__splink__labels_with_predictions")
 
     # c_P and c_N are clerical positive and negative, respectively
-    sqls = truth_space_table_from_labels_with_predictions(threshold_actual)
+    sqls = truth_space_table_from_labels_with_predictions(
+        threshold_actual, match_weight_round_to_nearest
+    )
 
     for sql in sqls:
         linker.enqueue_sql(sql["sql"], sql["output_table_name"])
