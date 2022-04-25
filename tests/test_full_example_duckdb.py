@@ -1,6 +1,5 @@
 import os
 
-from altair.vegalite.v4.schema.core import Orient
 from splink.duckdb.duckdb_linker import DuckDBLinker
 import pandas as pd
 
