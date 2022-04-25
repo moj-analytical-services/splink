@@ -659,8 +659,10 @@ class Linker:
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_from_pairwise_labels(self, table_name)
 
-    def roc_from_labels(self, labels_tablename):
-        df_truth_space = truth_space_table(self, labels_tablename)
+    def roc_from_labels(self, labels_tablename, match_weight_round_to_nearest):
+        df_truth_space = truth_space_table(
+            self, labels_tablename, match_weight_round_to_nearest
+        )
         recs = df_truth_space.as_record_dict()
         return roc_chart(recs)
 
@@ -669,8 +671,15 @@ class Linker:
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
 
-    def truth_space_table(self, labels_tablename):
-        return truth_space_table(self, labels_tablename)
+    def truth_space_table(
+        self, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
+    ):
+        return truth_space_table(
+            self,
+            labels_tablename,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
 
     def match_weight_histogram(self, df_predict, target_bins=30, width=600, height=250):
         df = histogram_data(self, df_predict, target_bins)
