@@ -93,8 +93,6 @@ class SQLiteLinker(Linker):
         self.con.create_function("pow", 2, pow)
         self.con.create_function("levenshtein", 2, distance)
 
-        self.con.create_function("greatest", 2, max)
-
         super().__init__(settings_dict, input_tables, set_up_basic_logging)
 
     def _df_as_obj(self, templated_name, physical_name):
