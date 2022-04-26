@@ -4,10 +4,24 @@ from .predict import predict_from_comparison_vectors_sql
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
 
 
-def predict_scores_for_labels(linker, labels_tablename):
+def labels_table_with_minimal_columns(linker):
+    columns_to_select = []
+    id_cols = linker.settings_obj._unique_id_input_columns
+    for id_col in id_cols:
+        columns_to_select.append(f"{id_col.name_l()}")
+        columns_to_select.append(f"{id_col.name_r()}")
+    columns_to_select.append("clerical_match_score")
+    columns_to_select = ", ".join(columns_to_select)
 
-    sds_col = linker.settings_obj._source_dataset_column_name
-    uid_col = linker.settings_obj._unique_id_column_name
+    sql = f"""
+    select {columns_to_select}
+    from __splink__labels_prepared_for_joining
+    """
+
+    return sql
+
+
+def predict_scores_for_labels(linker):
 
     brs = linker.settings_obj._blocking_rules_to_generate_predictions
     if brs:
@@ -18,25 +32,23 @@ def predict_scores_for_labels(linker, labels_tablename):
     else:
         br_col = " 1=1 "
 
-    if linker.settings_obj._source_dataset_column_name_is_required:
-        join_conditions = f"""
-            pred.{sds_col}_l = lab.{sds_col}_l and
-            pred.{sds_col}_r = lab.{sds_col}_r and
-            pred.{uid_col}_l = lab.{uid_col}_l and
-            pred.{uid_col}_r = lab.{uid_col}_r
-        """
-    else:
-        join_conditions = f"""
-            pred.{uid_col}_l = lab.{uid_col}_l and
-            pred.{uid_col}_r = lab.{uid_col}_r
-        """
+    id_cols = linker.settings_obj._unique_id_input_columns
+
+    join_conditions = []
+    for id_col in id_cols:
+        cond = f"pred.{id_col.name_l()} = lab.{id_col.name_l()}"
+        join_conditions.append(cond)
+        cond = f"pred.{id_col.name_r()} = lab.{id_col.name_r()}"
+        join_conditions.append(cond)
+
+    join_conditions = " AND ".join(join_conditions)
 
     sql = f"""
     select lab.clerical_match_score,
     {br_col} as found_by_blocking_rules,
      pred.*
     from __splink__df_predict as pred
-    left join __splink__labels_prepared_for_joining as lab
+    left join __splink__labels_minimal as lab
     on {join_conditions}
 
     """
@@ -186,7 +198,11 @@ def truth_space_table(
     for sql in sqls:
         linker.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    sql = predict_scores_for_labels(linker, labels_tablename)
+    # Select only necessary columns from labels table
+    sql = labels_table_with_minimal_columns(linker)
+    linker.enqueue_sql(sql, "__splink__labels_minimal")
+
+    sql = predict_scores_for_labels(linker)
     linker.enqueue_sql(sql, "__splink__labels_with_predictions")
 
     # c_P and c_N are clerical positive and negative, respectively

@@ -57,7 +57,12 @@ jobs:
       # install your root project, if required
       #----------------------------------------------
       - name: Install library
-        run: poetry install --no-interaction
+        run: |
+          if ! grep -Fxq "pyspark" ./pyproject.toml
+          then
+            sed -i 's/sqlglot = "1.23.1"/sqlglot = "1.23.1" \npyspark = "^3.2.1"/' ./pyproject.toml
+          fi
+          poetry install --no-interaction
       #----------------------------------------------
       #              run test suite
       #----------------------------------------------

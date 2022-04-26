@@ -4,6 +4,7 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.accuracy import (
     predict_scores_for_labels,
     truth_space_table_from_labels_with_predictions,
+    labels_table_with_minimal_columns,
 )
 from splink.comparison_library import exact_match
 
@@ -65,7 +66,10 @@ def test_scored_labels():
     for sql in sqls:
         linker.enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    sql = predict_scores_for_labels(linker, "labels")
+    sql = labels_table_with_minimal_columns(linker)
+    linker.enqueue_sql(sql, "__splink__labels_minimal")
+
+    sql = predict_scores_for_labels(linker)
     linker.enqueue_sql(sql, "__splink__labels_with_predictions")
     df_scores_labels = linker.execute_sql_pipeline()
 
