@@ -6,9 +6,8 @@ from rapidfuzz.distance.Levenshtein import distance
 
 
 from ..logging_messages import execute_sql_logging_message_info, log_sql
-
-
-from ..linker import Linker, SplinkDataFrame
+from ..linker import Linker
+from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 

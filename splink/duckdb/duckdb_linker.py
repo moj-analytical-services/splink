@@ -1,14 +1,16 @@
 import logging
 import os
 import tempfile
+from typing import Union
 import uuid
 import sqlglot
 from tempfile import TemporaryDirectory
 
 
 import duckdb
-from splink.linker import Linker, SplinkDataFrame
-from splink.logging_messages import execute_sql_logging_message_info, log_sql
+from ..linker import Linker
+from ..splink_dataframe import SplinkDataFrame
+from ..logging_messages import execute_sql_logging_message_info, log_sql
 
 logger = logging.getLogger(__name__)
 
@@ -54,16 +56,16 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
 class DuckDBLinker(Linker):
     def __init__(
         self,
+        input_table_or_tables,
         settings_dict=None,
-        input_tables={},
         connection=":memory:",
         set_up_basic_logging=True,
-        output_schema="",
+        output_schema=None,
+        input_table_aliases: Union[str, list] = None,
     ):
 
         if connection == ":memory:":
             con = duckdb.connect(database=connection)
-
         else:
             if connection == ":temporary:":
                 self.temp_dir = tempfile.TemporaryDirectory(dir=".")
@@ -75,19 +77,38 @@ class DuckDBLinker(Linker):
 
         self.con = con
 
-        # If inputted tables are pandas dataframes, register them against the db
-        input_tables_new = {}
+        # If user has provided pandas dataframes, need to register
+        # them with the database, using user-provided aliases
+        # if provided or a created alias if not
 
-        for templated_name, df in input_tables.items():
-            if type(df).__name__ == "DataFrame":
-                db_tablename = f"__splink__{templated_name}"
-                con.register(db_tablename, df)
-                input_tables_new[templated_name] = db_tablename
-            else:
-                input_tables_new[templated_name] = templated_name
-        input_tables = input_tables_new
+        input_tables = self._ensure_is_list(input_table_or_tables)
 
-        super().__init__(settings_dict, input_tables, set_up_basic_logging)
+        input_aliases = self._ensure_aliases_populated_and_is_list(
+            input_table_or_tables, input_table_aliases
+        )
+
+        homogenised_tables = []
+        homogenised_aliases = []
+
+        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
+
+            if type(alias).__name__ == "DataFrame":
+                alias = f"__splink__input_table_{i}"
+
+            if type(table).__name__ == "DataFrame":
+                con.register(alias, table)
+                table = alias
+
+            homogenised_tables.append(table)
+            homogenised_aliases.append(alias)
+
+        super().__init__(
+            homogenised_tables,
+            settings_dict,
+            set_up_basic_logging,
+            input_table_aliases=homogenised_aliases,
+        )
+
         if output_schema:
             self.con.execute(
                 f"""

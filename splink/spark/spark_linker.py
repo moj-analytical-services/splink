@@ -1,7 +1,8 @@
 import logging
 import re
 from pyspark.sql import Row
-from ..linker import Linker, SplinkDataFrame
+from ..linker import Linker
+from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 

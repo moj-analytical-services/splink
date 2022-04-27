@@ -1,12 +1,14 @@
-import sqlglot
-from splink.linker import Linker, SplinkDataFrame
 import logging
-from splink.logging_messages import execute_sql_logging_message_info, log_sql
 
-# import utils for communicating with athena
 import awswrangler as wr
 import boto3
-from splink.athena.athena_utils import boto_utils
+import sqlglot
+
+from ..linker import Linker
+from ..splink_dataframe import SplinkDataFrame
+from ..logging_messages import execute_sql_logging_message_info, log_sql
+from ..athena.athena_utils import boto_utils
+
 
 logger = logging.getLogger(__name__)
 
