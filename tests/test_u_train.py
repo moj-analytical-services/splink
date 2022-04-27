@@ -21,7 +21,7 @@ def test_u_train():
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
-    linker = DuckDBLinker(settings, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(df, settings)
     linker.debug_mode = True
     linker.train_u_using_random_sampling(target_rows=1e6)
     cc_name = linker.settings_obj.comparisons[0]

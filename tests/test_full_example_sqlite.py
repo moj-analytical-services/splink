@@ -15,9 +15,10 @@ def test_full_example_sqlite(tmp_path):
     df.to_sql("input_df_tablename", con)
     settings_dict = get_settings_dict()
     linker = SQLiteLinker(
+        "input_df_tablename",
         settings_dict,
-        input_tables={"fake_data_1": "input_df_tablename"},
         connection=con,
+        input_table_aliases="fake_data_1",
     )
 
     linker.profile_columns(["first_name", "surname", "first_name || surname"])

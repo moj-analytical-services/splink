@@ -22,7 +22,7 @@ def test_train_vs_predict():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
     settings_dict["blocking_rules_to_generate_predictions"] = ["l.surname = r.surname"]
-    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(df, settings_dict)
 
     training_session = linker.train_m_and_u_using_expectation_maximisation(
         "l.surname = r.surname"
