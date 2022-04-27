@@ -170,7 +170,7 @@ settings_dict = {
 
 
 def duckdb_performance(df, target_rows):
-    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(df, settings_dict)
 
     linker.train_u_using_random_sampling(target_rows=target_rows)
 
@@ -228,9 +228,8 @@ def test_3_rounds_1m_duckdb(benchmark):
 def spark_performance(df, target_rows=1e6):
 
     linker = SparkLinker(
+        df,
         settings_dict,
-        input_tables={"fake_data_1": df},
-        # break_lineage_method="checkpoint",
     )
 
     linker.train_u_using_random_sampling(target_rows=target_rows)

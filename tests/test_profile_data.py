@@ -11,9 +11,7 @@ from basic_settings import get_settings_dict
 def test_profile_using_duckdb():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(
-        settings_dict, input_tables={"fake_data_1": df}, connection=":memory:"
-    )
+    linker = DuckDBLinker(df, settings_dict, connection=":memory:")
 
     linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
@@ -25,7 +23,7 @@ def test_profile_using_duckdb():
 def test_profile_using_duckdb_no_settings():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = DuckDBLinker(input_tables={"fake_data_1": df}, connection=":memory:")
+    linker = DuckDBLinker(df, connection=":memory:")
 
     linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
@@ -42,9 +40,9 @@ def test_profile_using_sqlite():
     df.to_sql("fake_data_1", con, if_exists="replace")
     settings_dict = get_settings_dict()
     linker = SQLiteLinker(
+        "fake_data_1",
         settings_dict,
         connection=con,
-        input_tables={"fake_data_1": "fake_data_1"},
     )
 
     linker.profile_columns(["first_name", "surname", "first_name || surname"])
@@ -53,7 +51,7 @@ def test_profile_using_sqlite():
 # @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
 def test_profile_using_spark(df_spark):
     settings_dict = get_settings_dict()
-    linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df_spark})
+    linker = SparkLinker(df_spark, settings_dict)
 
     linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]

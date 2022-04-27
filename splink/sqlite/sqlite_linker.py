@@ -1,14 +1,13 @@
 import sqlglot
-
+from typing import Union
 import logging
 from math import pow, log2
 from rapidfuzz.distance.Levenshtein import distance
 
 
 from ..logging_messages import execute_sql_logging_message_info, log_sql
-
-
-from ..linker import Linker, SplinkDataFrame
+from ..linker import Linker
+from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 
@@ -82,10 +81,11 @@ class SQLiteDataFrame(SplinkDataFrame):
 class SQLiteLinker(Linker):
     def __init__(
         self,
+        input_table_or_tables,
         settings_dict=None,
-        input_tables={},
         connection=":memory:",
         set_up_basic_logging=True,
+        input_table_aliases: Union[str, list] = None,
     ):
         self.con = connection
         self.con.row_factory = dict_factory
@@ -93,7 +93,12 @@ class SQLiteLinker(Linker):
         self.con.create_function("pow", 2, pow)
         self.con.create_function("levenshtein", 2, distance)
 
-        super().__init__(settings_dict, input_tables, set_up_basic_logging)
+        super().__init__(
+            input_table_or_tables,
+            settings_dict,
+            set_up_basic_logging,
+            input_table_aliases=input_table_aliases,
+        )
 
     def _df_as_obj(self, templated_name, physical_name):
         return SQLiteDataFrame(templated_name, physical_name, self)

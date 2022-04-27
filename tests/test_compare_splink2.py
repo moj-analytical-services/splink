@@ -14,7 +14,7 @@ def test_splink_2_predict():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(df, settings_dict)
 
     expected_record = pd.read_csv("tests/datasets/splink2_479_vs_481.csv")
 
@@ -33,7 +33,7 @@ def test_splink_2_predict():
 # @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
 def test_splink_2_predict_spark(df_spark):
     settings_dict = get_settings_dict()
-    linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df_spark})
+    linker = SparkLinker(df_spark, settings_dict)
 
     df_e = linker.predict().as_pandas_dataframe()
     print(len(df_e))
@@ -57,9 +57,9 @@ def test_splink_2_predict_sqlite():
     df.to_sql("fake_data_1", con, if_exists="replace")
     settings_dict = get_settings_dict()
     linker = SQLiteLinker(
+        "fake_data_1",
         settings_dict,
         connection=con,
-        input_tables={"fake_data_1": "fake_data_1"},
     )
 
     df_e = linker.predict().as_pandas_dataframe()
@@ -81,7 +81,7 @@ def test_splink_2_em_fixed_u():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(df, settings_dict)
 
     # Check lambda history is the same
     expected_prop_history = pd.read_csv(
@@ -126,7 +126,7 @@ def test_splink_2_em_no_fix():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(df, settings_dict)
 
     # Check lambda history is the same
     expected_prop_history = pd.read_csv(
@@ -181,7 +181,7 @@ def test_lambda():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(df, settings_dict)
 
     ma = linker.predict().as_pandas_dataframe()
     print(len(ma))

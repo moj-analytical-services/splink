@@ -79,9 +79,7 @@ def test_tf_basic():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(
-        settings, input_tables={"fake_data_1": data}, connection=":memory:"
-    )
+    linker = DuckDBLinker(data, settings, connection=":memory:")
     df_predict = linker.predict()
     results = filter_results(df_predict)
 
@@ -117,9 +115,7 @@ def test_tf_clamp():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(
-        settings, input_tables={"fake_data_1": data}, connection=":memory:"
-    )
+    linker = DuckDBLinker(data, settings, connection=":memory:")
     df_predict = linker.predict()
     results = filter_results(df_predict)
 
@@ -155,9 +151,7 @@ def test_weight():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(
-        settings, input_tables={"fake_data_1": data}, connection=":memory:"
-    )
+    linker = DuckDBLinker(data, settings, connection=":memory:")
     df_predict = linker.predict()
     results = filter_results(df_predict)
 
@@ -206,9 +200,7 @@ def test_weightand_clamp():
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(
-        settings, input_tables={"fake_data_1": data}, connection=":memory:"
-    )
+    linker = DuckDBLinker(data, settings, connection=":memory:")
     df_predict = linker.predict()
     results = filter_results(df_predict)
 

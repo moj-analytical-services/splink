@@ -8,7 +8,7 @@ from basic_settings import get_settings_dict
 
 def test_full_example_spark(df_spark, tmp_path):
     settings_dict = get_settings_dict()
-    linker = SparkLinker(settings_dict, input_tables={"fake_data_1": df_spark})
+    linker = SparkLinker(df_spark, settings_dict)
 
     linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]

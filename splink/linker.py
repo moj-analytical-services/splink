@@ -3,6 +3,8 @@ from copy import copy, deepcopy
 from statistics import median
 import hashlib
 
+from typing import Union
+
 from .charts import (
     match_weight_histogram,
     missingness_chart,
@@ -15,7 +17,7 @@ from .charts import (
 from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .em_training_session import EMTrainingSession
-from .misc import bayes_factor_to_prob, escape_columns, prob_to_bayes_factor
+from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .predict import predict_from_comparison_vectors_sql
 from .settings import Settings
 from .term_frequencies import (
@@ -42,69 +44,18 @@ from .splink_comparison_viewer import (
     render_splink_comparison_viewer_html,
 )
 
+
 logger = logging.getLogger(__name__)
 
 
-class SplinkDataFrame:
-    """Abstraction over dataframe to handle basic operations
-    like retrieving columns, which need different implementations
-    depending on whether it's a spark dataframe, sqlite table etc.
-    """
-
-    def __init__(self, templated_name, physical_name):
-        self.templated_name = templated_name
-        self.physical_name = physical_name
-
-    @property
-    def columns(self):
-        pass
-
-    @property
-    def columns_escaped(self):
-        cols = self.columns
-        return escape_columns(cols)
-
-    def validate():
-        pass
-
-    def random_sample_sql(percent):
-        pass
-
-    @property
-    def physical_and_template_names_equal(self):
-        return self.templated_name == self.physical_name
-
-    def _check_drop_table_created_by_splink(self, force_non_splink_table=False):
-
-        if not self.physical_name.startswith("__splink__"):
-            if not force_non_splink_table:
-                raise ValueError(
-                    f"You've asked to drop table {self.physical_name} from your "
-                    "database which is not a table created by Splink.  If you really "
-                    "want to drop this table, you can do so by setting "
-                    "force_non_splink_table=True"
-                )
-        logger.debug(
-            f"Dropping table with templated name {self.templated_name} and "
-            f"physical name {self.physical_name}"
-        )
-
-    def drop_table_from_database(self, force_non_splink_table=False):
-        raise NotImplementedError(
-            "Drop table from database not implemented for this linker"
-        )
-
-    def as_record_dict(self, limit=None):
-        pass
-
-    def as_pandas_dataframe(self, limit=None):
-        import pandas as pd
-
-        return pd.DataFrame(self.as_record_dict(limit=limit))
-
-
 class Linker:
-    def __init__(self, settings_dict=None, input_tables={}, set_up_basic_logging=True):
+    def __init__(
+        self,
+        input_table_or_tables: Union[str, list],
+        settings_dict=None,
+        set_up_basic_logging=True,
+        input_table_aliases: Union[str, list] = None,
+    ):
 
         self.pipeline = SQLPipeline()
 
@@ -114,7 +65,9 @@ class Linker:
         else:
             self._settings_obj = Settings(settings_dict)
 
-        self.input_dfs = self._get_input_dataframe_dict(input_tables)
+        self.input_tables_dict = self._get_input_tables_dict(
+            input_table_or_tables, input_table_aliases
+        )
 
         self._validate_input_dfs()
         self.em_training_sessions = []
@@ -196,7 +149,10 @@ class Linker:
         if self.compare_two_records_mode:
             return True
 
-        if len(self.input_dfs) == 2 and self.settings_obj._link_type == "link_only":
+        if (
+            len(self.input_tables_dict) == 2
+            and self.settings_obj._link_type == "link_only"
+        ):
             return True
         else:
             return False
@@ -229,10 +185,10 @@ class Linker:
             source_dataset_col = self.settings_obj._source_dataset_column_name
             # Need df_l to be the one with the lowest id to preeserve the property
             # that the left dataset is the one with the lowest concatenated id
-            keys = self.input_dfs.keys()
+            keys = self.input_tables_dict.keys()
             keys = list(sorted(keys))
-            df_l = self.input_dfs[keys[0]]
-            df_r = self.input_dfs[keys[1]]
+            df_l = self.input_tables_dict[keys[0]]
+            df_r = self.input_tables_dict[keys[1]]
 
             sql = f"""
             select * from __splink__df_concat_with_tf
@@ -367,10 +323,33 @@ class Linker:
         new_linker._settings_obj = new_settings
         return new_linker
 
-    def _get_input_dataframe_dict(self, df_dict):
+    def _ensure_is_list(self, input_table_or_tables):
+        if not isinstance(input_table_or_tables, list):
+            input_table_or_tables = [input_table_or_tables]
+
+        return input_table_or_tables
+
+    def _ensure_aliases_populated_and_is_list(
+        self, input_table_or_tables, input_table_aliases
+    ):
+        if input_table_aliases is None:
+            input_table_aliases = input_table_or_tables
+
+        if not isinstance(input_table_aliases, list):
+            input_table_aliases = [input_table_aliases]
+        return input_table_aliases
+
+    def _get_input_tables_dict(self, input_table_or_tables, input_table_aliases):
+
+        input_table_or_tables = self._ensure_is_list(input_table_or_tables)
+
+        input_table_aliases = self._ensure_aliases_populated_and_is_list(
+            input_table_or_tables, input_table_aliases
+        )
+
         d = {}
-        for df_name, df_value in df_dict.items():
-            d[df_name] = self._df_as_obj(df_name, df_value)
+        for table_name, table_alias in zip(input_table_or_tables, input_table_aliases):
+            d[table_alias] = self._df_as_obj(table_alias, table_name)
         return d
 
     def _get_input_tf_dict(self, df_dict):
@@ -389,12 +368,12 @@ class Linker:
         )
 
     def _validate_input_dfs(self):
-        for df in self.input_dfs.values():
+        for df in self.input_tables_dict.values():
             df.validate()
 
         if self._settings_obj is not None:
             if self.settings_obj._link_type == "dedupe_only":
-                if len(self.input_dfs) > 1:
+                if len(self.input_tables_dict) > 1:
                     raise ValueError(
                         'If link_type = "dedupe only" then input tables must contain'
                         "only a single input table",
@@ -417,7 +396,7 @@ class Linker:
 
     def train_m_from_label_column(self, label_colname):
         self._initialise_df_concat_with_tf(materialise=True)
-        estimate_m_values_from_label_column(self, self.input_dfs, label_colname)
+        estimate_m_values_from_label_column(self, self.input_tables_dict, label_colname)
         self.populate_m_u_from_trained_values()
 
     def train_m_using_expectation_maximisation(

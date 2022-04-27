@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 def vertically_concatente_sql(linker):
 
     # Use column order from first table in dict
-    df_obj = next(iter(linker.input_dfs.values()))
+    df_obj = next(iter(linker.input_tables_dict.values()))
     columns = df_obj.columns_escaped
 
     select_columns_sql = ", ".join(columns)
@@ -22,7 +22,7 @@ def vertically_concatente_sql(linker):
 
     if source_dataset_col_req:
         sqls_to_union = []
-        for df_obj in linker.input_dfs.values():
+        for df_obj in linker.input_tables_dict.values():
             sql = f"""
             select '{df_obj.templated_name}' as source_dataset, {select_columns_sql}
             from {df_obj.physical_name}

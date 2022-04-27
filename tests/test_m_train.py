@@ -21,7 +21,7 @@ def test_m_train():
     }
 
     # Train from label column
-    linker = DuckDBLinker(settings, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(df, settings)
 
     linker.train_m_from_label_column("cluster")
     cc_name = linker.settings_obj.comparisons[0]
@@ -53,7 +53,7 @@ def test_m_train():
             val["unique_id_l"] = uid_r
             val["unique_id_r"] = uid_l
 
-    linker_pairwise = DuckDBLinker(settings, input_tables={"fake_data_1": df})
+    linker_pairwise = DuckDBLinker(df, settings)
 
     linker_pairwise.con.register("labels", df_labels)
     linker_pairwise.train_m_from_pairwise_labels("labels")
