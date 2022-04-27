@@ -30,10 +30,8 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
     def drop_table_from_database(self, force_non_splink_table=False):
 
         self._check_drop_table_created_by_splink(force_non_splink_table)
-
-        drop_sql = f"""
-        DROP TABLE IF EXISTS {self.physical_name}"""
-        self.duckdb_linker.con.execute(drop_sql)
+        
+        self.duckdb_linker.delete_table_from_database(self.physical_name)
 
     def as_record_dict(self, limit=None):
 
