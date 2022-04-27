@@ -1,4 +1,3 @@
-from duckdb import alias
 import pandas as pd
 import pytest
 from splink.comparison_library import exact_match
