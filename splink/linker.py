@@ -42,6 +42,8 @@ from .splink_comparison_viewer import (
     render_splink_comparison_viewer_html,
 )
 
+from .connected_components import ConnectedComponents
+
 logger = logging.getLogger(__name__)
 
 
@@ -346,7 +348,7 @@ class Linker:
                 transpile=transpile,
             )
 
-        self.names_of_tables_created_by_splink.append(dataframe.physical_name)
+        self.names_of_tables_created_by_splink.append(dataframe)
 
         if self.debug_mode:
 
@@ -627,23 +629,32 @@ class Linker:
 
         return predictions
 
+    def run_connected_components(self):
+        print("Attempting to run CC")
+        cc = ConnectedComponents(self)
+        cc_df = cc.connected_components()
+
+        return cc_df
+
     def delete_tables_created_by_splink_from_db(
         self, retain_term_frequency=True, retain_df_concat_with_tf=True
     ):
         tables_remaining = []
-        for name in self.names_of_tables_created_by_splink:
+        current_tables = self.names_of_tables_created_by_splink
+        for splink_df in current_tables:
+            name = splink_df.templated_name
             # Only delete tables explicitly marked as having been created by splink
             if "__splink__" not in name:
-                tables_remaining.append(name)
+                tables_remaining.append(splink_df)
                 continue
             if name == "__splink__df_concat_with_tf":
                 if retain_df_concat_with_tf:
-                    tables_remaining.append(name)
+                    tables_remaining.append(splink_df)
                 else:
                     self.delete_table_from_database(name)
             elif name.startswith("__splink__df_tf_"):
                 if retain_term_frequency:
-                    tables_remaining.append(name)
+                    tables_remaining.append(splink_df)
                 else:
                     self.delete_table_from_database(name)
             else:
