@@ -47,7 +47,7 @@ def test_scored_labels():
         ],
     }
 
-    linker = DuckDBLinker(settings, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(df, settings)
 
     linker._initialise_df_concat_with_tf()
     linker.con.register("labels", df_labels)
@@ -121,7 +121,7 @@ def test_truth_space_table():
         ],
     }
 
-    linker = DuckDBLinker(settings, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(df, settings)
 
     labels_with_predictions = [
         {
@@ -200,9 +200,7 @@ def test_roc_chart_dedupe_only():
         axis=1,
     )
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(
-        settings_dict, input_tables={"fake_data_1": df}, connection=":memory:"
-    )
+    linker = DuckDBLinker(df, settings_dict, connection=":memory:")
 
     linker._initialise_df_concat_with_tf()
 
@@ -234,7 +232,7 @@ def test_roc_chart_link_and_dedupe():
     settings_dict = get_settings_dict()
     settings_dict["link_type"] = "link_and_dedupe"
     linker = DuckDBLinker(
-        settings_dict, input_tables={"fake_data_1": df}, connection=":memory:"
+        df, settings_dict, connection=":memory:", input_table_aliases="fake_data_1"
     )
 
     linker._initialise_df_concat_with_tf()
