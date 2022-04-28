@@ -29,18 +29,6 @@ class ConnectedComponents:
 
     def connected_components(self):
 
-        # Creates a unique table with all of the
-        # nodes in our edges dataframe.
-        sql_create_nodes = f"""
-            select unique_id_l as node_id from {self.edges}
-            UNION
-            select unique_id_r as node_id
-            from {self.edges}
-        """
-        # self.linker.con.execute(sql_create_nodes)
-        self.linker.enqueue_sql(sql_create_nodes, "nodes")
-        self.linker.execute_sql_pipeline([], use_cache=False, materialise_as_hash=False)
-
         # https://arxiv.org/pdf/1802.09478.pdf:
         # 'begin by choosing for each vertex (node) a representatative by
         # picking the vertex with the minimum id amongst itself and its neighbours'
@@ -54,22 +42,6 @@ class ConnectedComponents:
         # i.e if we want to get the neighbours of node D, we don't need to get both
         # D->C and D->E, we only need to bother getting D->C, because we know in advance
         # this will have a lower minimum that D->E
-        sql = f"""
-        with neighbours as (select distinct
-            n.node_id,
-            coalesce(e.unique_id_l, n.node_id) as representative
-        from nodes as n
-        left join {self.edges} as e
-        on n.node_id = e.unique_id_r)
-        select
-            node_id,
-            min(representative) as representative
-        from neighbours
-            group by node_id
-            order by node_id
-        """
-        self.linker.enqueue_sql(sql, "representatives")
-        self.linker.execute_sql_pipeline([], use_cache=False, materialise_as_hash=False)
 
         # https://arxiv.org/pdf/1802.09478.pdf
         # 'then to improve on that representation by taking the minimum ID amongst
@@ -95,70 +67,109 @@ class ConnectedComponents:
 
         # >> This time join on not the edges, but the result of the above query
 
-        # Get all the neighbours of C in both directions
-        # Get their representatives
-        # Get the minimum of the representatives
-        neighbours_table = f"""
-            -- Generate all neighbours for each node (this keeps our
-            -- current connections and also generates the reverse
-            -- connections for evaluation)
+        # Generate a table that records ALL neighbours for each node -
+        # this includes circular connections (i.e. A->A), as well as
+        # current connections and the reverse of these connections
+        # (i.e. A->B and B->A would both be included in our representation).
 
-            select n.node_id, coalesce(e_l.unique_id_r, n.node_id) as neighbour
-                from nodes as n
+        # Circular connections are only included where our reverse
+        # connection is null when we apply our joins.
+        neighbours_table = f"""
+
+            with nodes as (
+                select unique_id_l as node_id
+                from {self.edges}
+                UNION
+                select unique_id_r as node_id
+                from {self.edges}
+            )
+
+            select n.node_id,
+                e_l.unique_id_r as neighbour
+            from nodes as n
+
             left join {self.edges} as e_l
                 on n.node_id = e_l.unique_id_l
 
-                UNION
 
-            select n.node_id, coalesce(e_r.unique_id_l, n.node_id) as neighbour
-                from nodes as n
+            UNION ALL
+
+
+            select n.node_id,
+                coalesce(e_r.unique_id_l, n.node_id) as neighbour
+            from nodes as n
+
             left join {self.edges} as e_r
                 on n.node_id = e_r.unique_id_r
         """
+
         # create our neighbours table
         self.linker.enqueue_sql(neighbours_table, "neighbours")
         self.linker.execute_sql_pipeline([], use_cache=False, materialise_as_hash=False)
 
         # loop while our representative table still has nodes
         # not connected to a "root node"
-        iteration = 0
-        root_rows = -1
-
-        representative_count = """
-        select count(*) as count
-        from representatives
-        """
-        representatives_table = "representatives"
-        dataframe = self.linker.sql_to_dataframe(
-            representative_count, "__splink__df_representatives_table_count"
-        )
-        repr_rows = dataframe.as_record_dict()
-        dataframe.drop_table_from_database()
-        repr_rows = repr_rows[0]["count"]
+        iteration, root_rows, repr_rows = 0, -1, 1
 
         while root_rows != repr_rows:
 
             iteration += 1
             representatives_name = f"representatives_{iteration}"
-            sql = f"""
-            select
-                neighbours.node_id,
-                min(representatives.representative) as representative
-            from neighbours
-            left join {representatives_table} as representatives
-            on neighbours.neighbour = representatives.node_id
-                group by neighbours.node_id
-                order by neighbours.node_id
-            """
-            self.linker.enqueue_sql(sql, representatives_name)
-            self.linker.execute_sql_pipeline(
-                [], use_cache=False, materialise_as_hash=False
-            )
-            # update representatives table
+
+            if iteration == 1:
+                # if this is the first iteration, we just need to create
+                # our initial representatives table
+                sql = """
+                    select
+                        neighbours.node_id,
+                        min(neighbour) as representative
+                    from neighbours
+                    group by node_id
+                    order by node_id
+                """
+                self.linker.enqueue_sql(sql, representatives_name)
+                representatives = self.linker.execute_sql_pipeline(
+                    [], use_cache=False, materialise_as_hash=False
+                )
+
+                # generate count of representative rows that we can compare
+                # our exit condition against (see root_nodes)
+                representative_count = f"""
+                    select count(*) as count
+                    from {representatives_name}
+                """
+
+                representatives_table = "representatives"
+                dataframe = self.linker.sql_to_dataframe(
+                    representative_count, "__splink__df_representatives_table_count"
+                )
+                repr_rows = dataframe.as_record_dict()
+                dataframe.drop_table_from_database()
+                repr_rows = repr_rows[0]["count"]
+
+            else:
+
+                sql = f"""
+                select
+                    neighbours.node_id,
+                    min(representatives.representative) as representative
+                from neighbours
+                left join {representatives_table} as representatives
+                on neighbours.neighbour = representatives.node_id
+                    group by neighbours.node_id
+                """
+
+                self.linker.enqueue_sql(sql, representatives_name)
+                representatives = self.linker.execute_sql_pipeline(
+                    [], use_cache=False, materialise_as_hash=False
+                )
+
+            # update representative table name
             representatives_table = representatives_name
 
             # Finally, update and evaluate our representative table
             # to see if all nodes are connected to a "root node".
+
             # If True, terminate the loop.
             sql = f"""
             with root_nodes as (
@@ -182,3 +193,5 @@ class ConnectedComponents:
             root_rows = root_rows[0]["count"]
 
         print(f"Exited after {iteration} iterations")
+
+        return representatives
