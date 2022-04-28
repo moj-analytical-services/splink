@@ -1,3 +1,6 @@
+from math import log2
+
+
 def dedupe_preserving_order(list_of_items):
     return list(dict.fromkeys(list_of_items))
 
@@ -12,6 +15,10 @@ def escape_column(col):
 
 def prob_to_bayes_factor(prob):
     return prob / (1 - prob)
+
+
+def prob_to_match_weight(prob):
+    return log2(prob_to_bayes_factor(prob))
 
 
 def bayes_factor_to_prob(bf):
