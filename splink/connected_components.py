@@ -101,6 +101,7 @@ class ConnectedComponents:
 
             left join {self.edges} as e_r
                 on n.node_id = e_r.unique_id_r
+
         """
 
         # create our neighbours table
@@ -123,7 +124,9 @@ class ConnectedComponents:
                     select
                         neighbours.node_id,
                         min(neighbour) as representative
+
                     from neighbours
+
                     group by node_id
                     order by node_id
                 """
@@ -150,13 +153,19 @@ class ConnectedComponents:
             else:
 
                 sql = f"""
+
                 select
                     neighbours.node_id,
                     min(representatives.representative) as representative
+
                 from neighbours
+
                 left join {representatives_table} as representatives
+
                 on neighbours.neighbour = representatives.node_id
-                    group by neighbours.node_id
+
+                group by neighbours.node_id
+
                 """
 
                 self.linker.enqueue_sql(sql, representatives_name)
@@ -172,18 +181,27 @@ class ConnectedComponents:
 
             # If True, terminate the loop.
             sql = f"""
+
             with root_nodes as (
+
                 select
                     node_id,
                     representative,
                     node_id=representative as root_node
+
                 from {representatives_name}
             )
-                select count(root_nodes.root_node) as count
-                from root_nodes
-                right join {representatives_name} as representatives
-                on root_nodes.node_id = representatives.representative
-                where root_nodes.root_node = true
+
+            select count(root_nodes.root_node) as count
+
+            from root_nodes
+
+            right join {representatives_name} as representatives
+
+            on root_nodes.node_id = representatives.representative
+
+            where root_nodes.root_node = true
+
             """
             dataframe = self.linker.sql_to_dataframe(
                 sql, "__splink__df_root_rows", materialise_as_hash=False
