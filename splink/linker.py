@@ -490,7 +490,7 @@ class Linker:
             comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa
         )
 
-    def predict(self):
+    def predict(self, threshold_match_probability=None, threshold_match_weight=None):
 
         # If the user only calls predict, it runs as a single pipeline with no
         # materialisation of anything
@@ -502,7 +502,9 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self.settings_obj)
         self.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sql(self.settings_obj)
+        sqls = predict_from_comparison_vectors_sql(
+            self.settings_obj, threshold_match_probability, threshold_match_weight
+        )
         for sql in sqls:
             self.enqueue_sql(sql["sql"], sql["output_table_name"])
 
