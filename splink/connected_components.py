@@ -37,7 +37,8 @@ class ConnectedComponents:
         # Note that, since the edges always have the lower id on the left hand side
         # we only need to join on unique_id_r, and pick unique_id_l
 
-        # That is to say, we only bother to find neighbours that are smaller than the node
+        # That is to say, we only bother to find neighbours that are
+        # smaller than the node
 
         # i.e if we want to get the neighbours of node D, we don't need to get both
         # D->C and D->E, we only need to bother getting D->C, because we know in advance
@@ -60,8 +61,8 @@ class ConnectedComponents:
         # EITHER SMALLER OR GREATER, and get THEIR representative
 
         # For example, supposing we have an edge C -> D.  It may be the case that the
-        # representative of D is A.  So we want to retreieve C->D even though D is greater
-        # than C, because D's representative may be less than C.
+        # representative of D is A.  So we want to retreieve C->D even though D
+        # is greater than C, because D's representative may be less than C.
 
         # >> Get all the neighbours of C,
 
