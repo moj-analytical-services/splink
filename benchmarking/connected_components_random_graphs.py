@@ -4,7 +4,7 @@ from tests.cc_testing_utils import (
     run_cc_implementation,
     register_cc_df,
     generate_random_graph,
-    )
+)
 
 ###############################################################################
 # Performance Testing
@@ -12,6 +12,7 @@ from tests.cc_testing_utils import (
 
 # set a seed for consistent benchmarking
 seed = 5
+
 
 def test_500_edge_performance(benchmark):
     g = generate_random_graph(graph_size=500, seed=seed)

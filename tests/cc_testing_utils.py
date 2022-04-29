@@ -18,17 +18,12 @@ def generate_random_graph(graph_size, seed=None):
 def register_cc_df(G):
 
     from tests.basic_settings import get_settings_dict
+
     settings_dict = get_settings_dict()
 
     df = nx.to_pandas_edgelist(G)
     df.columns = ["unique_id_l", "unique_id_r"]
-    df = pd.concat([
-        pd.DataFrame({
-            "unique_id_l": G.nodes,
-            "unique_id_r": G.nodes}
-        ),
-        df
-    ])
+    df = pd.concat([pd.DataFrame({"unique_id_l": G.nodes, "unique_id_r": G.nodes}), df])
 
     # boot up our linker
     table_name = "__splink__df_predict_graph"
