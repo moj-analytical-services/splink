@@ -289,13 +289,20 @@ class ComparisonLevel:
         col = self._level_dict.get("tf_adjustment_column")
         return col is not None
 
+    @property
+    def sql_read_dialect(self):
+        read_dialect = None
+        if self.settings_obj is not None:
+            read_dialect = self.settings_obj._sql_dialect
+        return read_dialect
+
     def _validate_sql(self):
         sql = self.sql_condition
         if self.is_else_level:
             return True
 
         try:
-            sqlglot.parse_one(sql, read=None)
+            sqlglot.parse_one(sql, read=self.sql_read_dialect)
         except sqlglot.ParseError as e:
             raise ValueError(f"Error parsing sql_statement:\n{sql}") from e
 
@@ -308,7 +315,9 @@ class ComparisonLevel:
         if self.is_else_level:
             return []
 
-        cols = get_columns_used_from_sql(self.sql_condition)
+        cols = get_columns_used_from_sql(
+            self.sql_condition, dialect=self.sql_read_dialect
+        )
         # Parsed order seems to be roughly in reverse order of apearance
         cols = cols[::-1]
 

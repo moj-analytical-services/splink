@@ -99,13 +99,17 @@ class AthenaDataFrame(SplinkDataFrame):
 class AthenaLinker(Linker):
     def __init__(
         self,
-        settings_dict: dict,
         boto3_session: boto3.session.Session,
         output_database: str,
         output_bucket: str,
+        settings_dict: dict = None,
         folder_in_bucket_for_outputs="",
         input_tables={},
     ):
+
+        if settings_dict is not None and "sql_dialect" not in settings_dict:
+            settings_dict["sql_dialect"] = "presto"
+
         self.boto3_session = boto3_session
         self.boto_utils = boto_utils(
             boto3_session, output_bucket, folder_in_bucket_for_outputs
