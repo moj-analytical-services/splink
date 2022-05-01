@@ -47,8 +47,8 @@ def join_tf_to_input_df(settings_obj):
         tf_col = escape_column(f"tf_{col}")
         select_cols.append(f"{tbl}.{tf_col}")
 
+    select_cols.insert(0, "__splink__df_concat.*")
     select_cols = ", ".join(select_cols)
-    select_cols = "__splink__df_concat.*, " + select_cols
 
     templ = "left join {tbl} on __splink__df_concat.{col} = {tbl}.{col}"
 
