@@ -2,7 +2,7 @@ import sqlglot
 from sqlglot.expressions import Column, Bracket, Lambda
 
 
-def get_columns_used_from_sql(sql, dialect="spark", retain_table_prefix=False):
+def get_columns_used_from_sql(sql, dialect=None, retain_table_prefix=False):
     column_names = set()
     syntax_tree = sqlglot.parse_one(sql, read=dialect)
     path = {}

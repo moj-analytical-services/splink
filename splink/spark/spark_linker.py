@@ -1,4 +1,5 @@
 import logging
+import sqlglot
 from typing import Union
 import re
 from pyspark.sql import Row
@@ -138,6 +139,9 @@ class SparkLinker(Linker):
         return spark_df
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+
+        if transpile:
+            sql = sqlglot.transpile(sql, read=None, write="spark", pretty=True)[0]
 
         spark_df = self.spark.sql(sql)
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))

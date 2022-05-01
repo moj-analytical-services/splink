@@ -3,7 +3,8 @@
 
 import logging
 
-from .misc import escape_column
+from .misc import escape_column, literal_column
+from .input_column import InputColumn
 
 logger = logging.getLogger(__name__)
 
@@ -17,13 +18,16 @@ def term_frequencies_for_single_column_sql(
     column_name, table_name="__splink__df_concat"
 ):
 
-    tf_col_name = escape_column(f"tf_{column_name}")
+    # TODO: Not escaped so if col name has a space, will fail in Spark
+
+    col = InputColumn(column_name, tf_adjustments=True)
+
     col_name = escape_column(column_name)
 
     sql = f"""
     select
     {col_name}, cast(count(*) as double) / (select
-        count({col_name}) as total from {table_name}) as {tf_col_name}
+        count({col_name}) as total from {table_name}) as {col.tf_name(escape=False)}
     from {table_name}
     where {col_name} is not null
     group by {col_name}

@@ -10,7 +10,11 @@ def escape_columns(cols):
 
 
 def escape_column(col):
-    return f"`{col}`"
+    return f'"{col}"'
+
+
+def literal_column(col):
+    return f"'{col}'"
 
 
 def prob_to_bayes_factor(prob):

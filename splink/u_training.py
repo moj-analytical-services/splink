@@ -87,7 +87,7 @@ def estimate_u_values(linker, target_rows):
     training_linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
 
     sql = """
-    select *, 0.0D as match_probability
+    select *, cast(0.0 as double) as match_probability
     from __splink__df_comparison_vectors
     """
     training_linker.enqueue_sql(sql, "__splink__df_predict")

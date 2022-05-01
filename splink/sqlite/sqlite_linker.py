@@ -106,7 +106,7 @@ class SQLiteLinker(Linker):
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
         if transpile:
-            sql = sqlglot.transpile(sql, read="spark", write="sqlite")[0]
+            sql = sqlglot.transpile(sql, read=None, write="sqlite")[0]
 
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))

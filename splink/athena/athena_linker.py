@@ -124,7 +124,7 @@ class AthenaLinker(Linker):
         self.drop_table_from_database_if_exists(physical_name)
 
         if transpile:
-            sql = sqlglot.transpile(sql, read="spark", write="presto")[0]
+            sql = sqlglot.transpile(sql, read=None, write="presto")[0]
 
         logger.debug(
             execute_sql_logging_message_info(

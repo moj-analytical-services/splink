@@ -40,7 +40,7 @@ def predict_from_comparison_vectors_sql(
     bayes_factor = prob_to_bayes_factor(proportion_of_matches)
 
     bayes_factor_expr = " * ".join(mult)
-    bayes_factor_expr = f"{bayes_factor}D * {bayes_factor_expr}"
+    bayes_factor_expr = f"cast({bayes_factor} as double) * {bayes_factor_expr}"
 
     # In case user provided both, take the minimum of the two thresholds
     if threshold_match_probability or threshold_match_weight:

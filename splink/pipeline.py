@@ -16,7 +16,7 @@ class SQLTask:
 
     @property
     def _uses_tables(self):
-        tree = sqlglot.parse_one(self.sql, read="spark")
+        tree = sqlglot.parse_one(self.sql, read=None)
 
         table_names = set()
         for subtree, parent, key in tree.walk():
