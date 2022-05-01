@@ -80,7 +80,9 @@ class ConnectedComponents:
             with nodes as (
                 select unique_id_l as node_id
                 from {self.edges}
+
                 UNION
+
                 select unique_id_r as node_id
                 from {self.edges}
             )
@@ -106,103 +108,158 @@ class ConnectedComponents:
         """
 
         # create our neighbours table
-        self.linker.enqueue_sql(neighbours_table, "neighbours")
+        neighbours_table_name = "neighbours"
+        self.linker.enqueue_sql(neighbours_table, neighbours_table_name)
         self.linker.execute_sql_pipeline([], use_cache=False, materialise_as_hash=False)
 
-        # loop while our representative table still has nodes
-        # not connected to a "root node"
-        iteration, root_rows, repr_rows = 0, -1, 1
+        # Create our initial representatives table
+        # this can be added to our pipeline code later!
+        sql = f"""
 
-        while root_rows != repr_rows:
+            with representatives as (
+                select
+                    neighbours.node_id,
+                    min(neighbour) as representative
+                from {neighbours_table_name} as neighbours
+                group by node_id
+                order by node_id
+            ),
 
-            iteration += 1
-            representatives_name = f"representatives_{iteration}"
 
-            if iteration == 1:
-                # if this is the first iteration, we just need to create
-                # our initial representatives table
-                sql = """
-                    select
-                        neighbours.node_id,
-                        min(neighbour) as representative
-
-                    from neighbours
-
-                    group by node_id
-                    order by node_id
-                """
-                self.linker.enqueue_sql(sql, representatives_name)
-                representatives = self.linker.execute_sql_pipeline(
-                    [], use_cache=False, materialise_as_hash=False
-                )
-
-                # generate count of representative rows that we can compare
-                # our exit condition against (see root_nodes)
-                representative_count = f"""
-                    select count(*) as count
-                    from {representatives_name}
-                """
-
-                representatives_table = "representatives"
-                dataframe = self.linker.sql_to_dataframe(
-                    representative_count, "__splink__df_representatives_table_count"
-                )
-                repr_rows = dataframe.as_record_dict()
-                dataframe.drop_table_from_database()
-                repr_rows = repr_rows[0]["count"]
-
-            else:
-
-                sql = f"""
-
+            current_repr as (
                 select
                     neighbours.node_id,
                     min(representatives.representative) as representative
-
-                from neighbours
-
-                left join {representatives_table} as representatives
-
+                from {neighbours_table_name} as neighbours
+                left join representatives
                 on neighbours.neighbour = representatives.node_id
+                    group by neighbours.node_id
+                    order by neighbours.node_id
+            )
 
-                group by neighbours.node_id
 
-                """
+            select
+                current_repr.node_id,
+                current_repr.representative,
+                current_repr.representative <> repr.representative as rep_match
+            from current_repr
+            left join representatives as repr
+            on current_repr.node_id = repr.node_id
 
-                self.linker.enqueue_sql(sql, representatives_name)
-                representatives = self.linker.execute_sql_pipeline(
-                    [], use_cache=False, materialise_as_hash=False
+            """
+
+        # create our initial representatives table
+        representatives_name = "representatives"
+        self.linker.enqueue_sql(sql, representatives_name)
+        self.linker.execute_sql_pipeline([], use_cache=False, materialise_as_hash=False)
+
+        # loop while our representative table still has unsettled nodes
+        iteration, root_rows = 0, 1
+
+        while root_rows > 0:
+
+            iteration += 1
+
+            """
+            Code summary:
+
+            The "r" table is the "representatives" table:
+            This utilises our neighbours table and our known representatives.
+
+            The idea is that we join on the representative for all
+            known neighbours of a specific node. So if we know that
+            (A->B and B->C), then on a subsequent iteration we can
+            infer that (A->C) by joining on B.
+
+            To speed up the code, we use a breakdown named "rep_match",
+            which takes a boolean value and indicates whether there a
+            match on the current and previous representative for the node.
+
+            This tells us if the node has reached its final
+            representative, by checking to see if any links have taken
+            place. By filtering on this, we can skip nodes that have
+            already been fully connected to a "base node".
+
+            The final select statement creates this "rep_match" by
+            joining on the previous representative of the node and
+            comparing it to the current representative.
+
+            This "rep_match" also in turn becomes our exit condition
+            for our "while" loop.
+
+            In short, where every node's representative has stopped changing,
+            we can exit the loop.
+            """
+
+            sql = f"""
+
+            with r as (
+
+                select
+
+                node_id,
+                min(representative) as representative
+
+                from
+                (
+
+                    select
+
+                        neighbours.node_id,
+                        repr_neighbour.representative as representative
+
+                    from {neighbours_table_name} as neighbours
+
+                    left join {representatives_name} as repr_neighbour
+                    on neighbours.neighbour = repr_neighbour.node_id
+
+                    where
+                        repr_neighbour.rep_match
+
+                    UNION ALL
+
+                    select
+
+                        node_id,
+                        representative
+
+                    from {representatives_name}
+
                 )
 
-            # update representative table name
-            representatives_table = representatives_name
+                group by node_id
+            )
 
-            # Finally, update and evaluate our representative table
-            # to see if all nodes are connected to a "root node".
+                select
+
+                    r.node_id,
+                    r.representative,
+                    r.representative <> repr.representative as rep_match
+
+                from r
+
+                left join {representatives_name} as repr
+                on r.node_id = repr.node_id
+
+            """
+
+            # set new representatives name (this will be used in the next iteration)
+            representatives_name = f"representatives_{iteration}"
+
+            self.linker.enqueue_sql(sql, representatives_name)
+            self.linker.execute_sql_pipeline(
+                [], use_cache=False, materialise_as_hash=False
+            )
+
+            # Finally, evaluate our representative table
+            # to see if all nodes have a constant representative
+            # (indicated by rep_match).
 
             # If True, terminate the loop.
             sql = f"""
-
-            with root_nodes as (
-
-                select
-                    node_id,
-                    representative,
-                    node_id=representative as root_node
-
+                select count(*) as count
                 from {representatives_name}
-            )
-
-            select count(root_nodes.root_node) as count
-
-            from root_nodes
-
-            right join {representatives_name} as representatives
-
-            on root_nodes.node_id = representatives.representative
-
-            where root_nodes.root_node = true
-
+                where rep_match
             """
             dataframe = self.linker.sql_to_dataframe(
                 sql, "__splink__df_root_rows", materialise_as_hash=False
@@ -212,5 +269,13 @@ class ConnectedComponents:
             root_rows = root_rows[0]["count"]
 
         print(f"Exited after {iteration} iterations")
+        exit_query = f"""
+            select node_id, representative
+            from {representatives_name}
+        """
+        self.linker.enqueue_sql(exit_query, "__splink__df_connected_components")
+        representatives = self.linker.execute_sql_pipeline(
+            [], use_cache=False, materialise_as_hash=False
+        )
 
         return representatives
