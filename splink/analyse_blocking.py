@@ -5,6 +5,10 @@ from .comparison_library import exact_match
 
 def analyse_blocking_rule_sql(linker, blocking_rule, link_type=None):
 
+    if linker._settings_obj is not None:
+        settings_obj = linker._settings_obj
+        link_type = settings_obj._link_type
+
     if link_type is None and linker._settings_obj is None:
         if len(linker.input_tables_dict.values()) == 1:
             link_type = "dedupe_only"
