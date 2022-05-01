@@ -13,7 +13,7 @@ from tests.cc_testing_utils import (
 seed = 5
 
 
-def test_500_edge_performance(benchmark):
+def test_500_node_performance(benchmark):
     g = generate_random_graph(graph_size=500, seed=seed)
     linker = register_cc_df(g)
 
@@ -26,7 +26,7 @@ def test_500_edge_performance(benchmark):
     )
 
 
-def test_10000_edge_performance(benchmark):
+def test_10000_node_performance(benchmark):
     g = generate_random_graph(graph_size=10000, seed=seed)
     linker = register_cc_df(g)
 
@@ -39,7 +39,7 @@ def test_10000_edge_performance(benchmark):
     )
 
 
-def test_100000_edge_performance(benchmark):
+def test_100000_node_performance(benchmark):
     g = generate_random_graph(graph_size=100000, seed=seed)
     linker = register_cc_df(g)
 
