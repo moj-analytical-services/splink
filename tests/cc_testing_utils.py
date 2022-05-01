@@ -44,6 +44,35 @@ def register_cc_df(G):
 def run_cc_implementation(linker):
 
     # finally, run our connected components linker
-    linker.run_connected_components()
+    cc = linker.run_connected_components()
 
-    return linker
+    return cc
+
+
+def networkx_solve(G):
+    rows = []
+    for cc in cc_nx(G):
+        m = min(list(cc))
+        for n in cc:
+            row = {"node_id": n, "representative": m}
+            rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def check_df_equality(df1, df2):
+    """
+    Test if two dataframes are equal
+    :param df1: First dataframe
+    :param df2: Second dataframe
+    :return: True if equal, False if not
+    """
+    if df1.shape != df2.shape:
+        return False
+    if df1.columns.tolist() != df2.columns.tolist():
+        return False
+    if df1.dtypes.tolist() != df2.dtypes.tolist():
+        return False
+    for col in df1.columns:
+        if df1[col].tolist() != df2[col].tolist():
+            return False
+    return True

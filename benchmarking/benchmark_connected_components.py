@@ -1,5 +1,4 @@
 # python3 -m pytest performance/connected_components_random_graphs.py
-import pytest
 from tests.cc_testing_utils import (
     run_cc_implementation,
     register_cc_df,
