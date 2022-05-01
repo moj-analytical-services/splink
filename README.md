@@ -6,13 +6,13 @@
 
 It's key features are:
 
-    - It is extremely fast. It is capable of linking a million records on a laptop in around a minute.
+- It is extremely fast. It is capable of linking a million records on a laptop in around a minute.
 
-    - It is highly accurate, with support for term frequency adjustments, and sophisticated fuzzy matching logic.
+- It is highly accurate, with support for term frequency adjustments, and sophisticated fuzzy matching logic.
 
-    - It supports multiple SQL backends, meaning it's capable of running at any scale. For smaller linkages of up to a few million records, no additional infrastructure is needed. For larger linkages, Splink currently supports Apache Spark or AWS Athena as backends.
+- It supports multiple SQL backends, meaning it's capable of running at any scale. For smaller linkages of up to a few million records, no additional infrastructure is needed. For larger linkages, Splink currently supports Apache Spark or AWS Athena as backends.
 
-    - It produces a wide variety of interactive outputs, helping users to understand their model and diagnose linkage problems.
+- It produces a wide variety of interactive outputs, helping users to understand their model and diagnose linkage problems.
 
 ## Acknowledgements
 
