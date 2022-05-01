@@ -13,10 +13,6 @@ def escape_column(col):
     return f'"{col}"'
 
 
-def literal_column(col):
-    return f"'{col}'"
-
-
 def prob_to_bayes_factor(prob):
     return prob / (1 - prob)
 

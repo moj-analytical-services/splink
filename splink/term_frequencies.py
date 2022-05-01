@@ -3,7 +3,7 @@
 
 import logging
 
-from .misc import escape_column, literal_column
+from .misc import escape_column
 from .input_column import InputColumn
 
 logger = logging.getLogger(__name__)
