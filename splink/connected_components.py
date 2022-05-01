@@ -162,24 +162,31 @@ class ConnectedComponents:
 
             """
             Code summary:
+
             The "r" table is the "representatives" table:
             This utilises our neighbours table and our known representatives.
+
             The idea is that we join on the representative for all
             known neighbours of a specific node. So if we know that
             (A->B and B->C), then on a subsequent iteration we can
             infer that (A->C) by joining on B.
+
             To speed up the code, we use a breakdown named "rep_match",
             which takes a boolean value and indicates whether there a
             match on the current and previous representative for the node.
+
             This tells us if the node has reached its final
             representative, by checking to see if any links have taken
             place. By filtering on this, we can skip nodes that have
             already been fully connected to a "base node".
+
             The final select statement creates this "rep_match" by
             joining on the previous representative of the node and
             comparing it to the current representative.
+
             This "rep_match" also in turn becomes our exit condition
             for our "while" loop.
+
             In short, where every node's representative has stopped changing,
             we can exit the loop.
             """
