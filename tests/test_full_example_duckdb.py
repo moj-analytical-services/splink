@@ -10,12 +10,28 @@ def test_full_example_duckdb(tmp_path):
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
+
+    # Overwrite the surname comparison to include duck-db specific syntax
+    surname_match_level = {
+        "sql_condition": "jaccard(surname_l, surname_r)",
+        # "sql_condition": "surname_l similar to surname_r",
+        "label_for_charts": "Exact match",
+        "m_probability": 0.9,
+        "u_probability": 0.1,
+    }
+
+    settings_dict["comparisons"][1]["comparison_levels"][1] = surname_match_level
+
     linker = DuckDBLinker(
         df,
         settings_dict,
         connection=os.path.join(tmp_path, "duckdb.db"),
         output_schema="splink_in_duckdb",
     )
+
+    # linker.analyse_blocking_rule(
+    #     "l.first_name = r.first_name and l.surname = r.surname"
+    # )
 
     linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]

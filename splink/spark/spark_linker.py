@@ -1,4 +1,5 @@
 import logging
+import sqlglot
 from typing import Union
 import re
 from pyspark.sql import Row
@@ -63,6 +64,9 @@ class SparkLinker(Linker):
         input_table_aliases: Union[str, list] = None,
         spark=None,
     ):
+
+        if settings_dict is not None and "sql_dialect" not in settings_dict:
+            settings_dict["sql_dialect"] = "spark"
 
         self.break_lineage_method = break_lineage_method
         self.persist_level = persist_level
@@ -138,6 +142,9 @@ class SparkLinker(Linker):
         return spark_df
 
     def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+
+        if transpile:
+            sql = sqlglot.transpile(sql, read=None, write="spark", pretty=True)[0]
 
         spark_df = self.spark.sql(sql)
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))

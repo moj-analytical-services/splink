@@ -19,7 +19,7 @@ def compute_new_parameters(settings_obj: Settings):
            sum(1 - match_probability)/(select sum(1 - match_probability)
             from __splink__df_predict where {gamma_column} != -1) as u_probability,
 
-           "{comparison_name}" as comparison_name
+           '{comparison_name}' as comparison_name
     from __splink__df_predict
     where {gamma_column} != -1
     group by {gamma_column}
@@ -37,7 +37,7 @@ def compute_new_parameters(settings_obj: Settings):
     select 0 as comparison_vector_value,
            avg(match_probability) as m_probability,
            avg(1-match_probability) as u_probability,
-           "_proportion_of_matches" as comparison_name
+           '_proportion_of_matches' as comparison_name
     from __splink__df_predict
     """
     union_sqls.append(sql)

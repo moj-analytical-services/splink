@@ -62,6 +62,9 @@ class DuckDBLinker(Linker):
         input_table_aliases: Union[str, list] = None,
     ):
 
+        if settings_dict is not None and "sql_dialect" not in settings_dict:
+            settings_dict["sql_dialect"] = "duckdb"
+
         if connection == ":memory:":
             con = duckdb.connect(database=connection)
         else:
@@ -125,7 +128,7 @@ class DuckDBLinker(Linker):
         self.delete_table_from_database(physical_name)
 
         if transpile:
-            sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
+            sql = sqlglot.transpile(sql, read=None, write="duckdb", pretty=True)[0]
 
         logger.debug(
             execute_sql_logging_message_info(

@@ -15,7 +15,7 @@ class InputColumn:
         # If settings_obj is None, then default values will be used
         # from the jsonschame
         self.settings_obj = settings_obj
-        self.has_tf_adjustments = tf_adjustments
+        self._has_tf_adjustments = tf_adjustments
 
         if name.endswith("_l"):
             self.input_name = name[:-2]
@@ -80,6 +80,9 @@ class InputColumn:
 
     @property
     def has_tf_adjustment(self):
+        if self._has_tf_adjustments is not None:
+            return self._has_tf_adjustments
+
         if self.settings_obj:
             if self.input_name in self.settings_obj._term_frequency_columns:
                 return True

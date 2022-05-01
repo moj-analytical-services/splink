@@ -61,7 +61,9 @@ class EMTrainingSession:
         # use this instead
         if not comparisons_to_deactivate:
             comparisons_to_deactivate = []
-            br_cols = get_columns_used_from_sql(blocking_rule_for_training)
+            br_cols = get_columns_used_from_sql(
+                blocking_rule_for_training, self.settings_obj._sql_dialect
+            )
             for cc in self.settings_obj.comparisons:
                 cc_cols = cc.input_columns_used_by_case_statement
                 cc_cols = [c.input_name for c in cc_cols]

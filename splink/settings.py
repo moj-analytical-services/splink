@@ -19,6 +19,8 @@ class Settings:
         self._settings_dict = settings_dict
 
         ccs = self._settings_dict["comparisons"]
+        s_else_d = self.from_settings_dict_else_default
+        self._sql_dialect = s_else_d("sql_dialect")
 
         self.comparisons = []
         for cc in ccs:
@@ -28,7 +30,6 @@ class Settings:
                 cc.settings_obj = self
                 self.comparisons.append(Comparison)
 
-        s_else_d = self.from_settings_dict_else_default
         self._link_type = s_else_d("link_type")
         self._proportion_of_matches = s_else_d("proportion_of_matches")
         self._em_convergence = s_else_d("em_convergence")

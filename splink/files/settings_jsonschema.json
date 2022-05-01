@@ -213,6 +213,12 @@
       "title": "The prefix to use for the columns that will be created to store the comparison vector values",
       "default": "gamma_",
       "examples": ["gamma_", "__gamma__"]
+    },
+    "sql_dialect": {
+      "type": "string",
+      "title": "The SQL dialect in which sql_conditions are written.  Must be a valid sqlglot dialect",
+      "default": null,
+      "examples": ["spark", "duckdb", "presto"]
     }
   }
 }
