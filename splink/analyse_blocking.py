@@ -5,6 +5,9 @@ from .comparison_library import exact_match
 
 def analyse_blocking_rule_sql(linker, blocking_rule, link_type=None):
 
+    if linker._settings_obj is not None:
+        settings_obj = linker._settings_obj
+
     if link_type is None and linker._settings_obj is None:
         if len(linker.input_tables_dict.values()) == 1:
             link_type = "dedupe_only"
@@ -24,7 +27,7 @@ def analyse_blocking_rule_sql(linker, blocking_rule, link_type=None):
             )
 
     where_condition = _sql_gen_where_condition(
-        link_type, settings_obj._unique_id_input_columns
+        settings_obj._link_type, settings_obj._unique_id_input_columns
     )
 
     sql = f"""
