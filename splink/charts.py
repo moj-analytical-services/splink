@@ -17,9 +17,8 @@ try:
             pass
 
     def vegalite(spec):
-        from IPython.display import display
 
-        display(VegaliteNoValidate(spec))
+        return VegaliteNoValidate(spec)
 
 except ImportError:
     altair_installed = False
@@ -54,8 +53,8 @@ def vegalite_or_json(chart_dict, as_dict=False):
         if not as_dict:
             try:
                 # Display chart then return its spec
-                vegalite(chart_dict)
-                return chart_dict
+                return vegalite(chart_dict)
+
             except ModuleNotFoundError:
                 return chart_dict
 
