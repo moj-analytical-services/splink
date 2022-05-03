@@ -13,10 +13,10 @@ try:
     # Slightly re-write logic to avoid validation
     # Some splink3 charts do not validate but display fine
     class VegaliteNoValidate(VegaLite):
-        def validate(self):
+        def _validate(self):
             pass
 
-    def vegalite(spec):
+    def vegalite_no_validate(spec):
 
         return VegaliteNoValidate(spec)
 
@@ -53,7 +53,7 @@ def vegalite_or_json(chart_dict, as_dict=False):
         if not as_dict:
             try:
                 # Display chart then return its spec
-                return vegalite(chart_dict)
+                return vegalite_no_validate(chart_dict)
 
             except ModuleNotFoundError:
                 return chart_dict

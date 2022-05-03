@@ -85,7 +85,12 @@
         ],
         "x": {
           "type": "quantitative",
-          "axis": null,
+          "axis": {
+            "labels": false,
+            "domain": false,
+            "title": "",
+            "ticks": false
+          },
           "field": "log2_bayes_factor",
           "scale": { "domain": [-10, 10] }
         },
@@ -179,8 +184,7 @@
         "x": {
           "type": "quantitative",
           "axis": {
-            "title": "Comparison level match weight = log2(m/u)",
-            "values": [-10, -5, 0, 5, 10]
+            "title": "Comparison level match weight = log2(m/u)"
           },
           "field": "log2_bayes_factor",
           "scale": { "domain": [-10, 10] }
