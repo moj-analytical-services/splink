@@ -2,7 +2,7 @@
   "config": {
     "view": {
       "width": 400,
-      "height": 50
+      "height": 60
     },
     "mark": {
       "tooltip": null
@@ -93,7 +93,7 @@
           "type": "nominal",
           "field": "label_for_charts",
           "axis": {
-            "title": "Proportion of matches (prior)",
+            "title": "Prior (starting) match weight",
             "titleAngle": 0,
             "titleAlign": "right",
             "titleFontWeight": "normal"
@@ -179,7 +179,7 @@
         "x": {
           "type": "quantitative",
           "axis": {
-            "title": "Match weight = log2(m/u)",
+            "title": "Comparison level match weight = log2(m/u)",
             "values": [-10, -5, 0, 5, 10]
           },
           "field": "log2_bayes_factor",
@@ -189,8 +189,7 @@
           "type": "nominal",
           "field": "label_for_charts",
           "axis": { "title": null },
-          "sort": { "field": "comparison_vector_value", "order": "descending" },
-          "band": 0.5
+          "sort": { "field": "comparison_vector_value", "order": "descending" }
         }
       },
       "resolve": {
@@ -214,7 +213,7 @@
     }
   },
   "title": {
-    "text": "Influence of comparison levels on match weight",
+    "text": "Model parameters (components of final match weight)",
     "subtitle": "Use mousewheel to zoom"
   },
   "$schema": "https://vega.github.io/schema/vega-lite/v5.2.json"

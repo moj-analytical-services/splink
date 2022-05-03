@@ -83,8 +83,8 @@ class EMTrainingSession:
         self.settings_obj.comparisons = filtered_ccs
         self.comparisons_that_can_be_estimated = filtered_ccs
 
-        self.comparison_level_history = []
-        self.lambda_history = []
+        self.settings_obj_history = []
+
         self.add_iteration()
 
     def _training_log_message(self):
@@ -183,17 +183,7 @@ class EMTrainingSession:
 
     def add_iteration(self):
 
-        ccs = [deepcopy(cc) for cc in self.settings_obj.comparisons]
-        self.comparison_level_history.append(ccs)
-
-        lam = self.settings_obj._proportion_of_matches
-
-        record = {
-            "proportion_of_matches": lam,
-            "proportion_of_matches_reciprocal": 1 / lam,
-        }
-
-        self.lambda_history.append(record)
+        self.settings_obj_history.append(deepcopy(self.settings_obj))
 
     @property
     def _blocking_adjusted_proportion_of_matches(self):
@@ -217,24 +207,28 @@ class EMTrainingSession:
     def iteration_history_records(self):
         output_records = []
 
-        for iteration, ccs in enumerate(self.comparison_level_history):
-            for cc in ccs:
-                records = cc.as_detailed_records
+        for iteration, settings_obj in enumerate(self.settings_obj_history):
 
-                for r in records:
-                    r["iteration"] = iteration
-                    r[
-                        "proportion_of_matches"
-                    ] = self.settings_obj._proportion_of_matches
-                output_records.extend(records)
+            records = settings_obj._parameters_as_detailed_records
+
+            for r in records:
+                r["iteration"] = iteration
+                r["proportion_of_matches"] = self.settings_obj._proportion_of_matches
+
+            output_records.extend(records)
         return output_records
 
     @property
     def lambda_history_records(self):
         output_records = []
-        for i, r in enumerate(self.lambda_history):
-            r = deepcopy(r)
-            r["iteration"] = i
+        for i, s in enumerate(self.settings_obj_history):
+            lam = s._proportion_of_matches
+            r = {
+                "proportion_of_matches": lam,
+                "proportion_of_matches_reciprocal": 1 / lam,
+                "iteration": i,
+            }
+
             output_records.append(r)
         return output_records
 
@@ -274,8 +268,8 @@ class EMTrainingSession:
 
     def max_change_in_parameters_comparison_levels(self):
 
-        previous_iteration = self.comparison_level_history[-2]
-        this_iteration = self.comparison_level_history[-1]
+        previous_iteration = self.settings_obj_history[-2]
+        this_iteration = self.settings_obj_history[-1]
         max_change = -0.1
 
         max_change_levels = {
@@ -284,7 +278,7 @@ class EMTrainingSession:
             "max_change_type": None,
             "max_change_value": None,
         }
-        comparisons = zip(previous_iteration, this_iteration)
+        comparisons = zip(previous_iteration.comparisons, this_iteration.comparisons)
         for comparison in comparisons:
             prev_cc = comparison[0]
             this_cc = comparison[1]
@@ -311,9 +305,10 @@ class EMTrainingSession:
                     max_change_levels["max_change_value"] = change_value
                     max_change_levels["max_abs_change_value"] = abs(change_value)
 
-        previous_iteration = self.lambda_history[-2]["proportion_of_matches"]
-        this_iteration = self.lambda_history[-1]["proportion_of_matches"]
-        change_proportion_of_matches = this_iteration - previous_iteration
+        change_proportion_of_matches = (
+            this_iteration._proportion_of_matches
+            - previous_iteration._proportion_of_matches
+        )
 
         if abs(change_proportion_of_matches) > max_change:
             max_change = abs(change_proportion_of_matches)
