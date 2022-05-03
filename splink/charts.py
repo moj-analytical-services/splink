@@ -4,10 +4,23 @@ import pkgutil
 
 from .waterfall_chart import records_to_waterfall_data
 
+
 altair_installed = True
 try:
 
-    from altair.vegalite.v4.display import vegalite
+    from altair.vegalite.v4.display import VegaLite
+
+    # Slightly re-write logic to avoid validation
+    # Some splink3 charts do not validate but display fine
+    class VegaliteNoValidate(VegaLite):
+        def validate(self):
+            pass
+
+    def vegalite(spec):
+        from IPython.display import display
+
+        display(VegaliteNoValidate(spec))
+
 except ImportError:
     altair_installed = False
 
