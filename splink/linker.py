@@ -441,6 +441,14 @@ class Linker:
                 em_training_session.comparison_levels_to_reverse_blocking_rule
             )
 
+            logger.log(
+                15,
+                "\n"
+                f"Proportion of matches from trained model blocking on "
+                f"{em_training_session.blocking_rule_for_training}: "
+                f"{training_lambda:,.3f}",
+            )
+
             for reverse_level in reverse_levels:
 
                 # Get comparison level on current settings obj
@@ -457,11 +465,28 @@ class Linker:
                 else:
                     bf = cl.bayes_factor
 
+                logger.log(
+                    15,
+                    f"Reversing comparison level {cc.comparison_name}"
+                    f" using bayes factor {bf:,.3f}",
+                )
+
                 training_lambda_bf = training_lambda_bf / bf
+
+                logger.log(
+                    15,
+                    "This estimate of proportion of matches now: "
+                    f" {bayes_factor_to_prob(training_lambda_bf):,.3f}",
+                )
             p = bayes_factor_to_prob(training_lambda_bf)
             prop_matches_estimates.append(p)
 
         self.settings_obj._proportion_of_matches = median(prop_matches_estimates)
+        logger.log(
+            15,
+            "\nMedian of prop of matches estimates: "
+            f"{self.settings_obj._proportion_of_matches:,.3f}",
+        )
 
     def populate_m_u_from_trained_values(self):
         ccs = self.settings_obj.comparisons

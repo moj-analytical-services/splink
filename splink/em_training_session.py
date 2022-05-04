@@ -27,6 +27,8 @@ class EMTrainingSession:
         comparison_levels_to_reverse_blocking_rule=None,
     ):
 
+        logger.info("\n----- Starting EM training session -----\n")
+
         self.original_settings_obj = linker.settings_obj
         self.original_linker = linker
         self.training_linker = deepcopy(linker)
@@ -108,7 +110,6 @@ class EMTrainingSession:
             mu = "m and u probabilities"
 
         logger.info(
-            "\n----- Starting EM training session -----\n\n"
             f"Training the {mu} of the model by blocking on:\n"
             f"{self.blocking_rule_for_training}\n\n"
             "Parameter estimates will be made for the following comparison(s):"
@@ -148,7 +149,7 @@ class EMTrainingSession:
                 orig_cl = orig_cc.get_comparison_level_by_comparison_vector_value(
                     cl.comparison_vector_value
                 )
-                # TODO:  HERE'S WHERE THE LOGGING SHOULD HAPPEN
+
                 if not self._training_fix_m_probabilities:
                     not_observed = "level not observed in training dataset"
                     if cl._m_probability == not_observed:
@@ -188,9 +189,11 @@ class EMTrainingSession:
     @property
     def _blocking_adjusted_proportion_of_matches(self):
 
-        adj_bayes_factor = prob_to_bayes_factor(
-            self.original_settings_obj._proportion_of_matches
-        )
+        orig_prop_m = self.original_settings_obj._proportion_of_matches
+
+        adj_bayes_factor = prob_to_bayes_factor(orig_prop_m)
+
+        logger.log(15, f"Original proportion of matches: {orig_prop_m:.3f}")
 
         comp_levels = self.comparison_levels_to_reverse_blocking_rule
         if not comp_levels:
@@ -201,7 +204,20 @@ class EMTrainingSession:
         for cl in comp_levels:
             adj_bayes_factor = cl.bayes_factor * adj_bayes_factor
 
-        return bayes_factor_to_prob(adj_bayes_factor)
+            logger.log(
+                15,
+                f"Applying comparison {cl.comparison.comparison_name}"
+                f" using bayes factor {cl.bayes_factor:,.3f}",
+            )
+
+        adjusted_prop_m = bayes_factor_to_prob(adj_bayes_factor)
+        logger.log(
+            15,
+            f"\nProportion of matches adjusted for blocking on "
+            f"{self.blocking_rule_for_training}: "
+            f"{adjusted_prop_m:.3f}",
+        )
+        return adjusted_prop_m
 
     @property
     def iteration_history_records(self):
