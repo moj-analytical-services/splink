@@ -57,7 +57,7 @@ def test_m_train():
 
     linker_pairwise.con.register("labels", df_labels)
     linker_pairwise.train_m_from_pairwise_labels("labels")
-    cc_name = linker_pairwise.settings_obj.comparisons[0]
+    cc_name = linker_pairwise._settings_obj.comparisons[0]
 
     cl_exact = cc_name.get_comparison_level_by_comparison_vector_value(2)
     assert cl_exact.m_probability == 1 / 4

@@ -17,7 +17,7 @@ class Comparison:
         self.comparison_levels = [
             ComparisonLevel(i, self, settings_obj) for i in comparison_level_list
         ]
-        self.settings_obj = settings_obj
+        self._settings_obj = settings_obj
 
         # Assign comparison vector values starting at highest level, count down to 0
         num_levels = len([cl for cl in self.comparison_levels if not cl.is_null_level])
@@ -37,7 +37,7 @@ class Comparison:
                 counter -= 1
 
     def __deepcopy__(self, memo):
-        cc = Comparison(self.as_dict, self.settings_obj)
+        cc = Comparison(self.as_dict, self._settings_obj)
         return cc
 
     @property
@@ -46,20 +46,22 @@ class Comparison:
 
     @property
     def gamma_prefix(self):
-        return self.settings_obj._gamma_prefix
+        return self._settings_obj._gamma_prefix
 
     @property
     def retain_intermediate_calculation_columns(self):
-        return self.settings_obj._retain_intermediate_calculation_columns
+        return self._settings_obj._retain_intermediate_calculation_columns
 
     @property
     def bf_column_name(self):
-        return f"{self.settings_obj._bf_prefix}{self.comparison_name}".replace(" ", "_")
+        return f"{self._settings_obj._bf_prefix}{self.comparison_name}".replace(
+            " ", "_"
+        )
 
     @property
     def bf_tf_adj_column_name(self):
-        bf = self.settings_obj._bf_prefix
-        tf = self.settings_obj._tf_prefix
+        bf = self._settings_obj._bf_prefix
+        tf = self._settings_obj._tf_prefix
         cc_name = self.comparison_name
         return f"{bf}{tf}adj_{cc_name}".replace(" ", "_")
 
@@ -134,7 +136,7 @@ class Comparison:
 
         output_cols = []
         for col in input_cols:
-            if self.settings_obj._retain_matching_columns:
+            if self._settings_obj._retain_matching_columns:
                 output_cols.extend(col.names_l_r())
 
         output_cols.append(self.case_statement)
@@ -155,7 +157,7 @@ class Comparison:
 
         output_cols = []
         for col in input_cols:
-            if self.settings_obj._retain_matching_columns:
+            if self._settings_obj._retain_matching_columns:
 
                 output_cols.extend(col.names_l_r())
 
@@ -164,7 +166,7 @@ class Comparison:
         for col in input_cols:
 
             if self.has_tf_adjustments:
-                if self.settings_obj._retain_intermediate_calculation_columns:
+                if self._settings_obj._retain_intermediate_calculation_columns:
 
                     output_cols.extend(col.tf_name_l_r())
 
@@ -194,17 +196,17 @@ class Comparison:
 
         output_cols = []
         for col in input_cols:
-            if self.settings_obj._retain_matching_columns:
+            if self._settings_obj._retain_matching_columns:
                 output_cols.extend(col.names_l_r())
 
         if (
-            self.settings_obj._training_mode
-            or self.settings_obj._retain_matching_columns
+            self._settings_obj._training_mode
+            or self._settings_obj._retain_matching_columns
         ):
             output_cols.append(self.gamma_column_name)
 
         for col in input_cols:
-            if self.settings_obj._retain_intermediate_calculation_columns:
+            if self._settings_obj._retain_intermediate_calculation_columns:
                 if self.has_tf_adjustments:
 
                     output_cols.extend(col.tf_name_l_r())

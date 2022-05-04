@@ -45,6 +45,8 @@ from .splink_comparison_viewer import (
 )
 from .analyse_blocking import analyse_blocking_rule_sql
 
+from .splink_dataframe import SplinkDataFrame
+
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +64,9 @@ class Linker:
 
         self._settings_dict = settings_dict
         if settings_dict is None:
-            self.__settings_obj = None
+            self._settings_obj_ = None
         else:
-            self.__settings_obj = Settings(settings_dict)
+            self._settings_obj_ = Settings(settings_dict)
 
         self._input_tables_dict = self._get_input_tables_dict(
             input_table_or_tables, input_table_aliases
@@ -92,18 +94,18 @@ class Linker:
 
     @property
     def _settings_obj(self):
-        if self.__settings_obj is None:
+        if self._settings_obj_ is None:
             raise ValueError(
                 "You did not provide a settings dictionary when you "
                 "created the linker.  To continue, you need to provide a settings "
                 "dictionary using the `initialise_settings()` method on your linker "
                 "object. i.e. linker.initialise_settings(settings_dict)"
             )
-        return self.__settings_obj
+        return self._settings_obj_
 
     def initialise_settings(self, settings_dict):
         self._settings_dict = settings_dict
-        self.__settings_obj = Settings(settings_dict)
+        self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
 
     @property
@@ -151,7 +153,7 @@ class Linker:
 
         if (
             len(self._input_tables_dict) == 2
-            and self.settings_obj._link_type == "link_only"
+            and self._settings_obj._link_type == "link_only"
         ):
             return True
         else:
@@ -184,7 +186,7 @@ class Linker:
             # we'd have to run all the code up to this point twice
             self._execute_sql_pipeline(materialise_as_hash=False)
 
-            source_dataset_col = self.settings_obj._source_dataset_column_name
+            source_dataset_col = self._settings_obj._source_dataset_column_name
             # Need df_l to be the one with the lowest id to preeserve the property
             # that the left dataset is the one with the lowest concatenated id
             keys = self._input_tables_dict.keys()
@@ -315,7 +317,7 @@ class Linker:
         new_linker = copy(self)
         new_linker._em_training_sessions = []
         new_settings = deepcopy(self._settings_obj)
-        new_linker.__settings_obj = new_settings
+        new_linker._settings_obj_ = new_settings
         return new_linker
 
     def _ensure_is_list(self, input_table_or_tables):
@@ -356,7 +358,7 @@ class Linker:
 
     def _predict_warning(self):
 
-        if not self.settings_obj.is_fully_trained:
+        if not self._settings_obj.is_fully_trained:
             msg = (
                 "\n -- WARNING --\n"
                 "You have called predict(), but there are some parameter "
@@ -364,7 +366,7 @@ class Linker:
                 "settings dictionary.  To produce predictions the following"
                 " untrained trained parameters will use default values."
             )
-            messages = self.settings_obj.not_trained_messages()
+            messages = self._settings_obj.not_trained_messages()
 
             warn_message = "\n".join([msg] + messages)
 
@@ -382,7 +384,7 @@ class Linker:
         for df in self._input_tables_dict.values():
             df.validate()
 
-        if self.__settings_obj is not None:
+        if self._settings_obj_ is not None:
             if self._settings_obj._link_type == "dedupe_only":
                 if len(self._input_tables_dict) > 1:
                     raise ValueError(
@@ -395,7 +397,7 @@ class Linker:
         # their blocking rules and m and u values
         prop_matches_estimates = []
         for em_training_session in self._em_training_sessions:
-            training_lambda = em_training_session.settings_obj._proportion_of_matches
+            training_lambda = em_training_session._settings_obj._proportion_of_matches
             training_lambda_bf = prob_to_bayes_factor(training_lambda)
             reverse_levels = (
                 em_training_session.comparison_levels_to_reverse_blocking_rule
@@ -412,7 +414,7 @@ class Linker:
             for reverse_level in reverse_levels:
 
                 # Get comparison level on current settings obj
-                cc = self.settings_obj._get_comparison_by_name(
+                cc = self._settings_obj._get_comparison_by_name(
                     reverse_level.comparison.comparison_name
                 )
 
@@ -565,7 +567,9 @@ class Linker:
             comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa
         )
 
-    def predict(self, threshold_match_probability=None, threshold_match_weight=None):
+    def predict(
+        self, threshold_match_probability=None, threshold_match_weight=None
+    ) -> SplinkDataFrame:
 
         # If the user only calls predict, it runs as a single pipeline with no
         # materialisation of anything
@@ -574,11 +578,11 @@ class Linker:
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
 
-        sql = compute_comparison_vector_values_sql(self.settings_obj)
+        sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sql(
-            self.settings_obj, threshold_match_probability, threshold_match_weight
+            self._settings_obj, threshold_match_probability, threshold_match_weight
         )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
@@ -592,28 +596,28 @@ class Linker:
     ):
 
         original_blocking_rules = (
-            self.settings_obj._blocking_rules_to_generate_predictions
+            self._settings_obj._blocking_rules_to_generate_predictions
         )
-        original_link_type = self.settings_obj._link_type
+        original_link_type = self._settings_obj._link_type
 
         self._records_to_table(records, "__splink__df_new_records")
 
         if blocking_rules is not None:
-            self.settings_obj._blocking_rules_to_generate_predictions = blocking_rules
-        self.settings_obj._link_type = "link_only_find_matches_to_new_records"
+            self._settings_obj._blocking_rules_to_generate_predictions = blocking_rules
+        self._settings_obj._link_type = "link_only_find_matches_to_new_records"
         self._find_new_matches_mode = True
 
-        sql = _join_tf_to_input_df(self.settings_obj)
+        sql = _join_tf_to_input_df(self._settings_obj)
         sql = sql.replace("__splink__df_concat", "__splink__df_new_records")
         self._enqueue_sql(sql, "__splink__df_new_records_with_tf")
 
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
 
-        sql = compute_comparison_vector_values_sql(self.settings_obj)
+        sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sql(self.settings_obj)
+        sqls = predict_from_comparison_vectors_sql(self._settings_obj)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -626,27 +630,27 @@ class Linker:
 
         predictions = self._execute_sql_pipeline(use_cache=False)
 
-        self.settings_obj._blocking_rules_to_generate_predictions = (
+        self._settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
         )
-        self.settings_obj._link_type = original_link_type
+        self._settings_obj._link_type = original_link_type
         self._find_new_matches_mode = False
 
         return predictions
 
     def compare_two_records(self, record_1, record_2):
         original_blocking_rules = (
-            self.settings_obj._blocking_rules_to_generate_predictions
+            self._settings_obj._blocking_rules_to_generate_predictions
         )
-        original_link_type = self.settings_obj._link_type
+        original_link_type = self._settings_obj._link_type
 
         self._compare_two_records_mode = True
-        self.settings_obj._blocking_rules_to_generate_predictions = []
+        self._settings_obj._blocking_rules_to_generate_predictions = []
 
         self._records_to_table([record_1], "__splink__compare_two_records_left")
         self._records_to_table([record_2], "__splink__compare_two_records_right")
 
-        sql_join_tf = _join_tf_to_input_df(self.settings_obj)
+        sql_join_tf = _join_tf_to_input_df(self._settings_obj)
         sql_join_tf = sql_join_tf.replace(
             "__splink__df_concat", "__splink__compare_two_records_left"
         )
@@ -660,19 +664,19 @@ class Linker:
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
 
-        sql = compute_comparison_vector_values_sql(self.settings_obj)
+        sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sql(self.settings_obj)
+        sqls = predict_from_comparison_vectors_sql(self._settings_obj)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         predictions = self._execute_sql_pipeline(use_cache=False)
 
-        self.settings_obj._blocking_rules_to_generate_predictions = (
+        self._settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
         )
-        self.settings_obj._link_type = original_link_type
+        self._settings_obj._link_type = original_link_type
         self._compare_two_records_mode = False
 
         return predictions
@@ -718,7 +722,7 @@ class Linker:
         return match_weight_histogram(recs, width=width, height=height)
 
     def waterfall_chart(self, records, filter_nulls=True, as_dict=False):
-        return waterfall_chart(records, self.settings_obj, filter_nulls, as_dict)
+        return waterfall_chart(records, self._settings_obj, filter_nulls, as_dict)
 
     def splink_comparison_viewer(
         self, df_predict, out_path, overwrite=False, num_example_rows=2
@@ -734,13 +738,13 @@ class Linker:
 
         render_splink_comparison_viewer_html(
             df.as_record_dict(),
-            self.settings_obj.as_completed_dict,
+            self._settings_obj.as_completed_dict,
             out_path,
             overwrite,
         )
 
     def parameter_estimate_comparisons_chart(self, include_m=True, include_u=True):
-        records = self.settings_obj._parameter_estimates_as_records
+        records = self._settings_obj._parameter_estimates_as_records
 
         to_retain = []
         if include_m:

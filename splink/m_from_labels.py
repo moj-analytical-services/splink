@@ -46,4 +46,4 @@ def estimate_m_from_pairwise_labels(linker, table_name):
                 cl, m_u_records_lookup, "estimate m from pairwise labels"
             )
 
-    linker.populate_m_u_from_trained_values()
+    linker._populate_m_u_from_trained_values()

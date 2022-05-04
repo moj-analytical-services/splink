@@ -61,7 +61,7 @@ class ComparisonLevel:
             level_dict  # Protected, because we don't want to modify the original dict
         )
         self.comparison = comparison
-        self.settings_obj = settings_obj
+        self._settings_obj = settings_obj
 
         self.sql_condition = self._level_dict["sql_condition"]
         self.is_null_level = self.level_dict_val_else_default("is_null_level")
@@ -92,7 +92,9 @@ class ComparisonLevel:
 
         val = self.level_dict_val_else_default("tf_adjustment_column")
         if val:
-            return InputColumn(val, tf_adjustments=True, settings_obj=self.settings_obj)
+            return InputColumn(
+                val, tf_adjustments=True, settings_obj=self._settings_obj
+            )
         else:
             return None
 
@@ -292,8 +294,8 @@ class ComparisonLevel:
     @property
     def sql_read_dialect(self):
         read_dialect = None
-        if self.settings_obj is not None:
-            read_dialect = self.settings_obj._sql_dialect
+        if self._settings_obj is not None:
+            read_dialect = self._settings_obj._sql_dialect
         return read_dialect
 
     def _validate_sql(self):
@@ -332,11 +334,13 @@ class ComparisonLevel:
             # not the dmeta_surname one
             if c == self.tf_adjustment_input_column_name:
                 input_cols.append(
-                    InputColumn(c, tf_adjustments=True, settings_obj=self.settings_obj)
+                    InputColumn(c, tf_adjustments=True, settings_obj=self._settings_obj)
                 )
             else:
                 input_cols.append(
-                    InputColumn(c, tf_adjustments=False, settings_obj=self.settings_obj)
+                    InputColumn(
+                        c, tf_adjustments=False, settings_obj=self._settings_obj
+                    )
                 )
 
         return input_cols

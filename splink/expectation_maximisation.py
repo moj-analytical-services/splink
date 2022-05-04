@@ -74,7 +74,7 @@ def populate_m_u_from_lookup(em_training_session, comparison_level, m_u_records_
 
 def maximisation_step(em_training_session, param_records):
 
-    settings_obj = em_training_session.settings_obj
+    settings_obj = em_training_session._settings_obj
 
     m_u_records = []
     for r in param_records:
@@ -97,7 +97,7 @@ def maximisation_step(em_training_session, param_records):
 
 def expectation_maximisation(em_training_session, df_comparison_vector_values):
 
-    settings_obj = em_training_session.settings_obj
+    settings_obj = em_training_session._settings_obj
     linker = em_training_session.original_linker
 
     max_iterations = settings_obj._max_iterations

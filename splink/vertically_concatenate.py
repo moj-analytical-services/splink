@@ -13,7 +13,7 @@ def vertically_concatente_sql(linker):
 
     # For data profiling, we need to vertically concat
     # but user may not have provided a settings dict yet
-    if linker._settings_obj is None:
+    if linker._settings_obj_ is None:
         source_dataset_col_req = True
     else:
         source_dataset_col_req = (
