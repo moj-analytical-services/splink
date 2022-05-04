@@ -75,18 +75,20 @@ class ConnectedComponents:
 
         # Circular connections are only included where our reverse
         # connection is null when we apply our joins.
+
+        sql = f"""
+        select unique_id_l as node_id
+            from {self.edges}
+
+            UNION
+
+        select unique_id_r as node_id
+            from {self.edges}
+        """
+
+        self.linker.enqueue_sql(sql, "nodes")
+
         neighbours_table = f"""
-
-            with nodes as (
-                select unique_id_l as node_id
-                from {self.edges}
-
-                UNION
-
-                select unique_id_r as node_id
-                from {self.edges}
-            )
-
             select n.node_id,
                 e_l.unique_id_r as neighbour
             from nodes as n
@@ -104,40 +106,40 @@ class ConnectedComponents:
 
             left join {self.edges} as e_r
                 on n.node_id = e_r.unique_id_r
-
         """
 
-        # create our neighbours table
-        neighbours_table_name = "neighbours"
+        # queue and create our neighbours table
+        neighbours_table_name = "__splink__df_neighbours"
         self.linker.enqueue_sql(neighbours_table, neighbours_table_name)
         self.linker.execute_sql_pipeline([], use_cache=False, materialise_as_hash=False)
 
         # Create our initial representatives table
         # this can be added to our pipeline code later!
         sql = f"""
+            select
+                neighbours.node_id,
+                min(neighbour) as representative
+            from {neighbours_table_name} as neighbours
+            group by node_id
+            order by node_id
+        """
 
-            with representatives as (
-                select
-                    neighbours.node_id,
-                    min(neighbour) as representative
-                from {neighbours_table_name} as neighbours
-                group by node_id
-                order by node_id
-            ),
+        self.linker.enqueue_sql(sql, "representatives")
 
+        sql = f"""
+            select
+                neighbours.node_id,
+                min(representatives.representative) as representative
+            from {neighbours_table_name} as neighbours
+            left join representatives
+            on neighbours.neighbour = representatives.node_id
+                group by neighbours.node_id
+                order by neighbours.node_id
+        """
 
-            current_repr as (
-                select
-                    neighbours.node_id,
-                    min(representatives.representative) as representative
-                from {neighbours_table_name} as neighbours
-                left join representatives
-                on neighbours.neighbour = representatives.node_id
-                    group by neighbours.node_id
-                    order by neighbours.node_id
-            )
+        self.linker.enqueue_sql(sql, "current_repr")
 
-
+        sql = """
             select
                 current_repr.node_id,
                 current_repr.representative,
@@ -145,8 +147,7 @@ class ConnectedComponents:
             from current_repr
             left join representatives as repr
             on current_repr.node_id = repr.node_id
-
-            """
+        """
 
         # create our initial representatives table
         representatives_name = "representatives"
@@ -192,9 +193,6 @@ class ConnectedComponents:
             """
 
             sql = f"""
-
-            with r as (
-
                 select
 
                 node_id,
@@ -226,10 +224,12 @@ class ConnectedComponents:
                     from {representatives_name}
 
                 )
-
                 group by node_id
-            )
+            """
 
+            self.linker.enqueue_sql(sql, "r")
+
+            sql = f"""
                 select
 
                     r.node_id,
@@ -240,9 +240,7 @@ class ConnectedComponents:
 
                 left join {representatives_name} as repr
                 on r.node_id = repr.node_id
-
             """
-
             # set new representatives name (this will be used in the next iteration)
             representatives_name = f"representatives_{iteration}"
 
@@ -251,7 +249,7 @@ class ConnectedComponents:
                 [], use_cache=False, materialise_as_hash=False
             )
 
-            # Finally, evaluate our representative table
+            # Finally, evaluate our representatives table
             # to see if all nodes have a constant representative
             # (indicated by rep_match).
 
