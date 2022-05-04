@@ -24,7 +24,7 @@ from .term_frequencies import (
     compute_all_term_frequencies_sqls,
     term_frequencies_for_single_column_sql,
     colname_to_tf_tablename,
-    join_tf_to_input_df,
+    _join_tf_to_input_df,
 )
 from .profile_data import profile_columns
 from .missingness import missingness_data
@@ -60,27 +60,26 @@ class Linker:
 
         self.pipeline = SQLPipeline()
 
-        self.settings_dict = settings_dict
+        self._settings_dict = settings_dict
         if settings_dict is None:
-            self._settings_obj = None
+            self.__settings_obj = None
         else:
-            self._settings_obj = Settings(settings_dict)
+            self.__settings_obj = Settings(settings_dict)
 
-        self.input_tables_dict = self._get_input_tables_dict(
+        self._input_tables_dict = self._get_input_tables_dict(
             input_table_or_tables, input_table_aliases
         )
 
         self._validate_input_dfs()
-        self.em_training_sessions = []
+        self._em_training_sessions = []
 
-        self.names_of_tables_created_by_splink = []
+        self._names_of_tables_created_by_splink = []
 
-        self.find_new_matches_mode = False
-        self.train_u_using_random_sample_mode = False
+        self._find_new_matches_mode = False
+        self._train_u_using_random_sample_mode = False
+        self._compare_two_records_mode = False
 
-        self.compare_two_records_mode = False
-
-        self.output_schema = ""
+        self._output_schema = ""
 
         self.debug_mode = False
 
@@ -92,66 +91,66 @@ class Linker:
             splink_logger.setLevel(logging.INFO)
 
     @property
-    def settings_obj(self):
-        if self._settings_obj is None:
+    def _settings_obj(self):
+        if self.__settings_obj is None:
             raise ValueError(
                 "You did not provide a settings dictionary when you "
                 "created the linker.  To continue, you need to provide a settings "
                 "dictionary using the `initialise_settings()` method on your linker "
                 "object. i.e. linker.initialise_settings(settings_dict)"
             )
-        return self._settings_obj
+        return self.__settings_obj
 
     def initialise_settings(self, settings_dict):
-        self.settings_dict = settings_dict
-        self._settings_obj = Settings(settings_dict)
+        self._settings_dict = settings_dict
+        self.__settings_obj = Settings(settings_dict)
         self._validate_input_dfs()
 
     @property
     def _input_tablename_l(self):
 
-        if self.find_new_matches_mode:
+        if self._find_new_matches_mode:
             return "__splink__df_concat_with_tf"
 
-        if self.compare_two_records_mode:
+        if self._compare_two_records_mode:
             return "__splink__compare_two_records_left_with_tf"
 
-        if self.train_u_using_random_sample_mode:
+        if self._train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
 
-        if self.two_dataset_link_only:
+        if self._two_dataset_link_only:
             return "__splink_df_concat_with_tf_left"
         return "__splink__df_concat_with_tf"
 
     @property
     def _input_tablename_r(self):
 
-        if self.find_new_matches_mode:
+        if self._find_new_matches_mode:
             return "__splink__df_new_records_with_tf"
 
-        if self.compare_two_records_mode:
+        if self._compare_two_records_mode:
             return "__splink__compare_two_records_right_with_tf"
 
-        if self.train_u_using_random_sample_mode:
+        if self._train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
 
-        if self.two_dataset_link_only:
+        if self._two_dataset_link_only:
             return "__splink_df_concat_with_tf_right"
         return "__splink__df_concat_with_tf"
 
     @property
-    def two_dataset_link_only(self):
+    def _two_dataset_link_only(self):
         # Two dataset link only join is a special case where an inner join of the
         # two datasets is much more efficient than self-joining the vertically
         # concatenation of all input datasets
-        if self.find_new_matches_mode:
+        if self._find_new_matches_mode:
             return True
 
-        if self.compare_two_records_mode:
+        if self._compare_two_records_mode:
             return True
 
         if (
-            len(self.input_tables_dict) == 2
+            len(self._input_tables_dict) == 2
             and self.settings_obj._link_type == "link_only"
         ):
             return True
@@ -159,66 +158,61 @@ class Linker:
             return False
 
     def _prepend_schema_to_table_name(self, table_name):
-        if self.output_schema:
-            return f"{self.output_schema}.{table_name}"
+        if self._output_schema:
+            return f"{self._output_schema}.{table_name}"
         return table_name
 
     def _initialise_df_concat(self, materialise=True):
-        sql = vertically_concatente_sql(self)
-        self.enqueue_sql(sql, "__splink__df_concat")
-        self.execute_sql_pipeline(materialise_as_hash=False)
-
-    def _initialise_df_concat_with_tf(self, materialise=True):
-        if self.table_exists_in_database("__splink__df_concat_with_tf"):
+        if self._table_exists_in_database("__splink__df_concat"):
             return
         sql = vertically_concatente_sql(self)
-        self.enqueue_sql(sql, "__splink__df_concat")
+        self._enqueue_sql(sql, "__splink__df_concat")
+        self._execute_sql_pipeline(materialise_as_hash=False)
+
+    def _initialise_df_concat_with_tf(self, materialise=True):
+        if self._table_exists_in_database("__splink__df_concat_with_tf"):
+            return
+        sql = vertically_concatente_sql(self)
+        self._enqueue_sql(sql, "__splink__df_concat")
 
         sqls = compute_all_term_frequencies_sqls(self)
         for sql in sqls:
-            self.enqueue_sql(sql["sql"], sql["output_table_name"])
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        if self.two_dataset_link_only:
+        if self._two_dataset_link_only:
             # If we do not materialise __splink_df_concat_with_tf
             # we'd have to run all the code up to this point twice
-            self.execute_sql_pipeline(materialise_as_hash=False)
+            self._execute_sql_pipeline(materialise_as_hash=False)
 
             source_dataset_col = self.settings_obj._source_dataset_column_name
             # Need df_l to be the one with the lowest id to preeserve the property
             # that the left dataset is the one with the lowest concatenated id
-            keys = self.input_tables_dict.keys()
+            keys = self._input_tables_dict.keys()
             keys = list(sorted(keys))
-            df_l = self.input_tables_dict[keys[0]]
-            df_r = self.input_tables_dict[keys[1]]
+            df_l = self._input_tables_dict[keys[0]]
+            df_r = self._input_tables_dict[keys[1]]
 
             sql = f"""
             select * from __splink__df_concat_with_tf
             where {source_dataset_col} = '{df_l.templated_name}'
             """
-            self.enqueue_sql(sql, "__splink_df_concat_with_tf_left")
-            self.execute_sql_pipeline(materialise_as_hash=False)
+            self._enqueue_sql(sql, "__splink_df_concat_with_tf_left")
+            self._execute_sql_pipeline(materialise_as_hash=False)
 
             sql = f"""
             select * from __splink__df_concat_with_tf
             where {source_dataset_col} = '{df_r.templated_name}'
             """
-            self.enqueue_sql(sql, "__splink_df_concat_with_tf_right")
-            self.execute_sql_pipeline(materialise_as_hash=False)
+            self._enqueue_sql(sql, "__splink_df_concat_with_tf_right")
+            self._execute_sql_pipeline(materialise_as_hash=False)
         else:
             if materialise:
-                self.execute_sql_pipeline(materialise_as_hash=False)
+                self._execute_sql_pipeline(materialise_as_hash=False)
 
-    def compute_tf_table(self, column_name):
-        sql = vertically_concatente_sql(self)
-        self.enqueue_sql(sql, "__splink__df_concat")
-        sql = term_frequencies_for_single_column_sql(column_name)
-        self.enqueue_sql(sql, colname_to_tf_tablename(column_name))
-        return self.execute_sql_pipeline(materialise_as_hash=False)
-
-    def enqueue_sql(self, sql, output_table_name):
+    def _enqueue_sql(self, sql, output_table_name):
         self.pipeline.enqueue_sql(sql, output_table_name)
 
-    def execute_sql_pipeline(
+    def _execute_sql_pipeline(
         self,
         input_dataframes=[],
         materialise_as_hash=True,
@@ -231,7 +225,7 @@ class Linker:
 
             output_tablename_templated = self.pipeline.queue[-1].output_table_name
 
-            dataframe = self.sql_to_dataframe(
+            dataframe = self._sql_to_dataframe(
                 sql_gen,
                 output_tablename_templated,
                 materialise_as_hash,
@@ -248,7 +242,7 @@ class Linker:
                 print("------")
                 print(f"--------Creating table: {output_tablename}--------")
 
-                dataframe = self.sql_to_dataframe(
+                dataframe = self._sql_to_dataframe(
                     sql,
                     output_tablename,
                     materialise_as_hash=False,
@@ -258,7 +252,7 @@ class Linker:
 
             return dataframe
 
-    def sql_to_dataframe(
+    def _sql_to_dataframe(
         self,
         sql,
         output_tablename_templated,
@@ -275,13 +269,13 @@ class Linker:
 
         if use_cache:
 
-            if self.table_exists_in_database(output_tablename_templated):
+            if self._table_exists_in_database(output_tablename_templated):
                 logger.debug(f"Using existing table {output_tablename_templated}")
                 return self._df_as_obj(
                     output_tablename_templated, output_tablename_templated
                 )
 
-            if self.table_exists_in_database(table_name_hash):
+            if self._table_exists_in_database(table_name_hash):
                 logger.debug(
                     f"Using cache for {output_tablename_templated}"
                     f" with physical name {table_name_hash}"
@@ -292,18 +286,18 @@ class Linker:
             print(sql)
 
         if materialise_as_hash:
-            dataframe = self.execute_sql(
+            dataframe = self._execute_sql(
                 sql, output_tablename_templated, table_name_hash, transpile=transpile
             )
         else:
-            dataframe = self.execute_sql(
+            dataframe = self._execute_sql(
                 sql,
                 output_tablename_templated,
                 output_tablename_templated,
                 transpile=transpile,
             )
 
-        self.names_of_tables_created_by_splink.append(dataframe.physical_name)
+        self._names_of_tables_created_by_splink.append(dataframe.physical_name)
 
         if self.debug_mode:
 
@@ -319,9 +313,9 @@ class Linker:
 
     def __deepcopy__(self, memo):
         new_linker = copy(self)
-        new_linker.em_training_sessions = []
-        new_settings = deepcopy(self.settings_obj)
-        new_linker._settings_obj = new_settings
+        new_linker._em_training_sessions = []
+        new_settings = deepcopy(self._settings_obj)
+        new_linker.__settings_obj = new_settings
         return new_linker
 
     def _ensure_is_list(self, input_table_or_tables):
@@ -360,81 +354,47 @@ class Linker:
             d[renamed] = self._df_as_obj(renamed, df_value)
         return d
 
-    def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _predict_warning(self):
+
+        if not self.settings_obj.is_fully_trained:
+            msg = (
+                "\n -- WARNING --\n"
+                "You have called predict(), but there are some parameter "
+                "estimates which have neither been estimated or specified in your "
+                "settings dictionary.  To produce predictions the following"
+                " untrained trained parameters will use default values."
+            )
+            messages = self.settings_obj.not_trained_messages()
+
+            warn_message = "\n".join([msg] + messages)
+
+            logger.warn(warn_message)
+
+    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
         raise NotImplementedError(f"execute_sql not implemented for {type(self)}")
 
-    def table_exists_in_database(self, table_name):
+    def _table_exists_in_database(self, table_name):
         raise NotImplementedError(
             f"table_exists_in_database not implemented for {type(self)}"
         )
 
     def _validate_input_dfs(self):
-        for df in self.input_tables_dict.values():
+        for df in self._input_tables_dict.values():
             df.validate()
 
-        if self._settings_obj is not None:
-            if self.settings_obj._link_type == "dedupe_only":
-                if len(self.input_tables_dict) > 1:
+        if self.__settings_obj is not None:
+            if self._settings_obj._link_type == "dedupe_only":
+                if len(self._input_tables_dict) > 1:
                     raise ValueError(
                         'If link_type = "dedupe only" then input tables must contain'
                         "only a single input table",
                     )
 
-    def deterministic_link(self, return_df_as_value=True):
-
-        df_dict = block_using_rules_sql(self)
-        if return_df_as_value:
-            return df_dict["__splink__df_blocked"].df_value
-        else:
-            return df_dict
-
-    def train_u_using_random_sampling(self, target_rows):
-        self._initialise_df_concat_with_tf(materialise=True)
-        estimate_u_values(self, target_rows)
-        self.populate_m_u_from_trained_values()
-
-        self.settings_obj.columns_without_estimated_parameters_message()
-
-    def train_m_from_label_column(self, label_colname):
-        self._initialise_df_concat_with_tf(materialise=True)
-        estimate_m_values_from_label_column(self, self.input_tables_dict, label_colname)
-        self.populate_m_u_from_trained_values()
-
-    def train_m_using_expectation_maximisation(
-        self,
-        blocking_rule,
-        comparisons_to_deactivate=None,
-        comparison_levels_to_reverse_blocking_rule=None,
-        fix_proportion_of_matches=False,
-        fix_u_probabilities=True,
-        fix_m_probabilities=False,
-    ):
-        self._initialise_df_concat_with_tf(materialise=True)
-        em_training_session = EMTrainingSession(
-            self,
-            blocking_rule,
-            fix_u_probabilities=fix_u_probabilities,
-            fix_m_probabilities=fix_m_probabilities,
-            fix_proportion_of_matches=fix_proportion_of_matches,
-            comparisons_to_deactivate=comparisons_to_deactivate,
-            comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa
-        )
-
-        em_training_session.train()
-
-        self.populate_m_u_from_trained_values()
-
-        self.populate_proportion_of_matches_from_trained_values()
-
-        self.settings_obj.columns_without_estimated_parameters_message()
-
-        return em_training_session
-
-    def populate_proportion_of_matches_from_trained_values(self):
+    def _populate_proportion_of_matches_from_trained_values(self):
         # Need access to here to the individual training session
         # their blocking rules and m and u values
         prop_matches_estimates = []
-        for em_training_session in self.em_training_sessions:
+        for em_training_session in self._em_training_sessions:
             training_lambda = em_training_session.settings_obj._proportion_of_matches
             training_lambda_bf = prob_to_bayes_factor(training_lambda)
             reverse_levels = (
@@ -481,15 +441,21 @@ class Linker:
             p = bayes_factor_to_prob(training_lambda_bf)
             prop_matches_estimates.append(p)
 
-        self.settings_obj._proportion_of_matches = median(prop_matches_estimates)
+        self._settings_obj._proportion_of_matches = median(prop_matches_estimates)
         logger.log(
             15,
             "\nMedian of prop of matches estimates: "
-            f"{self.settings_obj._proportion_of_matches:,.3f}",
+            f"{self._settings_obj._proportion_of_matches:,.3f}",
         )
 
-    def populate_m_u_from_trained_values(self):
-        ccs = self.settings_obj.comparisons
+    def _records_to_table(records, as_table_name):
+        # Create table in database containing records
+        # Probably quite difficult to implement correctly
+        # Due to data type issues.
+        raise NotImplementedError
+
+    def _populate_m_u_from_trained_values(self):
+        ccs = self._settings_obj.comparisons
 
         for cc in ccs:
             for cl in cc.comparison_levels_excluding_null:
@@ -497,6 +463,89 @@ class Linker:
                     cl.u_probability = cl.trained_u_median
                 if cl.has_estimated_m_values:
                     cl.m_probability = cl.trained_m_median
+
+    def _delete_tables_created_by_splink_from_db(
+        self, retain_term_frequency=True, retain_df_concat_with_tf=True
+    ):
+        tables_remaining = []
+        for name in self._names_of_tables_created_by_splink:
+            # Only delete tables explicitly marked as having been created by splink
+            if "__splink__" not in name:
+                tables_remaining.append(name)
+                continue
+            if name == "__splink__df_concat_with_tf":
+                if retain_df_concat_with_tf:
+                    tables_remaining.append(name)
+                else:
+                    self.delete_table_from_database(name)
+            elif name.startswith("__splink__df_tf_"):
+                if retain_term_frequency:
+                    tables_remaining.append(name)
+                else:
+                    self.delete_table_from_database(name)
+            else:
+                self.delete_table_from_database(name)
+
+        self._names_of_tables_created_by_splink = tables_remaining
+
+    def compute_tf_table(self, column_name):
+        sql = vertically_concatente_sql(self)
+        self._enqueue_sql(sql, "__splink__df_concat")
+        sql = term_frequencies_for_single_column_sql(column_name)
+        self._enqueue_sql(sql, colname_to_tf_tablename(column_name))
+        return self._execute_sql_pipeline(materialise_as_hash=False)
+
+    def deterministic_link(self, return_df_as_value=True):
+
+        df_dict = block_using_rules_sql(self)
+        if return_df_as_value:
+            return df_dict["__splink__df_blocked"].df_value
+        else:
+            return df_dict
+
+    def train_u_using_random_sampling(self, target_rows):
+        self._initialise_df_concat_with_tf(materialise=True)
+        estimate_u_values(self, target_rows)
+        self._populate_m_u_from_trained_values()
+
+        self._settings_obj.columns_without_estimated_parameters_message()
+
+    def train_m_from_label_column(self, label_colname):
+        self._initialise_df_concat_with_tf(materialise=True)
+        estimate_m_values_from_label_column(
+            self, self._input_tables_dict, label_colname
+        )
+        self._populate_m_u_from_trained_values()
+
+    def train_m_using_expectation_maximisation(
+        self,
+        blocking_rule,
+        comparisons_to_deactivate=None,
+        comparison_levels_to_reverse_blocking_rule=None,
+        fix_proportion_of_matches=False,
+        fix_u_probabilities=True,
+        fix_m_probabilities=False,
+    ):
+        self._initialise_df_concat_with_tf(materialise=True)
+        em_training_session = EMTrainingSession(
+            self,
+            blocking_rule,
+            fix_u_probabilities=fix_u_probabilities,
+            fix_m_probabilities=fix_m_probabilities,
+            fix_proportion_of_matches=fix_proportion_of_matches,
+            comparisons_to_deactivate=comparisons_to_deactivate,
+            comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa
+        )
+
+        em_training_session.train()
+
+        self._populate_m_u_from_trained_values()
+
+        self._populate_proportion_of_matches_from_trained_values()
+
+        self._settings_obj.columns_without_estimated_parameters_message()
+
+        return em_training_session
 
     def train_m_and_u_using_expectation_maximisation(
         self,
@@ -523,26 +572,20 @@ class Linker:
         self._initialise_df_concat_with_tf(materialise=False)
 
         sql = block_using_rules_sql(self)
-        self.enqueue_sql(sql, "__splink__df_blocked")
+        self._enqueue_sql(sql, "__splink__df_blocked")
 
         sql = compute_comparison_vector_values_sql(self.settings_obj)
-        self.enqueue_sql(sql, "__splink__df_comparison_vectors")
+        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sql(
             self.settings_obj, threshold_match_probability, threshold_match_weight
         )
         for sql in sqls:
-            self.enqueue_sql(sql["sql"], sql["output_table_name"])
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        predictions = self.execute_sql_pipeline([])
+        predictions = self._execute_sql_pipeline([])
         self._predict_warning()
         return predictions
-
-    def records_to_table(records, as_table_name):
-        # Create table in database containing records
-        # Probably quite difficult to implement correctly
-        # Due to data type issues.
-        raise NotImplementedError
 
     def find_matches_to_new_records(
         self, records, blocking_rules=None, match_weight_threshold=-4
@@ -553,41 +596,41 @@ class Linker:
         )
         original_link_type = self.settings_obj._link_type
 
-        self.records_to_table(records, "__splink__df_new_records")
+        self._records_to_table(records, "__splink__df_new_records")
 
         if blocking_rules is not None:
             self.settings_obj._blocking_rules_to_generate_predictions = blocking_rules
         self.settings_obj._link_type = "link_only_find_matches_to_new_records"
-        self.find_new_matches_mode = True
+        self._find_new_matches_mode = True
 
-        sql = join_tf_to_input_df(self.settings_obj)
+        sql = _join_tf_to_input_df(self.settings_obj)
         sql = sql.replace("__splink__df_concat", "__splink__df_new_records")
-        self.enqueue_sql(sql, "__splink__df_new_records_with_tf")
+        self._enqueue_sql(sql, "__splink__df_new_records_with_tf")
 
         sql = block_using_rules_sql(self)
-        self.enqueue_sql(sql, "__splink__df_blocked")
+        self._enqueue_sql(sql, "__splink__df_blocked")
 
         sql = compute_comparison_vector_values_sql(self.settings_obj)
-        self.enqueue_sql(sql, "__splink__df_comparison_vectors")
+        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sql(self.settings_obj)
         for sql in sqls:
-            self.enqueue_sql(sql["sql"], sql["output_table_name"])
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = f"""
         select * from __splink__df_predict
         where match_weight > {match_weight_threshold}
         """
 
-        self.enqueue_sql(sql, "__splink_find_matches_predictions")
+        self._enqueue_sql(sql, "__splink_find_matches_predictions")
 
-        predictions = self.execute_sql_pipeline(use_cache=False)
+        predictions = self._execute_sql_pipeline(use_cache=False)
 
         self.settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
         )
         self.settings_obj._link_type = original_link_type
-        self.find_new_matches_mode = False
+        self._find_new_matches_mode = False
 
         return predictions
 
@@ -597,66 +640,42 @@ class Linker:
         )
         original_link_type = self.settings_obj._link_type
 
-        self.compare_two_records_mode = True
+        self._compare_two_records_mode = True
         self.settings_obj._blocking_rules_to_generate_predictions = []
 
-        self.records_to_table([record_1], "__splink__compare_two_records_left")
-        self.records_to_table([record_2], "__splink__compare_two_records_right")
+        self._records_to_table([record_1], "__splink__compare_two_records_left")
+        self._records_to_table([record_2], "__splink__compare_two_records_right")
 
-        sql_join_tf = join_tf_to_input_df(self.settings_obj)
+        sql_join_tf = _join_tf_to_input_df(self.settings_obj)
         sql_join_tf = sql_join_tf.replace(
             "__splink__df_concat", "__splink__compare_two_records_left"
         )
-        self.enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
+        self._enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
 
         sql_join_tf = sql_join_tf.replace(
             "__splink__compare_two_records_left", "__splink__compare_two_records_right"
         )
-        self.enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
+        self._enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
         sql = block_using_rules_sql(self)
-        self.enqueue_sql(sql, "__splink__df_blocked")
+        self._enqueue_sql(sql, "__splink__df_blocked")
 
         sql = compute_comparison_vector_values_sql(self.settings_obj)
-        self.enqueue_sql(sql, "__splink__df_comparison_vectors")
+        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sql(self.settings_obj)
         for sql in sqls:
-            self.enqueue_sql(sql["sql"], sql["output_table_name"])
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        predictions = self.execute_sql_pipeline(use_cache=False)
+        predictions = self._execute_sql_pipeline(use_cache=False)
 
         self.settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
         )
         self.settings_obj._link_type = original_link_type
-        self.compare_two_records_mode = False
+        self._compare_two_records_mode = False
 
         return predictions
-
-    def delete_tables_created_by_splink_from_db(
-        self, retain_term_frequency=True, retain_df_concat_with_tf=True
-    ):
-        tables_remaining = []
-        for name in self.names_of_tables_created_by_splink:
-            # Only delete tables explicitly marked as having been created by splink
-            if "__splink__" not in name:
-                tables_remaining.append(name)
-                continue
-            if name == "__splink__df_concat_with_tf":
-                if retain_df_concat_with_tf:
-                    tables_remaining.append(name)
-                else:
-                    self.delete_table_from_database(name)
-            elif name.startswith("__splink__df_tf_"):
-                if retain_term_frequency:
-                    tables_remaining.append(name)
-                else:
-                    self.delete_table_from_database(name)
-            else:
-                self.delete_table_from_database(name)
-
-        self.names_of_tables_created_by_splink = tables_remaining
 
     def profile_columns(self, column_expressions, top_n=10, bottom_n=10):
 
@@ -666,7 +685,7 @@ class Linker:
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_from_pairwise_labels(self, table_name)
 
-    def roc_from_labels(
+    def roc_chart_from_labels(
         self, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
     ):
         df_truth_space = truth_space_table(
@@ -678,7 +697,7 @@ class Linker:
         recs = df_truth_space.as_record_dict()
         return roc_chart(recs)
 
-    def precision_recall_from_labels(self, labels_tablename):
+    def precision_recall_chart_from_labels(self, labels_tablename):
         df_truth_space = truth_space_table(self, labels_tablename)
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
@@ -705,13 +724,13 @@ class Linker:
         self, df_predict, out_path, overwrite=False, num_example_rows=2
     ):
         svd_sql = comparison_vector_distribution_sql(self)
-        self.enqueue_sql(svd_sql, "__splink__df_comparison_vector_distribution")
+        self._enqueue_sql(svd_sql, "__splink__df_comparison_vector_distribution")
 
         sqls = comparison_viewer_table(self, num_example_rows)
         for sql in sqls:
-            self.enqueue_sql(sql["sql"], sql["output_table_name"])
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        df = self.execute_sql_pipeline([df_predict])
+        df = self._execute_sql_pipeline([df_predict])
 
         render_splink_comparison_viewer_html(
             df.as_record_dict(),
@@ -720,7 +739,7 @@ class Linker:
             overwrite,
         )
 
-    def parameter_estimate_comparisons(self, include_m=True, include_u=True):
+    def parameter_estimate_comparisons_chart(self, include_m=True, include_u=True):
         records = self.settings_obj._parameter_estimates_as_records
 
         to_retain = []
@@ -740,25 +759,15 @@ class Linker:
     def analyse_blocking_rule(self, blocking_rule, link_type=None):
 
         sql = vertically_concatente_sql(self)
-        self.enqueue_sql(sql, "__splink__df_concat")
+        self._enqueue_sql(sql, "__splink__df_concat")
 
         sql = analyse_blocking_rule_sql(self, blocking_rule, link_type)
-        self.enqueue_sql(sql, "__splink__analyse_blocking_rule")
-        res = self.execute_sql_pipeline().as_record_dict()[0]
+        self._enqueue_sql(sql, "__splink__analyse_blocking_rule")
+        res = self._execute_sql_pipeline().as_record_dict()[0]
         return res
 
-    def _predict_warning(self):
+    def match_weights_chart(self):
+        return self._settings_obj.match_weights_chart()
 
-        if not self.settings_obj.is_fully_trained:
-            msg = (
-                "\n -- WARNING --\n"
-                "You have called predict(), but there are some parameter "
-                "estimates which have neither been estimated or specified in your "
-                "settings dictionary.  To produce predictions the following"
-                " untrained trained parameters will use default values."
-            )
-            messages = self.settings_obj.not_trained_messages()
-
-            warn_message = "\n".join([msg] + messages)
-
-            logger.warn(warn_message)
+    def m_u_values_chart(self):
+        return self._settings_obj.m_u_values_chart()

@@ -24,7 +24,7 @@ def test_u_train():
     linker = DuckDBLinker(df, settings)
     linker.debug_mode = True
     linker.train_u_using_random_sampling(target_rows=1e6)
-    cc_name = linker.settings_obj.comparisons[0]
+    cc_name = linker._settings_obj.comparisons[0]
 
     denom = (6 * 5) / 2  # n(n-1) / 2
     cl_exact = cc_name.get_comparison_level_by_comparison_vector_value(2)
@@ -33,6 +33,6 @@ def test_u_train():
     assert cl_lev.u_probability == 1 / denom
     cl_no = cc_name.get_comparison_level_by_comparison_vector_value(0)
     assert cl_no.u_probability == (denom - 2) / denom
-    assert linker.settings_obj._blocking_rules_to_generate_predictions == [
+    assert linker._settings_obj._blocking_rules_to_generate_predictions == [
         "l.name = r.name"
     ]

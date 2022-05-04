@@ -141,7 +141,7 @@ class SparkLinker(Linker):
                 )
         return spark_df
 
-    def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
         if transpile:
             sql = sqlglot.transpile(sql, read=None, write="spark", pretty=True)[0]
@@ -162,14 +162,14 @@ class SparkLinker(Linker):
         percent = proportion * 100
         return f" TABLESAMPLE ({percent} PERCENT) "
 
-    def table_exists_in_database(self, table_name):
+    def _table_exists_in_database(self, table_name):
         tables = self.spark.catalog.listTables()
         for t in tables:
             if t.name == table_name:
                 return True
         return False
 
-    def records_to_table(self, records, as_table_name):
+    def _records_to_table(self, records, as_table_name):
         df = self.spark.createDataFrame(Row(**x) for x in records)
         df.createOrReplaceTempView(as_table_name)
 

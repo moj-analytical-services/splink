@@ -196,18 +196,18 @@ def test_lambda():
     )
     actual_prop_history = pd.DataFrame(training_session.lambda_history_records)
 
-    # linker.settings_obj.match_weights_chart()
+    # linker._settings_obj.match_weights_chart()
     actual_prop_history
 
     #########
 
     bf_for_first_name = (
-        linker.settings_obj._get_comparison_by_name("first_name")
+        linker._settings_obj._get_comparison_by_name("first_name")
         .get_comparison_level_by_comparison_vector_value(2)
         .bayes_factor
     )
     bf_for_surname = (
-        linker.settings_obj._get_comparison_by_name("surname")
+        linker._settings_obj._get_comparison_by_name("surname")
         .get_comparison_level_by_comparison_vector_value(1)
         .bayes_factor
     )
@@ -215,7 +215,7 @@ def test_lambda():
         prob_to_bayes_factor(0.3) / (bf_for_first_name * bf_for_surname)
     )
 
-    for cc in linker.settings_obj.comparisons:
+    for cc in linker._settings_obj.comparisons:
         if cc.comparison_name not in ("first_name", "surname"):
             cl = cc.get_comparison_level_by_comparison_vector_value(1)
             cl.m_probability = 0.9
@@ -224,13 +224,13 @@ def test_lambda():
             cl.m_probability = 0.1
             cl.u_probability = 0.9
 
-    linker.settings_obj._proportion_of_matches = glo
+    linker._settings_obj._proportion_of_matches = glo
 
     training_session = linker.train_m_and_u_using_expectation_maximisation(
         "l.first_name = r.first_name and l.surname = r.surname"
     )
 
-    # linker.settings_obj.match_weights_chart()
+    # linker._settings_obj.match_weights_chart()
 
     # from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 
@@ -253,7 +253,7 @@ def test_lambda():
     # bf2 = 71.435024344641 * 8.378038065716774
     # p = bayes_factor_to_prob(bf/bf2)
     # p = 0.0023752954691593103
-    actual = linker.settings_obj._proportion_of_matches
+    actual = linker._settings_obj._proportion_of_matches
     expected = (0.46722294374907014 + 0.0023752954691593103) / 2
     assert actual == pytest.approx(expected)
 

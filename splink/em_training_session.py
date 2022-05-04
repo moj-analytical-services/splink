@@ -29,11 +29,11 @@ class EMTrainingSession:
 
         logger.info("\n----- Starting EM training session -----\n")
 
-        self.original_settings_obj = linker.settings_obj
+        self.original_settings_obj = linker._settings_obj
         self.original_linker = linker
         self.training_linker = deepcopy(linker)
 
-        self.settings_obj = self.training_linker.settings_obj
+        self.settings_obj = self.training_linker._settings_obj
         self.settings_obj._retain_matching_columns = False
         self.settings_obj._retain_intermediate_calculation_columns = False
         self.settings_obj._training_mode = True
@@ -122,11 +122,11 @@ class EMTrainingSession:
         self._training_log_message()
 
         sql = block_using_rules_sql(self.training_linker)
-        self.training_linker.enqueue_sql(sql, "__splink__df_blocked")
+        self.training_linker._enqueue_sql(sql, "__splink__df_blocked")
 
         sql = compute_comparison_vector_values_sql(self.settings_obj)
-        self.training_linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
-        return self.training_linker.execute_sql_pipeline([])
+        self.training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
+        return self.training_linker._execute_sql_pipeline([])
 
     def train(self):
 
@@ -180,7 +180,7 @@ class EMTrainingSession:
                             cl.u_probability, training_desc
                         )
 
-        self.original_linker.em_training_sessions.append(self)
+        self.original_linker._em_training_sessions.append(self)
 
     def add_iteration(self):
 

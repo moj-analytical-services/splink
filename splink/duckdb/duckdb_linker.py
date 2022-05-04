@@ -121,7 +121,7 @@ class DuckDBLinker(Linker):
     def _df_as_obj(self, templated_name, physical_name):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
-    def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
@@ -152,7 +152,7 @@ class DuckDBLinker(Linker):
         percent = proportion * 100
         return f"USING SAMPLE {percent}% (bernoulli)"
 
-    def table_exists_in_database(self, table_name):
+    def _table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
         try:
             self.con.execute(sql)
@@ -160,7 +160,7 @@ class DuckDBLinker(Linker):
             return False
         return True
 
-    def records_to_table(self, records, as_table_name):
+    def _records_to_table(self, records, as_table_name):
         for r in records:
             r["source_dataset"] = as_table_name
 
@@ -179,7 +179,7 @@ class DuckDBLinker(Linker):
         https://stackoverflow.com/questions/66027598/how-to-vacuum-reduce-file-size-on-duckdb
         """
         if delete_intermediate_tables:
-            self.delete_tables_created_by_splink_from_db()
+            self._delete_tables_created_by_splink_from_db()
         with TemporaryDirectory() as tmpdir:
             self.con.execute(f"EXPORT DATABASE '{tmpdir}' (FORMAT PARQUET);")
             new_con = duckdb.connect(database=output_path)

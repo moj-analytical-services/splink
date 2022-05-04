@@ -106,11 +106,11 @@ def expectation_maximisation(em_training_session, df_comparison_vector_values):
     for i in range(1, max_iterations + 1):
         sqls = predict_from_comparison_vectors_sql(settings_obj)
         for sql in sqls:
-            linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+            linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_new_parameters(settings_obj)
-        linker.enqueue_sql(sql, "__splink__df_new_params")
-        df_params = linker.execute_sql_pipeline([df_comparison_vector_values])
+        linker._enqueue_sql(sql, "__splink__df_new_params")
+        df_params = linker._execute_sql_pipeline([df_comparison_vector_values])
         param_records = df_params.as_record_dict()
 
         df_params.drop_table_from_database()
