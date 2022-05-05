@@ -1,281 +1,358 @@
-class ConnectedComponents:
-    def __init__(self, linker):
-        self.linker = linker
+# This sql code for solving connected components takes inspiration
+# from the following paper: https://arxiv.org/pdf/1802.09478.pdf
 
-        if self.linker.settings_dict["link_type"] != "dedupe_only":
-            return ["Not currently implemented"]
-
-        # find our final model
-        predict_dfs = list(
-            filter(
-                lambda i: i.physical_name.startswith("__splink__df_predict"),
-                linker.names_of_tables_created_by_splink,
-            )
-        )
-
-        # raise error if no predictions have been made
-        # -- improve error when finalising class
-        if len(predict_dfs) == 0:
-            raise Exception(
-                "No prediction dataframe found. Please ensure that you ",
-                "have run the linker's predict() method before attempting ",
-                "to find the model's connected components.",
-            )
-        else:
-            # else grab the most recent prediction
-            self.edges = predict_dfs[-1].physical_name
-            # add a print statement to clarify that the most recent
-            # predict value is being used?
-
-    def connected_components(self):
-
-        # https://arxiv.org/pdf/1802.09478.pdf:
-        # 'begin by choosing for each vertex (node) a representatative by
-        # picking the vertex with the minimum id amongst itself and its neighbours'
-
-        # i.e. attach neighbours to nodes and find the minumum
-        # Note that, since the edges always have the lower id on the left hand side
-        # we only need to join on unique_id_r, and pick unique_id_l
-
-        # That is to say, we only bother to find neighbours that are
-        # smaller than the node
-
-        # i.e if we want to get the neighbours of node D, we don't need to get both
-        # D->C and D->E, we only need to bother getting D->C, because we know in advance
-        # this will have a lower minimum that D->E
-
-        # https://arxiv.org/pdf/1802.09478.pdf
-        # 'then to improve on that representation by taking the minimum ID amongst
-        # the representatives of the vertex and all its neighbours'
-
-        # This time we want:
-        # To get all the neighbours of each node
-        # For each neighbour, get its representative (the neigbour's representative)
-        # For each node_id, to compute its new representative
-        # use the minimum of the neighbours' representatives
-
-        # Note that in this case, we want to get all neighbours of each node
-        # IN BOTH DIRECTIONS (hence the union)
-
-        # i.e. we want to retreieve all neighbours
-        # EITHER SMALLER OR GREATER, and get THEIR representative
-
-        # For example, supposing we have an edge C -> D.  It may be the case that the
-        # representative of D is A.  So we want to retreieve C->D even though D
-        # is greater than C, because D's representative may be less than C.
-
-        # >> Get all the neighbours of C,
-
-        # >> This time join on not the edges, but the result of the above query
-
-        # Generate a table that records ALL neighbours for each node -
-        # this includes circular connections (i.e. A->A), as well as
-        # current connections and the reverse of these connections
-        # (i.e. A->B and B->A would both be included in our representation).
-
-        # Circular connections are only included where our reverse
-        # connection is null when we apply our joins.
-        neighbours_table = f"""
-
-            with nodes as (
-                select unique_id_l as node_id
-                from {self.edges}
-
-                UNION
-
-                select unique_id_r as node_id
-                from {self.edges}
-            )
-
-            select n.node_id,
-                e_l.unique_id_r as neighbour
-            from nodes as n
-
-            left join {self.edges} as e_l
-                on n.node_id = e_l.unique_id_l
+# While we haven't been able to implement the solution presented
+# by the paper - due to SQL backend restrictions with UDFs, -
+# we have been able to use the paper to further our understanding
+# of the problem and come to a working solution.
 
 
-            UNION ALL
+def cc_create_nodes_table(edge_table):
+
+    """
+    From our edges table, create a nodes table.
+
+    This captures ALL nodes in our edges representation
+    as a single columnar list.
+    """
+
+    sql = f"""
+    select unique_id_l as node_id
+        from {edge_table}
+
+        UNION
+
+    select unique_id_r as node_id
+        from {edge_table}
+    """
+
+    return sql
 
 
-            select n.node_id,
-                coalesce(e_r.unique_id_l, n.node_id) as neighbour
-            from nodes as n
+def cc_generate_neighbours_representation(edges_table):
 
-            left join {self.edges} as e_r
-                on n.node_id = e_r.unique_id_r
+    """
+    Using our nodes table, create a representation
+    that documents all "neighbours" (any connections
+    between nodes) in our graph.
+    """
 
+    sql = f"""
+    select n.node_id,
+        e_l.unique_id_r as neighbour
+    from nodes as n
+
+    left join {edges_table} as e_l
+        on n.node_id = e_l.unique_id_l
+
+
+    UNION ALL
+
+
+    select n.node_id,
+        coalesce(e_r.unique_id_l, n.node_id) as neighbour
+    from nodes as n
+
+    left join {edges_table} as e_r
+        on n.node_id = e_r.unique_id_r
+    """
+
+    return sql
+
+
+def cc_generate_initial_representatives_table(neighbours_table):
+
+    """
+    Generate our initial "representatives" table.
+    --------------------------------------------
+
+    As outlined in the paper quoted at the top:
+
+    '...begin by choosing for each vertex (node)
+    a representatative by picking the vertex with
+    the minimum id amongst itself and its neighbours'.
+
+    This is done initially by grouping on our neighbours table
+    and finding the minimum representative for each node.
+    """
+
+    sql = f"""
+    select
+        neighbours.node_id,
+        min(neighbour) as representative
+
+    from {neighbours_table} as neighbours
+    group by node_id
+    order by node_id
+    """
+
+    return sql
+
+
+def cc_update_neighbours_first_iter(neighbours_table):
+
+    """
+    Update our neighbours table - first iteration only.
+    ------------------------------------------------
+
+    Takes our initial neighbours table, join on the representatives table
+    and recalculates the mimumum representative for each node.
+
+    This works by joining on the current known representative for each node's
+    neighbours.
+
+    So, if we know that B is represented by A (B -> A) and C is represented by B
+    (C -> B), then we can join on B to conclude that (C -> A).
+    """
+
+    sql = f"""
+    select
+        neighbours.node_id,
+        min(representatives.representative) as representative
+
+    from {neighbours_table} as neighbours
+    left join representatives
+    on neighbours.neighbour = representatives.node_id
+        group by neighbours.node_id
+        order by neighbours.node_id
+    """
+
+    return sql
+
+
+def cc_update_representatives_first_iter():
+
+    """
+    Update our representatives table - first iteration only.
+    -----------------------------------------------------
+
+    From here, standardised code can be used inside a while loop,
+    as the representatives table no longer needs generating.
+
+    This is only used for the first iteration as we
+
+    In this SQL, we also generate "rep_match", which is a boolean
+    that indicates whether the current representative differs
+    from the previous representative.
+
+    This value is used extensively to speed up our while loop and as.
+    an exit condition.
+    """
+
+    sql = """
+    select
+        n.node_id,
+        n.representative,
+        n.representative <> repr.representative as rep_match
+    from neighbours_first_iter as n
+    left join representatives as repr
+    on n.node_id = repr.node_id
+    """
+
+    return sql
+
+
+def cc_generate_representatives_loop_cond(
+    neighbours_table,
+    prev_representatives,
+):
+
+    """
+    ---- Main legs of our while loop ----
+
+    Takes our core neighbours table (this is constant), and
+    joins on the current representatives table from the
+    previous iteration by joining on information about each node's
+    neighbours representatives.
+
+    So, reusing the same summary logic mentioned above, if we know that B
+    is represented by A (B -> A) and C is represented by B (C -> B),
+    then we can join (B -> A) onto (C -> B) to conclude that (C -> A).
+
+    Doing this iteratively eventually allows us to climb up the ladder through
+    all of our neighbours' representatives to a solution.
+
+    The key difference between this function and 'cc_update_neighbours_first_iter',
+    is the usage of 'rep_match'.
+
+    The logic behind 'rep_match' is summarised in 'cc_update_representatives_first_iter'
+    and it can be used here to reduce our neighbours table to only those nodes that need
+    updating.
+    """
+
+    sql = f"""
+    select
+
+    node_id,
+    min(representative) as representative
+
+    from
+    (
+
+        select
+
+            neighbours.node_id,
+            repr_neighbour.representative as representative
+
+        from {neighbours_table} as neighbours
+
+        left join {prev_representatives} as repr_neighbour
+        on neighbours.neighbour = repr_neighbour.node_id
+
+        where
+            repr_neighbour.rep_match
+
+        UNION ALL
+
+        select
+
+            node_id,
+            representative
+
+        from {prev_representatives}
+
+    )
+    group by node_id
         """
 
-        # create our neighbours table
-        neighbours_table_name = "neighbours"
-        self.linker.enqueue_sql(neighbours_table, neighbours_table_name)
-        self.linker.execute_sql_pipeline([], use_cache=False, materialise_as_hash=False)
-
-        # Create our initial representatives table
-        # this can be added to our pipeline code later!
-        sql = f"""
-
-            with representatives as (
-                select
-                    neighbours.node_id,
-                    min(neighbour) as representative
-                from {neighbours_table_name} as neighbours
-                group by node_id
-                order by node_id
-            ),
+    return sql
 
 
-            current_repr as (
-                select
-                    neighbours.node_id,
-                    min(representatives.representative) as representative
-                from {neighbours_table_name} as neighbours
-                left join representatives
-                on neighbours.neighbour = representatives.node_id
-                    group by neighbours.node_id
-                    order by neighbours.node_id
-            )
+def cc_update_representatives_loop_cond(
+    prev_representatives,
+):
+
+    """
+    Update our representatives table - while loop condition.
+    -------------------------------------------------------
+
+    Reorganises our representatives output generated in
+    cc_generate_representatives_loop_cond() and isolates 'rep_match',
+    which indicates whether all representatives have 'settled' (i.e.
+    no change from previous iteration).
+    """
+
+    sql = f"""
+    select
+
+        r.node_id,
+        r.representative,
+        r.representative <> repr.representative as rep_match
+
+    from r
+
+    left join {prev_representatives} as repr
+    on r.node_id = repr.node_id
+        """
+
+    return sql
 
 
-            select
-                current_repr.node_id,
-                current_repr.representative,
-                current_repr.representative <> repr.representative as rep_match
-            from current_repr
-            left join representatives as repr
-            on current_repr.node_id = repr.node_id
+def cc_assess_exit_condition(representatives_name):
 
-            """
+    """
+    Exit condition for our Connected Components algorithm.
+    -----------------------------------------------------
 
-        # create our initial representatives table
-        representatives_name = "representatives"
-        self.linker.enqueue_sql(sql, representatives_name)
-        self.linker.execute_sql_pipeline([], use_cache=False, materialise_as_hash=False)
+    Where 'rep_match' (summarised in 'cc_update_representatives_first_iter')
+    it indicates that some nodes still require updating and have not yet
+    settled.
+    """
 
-        # loop while our representative table still has unsettled nodes
-        iteration, root_rows = 0, 1
-
-        while root_rows > 0:
-
-            iteration += 1
-
-            """
-            Code summary:
-
-            The "r" table is the "representatives" table:
-            This utilises our neighbours table and our known representatives.
-
-            The idea is that we join on the representative for all
-            known neighbours of a specific node. So if we know that
-            (A->B and B->C), then on a subsequent iteration we can
-            infer that (A->C) by joining on B.
-
-            To speed up the code, we use a breakdown named "rep_match",
-            which takes a boolean value and indicates whether there a
-            match on the current and previous representative for the node.
-
-            This tells us if the node has reached its final
-            representative, by checking to see if any links have taken
-            place. By filtering on this, we can skip nodes that have
-            already been fully connected to a "base node".
-
-            The final select statement creates this "rep_match" by
-            joining on the previous representative of the node and
-            comparing it to the current representative.
-
-            This "rep_match" also in turn becomes our exit condition
-            for our "while" loop.
-
-            In short, where every node's representative has stopped changing,
-            we can exit the loop.
-            """
-
-            sql = f"""
-
-            with r as (
-
-                select
-
-                node_id,
-                min(representative) as representative
-
-                from
-                (
-
-                    select
-
-                        neighbours.node_id,
-                        repr_neighbour.representative as representative
-
-                    from {neighbours_table_name} as neighbours
-
-                    left join {representatives_name} as repr_neighbour
-                    on neighbours.neighbour = repr_neighbour.node_id
-
-                    where
-                        repr_neighbour.rep_match
-
-                    UNION ALL
-
-                    select
-
-                        node_id,
-                        representative
-
-                    from {representatives_name}
-
-                )
-
-                group by node_id
-            )
-
-                select
-
-                    r.node_id,
-                    r.representative,
-                    r.representative <> repr.representative as rep_match
-
-                from r
-
-                left join {representatives_name} as repr
-                on r.node_id = repr.node_id
-
-            """
-
-            # set new representatives name (this will be used in the next iteration)
-            representatives_name = f"representatives_{iteration}"
-
-            self.linker.enqueue_sql(sql, representatives_name)
-            self.linker.execute_sql_pipeline(
-                [], use_cache=False, materialise_as_hash=False
-            )
-
-            # Finally, evaluate our representative table
-            # to see if all nodes have a constant representative
-            # (indicated by rep_match).
-
-            # If True, terminate the loop.
-            sql = f"""
-                select count(*) as count
-                from {representatives_name}
-                where rep_match
-            """
-            dataframe = self.linker.sql_to_dataframe(
-                sql, "__splink__df_root_rows", materialise_as_hash=False
-            )
-            root_rows = dataframe.as_record_dict()
-            dataframe.drop_table_from_database()
-            root_rows = root_rows[0]["count"]
-
-        print(f"Exited after {iteration} iterations")
-        exit_query = f"""
-            select node_id, representative
+    sql = f"""
+            select count(*) as count
             from {representatives_name}
+            where rep_match
         """
-        self.linker.enqueue_sql(exit_query, "__splink__df_connected_components")
-        representatives = self.linker.execute_sql_pipeline(
-            [], use_cache=False, materialise_as_hash=False
+
+    return sql
+
+
+def _solve_connected_components(
+    linker,
+    edges_table,
+):
+
+    """
+    ---- Connected Components algorithm ----
+
+    This brings together our simpler SQL statements (listed above)
+    and generates the final SQL for our algorithm.
+
+    The code will continue to loop until a solution is identified.
+    """
+
+    edges_table = edges_table.physical_name
+
+    # Create our initial node and neighbours tables
+    sql = cc_create_nodes_table(edges_table)
+    linker.enqueue_sql(sql, "nodes")
+    sql = cc_generate_neighbours_representation(edges_table)
+    neighbours = linker.enqueue_and_execute_sql_pipeline(sql, "neighbours")
+
+    # Extract our generated neighbours table name.
+    # This utilises our caching system to ensure that
+    # the problem we are solving is unique to
+    # this specific predict() solution and is not solved again.
+    neighbours_table = neighbours.physical_name
+    print(neighbours_table)
+
+    # Create our initial representatives table
+    sql = cc_generate_initial_representatives_table(neighbours_table)
+    linker.enqueue_sql(sql, "representatives")
+    sql = cc_update_neighbours_first_iter(neighbours_table)
+    linker.enqueue_sql(sql, "neighbours_first_iter")
+    sql = cc_update_representatives_first_iter()
+    representatives = linker.enqueue_and_execute_sql_pipeline(sql, "representatives")
+
+    # Loop while our representative table still has unsettled nodes
+    iteration, root_rows = 0, 1
+    while root_rows > 0:
+
+        iteration += 1
+
+        # Loop summary:
+
+        # 1. Update our neighbours table.
+        # 2. Join on the representatives table from the previous iteration
+        #  to create the "rep_match" column.
+        # 3. Assess if our exit condition has been met.
+
+        representatives_table = representatives.physical_name
+
+        # Generates our representatives table for the next iteration
+        # by joining our previous tables onto our neighbours table.
+        sql = cc_generate_representatives_loop_cond(
+            neighbours_table,
+            representatives_table,
+        )
+        linker.enqueue_sql(sql, "r")
+        # Update our rep_match column in the representatives table.
+        sql = cc_update_representatives_loop_cond(representatives_table)
+        representatives = linker.enqueue_and_execute_sql_pipeline(
+            sql,
+            f"representatives_{iteration}",
         )
 
-        return representatives
+        # Check if our exit condition has been met...
+        sql = cc_assess_exit_condition(representatives.physical_name)
+        dataframe = linker.sql_to_dataframe(
+            sql, "__splink__df_root_rows", materialise_as_hash=False
+        )
+        root_rows = dataframe.as_record_dict()
+        dataframe.drop_table_from_database()
+        root_rows = root_rows[0]["count"]
+
+    print(f"Exited after {iteration} iterations")
+    # Create our final representatives table
+    exit_query = f"""
+        select node_id, representative
+        from {representatives.physical_name}
+    """
+
+    representatives = linker.enqueue_and_execute_sql_pipeline(
+        exit_query,
+        "__splink__df_representatives",
+    )
+
+    return representatives
