@@ -175,7 +175,7 @@ def cc_generate_representatives_loop_cond(
     The key difference between this function and 'cc_update_neighbours_first_iter',
     is the usage of 'rep_match'.
 
-    The logic behind 'rep_match' is summarised in 'cc_update_representatives_first_iter',
+    The logic behind 'rep_match' is summarised in 'cc_update_representatives_first_iter'
     and it can be used here to reduce our neighbours table to only those nodes that need
     updating.
     """
