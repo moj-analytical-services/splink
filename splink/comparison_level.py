@@ -159,7 +159,7 @@ class ComparisonLevel:
     def m_probability_description(self):
         if self.m_probability is not None:
             return (
-                "Amongst truly matching record comparisons, "
+                "Amongst matching record comparisons, "
                 f"{self.m_probability:.2%} of records are in the "
                 f"{self.label_for_charts.lower()} comparison level"
             )
@@ -168,7 +168,7 @@ class ComparisonLevel:
     def u_probability_description(self):
         if self.u_probability is not None:
             return (
-                "Amongst truly non-matching record comparisons, "
+                "Amongst non-matching record comparisons, "
                 f"{self.u_probability:.2%} of records are in the "
                 f"{self.label_for_charts.lower()} comparison level"
             )

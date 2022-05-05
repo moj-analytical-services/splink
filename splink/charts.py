@@ -115,7 +115,12 @@ def m_u_values_chart(records, as_dict=False):
     del chart["params"]
     del chart["transform"]
 
-    records = [r for r in records if r["comparison_vector_value"] != -1]
+    records = [
+        r
+        for r in records
+        if r["comparison_vector_value"] != -1
+        and r["comparison_name"] != "proportion_of_matches"
+    ]
     chart["data"]["values"] = records
     return vegalite_or_json(chart, as_dict=as_dict)
 
