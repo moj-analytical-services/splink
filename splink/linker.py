@@ -42,7 +42,9 @@ from .splink_comparison_viewer import (
     render_splink_comparison_viewer_html,
 )
 
-from .connected_components import ConnectedComponents
+from .connected_components import (
+    _solve_connected_components,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -302,6 +304,23 @@ class Linker:
                 )
 
             return dataframe
+
+    def enqueue_and_execute_sql_pipeline(
+        self,
+        sql,
+        output_table_name,
+        materialise_as_hash=True,
+        use_cache=True,
+        transpile=True,
+    ):
+
+        """
+        Wrapper method to enqueue and execute a sql pipeline
+        in a single call.
+        """
+
+        self.enqueue_sql(sql, output_table_name)
+        return self.execute_sql_pipeline([], materialise_as_hash, use_cache, transpile)
 
     def sql_to_dataframe(
         self,
@@ -630,11 +649,17 @@ class Linker:
         return predictions
 
     def run_connected_components(self):
-        print("Attempting to run CC")
-        cc = ConnectedComponents(self)
-        cc_df = cc.connected_components()
 
-        return cc_df
+        # Using our caching system, either grab the edges table
+        # or run the predict() step to generate it.
+
+        # If the required pre-requisites for predict() are not met,
+        # the code will error.
+        edges_table = self.predict()
+
+        cc = _solve_connected_components(self, edges_table)
+
+        return cc
 
     def delete_tables_created_by_splink_from_db(
         self, retain_term_frequency=True, retain_df_concat_with_tf=True
