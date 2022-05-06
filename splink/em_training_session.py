@@ -29,16 +29,16 @@ class EMTrainingSession:
 
         logger.info("\n----- Starting EM training session -----\n")
 
-        self.original_settings_obj = linker.settings_obj
+        self.original_settings_obj = linker._settings_obj
         self.original_linker = linker
         self.training_linker = deepcopy(linker)
 
-        self.settings_obj = self.training_linker.settings_obj
-        self.settings_obj._retain_matching_columns = False
-        self.settings_obj._retain_intermediate_calculation_columns = False
-        self.settings_obj._training_mode = True
+        self._settings_obj = self.training_linker._settings_obj
+        self._settings_obj._retain_matching_columns = False
+        self._settings_obj._retain_intermediate_calculation_columns = False
+        self._settings_obj._training_mode = True
 
-        self.settings_obj._blocking_rule_for_training = blocking_rule_for_training
+        self._settings_obj._blocking_rule_for_training = blocking_rule_for_training
         self.blocking_rule_for_training = blocking_rule_for_training
 
         if comparison_levels_to_reverse_blocking_rule:
@@ -50,7 +50,7 @@ class EMTrainingSession:
                 blocking_rule_for_training
             )
 
-        self.settings_obj._proportion_of_matches = (
+        self._settings_obj._proportion_of_matches = (
             self._blocking_adjusted_proportion_of_matches
         )
 
@@ -64,9 +64,9 @@ class EMTrainingSession:
         if not comparisons_to_deactivate:
             comparisons_to_deactivate = []
             br_cols = get_columns_used_from_sql(
-                blocking_rule_for_training, self.settings_obj._sql_dialect
+                blocking_rule_for_training, self._settings_obj._sql_dialect
             )
-            for cc in self.settings_obj.comparisons:
+            for cc in self._settings_obj.comparisons:
                 cc_cols = cc.input_columns_used_by_case_statement
                 cc_cols = [c.input_name for c in cc_cols]
                 if set(br_cols).intersection(cc_cols):
@@ -78,14 +78,14 @@ class EMTrainingSession:
 
         filtered_ccs = [
             cc
-            for cc in self.settings_obj.comparisons
+            for cc in self._settings_obj.comparisons
             if cc.comparison_name not in cc_names_to_deactivate
         ]
 
-        self.settings_obj.comparisons = filtered_ccs
+        self._settings_obj.comparisons = filtered_ccs
         self.comparisons_that_can_be_estimated = filtered_ccs
 
-        self.settings_obj_history = []
+        self._settings_obj_history = []
 
         self.add_iteration()
 
@@ -122,11 +122,11 @@ class EMTrainingSession:
         self._training_log_message()
 
         sql = block_using_rules_sql(self.training_linker)
-        self.training_linker.enqueue_sql(sql, "__splink__df_blocked")
+        self.training_linker._enqueue_sql(sql, "__splink__df_blocked")
 
-        sql = compute_comparison_vector_values_sql(self.settings_obj)
-        self.training_linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
-        return self.training_linker.execute_sql_pipeline([])
+        sql = compute_comparison_vector_values_sql(self._settings_obj)
+        self.training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
+        return self.training_linker._execute_sql_pipeline([])
 
     def train(self):
 
@@ -140,7 +140,7 @@ class EMTrainingSession:
         training_desc = f"EM, blocked on: {self.blocking_rule_for_training}"
 
         # Add m and u values to original settings
-        for cc in self.settings_obj.comparisons:
+        for cc in self._settings_obj.comparisons:
             orig_cc = self.original_settings_obj._get_comparison_by_name(
                 cc.comparison_name
             )
@@ -180,11 +180,11 @@ class EMTrainingSession:
                             cl.u_probability, training_desc
                         )
 
-        self.original_linker.em_training_sessions.append(self)
+        self.original_linker._em_training_sessions.append(self)
 
     def add_iteration(self):
 
-        self.settings_obj_history.append(deepcopy(self.settings_obj))
+        self._settings_obj_history.append(deepcopy(self._settings_obj))
 
     @property
     def _blocking_adjusted_proportion_of_matches(self):
@@ -223,13 +223,13 @@ class EMTrainingSession:
     def iteration_history_records(self):
         output_records = []
 
-        for iteration, settings_obj in enumerate(self.settings_obj_history):
+        for iteration, settings_obj in enumerate(self._settings_obj_history):
 
             records = settings_obj._parameters_as_detailed_records
 
             for r in records:
                 r["iteration"] = iteration
-                r["proportion_of_matches"] = self.settings_obj._proportion_of_matches
+                r["proportion_of_matches"] = self._settings_obj._proportion_of_matches
 
             output_records.extend(records)
         return output_records
@@ -237,7 +237,7 @@ class EMTrainingSession:
     @property
     def lambda_history_records(self):
         output_records = []
-        for i, s in enumerate(self.settings_obj_history):
+        for i, s in enumerate(self._settings_obj_history):
             lam = s._proportion_of_matches
             r = {
                 "proportion_of_matches": lam,
@@ -284,8 +284,8 @@ class EMTrainingSession:
 
     def max_change_in_parameters_comparison_levels(self):
 
-        previous_iteration = self.settings_obj_history[-2]
-        this_iteration = self.settings_obj_history[-1]
+        previous_iteration = self._settings_obj_history[-2]
+        this_iteration = self._settings_obj_history[-1]
         max_change = -0.1
 
         max_change_levels = {

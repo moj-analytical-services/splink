@@ -121,7 +121,7 @@ class AthenaLinker(Linker):
     def _df_as_obj(self, templated_name, physical_name):
         return AthenaDataFrame(templated_name, physical_name, self)
 
-    def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
         # Deletes the table in the db, but not the object on s3.
         # This needs to be removed manually (full s3 path provided)
@@ -154,7 +154,7 @@ class AthenaLinker(Linker):
         percent = proportion * 100
         return f" TABLESAMPLE BERNOULLI ({percent})"
 
-    def table_exists_in_database(self, table_name):
+    def _table_exists_in_database(self, table_name):
         rec = wr.catalog.does_table_exist(
             database=self.output_schema,
             table=table_name,

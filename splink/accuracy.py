@@ -6,7 +6,7 @@ from .sql_transform import move_l_r_table_prefix_to_column_suffix
 
 def labels_table_with_minimal_columns(linker):
     columns_to_select = []
-    id_cols = linker.settings_obj._unique_id_input_columns
+    id_cols = linker._settings_obj._unique_id_input_columns
     for id_col in id_cols:
         columns_to_select.append(f"{id_col.name_l()}")
         columns_to_select.append(f"{id_col.name_r()}")
@@ -23,7 +23,7 @@ def labels_table_with_minimal_columns(linker):
 
 def predict_scores_for_labels(linker):
 
-    brs = linker.settings_obj._blocking_rules_to_generate_predictions
+    brs = linker._settings_obj._blocking_rules_to_generate_predictions
     if brs:
         brs = [move_l_r_table_prefix_to_column_suffix(b) for b in brs]
         brs = [f"(coalesce({b}, false))" for b in brs]
@@ -32,7 +32,7 @@ def predict_scores_for_labels(linker):
     else:
         br_col = " 1=1 "
 
-    id_cols = linker.settings_obj._unique_id_input_columns
+    id_cols = linker._settings_obj._unique_id_input_columns
 
     join_conditions = []
     for id_col in id_cols:
@@ -187,23 +187,23 @@ def truth_space_table(
     sqls = block_from_labels(linker, labels_tablename)
 
     for sql in sqls:
-        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    sql = compute_comparison_vector_values_sql(linker.settings_obj)
+    sql = compute_comparison_vector_values_sql(linker._settings_obj)
 
-    linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
+    linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-    sqls = predict_from_comparison_vectors_sql(linker.settings_obj)
+    sqls = predict_from_comparison_vectors_sql(linker._settings_obj)
 
     for sql in sqls:
-        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
     # Select only necessary columns from labels table
     sql = labels_table_with_minimal_columns(linker)
-    linker.enqueue_sql(sql, "__splink__labels_minimal")
+    linker._enqueue_sql(sql, "__splink__labels_minimal")
 
     sql = predict_scores_for_labels(linker)
-    linker.enqueue_sql(sql, "__splink__labels_with_predictions")
+    linker._enqueue_sql(sql, "__splink__labels_with_predictions")
 
     # c_P and c_N are clerical positive and negative, respectively
     sqls = truth_space_table_from_labels_with_predictions(
@@ -211,8 +211,8 @@ def truth_space_table(
     )
 
     for sql in sqls:
-        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    df_truth_space_table = linker.execute_sql_pipeline()
+    df_truth_space_table = linker._execute_sql_pipeline()
 
     return df_truth_space_table

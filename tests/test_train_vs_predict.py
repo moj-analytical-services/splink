@@ -28,7 +28,7 @@ def test_train_vs_predict():
         "l.surname = r.surname"
     )
 
-    expected = training_session.settings_obj._proportion_of_matches
+    expected = training_session._settings_obj._proportion_of_matches
 
     # We expect the proportion of matches to be the same as for a predict
     df = linker.predict().as_pandas_dataframe()

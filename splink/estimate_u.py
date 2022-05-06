@@ -1,5 +1,6 @@
 import logging
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
@@ -9,6 +10,10 @@ from .m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
     append_u_probability_to_comparison_level_trained_probabilities,
 )
+
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
 logger = logging.getLogger(__name__)
 
@@ -25,16 +30,17 @@ def _num_target_rows_to_rows_to_sample(target_rows):
     return sample_rows
 
 
-def estimate_u_values(linker, target_rows):
+def estimate_u_values(linker: "Linker", target_rows):
 
     logger.info("----- Training u probabilities using random sampling -----")
 
-    original_settings_obj = linker.settings_obj
+    original_settings_obj = linker._settings_obj
+
     training_linker = deepcopy(linker)
 
     training_linker.train_u_using_random_sample_mode = True
 
-    settings_obj = training_linker.settings_obj
+    settings_obj = training_linker._settings_obj
     settings_obj._retain_matching_columns = False
     settings_obj._retain_intermediate_calculation_columns = False
     settings_obj._training_mode = True
@@ -46,7 +52,7 @@ def estimate_u_values(linker, target_rows):
     select count(*) as count
     from __splink__df_concat_with_tf
     """
-    dataframe = training_linker.sql_to_dataframe(sql, "__splink__df_concat_count")
+    dataframe = training_linker._sql_to_dataframe(sql, "__splink__df_concat_count")
     result = dataframe.as_record_dict()
     dataframe.drop_table_from_database()
     count_rows = result[0]["count"]
@@ -71,7 +77,7 @@ def estimate_u_values(linker, target_rows):
     {training_linker.random_sample_sql(proportion, sample_size)}
     """
 
-    df_sample = training_linker.sql_to_dataframe(
+    df_sample = training_linker._sql_to_dataframe(
         sql,
         "__splink__df_concat_with_tf_sample",
         transpile=False,
@@ -80,22 +86,22 @@ def estimate_u_values(linker, target_rows):
     settings_obj._blocking_rules_to_generate_predictions = []
 
     sql = block_using_rules_sql(training_linker)
-    training_linker.enqueue_sql(sql, "__splink__df_blocked")
+    training_linker._enqueue_sql(sql, "__splink__df_blocked")
 
     sql = compute_comparison_vector_values_sql(settings_obj)
 
-    training_linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
+    training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
     sql = """
     select *, cast(0.0 as double) as match_probability
     from __splink__df_comparison_vectors
     """
-    training_linker.enqueue_sql(sql, "__splink__df_predict")
+    training_linker._enqueue_sql(sql, "__splink__df_predict")
 
     sql = compute_new_parameters(settings_obj)
-    training_linker.enqueue_sql(sql, "__splink__df_new_params")
+    training_linker._enqueue_sql(sql, "__splink__df_new_params")
 
-    df_params = training_linker.execute_sql_pipeline([df_sample])
+    df_params = training_linker._execute_sql_pipeline([df_sample])
 
     param_records = df_params.as_record_dict()
     df_params.drop_table_from_database()

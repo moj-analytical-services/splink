@@ -44,14 +44,14 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
 
 def block_using_rules_sql(linker):
 
-    settings_obj = linker.settings_obj
+    settings_obj = linker._settings_obj
 
     columns_to_select = settings_obj._columns_to_select_for_blocking
     sql_select_expr = ", ".join(columns_to_select)
 
     link_type = settings_obj._link_type
 
-    if linker.two_dataset_link_only:
+    if linker._two_dataset_link_only:
         link_type = "two_dataset_link_only"
     where_condition = _sql_gen_where_condition(
         link_type, settings_obj._unique_id_input_columns

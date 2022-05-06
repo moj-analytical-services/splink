@@ -172,7 +172,7 @@ settings_dict = {
 def duckdb_performance(df, target_rows):
     linker = DuckDBLinker(df, settings_dict)
 
-    linker.train_u_using_random_sampling(target_rows=target_rows)
+    linker.estimate_u_using_random_sampling(target_rows=target_rows)
 
     linker.train_m_using_expectation_maximisation("l.full_name = r.full_name")
 
@@ -232,7 +232,7 @@ def spark_performance(df, target_rows=1e6):
         settings_dict,
     )
 
-    linker.train_u_using_random_sampling(target_rows=target_rows)
+    linker.estimate_u_using_random_sampling(target_rows=target_rows)
 
     linker.train_m_using_expectation_maximisation("l.full_name = r.full_name")
 

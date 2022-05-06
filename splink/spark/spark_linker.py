@@ -71,7 +71,7 @@ class SparkLinker(Linker):
         self.break_lineage_method = break_lineage_method
         self.persist_level = persist_level
 
-        input_tables = self._ensure_is_list(input_table_or_tables)
+        input_tables = self._coerce_to_list(input_table_or_tables)
 
         input_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases
@@ -141,7 +141,7 @@ class SparkLinker(Linker):
                 )
         return spark_df
 
-    def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
         if transpile:
             sql = sqlglot.transpile(sql, read=None, write="spark", pretty=True)[0]
@@ -162,14 +162,14 @@ class SparkLinker(Linker):
         percent = proportion * 100
         return f" TABLESAMPLE ({percent} PERCENT) "
 
-    def table_exists_in_database(self, table_name):
+    def _table_exists_in_database(self, table_name):
         tables = self.spark.catalog.listTables()
         for t in tables:
             if t.name == table_name:
                 return True
         return False
 
-    def records_to_table(self, records, as_table_name):
+    def _records_to_table(self, records, as_table_name):
         df = self.spark.createDataFrame(Row(**x) for x in records)
         df.createOrReplaceTempView(as_table_name)
 

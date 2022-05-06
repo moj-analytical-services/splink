@@ -36,7 +36,7 @@ def term_frequencies_for_single_column_sql(
     return sql
 
 
-def join_tf_to_input_df(settings_obj):
+def _join_tf_to_input_df(settings_obj):
 
     tf_cols = settings_obj._term_frequency_columns
 
@@ -69,7 +69,7 @@ def join_tf_to_input_df(settings_obj):
 
 def compute_all_term_frequencies_sqls(linker):
 
-    settings_obj = linker.settings_obj
+    settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
 
     if not tf_cols:
@@ -84,7 +84,7 @@ def compute_all_term_frequencies_sqls(linker):
     for tf_col in tf_cols:
         tf_table_name = colname_to_tf_tablename(tf_col)
 
-        if not linker.table_exists_in_database(tf_table_name):
+        if not linker._table_exists_in_database(tf_table_name):
             sql = term_frequencies_for_single_column_sql(tf_col)
             sql = {
                 "sql": sql,
@@ -92,7 +92,7 @@ def compute_all_term_frequencies_sqls(linker):
             }
             sqls.append(sql)
 
-    sql = join_tf_to_input_df(settings_obj)
+    sql = _join_tf_to_input_df(settings_obj)
     sql = {
         "sql": sql,
         "output_table_name": "__splink__df_concat_with_tf",

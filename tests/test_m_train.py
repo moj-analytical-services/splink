@@ -23,8 +23,8 @@ def test_m_train():
     # Train from label column
     linker = DuckDBLinker(df, settings)
 
-    linker.train_m_from_label_column("cluster")
-    cc_name = linker.settings_obj.comparisons[0]
+    linker.estimate_m_from_label_column("cluster")
+    cc_name = linker._settings_obj.comparisons[0]
 
     cl_exact = cc_name.get_comparison_level_by_comparison_vector_value(2)
     assert cl_exact.m_probability == 1 / 4
@@ -32,7 +32,7 @@ def test_m_train():
     assert cl_lev.m_probability == 2 / 4
     cl_no = cc_name.get_comparison_level_by_comparison_vector_value(0)
     assert cl_no.m_probability == 1 / 4
-    assert linker.settings_obj._blocking_rules_to_generate_predictions == [
+    assert linker._settings_obj._blocking_rules_to_generate_predictions == [
         "l.name = r.name"
     ]
 
@@ -57,7 +57,7 @@ def test_m_train():
 
     linker_pairwise.con.register("labels", df_labels)
     linker_pairwise.train_m_from_pairwise_labels("labels")
-    cc_name = linker_pairwise.settings_obj.comparisons[0]
+    cc_name = linker_pairwise._settings_obj.comparisons[0]
 
     cl_exact = cc_name.get_comparison_level_by_comparison_vector_value(2)
     assert cl_exact.m_probability == 1 / 4

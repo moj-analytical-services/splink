@@ -170,7 +170,7 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
 
     input_tablename = "__splink__df_concat_with_tf"
-    if not linker.table_exists_in_database("__splink__df_concat_with_tf"):
+    if not linker._table_exists_in_database("__splink__df_concat_with_tf"):
         linker._initialise_df_concat()
         input_tablename = "__splink__df_concat"
 
@@ -179,24 +179,24 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
 
     sql = _col_or_expr_frequencies_raw_data_sql(column_expressions, input_tablename)
 
-    linker.enqueue_sql(sql, "df_all_column_value_frequencies")
-    df_raw = linker.execute_sql_pipeline(materialise_as_hash=True, transpile=True)
+    linker._enqueue_sql(sql, "df_all_column_value_frequencies")
+    df_raw = linker._execute_sql_pipeline(materialise_as_hash=True, transpile=True)
 
     sqls = _get_df_percentiles()
     for sql in sqls:
-        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    df_percentiles = linker.execute_sql_pipeline([df_raw], transpile=False)
+    df_percentiles = linker._execute_sql_pipeline([df_raw], transpile=False)
     percentile_rows_all = df_percentiles.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, top_n, "desc")
-    linker.enqueue_sql(sql, "df_top_n")
-    df_top_n = linker.execute_sql_pipeline([df_raw], transpile=False)
+    linker._enqueue_sql(sql, "df_top_n")
+    df_top_n = linker._execute_sql_pipeline([df_raw], transpile=False)
     top_n_rows_all = df_top_n.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, bottom_n, "asc")
-    linker.enqueue_sql(sql, "df_bottom_n")
-    df_bottom_n = linker.execute_sql_pipeline([df_raw], transpile=False)
+    linker._enqueue_sql(sql, "df_bottom_n")
+    df_bottom_n = linker._execute_sql_pipeline([df_raw], transpile=False)
     bottom_n_rows_all = df_bottom_n.as_record_dict()
 
     inner_charts = []

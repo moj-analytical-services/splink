@@ -107,7 +107,7 @@ class SQLiteLinker(Linker):
     def _df_as_obj(self, templated_name, physical_name):
         return SQLiteDataFrame(templated_name, physical_name, self)
 
-    def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
         if transpile:
             sql = sqlglot.transpile(sql, read=None, write="sqlite")[0]
@@ -136,7 +136,7 @@ class SQLiteLinker(Linker):
             f" ORDER BY RANDOM() LIMIT {sample_size})"
         )
 
-    def table_exists_in_database(self, table_name):
+    def _table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
 
         rec = self.con.execute(sql).fetchone()
