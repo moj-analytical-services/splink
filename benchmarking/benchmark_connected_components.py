@@ -1,6 +1,6 @@
-# python3 -m pytest performance/connected_components_random_graphs.py
+# python3 -m pytest benchmarking/benchmark_connected_components.py
 from tests.cc_testing_utils import (
-    run_cc_implementation,
+    benchmark_cc_implementation,
     register_cc_df,
     generate_random_graph,
 )
@@ -18,7 +18,7 @@ def test_500_node_performance(benchmark):
     linker = register_cc_df(g)
 
     benchmark.pedantic(
-        run_cc_implementation,
+        benchmark_cc_implementation,
         args=(linker,),
         rounds=10,
         iterations=10,
@@ -31,7 +31,7 @@ def test_10000_node_performance(benchmark):
     linker = register_cc_df(g)
 
     benchmark.pedantic(
-        run_cc_implementation,
+        benchmark_cc_implementation,
         args=(linker,),
         rounds=10,
         iterations=10,
@@ -44,7 +44,7 @@ def test_100000_node_performance(benchmark):
     linker = register_cc_df(g)
 
     benchmark.pedantic(
-        run_cc_implementation,
+        benchmark_cc_implementation,
         args=(linker,),
         rounds=10,
         iterations=2,

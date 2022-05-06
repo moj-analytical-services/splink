@@ -47,8 +47,7 @@ def run_cc_implementation(splink_df, batching=1):
 
     # finally, run our connected components algorithm
     return solve_connected_components(
-        splink_df.duckdb_linker, splink_df,
-        batching=batching
+        splink_df.duckdb_linker, splink_df, batching=batching
     ).as_pandas_dataframe()
 
 

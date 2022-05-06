@@ -306,12 +306,12 @@ def solve_connected_components(
     # Execute if we have no batching, otherwise add it to our batched process
     if batching == 1:
         representatives = linker.enqueue_and_execute_sql_pipeline(
-            sql, "representatives")
+            sql, "representatives"
+        )
         representatives_table = representatives.physical_name
     else:
         linker.enqueue_sql(sql, "representatives_init")
         representatives_table = "representatives_init"
-
 
     # Loop while our representative table still has unsettled nodes
     iteration, root_rows = 0, 1
