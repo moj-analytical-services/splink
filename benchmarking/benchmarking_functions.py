@@ -192,5 +192,5 @@ def chart_to_markdown(alt_chart):
     return (
         f"**Click [here]"
         f"(https://vega.github.io/editor/#/url/vega-lite/{compressed})"
-        "for vega lite time series charts**"
+        " for vega lite time series charts**"
     )

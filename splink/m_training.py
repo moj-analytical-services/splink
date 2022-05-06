@@ -14,9 +14,12 @@ logger = logging.getLogger(__name__)
 
 def estimate_m_values_from_label_column(linker, df_dict, label_colname):
 
-    original_settings_object = linker.settings_obj
+    msg = f" Estimating m probabilities using from column {label_colname} "
+    logger.info(f"{msg:-^70}")
+
+    original_settings_object = linker._settings_obj
     training_linker = deepcopy(linker)
-    settings_obj = training_linker.settings_obj
+    settings_obj = training_linker._settings_obj
     settings_obj._retain_matching_columns = False
     settings_obj._retain_intermediate_calculation_columns = False
     for cc in settings_obj.comparisons:
@@ -28,22 +31,22 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
     ]
 
     sql = block_using_rules_sql(training_linker)
-    training_linker.enqueue_sql(sql, "__splink__df_blocked")
+    training_linker._enqueue_sql(sql, "__splink__df_blocked")
 
     sql = compute_comparison_vector_values_sql(settings_obj)
 
-    training_linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
+    training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
     sql = """
-    select *, 1.0D as match_probability
+    select *, cast(1.0 as double) as match_probability
     from __splink__df_comparison_vectors
     """
-    training_linker.enqueue_sql(sql, "__splink__df_predict")
+    training_linker._enqueue_sql(sql, "__splink__df_predict")
 
     sql = compute_new_parameters(settings_obj)
-    training_linker.enqueue_sql(sql, "__splink__df_new_params")
+    training_linker._enqueue_sql(sql, "__splink__df_new_params")
 
-    df_params = training_linker.execute_sql_pipeline()
+    df_params = training_linker._execute_sql_pipeline()
     param_records = df_params.as_record_dict()
 
     m_u_records = [

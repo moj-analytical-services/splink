@@ -1,14 +1,13 @@
 import sqlglot
-
+from typing import Union
 import logging
 from math import pow, log2
 from rapidfuzz.distance.Levenshtein import distance
 
 
 from ..logging_messages import execute_sql_logging_message_info, log_sql
-
-
-from ..linker import Linker, SplinkDataFrame
+from ..linker import Linker
+from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 
@@ -82,26 +81,36 @@ class SQLiteDataFrame(SplinkDataFrame):
 class SQLiteLinker(Linker):
     def __init__(
         self,
+        input_table_or_tables,
         settings_dict=None,
-        input_tables={},
         connection=":memory:",
         set_up_basic_logging=True,
+        input_table_aliases: Union[str, list] = None,
     ):
+
+        if settings_dict is not None and "sql_dialect" not in settings_dict:
+            settings_dict["sql_dialect"] = "sqlite"
+
         self.con = connection
         self.con.row_factory = dict_factory
         self.con.create_function("log2", 1, log2)
         self.con.create_function("pow", 2, pow)
         self.con.create_function("levenshtein", 2, distance)
 
-        super().__init__(settings_dict, input_tables, set_up_basic_logging)
+        super().__init__(
+            input_table_or_tables,
+            settings_dict,
+            set_up_basic_logging,
+            input_table_aliases=input_table_aliases,
+        )
 
     def _df_as_obj(self, templated_name, physical_name):
         return SQLiteDataFrame(templated_name, physical_name, self)
 
-    def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
         if transpile:
-            sql = sqlglot.transpile(sql, read="spark", write="sqlite")[0]
+            sql = sqlglot.transpile(sql, read=None, write="sqlite")[0]
 
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))
@@ -127,7 +136,7 @@ class SQLiteLinker(Linker):
             f" ORDER BY RANDOM() LIMIT {sample_size})"
         )
 
-    def table_exists_in_database(self, table_name):
+    def _table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
 
         rec = self.con.execute(sql).fetchone()

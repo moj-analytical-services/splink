@@ -1,7 +1,7 @@
 import logging
 
 from .parse_sql import get_columns_used_from_sql
-
+from .misc import prob_to_bayes_factor, prob_to_match_weight
 from .charts import m_u_values_chart, match_weights_chart
 from .comparison import Comparison
 from .default_from_jsonschema import default_value_from_schema
@@ -19,6 +19,8 @@ class Settings:
         self._settings_dict = settings_dict
 
         ccs = self._settings_dict["comparisons"]
+        s_else_d = self.from_settings_dict_else_default
+        self._sql_dialect = s_else_d("sql_dialect")
 
         self.comparisons = []
         for cc in ccs:
@@ -28,7 +30,6 @@ class Settings:
                 cc.settings_obj = self
                 self.comparisons.append(Comparison)
 
-        s_else_d = self.from_settings_dict_else_default
         self._link_type = s_else_d("link_type")
         self._proportion_of_matches = s_else_d("proportion_of_matches")
         self._em_convergence = s_else_d("em_convergence")
@@ -248,6 +249,37 @@ class Settings:
                 r["proportion_of_matches"] = self._proportion_of_matches
                 r["comparison_sort_order"] = i
             output.extend(records)
+
+        prior_description = (
+            f"Proportion of matches is {self._proportion_of_matches:.3f}, equivalent "
+            f"to a starting match weight of "
+            f"{prob_to_match_weight(self._proportion_of_matches):.3f}."
+            "This means that if two records are drawn at random, one in "
+            f" {1/self._proportion_of_matches:,.1f} is expected to be a match"
+        )
+
+        # Finally add a record for proportion of matches
+        prop_record = {
+            "comparison_name": "proportion_of_matches",
+            "sql_condition": None,
+            "label_for_charts": "",
+            "m_probability": None,
+            "u_probability": None,
+            "m_probability_description": None,
+            "u_probability_description": None,
+            "has_tf_adjustments": False,
+            "tf_adjustment_column": None,
+            "tf_adjustment_weight": None,
+            "is_null_level": False,
+            "bayes_factor": prob_to_bayes_factor(self._proportion_of_matches),
+            "log2_bayes_factor": prob_to_match_weight(self._proportion_of_matches),
+            "comparison_vector_value": 0,
+            "max_comparison_vector_value": 0,
+            "bayes_factor_description": prior_description,
+            "proportion_of_matches": self._proportion_of_matches,
+            "comparison_sort_order": -1,
+        }
+        output.insert(0, prop_record)
         return output
 
     @property
@@ -276,10 +308,10 @@ class Settings:
         }
         return {**self._settings_dict, **current_settings}
 
-    def match_weights_chart(self):
+    def match_weights_chart(self, as_dict=False):
         records = self._parameters_as_detailed_records
 
-        return match_weights_chart(records)
+        return match_weights_chart(records, as_dict=as_dict)
 
     def m_u_values_chart(self):
         records = self._parameters_as_detailed_records

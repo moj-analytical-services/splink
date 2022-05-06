@@ -19,7 +19,7 @@ def compute_new_parameters(settings_obj: Settings):
            sum(1 - match_probability)/(select sum(1 - match_probability)
             from __splink__df_predict where {gamma_column} != -1) as u_probability,
 
-           "{comparison_name}" as comparison_name
+           '{comparison_name}' as comparison_name
     from __splink__df_predict
     where {gamma_column} != -1
     group by {gamma_column}
@@ -37,7 +37,7 @@ def compute_new_parameters(settings_obj: Settings):
     select 0 as comparison_vector_value,
            avg(match_probability) as m_probability,
            avg(1-match_probability) as u_probability,
-           "_proportion_of_matches" as comparison_name
+           '_proportion_of_matches' as comparison_name
     from __splink__df_predict
     """
     union_sqls.append(sql)
@@ -74,7 +74,7 @@ def populate_m_u_from_lookup(em_training_session, comparison_level, m_u_records_
 
 def maximisation_step(em_training_session, param_records):
 
-    settings_obj = em_training_session.settings_obj
+    settings_obj = em_training_session._settings_obj
 
     m_u_records = []
     for r in param_records:
@@ -97,7 +97,7 @@ def maximisation_step(em_training_session, param_records):
 
 def expectation_maximisation(em_training_session, df_comparison_vector_values):
 
-    settings_obj = em_training_session.settings_obj
+    settings_obj = em_training_session._settings_obj
     linker = em_training_session.original_linker
 
     max_iterations = settings_obj._max_iterations
@@ -106,11 +106,11 @@ def expectation_maximisation(em_training_session, df_comparison_vector_values):
     for i in range(1, max_iterations + 1):
         sqls = predict_from_comparison_vectors_sql(settings_obj)
         for sql in sqls:
-            linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+            linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_new_parameters(settings_obj)
-        linker.enqueue_sql(sql, "__splink__df_new_params")
-        df_params = linker.execute_sql_pipeline([df_comparison_vector_values])
+        linker._enqueue_sql(sql, "__splink__df_new_params")
+        df_params = linker._execute_sql_pipeline([df_comparison_vector_values])
         param_records = df_params.as_record_dict()
 
         df_params.drop_table_from_database()

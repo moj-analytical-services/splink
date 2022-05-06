@@ -46,18 +46,28 @@ def dfs():
     )
 
     return {
-        "dedupe_only__pass": {"df": dedupe_only},
-        "link_only__two": {"df_d": sds_d_only.copy(), "df_b": sds_b_only.copy()},
-        "link_only__three": {
-            "df_d": sds_d_only.copy(),
-            "df_b": sds_b_only.copy(),
-            "df_c": sds_c_only.copy(),
+        "dedupe_only__pass": {"input_tables": dedupe_only, "input_table_aliases": "df"},
+        "link_only__two": {
+            "input_tables": [sds_d_only, sds_b_only],
+            "input_table_aliases": [
+                "df_d",
+                "df_b",
+            ],
         },
-        "link_and_dedupe__two": {"df_d": sds_d_only.copy(), "df_b": sds_b_only.copy()},
+        "link_only__three": {
+            "input_tables": [sds_d_only, sds_b_only, sds_c_only],
+            "input_table_aliases": ["df_d", "df_b", "df_c"],
+        },
+        "link_and_dedupe__two": {
+            "input_tables": [sds_d_only, sds_b_only],
+            "input_table_aliases": [
+                "df_d",
+                "df_b",
+            ],
+        },
         "link_and_dedupe__three": {
-            "df_d": sds_d_only.copy(),
-            "df_b": sds_b_only.copy(),
-            "df_c": sds_c_only.copy(),
+            "input_tables": [sds_d_only, sds_b_only, sds_c_only],
+            "input_table_aliases": ["df_d", "df_b", "df_c"],
         },
     }
 
@@ -67,7 +77,8 @@ def test_link_type(input_name, input_tables):
     # Basic check that no errors are generated for any of the link types
     link_type, test_name = input_name.split("__")
 
-    input_tables = dfs()[input_name]
+    input_tables = dfs()[input_name]["input_tables"]
+    aliases = dfs()[input_name]["input_table_aliases"]
     settings = {
         "proportion_of_matches": 0.01,
         "unique_id_column_name": "id",
@@ -88,9 +99,11 @@ def test_link_type(input_name, input_tables):
 
     from splink.duckdb.duckdb_linker import DuckDBLinker
 
-    linker = DuckDBLinker(settings, input_tables=input_tables, connection=":memory:")
+    linker = DuckDBLinker(
+        input_tables, settings, connection=":memory:", input_table_aliases=aliases
+    )
 
-    linker.train_u_using_random_sampling(target_rows=1e6)
+    linker.estimate_u_using_random_sampling(target_rows=1e6)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.train_m_using_expectation_maximisation(blocking_rule)

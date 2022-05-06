@@ -71,7 +71,7 @@
       "type": "array",
       "title": "A list specifying how records should be compared for probabalistic matching",
       "description": "Comparisons between the values in these columns will be used to determine match scores",
-      "minItems": 1,
+      "minItems": 0,
       "items": {
         "type": "object",
         "title": "A comparison of input column(s) that is used for probabalistic matching",
@@ -213,6 +213,12 @@
       "title": "The prefix to use for the columns that will be created to store the comparison vector values",
       "default": "gamma_",
       "examples": ["gamma_", "__gamma__"]
+    },
+    "sql_dialect": {
+      "type": "string",
+      "title": "The SQL dialect in which sql_conditions are written.  Must be a valid sqlglot dialect",
+      "default": null,
+      "examples": ["spark", "duckdb", "presto"]
     }
   }
 }

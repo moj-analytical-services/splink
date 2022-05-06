@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def _is_exact_match(sql):
-    syntax_tree = sqlglot.parse_one(sql, read="spark")
+    syntax_tree = sqlglot.parse_one(sql, read=None)
 
     expected_types = {0: EQ, 1: Column, 2: Identifier}
     for tup in syntax_tree.walk():
@@ -38,7 +38,7 @@ def _is_exact_match(sql):
 
 def _exact_match_colname(sql):
     cols = []
-    syntax_tree = sqlglot.parse_one(sql.lower(), read="spark")
+    syntax_tree = sqlglot.parse_one(sql.lower(), read=None)
     for tup in syntax_tree.walk():
         subtree = tup[0]
         depth = getattr(subtree, "depth", None)
@@ -61,7 +61,7 @@ class ComparisonLevel:
             level_dict  # Protected, because we don't want to modify the original dict
         )
         self.comparison = comparison
-        self.settings_obj = settings_obj
+        self._settings_obj = settings_obj
 
         self.sql_condition = self._level_dict["sql_condition"]
         self.is_null_level = self.level_dict_val_else_default("is_null_level")
@@ -92,7 +92,9 @@ class ComparisonLevel:
 
         val = self.level_dict_val_else_default("tf_adjustment_column")
         if val:
-            return InputColumn(val, tf_adjustments=True, settings_obj=self.settings_obj)
+            return InputColumn(
+                val, tf_adjustments=True, settings_obj=self._settings_obj
+            )
         else:
             return None
 
@@ -159,7 +161,7 @@ class ComparisonLevel:
     def m_probability_description(self):
         if self.m_probability is not None:
             return (
-                "Amongst truly matching record comparisons, "
+                "Amongst matching record comparisons, "
                 f"{self.m_probability:.2%} of records are in the "
                 f"{self.label_for_charts.lower()} comparison level"
             )
@@ -168,7 +170,7 @@ class ComparisonLevel:
     def u_probability_description(self):
         if self.u_probability is not None:
             return (
-                "Amongst truly non-matching record comparisons, "
+                "Amongst non-matching record comparisons, "
                 f"{self.u_probability:.2%} of records are in the "
                 f"{self.label_for_charts.lower()} comparison level"
             )
@@ -289,13 +291,20 @@ class ComparisonLevel:
         col = self._level_dict.get("tf_adjustment_column")
         return col is not None
 
+    @property
+    def sql_read_dialect(self):
+        read_dialect = None
+        if self._settings_obj is not None:
+            read_dialect = self._settings_obj._sql_dialect
+        return read_dialect
+
     def _validate_sql(self):
         sql = self.sql_condition
         if self.is_else_level:
             return True
 
         try:
-            sqlglot.parse_one(sql, read="spark")
+            sqlglot.parse_one(sql, read=self.sql_read_dialect)
         except sqlglot.ParseError as e:
             raise ValueError(f"Error parsing sql_statement:\n{sql}") from e
 
@@ -308,7 +317,9 @@ class ComparisonLevel:
         if self.is_else_level:
             return []
 
-        cols = get_columns_used_from_sql(self.sql_condition)
+        cols = get_columns_used_from_sql(
+            self.sql_condition, dialect=self.sql_read_dialect
+        )
         # Parsed order seems to be roughly in reverse order of apearance
         cols = cols[::-1]
 
@@ -323,11 +334,13 @@ class ComparisonLevel:
             # not the dmeta_surname one
             if c == self.tf_adjustment_input_column_name:
                 input_cols.append(
-                    InputColumn(c, tf_adjustments=True, settings_obj=self.settings_obj)
+                    InputColumn(c, tf_adjustments=True, settings_obj=self._settings_obj)
                 )
             else:
                 input_cols.append(
-                    InputColumn(c, tf_adjustments=False, settings_obj=self.settings_obj)
+                    InputColumn(
+                        c, tf_adjustments=False, settings_obj=self._settings_obj
+                    )
                 )
 
         return input_cols
@@ -413,7 +426,7 @@ class ComparisonLevel:
         sql = f"""
         WHEN
         {self.comparison.gamma_column_name} = {self.comparison_vector_value}
-        THEN {self.bayes_factor}D
+        THEN cast({self.bayes_factor} as double)
         """
         return dedent(sql)
 
@@ -426,13 +439,13 @@ class ComparisonLevel:
 
         # A tf adjustment of 1D is a multiplier of 1.0, i.e. no adjustment
         if self.comparison_vector_value == -1:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then 1D"
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as double)"
         elif not self.has_tf_adjustments:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then 1D"
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as double)"
         elif self.tf_adjustment_weight == 0:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then 1D"
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as double)"
         elif self.is_else_level:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then 1D"
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as double)"
         else:
             tf_adj_col = self.tf_adjustment_input_column
 
@@ -467,11 +480,11 @@ class ComparisonLevel:
                 divisor_sql = f"""
                 (CASE
                     WHEN {coalesce_l_r} >= {coalesce_r_l}
-                    AND {coalesce_l_r} > {self.tf_minimum_u_value}D
+                    AND {coalesce_l_r} > cast({self.tf_minimum_u_value} as double)
                         THEN {coalesce_l_r}
-                    WHEN {coalesce_r_l}  > {self.tf_minimum_u_value}D
+                    WHEN {coalesce_r_l}  > cast({self.tf_minimum_u_value} as double)
                         THEN {coalesce_r_l}
-                    ELSE {self.tf_minimum_u_value}D
+                    ELSE cast({self.tf_minimum_u_value} as double)
                 END)
                 """
 
@@ -480,10 +493,10 @@ class ComparisonLevel:
                 (CASE WHEN {tf_adjustment_exists}
                 THEN
                 POW(
-                    {u_prob_exact_match}D /{divisor_sql},
-                    {self.tf_adjustment_weight}D
+                    cast({u_prob_exact_match} as double) /{divisor_sql},
+                    cast({self.tf_adjustment_weight} as double)
                 )
-                ELSE 1D
+                ELSE cast(1 as double)
                 END)
             """
         return dedent(sql).strip()

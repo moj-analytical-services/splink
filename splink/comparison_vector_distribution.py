@@ -1,6 +1,6 @@
 def comparison_vector_distribution_sql(linker):
 
-    gamma_columns = [c.gamma_column_name for c in linker.settings_obj.comparisons]
+    gamma_columns = [c.gamma_column_name for c in linker._settings_obj.comparisons]
     groupby_cols = " , ".join(gamma_columns)
     gam_concat = " || ',' || ".join(gamma_columns)
 

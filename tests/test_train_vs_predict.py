@@ -22,13 +22,13 @@ def test_train_vs_predict():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
     settings_dict["blocking_rules_to_generate_predictions"] = ["l.surname = r.surname"]
-    linker = DuckDBLinker(settings_dict, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(df, settings_dict)
 
     training_session = linker.train_m_and_u_using_expectation_maximisation(
         "l.surname = r.surname"
     )
 
-    expected = training_session.settings_obj._proportion_of_matches
+    expected = training_session._settings_obj._proportion_of_matches
 
     # We expect the proportion of matches to be the same as for a predict
     df = linker.predict().as_pandas_dataframe()

@@ -1,13 +1,17 @@
 # This is otherwise known as the expectation step of the EM algorithm.
 import logging
 
-from .misc import prob_to_bayes_factor
+from .misc import prob_to_bayes_factor, prob_to_match_weight
 from .settings import Settings
 
 logger = logging.getLogger(__name__)
 
 
-def predict_from_comparison_vectors_sql(settings_obj: Settings):
+def predict_from_comparison_vectors_sql(
+    settings_obj: Settings,
+    threshold_match_probability=None,
+    threshold_match_weight=None,
+):
 
     sqls = []
 
@@ -36,16 +40,26 @@ def predict_from_comparison_vectors_sql(settings_obj: Settings):
     bayes_factor = prob_to_bayes_factor(proportion_of_matches)
 
     bayes_factor_expr = " * ".join(mult)
-    bayes_factor_expr = f"{bayes_factor}D * {bayes_factor_expr}"
+    bayes_factor_expr = f"cast({bayes_factor} as double) * {bayes_factor_expr}"
+
+    # In case user provided both, take the minimum of the two thresholds
+    if threshold_match_probability or threshold_match_weight:
+        thresholds = [
+            prob_to_match_weight(threshold_match_probability),
+            threshold_match_weight,
+        ]
+        threshold = max([t for t in thresholds if t is not None])
+        threshold_expr = f" where log2({bayes_factor_expr}) >= {threshold} "
+    else:
+        threshold_expr = ""
 
     sql = f"""
     select
     log2({bayes_factor_expr}) as match_weight,
     (({bayes_factor_expr})/(1+({bayes_factor_expr}))) as match_probability,
-
-
     {select_cols_expr}
     from __splink__df_match_weight_parts
+    {threshold_expr}
     """
 
     sql = {

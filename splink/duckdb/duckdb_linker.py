@@ -1,14 +1,16 @@
 import logging
 import os
 import tempfile
+from typing import Union
 import uuid
 import sqlglot
 from tempfile import TemporaryDirectory
 
 
 import duckdb
-from splink.linker import Linker, SplinkDataFrame
-from splink.logging_messages import execute_sql_logging_message_info, log_sql
+from ..linker import Linker
+from ..splink_dataframe import SplinkDataFrame
+from ..logging_messages import execute_sql_logging_message_info, log_sql
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +33,7 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
 
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
-        drop_sql = f"""
-        DROP TABLE IF EXISTS {self.physical_name}"""
-        self.duckdb_linker.con.execute(drop_sql)
+        self.duckdb_linker.delete_table_from_database(self.physical_name)
 
     def as_record_dict(self, limit=None):
 
@@ -54,16 +54,19 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
 class DuckDBLinker(Linker):
     def __init__(
         self,
+        input_table_or_tables,
         settings_dict=None,
-        input_tables={},
         connection=":memory:",
         set_up_basic_logging=True,
-        output_schema="",
+        output_schema=None,
+        input_table_aliases: Union[str, list] = None,
     ):
+
+        if settings_dict is not None and "sql_dialect" not in settings_dict:
+            settings_dict["sql_dialect"] = "duckdb"
 
         if connection == ":memory:":
             con = duckdb.connect(database=connection)
-
         else:
             if connection == ":temporary:":
                 self.temp_dir = tempfile.TemporaryDirectory(dir=".")
@@ -75,19 +78,39 @@ class DuckDBLinker(Linker):
 
         self.con = con
 
-        # If inputted tables are pandas dataframes, register them against the db
-        input_tables_new = {}
+        # If user has provided pandas dataframes, need to register
+        # them with the database, using user-provided aliases
+        # if provided or a created alias if not
 
-        for templated_name, df in input_tables.items():
-            if type(df).__name__ == "DataFrame":
-                db_tablename = f"__splink__{templated_name}"
-                con.register(db_tablename, df)
-                input_tables_new[templated_name] = db_tablename
-            else:
-                input_tables_new[templated_name] = templated_name
-        input_tables = input_tables_new
+        input_tables = self._coerce_to_list(input_table_or_tables)
 
-        super().__init__(settings_dict, input_tables, set_up_basic_logging)
+        input_aliases = self._ensure_aliases_populated_and_is_list(
+            input_table_or_tables, input_table_aliases
+        )
+
+        # 'homogenised' means all entries are strings representing tables
+        homogenised_tables = []
+        homogenised_aliases = []
+
+        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
+
+            if type(alias).__name__ == "DataFrame":
+                alias = f"__splink__input_table_{i}"
+
+            if type(table).__name__ == "DataFrame":
+                con.register(alias, table)
+                table = alias
+
+            homogenised_tables.append(table)
+            homogenised_aliases.append(alias)
+
+        super().__init__(
+            homogenised_tables,
+            settings_dict,
+            set_up_basic_logging,
+            input_table_aliases=homogenised_aliases,
+        )
+
         if output_schema:
             self.con.execute(
                 f"""
@@ -99,14 +122,14 @@ class DuckDBLinker(Linker):
     def _df_as_obj(self, templated_name, physical_name):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
-    def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
         self.delete_table_from_database(physical_name)
 
         if transpile:
-            sql = sqlglot.transpile(sql, read="spark", write="duckdb", pretty=True)[0]
+            sql = sqlglot.transpile(sql, read=None, write="duckdb", pretty=True)[0]
 
         logger.debug(
             execute_sql_logging_message_info(
@@ -130,7 +153,7 @@ class DuckDBLinker(Linker):
         percent = proportion * 100
         return f"USING SAMPLE {percent}% (bernoulli)"
 
-    def table_exists_in_database(self, table_name):
+    def _table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
         try:
             self.con.execute(sql)
@@ -138,7 +161,7 @@ class DuckDBLinker(Linker):
             return False
         return True
 
-    def records_to_table(self, records, as_table_name):
+    def _records_to_table(self, records, as_table_name):
         for r in records:
             r["source_dataset"] = as_table_name
 
@@ -157,7 +180,7 @@ class DuckDBLinker(Linker):
         https://stackoverflow.com/questions/66027598/how-to-vacuum-reduce-file-size-on-duckdb
         """
         if delete_intermediate_tables:
-            self.delete_tables_created_by_splink_from_db()
+            self._delete_tables_created_by_splink_from_db()
         with TemporaryDirectory() as tmpdir:
             self.con.execute(f"EXPORT DATABASE '{tmpdir}' (FORMAT PARQUET);")
             new_con = duckdb.connect(database=output_path)

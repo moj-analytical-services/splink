@@ -29,7 +29,7 @@
     {
       "mark": "bar",
       "title": {
-        "text": "Matches",
+        "text": "Amongst matching record comparisons:",
         "fontWeight": "bold",
         "fontSize": 12
       },
@@ -130,7 +130,7 @@
     {
       "mark": "bar",
       "title": {
-        "text": "Non-matches",
+        "text": "Amongst non-matching record comparisons:",
         "fontWeight": "bold",
         "fontSize": 12
       },
@@ -237,8 +237,8 @@
   ],
 
   "title": {
-    "text": "m and u probabilities",
-    "subtitle": "(proportion of record comparisons in each comparison level by match status)"
+    "text": "Proportion of record comparisons in each comparison level by match status",
+    "subtitle": "(m and u probabilities)"
   },
   "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
 }

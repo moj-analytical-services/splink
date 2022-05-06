@@ -1,12 +1,14 @@
-import sqlglot
-from splink.linker import Linker, SplinkDataFrame
 import logging
-from splink.logging_messages import execute_sql_logging_message_info, log_sql
 
-# import utils for communicating with athena
 import awswrangler as wr
 import boto3
-from splink.athena.athena_utils import boto_utils
+import sqlglot
+
+from ..linker import Linker
+from ..splink_dataframe import SplinkDataFrame
+from ..logging_messages import execute_sql_logging_message_info, log_sql
+from ..athena.athena_utils import boto_utils
+
 
 logger = logging.getLogger(__name__)
 
@@ -97,13 +99,17 @@ class AthenaDataFrame(SplinkDataFrame):
 class AthenaLinker(Linker):
     def __init__(
         self,
-        settings_dict: dict,
         boto3_session: boto3.session.Session,
         output_database: str,
         output_bucket: str,
+        settings_dict: dict = None,
         folder_in_bucket_for_outputs="",
         input_tables={},
     ):
+
+        if settings_dict is not None and "sql_dialect" not in settings_dict:
+            settings_dict["sql_dialect"] = "presto"
+
         self.boto3_session = boto3_session
         self.boto_utils = boto_utils(
             boto3_session, output_bucket, folder_in_bucket_for_outputs
@@ -115,14 +121,14 @@ class AthenaLinker(Linker):
     def _df_as_obj(self, templated_name, physical_name):
         return AthenaDataFrame(templated_name, physical_name, self)
 
-    def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
         # Deletes the table in the db, but not the object on s3.
         # This needs to be removed manually (full s3 path provided)
         self.drop_table_from_database_if_exists(physical_name)
 
         if transpile:
-            sql = sqlglot.transpile(sql, read="spark", write="presto")[0]
+            sql = sqlglot.transpile(sql, read=None, write="presto")[0]
 
         logger.debug(
             execute_sql_logging_message_info(
@@ -148,7 +154,7 @@ class AthenaLinker(Linker):
         percent = proportion * 100
         return f" TABLESAMPLE BERNOULLI ({percent})"
 
-    def table_exists_in_database(self, table_name):
+    def _table_exists_in_database(self, table_name):
         rec = wr.catalog.does_table_exist(
             database=self.output_schema,
             table=table_name,

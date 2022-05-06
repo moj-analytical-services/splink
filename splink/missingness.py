@@ -48,7 +48,7 @@ def missingness_data(linker, input_tablename):
 
     if input_tablename is None:
         input_tablename = "__splink__df_concat_with_tf"
-        if not linker.table_exists_in_database("__splink__df_concat_with_tf"):
+        if not linker._table_exists_in_database("__splink__df_concat_with_tf"):
             linker._initialise_df_concat()
             input_tablename = "__splink__df_concat"
 
@@ -58,8 +58,8 @@ def missingness_data(linker, input_tablename):
     sqls = missingness_sqls(columns, input_tablename)
 
     for sql in sqls:
-        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    df = linker.execute_sql_pipeline()
+    df = linker._execute_sql_pipeline()
 
     return df.as_record_dict()

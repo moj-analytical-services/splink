@@ -1,7 +1,10 @@
 import logging
+import sqlglot
+from typing import Union
 import re
 from pyspark.sql import Row
-from ..linker import Linker, SplinkDataFrame
+from ..linker import Linker
+from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 
@@ -38,9 +41,11 @@ class SparkDataframe(SplinkDataFrame):
         # But there's no real need to clean these up, so we'll just do nothing
         pass
 
-    def as_pandas_dataframe(self):
+    def as_pandas_dataframe(self, limit=None):
 
         sql = f"select * from {self.physical_name}"
+        if limit:
+            sql += f" limit {limit}"
 
         return self.spark_linker.spark.sql(sql).toPandas()
 
@@ -48,30 +53,64 @@ class SparkDataframe(SplinkDataFrame):
         return self.spark_linker.spark.table(self.physical_name)
 
 
-# These classes want to be as minimal as possible
-# dealing with only the backend-specific logic
 class SparkLinker(Linker):
     def __init__(
         self,
+        input_table_or_tables,
         settings_dict=None,
-        input_tables={},
         break_lineage_method="persist",
         persist_level=None,
         set_up_basic_logging=True,
+        input_table_aliases: Union[str, list] = None,
+        spark=None,
     ):
-        df = next(iter(input_tables.values()))
 
-        self.spark = df.sql_ctx.sparkSession
+        if settings_dict is not None and "sql_dialect" not in settings_dict:
+            settings_dict["sql_dialect"] = "spark"
+
         self.break_lineage_method = break_lineage_method
         self.persist_level = persist_level
 
-        for templated_name, df in input_tables.items():
-            db_tablename = f"__splink__{templated_name}"
+        input_tables = self._coerce_to_list(input_table_or_tables)
 
-            df.createOrReplaceTempView(db_tablename)
-            input_tables[templated_name] = db_tablename
+        input_aliases = self._ensure_aliases_populated_and_is_list(
+            input_table_or_tables, input_table_aliases
+        )
 
-        super().__init__(settings_dict, input_tables, set_up_basic_logging)
+        self.spark = spark
+        if spark is None:
+            for t in input_tables:
+                if type(t).__name__ == "DataFrame":
+                    self.spark = t.sql_ctx.sparkSession
+                    break
+        if self.spark is None:
+            raise ValueError(
+                "If input_table_or_tables are strings rather than "
+                "Spark dataframes, you must pass in the spark session using the spark="
+                " argument when you initialise thel inker"
+            )
+
+        homogenised_tables = []
+        homogenised_aliases = []
+
+        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
+
+            if type(alias).__name__ == "DataFrame":
+                alias = f"__splink__input_table_{i}"
+
+            if type(table).__name__ == "DataFrame":
+                table.createOrReplaceTempView(alias)
+                table = alias
+
+            homogenised_tables.append(table)
+            homogenised_aliases.append(alias)
+
+        super().__init__(
+            homogenised_tables,
+            settings_dict,
+            set_up_basic_logging,
+            input_table_aliases=homogenised_aliases,
+        )
 
     def _df_as_obj(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
@@ -102,7 +141,10 @@ class SparkLinker(Linker):
                 )
         return spark_df
 
-    def execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
+
+        if transpile:
+            sql = sqlglot.transpile(sql, read=None, write="spark", pretty=True)[0]
 
         spark_df = self.spark.sql(sql)
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
@@ -120,14 +162,14 @@ class SparkLinker(Linker):
         percent = proportion * 100
         return f" TABLESAMPLE ({percent} PERCENT) "
 
-    def table_exists_in_database(self, table_name):
+    def _table_exists_in_database(self, table_name):
         tables = self.spark.catalog.listTables()
         for t in tables:
             if t.name == table_name:
                 return True
         return False
 
-    def records_to_table(self, records, as_table_name):
+    def _records_to_table(self, records, as_table_name):
         df = self.spark.createDataFrame(Row(**x) for x in records)
         df.createOrReplaceTempView(as_table_name)
 

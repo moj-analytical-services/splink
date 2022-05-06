@@ -47,7 +47,7 @@ def test_scored_labels():
         ],
     }
 
-    linker = DuckDBLinker(settings, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(df, settings)
 
     linker._initialise_df_concat_with_tf()
     linker.con.register("labels", df_labels)
@@ -55,23 +55,23 @@ def test_scored_labels():
     sqls = block_from_labels(linker, "labels")
 
     for sql in sqls:
-        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    sql = compute_comparison_vector_values_sql(linker.settings_obj)
+    sql = compute_comparison_vector_values_sql(linker._settings_obj)
 
-    linker.enqueue_sql(sql, "__splink__df_comparison_vectors")
+    linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-    sqls = predict_from_comparison_vectors_sql(linker.settings_obj)
+    sqls = predict_from_comparison_vectors_sql(linker._settings_obj)
 
     for sql in sqls:
-        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
+        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
     sql = labels_table_with_minimal_columns(linker)
-    linker.enqueue_sql(sql, "__splink__labels_minimal")
+    linker._enqueue_sql(sql, "__splink__labels_minimal")
 
     sql = predict_scores_for_labels(linker)
-    linker.enqueue_sql(sql, "__splink__labels_with_predictions")
-    df_scores_labels = linker.execute_sql_pipeline()
+    linker._enqueue_sql(sql, "__splink__labels_with_predictions")
+    df_scores_labels = linker._execute_sql_pipeline()
 
     df_scores_labels = df_scores_labels.as_pandas_dataframe()
     df_scores_labels.sort_values(["unique_id_l", "unique_id_r"], inplace=True)
@@ -121,7 +121,7 @@ def test_truth_space_table():
         ],
     }
 
-    linker = DuckDBLinker(settings, input_tables={"fake_data_1": df})
+    linker = DuckDBLinker(df, settings)
 
     labels_with_predictions = [
         {
@@ -152,8 +152,8 @@ def test_truth_space_table():
 
     sqls = truth_space_table_from_labels_with_predictions(0.5)
     for sql in sqls:
-        linker.enqueue_sql(sql["sql"], sql["output_table_name"])
-    df_roc = linker.execute_sql_pipeline()
+        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+    df_roc = linker._execute_sql_pipeline()
 
     df_roc = df_roc.as_pandas_dataframe()
 
@@ -200,15 +200,13 @@ def test_roc_chart_dedupe_only():
         axis=1,
     )
     settings_dict = get_settings_dict()
-    linker = DuckDBLinker(
-        settings_dict, input_tables={"fake_data_1": df}, connection=":memory:"
-    )
+    linker = DuckDBLinker(df, settings_dict, connection=":memory:")
 
     linker._initialise_df_concat_with_tf()
 
     linker.con.register("labels", df_labels)
 
-    linker.roc_from_labels("labels")
+    linker.roc_chart_from_labels("labels")
 
 
 def test_roc_chart_link_and_dedupe():
@@ -234,11 +232,11 @@ def test_roc_chart_link_and_dedupe():
     settings_dict = get_settings_dict()
     settings_dict["link_type"] = "link_and_dedupe"
     linker = DuckDBLinker(
-        settings_dict, input_tables={"fake_data_1": df}, connection=":memory:"
+        df, settings_dict, connection=":memory:", input_table_aliases="fake_data_1"
     )
 
     linker._initialise_df_concat_with_tf()
 
     linker.con.register("labels", df_labels)
 
-    linker.roc_from_labels("labels")
+    linker.roc_chart_from_labels("labels")

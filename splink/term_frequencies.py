@@ -4,6 +4,7 @@
 import logging
 
 from .misc import escape_column
+from .input_column import InputColumn
 
 logger = logging.getLogger(__name__)
 
@@ -17,13 +18,16 @@ def term_frequencies_for_single_column_sql(
     column_name, table_name="__splink__df_concat"
 ):
 
-    tf_col_name = escape_column(f"tf_{column_name}")
+    # TODO: Not escaped so if col name has a space, will fail in Spark
+
+    col = InputColumn(column_name, tf_adjustments=True)
+
     col_name = escape_column(column_name)
 
     sql = f"""
     select
     {col_name}, cast(count(*) as double) / (select
-        count({col_name}) as total from {table_name}) as {tf_col_name}
+        count({col_name}) as total from {table_name}) as {col.tf_name(escape=False)}
     from {table_name}
     where {col_name} is not null
     group by {col_name}
@@ -32,7 +36,7 @@ def term_frequencies_for_single_column_sql(
     return sql
 
 
-def join_tf_to_input_df(settings_obj):
+def _join_tf_to_input_df(settings_obj):
 
     tf_cols = settings_obj._term_frequency_columns
 
@@ -43,8 +47,8 @@ def join_tf_to_input_df(settings_obj):
         tf_col = escape_column(f"tf_{col}")
         select_cols.append(f"{tbl}.{tf_col}")
 
+    select_cols.insert(0, "__splink__df_concat.*")
     select_cols = ", ".join(select_cols)
-    select_cols = "__splink__df_concat.*, " + select_cols
 
     templ = "left join {tbl} on __splink__df_concat.{col} = {tbl}.{col}"
 
@@ -65,7 +69,7 @@ def join_tf_to_input_df(settings_obj):
 
 def compute_all_term_frequencies_sqls(linker):
 
-    settings_obj = linker.settings_obj
+    settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
 
     if not tf_cols:
@@ -80,7 +84,7 @@ def compute_all_term_frequencies_sqls(linker):
     for tf_col in tf_cols:
         tf_table_name = colname_to_tf_tablename(tf_col)
 
-        if not linker.table_exists_in_database(tf_table_name):
+        if not linker._table_exists_in_database(tf_table_name):
             sql = term_frequencies_for_single_column_sql(tf_col)
             sql = {
                 "sql": sql,
@@ -88,7 +92,7 @@ def compute_all_term_frequencies_sqls(linker):
             }
             sqls.append(sql)
 
-    sql = join_tf_to_input_df(settings_obj)
+    sql = _join_tf_to_input_df(settings_obj)
     sql = {
         "sql": sql,
         "output_table_name": "__splink__df_concat_with_tf",
