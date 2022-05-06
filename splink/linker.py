@@ -532,12 +532,29 @@ class Linker:
 
         self._settings_obj.columns_without_estimated_parameters_message()
 
-    def train_m_from_label_column(self, label_colname):
+    def estimate_m_from_label_column(self, label_colname: str):
+        """If there exists a column that contains a ground truth identifier, this can
+        be used to generate record comparisons for truly matching records.
+
+        For example, if the entity being matched is persons, and your input dataset(s)
+        contain social security number, this could be used to estimate the m values
+        for the model.
+
+        Note that this column does not need to be fully populated.  A common case is
+        where a unique identifier such as social security number is only partially
+        populated.
+
+        Args:
+            label_colname (str): The name of the column containing the ground truth
+                label in the input data.
+        """
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_values_from_label_column(
             self, self._input_tables_dict, label_colname
         )
         self._populate_m_u_from_trained_values()
+
+        self._settings_obj.columns_without_estimated_parameters_message()
 
     def train_m_using_expectation_maximisation(
         self,
