@@ -497,13 +497,26 @@ class Linker:
         self._enqueue_sql(sql, colname_to_tf_tablename(column_name))
         return self._execute_sql_pipeline(materialise_as_hash=False)
 
-    def deterministic_link(self, return_df_as_value=True):
+    def deterministic_link(self) -> SplinkDataFrame:
+        """Uses the blocking rules specified in the
+        `blocking_rules_to_generate_predictions` of the settings dictionary to
+        generate pairwise record comparisons.
 
-        df_dict = block_using_rules_sql(self)
-        if return_df_as_value:
-            return df_dict["__splink__df_blocked"].df_value
-        else:
-            return df_dict
+
+        `blocking_rules_to_generate_predictions` contains a list of blocking rules
+        which are strict enough to  generate only true links,  then the result
+        will be a dataframe of true links.  This methodology, however, is likely to
+        result in missed links (false negatives).
+
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
+                represents a table materialised in the database. Methods on the
+                SplinkDataFrame allow you to access the underlying data.
+        """
+        self._initialise_df_concat_with_tf()
+        sql = block_using_rules_sql(self)
+        self._enqueue_sql(sql, "__splink__df_blocked")
+        return self._execute_sql_pipeline()
 
     def estimate_u_using_random_sampling(self, target_rows: int):
         """Estimate the u parameters of the linkage model using random sampling i.e.

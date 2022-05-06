@@ -71,7 +71,7 @@
       "type": "array",
       "title": "A list specifying how records should be compared for probabalistic matching",
       "description": "Comparisons between the values in these columns will be used to determine match scores",
-      "minItems": 1,
+      "minItems": 0,
       "items": {
         "type": "object",
         "title": "A comparison of input column(s) that is used for probabalistic matching",
