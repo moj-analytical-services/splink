@@ -1,4 +1,3 @@
-from copy import deepcopy
 import networkx as nx
 from networkx.algorithms import connected_components as cc_nx
 import pandas as pd
