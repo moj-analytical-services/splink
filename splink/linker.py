@@ -47,6 +47,9 @@ from .analyse_blocking import analyse_blocking_rule_sql
 
 from .splink_dataframe import SplinkDataFrame
 
+from .connected_components import (
+    solve_connected_components,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -254,7 +257,24 @@ class Linker:
 
             return dataframe
 
-    def _sql_to_dataframe(
+    def enqueue_and_execute_sql_pipeline(
+        self,
+        sql,
+        output_table_name,
+        materialise_as_hash=True,
+        use_cache=True,
+        transpile=True,
+    ):
+
+        """
+        Wrapper method to enqueue and execute a sql pipeline
+        in a single call.
+        """
+
+        self.enqueue_sql(sql, output_table_name)
+        return self.execute_sql_pipeline([], materialise_as_hash, use_cache, transpile)
+
+    def sql_to_dataframe(
         self,
         sql,
         output_tablename_templated,
@@ -753,6 +773,47 @@ class Linker:
         self._compare_two_records_mode = False
 
         return predictions
+
+    def run_connected_components(self, batching=5):
+
+        # error if batching < 1 or something silly...
+
+        # Using our caching system, either grab the edges table
+        # or run the predict() step to generate it.
+
+        # If the required pre-requisites for predict() are not met,
+        # the code will error.
+        edges_table = self.predict()
+
+        cc = solve_connected_components(self, edges_table, batching=batching)
+
+        return cc
+
+    def delete_tables_created_by_splink_from_db(
+        self, retain_term_frequency=True, retain_df_concat_with_tf=True
+    ):
+        tables_remaining = []
+        current_tables = self.names_of_tables_created_by_splink
+        for splink_df in current_tables:
+            name = splink_df.templated_name
+            # Only delete tables explicitly marked as having been created by splink
+            if "__splink__" not in name:
+                tables_remaining.append(splink_df)
+                continue
+            if name == "__splink__df_concat_with_tf":
+                if retain_df_concat_with_tf:
+                    tables_remaining.append(splink_df)
+                else:
+                    self.delete_table_from_database(name)
+            elif name.startswith("__splink__df_tf_"):
+                if retain_term_frequency:
+                    tables_remaining.append(splink_df)
+                else:
+                    self.delete_table_from_database(name)
+            else:
+                self.delete_table_from_database(name)
+
+        self.names_of_tables_created_by_splink = tables_remaining
 
     def profile_columns(self, column_expressions, top_n=10, bottom_n=10):
 
