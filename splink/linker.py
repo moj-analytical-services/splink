@@ -274,7 +274,7 @@ class Linker:
         self.enqueue_sql(sql, output_table_name)
         return self.execute_sql_pipeline([], materialise_as_hash, use_cache, transpile)
 
-    def sql_to_dataframe(
+    def _sql_to_dataframe(
         self,
         sql,
         output_tablename_templated,
