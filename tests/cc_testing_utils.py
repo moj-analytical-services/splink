@@ -1,9 +1,11 @@
+from copy import deepcopy
 import networkx as nx
 from networkx.algorithms import connected_components as cc_nx
 import pandas as pd
 import random
 
 from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
+from splink.connected_components import solve_connected_components
 
 
 def generate_random_graph(graph_size, seed=None):
@@ -38,15 +40,32 @@ def register_cc_df(G):
     predict_df = DuckDBLinkerDataFrame(table_name, table_name, linker)
     linker.names_of_tables_created_by_splink = [predict_df]
 
-    return linker
+    return predict_df
 
 
-def run_cc_implementation(linker):
+def run_cc_implementation(splink_df, batching=1):
 
-    # finally, run our connected components linker
-    cc = linker.run_connected_components()
+    # finally, run our connected components algorithm
+    return solve_connected_components(
+        splink_df.duckdb_linker, splink_df,
+        batching=batching
+    ).as_pandas_dataframe()
 
-    return cc
+
+def benchmark_cc_implementation(linker_df, batching=1):
+
+    # add a schema so we don't need to re-register our df
+    linker_df.duckdb_linker.con.execute(
+        """
+        create schema if not exists con_comp;
+        set schema 'con_comp';
+        """
+    )
+
+    df = run_cc_implementation(linker_df, batching)
+    linker_df.duckdb_linker.con.execute("drop schema con_comp cascade")
+
+    return df
 
 
 def networkx_solve(G):

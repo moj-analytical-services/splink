@@ -19,11 +19,11 @@ def test_small_erdos_renyi_graph(execution_number):
     linker = register_cc_df(g)
 
     assert check_df_equality(
-        run_cc_implementation(linker)
-        .as_pandas_dataframe()
-        .sort_values(by=["node_id", "representative"]),
-        networkx_solve(g).sort_values(by=["node_id", "representative"]),
-    )
+        run_cc_implementation(
+            linker).sort_values(by=["node_id", "representative"]),
+        networkx_solve(
+            g).sort_values(by=["node_id", "representative"]),
+        )
 
 
 @pytest.mark.parametrize("execution_number", range(10))
@@ -32,11 +32,11 @@ def test_medium_erdos_renyi_graph(execution_number):
     linker = register_cc_df(g)
 
     assert check_df_equality(
-        run_cc_implementation(linker)
-        .as_pandas_dataframe()
-        .sort_values(by=["node_id", "representative"]),
-        networkx_solve(g).sort_values(by=["node_id", "representative"]),
-    )
+        run_cc_implementation(
+            linker).sort_values(by=["node_id", "representative"]),
+        networkx_solve(
+            g).sort_values(by=["node_id", "representative"]),
+        )
 
 
 @pytest.mark.parametrize("execution_number", range(2))
@@ -45,8 +45,8 @@ def test_large_erdos_renyi_graph(execution_number):
     linker = register_cc_df(g)
 
     assert check_df_equality(
-        run_cc_implementation(linker)
-        .as_pandas_dataframe()
-        .sort_values(by=["node_id", "representative"]),
-        networkx_solve(g).sort_values(by=["node_id", "representative"]),
-    )
+        run_cc_implementation(
+            linker).sort_values(by=["node_id", "representative"]),
+        networkx_solve(
+            g).sort_values(by=["node_id", "representative"]),
+        )
