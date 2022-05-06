@@ -1,5 +1,6 @@
 import logging
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
@@ -9,6 +10,10 @@ from .m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
     append_u_probability_to_comparison_level_trained_probabilities,
 )
+
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +30,12 @@ def _num_target_rows_to_rows_to_sample(target_rows):
     return sample_rows
 
 
-def estimate_u_values(linker, target_rows):
+def estimate_u_values(linker: "Linker", target_rows):
 
     logger.info("----- Training u probabilities using random sampling -----")
 
     original_settings_obj = linker._settings_obj
+
     training_linker = deepcopy(linker)
 
     training_linker.train_u_using_random_sample_mode = True

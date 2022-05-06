@@ -93,7 +93,7 @@ class Linker:
             splink_logger.setLevel(logging.INFO)
 
     @property
-    def _settings_obj(self):
+    def _settings_obj(self) -> Settings:
         if self._settings_obj_ is None:
             raise ValueError(
                 "You did not provide a settings dictionary when you "
@@ -505,7 +505,27 @@ class Linker:
         else:
             return df_dict
 
-    def train_u_using_random_sampling(self, target_rows):
+    def estimate_u_using_random_sampling(self, target_rows: int):
+        """Estimate the u parameters of the linkage model using random sampling i.e.
+        amongst non matching records, what proportion of record comparisons fall
+        into each comparison level.
+
+        This procedure takes a sample of the data and generates the cartesian
+        product of pairwise record comparisons amongst the sampled records.
+        The validity of the u values rests on the assumption that the resultant
+        pairwise comparisons are non-matches (or at least, they are very unlikely to be
+        matches). For large datasets, this is typically true.
+
+        Args:
+            target_rows (int): The target number of pairwise record comparisons from
+            which to derive the u values.  Larger will give more accurate estimates
+            but lead to longer runtimes.  In our experience at least1e9 gives
+            best results. 1e7 is often adequate for rapid model development.
+
+        Returns:
+            Updates the u values within the linker object with their estimates
+            and returns nothing.
+        """
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_u_values(self, target_rows)
         self._populate_m_u_from_trained_values()

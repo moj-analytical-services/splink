@@ -1,9 +1,27 @@
 import logging
+from typing import TYPE_CHECKING
 
 logger = logging.getLogger(__name__)
 
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
-def vertically_concatente_sql(linker):
+
+def vertically_concatente_sql(linker: "Linker") -> str:
+    """
+    Using `input_table_or_tables`, create a single table with the columns and
+    rows required for linking.
+
+    This table will later be the basis for the generation of pairwise record comparises,
+    and will also be used to generate the term frequency adjustment tables.
+
+    If multiple input tables are provided, this single table is the vertical
+    concatenation of all the input tables.  In this case, a 'source_dataset' column
+    is created.  This is used to uniquely identify rows in the vertical concatenation.
+    Without it, ID collisions would be possible leading to ambiguity e.g. if several
+    of the input tables have the same ID.
+    """
 
     # Use column order from first table in dict
     df_obj = next(iter(linker._input_tables_dict.values()))
