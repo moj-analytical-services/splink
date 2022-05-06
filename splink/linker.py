@@ -30,7 +30,7 @@ from .profile_data import profile_columns
 from .missingness import missingness_data
 
 from .m_training import estimate_m_values_from_label_column
-from .u_training import estimate_u_values
+from .estimate_u import estimate_u_values
 from .pipeline import SQLPipeline
 
 from .vertically_concatenate import vertically_concatente_sql

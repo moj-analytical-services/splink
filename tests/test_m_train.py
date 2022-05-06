@@ -23,7 +23,7 @@ def test_m_train():
     # Train from label column
     linker = DuckDBLinker(df, settings)
 
-    linker.train_m_from_label_column("cluster")
+    linker.estimate_m_from_label_column("cluster")
     cc_name = linker._settings_obj.comparisons[0]
 
     cl_exact = cc_name.get_comparison_level_by_comparison_vector_value(2)
