@@ -268,10 +268,57 @@ def _cc_assess_exit_condition(representatives_name):
     return sql
 
 
+def _cc_create_unique_id_cols(linker, match_probability_threshold):
+
+    """
+    Takes the output of linker.predict() and either creates unique IDs for
+    our linked dataframes, if we are performing a link job, or pulls out
+    the unique ID columns if deduping.
+    """
+
+    df_predict = linker.predict()
+
+    # Code assumes a unique ID column is provided.
+    if linker._settings_dict["link_type"] == "dedupe_only":
+        sql = f"""
+            select unique_id_l, unique_id_r
+            from {df_predict.physical_name}
+            where match_probability >= {match_probability_threshold}
+
+            UNION
+
+            select
+            unique_id as unique_id_l,
+            unique_id as unique_id_r
+            from __splink__df_concat_with_tf
+        """
+
+    else:
+        # Generate new unique IDs for our linked dataframes.
+        sql = f"""
+            select
+            concat(unique_id_l, '|| -__- ||', source_dataset_l) as unique_id_l,
+            concat(unique_id_r, '|| -__- ||', source_dataset_r) as unique_id_r
+            from {df_predict.physical_name}
+            where match_probability >= {match_probability_threshold}
+
+            UNION
+
+            select
+            concat(unique_id, '|| -__- ||', source_dataset) as unique_id_l,
+            concat(unique_id, '|| -__- ||', source_dataset) as unique_id_r
+            from __splink__df_concat_with_tf
+        """
+        print(sql)
+
+    return linker._enqueue_and_execute_sql_pipeline(
+        sql, "__splink__df_connected_components_df"
+    )
+
+
 def solve_connected_components(
     linker,
     edges_table,
-    batching,
 ):
 
     """
@@ -287,9 +334,9 @@ def solve_connected_components(
 
     # Create our initial node and neighbours tables
     sql = _cc_create_nodes_table(edges_table)
-    linker.enqueue_sql(sql, "nodes")
+    linker._enqueue_sql(sql, "nodes")
     sql = _cc_generate_neighbours_representation(edges_table)
-    neighbours = linker.enqueue_and_execute_sql_pipeline(sql, "neighbours")
+    neighbours = linker._enqueue_and_execute_sql_pipeline(sql, "neighbours")
 
     # Extract our generated neighbours table name.
     # This utilises our caching system to ensure that
@@ -299,19 +346,13 @@ def solve_connected_components(
 
     # Create our initial representatives table
     sql = _cc_generate_initial_representatives_table(neighbours_table)
-    linker.enqueue_sql(sql, "representatives")
+    linker._enqueue_sql(sql, "representatives")
     sql = _cc_update_neighbours_first_iter(neighbours_table)
-    linker.enqueue_sql(sql, "neighbours_first_iter")
+    linker._enqueue_sql(sql, "neighbours_first_iter")
     sql = _cc_update_representatives_first_iter()
     # Execute if we have no batching, otherwise add it to our batched process
-    if batching == 1:
-        representatives = linker.enqueue_and_execute_sql_pipeline(
-            sql, "representatives"
-        )
-        representatives_table = representatives.physical_name
-    else:
-        linker.enqueue_sql(sql, "representatives_init")
-        representatives_table = "representatives_init"
+    representatives = linker._enqueue_and_execute_sql_pipeline(sql, "representatives")
+    representatives_table = representatives.physical_name
 
     # Loop while our representative table still has unsettled nodes
     iteration, root_rows = 0, 1
@@ -332,10 +373,10 @@ def solve_connected_components(
             neighbours_table,
             representatives_table,
         )
-        linker.enqueue_sql(sql, "r")
+        linker._enqueue_sql(sql, "r")
         # Update our rep_match column in the representatives table.
         sql = _cc_update_representatives_loop_cond(representatives_table)
-        representatives = linker.enqueue_and_execute_sql_pipeline(
+        representatives = linker._enqueue_and_execute_sql_pipeline(
             sql,
             f"representatives_{iteration}",
         )
@@ -344,7 +385,7 @@ def solve_connected_components(
 
         # Check if our exit condition has been met...
         sql = _cc_assess_exit_condition(representatives.physical_name)
-        dataframe = linker.sql_to_dataframe(
+        dataframe = linker._sql_to_dataframe(
             sql, "__splink__df_root_rows", materialise_as_hash=False
         )
         root_rows = dataframe.as_record_dict()
@@ -358,7 +399,7 @@ def solve_connected_components(
         from {representatives.physical_name}
     """
 
-    representatives = linker.enqueue_and_execute_sql_pipeline(
+    representatives = linker._enqueue_and_execute_sql_pipeline(
         exit_query,
         "__splink__df_representatives",
     )
