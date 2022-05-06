@@ -7,7 +7,7 @@
 # of the problem and come to a working solution.
 
 
-def cc_create_nodes_table(edge_table):
+def _cc_create_nodes_table(edge_table):
 
     """
     From our edges table, create a nodes table.
@@ -29,7 +29,7 @@ def cc_create_nodes_table(edge_table):
     return sql
 
 
-def cc_generate_neighbours_representation(edges_table):
+def _cc_generate_neighbours_representation(edges_table):
 
     """
     Using our nodes table, create a representation
@@ -60,7 +60,7 @@ def cc_generate_neighbours_representation(edges_table):
     return sql
 
 
-def cc_generate_initial_representatives_table(neighbours_table):
+def _cc_generate_initial_representatives_table(neighbours_table):
 
     """
     Generate our initial "representatives" table.
@@ -89,7 +89,7 @@ def cc_generate_initial_representatives_table(neighbours_table):
     return sql
 
 
-def cc_update_neighbours_first_iter(neighbours_table):
+def _cc_update_neighbours_first_iter(neighbours_table):
 
     """
     Update our neighbours table - first iteration only.
@@ -120,7 +120,7 @@ def cc_update_neighbours_first_iter(neighbours_table):
     return sql
 
 
-def cc_update_representatives_first_iter():
+def _cc_update_representatives_first_iter():
 
     """
     Update our representatives table - first iteration only.
@@ -152,7 +152,7 @@ def cc_update_representatives_first_iter():
     return sql
 
 
-def cc_generate_representatives_loop_cond(
+def _cc_generate_representatives_loop_cond(
     neighbours_table,
     prev_representatives,
 ):
@@ -218,7 +218,7 @@ def cc_generate_representatives_loop_cond(
     return sql
 
 
-def cc_update_representatives_loop_cond(
+def _cc_update_representatives_loop_cond(
     prev_representatives,
 ):
 
@@ -248,7 +248,7 @@ def cc_update_representatives_loop_cond(
     return sql
 
 
-def cc_assess_exit_condition(representatives_name):
+def _cc_assess_exit_condition(representatives_name):
 
     """
     Exit condition for our Connected Components algorithm.
@@ -268,9 +268,10 @@ def cc_assess_exit_condition(representatives_name):
     return sql
 
 
-def _solve_connected_components(
+def solve_connected_components(
     linker,
     edges_table,
+    batching,
 ):
 
     """
@@ -285,9 +286,9 @@ def _solve_connected_components(
     edges_table = edges_table.physical_name
 
     # Create our initial node and neighbours tables
-    sql = cc_create_nodes_table(edges_table)
+    sql = _cc_create_nodes_table(edges_table)
     linker.enqueue_sql(sql, "nodes")
-    sql = cc_generate_neighbours_representation(edges_table)
+    sql = _cc_generate_neighbours_representation(edges_table)
     neighbours = linker.enqueue_and_execute_sql_pipeline(sql, "neighbours")
 
     # Extract our generated neighbours table name.
@@ -295,15 +296,22 @@ def _solve_connected_components(
     # the problem we are solving is unique to
     # this specific predict() solution and is not solved again.
     neighbours_table = neighbours.physical_name
-    print(neighbours_table)
 
     # Create our initial representatives table
-    sql = cc_generate_initial_representatives_table(neighbours_table)
+    sql = _cc_generate_initial_representatives_table(neighbours_table)
     linker.enqueue_sql(sql, "representatives")
-    sql = cc_update_neighbours_first_iter(neighbours_table)
+    sql = _cc_update_neighbours_first_iter(neighbours_table)
     linker.enqueue_sql(sql, "neighbours_first_iter")
-    sql = cc_update_representatives_first_iter()
-    representatives = linker.enqueue_and_execute_sql_pipeline(sql, "representatives")
+    sql = _cc_update_representatives_first_iter()
+    # Execute if we have no batching, otherwise add it to our batched process
+    if batching == 1:
+        representatives = linker.enqueue_and_execute_sql_pipeline(
+            sql, "representatives"
+        )
+        representatives_table = representatives.physical_name
+    else:
+        linker.enqueue_sql(sql, "representatives_init")
+        representatives_table = "representatives_init"
 
     # Loop while our representative table still has unsettled nodes
     iteration, root_rows = 0, 1
@@ -318,24 +326,24 @@ def _solve_connected_components(
         #  to create the "rep_match" column.
         # 3. Assess if our exit condition has been met.
 
-        representatives_table = representatives.physical_name
-
         # Generates our representatives table for the next iteration
         # by joining our previous tables onto our neighbours table.
-        sql = cc_generate_representatives_loop_cond(
+        sql = _cc_generate_representatives_loop_cond(
             neighbours_table,
             representatives_table,
         )
         linker.enqueue_sql(sql, "r")
         # Update our rep_match column in the representatives table.
-        sql = cc_update_representatives_loop_cond(representatives_table)
+        sql = _cc_update_representatives_loop_cond(representatives_table)
         representatives = linker.enqueue_and_execute_sql_pipeline(
             sql,
             f"representatives_{iteration}",
         )
+        # Update table reference
+        representatives_table = representatives.physical_name
 
         # Check if our exit condition has been met...
-        sql = cc_assess_exit_condition(representatives.physical_name)
+        sql = _cc_assess_exit_condition(representatives.physical_name)
         dataframe = linker.sql_to_dataframe(
             sql, "__splink__df_root_rows", materialise_as_hash=False
         )

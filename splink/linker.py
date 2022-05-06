@@ -43,7 +43,7 @@ from .splink_comparison_viewer import (
 )
 
 from .connected_components import (
-    _solve_connected_components,
+    solve_connected_components,
 )
 
 logger = logging.getLogger(__name__)
@@ -648,7 +648,9 @@ class Linker:
 
         return predictions
 
-    def run_connected_components(self):
+    def run_connected_components(self, batching=5):
+
+        # error if batching < 1 or something silly...
 
         # Using our caching system, either grab the edges table
         # or run the predict() step to generate it.
@@ -657,7 +659,7 @@ class Linker:
         # the code will error.
         edges_table = self.predict()
 
-        cc = _solve_connected_components(self, edges_table)
+        cc = solve_connected_components(self, edges_table, batching=batching)
 
         return cc
 
