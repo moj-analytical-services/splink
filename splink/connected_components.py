@@ -7,24 +7,40 @@
 # of the problem and come to a working solution.
 
 
-def _cc_create_nodes_table(edge_table):
+def _cc_create_nodes_table(linker, edge_table, generated_graph=False):
 
     """
     From our edges table, create a nodes table.
 
     This captures ALL nodes in our edges representation
     as a single columnar list.
+
+    This logic can be shortcut by using the unique
+    id column found in __splink__df_concat_with_tf.
     """
 
-    sql = f"""
-    select unique_id_l as node_id
-        from {edge_table}
+    if generated_graph:
+        sql = f"""
+        select unique_id_l as node_id
+            from {edge_table}
 
-        UNION
+            UNION
 
-    select unique_id_r as node_id
-        from {edge_table}
-    """
+        select unique_id_r as node_id
+            from {edge_table}
+        """
+    else:
+
+        if linker._settings_dict["link_type"] == "dedupe_only":
+            unique_id_sql = "unique_id as node_id"
+        else:
+            unique_id_sql = """concat(unique_id, '|| -__- ||', source_dataset)
+                            as node_id"""
+
+        sql = f"""
+        select {unique_id_sql}
+        from __splink__df_concat_with_tf
+        """
 
     return sql
 
@@ -309,7 +325,6 @@ def _cc_create_unique_id_cols(linker, match_probability_threshold):
             concat(unique_id, '|| -__- ||', source_dataset) as unique_id_r
             from __splink__df_concat_with_tf
         """
-        print(sql)
 
     return linker._enqueue_and_execute_sql_pipeline(
         sql, "__splink__df_connected_components_df"
@@ -319,6 +334,7 @@ def _cc_create_unique_id_cols(linker, match_probability_threshold):
 def solve_connected_components(
     linker,
     edges_table,
+    generated_graph=False,
 ):
 
     """
@@ -328,15 +344,38 @@ def solve_connected_components(
     and generates the final SQL for our algorithm.
 
     The code will continue to loop until a solution is identified.
+
+    Returns:
+    --------
+        A dataframe containing the connected components of our input
+        edges table.
+
+    Parameters:
+    -----------
+    linker: Linker object
+        Splink linker object.
+
+    edges_table: SplinkDataFrame
+        Splink dataframe containing our edges dataframe to be connected.
+
+    generated_graph: Boolean
+        Specifies whether the input df is a generated graph, or part of
+        an actual deduping or linking job.
+
+        This is used for testing against NetworkX and only impacts how
+        our nodes table is generated as this can be shortcut using
+        __splink__df_concat_with_tf.
+
     """
 
     edges_table = edges_table.physical_name
 
     # Create our initial node and neighbours tables
-    sql = _cc_create_nodes_table(edges_table)
+    sql = _cc_create_nodes_table(linker, edges_table, generated_graph)
     linker._enqueue_sql(sql, "nodes")
     sql = _cc_generate_neighbours_representation(edges_table)
-    neighbours = linker._enqueue_and_execute_sql_pipeline(sql, "neighbours")
+    neighbours = linker._enqueue_and_execute_sql_pipeline(
+        sql, "__splink__df_neighbours")
 
     # Extract our generated neighbours table name.
     # This utilises our caching system to ensure that
@@ -351,7 +390,8 @@ def solve_connected_components(
     linker._enqueue_sql(sql, "neighbours_first_iter")
     sql = _cc_update_representatives_first_iter()
     # Execute if we have no batching, otherwise add it to our batched process
-    representatives = linker._enqueue_and_execute_sql_pipeline(sql, "representatives")
+    representatives = linker._enqueue_and_execute_sql_pipeline(
+        sql, "__splink__df_representatives")
     representatives_table = representatives.physical_name
 
     # Loop while our representative table still has unsettled nodes
@@ -378,7 +418,7 @@ def solve_connected_components(
         sql = _cc_update_representatives_loop_cond(representatives_table)
         representatives = linker._enqueue_and_execute_sql_pipeline(
             sql,
-            f"representatives_{iteration}",
+            f"__splink__df_representatives_{iteration}",
         )
         # Update table reference
         representatives_table = representatives.physical_name
@@ -392,8 +432,9 @@ def solve_connected_components(
         dataframe.drop_table_from_database()
         root_rows = root_rows[0]["count"]
 
-    print(f"Exited after {iteration} iterations")
     # Create our final representatives table
+    # Need to edit how we export the table based on whether we are
+    # performing a link or dedupe job.
     exit_query = f"""
         select node_id, representative
         from {representatives.physical_name}
