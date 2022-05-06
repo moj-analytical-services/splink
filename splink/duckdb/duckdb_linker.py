@@ -82,12 +82,13 @@ class DuckDBLinker(Linker):
         # them with the database, using user-provided aliases
         # if provided or a created alias if not
 
-        input_tables = self._ensure_is_list(input_table_or_tables)
+        input_tables = self._coerce_to_list(input_table_or_tables)
 
         input_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases
         )
 
+        # 'homogenised' means all entries are strings representing tables
         homogenised_tables = []
         homogenised_aliases = []
 

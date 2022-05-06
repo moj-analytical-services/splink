@@ -71,7 +71,7 @@ class SparkLinker(Linker):
         self.break_lineage_method = break_lineage_method
         self.persist_level = persist_level
 
-        input_tables = self._ensure_is_list(input_table_or_tables)
+        input_tables = self._coerce_to_list(input_table_or_tables)
 
         input_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases

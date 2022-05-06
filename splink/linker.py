@@ -320,7 +320,7 @@ class Linker:
         new_linker._settings_obj_ = new_settings
         return new_linker
 
-    def _ensure_is_list(self, input_table_or_tables):
+    def _coerce_to_list(self, input_table_or_tables):
         if not isinstance(input_table_or_tables, list):
             input_table_or_tables = [input_table_or_tables]
 
@@ -338,7 +338,7 @@ class Linker:
 
     def _get_input_tables_dict(self, input_table_or_tables, input_table_aliases):
 
-        input_table_or_tables = self._ensure_is_list(input_table_or_tables)
+        input_table_or_tables = self._coerce_to_list(input_table_or_tables)
 
         input_table_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases
