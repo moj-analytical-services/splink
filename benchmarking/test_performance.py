@@ -160,7 +160,7 @@ def duckdb_performance(df, target_rows=1e6):
 
     linker = DuckDBLinker(df, settings_dict)
 
-    linker.train_u_using_random_sampling(target_rows=target_rows)
+    linker.estimate_u_using_random_sampling(target_rows=target_rows)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.train_m_using_expectation_maximisation(blocking_rule)
@@ -198,7 +198,7 @@ def duckdb_on_disk_performance(df, target_rows=1e6):
 
     linker = DuckDBLinker(df, settings_dict, connection=":temporary:")
 
-    linker.train_u_using_random_sampling(target_rows=target_rows)
+    linker.estimate_u_using_random_sampling(target_rows=target_rows)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.train_m_using_expectation_maximisation(blocking_rule)
@@ -236,7 +236,7 @@ def spark_performance(df, target_rows=1e6):
 
     linker = SparkLinker(df, settings_dict)
 
-    linker.train_u_using_random_sampling(target_rows=target_rows)
+    linker.estimate_u_using_random_sampling(target_rows=target_rows)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.train_m_using_expectation_maximisation(blocking_rule)
@@ -286,7 +286,7 @@ def sqlite_performance(con, target_rows=1e6):
         "input_df_tablename", settings_dict, connection=con, input_table_aliases="mydf"
     )
 
-    linker.train_u_using_random_sampling(target_rows=target_rows)
+    linker.estimate_u_using_random_sampling(target_rows=target_rows)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.train_m_using_expectation_maximisation(blocking_rule)

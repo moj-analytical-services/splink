@@ -23,7 +23,7 @@ def test_u_train():
 
     linker = DuckDBLinker(df, settings)
     linker.debug_mode = True
-    linker.train_u_using_random_sampling(target_rows=1e6)
+    linker.estimate_u_using_random_sampling(target_rows=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     denom = (6 * 5) / 2  # n(n-1) / 2

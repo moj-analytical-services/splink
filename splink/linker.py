@@ -220,7 +220,7 @@ class Linker:
         materialise_as_hash=True,
         use_cache=True,
         transpile=True,
-    ):
+    ) -> SplinkDataFrame:
 
         if not self.debug_mode:
             sql_gen = self.pipeline._generate_pipeline(input_dataframes)
@@ -588,8 +588,31 @@ class Linker:
         )
 
     def predict(
-        self, threshold_match_probability=None, threshold_match_weight=None
+        self,
+        threshold_match_probability: float = None,
+        threshold_match_weight: float = None,
     ) -> SplinkDataFrame:
+        """Create a dataframe of scored pairwise comparisons using the parameters
+        of the linkage model.
+
+        Uses the blocking rules specified in the
+        `blocking_rules_to_generate_predictions` of the settings dictionary to
+        generate the pairwise comparisons.
+
+        Args:
+            threshold_match_probability (float, optional): If specified,
+                filter the results to include only pairwise comparisons with a
+                match_probability above this threshold. Defaults to None.
+            threshold_match_weight (float, optional): If specified,
+                filter the results to include only pairwise comparisons with a
+                match_weight above this threshold.. Defaults to None.
+
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
+                represents a table materialised in the database. Methods on the
+                SplinkDataFrame allow you to access the underlying data.
+
+        """
 
         # If the user only calls predict, it runs as a single pipeline with no
         # materialisation of anything
@@ -607,7 +630,7 @@ class Linker:
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        predictions = self._execute_sql_pipeline([])
+        predictions = self._execute_sql_pipeline()
         self._predict_warning()
         return predictions
 
