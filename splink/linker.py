@@ -48,6 +48,7 @@ from .analyse_blocking import analyse_blocking_rule_sql
 from .splink_dataframe import SplinkDataFrame
 
 from .connected_components import (
+    _cc_create_unique_id_cols,
     solve_connected_components,
 )
 
@@ -257,7 +258,7 @@ class Linker:
 
             return dataframe
 
-    def enqueue_and_execute_sql_pipeline(
+    def _enqueue_and_execute_sql_pipeline(
         self,
         sql,
         output_table_name,
@@ -271,10 +272,10 @@ class Linker:
         in a single call.
         """
 
-        self.enqueue_sql(sql, output_table_name)
-        return self.execute_sql_pipeline([], materialise_as_hash, use_cache, transpile)
+        self._enqueue_sql(sql, output_table_name)
+        return self._execute_sql_pipeline([], materialise_as_hash, use_cache, transpile)
 
-    def sql_to_dataframe(
+    def _sql_to_dataframe(
         self,
         sql,
         output_tablename_templated,
@@ -774,18 +775,19 @@ class Linker:
 
         return predictions
 
-    def run_connected_components(self, batching=5):
-
-        # error if batching < 1 or something silly...
+    def run_connected_components(self, match_probability_threshold=0.9):
 
         # Using our caching system, either grab the edges table
         # or run the predict() step to generate it.
 
         # If the required pre-requisites for predict() are not met,
         # the code will error.
-        edges_table = self.predict()
+        edges_table = _cc_create_unique_id_cols(
+            self,
+            match_probability_threshold,
+        )
 
-        cc = solve_connected_components(self, edges_table, batching=batching)
+        cc = solve_connected_components(self, edges_table)
 
         return cc
 
