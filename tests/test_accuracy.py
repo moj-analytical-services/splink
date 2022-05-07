@@ -50,7 +50,7 @@ def test_scored_labels():
     linker = DuckDBLinker(df, settings)
 
     linker._initialise_df_concat_with_tf()
-    linker.con.register("labels", df_labels)
+    linker._con.register("labels", df_labels)
 
     sqls = block_from_labels(linker, "labels")
 
@@ -148,7 +148,7 @@ def test_truth_space_table():
     ]
     labels_with_predictions = pd.DataFrame(labels_with_predictions)
 
-    linker.con.register("__splink__labels_with_predictions", labels_with_predictions)
+    linker._con.register("__splink__labels_with_predictions", labels_with_predictions)
 
     sqls = truth_space_table_from_labels_with_predictions(0.5)
     for sql in sqls:
@@ -204,7 +204,7 @@ def test_roc_chart_dedupe_only():
 
     linker._initialise_df_concat_with_tf()
 
-    linker.con.register("labels", df_labels)
+    linker._con.register("labels", df_labels)
 
     linker.roc_chart_from_labels("labels")
 
@@ -237,6 +237,6 @@ def test_roc_chart_link_and_dedupe():
 
     linker._initialise_df_concat_with_tf()
 
-    linker.con.register("labels", df_labels)
+    linker._con.register("labels", df_labels)
 
     linker.roc_chart_from_labels("labels")

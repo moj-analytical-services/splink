@@ -33,7 +33,7 @@ def register_cc_df(G):
     linker = DuckDBLinker(df, settings_dict, input_table_aliases=table_name)
 
     # re-register under our required name to run the CC function
-    linker.con.register(table_name, df)
+    linker._con.register(table_name, df)
 
     # add our prediction df to our list of created tables
     predict_df = DuckDBLinkerDataFrame(table_name, table_name, linker)
@@ -53,7 +53,7 @@ def run_cc_implementation(splink_df, batching=1):
 def benchmark_cc_implementation(linker_df, batching=1):
 
     # add a schema so we don't need to re-register our df
-    linker_df.duckdb_linker.con.execute(
+    linker_df.duckdb_linker._con.execute(
         """
         create schema if not exists con_comp;
         set schema 'con_comp';
@@ -61,7 +61,7 @@ def benchmark_cc_implementation(linker_df, batching=1):
     )
 
     df = run_cc_implementation(linker_df, batching)
-    linker_df.duckdb_linker.con.execute("drop schema con_comp cascade")
+    linker_df.duckdb_linker._con.execute("drop schema con_comp cascade")
 
     return df
 

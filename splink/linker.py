@@ -63,7 +63,7 @@ class Linker:
         input_table_aliases: Union[str, list] = None,
     ):
 
-        self.pipeline = SQLPipeline()
+        self._pipeline = SQLPipeline()
 
         self._settings_dict = settings_dict
         if settings_dict is None:
@@ -215,7 +215,7 @@ class Linker:
                 self._execute_sql_pipeline(materialise_as_hash=False)
 
     def _enqueue_sql(self, sql, output_table_name):
-        self.pipeline.enqueue_sql(sql, output_table_name)
+        self._pipeline.enqueue_sql(sql, output_table_name)
 
     def _execute_sql_pipeline(
         self,
@@ -226,9 +226,9 @@ class Linker:
     ) -> SplinkDataFrame:
 
         if not self.debug_mode:
-            sql_gen = self.pipeline._generate_pipeline(input_dataframes)
+            sql_gen = self._pipeline._generate_pipeline(input_dataframes)
 
-            output_tablename_templated = self.pipeline.queue[-1].output_table_name
+            output_tablename_templated = self._pipeline.queue[-1].output_table_name
 
             dataframe = self._sql_to_dataframe(
                 sql_gen,
@@ -241,7 +241,7 @@ class Linker:
         else:
             # In debug mode, we do not pipeline the sql and print the
             # results of each part of the pipeline
-            for task in self.pipeline._generate_pipeline_parts(input_dataframes):
+            for task in self._pipeline._generate_pipeline_parts(input_dataframes):
                 output_tablename = task.output_table_name
                 sql = task.sql
                 print("------")
@@ -283,7 +283,7 @@ class Linker:
         transpile=True,
     ):
 
-        self.pipeline.reset()
+        self._pipeline.reset()
 
         hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
         # Ensure hash is valid sql table name
@@ -420,14 +420,14 @@ class Linker:
             training_lambda = em_training_session._settings_obj._proportion_of_matches
             training_lambda_bf = prob_to_bayes_factor(training_lambda)
             reverse_levels = (
-                em_training_session.comparison_levels_to_reverse_blocking_rule
+                em_training_session._comparison_levels_to_reverse_blocking_rule
             )
 
             logger.log(
                 15,
                 "\n"
                 f"Proportion of matches from trained model blocking on "
-                f"{em_training_session.blocking_rule_for_training}: "
+                f"{em_training_session._blocking_rule_for_training}: "
                 f"{training_lambda:,.3f}",
             )
 
@@ -499,14 +499,14 @@ class Linker:
                 if retain_df_concat_with_tf:
                     tables_remaining.append(name)
                 else:
-                    self.delete_table_from_database(name)
+                    self._delete_table_from_database(name)
             elif name.startswith("__splink__df_tf_"):
                 if retain_term_frequency:
                     tables_remaining.append(name)
                 else:
-                    self.delete_table_from_database(name)
+                    self._delete_table_from_database(name)
             else:
-                self.delete_table_from_database(name)
+                self._delete_table_from_database(name)
 
         self._names_of_tables_created_by_splink = tables_remaining
 
@@ -678,7 +678,7 @@ class Linker:
             comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa
         )
 
-        em_training_session.train()
+        em_training_session._train()
 
         self._populate_m_u_from_trained_values()
 
@@ -855,14 +855,14 @@ class Linker:
                 if retain_df_concat_with_tf:
                     tables_remaining.append(splink_df)
                 else:
-                    self.delete_table_from_database(name)
+                    self._delete_table_from_database(name)
             elif name.startswith("__splink__df_tf_"):
                 if retain_term_frequency:
                     tables_remaining.append(splink_df)
                 else:
-                    self.delete_table_from_database(name)
+                    self._delete_table_from_database(name)
             else:
-                self.delete_table_from_database(name)
+                self._delete_table_from_database(name)
 
         self.names_of_tables_created_by_splink = tables_remaining
 

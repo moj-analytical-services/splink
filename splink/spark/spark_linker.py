@@ -156,7 +156,7 @@ class SparkLinker(Linker):
         output_df = self._df_as_obj(templated_name, physical_name)
         return output_df
 
-    def random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
