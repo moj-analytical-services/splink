@@ -257,7 +257,7 @@ class Linker:
 
             return dataframe
 
-    def enqueue_and_execute_sql_pipeline(
+    def _enqueue_and_execute_sql_pipeline(
         self,
         sql,
         output_table_name,
@@ -271,8 +271,8 @@ class Linker:
         in a single call.
         """
 
-        self.enqueue_sql(sql, output_table_name)
-        return self.execute_sql_pipeline([], materialise_as_hash, use_cache, transpile)
+        self._enqueue_sql(sql, output_table_name)
+        return self._execute_sql_pipeline([], materialise_as_hash, use_cache, transpile)
 
     def _sql_to_dataframe(
         self,
