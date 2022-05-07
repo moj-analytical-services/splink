@@ -671,8 +671,8 @@ class Linker:
         em_training_session = EMTrainingSession(
             self,
             blocking_rule,
-            fix_u_probabilities=True,
-            fix_m_probabilities=False,
+            fix_u_probabilities=fix_u_probabilities,
+            fix_m_probabilities=fix_m_probabilities,
             fix_proportion_of_matches=fix_proportion_of_matches,
             comparisons_to_deactivate=comparisons_to_deactivate,
             comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa
