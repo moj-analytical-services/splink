@@ -30,7 +30,7 @@ def register_cc_df(G):
     table_name = "__splink__df_predict_graph"
     # this registers our table under __splink__df__{table_name}
     # but our cc function actively looks for "__splink__df_predict"
-    linker = DuckDBLinker(settings_dict, input_tables={table_name: df})
+    linker = DuckDBLinker(df, settings_dict, input_table_aliases=table_name)
 
     # re-register under our required name to run the CC function
     linker.con.register(table_name, df)
