@@ -174,9 +174,11 @@ def duckdb_performance(df, target_rows):
 
     linker.estimate_u_using_random_sampling(target_rows=target_rows)
 
-    linker.train_m_using_expectation_maximisation("l.full_name = r.full_name")
+    linker.estimate_parameters_using_expectation_maximisation(
+        "l.full_name = r.full_name"
+    )
 
-    linker.train_m_using_expectation_maximisation(
+    linker.estimate_parameters_using_expectation_maximisation(
         "l.dob = r.dob and substr(l.postcode,1,2) = substr(r.postcode,1,2)"
     )
 
@@ -234,9 +236,11 @@ def spark_performance(df, target_rows=1e6):
 
     linker.estimate_u_using_random_sampling(target_rows=target_rows)
 
-    linker.train_m_using_expectation_maximisation("l.full_name = r.full_name")
+    linker.estimate_parameters_using_expectation_maximisation(
+        "l.full_name = r.full_name"
+    )
 
-    linker.train_m_using_expectation_maximisation(
+    linker.estimate_parameters_using_expectation_maximisation(
         "l.dob = r.dob and substr(l.postcode,1,2) = substr(r.postcode,1,2)"
     )
 

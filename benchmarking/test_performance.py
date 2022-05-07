@@ -163,10 +163,10 @@ def duckdb_performance(df, target_rows=1e6):
     linker.estimate_u_using_random_sampling(target_rows=target_rows)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
-    linker.train_m_using_expectation_maximisation(blocking_rule)
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
-    linker.train_m_using_expectation_maximisation(blocking_rule)
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     df = linker.predict()
     df.as_pandas_dataframe()
@@ -201,10 +201,10 @@ def duckdb_on_disk_performance(df, target_rows=1e6):
     linker.estimate_u_using_random_sampling(target_rows=target_rows)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
-    linker.train_m_using_expectation_maximisation(blocking_rule)
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
-    linker.train_m_using_expectation_maximisation(blocking_rule)
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     df = linker.predict()
     df.as_pandas_dataframe()
@@ -239,10 +239,10 @@ def spark_performance(df, target_rows=1e6):
     linker.estimate_u_using_random_sampling(target_rows=target_rows)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
-    linker.train_m_using_expectation_maximisation(blocking_rule)
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
-    linker.train_m_using_expectation_maximisation(blocking_rule)
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     df = linker.predict()
     df.as_pandas_dataframe()
@@ -289,10 +289,10 @@ def sqlite_performance(con, target_rows=1e6):
     linker.estimate_u_using_random_sampling(target_rows=target_rows)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
-    linker.train_m_using_expectation_maximisation(blocking_rule)
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
-    linker.train_m_using_expectation_maximisation(blocking_rule)
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
     df = linker.predict()
     df.as_record_dict()
 

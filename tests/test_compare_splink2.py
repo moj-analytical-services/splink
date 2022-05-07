@@ -74,7 +74,7 @@ def test_splink_2_predict_sqlite():
 
     assert expected_match_weight == pytest.approx(actual_match_weight)
 
-    linker.train_m_using_expectation_maximisation("l.dob=r.dob")
+    linker.estimate_parameters_using_expectation_maximisation("l.dob=r.dob")
 
 
 def test_splink_2_em_fixed_u():
@@ -88,7 +88,7 @@ def test_splink_2_em_fixed_u():
         "tests/datasets/splink2_proportion_of_matches_history_fixed_u.csv"
     )
 
-    training_session = linker.train_m_using_expectation_maximisation(
+    training_session = linker.estimate_parameters_using_expectation_maximisation(
         "l.surname = r.surname"
     )
     actual_prop_history = pd.DataFrame(training_session.lambda_history_records)
@@ -133,8 +133,8 @@ def test_splink_2_em_no_fix():
         "tests/datasets/splink2_proportion_of_matches_history_no_fix.csv"
     )
 
-    training_session = linker.train_m_and_u_using_expectation_maximisation(
-        "l.surname = r.surname"
+    training_session = linker.estimate_parameters_using_expectation_maximisation(
+        "l.surname = r.surname", fix_u_probabilities=False
     )
     actual_prop_history = pd.DataFrame(training_session.lambda_history_records)
 
@@ -191,8 +191,8 @@ def test_lambda():
     actual_record = ma[f1 & f2]
     actual_record
     ma["match_probability"].mean()
-    training_session = linker.train_m_and_u_using_expectation_maximisation(
-        "l.dob = r.dob"
+    training_session = linker.estimate_parameters_using_expectation_maximisation(
+        "l.dob = r.dob", fix_u_probabilities=False
     )
     actual_prop_history = pd.DataFrame(training_session.lambda_history_records)
 
@@ -226,8 +226,9 @@ def test_lambda():
 
     linker._settings_obj._proportion_of_matches = glo
 
-    training_session = linker.train_m_and_u_using_expectation_maximisation(
-        "l.first_name = r.first_name and l.surname = r.surname"
+    training_session = linker.estimate_parameters_using_expectation_maximisation(
+        "l.first_name = r.first_name and l.surname = r.surname",
+        fix_u_probabilities=False,
     )
 
     # linker._settings_obj.match_weights_chart()
