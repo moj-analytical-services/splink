@@ -24,8 +24,8 @@ def test_train_vs_predict():
     settings_dict["blocking_rules_to_generate_predictions"] = ["l.surname = r.surname"]
     linker = DuckDBLinker(df, settings_dict)
 
-    training_session = linker.train_m_and_u_using_expectation_maximisation(
-        "l.surname = r.surname"
+    training_session = linker.estimate_parameters_using_expectation_maximisation(
+        "l.surname = r.surname", fix_u_probabilities=False
     )
 
     expected = training_session._settings_obj._proportion_of_matches

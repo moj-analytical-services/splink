@@ -552,11 +552,15 @@ class Linker:
         Args:
             target_rows (int): The target number of pairwise record comparisons from
             which to derive the u values.  Larger will give more accurate estimates
-            but lead to longer runtimes.  In our experience at least1e9 gives
-            best results. 1e7 is often adequate for rapid model development.
+            but lead to longer runtimes.  In our experience at least 1e9 (one billion)
+            gives best results. 1e7 (ten million) is often adequate for rapid model
+            development.
+
+        Examples:
+            >>> linker.estimate_u_using_random_sampling(1e9)
 
         Returns:
-            Updates the u values within the linker object with their estimates
+            Updates the estimated u parameters within the linker object
             and returns nothing.
         """
         self._initialise_df_concat_with_tf(materialise=True)
@@ -566,8 +570,11 @@ class Linker:
         self._settings_obj.columns_without_estimated_parameters_message()
 
     def estimate_m_from_label_column(self, label_colname: str):
-        """If there exists a column that contains a ground truth identifier, this can
-        be used to generate record comparisons for truly matching records.
+        """Estimate the m parameters of the linkage model from a label (ground truth)
+        column in the input dataframe(s).
+
+        The ground truth column is used to generate pairwise record comparisons
+        which are then assumed to be matches.
 
         For example, if the entity being matched is persons, and your input dataset(s)
         contain social security number, this could be used to estimate the m values
@@ -580,6 +587,13 @@ class Linker:
         Args:
             label_colname (str): The name of the column containing the ground truth
                 label in the input data.
+
+        Examples:
+            >>> linker.estimate_m_from_label_column("social_security_number")
+
+        Returns:
+            Updates the estimated m parameters within the linker object
+            and returns nothing.
         """
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_values_from_label_column(
@@ -589,15 +603,70 @@ class Linker:
 
         self._settings_obj.columns_without_estimated_parameters_message()
 
-    def train_m_using_expectation_maximisation(
+    def estimate_parameters_using_expectation_maximisation(
         self,
-        blocking_rule,
-        comparisons_to_deactivate=None,
-        comparison_levels_to_reverse_blocking_rule=None,
-        fix_proportion_of_matches=False,
-        fix_u_probabilities=True,
+        blocking_rule: str,
+        comparisons_to_deactivate: list = None,
+        comparison_levels_to_reverse_blocking_rule: list = None,
+        fix_proportion_of_matches: bool = False,
         fix_m_probabilities=False,
-    ):
+        fix_u_probabilities=True,
+    ) -> EMTrainingSession:
+        """Estimate the parameters of the linkage model using expectation maximisation
+
+        By default, the m probabilities are estimate, but not the u probabilities,
+        because good estiamtes for the u probabilities can be obtained from
+        `linker.estimate_u_using_random_sampling()`.  This can be controlled using the
+        `fix_u_probabilities` parameter.
+
+        The blocking rule provided is used to generate pairwise record comparisons.
+
+        By default, m parameters are estimated for all comparisons except those which
+        are included in the blocking rule.
+
+        For example, if the blocking rule is `l.first_name = r.first_name`, then
+        parameter esimates will be made for all comparison except those which use
+        `first_name` in their sql_condition
+
+        By default, the proportion of matches is estimated for the blocked data, and
+        then the m and u parameters for the columns specified in the blocking rules are
+        used to estiamte the global proportion of matches.
+
+        To control which comparisons should have their parameter estimated, and the
+        process of 'reversing out' the global proportion of matches, the user
+        may specify `comparisons_to_deactivate` and
+        `comparison_levels_to_reverse_blocking_rule`.
+
+        Args:
+            blocking_rule (str): The blocking rule used to generate pairwise record
+                comparisons.
+            comparisons_to_deactivate (list, optional): By default, splink will
+                analyse the blocking rule provided and estimate the m parameters for
+                all comaprisons except those included in the blocking rule.  If
+                comparisons_to_deactivate are provided, spink will instead
+                estimate m parameters for all comparison except those specified by name
+                in the comparisons_to_deactivate list.  Defaults to None.
+            comparison_levels_to_reverse_blocking_rule (list, optional): By default,
+                splink will analyse the blocking rule provided and adjust the
+                global proportion of matches to account for the matches specified
+                in the blocking rule. If provided, this argument will overrule
+                this default behaviour. Defaults to None.
+            fix_proportion_of_matches (bool, optional): If True, do not update the
+                proportion of matches after each iteration. Defaults to False.
+            fix_m_probabilities (bool, optional): If True, do not update the m
+                probabilities after each iteration. Defaults to False.
+            fix_u_probabilities (bool, optional): If True, do not update the u
+                probabilities after each iteration. Defaults to True.
+
+        Examples:
+            >>> blocking_rule = "l.first_name = r.first_name and l.dob = r.dob"
+            >>> linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+
+        Returns:
+            Updates the estimated m parameters and proportion_of_matches within the
+            linker object and returns nothing.
+        """
+
         self._initialise_df_concat_with_tf(materialise=True)
         em_training_session = EMTrainingSession(
             self,
@@ -618,24 +687,6 @@ class Linker:
         self._settings_obj.columns_without_estimated_parameters_message()
 
         return em_training_session
-
-    def train_m_and_u_using_expectation_maximisation(
-        self,
-        blocking_rule,
-        fix_proportion_of_matches=False,
-        comparisons_to_deactivate=None,
-        fix_u_probabilities=False,
-        fix_m_probabilities=False,
-        comparison_levels_to_reverse_blocking_rule=None,
-    ):
-        return self.train_m_using_expectation_maximisation(
-            blocking_rule,
-            fix_proportion_of_matches=fix_proportion_of_matches,
-            comparisons_to_deactivate=comparisons_to_deactivate,
-            fix_u_probabilities=fix_u_probabilities,
-            fix_m_probabilities=fix_m_probabilities,
-            comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa
-        )
 
     def predict(
         self,
