@@ -91,7 +91,7 @@ def test_splink_2_em_fixed_u():
     training_session = linker.estimate_parameters_using_expectation_maximisation(
         "l.surname = r.surname"
     )
-    actual_prop_history = pd.DataFrame(training_session.lambda_history_records)
+    actual_prop_history = pd.DataFrame(training_session._lambda_history_records)
 
     compare = expected_prop_history.merge(
         actual_prop_history, left_on="iteration", right_on="iteration"
@@ -106,7 +106,7 @@ def test_splink_2_em_fixed_u():
     f2 = expected_m_u_history["comparison_vector_value"] == "1"
     expected_first_name_level_1_m = expected_m_u_history[f1 & f2]
 
-    actual_m_u_history = pd.DataFrame(training_session.iteration_history_records)
+    actual_m_u_history = pd.DataFrame(training_session._iteration_history_records)
     f1 = actual_m_u_history["comparison_name"] == "first_name"
     f2 = actual_m_u_history["comparison_vector_value"] == 1
     actual_first_name_level_1_m = actual_m_u_history[f1 & f2]
@@ -136,7 +136,7 @@ def test_splink_2_em_no_fix():
     training_session = linker.estimate_parameters_using_expectation_maximisation(
         "l.surname = r.surname", fix_u_probabilities=False
     )
-    actual_prop_history = pd.DataFrame(training_session.lambda_history_records)
+    actual_prop_history = pd.DataFrame(training_session._lambda_history_records)
 
     compare = expected_prop_history.merge(
         actual_prop_history, left_on="iteration", right_on="iteration"
@@ -151,7 +151,7 @@ def test_splink_2_em_no_fix():
     f2 = expected_m_u_history["comparison_vector_value"] == "1"
     expected_first_name_level_1_m = expected_m_u_history[f1 & f2]
 
-    actual_m_u_history = pd.DataFrame(training_session.iteration_history_records)
+    actual_m_u_history = pd.DataFrame(training_session._iteration_history_records)
     f1 = actual_m_u_history["comparison_name"] == "first_name"
     f2 = actual_m_u_history["comparison_vector_value"] == 1
     actual_first_name_level_1_m = actual_m_u_history[f1 & f2]
@@ -194,7 +194,7 @@ def test_lambda():
     training_session = linker.estimate_parameters_using_expectation_maximisation(
         "l.dob = r.dob", fix_u_probabilities=False
     )
-    actual_prop_history = pd.DataFrame(training_session.lambda_history_records)
+    actual_prop_history = pd.DataFrame(training_session._lambda_history_records)
 
     # linker._settings_obj.match_weights_chart()
     actual_prop_history

@@ -1,8 +1,14 @@
 import logging
+from typing import TYPE_CHECKING
 
 from .predict import predict_from_comparison_vectors_sql
 from .settings import Settings
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
+
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .em_training_session import EMTrainingSession
+
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +78,7 @@ def populate_m_u_from_lookup(em_training_session, comparison_level, m_u_records_
         cl.u_probability = u_probability
 
 
-def maximisation_step(em_training_session, param_records):
+def maximisation_step(em_training_session: "EMTrainingSession", param_records):
 
     settings_obj = em_training_session._settings_obj
 
@@ -92,13 +98,15 @@ def maximisation_step(em_training_session, param_records):
         for cl in cc.comparison_levels_excluding_null:
             populate_m_u_from_lookup(em_training_session, cl, m_u_records_lookup)
 
-    em_training_session.add_iteration()
+    em_training_session._add_iteration()
 
 
-def expectation_maximisation(em_training_session, df_comparison_vector_values):
+def expectation_maximisation(
+    em_training_session: "EMTrainingSession", df_comparison_vector_values
+):
 
     settings_obj = em_training_session._settings_obj
-    linker = em_training_session.original_linker
+    linker = em_training_session._original_linker
 
     max_iterations = settings_obj._max_iterations
     em_convergece = settings_obj._em_convergence
@@ -117,7 +125,7 @@ def expectation_maximisation(em_training_session, df_comparison_vector_values):
 
         maximisation_step(em_training_session, param_records)
         max_change_dict = (
-            em_training_session.max_change_in_parameters_comparison_levels()
+            em_training_session._max_change_in_parameters_comparison_levels()
         )
         logger.info(f"Iteration {i}: {max_change_dict['message']}")
 

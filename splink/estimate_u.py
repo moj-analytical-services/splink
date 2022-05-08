@@ -74,7 +74,7 @@ def estimate_u_values(linker: "Linker", target_rows):
     sql = f"""
     select *
     from __splink__df_concat_with_tf
-    {training_linker.random_sample_sql(proportion, sample_size)}
+    {training_linker._random_sample_sql(proportion, sample_size)}
     """
 
     df_sample = training_linker._sql_to_dataframe(

@@ -79,7 +79,7 @@ def test_full_example_duckdb(tmp_path):
         axis=1,
     )
 
-    linker.con.register("labels", df_labels)
+    linker._con.register("labels", df_labels)
     # Finish create labels
 
     linker.roc_chart_from_labels("labels")
