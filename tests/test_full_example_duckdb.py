@@ -29,9 +29,9 @@ def test_full_example_duckdb(tmp_path):
         output_schema="splink_in_duckdb",
     )
 
-    # linker.analyse_blocking_rule(
-    #     "l.first_name = r.first_name and l.surname = r.surname"
-    # )
+    linker.compute_number_of_comparisons_generated_by_blocking_rule(
+        "l.first_name = r.first_name and l.surname = r.surname"
+    )
 
     linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]
