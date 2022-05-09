@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
-from .expectation_maximisation import compute_new_parameters
+from .expectation_maximisation import compute_new_parameters_sql
 
 from .m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
@@ -98,7 +98,7 @@ def estimate_u_values(linker: "Linker", target_rows):
     """
     training_linker._enqueue_sql(sql, "__splink__df_predict")
 
-    sql = compute_new_parameters(settings_obj)
+    sql = compute_new_parameters_sql(settings_obj)
     training_linker._enqueue_sql(sql, "__splink__df_new_params")
 
     df_params = training_linker._execute_sql_pipeline([df_sample])

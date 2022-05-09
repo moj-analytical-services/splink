@@ -87,6 +87,7 @@ class EMTrainingSession:
 
         self._settings_obj_history = []
 
+        # Add iteration 0 i.e. the starting parameters
         self._add_iteration()
 
     def _training_log_message(self):
