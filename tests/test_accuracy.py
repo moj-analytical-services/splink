@@ -2,9 +2,9 @@ import pandas as pd
 import pytest
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.accuracy import (
-    predict_scores_for_labels,
-    truth_space_table_from_labels_with_predictions,
-    labels_table_with_minimal_columns,
+    predict_scores_for_labels_sql,
+    truth_space_table_from_labels_with_predictions_sqls,
+    labels_table_with_minimal_columns_sql,
 )
 from splink.comparison_library import exact_match
 
@@ -66,10 +66,10 @@ def test_scored_labels():
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    sql = labels_table_with_minimal_columns(linker)
+    sql = labels_table_with_minimal_columns_sql(linker)
     linker._enqueue_sql(sql, "__splink__labels_minimal")
 
-    sql = predict_scores_for_labels(linker)
+    sql = predict_scores_for_labels_sql(linker)
     linker._enqueue_sql(sql, "__splink__labels_with_predictions")
     df_scores_labels = linker._execute_sql_pipeline()
 
@@ -150,7 +150,7 @@ def test_truth_space_table():
 
     linker._con.register("__splink__labels_with_predictions", labels_with_predictions)
 
-    sqls = truth_space_table_from_labels_with_predictions(0.5)
+    sqls = truth_space_table_from_labels_with_predictions_sqls(0.5)
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])
     df_roc = linker._execute_sql_pipeline()

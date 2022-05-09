@@ -4,7 +4,7 @@ from .predict import predict_from_comparison_vectors_sql
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
 
 
-def labels_table_with_minimal_columns(linker):
+def labels_table_with_minimal_columns_sql(linker):
     columns_to_select = []
     id_cols = linker._settings_obj._unique_id_input_columns
     for id_col in id_cols:
@@ -21,7 +21,7 @@ def labels_table_with_minimal_columns(linker):
     return sql
 
 
-def predict_scores_for_labels(linker):
+def predict_scores_for_labels_sql(linker):
 
     brs = linker._settings_obj._blocking_rules_to_generate_predictions
     if brs:
@@ -56,7 +56,7 @@ def predict_scores_for_labels(linker):
     return sql
 
 
-def truth_space_table_from_labels_with_predictions(
+def truth_space_table_from_labels_with_predictions_sqls(
     threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
 
@@ -199,14 +199,14 @@ def truth_space_table(
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
     # Select only necessary columns from labels table
-    sql = labels_table_with_minimal_columns(linker)
+    sql = labels_table_with_minimal_columns_sql(linker)
     linker._enqueue_sql(sql, "__splink__labels_minimal")
 
-    sql = predict_scores_for_labels(linker)
+    sql = predict_scores_for_labels_sql(linker)
     linker._enqueue_sql(sql, "__splink__labels_with_predictions")
 
     # c_P and c_N are clerical positive and negative, respectively
-    sqls = truth_space_table_from_labels_with_predictions(
+    sqls = truth_space_table_from_labels_with_predictions_sqls(
         threshold_actual, match_weight_round_to_nearest
     )
 
