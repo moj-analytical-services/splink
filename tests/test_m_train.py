@@ -55,7 +55,7 @@ def test_m_train():
 
     linker_pairwise = DuckDBLinker(df, settings)
 
-    linker_pairwise.con.register("labels", df_labels)
+    linker_pairwise._con.register("labels", df_labels)
     linker_pairwise.train_m_from_pairwise_labels("labels")
     cc_name = linker_pairwise._settings_obj.comparisons[0]
 

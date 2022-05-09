@@ -28,8 +28,8 @@ class SplinkDataFrame:
     def validate():
         pass
 
-    def random_sample_sql(percent):
-        pass
+    def _random_sample_sql(percent):
+        raise NotImplementedError("Random sample sql not implemented for this linker")
 
     @property
     def physical_and_template_names_equal(self):
@@ -62,3 +62,14 @@ class SplinkDataFrame:
         import pandas as pd
 
         return pd.DataFrame(self.as_record_dict(limit=limit))
+
+    def __repr__(self):
+        return (
+            f"Table name in database: `{self.physical_name}`\n"
+            "\nTo retrieve records, you can call the following methods:"
+            "\n`splink_df.as_record_dict(limit=5)` or "
+            "`splink_df.as_pandas_dataframe(limit=5)`.\n"
+            "\nYou may omit the `limit` argument to return all records."
+            "\n\nThis table represents the following splink entity: "
+            f"{self.templated_name}"
+        )

@@ -58,7 +58,7 @@ jobs:
       #----------------------------------------------
       - name: Install library
         run: |
-          if ! grep -Fxq "pyspark" ./pyproject.toml
+          if ! grep "pyspark" ./pyproject.toml
           then
             sed -i 's/sqlglot = "1.23.1"/sqlglot = "1.23.1" \npyspark = "^3.2.1"/' ./pyproject.toml
           fi

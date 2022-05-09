@@ -35,7 +35,7 @@ from .pipeline import SQLPipeline
 
 from .vertically_concatenate import vertically_concatente_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
-from .accuracy import truth_space_table
+from .accuracy import roc_table
 
 from .match_weight_histogram import histogram_data
 from .comparison_vector_distribution import comparison_vector_distribution_sql
@@ -64,7 +64,7 @@ class Linker:
         input_table_aliases: Union[str, list] = None,
     ):
 
-        self.pipeline = SQLPipeline()
+        self._pipeline = SQLPipeline()
 
         self._settings_dict = settings_dict
         if settings_dict is None:
@@ -216,7 +216,7 @@ class Linker:
                 self._execute_sql_pipeline(materialise_as_hash=False)
 
     def _enqueue_sql(self, sql, output_table_name):
-        self.pipeline.enqueue_sql(sql, output_table_name)
+        self._pipeline.enqueue_sql(sql, output_table_name)
 
     def _execute_sql_pipeline(
         self,
@@ -227,9 +227,9 @@ class Linker:
     ) -> SplinkDataFrame:
 
         if not self.debug_mode:
-            sql_gen = self.pipeline._generate_pipeline(input_dataframes)
+            sql_gen = self._pipeline._generate_pipeline(input_dataframes)
 
-            output_tablename_templated = self.pipeline.queue[-1].output_table_name
+            output_tablename_templated = self._pipeline.queue[-1].output_table_name
 
             dataframe = self._sql_to_dataframe(
                 sql_gen,
@@ -242,7 +242,7 @@ class Linker:
         else:
             # In debug mode, we do not pipeline the sql and print the
             # results of each part of the pipeline
-            for task in self.pipeline._generate_pipeline_parts(input_dataframes):
+            for task in self._pipeline._generate_pipeline_parts(input_dataframes):
                 output_tablename = task.output_table_name
                 sql = task.sql
                 print("------")
@@ -284,7 +284,7 @@ class Linker:
         transpile=True,
     ):
 
-        self.pipeline.reset()
+        self._pipeline.reset()
 
         hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
         # Ensure hash is valid sql table name
@@ -421,14 +421,14 @@ class Linker:
             training_lambda = em_training_session._settings_obj._proportion_of_matches
             training_lambda_bf = prob_to_bayes_factor(training_lambda)
             reverse_levels = (
-                em_training_session.comparison_levels_to_reverse_blocking_rule
+                em_training_session._comparison_levels_to_reverse_blocking_rule
             )
 
             logger.log(
                 15,
                 "\n"
                 f"Proportion of matches from trained model blocking on "
-                f"{em_training_session.blocking_rule_for_training}: "
+                f"{em_training_session._blocking_rule_for_training}: "
                 f"{training_lambda:,.3f}",
             )
 
@@ -500,14 +500,14 @@ class Linker:
                 if retain_df_concat_with_tf:
                     tables_remaining.append(name)
                 else:
-                    self.delete_table_from_database(name)
+                    self._delete_table_from_database(name)
             elif name.startswith("__splink__df_tf_"):
                 if retain_term_frequency:
                     tables_remaining.append(name)
                 else:
-                    self.delete_table_from_database(name)
+                    self._delete_table_from_database(name)
             else:
-                self.delete_table_from_database(name)
+                self._delete_table_from_database(name)
 
         self._names_of_tables_created_by_splink = tables_remaining
 
@@ -553,11 +553,15 @@ class Linker:
         Args:
             target_rows (int): The target number of pairwise record comparisons from
             which to derive the u values.  Larger will give more accurate estimates
-            but lead to longer runtimes.  In our experience at least1e9 gives
-            best results. 1e7 is often adequate for rapid model development.
+            but lead to longer runtimes.  In our experience at least 1e9 (one billion)
+            gives best results. 1e7 (ten million) is often adequate for rapid model
+            development.
+
+        Examples:
+            >>> linker.estimate_u_using_random_sampling(1e9)
 
         Returns:
-            Updates the u values within the linker object with their estimates
+            Updates the estimated u parameters within the linker object
             and returns nothing.
         """
         self._initialise_df_concat_with_tf(materialise=True)
@@ -567,8 +571,11 @@ class Linker:
         self._settings_obj.columns_without_estimated_parameters_message()
 
     def estimate_m_from_label_column(self, label_colname: str):
-        """If there exists a column that contains a ground truth identifier, this can
-        be used to generate record comparisons for truly matching records.
+        """Estimate the m parameters of the linkage model from a label (ground truth)
+        column in the input dataframe(s).
+
+        The ground truth column is used to generate pairwise record comparisons
+        which are then assumed to be matches.
 
         For example, if the entity being matched is persons, and your input dataset(s)
         contain social security number, this could be used to estimate the m values
@@ -581,6 +588,13 @@ class Linker:
         Args:
             label_colname (str): The name of the column containing the ground truth
                 label in the input data.
+
+        Examples:
+            >>> linker.estimate_m_from_label_column("social_security_number")
+
+        Returns:
+            Updates the estimated m parameters within the linker object
+            and returns nothing.
         """
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_values_from_label_column(
@@ -590,15 +604,70 @@ class Linker:
 
         self._settings_obj.columns_without_estimated_parameters_message()
 
-    def train_m_using_expectation_maximisation(
+    def estimate_parameters_using_expectation_maximisation(
         self,
-        blocking_rule,
-        comparisons_to_deactivate=None,
-        comparison_levels_to_reverse_blocking_rule=None,
-        fix_proportion_of_matches=False,
-        fix_u_probabilities=True,
+        blocking_rule: str,
+        comparisons_to_deactivate: list = None,
+        comparison_levels_to_reverse_blocking_rule: list = None,
+        fix_proportion_of_matches: bool = False,
         fix_m_probabilities=False,
-    ):
+        fix_u_probabilities=True,
+    ) -> EMTrainingSession:
+        """Estimate the parameters of the linkage model using expectation maximisation
+
+        By default, the m probabilities are estimate, but not the u probabilities,
+        because good estiamtes for the u probabilities can be obtained from
+        `linker.estimate_u_using_random_sampling()`.  This can be controlled using the
+        `fix_u_probabilities` parameter.
+
+        The blocking rule provided is used to generate pairwise record comparisons.
+
+        By default, m parameters are estimated for all comparisons except those which
+        are included in the blocking rule.
+
+        For example, if the blocking rule is `l.first_name = r.first_name`, then
+        parameter esimates will be made for all comparison except those which use
+        `first_name` in their sql_condition
+
+        By default, the proportion of matches is estimated for the blocked data, and
+        then the m and u parameters for the columns specified in the blocking rules are
+        used to estiamte the global proportion of matches.
+
+        To control which comparisons should have their parameter estimated, and the
+        process of 'reversing out' the global proportion of matches, the user
+        may specify `comparisons_to_deactivate` and
+        `comparison_levels_to_reverse_blocking_rule`.
+
+        Args:
+            blocking_rule (str): The blocking rule used to generate pairwise record
+                comparisons.
+            comparisons_to_deactivate (list, optional): By default, splink will
+                analyse the blocking rule provided and estimate the m parameters for
+                all comaprisons except those included in the blocking rule.  If
+                comparisons_to_deactivate are provided, spink will instead
+                estimate m parameters for all comparison except those specified by name
+                in the comparisons_to_deactivate list.  Defaults to None.
+            comparison_levels_to_reverse_blocking_rule (list, optional): By default,
+                splink will analyse the blocking rule provided and adjust the
+                global proportion of matches to account for the matches specified
+                in the blocking rule. If provided, this argument will overrule
+                this default behaviour. Defaults to None.
+            fix_proportion_of_matches (bool, optional): If True, do not update the
+                proportion of matches after each iteration. Defaults to False.
+            fix_m_probabilities (bool, optional): If True, do not update the m
+                probabilities after each iteration. Defaults to False.
+            fix_u_probabilities (bool, optional): If True, do not update the u
+                probabilities after each iteration. Defaults to True.
+
+        Examples:
+            >>> blocking_rule = "l.first_name = r.first_name and l.dob = r.dob"
+            >>> linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+
+        Returns:
+            Updates the estimated m parameters and proportion_of_matches within the
+            linker object and returns nothing.
+        """
+
         self._initialise_df_concat_with_tf(materialise=True)
         em_training_session = EMTrainingSession(
             self,
@@ -610,7 +679,7 @@ class Linker:
             comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa
         )
 
-        em_training_session.train()
+        em_training_session._train()
 
         self._populate_m_u_from_trained_values()
 
@@ -619,24 +688,6 @@ class Linker:
         self._settings_obj.columns_without_estimated_parameters_message()
 
         return em_training_session
-
-    def train_m_and_u_using_expectation_maximisation(
-        self,
-        blocking_rule,
-        fix_proportion_of_matches=False,
-        comparisons_to_deactivate=None,
-        fix_u_probabilities=False,
-        fix_m_probabilities=False,
-        comparison_levels_to_reverse_blocking_rule=None,
-    ):
-        return self.train_m_using_expectation_maximisation(
-            blocking_rule,
-            fix_proportion_of_matches=fix_proportion_of_matches,
-            comparisons_to_deactivate=comparisons_to_deactivate,
-            fix_u_probabilities=fix_u_probabilities,
-            fix_m_probabilities=fix_m_probabilities,
-            comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa
-        )
 
     def predict(
         self,
@@ -806,14 +857,14 @@ class Linker:
                 if retain_df_concat_with_tf:
                     tables_remaining.append(splink_df)
                 else:
-                    self.delete_table_from_database(name)
+                    self._delete_table_from_database(name)
             elif name.startswith("__splink__df_tf_"):
                 if retain_term_frequency:
                     tables_remaining.append(splink_df)
                 else:
-                    self.delete_table_from_database(name)
+                    self._delete_table_from_database(name)
             else:
-                self.delete_table_from_database(name)
+                self._delete_table_from_database(name)
 
         self.names_of_tables_created_by_splink = tables_remaining
 
@@ -826,9 +877,53 @@ class Linker:
         estimate_m_from_pairwise_labels(self, table_name)
 
     def roc_chart_from_labels(
-        self, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
+        self,
+        labels_tablename,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
     ):
-        df_truth_space = truth_space_table(
+        """Generate a ROC chart from labelled (ground truth) data.
+
+        The table of labels should be in the following format, and should be registered
+        with your database:
+
+        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
+        |----------------|-----------|----------------|-----------|--------------------|
+        |df_1            |1          |df_2            |2          |0.99                |
+        |df_1            |1          |df_2            |3          |0.2                 |
+
+        Note that `source_dataset` and `unique_id` should correspond to the values
+        specified in the settings dict, and the `input_table_aliases` passed to the
+        `linker` object.
+
+        For `dedupe_only` links, the `source_dataset` columns can be ommitted.
+
+        Args:
+            labels_tablename (str): Name of table containing labels in the database
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the ROC chart. Defaults to None.
+
+        Examples:
+            >>> # DuckDBLinker
+            >>> labels = pd.read_csv("my_labels.csv")
+            >>> linker._con.register("labels", labels)
+            >>> linker.roc_chart_from_labels("labels")
+            >>>
+            >>> # SparkLinker
+            >>> labels = spark.read.csv("my_labels.csv", header=True)
+            >>> labels.createDataFrame("labels")
+            >>> linker.roc_chart_from_labels("labels")
+
+        Returns:
+            SplinkDataFrame
+        """
+        df_truth_space = roc_table(
             self,
             labels_tablename,
             threshold_actual=threshold_actual,
@@ -838,14 +933,100 @@ class Linker:
         return roc_chart(recs)
 
     def precision_recall_chart_from_labels(self, labels_tablename):
-        df_truth_space = truth_space_table(self, labels_tablename)
+        """Generate a precision-recall chart from labelled (ground truth) data.
+
+        The table of labels should be in the following format, and should be registered
+        as a table with your database:
+
+        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
+        |----------------|-----------|----------------|-----------|--------------------|
+        |df_1            |1          |df_2            |2          |0.99                |
+        |df_1            |1          |df_2            |3          |0.2                 |
+
+        Note that `source_dataset` and `unique_id` should correspond to the values
+        specified in the settings dict, and the `input_table_aliases` passed to the
+        `linker` object.
+
+        For `dedupe_only` links, the `source_dataset` columns can be ommitted.
+
+        Args:
+            labels_tablename (str): Name of table containing labels in the database
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the ROC chart. Defaults to None.
+        Examples:
+            >>> # DuckDBLinker
+            >>> labels = pd.read_csv("my_labels.csv")
+            >>> linker._con.register("labels", labels)
+            >>> linker.precision_recall_chart_from_labels("labels")
+            >>>
+            >>> # SparkLinker
+            >>> labels = spark.read.csv("my_labels.csv", header=True)
+            >>> labels.createDataFrame("labels")
+            >>> linker.precision_recall_chart_from_labels("labels")
+
+        Returns:
+            SplinkDataFrame
+        """
+        df_truth_space = roc_table(self, labels_tablename)
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
 
-    def truth_space_table(
-        self, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
-    ):
-        return truth_space_table(
+    def roc_table_from_labels(
+        self,
+        labels_tablename,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+    ) -> SplinkDataFrame:
+        """Generate truth statistics (false positive etc.) for each threshold value of
+        match_probability, suitable for plotting a ROC chart.
+
+        The table of labels should be in the following format, and should be registered
+        with your database:
+
+        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
+        |----------------|-----------|----------------|-----------|--------------------|
+        |df_1            |1          |df_2            |2          |0.99                |
+        |df_1            |1          |df_2            |3          |0.2                 |
+
+        Note that `source_dataset` and `unique_id` should correspond to the values
+        specified in the settings dict, and the `input_table_aliases` passed to the
+        `linker` object.
+
+        For `dedupe_only` links, the `source_dataset` columns can be ommitted.
+
+        Args:
+            labels_tablename (str): Name of table containing labels in the database
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the ROC chart. Defaults to None.
+
+        Examples:
+            >>> # DuckDBLinker
+            >>> labels = pd.read_csv("my_labels.csv")
+            >>> linker._con.register("labels", labels)
+            >>> linker.roc_table_from_labels("labels")
+            >>>
+            >>> # SparkLinker
+            >>> labels = spark.read.csv("my_labels.csv", header=True)
+            >>> labels.createDataFrame("labels")
+            >>> linker.roc_table_from_labels("labels")
+
+        Returns:
+            SplinkDataFrame
+        """
+
+        return roc_table(
             self,
             labels_tablename,
             threshold_actual=threshold_actual,
@@ -896,7 +1077,26 @@ class Linker:
         records = missingness_data(self, input_dataset)
         return missingness_chart(records, input_dataset)
 
-    def analyse_blocking_rule(self, blocking_rule, link_type=None):
+    def compute_number_of_comparisons_generated_by_blocking_rule(
+        self, blocking_rule: str, link_type: str = None
+    ) -> dict:
+        """Compute the number of pairwise record comparisons that would be generated by
+        a blocking rule
+
+        Args:
+            blocking_rule (str): The blocking rule to analyse
+            link_type (str, optional): The link type.  This is needed only if the
+                linker has not yet been provided with a settings dictionary.  Defaults
+                to None.
+
+        Examples:
+            >>> br = "l.first_name = r.first_name"
+            >>> linker.compute_number_of_comparisons_generated_by_blocking_rule(br)
+
+        Returns:
+            dict: A dictionray containing the number of comparisons generated by the
+                blocking rule
+        """
 
         sql = vertically_concatente_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")

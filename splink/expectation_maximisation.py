@@ -1,13 +1,20 @@
 import logging
+from typing import TYPE_CHECKING
 
 from .predict import predict_from_comparison_vectors_sql
 from .settings import Settings
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
+from .splink_dataframe import SplinkDataFrame
+
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .em_training_session import EMTrainingSession
+
 
 logger = logging.getLogger(__name__)
 
 
-def compute_new_parameters(settings_obj: Settings):
+def compute_new_parameters_sql(settings_obj: Settings):
     """compute m and u from results of predict"""
 
     sql_template = """
@@ -72,7 +79,7 @@ def populate_m_u_from_lookup(em_training_session, comparison_level, m_u_records_
         cl.u_probability = u_probability
 
 
-def maximisation_step(em_training_session, param_records):
+def maximisation_step(em_training_session: "EMTrainingSession", param_records):
 
     settings_obj = em_training_session._settings_obj
 
@@ -92,23 +99,34 @@ def maximisation_step(em_training_session, param_records):
         for cl in cc.comparison_levels_excluding_null:
             populate_m_u_from_lookup(em_training_session, cl, m_u_records_lookup)
 
-    em_training_session.add_iteration()
+    em_training_session._add_iteration()
 
 
-def expectation_maximisation(em_training_session, df_comparison_vector_values):
+def expectation_maximisation(
+    em_training_session: "EMTrainingSession",
+    df_comparison_vector_values: SplinkDataFrame,
+):
+    """In the expectation step, we use the current model parameters to estimate
+    the probability of match for each pairwise record comparison
+
+    In the maximisation step, we use these predicted probabilities to re-compute
+    the parameters of the model
+    """
 
     settings_obj = em_training_session._settings_obj
-    linker = em_training_session.original_linker
+    linker = em_training_session._original_linker
 
     max_iterations = settings_obj._max_iterations
     em_convergece = settings_obj._em_convergence
     logger.info("")  # newline
     for i in range(1, max_iterations + 1):
+
+        # Expectation step
         sqls = predict_from_comparison_vectors_sql(settings_obj)
         for sql in sqls:
             linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        sql = compute_new_parameters(settings_obj)
+        sql = compute_new_parameters_sql(settings_obj)
         linker._enqueue_sql(sql, "__splink__df_new_params")
         df_params = linker._execute_sql_pipeline([df_comparison_vector_values])
         param_records = df_params.as_record_dict()
@@ -117,7 +135,7 @@ def expectation_maximisation(em_training_session, df_comparison_vector_values):
 
         maximisation_step(em_training_session, param_records)
         max_change_dict = (
-            em_training_session.max_change_in_parameters_comparison_levels()
+            em_training_session._max_change_in_parameters_comparison_levels()
         )
         logger.info(f"Iteration {i}: {max_change_dict['message']}")
 
