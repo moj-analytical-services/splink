@@ -375,7 +375,8 @@ def solve_connected_components(
     linker._enqueue_sql(sql, "nodes")
     sql = _cc_generate_neighbours_representation(edges_table)
     neighbours = linker._enqueue_and_execute_sql_pipeline(
-        sql, "__splink__df_neighbours")
+        sql, "__splink__df_neighbours"
+    )
 
     # Extract our generated neighbours table name.
     # This utilises our caching system to ensure that
@@ -391,7 +392,8 @@ def solve_connected_components(
     sql = _cc_update_representatives_first_iter()
     # Execute if we have no batching, otherwise add it to our batched process
     representatives = linker._enqueue_and_execute_sql_pipeline(
-        sql, "__splink__df_representatives")
+        sql, "__splink__df_representatives"
+    )
     representatives_table = representatives.physical_name
 
     # Loop while our representative table still has unsettled nodes
