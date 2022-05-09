@@ -49,7 +49,7 @@ from .splink_dataframe import SplinkDataFrame
 
 from .connected_components import (
     _cc_create_unique_id_cols,
-    solve_connected_components,
+    cluster_predictions,
 )
 
 logger = logging.getLogger(__name__)
@@ -707,7 +707,7 @@ class Linker:
                 match_probability above this threshold. Defaults to None.
             threshold_match_weight (float, optional): If specified,
                 filter the results to include only pairwise comparisons with a
-                match_weight above this threshold.. Defaults to None.
+                match_weight above this threshold. Defaults to None.
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
@@ -838,7 +838,7 @@ class Linker:
             match_probability_threshold,
         )
 
-        cc = solve_connected_components(self, edges_table)
+        cc = cluster_predictions(self, edges_table)
 
         return cc
 
