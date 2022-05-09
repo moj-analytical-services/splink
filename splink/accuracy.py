@@ -181,7 +181,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
     return sqls
 
 
-def truth_space_table(
+def roc_table(
     linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
     sqls = block_from_labels(linker, labels_tablename)
