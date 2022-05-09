@@ -4,7 +4,7 @@ import pandas as pd
 import random
 
 from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
-from splink.connected_components import solve_connected_components
+from splink.connected_components import cluster_predictions
 
 
 def generate_random_graph(graph_size, seed=None):
@@ -45,8 +45,8 @@ def register_cc_df(G):
 def run_cc_implementation(splink_df):
 
     # finally, run our connected components algorithm
-    return solve_connected_components(
-        splink_df.duckdb_linker, splink_df, generated_graph=True
+    return cluster_predictions(
+        splink_df.duckdb_linker, splink_df, _generated_graph=True
     ).as_pandas_dataframe()
 
 
