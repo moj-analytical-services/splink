@@ -254,7 +254,9 @@ class EMTrainingSession:
 
     def match_weights_interactive_history_chart(self):
         records = self._iteration_history_records
-        return match_weights_interactive_history_chart(records)
+        return match_weights_interactive_history_chart(
+            records, blocking_rule=self._blocking_rule_for_training
+        )
 
     def m_u_values_interactive_history_chart(self):
         records = self._iteration_history_records

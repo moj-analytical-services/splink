@@ -133,9 +133,12 @@ def proportion_of_matches_iteration_chart(records, as_dict=False):
     return vegalite_or_json(chart, as_dict=as_dict)
 
 
-def match_weights_interactive_history_chart(records, as_dict=False):
+def match_weights_interactive_history_chart(records, as_dict=False, blocking_rule=None):
     chart_path = "match_weights_interactive_history.json"
     chart = load_chart_definition(chart_path)
+
+    chart["title"]["subtitle"] = f"Training session blocked on {blocking_rule}"
+
     records = [r for r in records if r["comparison_vector_value"] != -1]
     chart["data"]["values"] = records
 
