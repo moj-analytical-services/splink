@@ -49,7 +49,7 @@ from .splink_dataframe import SplinkDataFrame
 
 from .connected_components import (
     _cc_create_unique_id_cols,
-    cluster_predictions,
+    solve_connected_components,
 )
 
 logger = logging.getLogger(__name__)
@@ -826,7 +826,7 @@ class Linker:
 
         return predictions
 
-    def run_connected_components(self, match_probability_threshold=0.9):
+    def cluster_predictions(self, match_probability_threshold=0.9):
 
         # Using our caching system, either grab the edges table
         # or run the predict() step to generate it.
@@ -838,7 +838,7 @@ class Linker:
             match_probability_threshold,
         )
 
-        cc = cluster_predictions(self, edges_table)
+        cc = solve_connected_components(self, edges_table)
 
         return cc
 

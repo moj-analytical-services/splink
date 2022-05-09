@@ -340,7 +340,7 @@ def _cc_create_unique_id_cols(linker, match_probability_threshold):
     )
 
 
-def cluster_predictions(
+def solve_connected_components(
     linker,
     edges_table,
     _generated_graph=False,
@@ -437,6 +437,10 @@ def cluster_predictions(
         root_rows = dataframe.as_record_dict()
         dataframe.drop_table_from_database()
         root_rows = root_rows[0]["count"]
+
+        # if iteration == 31:
+        #     print(representatives.physical_name)
+        #     print
 
     print(f"Exited after: {iteration} iterations")
     # Create our final representatives table
