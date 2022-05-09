@@ -125,7 +125,7 @@ class SQLiteLinker(Linker):
         output_obj = self._df_as_obj(templated_name, physical_name)
         return output_obj
 
-    def random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
             return ""
 
@@ -145,7 +145,7 @@ class SQLiteLinker(Linker):
         else:
             return True
 
-    def delete_table_from_database(self, name):
+    def _delete_table_from_database(self, name):
         drop_sql = f"""
         DROP TABLE IF EXISTS {name}"""
         self.con.execute(drop_sql)

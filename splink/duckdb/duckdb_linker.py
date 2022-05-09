@@ -33,7 +33,7 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
 
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
-        self.duckdb_linker.delete_table_from_database(self.physical_name)
+        self.duckdb_linker._delete_table_from_database(self.physical_name)
 
     def as_record_dict(self, limit=None):
 
@@ -41,14 +41,14 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
 
-        return self.duckdb_linker.con.query(sql).to_df().to_dict(orient="records")
+        return self.duckdb_linker._con.query(sql).to_df().to_dict(orient="records")
 
     def as_pandas_dataframe(self, limit=None):
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
 
-        return self.duckdb_linker.con.query(sql).to_df()
+        return self.duckdb_linker._con.query(sql).to_df()
 
 
 class DuckDBLinker(Linker):
@@ -69,14 +69,14 @@ class DuckDBLinker(Linker):
             con = duckdb.connect(database=connection)
         else:
             if connection == ":temporary:":
-                self.temp_dir = tempfile.TemporaryDirectory(dir=".")
+                self._temp_dir = tempfile.TemporaryDirectory(dir=".")
                 fname = uuid.uuid4().hex[:7]
-                path = os.path.join(self.temp_dir.name, f"{fname}.duckdb")
+                path = os.path.join(self._temp_dir.name, f"{fname}.duckdb")
                 con = duckdb.connect(database=path, read_only=False)
             else:
                 con = duckdb.connect(database=connection)
 
-        self.con = con
+        self._con = con
 
         # If user has provided pandas dataframes, need to register
         # them with the database, using user-provided aliases
@@ -112,7 +112,7 @@ class DuckDBLinker(Linker):
         )
 
         if output_schema:
-            self.con.execute(
+            self._con.execute(
                 f"""
                     CREATE SCHEMA IF NOT EXISTS {output_schema};
                     SET schema '{output_schema}';
@@ -126,7 +126,7 @@ class DuckDBLinker(Linker):
 
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
-        self.delete_table_from_database(physical_name)
+        self._delete_table_from_database(physical_name)
 
         if transpile:
             sql = sqlglot.transpile(sql, read=None, write="duckdb", pretty=True)[0]
@@ -143,11 +143,11 @@ class DuckDBLinker(Linker):
         AS
         ({sql})
         """
-        self.con.execute(sql).fetch_df()
+        self._con.execute(sql).fetch_df()
 
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
-    def random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
@@ -156,7 +156,7 @@ class DuckDBLinker(Linker):
     def _table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
         try:
-            self.con.execute(sql)
+            self._con.execute(sql)
         except RuntimeError:
             return False
         return True
@@ -168,12 +168,12 @@ class DuckDBLinker(Linker):
         import pandas as pd
 
         df = pd.DataFrame(records)
-        self.con.register(as_table_name, df)
+        self._con.register(as_table_name, df)
 
-    def delete_table_from_database(self, name):
+    def _delete_table_from_database(self, name):
         drop_sql = f"""
         DROP TABLE IF EXISTS {name}"""
-        self.con.execute(drop_sql)
+        self._con.execute(drop_sql)
 
     def export_to_duckdb_file(self, output_path, delete_intermediate_tables=False):
         """
@@ -182,7 +182,7 @@ class DuckDBLinker(Linker):
         if delete_intermediate_tables:
             self._delete_tables_created_by_splink_from_db()
         with TemporaryDirectory() as tmpdir:
-            self.con.execute(f"EXPORT DATABASE '{tmpdir}' (FORMAT PARQUET);")
+            self._con.execute(f"EXPORT DATABASE '{tmpdir}' (FORMAT PARQUET);")
             new_con = duckdb.connect(database=output_path)
             new_con.execute(f"IMPORT DATABASE '{tmpdir}';")
             new_con.close()

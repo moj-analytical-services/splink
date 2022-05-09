@@ -224,7 +224,7 @@ class Settings:
                 if cl.is_exact_match:
                     exact_comparison_levels.append(cl)
 
-        # Where exact match on multiple columns exists, use that instaed of individual
+        # Where exact match on multiple columns exists, use that instead of individual
         # exact match columns
         # So for example, if we have a param estimate for exact match on first name AND
         # surname, prefer that

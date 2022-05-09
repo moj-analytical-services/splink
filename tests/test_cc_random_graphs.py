@@ -13,7 +13,7 @@ from tests.cc_testing_utils import (
 ###############################################################################
 
 
-@pytest.mark.parametrize("execution_number", range(1000))
+@pytest.mark.parametrize("execution_number", range(20))
 def test_small_erdos_renyi_graph(execution_number):
     g = generate_random_graph(graph_size=500)
     linker = register_cc_df(g)
@@ -24,6 +24,7 @@ def test_small_erdos_renyi_graph(execution_number):
     )
 
 
+@pytest.mark.skip(reason="Slow")
 @pytest.mark.parametrize("execution_number", range(10))
 def test_medium_erdos_renyi_graph(execution_number):
     g = generate_random_graph(graph_size=10000)
@@ -35,6 +36,7 @@ def test_medium_erdos_renyi_graph(execution_number):
     )
 
 
+@pytest.mark.skip(reason="Slow")
 @pytest.mark.parametrize("execution_number", range(2))
 def test_large_erdos_renyi_graph(execution_number):
     g = generate_random_graph(graph_size=100000)

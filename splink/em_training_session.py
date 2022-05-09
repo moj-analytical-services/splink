@@ -29,24 +29,24 @@ class EMTrainingSession:
 
         logger.info("\n----- Starting EM training session -----\n")
 
-        self.original_settings_obj = linker._settings_obj
-        self.original_linker = linker
-        self.training_linker = deepcopy(linker)
+        self._original_settings_obj = linker._settings_obj
+        self._original_linker = linker
+        self._training_linker = deepcopy(linker)
 
-        self._settings_obj = self.training_linker._settings_obj
+        self._settings_obj = self._training_linker._settings_obj
         self._settings_obj._retain_matching_columns = False
         self._settings_obj._retain_intermediate_calculation_columns = False
         self._settings_obj._training_mode = True
 
         self._settings_obj._blocking_rule_for_training = blocking_rule_for_training
-        self.blocking_rule_for_training = blocking_rule_for_training
+        self._blocking_rule_for_training = blocking_rule_for_training
 
         if comparison_levels_to_reverse_blocking_rule:
-            self.comparison_levels_to_reverse_blocking_rule = (
+            self._comparison_levels_to_reverse_blocking_rule = (
                 comparison_levels_to_reverse_blocking_rule
             )
         else:
-            self.comparison_levels_to_reverse_blocking_rule = self.original_settings_obj._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
+            self._comparison_levels_to_reverse_blocking_rule = self._original_settings_obj._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
                 blocking_rule_for_training
             )
 
@@ -74,7 +74,7 @@ class EMTrainingSession:
         cc_names_to_deactivate = [
             cc.comparison_name for cc in comparisons_to_deactivate
         ]
-        self.comparisons_that_cannot_be_estimated = comparisons_to_deactivate
+        self._comparisons_that_cannot_be_estimated = comparisons_to_deactivate
 
         filtered_ccs = [
             cc
@@ -83,20 +83,21 @@ class EMTrainingSession:
         ]
 
         self._settings_obj.comparisons = filtered_ccs
-        self.comparisons_that_can_be_estimated = filtered_ccs
+        self._comparisons_that_can_be_estimated = filtered_ccs
 
         self._settings_obj_history = []
 
-        self.add_iteration()
+        # Add iteration 0 i.e. the starting parameters
+        self._add_iteration()
 
     def _training_log_message(self):
         not_estimated = [
-            cc.comparison_name for cc in self.comparisons_that_cannot_be_estimated
+            cc.comparison_name for cc in self._comparisons_that_cannot_be_estimated
         ]
         not_estimated = "".join([f"\n    - {cc}" for cc in not_estimated])
 
         estimated = [
-            cc.comparison_name for cc in self.comparisons_that_can_be_estimated
+            cc.comparison_name for cc in self._comparisons_that_can_be_estimated
         ]
         estimated = "".join([f"\n    - {cc}" for cc in estimated])
 
@@ -111,7 +112,7 @@ class EMTrainingSession:
 
         logger.info(
             f"Training the {mu} of the model by blocking on:\n"
-            f"{self.blocking_rule_for_training}\n\n"
+            f"{self._blocking_rule_for_training}\n\n"
             "Parameter estimates will be made for the following comparison(s):"
             f"{estimated}\n"
             "\nParameter estimates cannot be made for the following comparison(s)"
@@ -121,14 +122,14 @@ class EMTrainingSession:
     def _comparison_vectors(self):
         self._training_log_message()
 
-        sql = block_using_rules_sql(self.training_linker)
-        self.training_linker._enqueue_sql(sql, "__splink__df_blocked")
+        sql = block_using_rules_sql(self._training_linker)
+        self._training_linker._enqueue_sql(sql, "__splink__df_blocked")
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
-        self.training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
-        return self.training_linker._execute_sql_pipeline([])
+        self._training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
+        return self._training_linker._execute_sql_pipeline([])
 
-    def train(self):
+    def _train(self):
 
         cvv = self._comparison_vectors()
 
@@ -137,11 +138,11 @@ class EMTrainingSession:
         # in the original (main) setting object
         expectation_maximisation(self, cvv)
 
-        training_desc = f"EM, blocked on: {self.blocking_rule_for_training}"
+        training_desc = f"EM, blocked on: {self._blocking_rule_for_training}"
 
         # Add m and u values to original settings
         for cc in self._settings_obj.comparisons:
-            orig_cc = self.original_settings_obj._get_comparison_by_name(
+            orig_cc = self._original_settings_obj._get_comparison_by_name(
                 cc.comparison_name
             )
             for cl in cc.comparison_levels_excluding_null:
@@ -180,25 +181,25 @@ class EMTrainingSession:
                             cl.u_probability, training_desc
                         )
 
-        self.original_linker._em_training_sessions.append(self)
+        self._original_linker._em_training_sessions.append(self)
 
-    def add_iteration(self):
+    def _add_iteration(self):
 
         self._settings_obj_history.append(deepcopy(self._settings_obj))
 
     @property
     def _blocking_adjusted_proportion_of_matches(self):
 
-        orig_prop_m = self.original_settings_obj._proportion_of_matches
+        orig_prop_m = self._original_settings_obj._proportion_of_matches
 
         adj_bayes_factor = prob_to_bayes_factor(orig_prop_m)
 
         logger.log(15, f"Original proportion of matches: {orig_prop_m:.3f}")
 
-        comp_levels = self.comparison_levels_to_reverse_blocking_rule
+        comp_levels = self._comparison_levels_to_reverse_blocking_rule
         if not comp_levels:
-            comp_levels = self.original_settings_obj._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
-                self.blocking_rule_for_training
+            comp_levels = self._original_settings_obj._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
+                self._blocking_rule_for_training
             )
 
         for cl in comp_levels:
@@ -214,13 +215,13 @@ class EMTrainingSession:
         logger.log(
             15,
             f"\nProportion of matches adjusted for blocking on "
-            f"{self.blocking_rule_for_training}: "
+            f"{self._blocking_rule_for_training}: "
             f"{adjusted_prop_m:.3f}",
         )
         return adjusted_prop_m
 
     @property
-    def iteration_history_records(self):
+    def _iteration_history_records(self):
         output_records = []
 
         for iteration, settings_obj in enumerate(self._settings_obj_history):
@@ -235,7 +236,7 @@ class EMTrainingSession:
         return output_records
 
     @property
-    def lambda_history_records(self):
+    def _lambda_history_records(self):
         output_records = []
         for i, s in enumerate(self._settings_obj_history):
             lam = s._proportion_of_matches
@@ -249,18 +250,20 @@ class EMTrainingSession:
         return output_records
 
     def proportion_of_matches_iteration_chart(self):
-        records = self.lambda_history_records
+        records = self._lambda_history_records
         return proportion_of_matches_iteration_chart(records)
 
     def match_weights_interactive_history_chart(self):
-        records = self.iteration_history_records
-        return match_weights_interactive_history_chart(records)
+        records = self._iteration_history_records
+        return match_weights_interactive_history_chart(
+            records, blocking_rule=self._blocking_rule_for_training
+        )
 
     def m_u_values_interactive_history_chart(self):
-        records = self.iteration_history_records
+        records = self._iteration_history_records
         return m_u_values_interactive_history_chart(records)
 
-    def max_change_message(self, max_change_dict):
+    def _max_change_message(self, max_change_dict):
         message = "Largest change in params was"
 
         if max_change_dict["max_change_type"] == "proportion_of_matches":
@@ -282,7 +285,7 @@ class EMTrainingSession:
 
         return message
 
-    def max_change_in_parameters_comparison_levels(self):
+    def _max_change_in_parameters_comparison_levels(self):
 
         previous_iteration = self._settings_obj_history[-2]
         this_iteration = self._settings_obj_history[-1]
@@ -336,15 +339,15 @@ class EMTrainingSession:
                 change_proportion_of_matches
             )
 
-        max_change_levels["message"] = self.max_change_message(max_change_levels)
+        max_change_levels["message"] = self._max_change_message(max_change_levels)
 
         return max_change_levels
 
     def __repr__(self):
         deactivated_cols = ", ".join(
-            [cc.comparison_name for cc in self.comparisons_that_cannot_be_estimated]
+            [cc.comparison_name for cc in self._comparisons_that_cannot_be_estimated]
         )
         return (
-            f"<EMTrainingSession, blocking on {self.blocking_rule_for_training}, "
+            f"<EMTrainingSession, blocking on {self._blocking_rule_for_training}, "
             f"deactivating comparisons {deactivated_cols}>"
         )
