@@ -42,15 +42,15 @@ def register_cc_df(G):
     return predict_df
 
 
-def run_cc_implementation(splink_df, batching=1):
+def run_cc_implementation(splink_df):
 
     # finally, run our connected components algorithm
     return solve_connected_components(
-        splink_df.duckdb_linker, splink_df, batching=batching
+        splink_df.duckdb_linker, splink_df, generated_graph=True
     ).as_pandas_dataframe()
 
 
-def benchmark_cc_implementation(linker_df, batching=1):
+def benchmark_cc_implementation(linker_df):
 
     # add a schema so we don't need to re-register our df
     linker_df.duckdb_linker._con.execute(
@@ -60,7 +60,7 @@ def benchmark_cc_implementation(linker_df, batching=1):
         """
     )
 
-    df = run_cc_implementation(linker_df, batching)
+    df = run_cc_implementation(linker_df)
     linker_df.duckdb_linker._con.execute("drop schema con_comp cascade")
 
     return df
