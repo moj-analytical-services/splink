@@ -1,9 +1,14 @@
+from typing import TYPE_CHECKING
 from .lower_id_on_lhs import lower_id_to_left_hand_side
 
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
-def block_from_labels(linker, table_name):
 
-    df = linker._df_as_obj(table_name, table_name)
+def block_from_labels(linker: "Linker", labels_table_name: str):
+
+    df = linker._table_to_splink_dataframe(labels_table_name, labels_table_name)
 
     unique_id_col = linker._settings_obj._unique_id_column_name
 

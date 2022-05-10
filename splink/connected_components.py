@@ -344,7 +344,7 @@ def solve_connected_components(
 
         # Check if our exit condition has been met...
         sql = _cc_assess_exit_condition(representatives.physical_name)
-        dataframe = linker._sql_to_dataframe(
+        dataframe = linker._sql_to_splink_dataframe(
             sql, "__splink__df_root_rows", materialise_as_hash=False
         )
         root_rows = dataframe.as_record_dict()

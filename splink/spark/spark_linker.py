@@ -112,7 +112,7 @@ class SparkLinker(Linker):
             input_table_aliases=homogenised_aliases,
         )
 
-    def _df_as_obj(self, templated_name, physical_name):
+    def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
 
     def _break_lineage(self, spark_df, templated_name):
@@ -153,7 +153,7 @@ class SparkLinker(Linker):
 
         spark_df.createOrReplaceTempView(physical_name)
 
-        output_df = self._df_as_obj(templated_name, physical_name)
+        output_df = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_df
 
     def _random_sample_sql(self, proportion, sample_size):

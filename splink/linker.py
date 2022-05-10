@@ -3,7 +3,7 @@ from copy import copy, deepcopy
 from statistics import median
 import hashlib
 
-from typing import Union
+from typing import Union, List
 
 from .charts import (
     match_weight_histogram,
@@ -43,7 +43,7 @@ from .splink_comparison_viewer import (
     comparison_viewer_table,
     render_splink_comparison_viewer_html,
 )
-from .analyse_blocking import analyse_blocking_rule_sql
+from .analyse_blocking import number_of_comparisons_generated_by_blocking_rule_sql
 
 from .splink_dataframe import SplinkDataFrame
 
@@ -106,7 +106,13 @@ class Linker:
             )
         return self._settings_obj_
 
-    def initialise_settings(self, settings_dict):
+    def initialise_settings(self, settings_dict: dict):
+        """Initialise settings for the linker.  To be used if settings were
+        not passed to the linker on creation.
+
+        Args:
+            settings_dict (dict): A Splink settings dictionary
+        """
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
@@ -214,23 +220,58 @@ class Linker:
             if materialise:
                 self._execute_sql_pipeline(materialise_as_hash=False)
 
+    def _table_to_splink_dataframe(self, templated_name, physical_name):
+        """Create a SplinkDataframe from a table in the underlying database called
+        `physical_name`.
+
+        Associate a `templated_name` with this table, which signifies the purpose
+        or 'meaning' of this table to splink. (e.g. `__splink__df_blocked`)
+
+        Args:
+            templated_name (str): The purpose of the table to Splink
+            physical_name (str): The name of the table in the underlying databse
+        """
+        raise NotImplementedError(
+            "_table_to_splink_dataframe not implemented on this linker"
+        )
+
     def _enqueue_sql(self, sql, output_table_name):
+        """Add sql to the current pipeline, but do not execute the pipeline."""
         self._pipeline.enqueue_sql(sql, output_table_name)
 
     def _execute_sql_pipeline(
         self,
-        input_dataframes=[],
+        input_dataframes: List[SplinkDataFrame] = [],
         materialise_as_hash=True,
         use_cache=True,
         transpile=True,
     ) -> SplinkDataFrame:
+
+        """Execute the SQL queued in the current pipeline as a single statement
+        e.g. `with a as (), b as , c as (), select ... from c`, then execute the
+        pipeline, returning the resultant table as a SplinkDataFrame
+
+        Args:
+            input_dataframes (List[SplinkDataFrame], optional): A 'starting point' of
+                SplinkDataFrames if needed. Defaults to [].
+            materialise_as_hash (bool, optional): If true, the output tablename will end
+                in a unique identifer. Defaults to True.
+            use_cache (bool, optional): If true, look at whether the SQL pipeline has
+                been executed before, and if so, use the existing result. Defaults to
+                True.
+            transpile (bool, optional): Transpile the SQL using SQLGlot. Defaults to
+                True.
+
+        Returns:
+            SplinkDataFrame: _description_
+        """
 
         if not self.debug_mode:
             sql_gen = self._pipeline._generate_pipeline(input_dataframes)
 
             output_tablename_templated = self._pipeline.queue[-1].output_table_name
 
-            dataframe = self._sql_to_dataframe(
+            dataframe = self._sql_to_splink_dataframe(
                 sql_gen,
                 output_tablename_templated,
                 materialise_as_hash,
@@ -247,7 +288,7 @@ class Linker:
                 print("------")
                 print(f"--------Creating table: {output_tablename}--------")
 
-                dataframe = self._sql_to_dataframe(
+                dataframe = self._sql_to_splink_dataframe(
                     sql,
                     output_tablename,
                     materialise_as_hash=False,
@@ -264,7 +305,7 @@ class Linker:
         materialise_as_hash=True,
         use_cache=True,
         transpile=True,
-    ):
+    ) -> SplinkDataFrame:
 
         """
         Wrapper method to enqueue and execute a sql pipeline
@@ -274,14 +315,17 @@ class Linker:
         self._enqueue_sql(sql, output_table_name)
         return self._execute_sql_pipeline([], materialise_as_hash, use_cache, transpile)
 
-    def _sql_to_dataframe(
+    def _sql_to_splink_dataframe(
         self,
         sql,
         output_tablename_templated,
         materialise_as_hash=True,
         use_cache=True,
         transpile=True,
-    ):
+    ) -> SplinkDataFrame:
+        """Execute sql (or if identical sql has been run before, return cached results),
+        reset pipeline, and return a splink dataframe representing the results of the
+        sql"""
 
         self._pipeline.reset()
 
@@ -293,7 +337,7 @@ class Linker:
 
             if self._table_exists_in_database(output_tablename_templated):
                 logger.debug(f"Using existing table {output_tablename_templated}")
-                return self._df_as_obj(
+                return self._table_to_splink_dataframe(
                     output_tablename_templated, output_tablename_templated
                 )
 
@@ -302,28 +346,30 @@ class Linker:
                     f"Using cache for {output_tablename_templated}"
                     f" with physical name {table_name_hash}"
                 )
-                return self._df_as_obj(output_tablename_templated, table_name_hash)
+                return self._table_to_splink_dataframe(
+                    output_tablename_templated, table_name_hash
+                )
 
         if self.debug_mode:
             print(sql)
 
         if materialise_as_hash:
-            dataframe = self._execute_sql(
+            splink_dataframe = self._execute_sql(
                 sql, output_tablename_templated, table_name_hash, transpile=transpile
             )
         else:
-            dataframe = self._execute_sql(
+            splink_dataframe = self._execute_sql(
                 sql,
                 output_tablename_templated,
                 output_tablename_templated,
                 transpile=transpile,
             )
 
-        self._names_of_tables_created_by_splink.append(dataframe.physical_name)
+        self._names_of_tables_created_by_splink.append(splink_dataframe.physical_name)
 
         if self.debug_mode:
 
-            df_pd = dataframe.as_pandas_dataframe()
+            df_pd = splink_dataframe.as_pandas_dataframe()
             try:
                 from IPython.display import display
 
@@ -331,7 +377,7 @@ class Linker:
             except ModuleNotFoundError:
                 print(df_pd)
 
-        return dataframe
+        return splink_dataframe
 
     def __deepcopy__(self, memo):
         new_linker = copy(self)
@@ -366,14 +412,14 @@ class Linker:
 
         d = {}
         for table_name, table_alias in zip(input_table_or_tables, input_table_aliases):
-            d[table_alias] = self._df_as_obj(table_alias, table_name)
+            d[table_alias] = self._table_to_splink_dataframe(table_alias, table_name)
         return d
 
     def _get_input_tf_dict(self, df_dict):
         d = {}
         for df_name, df_value in df_dict.items():
             renamed = colname_to_tf_tablename(df_name)
-            d[renamed] = self._df_as_obj(renamed, df_value)
+            d[renamed] = self._table_to_splink_dataframe(renamed, df_value)
         return d
 
     def _predict_warning(self):
@@ -1099,7 +1145,9 @@ class Linker:
         sql = vertically_concatente_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
 
-        sql = analyse_blocking_rule_sql(self, blocking_rule, link_type)
+        sql = number_of_comparisons_generated_by_blocking_rule_sql(
+            self, blocking_rule, link_type
+        )
         self._enqueue_sql(sql, "__splink__analyse_blocking_rule")
         res = self._execute_sql_pipeline().as_record_dict()[0]
         return res

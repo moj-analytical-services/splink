@@ -66,9 +66,9 @@ class SplinkDataFrame:
     def __repr__(self):
         return (
             f"Table name in database: `{self.physical_name}`\n"
-            "\nTo retrieve records, you can call the following methods:"
-            "\n`splink_df.as_record_dict(limit=5)` or "
-            "`splink_df.as_pandas_dataframe(limit=5)`.\n"
+            "\nTo retrieve records, you can call the following methods on this object:"
+            "\n`.as_record_dict(limit=5)` or "
+            "`.as_pandas_dataframe(limit=5)`.\n"
             "\nYou may omit the `limit` argument to return all records."
             "\n\nThis table represents the following splink entity: "
             f"{self.templated_name}"

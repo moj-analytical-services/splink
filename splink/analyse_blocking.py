@@ -1,9 +1,17 @@
+from typing import TYPE_CHECKING
+
 from .blocking import _sql_gen_where_condition
 from .settings import Settings
 from .comparison_library import exact_match
 
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
-def analyse_blocking_rule_sql(linker, blocking_rule, link_type=None):
+
+def number_of_comparisons_generated_by_blocking_rule_sql(
+    linker: "Linker", blocking_rule, link_type=None
+) -> str:
 
     if linker._settings_obj_ is not None:
         settings_obj = linker._settings_obj
