@@ -52,7 +52,9 @@ def missingness_data(linker, input_tablename):
             linker._initialise_df_concat()
             input_tablename = "__splink__df_concat"
 
-    splink_dataframe = linker._df_as_obj(input_tablename, input_tablename)
+    splink_dataframe = linker._table_to_splink_dataframe(
+        input_tablename, input_tablename
+    )
     columns = splink_dataframe.columns
 
     sqls = missingness_sqls(columns, input_tablename)

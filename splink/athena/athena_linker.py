@@ -118,7 +118,7 @@ class AthenaLinker(Linker):
         super().__init__(settings_dict, input_tables)
         self.output_schema = output_database
 
-    def _df_as_obj(self, templated_name, physical_name):
+    def _table_to_splink_dataframe(self, templated_name, physical_name):
         return AthenaDataFrame(templated_name, physical_name, self)
 
     def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
@@ -145,7 +145,7 @@ class AthenaLinker(Linker):
             **{physical_name: query_metadata},
         }
 
-        output_obj = self._df_as_obj(templated_name, physical_name)
+        output_obj = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_obj
 
     def random_sample_sql(self, proportion, sample_size):
