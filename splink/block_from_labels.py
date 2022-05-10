@@ -7,6 +7,21 @@ if TYPE_CHECKING:
 
 
 def block_from_labels(linker: "Linker", labels_table_name: str):
+    """Create pairwise record comparisons corresponding to the ID pairs in a labels
+    table
+
+    The table of labels should be in the following format, and should be registered
+    with your database:
+
+    |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
+    |----------------|-----------|----------------|-----------|--------------------|
+    |df_1            |1          |df_2            |2          |0.99                |
+    |df_1            |1          |df_2            |3          |0.2                 |
+
+    Note that `source_dataset` and `unique_id` should correspond to the values
+    specified in the settings dict, and the `input_table_aliases` passed to the
+    `linker` object.
+    """
 
     df = linker._table_to_splink_dataframe(labels_table_name, labels_table_name)
 

@@ -1,6 +1,11 @@
+from typing import TYPE_CHECKING
 import logging
 
 logger = logging.getLogger(__name__)
+
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
 
 def _sql_gen_and_not_previous_rules(previous_rules: list):
@@ -42,7 +47,14 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
-def block_using_rules_sql(linker):
+def block_using_rules_sql(linker: "Linker"):
+    """Use the blocking rules specified in the linker's settings object to
+    generate a SQL statement that will create pairwise record comparions
+    according to the blocking rule(s).
+
+    Where there are multiple blocking rules, the SQL statement contains logic
+    so that duplicate comparisons are not generated.
+    """
 
     settings_obj = linker._settings_obj
 
