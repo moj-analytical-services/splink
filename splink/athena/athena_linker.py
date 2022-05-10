@@ -188,27 +188,11 @@ class AthenaLinker(Linker):
             input_table_or_tables, input_table_aliases
         )
 
-        # 'homogenised' means all entries are strings representing tables
-        homogenised_tables = []
-        homogenised_aliases = []
-
-        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
-
-            if type(alias).__name__ == "DataFrame":
-                alias = f"__splink__input_table_{i}"
-
-            if type(table).__name__ == "DataFrame":
-                con.register(alias, table)
-                table = alias
-
-            homogenised_tables.append(table)
-            homogenised_aliases.append(alias)
-
         super().__init__(
-            homogenised_tables,
+            input_table_or_tables,
             settings_dict,
             set_up_basic_logging,
-            input_table_aliases=homogenised_aliases,
+            input_table_aliases=input_table_aliases,
         )
 
         self.output_schema = output_database
