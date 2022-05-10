@@ -83,3 +83,5 @@ def test_full_example_duckdb(tmp_path):
     # Finish create labels
 
     linker.roc_chart_from_labels("labels")
+
+    linker.cluster_predictions()

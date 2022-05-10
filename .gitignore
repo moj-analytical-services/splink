@@ -3,6 +3,7 @@
 
 .benchmarks/
 tmp_spark/
+*tmp
 try_*.py
 .github/workflows/benchmark_comment_markdown.md
 benchmarking/output.json
@@ -129,6 +130,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+Pipfile*
 
 # Spyder project settings
 .spyderproject
@@ -162,3 +164,4 @@ cython_debug/
 #.idea/
 
 *.parquet
+*.csv

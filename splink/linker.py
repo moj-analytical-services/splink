@@ -48,6 +48,7 @@ from .analyse_blocking import number_of_comparisons_generated_by_blocking_rule_s
 from .splink_dataframe import SplinkDataFrame
 
 from .connected_components import (
+    _cc_create_unique_id_cols,
     solve_connected_components,
 )
 
@@ -763,7 +764,7 @@ class Linker:
                 match_probability above this threshold. Defaults to None.
             threshold_match_weight (float, optional): If specified,
                 filter the results to include only pairwise comparisons with a
-                match_weight above this threshold.. Defaults to None.
+                match_weight above this threshold. Defaults to None.
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
@@ -913,18 +914,19 @@ class Linker:
 
         return predictions
 
-    def run_connected_components(self, batching=5):
-
-        # error if batching < 1 or something silly...
+    def cluster_predictions(self, match_probability_threshold=0.9):
 
         # Using our caching system, either grab the edges table
         # or run the predict() step to generate it.
 
         # If the required pre-requisites for predict() are not met,
         # the code will error.
-        edges_table = self.predict()
+        edges_table = _cc_create_unique_id_cols(
+            self,
+            match_probability_threshold,
+        )
 
-        cc = solve_connected_components(self, edges_table, batching=batching)
+        cc = solve_connected_components(self, edges_table)
 
         return cc
 
