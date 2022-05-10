@@ -106,17 +106,6 @@ class Linker:
             )
         return self._settings_obj_
 
-    def initialise_settings(self, settings_dict: dict):
-        """Initialise settings for the linker.  To be used if settings were
-        not passed to the linker on creation.
-
-        Args:
-            settings_dict (dict): A Splink settings dictionary
-        """
-        self._settings_dict = settings_dict
-        self._settings_obj_ = Settings(settings_dict)
-        self._validate_input_dfs()
-
     @property
     def _input_tablename_l(self):
 
@@ -556,7 +545,29 @@ class Linker:
 
         self._names_of_tables_created_by_splink = tables_remaining
 
-    def compute_tf_table(self, column_name):
+    def initialise_settings(self, settings_dict: dict):
+        """Initialise settings for the linker.  To be used if settings were
+        not passed to the linker on creation.
+
+        Args:
+            settings_dict (dict): A Splink settings dictionary
+        """
+        self._settings_dict = settings_dict
+        self._settings_obj_ = Settings(settings_dict)
+        self._validate_input_dfs()
+
+    def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
+        """Compute a term frequency table for a given column and persist to the database
+
+        This method is useful if you want to pre-compute term frequency tables e.g.
+        so that real time linkage executes faster.
+
+        Args:
+            column_name (str): The column name in the input table
+
+        Returns:
+            SplinkDataFrame: The resultant table as a splink data frame
+        """
         sql = vertically_concatente_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
         sql = term_frequencies_for_single_column_sql(column_name)
@@ -782,8 +793,28 @@ class Linker:
         return predictions
 
     def find_matches_to_new_records(
-        self, records, blocking_rules=None, match_weight_threshold=-4
-    ):
+        self, records: List[dict], blocking_rules=None, match_weight_threshold=-4
+    ) -> SplinkDataFrame:
+        """Given one or more records, find records in the input dataset(s) which match
+        and return in order of the splink prediction score.
+
+        i.e. this effectively provides a way of searching the input datasets
+        for a given record
+
+        Args:
+            records (List[dict]): Input search record(s).
+            blocking_rules (str, optional): Blocking rules to select
+                which records to find and score. If None, do not use a blocking
+                rule - meaning the input records will be compared to all records
+                provided to the linker when it was instantiated. Defaults to None.
+            match_weight_threshold (int, optional): Return matches with a match weight
+                above this threshold. Defaults to -4.
+
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
+                represents a table materialised in the database. Methods on the
+                SplinkDataFrame allow you to access the underlying data.
+        """
 
         original_blocking_rules = (
             self._settings_obj._blocking_rules_to_generate_predictions
@@ -828,7 +859,18 @@ class Linker:
 
         return predictions
 
-    def compare_two_records(self, record_1, record_2):
+    def compare_two_records(self, record_1: dict, record_2: dict):
+        """Use the linkage model to compare and score two records
+
+        Args:
+            record_1 (dict): dictionary representing the first record.  Columns names
+                and data types must be the same as the columns in the settings object
+            record_2 (dict): dictionary representing the second record.  Columns names
+                and data types must be the same as the columns in the settings object
+
+        Returns:
+            SplinkDataFrame: Pairwise comparison with scored prediction
+        """
         original_blocking_rules = (
             self._settings_obj._blocking_rules_to_generate_predictions
         )
