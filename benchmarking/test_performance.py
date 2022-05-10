@@ -332,4 +332,3 @@ def test_10_rounds_20k_sqlite(benchmark):
         iterations=1,
         warmup_rounds=0,
     )
-

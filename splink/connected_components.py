@@ -438,11 +438,6 @@ def solve_connected_components(
         dataframe.drop_table_from_database()
         root_rows = root_rows[0]["count"]
 
-        # if iteration == 31:
-        #     print(representatives.physical_name)
-        #     print
-
-    print(f"Exited after: {iteration} iterations")
     # Create our final representatives table
     # Need to edit how we export the table based on whether we are
     # performing a link or dedupe job.
