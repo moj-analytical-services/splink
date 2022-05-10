@@ -3,6 +3,7 @@ import logging
 import awswrangler as wr
 import boto3
 import sqlglot
+from typing import Union
 
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
@@ -99,13 +100,16 @@ class AthenaDataFrame(SplinkDataFrame):
 class AthenaLinker(Linker):
     def __init__(
         self,
+        input_table_or_tables,
         boto3_session: boto3.session.Session,
         output_database: str,
         output_bucket: str,
         settings_dict: dict = None,
         folder_in_bucket_for_outputs="",
-        input_tables={},
+        input_table_aliases: Union[str, list] = None,
+        set_up_basic_logging=True,
     ):
+        
 
         if settings_dict is not None and "sql_dialect" not in settings_dict:
             settings_dict["sql_dialect"] = "presto"
@@ -115,7 +119,36 @@ class AthenaLinker(Linker):
             boto3_session, output_bucket, folder_in_bucket_for_outputs
         )
         self.ctas_query_info = {}
-        super().__init__(settings_dict, input_tables)
+        
+        input_tables = self._coerce_to_list(input_table_or_tables)
+        
+        input_aliases = self._ensure_aliases_populated_and_is_list(
+            input_table_or_tables, input_table_aliases
+        )
+        
+        # 'homogenised' means all entries are strings representing tables
+        homogenised_tables = []
+        homogenised_aliases = []
+
+        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
+
+            if type(alias).__name__ == "DataFrame":
+                alias = f"__splink__input_table_{i}"
+
+            if type(table).__name__ == "DataFrame":
+                con.register(alias, table)
+                table = alias
+
+            homogenised_tables.append(table)
+            homogenised_aliases.append(alias)
+
+        super().__init__(
+            homogenised_tables,
+            settings_dict,
+            set_up_basic_logging,
+            input_table_aliases=homogenised_aliases,
+        )
+        
         self.output_schema = output_database
 
     def _df_as_obj(self, templated_name, physical_name):
