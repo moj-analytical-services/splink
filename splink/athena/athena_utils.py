@@ -8,7 +8,6 @@ class boto_utils:
         self,
         boto3_session: boto3.session.Session,
         output_bucket: str,
-        folder_in_bucket_for_outputs: str,
     ):
 
         if not type(boto3_session) == boto3.session.Session:
@@ -16,7 +15,6 @@ class boto_utils:
 
         self.boto3_session = boto3_session
         self.bucket = output_bucket
-        self.folder_in_bucket_for_outputs = folder_in_bucket_for_outputs
         self.session_id = uuid4().hex[:10]
 
         # specify some additional prefixes
@@ -28,7 +26,6 @@ class boto_utils:
         out_path = os.path.join(
             "s3://",
             self.bucket,
-            self.folder_in_bucket_for_outputs,
             self.s3_output_name_prefix,
             self.session_id,
         )

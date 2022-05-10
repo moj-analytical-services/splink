@@ -105,27 +105,89 @@ class AthenaLinker(Linker):
         output_database: str,
         output_bucket: str,
         settings_dict: dict = None,
-        folder_in_bucket_for_outputs="",
         input_table_aliases: Union[str, list] = None,
         set_up_basic_logging=True,
     ):
-        
+
+        """An athena backend for our main linker class. This funnels our generated SQL
+        through athena using awswrangler.
+
+        See linker.py for more information on the main linker class.
+
+        Attributes:
+            input_table_or_tables: A list, str or pandas dataframe object that contains your
+                data or the name of your data to link and/or dedupe.
+            boto3_session (boto3.session.Session): A working boto3 session, which should contain
+                user credentials and region information.
+            output_database (str): The name of the database you wish to export the results
+                of the link job to. This should be created prior to performing your link.
+            output_bucket (str): The name of the bucket and the filepath you wish to store your
+                outputs in on aws. The bucket should be created prior to performing your link.
+            settings_dict (dict): A splink settings dictionary.
+            input_table_aliases: Aliases/custom names for your input tables, if
+                a pandas df or a list of dfs are used as inputs. None by default, which saves
+                your tables under a custom name: '__splink__input_table_{n}'; where n is the list index.
+            set_up_basic_logging (bool): Set up basic logging for splink. This logs ...
+                True by default.
+
+        Examples:
+            >>> # Creating a database in athena and writing to it
+            >>> import awswrangler as wr
+            >>> wr.catalog.create_database("splink_awswrangler_test", exist_ok=True)
+            >>>
+            >>> from splink.athena.athena_linker import AthenaLinker
+            >>> import boto3
+            >>> # Create a session - please see the boto3 documentation for more info:
+            >>> # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/core/session.html
+            >>> my_session = boto3.Session(region_name="eu-west-1")
+            >>>
+            >>> linker = AthenaLinker(
+            >>>     settings_dict=settings_dict,
+            >>>     input_table_or_tables="synthetic_data_all",
+            >>>     boto3_session=my_session,
+            >>>     output_bucket="alpha-splink-db-testing",
+            >>>     output_database="splink_awswrangler_test",
+            >>> )
+            >>>
+            >>>
+            >>>
+            >>> # Creating a secondary database and use data on and existing db
+            >>> import awswrangler as wr
+            >>> wr.catalog.create_database("splink_awswrangler_test2", exist_ok=True)
+            >>>
+            >>> from splink.athena.athena_linker import AthenaLinker
+            >>> import boto3
+            >>> my_session = boto3.Session(region_name="eu-west-1")
+            >>>
+            >>> # To read and write from separate databases, specify your secondary
+            >>> # database as the output and enter your primary database as a schema
+            >>> # for your input table(s)
+            >>> linker = AthenaLinker(
+            >>>     settings_dict=settings_dict,
+            >>>     input_table_or_tables="splink_awswrangler_test.synthetic_data_all",
+            >>>     boto3_session=my_session,
+            >>>     output_bucket="alpha-splink-db-testing",
+            >>>     output_database="splink_awswrangler_test2",
+            >>> )
+
+        """
 
         if settings_dict is not None and "sql_dialect" not in settings_dict:
             settings_dict["sql_dialect"] = "presto"
 
         self.boto3_session = boto3_session
         self.boto_utils = boto_utils(
-            boto3_session, output_bucket, folder_in_bucket_for_outputs
+            boto3_session,
+            output_bucket,
         )
         self.ctas_query_info = {}
-        
+
         input_tables = self._coerce_to_list(input_table_or_tables)
-        
+
         input_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases
         )
-        
+
         # 'homogenised' means all entries are strings representing tables
         homogenised_tables = []
         homogenised_aliases = []
@@ -148,7 +210,7 @@ class AthenaLinker(Linker):
             set_up_basic_logging,
             input_table_aliases=homogenised_aliases,
         )
-        
+
         self.output_schema = output_database
 
     def _df_as_obj(self, templated_name, physical_name):
