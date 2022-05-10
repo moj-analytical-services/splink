@@ -38,7 +38,7 @@ def estimate_u_values(linker: "Linker", target_rows):
 
     training_linker = deepcopy(linker)
 
-    training_linker.train_u_using_random_sample_mode = True
+    training_linker._train_u_using_random_sample_mode = True
 
     settings_obj = training_linker._settings_obj
     settings_obj._retain_matching_columns = False
