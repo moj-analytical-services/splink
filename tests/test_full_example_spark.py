@@ -41,5 +41,3 @@ def test_full_example_spark(df_spark, tmp_path):
     linker.splink_comparison_viewer(
         df_predict, os.path.join(tmp_path, "test_scv_spark.html"), True, 2
     )
-
-    linker.cluster_predictions()
