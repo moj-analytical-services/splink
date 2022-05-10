@@ -157,7 +157,7 @@ settings_dict = {
 }
 
 
-def duckdb_performance(df, target_rows=1e6, con_comp=False):
+def duckdb_performance(df, target_rows=1e6):
 
     linker = DuckDBLinker(df, settings_dict)
 
@@ -171,10 +171,6 @@ def duckdb_performance(df, target_rows=1e6, con_comp=False):
 
     df = linker.predict()
     df.as_pandas_dataframe()
-
-    if con_comp:
-        cc = linker.run_connected_components(match_probability_threshold=0.95)
-        cc.as_pandas_dataframe()
 
 
 def test_2_rounds_1k_duckdb(benchmark):
@@ -194,17 +190,6 @@ def test_10_rounds_20k_duckdb(benchmark):
         duckdb_performance,
         kwargs={"df": df, "target_rows": 3e6},
         rounds=10,
-        iterations=1,
-        warmup_rounds=0,
-    )
-
-
-def test_3_rounds_20k_duckdb_plus_con_comp(benchmark):
-    df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
-    benchmark.pedantic(
-        duckdb_performance,
-        kwargs={"df": df, "target_rows": 3e6, "con_comp": True},
-        rounds=3,
         iterations=1,
         warmup_rounds=0,
     )
@@ -248,7 +233,7 @@ def test_10_rounds_20k_duckdb_on_disk_performance(benchmark):
     )
 
 
-def spark_performance(df, target_rows=1e6, con_comp=False):
+def spark_performance(df, target_rows=1e6):
 
     linker = SparkLinker(df, settings_dict)
 
@@ -262,10 +247,6 @@ def spark_performance(df, target_rows=1e6, con_comp=False):
 
     df = linker.predict()
     df.as_pandas_dataframe()
-
-    if con_comp:
-        cc = linker.run_connected_components(match_probability_threshold=0.95)
-        cc.as_pandas_dataframe()
 
 
 def test_3_rounds_20k_spark(benchmark):
@@ -299,38 +280,7 @@ def test_3_rounds_20k_spark(benchmark):
     )
 
 
-def test_3_rounds_20k_spark_plus_con_comp(benchmark):
-    from pyspark.context import SparkContext, SparkConf
-    from pyspark.sql import SparkSession
-
-    def setup():
-        conf = SparkConf()
-        conf.set("spark.driver.memory", "12g")
-        conf.set("spark.sql.shuffle.partitions", "8")
-        conf.set("spark.default.parallelism", "8")
-
-        sc = SparkContext.getOrCreate(conf=conf)
-        spark = SparkSession(sc)
-
-        for table in spark.catalog.listTables():
-            if table.isTemporary:
-                spark.catalog.dropTempView(table.name)
-
-        df = spark.read.csv(
-            "./benchmarking/fake_20000_from_splink_demos.csv", header=True
-        )
-        return (df,), {"target_rows": 1e6}, {"con_comp": True}
-
-    benchmark.pedantic(
-        spark_performance,
-        setup=setup,
-        rounds=3,
-        iterations=1,
-        warmup_rounds=0,
-    )
-
-
-def sqlite_performance(con, target_rows=1e6, con_comp=False):
+def sqlite_performance(con, target_rows=1e6):
 
     print("**** running sqlite benchmark ***")
     linker = SQLiteLinker(
@@ -346,10 +296,6 @@ def sqlite_performance(con, target_rows=1e6, con_comp=False):
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
     df = linker.predict()
     df.as_record_dict()
-
-    if con_comp:
-        cc = linker.run_connected_components(match_probability_threshold=0.95)
-        cc.as_pandas_dataframe()
 
 
 def test_2_rounds_1k_sqlite(benchmark):
@@ -387,20 +333,3 @@ def test_10_rounds_20k_sqlite(benchmark):
         warmup_rounds=0,
     )
 
-
-def test_10_rounds_20k_sqlite__plus_connected_components(benchmark):
-    import sqlite3
-
-    def setup():
-        con = sqlite3.connect(":memory:")
-        df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
-        df.to_sql("input_df_tablename", con)
-        return (con,), {"target_rows": 3e6}, {"con_comp": True}
-
-    benchmark.pedantic(
-        sqlite_performance,
-        setup=setup,
-        rounds=10,
-        iterations=1,
-        warmup_rounds=0,
-    )
