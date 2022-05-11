@@ -1130,10 +1130,37 @@ class Linker:
         return waterfall_chart(records, self._settings_obj, filter_nulls, as_dict)
 
     def splink_comparison_viewer(
-        self, df_predict, out_path, overwrite=False, num_example_rows=2
+        self,
+        df_predict: SplinkDataFrame,
+        out_path: str,
+        overwrite=False,
+        num_example_rows=2,
     ):
-        svd_sql = comparison_vector_distribution_sql(self)
-        self._enqueue_sql(svd_sql, "__splink__df_comparison_vector_distribution")
+        """Generate an interactive html visualization of the linker's predictions and
+        save to `out_path`.  For more information see
+        [this video](https://www.youtube.com/watch?v=DNvCMqjipis)
+
+
+        Args:
+            df_predict (SplinkDataFrame): The outputs of `linker.predict()`
+            out_path (str): The path (including filename) to save the html file to.
+            overwrite (bool, optional): Overwrite the html file if it already exists?
+                Defaults to False.
+            num_example_rows (int, optional): Number of example rows per comparison
+                vector. Defaults to 2.
+
+        Examples:
+            >>> df_predictions = linker.predict()
+            >>> linker.splink_comparison_viewer(df_predictions, "scv.html", True,2)
+            >>>
+            >>> # Optionally, in Jupyter, you can display the results inline
+            >>> # Otherwise you can just load the html file in your browser
+            >>> from IPython.display import IFrame
+            >>> IFrame(src="./scv.html", width=1400, height=1200)
+
+        """
+        sql = comparison_vector_distribution_sql(self)
+        self._enqueue_sql(sql, "__splink__df_comparison_vector_distribution")
 
         sqls = comparison_viewer_table(self, num_example_rows)
         for sql in sqls:

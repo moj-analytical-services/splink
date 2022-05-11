@@ -12,6 +12,8 @@ try:
 
     # Slightly re-write logic to avoid validation
     # Some splink3 charts do not validate but display fine
+    # When Altair supports Vega Lite v5, this should no longer be a problem
+    # and this logic should be able to be removed
     class VegaliteNoValidate(VegaLite):
         def _validate(self):
             pass
