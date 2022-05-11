@@ -18,6 +18,7 @@ from .parse_sql import get_columns_used_from_sql
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from .settings import Settings
+    from .comparison import Comparison
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,12 @@ def _exact_match_colname(sql):
 
 
 class ComparisonLevel:
-    def __init__(self, level_dict, comparison=None, settings_obj: "Settings" = None):
+    def __init__(
+        self,
+        level_dict,
+        comparison: "Comparison" = None,
+        settings_obj: "Settings" = None,
+    ):
 
         self._level_dict = (
             level_dict  # Protected, because we don't want to modify the original dict
