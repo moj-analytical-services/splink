@@ -101,7 +101,7 @@ def _comparison_records(record_as_dict, comparison):
             waterfall_record_2["log2_bayes_factor"] = math.log2(bf)
             waterfall_record_2["m_probability"] = None
             waterfall_record_2["u_probability"] = None
-            waterfall_record["bayes_factor_description"] = None
+            waterfall_record_2["bayes_factor_description"] = None
 
             text = (
                 "Term frequency adjustment on "
