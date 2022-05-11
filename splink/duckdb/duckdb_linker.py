@@ -15,6 +15,38 @@ from ..logging_messages import execute_sql_logging_message_info, log_sql
 logger = logging.getLogger(__name__)
 
 
+def validate_duckdb_connection(connection):
+
+    """Check if the duckdb connection requested by the user is valid.
+
+    Raises:
+        Exception: If the connection is invalid or a warning if
+        the naming convention is ambiguous (not adhering to the
+        duckdb convention).
+    """
+
+    if not isinstance(connection, str):
+        raise Exception(
+            "Connection must be a string in the form: :memory:, :temporary: "
+            "or the name of a new or existing duckdb database."
+        )
+
+    connection = connection.lower()
+
+    if connection in [":memory:", ":temporary:"]:
+        return
+
+    suffixes = (".duckdb", ".db")
+    if connection.endswith(suffixes):
+        return
+
+    logger.info(
+        f"The registered connection -- {connection} -- has an uncommon file type. "
+        "We recommend that you add a clear suffix of '.db' or '.duckdb' "
+        "to the connection string, when generating an on-disk database."
+    )
+
+
 class DuckDBLinkerDataFrame(SplinkDataFrame):
     def __init__(self, templated_name, physical_name, duckdb_linker):
         super().__init__(templated_name, physical_name)
@@ -64,6 +96,8 @@ class DuckDBLinker(Linker):
 
         if settings_dict is not None and "sql_dialect" not in settings_dict:
             settings_dict["sql_dialect"] = "duckdb"
+
+        validate_duckdb_connection(connection)
 
         if connection == ":memory:":
             con = duckdb.connect(database=connection)
