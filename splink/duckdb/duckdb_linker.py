@@ -41,7 +41,7 @@ def validate_duckdb_connection(connection):
         return
 
     logger.info(
-        f"The registered connection -- {connection} -- is ambiguous. "
+        f"The registered connection -- {connection} -- has an uncommon file type. "
         "We recommend that you add a clear suffix of '.db' or '.duckdb' "
         "to the connection string, when generating an on-disk database."
     )
