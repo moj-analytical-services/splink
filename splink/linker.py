@@ -914,7 +914,29 @@ class Linker:
 
         return predictions
 
-    def cluster_predictions(self, match_probability_threshold=0.9):
+    def cluster_predictions(self, threshold_match_probability=0.99):
+
+        """This method clusters your linked or deduped records
+        into single groups, for easier visualisation and analysis.
+
+        It uses the output generated in linker.predict(), or - if this doesn't exist
+        in your database - automatically runs the predict method.
+
+        A match probability threshold can be manually set by the user to
+        filter for specific pairwise match comparisons.
+
+        Args:
+            threshold_match_probability (float):
+                Filter the results of linker.predict() to include only
+                pairwise comparisons with a match_probability above this
+                threshold. This dataframe is then fed into the clustering
+                algorithm.
+
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame dataframe containing a list of
+            all IDs, clustered into groups based on the desired match threshold.
+
+        """
 
         # Using our caching system, either grab the edges table
         # or run the predict() step to generate it.
@@ -923,7 +945,7 @@ class Linker:
         # the code will error.
         edges_table = _cc_create_unique_id_cols(
             self,
-            match_probability_threshold,
+            threshold_match_probability,
         )
 
         cc = solve_connected_components(self, edges_table)
