@@ -3,11 +3,11 @@ from copy import deepcopy
 from .charts import vegalite_or_json, load_chart_definition
 
 
-def _group_name(cols_or_exprs):
-    group_name = "_".join(cols_or_exprs)
-    group_name = re.sub(r"[^0-9a-zA-Z_\(\),]", " ", group_name)
-    group_name = re.sub(r"\s+", " ", group_name)
-    return group_name
+def _group_name(cols_or_expr):
+
+    cols_or_expr = re.sub(r"[^0-9a-zA-Z_]", " ", cols_or_expr)
+    cols_or_expr = re.sub(r"\s+", "_", cols_or_expr)
+    return cols_or_expr
 
 
 _outer_chart_spec_freq = {
@@ -113,13 +113,13 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     select * from
     (select *
     from df_all_column_value_frequencies
-    where group_name = '{group_name}'
+    where group_name = '{gn}'
     order by value_count {value_order}
     limit {limit})
     """
 
     to_union = [
-        sql.format(group_name=g, limit=limit, value_order=value_order)
+        sql.format(gn=_group_name(g), limit=limit, value_order=value_order)
         for g in expressions
     ]
 
@@ -134,11 +134,12 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
         cols_or_exprs = [cols_or_exprs]
     sqls = []
     for col_or_expr in cols_or_exprs:
+        gn = _group_name(col_or_expr)
         sql = f"""
         select * from
         (select
             count(*) as value_count,
-            '{col_or_expr}' as group_name,
+            '{gn}' as group_name,
             {col_or_expr} as value,
             (select count({col_or_expr}) from {table_name}) as total_non_null_rows,
             (select count(*) from {table_name}) as total_rows_inc_nulls,
@@ -202,11 +203,15 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
     inner_charts = []
     for expression in column_expressions:
         percentile_rows = [
-            p for p in percentile_rows_all if p["group_name"] == expression
+            p for p in percentile_rows_all if p["group_name"] == _group_name(expression)
         ]
         percentile_rows = _add_100_percentile_to_df_percentiles(percentile_rows)
-        top_n_rows = [p for p in top_n_rows_all if p["group_name"] == expression]
-        bottom_n_rows = [p for p in bottom_n_rows_all if p["group_name"] == expression]
+        top_n_rows = [
+            p for p in top_n_rows_all if p["group_name"] == _group_name(expression)
+        ]
+        bottom_n_rows = [
+            p for p in bottom_n_rows_all if p["group_name"] == _group_name(expression)
+        ]
 
         inner_chart = _get_inner_chart_spec_freq(
             percentile_rows, top_n_rows, bottom_n_rows, expression
