@@ -43,7 +43,7 @@ def validate_duckdb_connection(connection):
     logger.info(
         f"The registered connection -- {connection} -- is ambiguous. "
         "We recommend that you add a clear suffix of '.db' or '.duckdb' "
-        "to the connection string, when generating a custom database."
+        "to the connection string, when generating an on-disk database."
     )
 
 
