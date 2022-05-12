@@ -6,8 +6,15 @@
 # we have been able to use the paper to further our understanding
 # of the problem and come to a working solution.
 
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+from typing import TYPE_CHECKING
+from .unique_id_concat import _composite_unique_id_from_nodes_sql
 
-def _cc_create_nodes_table(linker, edge_table, generated_graph=False):
+if TYPE_CHECKING:
+    from .linker import Linker
+
+
+def _cc_create_nodes_table(linker: "Linker", edge_table, generated_graph=False):
 
     """SQL to create our connected components nodes table.
 
@@ -19,6 +26,9 @@ def _cc_create_nodes_table(linker, edge_table, generated_graph=False):
     This logic can be shortcut by using the unique
     id column found in __splink__df_concat_with_tf.
     """
+
+    uid_cols = linker._settings_obj._unique_id_input_columns
+    uid_concat = _composite_unique_id_from_nodes_sql(uid_cols)
 
     if generated_graph:
         sql = f"""
@@ -32,14 +42,8 @@ def _cc_create_nodes_table(linker, edge_table, generated_graph=False):
         """
     else:
 
-        if linker._settings_obj._source_dataset_column_name_is_required:
-            unique_id_sql = """concat(unique_id, '|| -__- ||', source_dataset)
-                            as node_id"""
-        else:
-            unique_id_sql = "unique_id as node_id"
-
         sql = f"""
-        select {unique_id_sql}
+        select {uid_concat}
         from __splink__df_concat_with_tf
         """
 
@@ -345,7 +349,6 @@ def solve_connected_components(
     edges_table,
     _generated_graph=False,
 ):
-
     """Connected Components main algorithm.
 
     This function helps cluster your linked (or deduped) records
