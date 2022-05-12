@@ -133,8 +133,8 @@ def test_link_type(input_name, input_tables):
     else:
         df_e_pd["id_l"] = df_e_pd["id_l"].astype(str)
         df_e_pd["id_r"] = df_e_pd["id_r"].astype(str)
-        df_e_pd["id_concat_l"] = df_e_pd["source_dataset_l"] + "-__-" + df_e_pd["id_l"]
-        df_e_pd["id_concat_r"] = df_e_pd["source_dataset_r"] + "-__-" + df_e_pd["id_r"]
+        df_e_pd["id_concat_l"] = df_e_pd["id_l"] + "-__-" + df_e_pd["source_dataset_l"]
+        df_e_pd["id_concat_r"] = df_e_pd["id_r"] + "-__-" + df_e_pd["source_dataset_r"]
 
     assert all(df_e_pd["id_concat_l"] < df_e_pd["id_concat_r"])
 
