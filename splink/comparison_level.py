@@ -130,7 +130,7 @@ class ComparisonLevel:
         if value == "level not observed in training dataset":
             cc_n = self.comparison.comparison_name
             cl_n = self.label_for_charts
-            logger.warn(
+            logger.warning(
                 "\nWARNING:\n"
                 f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
                 "unable to train m value"
@@ -156,7 +156,7 @@ class ComparisonLevel:
         if value == "level not observed in training dataset":
             cc_n = self.comparison.comparison_name
             cl_n = self.label_for_charts
-            logger.warn(
+            logger.warning(
                 "\nWARNING:\n"
                 f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
                 "unable to train u value"

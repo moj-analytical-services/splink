@@ -426,7 +426,7 @@ class Linker:
 
             warn_message = "\n".join([msg] + messages)
 
-            logger.warn(warn_message)
+            logger.warning(warn_message)
 
     def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
         raise NotImplementedError(f"execute_sql not implemented for {type(self)}")
