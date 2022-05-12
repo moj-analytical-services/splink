@@ -8,7 +8,10 @@
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 from typing import TYPE_CHECKING
-from .unique_id_concat import _composite_unique_id_from_nodes_sql
+from .unique_id_concat import (
+    _composite_unique_id_from_nodes_sql,
+    _composite_unique_id_from_edges_sql,
+)
 
 if TYPE_CHECKING:
     from .linker import Linker
@@ -43,7 +46,7 @@ def _cc_create_nodes_table(linker: "Linker", edge_table, generated_graph=False):
     else:
 
         sql = f"""
-        select {uid_concat}
+        select {uid_concat} as node_id
         from __splink__df_concat_with_tf
         """
 
@@ -279,7 +282,7 @@ def _cc_assess_exit_condition(representatives_name):
     return sql
 
 
-def _cc_create_unique_id_cols(linker, match_probability_threshold):
+def _cc_create_unique_id_cols(linker: "Linker", match_probability_threshold):
 
     """Create SQL to pull unique ID columns for connected components.
 
@@ -308,36 +311,26 @@ def _cc_create_unique_id_cols(linker, match_probability_threshold):
     # Pull our predict() output from cache or create it.
     df_predict = linker.predict()
 
-    # Code assumes a unique ID column is provided.
-    if linker._settings_obj._source_dataset_column_name_is_required:
-        # Generate new unique IDs for our linked dataframes.
-        sql = f"""
-            select
-            concat(unique_id_l, '|| -__- ||', source_dataset_l) as unique_id_l,
-            concat(unique_id_r, '|| -__- ||', source_dataset_r) as unique_id_r
-            from {df_predict.physical_name}
-            where match_probability >= {match_probability_threshold}
+    uid_cols = linker._settings_obj._unique_id_input_columns
+    uid_concat_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+    uid_concat_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
+    uid_concat_edges = _composite_unique_id_from_edges_sql(uid_cols, None)
 
-            UNION
+    # Generate new unique IDs for our linked dataframes.
+    sql = f"""
+        select
+        {uid_concat_edges_l} as unique_id_l,
+        {uid_concat_edges_r} as unique_id_r
+        from {df_predict.physical_name}
+        where match_probability >= {match_probability_threshold}
 
-            select
-            concat(unique_id, '|| -__- ||', source_dataset) as unique_id_l,
-            concat(unique_id, '|| -__- ||', source_dataset) as unique_id_r
-            from __splink__df_concat_with_tf
-        """
-    else:
-        sql = f"""
-            select unique_id_l, unique_id_r
-            from {df_predict.physical_name}
-            where match_probability >= {match_probability_threshold}
+        UNION
 
-            UNION
-
-            select
-            unique_id as unique_id_l,
-            unique_id as unique_id_r
-            from __splink__df_concat_with_tf
-        """
+        select
+        {uid_concat_edges} as unique_id_l,
+        {uid_concat_edges} as unique_id_r
+        from __splink__df_concat_with_tf
+    """
 
     return linker._enqueue_and_execute_sql_pipeline(
         sql, "__splink__df_connected_components_df"
