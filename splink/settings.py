@@ -91,7 +91,7 @@ class Settings:
             cols.append(col)
 
         col = InputColumn(self._unique_id_column_name, settings_obj=self)
-        cols.insert(0, col)
+        cols.append(col)
 
         return cols
 

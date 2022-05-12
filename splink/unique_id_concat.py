@@ -8,7 +8,7 @@ def _composite_unique_id_from_nodes_sql(unique_id_cols, l_or_r=None):
     else:
         l_or_r = ""
 
-    cols = [f"{l_or_r}.{c.name()}" for c in unique_id_cols[::-1]]
+    cols = [f"{l_or_r}{c.name()}" for c in unique_id_cols]
 
     return " || '-__-' || ".join(cols)
 
@@ -20,10 +20,10 @@ def _composite_unique_id_from_edges_sql(unique_id_cols, l_or_r):
     """
 
     if l_or_r == "l":
-        cols = [c.name_l() for c in unique_id_cols[::-1]]
+        cols = [c.name_l() for c in unique_id_cols]
     if l_or_r == "r":
-        cols = [c.name_r() for c in unique_id_cols[::-1]]
+        cols = [c.name_r() for c in unique_id_cols]
     if l_or_r is None:
-        cols = [c.name() for c in unique_id_cols[::-1]]
+        cols = [c.name() for c in unique_id_cols]
 
     return " || '-__-' || ".join(cols)
