@@ -84,4 +84,4 @@ def test_full_example_duckdb(tmp_path):
 
     linker.roc_chart_from_labels("labels")
 
-    linker.cluster_pairwise_predictions_at_threshold()
+    linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.5)
