@@ -1,16 +1,19 @@
-def _composite_unique_id_from_nodes_sql(unique_id_cols, l_or_r=None):
+CONCAT_SEPARATOR = "-__-"
+
+
+def _composite_unique_id_from_nodes_sql(unique_id_cols, table_prefix=None):
     """
     Returns:
         str: e.g. 'l."source_dataset" || -__- || l."unique_id"'
     """
-    if l_or_r:
-        l_or_r = f"{l_or_r}."
+    if table_prefix:
+        table_prefix = f"{table_prefix}."
     else:
-        l_or_r = ""
+        table_prefix = ""
 
-    cols = [f"{l_or_r}{c.name()}" for c in unique_id_cols]
+    cols = [f"{table_prefix}{c.name()}" for c in unique_id_cols]
 
-    return " || '-__-' || ".join(cols)
+    return f" || '{CONCAT_SEPARATOR}' || ".join(cols)
 
 
 def _composite_unique_id_from_edges_sql(unique_id_cols, l_or_r):
@@ -26,4 +29,4 @@ def _composite_unique_id_from_edges_sql(unique_id_cols, l_or_r):
     if l_or_r is None:
         cols = [c.name() for c in unique_id_cols]
 
-    return " || '-__-' || ".join(cols)
+    return f" || '{CONCAT_SEPARATOR}' || ".join(cols)

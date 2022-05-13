@@ -98,11 +98,15 @@ def _cc_generate_initial_representatives_table(neighbours_table):
 
     """SQL to generate our initial "representatives" table.
 
+    The 'representative' column will eventually become the cluster ID.
+
     As outlined in the paper quoted at the top:
 
-    '...begin by choosing for each vertex (node)
-    a representatative by picking the vertex (node) with
-    the minimum id amongst itself and its neighbours'.
+    '...begin by choosing for each vertex (node) a representatative by picking the
+    vertex (node) with the minimum id amongst itself and its neighbours'.
+
+    e.g. node ids 1, 2 and 3 may all have representative 2, indicating
+    they are a cluster.
 
     This is done initially by grouping on our neighbours table
     and finding the minimum representative for each node.
@@ -130,6 +134,9 @@ def _cc_update_neighbours_first_iter(neighbours_table):
 
     This works by joining on the current known representative for each node's
     neighbours.
+
+    i.e. rather than looking at a node's minimum representative, we look at the node's
+    neighbour's minimum representative.
 
     So, if we know that B is represented by A (B -> A) and C is represented by B
     (C -> B), then we can join on B to conclude that (C -> A).
@@ -163,7 +170,7 @@ def _cc_update_representatives_first_iter():
     that indicates whether the current representative differs
     from the previous representative.
 
-    This value is used extensively to speed up our while loop and as.
+    This value is used extensively to speed up our while loop and as
     an exit condition.
     """
 
@@ -442,9 +449,16 @@ def solve_connected_components(
     # Create our final representatives table
     # Need to edit how we export the table based on whether we are
     # performing a link or dedupe job.
+
+    uid_cols = linker._settings_obj._unique_id_input_columns
+    uid_concat = _composite_unique_id_from_nodes_sql(uid_cols, "n")
+
     exit_query = f"""
-        select node_id, representative
-        from {representatives.physical_name}
+        select c.representative as cluster_id, n.*
+        from {representatives.physical_name} as c
+        left join __splink__df_concat_with_tf as n
+        on {uid_concat} = c.node_id
+
     """
 
     representatives = linker._enqueue_and_execute_sql_pipeline(
