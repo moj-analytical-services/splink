@@ -39,4 +39,4 @@ def test_full_example_sqlite(tmp_path):
         df_predict, os.path.join(tmp_path, "test_scv_sqlite.html"), True, 2
     )
 
-    linker.cluster_predictions()
+    linker.cluster_pairwise_predictions_at_threshold()
