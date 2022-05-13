@@ -2,7 +2,7 @@ import logging
 
 from .parse_sql import get_columns_used_from_sql
 from .misc import prob_to_bayes_factor, prob_to_match_weight
-from .charts import m_u_values_chart, match_weights_chart
+from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
 from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
@@ -313,9 +313,9 @@ class Settings:
 
         return match_weights_chart(records, as_dict=as_dict)
 
-    def m_u_values_chart(self):
+    def m_u_parameters_chart(self, as_dict=False):
         records = self._parameters_as_detailed_records
-        return m_u_values_chart(records)
+        return m_u_parameters_chart(records, as_dict=as_dict)
 
     def columns_without_estimated_parameters_message(self):
         message_lines = []
