@@ -20,7 +20,7 @@ def test_full_example_spark(df_spark, tmp_path):
 
     settings_dict["comparisons"][1]["comparison_levels"][1] = surname_match_level
 
-    linker = SparkLinker(df_spark, settings_dict)
+    linker = SparkLinker(df_spark, settings_dict, break_lineage_method="checkpoint")
 
     linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]
@@ -41,3 +41,5 @@ def test_full_example_spark(df_spark, tmp_path):
     linker.splink_comparison_viewer(
         df_predict, os.path.join(tmp_path, "test_scv_spark.html"), True, 2
     )
+
+    linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.5)

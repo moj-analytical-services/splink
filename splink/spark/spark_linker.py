@@ -122,6 +122,7 @@ class SparkLinker(Linker):
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
+            r"__splink__df_representatives_.+",
         ]
 
         if re.match(r"|".join(regex_to_persist), templated_name):
@@ -134,7 +135,7 @@ class SparkLinker(Linker):
                 logger.debug(f"persisted {templated_name}")
             elif self.break_lineage_method == "checkpoint":
                 spark_df = spark_df.checkpoint()
-                logger.debug(f"checkpointed {templated_name}")
+                logger.debug(f"Checkpointed {templated_name}")
             else:
                 raise ValueError(
                     f"Unknown break_lineage_method: {self.break_lineage_method}"
