@@ -8,6 +8,7 @@
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 from typing import TYPE_CHECKING
+import logging
 from .unique_id_concat import (
     _composite_unique_id_from_nodes_sql,
     _composite_unique_id_from_edges_sql,
@@ -17,6 +18,8 @@ from .splink_dataframe import SplinkDataFrame
 
 if TYPE_CHECKING:
     from .linker import Linker
+
+logger = logging.getLogger(__name__)
 
 
 def _cc_create_nodes_table(linker: "Linker", edge_table, generated_graph=False):
@@ -445,6 +448,7 @@ def solve_connected_components(
         root_rows = dataframe.as_record_dict()
         dataframe.drop_table_from_database()
         root_rows = root_rows[0]["count"]
+        logger.info(f"Completed iteration {iteration}, root rows count {root_rows}")
 
     # Create our final representatives table
     # Need to edit how we export the table based on whether we are
