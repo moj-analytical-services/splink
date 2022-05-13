@@ -7,7 +7,7 @@ from .parse_sql import get_columns_used_from_sql
 from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .charts import (
-    m_u_values_interactive_history_chart,
+    m_u_parameters_interactive_history_chart,
     match_weights_interactive_history_chart,
     proportion_of_matches_iteration_chart,
 )
@@ -261,7 +261,7 @@ class EMTrainingSession:
 
     def m_u_values_interactive_history_chart(self):
         records = self._iteration_history_records
-        return m_u_values_interactive_history_chart(records)
+        return m_u_parameters_interactive_history_chart(records)
 
     def _max_change_message(self, max_change_dict):
         message = "Largest change in params was"

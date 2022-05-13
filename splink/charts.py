@@ -109,8 +109,8 @@ def match_weights_chart(records, as_dict=False):
     return vegalite_or_json(chart, as_dict=as_dict)
 
 
-def m_u_values_chart(records, as_dict=False):
-    chart_path = "m_u_values_interactive_history.json"
+def m_u_parameters_chart(records, as_dict=False):
+    chart_path = "m_u_parameters_interactive_history.json"
     chart = load_chart_definition(chart_path)
 
     # Remove iteration history since this is a static chart
@@ -153,10 +153,15 @@ def match_weights_interactive_history_chart(records, as_dict=False, blocking_rul
     return vegalite_or_json(chart, as_dict=as_dict)
 
 
-def m_u_values_interactive_history_chart(records, as_dict=False):
-    chart_path = "m_u_values_interactive_history.json"
+def m_u_parameters_interactive_history_chart(records, as_dict=False):
+    chart_path = "m_u_parameters_interactive_history.json"
     chart = load_chart_definition(chart_path)
-    records = [r for r in records if r["comparison_vector_value"] != -1]
+    records = [
+        r
+        for r in records
+        if r["comparison_vector_value"] != -1
+        and r["comparison_name"] != "proportion_of_matches"
+    ]
     chart["data"]["values"] = records
 
     max_iteration = 0

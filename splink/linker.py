@@ -1248,5 +1248,7 @@ class Linker:
     def match_weights_chart(self):
         return self._settings_obj.match_weights_chart()
 
-    def m_u_values_chart(self):
-        return self._settings_obj.m_u_values_chart()
+    def m_u_parameters_chart(self):
+        """Display a chart of the m and u parameters of the linkage model"""
+
+        return self._settings_obj.m_u_parameters_chart()
