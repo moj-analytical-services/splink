@@ -914,37 +914,35 @@ class Linker:
 
         return predictions
 
-    def cluster_predictions(self, threshold_match_probability=0.99):
+    def cluster_pairwise_predictions_at_threshold(
+        self, df_predict: SplinkDataFrame, threshold_match_probability: float
+    ) -> SplinkDataFrame:
+        """Clusters the pairwise match predictions that result from `linker.predict()`
+        into groups of connected record using the connected components graph clustering
+        algorithm
 
-        """This method clusters your linked or deduped records
-        into single groups, for easier visualisation and analysis.
-
-        It uses the output generated in linker.predict(), or - if this doesn't exist
-        in your database - automatically runs the predict method.
-
-        A match probability threshold can be manually set by the user to
-        filter for specific pairwise match comparisons.
+        Records with an estimated `match_probability` above
+        `threshold_match_probability` are considered to be a match (i.e. they represent
+        the same entity).
 
         Args:
-            threshold_match_probability (float):
-                Filter the results of linker.predict() to include only
-                pairwise comparisons with a match_probability above this
+            df_predict (SplinkDataFrame): The results of `linker.predict()`
+            threshold_match_probability (float): Filter the pairwise match predictions
+                to include only pairwise comparisons with a match_probability above this
                 threshold. This dataframe is then fed into the clustering
                 algorithm.
 
         Returns:
-            SplinkDataFrame: A SplinkDataFrame dataframe containing a list of
-            all IDs, clustered into groups based on the desired match threshold.
+            SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
+                into groups based on the desired match threshold.
 
         """
 
-        # Using our caching system, either grab the edges table
-        # or run the predict() step to generate it.
+        self._initialise_df_concat_with_tf(df_predict)
 
-        # If the required pre-requisites for predict() are not met,
-        # the code will error.
         edges_table = _cc_create_unique_id_cols(
             self,
+            df_predict,
             threshold_match_probability,
         )
 

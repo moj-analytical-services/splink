@@ -24,16 +24,21 @@ def register_cc_df(G):
 
     df = nx.to_pandas_edgelist(G)
     df.columns = ["unique_id_l", "unique_id_r"]
-    df = pd.concat([pd.DataFrame({"unique_id_l": G.nodes, "unique_id_r": G.nodes}), df])
+    df_concat = pd.concat(
+        [pd.DataFrame({"unique_id_l": G.nodes, "unique_id_r": G.nodes}), df]
+    )
 
     # boot up our linker
     table_name = "__splink__df_predict_graph"
     # this registers our table under __splink__df__{table_name}
     # but our cc function actively looks for "__splink__df_predict"
-    linker = DuckDBLinker(df, settings_dict, input_table_aliases=table_name)
+    linker = DuckDBLinker(df_concat, settings_dict, input_table_aliases=table_name)
 
     # re-register under our required name to run the CC function
-    linker._con.register(table_name, df)
+    linker._con.register(table_name, df_concat)
+
+    df_nodes = pd.DataFrame({"unique_id": G.nodes})
+    linker._con.register("__splink__df_concat_with_tf", df_nodes)
 
     # add our prediction df to our list of created tables
     predict_df = DuckDBLinkerDataFrame(table_name, table_name, linker)
@@ -45,9 +50,12 @@ def register_cc_df(G):
 def run_cc_implementation(splink_df):
 
     # finally, run our connected components algorithm
-    return solve_connected_components(
+    cc = solve_connected_components(
         splink_df.duckdb_linker, splink_df, _generated_graph=True
     ).as_pandas_dataframe()
+    cc = cc.rename(columns={"unique_id": "node_id", "cluster_id": "representative"})
+    cc = cc[["node_id", "representative"]]
+    return cc
 
 
 def benchmark_cc_implementation(linker_df):

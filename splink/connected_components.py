@@ -8,13 +8,18 @@
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 from typing import TYPE_CHECKING
+import logging
 from .unique_id_concat import (
     _composite_unique_id_from_nodes_sql,
     _composite_unique_id_from_edges_sql,
 )
 
+from .splink_dataframe import SplinkDataFrame
+
 if TYPE_CHECKING:
     from .linker import Linker
+
+logger = logging.getLogger(__name__)
 
 
 def _cc_create_nodes_table(linker: "Linker", edge_table, generated_graph=False):
@@ -55,11 +60,20 @@ def _cc_create_nodes_table(linker: "Linker", edge_table, generated_graph=False):
 
 def _cc_generate_neighbours_representation(edges_table):
 
-    """SQL to generate our connected components neighbours representation.
+    """SQL to generate all the 'neighbours' of each input node.
 
-    Using our nodes table, create a representation
-    that documents all "neighbours" (any connections
-    between nodes) in our graph.
+    The 'neighbour' of a node is any other node that is connected to the original node
+    within the graph.  'Connected' means that at the threshold match probability,
+    the nodes are considered to be a match (i.e. the nodes are estimated to
+    be same entity)
+
+    This table differs to the edges table in two respects:
+    1.  Unlike the edges table, it's not guaranteed that the node (left hand side)
+        has a lower id than the neighbour.  That is, the left column (node_id) contains
+        all the nodes, not just the ones with a higher id on the right hand side
+    2. The table contains all nodes, even those with no edges (these are represented)
+        as a 'self link' i.e. ID1 -> ID1, ensuring they are present in the final
+        clusters table.
     """
 
     sql = f"""
@@ -70,9 +84,7 @@ def _cc_generate_neighbours_representation(edges_table):
     left join {edges_table} as e_l
         on n.node_id = e_l.unique_id_l
 
-
     UNION ALL
-
 
     select n.node_id,
         coalesce(e_r.unique_id_l, n.node_id) as neighbour
@@ -89,11 +101,15 @@ def _cc_generate_initial_representatives_table(neighbours_table):
 
     """SQL to generate our initial "representatives" table.
 
+    The 'representative' column will eventually become the cluster ID.
+
     As outlined in the paper quoted at the top:
 
-    '...begin by choosing for each vertex (node)
-    a representatative by picking the vertex with
-    the minimum id amongst itself and its neighbours'.
+    '...begin by choosing for each vertex (node) a representatative by picking the
+    vertex (node) with the minimum id amongst itself and its neighbours'.
+
+    e.g. node ids 1, 2 and 3 may all have representative 2, indicating
+    they are a cluster.
 
     This is done initially by grouping on our neighbours table
     and finding the minimum representative for each node.
@@ -121,6 +137,9 @@ def _cc_update_neighbours_first_iter(neighbours_table):
 
     This works by joining on the current known representative for each node's
     neighbours.
+
+    i.e. rather than looking at a node's minimum representative, we look at the node's
+    neighbour's minimum representative.
 
     So, if we know that B is represented by A (B -> A) and C is represented by B
     (C -> B), then we can join on B to conclude that (C -> A).
@@ -154,7 +173,7 @@ def _cc_update_representatives_first_iter():
     that indicates whether the current representative differs
     from the previous representative.
 
-    This value is used extensively to speed up our while loop and as.
+    This value is used extensively to speed up our while loop and as
     an exit condition.
     """
 
@@ -282,7 +301,9 @@ def _cc_assess_exit_condition(representatives_name):
     return sql
 
 
-def _cc_create_unique_id_cols(linker: "Linker", match_probability_threshold):
+def _cc_create_unique_id_cols(
+    linker: "Linker", df_predict: SplinkDataFrame, match_probability_threshold
+):
 
     """Create SQL to pull unique ID columns for connected components.
 
@@ -304,12 +325,6 @@ def _cc_create_unique_id_cols(linker: "Linker", match_probability_threshold):
         unique_id_l and unique_id_r.
 
     """
-
-    # Ensure our linker contains the table: __splink__df_concat_with_tf
-    # This is used for creating our nodes table.
-    linker._initialise_df_concat_with_tf(materialise=True)
-    # Pull our predict() output from cache or create it.
-    df_predict = linker.predict()
 
     uid_cols = linker._settings_obj._unique_id_input_columns
     uid_concat_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
@@ -433,13 +448,21 @@ def solve_connected_components(
         root_rows = dataframe.as_record_dict()
         dataframe.drop_table_from_database()
         root_rows = root_rows[0]["count"]
+        logger.info(f"Completed iteration {iteration}, root rows count {root_rows}")
 
     # Create our final representatives table
     # Need to edit how we export the table based on whether we are
     # performing a link or dedupe job.
+
+    uid_cols = linker._settings_obj._unique_id_input_columns
+    uid_concat = _composite_unique_id_from_nodes_sql(uid_cols, "n")
+
     exit_query = f"""
-        select node_id, representative
-        from {representatives.physical_name}
+        select c.representative as cluster_id, n.*
+        from {representatives.physical_name} as c
+        left join __splink__df_concat_with_tf as n
+        on {uid_concat} = c.node_id
+
     """
 
     representatives = linker._enqueue_and_execute_sql_pipeline(
