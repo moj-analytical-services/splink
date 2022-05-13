@@ -916,7 +916,7 @@ class Linker:
 
     def cluster_pairwise_predictions_at_threshold(
         self, df_predict: SplinkDataFrame, threshold_match_probability: float
-    ):
+    ) -> SplinkDataFrame:
         """Clusters the pairwise match predictions that result from `linker.predict()`
         into groups of connected record using the connected components graph clustering
         algorithm
