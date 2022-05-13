@@ -15,11 +15,13 @@ def spark():
     conf = SparkConf()
 
     conf.set("spark.driver.memory", "4g")
-    conf.set("spark.sql.shuffle.partitions", "12")
+    conf.set("spark.sql.shuffle.partitions", "8")
+    conf.set("spark.default.parallelism", "8")
 
     sc = SparkContext.getOrCreate(conf=conf)
 
     spark = SparkSession(sc)
+    spark.sparkContext.setCheckpointDir("./tmp_checkpoints")
 
     yield spark
 

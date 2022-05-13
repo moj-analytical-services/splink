@@ -120,7 +120,7 @@ class SparkLinker(Linker):
         regex_to_persist = [
             r"__splink__df_comparison_vectors",
             r"__splink__df_concat_with_tf",
-            r"__splink__df_predict.+",
+            r"__splink__df_predict",
             r"__splink__df_tf_.+",
             r"__splink__df_representatives_.+",
         ]
