@@ -353,8 +353,8 @@ def _cc_create_unique_id_cols(
 
 
 def solve_connected_components(
-    linker,
-    edges_table,
+    linker: "Linker",
+    edges_table: SplinkDataFrame,
     _generated_graph=False,
 ):
     """Connected Components main algorithm.
@@ -442,11 +442,13 @@ def solve_connected_components(
 
         # Check if our exit condition has been met...
         sql = _cc_assess_exit_condition(representatives.physical_name)
-        dataframe = linker._sql_to_splink_dataframe(
-            sql, "__splink__df_root_rows", materialise_as_hash=False
+
+        root_rows_df = linker._enqueue_and_execute_sql_pipeline(
+            sql, "__splink__df_root_rows", materialise_as_hash=False, use_cache=False
         )
-        root_rows = dataframe.as_record_dict()
-        dataframe.drop_table_from_database()
+
+        root_rows = root_rows_df.as_record_dict()
+        root_rows_df.drop_table_from_database()
         root_rows = root_rows[0]["count"]
         logger.info(f"Completed iteration {iteration}, root rows count {root_rows}")
 
