@@ -3,7 +3,7 @@ import json
 import re
 import sqlglot
 from sqlglot.expressions import Case, Column, Alias, Bracket, Lambda
-
+from itertools import groupby
 from sqlglot.errors import ParseError
 
 
@@ -67,10 +67,27 @@ def _parse_top_level_case_statement_from_sql(top_level_case_tree):
     return parsed_case_expr
 
 
+def _merge_duplicate_levels(parsed_case_expr):
+    def _join_or(groupby_item):
+
+        exprs = [x["sql_expr"] for x in groupby_item[1]]
+        if len(exprs) > 1:
+
+            exprs = [f"({e})" for e in exprs]
+        merged = "\n OR ".join(exprs)
+        return merged
+
+    gb = groupby(parsed_case_expr, key=lambda x: x["label"])
+    return list(map(_join_or, gb))
+
+
 def parse_case_statement(sql):
 
     tree = _get_top_level_case(sql)
-    return _parse_top_level_case_statement_from_sql(tree)
+    parsed = _parse_top_level_case_statement_from_sql(tree)
+
+    # Finally dedupe - if two keys have the same level they need an OR condition
+    return _merge_duplicate_levels(parsed)
 
 
 settings_2 = json.loads(data)
@@ -89,6 +106,9 @@ copy_keys = [
     "additional_columns_to_retain",
 ]
 
+for k in copy_keys:
+    if k in settings_2:
+        settings_3[k] = settings_2[k]
 
 comparisons_3 = []
 for comparison_column in settings_2["comparison_columns"]:
@@ -103,6 +123,8 @@ for comparison_column in settings_2["comparison_columns"]:
 
     for m, u, p in m_u_ps:
         level = {"m_probability": m, "u_probability": u, "sql_condition": p}
+        if m is None:
+            level["is_null_level"] = True
         comparison_3["comparison_levels"].append(level)
     comparisons_3.append(comparison_3)
 settings_3["comparisons"] = comparisons_3
@@ -110,5 +132,3 @@ settings_3["comparisons"] = comparisons_3
 import json
 
 print(json.dumps(settings_3, indent=4))
-
-parsed
