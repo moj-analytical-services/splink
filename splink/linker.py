@@ -1244,9 +1244,40 @@ class Linker:
         return res
 
     def match_weights_chart(self):
+        """Display a chart of the match weights of the linkage model
+
+        Examples:
+            >>> linker.match_weights_chart()
+            >>>
+            >>> # To view offline (if you don't have an internet connection):
+            >>>
+            >>> from splink.charts import save_offline_chart
+            >>> c = linker.match_weights_chart()
+            >>> save_offline_chart(c.spec, "test_chart.html")
+            >>>
+            >>> # View resultant html file in Jupyter (or just load it in your browser)
+            >>> from IPython.display import IFrame
+            >>> IFrame(src="./test_chart.html", width=1000, height=500)
+
+
+
+        """
         return self._settings_obj.match_weights_chart()
 
     def m_u_parameters_chart(self):
-        """Display a chart of the m and u parameters of the linkage model"""
+        """Display a chart of the m and u parameters of the linkage model
+
+        Examples:
+            >>> linker.m_u_parameters_chart()
+            >>>
+            >>> # To view offline (if you don't have an internet connection):
+            >>>
+            >>> from splink.charts import save_offline_chart
+            >>> c = linker.match_weights_chart()
+            >>> save_offline_chart(c.spec, "test_chart.html")
+            >>>
+            >>> # View resultant html file in Jupyter (or just load it in your browser)
+            >>> from IPython.display import IFrame
+            >>> IFrame(src="./test_chart.html", width=1000, height=500)"""
 
         return self._settings_obj.m_u_parameters_chart()
