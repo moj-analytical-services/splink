@@ -124,6 +124,10 @@ for comparison_column in settings_2["comparison_columns"]:
     for m, u, p in m_u_ps:
         level = {"m_probability": m, "u_probability": u, "sql_condition": p}
         if m is None:
+            del level["m_probability"]
+        if u is None:
+            del level["u_probability"]
+        if m is None:
             level["is_null_level"] = True
         comparison_3["comparison_levels"].append(level)
     comparisons_3.append(comparison_3)
@@ -131,4 +135,8 @@ settings_3["comparisons"] = comparisons_3
 
 import json
 
-print(json.dumps(settings_3, indent=4))
+# print(json.dumps(settings_3, indent=4))
+
+from splink.settings import Settings
+
+s = Settings(settings_3)
