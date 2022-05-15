@@ -55,13 +55,13 @@ def _parse_top_level_case_statement_from_sql(top_level_case_tree):
         lit = i.args["true"].sql()
 
         sql = i.args["this"].sql(dialect="spark")
-        sql = f"WHEN {sql} THEN {lit}".format(sql=sql, lit=lit)
+        sql = f"{sql}".format(sql=sql, lit=lit)
 
         parsed_case_expr.append({"sql_expr": sql, "label": f"level_{lit}"})
 
     if top_level_case_tree.args.get("default") is not None:
         lit = top_level_case_tree.args.get("default").sql("spark", pretty=True)
-        sql = f"ELSE {lit}"
+        sql = f"ELSE"
         parsed_case_expr.append({"sql_expr": sql, "label": f"level_{lit}"})
 
     return parsed_case_expr
@@ -135,7 +135,7 @@ settings_3["comparisons"] = comparisons_3
 
 import json
 
-# print(json.dumps(settings_3, indent=4))
+print(json.dumps(settings_3, indent=4))
 
 from splink.settings import Settings
 
