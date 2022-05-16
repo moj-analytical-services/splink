@@ -52,6 +52,8 @@ from .connected_components import (
     solve_connected_components,
 )
 
+from .cluster_studio import render_splink_cluster_studio_html
+
 logger = logging.getLogger(__name__)
 
 
@@ -1281,3 +1283,13 @@ class Linker:
             >>> IFrame(src="./test_chart.html", width=1000, height=500)"""
 
         return self._settings_obj.m_u_parameters_chart()
+
+    def cluster_studio(
+        self,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        cluster_ids: list,
+    ):
+        return render_splink_cluster_studio_html(
+            self, df_predict, df_clustered, cluster_ids
+        )
