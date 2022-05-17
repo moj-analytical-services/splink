@@ -305,6 +305,8 @@ class Settings:
         current_settings = {
             "comparisons": [cc.as_completed_dict for cc in self.comparisons],
             "proportion_of_matches": self._proportion_of_matches,
+            "unique_id_column_name": self._unique_id_column_name,
+            "source_dataset_column_name": self._source_dataset_column_name,
         }
         return {**self._settings_dict, **current_settings}
 

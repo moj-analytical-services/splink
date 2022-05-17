@@ -1,0 +1,130 @@
+:root {
+  --table-gray: rgb(245, 245, 245);
+  --table-white: rgb(255, 255, 255);
+  --table-hover: rgb(255, 253, 190);
+  --table-border-width: 2px;
+  --table-text-colour: rgb(0, 0, 0);
+  --font-very-large: 2.5rem;
+  --font-large: 1.5rem;
+  --font-regular: 1.2rem;
+  --font-small: 1rem;
+  --font-very-small: 0.8rem;
+}
+
+div#outer_container {
+  font-family: "Source Sans Pro", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  margin: 20px;
+
+  font-size: var(--font-regular);
+  color: #3c3c3c;
+}
+
+/* center margins */
+div#outer_container > div {
+  margin: 0 auto;
+}
+
+.observablehq {
+  margin-bottom: 10px;
+}
+
+label {
+  display: inline-block;
+  margin-right: 12px;
+}
+
+/* Controls */
+
+#controls {
+  border: 1px solid #e7e7e7;
+  background-color: var(--table-gray);
+  padding: 10px;
+  color: #3c3c3c;
+  margin-bottom: 10px;
+}
+
+#controls input,
+select,
+label {
+  display: inline-block;
+  font-size: var(--font-small);
+  margin-bottom: 0px;
+  color: #3c3c3c;
+}
+
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"] {
+  vertical-align: middle;
+  position: relative;
+  bottom: 1px;
+  color: #3c3c3c;
+}
+
+#observablehq-corresponding_probability {
+  font-size: var(--font-small);
+}
+/* Table */
+.observablehq table {
+  display: block;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border: none;
+  color: var(--table-text-colour);
+  font-size: var(--font-very-small);
+
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+  max-height: 500px;
+  overflow: auto;
+}
+
+.observablehq thead {
+  border-bottom: var(--table-border-width) solid var(--table-gray);
+  vertical-align: bottom;
+}
+
+.observablehq td,
+.observablehq th,
+.observablehq tr {
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+
+.observablehq th {
+  font-weight: bold;
+}
+
+.observablehq tbody tr:nth-child(odd) {
+  background: var(--table-white);
+}
+
+.observablehq tbody tr:nth-child(even) {
+  background: var(--table-gray);
+}
+
+.observablehq tbody tr:hover {
+  background: var(--table-hover);
+}
+
+.observablehq table {
+  margin-bottom: 1em;
+}
+
+/* Headers */
+
+h2 {
+  margin-bottom: 5px;
+  font-size: var(--font-very-large);
+  color: black;
+}
+h3 {
+  margin-bottom: 5px;
+  font-size: var(--font-large);
+  color: black;
+}

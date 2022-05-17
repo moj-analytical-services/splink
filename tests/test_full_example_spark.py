@@ -42,4 +42,11 @@ def test_full_example_spark(df_spark, tmp_path):
         df_predict, os.path.join(tmp_path, "test_scv_spark.html"), True, 2
     )
 
-    linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.5)
+    df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.2)
+
+    linker.cluster_studio(
+        df_predict,
+        df_clusters,
+        [0, 4],
+        os.path.join(tmp_path, "test_cluster_studio.html"),
+    )
