@@ -1289,7 +1289,9 @@ class Linker:
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
         cluster_ids: list,
+        out_path: str,
+        overwrite=False,
     ):
         return render_splink_cluster_studio_html(
-            self, df_predict, df_clustered, cluster_ids
+            self, df_predict, df_clustered, cluster_ids, out_path, overwrite=overwrite
         )

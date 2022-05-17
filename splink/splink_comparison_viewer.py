@@ -134,7 +134,7 @@ def render_splink_comparison_viewer_html(
         "embed": "files/external_js/vega-embed@6.20.2",
         "vega": "files/external_js/vega@5.21.0",
         "vegalite": "files/external_js/vega-lite@5.2.0",
-        "svu_text": "files/splink_comparison_viewer/splink_vis_utils.js",
+        "svu_text": "files/splink_vis_utils/splink_vis_utils.js",
         "custom_css": "files/splink_comparison_viewer/custom.css",
     }
     for k, v in files.items():

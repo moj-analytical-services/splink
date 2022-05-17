@@ -1,18 +1,3 @@
-// Observable runtime, inputs, stdlib and inspector are Copyright 2018-2021 Observable, Inc.
-// The licence for these libraries is as follows:
-
-// Permission to use, copy, modify, and/or distribute this software for any purpose
-// with or without fee is hereby granted, provided that the above copyright notice
-// and this permission notice appear in all copies.
-
-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-// FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
-// OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
-// TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
-// THIS SOFTWARE
-
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -2933,24 +2918,26 @@
 	  };
 	}
 
-	const d3 = dependency("d3", "7.1.0", "dist/d3.min.js");
-	const inputs = dependency("@observablehq/inputs", "0.10.1", "dist/inputs.min.js");
-	const plot = dependency("@observablehq/plot", "0.2.8", "dist/plot.umd.min.js");
+	const d3 = dependency("d3", "7.4.4", "dist/d3.min.js");
+	const inputs = dependency("@observablehq/inputs", "0.10.4", "dist/inputs.min.js");
+	const plot = dependency("@observablehq/plot", "0.4.3", "dist/plot.umd.min.js");
 	const graphviz = dependency("@observablehq/graphviz", "0.2.1", "dist/graphviz.min.js");
 	const highlight = dependency("@observablehq/highlight.js", "2.0.0", "highlight.min.js");
 	const katex = dependency("@observablehq/katex", "0.11.1", "dist/katex.min.js");
 	const lodash = dependency("lodash", "4.17.21", "lodash.min.js");
 	const htl = dependency("htl", "0.3.1", "dist/htl.min.js");
-	const jszip = dependency("jszip", "3.7.1", "dist/jszip.min.js");
+	const jszip = dependency("jszip", "3.9.1", "dist/jszip.min.js");
 	const marked = dependency("marked", "0.3.12", "marked.min.js");
-	const sql = dependency("sql.js", "1.6.1", "dist/sql-wasm.js");
-	const vega = dependency("vega", "5.21.0", "build/vega.min.js");
-	const vegalite = dependency("vega-lite", "5.1.1", "build/vega-lite.min.js");
+	const sql = dependency("sql.js", "1.6.2", "dist/sql-wasm.js");
+	const vega = dependency("vega", "5.22.1", "build/vega.min.js");
+	const vegalite = dependency("vega-lite", "5.2.0", "build/vega-lite.min.js");
 	const vegaliteApi = dependency("vega-lite-api", "5.0.0", "build/vega-lite-api.min.js");
 	const arrow = dependency("apache-arrow", "4.0.1", "Arrow.es2015.min.js");
-	const arquero = dependency("arquero", "4.8.7", "dist/arquero.min.js");
+	const arquero = dependency("arquero", "4.8.8", "dist/arquero.min.js");
 	const topojson = dependency("topojson-client", "3.1.0", "dist/topojson-client.min.js");
 	const exceljs = dependency("exceljs", "4.3.0", "dist/exceljs.min.js");
+	const mermaid$1 = dependency("mermaid", "9.0.0", "dist/mermaid.min.js");
+	const leaflet$1 = dependency("leaflet", "1.8.0", "dist/leaflet.js");
 
 	async function sqlite(require) {
 	  const init = await require(sql.resolve());
@@ -2990,7 +2977,13 @@
 	      element$1("tbody", rows.map(r => element$1("tr", columns.map(c => element$1("td", [text$2(r[c])])))))
 	    ]);
 	  }
+	  async sql(strings, ...args) {
+	    return this.query(strings.join("?"), args);
+	  }
 	}
+	Object.defineProperty(SQLiteDatabaseClient.prototype, "dialect", {
+	  value: "sqlite"
+	});
 
 	function load$1(source) {
 	  return typeof source === "string" ? fetch(source).then(load$1)
@@ -3144,8 +3137,9 @@
 	}
 
 	class AbstractFile {
-	  constructor(name) {
+	  constructor(name, mimeType) {
 	    Object.defineProperty(this, "name", {value: name, enumerable: true});
+	    if (mimeType !== undefined) Object.defineProperty(this, "mimeType", {value: mimeType + "", enumerable: true});
 	  }
 	  async blob() {
 	    return (await remote_fetch(this)).blob();
@@ -3168,13 +3162,14 @@
 	  async tsv(options) {
 	    return dsv(this, "\t", options);
 	  }
-	  async image() {
+	  async image(props) {
 	    const url = await this.url();
 	    return new Promise((resolve, reject) => {
-	      const i = new Image;
+	      const i = new Image();
 	      if (new URL(url, document.baseURI).origin !== new URL(location).origin) {
 	        i.crossOrigin = "anonymous";
 	      }
+	      Object.assign(i, props);
 	      i.onload = () => resolve(i);
 	      i.onerror = () => reject(new Error(`Unable to load file: ${this.name}`));
 	      i.src = url;
@@ -3204,8 +3199,8 @@
 	}
 
 	class FileAttachment extends AbstractFile {
-	  constructor(url, name) {
-	    super(name);
+	  constructor(url, name, mimeType) {
+	    super(name, mimeType);
 	    Object.defineProperty(this, "_url", {value: url});
 	  }
 	  async url() {
@@ -3220,9 +3215,13 @@
 	function FileAttachments(resolve) {
 	  return Object.assign(
 	    name => {
-	      const url = resolve(name += ""); // Returns a Promise, string, or null.
-	      if (url == null) throw new Error(`File not found: ${name}`);
-	      return new FileAttachment(url, name);
+	      const result = resolve(name += "");
+	      if (result == null) throw new Error(`File not found: ${name}`);
+	      if (typeof result === "object" && "url" in result) {
+	        const {url, mimeType} = result;
+	        return new FileAttachment(url, name, mimeType);
+	      }
+	      return new FileAttachment(result, name);
 	    },
 	    {prototype: FileAttachment.prototype} // instanceof
 	  );
@@ -3679,6 +3678,17 @@
 	  return document.createElement("span");
 	});
 
+	async function leaflet(require) {
+	  const L = await require(leaflet$1.resolve());
+	  if (!L._style) {
+	    const link = document.createElement("link");
+	    link.rel = "stylesheet";
+	    link.href = leaflet$1.resolve("dist/leaflet.css");
+	    L._style = document.head.appendChild(link);
+	  }
+	  return L;
+	}
+
 	function md(require) {
 	  return require(marked.resolve()).then(function(marked) {
 	    return template(
@@ -3716,6 +3726,16 @@
 	      }
 	    );
 	  });
+	}
+
+	async function mermaid(require) {
+	  const mer = await require(mermaid$1.resolve());
+	  mer.initialize({securityLevel: "loose", theme: "neutral"});
+	  return function mermaid() {
+	    const root = document.createElement("div");
+	    root.innerHTML = mer.render(uid().id, String.raw.apply(String, arguments));
+	    return root.removeChild(root.firstChild);
+	  };
 	}
 
 	function Mutable(value) {
@@ -3848,27 +3868,46 @@
 	  const require = requirer(resolver);
 	  Object.defineProperties(this, properties({
 	    FileAttachment: () => NoFileAttachments,
-	    Arrow: () => require(arrow.resolve()),
-	    Inputs: () => require(inputs.resolve()).then(Inputs => ({...Inputs, file: Inputs.fileOf(AbstractFile)})),
 	    Mutable: () => Mutable,
-	    Plot: () => require(plot.resolve()),
-	    SQLite: () => sqlite(require),
-	    SQLiteDatabaseClient: () => SQLiteDatabaseClient,
-	    _: () => require(lodash.resolve()),
-	    aq: () => require.alias({"apache-arrow": arrow.resolve()})(arquero.resolve()),
-	    d3: () => require(d3.resolve()),
+	    now,
+	    width: width$2,
+
+	    // Tagged template literals
 	    dot: () => require(graphviz.resolve()),
 	    htl: () => require(htl.resolve()),
 	    html: () => html$1,
 	    md: () => md(require),
-	    now,
-	    require: () => require,
-	    resolve: () => resolve$1,
 	    svg: () => svg,
 	    tex: () => tex(require),
+
+	    // Recommended libraries
+	    // https://observablehq.com/@observablehq/recommended-libraries
+	    _: () => require(lodash.resolve()),
+	    aq: () => require.alias({"apache-arrow": arrow.resolve()})(arquero.resolve()),
+	    Arrow: () => require(arrow.resolve()),
+	    d3: () => require(d3.resolve()),
+	    Inputs: () => require(inputs.resolve()).then(Inputs => ({...Inputs, file: Inputs.fileOf(AbstractFile)})),
+	    L: () => leaflet(require),
+	    mermaid: () => mermaid(require),
+	    Plot: () => require(plot.resolve()),
+	    require: () => require,
+	    resolve: () => resolve$1, // deprecated; use async require.resolve instead
+	    SQLite: () => sqlite(require),
+	    SQLiteDatabaseClient: () => SQLiteDatabaseClient,
 	    topojson: () => require(topojson.resolve()),
 	    vl: () => vl(require),
-	    width: width$2,
+
+	    // Sample datasets
+	    // https://observablehq.com/@observablehq/datasets
+	    aapl: () => new FileAttachment("https://static.observableusercontent.com/files/3ccff97fd2d93da734e76829b2b066eafdaac6a1fafdec0faf6ebc443271cfc109d29e80dd217468fcb2aff1e6bffdc73f356cc48feb657f35378e6abbbb63b9").csv({typed: true}),
+	    alphabet: () => new FileAttachment("https://static.observableusercontent.com/files/75d52e6c3130b1cae83cda89305e17b50f33e7420ef205587a135e8562bcfd22e483cf4fa2fb5df6dff66f9c5d19740be1cfaf47406286e2eb6574b49ffc685d").csv({typed: true}),
+	    cars: () => new FileAttachment("https://static.observableusercontent.com/files/048ec3dfd528110c0665dfa363dd28bc516ffb7247231f3ab25005036717f5c4c232a5efc7bb74bc03037155cb72b1abe85a33d86eb9f1a336196030443be4f6").csv({typed: true}),
+	    citywages: () => new FileAttachment("https://static.observableusercontent.com/files/39837ec5121fcc163131dbc2fe8c1a2e0b3423a5d1e96b5ce371e2ac2e20a290d78b71a4fb08b9fa6a0107776e17fb78af313b8ea70f4cc6648fad68ddf06f7a").csv({typed: true}),
+	    diamonds: () => new FileAttachment("https://static.observableusercontent.com/files/87942b1f5d061a21fa4bb8f2162db44e3ef0f7391301f867ab5ba718b225a63091af20675f0bfe7f922db097b217b377135203a7eab34651e21a8d09f4e37252").csv({typed: true}),
+	    industries: () => new FileAttachment("https://static.observableusercontent.com/files/76f13741128340cc88798c0a0b7fa5a2df8370f57554000774ab8ee9ae785ffa2903010cad670d4939af3e9c17e5e18e7e05ed2b38b848ac2fc1a0066aa0005f").csv({typed: true}),
+	    olympians: () => new FileAttachment("https://static.observableusercontent.com/files/31ca24545a0603dce099d10ee89ee5ae72d29fa55e8fc7c9ffb5ded87ac83060d80f1d9e21f4ae8eb04c1e8940b7287d179fe8060d887fb1f055f430e210007c").csv({typed: true}),
+	    penguins: () => new FileAttachment("https://static.observableusercontent.com/files/715db1223e067f00500780077febc6cebbdd90c151d3d78317c802732252052ab0e367039872ab9c77d6ef99e5f55a0724b35ddc898a1c99cb14c31a379af80a").csv({typed: true}),
+	    weather: () => new FileAttachment("https://static.observableusercontent.com/files/693a46b22b33db0f042728700e0c73e836fa13d55446df89120682d55339c6db7cc9e574d3d73f24ecc9bc7eb9ac9a1e7e104a1ee52c00aab1e77eb102913c1f").csv({typed: true}),
 
 	    // Note: these are namespace objects, and thus exposed directly rather than
 	    // being wrapped in a function. This allows library.Generators to resolve,
@@ -4281,7 +4320,9 @@
 	  return variable._name;
 	}
 
-	const frame = typeof requestAnimationFrame === "function" ? requestAnimationFrame : setImmediate;
+	const frame = typeof requestAnimationFrame === "function" ? requestAnimationFrame
+	  : typeof setImmediate === "function" ? setImmediate
+	  : f => setTimeout(f, 0);
 
 	var variable_invalidation = {};
 	var variable_visibility = {};
@@ -4291,6 +4332,7 @@
 	  Object.defineProperties(this, {
 	    _dirty: {value: new Set},
 	    _updates: {value: new Set},
+	    _precomputes: {value: [], writable: true},
 	    _computing: {value: null, writable: true},
 	    _init: {value: null, writable: true},
 	    _modules: {value: new Map},
@@ -4309,6 +4351,7 @@
 	});
 
 	Object.defineProperties(Runtime.prototype, {
+	  _precompute: {value: runtime_precompute, writable: true, configurable: true},
 	  _compute: {value: runtime_compute, writable: true, configurable: true},
 	  _computeSoon: {value: runtime_computeSoon, writable: true, configurable: true},
 	  _computeNow: {value: runtime_computeNow, writable: true, configurable: true},
@@ -4347,24 +4390,32 @@
 	  return module;
 	}
 
+	function runtime_precompute(callback) {
+	  this._precomputes.push(callback);
+	  this._compute();
+	}
+
 	function runtime_compute() {
 	  return this._computing || (this._computing = this._computeSoon());
 	}
 
 	function runtime_computeSoon() {
-	  var runtime = this;
-	  return new Promise(function(resolve) {
-	    frame(function() {
-	      resolve();
-	      runtime._disposed || runtime._computeNow();
-	    });
-	  });
+	  return new Promise(frame).then(() => this._disposed ? undefined : this._computeNow());
 	}
 
-	function runtime_computeNow() {
+	async function runtime_computeNow() {
 	  var queue = [],
 	      variables,
-	      variable;
+	      variable,
+	      precomputes = this._precomputes;
+
+	  // If there are any paused generators, resume them before computing so they
+	  // can update (if synchronous) before computing downstream variables.
+	  if (precomputes.length) {
+	    this._precomputes = [];
+	    for (const callback of precomputes) callback();
+	    await runtime_defer(3);
+	  }
 
 	  // Compute the reachability of the transitive closure of dirty variables.
 	  // Any newly-reachable variable must also be recomputed.
@@ -4434,6 +4485,16 @@
 	  }
 	}
 
+	// We want to give generators, if they’re defined synchronously, a chance to
+	// update before computing downstream variables. This creates a synchronous
+	// promise chain of the given depth that we’ll await before recomputing
+	// downstream variables.
+	function runtime_defer(depth = 0) {
+	  let p = Promise.resolve();
+	  for (let i = 0; i < depth; ++i) p = p.then(() => {});
+	  return p;
+	}
+
 	function variable_circular(variable) {
 	  const inputs = new Set(variable._inputs);
 	  for (const i of inputs) {
@@ -4481,10 +4542,21 @@
 	  variable._invalidate();
 	  variable._invalidate = noop;
 	  variable._pending();
-	  var value0 = variable._value,
-	      version = ++variable._version,
-	      invalidation = null,
-	      promise = variable._promise = Promise.all(variable._inputs.map(variable_value)).then(function(inputs) {
+
+	  const value0 = variable._value;
+	  const version = ++variable._version;
+
+	  // Lazily-constructed invalidation variable; only constructed if referenced as an input.
+	  let invalidation = null;
+
+	  // If the variable doesn’t have any inputs, we can optimize slightly.
+	  const promise = variable._promise = (variable._inputs.length
+	      ? Promise.all(variable._inputs.map(variable_value)).then(define)
+	      : new Promise(resolve => resolve(variable._definition.call(value0))))
+	    .then(generate);
+
+	  // Compute the initial value of the variable.
+	  function define(inputs) {
 	    if (variable._version !== version) return;
 
 	    // Replace any reference to invalidation with the promise, lazily.
@@ -4502,64 +4574,82 @@
 	      }
 	    }
 
-	    // Compute the initial value of the variable.
 	    return variable._definition.apply(value0, inputs);
-	  }).then(function(value) {
-	    // If the value is a generator, then retrieve its first value,
-	    // and dispose of the generator if the variable is invalidated.
-	    // Note that the cell may already have been invalidated here,
-	    // in which case we need to terminate the generator immediately!
+	  }
+
+	  // If the value is a generator, then retrieve its first value, and dispose of
+	  // the generator if the variable is invalidated. Note that the cell may
+	  // already have been invalidated here, in which case we need to terminate the
+	  // generator immediately!
+	  function generate(value) {
 	    if (generatorish(value)) {
 	      if (variable._version !== version) return void value.return();
 	      (invalidation || variable_invalidator(variable)).then(variable_return(value));
-	      return variable_precompute(variable, version, promise, value);
+	      return variable_generate(variable, version, value);
 	    }
 	    return value;
-	  });
-	  promise.then(function(value) {
+	  }
+
+	  promise.then((value) => {
 	    if (variable._version !== version) return;
 	    variable._value = value;
 	    variable._fulfilled(value);
-	  }, function(error) {
+	  }, (error) => {
 	    if (variable._version !== version) return;
 	    variable._value = undefined;
 	    variable._rejected(error);
 	  });
 	}
 
-	function variable_precompute(variable, version, promise, generator) {
-	  function recompute() {
-	    var promise = new Promise(function(resolve) {
-	      resolve(generator.next());
-	    }).then(function(next) {
-	      return next.done ? undefined : Promise.resolve(next.value).then(function(value) {
-	        if (variable._version !== version) return;
-	        variable_postrecompute(variable, value, promise).then(recompute);
-	        variable._fulfilled(value);
-	        return value;
-	      });
+	function variable_generate(variable, version, generator) {
+	  const runtime = variable._module._runtime;
+	  let currentValue; // so that yield resolves to the yielded value
+
+	  // Retrieve the next value from the generator; if successful, invoke the
+	  // specified callback. The returned promise resolves to the yielded value, or
+	  // to undefined if the generator is done.
+	  function compute(onfulfilled) {
+	    return new Promise(resolve => resolve(generator.next(currentValue))).then(({done, value}) => {
+	      return done ? undefined : Promise.resolve(value).then(onfulfilled);
 	    });
-	    promise.catch(function(error) {
+	  }
+
+	  // Retrieve the next value from the generator; if successful, fulfill the
+	  // variable, compute downstream variables, and schedule the next value to be
+	  // pulled from the generator at the start of the next animation frame. If not
+	  // successful, reject the variable, compute downstream variables, and return.
+	  function recompute() {
+	    const promise = compute((value) => {
 	      if (variable._version !== version) return;
-	      variable_postrecompute(variable, undefined, promise);
+	      currentValue = value;
+	      postcompute(value, promise).then(() => runtime._precompute(recompute));
+	      variable._fulfilled(value);
+	      return value;
+	    });
+	    promise.catch((error) => {
+	      if (variable._version !== version) return;
+	      postcompute(undefined, promise);
 	      variable._rejected(error);
 	    });
 	  }
-	  return new Promise(function(resolve) {
-	    resolve(generator.next());
-	  }).then(function(next) {
-	    if (next.done) return;
-	    promise.then(recompute);
-	    return next.value;
-	  });
-	}
 
-	function variable_postrecompute(variable, value, promise) {
-	  var runtime = variable._module._runtime;
-	  variable._value = value;
-	  variable._promise = promise;
-	  variable._outputs.forEach(runtime._updates.add, runtime._updates); // TODO Cleaner?
-	  return runtime._compute();
+	  // After the generator fulfills or rejects, set its current value, promise,
+	  // and schedule any downstream variables for update.
+	  function postcompute(value, promise) {
+	    variable._value = value;
+	    variable._promise = promise;
+	    variable._outputs.forEach(runtime._updates.add, runtime._updates);
+	    return runtime._compute();
+	  }
+
+	  // When retrieving the first value from the generator, the promise graph is
+	  // already established, so we only need to queue the next pull.
+	  return compute((value) => {
+	    if (variable._version !== version) return;
+	    currentValue = value;
+	    runtime._precompute(recompute);
+	    return value;
+	  });
 	}
 
 	function variable_error(variable, error) {
@@ -5301,6 +5391,16 @@
 	  return Array.isArray(array) ? array : Array.from(array);
 	}
 
+	function iterable(array) {
+	  return array ? typeof array[Symbol.iterator] === "function" : false;
+	}
+
+	function maybeColumns(data) {
+	  if (iterable(data.columns)) return data.columns; // d3-dsv, FileAttachment
+	  if (data.schema && iterable(data.schema.fields)) return Array.from(data.schema.fields, f => f.name); // apache-arrow
+	  if (typeof data.columnNames === "function") return data.columnNames(); // arquero
+	}
+
 	// Note: use formatAuto (or any other localized format) to present values to the
 	// user; stringify is only intended for machine values.
 	function stringify(x) {
@@ -5725,6 +5825,7 @@
 	  // of data to the table without an explicit await.
 	  if (data && typeof data.then === "function") {
 	    Object.defineProperty(root, "value", {
+	      configurable: true, // allow defineProperty again on initialization
 	      set() {
 	        throw new Error("cannot set value while data is unresolved");
 	      }
@@ -5743,7 +5844,7 @@
 	  },
 	  data,
 	  {
-	    columns, // array of column names
+	    columns = maybeColumns(data), // array of column names
 	    value, // initial selection
 	    required = true, // if true, the value is everything if nothing is selected
 	    sort, // name of column to sort by, if any
@@ -6073,9 +6174,6 @@
 	}
 
 	function columnsof(data) {
-	  if (Array.isArray(data.columns)) return data.columns; // d3-dsv, FileAttachment
-	  if (data.schema && Array.isArray(data.schema.fields)) return data.schema.fields.map(f => f.name); // apache-arrow
-	  if (typeof data.columnNames === "function") return data.columnNames(); // arquero
 	  const columns = new Set();
 	  for (const row of data) {
 	    for (const name in row) {
@@ -6085,30 +6183,331 @@
 	  return Array.from(columns);
 	}
 
-	// https://observablehq.com/@robinl/to-embed-in-splink-outputs@290
 	function _1$1(md){return(
-	md`# To embed in splink outputs`
+	md`# Splink cluster studio (splink3 version)`
 	)}
 
-	function _x(splink_vis_utils){return(
-	splink_vis_utils.range([0, 100])
+	function _selected_cluster_id(splink_vis_utils,cluster_unique_ids){return(
+	splink_vis_utils.select(cluster_unique_ids, {
+	  label: "Choose cluster: "
+	})
 	)}
 
-	function _embedded(vegaEmbed,splink_vis_utils,spec){return(
+	function _edge_colour_metric(splink_vis_utils,raw_edges_data)
+	{
+	  const node_size_options = splink_vis_utils.detect_edge_colour_metrics(
+	    raw_edges_data
+	  );
+
+	  let v = splink_vis_utils.select(node_size_options, {
+	    label: "Choose metric for edge colour: "
+	  });
+	  if (node_size_options.length == 1) {
+	    v.style.visibility = "hidden";
+	  }
+	  return v;
+	}
+
+
+	function _node_size_metric(splink_vis_utils,raw_nodes_data)
+	{
+	  const node_size_options = splink_vis_utils.detect_node_size_metrics(
+	    raw_nodes_data
+	  );
+	  let v = splink_vis_utils.select(node_size_options, {
+	    label: "Choose metric for node size: "
+	  });
+	  if (node_size_options.length == 1) {
+	    v.style.visibility = "hidden";
+	  }
+	  return v;
+	}
+
+
+	function _node_colour_metric(splink_vis_utils,raw_nodes_data)
+	{
+	  const node_size_options = splink_vis_utils.detect_node_colour_metrics(
+	    raw_nodes_data
+	  );
+
+	  let v = splink_vis_utils.select(node_size_options, {
+	    label: "Choose metric for node colour: "
+	  });
+	  if (node_size_options.length == 1) {
+	    v.style.visibility = "hidden";
+	  }
+	  return v;
+	}
+
+
+	function _show_edge_comparison_type$1(splink_vis_utils){return(
+	splink_vis_utils.checkbox(
+	  new Map([
+	    ["Show waterfall chart on edge click", "show_waterfall"],
+	    ["Show raw edge data on edge click", "raw_edge_data"],
+
+	    ["Show comparison columns on edge click", "cc_data"],
+	    ["Show history of node clicks", "node_history"]
+	  ]),
+	  {
+	    label: "",
+	    value: ["show_waterfall", "raw_edge_data", "node_history"]
+	  }
+	)
+	)}
+
+	function _show_full_tables(raw_clusters_data,splink_vis_utils)
+	{
+	  let options;
+	  
+	  if (raw_clusters_data == null) {
+	    options = new Map([
+	      ["Show table of all edges", "edges"],
+	      ["Show table of all nodes", "nodes"]
+	    ]);
+	  } else {
+	    options = new Map([
+	      ["Show cluster info", "clusters"],
+	      ["Show table of all edges", "edges"],
+	      ["Show table of all nodes", "nodes"],
+	      ["Show table of all clusters", "all_clusters"]
+	    ]);
+	  }
+
+	  return splink_vis_utils.checkbox(options, {
+	    label: ""
+	  });
+	}
+
+
+	function _score_threshold_filter(splink_vis_utils){return(
+	splink_vis_utils.range([-20, 20], {
+	  label: 'Filter out edges with match weight below threshold:',
+	  value: -20,
+	  step: 0.1
+	})
+	)}
+
+	function _corresponding_probability(html,splink_vis_utils,score_threshold_filter){return(
+	html`Your chosen threshold corresponds to a match probability of ${splink_vis_utils
+  .log2_bayes_factor_to_prob(score_threshold_filter)
+  .toPrecision(4)}`
+	)}
+
+	function _additional_graph_controls(splink_vis_utils){return(
+	splink_vis_utils.checkbox(
+	  new Map([["Show additional graph controls", "graph_controls"]]),
+	  {
+	    label: ""
+	  }
+	)
+	)}
+
+	function _edge_table(selected_edge,html,show_edge_comparison_type,splink_vis_utils,ss)
+	{
+	  if (selected_edge == undefined) {
+	    return html``;
+	  }
+
+	  if (show_edge_comparison_type.includes("raw_edge_data")) {
+	    return html`
+  <h3>Rows compared by selected edge</h3>   
+    ${splink_vis_utils.edge_row_to_table(selected_edge, ss)}
+
+`;
+	  }
+
+	  return html``;
+	}
+
+
+	function _nothing_selected_message$1(no_edge_selected,no_node_selected,html,selected_edge)
+	{
+	  if (no_edge_selected && no_node_selected) {
+	    return html`<span style="color:red"'>Click on nodes and/or edges in the below graph to show data and chart</span>`;
+	  }
+
+	  if (typeof selected_edge == 'undefined') {
+	    return html`<span style="color:red"'>Click on an edges in the below graph to show waterfall chart and table</span>`;
+	  }
+
+	  return html``;
+	}
+
+
+	function _force_directed_chart(vegaEmbed,splink_vis_utils,spec){return(
 	vegaEmbed(splink_vis_utils.cloneDeep(spec))
 	)}
 
-	function _spec(splink_vis_utils,raw_nodes_data,ss,raw_edges_data)
+	function _node_history_table(node_history,html,show_edge_comparison_type,splink_vis_utils,ss)
+	{
+	  if (node_history.length == 0) {
+	    return html``;
+	  }
+	  if (show_edge_comparison_type.includes("node_history")) {
+	    return html`
+<h3>History of clicked nodes</h3> 
+${splink_vis_utils.node_rows_to_table(node_history, ss)}
+`;
+	  }
+	  return html``;
+	}
+
+
+	function _refresh$1(Inputs){return(
+	Inputs.button("refresh splink_vis_utils javascript lib")
+	)}
+
+	function _cluster_table(selected_cluster_metrics,html,show_full_tables,splink_vis_utils)
+	{
+	  if (selected_cluster_metrics == null) {
+	    return html``;
+	  }
+	  if (!show_full_tables.includes("clusters")) {
+	    return html``;
+	  }
+	  return html`
+  <h3> Cluster metrics </h3>
+  ${splink_vis_utils.single_cluster_table(selected_cluster_metrics)}
+`;
+	}
+
+
+	function _comparison_columns_table$1(no_edge_selected,html,show_edge_comparison_type,splink_vis_utils,selected_edge,ss)
+	{
+	  if (no_edge_selected) {
+	    return html``;
+	  }
+	  if (show_edge_comparison_type.includes("cc_data")) {
+	    return splink_vis_utils.comparison_column_table(selected_edge, ss);
+	  }
+	  return html``;
+	}
+
+
+	function _waterfall_chart$1(no_edge_selected,html,show_edge_comparison_type,splink_vis_utils,selected_edge,ss,vegaEmbed)
+	{
+	  if (no_edge_selected) {
+	    return html``;
+	  } else if (!show_edge_comparison_type.includes("show_waterfall")) {
+	    return html``;
+	  } else {
+	    debugger;
+	    let waterfall_data = splink_vis_utils.get_waterfall_chart_data(
+	      selected_edge,
+	      ss
+	    );
+	    debugger;
+
+	    return vegaEmbed(
+	      splink_vis_utils.get_waterfall_chart_spec(waterfall_data, {})
+	    );
+	  }
+	}
+
+
+	function _edges_full_table(show_full_tables,html,splink_vis_utils,filtered_edges)
+	{
+	  if (show_full_tables.includes("edges")) {
+	    // const filtered_edges = filtered_edges.filter(
+	    //   d => d[svu_options.cluster_colname + "_l"] == selected_cluster_id
+	    // );
+	    return html`
+    <h3>Edges corresponding to selected cluster, filtered by threshold</h3>
+    Click column headers to sort
+    
+    ${splink_vis_utils.table(filtered_edges, { layout: "auto" })}
+
+  `;
+	  } else {
+	    return html``;
+	  }
+	}
+
+
+	function _nodes_full_table(show_full_tables,raw_nodes_data,svu_options,selected_cluster_id,html,splink_vis_utils)
+	{
+	  if (show_full_tables.includes("nodes")) {
+	    const filtered_nodes = raw_nodes_data.filter(
+	      d => d[svu_options.cluster_colname] == selected_cluster_id
+	    );
+
+	    return html`
+    <h3>All nodes corresponding to selected cluster</h3>
+    Click column headers to sort
+    
+    ${splink_vis_utils.table(filtered_nodes, { layout: "auto" })}
+
+  `;
+	  } else {
+	    return html``;
+	  }
+	}
+
+
+	function _clusters_full_table(show_full_tables,html,splink_vis_utils,raw_clusters_data)
+	{
+	  if (show_full_tables.includes("all_clusters")) {
+	    return html`
+    <h3>All clusters</h3>
+    Click column headers to sort
+    
+    ${splink_vis_utils.table(raw_clusters_data, { layout: "auto" })}
+
+  `;
+	  } else {
+	    return html``;
+	  }
+	}
+
+
+	function _22$1(md){return(
+	md`## Outputs`
+	)}
+
+	function _spec(splink_vis_utils,filtered_nodes,ss,filtered_edges,edge_colour_metric,node_size_metric,node_colour_metric,width,additional_graph_controls)
 	{
 	  let formatted_nodes = splink_vis_utils.format_nodes_data_for_force_directed(
-	    raw_nodes_data,
+	    filtered_nodes,
 	    ss
 	  );
+
 	  let formatted_edges = splink_vis_utils.format_edges_data_for_force_directed(
-	    raw_edges_data,
+	    filtered_edges,
 	    ss
 	  );
-	  let s = new splink_vis_utils.ForceDirectedChart(formatted_nodes, formatted_edges);
+	  let s = new splink_vis_utils.ForceDirectedChart(
+	    formatted_nodes,
+	    formatted_edges
+	  );
+
+	  let edge_colour_args =
+	    splink_vis_utils.metric_vis_args["edge_colour"][edge_colour_metric];
+
+	  s.set_edge_colour_metric(...Object.values(edge_colour_args));
+
+	  if (node_size_metric != "none") {
+	    let node_size_args =
+	      splink_vis_utils.metric_vis_args["node_size"][node_size_metric];
+	    s.set_node_area_metric(...Object.values(node_size_args));
+	  }
+
+	  if (node_colour_metric != "none") {
+	    let node_size_args =
+	      splink_vis_utils.metric_vis_args["node_colour"][node_colour_metric];
+	    s.set_node_colour_metric(...Object.values(node_size_args));
+	  }
+
+	  s.set_height_from_nodes_data();
+
+	  let new_width = width;
+	  if (width > 1500) {
+	    new_width = 1500;
+	  }
+	  s.set_starting_width(new_width);
+	  if (additional_graph_controls.length == 0) {
+	    s.remove_all_sliders();
+	  }
 
 	  return s.spec;
 	}
@@ -6118,1193 +6517,187 @@
 	new splink_vis_utils.SplinkSettings(JSON.stringify(splink_settings))
 	)}
 
-	function _localUrl(){return(
-	"http://127.0.0.1:8080/dist/splink_vis_utils.js"
+	function _no_edge_selected$1(selected_edge){return(
+	typeof selected_edge == 'undefined'
 	)}
 
-	function _raw_nodes_data(){return(
-	[
-	  {
-	    cluster_medium: 0,
-	    unique_id: 107,
-	    first_name: "Gabriel ",
-	    surname: null,
-	    dob: "1977-12-21",
-	    city: "Leds",
-	    email: "rachelschtitm@geore-walker.com",
-	    group: 57,
-	    source_dataset: "df_1"
-	  },
-	  {
-	    cluster_medium: 1,
-	    unique_id: 111,
-	    first_name: "Ntaan ",
-	    surname: "Mcdonald",
-	    dob: "1996-09-09",
-	    city: "London",
-	    email: null,
-	    group: 29,
-	    source_dataset: "df_2"
-	  },
-	  {
-	    cluster_medium: 1,
-	    unique_id: 56,
-	    first_name: "Nathan ",
-	    surname: "Mcdonald",
-	    dob: "1996-09-09",
-	    city: "London",
-	    email: "barbara84@robbins.biz",
-	    group: 29,
-	    source_dataset: "df_1"
-	  },
-	  {
-	    cluster_medium: 1,
-	    unique_id: 55,
-	    first_name: "Nathan ",
-	    surname: "Mcdonald",
-	    dob: "1996-09-09",
-	    city: "London",
-	    email: "barbara84@robbins.biz",
-	    group: 29,
-	    source_dataset: "df_1"
-	  },
-	  {
-	    cluster_medium: 1,
-	    unique_id: 112,
-	    first_name: "Nathan ",
-	    surname: "lconaMd",
-	    dob: "1996-09-09",
-	    city: "London",
-	    email: "birara84@robbins.baz",
-	    group: 29,
-	    source_dataset: "df_2"
-	  },
-	  {
-	    cluster_medium: 1,
-	    unique_id: 109,
-	    first_name: null,
-	    surname: "Mcdonald",
-	    dob: "1996-09-09",
-	    city: "London",
-	    email: "barbara84@robbins.biz",
-	    group: 29,
-	    source_dataset: "df_2"
-	  },
-	  {
-	    cluster_medium: 2,
-	    unique_id: 118,
-	    first_name: "Nancy ",
-	    surname: "Taylor",
-	    dob: "1989-07-25",
-	    city: "London",
-	    email: "wagnershane@landry.com",
-	    group: 62,
-	    source_dataset: "df_1"
-	  },
-	  {
-	    cluster_medium: 2,
-	    unique_id: 247,
-	    first_name: "Taylor",
-	    surname: "Nancy ",
-	    dob: "1989-07-25",
-	    city: "London",
-	    email: "wagnershane@landry.com",
-	    group: 62,
-	    source_dataset: "df_2"
-	  },
-	  {
-	    cluster_medium: 2,
-	    unique_id: 245,
-	    first_name: "Nancy ",
-	    surname: "Taylor",
-	    dob: "1989-07-25",
-	    city: "London",
-	    email: "wagnershane@landry.com",
-	    group: 62,
-	    source_dataset: "df_2"
-	  },
-	  {
-	    cluster_medium: 2,
-	    unique_id: 246,
-	    first_name: "Nancy ",
-	    surname: "Taylor",
-	    dob: "1989-08-19",
-	    city: "London",
-	    email: "wagnershane@landry.com",
-	    group: 62,
-	    source_dataset: "df_2"
-	  },
-	  {
-	    cluster_medium: 2,
-	    unique_id: 117,
-	    first_name: null,
-	    surname: "Taylor",
-	    dob: "1989-07-25",
-	    city: "London",
-	    email: "wagnershane@landry.com",
-	    group: 62,
-	    source_dataset: "df_1"
-	  },
-	  {
-	    cluster_medium: 2,
-	    unique_id: 248,
-	    first_name: "Nacy ",
-	    surname: "Taylor",
-	    dob: "1989-07-25",
-	    city: "London",
-	    email: "wagnershane@landry.com",
-	    group: 62,
-	    source_dataset: "df_2"
-	  },
-	  {
-	    cluster_medium: 3,
-	    unique_id: 119,
-	    first_name: "Lewis",
-	    surname: "Freddie ",
-	    dob: "1971-12-19",
-	    city: "Southend-on-Sea",
-	    email: "tyler28@weaver-alvarez.com",
-	    group: 63,
-	    source_dataset: "df_1"
-	  },
-	  {
-	    cluster_medium: 3,
-	    unique_id: 120,
-	    first_name: "Lewis",
-	    surname: "Freddie ",
-	    dob: "1971-09-14",
-	    city: "Southend-on-Sea",
-	    email: "tyler28@weaver-alvarez.com",
-	    group: 63,
-	    source_dataset: "df_1"
-	  },
-	  {
-	    cluster_medium: 3,
-	    unique_id: 249,
-	    first_name: "Freddi ",
-	    surname: "Lewis",
-	    dob: "1971-12-19",
-	    city: "Southend-on-Sea",
-	    email: "tyler28@wecveralvarez.aom",
-	    group: 63,
-	    source_dataset: "df_2"
-	  },
-	  {
-	    cluster_medium: 3,
-	    unique_id: 250,
-	    first_name: null,
-	    surname: "Lewis",
-	    dob: "1971-12-19",
-	    city: "Southend-on-Sea",
-	    email: "tyler28@weaver-alvarez.com",
-	    group: 63,
-	    source_dataset: "df_2"
-	  },
-	  {
-	    cluster_medium: 4,
-	    unique_id: 11,
-	    first_name: "lmeAi ",
-	    surname: "Alexander",
-	    dob: "1983-05-19",
-	    city: "Glasgow",
-	    email: "icampbell@allen-lewis.org",
-	    group: 3,
-	    source_dataset: "df_2"
-	  },
-	  {
-	    cluster_medium: 4,
-	    unique_id: 10,
-	    first_name: "Amelia ",
-	    surname: "Alexander",
-	    dob: "1983-05-19",
-	    city: "Glasgow",
-	    email: "icampbell@allen-lewis.org",
-	    group: 3,
-	    source_dataset: "df_2"
-	  },
-	  {
-	    cluster_medium: 6,
-	    unique_id: 121,
-	    first_name: "Adam ",
-	    surname: "Berry",
-	    dob: "1986-02-08",
-	    city: "London",
-	    email: "walterdunn@pham-hill.com",
-	    group: 64,
-	    source_dataset: "df_1"
-	  },
-	  {
-	    cluster_medium: 6,
-	    unique_id: 252,
-	    first_name: "Adam ",
-	    surname: "Berr",
-	    dob: "1986-02-08",
-	    city: "London",
-	    email: "walterdunn@pham-hill.com",
-	    group: 64,
-	    source_dataset: "df_2"
-	  },
-	  {
-	    cluster_medium: 6,
-	    unique_id: 253,
-	    first_name: "Aad ",
-	    surname: "Berry",
-	    dob: "1986-02-08",
-	    city: "London",
-	    email: "walterdunn@pham-hill.com",
-	    group: 64,
-	    source_dataset: "df_2"
-	  }
-	]
+	function _no_node_selected(selected_node){return(
+	typeof selected_node == 'undefined'
 	)}
 
-	function _raw_edges_data(){return(
-	[
-	  {
-	    tf_adjusted_match_prob: 0.9999999929,
-	    match_probability: 0.9999917496,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 55,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 109,
-	    first_name_l: "Nathan ",
-	    first_name_r: null,
-	    gamma_first_name: -1,
-	    surname_l: "Mcdonald",
-	    surname_r: "Mcdonald",
-	    gamma_surname: 2,
-	    dob_l: "1996-09-09",
-	    dob_r: "1996-09-09",
-	    gamma_dob: 1,
-	    email_l: "barbara84@robbins.biz",
-	    email_r: "barbara84@robbins.biz",
-	    gamma_email: 1,
-	    group_l: 29,
-	    group_r: 29,
-	    cluster_medium_l: 1,
-	    cluster_medium_r: 1
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9999999929,
-	    match_probability: 0.9999917496,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 56,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 109,
-	    first_name_l: "Nathan ",
-	    first_name_r: null,
-	    gamma_first_name: -1,
-	    surname_l: "Mcdonald",
-	    surname_r: "Mcdonald",
-	    gamma_surname: 2,
-	    dob_l: "1996-09-09",
-	    dob_r: "1996-09-09",
-	    gamma_dob: 1,
-	    email_l: "barbara84@robbins.biz",
-	    email_r: "barbara84@robbins.biz",
-	    gamma_email: 1,
-	    group_l: 29,
-	    group_r: 29,
-	    cluster_medium_l: 1,
-	    cluster_medium_r: 1
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9996251539,
-	    match_probability: 0.988646879,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 55,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 112,
-	    first_name_l: "Nathan ",
-	    first_name_r: "Nathan ",
-	    gamma_first_name: 2,
-	    surname_l: "Mcdonald",
-	    surname_r: "lconaMd",
-	    gamma_surname: 0,
-	    dob_l: "1996-09-09",
-	    dob_r: "1996-09-09",
-	    gamma_dob: 1,
-	    email_l: "barbara84@robbins.biz",
-	    email_r: "birara84@robbins.baz",
-	    gamma_email: 0,
-	    group_l: 29,
-	    group_r: 29,
-	    cluster_medium_l: 1,
-	    cluster_medium_r: 1
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9996251539,
-	    match_probability: 0.988646879,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 56,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 112,
-	    first_name_l: "Nathan ",
-	    first_name_r: "Nathan ",
-	    gamma_first_name: 2,
-	    surname_l: "Mcdonald",
-	    surname_r: "lconaMd",
-	    gamma_surname: 0,
-	    dob_l: "1996-09-09",
-	    dob_r: "1996-09-09",
-	    gamma_dob: 1,
-	    email_l: "barbara84@robbins.biz",
-	    email_r: "birara84@robbins.baz",
-	    gamma_email: 0,
-	    group_l: 29,
-	    group_r: 29,
-	    cluster_medium_l: 1,
-	    cluster_medium_r: 1
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.994051709,
-	    match_probability: 0.994051709,
-	    source_dataset_l: "df_2",
-	    unique_id_l: 111,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 112,
-	    first_name_l: "Ntaan ",
-	    first_name_r: "Nathan ",
-	    gamma_first_name: 1,
-	    surname_l: "Mcdonald",
-	    surname_r: "lconaMd",
-	    gamma_surname: 0,
-	    dob_l: "1996-09-09",
-	    dob_r: "1996-09-09",
-	    gamma_dob: 1,
-	    email_l: null,
-	    email_r: "birara84@robbins.baz",
-	    gamma_email: -1,
-	    group_l: 29,
-	    group_r: 29,
-	    cluster_medium_l: 1,
-	    cluster_medium_r: 1
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.4404287501,
-	    match_probability: 0.4404287501,
-	    source_dataset_l: "df_2",
-	    unique_id_l: 109,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 112,
-	    first_name_l: null,
-	    first_name_r: "Nathan ",
-	    gamma_first_name: -1,
-	    surname_l: "Mcdonald",
-	    surname_r: "lconaMd",
-	    gamma_surname: 0,
-	    dob_l: "1996-09-09",
-	    dob_r: "1996-09-09",
-	    gamma_dob: 1,
-	    email_l: "barbara84@robbins.biz",
-	    email_r: "birara84@robbins.baz",
-	    gamma_email: 0,
-	    group_l: 29,
-	    group_r: 29,
-	    cluster_medium_l: 1,
-	    cluster_medium_r: 1
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.995049863,
-	    match_probability: 0.995049863,
-	    source_dataset_l: "df_2",
-	    unique_id_l: 245,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 247,
-	    first_name_l: "Nancy ",
-	    first_name_r: "Taylor",
-	    gamma_first_name: 0,
-	    surname_l: "Taylor",
-	    surname_r: "Nancy ",
-	    gamma_surname: 0,
-	    dob_l: "1989-07-25",
-	    dob_r: "1989-07-25",
-	    gamma_dob: 1,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.2701297195,
-	    match_probability: 0.2701297195,
-	    source_dataset_l: "df_2",
-	    unique_id_l: 246,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 247,
-	    first_name_l: "Nancy ",
-	    first_name_r: "Taylor",
-	    gamma_first_name: 0,
-	    surname_l: "Taylor",
-	    surname_r: "Nancy ",
-	    gamma_surname: 0,
-	    dob_l: "1989-08-19",
-	    dob_r: "1989-07-25",
-	    gamma_dob: 0,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.99816319,
-	    match_probability: 0.99816319,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 117,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 247,
-	    first_name_l: null,
-	    first_name_r: "Taylor",
-	    gamma_first_name: -1,
-	    surname_l: "Taylor",
-	    surname_r: "Nancy ",
-	    gamma_surname: 0,
-	    dob_l: "1989-07-25",
-	    dob_r: "1989-07-25",
-	    gamma_dob: 1,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.995049863,
-	    match_probability: 0.995049863,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 118,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 247,
-	    first_name_l: "Nancy ",
-	    first_name_r: "Taylor",
-	    gamma_first_name: 0,
-	    surname_l: "Taylor",
-	    surname_r: "Nancy ",
-	    gamma_surname: 0,
-	    dob_l: "1989-07-25",
-	    dob_r: "1989-07-25",
-	    gamma_dob: 1,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.5001360677,
-	    match_probability: 0.5001360677,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 120,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 250,
-	    first_name_l: "Lewis",
-	    first_name_r: null,
-	    gamma_first_name: -1,
-	    surname_l: "Freddie ",
-	    surname_r: "Lewis",
-	    gamma_surname: 0,
-	    dob_l: "1971-09-14",
-	    dob_r: "1971-12-19",
-	    gamma_dob: 0,
-	    email_l: "tyler28@weaver-alvarez.com",
-	    email_r: "tyler28@weaver-alvarez.com",
-	    gamma_email: 1,
-	    group_l: 63,
-	    group_r: 63,
-	    cluster_medium_l: 3,
-	    cluster_medium_r: 3
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9999017555,
-	    match_probability: 0.994335954,
-	    source_dataset_l: "df_2",
-	    unique_id_l: 249,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 250,
-	    first_name_l: "Freddi ",
-	    first_name_r: null,
-	    gamma_first_name: -1,
-	    surname_l: "Lewis",
-	    surname_r: "Lewis",
-	    gamma_surname: 2,
-	    dob_l: "1971-12-19",
-	    dob_r: "1971-12-19",
-	    gamma_dob: 1,
-	    email_l: "tyler28@wecveralvarez.aom",
-	    email_r: "tyler28@weaver-alvarez.com",
-	    gamma_email: 0,
-	    group_l: 63,
-	    group_r: 63,
-	    cluster_medium_l: 3,
-	    cluster_medium_r: 3
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.99816319,
-	    match_probability: 0.99816319,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 119,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 250,
-	    first_name_l: "Lewis",
-	    first_name_r: null,
-	    gamma_first_name: -1,
-	    surname_l: "Freddie ",
-	    surname_r: "Lewis",
-	    gamma_surname: 0,
-	    dob_l: "1971-12-19",
-	    dob_r: "1971-12-19",
-	    gamma_dob: 1,
-	    email_l: "tyler28@weaver-alvarez.com",
-	    email_r: "tyler28@weaver-alvarez.com",
-	    gamma_email: 1,
-	    group_l: 63,
-	    group_r: 63,
-	    cluster_medium_l: 3,
-	    cluster_medium_r: 3
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9999566321,
-	    match_probability: 0.9999917496,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 117,
-	    source_dataset_r: "df_1",
-	    unique_id_r: 118,
-	    first_name_l: null,
-	    first_name_r: "Nancy ",
-	    gamma_first_name: -1,
-	    surname_l: "Taylor",
-	    surname_r: "Taylor",
-	    gamma_surname: 2,
-	    dob_l: "1989-07-25",
-	    dob_r: "1989-07-25",
-	    gamma_dob: 1,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 1.0,
-	    match_probability: 0.9999999254,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 55,
-	    source_dataset_r: "df_1",
-	    unique_id_r: 56,
-	    first_name_l: "Nathan ",
-	    first_name_r: "Nathan ",
-	    gamma_first_name: 2,
-	    surname_l: "Mcdonald",
-	    surname_r: "Mcdonald",
-	    gamma_surname: 2,
-	    dob_l: "1996-09-09",
-	    dob_r: "1996-09-09",
-	    gamma_dob: 1,
-	    email_l: "barbara84@robbins.biz",
-	    email_r: "barbara84@robbins.biz",
-	    gamma_email: 1,
-	    group_l: 29,
-	    group_r: 29,
-	    cluster_medium_l: 1,
-	    cluster_medium_r: 1
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9999999769,
-	    match_probability: 0.9999731722,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 55,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 111,
-	    first_name_l: "Nathan ",
-	    first_name_r: "Ntaan ",
-	    gamma_first_name: 1,
-	    surname_l: "Mcdonald",
-	    surname_r: "Mcdonald",
-	    gamma_surname: 2,
-	    dob_l: "1996-09-09",
-	    dob_r: "1996-09-09",
-	    gamma_dob: 1,
-	    email_l: "barbara84@robbins.biz",
-	    email_r: null,
-	    gamma_email: -1,
-	    group_l: 29,
-	    group_r: 29,
-	    cluster_medium_l: 1,
-	    cluster_medium_r: 1
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9999999769,
-	    match_probability: 0.9999731722,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 56,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 111,
-	    first_name_l: "Nathan ",
-	    first_name_r: "Ntaan ",
-	    gamma_first_name: 1,
-	    surname_l: "Mcdonald",
-	    surname_r: "Mcdonald",
-	    gamma_surname: 2,
-	    dob_l: "1996-09-09",
-	    dob_r: "1996-09-09",
-	    gamma_dob: 1,
-	    email_l: "barbara84@robbins.biz",
-	    email_r: null,
-	    gamma_email: -1,
-	    group_l: 29,
-	    group_r: 29,
-	    cluster_medium_l: 1,
-	    cluster_medium_r: 1
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9999985892,
-	    match_probability: 0.9983643831,
-	    source_dataset_l: "df_2",
-	    unique_id_l: 109,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 111,
-	    first_name_l: null,
-	    first_name_r: "Ntaan ",
-	    gamma_first_name: -1,
-	    surname_l: "Mcdonald",
-	    surname_r: "Mcdonald",
-	    gamma_surname: 2,
-	    dob_l: "1996-09-09",
-	    dob_r: "1996-09-09",
-	    gamma_dob: 1,
-	    email_l: "barbara84@robbins.biz",
-	    email_r: null,
-	    gamma_email: -1,
-	    group_l: 29,
-	    group_r: 29,
-	    cluster_medium_l: 1,
-	    cluster_medium_r: 1
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9999999754,
-	    match_probability: 0.9999595001,
-	    source_dataset_l: "df_2",
-	    unique_id_l: 245,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 246,
-	    first_name_l: "Nancy ",
-	    first_name_r: "Nancy ",
-	    gamma_first_name: 2,
-	    surname_l: "Taylor",
-	    surname_r: "Taylor",
-	    gamma_surname: 2,
-	    dob_l: "1989-07-25",
-	    dob_r: "1989-08-19",
-	    gamma_dob: 0,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9769868124,
-	    match_probability: 0.9955389635,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 117,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 246,
-	    first_name_l: null,
-	    first_name_r: "Nancy ",
-	    gamma_first_name: -1,
-	    surname_l: "Taylor",
-	    surname_r: "Taylor",
-	    gamma_surname: 2,
-	    dob_l: "1989-07-25",
-	    dob_r: "1989-08-19",
-	    gamma_dob: 0,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9999999754,
-	    match_probability: 0.9999595001,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 118,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 246,
-	    first_name_l: "Nancy ",
-	    first_name_r: "Nancy ",
-	    gamma_first_name: 2,
-	    surname_l: "Taylor",
-	    surname_r: "Taylor",
-	    gamma_surname: 2,
-	    dob_l: "1989-07-25",
-	    dob_r: "1989-08-19",
-	    gamma_dob: 0,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9999992898,
-	    match_probability: 0.9999998649,
-	    source_dataset_l: "df_2",
-	    unique_id_l: 245,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 248,
-	    first_name_l: "Nancy ",
-	    first_name_r: "Nacy ",
-	    gamma_first_name: 1,
-	    surname_l: "Taylor",
-	    surname_r: "Taylor",
-	    gamma_surname: 2,
-	    dob_l: "1989-07-25",
-	    dob_r: "1989-07-25",
-	    gamma_dob: 1,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9996144105,
-	    match_probability: 0.9999266246,
-	    source_dataset_l: "df_2",
-	    unique_id_l: 246,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 248,
-	    first_name_l: "Nancy ",
-	    first_name_r: "Nacy ",
-	    gamma_first_name: 1,
-	    surname_l: "Taylor",
-	    surname_r: "Taylor",
-	    gamma_surname: 2,
-	    dob_l: "1989-08-19",
-	    dob_r: "1989-07-25",
-	    gamma_dob: 0,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.995049863,
-	    match_probability: 0.995049863,
-	    source_dataset_l: "df_2",
-	    unique_id_l: 247,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 248,
-	    first_name_l: "Taylor",
-	    first_name_r: "Nacy ",
-	    gamma_first_name: 0,
-	    surname_l: "Nancy ",
-	    surname_r: "Taylor",
-	    gamma_surname: 0,
-	    dob_l: "1989-07-25",
-	    dob_r: "1989-07-25",
-	    gamma_dob: 1,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9999566321,
-	    match_probability: 0.9999917496,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 117,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 248,
-	    first_name_l: null,
-	    first_name_r: "Nacy ",
-	    gamma_first_name: -1,
-	    surname_l: "Taylor",
-	    surname_r: "Taylor",
-	    gamma_surname: 2,
-	    dob_l: "1989-07-25",
-	    dob_r: "1989-07-25",
-	    gamma_dob: 1,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9999992898,
-	    match_probability: 0.9999998649,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 118,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 248,
-	    first_name_l: "Nancy ",
-	    first_name_r: "Nacy ",
-	    gamma_first_name: 1,
-	    surname_l: "Taylor",
-	    surname_r: "Taylor",
-	    gamma_surname: 2,
-	    dob_l: "1989-07-25",
-	    dob_r: "1989-07-25",
-	    gamma_dob: 1,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 1.0,
-	    match_probability: 0.9999595001,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 119,
-	    source_dataset_r: "df_1",
-	    unique_id_r: 120,
-	    first_name_l: "Lewis",
-	    first_name_r: "Lewis",
-	    gamma_first_name: 2,
-	    surname_l: "Freddie ",
-	    surname_r: "Freddie ",
-	    gamma_surname: 2,
-	    dob_l: "1971-12-19",
-	    dob_r: "1971-09-14",
-	    gamma_dob: 0,
-	    email_l: "tyler28@weaver-alvarez.com",
-	    email_r: "tyler28@weaver-alvarez.com",
-	    gamma_email: 1,
-	    group_l: 63,
-	    group_r: 63,
-	    cluster_medium_l: 3,
-	    cluster_medium_r: 3
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.0005357682,
-	    match_probability: 0.0005357682,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 120,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 249,
-	    first_name_l: "Lewis",
-	    first_name_r: "Freddi ",
-	    gamma_first_name: 0,
-	    surname_l: "Freddie ",
-	    surname_r: "Lewis",
-	    gamma_surname: 0,
-	    dob_l: "1971-09-14",
-	    dob_r: "1971-12-19",
-	    gamma_dob: 0,
-	    email_l: "tyler28@weaver-alvarez.com",
-	    email_r: "tyler28@wecveralvarez.aom",
-	    gamma_email: 0,
-	    group_l: 63,
-	    group_r: 63,
-	    cluster_medium_l: 3,
-	    cluster_medium_r: 3
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.2254941519,
-	    match_probability: 0.2254941519,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 119,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 249,
-	    first_name_l: "Lewis",
-	    first_name_r: "Freddi ",
-	    gamma_first_name: 0,
-	    surname_l: "Freddie ",
-	    surname_r: "Lewis",
-	    gamma_surname: 0,
-	    dob_l: "1971-12-19",
-	    dob_r: "1971-12-19",
-	    gamma_dob: 1,
-	    email_l: "tyler28@weaver-alvarez.com",
-	    email_r: "tyler28@wecveralvarez.aom",
-	    gamma_email: 0,
-	    group_l: 63,
-	    group_r: 63,
-	    cluster_medium_l: 3,
-	    cluster_medium_r: 3
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.999970108,
-	    match_probability: 0.9999776963,
-	    source_dataset_l: "df_2",
-	    unique_id_l: 10,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 11,
-	    first_name_l: "Amelia ",
-	    first_name_r: "lmeAi ",
-	    gamma_first_name: 0,
-	    surname_l: "Alexander",
-	    surname_r: "Alexander",
-	    gamma_surname: 2,
-	    dob_l: "1983-05-19",
-	    dob_r: "1983-05-19",
-	    gamma_dob: 1,
-	    email_l: "icampbell@allen-lewis.org",
-	    email_r: "icampbell@allen-lewis.org",
-	    gamma_email: 1,
-	    group_l: 3,
-	    group_r: 3,
-	    cluster_medium_l: 4,
-	    cluster_medium_r: 4
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.999958329,
-	    match_probability: 0.999958329,
-	    source_dataset_l: "df_2",
-	    unique_id_l: 252,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 253,
-	    first_name_l: "Adam ",
-	    first_name_r: "Aad ",
-	    gamma_first_name: 0,
-	    surname_l: "Berr",
-	    surname_r: "Berry",
-	    gamma_surname: 1,
-	    dob_l: "1986-02-08",
-	    dob_r: "1986-02-08",
-	    gamma_dob: 1,
-	    email_l: "walterdunn@pham-hill.com",
-	    email_r: "walterdunn@pham-hill.com",
-	    gamma_email: 1,
-	    group_l: 64,
-	    group_r: 64,
-	    cluster_medium_l: 6,
-	    cluster_medium_r: 6
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9999999985,
-	    match_probability: 0.9999776963,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 121,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 253,
-	    first_name_l: "Adam ",
-	    first_name_r: "Aad ",
-	    gamma_first_name: 0,
-	    surname_l: "Berry",
-	    surname_r: "Berry",
-	    gamma_surname: 2,
-	    dob_l: "1986-02-08",
-	    dob_r: "1986-02-08",
-	    gamma_dob: 1,
-	    email_l: "walterdunn@pham-hill.com",
-	    email_r: "walterdunn@pham-hill.com",
-	    gamma_email: 1,
-	    group_l: 64,
-	    group_r: 64,
-	    cluster_medium_l: 6,
-	    cluster_medium_r: 6
-	  },
-	  {
-	    tf_adjusted_match_prob: 0.9999566321,
-	    match_probability: 0.9999917496,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 117,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 245,
-	    first_name_l: null,
-	    first_name_r: "Nancy ",
-	    gamma_first_name: -1,
-	    surname_l: "Taylor",
-	    surname_r: "Taylor",
-	    gamma_surname: 2,
-	    dob_l: "1989-07-25",
-	    dob_r: "1989-07-25",
-	    gamma_dob: 1,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 1.0,
-	    match_probability: 0.9999999254,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 118,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 245,
-	    first_name_l: "Nancy ",
-	    first_name_r: "Nancy ",
-	    gamma_first_name: 2,
-	    surname_l: "Taylor",
-	    surname_r: "Taylor",
-	    gamma_surname: 2,
-	    dob_l: "1989-07-25",
-	    dob_r: "1989-07-25",
-	    gamma_dob: 1,
-	    email_l: "wagnershane@landry.com",
-	    email_r: "wagnershane@landry.com",
-	    gamma_email: 1,
-	    group_l: 62,
-	    group_r: 62,
-	    cluster_medium_l: 2,
-	    cluster_medium_r: 2
-	  },
-	  {
-	    tf_adjusted_match_prob: 1.0,
-	    match_probability: 0.9999998607,
-	    source_dataset_l: "df_1",
-	    unique_id_l: 121,
-	    source_dataset_r: "df_2",
-	    unique_id_r: 252,
-	    first_name_l: "Adam ",
-	    first_name_r: "Adam ",
-	    gamma_first_name: 2,
-	    surname_l: "Berry",
-	    surname_r: "Berr",
-	    gamma_surname: 1,
-	    dob_l: "1986-02-08",
-	    dob_r: "1986-02-08",
-	    gamma_dob: 1,
-	    email_l: "walterdunn@pham-hill.com",
-	    email_r: "walterdunn@pham-hill.com",
-	    gamma_email: 1,
-	    group_l: 64,
-	    group_r: 64,
-	    cluster_medium_l: 6,
-	    cluster_medium_r: 6
-	  }
-	]
+	function _27(md){return(
+	md`## Data processing`
 	)}
 
-	function _splink_settings(){return(
+	function _cluster_unique_ids(splink_vis_utils,raw_nodes_data,svu_options,named_clusters)
 	{
-	  link_type: "link_and_dedupe",
-	  blocking_rules: ["l.city = r.city"],
-	  comparison_columns: [
-	    {
-	      col_name: "first_name",
-	      num_levels: 3,
-	      term_frequency_adjustments: true,
-	      gamma_index: 0,
-	      data_type: "string",
-	      fix_u_probabilities: false,
-	      fix_m_probabilities: false,
-	      case_expression:
-	        "case\n    when (first_name_l is null or first_name_r is null) then -1\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 1.0 then 2\n    when jaro_winkler_sim(first_name_l, first_name_r) >= 0.88 then 1\n    else 0 end as gamma_first_name",
-	      m_probabilities: [
-	        0.36731645464897156,
-	        0.17439667880535126,
-	        0.4582868814468384
-	      ],
-	      u_probabilities: [
-	        0.9930018782615662,
-	        0.0028558988124132156,
-	        0.0041422066278755665
-	      ]
-	    },
-	    {
-	      col_name: "surname",
-	      num_levels: 3,
-	      term_frequency_adjustments: true,
-	      gamma_index: 1,
-	      data_type: "string",
-	      fix_u_probabilities: false,
-	      fix_m_probabilities: false,
-	      case_expression:
-	        "case\n    when (surname_l is null or surname_r is null) then -1\n    when jaro_winkler_sim(surname_l, surname_r) >= 1.0 then 2\n    when jaro_winkler_sim(surname_l, surname_r) >= 0.88 then 1\n    else 0 end as gamma_surname",
-	      m_probabilities: [
-	        0.34741583466529846,
-	        0.12415848672389984,
-	        0.5284256935119629
-	      ],
-	      u_probabilities: [
-	        0.9902822375297546,
-	        0.0029645985923707485,
-	        0.006753162480890751
-	      ]
-	    },
-	    {
-	      col_name: "dob",
-	      gamma_index: 2,
-	      num_levels: 2,
-	      data_type: "string",
-	      term_frequency_adjustments: false,
-	      fix_u_probabilities: false,
-	      fix_m_probabilities: false,
-	      case_expression:
-	        "case\n    when dob_l is null or dob_r is null then -1\n    when dob_l = dob_r then 1\n    else 0 end as gamma_dob",
-	      m_probabilities: [0.3700525462627411, 0.6299474835395813],
-	      u_probabilities: [0.996875524520874, 0.0031245029531419277]
-	    },
-	    {
-	      col_name: "email",
-	      gamma_index: 3,
-	      num_levels: 2,
-	      data_type: "string",
-	      term_frequency_adjustments: false,
-	      fix_u_probabilities: false,
-	      fix_m_probabilities: false,
-	      case_expression:
-	        "case\n    when email_l is null or email_r is null then -1\n    when email_l = email_r then 1\n    else 0 end as gamma_email",
-	      m_probabilities: [0.2865733206272125, 0.7134267091751099],
-	      u_probabilities: [0.9964072108268738, 0.00359280314296484]
-	    }
-	  ],
-	  additional_columns_to_retain: ["group"],
-	  em_convergence: 0.0001,
-	  source_dataset_column_name: "source_dataset",
-	  unique_id_column_name: "unique_id",
-	  retain_matching_columns: true,
-	  retain_intermediate_calculation_columns: false,
-	  max_iterations: 25,
-	  proportion_of_matches: 0.03724955394864082
+	  let cluster_ids = splink_vis_utils.get_unique_cluster_ids_from_nodes_data(
+	    raw_nodes_data,
+	    svu_options.cluster_colname
+	  );
+	  cluster_ids = cluster_ids.map(d => d.toString());
+
+	  if (named_clusters != null) {
+	    let cid_map = new Map();
+
+	    Object.entries(named_clusters).forEach(e => {
+	      cid_map.set(e[1], e[0]);
+
+	      const index = cluster_ids.indexOf(e[0]);
+
+	      if (index > -1) {
+	        cluster_ids.splice(index, 1);
+	      }
+	    });
+
+	    cluster_ids.forEach(d => cid_map.set(d, d));
+
+	    return cid_map;
+	  }
+	  return cluster_ids;
+	}
+
+
+	function _selected_edge$1(observe_chart_data,force_directed_chart){return(
+	observe_chart_data(force_directed_chart, "edge_click")
+	)}
+
+	function _observe_chart_data$1(Generators){return(
+	function observe_chart_data(chart, signal_name) {
+	  return Generators.observe(function(notify) {
+	    // change is a function; calling change triggers the resolution of the current promise with the passed value.
+
+	    // Yield the element’s initial value.
+	    const signaled = (name, value) => notify(chart.signal(signal_name));
+	    chart.addSignalListener(signal_name, signaled);
+	    notify(chart.signal(signal_name));
+
+	    return () => chart.removeSignalListener(signal_name, signaled);
+	  });
 	}
 	)}
 
-	function _a(){return(
-	1
+	function _selected_node(observe_chart_data,force_directed_chart){return(
+	observe_chart_data(force_directed_chart, "node_click")
+	)}
+
+	function _selected_cluster_metrics(raw_clusters_data,svu_options,selected_cluster_id)
+	{
+	  if (raw_clusters_data == null) {
+	    return null;
+	  } else {
+	    let data = raw_clusters_data.filter(
+	      d => d[svu_options.cluster_colname] == selected_cluster_id
+	    );
+	    return data[0];
+	  }
+	}
+
+
+	function _filtered_nodes(splink_vis_utils,raw_nodes_data,svu_options,selected_cluster_id){return(
+	splink_vis_utils.filter_nodes_with_cluster_id(
+	  raw_nodes_data,
+	  svu_options.cluster_colname,
+	  selected_cluster_id
+	)
+	)}
+
+	function _filtered_edges(splink_vis_utils,raw_edges_data,svu_options,selected_cluster_id,score_threshold_filter)
+	{
+	  let edges = splink_vis_utils.filter_edges_with_cluster_id(
+	    raw_edges_data,
+	    svu_options.cluster_colname,
+	    selected_cluster_id
+	  );
+
+	  edges = edges.filter(
+	    d =>
+	      d[svu_options.prob_colname] >=
+	      splink_vis_utils.log2_bayes_factor_to_prob(score_threshold_filter)
+	  );
+
+	  return edges;
+	}
+
+
+	function _node_history(){return(
+	[]
+	)}
+
+	function _control_node_history(selected_node,force_directed_chart,$0)
+	{
+
+	  if (typeof force_directed_chart._signals.node_click.value == 'undefined') {
+	    $0.value = [];
+	  } else {
+	    $0.value.unshift(
+	      force_directed_chart._signals.node_click.value
+	    );
+	    $0.value = $0.value;
+	  }
+	}
+
+
+	function _37(md){return(
+	md`## Following are global variables embedded in final html so not needed in final version`
+	)}
+
+	function _named_clusters(){return(
+	null
 	)}
 
 	function define$1(runtime, observer) {
 	  const main = runtime.module();
 	  main.variable(observer()).define(["md"], _1$1);
-	  main.variable(observer("viewof x")).define("viewof x", ["splink_vis_utils"], _x);
-	  main.variable(observer("x")).define("x", ["Generators", "viewof x"], (G, _) => G.input(_));
-	  main.variable(observer("embedded")).define("embedded", ["vegaEmbed","splink_vis_utils","spec"], _embedded);
-	  main.variable(observer("spec")).define("spec", ["splink_vis_utils","raw_nodes_data","ss","raw_edges_data"], _spec);
+	  main.variable(observer("viewof selected_cluster_id")).define("viewof selected_cluster_id", ["splink_vis_utils","cluster_unique_ids"], _selected_cluster_id);
+	  main.variable(observer("selected_cluster_id")).define("selected_cluster_id", ["Generators", "viewof selected_cluster_id"], (G, _) => G.input(_));
+	  main.variable(observer("viewof edge_colour_metric")).define("viewof edge_colour_metric", ["splink_vis_utils","raw_edges_data"], _edge_colour_metric);
+	  main.variable(observer("edge_colour_metric")).define("edge_colour_metric", ["Generators", "viewof edge_colour_metric"], (G, _) => G.input(_));
+	  main.variable(observer("viewof node_size_metric")).define("viewof node_size_metric", ["splink_vis_utils","raw_nodes_data"], _node_size_metric);
+	  main.variable(observer("node_size_metric")).define("node_size_metric", ["Generators", "viewof node_size_metric"], (G, _) => G.input(_));
+	  main.variable(observer("viewof node_colour_metric")).define("viewof node_colour_metric", ["splink_vis_utils","raw_nodes_data"], _node_colour_metric);
+	  main.variable(observer("node_colour_metric")).define("node_colour_metric", ["Generators", "viewof node_colour_metric"], (G, _) => G.input(_));
+	  main.variable(observer("viewof show_edge_comparison_type")).define("viewof show_edge_comparison_type", ["splink_vis_utils"], _show_edge_comparison_type$1);
+	  main.variable(observer("show_edge_comparison_type")).define("show_edge_comparison_type", ["Generators", "viewof show_edge_comparison_type"], (G, _) => G.input(_));
+	  main.variable(observer("viewof show_full_tables")).define("viewof show_full_tables", ["raw_clusters_data","splink_vis_utils"], _show_full_tables);
+	  main.variable(observer("show_full_tables")).define("show_full_tables", ["Generators", "viewof show_full_tables"], (G, _) => G.input(_));
+	  main.variable(observer("viewof score_threshold_filter")).define("viewof score_threshold_filter", ["splink_vis_utils"], _score_threshold_filter);
+	  main.variable(observer("score_threshold_filter")).define("score_threshold_filter", ["Generators", "viewof score_threshold_filter"], (G, _) => G.input(_));
+	  main.variable(observer("corresponding_probability")).define("corresponding_probability", ["html","splink_vis_utils","score_threshold_filter"], _corresponding_probability);
+	  main.variable(observer("viewof additional_graph_controls")).define("viewof additional_graph_controls", ["splink_vis_utils"], _additional_graph_controls);
+	  main.variable(observer("additional_graph_controls")).define("additional_graph_controls", ["Generators", "viewof additional_graph_controls"], (G, _) => G.input(_));
+	  main.variable(observer("edge_table")).define("edge_table", ["selected_edge","html","show_edge_comparison_type","splink_vis_utils","ss"], _edge_table);
+	  main.variable(observer("nothing_selected_message")).define("nothing_selected_message", ["no_edge_selected","no_node_selected","html","selected_edge"], _nothing_selected_message$1);
+	  main.variable(observer("viewof force_directed_chart")).define("viewof force_directed_chart", ["vegaEmbed","splink_vis_utils","spec"], _force_directed_chart);
+	  main.variable(observer("force_directed_chart")).define("force_directed_chart", ["Generators", "viewof force_directed_chart"], (G, _) => G.input(_));
+	  main.variable(observer("node_history_table")).define("node_history_table", ["node_history","html","show_edge_comparison_type","splink_vis_utils","ss"], _node_history_table);
+	  main.variable(observer("viewof refresh")).define("viewof refresh", ["Inputs"], _refresh$1);
+	  main.variable(observer("refresh")).define("refresh", ["Generators", "viewof refresh"], (G, _) => G.input(_));
+	  main.variable(observer("cluster_table")).define("cluster_table", ["selected_cluster_metrics","html","show_full_tables","splink_vis_utils"], _cluster_table);
+	  main.variable(observer("comparison_columns_table")).define("comparison_columns_table", ["no_edge_selected","html","show_edge_comparison_type","splink_vis_utils","selected_edge","ss"], _comparison_columns_table$1);
+	  main.variable(observer("waterfall_chart")).define("waterfall_chart", ["no_edge_selected","html","show_edge_comparison_type","splink_vis_utils","selected_edge","ss","vegaEmbed"], _waterfall_chart$1);
+	  main.variable(observer("edges_full_table")).define("edges_full_table", ["show_full_tables","html","splink_vis_utils","filtered_edges"], _edges_full_table);
+	  main.variable(observer("nodes_full_table")).define("nodes_full_table", ["show_full_tables","raw_nodes_data","svu_options","selected_cluster_id","html","splink_vis_utils"], _nodes_full_table);
+	  main.variable(observer("clusters_full_table")).define("clusters_full_table", ["show_full_tables","html","splink_vis_utils","raw_clusters_data"], _clusters_full_table);
+	  main.variable(observer()).define(["md"], _22$1);
+	  main.variable(observer("spec")).define("spec", ["splink_vis_utils","filtered_nodes","ss","filtered_edges","edge_colour_metric","node_size_metric","node_colour_metric","width","additional_graph_controls"], _spec);
 	  main.variable(observer("ss")).define("ss", ["splink_vis_utils","splink_settings"], _ss$1);
-	  main.variable(observer("localUrl")).define("localUrl", _localUrl);
-	  main.variable(observer("raw_nodes_data")).define("raw_nodes_data", _raw_nodes_data);
-	  main.variable(observer("raw_edges_data")).define("raw_edges_data", _raw_edges_data);
-	  main.variable(observer("splink_settings")).define("splink_settings", _splink_settings);
-	  main.variable(observer("a")).define("a", _a);
+	  main.variable(observer("no_edge_selected")).define("no_edge_selected", ["selected_edge"], _no_edge_selected$1);
+	  main.variable(observer("no_node_selected")).define("no_node_selected", ["selected_node"], _no_node_selected);
+	  main.variable(observer()).define(["md"], _27);
+	  main.variable(observer("cluster_unique_ids")).define("cluster_unique_ids", ["splink_vis_utils","raw_nodes_data","svu_options","named_clusters"], _cluster_unique_ids);
+	  main.variable(observer("selected_edge")).define("selected_edge", ["observe_chart_data","force_directed_chart"], _selected_edge$1);
+	  main.variable(observer("observe_chart_data")).define("observe_chart_data", ["Generators"], _observe_chart_data$1);
+	  main.variable(observer("selected_node")).define("selected_node", ["observe_chart_data","force_directed_chart"], _selected_node);
+	  main.variable(observer("selected_cluster_metrics")).define("selected_cluster_metrics", ["raw_clusters_data","svu_options","selected_cluster_id"], _selected_cluster_metrics);
+	  main.variable(observer("filtered_nodes")).define("filtered_nodes", ["splink_vis_utils","raw_nodes_data","svu_options","selected_cluster_id"], _filtered_nodes);
+	  main.variable(observer("filtered_edges")).define("filtered_edges", ["splink_vis_utils","raw_edges_data","svu_options","selected_cluster_id","score_threshold_filter"], _filtered_edges);
+	  main.define("initial node_history", _node_history);
+	  main.variable(observer("mutable node_history")).define("mutable node_history", ["Mutable", "initial node_history"], (M, _) => new M(_));
+	  main.variable(observer("node_history")).define("node_history", ["mutable node_history"], _ => _.generator);
+	  main.variable(observer("control_node_history")).define("control_node_history", ["selected_node","force_directed_chart","mutable node_history"], _control_node_history);
+	  main.variable(observer()).define(["md"], _37);
+	  main.variable(observer("named_clusters")).define("named_clusters", _named_clusters);
 	  return main;
 	}
 

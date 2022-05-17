@@ -114,8 +114,16 @@ def render_splink_cluster_studio_html(
     linker: "Linker",
     df_predicted_edges: SplinkDataFrame,
     df_clustered_nodes: SplinkDataFrame,
-    cluster_ids,
+    cluster_ids: list,
+    out_path: str,
+    overwrite: bool = False,
 ):
+    bundle_observable_notebook = True
+
+    svu_options = {
+        "cluster_colname": "cluster_id",
+        "prob_colname": "match_probability",
+    }
 
     cluster_recs = df_clusters_as_records(linker, df_clustered_nodes, cluster_ids)
     df_nodes = create_df_nodes(linker, df_clustered_nodes, cluster_ids)
@@ -123,13 +131,16 @@ def render_splink_cluster_studio_html(
     edges_recs = df_edges_as_records(linker, df_predicted_edges, df_nodes)
 
     # Render template with cluster, nodes and edges
-    template_path = "files/splink_comparison_viewer/template.j2"
+    template_path = "files/splink_cluster_studio/cluster_template.j2"
     template = pkgutil.get_data(__name__, template_path).decode("utf-8")
     template = Template(template)
 
     template_data = {
-        "comparison_vector_data": json.dumps(comparison_vector_data),
-        "splink_settings": json.dumps(splink_settings),
+        "raw_edge_data": json.dumps(edges_recs),
+        "raw_node_data": json.dumps(nodes_recs),
+        "raw_clusters_data": json.dumps(cluster_recs),
+        "splink_settings": json.dumps(linker._settings_obj.as_completed_dict),
+        "svu_options": json.dumps(svu_options),
     }
 
     files = {
@@ -137,7 +148,7 @@ def render_splink_cluster_studio_html(
         "vega": "files/external_js/vega@5.21.0",
         "vegalite": "files/external_js/vega-lite@5.2.0",
         "svu_text": "files/splink_vis_utils/splink_vis_utils.js",
-        "custom_css": "files/splink_comparison_viewer/custom.css",
+        "custom_css": "files/splink_cluster_studio/custom.css",
     }
     for k, v in files.items():
         f = pkgutil.get_data(__name__, v)
