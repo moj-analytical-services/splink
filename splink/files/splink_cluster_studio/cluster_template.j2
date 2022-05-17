@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+
+<title>Splink cluster studio</title>
+<meta name="description" content="desc" />
+
+<style>{{custom_css}}</style>
+
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+
+</head>
+
+<body>
+
+<script>{{vega}}</script>
+<script>{{vegalite}}</script>
+<script>{{embed}}</script>
+
+
+
+    <script>{{svu_text}} </script>
+
+
+
+
+<script>
+ raw_nodes_data = {{raw_node_data}};
+ raw_edges_data = {{raw_edge_data}};
+
+ {% if raw_clusters_data is defined %}
+    raw_clusters_data = {{raw_clusters_data}};
+ {% else %}
+    raw_clusters_data = null
+ {% endif %}
+
+ {% if named_clusters is defined %}
+    named_clusters = {{named_clusters}};
+ {% else %}
+    named_clusters = null
+ {% endif %}
+
+ splink_settings = {{splink_settings}};
+
+ svu_options = {{svu_options}};
+</script>
+
+<div id="outer_container">
+
+    <h2>Splink cluster studio</h2>
+
+    <div id="controls">
+    <div id="observablehq-selected-cluster-id"></div>
+
+    <div id="observablehq-edge_colour_metric"></div>
+    <div id="observablehq-node_size_metric"></div>
+    <div id="observablehq-node_colour_metric"></div>
+
+    <div id="observablehq-show_edge_comparison_type"></div>
+    <div id="observablehq-show_full_tables"></div>
+
+
+    <div id="observablehq-score_threshold_filter"></div>
+    <div id="observablehq-corresponding_probability"></div>
+    <div id="observablehq-additional_graph_controls"></div>
+    </div>
+
+    <div id="observablehq-nothing-selected-message"></div>
+    <div id="observablehq-cluster_table"></div>
+    <div id="observablehq-force-directed-chart"></div>
+
+
+    <div id="observablehq-edge-table"></div>
+    <div id="observablehq-comparison_columns_table"></div>
+    <div id="observablehq-waterfall-chart"></div>
+
+    <div id="observablehq-node_history_table"></div>
+
+
+
+
+
+    <div id="observablehq-edges_full_table"></div>
+    <div id="observablehq-nodes_full_table"></div>
+    <div id="observablehq-clusters_full_table"></div>
+
+
+    <div id="observablehq-control_node_history" style="display:none"></div>
+
+
+    </div>
+
+<script type="module">
+
+
+{% if bundle_observable_notebook %}
+
+new splink_vis_utils.Runtime().module(splink_vis_utils.define, name => {
+
+
+
+{% else %}
+
+import define from "https://api.observablehq.com/@robinl/to-embed-in-splink-outputs.js?v=3";
+new splink_vis_utils.Runtime().module(define, name => {
+
+{% endif %}
+
+
+
+
+
+
+if (name === "viewof selected_cluster_id") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-selected-cluster-id"));
+if (name === "nothing_selected_message") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-nothing-selected-message"));
+if (name === "viewof force_directed_chart") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-force-directed-chart"));
+if (name === "waterfall_chart") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-waterfall-chart"));
+
+if (name === "edge_table") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-edge-table"));
+if (name === "comparison_columns_table") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-comparison_columns_table"));
+
+
+if (name === "node_table") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-node_table"));
+
+if (name === "viewof show_full_tables") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-show_full_tables"));
+if (name === "viewof score_threshold_filter") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-score_threshold_filter"));
+if (name === "corresponding_probability") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-corresponding_probability"));
+if (name === "edges_full_table") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-edges_full_table"));
+if (name === "nodes_full_table") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-nodes_full_table"));
+
+
+if (name === "viewof edge_colour_metric") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-edge_colour_metric"));
+if (name === "viewof node_size_metric") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-node_size_metric"));
+if (name === "viewof node_colour_metric") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-node_colour_metric"));
+if (name === "viewof show_edge_comparison_type") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-show_edge_comparison_type"));
+if (name === "viewof additional_graph_controls") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-additional_graph_controls"));
+if (name === "cluster_table") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-cluster_table"));
+if (name === "clusters_full_table") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-clusters_full_table"));
+
+if (name === "control_node_history") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-control_node_history"));
+if (name === "node_history_table") return new splink_vis_utils.Inspector(document.querySelector("#observablehq-node_history_table"));
+
+
+
+});
+</script>
+
+</body>
+</html>
+
+
