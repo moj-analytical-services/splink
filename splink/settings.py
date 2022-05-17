@@ -22,7 +22,7 @@ class Settings:
         s_else_d = self.from_settings_dict_else_default
         self._sql_dialect = s_else_d("sql_dialect")
 
-        self.comparisons = []
+        self.comparisons: list[Comparison] = []
         for cc in ccs:
             if type(cc) is dict:
                 self.comparisons.append(Comparison(cc, self))
