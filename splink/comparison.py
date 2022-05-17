@@ -14,10 +14,10 @@ class Comparison:
         # Protected because we don't want to modify
         self._comparison_dict = comparison_dict
         comparison_level_list = comparison_dict["comparison_levels"]
-        self.comparison_levels = [
+        self.comparison_levels: list[ComparisonLevel] = [
             ComparisonLevel(i, self, settings_obj) for i in comparison_level_list
         ]
-        self._settings_obj = settings_obj
+        self._settings_obj: "Settings" = settings_obj
 
         # Assign comparison vector values starting at highest level, count down to 0
         num_levels = len([cl for cl in self.comparison_levels if not cl.is_null_level])

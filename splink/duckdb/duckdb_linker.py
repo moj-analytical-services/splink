@@ -153,7 +153,9 @@ class DuckDBLinker(Linker):
                 """
             )
 
-    def _table_to_splink_dataframe(self, templated_name, physical_name):
+    def _table_to_splink_dataframe(
+        self, templated_name, physical_name
+    ) -> DuckDBLinkerDataFrame:
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
     def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
