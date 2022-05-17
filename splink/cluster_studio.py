@@ -1,4 +1,9 @@
 from typing import TYPE_CHECKING
+from jinja2 import Template
+import json
+import os
+import pkgutil
+
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -118,3 +123,35 @@ def render_splink_cluster_studio_html(
     edges_recs = df_edges_as_records(linker, df_predicted_edges, df_nodes)
 
     # Render template with cluster, nodes and edges
+    template_path = "files/splink_comparison_viewer/template.j2"
+    template = pkgutil.get_data(__name__, template_path).decode("utf-8")
+    template = Template(template)
+
+    template_data = {
+        "comparison_vector_data": json.dumps(comparison_vector_data),
+        "splink_settings": json.dumps(splink_settings),
+    }
+
+    files = {
+        "embed": "files/external_js/vega-embed@6.20.2",
+        "vega": "files/external_js/vega@5.21.0",
+        "vegalite": "files/external_js/vega-lite@5.2.0",
+        "svu_text": "files/splink_vis_utils/splink_vis_utils.js",
+        "custom_css": "files/splink_comparison_viewer/custom.css",
+    }
+    for k, v in files.items():
+        f = pkgutil.get_data(__name__, v)
+        f = f.decode("utf-8")
+        template_data[k] = f
+
+    template_data["bundle_observable_notebook"] = bundle_observable_notebook
+
+    rendered = template.render(**template_data)
+
+    if os.path.isfile(out_path) and not overwrite:
+        raise ValueError(
+            f"The path {out_path} already exists. Please provide a different path."
+        )
+    else:
+        with open(out_path, "w") as html_file:
+            html_file.write(rendered)
