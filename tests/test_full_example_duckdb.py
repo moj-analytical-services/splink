@@ -84,4 +84,11 @@ def test_full_example_duckdb(tmp_path):
 
     linker.roc_chart_from_labels("labels")
 
-    linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.5)
+    df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
+
+    linker.cluster_studio(
+        df_predict,
+        df_clusters,
+        [0, 4],
+        os.path.join(tmp_path, "test_cluster_studio.html"),
+    )
