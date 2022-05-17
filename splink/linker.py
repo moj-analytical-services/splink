@@ -212,7 +212,9 @@ class Linker:
             if materialise:
                 self._execute_sql_pipeline(materialise_as_hash=False)
 
-    def _table_to_splink_dataframe(self, templated_name, physical_name):
+    def _table_to_splink_dataframe(
+        self, templated_name, physical_name
+    ) -> SplinkDataFrame:
         """Create a SplinkDataframe from a table in the underlying database called
         `physical_name`.
 
