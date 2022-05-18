@@ -51,8 +51,10 @@ def test_splink_2_predict_spark(df_spark):
 def test_splink_2_predict_sqlite():
 
     import sqlite3
+    from rapidfuzz.distance.Levenshtein import distance
 
     con = sqlite3.connect(":memory:")
+    con.create_function("levenshtein", 2, distance)
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df.to_sql("fake_data_1", con, if_exists="replace")
     settings_dict = get_settings_dict()
