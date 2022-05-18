@@ -53,19 +53,12 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: |
-          sed -i 's/sqlglot = "1.23.1"/sqlglot = "1.23.1" \npyspark = "^3.2.1"/' ./pyproject.toml
-          poetry install --no-interaction --no-root
+        run: poetry install --no-interaction --no-root
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
       - name: Install library
-        run: |
-          if ! grep "pyspark" ./pyproject.toml
-          then
-            sed -i 's/sqlglot = "1.23.1"/sqlglot = "1.23.1" \npyspark = "^3.2.1"/' ./pyproject.toml
-          fi
-          poetry install --no-interaction
+        run: poetry install --no-interaction
       #----------------------------------------------
       #              run benchmarks and comment
       #----------------------------------------------
