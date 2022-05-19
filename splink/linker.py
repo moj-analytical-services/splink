@@ -58,13 +58,39 @@ logger = logging.getLogger(__name__)
 
 
 class Linker:
+    """Manages the data linkage process and holds the data linkage model."""
+
     def __init__(
         self,
         input_table_or_tables: Union[str, list],
-        settings_dict=None,
-        set_up_basic_logging=True,
+        settings_dict: dict = None,
+        set_up_basic_logging: bool = True,
         input_table_aliases: Union[str, list] = None,
     ):
+        """The Linker object manages the data linkage process and holds the data linkage
+        model.
+
+        Most of Splink's functionality can  be accessed by calling functions (methods)
+        on the linker, such as `linker.predict()`, `linker.profile_columns()` etc.
+
+        The Linker class is intended for subclassing for specific backends, e.g.
+        a DuckDBLinker.
+
+        Args:
+            input_table_or_tables (Union[str, list]): Input data into the linkage model.
+                Either a single string (the name of a table in a database) for
+                deduplication jobs, or a list of strings  (the name of tables in a
+                database) for link_only or link_and_dedupe
+            settings_dict (dict, optional): A Splink settings dictionary. If not
+                provided when the object is created, can later be added using
+                `linker.initialise_settings()` Defaults to None.
+            set_up_basic_logging (bool, optional): If true, sets ups up basic logging
+                so that Splink sends messages at INFO level to stdout. Defaults to True.
+            input_table_aliases (Union[str, list], optional): Labels assigned to
+                input tables in Splink outputs.  If the names of the tables in the
+                input database are long or unspecific, this argument can be used
+                to attach more easily readable/interpretable names. Defaults to None.
+        """
 
         self._pipeline = SQLPipeline()
 
