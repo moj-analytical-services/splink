@@ -1,6 +1,6 @@
 FROM mamonu/moj-spark-jovyan:baseenv
 
-RUN pip install pytest pytest-cov poetry coveralls typeguard sqlglot
+RUN pip install pytest pytest-cov poetry coveralls typeguard sqlglot==1.23.1
 RUN pip install --no-dependencies splink-data-generation==1.0.1
 
 ADD . /myfiles
