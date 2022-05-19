@@ -75,6 +75,7 @@ def _check_graphframes_installation(spark):
         "spark.app.initial.file.urls",
         "spark.files",
         "spark.app.initial.jar.urls",
+        "spark.pyspark.virtualenv.packages",
     ]
 
     graphframe_jar_registered = False
