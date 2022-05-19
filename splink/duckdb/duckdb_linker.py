@@ -6,8 +6,9 @@ import uuid
 import sqlglot
 from tempfile import TemporaryDirectory
 
-
+from duckdb import DuckDBPyConnection
 import duckdb
+
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..logging_messages import execute_sql_logging_message_info, log_sql
@@ -24,6 +25,9 @@ def validate_duckdb_connection(connection):
         the naming convention is ambiguous (not adhering to the
         duckdb convention).
     """
+
+    if isinstance(connection, DuckDBPyConnection):
+        return
 
     if not isinstance(connection, str):
         raise Exception(
@@ -84,31 +88,60 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
 
 
 class DuckDBLinker(Linker):
+    """Manages the data linkage process and holds the data linkage model."""
+
     def __init__(
         self,
-        input_table_or_tables,
-        settings_dict=None,
-        connection=":memory:",
-        set_up_basic_logging=True,
-        output_schema=None,
+        input_table_or_tables: Union[str, list],
+        settings_dict: dict = None,
+        connection: Union[str, DuckDBPyConnection] = ":memory:",
+        set_up_basic_logging: bool = True,
+        output_schema: str = None,
         input_table_aliases: Union[str, list] = None,
     ):
+        """The Linker object manages the data linkage process and holds the data linkage
+        model.
+
+        Most of Splink's functionality can  be accessed by calling functions (methods)
+        on the linker, such as `linker.predict()`, `linker.profile_columns()` etc.
+
+        Args:
+            input_table_or_tables (Union[str, list]): Input data into the linkage model.
+                Either a single string (the name of a table in a database) for
+                deduplication jobs, or a list of strings  (the name of tables in a
+                database) for link_only or link_and_dedupe
+            connection (DuckDBPyConnection or str, optional):  Connection to duckdb.
+                If a a string, will instantiate a new connection.  Defaults to :memory:.
+                If the special :temporary: string is provided, an on-disk duckdb
+                database will be created in a temporary directory.  This can be used
+                if you are running out of memory using :memory:.
+            settings_dict (dict, optional): A Splink settings dictionary. If not
+                provided when the object is created, can later be added using
+                `linker.initialise_settings()` Defaults to None.
+            set_up_basic_logging (bool, optional): If true, sets ups up basic logging
+                so that Splink sends messages at INFO level to stdout. Defaults to True.
+            input_table_aliases (Union[str, list], optional): Labels assigned to
+                input tables in Splink outputs.  If the names of the tables in the
+                input database are long or unspecific, this argument can be used
+                to attach more easily readable/interpretable names. Defaults to None.
+        """
 
         if settings_dict is not None and "sql_dialect" not in settings_dict:
             settings_dict["sql_dialect"] = "duckdb"
 
         validate_duckdb_connection(connection)
 
+        if isinstance(connection, DuckDBPyConnection):
+            con = connection
         if connection == ":memory:":
             con = duckdb.connect(database=connection)
+        elif connection == ":temporary:":
+            self._temp_dir = tempfile.TemporaryDirectory(dir=".")
+            fname = uuid.uuid4().hex[:7]
+            path = os.path.join(self._temp_dir.name, f"{fname}.duckdb")
+            con = duckdb.connect(database=path, read_only=False)
         else:
-            if connection == ":temporary:":
-                self._temp_dir = tempfile.TemporaryDirectory(dir=".")
-                fname = uuid.uuid4().hex[:7]
-                path = os.path.join(self._temp_dir.name, f"{fname}.duckdb")
-                con = duckdb.connect(database=path, read_only=False)
-            else:
-                con = duckdb.connect(database=connection)
+            con = duckdb.connect(database=connection)
 
         self._con = con
 
