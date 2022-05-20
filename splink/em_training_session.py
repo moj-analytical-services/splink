@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 
 
 class EMTrainingSession:
+    """Holds the history of parameter estimates from an EM training session"""
+
     def __init__(
         self,
         linker,
