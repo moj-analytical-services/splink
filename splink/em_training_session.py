@@ -16,7 +16,9 @@ logger = logging.getLogger(__name__)
 
 
 class EMTrainingSession:
-    """Holds the history of parameter estimates from an EM training session"""
+    """Manages training models using the Expectation Maximisation algorithm, and
+    holds statistics on the evolution of parameter estimates.  Plots diagnostic charts
+    """
 
     def __init__(
         self,
