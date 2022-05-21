@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from .comparison_level import ComparisonLevel
 from .misc import dedupe_preserving_order
@@ -14,7 +14,7 @@ class Comparison:
         # Protected because we don't want to modify
         self._comparison_dict = comparison_dict
         comparison_level_list = comparison_dict["comparison_levels"]
-        self.comparison_levels: list[ComparisonLevel] = [
+        self.comparison_levels: List[ComparisonLevel] = [
             ComparisonLevel(i, self, settings_obj) for i in comparison_level_list
         ]
         self._settings_obj: "Settings" = settings_obj
