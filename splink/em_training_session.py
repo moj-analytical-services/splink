@@ -1,4 +1,5 @@
 from copy import deepcopy
+from typing import TYPE_CHECKING, List
 import logging
 
 from .expectation_maximisation import expectation_maximisation
@@ -11,8 +12,14 @@ from .charts import (
     match_weights_interactive_history_chart,
     proportion_of_matches_iteration_chart,
 )
+from .comparison_level import ComparisonLevel
+from .comparison import Comparison
 
 logger = logging.getLogger(__name__)
+
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
 
 class EMTrainingSession:
@@ -22,13 +29,13 @@ class EMTrainingSession:
 
     def __init__(
         self,
-        linker,
-        blocking_rule_for_training,
-        fix_u_probabilities=False,
-        fix_m_probabilities=False,
-        fix_proportion_of_matches=False,
-        comparisons_to_deactivate=None,
-        comparison_levels_to_reverse_blocking_rule=None,
+        linker: "Linker",
+        blocking_rule_for_training: str,
+        fix_u_probabilities: bool = False,
+        fix_m_probabilities: bool = False,
+        fix_proportion_of_matches: bool = False,
+        comparisons_to_deactivate: List[Comparison] = None,
+        comparison_levels_to_reverse_blocking_rule: List[ComparisonLevel] = None,
     ):
 
         logger.info("\n----- Starting EM training session -----\n")
@@ -78,7 +85,9 @@ class EMTrainingSession:
         cc_names_to_deactivate = [
             cc.comparison_name for cc in comparisons_to_deactivate
         ]
-        self._comparisons_that_cannot_be_estimated = comparisons_to_deactivate
+        self._comparisons_that_cannot_be_estimated: List[
+            Comparison
+        ] = comparisons_to_deactivate
 
         filtered_ccs = [
             cc
