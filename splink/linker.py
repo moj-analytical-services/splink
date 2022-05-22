@@ -1024,12 +1024,12 @@ class Linker:
 
         The table of labels should be in the following format, and should be registered
         with your database:
-
+        ```
         |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
         |----------------|-----------|----------------|-----------|--------------------|
         |df_1            |1          |df_2            |2          |0.99                |
         |df_1            |1          |df_2            |3          |0.2                 |
-
+        ```
         Note that `source_dataset` and `unique_id` should correspond to the values
         specified in the settings dict, and the `input_table_aliases` passed to the
         `linker` object.
@@ -1179,7 +1179,7 @@ class Linker:
     def waterfall_chart(self, records, filter_nulls=True, as_dict=False):
         return waterfall_chart(records, self._settings_obj, filter_nulls, as_dict)
 
-    def splink_comparison_viewer(
+    def comparison_viewer_dashboard(
         self,
         df_predict: SplinkDataFrame,
         out_path: str,
@@ -1288,9 +1288,6 @@ class Linker:
             >>> # View resultant html file in Jupyter (or just load it in your browser)
             >>> from IPython.display import IFrame
             >>> IFrame(src="./test_chart.html", width=1000, height=500)
-
-
-
         """
         return self._settings_obj.match_weights_chart()
 
@@ -1308,11 +1305,12 @@ class Linker:
             >>>
             >>> # View resultant html file in Jupyter (or just load it in your browser)
             >>> from IPython.display import IFrame
-            >>> IFrame(src="./test_chart.html", width=1000, height=500)"""
+            >>> IFrame(src="./test_chart.html", width=1000, height=500)
+        """
 
         return self._settings_obj.m_u_parameters_chart()
 
-    def cluster_studio(
+    def cluster_studio_dashboard(
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
@@ -1320,6 +1318,28 @@ class Linker:
         out_path: str,
         overwrite=False,
     ):
+        """Generate an interactive html visualization of the predicted cluster and
+        save to `out_path`.
+
+        Args:
+            df_predict (SplinkDataFrame): The outputs of `linker.predict()`
+            df_clustered (SplinkDataFrame): The outputs of
+                `linker.cluster_pairwise_predictions_at_threshold()`
+            cluster_ids (list): The IDs of the clusters that will be displayed in the
+                dashboard
+            out_path (str): The path (including filename) to save the html file to.
+            overwrite (bool, optional): Overwrite the html file if it already exists?
+                Defaults to False.
+
+        Examples:
+            >>> df_p = linker.predict()
+            >>> df_c = linker.cluster_pairwise_predictions_at_threshold(0.5)
+            >>> linker.cluster_studio_dashboard(
+            >>>     df_p, df_c, [0, 4, 7], "cluster_studio.html"
+            >>> )
+
+        """
+
         return render_splink_cluster_studio_html(
             self, df_predict, df_clustered, cluster_ids, out_path, overwrite=overwrite
         )

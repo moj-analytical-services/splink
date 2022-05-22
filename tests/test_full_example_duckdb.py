@@ -50,7 +50,7 @@ def test_full_example_duckdb(tmp_path):
 
     df_predict = linker.predict()
 
-    linker.splink_comparison_viewer(
+    linker.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_duckdb.html"), True, 2
     )
 
@@ -86,7 +86,7 @@ def test_full_example_duckdb(tmp_path):
 
     df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
 
-    linker.cluster_studio(
+    linker.cluster_studio_dashboard(
         df_predict,
         df_clusters,
         [0, 4],
