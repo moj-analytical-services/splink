@@ -38,13 +38,13 @@ def test_full_example_spark(df_spark, tmp_path):
 
     df_predict = linker.predict()
 
-    linker.splink_comparison_viewer(
+    linker.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_spark.html"), True, 2
     )
 
     df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.2)
 
-    linker.cluster_studio(
+    linker.cluster_studio_dashboard(
         df_predict,
         df_clusters,
         [0, 4],
