@@ -1206,7 +1206,7 @@ class Linker:
             >>> # Optionally, in Jupyter, you can display the results inline
             >>> # Otherwise you can just load the html file in your browser
             >>> from IPython.display import IFrame
-            >>> IFrame(src="./scv.html", width=1400, height=1200)
+            >>> IFrame(src="./scv.html", width="100%", height=1200)
 
         """
         sql = comparison_vector_distribution_sql(self)
@@ -1333,10 +1333,15 @@ class Linker:
 
         Examples:
             >>> df_p = linker.predict()
-            >>> df_c = linker.cluster_pairwise_predictions_at_threshold(0.5)
+            >>> df_c = linker.cluster_pairwise_predictions_at_threshold(df_p, 0.5)
             >>> linker.cluster_studio_dashboard(
             >>>     df_p, df_c, [0, 4, 7], "cluster_studio.html"
             >>> )
+            >>>
+            >>> # Optionally, in Jupyter, you can display the results inline
+            >>> # Otherwise you can just load the html file in your browser
+            >>> from IPython.display import IFrame
+            >>> IFrame(src="./cluster_studio.html", width="100%", height=1200)
 
         """
 
