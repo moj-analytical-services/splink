@@ -494,8 +494,8 @@ class Linker:
             for reverse_level in reverse_levels:
 
                 # Get comparison level on current settings obj
-                cc = self._settings_obj._get_comparison_by_name(
-                    reverse_level.comparison.comparison_name
+                cc = self._settings_obj._get_comparison_by_output_column_name(
+                    reverse_level.comparison._output_column_name
                 )
 
                 cl = cc._get_comparison_level_by_comparison_vector_value(

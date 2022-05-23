@@ -1,7 +1,7 @@
 from typing import Union
 from .comparison import Comparison
 from . import comparison_level_library as cl
-from .misc import ensure_iterable
+from .misc import ensure_is_iterable
 
 
 def exact_match(
@@ -35,11 +35,11 @@ def levenshtein(
     m_probability_else=None,
 ) -> Comparison:
 
-    distance_thresholds = ensure_iterable(distance_threshold_or_thresholds)
+    distance_thresholds = ensure_is_iterable(distance_threshold_or_thresholds)
 
     if m_probability_or_probabilities_lev is None:
         m_probability_or_probabilities_lev = [None] * len(distance_thresholds)
-    m_probabilities = ensure_iterable(m_probability_or_probabilities_lev)
+    m_probabilities = ensure_is_iterable(m_probability_or_probabilities_lev)
 
     comparison_levels = []
     comparison_levels.append(cl.null_level(col_name))

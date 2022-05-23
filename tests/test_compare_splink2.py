@@ -204,12 +204,12 @@ def test_lambda():
     #########
 
     bf_for_first_name = (
-        linker._settings_obj._get_comparison_by_name("first_name")
+        linker._settings_obj._get_comparison_by_output_column_name("first_name")
         ._get_comparison_level_by_comparison_vector_value(2)
         ._bayes_factor
     )
     bf_for_surname = (
-        linker._settings_obj._get_comparison_by_name("surname")
+        linker._settings_obj._get_comparison_by_output_column_name("surname")
         ._get_comparison_level_by_comparison_vector_value(1)
         ._bayes_factor
     )

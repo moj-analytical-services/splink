@@ -110,7 +110,7 @@ def estimate_u_values(linker: "Linker", target_rows):
     df_sample.drop_table_from_database()
 
     m_u_records = [
-        r for r in param_records if r["comparison_name"] != "_proportion_of_matches"
+        r for r in param_records if r["output_column_name"] != "_proportion_of_matches"
     ]
 
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)

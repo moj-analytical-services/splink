@@ -155,7 +155,7 @@ class EMTrainingSession:
 
         # Add m and u values to original settings
         for cc in self._settings_obj.comparisons:
-            orig_cc = self._original_settings_obj._get_comparison_by_name(
+            orig_cc = self._original_settings_obj._get_comparison_by_output_column_name(
                 cc._output_column_name
             )
             for cl in cc._comparison_levels_excluding_null:

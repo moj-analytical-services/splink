@@ -254,7 +254,7 @@ class Comparison:
     @property
     def as_dict(self):
         return {
-            "column_name": self._output_column_name,
+            "output_column_name": self._output_column_name,
             "comparison_levels": [cl.as_dict for cl in self.comparison_levels],
         }
 

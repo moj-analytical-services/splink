@@ -191,7 +191,7 @@ class Settings:
         cols = dedupe_preserving_order(cols)
         return cols
 
-    def _get_comparison_by_name(self, name):
+    def _get_comparison_by_output_column_name(self, name):
         for cc in self.comparisons:
             if cc._output_column_name == name:
                 return cc
@@ -233,11 +233,11 @@ class Settings:
         # So for example, if we have a param estimate for exact match on first name AND
         # surname, prefer that
         # over individual estimtes for exact match first name and surname.
-        exact_comparison_levels.sort(key=lambda x: -len(x.exact_match_colnames))
+        exact_comparison_levels.sort(key=lambda x: -len(x._exact_match_colnames))
 
         comparison_levels_corresponding_to_blocking_rule = []
         for cl in exact_comparison_levels:
-            exact_cols = set(cl.exact_match_colnames)
+            exact_cols = set(cl._exact_match_colnames)
             if exact_cols.issubset(blocking_exact_match_columns):
                 blocking_exact_match_columns = blocking_exact_match_columns - exact_cols
                 comparison_levels_corresponding_to_blocking_rule.append(cl)

@@ -56,6 +56,15 @@ def _exact_match_colname(sql):
 
 
 class ComparisonLevel:
+    """Defines a way in which the similarity between one or more columns of a pairwise
+    comparisons is assessed.
+
+    For example, the Comparison for first_name comparison may have an exact match level,
+    a levenstein similarity level and an 'all other comparisons' level
+
+    A Comparison will have several ComparisonLevels. A Splink model will have several
+    Comparisons (e.g. name, dob, postcode, etc.)"""
+
     def __init__(
         self,
         level_dict,
@@ -527,10 +536,10 @@ class ComparisonLevel:
         if self._level_dict.get("label_for_charts"):
             output["label_for_charts"] = self._label_for_charts
 
-        if self.m_probability:
+        if self.m_probability and self._m_is_trained:
             output["m_probability"] = self.m_probability
 
-        if self.u_probability:
+        if self.u_probability and self._u_is_trained:
             output["u_probability"] = self.u_probability
 
         if self._has_tf_adjustments:
