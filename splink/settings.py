@@ -1,5 +1,5 @@
 import logging
-
+from copy import deepcopy
 from .parse_sql import get_columns_used_from_sql
 from .misc import prob_to_bayes_factor, prob_to_match_weight
 from .charts import m_u_parameters_chart, match_weights_chart
@@ -15,7 +15,15 @@ logger = logging.getLogger(__name__)
 class Settings:
     def __init__(self, settings_dict):
 
+        settings_dict = deepcopy(settings_dict)
+
+        # If incoming comparisons are of type Comparison not dict, turn back into dict
+        ccs = settings_dict["comparisons"]
+        ccs = [cc.as_dict if isinstance(cc, Comparison) else cc for cc in ccs]
+        settings_dict["comparisons"] = ccs
+
         validate_settings_against_schema(settings_dict)
+
         self._settings_dict = settings_dict
 
         ccs = self._settings_dict["comparisons"]
@@ -24,11 +32,7 @@ class Settings:
 
         self.comparisons: list[Comparison] = []
         for cc in ccs:
-            if type(cc) is dict:
-                self.comparisons.append(Comparison(cc, self))
-            else:
-                cc.settings_obj = self
-                self.comparisons.append(Comparison)
+            self.comparisons.append(Comparison(cc, self))
 
         self._link_type = s_else_d("link_type")
         self._proportion_of_matches = s_else_d("proportion_of_matches")
@@ -189,7 +193,7 @@ class Settings:
 
     def _get_comparison_by_name(self, name):
         for cc in self.comparisons:
-            if cc.comparison_name == name:
+            if cc.output_column_name == name:
                 return cc
         raise ValueError(f"No comparison column with name {name}")
 

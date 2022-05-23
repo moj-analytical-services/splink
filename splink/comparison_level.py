@@ -85,6 +85,10 @@ class ComparisonLevel:
         self.trained_m_probabilities = []
         self.trained_u_probabilities = []
 
+        # This is set by the init method on Comparison when the ComparisonLevel
+        # is part of  a Comparison
+        self.comparison_vector_value = None
+
         self.validate()
 
     def level_dict_val_else_default(self, key):
@@ -94,7 +98,7 @@ class ComparisonLevel:
         return val
 
     @property
-    def tf_adjustment_input_column(self):
+    def _tf_adjustment_input_column(self):
 
         val = self.level_dict_val_else_default("tf_adjustment_column")
         if val:
@@ -105,12 +109,18 @@ class ComparisonLevel:
             return None
 
     @property
-    def tf_adjustment_input_column_name(self):
-        input_column = self.tf_adjustment_input_column
+    def _tf_adjustment_input_column_name(self):
+        input_column = self._tf_adjustment_input_column
         if input_column:
             return input_column.input_name
         else:
             return None
+
+    @property
+    def _has_comparison(self):
+        from .comparison import Comparison
+
+        return isinstance(self.comparison, Comparison)
 
     @property
     def m_probability(self):
@@ -118,7 +128,7 @@ class ComparisonLevel:
             return None
         if self._m_probability == "level not observed in training dataset":
             return 1e-6
-        if self._m_probability is None:
+        if self._m_probability is None and self._has_comparison:
             vals = normalise(interpolate(0.05, 0.95, self.comparison.num_levels))
             return vals[self.comparison_vector_value]
         return self._m_probability
@@ -128,7 +138,7 @@ class ComparisonLevel:
         if self.is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
         if value == "level not observed in training dataset":
-            cc_n = self.comparison.comparison_name
+            cc_n = self.comparison.output_column_name
             cl_n = self.label_for_charts
             logger.warning(
                 "\nWARNING:\n"
@@ -154,7 +164,7 @@ class ComparisonLevel:
         if self.is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
         if value == "level not observed in training dataset":
-            cc_n = self.comparison.comparison_name
+            cc_n = self.comparison.output_column_name
             cl_n = self.label_for_charts
             logger.warning(
                 "\nWARNING:\n"
@@ -164,7 +174,7 @@ class ComparisonLevel:
         self._u_probability = value
 
     @property
-    def m_probability_description(self):
+    def _m_probability_description(self):
         if self.m_probability is not None:
             return (
                 "Amongst matching record comparisons, "
@@ -173,7 +183,7 @@ class ComparisonLevel:
             )
 
     @property
-    def u_probability_description(self):
+    def _u_probability_description(self):
         if self.u_probability is not None:
             return (
                 "Amongst non-matching record comparisons, "
@@ -181,20 +191,20 @@ class ComparisonLevel:
                 f"{self.label_for_charts.lower()} comparison level"
             )
 
-    def add_trained_u_probability(self, val, desc="no description given"):
+    def _add_trained_u_probability(self, val, desc="no description given"):
 
         self.trained_u_probabilities.append(
             {"probability": val, "description": desc, "m_or_u": "u"}
         )
 
-    def add_trained_m_probability(self, val, desc="no description given"):
+    def _add_trained_m_probability(self, val, desc="no description given"):
 
         self.trained_m_probabilities.append(
             {"probability": val, "description": desc, "m_or_u": "m"}
         )
 
     @property
-    def has_estimated_u_values(self):
+    def _has_estimated_u_values(self):
         if self.is_null_level:
             return True
         vals = [r["probability"] for r in self.trained_u_probabilities]
@@ -202,7 +212,7 @@ class ComparisonLevel:
         return len(vals) > 0
 
     @property
-    def has_estimated_m_values(self):
+    def _has_estimated_m_values(self):
         if self.is_null_level:
             return True
         vals = [r["probability"] for r in self.trained_m_probabilities]
@@ -210,8 +220,8 @@ class ComparisonLevel:
         return len(vals) > 0
 
     @property
-    def has_estimated_values(self):
-        return self.has_estimated_m_values and self.has_estimated_u_values
+    def _has_estimated_values(self):
+        return self._has_estimated_m_values and self._has_estimated_u_values
 
     @property
     def trained_m_median(self):
@@ -338,7 +348,7 @@ class ComparisonLevel:
             # We could have tf adjustments for surname on a dmeta_surname column
             # If so, we want to set the tf adjustments against the surname col,
             # not the dmeta_surname one
-            if c == self.tf_adjustment_input_column_name:
+            if c == self._tf_adjustment_input_column_name:
                 input_cols.append(
                     InputColumn(c, tf_adjustments=True, settings_obj=self._settings_obj)
                 )
@@ -418,11 +428,11 @@ class ComparisonLevel:
             colnames = level.exact_match_colnames
             if len(colnames) != 1:
                 continue
-            if colnames[0] == self.tf_adjustment_input_column_name.lower():
+            if colnames[0] == self._tf_adjustment_input_column_name.lower():
                 return level.u_probability
         raise ValueError(
             "Could not find an exact match level for "
-            f"{self.tf_adjustment_input_column_name}."
+            f"{self._tf_adjustment_input_column_name}."
             "\nAn exact match level is required to make a term frequency adjustment "
             "on a comparison level that is not an exact match."
         )
@@ -453,7 +463,7 @@ class ComparisonLevel:
         elif self.is_else_level:
             sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as double)"
         else:
-            tf_adj_col = self.tf_adjustment_input_column
+            tf_adj_col = self._tf_adjustment_input_column
 
             coalesce_l_r = (
                 f"coalesce({tf_adj_col.tf_name_l()}, {tf_adj_col.tf_name_r()})"
@@ -524,7 +534,7 @@ class ComparisonLevel:
             output["u_probability"] = self.u_probability
 
         if self.has_tf_adjustments:
-            output["tf_adjustment_column"] = self.tf_adjustment_input_column.input_name
+            output["tf_adjustment_column"] = self._tf_adjustment_input_column.input_name
             if self.tf_adjustment_weight != 0:
                 output["tf_adjustment_weight"] = self.tf_adjustment_weight
 
@@ -548,12 +558,12 @@ class ComparisonLevel:
         output["m_probability"] = self.m_probability
         output["u_probability"] = self.u_probability
 
-        output["m_probability_description"] = self.m_probability_description
-        output["u_probability_description"] = self.u_probability_description
+        output["m_probability_description"] = self._m_probability_description
+        output["u_probability_description"] = self._u_probability_description
 
         output["has_tf_adjustments"] = self.has_tf_adjustments
         if self.has_tf_adjustments:
-            output["tf_adjustment_column"] = self.tf_adjustment_input_column.input_name
+            output["tf_adjustment_column"] = self._tf_adjustment_input_column.input_name
         else:
             output["tf_adjustment_column"] = None
         output["tf_adjustment_weight"] = self.tf_adjustment_weight
@@ -598,7 +608,4 @@ class ComparisonLevel:
     def __repr__(self):
         sql = self.sql_condition
         sql = (sql[:75] + "...") if len(sql) > 75 else sql
-        return (
-            f"<ComparisonLevel {self.label_for_charts} with "
-            f"match weight {self.bayes_factor:,.2} and SQL: {sql}>"
-        )
+        return f"<ComparisonLevel {self.label_for_charts} with SQL: {sql}>"

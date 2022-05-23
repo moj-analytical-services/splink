@@ -12,6 +12,7 @@ import duckdb
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..logging_messages import execute_sql_logging_message_info, log_sql
+from ..misc import ensure_is_iterable
 
 logger = logging.getLogger(__name__)
 
@@ -149,7 +150,7 @@ class DuckDBLinker(Linker):
         # them with the database, using user-provided aliases
         # if provided or a created alias if not
 
-        input_tables = self._coerce_to_list(input_table_or_tables)
+        input_tables = ensure_is_iterable(input_table_or_tables)
 
         input_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases

@@ -17,7 +17,7 @@ from .charts import (
 from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .em_training_session import EMTrainingSession
-from .misc import bayes_factor_to_prob, prob_to_bayes_factor
+from .misc import bayes_factor_to_prob, prob_to_bayes_factor, ensure_is_iterable
 from .predict import predict_from_comparison_vectors_sql
 from .settings import Settings
 from .term_frequencies import (
@@ -406,12 +406,6 @@ class Linker:
         new_linker._settings_obj_ = new_settings
         return new_linker
 
-    def _coerce_to_list(self, input_table_or_tables):
-        if not isinstance(input_table_or_tables, list):
-            input_table_or_tables = [input_table_or_tables]
-
-        return input_table_or_tables
-
     def _ensure_aliases_populated_and_is_list(
         self, input_table_or_tables, input_table_aliases
     ):
@@ -424,7 +418,7 @@ class Linker:
 
     def _get_input_tables_dict(self, input_table_or_tables, input_table_aliases):
 
-        input_table_or_tables = self._coerce_to_list(input_table_or_tables)
+        input_table_or_tables = ensure_is_iterable(input_table_or_tables)
 
         input_table_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases
@@ -508,14 +502,14 @@ class Linker:
                     reverse_level.comparison_vector_value
                 )
 
-                if cl.has_estimated_values:
+                if cl._has_estimated_values:
                     bf = cl.trained_m_median / cl.trained_u_median
                 else:
                     bf = cl.bayes_factor
 
                 logger.log(
                     15,
-                    f"Reversing comparison level {cc.comparison_name}"
+                    f"Reversing comparison level {cc.output_column_name}"
                     f" using bayes factor {bf:,.3f}",
                 )
 
@@ -547,9 +541,9 @@ class Linker:
 
         for cc in ccs:
             for cl in cc.comparison_levels_excluding_null:
-                if cl.has_estimated_u_values:
+                if cl._has_estimated_u_values:
                     cl.u_probability = cl.trained_u_median
-                if cl.has_estimated_m_values:
+                if cl._has_estimated_m_values:
                     cl.m_probability = cl.trained_m_median
 
     def _delete_tables_created_by_splink_from_db(

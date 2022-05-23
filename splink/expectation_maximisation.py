@@ -34,7 +34,7 @@ def compute_new_parameters_sql(settings_obj: Settings):
     union_sqls = [
         sql_template.format(
             gamma_column=cc.gamma_column_name,
-            comparison_name=cc.comparison_name,
+            comparison_name=cc.output_column_name,
         )
         for cc in settings_obj.comparisons
     ]

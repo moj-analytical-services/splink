@@ -14,14 +14,24 @@ class Comparison:
         # Protected because we don't want to modify
         self._comparison_dict = comparison_dict
         comparison_level_list = comparison_dict["comparison_levels"]
-        self.comparison_levels: List[ComparisonLevel] = [
-            ComparisonLevel(i, self, settings_obj) for i in comparison_level_list
-        ]
+        self.comparison_levels: List[ComparisonLevel] = []
+
+        # If comparison_levels are already of type ComparisonLevel, register
+        # the settings object on them
+        # otherwise turn the dictionaries into ComparisonLevel
+
+        for cl in comparison_level_list:
+            if isinstance(cl, ComparisonLevel):
+                cl._settings_obj = settings_obj
+                cl.comparison = self
+            else:
+                cl = ComparisonLevel(cl, self, settings_obj)
+            self.comparison_levels.append(cl)
+
         self._settings_obj: "Settings" = settings_obj
 
         # Assign comparison vector values starting at highest level, count down to 0
-        num_levels = len([cl for cl in self.comparison_levels if not cl.is_null_level])
-        self.num_levels = num_levels
+        num_levels = self.num_levels
         counter = num_levels - 1
 
         for level in self.comparison_levels:
@@ -41,6 +51,10 @@ class Comparison:
         return cc
 
     @property
+    def num_levels(self):
+        return len([cl for cl in self.comparison_levels if not cl.is_null_level])
+
+    @property
     def comparison_levels_excluding_null(self):
         return [cl for cl in self.comparison_levels if not cl.is_null_level]
 
@@ -54,7 +68,7 @@ class Comparison:
 
     @property
     def bf_column_name(self):
-        return f"{self._settings_obj._bf_prefix}{self.comparison_name}".replace(
+        return f"{self._settings_obj._bf_prefix}{self.output_column_name}".replace(
             " ", "_"
         )
 
@@ -62,7 +76,7 @@ class Comparison:
     def bf_tf_adj_column_name(self):
         bf = self._settings_obj._bf_prefix
         tf = self._settings_obj._tf_prefix
-        cc_name = self.comparison_name
+        cc_name = self.output_column_name
         return f"{bf}{tf}adj_{cc_name}".replace(" ", "_")
 
     @property
@@ -97,9 +111,9 @@ class Comparison:
         return deduped_cols
 
     @property
-    def comparison_name(self):
-        if "column_name" in self._comparison_dict:
-            return self._comparison_dict["column_name"]
+    def output_column_name(self):
+        if "output_column_name" in self._comparison_dict:
+            return self._comparison_dict["output_column_name"]
         else:
             cols = self.input_columns_used_by_case_statement
             cols = [c.input_name for c in cols]
@@ -109,12 +123,19 @@ class Comparison:
                 return f"custom_{'_'.join(cols)}"
 
     @property
+    def comparison_description(self):
+        if "comparison_description" in self._comparison_dict:
+            return self._comparison_dict["comparison_description"]
+        else:
+            return self.output_column_name
+
+    @property
     def gamma_column_name(self):
-        return f"{self.gamma_prefix}{self.comparison_name}".replace(" ", "_")
+        return f"{self.gamma_prefix}{self.output_column_name}".replace(" ", "_")
 
     @property
     def tf_adjustment_input_col_names(self):
-        cols = [cl.tf_adjustment_input_column_name for cl in self.comparison_levels]
+        cols = [cl._tf_adjustment_input_column_name for cl in self.comparison_levels]
         cols = [c for c in cols if c]
 
         return cols
@@ -233,14 +254,14 @@ class Comparison:
     @property
     def as_dict(self):
         return {
-            "column_name": self.comparison_name,
+            "column_name": self.output_column_name,
             "comparison_levels": [cl.as_dict for cl in self.comparison_levels],
         }
 
     @property
     def as_completed_dict(self):
         return {
-            "column_name": self.comparison_name,
+            "column_name": self.output_column_name,
             "comparison_levels": [
                 cl.as_completed_dict for cl in self.comparison_levels
             ],
@@ -251,11 +272,11 @@ class Comparison:
 
     @property
     def has_estimated_m_values(self):
-        return all(cl.has_estimated_m_values for cl in self.comparison_levels)
+        return all(cl._has_estimated_m_values for cl in self.comparison_levels)
 
     @property
     def has_estimated_u_values(self):
-        return all(cl.has_estimated_u_values for cl in self.comparison_levels)
+        return all(cl._has_estimated_u_values for cl in self.comparison_levels)
 
     @property
     def all_m_are_trained(self):
@@ -290,7 +311,7 @@ class Comparison:
             messages.append("some m values are not trained")
 
         message = ", ".join(messages)
-        message = f"    - {self.comparison_name} ({message})."
+        message = f"    - {self.output_column_name} ({message})."
         return message
 
     @property
@@ -302,7 +323,7 @@ class Comparison:
         records = []
         for cl in self.comparison_levels:
             record = {}
-            record["comparison_name"] = self.comparison_name
+            record["comparison_name"] = self.output_column_name
             record = {**record, **cl.as_detailed_record}
             records.append(record)
         return records
@@ -313,7 +334,7 @@ class Comparison:
         for cl in self.comparison_levels:
             new_records = cl.parameter_estimates_as_records
             for r in new_records:
-                r["comparison_name"] = self.comparison_name
+                r["comparison_name"] = self.output_column_name
             records.extend(new_records)
 
         return records
@@ -327,7 +348,7 @@ class Comparison:
 
     def __repr__(self):
         return (
-            f"<Comparison {self.comparison_name} with "
+            f"<Comparison {self.comparison_description} with "
             f"{self.num_levels} levels at {hex(id(self))}>"
         )
 
@@ -336,7 +357,7 @@ class Comparison:
 
         msgs = []
 
-        cname = self.comparison_name
+        cname = self.output_column_name
 
         header = f"Comparison: '{cname}':\n"
 

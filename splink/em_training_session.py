@@ -83,7 +83,7 @@ class EMTrainingSession:
                 if set(br_cols).intersection(cc_cols):
                     comparisons_to_deactivate.append(cc)
         cc_names_to_deactivate = [
-            cc.comparison_name for cc in comparisons_to_deactivate
+            cc.output_column_name for cc in comparisons_to_deactivate
         ]
         self._comparisons_that_cannot_be_estimated: List[
             Comparison
@@ -92,7 +92,7 @@ class EMTrainingSession:
         filtered_ccs = [
             cc
             for cc in self._settings_obj.comparisons
-            if cc.comparison_name not in cc_names_to_deactivate
+            if cc.output_column_name not in cc_names_to_deactivate
         ]
 
         self._settings_obj.comparisons = filtered_ccs
@@ -105,12 +105,12 @@ class EMTrainingSession:
 
     def _training_log_message(self):
         not_estimated = [
-            cc.comparison_name for cc in self._comparisons_that_cannot_be_estimated
+            cc.output_column_name for cc in self._comparisons_that_cannot_be_estimated
         ]
         not_estimated = "".join([f"\n    - {cc}" for cc in not_estimated])
 
         estimated = [
-            cc.comparison_name for cc in self._comparisons_that_can_be_estimated
+            cc.output_column_name for cc in self._comparisons_that_can_be_estimated
         ]
         estimated = "".join([f"\n    - {cc}" for cc in estimated])
 
@@ -156,7 +156,7 @@ class EMTrainingSession:
         # Add m and u values to original settings
         for cc in self._settings_obj.comparisons:
             orig_cc = self._original_settings_obj._get_comparison_by_name(
-                cc.comparison_name
+                cc.output_column_name
             )
             for cl in cc.comparison_levels_excluding_null:
 
@@ -167,30 +167,30 @@ class EMTrainingSession:
                 if not self._training_fix_m_probabilities:
                     not_observed = "level not observed in training dataset"
                     if cl._m_probability == not_observed:
-                        orig_cl.add_trained_m_probability(not_observed, training_desc)
+                        orig_cl._add_trained_m_probability(not_observed, training_desc)
                         logger.info(
-                            f"m probability not trained for {cc.comparison_name} - "
+                            f"m probability not trained for {cc.output_column_name} - "
                             f"{cl.label_for_charts} (comparison vector value: "
                             f"{cl.comparison_vector_value}). This usually means the "
                             "comparison level was never observed in the training data."
                         )
                     else:
-                        orig_cl.add_trained_m_probability(
+                        orig_cl._add_trained_m_probability(
                             cl.m_probability, training_desc
                         )
 
                 if not self._training_fix_u_probabilities:
                     not_observed = "level not observed in training dataset"
                     if cl._u_probability == not_observed:
-                        orig_cl.add_trained_u_probability(not_observed, training_desc)
+                        orig_cl._add_trained_u_probability(not_observed, training_desc)
                         logger.info(
-                            f"u probability not trained for {cc.comparison_name} - "
+                            f"u probability not trained for {cc.output_column_name} - "
                             f"{cl.label_for_charts} (comparison vector value: "
                             f"{cl.comparison_vector_value}). This usually means the "
                             "comparison level was never observed in the training data."
                         )
                     else:
-                        orig_cl.add_trained_u_probability(
+                        orig_cl._add_trained_u_probability(
                             cl.u_probability, training_desc
                         )
 
@@ -220,7 +220,7 @@ class EMTrainingSession:
 
             logger.log(
                 15,
-                f"Applying comparison {cl.comparison.comparison_name}"
+                f"Applying comparison {cl.comparison.output_column_name}"
                 f" using bayes factor {cl.bayes_factor:,.3f}",
             )
 
@@ -358,7 +358,7 @@ class EMTrainingSession:
 
     def __repr__(self):
         deactivated_cols = ", ".join(
-            [cc.comparison_name for cc in self._comparisons_that_cannot_be_estimated]
+            [cc.output_column_name for cc in self._comparisons_that_cannot_be_estimated]
         )
         return (
             f"<EMTrainingSession, blocking on {self._blocking_rule_for_training}, "
