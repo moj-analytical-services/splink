@@ -498,18 +498,18 @@ class Linker:
                     reverse_level.comparison.comparison_name
                 )
 
-                cl = cc.get_comparison_level_by_comparison_vector_value(
+                cl = cc._get_comparison_level_by_comparison_vector_value(
                     reverse_level.comparison_vector_value
                 )
 
                 if cl._has_estimated_values:
-                    bf = cl.trained_m_median / cl.trained_u_median
+                    bf = cl._trained_m_median / cl._trained_u_median
                 else:
-                    bf = cl.bayes_factor
+                    bf = cl._bayes_factor
 
                 logger.log(
                     15,
-                    f"Reversing comparison level {cc.output_column_name}"
+                    f"Reversing comparison level {cc._output_column_name}"
                     f" using bayes factor {bf:,.3f}",
                 )
 
@@ -540,11 +540,11 @@ class Linker:
         ccs = self._settings_obj.comparisons
 
         for cc in ccs:
-            for cl in cc.comparison_levels_excluding_null:
+            for cl in cc._comparison_levels_excluding_null:
                 if cl._has_estimated_u_values:
-                    cl.u_probability = cl.trained_u_median
+                    cl.u_probability = cl._trained_u_median
                 if cl._has_estimated_m_values:
-                    cl.m_probability = cl.trained_m_median
+                    cl.m_probability = cl._trained_m_median
 
     def _delete_tables_created_by_splink_from_db(
         self, retain_term_frequency=True, retain_df_concat_with_tf=True

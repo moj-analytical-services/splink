@@ -103,7 +103,7 @@ class Settings:
     def _term_frequency_columns(self):
         cols = set()
         for cc in self.comparisons:
-            cols.update(cc.tf_adjustment_input_col_names)
+            cols.update(cc._tf_adjustment_input_col_names)
         return list(cols)
 
     @property
@@ -121,7 +121,7 @@ class Settings:
             cols.append(uid_col.r_name_as_r())
 
         for cc in self.comparisons:
-            cols.extend(cc.columns_to_select_for_blocking)
+            cols.extend(cc._columns_to_select_for_blocking)
 
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.l_r_names_as_l_r())
@@ -138,7 +138,7 @@ class Settings:
             cols.append(uid_col.name_r())
 
         for cc in self.comparisons:
-            cols.extend(cc.columns_to_select_for_comparison_vector_values)
+            cols.extend(cc._columns_to_select_for_comparison_vector_values)
 
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.names_l_r())
@@ -159,7 +159,7 @@ class Settings:
             cols.append(uid_col.name_r())
 
         for cc in self.comparisons:
-            cols.extend(cc.columns_to_select_for_bayes_factor_parts)
+            cols.extend(cc._columns_to_select_for_bayes_factor_parts)
 
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.names_l_r())
@@ -180,7 +180,7 @@ class Settings:
             cols.append(uid_col.name_r())
 
         for cc in self.comparisons:
-            cols.extend(cc.columns_to_select_for_predict)
+            cols.extend(cc._columns_to_select_for_predict)
 
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.names_l_r())
@@ -193,7 +193,7 @@ class Settings:
 
     def _get_comparison_by_name(self, name):
         for cc in self.comparisons:
-            if cc.output_column_name == name:
+            if cc._output_column_name == name:
                 return cc
         raise ValueError(f"No comparison column with name {name}")
 
@@ -225,7 +225,7 @@ class Settings:
         exact_comparison_levels = []
         for cc in ccs:
             for cl in cc.comparison_levels:
-                if cl.is_exact_match:
+                if cl._is_exact_match:
                     exact_comparison_levels.append(cl)
 
         # Where exact match on multiple columns exists, use that instead of individual
@@ -248,7 +248,7 @@ class Settings:
     def _parameters_as_detailed_records(self):
         output = []
         for i, cc in enumerate(self.comparisons):
-            records = cc.as_detailed_records
+            records = cc._as_detailed_records
             for r in records:
                 r["proportion_of_matches"] = self._proportion_of_matches
                 r["comparison_sort_order"] = i
@@ -290,7 +290,7 @@ class Settings:
     def _parameter_estimates_as_records(self):
         output = []
         for i, cc in enumerate(self.comparisons):
-            records = cc.parameter_estimates_as_records
+            records = cc._parameter_estimates_as_records
             for r in records:
                 r["comparison_sort_order"] = i
             output.extend(records)
@@ -326,9 +326,9 @@ class Settings:
     def columns_without_estimated_parameters_message(self):
         message_lines = []
         for c in self.comparisons:
-            msg = c.is_trained_message
+            msg = c._is_trained_message
             if msg is not None:
-                message_lines.append(c.is_trained_message)
+                message_lines.append(c._is_trained_message)
 
         if len(message_lines) == 0:
             message = (
@@ -344,10 +344,10 @@ class Settings:
 
     @property
     def is_fully_trained(self):
-        return all([c.is_trained for c in self.comparisons])
+        return all([c._is_trained for c in self.comparisons])
 
     def not_trained_messages(self):
         messages = []
         for c in self.comparisons:
-            messages.extend(c.not_trained_messages)
+            messages.extend(c._not_trained_messages)
         return messages

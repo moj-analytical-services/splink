@@ -115,7 +115,7 @@ def estimate_u_values(linker: "Linker", target_rows):
 
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
     for c in original_settings_obj.comparisons:
-        for cl in c.comparison_levels_excluding_null:
+        for cl in c._comparison_levels_excluding_null:
             append_u_probability_to_comparison_level_trained_probabilities(
                 cl, m_u_records_lookup, "estimate u by random sampling"
             )

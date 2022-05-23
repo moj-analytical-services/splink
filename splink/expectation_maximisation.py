@@ -33,8 +33,8 @@ def compute_new_parameters_sql(settings_obj: Settings):
     """
     union_sqls = [
         sql_template.format(
-            gamma_column=cc.gamma_column_name,
-            comparison_name=cc.output_column_name,
+            gamma_column=cc._gamma_column_name,
+            comparison_name=cc._output_column_name,
         )
         for cc in settings_obj.comparisons
     ]
@@ -96,7 +96,7 @@ def maximisation_step(em_training_session: "EMTrainingSession", param_records):
 
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
     for cc in settings_obj.comparisons:
-        for cl in cc.comparison_levels_excluding_null:
+        for cl in cc._comparison_levels_excluding_null:
             populate_m_u_from_lookup(em_training_session, cl, m_u_records_lookup)
 
     em_training_session._add_iteration()
