@@ -33,7 +33,7 @@ def not_trained_message(comparison_level: ComparisonLevel):
     cl = comparison_level
     return (
         f"not trained for {c._output_column_name} - "
-        f"{cl.label_for_charts} (comparison vector value: "
+        f"{cl._label_for_charts} (comparison vector value: "
         f"{cl.comparison_vector_value}). This usually means the "
         "comparison level was never observed in the training data."
     )
@@ -68,7 +68,7 @@ def append_m_probability_to_comparison_level_trained_probabilities(
     c = cl.comparison
 
     try:
-        m_probability = m_u_records_lookup[c.comparison_name][
+        m_probability = m_u_records_lookup[c._output_column_name][
             cl.comparison_vector_value
         ]["m_probability"]
 
@@ -76,7 +76,7 @@ def append_m_probability_to_comparison_level_trained_probabilities(
         m_probability = "level not observed in training dataset"
 
         logger.info(f"u probability {not_trained_message(cl)}")
-    cl.add_trained_m_probability(
+    cl._add_trained_m_probability(
         m_probability,
         training_description,
     )

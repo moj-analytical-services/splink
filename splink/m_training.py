@@ -50,11 +50,11 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
     param_records = df_params.as_record_dict()
 
     m_u_records = [
-        r for r in param_records if r["comparison_name"] != "_proportion_of_matches"
+        r for r in param_records if r["output_column_name"] != "_proportion_of_matches"
     ]
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
     for cc in original_settings_object.comparisons:
-        for cl in cc.comparison_levels_excluding_null:
+        for cl in cc._comparison_levels_excluding_null:
             append_m_probability_to_comparison_level_trained_probabilities(
                 cl, m_u_records_lookup, "estimate m from label column"
             )
