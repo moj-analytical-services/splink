@@ -1,5 +1,5 @@
 import logging
-
+from copy import deepcopy
 from .parse_sql import get_columns_used_from_sql
 from .misc import prob_to_bayes_factor, prob_to_match_weight
 from .charts import m_u_parameters_chart, match_weights_chart
@@ -18,7 +18,15 @@ class Settings:
 
     def __init__(self, settings_dict):
 
+        settings_dict = deepcopy(settings_dict)
+
+        # If incoming comparisons are of type Comparison not dict, turn back into dict
+        ccs = settings_dict["comparisons"]
+        ccs = [cc.as_dict if isinstance(cc, Comparison) else cc for cc in ccs]
+        settings_dict["comparisons"] = ccs
+
         validate_settings_against_schema(settings_dict)
+
         self._settings_dict = settings_dict
 
         ccs = self._settings_dict["comparisons"]
@@ -27,11 +35,7 @@ class Settings:
 
         self.comparisons: list[Comparison] = []
         for cc in ccs:
-            if type(cc) is dict:
-                self.comparisons.append(Comparison(cc, self))
-            else:
-                cc.settings_obj = self
-                self.comparisons.append(Comparison)
+            self.comparisons.append(Comparison(cc, self))
 
         self._link_type = s_else_d("link_type")
         self._proportion_of_matches = s_else_d("proportion_of_matches")
@@ -102,7 +106,7 @@ class Settings:
     def _term_frequency_columns(self):
         cols = set()
         for cc in self.comparisons:
-            cols.update(cc.tf_adjustment_input_col_names)
+            cols.update(cc._tf_adjustment_input_col_names)
         return list(cols)
 
     @property
@@ -120,7 +124,7 @@ class Settings:
             cols.append(uid_col.r_name_as_r())
 
         for cc in self.comparisons:
-            cols.extend(cc.columns_to_select_for_blocking)
+            cols.extend(cc._columns_to_select_for_blocking)
 
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.l_r_names_as_l_r())
@@ -137,7 +141,7 @@ class Settings:
             cols.append(uid_col.name_r())
 
         for cc in self.comparisons:
-            cols.extend(cc.columns_to_select_for_comparison_vector_values)
+            cols.extend(cc._columns_to_select_for_comparison_vector_values)
 
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.names_l_r())
@@ -158,7 +162,7 @@ class Settings:
             cols.append(uid_col.name_r())
 
         for cc in self.comparisons:
-            cols.extend(cc.columns_to_select_for_bayes_factor_parts)
+            cols.extend(cc._columns_to_select_for_bayes_factor_parts)
 
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.names_l_r())
@@ -179,7 +183,7 @@ class Settings:
             cols.append(uid_col.name_r())
 
         for cc in self.comparisons:
-            cols.extend(cc.columns_to_select_for_predict)
+            cols.extend(cc._columns_to_select_for_predict)
 
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.names_l_r())
@@ -190,9 +194,9 @@ class Settings:
         cols = dedupe_preserving_order(cols)
         return cols
 
-    def _get_comparison_by_name(self, name):
+    def _get_comparison_by_output_column_name(self, name):
         for cc in self.comparisons:
-            if cc.comparison_name == name:
+            if cc._output_column_name == name:
                 return cc
         raise ValueError(f"No comparison column with name {name}")
 
@@ -224,7 +228,7 @@ class Settings:
         exact_comparison_levels = []
         for cc in ccs:
             for cl in cc.comparison_levels:
-                if cl.is_exact_match:
+                if cl._is_exact_match:
                     exact_comparison_levels.append(cl)
 
         # Where exact match on multiple columns exists, use that instead of individual
@@ -232,11 +236,11 @@ class Settings:
         # So for example, if we have a param estimate for exact match on first name AND
         # surname, prefer that
         # over individual estimtes for exact match first name and surname.
-        exact_comparison_levels.sort(key=lambda x: -len(x.exact_match_colnames))
+        exact_comparison_levels.sort(key=lambda x: -len(x._exact_match_colnames))
 
         comparison_levels_corresponding_to_blocking_rule = []
         for cl in exact_comparison_levels:
-            exact_cols = set(cl.exact_match_colnames)
+            exact_cols = set(cl._exact_match_colnames)
             if exact_cols.issubset(blocking_exact_match_columns):
                 blocking_exact_match_columns = blocking_exact_match_columns - exact_cols
                 comparison_levels_corresponding_to_blocking_rule.append(cl)
@@ -247,7 +251,7 @@ class Settings:
     def _parameters_as_detailed_records(self):
         output = []
         for i, cc in enumerate(self.comparisons):
-            records = cc.as_detailed_records
+            records = cc._as_detailed_records
             for r in records:
                 r["proportion_of_matches"] = self._proportion_of_matches
                 r["comparison_sort_order"] = i
@@ -289,7 +293,7 @@ class Settings:
     def _parameter_estimates_as_records(self):
         output = []
         for i, cc in enumerate(self.comparisons):
-            records = cc.parameter_estimates_as_records
+            records = cc._parameter_estimates_as_records
             for r in records:
                 r["comparison_sort_order"] = i
             output.extend(records)
@@ -325,9 +329,9 @@ class Settings:
     def columns_without_estimated_parameters_message(self):
         message_lines = []
         for c in self.comparisons:
-            msg = c.is_trained_message
+            msg = c._is_trained_message
             if msg is not None:
-                message_lines.append(c.is_trained_message)
+                message_lines.append(c._is_trained_message)
 
         if len(message_lines) == 0:
             message = (
@@ -343,10 +347,10 @@ class Settings:
 
     @property
     def is_fully_trained(self):
-        return all([c.is_trained for c in self.comparisons])
+        return all([c._is_trained for c in self.comparisons])
 
     def not_trained_messages(self):
         messages = []
         for c in self.comparisons:
-            messages.extend(c.not_trained_messages)
+            messages.extend(c._not_trained_messages)
         return messages

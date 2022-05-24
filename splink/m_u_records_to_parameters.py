@@ -1,12 +1,14 @@
 import logging
 
+from .comparison_level import ComparisonLevel
+
 logger = logging.getLogger(__name__)
 
 
 def m_u_records_to_lookup_dict(m_u_records):
     lookup = {}
     for m_u_record in m_u_records:
-        comparison_name = m_u_record["comparison_name"]
+        comparison_name = m_u_record["output_column_name"]
         level_value = m_u_record["comparison_vector_value"]
         if comparison_name not in lookup:
             lookup[comparison_name] = {}
@@ -25,26 +27,26 @@ def m_u_records_to_lookup_dict(m_u_records):
     return lookup
 
 
-def not_trained_message(comparison_level):
+def not_trained_message(comparison_level: ComparisonLevel):
     c = comparison_level.comparison
     cl = comparison_level
     return (
-        f"not trained for {c.comparison_name} - "
-        f"{cl.label_for_charts} (comparison vector value: "
+        f"not trained for {c._output_column_name} - "
+        f"{cl._label_for_charts} (comparison vector value: "
         f"{cl.comparison_vector_value}). This usually means the "
         "comparison level was never observed in the training data."
     )
 
 
 def append_u_probability_to_comparison_level_trained_probabilities(
-    comparison_level, m_u_records_lookup, training_description
+    comparison_level: ComparisonLevel, m_u_records_lookup, training_description
 ):
 
     cl = comparison_level
     c = cl.comparison
 
     try:
-        u_probability = m_u_records_lookup[c.comparison_name][
+        u_probability = m_u_records_lookup[c._output_column_name][
             cl.comparison_vector_value
         ]["u_probability"]
 
@@ -52,20 +54,20 @@ def append_u_probability_to_comparison_level_trained_probabilities(
         u_probability = "level not observed in training dataset"
 
         logger.info(f"u probability {not_trained_message(cl)}")
-    cl.add_trained_u_probability(
+    cl._add_trained_u_probability(
         u_probability,
         training_description,
     )
 
 
 def append_m_probability_to_comparison_level_trained_probabilities(
-    comparison_level, m_u_records_lookup, training_description
+    comparison_level: ComparisonLevel, m_u_records_lookup, training_description
 ):
     cl = comparison_level
     c = cl.comparison
 
     try:
-        m_probability = m_u_records_lookup[c.comparison_name][
+        m_probability = m_u_records_lookup[c._output_column_name][
             cl.comparison_vector_value
         ]["m_probability"]
 
@@ -73,7 +75,7 @@ def append_m_probability_to_comparison_level_trained_probabilities(
         m_probability = "level not observed in training dataset"
 
         logger.info(f"u probability {not_trained_message(cl)}")
-    cl.add_trained_m_probability(
+    cl._add_trained_m_probability(
         m_probability,
         training_description,
     )

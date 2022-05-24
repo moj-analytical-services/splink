@@ -77,11 +77,19 @@
         "title": "A comparison of input column(s) that is used for probabalistic matching",
         "additionalProperties": false,
         "properties": {
-          "column_name": {
+          "output_column_name": {
             "type": "string",
             "title": "The name used to refer to this column in the output dataset.  Most useful to describe comparison columns that use multiple input columns.  e.g. a location column that uses postcode and town may be named location",
             "description": "For a comparison column that uses a single input column, e.g. first_name, this will be set first_name. For comparison columns that use multiple columns, if left blank, this will be set to the concatenation of columns used.",
             "examples": ["first_name", "surname"]
+          },
+          "comparison_description": {
+            "type": "string",
+            "title": "An optional label to describe this comparison.",
+            "examples": [
+              "First name exact match",
+              "Surname with middle levenstein level"
+            ]
           },
           "comparison_levels": {
             "type": "array",

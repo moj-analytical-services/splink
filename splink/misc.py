@@ -1,4 +1,5 @@
 from math import log2
+from typing import Iterable
 
 
 def dedupe_preserving_order(list_of_items):
@@ -34,3 +35,11 @@ def interpolate(start, end, num_elements):
 
 def normalise(vals):
     return [v / sum(vals) for v in vals]
+
+
+def ensure_is_iterable(a):
+    return a if isinstance(a, Iterable) else [a]
+
+
+def ensure_is_list(a):
+    return a if isinstance(a, list) else [a]

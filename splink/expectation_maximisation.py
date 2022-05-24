@@ -5,6 +5,7 @@ from .predict import predict_from_comparison_vectors_sql
 from .settings import Settings
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
 from .splink_dataframe import SplinkDataFrame
+from .comparison_level import ComparisonLevel
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -26,15 +27,15 @@ def compute_new_parameters_sql(settings_obj: Settings):
            sum(1 - match_probability)/(select sum(1 - match_probability)
             from __splink__df_predict where {gamma_column} != -1) as u_probability,
 
-           '{comparison_name}' as comparison_name
+           '{output_column_name}' as output_column_name
     from __splink__df_predict
     where {gamma_column} != -1
     group by {gamma_column}
     """
     union_sqls = [
         sql_template.format(
-            gamma_column=cc.gamma_column_name,
-            comparison_name=cc.comparison_name,
+            gamma_column=cc._gamma_column_name,
+            output_column_name=cc._output_column_name,
         )
         for cc in settings_obj.comparisons
     ]
@@ -44,7 +45,7 @@ def compute_new_parameters_sql(settings_obj: Settings):
     select 0 as comparison_vector_value,
            avg(match_probability) as m_probability,
            avg(1-match_probability) as u_probability,
-           '_proportion_of_matches' as comparison_name
+           '_proportion_of_matches' as output_column_name
     from __splink__df_predict
     """
     union_sqls.append(sql)
@@ -54,12 +55,14 @@ def compute_new_parameters_sql(settings_obj: Settings):
     return sql
 
 
-def populate_m_u_from_lookup(em_training_session, comparison_level, m_u_records_lookup):
+def populate_m_u_from_lookup(
+    em_training_session, comparison_level: ComparisonLevel, m_u_records_lookup
+):
     cl = comparison_level
     c = comparison_level.comparison
     if not em_training_session._training_fix_m_probabilities:
         try:
-            m_probability = m_u_records_lookup[c.comparison_name][
+            m_probability = m_u_records_lookup[c._output_column_name][
                 cl.comparison_vector_value
             ]["m_probability"]
 
@@ -69,7 +72,7 @@ def populate_m_u_from_lookup(em_training_session, comparison_level, m_u_records_
 
     if not em_training_session._training_fix_u_probabilities:
         try:
-            u_probability = m_u_records_lookup[c.comparison_name][
+            u_probability = m_u_records_lookup[c._output_column_name][
                 cl.comparison_vector_value
             ]["u_probability"]
 
@@ -85,7 +88,7 @@ def maximisation_step(em_training_session: "EMTrainingSession", param_records):
 
     m_u_records = []
     for r in param_records:
-        if r["comparison_name"] == "_proportion_of_matches":
+        if r["output_column_name"] == "_proportion_of_matches":
             prop_record = r
         else:
             m_u_records.append(r)
@@ -96,7 +99,7 @@ def maximisation_step(em_training_session: "EMTrainingSession", param_records):
 
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
     for cc in settings_obj.comparisons:
-        for cl in cc.comparison_levels_excluding_null:
+        for cl in cc._comparison_levels_excluding_null:
             populate_m_u_from_lookup(em_training_session, cl, m_u_records_lookup)
 
     em_training_session._add_iteration()

@@ -33,7 +33,7 @@ def predict_from_comparison_vectors_sql(
     select_cols_expr = ",".join(select_cols)
     mult = []
     for cc in settings_obj.comparisons:
-        mult.extend(cc.match_weight_columns_to_multiply)
+        mult.extend(cc._match_weight_columns_to_multiply)
 
     proportion_of_matches = settings_obj._proportion_of_matches
 

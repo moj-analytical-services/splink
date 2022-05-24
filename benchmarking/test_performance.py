@@ -13,7 +13,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
 first_name_cc = {
-    "column_name": "first_name",
+    "output_column_name": "first_name",
     "comparison_levels": [
         {
             "sql_condition": "first_name_l IS NULL OR first_name_r IS NULL",
@@ -44,7 +44,7 @@ first_name_cc = {
 }
 
 surname_cc = {
-    "column_name": "surname",
+    "output_column_name": "surname",
     "comparison_levels": [
         {
             "sql_condition": "surname_l IS NULL OR surname_r IS NULL",
@@ -67,7 +67,7 @@ surname_cc = {
 }
 
 dob_cc = {
-    "column_name": "dob",
+    "output_column_name": "dob",
     "comparison_levels": [
         {
             "sql_condition": "dob_l IS NULL OR dob_r IS NULL",
@@ -90,7 +90,7 @@ dob_cc = {
 }
 
 email_cc = {
-    "column_name": "email",
+    "output_column_name": "email",
     "comparison_levels": [
         {
             "sql_condition": "email_l IS NULL OR email_r IS NULL",
@@ -113,7 +113,7 @@ email_cc = {
 }
 
 city_cc = {
-    "column_name": "city",
+    "output_column_name": "city",
     "comparison_levels": [
         {
             "sql_condition": "city_l IS NULL OR city_r IS NULL",

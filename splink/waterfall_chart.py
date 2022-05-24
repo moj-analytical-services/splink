@@ -2,6 +2,7 @@ import math
 from copy import deepcopy
 
 from .misc import prob_to_bayes_factor
+from .comparison import Comparison
 
 
 def _prior_record(settings_obj):
@@ -39,27 +40,27 @@ def _final_score_record(record_as_dict):
     return rec
 
 
-def _comparison_records(record_as_dict, comparison):
+def _comparison_records(record_as_dict, comparison: Comparison):
 
     output_records = []
     waterfall_record = {}
 
-    cc = comparison
-    cv_value = record_as_dict[cc.gamma_column_name]
+    c = comparison
+    cv_value = record_as_dict[c._gamma_column_name]
 
-    cl = cc.get_comparison_level_by_comparison_vector_value(cv_value)
+    cl = c._get_comparison_level_by_comparison_vector_value(cv_value)
 
-    waterfall_record["column_name"] = cc.comparison_name
-    waterfall_record["label_for_charts"] = cl.label_for_charts
+    waterfall_record["column_name"] = c._output_column_name
+    waterfall_record["label_for_charts"] = cl._label_for_charts
 
     waterfall_record["sql_condition"] = cl.sql_condition
-    waterfall_record["log2_bayes_factor"] = cl.log2_bayes_factor
-    waterfall_record["bayes_factor"] = cl.bayes_factor
+    waterfall_record["log2_bayes_factor"] = cl._log2_bayes_factor
+    waterfall_record["bayes_factor"] = cl._bayes_factor
     waterfall_record["comparison_vector_value"] = int(cv_value)
     waterfall_record["m_probability"] = cl.m_probability
     waterfall_record["u_probability"] = cl.u_probability
-    waterfall_record["bayes_factor_description"] = cl.bayes_factor_description
-    input_cols_used = cc.input_columns_used_by_case_statement
+    waterfall_record["bayes_factor_description"] = cl._bayes_factor_description
+    input_cols_used = c._input_columns_used_by_case_statement
     input_cols_l = [ic.name_l(escape=False) for ic in input_cols_used]
     input_cols_r = [ic.name_r(escape=False) for ic in input_cols_used]
     waterfall_record["value_l"] = ", ".join(
@@ -73,30 +74,30 @@ def _comparison_records(record_as_dict, comparison):
     output_records.append(waterfall_record)
     # Term frequency record if needed
 
-    if cc.has_tf_adjustments:
+    if c._has_tf_adjustments:
         waterfall_record_2 = deepcopy(waterfall_record)
 
-        if cl.tf_adjustment_input_column is not None:
+        if cl._tf_adjustment_input_column is not None:
             waterfall_record_2["value_l"] = str(
-                record_as_dict[cl.tf_adjustment_input_column.name_l(escape=False)]
+                record_as_dict[cl._tf_adjustment_input_column.name_l(escape=False)]
             )
             waterfall_record_2["value_r"] = str(
-                record_as_dict[cl.tf_adjustment_input_column.name_r(escape=False)]
+                record_as_dict[cl._tf_adjustment_input_column.name_r(escape=False)]
             )
         else:
             waterfall_record_2["value_l"] = ""
             waterfall_record_2["value_r"] = ""
 
-        waterfall_record_2["column_name"] = "tf_" + cc.comparison_name
+        waterfall_record_2["column_name"] = "tf_" + c._output_column_name
         waterfall_record_2["term_frequency_adjustment"] = True
         waterfall_record_2["bayes_factor"] = 1.0
         waterfall_record_2["log2_bayes_factor"] = math.log2(1.0)
-        if cl.has_tf_adjustments:
+        if cl._has_tf_adjustments:
             waterfall_record_2["label_for_charts"] = (
-                f"Term freq adjustment on {cl.tf_adjustment_input_column.input_name} "
+                f"Term freq adjustment on {cl._tf_adjustment_input_column.input_name} "
                 "with weight {cl.tf_adjustment_weight}"
             )
-            bf = record_as_dict[cc.bf_tf_adj_column_name]
+            bf = record_as_dict[c._bf_tf_adj_column_name]
             waterfall_record_2["bayes_factor"] = bf
             waterfall_record_2["log2_bayes_factor"] = math.log2(bf)
             waterfall_record_2["m_probability"] = None
@@ -105,7 +106,7 @@ def _comparison_records(record_as_dict, comparison):
 
             text = (
                 "Term frequency adjustment on "
-                f"{cl.tf_adjustment_input_column.input_name} makes comparison"
+                f"{cl._tf_adjustment_input_column.input_name} makes comparison"
             )
             if bf >= 1.0:
                 text = f"{text} {bf:,.2f} times more likely to be a match"
