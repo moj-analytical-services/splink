@@ -438,7 +438,7 @@ class Linker:
 
     def _predict_warning(self):
 
-        if not self._settings_obj.is_fully_trained:
+        if not self._settings_obj._is_fully_trained:
             msg = (
                 "\n -- WARNING --\n"
                 "You have called predict(), but there are some parameter "
@@ -446,7 +446,7 @@ class Linker:
                 "settings dictionary.  To produce predictions the following"
                 " untrained trained parameters will use default values."
             )
-            messages = self._settings_obj.not_trained_messages()
+            messages = self._settings_obj._not_trained_messages()
 
             warn_message = "\n".join([msg] + messages)
 
@@ -649,7 +649,7 @@ class Linker:
         estimate_u_values(self, target_rows)
         self._populate_m_u_from_trained_values()
 
-        self._settings_obj.columns_without_estimated_parameters_message()
+        self._settings_obj._columns_without_estimated_parameters_message()
 
     def estimate_m_from_label_column(self, label_colname: str):
         """Estimate the m parameters of the linkage model from a label (ground truth)
@@ -683,7 +683,7 @@ class Linker:
         )
         self._populate_m_u_from_trained_values()
 
-        self._settings_obj.columns_without_estimated_parameters_message()
+        self._settings_obj._columns_without_estimated_parameters_message()
 
     def estimate_parameters_using_expectation_maximisation(
         self,
@@ -766,7 +766,7 @@ class Linker:
 
         self._populate_proportion_of_matches_from_trained_values()
 
-        self._settings_obj.columns_without_estimated_parameters_message()
+        self._settings_obj._columns_without_estimated_parameters_message()
 
         return em_training_session
 
