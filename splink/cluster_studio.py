@@ -139,7 +139,7 @@ def render_splink_cluster_studio_html(
         "raw_edge_data": json.dumps(edges_recs),
         "raw_node_data": json.dumps(nodes_recs),
         "raw_clusters_data": json.dumps(cluster_recs),
-        "splink_settings": json.dumps(linker._settings_obj.as_completed_dict),
+        "splink_settings": json.dumps(linker._settings_obj.as_completed_dict()),
         "svu_options": json.dumps(svu_options),
     }
 

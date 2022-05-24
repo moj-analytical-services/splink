@@ -1214,7 +1214,7 @@ class Linker:
 
         render_splink_comparison_viewer_html(
             df.as_record_dict(),
-            self._settings_obj.as_completed_dict,
+            self._settings_obj.as_completed_dict(),
             out_path,
             overwrite,
         )

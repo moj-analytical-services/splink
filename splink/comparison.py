@@ -36,18 +36,18 @@ class Comparison:
 
         for level in self.comparison_levels:
             if level._is_null_level:
-                level.comparison_vector_value = -1
-                level.max_level = False
+                level._comparison_vector_value = -1
+                level._max_level = False
             else:
-                level.comparison_vector_value = counter
+                level._comparison_vector_value = counter
                 if counter == num_levels - 1:
-                    level.max_level = True
+                    level._max_level = True
                 else:
-                    level.max_level = False
+                    level._max_level = False
                 counter -= 1
 
     def __deepcopy__(self, memo):
-        cc = Comparison(self.as_dict, self._settings_obj)
+        cc = Comparison(self.as_dict(), self._settings_obj)
         return cc
 
     @property
@@ -251,19 +251,17 @@ class Comparison:
             cols.add(cl.tf_adjustment_input_col_name)
         return list(cols)
 
-    @property
     def as_dict(self):
         return {
             "output_column_name": self._output_column_name,
-            "comparison_levels": [cl.as_dict for cl in self.comparison_levels],
+            "comparison_levels": [cl.as_dict() for cl in self.comparison_levels],
         }
 
-    @property
     def as_completed_dict(self):
         return {
             "column_name": self._output_column_name,
             "comparison_levels": [
-                cl.as_completed_dict for cl in self.comparison_levels
+                cl.as_completed_dict() for cl in self.comparison_levels
             ],
             "input_columns_used_by_case_statement": [
                 c.input_name for c in self._input_columns_used_by_case_statement
@@ -344,7 +342,7 @@ class Comparison:
     ) -> ComparisonLevel:
         for cl in self.comparison_levels:
 
-            if cl.comparison_vector_value == value:
+            if cl._comparison_vector_value == value:
                 return cl
         raise ValueError(f"No comparison level with comparison vector value {value}")
 

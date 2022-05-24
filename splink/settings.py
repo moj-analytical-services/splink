@@ -57,7 +57,7 @@ class Settings:
         self._training_mode = False
 
     def __deepcopy__(self, memo):
-        cc = Settings(self.as_dict)
+        cc = Settings(self.as_dict())
         return cc
 
     def from_settings_dict_else_default(self, key):
@@ -299,10 +299,9 @@ class Settings:
             output.extend(records)
         return output
 
-    @property
     def as_dict(self):
         current_settings = {
-            "comparisons": [cc.as_dict for cc in self.comparisons],
+            "comparisons": [cc.as_dict() for cc in self.comparisons],
             "proportion_of_matches": self._proportion_of_matches,
         }
         return {**self._settings_dict, **current_settings}
@@ -310,7 +309,7 @@ class Settings:
     @property
     def as_completed_dict(self):
         current_settings = {
-            "comparisons": [cc.as_completed_dict for cc in self.comparisons],
+            "comparisons": [cc.as_completed_dict() for cc in self.comparisons],
             "proportion_of_matches": self._proportion_of_matches,
             "unique_id_column_name": self._unique_id_column_name,
             "source_dataset_column_name": self._source_dataset_column_name,
