@@ -387,12 +387,12 @@ class ComparisonLevel:
     @property
     def _when_then_comparison_vector_value_sql(self):
         # e.g. when first_name_l = first_name_r then 1
-        if not hasattr(self, "comparison_vector_value"):
+        if not hasattr(self, "_comparison_vector_value"):
             raise ValueError(
                 "Cannot get the 'when .. then ...' sql expression because "
-                "this comparison level does not have a parent ComparisonColumn. "
+                "this comparison level does not belong to a parent Comparison. "
                 "The comparison_vector_value is only defined in the "
-                "context of a list of ComparisonLevels within a ComparisonColumn."
+                "context of a list of ComparisonLevels within a Comparison."
             )
         if self._is_else_level:
             return f"{self._sql_condition} {self._comparison_vector_value}"

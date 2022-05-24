@@ -22,7 +22,7 @@ class Settings:
 
         # If incoming comparisons are of type Comparison not dict, turn back into dict
         ccs = settings_dict["comparisons"]
-        ccs = [cc.as_dict if isinstance(cc, Comparison) else cc for cc in ccs]
+        ccs = [cc.as_dict() if isinstance(cc, Comparison) else cc for cc in ccs]
         settings_dict["comparisons"] = ccs
 
         validate_settings_against_schema(settings_dict)
@@ -306,7 +306,6 @@ class Settings:
         }
         return {**self._settings_dict, **current_settings}
 
-    @property
     def as_completed_dict(self):
         current_settings = {
             "comparisons": [cc.as_completed_dict() for cc in self.comparisons],
