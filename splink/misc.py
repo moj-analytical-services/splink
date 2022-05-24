@@ -39,3 +39,7 @@ def normalise(vals):
 
 def ensure_is_iterable(a):
     return a if isinstance(a, Iterable) else [a]
+
+
+def ensure_is_list(a):
+    return a if isinstance(a, list) else [a]

@@ -72,7 +72,7 @@ def populate_m_u_from_lookup(
 
     if not em_training_session._training_fix_u_probabilities:
         try:
-            u_probability = m_u_records_lookup[c.comparison_name][
+            u_probability = m_u_records_lookup[c._output_column_name][
                 cl.comparison_vector_value
             ]["u_probability"]
 

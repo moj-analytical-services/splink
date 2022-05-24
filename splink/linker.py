@@ -17,7 +17,7 @@ from .charts import (
 from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .em_training_session import EMTrainingSession
-from .misc import bayes_factor_to_prob, prob_to_bayes_factor, ensure_is_iterable
+from .misc import bayes_factor_to_prob, prob_to_bayes_factor, ensure_is_list
 from .predict import predict_from_comparison_vectors_sql
 from .settings import Settings
 from .term_frequencies import (
@@ -418,7 +418,7 @@ class Linker:
 
     def _get_input_tables_dict(self, input_table_or_tables, input_table_aliases):
 
-        input_table_or_tables = ensure_is_iterable(input_table_or_tables)
+        input_table_or_tables = ensure_is_list(input_table_or_tables)
 
         input_table_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases

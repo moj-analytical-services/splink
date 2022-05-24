@@ -7,7 +7,7 @@ from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
 from ..logging_messages import execute_sql_logging_message_info, log_sql
-from ..misc import ensure_is_iterable
+from ..misc import ensure_is_list
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ class SparkLinker(Linker):
         self.break_lineage_method = break_lineage_method
         self.persist_level = persist_level
 
-        input_tables = ensure_is_iterable(input_table_or_tables)
+        input_tables = ensure_is_list(input_table_or_tables)
 
         input_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases

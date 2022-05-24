@@ -75,11 +75,11 @@ class ComparisonLevel:
         self._level_dict = (
             level_dict  # Protected, because we don't want to modify the original dict
         )
-        self.comparison = comparison
+        self.comparison: "Comparison" = comparison
         self._settings_obj = settings_obj
 
         self.sql_condition = self._level_dict["sql_condition"]
-        self.is_null_level = self.level_dict_val_else_default("is_null_level")
+        self._is_null_level = self.level_dict_val_else_default("is_null_level")
         self.tf_adjustment_weight = self.level_dict_val_else_default(
             "tf_adjustment_weight"
         )
@@ -133,7 +133,7 @@ class ComparisonLevel:
 
     @property
     def m_probability(self):
-        if self.is_null_level:
+        if self._is_null_level:
             return None
         if self._m_probability == "level not observed in training dataset":
             return 1e-6
@@ -144,7 +144,7 @@ class ComparisonLevel:
 
     @m_probability.setter
     def m_probability(self, value):
-        if self.is_null_level:
+        if self._is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
         if value == "level not observed in training dataset":
             cc_n = self.comparison._output_column_name
@@ -159,7 +159,7 @@ class ComparisonLevel:
 
     @property
     def u_probability(self):
-        if self.is_null_level:
+        if self._is_null_level:
             return None
         if self._u_probability == "level not observed in training dataset":
             return 1e-6
@@ -170,7 +170,7 @@ class ComparisonLevel:
 
     @u_probability.setter
     def u_probability(self, value):
-        if self.is_null_level:
+        if self._is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
         if value == "level not observed in training dataset":
             cc_n = self.comparison._output_column_name
@@ -214,7 +214,7 @@ class ComparisonLevel:
 
     @property
     def _has_estimated_u_values(self):
-        if self.is_null_level:
+        if self._is_null_level:
             return True
         vals = [r["probability"] for r in self.trained_u_probabilities]
         vals = [v for v in vals if isinstance(v, (int, float))]
@@ -222,7 +222,7 @@ class ComparisonLevel:
 
     @property
     def _has_estimated_m_values(self):
-        if self.is_null_level:
+        if self._is_null_level:
             return True
         vals = [r["probability"] for r in self.trained_m_probabilities]
         vals = [v for v in vals if isinstance(v, (int, float))]
@@ -250,7 +250,7 @@ class ComparisonLevel:
 
     @property
     def _m_is_trained(self):
-        if self.is_null_level:
+        if self._is_null_level:
             return True
         if self._m_probability == "level not observed in data":
             return False
@@ -260,7 +260,7 @@ class ComparisonLevel:
 
     @property
     def _u_is_trained(self):
-        if self.is_null_level:
+        if self._is_null_level:
             return True
         if self._u_probability == "level not observed in data":
             return False
@@ -274,7 +274,7 @@ class ComparisonLevel:
 
     @property
     def _bayes_factor(self):
-        if self.is_null_level:
+        if self._is_null_level:
             return 1.0
         if self.m_probability is None or self.u_probability is None:
             return None
@@ -283,7 +283,7 @@ class ComparisonLevel:
 
     @property
     def _log2_bayes_factor(self):
-        if self.is_null_level:
+        if self._is_null_level:
             return 0.0
         else:
             return math.log2(self._bayes_factor)
@@ -547,7 +547,7 @@ class ComparisonLevel:
             if self.tf_adjustment_weight != 0:
                 output["tf_adjustment_weight"] = self.tf_adjustment_weight
 
-        if self.is_null_level:
+        if self._is_null_level:
             output["is_null_level"] = True
         return output
 
@@ -577,7 +577,7 @@ class ComparisonLevel:
             output["tf_adjustment_column"] = None
         output["tf_adjustment_weight"] = self.tf_adjustment_weight
 
-        output["is_null_level"] = self.is_null_level
+        output["is_null_level"] = self._is_null_level
         output["bayes_factor"] = self._bayes_factor
         output["log2_bayes_factor"] = self._log2_bayes_factor
         output["comparison_vector_value"] = self.comparison_vector_value

@@ -287,8 +287,9 @@ class EMTrainingSession:
         else:
             cl = max_change_dict["current_comparison_level"]
             m_u = max_change_dict["max_change_type"]
-            cc_name = cl.comparison.comparison_name
-            cl_label = cl.label_for_charts
+            cc_name = cl.comparison._output_column_name
+
+            cl_label = cl._label_for_charts
             level_text = f"{cc_name}, level `{cl_label}`"
 
             message = (
@@ -316,7 +317,7 @@ class EMTrainingSession:
             this_cc = comparison[1]
             z_cls = zip(prev_cc.comparison_levels, this_cc.comparison_levels)
             for z_cl in z_cls:
-                if z_cl[0].is_null_level:
+                if z_cl[0]._is_null_level:
                     continue
                 prev_cl = z_cl[0]
                 this_cl = z_cl[1]

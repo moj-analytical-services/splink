@@ -2,9 +2,14 @@ from jinja2 import Template
 import json
 import os
 import pkgutil
+from typing import TYPE_CHECKING
+
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
 
-def row_examples(linker, example_rows_per_category=2):
+def row_examples(linker: "Linker", example_rows_per_category=2):
 
     sqls = []
 
@@ -14,7 +19,7 @@ def row_examples(linker, example_rows_per_category=2):
     uid_cols = uid_cols_l + uid_cols_r
     uid_expr = " || '-' ||".join(uid_cols)
 
-    gamma_columns = [c.gamma_column_name for c in linker._settings_obj.comparisons]
+    gamma_columns = [c._gamma_column_name for c in linker._settings_obj.comparisons]
 
     gam_concat = " || ',' || ".join(gamma_columns)
 
