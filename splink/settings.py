@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 class Settings:
+    """The settings object contains the configuration and parameters of the data
+    linking model"""
+
     def __init__(self, settings_dict):
 
         validate_settings_against_schema(settings_dict)
