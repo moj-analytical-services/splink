@@ -978,7 +978,7 @@ class Linker:
         self, retain_term_frequency=True, retain_df_concat_with_tf=True
     ):
         tables_remaining = []
-        current_tables = self.names_of_tables_created_by_splink
+        current_tables = self._names_of_tables_created_by_splink
         for splink_df in current_tables:
             name = splink_df.templated_name
             # Only delete tables explicitly marked as having been created by splink
@@ -998,7 +998,7 @@ class Linker:
             else:
                 self._delete_table_from_database(name)
 
-        self.names_of_tables_created_by_splink = tables_remaining
+        self._names_of_tables_created_by_splink = tables_remaining
 
     def profile_columns(self, column_expressions, top_n=10, bottom_n=10):
 

@@ -2,7 +2,7 @@ import math
 import re
 from statistics import median
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 import logging
 
 
@@ -11,7 +11,12 @@ from sqlglot.expressions import EQ, Column, Identifier
 
 from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
-from .misc import dedupe_preserving_order, normalise, interpolate
+from .misc import (
+    dedupe_preserving_order,
+    normalise,
+    interpolate,
+    join_list_with_commas_final_and,
+)
 from .parse_sql import get_columns_used_from_sql
 
 
@@ -338,7 +343,7 @@ class ComparisonLevel:
         return True
 
     @property
-    def _input_columns_used_by_sql_condition(self):
+    def _input_columns_used_by_sql_condition(self) -> List[InputColumn]:
         # returns e.g. InputColumn(first_name), InputColumn(surname)
 
         if self._is_else_level:
@@ -614,7 +619,29 @@ class ComparisonLevel:
     def _validate(self):
         self._validate_sql()
 
-    def __repr__(self):
+    def _abbreviated_sql(self, cutoff=75):
         sql = self._sql_condition
         sql = (sql[:75] + "...") if len(sql) > 75 else sql
-        return f"<ComparisonLevel {self._label_for_charts} with SQL: {sql}>"
+        return sql
+
+    def __repr__(self):
+
+        return f"<{self._human_readable_succinct}>"
+
+    def _human_readable_succinct(self):
+        sql = self._abbreviated_sql(75)
+        f"Comparison Level {self._label_for_charts} using SQL rule: {sql}"
+
+    @property
+    def human_readable_description(self):
+
+        input_cols = join_list_with_commas_final_and(
+            [c.name(escape=False) for c in self._input_columns_used_by_sql_condition]
+        )
+        desc = (
+            f"Comparison level: {self._label_for_charts} of {input_cols}\n"
+            "Assesses similarity between pairwise comparisons of the input columns "
+            f"using the following rule\n{self._sql_condition}"
+        )
+
+        return desc
