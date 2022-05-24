@@ -1,7 +1,6 @@
 import logging
 
 from .comparison_level import ComparisonLevel
-from .comparison import Comparison
 
 logger = logging.getLogger(__name__)
 
