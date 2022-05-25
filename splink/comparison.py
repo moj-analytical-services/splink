@@ -409,11 +409,13 @@ class Comparison:
         comp_levels = self._comparison_level_description_list
 
         if "comparison_description" in self._comparison_dict:
-            main_desc = f"'{self._comparison_description}' of {input_cols}"
+            main_desc = (
+                f"of {input_cols}\nDescription: '{self._comparison_description}'"
+            )
         else:
             main_desc = f"of {input_cols}"
 
-        desc = f"Comparison {main_desc} with ComparisonLevels:\n{comp_levels}"
+        desc = f"Comparison {main_desc}\nComparison levels:\n{comp_levels}"
         return desc
 
     @property

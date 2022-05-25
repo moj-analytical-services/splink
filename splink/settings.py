@@ -360,6 +360,8 @@ class Settings:
         ]
         comparison_descs = "\n".join(comparison_descs)
         desc = (
+            "SUMMARY OF LINKING MODEL\n"
+            "------------------------\n"
             "The similarity of pairwise record comparison in your model will be "
             f"assessed as follows:\n\n{comparison_descs}"
         )
