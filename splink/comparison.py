@@ -9,13 +9,30 @@ if TYPE_CHECKING:
 
 
 class Comparison:
-    """Assesses of the similarity of one or more input columns.
+    """Each comparison defines how one type of data in the input record is compared to
+    assess its similarity.  For example, one comparison may represent the comparison
+    of a person's date or birth.  Another may represent the comparison of a person's
+    name, or location.
 
-    A Comparison contains two or more ComparisonLevels which assess gradations of
-    similarity between the input columns.
+    A linking model thus usually contains several Comparisons.
 
-    A linking model contains two or more Comparison e.g. one for name, one for date of
-    birth etc.
+    Each Comparison contains two or more ComparisonLevels which assess gradations of
+    similarity between the input columns.  For example, for the date of birth Comparison
+    there may be a ComparisonLevel for an exact match, another for a one-character
+    difference, and another for all other comparisons.
+
+    To summarise:
+
+    Data Linking Model
+    ├─-- Comparison: Date of birth
+    │    ├─-- ComparisonLevel: Exact match
+    │    ├─-- ComparisonLevel: One character difference
+    │    ├─-- ComparisonLevel: All other
+    ├─-- Comparison: Name
+    │    ├─-- ComparisonLevel: Exact match on first name and surname
+    │    ├─-- ComparisonLevel: Exact match on first name
+    │    ├─-- etc.
+
     """
 
     def __init__(self, comparison_dict, settings_obj: "Settings" = None):
