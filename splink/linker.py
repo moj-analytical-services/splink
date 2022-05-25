@@ -1232,7 +1232,16 @@ class Linker:
 
         return parameter_estimate_comparisons(records)
 
-    def missingness_chart(self, input_dataset=None):
+    def missingness_chart(self, input_dataset: str = None):
+        """Generate a summary chart of the missingness (prevalence of nulls) of
+        columns in the input datasets.  By default, missingness is assessed across
+        all input datasets
+
+        Args:
+            input_dataset (str, optional): Name of one of the input tables in the
+            database.  If provided, missingness will be computed for this table alone.
+            Defaults to None.
+        """
         records = missingness_data(self, input_dataset)
         return missingness_chart(records, input_dataset)
 
