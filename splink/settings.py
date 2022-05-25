@@ -352,3 +352,15 @@ class Settings:
         for c in self.comparisons:
             messages.extend(c._not_trained_messages)
         return messages
+
+    @property
+    def human_readable_description(self):
+        comparison_descs = [
+            c._human_readable_description_succinct for c in self.comparisons
+        ]
+        comparison_descs = "\n".join(comparison_descs)
+        desc = (
+            "The similarity of pairwise record comparison in your model will be "
+            f"assessed as follows:\n\n{comparison_descs}"
+        )
+        return desc

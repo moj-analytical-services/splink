@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, List
 
 from .comparison_level import ComparisonLevel
-from .misc import dedupe_preserving_order
+from .misc import dedupe_preserving_order, join_list_with_commas_final_and
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -9,6 +9,15 @@ if TYPE_CHECKING:
 
 
 class Comparison:
+    """Assesses of the similarity of one or more input columns.
+
+    A Comparison contains two or more ComparisonLevels which assess gradations of
+    similarity between the input columns.
+
+    A linking model contains two or more Comparison e.g. one for name, one for date of
+    birth etc.
+    """
+
     def __init__(self, comparison_dict, settings_obj: "Settings" = None):
 
         # Protected because we don't want to modify
@@ -252,10 +261,15 @@ class Comparison:
         return list(cols)
 
     def as_dict(self):
-        return {
+        d = {
             "output_column_name": self._output_column_name,
             "comparison_levels": [cl.as_dict() for cl in self.comparison_levels],
         }
+        if "comparison_description" in self._comparison_dict:
+            d["comparison_description"] = self._comparison_dict[
+                "comparison_description"
+            ]
+        return d
 
     def as_completed_dict(self):
         return {
@@ -369,3 +383,57 @@ class Comparison:
             msgs.append(msg_template.format(header=header, m_or_u="u"))
 
         return msgs
+
+    @property
+    def _comparison_level_description_list(self):
+        cl_template = "    - '{label}' with SQL rule: {sql}\n"
+
+        comp_levels = [
+            cl_template.format(
+                cvv=cl._comparison_vector_value,
+                label=cl._label_for_charts,
+                sql=cl._sql_condition,
+            )
+            for cl in self.comparison_levels
+        ]
+        comp_levels = "".join(comp_levels)
+        return comp_levels
+
+    @property
+    def _human_readable_description_succinct(self):
+
+        input_cols = join_list_with_commas_final_and(
+            [c.name(escape=False) for c in self._input_columns_used_by_case_statement]
+        )
+
+        comp_levels = self._comparison_level_description_list
+
+        if "comparison_description" in self._comparison_dict:
+            main_desc = f"'{self._comparison_description}' of {input_cols}"
+        else:
+            main_desc = f"of {input_cols}"
+
+        desc = f"Comparison {main_desc} with ComparisonLevels:\n{comp_levels}"
+        return desc
+
+    @property
+    def human_readable_description(self):
+
+        input_cols = join_list_with_commas_final_and(
+            [c.name(escape=False) for c in self._input_columns_used_by_case_statement]
+        )
+
+        comp_levels = self._comparison_level_description_list
+
+        if "comparison_description" in self._comparison_dict:
+            main_desc = f"'{self._comparison_description}' of {input_cols}"
+        else:
+            main_desc = f"of {input_cols}"
+
+        desc = (
+            f"Comparison {main_desc}.\n"
+            "Similarity is assessed using the following "
+            f"ComparisonLevels:\n{comp_levels}"
+        )
+
+        return desc

@@ -628,9 +628,10 @@ class ComparisonLevel:
 
         return f"<{self._human_readable_succinct}>"
 
+    @property
     def _human_readable_succinct(self):
         sql = self._abbreviated_sql(75)
-        f"Comparison Level {self._label_for_charts} using SQL rule: {sql}"
+        return f"Comparison level '{self._label_for_charts}' using SQL rule: {sql}"
 
     @property
     def human_readable_description(self):
