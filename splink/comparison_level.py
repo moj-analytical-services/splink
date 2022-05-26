@@ -85,14 +85,32 @@ def _default_u_values(num_levels):
 
 
 class ComparisonLevel:
-    """Defines a way in which the similarity between one or more columns of a pairwise
-    comparisons is assessed.
+    """ComparisonLevels define the gradations of similarity within a Comparison.
 
-    For example, the Comparison for first_name comparison may have an exact match level,
-    a levenstein similarity level and an 'all other comparisons' level
+    For example, a Comparison of the first_name and surname columns may define three
+    ComparisonLevels:
+        An exact match on first name and surname
+        First name and surname have a JaroWinkler score of above 0.95
+        All other comparisons
 
-    A Comparison will have several ComparisonLevels. A Splink model will have several
-    Comparisons (e.g. name, dob, postcode, etc.)"""
+    The method used to assess similarity will depend on the type of data -
+    for instance, the method used to assess similarity of a company's turnover would
+    be different to the method used to assess the similarity of a person's first name.
+
+    To summarise:
+
+    Data Linking Model
+    ├─-- Comparison: Name
+    │    ├─-- ComparisonLevel: Exact match on first_name and surname
+    │    ├─-- ComparisonLevel: first_name and surname have JaroWinkler > 0.95
+    │    ├─-- ComparisonLevel: All other
+    ├─-- Comparison: Date of birth
+    │    ├─-- ComparisonLevel: Exact match
+    │    ├─-- ComparisonLevel: One character difference
+    │    ├─-- ComparisonLevel: All other
+    ├─-- etc.
+
+    """
 
     def __init__(
         self,

@@ -10,14 +10,18 @@ if TYPE_CHECKING:
 
 
 class Comparison:
-    """Each comparison defines how one type of data in the input record is compared to
-    assess its similarity.  For example, one comparison may represent the comparison
-    of a person's date or birth.  Another may represent the comparison of a person's
-    name, or location.
+    """Each comparison defines how data from a subset of input columns is
+    compared to assess its similarity.
+
+    For example, one comparison may represent how similarity is assessed for a
+    person's date of birth.  Others may represent the comparison of a person's name or
+    location.  The method used to assess similarity will depend on the type of data -
+    for instance, the method used to assess similarity of a company's turnover would
+    be different to the method used to assess the similarity of a person's first name.
 
     A linking model thus usually contains several Comparisons.
 
-    Each Comparison contains two or more ComparisonLevels which assess gradations of
+    Each Comparison contains two or more ComparisonLevels which define the gradations of
     similarity between the input columns.  For example, for the date of birth Comparison
     there may be a ComparisonLevel for an exact match, another for a one-character
     difference, and another for all other comparisons.
