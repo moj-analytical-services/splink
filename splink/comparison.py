@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, List
 from .comparison_level import ComparisonLevel
 from .misc import dedupe_preserving_order, join_list_with_commas_final_and
 
+
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from .settings import Settings
@@ -456,3 +457,10 @@ class Comparison:
         )
 
         return desc
+
+    def match_weights_chart(self, as_dict=False):
+        """Display a chart of comparison levels of the comparison"""
+        from .charts import comparison_match_weights_chart
+
+        records = self._as_detailed_records
+        return comparison_match_weights_chart(records, as_dict=as_dict)
