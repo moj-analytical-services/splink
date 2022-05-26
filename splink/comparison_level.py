@@ -13,9 +13,9 @@ from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
 from .misc import (
     dedupe_preserving_order,
-    normalise,
     interpolate,
     join_list_with_commas_final_and,
+    match_weight_to_bayes_factor,
 )
 from .parse_sql import get_columns_used_from_sql
 
@@ -58,6 +58,30 @@ def _exact_match_colname(sql):
             f"Expected sql condition to refer to one column but got {cols}"
         )
     return cols[0]
+
+
+def _default_m_values(num_levels):
+    proportion_exact_match = 0.95
+    remainder = 1 - proportion_exact_match
+    split_remainder = remainder / (num_levels - 1)
+    return [split_remainder] * (num_levels - 1) + [proportion_exact_match]
+
+
+def _default_u_values(num_levels):
+    m_vals = _default_m_values(num_levels)
+    if num_levels == 2:
+        match_weights = [-5]
+    else:
+        match_weights = interpolate(-5, 3, num_levels - 1)
+    match_weights = match_weights + [10]
+
+    u_vals = []
+    for m, w in zip(m_vals, match_weights):
+        p = match_weight_to_bayes_factor(w)
+        u = m / p
+        u_vals.append(u)
+
+    return u_vals
 
 
 class ComparisonLevel:
@@ -145,7 +169,7 @@ class ComparisonLevel:
         if self._m_probability == "level not observed in training dataset":
             return 1e-6
         if self._m_probability is None and self._has_comparison:
-            vals = normalise(interpolate(0.05, 0.95, self.comparison._num_levels))
+            vals = _default_m_values(self.comparison._num_levels)
             return vals[self._comparison_vector_value]
         return self._m_probability
 
@@ -171,7 +195,7 @@ class ComparisonLevel:
         if self._u_probability == "level not observed in training dataset":
             return 1e-6
         if self._u_probability is None:
-            vals = normalise(interpolate(0.95, 0.05, self.comparison._num_levels))
+            vals = _default_u_values(self.comparison._num_levels)
             return vals[self._comparison_vector_value]
         return self._u_probability
 

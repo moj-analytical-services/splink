@@ -22,6 +22,10 @@ def prob_to_match_weight(prob):
     return log2(prob_to_bayes_factor(prob))
 
 
+def match_weight_to_bayes_factor(weight):
+    return 2**weight
+
+
 def bayes_factor_to_prob(bf):
     return bf / (1 + bf)
 
