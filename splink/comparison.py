@@ -1,7 +1,8 @@
 from typing import TYPE_CHECKING, List
 
 from .comparison_level import ComparisonLevel
-from .misc import dedupe_preserving_order
+from .misc import dedupe_preserving_order, join_list_with_commas_final_and
+
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -9,6 +10,32 @@ if TYPE_CHECKING:
 
 
 class Comparison:
+    """Each comparison defines how one type of data in the input record is compared to
+    assess its similarity.  For example, one comparison may represent the comparison
+    of a person's date or birth.  Another may represent the comparison of a person's
+    name, or location.
+
+    A linking model thus usually contains several Comparisons.
+
+    Each Comparison contains two or more ComparisonLevels which assess gradations of
+    similarity between the input columns.  For example, for the date of birth Comparison
+    there may be a ComparisonLevel for an exact match, another for a one-character
+    difference, and another for all other comparisons.
+
+    To summarise:
+
+    Data Linking Model
+    ├─-- Comparison: Date of birth
+    │    ├─-- ComparisonLevel: Exact match
+    │    ├─-- ComparisonLevel: One character difference
+    │    ├─-- ComparisonLevel: All other
+    ├─-- Comparison: Name
+    │    ├─-- ComparisonLevel: Exact match on first name and surname
+    │    ├─-- ComparisonLevel: Exact match on first name
+    │    ├─-- etc.
+
+    """
+
     def __init__(self, comparison_dict, settings_obj: "Settings" = None):
 
         # Protected because we don't want to modify
@@ -36,18 +63,18 @@ class Comparison:
 
         for level in self.comparison_levels:
             if level._is_null_level:
-                level.comparison_vector_value = -1
-                level.max_level = False
+                level._comparison_vector_value = -1
+                level._max_level = False
             else:
-                level.comparison_vector_value = counter
+                level._comparison_vector_value = counter
                 if counter == num_levels - 1:
-                    level.max_level = True
+                    level._max_level = True
                 else:
-                    level.max_level = False
+                    level._max_level = False
                 counter -= 1
 
     def __deepcopy__(self, memo):
-        cc = Comparison(self.as_dict, self._settings_obj)
+        cc = Comparison(self.as_dict(), self._settings_obj)
         return cc
 
     @property
@@ -251,19 +278,22 @@ class Comparison:
             cols.add(cl.tf_adjustment_input_col_name)
         return list(cols)
 
-    @property
     def as_dict(self):
-        return {
+        d = {
             "output_column_name": self._output_column_name,
-            "comparison_levels": [cl.as_dict for cl in self.comparison_levels],
+            "comparison_levels": [cl.as_dict() for cl in self.comparison_levels],
         }
+        if "comparison_description" in self._comparison_dict:
+            d["comparison_description"] = self._comparison_dict[
+                "comparison_description"
+            ]
+        return d
 
-    @property
     def as_completed_dict(self):
         return {
             "column_name": self._output_column_name,
             "comparison_levels": [
-                cl.as_completed_dict for cl in self.comparison_levels
+                cl.as_completed_dict() for cl in self.comparison_levels
             ],
             "input_columns_used_by_case_statement": [
                 c.input_name for c in self._input_columns_used_by_case_statement
@@ -344,7 +374,7 @@ class Comparison:
     ) -> ComparisonLevel:
         for cl in self.comparison_levels:
 
-            if cl.comparison_vector_value == value:
+            if cl._comparison_vector_value == value:
                 return cl
         raise ValueError(f"No comparison level with comparison vector value {value}")
 
@@ -371,3 +401,66 @@ class Comparison:
             msgs.append(msg_template.format(header=header, m_or_u="u"))
 
         return msgs
+
+    @property
+    def _comparison_level_description_list(self):
+        cl_template = "    - '{label}' with SQL rule: {sql}\n"
+
+        comp_levels = [
+            cl_template.format(
+                cvv=cl._comparison_vector_value,
+                label=cl._label_for_charts,
+                sql=cl._sql_condition,
+            )
+            for cl in self.comparison_levels
+        ]
+        comp_levels = "".join(comp_levels)
+        return comp_levels
+
+    @property
+    def _human_readable_description_succinct(self):
+
+        input_cols = join_list_with_commas_final_and(
+            [c.name(escape=False) for c in self._input_columns_used_by_case_statement]
+        )
+
+        comp_levels = self._comparison_level_description_list
+
+        if "comparison_description" in self._comparison_dict:
+            main_desc = (
+                f"of {input_cols}\nDescription: '{self._comparison_description}'"
+            )
+        else:
+            main_desc = f"of {input_cols}"
+
+        desc = f"Comparison {main_desc}\nComparison levels:\n{comp_levels}"
+        return desc
+
+    @property
+    def human_readable_description(self):
+
+        input_cols = join_list_with_commas_final_and(
+            [c.name(escape=False) for c in self._input_columns_used_by_case_statement]
+        )
+
+        comp_levels = self._comparison_level_description_list
+
+        if "comparison_description" in self._comparison_dict:
+            main_desc = f"'{self._comparison_description}' of {input_cols}"
+        else:
+            main_desc = f"of {input_cols}"
+
+        desc = (
+            f"Comparison {main_desc}.\n"
+            "Similarity is assessed using the following "
+            f"ComparisonLevels:\n{comp_levels}"
+        )
+
+        return desc
+
+    def match_weights_chart(self, as_dict=False):
+        """Display a chart of comparison levels of the comparison"""
+        from .charts import comparison_match_weights_chart
+
+        records = self._as_detailed_records
+        return comparison_match_weights_chart(records, as_dict=as_dict)

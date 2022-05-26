@@ -43,3 +43,9 @@ def ensure_is_iterable(a):
 
 def ensure_is_list(a):
     return a if isinstance(a, list) else [a]
+
+
+def join_list_with_commas_final_and(lst):
+    if len(lst) == 1:
+        return lst[0]
+    return ", ".join(lst[:-1]) + " and " + lst[-1]

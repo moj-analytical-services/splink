@@ -22,7 +22,7 @@ class Settings:
 
         # If incoming comparisons are of type Comparison not dict, turn back into dict
         ccs = settings_dict["comparisons"]
-        ccs = [cc.as_dict if isinstance(cc, Comparison) else cc for cc in ccs]
+        ccs = [cc.as_dict() if isinstance(cc, Comparison) else cc for cc in ccs]
         settings_dict["comparisons"] = ccs
 
         validate_settings_against_schema(settings_dict)
@@ -30,7 +30,7 @@ class Settings:
         self._settings_dict = settings_dict
 
         ccs = self._settings_dict["comparisons"]
-        s_else_d = self.from_settings_dict_else_default
+        s_else_d = self._from_settings_dict_else_default
         self._sql_dialect = s_else_d("sql_dialect")
 
         self.comparisons: list[Comparison] = []
@@ -57,10 +57,10 @@ class Settings:
         self._training_mode = False
 
     def __deepcopy__(self, memo):
-        cc = Settings(self.as_dict)
+        cc = Settings(self.as_dict())
         return cc
 
-    def from_settings_dict_else_default(self, key):
+    def _from_settings_dict_else_default(self, key):
         val = self._settings_dict.get(key, "__val_not_found_in_settings_dict__")
         if val == "__val_not_found_in_settings_dict__":
             val = default_value_from_schema(key, "root")
@@ -68,7 +68,7 @@ class Settings:
 
     @property
     def _additional_columns_to_retain(self):
-        cols = self.from_settings_dict_else_default("additional_columns_to_retain")
+        cols = self._from_settings_dict_else_default("additional_columns_to_retain")
         return [InputColumn(c, tf_adjustments=False, settings_obj=self) for c in cols]
 
     @property
@@ -81,7 +81,7 @@ class Settings:
     @property
     def _source_dataset_column_name(self):
         if self._source_dataset_column_name_is_required:
-            s_else_d = self.from_settings_dict_else_default
+            s_else_d = self._from_settings_dict_else_default
             return s_else_d("source_dataset_column_name")
         else:
             return None
@@ -299,18 +299,16 @@ class Settings:
             output.extend(records)
         return output
 
-    @property
     def as_dict(self):
         current_settings = {
-            "comparisons": [cc.as_dict for cc in self.comparisons],
+            "comparisons": [cc.as_dict() for cc in self.comparisons],
             "proportion_of_matches": self._proportion_of_matches,
         }
         return {**self._settings_dict, **current_settings}
 
-    @property
     def as_completed_dict(self):
         current_settings = {
-            "comparisons": [cc.as_completed_dict for cc in self.comparisons],
+            "comparisons": [cc.as_completed_dict() for cc in self.comparisons],
             "proportion_of_matches": self._proportion_of_matches,
             "unique_id_column_name": self._unique_id_column_name,
             "source_dataset_column_name": self._source_dataset_column_name,
@@ -326,7 +324,7 @@ class Settings:
         records = self._parameters_as_detailed_records
         return m_u_parameters_chart(records, as_dict=as_dict)
 
-    def columns_without_estimated_parameters_message(self):
+    def _columns_without_estimated_parameters_message(self):
         message_lines = []
         for c in self.comparisons:
             msg = c._is_trained_message
@@ -346,11 +344,25 @@ class Settings:
         logger.info(message)
 
     @property
-    def is_fully_trained(self):
+    def _is_fully_trained(self):
         return all([c._is_trained for c in self.comparisons])
 
-    def not_trained_messages(self):
+    def _not_trained_messages(self):
         messages = []
         for c in self.comparisons:
             messages.extend(c._not_trained_messages)
         return messages
+
+    @property
+    def human_readable_description(self):
+        comparison_descs = [
+            c._human_readable_description_succinct for c in self.comparisons
+        ]
+        comparison_descs = "\n".join(comparison_descs)
+        desc = (
+            "SUMMARY OF LINKING MODEL\n"
+            "------------------------\n"
+            "The similarity of pairwise record comparison in your model will be "
+            f"assessed as follows:\n\n{comparison_descs}"
+        )
+        return desc

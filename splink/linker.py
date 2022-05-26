@@ -438,7 +438,7 @@ class Linker:
 
     def _predict_warning(self):
 
-        if not self._settings_obj.is_fully_trained:
+        if not self._settings_obj._is_fully_trained:
             msg = (
                 "\n -- WARNING --\n"
                 "You have called predict(), but there are some parameter "
@@ -446,7 +446,7 @@ class Linker:
                 "settings dictionary.  To produce predictions the following"
                 " untrained trained parameters will use default values."
             )
-            messages = self._settings_obj.not_trained_messages()
+            messages = self._settings_obj._not_trained_messages()
 
             warn_message = "\n".join([msg] + messages)
 
@@ -499,7 +499,7 @@ class Linker:
                 )
 
                 cl = cc._get_comparison_level_by_comparison_vector_value(
-                    reverse_level.comparison_vector_value
+                    reverse_level._comparison_vector_value
                 )
 
                 if cl._has_estimated_values:
@@ -649,7 +649,7 @@ class Linker:
         estimate_u_values(self, target_rows)
         self._populate_m_u_from_trained_values()
 
-        self._settings_obj.columns_without_estimated_parameters_message()
+        self._settings_obj._columns_without_estimated_parameters_message()
 
     def estimate_m_from_label_column(self, label_colname: str):
         """Estimate the m parameters of the linkage model from a label (ground truth)
@@ -683,7 +683,7 @@ class Linker:
         )
         self._populate_m_u_from_trained_values()
 
-        self._settings_obj.columns_without_estimated_parameters_message()
+        self._settings_obj._columns_without_estimated_parameters_message()
 
     def estimate_parameters_using_expectation_maximisation(
         self,
@@ -766,7 +766,7 @@ class Linker:
 
         self._populate_proportion_of_matches_from_trained_values()
 
-        self._settings_obj.columns_without_estimated_parameters_message()
+        self._settings_obj._columns_without_estimated_parameters_message()
 
         return em_training_session
 
@@ -978,7 +978,7 @@ class Linker:
         self, retain_term_frequency=True, retain_df_concat_with_tf=True
     ):
         tables_remaining = []
-        current_tables = self.names_of_tables_created_by_splink
+        current_tables = self._names_of_tables_created_by_splink
         for splink_df in current_tables:
             name = splink_df.templated_name
             # Only delete tables explicitly marked as having been created by splink
@@ -998,7 +998,7 @@ class Linker:
             else:
                 self._delete_table_from_database(name)
 
-        self.names_of_tables_created_by_splink = tables_remaining
+        self._names_of_tables_created_by_splink = tables_remaining
 
     def profile_columns(self, column_expressions, top_n=10, bottom_n=10):
 
@@ -1214,7 +1214,7 @@ class Linker:
 
         render_splink_comparison_viewer_html(
             df.as_record_dict(),
-            self._settings_obj.as_completed_dict,
+            self._settings_obj.as_completed_dict(),
             out_path,
             overwrite,
         )
