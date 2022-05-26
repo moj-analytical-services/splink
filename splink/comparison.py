@@ -15,7 +15,9 @@ class Comparison:
 
     For example, one comparison may represent how similarity is assessed for a
     person's date of birth.  Others may represent the comparison of a person's name or
-    location.  The method used to assess similarity will depend on the type of data -
+    location.
+
+    The method used to assess similarity will depend on the type of data -
     for instance, the method used to assess similarity of a company's turnover would
     be different to the method used to assess the similarity of a person's first name.
 
