@@ -4,7 +4,6 @@ import pkgutil
 
 from .waterfall_chart import records_to_waterfall_data
 
-
 altair_installed = True
 try:
 
@@ -259,3 +258,39 @@ def missingness_chart(records, as_dict=False):
         c["title"] = f"Missingness per column out of {record_count:,.0f} records"
 
     return vegalite_or_json(chart, as_dict=as_dict)
+
+
+def unlinkables_chart(
+    records,
+    x_col="match_weight",
+    source_dataset=None,
+    as_dict=False,
+):
+    chart_path = "unlinkables_chart_def.json"
+    unlinkables_chart_def = load_chart_definition(chart_path)
+    unlinkables_chart_def["data"]["values"] = records
+
+    if x_col == "match_probability":
+        unlinkables_chart_def["layer"][0]["encoding"]["x"]["field"] = "match_proba"
+        unlinkables_chart_def["layer"][0]["encoding"]["x"]["axis"][
+            "title"
+        ] = "Threshold match probability"
+        unlinkables_chart_def["layer"][0]["encoding"]["x"]["axis"]["format"] = ".2"
+
+        unlinkables_chart_def["layer"][1]["encoding"]["x"]["field"] = "match_proba"
+        unlinkables_chart_def["layer"][1]["selection"]["selector112"]["fields"] = [
+            "match_proba",
+            "cum_prop",
+        ]
+
+        unlinkables_chart_def["layer"][2]["encoding"]["x"]["field"] = "match_proba"
+        unlinkables_chart_def["layer"][2]["encoding"]["x"]["axis"][
+            "title"
+        ] = "Threshold match probability"
+
+        unlinkables_chart_def["layer"][3]["encoding"]["x"]["field"] = "match_proba"
+
+    if source_dataset:
+        unlinkables_chart_def["title"]["text"] += f" - {source_dataset}"
+
+    return vegalite_or_json(unlinkables_chart_def, as_dict=as_dict)
