@@ -43,3 +43,5 @@ def test_full_example_sqlite(tmp_path):
     )
 
     linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.5)
+
+    linker.unlinkables_chart(source_dataset="Testing")
