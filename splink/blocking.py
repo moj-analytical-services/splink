@@ -41,7 +41,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
-def block_using_rules_sql(linker: "Linker"):
+def block_using_rules_sql(linker: "Linker", custom_rule: str = ""):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
@@ -80,7 +80,10 @@ def block_using_rules_sql(linker: "Linker"):
     # you create a cartesian product, rather than having separate code
     # that generates a cross join for the case of no blocking rules
     if not blocking_rules:
-        blocking_rules = ["1=1"]
+        if custom_rule:
+            blocking_rules = [custom_rule]
+        else:
+            blocking_rules = ["1=1"]
 
     for matchkey_number, rule in enumerate(blocking_rules):
         not_previous_rules_statement = _sql_gen_and_not_previous_rules(previous_rules)
