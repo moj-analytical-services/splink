@@ -70,7 +70,7 @@ class Linker:
         """The Linker object manages the data linkage process and holds the data linkage
         model.
 
-        Most of Splink's functionality can  be accessed by calling functions (methods)
+        Most of Splink's functionality can  be accessed by calling methods (functions)
         on the linker, such as `linker.predict()`, `linker.profile_columns()` etc.
 
         The Linker class is intended for subclassing for specific backends, e.g.
@@ -107,7 +107,7 @@ class Linker:
         self._validate_input_dfs()
         self._em_training_sessions = []
 
-        self._names_of_tables_created_by_splink = []
+        self._names_of_tables_created_by_splink: list = []
 
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
@@ -283,7 +283,8 @@ class Linker:
                 True.
 
         Returns:
-            SplinkDataFrame: _description_
+            SplinkDataFrame: An abstraction representing the table created by the sql
+                pipeline
         """
 
         if not self.debug_mode:
