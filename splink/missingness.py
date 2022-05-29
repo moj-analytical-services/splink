@@ -1,6 +1,3 @@
-from .input_column import InputColumn
-
-
 def missingness_sqls(columns, input_tablename):
 
     sqls = []
