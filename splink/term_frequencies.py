@@ -14,7 +14,7 @@ def colname_to_tf_tablename(input_column: InputColumn):
 
 
 def term_frequencies_for_single_column_sql(
-    input_column, table_name="__splink__df_concat"
+    input_column: InputColumn, table_name="__splink__df_concat"
 ):
 
     # TODO: Not escaped so if col name has a space, will fail in Spark

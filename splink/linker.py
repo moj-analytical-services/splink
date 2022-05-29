@@ -5,6 +5,8 @@ import hashlib
 
 from typing import Union, List
 
+from splink.input_column import InputColumn
+
 from .charts import (
     match_weight_histogram,
     missingness_chart,
@@ -595,8 +597,9 @@ class Linker:
         """
         sql = vertically_concatente_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
-        sql = term_frequencies_for_single_column_sql(column_name)
-        self._enqueue_sql(sql, colname_to_tf_tablename(column_name))
+        input_col = InputColumn(column_name, tf_adjustments=True)
+        sql = term_frequencies_for_single_column_sql(input_col)
+        self._enqueue_sql(sql, colname_to_tf_tablename(input_col))
         return self._execute_sql_pipeline(materialise_as_hash=False)
 
     def deterministic_link(self) -> SplinkDataFrame:

@@ -10,7 +10,6 @@ def missingness_sqls(columns, input_tablename):
                     '{col_name}' as column_name
                 from {input_tablename}"""
 
-    columns = [InputColumn(col_name) for col_name in columns]
     selects = [
         col_template.format(
             col_name_escaped=col.name(),

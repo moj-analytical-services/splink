@@ -5,7 +5,7 @@ from .default_from_jsonschema import default_value_from_schema
 
 
 def _detect_if_name_needs_escaping(name):
-    if name in ("group",):
+    if name in ("group", "index"):
         return True
     tree = sqlglot.parse_one(name)
     if isinstance(tree, Column) and isinstance(tree.this, Identifier):
@@ -22,12 +22,7 @@ class InputColumn:
         self._settings_obj = settings_obj
         self._has_tf_adjustments = tf_adjustments
 
-        if name.endswith("_l"):
-            self.input_name = name[:-2]
-        elif name.endswith("_r"):
-            self.input_name = name[:-2]
-        else:
-            self.input_name = name
+        self.input_name = name
 
         if sql_dialect:
             self._sql_dialect = sql_dialect
