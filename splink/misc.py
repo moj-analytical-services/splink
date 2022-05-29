@@ -7,11 +7,7 @@ def dedupe_preserving_order(list_of_items):
 
 
 def escape_columns(cols):
-    return [escape_column(c) for c in cols]
-
-
-def escape_column(col):
-    return f'"{col}"'
+    return [c.name(escape=True) for c in cols]
 
 
 def prob_to_bayes_factor(prob):

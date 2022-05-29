@@ -1,28 +1,37 @@
+import sqlglot
+from sqlglot.expressions import Column, Identifier
+
 from .default_from_jsonschema import default_value_from_schema
-from .misc import escape_column
 
 
-def escape_if_requested(col, escape=True):
-    if escape:
-        return escape_column(col)
+def _detect_if_name_needs_escaping(name):
+    if name in ("group", "index"):
+        return True
+    tree = sqlglot.parse_one(name)
+    if isinstance(tree, Column) and isinstance(tree.this, Identifier):
+        return False
     else:
-        return col
+        return True
 
 
 class InputColumn:
-    def __init__(self, name, tf_adjustments=False, settings_obj=None):
+    def __init__(self, name, tf_adjustments=False, settings_obj=None, sql_dialect=None):
 
         # If settings_obj is None, then default values will be used
-        # from the jsonschame
+        # from the jsonschama
         self._settings_obj = settings_obj
         self._has_tf_adjustments = tf_adjustments
 
-        if name.endswith("_l"):
-            self.input_name = name[:-2]
-        elif name.endswith("_r"):
-            self.input_name = name[:-2]
+        self.input_name = name
+
+        if sql_dialect:
+            self._sql_dialect = sql_dialect
+        elif settings_obj:
+            self._sql_dialect = getattr(self._settings_obj, "_sql_dialect")
         else:
-            self.input_name = name
+            self._sql_dialect = None
+
+        self._name_needs_escaping = _detect_if_name_needs_escaping(name)
 
     def from_settings_obj_else_default(self, key, schema_key=None):
         # Covers the case where no settings obj is set on the comparison level
@@ -51,14 +60,29 @@ class InputColumn:
             "_tf_prefix", "term_frequency_adjustment_column_prefix"
         )
 
+    def _escape_if_requested(self, column_name, escape):
+        if not escape:
+            return column_name
+        if self._name_needs_escaping:
+            # Create parse tree
+            parsed = sqlglot.parse_one("col")
+
+            # Quote it and replace 'col' with true column_name
+            parsed.this.args["quoted"] = True
+            parsed.this.args["this"] = column_name
+
+            return parsed.sql(dialect=self._sql_dialect)
+        else:
+            return column_name
+
     def name(self, escape=True):
-        return escape_if_requested(self.input_name, escape)
+        return self._escape_if_requested(self.input_name, escape)
 
     def name_l(self, escape=True):
-        return escape_if_requested(f"{self.input_name}_l", escape)
+        return self._escape_if_requested(f"{self.input_name}_l", escape)
 
     def name_r(self, escape=True):
-        return escape_if_requested(f"{self.input_name}_r", escape)
+        return self._escape_if_requested(f"{self.input_name}_r", escape)
 
     def names_l_r(self, escape=True):
         return [self.name_l(escape), self.name_r(escape)]
@@ -76,7 +100,7 @@ class InputColumn:
         bf_prefix = self.from_settings_obj_else_default(
             "_bf_prefix", "bayes_factor_column_prefix"
         )
-        return escape_if_requested(f"{bf_prefix}{self.input_name}", escape)
+        return self._escape_if_requested(f"{bf_prefix}{self.input_name}", escape)
 
     @property
     def has_tf_adjustment(self):
@@ -97,15 +121,15 @@ class InputColumn:
         name = f"{tf_prefix}{self.input_name}"
 
         if self.has_tf_adjustment:
-            return escape_if_requested(name, escape)
+            return self._escape_if_requested(name, escape)
 
     def tf_name_l(self, escape=True):
         if self.has_tf_adjustment:
-            return escape_if_requested(f"{self.tf_name(escape=False)}_l", escape)
+            return self._escape_if_requested(f"{self.tf_name(escape=False)}_l", escape)
 
     def tf_name_r(self, escape=True):
         if self.has_tf_adjustment:
-            return escape_if_requested(f"{self.tf_name(escape=False)}_r", escape)
+            return self._escape_if_requested(f"{self.tf_name(escape=False)}_r", escape)
 
     def tf_name_l_r(self, escape=True):
         if self.has_tf_adjustment:

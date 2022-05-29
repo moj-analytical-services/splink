@@ -1,5 +1,6 @@
 import logging
 from copy import deepcopy
+from typing import List
 from .parse_sql import get_columns_used_from_sql
 from .misc import prob_to_bayes_factor, prob_to_match_weight
 from .charts import m_u_parameters_chart, match_weights_chart
@@ -33,7 +34,7 @@ class Settings:
         s_else_d = self._from_settings_dict_else_default
         self._sql_dialect = s_else_d("sql_dialect")
 
-        self.comparisons: list[Comparison] = []
+        self.comparisons: List[Comparison] = []
         for cc in ccs:
             self.comparisons.append(Comparison(cc, self))
 
@@ -103,11 +104,13 @@ class Settings:
         return cols
 
     @property
-    def _term_frequency_columns(self):
+    def _term_frequency_columns(self) -> List[InputColumn]:
         cols = set()
         for cc in self.comparisons:
             cols.update(cc._tf_adjustment_input_col_names)
-        return list(cols)
+        return [
+            InputColumn(c, settings_obj=self, tf_adjustments=True) for c in list(cols)
+        ]
 
     @property
     def _needs_matchkey_column(self):
