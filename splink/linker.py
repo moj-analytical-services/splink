@@ -1222,13 +1222,13 @@ class Linker:
 
     def parameter_estimate_comparisons_chart(self, include_m=True, include_u=True):
         """Show a chart that shows how parameter estimates have differed across
-        the different estimation methods you have used.  
-        
+        the different estimation methods you have used.
+
         For example, if you have run two EM estimation sessions, blocking on
-        different variables, and both result in parameter estimates for 
+        different variables, and both result in parameter estimates for
         first_name, this chart will enable easy comparison of the different
         estimates
-        
+
         """
         records = self._settings_obj._parameter_estimates_as_records
 
