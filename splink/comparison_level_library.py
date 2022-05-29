@@ -2,8 +2,8 @@ from .input_column import InputColumn
 from .comparison_level import ComparisonLevel
 
 
-def null_level(col_name) -> ComparisonLevel:
-    col = InputColumn(col_name)
+def null_level(col_name, dialect=None) -> ComparisonLevel:
+    col = InputColumn(col_name, dialect)
     level_dict = {
         "sql_condition": f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL",
         "label_for_charts": "Null",
