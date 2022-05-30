@@ -1169,7 +1169,20 @@ class Linker:
             match_weight_round_to_nearest=match_weight_round_to_nearest,
         )
 
-    def match_weight_histogram(self, df_predict, target_bins=30, width=600, height=250):
+    def match_weight_histogram(
+        self, df_predict: SplinkDataFrame, target_bins: int = 30, width=600, height=250
+    ):
+        """Generate a histogram that shows the distribution of match weights in
+        `df_predict`
+
+        Args:
+            df_predict (SplinkDataFrame): Output of `linker.predict()`
+            target_bins (int, optional): Target number of bins in histogram. Defaults to
+                30.
+            width (int, optional): Width of output. Defaults to 600.
+            height (int, optional): Height of output chart. Defaults to 250.
+
+        """
         df = histogram_data(self, df_predict, target_bins)
         recs = df.as_record_dict()
         return match_weight_histogram(recs, width=width, height=height)
