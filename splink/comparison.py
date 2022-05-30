@@ -55,10 +55,9 @@ class Comparison:
 
         for cl in comparison_level_list:
             if isinstance(cl, ComparisonLevel):
-                cl._settings_obj = settings_obj
                 cl.comparison = self
             else:
-                cl = ComparisonLevel(cl, self, settings_obj)
+                cl = ComparisonLevel(cl, self, sql_dialect=settings_obj._sql_dialect)
             self.comparison_levels.append(cl)
 
         self._settings_obj: "Settings" = settings_obj

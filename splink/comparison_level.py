@@ -22,7 +22,6 @@ from .parse_sql import get_columns_used_from_sql
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .settings import Settings
     from .comparison import Comparison
 
 logger = logging.getLogger(__name__)
@@ -116,14 +115,14 @@ class ComparisonLevel:
         self,
         level_dict,
         comparison: "Comparison" = None,
-        settings_obj: "Settings" = None,
+        sql_dialect: str = None,
     ):
 
         # Protected, because we don't want to modify the original dict
         self._level_dict = level_dict
 
         self.comparison: "Comparison" = comparison
-        self._settings_obj: "Settings" = settings_obj
+        self._sql_dialect = sql_dialect
 
         self._sql_condition = self._level_dict["sql_condition"]
         self._is_null_level = self._level_dict_val_else_default("is_null_level")
@@ -160,9 +159,7 @@ class ComparisonLevel:
 
         val = self._level_dict_val_else_default("tf_adjustment_column")
         if val:
-            return InputColumn(
-                val, tf_adjustments=True, settings_obj=self._settings_obj
-            )
+            return InputColumn(val, tf_adjustments=True, sql_dialect=self._sql_dialect)
         else:
             return None
 
@@ -368,8 +365,8 @@ class ComparisonLevel:
     @property
     def _sql_read_dialect(self):
         read_dialect = None
-        if self._settings_obj is not None:
-            read_dialect = self._settings_obj._sql_dialect
+        if self._sql_dialect is not None:
+            read_dialect = self._sql_dialect
         return read_dialect
 
     def _validate_sql(self):
@@ -408,13 +405,11 @@ class ComparisonLevel:
             # not the dmeta_surname one
             if c == self._tf_adjustment_input_column_name:
                 input_cols.append(
-                    InputColumn(c, tf_adjustments=True, settings_obj=self._settings_obj)
+                    InputColumn(c, tf_adjustments=True, sql_dialect=self._sql_dialect)
                 )
             else:
                 input_cols.append(
-                    InputColumn(
-                        c, tf_adjustments=False, settings_obj=self._settings_obj
-                    )
+                    InputColumn(c, tf_adjustments=False, sql_dialect=self._sql_dialectj)
                 )
 
         return input_cols
