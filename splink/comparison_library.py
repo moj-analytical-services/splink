@@ -179,7 +179,7 @@ def levenshtein_at_thresholds(
 
     return distance_function_at_thresholds(
         col_name,
-        "levenshtein",
+        cl._mutable_params["levenshtein"],
         distance_threshold_or_thresholds,
         False,
         include_exact_match_level,
