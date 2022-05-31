@@ -2,6 +2,7 @@ import os
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.duckdb.duckdb_comparison_library import jaccard_at_thresholds
+from splink.duckdb.duckdb_comparison_level_library import _mutable_params
 import pandas as pd
 
 from basic_settings import get_settings_dict
@@ -15,6 +16,7 @@ def test_full_example_duckdb(tmp_path):
 
     # Overwrite the surname comparison to include duck-db specific syntax
 
+    _mutable_params["dialect"] = "duckdb"
     settings_dict["comparisons"][1] = jaccard_at_thresholds("SUR name")
     settings_dict["blocking_rules_to_generate_predictions"] = [
         'l."SUR name" = r."SUR name"',
