@@ -6,7 +6,8 @@ from splink.accuracy import (
     truth_space_table_from_labels_with_predictions_sqls,
     labels_table_with_minimal_columns_sql,
 )
-from splink.comparison_library import exact_match
+
+from splink.duckdb.duckdb_comparison_library import exact_match
 
 from basic_settings import get_settings_dict
 

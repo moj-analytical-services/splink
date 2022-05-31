@@ -14,7 +14,6 @@ def test_full_example_duckdb(tmp_path):
     # Overwrite the surname comparison to include duck-db specific syntax
     surname_match_level = {
         "sql_condition": "jaccard(surname_l, surname_r)",
-        # "sql_condition": "surname_l similar to surname_r",
         "label_for_charts": "Exact match",
         "m_probability": 0.9,
         "u_probability": 0.1,
