@@ -72,7 +72,7 @@ def null_level(col_name) -> ComparisonLevel:
     level_dict = {
         "sql_condition": f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL",
         "label_for_charts": "Null",
-        "is_storer": True,
+        "is_null_level": True,
     }
     return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
 
