@@ -10,7 +10,7 @@ from basic_settings import get_settings_dict
 def test_full_example_spark(df_spark, tmp_path):
     settings_dict = get_settings_dict()
 
-    _mutable_params["dialect"] = "duckdb"
+    _mutable_params["dialect"] = "spark"
     settings_dict["comparisons"][1] = cl.exact_match("surname")
 
     linker = SparkLinker(df_spark, settings_dict, break_lineage_method="checkpoint")
