@@ -21,19 +21,31 @@ def unlinkables_data(linker, x_col="match_weight"):
         )
 
     sql = f"""
-        with prob_table as (
-            select
-            max(round(match_weight, 2)) as match_wei,
-            round(match_probability, 5) as match_proba,
-            count(*) / cast( sum(count(*)) over () as float) as prop
-            from {self_link.physical_name}
-            group by match_proba
-            order by match_proba
-        )
+        select
+        round(match_weight, 2) as match_weight,
+        round(match_probability, 5) as match_probability
+        from {self_link.physical_name}
+    """
+
+    linker._enqueue_sql(sql, "__splink__df_round_self_link")
+
+    sql = """
+        select
+        max(match_weight) as match_weight,
+        match_probability,
+        count(*) / cast( sum(count(*)) over () as float) as prop
+        from __splink__df_round_self_link
+        group by match_probability
+        order by match_probability
+    """
+
+    linker._enqueue_sql(sql, "__splink__df_unlinkables_proportions")
+
+    sql = """
         select *,
-        sum(prop) over(order by match_proba) as cum_prop
-        from prob_table
-        where match_proba < 1
+        sum(prop) over(order by match_probability) as cum_prop
+        from __splink__df_unlinkables_proportions
+        where match_probability < 1
     """
 
     data = linker._enqueue_and_execute_sql_pipeline(
