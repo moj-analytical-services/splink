@@ -25,19 +25,19 @@ full_name_cc = {
             "sql_condition": "levenshtein(full_name_l, full_name_r) <= 2",
             "m_probability": 0.2,
             "u_probability": 0.1,
-            "label_for_charts": "Levenstein <= 2",
+            "label_for_charts": "levenshtein <= 2",
         },
         {
             "sql_condition": "levenshtein(full_name_l, full_name_r) <= 4",
             "m_probability": 0.2,
             "u_probability": 0.1,
-            "label_for_charts": "Levenstein <= 4",
+            "label_for_charts": "levenshtein <= 4",
         },
         {
             "sql_condition": "levenshtein(full_name_l, full_name_r) <= 8",
             "m_probability": 0.2,
             "u_probability": 0.1,
-            "label_for_charts": "Levenstein <= 8",
+            "label_for_charts": "levenshtein <= 8",
         },
         {
             "sql_condition": "ELSE",

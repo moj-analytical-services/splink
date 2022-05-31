@@ -409,7 +409,7 @@ class ComparisonLevel:
                 )
             else:
                 input_cols.append(
-                    InputColumn(c, tf_adjustments=False, sql_dialect=self._sql_dialectj)
+                    InputColumn(c, tf_adjustments=False, sql_dialect=self._sql_dialect)
                 )
 
         return input_cols
