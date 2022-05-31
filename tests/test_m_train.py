@@ -1,5 +1,5 @@
-from splink.comparison_library import levenshtein
 from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.duckdb_comparison_library import levenshtein_at_thresholds
 import pandas as pd
 
 
@@ -16,7 +16,7 @@ def test_m_train():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein("name")],
+        "comparisons": [levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 

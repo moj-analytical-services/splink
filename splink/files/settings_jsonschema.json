@@ -88,7 +88,7 @@
             "title": "An optional label to describe this comparison.",
             "examples": [
               "First name exact match",
-              "Surname with middle levenstein level"
+              "Surname with middle levenshtein level"
             ]
           },
           "comparison_levels": {

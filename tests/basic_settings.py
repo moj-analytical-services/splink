@@ -21,7 +21,7 @@ first_name_cc = {
             "sql_condition": "levenshtein(first_name_l, first_name_r) <= 2",
             "m_probability": 0.2,
             "u_probability": 0.1,
-            "label_for_charts": "Levenstein <= 2",
+            "label_for_charts": "levenshtein <= 2",
         },
         {
             "sql_condition": "ELSE",
