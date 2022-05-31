@@ -1,6 +1,7 @@
 import os
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.duckdb_comparison_library import jaccard_at_thresholds
 import pandas as pd
 
 from basic_settings import get_settings_dict
@@ -9,17 +10,15 @@ from basic_settings import get_settings_dict
 def test_full_example_duckdb(tmp_path):
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = df.rename(columns={"surname": "SUR name"})
     settings_dict = get_settings_dict()
 
     # Overwrite the surname comparison to include duck-db specific syntax
-    surname_match_level = {
-        "sql_condition": "jaccard(surname_l, surname_r)",
-        "label_for_charts": "Exact match",
-        "m_probability": 0.9,
-        "u_probability": 0.1,
-    }
 
-    settings_dict["comparisons"][1]["comparison_levels"][1] = surname_match_level
+    settings_dict["comparisons"][1] = jaccard_at_thresholds("SUR name")
+    settings_dict["blocking_rules_to_generate_predictions"] = [
+        'l."SUR name" = r."SUR name"',
+    ]
 
     linker = DuckDBLinker(
         df,
@@ -29,11 +28,16 @@ def test_full_example_duckdb(tmp_path):
     )
 
     linker.compute_number_of_comparisons_generated_by_blocking_rule(
-        "l.first_name = r.first_name and l.surname = r.surname"
+        'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     )
 
     linker.profile_columns(
-        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]
+        [
+            "first_name",
+            '"SUR name"',
+            'first_name || "SUR name"',
+            "concat(city, first_name)",
+        ]
     )
     linker.missingness_chart()
     linker.compute_tf_table("city")
@@ -41,7 +45,7 @@ def test_full_example_duckdb(tmp_path):
 
     linker.estimate_u_using_random_sampling(target_rows=1e6)
 
-    blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
+    blocking_rule = 'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
