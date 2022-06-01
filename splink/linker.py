@@ -2,9 +2,6 @@ import logging
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
-from .unique_id_concat import (
-    _composite_unique_id_from_edges_sql,
-)
 
 from typing import Union, List
 
@@ -55,6 +52,10 @@ from .splink_dataframe import SplinkDataFrame
 from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
+)
+
+from .unique_id_concat import (
+    _composite_unique_id_from_edges_sql,
 )
 
 from .cluster_studio import render_splink_cluster_studio_html
