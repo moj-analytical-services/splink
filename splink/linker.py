@@ -2,7 +2,9 @@ import logging
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
-import re
+from .unique_id_concat import (
+    _composite_unique_id_from_edges_sql,
+)
 
 from typing import Union, List
 
@@ -53,10 +55,6 @@ from .splink_dataframe import SplinkDataFrame
 from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
-)
-
-from .unique_id_concat import (
-    _composite_unique_id_from_edges_sql,
 )
 
 from .cluster_studio import render_splink_cluster_studio_html
@@ -119,6 +117,7 @@ class Linker:
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
         self._compare_two_records_mode = False
+        self._self_link_mode = False
 
         self._output_schema = ""
 
@@ -891,19 +890,6 @@ class Linker:
 
         return predictions
 
-    def _produce_record_comparisons(self) -> SplinkDataFrame:
-
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
-        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
-
-        sqls = predict_from_comparison_vectors_sql(self._settings_obj)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-        predictions = self._execute_sql_pipeline(use_cache=False)
-
-        return predictions
-
     def compare_two_records(self, record_1: dict, record_2: dict):
         """Use the linkage model to compare and score two records
 
@@ -954,7 +940,7 @@ class Linker:
 
         return predictions
 
-    def _self_link(self):
+    def _self_link(self) -> SplinkDataFrame:
         """Use the linkage model to compare and score all records in our input df,
             with themselves.
 
@@ -968,35 +954,36 @@ class Linker:
         )
         original_link_type = self._settings_obj._link_type
 
-        # Changes our sql to allow for a simple self link.
-        self._compare_two_records_mode = True
-        self._settings_obj._blocking_rules_to_generate_predictions = []
+        # Changes our sql to allow for a self link.
+        # This is used in `_sql_gen_where_condition` in blocking.py
+        # to remove any 'where' clauses when blocking (normally when blocking
+        # we want to *remove* self links!)
+        self._self_link_mode = True
 
+        # Block on uid i.e. create pairwise record comparisons where the uid matches
         uid_cols = self._settings_obj._unique_id_input_columns
-        uid_concat_edges = _composite_unique_id_from_edges_sql(uid_cols, None)
+        uid_l = _composite_unique_id_from_edges_sql(uid_cols, None, "l")
+        uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
-        # If we are performing a self link, use our input df w/ tf adjustments.
-        # _initialise_df_concat_with_tf() is called when calculating total
-        # unlinkable results.
-        sql = f"""
-            select *,
-            {uid_concat_edges} as __splink__unique_id
-            from __splink__df_concat_with_tf
-        """
-        self._enqueue_sql(sql, "__splink__compare_records_with_tf")
+        self._settings_obj._blocking_rules_to_generate_predictions = [
+            f"{uid_l} = {uid_r}"
+        ]
 
-        sql = block_using_rules_sql(
-            self, custom_rule="l.__splink__unique_id = r.__splink__unique_id"
-        )
+        self._initialise_df_concat_with_tf()
 
-        comparison_reg = re.compile(
-            "__splink__compare_two_records_(left|right){1}_with_tf"
-        )
-        sql = re.sub(comparison_reg, "__splink__compare_records_with_tf", sql)
+        sql = block_using_rules_sql(self)
 
         self._enqueue_sql(sql, "__splink__df_blocked")
 
-        predictions = self._produce_record_comparisons()
+        sql = compute_comparison_vector_values_sql(self._settings_obj)
+
+        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
+
+        sqls = predict_from_comparison_vectors_sql(self._settings_obj)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        predictions = self._execute_sql_pipeline(use_cache=False)
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
