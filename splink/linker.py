@@ -749,8 +749,9 @@ class Linker:
             >>> linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
         Returns:
-            Updates the estimated m parameters and proportion_of_matches within the
-            linker object and returns nothing.
+            EMTrainingSession:  An object containing information about the training
+                session such as how parameters changed during the iteration history
+
         """
 
         self._initialise_df_concat_with_tf(materialise=True)
