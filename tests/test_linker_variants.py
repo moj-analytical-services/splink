@@ -113,17 +113,27 @@ def test_link_type(input_name, input_tables):
 
     df_e = linker.predict()
 
+    self_link = linker._self_link().as_pandas_dataframe()
+
     df_len = len(df_e.as_pandas_dataframe())
+    self_link_len = len(self_link)
+    self_link_expe_len = sum([len(df) for df in input_tables])
+
     if input_name == "dedupe_only__pass":
         assert df_len == (6 * 5) / 2
+        assert self_link_len == len(input_tables)
     if input_name == "link_only__two":
         assert df_len == 4
+        assert self_link_len == self_link_expe_len
     if input_name == "link_only__three":
         assert df_len == 12
+        assert self_link_len == self_link_expe_len
     if input_name == "link_and_dedupe__two":
         assert df_len == (4 * 3) / 2
+        assert self_link_len == self_link_expe_len
     if input_name == "link_and_dedupe__three":
         assert df_len == (6 * 5) / 2
+        assert self_link_len == self_link_expe_len
 
     # Check that the lower ID is always on the left hand side
     df_e_pd = df_e.as_pandas_dataframe()
@@ -137,6 +147,9 @@ def test_link_type(input_name, input_tables):
         df_e_pd["id_concat_r"] = df_e_pd["source_dataset_r"] + "-__-" + df_e_pd["id_r"]
 
     assert all(df_e_pd["id_concat_l"] < df_e_pd["id_concat_r"])
+    assert all(self_link.id_l == self_link.id_r)
+    if input_name != "dedupe_only__pass":
+        assert all(self_link.source_dataset_l == self_link.source_dataset_r)
 
     record_1 = {
         "id": 1,
