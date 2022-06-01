@@ -963,6 +963,9 @@ class Linker:
                 input records.
         """
 
+        # Calculate tf columns or load from cache.
+        self._initialise_df_concat_with_tf()
+
         original_blocking_rules = (
             self._settings_obj._blocking_rules_to_generate_predictions
         )
@@ -1272,8 +1275,6 @@ class Linker:
             >>> # Please note,
         """
 
-        # Calculate tf columns or load from cache.
-        self._initialise_df_concat_with_tf()
         # Link our initial df on itself and calculate the % of unlinkable entries
         records = unlinkables_data(self, x_col)
         return unlinkables_chart(records, x_col, source_dataset)
