@@ -32,7 +32,7 @@ def _num_target_rows_to_rows_to_sample(target_rows):
 
 def estimate_u_values(linker: "Linker", target_rows):
 
-    logger.info("----- Training u probabilities using random sampling -----")
+    logger.info("----- Estimating u probabilities using random sampling -----")
 
     original_settings_obj = linker._settings_obj
 
@@ -120,4 +120,4 @@ def estimate_u_values(linker: "Linker", target_rows):
                 cl, m_u_records_lookup, "estimate u by random sampling"
             )
 
-    logger.info("\nTrained u probabilities using random sampling")
+    logger.info("\nEstimated u probabilities using random sampling")
