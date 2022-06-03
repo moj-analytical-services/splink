@@ -57,7 +57,7 @@ class Settings:
         self._blocking_rule_for_training = None
         self._training_mode = False
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo) -> "Settings":
         cc = Settings(self.as_dict())
         return cc
 
@@ -88,7 +88,7 @@ class Settings:
             return None
 
     @property
-    def _unique_id_input_columns(self):
+    def _unique_id_input_columns(self) -> List[InputColumn]:
         cols = []
 
         if self._source_dataset_column_name_is_required:
@@ -113,7 +113,13 @@ class Settings:
         ]
 
     @property
-    def _needs_matchkey_column(self):
+    def _needs_matchkey_column(self) -> bool:
+        """Where multiple `blocking_rules_to_generate_predictions` are specified,
+        it's useful to include a matchkey column, that indicates from which blocking
+        rule the pairwise record comparisons arose.
+
+        This column is only needed if multiple rules are specified.
+        """
 
         return len(self._blocking_rules_to_generate_predictions) > 1
 
@@ -303,13 +309,17 @@ class Settings:
         return output
 
     def as_dict(self):
+        """Serialise the current settings (including any estimated model parameters)
+        to a dictionary, enabling the settings to be saved to disk and reloaded
+        """
+
         current_settings = {
             "comparisons": [cc.as_dict() for cc in self.comparisons],
             "proportion_of_matches": self._proportion_of_matches,
         }
         return {**self._settings_dict, **current_settings}
 
-    def as_completed_dict(self):
+    def _as_completed_dict(self):
         current_settings = {
             "comparisons": [cc.as_completed_dict() for cc in self.comparisons],
             "proportion_of_matches": self._proportion_of_matches,
