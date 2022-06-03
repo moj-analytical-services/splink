@@ -124,7 +124,7 @@ class EMTrainingSession:
             mu = "m and u probabilities"
 
         logger.info(
-            f"Training the {mu} of the model by blocking on:\n"
+            f"Estimating the {mu} of the model by blocking on:\n"
             f"{self._blocking_rule_for_training}\n\n"
             "Parameter estimates will be made for the following comparison(s):"
             f"{estimated}\n"
