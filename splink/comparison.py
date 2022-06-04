@@ -16,25 +16,25 @@ class Comparison:
     For example, one Comparison may represent how similarity is assessed for a
     person's date of birth.  Others may represent the comparison of a person's name or
     location.
-    
+
     The method used to assess similarity will depend on the type of data -
     for instance, the method used to assess similarity of a company's turnover would
     be different to the method used to assess the similarity of a person's first name.
 
     A linking model thus usually contains several Comparisons.
-    
-    As far as possible, Comparisons should be configured to satisfy the assumption of 
-    independece conditional on the true match status, a key assumption of the Fellegi Sunter 
-    probabilistic linkage model.  This would be broken, for example, if a model
-    contained one Comparison for city, and another for postcode. Instead, in this example,
-    a single comparison should be modelled, which may to capture similarity taking account
-    of both the city and postcode field.
 
-    Each Comparison contains two or more `ComparisonLevel`s which define the gradations of
-    similarity between the input columns within the Comparison.  
-    
-    For example, for the date of birth Comparison there may be a ComparisonLevel 
-    for an exact match, another for a one-character difference, and another for all other 
+    As far as possible, Comparisons should be configured to satisfy the assumption of
+    independece conditional on the true match status, a key assumption of the Fellegi
+    Sunter probabilistic linkage model.  This would be broken, for example, if a model
+    contained one Comparison for city, and another for postcode. Instead, in this
+    example, a single comparison should be modelled, which may to capture similarity
+    taking account of both the city and postcode field.
+
+    Each Comparison contains two or more `ComparisonLevel`s which define the gradations
+    of similarity between the input columns within the Comparison.
+
+    For example, for the date of birth Comparison there may be a ComparisonLevel for an
+    exact match, another for a one-character difference, and another for all other
     comparisons.
 
     To summarise:
