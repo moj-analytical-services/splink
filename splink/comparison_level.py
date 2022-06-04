@@ -84,7 +84,8 @@ def _default_u_values(num_levels):
 
 
 class ComparisonLevel:
-    """ComparisonLevels define the gradations of similarity within a Comparison.
+    """Each ComparisonLevel defines a gradation (category) of similarity within a 
+    Comparison.
 
     For example, a Comparison of the first_name and surname columns may define three
     ComparisonLevels:
