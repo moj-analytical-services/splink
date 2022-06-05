@@ -594,7 +594,7 @@ class ComparisonLevel:
             output["is_null_level"] = True
         return output
 
-    def as_completed_dict(self):
+    def _as_completed_dict(self):
         comp_dict = self.as_dict()
         comp_dict["comparison_vector_value"] = self._comparison_vector_value
         return comp_dict

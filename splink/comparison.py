@@ -297,11 +297,11 @@ class Comparison:
             ]
         return d
 
-    def as_completed_dict(self):
+    def _as_completed_dict(self):
         return {
             "column_name": self._output_column_name,
             "comparison_levels": [
-                cl.as_completed_dict() for cl in self.comparison_levels
+                cl._as_completed_dict() for cl in self.comparison_levels
             ],
             "input_columns_used_by_case_statement": [
                 c.input_name for c in self._input_columns_used_by_case_statement
