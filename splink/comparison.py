@@ -10,10 +10,10 @@ if TYPE_CHECKING:
 
 
 class Comparison:
-    """Each comparison defines how data from a subset of input columns is
+    """Each Comparison defines how data from one or more input columns is
     compared to assess its similarity.
 
-    For example, one comparison may represent how similarity is assessed for a
+    For example, one Comparison may represent how similarity is assessed for a
     person's date of birth.  Others may represent the comparison of a person's name or
     location.
 
@@ -23,10 +23,19 @@ class Comparison:
 
     A linking model thus usually contains several Comparisons.
 
-    Each Comparison contains two or more ComparisonLevels which define the gradations of
-    similarity between the input columns.  For example, for the date of birth Comparison
-    there may be a ComparisonLevel for an exact match, another for a one-character
-    difference, and another for all other comparisons.
+    As far as possible, Comparisons should be configured to satisfy the assumption of
+    independece conditional on the true match status, a key assumption of the Fellegi
+    Sunter probabilistic linkage model.  This would be broken, for example, if a model
+    contained one Comparison for city, and another for postcode. Instead, in this
+    example, a single comparison should be modelled, which may to capture similarity
+    taking account of both the city and postcode field.
+
+    Each Comparison contains two or more `ComparisonLevel`s which define the gradations
+    of similarity between the input columns within the Comparison.
+
+    For example, for the date of birth Comparison there may be a ComparisonLevel for an
+    exact match, another for a one-character difference, and another for all other
+    comparisons.
 
     To summarise:
 

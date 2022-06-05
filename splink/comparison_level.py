@@ -84,10 +84,11 @@ def _default_u_values(num_levels):
 
 
 class ComparisonLevel:
-    """ComparisonLevels define the gradations of similarity within a Comparison.
+    """Each ComparisonLevel defines a gradation (category) of similarity within a
+    Comparison.
 
-    For example, a Comparison of the first_name and surname columns may define three
-    ComparisonLevels:
+    For example, a Comparison that uses the first_name and surname columns may define
+    three `ComparisonLevel`s:
         An exact match on first name and surname
         First name and surname have a JaroWinkler score of above 0.95
         All other comparisons
