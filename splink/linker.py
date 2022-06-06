@@ -979,8 +979,6 @@ class Linker:
         uid_concat_edges = _composite_unique_id_from_edges_sql(uid_cols, None)
 
         # If we are performing a self link, use our input df w/ tf adjustments.
-        # _initialise_df_concat_with_tf() is called when calculating total
-        # unlinkable results.
         sql = f"""
             select *,
             {uid_concat_edges} as __splink__unique_id
