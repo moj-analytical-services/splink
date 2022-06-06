@@ -22,7 +22,7 @@ from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .em_training_session import EMTrainingSession
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor, ensure_is_list
-from .predict import predict_from_comparison_vectors_sql
+from .predict import predict_from_comparison_vectors_sqls
 from .settings import Settings
 from .term_frequencies import (
     compute_all_term_frequencies_sqls,
@@ -193,7 +193,8 @@ class Linker:
     def _prepend_schema_to_table_name(self, table_name):
         if self._output_schema:
             return f"{self._output_schema}.{table_name}"
-        return table_name
+        else:
+            return table_name
 
     def _initialise_df_concat(self, materialise=True):
         if self._table_exists_in_database("__splink__df_concat"):
@@ -323,6 +324,9 @@ class Linker:
 
             return dataframe
 
+    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
+        raise NotImplementedError(f"execute_sql not implemented for {type(self)}")
+
     def _enqueue_and_execute_sql_pipeline(
         self,
         sql,
@@ -331,11 +335,7 @@ class Linker:
         use_cache=True,
         transpile=True,
     ) -> SplinkDataFrame:
-
-        """
-        Wrapper method to enqueue and execute a sql pipeline
-        in a single call.
-        """
+        """Wrapper method to enqueue and execute a sql pipeline in a single call."""
 
         self._enqueue_sql(sql, output_table_name)
         return self._execute_sql_pipeline([], materialise_as_hash, use_cache, transpile)
@@ -349,7 +349,7 @@ class Linker:
         transpile=True,
     ) -> SplinkDataFrame:
         """Execute sql (or if identical sql has been run before, return cached results),
-        reset pipeline, and return a splink dataframe representing the results of the
+        reset pipeline, and return a SplinkDataFrame representing the results of the
         sql"""
 
         self._pipeline.reset()
@@ -405,6 +405,10 @@ class Linker:
         return splink_dataframe
 
     def __deepcopy__(self, memo):
+        """When we do EM training, we need a copy of the linker which is independent
+        of the main linker e.g. setting parameters on the copy will not affect the
+        main linker.  This method implements ensures linker can be deepcopied.
+        """
         new_linker = copy(self)
         new_linker._em_training_sessions = []
         new_settings = deepcopy(self._settings_obj)
@@ -417,8 +421,8 @@ class Linker:
         if input_table_aliases is None:
             input_table_aliases = input_table_or_tables
 
-        if not isinstance(input_table_aliases, list):
-            input_table_aliases = [input_table_aliases]
+        input_table_aliases = ensure_is_list(input_table_aliases)
+
         return input_table_aliases
 
     def _get_input_tables_dict(self, input_table_or_tables, input_table_aliases):
@@ -457,9 +461,6 @@ class Linker:
 
             logger.warning(warn_message)
 
-    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
-        raise NotImplementedError(f"execute_sql not implemented for {type(self)}")
-
     def _table_exists_in_database(self, table_name):
         raise NotImplementedError(
             f"table_exists_in_database not implemented for {type(self)}"
@@ -478,8 +479,7 @@ class Linker:
                     )
 
     def _populate_proportion_of_matches_from_trained_values(self):
-        # Need access to here to the individual training session
-        # their blocking rules and m and u values
+
         prop_matches_estimates = []
         for em_training_session in self._em_training_sessions:
             training_lambda = em_training_session._settings_obj._proportion_of_matches
@@ -814,7 +814,7 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sql(
+        sqls = predict_from_comparison_vectors_sqls(
             self._settings_obj, threshold_match_probability, threshold_match_weight
         )
         for sql in sqls:
@@ -870,7 +870,7 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sql(self._settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -931,7 +931,7 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sql(self._settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 

@@ -91,6 +91,10 @@ class Comparison:
                 counter -= 1
 
     def __deepcopy__(self, memo):
+        """When we do EM training, we need a copy of the Comparison which is independent
+        of the original e.g. modifying the copy will not affect the original.
+        This method implements ensures the Comparison can be deepcopied.
+        """
         cc = Comparison(self.as_dict(), self._settings_obj)
         return cc
 

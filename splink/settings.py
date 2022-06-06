@@ -58,6 +58,9 @@ class Settings:
         self._training_mode = False
 
     def __deepcopy__(self, memo) -> "Settings":
+        """When we do EM training, we need a copy of the Settings which is independent
+        of the original e.g. modifying the copy will not affect the original.
+        This method implements ensures the Settings can be deepcopied."""
         cc = Settings(self.as_dict())
         return cc
 

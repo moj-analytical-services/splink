@@ -7,7 +7,7 @@ from .settings import Settings
 logger = logging.getLogger(__name__)
 
 
-def predict_from_comparison_vectors_sql(
+def predict_from_comparison_vectors_sqls(
     settings_obj: Settings,
     threshold_match_probability=None,
     threshold_match_weight=None,
