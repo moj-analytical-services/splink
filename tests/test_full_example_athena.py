@@ -9,18 +9,15 @@ from dataengineeringutils3.s3 import delete_s3_folder_contents
 import awswrangler as wr
 
 
-def setup_athena_db(db_name = "splink_awswrangler_test"):
-    
+def setup_athena_db(db_name="splink_awswrangler_test"):
+
     # creates a session at least on the platform...
     my_session = boto3.Session(region_name="eu-west-1")
-    
+
     ## DELETE + RECREATE OUR DATABASE TO WRITE TO
     # reset our db for another test run...
     if db_name in wr.catalog.databases(limit=10000).values:
-        wr.catalog.delete_database(
-            name=db_name,
-            boto3_session=my_session
-        )
+        wr.catalog.delete_database(name=db_name, boto3_session=my_session)
         # clean up folder contents from s3...
         # can potentially add this as a module to our awslinker
         delete_s3_folder_contents("s3://alpha-splink-db-testing/splink_warehouse/")
@@ -29,9 +26,10 @@ def setup_athena_db(db_name = "splink_awswrangler_test"):
 
     if db_name not in wr.catalog.databases(limit=10000).values:
         import time
+
         time.sleep(3)
         wr.catalog.create_database(db_name, exist_ok=True)
-    
+
     return my_session, db_name
 
 
@@ -48,25 +46,25 @@ def upload_data(db_name):
         dataset=True,
         mode="overwrite",
         database=db_name,
-        table=table_name
+        table=table_name,
     )
 
 
 @pytest.mark.skip(reason="AWS Connection Required")
 def test_full_example_athena(tmp_path):
-    
+
     session_read, db_name_read = setup_athena_db()
     session_write, db_name_write = setup_athena_db(db_name="splink_awswrangler_test2")
     upload_data("splink_awswrangler_test")
     settings_dict = get_settings_dict()
-    
+
     # Update first name settings
     settings_dict["comparisons"][0]["comparison_levels"][2] = {
-                "sql_condition": "levenshtein_distance(first_name_l, first_name_r) <= 2",
-                "m_probability": 0.2,
-                "u_probability": 0.1,
-                "label_for_charts": "Levenstein <= 2",
-            }
+        "sql_condition": "levenshtein_distance(first_name_l, first_name_r) <= 2",
+        "m_probability": 0.2,
+        "u_probability": 0.1,
+        "label_for_charts": "Levenstein <= 2",
+    }
 
     linker = AthenaLinker(
         settings_dict=settings_dict,
@@ -102,5 +100,5 @@ def test_full_example_athena(tmp_path):
         [0, 4],
         os.path.join(tmp_path, "test_cluster_studio.html"),
     )
-    
+
     linker.unlinkables_chart(source_dataset="Testing")

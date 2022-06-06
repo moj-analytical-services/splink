@@ -206,7 +206,7 @@ class AthenaLinker(Linker):
 
         if transpile:
             sql = sqlglot.transpile(sql, read=None, write="presto")[0]
-        
+
         sql = sql.replace("float", "real")
 
         logger.debug(
