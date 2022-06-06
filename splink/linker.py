@@ -1381,14 +1381,17 @@ class Linker:
             self, df_predict, df_clustered, cluster_ids, out_path, overwrite=overwrite
         )
 
-    def save_settings(self, out_path: str = None, overwrite=False) -> dict:
-        """Save the configuration and parameters the linkage model.
+    def save_settings_to_json(self, out_path: str, overwrite=False) -> dict:
+        """Save the configuration and parameters the linkage model to a json file.
 
         Returns the model as a Python dictionary.
 
         If an out_path is specified, also saves the settings to
-        a file.
+        a file
 
+        Args:
+            out_path (str): File path for json file
+            overwrite (bool, optional): Overwrite if already exists? Defaults to False.
         """
 
         model_dict = self._settings_obj.as_dict()
@@ -1404,11 +1407,9 @@ class Linker:
             with open(out_path, "w") as f:
                 json.dump(model_dict, f, indent=4)
 
-        return model_dict
-
-    def load_settings_from_file(self, in_path: str):
+    def load_settings_from_json(self, in_path: str):
         """
-        Load the settings from a file.
+        Load settings from a file.
 
         Args:
             in_path (str): Path to settings json file
