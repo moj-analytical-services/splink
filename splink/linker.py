@@ -37,7 +37,7 @@ from .m_training import estimate_m_values_from_label_column
 from .estimate_u import estimate_u_values
 from .pipeline import SQLPipeline
 
-from .vertically_concatenate import vertically_concatente_sql
+from .vertically_concatenate import vertically_concatenate_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .accuracy import roc_table
 
@@ -198,14 +198,14 @@ class Linker:
     def _initialise_df_concat(self, materialise=True):
         if self._table_exists_in_database("__splink__df_concat"):
             return
-        sql = vertically_concatente_sql(self)
+        sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
         self._execute_sql_pipeline(materialise_as_hash=False)
 
     def _initialise_df_concat_with_tf(self, materialise=True):
         if self._table_exists_in_database("__splink__df_concat_with_tf"):
             return
-        sql = vertically_concatente_sql(self)
+        sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
 
         sqls = compute_all_term_frequencies_sqls(self)
@@ -598,7 +598,7 @@ class Linker:
         Returns:
             SplinkDataFrame: The resultant table as a splink data frame
         """
-        sql = vertically_concatente_sql(self)
+        sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
         input_col = InputColumn(column_name, tf_adjustments=True)
         sql = term_frequencies_for_single_column_sql(input_col)
@@ -1295,7 +1295,7 @@ class Linker:
                 blocking rule
         """
 
-        sql = vertically_concatente_sql(self)
+        sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
 
         sql = number_of_comparisons_generated_by_blocking_rule_sql(
