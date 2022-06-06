@@ -975,9 +975,7 @@ class Linker:
 
         sql = block_using_rules_sql(self)
 
-        comparison_reg = re.compile(
-            "__splink_df_concat_with_tf_(left|right){1}"
-        )
+        comparison_reg = re.compile("__splink_df_concat_with_tf_(left|right){1}")
         sql = re.sub(comparison_reg, "__splink__df_concat_with_tf", sql)
 
         self._enqueue_sql(sql, "__splink__df_blocked")
