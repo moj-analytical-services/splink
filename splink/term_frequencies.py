@@ -2,8 +2,10 @@
 # https://github.com/moj-analytical-services/splink/pull/107
 
 import logging
+from typing import List
 
 from .input_column import InputColumn
+from .linker import Linker
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +36,9 @@ def term_frequencies_for_single_column_sql(
     return sql
 
 
-def _join_tf_to_input_df(settings_obj):
+def _join_tf_to_input_df_sql(linker: Linker):
 
+    settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
 
     select_cols = []
@@ -65,7 +68,7 @@ def _join_tf_to_input_df(settings_obj):
     return sql
 
 
-def compute_all_term_frequencies_sqls(linker):
+def compute_all_term_frequencies_sqls(linker: Linker) -> List[str]:
 
     settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
@@ -90,7 +93,7 @@ def compute_all_term_frequencies_sqls(linker):
             }
             sqls.append(sql)
 
-    sql = _join_tf_to_input_df(settings_obj)
+    sql = _join_tf_to_input_df_sql(settings_obj)
     sql = {
         "sql": sql,
         "output_table_name": "__splink__df_concat_with_tf",
