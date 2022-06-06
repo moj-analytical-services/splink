@@ -32,7 +32,7 @@ def _num_target_rows_to_rows_to_sample(target_rows):
 
 def estimate_u_values(linker: "Linker", target_rows):
 
-    logger.info("----- Training u probabilities using random sampling -----")
+    logger.info("----- Estimating u probabilities using random sampling -----")
 
     original_settings_obj = linker._settings_obj
 
@@ -110,14 +110,14 @@ def estimate_u_values(linker: "Linker", target_rows):
     df_sample.drop_table_from_database()
 
     m_u_records = [
-        r for r in param_records if r["comparison_name"] != "_proportion_of_matches"
+        r for r in param_records if r["output_column_name"] != "_proportion_of_matches"
     ]
 
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
     for c in original_settings_obj.comparisons:
-        for cl in c.comparison_levels_excluding_null:
+        for cl in c._comparison_levels_excluding_null:
             append_u_probability_to_comparison_level_trained_probabilities(
                 cl, m_u_records_lookup, "estimate u by random sampling"
             )
 
-    logger.info("\nTrained u probabilities using random sampling")
+    logger.info("\nEstimated u probabilities using random sampling")

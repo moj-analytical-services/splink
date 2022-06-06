@@ -51,8 +51,10 @@ def test_splink_2_predict_spark(df_spark):
 def test_splink_2_predict_sqlite():
 
     import sqlite3
+    from rapidfuzz.distance.Levenshtein import distance
 
     con = sqlite3.connect(":memory:")
+    con.create_function("levenshtein", 2, distance)
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df.to_sql("fake_data_1", con, if_exists="replace")
     settings_dict = get_settings_dict()
@@ -202,25 +204,25 @@ def test_lambda():
     #########
 
     bf_for_first_name = (
-        linker._settings_obj._get_comparison_by_name("first_name")
-        .get_comparison_level_by_comparison_vector_value(2)
-        .bayes_factor
+        linker._settings_obj._get_comparison_by_output_column_name("first_name")
+        ._get_comparison_level_by_comparison_vector_value(2)
+        ._bayes_factor
     )
     bf_for_surname = (
-        linker._settings_obj._get_comparison_by_name("surname")
-        .get_comparison_level_by_comparison_vector_value(1)
-        .bayes_factor
+        linker._settings_obj._get_comparison_by_output_column_name("surname")
+        ._get_comparison_level_by_comparison_vector_value(1)
+        ._bayes_factor
     )
     glo = bayes_factor_to_prob(
         prob_to_bayes_factor(0.3) / (bf_for_first_name * bf_for_surname)
     )
 
     for cc in linker._settings_obj.comparisons:
-        if cc.comparison_name not in ("first_name", "surname"):
-            cl = cc.get_comparison_level_by_comparison_vector_value(1)
+        if cc._output_column_name not in ("first_name", "surname"):
+            cl = cc._get_comparison_level_by_comparison_vector_value(1)
             cl.m_probability = 0.9
             cl.u_probability = 0.1
-            cl = cc.get_comparison_level_by_comparison_vector_value(0)
+            cl = cc._get_comparison_level_by_comparison_vector_value(0)
             cl.m_probability = 0.1
             cl.u_probability = 0.9
 

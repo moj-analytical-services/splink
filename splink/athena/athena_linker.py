@@ -9,6 +9,7 @@ from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..athena.athena_utils import boto_utils
+from ..input_column import InputColumn
 
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,8 @@ class AthenaDataFrame(SplinkDataFrame):
         t = self.get_schema_info(self.physical_name)
         d = wr.catalog.get_table_types(database=t[0], table=t[1])
 
-        return list(d.keys())
+        cols = list(d.keys())
+        return [InputColumn(c, sql_dialect="presto") for c in cols]
 
     def validate(self):
         pass

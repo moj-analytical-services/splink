@@ -2,9 +2,14 @@ from jinja2 import Template
 import json
 import os
 import pkgutil
+from typing import TYPE_CHECKING, List
+
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
 
-def row_examples(linker, example_rows_per_category=2):
+def row_examples(linker: "Linker", example_rows_per_category=2):
 
     sqls = []
 
@@ -14,7 +19,7 @@ def row_examples(linker, example_rows_per_category=2):
     uid_cols = uid_cols_l + uid_cols_r
     uid_expr = " || '-' ||".join(uid_cols)
 
-    gamma_columns = [c.gamma_column_name for c in linker._settings_obj.comparisons]
+    gamma_columns = [c._gamma_column_name for c in linker._settings_obj.comparisons]
 
     gam_concat = " || ',' || ".join(gamma_columns)
 
@@ -65,7 +70,9 @@ def row_examples(linker, example_rows_per_category=2):
 # def row_examples_correlated_subquery()
 
 
-def comparison_viewer_table(linker, example_rows_per_category=2):
+def comparison_viewer_table_sqls(
+    linker: "Linker", example_rows_per_category=2
+) -> List[dict]:
 
     sqls = row_examples(linker, example_rows_per_category)
 
@@ -134,7 +141,7 @@ def render_splink_comparison_viewer_html(
         "embed": "files/external_js/vega-embed@6.20.2",
         "vega": "files/external_js/vega@5.21.0",
         "vegalite": "files/external_js/vega-lite@5.2.0",
-        "svu_text": "files/splink_comparison_viewer/splink_vis_utils.js",
+        "svu_text": "files/splink_vis_utils/splink_vis_utils.js",
         "custom_css": "files/splink_comparison_viewer/custom.css",
     }
     for k, v in files.items():

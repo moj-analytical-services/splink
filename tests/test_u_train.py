@@ -1,4 +1,4 @@
-from splink.comparison_library import levenshtein
+from splink.duckdb.duckdb_comparison_library import levenshtein_at_thresholds
 from splink.duckdb.duckdb_linker import DuckDBLinker
 import pandas as pd
 
@@ -17,7 +17,7 @@ def test_u_train():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein("name")],
+        "comparisons": [levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
@@ -27,11 +27,11 @@ def test_u_train():
     cc_name = linker._settings_obj.comparisons[0]
 
     denom = (6 * 5) / 2  # n(n-1) / 2
-    cl_exact = cc_name.get_comparison_level_by_comparison_vector_value(2)
+    cl_exact = cc_name._get_comparison_level_by_comparison_vector_value(2)
     assert cl_exact.u_probability == 1 / denom
-    cl_lev = cc_name.get_comparison_level_by_comparison_vector_value(1)
+    cl_lev = cc_name._get_comparison_level_by_comparison_vector_value(1)
     assert cl_lev.u_probability == 1 / denom
-    cl_no = cc_name.get_comparison_level_by_comparison_vector_value(0)
+    cl_no = cc_name._get_comparison_level_by_comparison_vector_value(0)
     assert cl_no.u_probability == (denom - 2) / denom
     assert linker._settings_obj._blocking_rules_to_generate_predictions == [
         "l.name = r.name"

@@ -1,5 +1,6 @@
 # This is otherwise known as the expectation step of the EM algorithm.
 import logging
+from typing import List
 
 from .misc import prob_to_bayes_factor, prob_to_match_weight
 from .settings import Settings
@@ -7,11 +8,11 @@ from .settings import Settings
 logger = logging.getLogger(__name__)
 
 
-def predict_from_comparison_vectors_sql(
+def predict_from_comparison_vectors_sqls(
     settings_obj: Settings,
     threshold_match_probability=None,
     threshold_match_weight=None,
-):
+) -> List[dict]:
 
     sqls = []
 
@@ -33,7 +34,7 @@ def predict_from_comparison_vectors_sql(
     select_cols_expr = ",".join(select_cols)
     mult = []
     for cc in settings_obj.comparisons:
-        mult.extend(cc.match_weight_columns_to_multiply)
+        mult.extend(cc._match_weight_columns_to_multiply)
 
     proportion_of_matches = settings_obj._proportion_of_matches
 
@@ -43,9 +44,13 @@ def predict_from_comparison_vectors_sql(
     bayes_factor_expr = f"cast({bayes_factor} as double) * {bayes_factor_expr}"
 
     # In case user provided both, take the minimum of the two thresholds
+    if threshold_match_probability is not None:
+        thres_prob_as_weight = prob_to_match_weight(threshold_match_probability)
+    else:
+        thres_prob_as_weight = None
     if threshold_match_probability or threshold_match_weight:
         thresholds = [
-            prob_to_match_weight(threshold_match_probability),
+            thres_prob_as_weight,
             threshold_match_weight,
         ]
         threshold = max([t for t in thresholds if t is not None])

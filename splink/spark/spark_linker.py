@@ -1,12 +1,14 @@
 import logging
 import sqlglot
-from typing import Union
+from typing import Union, List
 import re
 from pyspark.sql import Row
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
 from ..logging_messages import execute_sql_logging_message_info, log_sql
+from ..misc import ensure_is_list
+from ..input_column import InputColumn
 
 logger = logging.getLogger(__name__)
 
@@ -17,11 +19,12 @@ class SparkDataframe(SplinkDataFrame):
         self.spark_linker = spark_linker
 
     @property
-    def columns(self):
+    def columns(self) -> List[InputColumn]:
         sql = f"select * from {self.physical_name} limit 1"
         spark_df = self.spark_linker.spark.sql(sql)
 
-        return list(spark_df.columns)
+        col_strings = list(spark_df.columns)
+        return [InputColumn(c, sql_dialect="spark") for c in col_strings]
 
     def validate(self):
         pass
@@ -71,7 +74,7 @@ class SparkLinker(Linker):
         self.break_lineage_method = break_lineage_method
         self.persist_level = persist_level
 
-        input_tables = self._coerce_to_list(input_table_or_tables)
+        input_tables = ensure_is_list(input_table_or_tables)
 
         input_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases

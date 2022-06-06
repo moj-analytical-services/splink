@@ -6,13 +6,14 @@ from splink.accuracy import (
     truth_space_table_from_labels_with_predictions_sqls,
     labels_table_with_minimal_columns_sql,
 )
-from splink.comparison_library import exact_match
+
+from splink.duckdb.duckdb_comparison_library import exact_match
 
 from basic_settings import get_settings_dict
 
 from splink.block_from_labels import block_from_labels
 from splink.comparison_vector_values import compute_comparison_vector_values_sql
-from splink.predict import predict_from_comparison_vectors_sql
+from splink.predict import predict_from_comparison_vectors_sqls
 
 
 def test_scored_labels():
@@ -61,7 +62,7 @@ def test_scored_labels():
 
     linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-    sqls = predict_from_comparison_vectors_sql(linker._settings_obj)
+    sqls = predict_from_comparison_vectors_sqls(linker._settings_obj)
 
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])

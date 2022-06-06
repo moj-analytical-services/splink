@@ -9,7 +9,10 @@ from basic_settings import get_settings_dict
 
 def test_full_example_sqlite(tmp_path):
 
+    from rapidfuzz.distance.Levenshtein import distance
+
     con = sqlite3.connect(":memory:")
+    con.create_function("levenshtein", 2, distance)
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     df.to_sql("input_df_tablename", con)
@@ -35,7 +38,7 @@ def test_full_example_sqlite(tmp_path):
 
     df_predict = linker.predict()
 
-    linker.splink_comparison_viewer(
+    linker.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_sqlite.html"), True, 2
     )
 

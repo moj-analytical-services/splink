@@ -1,6 +1,8 @@
 import os
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.duckdb_comparison_library import jaccard_at_thresholds
+from splink.duckdb.duckdb_comparison_level_library import _mutable_params
 import pandas as pd
 
 from basic_settings import get_settings_dict
@@ -9,18 +11,16 @@ from basic_settings import get_settings_dict
 def test_full_example_duckdb(tmp_path):
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = df.rename(columns={"surname": "SUR name"})
     settings_dict = get_settings_dict()
 
     # Overwrite the surname comparison to include duck-db specific syntax
-    surname_match_level = {
-        "sql_condition": "jaccard(surname_l, surname_r)",
-        # "sql_condition": "surname_l similar to surname_r",
-        "label_for_charts": "Exact match",
-        "m_probability": 0.9,
-        "u_probability": 0.1,
-    }
 
-    settings_dict["comparisons"][1]["comparison_levels"][1] = surname_match_level
+    _mutable_params["dialect"] = "duckdb"
+    settings_dict["comparisons"][1] = jaccard_at_thresholds("SUR name")
+    settings_dict["blocking_rules_to_generate_predictions"] = [
+        'l."SUR name" = r."SUR name"',
+    ]
 
     linker = DuckDBLinker(
         df,
@@ -30,11 +30,16 @@ def test_full_example_duckdb(tmp_path):
     )
 
     linker.compute_number_of_comparisons_generated_by_blocking_rule(
-        "l.first_name = r.first_name and l.surname = r.surname"
+        'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     )
 
     linker.profile_columns(
-        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]
+        [
+            "first_name",
+            '"SUR name"',
+            'first_name || "SUR name"',
+            "concat(city, first_name)",
+        ]
     )
     linker.missingness_chart()
     linker.compute_tf_table("city")
@@ -42,7 +47,7 @@ def test_full_example_duckdb(tmp_path):
 
     linker.estimate_u_using_random_sampling(target_rows=1e6)
 
-    blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
+    blocking_rule = 'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
@@ -50,7 +55,7 @@ def test_full_example_duckdb(tmp_path):
 
     df_predict = linker.predict()
 
-    linker.splink_comparison_viewer(
+    linker.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_duckdb.html"), True, 2
     )
 
@@ -84,4 +89,18 @@ def test_full_example_duckdb(tmp_path):
 
     linker.roc_chart_from_labels("labels")
 
-    linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.5)
+    df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
+
+    linker.cluster_studio_dashboard(
+        df_predict,
+        df_clusters,
+        [0, 4],
+        os.path.join(tmp_path, "test_cluster_studio.html"),
+    )
+
+    # Test saving and loading
+    path = os.path.join(tmp_path, "model.json")
+    linker.save_settings_to_json(path)
+
+    linker_2 = DuckDBLinker(df, connection=":memory:")
+    linker_2.load_settings_from_json(path)

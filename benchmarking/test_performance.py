@@ -1,4 +1,6 @@
 # python3 -m pytest benchmarking/test_performance.py
+from rapidfuzz.distance.Levenshtein import distance
+
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 from splink.sqlite.sqlite_linker import SQLiteLinker
@@ -11,7 +13,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
 
 first_name_cc = {
-    "column_name": "first_name",
+    "output_column_name": "first_name",
     "comparison_levels": [
         {
             "sql_condition": "first_name_l IS NULL OR first_name_r IS NULL",
@@ -30,7 +32,7 @@ first_name_cc = {
             "sql_condition": "levenshtein(first_name_l, first_name_r) <= 2",
             "m_probability": 0.2,
             "u_probability": 0.1,
-            "label_for_charts": "Levenstein <= 2",
+            "label_for_charts": "levenshtein <= 2",
         },
         {
             "sql_condition": "ELSE",
@@ -42,7 +44,7 @@ first_name_cc = {
 }
 
 surname_cc = {
-    "column_name": "surname",
+    "output_column_name": "surname",
     "comparison_levels": [
         {
             "sql_condition": "surname_l IS NULL OR surname_r IS NULL",
@@ -65,7 +67,7 @@ surname_cc = {
 }
 
 dob_cc = {
-    "column_name": "dob",
+    "output_column_name": "dob",
     "comparison_levels": [
         {
             "sql_condition": "dob_l IS NULL OR dob_r IS NULL",
@@ -88,7 +90,7 @@ dob_cc = {
 }
 
 email_cc = {
-    "column_name": "email",
+    "output_column_name": "email",
     "comparison_levels": [
         {
             "sql_condition": "email_l IS NULL OR email_r IS NULL",
@@ -111,7 +113,7 @@ email_cc = {
 }
 
 city_cc = {
-    "column_name": "city",
+    "output_column_name": "city",
     "comparison_levels": [
         {
             "sql_condition": "city_l IS NULL OR city_r IS NULL",
@@ -303,6 +305,7 @@ def test_2_rounds_1k_sqlite(benchmark):
 
     def setup():
         con = sqlite3.connect(":memory:")
+        con.create_function("levenshtein", 2, distance)
         df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
         df.to_sql("input_df_tablename", con)
         return (con,), {"target_rows": 1e6}
@@ -321,6 +324,7 @@ def test_10_rounds_20k_sqlite(benchmark):
 
     def setup():
         con = sqlite3.connect(":memory:")
+        con.create_function("levenshtein", 2, distance)
         df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
         df.to_sql("input_df_tablename", con)
         return (con,), {"target_rows": 3e6}

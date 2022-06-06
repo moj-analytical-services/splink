@@ -1,7 +1,8 @@
 import os
 
 from splink.spark.spark_linker import SparkLinker
-
+import splink.spark.spark_comparison_library as cl
+from splink.spark.spark_comparison_level_library import _mutable_params
 
 from basic_settings import get_settings_dict
 
@@ -9,16 +10,8 @@ from basic_settings import get_settings_dict
 def test_full_example_spark(df_spark, tmp_path):
     settings_dict = get_settings_dict()
 
-    # Overwrite the surname comparison to include duck-db specific syntax
-    surname_match_level = {
-        "sql_condition": "`surname_l` = `surname_r`",
-        # "sql_condition": "surname_l similar to surname_r",
-        "label_for_charts": "Exact match",
-        "m_probability": 0.9,
-        "u_probability": 0.1,
-    }
-
-    settings_dict["comparisons"][1]["comparison_levels"][1] = surname_match_level
+    _mutable_params["dialect"] = "spark"
+    settings_dict["comparisons"][1] = cl.exact_match("surname")
 
     linker = SparkLinker(df_spark, settings_dict, break_lineage_method="checkpoint")
 
@@ -38,8 +31,15 @@ def test_full_example_spark(df_spark, tmp_path):
 
     df_predict = linker.predict()
 
-    linker.splink_comparison_viewer(
+    linker.comparison_viewer_dashboard(
         df_predict, os.path.join(tmp_path, "test_scv_spark.html"), True, 2
     )
 
-    linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.5)
+    df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.2)
+
+    linker.cluster_studio_dashboard(
+        df_predict,
+        df_clusters,
+        [0, 4],
+        os.path.join(tmp_path, "test_cluster_studio.html"),
+    )

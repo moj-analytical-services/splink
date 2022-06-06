@@ -1,13 +1,13 @@
 import sqlglot
-from typing import Union
+from typing import Union, List
 import logging
 from math import pow, log2
-from rapidfuzz.distance.Levenshtein import distance
 
 
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
+from ..input_column import InputColumn
 
 logger = logging.getLogger(__name__)
 
@@ -25,13 +25,14 @@ class SQLiteDataFrame(SplinkDataFrame):
         self.sqlite_linker = sqlite_linker
 
     @property
-    def columns(self):
+    def columns(self) -> List[InputColumn]:
         sql = f"""
         PRAGMA table_info({self.physical_name});
         """
         pragma_result = self.sqlite_linker.con.execute(sql).fetchall()
         cols = [r["name"] for r in pragma_result]
-        return cols
+
+        return [InputColumn(c, sql_dialect="sqlite") for c in cols]
 
     def validate(self):
         if not type(self.physical_name) is str:
@@ -95,7 +96,6 @@ class SQLiteLinker(Linker):
         self.con.row_factory = dict_factory
         self.con.create_function("log2", 1, log2)
         self.con.create_function("pow", 2, pow)
-        self.con.create_function("levenshtein", 2, distance)
 
         super().__init__(
             input_table_or_tables,
