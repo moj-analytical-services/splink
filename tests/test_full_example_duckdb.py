@@ -97,3 +97,10 @@ def test_full_example_duckdb(tmp_path):
         [0, 4],
         os.path.join(tmp_path, "test_cluster_studio.html"),
     )
+
+    # Test saving and loading
+    path = os.path.join(tmp_path, "model.json")
+    linker.save_settings_to_json(path)
+
+    linker_2 = DuckDBLinker(df, connection=":memory:")
+    linker_2.load_settings_from_json(path)

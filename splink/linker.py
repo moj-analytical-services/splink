@@ -2,6 +2,8 @@ import logging
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
+import os
+import json
 
 from typing import Union, List
 
@@ -1378,3 +1380,40 @@ class Linker:
         return render_splink_cluster_studio_html(
             self, df_predict, df_clustered, cluster_ids, out_path, overwrite=overwrite
         )
+
+    def save_settings_to_json(self, out_path: str, overwrite=False) -> dict:
+        """Save the configuration and parameters the linkage model to a json file.
+
+        Returns the model as a Python dictionary.
+
+        If an out_path is specified, also saves the settings to
+        a file
+
+        Args:
+            out_path (str): File path for json file
+            overwrite (bool, optional): Overwrite if already exists? Defaults to False.
+        """
+
+        model_dict = self._settings_obj.as_dict()
+
+        if out_path:
+
+            if os.path.isfile(out_path) and not overwrite:
+                raise ValueError(
+                    f"The path {out_path} already exists. Please provide a different "
+                    "path or set overwrite=True"
+                )
+
+            with open(out_path, "w") as f:
+                json.dump(model_dict, f, indent=4)
+
+    def load_settings_from_json(self, in_path: str):
+        """
+        Load settings from a file.
+
+        Args:
+            in_path (str): Path to settings json file
+        """
+        with open(in_path, "r") as f:
+            model_dict = json.load(f)
+        self.initialise_settings(model_dict)
