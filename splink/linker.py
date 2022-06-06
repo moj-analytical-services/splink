@@ -148,6 +148,9 @@ class Linker:
         if self._find_new_matches_mode:
             return "__splink__df_concat_with_tf"
 
+        if self._self_link_mode:
+            return "__splink__df_concat_with_tf"
+
         if self._compare_two_records_mode:
             return "__splink__compare_two_records_left_with_tf"
 
@@ -163,6 +166,9 @@ class Linker:
 
         if self._find_new_matches_mode:
             return "__splink__df_new_records_with_tf"
+
+        if self._self_link_mode:
+            return "__splink__df_concat_with_tf"
 
         if self._compare_two_records_mode:
             return "__splink__compare_two_records_right_with_tf"
@@ -949,9 +955,6 @@ class Linker:
             SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons for your
                 input records.
         """
-
-        # Calculate tf columns or load from cache.
-        self._initialise_df_concat_with_tf()
 
         original_blocking_rules = (
             self._settings_obj._blocking_rules_to_generate_predictions
