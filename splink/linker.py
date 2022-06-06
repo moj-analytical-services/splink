@@ -2,6 +2,7 @@ import logging
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
+import re
 
 from typing import Union, List
 
@@ -950,9 +951,6 @@ class Linker:
                 input records.
         """
 
-        # Calculate tf columns or load from cache.
-        self._initialise_df_concat_with_tf()
-
         original_blocking_rules = (
             self._settings_obj._blocking_rules_to_generate_predictions
         )
@@ -976,6 +974,11 @@ class Linker:
         self._initialise_df_concat_with_tf()
 
         sql = block_using_rules_sql(self)
+
+        comparison_reg = re.compile(
+            "__splink_df_concat_with_tf_(left|right){1}"
+        )
+        sql = re.sub(comparison_reg, "__splink__df_concat_with_tf", sql)
 
         self._enqueue_sql(sql, "__splink__df_blocked")
 
