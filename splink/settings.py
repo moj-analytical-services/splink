@@ -58,10 +58,15 @@ class Settings:
         self._training_mode = False
 
     def __deepcopy__(self, memo) -> "Settings":
+        """When we do EM training, we need a copy of the Settings which is independent
+        of the original e.g. modifying the copy will not affect the original.
+        This method implements ensures the Settings can be deepcopied."""
         cc = Settings(self.as_dict())
         return cc
 
     def _from_settings_dict_else_default(self, key):
+        # Don't want a default of None because that's a valid value sometimes
+        # i.e. need to distinguish between None and 'not found in settings dict'
         val = self._settings_dict.get(key, "__val_not_found_in_settings_dict__")
         if val == "__val_not_found_in_settings_dict__":
             val = default_value_from_schema(key, "root")

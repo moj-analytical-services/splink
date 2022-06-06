@@ -1,7 +1,7 @@
 import logging
 from typing import TYPE_CHECKING
 
-from .predict import predict_from_comparison_vectors_sql
+from .predict import predict_from_comparison_vectors_sqls
 from .settings import Settings
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
 from .splink_dataframe import SplinkDataFrame
@@ -125,7 +125,7 @@ def expectation_maximisation(
     for i in range(1, max_iterations + 1):
 
         # Expectation step
-        sqls = predict_from_comparison_vectors_sql(settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(settings_obj)
         for sql in sqls:
             linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
