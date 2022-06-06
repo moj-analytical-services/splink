@@ -575,6 +575,19 @@ class Linker:
 
         self._names_of_tables_created_by_splink = tables_remaining
 
+    def _raise_error_if_necessary_waterfall_columns_not_computed(self):
+        ricc = self._settings_obj._retain_intermediate_calculation_columns
+        rmc = self._settings_obj._retain_matching_columns
+        if not (ricc and rmc):
+            raise ValueError(
+                "retain_intermediate_calculation_columns and "
+                "retain_matching_columns must both be set to True in your settings"
+                " dictionary to use this function, because otherwise the necessary "
+                "columns will not be available in the input records."
+                f" Their current values are {ricc} and {rmc}, respectively. "
+                "Please re-run your linkage with them both set to True."
+            )
+
     def initialise_settings(self, settings_dict: dict):
         """Initialise settings for the linker.  To be used if settings were
         not passed to the linker on creation.
@@ -1190,8 +1203,29 @@ class Linker:
         recs = df.as_record_dict()
         return match_weight_histogram(recs, width=width, height=height)
 
-    def waterfall_chart(self, records, filter_nulls=True, as_dict=False):
-        return waterfall_chart(records, self._settings_obj, filter_nulls, as_dict)
+    def waterfall_chart(self, records: List[dict], filter_nulls=True):
+        """Visualise how the final match weight is computed for  the provided pairwise
+        record comparisons.
+
+        Records must be provided as a list of dictionaries. This would usually be
+        obtained from `df.as_record_dict(limit=n)` where `df` is a SplinkDataFrame.
+
+        Examples:
+            >>> df = linker.predict(threshold_match_weight=2)
+            >>> records = df.as_record_dict(limit=10)
+            >>> linker.waterfall_chart(records)
+
+        Args:
+            records (List[dict]): Usually be obtained from `df.as_record_dict(limit=n)`
+                where `df` is a SplinkDataFrame.
+            filter_nulls (bool, optional): Whether the visualiation shows null
+                comparisons, which have no effect on final match weight. Defaults to
+                True.
+
+        """
+        self._raise_error_if_necessary_waterfall_columns_not_computed()
+
+        return waterfall_chart(records, self._settings_obj, filter_nulls)
 
     def comparison_viewer_dashboard(
         self,
@@ -1223,6 +1257,8 @@ class Linker:
             >>> IFrame(src="./scv.html", width="100%", height=1200)
 
         """
+        self._raise_error_if_necessary_waterfall_columns_not_computed()
+
         sql = comparison_vector_distribution_sql(self)
         self._enqueue_sql(sql, "__splink__df_comparison_vector_distribution")
 
@@ -1376,6 +1412,7 @@ class Linker:
             >>> IFrame(src="./cluster_studio.html", width="100%", height=1200)
 
         """
+        self._raise_error_if_necessary_waterfall_columns_not_computed()
 
         return render_splink_cluster_studio_html(
             self, df_predict, df_clustered, cluster_ids, out_path, overwrite=overwrite

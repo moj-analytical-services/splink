@@ -44,9 +44,13 @@ def predict_from_comparison_vectors_sqls(
     bayes_factor_expr = f"cast({bayes_factor} as double) * {bayes_factor_expr}"
 
     # In case user provided both, take the minimum of the two thresholds
+    if threshold_match_probability is not None:
+        thres_prob_as_weight = prob_to_match_weight(threshold_match_probability)
+    else:
+        thres_prob_as_weight = None
     if threshold_match_probability or threshold_match_weight:
         thresholds = [
-            prob_to_match_weight(threshold_match_probability),
+            thres_prob_as_weight,
             threshold_match_weight,
         ]
         threshold = max([t for t in thresholds if t is not None])
