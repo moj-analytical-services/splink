@@ -61,6 +61,17 @@ class SplinkDataFrame:
         pass
 
     def as_pandas_dataframe(self, limit=None):
+        """Return the dataframe as a pandas dataframe.
+
+        This can be computationally expensive if the dataframe is large.
+
+        Args:
+            limit (int, optional): If provided, return this number of rows (equivalent
+            to a limit statement in SQL). Defaults to None, meaning return all rows
+
+        Returns:
+            pandas.DataFrame: pandas Dataframe
+        """
         import pandas as pd
 
         return pd.DataFrame(self.as_record_dict(limit=limit))
