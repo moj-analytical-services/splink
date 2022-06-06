@@ -65,6 +65,8 @@ class Settings:
         return cc
 
     def _from_settings_dict_else_default(self, key):
+        # Don't want a default of None because that's a valid value sometimes
+        # i.e. need to distinguish between None and 'not found in settings dict'
         val = self._settings_dict.get(key, "__val_not_found_in_settings_dict__")
         if val == "__val_not_found_in_settings_dict__":
             val = default_value_from_schema(key, "root")
