@@ -15,8 +15,8 @@ def setup_athena_db(db_name="splink_awswrangler_test"):
     # creates a session at least on the platform...
     my_session = boto3.Session(region_name="eu-west-1")
 
-    ## DELETE + RECREATE OUR DATABASE TO WRITE TO
-    # reset our db for another test run...
+    # If our database already exists, delete and recreate it,
+    # so we ensure we have no cached datasets to read from.
     if db_name in wr.catalog.databases(limit=10000).values:
         wr.catalog.delete_database(name=db_name, boto3_session=my_session)
         # clean up folder contents from s3...
@@ -59,7 +59,8 @@ def test_full_example_athena(tmp_path):
     upload_data("splink_awswrangler_test")
     settings_dict = get_settings_dict()
 
-    # Update first name settings
+    # SQLglot doesn't currently convert the levenshtein function,
+    # so manually adjust it for now
     settings_dict["comparisons"][0]["comparison_levels"][2] = {
         "sql_condition": "levenshtein_distance(first_name_l, first_name_r) <= 2",
         "m_probability": 0.2,
