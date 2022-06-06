@@ -860,7 +860,7 @@ class Linker:
         self._settings_obj._link_type = "link_only_find_matches_to_new_records"
         self._find_new_matches_mode = True
 
-        sql = _join_tf_to_input_df_sql(self._settings_obj)
+        sql = _join_tf_to_input_df_sql(self)
         sql = sql.replace("__splink__df_concat", "__splink__df_new_records")
         self._enqueue_sql(sql, "__splink__df_new_records_with_tf")
 
@@ -914,7 +914,7 @@ class Linker:
         self._records_to_table([record_1], "__splink__compare_two_records_left")
         self._records_to_table([record_2], "__splink__compare_two_records_right")
 
-        sql_join_tf = _join_tf_to_input_df_sql(self._settings_obj)
+        sql_join_tf = _join_tf_to_input_df_sql(self)
         sql_join_tf = sql_join_tf.replace(
             "__splink__df_concat", "__splink__compare_two_records_left"
         )
