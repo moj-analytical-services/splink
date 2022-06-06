@@ -2,7 +2,7 @@ from jinja2 import Template
 import json
 import os
 import pkgutil
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -70,7 +70,9 @@ def row_examples(linker: "Linker", example_rows_per_category=2):
 # def row_examples_correlated_subquery()
 
 
-def comparison_viewer_table(linker, example_rows_per_category=2):
+def comparison_viewer_table_sqls(
+    linker: "Linker", example_rows_per_category=2
+) -> List[dict]:
 
     sqls = row_examples(linker, example_rows_per_category)
 

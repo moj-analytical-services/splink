@@ -44,7 +44,7 @@ from .accuracy import roc_table
 from .match_weight_histogram import histogram_data
 from .comparison_vector_distribution import comparison_vector_distribution_sql
 from .splink_comparison_viewer import (
-    comparison_viewer_table,
+    comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,
 )
 from .analyse_blocking import number_of_comparisons_generated_by_blocking_rule_sql
@@ -1226,7 +1226,7 @@ class Linker:
         sql = comparison_vector_distribution_sql(self)
         self._enqueue_sql(sql, "__splink__df_comparison_vector_distribution")
 
-        sqls = comparison_viewer_table(self, num_example_rows)
+        sqls = comparison_viewer_table_sqls(self, num_example_rows)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 

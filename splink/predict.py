@@ -1,5 +1,6 @@
 # This is otherwise known as the expectation step of the EM algorithm.
 import logging
+from typing import List
 
 from .misc import prob_to_bayes_factor, prob_to_match_weight
 from .settings import Settings
@@ -11,7 +12,7 @@ def predict_from_comparison_vectors_sqls(
     settings_obj: Settings,
     threshold_match_probability=None,
     threshold_match_weight=None,
-):
+) -> List[dict]:
 
     sqls = []
 
