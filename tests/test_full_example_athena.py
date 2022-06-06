@@ -1,6 +1,7 @@
 from splink.athena.athena_linker import AthenaLinker
 import pandas as pd
 import pytest
+import os
 
 from basic_settings import get_settings_dict
 
