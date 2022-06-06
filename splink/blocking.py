@@ -27,7 +27,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_cols, "l")
     id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_cols, "r")
 
-    if link_type == "two_dataset_link_only":
+    if link_type in ("two_dataset_link_only", "self_link"):
         where_condition = " where 1=1 "
     elif link_type in ["link_and_dedupe", "dedupe_only"]:
         where_condition = f"where {id_expr_l} < {id_expr_r}"
@@ -59,6 +59,10 @@ def block_using_rules_sql(linker: "Linker", custom_rule: str = ""):
 
     if linker._two_dataset_link_only:
         link_type = "two_dataset_link_only"
+
+    if linker._self_link_mode:
+        link_type = "self_link"
+
     where_condition = _sql_gen_where_condition(
         link_type, settings_obj._unique_id_input_columns
     )
