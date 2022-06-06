@@ -2,7 +2,6 @@ import logging
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
-import re
 
 from typing import Union, List
 
@@ -149,6 +148,9 @@ class Linker:
         if self._find_new_matches_mode:
             return "__splink__df_concat_with_tf"
 
+        if self._self_link_mode:
+            return "__splink__df_concat_with_tf"
+
         if self._compare_two_records_mode:
             return "__splink__compare_two_records_left_with_tf"
 
@@ -164,6 +166,9 @@ class Linker:
 
         if self._find_new_matches_mode:
             return "__splink__df_new_records_with_tf"
+
+        if self._self_link_mode:
+            return "__splink__df_concat_with_tf"
 
         if self._compare_two_records_mode:
             return "__splink__compare_two_records_right_with_tf"
@@ -974,9 +979,6 @@ class Linker:
         self._initialise_df_concat_with_tf()
 
         sql = block_using_rules_sql(self)
-
-        comparison_reg = re.compile("__splink_df_concat_with_tf_(left|right){1}")
-        sql = re.sub(comparison_reg, "__splink__df_concat_with_tf", sql)
 
         self._enqueue_sql(sql, "__splink__df_blocked")
 
