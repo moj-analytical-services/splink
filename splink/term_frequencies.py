@@ -80,10 +80,10 @@ def add_term_frequencies(df: DataFrame, model: Model, spark: SparkSession):
     """
 
     if model.current_settings_obj.any_cols_have_tf_adjustments:
-        sql = _sql_gen_add_term_frequencies(model, "df")
+        sql = _sql_gen_add_term_frequencies(model, "df_no_tf")
 
         logger.debug(_format_sql(sql))
-        df.createOrReplaceTempView("df")
+        df.createOrReplaceTempView("df_no_tf")
         df_with_tf = spark.sql(sql)
 
         return df_with_tf
