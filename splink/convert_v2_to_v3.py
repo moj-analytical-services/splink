@@ -49,12 +49,14 @@ def _parse_top_level_case_statement_from_sql(top_level_case_tree):
         sql = i.args["this"].sql(dialect="spark")
         sql = f"{sql}".format(sql=sql, lit=lit)
 
-        parsed_case_expr.append({"sql_expr": sql, "label": f"level_{lit}"})
+        parsed_case_expr.append(
+            {"sql_expr": sql, "label": f"level_{lit}", "value": int(lit)}
+        )
 
     if top_level_case_tree.args.get("default") is not None:
         lit = top_level_case_tree.args.get("default").sql("spark", pretty=True)
         sql = "ELSE"
-        parsed_case_expr.append({"sql_expr": sql, "label": f"level_{lit}"})
+        parsed_case_expr.append({"sql_expr": sql, "label": f"level_{lit}", "value": 0})
 
     return parsed_case_expr
 
@@ -62,15 +64,29 @@ def _parse_top_level_case_statement_from_sql(top_level_case_tree):
 def _merge_duplicate_levels(parsed_case_expr):
     def _join_or(groupby_item):
 
-        exprs = [x["sql_expr"] for x in groupby_item[1]]
+        items = list(groupby_item[1])
+
+        exprs = [x["sql_expr"] for x in items]
         if len(exprs) > 1:
 
             exprs = [f"({e})" for e in exprs]
         merged = "\n OR ".join(exprs)
-        return merged
+
+        if len(items) > 0:
+            value = items[0]["value"]
+        else:
+            value = None
+        return {"sql_condition": merged, "value": value}
 
     gb = groupby(parsed_case_expr, key=lambda x: x["label"])
-    return list(map(_join_or, gb))
+    grouped_parsed = list(map(_join_or, gb))
+
+    # Guarantee order and that -1 (null) comes first
+    grouped_parsed = sorted(
+        grouped_parsed, key=lambda x: -x["value"] if x["value"] >= 0 else -9999
+    )
+
+    return grouped_parsed
 
 
 def _parse_case_statement(sql):
@@ -108,24 +124,50 @@ def convert_settings_from_v2_to_v3(settings_dict_v2: dict):
     comparisons_3 = []
     for comparison_column in settings_dict_v2["comparison_columns"]:
 
-        m = comparison_column["m_probabilities"]
-        m.insert(0, None)
-        u = comparison_column["u_probabilities"]
-        u.insert(0, None)
         parsed = _parse_case_statement(comparison_column["case_expression"])
-        m_u_ps = list(zip(m, u, parsed))
+
+        if "m_probabilities" in comparison_column:
+
+            m = comparison_column["m_probabilities"]
+            m.insert(0, None)
+        else:
+            m = [None] * (len(parsed) + 1)
+
+        if "u_probabilities" in comparison_column:
+
+            u = comparison_column["u_probabilities"]
+            u.insert(0, None)
+        else:
+            u = [None] * (len(parsed) + 1)
+
         comparison_3 = {"comparison_levels": []}
 
-        for m, u, p in m_u_ps:
-            level = {"m_probability": m, "u_probability": u, "sql_condition": p}
-            if m is None:
-                del level["m_probability"]
-            if u is None:
-                del level["u_probability"]
-            if m is None:
+        for index, level in enumerate(parsed):
+            if level["value"] == -1:
                 level["is_null_level"] = True
+            if m[index]:
+                level["m_probability"] = m[index]
+            if u[index]:
+                level["u_probability"] = u[index]
+            del level["value"]
             comparison_3["comparison_levels"].append(level)
+
         comparisons_3.append(comparison_3)
+
+        # m_u_ps = list(zip(m, u, parsed))
+
+        # for m, u, p in m_u_ps:
+        #     sql = p["sql_expr"]
+        #     value = p["value"]
+        #     level = {"m_probability": m, "u_probability": u, "sql_condition": sql}
+        #     if m is None:
+        #         del level["m_probability"]
+        #     if u is None:
+        #         del level["u_probability"]
+        #     if value == -1:
+        #         level["is_null_level"] = True
+        #     comparison_3["comparison_levels"].append(level)
+
     settings_3["comparisons"] = comparisons_3
 
     return settings_3
