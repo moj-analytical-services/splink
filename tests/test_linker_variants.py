@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import pytest
 from splink.comparison_library import exact_match
 
@@ -150,6 +151,24 @@ def test_link_type(input_name, input_tables):
     assert all(self_link.id_l == self_link.id_r)
     if input_name != "dedupe_only__pass":
         assert all(self_link.source_dataset_l == self_link.source_dataset_r)
+
+        self_ids_to_check = [
+            list(map(lambda x: f"{alias} -__- {x}", input.id))
+            for alias, input in zip(aliases, input_tables)
+        ]
+        self_ids_to_check = list(np.array(self_ids_to_check).flat)
+
+        self_left_ids = [
+            f"{df} -__- {id}"
+            for df, id in zip(self_link.source_dataset_l, self_link.id_l)
+        ]
+        self_right_ids = [
+            f"{df} -__- {id}"
+            for df, id in zip(self_link.source_dataset_r, self_link.id_r)
+        ]
+
+        assert self_ids_to_check == self_left_ids
+        assert self_ids_to_check == self_right_ids
 
     record_1 = {
         "id": 1,
