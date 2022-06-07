@@ -88,7 +88,7 @@
             "title": "An optional label to describe this comparison.",
             "examples": [
               "First name exact match",
-              "Surname with middle levenstein level"
+              "Surname with middle levenshtein level"
             ]
           },
           "comparison_levels": {
@@ -195,7 +195,7 @@
     "additional_columns_to_retain": {
       "type": "array",
       "title": "A list of columns not being used in the probabalistic matching comparisons that you want to include in your results.",
-      "description": "A common example is if the user has labelled data (training data) and wishes to retain the labels in the outputs",
+      "description": "By default, splink drops columns which are not used by any comparisons.  This gives you the option to retain columns which are not used by the model.  A common example is if the user has labelled data (training data) and wishes to retain the labels in the outputs",
       "default": [],
       "examples": ["label", "col2"],
       "items": {

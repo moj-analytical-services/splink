@@ -1,7 +1,7 @@
 import logging
 import os
 import tempfile
-from typing import Union
+from typing import Union, List
 import uuid
 import sqlglot
 from tempfile import TemporaryDirectory
@@ -9,10 +9,12 @@ from tempfile import TemporaryDirectory
 from duckdb import DuckDBPyConnection
 import duckdb
 
+
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import ensure_is_list
+from ..input_column import InputColumn
 
 logger = logging.getLogger(__name__)
 
@@ -58,10 +60,11 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
         self.duckdb_linker = duckdb_linker
 
     @property
-    def columns(self):
+    def columns(self) -> List[InputColumn]:
         d = self.as_record_dict(1)[0]
 
-        return list(d.keys())
+        col_strings = list(d.keys())
+        return [InputColumn(c, sql_dialect="duckdb") for c in col_strings]
 
     def validate(self):
         pass

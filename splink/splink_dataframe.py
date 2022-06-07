@@ -7,9 +7,11 @@ logger = logging.getLogger(__name__)
 
 
 class SplinkDataFrame:
-    """Abstraction over dataframe to handle basic operations
-    like retrieving columns, which need different implementations
-    depending on whether it's a spark dataframe, sqlite table etc.
+    """Abstraction over dataframe to handle basic operations like retrieving data and
+    retrieving column names, which need different implementations depending on whether
+    it's a spark dataframe, sqlite table etc.
+
+    Uses methods like `as_pandas_dataframe()` and `as_record_dict()` to retrieve data
     """
 
     def __init__(self, templated_name, physical_name):
@@ -59,6 +61,17 @@ class SplinkDataFrame:
         pass
 
     def as_pandas_dataframe(self, limit=None):
+        """Return the dataframe as a pandas dataframe.
+
+        This can be computationally expensive if the dataframe is large.
+
+        Args:
+            limit (int, optional): If provided, return this number of rows (equivalent
+            to a limit statement in SQL). Defaults to None, meaning return all rows
+
+        Returns:
+            pandas.DataFrame: pandas Dataframe
+        """
         import pandas as pd
 
         return pd.DataFrame(self.as_record_dict(limit=limit))

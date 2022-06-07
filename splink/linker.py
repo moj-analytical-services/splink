@@ -2,8 +2,12 @@ import logging
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
+import os
+import json
 
 from typing import Union, List
+
+from splink.input_column import InputColumn
 
 from .charts import (
     match_weight_histogram,
@@ -19,13 +23,13 @@ from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .em_training_session import EMTrainingSession
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor, ensure_is_list
-from .predict import predict_from_comparison_vectors_sql
+from .predict import predict_from_comparison_vectors_sqls
 from .settings import Settings
 from .term_frequencies import (
     compute_all_term_frequencies_sqls,
     term_frequencies_for_single_column_sql,
     colname_to_tf_tablename,
-    _join_tf_to_input_df,
+    _join_tf_to_input_df_sql,
 )
 from .profile_data import profile_columns
 from .missingness import missingness_data
@@ -35,14 +39,14 @@ from .m_training import estimate_m_values_from_label_column
 from .estimate_u import estimate_u_values
 from .pipeline import SQLPipeline
 
-from .vertically_concatenate import vertically_concatente_sql
+from .vertically_concatenate import vertically_concatenate_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .accuracy import roc_table
 
 from .match_weight_histogram import histogram_data
 from .comparison_vector_distribution import comparison_vector_distribution_sql
 from .splink_comparison_viewer import (
-    comparison_viewer_table,
+    comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,
 )
 from .analyse_blocking import number_of_comparisons_generated_by_blocking_rule_sql
@@ -76,7 +80,7 @@ class Linker:
         """The Linker object manages the data linkage process and holds the data linkage
         model.
 
-        Most of Splink's functionality can  be accessed by calling functions (methods)
+        Most of Splink's functionality can  be accessed by calling methods (functions)
         on the linker, such as `linker.predict()`, `linker.profile_columns()` etc.
 
         The Linker class is intended for subclassing for specific backends, e.g.
@@ -113,7 +117,7 @@ class Linker:
         self._validate_input_dfs()
         self._em_training_sessions = []
 
-        self._names_of_tables_created_by_splink = []
+        self._names_of_tables_created_by_splink: list = []
 
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
@@ -202,19 +206,20 @@ class Linker:
     def _prepend_schema_to_table_name(self, table_name):
         if self._output_schema:
             return f"{self._output_schema}.{table_name}"
-        return table_name
+        else:
+            return table_name
 
     def _initialise_df_concat(self, materialise=True):
         if self._table_exists_in_database("__splink__df_concat"):
             return
-        sql = vertically_concatente_sql(self)
+        sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
         self._execute_sql_pipeline(materialise_as_hash=False)
 
     def _initialise_df_concat_with_tf(self, materialise=True):
         if self._table_exists_in_database("__splink__df_concat_with_tf"):
             return
-        sql = vertically_concatente_sql(self)
+        sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
 
         sqls = compute_all_term_frequencies_sqls(self)
@@ -296,7 +301,8 @@ class Linker:
                 True.
 
         Returns:
-            SplinkDataFrame: _description_
+            SplinkDataFrame: An abstraction representing the table created by the sql
+                pipeline
         """
 
         if not self.debug_mode:
@@ -331,6 +337,9 @@ class Linker:
 
             return dataframe
 
+    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
+        raise NotImplementedError(f"execute_sql not implemented for {type(self)}")
+
     def _enqueue_and_execute_sql_pipeline(
         self,
         sql,
@@ -339,11 +348,7 @@ class Linker:
         use_cache=True,
         transpile=True,
     ) -> SplinkDataFrame:
-
-        """
-        Wrapper method to enqueue and execute a sql pipeline
-        in a single call.
-        """
+        """Wrapper method to enqueue and execute a sql pipeline in a single call."""
 
         self._enqueue_sql(sql, output_table_name)
         return self._execute_sql_pipeline([], materialise_as_hash, use_cache, transpile)
@@ -357,7 +362,7 @@ class Linker:
         transpile=True,
     ) -> SplinkDataFrame:
         """Execute sql (or if identical sql has been run before, return cached results),
-        reset pipeline, and return a splink dataframe representing the results of the
+        reset pipeline, and return a SplinkDataFrame representing the results of the
         sql"""
 
         self._pipeline.reset()
@@ -413,6 +418,10 @@ class Linker:
         return splink_dataframe
 
     def __deepcopy__(self, memo):
+        """When we do EM training, we need a copy of the linker which is independent
+        of the main linker e.g. setting parameters on the copy will not affect the
+        main linker.  This method implements ensures linker can be deepcopied.
+        """
         new_linker = copy(self)
         new_linker._em_training_sessions = []
         new_settings = deepcopy(self._settings_obj)
@@ -425,8 +434,8 @@ class Linker:
         if input_table_aliases is None:
             input_table_aliases = input_table_or_tables
 
-        if not isinstance(input_table_aliases, list):
-            input_table_aliases = [input_table_aliases]
+        input_table_aliases = ensure_is_list(input_table_aliases)
+
         return input_table_aliases
 
     def _get_input_tables_dict(self, input_table_or_tables, input_table_aliases):
@@ -451,7 +460,7 @@ class Linker:
 
     def _predict_warning(self):
 
-        if not self._settings_obj.is_fully_trained:
+        if not self._settings_obj._is_fully_trained:
             msg = (
                 "\n -- WARNING --\n"
                 "You have called predict(), but there are some parameter "
@@ -459,14 +468,11 @@ class Linker:
                 "settings dictionary.  To produce predictions the following"
                 " untrained trained parameters will use default values."
             )
-            messages = self._settings_obj.not_trained_messages()
+            messages = self._settings_obj._not_trained_messages()
 
             warn_message = "\n".join([msg] + messages)
 
             logger.warning(warn_message)
-
-    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
-        raise NotImplementedError(f"execute_sql not implemented for {type(self)}")
 
     def _table_exists_in_database(self, table_name):
         raise NotImplementedError(
@@ -486,8 +492,7 @@ class Linker:
                     )
 
     def _populate_proportion_of_matches_from_trained_values(self):
-        # Need access to here to the individual training session
-        # their blocking rules and m and u values
+
         prop_matches_estimates = []
         for em_training_session in self._em_training_sessions:
             training_lambda = em_training_session._settings_obj._proportion_of_matches
@@ -512,7 +517,7 @@ class Linker:
                 )
 
                 cl = cc._get_comparison_level_by_comparison_vector_value(
-                    reverse_level.comparison_vector_value
+                    reverse_level._comparison_vector_value
                 )
 
                 if cl._has_estimated_values:
@@ -583,6 +588,19 @@ class Linker:
 
         self._names_of_tables_created_by_splink = tables_remaining
 
+    def _raise_error_if_necessary_waterfall_columns_not_computed(self):
+        ricc = self._settings_obj._retain_intermediate_calculation_columns
+        rmc = self._settings_obj._retain_matching_columns
+        if not (ricc and rmc):
+            raise ValueError(
+                "retain_intermediate_calculation_columns and "
+                "retain_matching_columns must both be set to True in your settings"
+                " dictionary to use this function, because otherwise the necessary "
+                "columns will not be available in the input records."
+                f" Their current values are {ricc} and {rmc}, respectively. "
+                "Please re-run your linkage with them both set to True."
+            )
+
     def initialise_settings(self, settings_dict: dict):
         """Initialise settings for the linker.  To be used if settings were
         not passed to the linker on creation.
@@ -606,10 +624,11 @@ class Linker:
         Returns:
             SplinkDataFrame: The resultant table as a splink data frame
         """
-        sql = vertically_concatente_sql(self)
+        sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
-        sql = term_frequencies_for_single_column_sql(column_name)
-        self._enqueue_sql(sql, colname_to_tf_tablename(column_name))
+        input_col = InputColumn(column_name, tf_adjustments=True)
+        sql = term_frequencies_for_single_column_sql(input_col)
+        self._enqueue_sql(sql, colname_to_tf_tablename(input_col))
         return self._execute_sql_pipeline(materialise_as_hash=False)
 
     def deterministic_link(self) -> SplinkDataFrame:
@@ -662,7 +681,7 @@ class Linker:
         estimate_u_values(self, target_rows)
         self._populate_m_u_from_trained_values()
 
-        self._settings_obj.columns_without_estimated_parameters_message()
+        self._settings_obj._columns_without_estimated_parameters_message()
 
     def estimate_m_from_label_column(self, label_colname: str):
         """Estimate the m parameters of the linkage model from a label (ground truth)
@@ -696,7 +715,7 @@ class Linker:
         )
         self._populate_m_u_from_trained_values()
 
-        self._settings_obj.columns_without_estimated_parameters_message()
+        self._settings_obj._columns_without_estimated_parameters_message()
 
     def estimate_parameters_using_expectation_maximisation(
         self,
@@ -758,8 +777,9 @@ class Linker:
             >>> linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
         Returns:
-            Updates the estimated m parameters and proportion_of_matches within the
-            linker object and returns nothing.
+            EMTrainingSession:  An object containing information about the training
+                session such as how parameters changed during the iteration history
+
         """
 
         self._initialise_df_concat_with_tf(materialise=True)
@@ -779,7 +799,7 @@ class Linker:
 
         self._populate_proportion_of_matches_from_trained_values()
 
-        self._settings_obj.columns_without_estimated_parameters_message()
+        self._settings_obj._columns_without_estimated_parameters_message()
 
         return em_training_session
 
@@ -820,7 +840,7 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sql(
+        sqls = predict_from_comparison_vectors_sqls(
             self._settings_obj, threshold_match_probability, threshold_match_weight
         )
         for sql in sqls:
@@ -866,7 +886,7 @@ class Linker:
         self._settings_obj._link_type = "link_only_find_matches_to_new_records"
         self._find_new_matches_mode = True
 
-        sql = _join_tf_to_input_df(self._settings_obj)
+        sql = _join_tf_to_input_df_sql(self)
         sql = sql.replace("__splink__df_concat", "__splink__df_new_records")
         self._enqueue_sql(sql, "__splink__df_new_records_with_tf")
 
@@ -876,7 +896,7 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sql(self._settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -920,9 +940,8 @@ class Linker:
         self._records_to_table([record_1], "__splink__compare_two_records_left")
         self._records_to_table([record_2], "__splink__compare_two_records_right")
 
-        # If you're not performing a self link, use the custom records specified
-        # by the user.
-        sql_join_tf = _join_tf_to_input_df(self._settings_obj)
+        sql_join_tf = _join_tf_to_input_df_sql(self)
+
         sql_join_tf = sql_join_tf.replace(
             "__splink__df_concat", "__splink__compare_two_records_left"
         )
@@ -986,7 +1005,7 @@ class Linker:
 
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sql(self._settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -1040,7 +1059,7 @@ class Linker:
         self, retain_term_frequency=True, retain_df_concat_with_tf=True
     ):
         tables_remaining = []
-        current_tables = self.names_of_tables_created_by_splink
+        current_tables = self._names_of_tables_created_by_splink
         for splink_df in current_tables:
             name = splink_df.templated_name
             # Only delete tables explicitly marked as having been created by splink
@@ -1060,7 +1079,7 @@ class Linker:
             else:
                 self._delete_table_from_database(name)
 
-        self.names_of_tables_created_by_splink = tables_remaining
+        self._names_of_tables_created_by_splink = tables_remaining
 
     def profile_columns(self, column_expressions, top_n=10, bottom_n=10):
 
@@ -1227,13 +1246,47 @@ class Linker:
             match_weight_round_to_nearest=match_weight_round_to_nearest,
         )
 
-    def match_weight_histogram(self, df_predict, target_bins=30, width=600, height=250):
+    def match_weight_histogram(
+        self, df_predict: SplinkDataFrame, target_bins: int = 30, width=600, height=250
+    ):
+        """Generate a histogram that shows the distribution of match weights in
+        `df_predict`
+
+        Args:
+            df_predict (SplinkDataFrame): Output of `linker.predict()`
+            target_bins (int, optional): Target number of bins in histogram. Defaults to
+                30.
+            width (int, optional): Width of output. Defaults to 600.
+            height (int, optional): Height of output chart. Defaults to 250.
+
+        """
         df = histogram_data(self, df_predict, target_bins)
         recs = df.as_record_dict()
         return match_weight_histogram(recs, width=width, height=height)
 
-    def waterfall_chart(self, records, filter_nulls=True, as_dict=False):
-        return waterfall_chart(records, self._settings_obj, filter_nulls, as_dict)
+    def waterfall_chart(self, records: List[dict], filter_nulls=True):
+        """Visualise how the final match weight is computed for  the provided pairwise
+        record comparisons.
+
+        Records must be provided as a list of dictionaries. This would usually be
+        obtained from `df.as_record_dict(limit=n)` where `df` is a SplinkDataFrame.
+
+        Examples:
+            >>> df = linker.predict(threshold_match_weight=2)
+            >>> records = df.as_record_dict(limit=10)
+            >>> linker.waterfall_chart(records)
+
+        Args:
+            records (List[dict]): Usually be obtained from `df.as_record_dict(limit=n)`
+                where `df` is a SplinkDataFrame.
+            filter_nulls (bool, optional): Whether the visualiation shows null
+                comparisons, which have no effect on final match weight. Defaults to
+                True.
+
+        """
+        self._raise_error_if_necessary_waterfall_columns_not_computed()
+
+        return waterfall_chart(records, self._settings_obj, filter_nulls)
 
     def unlinkables_chart(
         self,
@@ -1300,10 +1353,12 @@ class Linker:
             >>> IFrame(src="./scv.html", width="100%", height=1200)
 
         """
+        self._raise_error_if_necessary_waterfall_columns_not_computed()
+
         sql = comparison_vector_distribution_sql(self)
         self._enqueue_sql(sql, "__splink__df_comparison_vector_distribution")
 
-        sqls = comparison_viewer_table(self, num_example_rows)
+        sqls = comparison_viewer_table_sqls(self, num_example_rows)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -1311,12 +1366,21 @@ class Linker:
 
         render_splink_comparison_viewer_html(
             df.as_record_dict(),
-            self._settings_obj.as_completed_dict,
+            self._settings_obj._as_completed_dict(),
             out_path,
             overwrite,
         )
 
     def parameter_estimate_comparisons_chart(self, include_m=True, include_u=True):
+        """Show a chart that shows how parameter estimates have differed across
+        the different estimation methods you have used.
+
+        For example, if you have run two EM estimation sessions, blocking on
+        different variables, and both result in parameter estimates for
+        first_name, this chart will enable easy comparison of the different
+        estimates
+
+        """
         records = self._settings_obj._parameter_estimates_as_records
 
         to_retain = []
@@ -1329,7 +1393,16 @@ class Linker:
 
         return parameter_estimate_comparisons(records)
 
-    def missingness_chart(self, input_dataset=None):
+    def missingness_chart(self, input_dataset: str = None):
+        """Generate a summary chart of the missingness (prevalence of nulls) of
+        columns in the input datasets.  By default, missingness is assessed across
+        all input datasets
+
+        Args:
+            input_dataset (str, optional): Name of one of the input tables in the
+            database.  If provided, missingness will be computed for this table alone.
+            Defaults to None.
+        """
         records = missingness_data(self, input_dataset)
         return missingness_chart(records, input_dataset)
 
@@ -1354,7 +1427,7 @@ class Linker:
                 blocking rule
         """
 
-        sql = vertically_concatente_sql(self)
+        sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
 
         sql = number_of_comparisons_generated_by_blocking_rule_sql(
@@ -1365,7 +1438,7 @@ class Linker:
         return res
 
     def match_weights_chart(self):
-        """Display a chart of the match weights of the linkage model
+        """Display a chart of the (partial) match weights of the linkage model
 
         Examples:
             >>> linker.match_weights_chart()
@@ -1435,7 +1508,45 @@ class Linker:
             >>> IFrame(src="./cluster_studio.html", width="100%", height=1200)
 
         """
+        self._raise_error_if_necessary_waterfall_columns_not_computed()
 
         return render_splink_cluster_studio_html(
             self, df_predict, df_clustered, cluster_ids, out_path, overwrite=overwrite
         )
+
+    def save_settings_to_json(self, out_path: str, overwrite=False) -> dict:
+        """Save the configuration and parameters the linkage model to a json file.
+
+        Returns the model as a Python dictionary.
+
+        If an out_path is specified, also saves the settings to
+        a file
+
+        Args:
+            out_path (str): File path for json file
+            overwrite (bool, optional): Overwrite if already exists? Defaults to False.
+        """
+
+        model_dict = self._settings_obj.as_dict()
+
+        if out_path:
+
+            if os.path.isfile(out_path) and not overwrite:
+                raise ValueError(
+                    f"The path {out_path} already exists. Please provide a different "
+                    "path or set overwrite=True"
+                )
+
+            with open(out_path, "w") as f:
+                json.dump(model_dict, f, indent=4)
+
+    def load_settings_from_json(self, in_path: str):
+        """
+        Load settings from a file.
+
+        Args:
+            in_path (str): Path to settings json file
+        """
+        with open(in_path, "r") as f:
+            model_dict = json.load(f)
+        self.initialise_settings(model_dict)

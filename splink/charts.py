@@ -108,6 +108,21 @@ def match_weights_chart(records, as_dict=False):
     return vegalite_or_json(chart, as_dict=as_dict)
 
 
+def comparison_match_weights_chart(records, as_dict=False):
+    chart_path = "match_weights_interactive_history.json"
+    chart = load_chart_definition(chart_path)
+
+    # Remove iteration history since this is a static chart
+    del chart["vconcat"][0]
+    del chart["params"]
+    del chart["transform"]
+
+    chart["title"]["text"] = "Comparison summary"
+    records = [r for r in records if r["comparison_vector_value"] != -1]
+    chart["data"]["values"] = records
+    return vegalite_or_json(chart, as_dict=as_dict)
+
+
 def m_u_parameters_chart(records, as_dict=False):
     chart_path = "m_u_parameters_interactive_history.json"
     chart = load_chart_definition(chart_path)
