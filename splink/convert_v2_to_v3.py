@@ -103,6 +103,36 @@ def _parse_case_statement(sql):
     return _merge_duplicate_levels(parsed)
 
 
+def _parsed_to_v3_comparison(comparison_column, parsed_case_expr, m, u):
+    comparison_3 = {}
+    comparison_3["comparison_levels"] = []
+    found_max_level = False
+    num_levels = len(parsed_case_expr)
+    for index, level in enumerate(parsed_case_expr):
+        max_level = False
+        if level["value"] == -1:
+            level["is_null_level"] = True
+        elif not found_max_level:
+            max_level = True
+            found_max_level = True
+
+        reverse_index = num_levels - index
+        if level["value"] != -1:
+            if m[reverse_index]:
+                level["m_probability"] = m[reverse_index]
+            if u[reverse_index]:
+                level["u_probability"] = u[reverse_index]
+        del level["value"]
+
+        tf = "term_frequency_adjustments" in comparison_column
+        cn = "col_name" in comparison_column
+        if all([tf, cn, max_level]):
+            level["tf_adjustment_column"] = comparison_column["col_name"]
+
+        comparison_3["comparison_levels"].append(level)
+    return comparison_3
+
+
 def convert_settings_from_v2_to_v3(settings_dict_v2: dict) -> dict:
     """Take a fully populated settings dictionary in Splink v2 format and convert it
     into the equivalent Splink3 settings dictionary.
@@ -159,26 +189,7 @@ def convert_settings_from_v2_to_v3(settings_dict_v2: dict) -> dict:
 
         comparison_3 = {"comparison_levels": []}
 
-        found_max_level = False
-        for index, level in enumerate(parsed):
-            max_level = False
-            if level["value"] == -1:
-                level["is_null_level"] = True
-            elif not found_max_level:
-                max_level = True
-                found_max_level = True
-            if m[index]:
-                level["m_probability"] = m[index]
-            if u[index]:
-                level["u_probability"] = u[index]
-            del level["value"]
-
-            tf = "term_frequency_adjustments" in comparison_column
-            cn = "col_name" in comparison_column
-            if all([tf, cn, max_level]):
-                level["tf_adjustment_column"] = comparison_column["col_name"]
-
-            comparison_3["comparison_levels"].append(level)
+        comparison_3 = _parsed_to_v3_comparison(comparison_column, parsed, m, u)
 
         comparisons_3.append(comparison_3)
 
