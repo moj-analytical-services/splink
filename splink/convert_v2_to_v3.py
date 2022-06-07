@@ -173,10 +173,10 @@ def convert_settings_from_v2_to_v3(settings_dict_v2: dict) -> dict:
                 level["u_probability"] = u[index]
             del level["value"]
 
-            if "term_frequency_adjustments" in comparison_column:
-                if max_level:
-                    if "col_name" in comparison_column:
-                        level["tf_adjustment_column"] = comparison_column["col_name"]
+            tf = "term_frequency_adjustments" in comparison_column
+            cn = "col_name" in comparison_column
+            if all([tf, cn, max_level]):
+                level["tf_adjustment_column"] = comparison_column["col_name"]
 
             comparison_3["comparison_levels"].append(level)
 
