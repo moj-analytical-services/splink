@@ -1,7 +1,12 @@
+import logging
+
 import sqlglot
 from sqlglot.expressions import Case, Alias
 from itertools import groupby
 from sqlglot.errors import ParseError
+
+
+logger = logging.getLogger(__name__)
 
 
 def _tree_is_alias(syntax_tree):
@@ -98,7 +103,19 @@ def _parse_case_statement(sql):
     return _merge_duplicate_levels(parsed)
 
 
-def convert_settings_from_v2_to_v3(settings_dict_v2: dict):
+def convert_settings_from_v2_to_v3(settings_dict_v2: dict) -> dict:
+    """Take a fully populated settings dictionary in Splink v2 format and convert it
+    into the equivalent Splink3 settings dictionary.
+
+    The input is expected to be a setting dictionary outputted using the
+    `linker.save_model_as_json()` method in Splink v2.
+
+    Args:
+        settings_dict_v2 (dict): Fully completed Splink v2 settings dictionary
+
+    Returns:
+        dict: Equivalent Splink3 settings dictionary
+    """
 
     settings_3 = {}
     settings_3["blocking_rules_to_generate_predictions"] = settings_dict_v2[
@@ -142,18 +159,34 @@ def convert_settings_from_v2_to_v3(settings_dict_v2: dict):
 
         comparison_3 = {"comparison_levels": []}
 
+        found_max_level = False
         for index, level in enumerate(parsed):
+            max_level = False
             if level["value"] == -1:
                 level["is_null_level"] = True
+            elif not found_max_level:
+                max_level = True
+                found_max_level = True
             if m[index]:
                 level["m_probability"] = m[index]
             if u[index]:
                 level["u_probability"] = u[index]
             del level["value"]
+
+            if "term_frequency_adjustments" in comparison_column:
+                if max_level:
+                    if "col_name" in comparison_column:
+                        level["tf_adjustment_column"] = comparison_column["col_name"]
+
             comparison_3["comparison_levels"].append(level)
 
         comparisons_3.append(comparison_3)
 
     settings_3["comparisons"] = comparisons_3
+
+    logger.warn(
+        "Settings converted from v2 to v3.  This has been done on a 'best "
+        "efforts' basis.  Please check the settings to ensure they are correct."
+    )
 
     return settings_3
