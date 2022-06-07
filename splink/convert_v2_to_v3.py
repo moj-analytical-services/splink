@@ -154,20 +154,6 @@ def convert_settings_from_v2_to_v3(settings_dict_v2: dict):
 
         comparisons_3.append(comparison_3)
 
-        # m_u_ps = list(zip(m, u, parsed))
-
-        # for m, u, p in m_u_ps:
-        #     sql = p["sql_expr"]
-        #     value = p["value"]
-        #     level = {"m_probability": m, "u_probability": u, "sql_condition": sql}
-        #     if m is None:
-        #         del level["m_probability"]
-        #     if u is None:
-        #         del level["u_probability"]
-        #     if value == -1:
-        #         level["is_null_level"] = True
-        #     comparison_3["comparison_levels"].append(level)
-
     settings_3["comparisons"] = comparisons_3
 
     return settings_3
