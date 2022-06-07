@@ -1,6 +1,7 @@
 import logging
 
 import awswrangler as wr
+import numpy as np
 import boto3
 import sqlglot
 from typing import Union
@@ -90,6 +91,7 @@ class AthenaDataFrame(SplinkDataFrame):
 
     def as_record_dict(self, limit=None):
         out_df = self.as_pandas_dataframe(limit)
+        out_df = out_df.fillna(np.nan).replace([np.nan], [None])
         return out_df.to_dict(orient="records")
 
     def get_schema_info(self, input_table):
@@ -207,6 +209,8 @@ class AthenaLinker(Linker):
         if transpile:
             sql = sqlglot.transpile(sql, read=None, write="presto")[0]
 
+        sql = sql.replace("float", "real")
+
         logger.debug(
             execute_sql_logging_message_info(
                 templated_name, self._prepend_schema_to_table_name(physical_name)
@@ -225,7 +229,7 @@ class AthenaLinker(Linker):
         output_obj = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_obj
 
-    def random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
