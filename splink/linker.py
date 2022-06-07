@@ -956,7 +956,7 @@ class Linker:
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
 
-        predictions = self._produce_record_comparisons()
+        predictions = self._execute_sql_pipeline(use_cache=False)
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
