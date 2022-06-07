@@ -1,0 +1,94 @@
+{
+  "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
+  "layer": [
+    {
+      "mark": "line",
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "axis": {"format": "+", "title": "Threshold match weight"},
+          "field": "match_weight"
+        },
+        "y": {
+          "type": "quantitative",
+          "axis": {"format": "%", "title": "Percentage of unlinkable records"},
+          "field": "cum_prop"
+        }
+      }
+    },
+    {
+      "mark": "point",
+      "encoding": {
+        "opacity": {"value": 0},
+        "tooltip": [
+          {
+            "type": "quantitative",
+            "field": "match_weight",
+            "format": "+.5",
+            "title": "Match weight"
+          },
+          {
+            "type": "quantitative",
+            "field": "match_probability",
+            "format": ".5",
+            "title": "Match probability"
+          },
+          {
+            "type": "quantitative",
+            "field": "cum_prop",
+            "format": ".3%",
+            "title": "Proportion of unlinkable records"
+          }
+        ],
+        "x": {"type": "quantitative", "field": "match_weight"},
+        "y": {"type": "quantitative", "field": "cum_prop"}
+      },
+      "selection": {
+        "selector112": {
+          "type": "single",
+          "nearest": true,
+          "on": "mouseover",
+          "fields": ["match_weight", "cum_prop"],
+          "empty": "none"
+        }
+      }
+    },
+    {
+      "mark": "point",
+      "encoding": {
+        "opacity": {
+          "condition": {"value": 1, "selection": "selector112"},
+          "value": 0
+        },
+        "x": {
+          "type": "quantitative",
+          "axis": {"title": "Threshold match weight"},
+          "field": "match_weight"
+        },
+        "y": {
+          "type": "quantitative",
+          "axis": {"format": "%", "title": "Percentage of unlinkable records"},
+          "field": "cum_prop"
+        }
+      }
+    },
+    {
+      "mark": {"type": "rule", "color": "gray"},
+      "encoding": {"x": {"type": "quantitative", "field": "match_weight"}},
+      "transform": [{"filter": {"selection": "selector112"}}]
+    },
+    {
+      "mark": {"type": "rule", "color": "gray"},
+      "encoding": {"y": {"type": "quantitative", "field": "cum_prop"}},
+      "transform": [{"filter": {"selection": "selector112"}}]
+    }
+  ],
+  "data": {"values": null},
+  "height": 400,
+  "title": {
+    "text": "Unlinkable records",
+    "subtitle": "Records with insufficient information to exceed a given match threshold"
+  },
+  "width": 400,
+  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json"
+}

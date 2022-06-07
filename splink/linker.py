@@ -16,6 +16,7 @@ from .charts import (
     roc_chart,
     parameter_estimate_comparisons,
     waterfall_chart,
+    unlinkables_chart,
 )
 
 from .blocking import block_using_rules_sql
@@ -32,6 +33,7 @@ from .term_frequencies import (
 )
 from .profile_data import profile_columns
 from .missingness import missingness_data
+from .unlinkables import unlinkables_data
 
 from .m_training import estimate_m_values_from_label_column
 from .estimate_u import estimate_u_values
@@ -54,6 +56,10 @@ from .splink_dataframe import SplinkDataFrame
 from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
+)
+
+from .unique_id_concat import (
+    _composite_unique_id_from_edges_sql,
 )
 
 from .cluster_studio import render_splink_cluster_studio_html
@@ -116,6 +122,7 @@ class Linker:
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
         self._compare_two_records_mode = False
+        self._self_link_mode = False
 
         self._output_schema = ""
 
@@ -145,6 +152,9 @@ class Linker:
         if self._find_new_matches_mode:
             return "__splink__df_concat_with_tf"
 
+        if self._self_link_mode:
+            return "__splink__df_concat_with_tf"
+
         if self._compare_two_records_mode:
             return "__splink__compare_two_records_left_with_tf"
 
@@ -160,6 +170,9 @@ class Linker:
 
         if self._find_new_matches_mode:
             return "__splink__df_new_records_with_tf"
+
+        if self._self_link_mode:
+            return "__splink__df_concat_with_tf"
 
         if self._compare_two_records_mode:
             return "__splink__compare_two_records_right_with_tf"
@@ -928,6 +941,7 @@ class Linker:
         self._records_to_table([record_2], "__splink__compare_two_records_right")
 
         sql_join_tf = _join_tf_to_input_df_sql(self)
+
         sql_join_tf = sql_join_tf.replace(
             "__splink__df_concat", "__splink__compare_two_records_left"
         )
@@ -936,12 +950,59 @@ class Linker:
         sql_join_tf = sql_join_tf.replace(
             "__splink__compare_two_records_left", "__splink__compare_two_records_right"
         )
+
         self._enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
 
+        predictions = self._execute_sql_pipeline(use_cache=False)
+
+        self._settings_obj._blocking_rules_to_generate_predictions = (
+            original_blocking_rules
+        )
+        self._settings_obj._link_type = original_link_type
+        self._compare_two_records_mode = False
+
+        return predictions
+
+    def _self_link(self) -> SplinkDataFrame:
+        """Use the linkage model to compare and score all records in our input df,
+            with themselves.
+
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons for your
+                input records.
+        """
+
+        original_blocking_rules = (
+            self._settings_obj._blocking_rules_to_generate_predictions
+        )
+        original_link_type = self._settings_obj._link_type
+
+        # Changes our sql to allow for a self link.
+        # This is used in `_sql_gen_where_condition` in blocking.py
+        # to remove any 'where' clauses when blocking (normally when blocking
+        # we want to *remove* self links!)
+        self._self_link_mode = True
+
+        # Block on uid i.e. create pairwise record comparisons where the uid matches
+        uid_cols = self._settings_obj._unique_id_input_columns
+        uid_l = _composite_unique_id_from_edges_sql(uid_cols, None, "l")
+        uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
+
+        self._settings_obj._blocking_rules_to_generate_predictions = [
+            f"{uid_l} = {uid_r}"
+        ]
+
+        self._initialise_df_concat_with_tf()
+
+        sql = block_using_rules_sql(self)
+
+        self._enqueue_sql(sql, "__splink__df_blocked")
+
         sql = compute_comparison_vector_values_sql(self._settings_obj)
+
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
@@ -954,7 +1015,7 @@ class Linker:
             original_blocking_rules
         )
         self._settings_obj._link_type = original_link_type
-        self._compare_two_records_mode = False
+        self._self_link_mode = False
 
         return predictions
 
@@ -1226,6 +1287,41 @@ class Linker:
         self._raise_error_if_necessary_waterfall_columns_not_computed()
 
         return waterfall_chart(records, self._settings_obj, filter_nulls)
+
+    def unlinkables_chart(
+        self,
+        x_col="match_weight",
+        source_dataset=None,
+        as_dict=False,
+    ):
+        """Generate an interactive chart displaying the proportion of records that
+        are "unlinkable" for a given splink score threshold and model parameters.
+
+        These are records that, even when compared with themselves, do not contain
+        enough information to confirm a match.
+
+        Args:
+            x_col (str, optional): Column to use for the x-axis.
+                Defaults to "match_weight".
+            source_dataset (str, optional): Name of the source dataset to use for
+                the title of the output chart.
+            as_dict (bool, optional): If True, return a dict version of the chart.
+
+        Examples:
+            >>> # For the simplest code pipeline, simply load a pre-trained model
+            >>> # and run this against the test data.
+            >>> df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+            >>> linker = DuckDBLinker(df, settings)
+            >>> linker.unlinkables_chart()
+            >>>
+            >>> # For more complex code pipelines, you can run an entire pipeline
+            >>> # that calculates your m and u values, before `unlinkables_chart().
+            >>> # Please note,
+        """
+
+        # Link our initial df on itself and calculate the % of unlinkable entries
+        records = unlinkables_data(self, x_col)
+        return unlinkables_chart(records, x_col, source_dataset)
 
     def comparison_viewer_dashboard(
         self,

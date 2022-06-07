@@ -43,3 +43,5 @@ def test_full_example_spark(df_spark, tmp_path):
         [0, 4],
         os.path.join(tmp_path, "test_cluster_studio.html"),
     )
+
+    linker.unlinkables_chart(source_dataset="Testing")

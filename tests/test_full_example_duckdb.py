@@ -98,6 +98,8 @@ def test_full_example_duckdb(tmp_path):
         os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
+    linker.unlinkables_chart(source_dataset="Testing")
+
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
     linker.save_settings_to_json(path)
