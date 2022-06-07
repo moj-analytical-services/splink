@@ -9,9 +9,15 @@ def test_2_to_3(tmp_path):
 
     sql_col1 = """
     case
-        when dob_l is null or dob_r is null then -1
-        when dob_l = dob_r then 1
-        else 0 end as gamma_dob'
+        when col_1_l is null or col_1_r is null then -1
+        when col_1_l = col_1_r then 1
+        else 0 end as gamma_col_1'
+    """
+
+    sql_col2 = """
+    case
+        when col_2_l = col_2_r then 1
+        else 0 end
     """
 
     sql_custom_name = """
@@ -36,12 +42,15 @@ def test_2_to_3(tmp_path):
             {
                 "col_name": "col_2",
                 "term_frequency_adjustments": True,
+                "case_expression": sql_col2,
             },
             {
                 "custom_name": "name_inversion_forname",
                 "case_expression": sql_custom_name,
                 "custom_columns_used": ["forename", "surname"],
                 "num_levels": 4,
+                "m_probabilities": [0.1, 0.1, 0.1, 0.7],
+                "u_probabilities": [0.9, 0.02, 0.02, 0.06],
             },
         ],
         "blocking_rules": ["l.first_name = r.first_name"],
