@@ -1,13 +1,22 @@
-from splink.athena.athena_linker import AthenaLinker
+skip = False
+
+from ast import Import
 import pandas as pd
 import pytest
 import os
 
 from basic_settings import get_settings_dict
 
-import boto3
-from dataengineeringutils3.s3 import delete_s3_folder_contents
-import awswrangler as wr
+try:
+    import awswrangler as wr
+except ImportError:
+    skip = True
+    pass  # Prevent failures if awswrangler is not installed
+
+if not skip:
+    from splink.athena.athena_linker import AthenaLinker
+    import boto3
+    from dataengineeringutils3.s3 import delete_s3_folder_contents
 
 
 def setup_athena_db(db_name="splink_awswrangler_test"):
