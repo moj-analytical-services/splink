@@ -151,6 +151,13 @@ def jaccard_level(
 def else_level(
     m_probability=None,
 ) -> ComparisonLevel:
+
+    if isinstance(m_probability, str):
+        raise ValueError(
+            "You provided a string for the value of m probability when it should be "
+            "numeric.  Perhaps you passed a column name.  Note that you do not need to "
+            "pass a column name into the else level."
+        )
     level_dict = {
         "sql_condition": "ELSE",
         "label_for_charts": "All other comparisons",

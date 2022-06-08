@@ -146,8 +146,8 @@ def get_settings_dict():
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
         "additional_columns_to_retain": ["group"],
-        "em_convergence": 0.001,
-        "max_iterations": 20,
+        "em_convergence": 0.01,
+        "max_iterations": 3,
     }
 
     return deepcopy(settings)

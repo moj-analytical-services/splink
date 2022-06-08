@@ -2,18 +2,54 @@ import os
 
 from splink.spark.spark_linker import SparkLinker
 import splink.spark.spark_comparison_library as cl
-from splink.spark.spark_comparison_level_library import _mutable_params
+from splink.spark.spark_comparison_level_library import (
+    _mutable_params,
+    array_intersect_level,
+    else_level,
+)
 
 from basic_settings import get_settings_dict
 
+from pyspark.sql.functions import array
+
 
 def test_full_example_spark(df_spark, tmp_path):
+
+    # Convert a column to an array to enable testing intersection
+    df_spark = df_spark.withColumn("email", array("email"))
+
     settings_dict = get_settings_dict()
 
+    # Only needed because the value can be overwritten by other tests
     _mutable_params["dialect"] = "spark"
     settings_dict["comparisons"][1] = cl.exact_match("surname")
 
-    linker = SparkLinker(df_spark, settings_dict, break_lineage_method="checkpoint")
+    settings = {
+        "proportion_of_matches": 0.01,
+        "link_type": "dedupe_only",
+        "blocking_rules_to_generate_predictions": [
+            "l.surname = r.surname",
+        ],
+        "comparisons": [
+            cl.levenshtein_at_thresholds("first_name", 2),
+            cl.exact_match("surname"),
+            cl.exact_match("dob"),
+            {
+                "comparison_levels": [
+                    array_intersect_level("email"),
+                    else_level(),
+                ]
+            },
+            cl.exact_match("city"),
+        ],
+        "retain_matching_columns": True,
+        "retain_intermediate_calculation_columns": True,
+        "additional_columns_to_retain": ["group"],
+        "em_convergence": 0.001,
+        "max_iterations": 20,
+    }
+
+    linker = SparkLinker(df_spark, settings, break_lineage_method="checkpoint")
 
     linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]
