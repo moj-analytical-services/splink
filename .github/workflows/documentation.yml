@@ -1,0 +1,43 @@
+name: docswithmkdoc
+
+on:
+  push:
+    branches:
+      - splink3docs
+    paths:
+      - "**.md"
+      - "mkdocs.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      #- uses: actions/checkout@v3
+      #  with:
+      #    repository: "RobinL/splink3_settings_editor_temp"
+      #    path: "docs/settingseditor/"
+      - uses: actions/checkout@v3
+        with:
+          repository: "moj-analytical-services/splink_demos"
+          ref: splink3_demos
+          path: "docs/demos/"
+
+      - run: mkdir docs/settingseditor
+      - run: curl https://raw.githubusercontent.com/moj-analytical-services/splink/splink3/splink/files/settings_jsonschema.json --output docs/settingseditor/settings_jsonschema.json
+      - run: cat docs/settingseditor/settings_jsonschema.json
+      - run: echo '<iframe  height="1200" width="100%" src="https://www.robinlinacre.com/splink3_settings_editor_temp" >' >  docs/settingseditor/editor.md
+      - run: tree docs/
+
+      #- run: find docs/demos/ \! -name '\docs\demos\*.ipynb'  | xargs --null rm -f
+      - run: pip install --upgrade pip && pip install mkdocs==1.3.0 mknotebooks mkdocs-schema-reader mkdocs-material mkdocs-gen-files mkdocs-autorefs mkdocs-include-markdown-plugin  mkdocs-material-extensions mkdocs-mermaid2-plugin mkdocs-monorepo-plugin mkdocs-semiliterate mkdocs-simple-plugin mkdocstrings mkdocstrings-python mkdocstrings-python-legacy mkdocs-semiliterate
+      - run: pip install jinja2==3.0.3 splink==3.0.0.dev11 && mkdocs gh-deploy --force
+      - run: mkdocs --version
+      - run: tree docs/
