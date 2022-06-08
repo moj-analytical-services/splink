@@ -28,8 +28,6 @@ pyarrow = "^7.0.0"
 networkx = "2.5.1"
 pyspark = "^3.2.1"
 rapidfuzz = "^2.0.3"
-boto3 = "^1.24.4"
-dataengineeringutils3 = "^1.4.0"
 
 [build-system]
 requires = ["poetry>=0.12"]
