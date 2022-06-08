@@ -13,7 +13,7 @@ python = "^3.7"
 jsonschema = "^3.2"
 pandas = "^1.0.0"
 duckdb = "0.3.2"
-sqlglot = "1.23.1"
+sqlglot = "^2.7.0"
 altair = "^4.2.0"
 Jinja2 = "^3.0.3"
 
@@ -28,6 +28,8 @@ pyarrow = "^7.0.0"
 networkx = "2.5.1"
 pyspark = "^3.2.1"
 rapidfuzz = "^2.0.3"
+boto3 = "^1.24.4"
+dataengineeringutils3 = "^1.4.0"
 
 [build-system]
 requires = ["poetry>=0.12"]
