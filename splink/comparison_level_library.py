@@ -47,7 +47,7 @@ def distance_function_level(
     )
     level_dict = {
         "sql_condition": sql_cond,
-        "label_for_charts": f"{distance_function_name} <= {distance_threshold}",
+        "label_for_charts": f"{distance_function_name} {operator} {distance_threshold}",
     }
     if m_probability:
         level_dict["m_probability"] = m_probability
