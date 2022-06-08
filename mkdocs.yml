@@ -51,4 +51,3 @@ nav:
       - EM Training Session API: "em_training_session.md"
       - SplinkDataFrame API: "SplinkDataFrame.md"
   - Settings Editor: "settingseditor/editor.md"
-  - Glossary: "Glossary.md"
