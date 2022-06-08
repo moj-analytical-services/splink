@@ -1,5 +1,3 @@
-
-
 import logging
 from copy import copy, deepcopy
 from statistics import median
