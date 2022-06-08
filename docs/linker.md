@@ -1,6 +1,7 @@
 
 # Documentation for `Linker` object
 
+
 ::: splink.linker.Linker
     handler: python
     selection:
