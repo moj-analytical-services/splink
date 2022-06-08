@@ -5,6 +5,7 @@ from .parse_sql import get_columns_used_from_sql
 from .misc import prob_to_bayes_factor, prob_to_match_weight
 from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
+from .comparison_level import ComparisonLevel
 from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
 from .misc import dedupe_preserving_order
@@ -24,7 +25,15 @@ class Settings:
         # If incoming comparisons are of type Comparison not dict, turn back into dict
         ccs = settings_dict["comparisons"]
         ccs = [cc.as_dict() if isinstance(cc, Comparison) else cc for cc in ccs]
+
         settings_dict["comparisons"] = ccs
+
+        # In incoming comparisons have nested ComparisonLevels, turn back into dict
+        for comparison_dict in settings_dict["comparisons"]:
+            comparison_dict["comparison_levels"] = [
+                cl.as_dict() if isinstance(cl, ComparisonLevel) else cl
+                for cl in comparison_dict["comparison_levels"]
+            ]
 
         validate_settings_against_schema(settings_dict)
 
