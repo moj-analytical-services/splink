@@ -1,7 +1,6 @@
 from splink.sqlite.sqlite_linker import SQLiteLinker
-import sqlite3
 import os
-
+import sqlite3
 import pandas as pd
 
 from basic_settings import get_settings_dict
