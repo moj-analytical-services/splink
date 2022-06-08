@@ -580,10 +580,10 @@ class ComparisonLevel:
         if self._level_dict.get("label_for_charts"):
             output["label_for_charts"] = self._label_for_charts
 
-        if self.m_probability and self._m_is_trained:
+        if self._m_probability and self._m_is_trained:
             output["m_probability"] = self.m_probability
 
-        if self.u_probability and self._u_is_trained:
+        if self._u_probability and self._u_is_trained:
             output["u_probability"] = self.u_probability
 
         if self._has_tf_adjustments:
