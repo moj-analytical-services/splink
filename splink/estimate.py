@@ -86,7 +86,7 @@ def estimate_u_values(
         proportion = sample_size / count_rows
 
     if settings["link_type"] == "link_only":
-        sample_size = target_rows ** 0.5
+        sample_size = target_rows**0.5
         proportion = sample_size / count_rows
 
     if proportion >= 1.0:

@@ -83,7 +83,7 @@ def _check_graphframes_installation(spark):
         if key in config_keys:
             if "graphframes" in value:
                 graphframe_jar_registered = True
-                
+
     databricks_backend = False
     for key, value in all_config:
         if "databricks" in key:

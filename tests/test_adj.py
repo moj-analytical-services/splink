@@ -35,7 +35,7 @@ def _probabilities_from_freqs(freqs, m_gamma_0=0.05):
     #   22/36 do not match
 
     sum_freqs_sq = sum(freqs) ** 2
-    u_probs = [f ** 2 / sum_freqs_sq for f in freqs]
+    u_probs = [f**2 / sum_freqs_sq for f in freqs]
     remainder = 1 - sum(u_probs)
     u_probs.insert(0, remainder)
 

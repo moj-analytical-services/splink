@@ -115,7 +115,7 @@ def bayes_factor_intuition_chart(row_dict, model):
         .reset_index(drop=True)
         .append(
             {
-                "bayes_factor": 2 ** bf_final,
+                "bayes_factor": 2**bf_final,
                 "log2_bayes_factor": bf_final,
                 "column_name": "Final score",
             },

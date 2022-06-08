@@ -17,7 +17,6 @@ def iterate(
     df_gammas: DataFrame,
     model: Model,
     spark: SparkSession,
-
     save_state_fn: Callable = None,
 ):
     """Repeatedly run expectation and maximisation step until convergence or max itations is reached.
