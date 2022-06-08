@@ -1,12 +1,10 @@
-skip = False
-
-from ast import Import
 import pandas as pd
 import pytest
 import os
 
 from basic_settings import get_settings_dict
 
+skip = False
 try:
     import awswrangler as wr
 except ImportError:
