@@ -89,10 +89,8 @@ def test_full_example_athena(tmp_path):
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     df_predict = linker.predict()
-    
-    linker.comparison_viewer_dashboard(
-        df_predict, "test_scv_athena.html", True, 2
-    )
+
+    linker.comparison_viewer_dashboard(df_predict, "test_scv_athena.html", True, 2)
 
     df_predict.as_pandas_dataframe()
 
