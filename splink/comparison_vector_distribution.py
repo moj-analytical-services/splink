@@ -8,8 +8,9 @@ if TYPE_CHECKING:
 def comparison_vector_distribution_sql(linker: "Linker"):
 
     gamma_columns = [c._gamma_column_name for c in linker._settings_obj.comparisons]
+    gamma_columns_cast = [f"cast({c} as varchar)" for c in gamma_columns]
     groupby_cols = " , ".join(gamma_columns)
-    gam_concat = " || ',' || ".join(gamma_columns)
+    gam_concat = " || ',' || ".join(gamma_columns_cast)
 
     case_tem = "(case when {g} = -1 then 0 when {g} = 0 then -1 else {g} end)"
     sum_gam = " + ".join([case_tem.format(g=c) for c in gamma_columns])
