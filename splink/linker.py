@@ -1081,7 +1081,9 @@ class Linker:
 
         self._names_of_tables_created_by_splink = tables_remaining
 
-    def profile_columns(self, column_expressions, top_n=10, bottom_n=10):
+    def profile_columns(
+        self, column_expressions: Union[str, List[str]], top_n=10, bottom_n=10
+    ):
 
         return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
 
