@@ -1,4 +1,4 @@
-# Splink: Super fast data linkage at any scale
+# Fast, accurate and scalable probabilistic data linkage using your choice of SQL backend.
 
 ![image](https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png)
 
