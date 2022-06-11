@@ -18,7 +18,7 @@ def array_intersect_level(
 
     col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
 
-    sql = f"size(array_intersect({col.name_l()}, {col.name_l()})) >= {min_intersection}"
+    sql = f"size(array_intersect({col.name_l()}, {col.name_r()})) >= {min_intersection}"
 
     if min_intersection == 1:
         label = "Arrays intersect"
