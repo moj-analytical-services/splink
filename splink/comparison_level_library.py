@@ -168,8 +168,22 @@ def else_level(
 
 
 def columns_reversed_level(
-    col_name_1, col_name_2, m_probability=None, tf_adjustment_column=None
+    col_name_1: str, col_name_2: str, m_probability=None, tf_adjustment_column=None
 ) -> ComparisonLevel:
+    """Represents a comparison where the columns are reversed.  For example, if
+    surname is in the forename field and vice versa
+
+    Args:
+        col_name_1 (str): First column, e.g. forename
+        col_name_2 (str): Second column, e.g. surname
+        m_probability (float, optional): Starting value for m probability. Defaults to
+            None.
+        tf_adjustment_column (str, optional): Column to use for term frequency
+            adjustments if an exact match is observed. Defaults to None.
+
+    Returns:
+        ComparisonLevel:
+    """
 
     col_1 = InputColumn(col_name_1, sql_dialect=_mutable_params["dialect"])
     col_2 = InputColumn(col_name_2, sql_dialect=_mutable_params["dialect"])
