@@ -1,6 +1,6 @@
 import pandas as pd
 
-from splink.comparison_level_library import (
+from splink.duckdb.duckdb_comparison_level_library import (
     columns_reversed_level,
     else_level,
     exact_match_level,

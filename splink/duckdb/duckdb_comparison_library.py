@@ -8,7 +8,6 @@ from ..comparison_library import (  # noqa: F401
     levenshtein_at_thresholds,
     distance_function_at_thresholds,
     jaccard_at_thresholds,
-    columns_reversed_level,
 )
 
 _mutable_params["dialect"] = "duckdb"
