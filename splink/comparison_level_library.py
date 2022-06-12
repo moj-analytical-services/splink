@@ -165,3 +165,24 @@ def else_level(
     if m_probability:
         level_dict["m_probability"] = m_probability
     return ComparisonLevel(level_dict)
+
+
+def columns_reversed_level(
+    col_name_1, col_name_2, m_probability=None, tf_adjustment_column=None
+) -> ComparisonLevel:
+
+    col_1 = InputColumn(col_name_1, sql_dialect=_mutable_params["dialect"])
+    col_2 = InputColumn(col_name_2, sql_dialect=_mutable_params["dialect"])
+
+    s = f"{col_1.name_l()} = {col_2.name_r()} and {col_1.name_r()} = {col_2.name_l()}"
+    level_dict = {
+        "sql_condition": s,
+        "label_for_charts": "Exact match on reversed cols",
+    }
+    if m_probability:
+        level_dict["m_probability"] = m_probability
+
+    if tf_adjustment_column:
+        level_dict["tf_adjustment_column"] = tf_adjustment_column
+
+    return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
