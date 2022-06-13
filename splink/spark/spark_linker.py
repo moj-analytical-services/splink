@@ -90,7 +90,7 @@ class SparkLinker(Linker):
             raise ValueError(
                 "If input_table_or_tables are strings rather than "
                 "Spark dataframes, you must pass in the spark session using the spark="
-                " argument when you initialise thel inker"
+                " argument when you initialise the linker"
             )
 
         homogenised_tables = []
