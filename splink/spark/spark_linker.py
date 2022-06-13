@@ -133,6 +133,7 @@ class SparkLinker(Linker):
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
             r"__splink__df_representatives_.+",
+            r"__splink__df_neighbours",
         ]
 
         if self.break_lineage_after_blocking:
