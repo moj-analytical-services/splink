@@ -139,13 +139,14 @@ class SparkLinker(Linker):
         if self.break_lineage_after_blocking:
             regex_to_persist.append(r"__splink__df_blocked")
 
-        names_to_repartition = (
-            "__splink__df_comparison_vectors",
-            "__splink__df_blocked",
-        )
+        names_to_repartition = [
+            r"__splink__df_comparison_vectors",
+            r"__splink__df_blocked",
+            r"__splink__df_neighbours",
+            r"__splink__df_representatives_1",
+        ]
 
         if re.match(r"|".join(regex_to_persist), templated_name):
-
             if self.break_lineage_method == "persist":
                 if self.persist_level is None:
                     spark_df = spark_df.persist()
@@ -153,7 +154,7 @@ class SparkLinker(Linker):
                     spark_df = spark_df.persist(self.persist_level)
                 logger.debug(f"persisted {templated_name}")
             elif self.break_lineage_method == "checkpoint":
-                if templated_name in names_to_repartition:
+                if re.match(r"|".join(names_to_repartition), templated_name):
                     spark_df = spark_df.repartition(self.num_partitions_on_repartition)
                 spark_df = spark_df.checkpoint()
                 logger.debug(f"Checkpointed {templated_name}")
@@ -167,7 +168,7 @@ class SparkLinker(Linker):
                     # Raise checkpointing error
                     spark_df.limit(1).checkpoint()
                 write_path = os.path.join(checkpoint_dir, physical_name)
-                if templated_name in names_to_repartition:
+                if re.match(r"|".join(names_to_repartition), templated_name):
                     spark_df = spark_df.repartition(self.num_partitions_on_repartition)
                 spark_df.write.mode("overwrite").parquet(write_path)
 
