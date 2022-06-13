@@ -144,11 +144,11 @@ class SparkLinker(Linker):
             r"__splink__df_comparison_vectors",
             r"__splink__df_blocked",
             r"__splink__df_neighbours",
-            r"__splink__df_representatives_1",
+            r"__splink__df_representatives_.+",
         ]
 
         num_partitions = self.num_partitions_on_repartition
-        if templated_name == "__splink__df_representatives_1":
+        if re.match(r"__splink__df_representatives_.+", templated_name):
             num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
 
         if re.match(r"|".join(regex_to_persist), templated_name):
