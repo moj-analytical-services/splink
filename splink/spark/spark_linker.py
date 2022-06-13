@@ -157,7 +157,14 @@ class SparkLinker(Linker):
                 spark_df = spark_df.checkpoint()
                 logger.debug(f"Checkpointed {templated_name}")
             elif self.break_lineage_method == "parquet":
-                checkpoint_dir = self.spark.sparkContext.getCheckpointDir()
+                # https://github.com/apache/spark/blob/301a13963808d1ad44be5cacf0a20f65b853d5a2/python/pyspark/context.py#L1323 # noqa
+                # getCheckpointDir method exists only in Spark 3.1+, use implementation
+                # from above link
+                if not self.spark._jsc.sc().getCheckpointDir().isEmpty():
+                    checkpoint_dir = self.spark._jsc.sc().getCheckpointDir().get()
+                else:
+                    # Raise checkpointing error
+                    spark_df.limit(1).checkpoint()
                 write_path = os.path.join(checkpoint_dir, physical_name)
                 if templated_name in names_to_repartition:
                     spark_df = spark_df.repartition(self.num_partitions_on_repartition)
