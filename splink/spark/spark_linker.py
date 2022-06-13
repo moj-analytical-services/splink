@@ -3,6 +3,7 @@ import sqlglot
 from typing import Union, List
 import re
 import os
+import math
 
 from pyspark.sql import Row
 from ..linker import Linker
@@ -146,6 +147,10 @@ class SparkLinker(Linker):
             r"__splink__df_representatives_1",
         ]
 
+        num_partitions = self.num_partitions_on_repartition
+        if templated_name == "__splink__df_representatives_1":
+            num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
+
         if re.match(r"|".join(regex_to_persist), templated_name):
             if self.break_lineage_method == "persist":
                 if self.persist_level is None:
@@ -155,7 +160,7 @@ class SparkLinker(Linker):
                 logger.debug(f"persisted {templated_name}")
             elif self.break_lineage_method == "checkpoint":
                 if re.match(r"|".join(names_to_repartition), templated_name):
-                    spark_df = spark_df.repartition(self.num_partitions_on_repartition)
+                    spark_df = spark_df.repartition(num_partitions)
                 spark_df = spark_df.checkpoint()
                 logger.debug(f"Checkpointed {templated_name}")
             elif self.break_lineage_method == "parquet":
@@ -169,7 +174,7 @@ class SparkLinker(Linker):
                     spark_df.limit(1).checkpoint()
                 write_path = os.path.join(checkpoint_dir, physical_name)
                 if re.match(r"|".join(names_to_repartition), templated_name):
-                    spark_df = spark_df.repartition(self.num_partitions_on_repartition)
+                    spark_df = spark_df.repartition(num_partitions)
                 spark_df.write.mode("overwrite").parquet(write_path)
 
                 spark_df = self.spark.read.parquet(write_path)
