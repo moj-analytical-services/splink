@@ -42,6 +42,11 @@ markdown_extensions:
   - abbr
   - attr_list
   - meta
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.snippets:
       auto_append:
         - includes/abbreviations.md

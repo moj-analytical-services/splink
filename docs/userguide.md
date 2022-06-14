@@ -16,5 +16,12 @@ However in order to make this process computationally tractable usually the proc
 
 ## SQL backends
 
-:material-information-outline:{ title="Important information" } 
+
+``` mermaid
+graph LR
+  A[Start] --> B{SQL Backend?};
+  B -->|Spark| SP[spark backend];
+  B --> |sqlite3| SL3[sqlite3 backend] ;
+   B --> |duckdb| DDB[duckdb]] ;
+```
 
