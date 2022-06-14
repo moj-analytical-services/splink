@@ -7,7 +7,9 @@
 # of the problem and come to a working solution.
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+import time
 from typing import TYPE_CHECKING
+
 import logging
 from .unique_id_concat import (
     _composite_unique_id_from_nodes_sql,
@@ -414,7 +416,7 @@ def solve_connected_components(
     # Loop while our representative table still has unsettled nodes
     iteration, root_rows = 0, 1
     while root_rows > 0:
-
+        start_time = time.time()
         iteration += 1
 
         # Loop summary:
@@ -451,6 +453,8 @@ def solve_connected_components(
         root_rows_df.drop_table_from_database()
         root_rows = root_rows[0]["count"]
         logger.info(f"Completed iteration {iteration}, root rows count {root_rows}")
+        end_time = time.time()
+        logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
 
     # Create our final representatives table
     # Need to edit how we export the table based on whether we are

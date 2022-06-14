@@ -1,5 +1,6 @@
 import logging
 from typing import TYPE_CHECKING
+import time
 
 from .predict import predict_from_comparison_vectors_sqls
 from .settings import Settings
@@ -122,7 +123,6 @@ def expectation_maximisation(
     max_iterations = settings_obj._max_iterations
     em_convergece = settings_obj._em_convergence
     logger.info("")  # newline
-    import time
 
     for i in range(1, max_iterations + 1):
         start_time = time.time()
@@ -145,7 +145,7 @@ def expectation_maximisation(
         )
         logger.info(f"Iteration {i}: {max_change_dict['message']}")
         end_time = time.time()
-        logger.info(f"    Iteration time: {end_time - start_time} seconds")
+        logger.log(15, f"    Iteration time: {end_time - start_time} seconds")
 
         if max_change_dict["max_abs_change_value"] < em_convergece:
             break
