@@ -6,12 +6,7 @@ markdown_extensions:
   - attr_list
   - meta
   - pymdownx.snippets:
-      auto_append:
-        - includes/tooltips.md
-  - pymdownx.superfences:
-      custom_fences:
-        - name: mermaid
-          class: mermaid
+      auto_append: "includes/tooltips.md"
   - toc:
       permalink: True
 theme:
@@ -43,7 +38,8 @@ plugins:
   - search
   - semiliterate
   - mknotebooks
-  - tags
+  - tags:
+      - tags_file: "includes/tags.md"
   - mkdocstrings:
       default_handler: python
       handlers:
