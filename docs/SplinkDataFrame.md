@@ -4,6 +4,8 @@ tags:
 ---
 # Documentation for `SplinkDataFrame` object
 
+
+
 ::: splink.splink_dataframe.SplinkDataFrame
     handler: python
     selection:
