@@ -1,4 +1,4 @@
-# Documentation for `em_training_session` object
+# Documentation for `EMTrainingSession` object
 
 ::: splink.em_training_session.EMTrainingSession
     handler: python
