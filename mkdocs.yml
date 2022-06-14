@@ -40,8 +40,7 @@ plugins:
   - semiliterate
   - mknotebooks
   - tags:
-      - tags_file:
-          - includes/tags.md
+      - tags_file: includes/tags.md
   - mkdocstrings:
       default_handler: python
       handlers:
@@ -63,4 +62,4 @@ nav:
           - Comparison Level: "comparison_level.md"
           - Comparison Level Library: "comparison_level_library.md"
   - Settings Editor: "settingseditor/editor.md"
-  - Tags: "includes/tags"
+  - Tags: "includes/tags.md"
