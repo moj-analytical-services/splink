@@ -126,6 +126,7 @@ class SparkLinker(Linker):
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
 
+    # flake8: noqa: C901
     def _break_lineage(self, spark_df, templated_name, physical_name):
 
         regex_to_persist = [
