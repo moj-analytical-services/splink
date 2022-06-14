@@ -1,2 +1,0 @@
-*[blocking] : A type of indexing technique that has traditionally been employed in data matching to reduce the number of record pairs that need to be compared.
-*[comparators]: Functions that have as input two attribute values (which can be strings, numbers, dates, times or more complex objects) and then calculate a similarity between these two values.
