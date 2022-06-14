@@ -98,7 +98,7 @@ class ComparisonLevel:
     be different to the method used to assess the similarity of a person's first name.
 
     To summarise:
-
+```
     Data Linking Model
     ├─-- Comparison: Name
     │    ├─-- ComparisonLevel: Exact match on first_name and surname
@@ -109,7 +109,7 @@ class ComparisonLevel:
     │    ├─-- ComparisonLevel: One character difference
     │    ├─-- ComparisonLevel: All other
     ├─-- etc.
-
+```
     """
 
     def __init__(
