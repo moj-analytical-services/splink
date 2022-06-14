@@ -66,6 +66,8 @@ class Settings:
         self._blocking_rule_for_training = None
         self._training_mode = False
 
+        self._warn_if_no_null_level_in_comparisons()
+
     def __deepcopy__(self, memo) -> "Settings":
         """When we do EM training, we need a copy of the Settings which is independent
         of the original e.g. modifying the copy will not affect the original.
@@ -80,6 +82,20 @@ class Settings:
         if val == "__val_not_found_in_settings_dict__":
             val = default_value_from_schema(key, "root")
         return val
+
+    def _warn_if_no_null_level_in_comparisons(self):
+        for c in self.comparisons:
+            if not c._has_null_level:
+                logger.warning(
+                    "Warning: No null level found for comparison "
+                    f"{c._output_column_name}.\n"
+                    "In most cases you want to define a comparison level that deals"
+                    " with the case that one or both sides of the comparison are null."
+                    "\nThis comparison level should have the `is_null_level` flag to "
+                    "True in the settings for that comparison level"
+                    "\nIf the column does not contain null values, or you know what "
+                    "you're doing, you can ignore this warning"
+                )
 
     @property
     def _additional_columns_to_retain(self):
