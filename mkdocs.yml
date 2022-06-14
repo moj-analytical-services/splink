@@ -53,6 +53,7 @@ plugins:
       custom_templates: templates
 nav:
   - Home: "splink/README.md"
+  - User Guide: "userguide.md"
   - Changelog: "CHANGELOG.md"
   - API Reference:
       - Linker API: "linker.md"
@@ -64,3 +65,4 @@ nav:
           - Comparison Level: "comparison_level.md"
           - Comparison Level Library: "comparison_level_library.md"
   - Settings Editor: "settingseditor/editor.md"
+  - Tags: "includes/tags"
