@@ -1493,9 +1493,12 @@ class Linker:
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
-        cluster_ids: list,
         out_path: str,
-        overwrite=False,
+        sampling_method="random",
+        sample_size=10,
+        cluster_ids: list = None,
+        overwrite: bool = False,
+        cluster_names: list = None,
     ):
         """Generate an interactive html visualization of the predicted cluster and
         save to `out_path`.
@@ -1526,7 +1529,15 @@ class Linker:
         self._raise_error_if_necessary_waterfall_columns_not_computed()
 
         return render_splink_cluster_studio_html(
-            self, df_predict, df_clustered, cluster_ids, out_path, overwrite=overwrite
+            self,
+            df_predict,
+            df_clustered,
+            out_path,
+            sampling_method=sampling_method,
+            sample_size=sample_size,
+            cluster_ids=cluster_ids,
+            overwrite=overwrite,
+            cluster_names=cluster_names,
         )
 
     def save_settings_to_json(self, out_path: str, overwrite=False) -> dict:

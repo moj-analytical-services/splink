@@ -3,6 +3,7 @@ from jinja2 import Template
 import json
 import os
 import pkgutil
+import random
 
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
@@ -110,13 +111,82 @@ def df_edges_as_records(
     return df_edges.as_record_dict()
 
 
+def _get_random_cluster_ids(
+    linker: "Linker", connected_components: SplinkDataFrame, sample_size: int
+):
+    sql = f"""
+    select count(distinct cluster_id) as count
+    from {connected_components.physical_name}
+    """
+    df_cluster_count = linker._enqueue_and_execute_sql_pipeline(
+        sql, "__splink__cluster_count"
+    )
+    cluster_count = df_cluster_count.as_record_dict()[0]["count"]
+    df_cluster_count.drop_table_from_database()
+
+    proportion = sample_size / cluster_count
+
+    sql = f"""
+    with distinct_clusters as (
+    select distinct(cluster_id)
+    from {connected_components.physical_name}
+    )
+    select cluster_id from distinct_clusters
+    {linker._random_sample_sql(proportion, sample_size)}
+    """
+
+    df_sample = linker._sql_to_splink_dataframe(
+        sql,
+        "__splink__df_concat_with_tf_sample",
+        transpile=False,
+    )
+    return [r["cluster_id"] for r in df_sample.as_record_dict()]
+
+
+def _get_cluster_id_of_each_size(
+    linker: "Linker", connected_components: SplinkDataFrame, rows_per_cluster: int
+):
+    sql = f"""
+    select cluster_id, count(*) as cluster_size,
+        max({linker._settings_obj._unique_id_column_name}) as ordering
+    from {connected_components.physical_name}
+    group by cluster_id
+    having count(*)>1
+    """
+
+    linker._enqueue_sql(sql, "__splink__cluster_count")
+
+    sql = """
+    select
+        cluster_id, cluster_size,
+        row_number() over (partition by cluster_size order by ordering) as row_num
+    from __splink__cluster_count
+    """
+
+    linker._enqueue_sql(sql, "__splink__cluster_count_row_numbered")
+
+    sql = f"""
+    select cluster_id, cluster_size
+    from __splink__cluster_count_row_numbered
+    where row_num <= {rows_per_cluster} and cluster_size > 1
+    """
+
+    linker._enqueue_sql(sql, "__splink__cluster_count_row_numbered")
+    df_cluster_sample_with_size = linker._execute_sql_pipeline()
+
+    return df_cluster_sample_with_size.as_record_dict()
+
+
 def render_splink_cluster_studio_html(
     linker: "Linker",
     df_predicted_edges: SplinkDataFrame,
     df_clustered_nodes: SplinkDataFrame,
-    cluster_ids: list,
     out_path: str,
+    sampling_method="random",
+    sample_size=10,
+    cluster_ids: list = None,
     overwrite: bool = False,
+    cluster_names: list = None,
 ):
     bundle_observable_notebook = True
 
@@ -124,12 +194,29 @@ def render_splink_cluster_studio_html(
         "cluster_colname": "cluster_id",
         "prob_colname": "match_probability",
     }
+    named_clusters_dict = None
+    if cluster_ids is None:
+        if sampling_method == "random":
+            cluster_ids = _get_random_cluster_ids(
+                linker, df_clustered_nodes, sample_size
+            )
+        if sampling_method == "by_cluster_size":
+            cluster_ids = _get_cluster_id_of_each_size(linker, df_clustered_nodes, 1)
+            if len(cluster_ids) > sample_size:
+                cluster_ids = random.sample(cluster_ids, k=sample_size)
+            cluster_names = [
+                f"Cluster ID: {c['cluster_id']}, size  {c['cluster_size']}"
+                for c in cluster_ids
+            ]
+            cluster_ids = [c["cluster_id"] for c in cluster_ids]
+            named_clusters_dict = dict(zip(cluster_ids, cluster_names))
 
     cluster_recs = df_clusters_as_records(linker, df_clustered_nodes, cluster_ids)
     df_nodes = create_df_nodes(linker, df_clustered_nodes, cluster_ids)
     nodes_recs = df_nodes.as_record_dict()
     edges_recs = df_edges_as_records(linker, df_predicted_edges, df_nodes)
 
+    print(f"{cluster_ids}")
     # Render template with cluster, nodes and edges
     template_path = "files/splink_cluster_studio/cluster_template.j2"
     template = pkgutil.get_data(__name__, template_path).decode("utf-8")
@@ -143,6 +230,12 @@ def render_splink_cluster_studio_html(
         "svu_options": json.dumps(svu_options),
     }
 
+    if cluster_names:
+        named_clusters_dict = dict(zip(cluster_ids, cluster_names))
+
+    if named_clusters_dict:
+        template_data["named_clusters"] = json.dumps(named_clusters_dict)
+
     files = {
         "embed": "files/external_js/vega-embed@6.20.2",
         "vega": "files/external_js/vega@5.21.0",
@@ -150,6 +243,7 @@ def render_splink_cluster_studio_html(
         "svu_text": "files/splink_vis_utils/splink_vis_utils.js",
         "custom_css": "files/splink_cluster_studio/custom.css",
     }
+
     for k, v in files.items():
         f = pkgutil.get_data(__name__, v)
         f = f.decode("utf-8")
