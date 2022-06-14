@@ -65,7 +65,6 @@ class SparkLinker(Linker):
         input_table_or_tables,
         settings_dict=None,
         break_lineage_method="persist",
-        persist_level=None,
         set_up_basic_logging=True,
         input_table_aliases: Union[str, list] = None,
         spark=None,
@@ -77,7 +76,6 @@ class SparkLinker(Linker):
             settings_dict["sql_dialect"] = "spark"
 
         self.break_lineage_method = break_lineage_method
-        self.persist_level = persist_level
 
         self.break_lineage_after_blocking = break_lineage_after_blocking
         self.num_partitions_on_repartition = num_partitions_on_repartition
@@ -154,10 +152,9 @@ class SparkLinker(Linker):
 
         if re.match(r"|".join(regex_to_persist), templated_name):
             if self.break_lineage_method == "persist":
-                if self.persist_level is None:
-                    spark_df = spark_df.persist()
-                else:
-                    spark_df = spark_df.persist(self.persist_level)
+
+                spark_df = spark_df.persist()
+
                 logger.debug(f"persisted {templated_name}")
             elif self.break_lineage_method == "checkpoint":
                 if re.match(r"|".join(names_to_repartition), templated_name):
