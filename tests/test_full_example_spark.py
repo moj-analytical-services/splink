@@ -45,8 +45,8 @@ def test_full_example_spark(df_spark, tmp_path):
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
         "additional_columns_to_retain": ["group"],
-        "em_convergence": 0.001,
-        "max_iterations": 1,
+        "em_convergence": 0.01,
+        "max_iterations": 2,
     }
 
     linker = SparkLinker(

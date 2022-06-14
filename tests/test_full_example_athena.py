@@ -66,15 +66,6 @@ def test_full_example_athena(tmp_path):
     upload_data("splink_awswrangler_test")
     settings_dict = get_settings_dict()
 
-    # SQLglot doesn't currently convert the levenshtein function,
-    # so manually adjust it for now
-    settings_dict["comparisons"][0]["comparison_levels"][2] = {
-        "sql_condition": "levenshtein_distance(first_name_l, first_name_r) <= 2",
-        "m_probability": 0.2,
-        "u_probability": 0.1,
-        "label_for_charts": "Levenstein <= 2",
-    }
-
     linker = AthenaLinker(
         settings_dict=settings_dict,
         input_table_or_tables=f"{db_name_read}.fake_1000_from_splink_demos",
@@ -98,6 +89,8 @@ def test_full_example_athena(tmp_path):
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     df_predict = linker.predict()
+
+    linker.comparison_viewer_dashboard(df_predict, "test_scv_athena.html", True, 2)
 
     df_predict.as_pandas_dataframe()
 
