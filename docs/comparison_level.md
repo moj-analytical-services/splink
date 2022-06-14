@@ -1,3 +1,8 @@
+---
+tags:
+  - API
+  - comparisons
+---
 # Documentation for `ComparisonLevel` object
 
 ::: splink.comparison_level.ComparisonLevel
