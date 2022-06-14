@@ -121,6 +121,10 @@ class Comparison:
         )
 
     @property
+    def _has_null_level(self):
+        return any([cl._is_null_level for cl in self.comparison_levels])
+
+    @property
     def _bf_tf_adj_column_name(self):
         bf = self._settings_obj._bf_prefix
         tf = self._settings_obj._tf_prefix
