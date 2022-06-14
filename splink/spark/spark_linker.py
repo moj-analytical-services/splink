@@ -2,6 +2,9 @@ import logging
 import sqlglot
 from typing import Union, List
 import re
+import os
+import math
+
 from pyspark.sql import Row
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
@@ -62,17 +65,20 @@ class SparkLinker(Linker):
         input_table_or_tables,
         settings_dict=None,
         break_lineage_method="persist",
-        persist_level=None,
         set_up_basic_logging=True,
         input_table_aliases: Union[str, list] = None,
         spark=None,
+        break_lineage_after_blocking=False,
+        num_partitions_on_repartition=100,
     ):
 
         if settings_dict is not None and "sql_dialect" not in settings_dict:
             settings_dict["sql_dialect"] = "spark"
 
         self.break_lineage_method = break_lineage_method
-        self.persist_level = persist_level
+
+        self.break_lineage_after_blocking = break_lineage_after_blocking
+        self.num_partitions_on_repartition = num_partitions_on_repartition
 
         input_tables = ensure_is_list(input_table_or_tables)
 
@@ -118,7 +124,8 @@ class SparkLinker(Linker):
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
 
-    def _break_lineage(self, spark_df, templated_name):
+    # flake8: noqa: C901
+    def _break_lineage(self, spark_df, templated_name, physical_name):
 
         regex_to_persist = [
             r"__splink__df_comparison_vectors",
@@ -126,19 +133,50 @@ class SparkLinker(Linker):
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
             r"__splink__df_representatives_.+",
+            r"__splink__df_neighbours",
         ]
 
-        if re.match(r"|".join(regex_to_persist), templated_name):
+        if self.break_lineage_after_blocking:
+            regex_to_persist.append(r"__splink__df_blocked")
 
+        names_to_repartition = [
+            r"__splink__df_comparison_vectors",
+            r"__splink__df_blocked",
+            r"__splink__df_neighbours",
+            r"__splink__df_representatives_.+",
+        ]
+
+        num_partitions = self.num_partitions_on_repartition
+        if re.match(r"__splink__df_representatives_.+", templated_name):
+            num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
+
+        if re.match(r"|".join(regex_to_persist), templated_name):
             if self.break_lineage_method == "persist":
-                if self.persist_level is None:
-                    spark_df = spark_df.persist()
-                else:
-                    spark_df = spark_df.persist(self.persist_level)
+
+                spark_df = spark_df.persist()
+
                 logger.debug(f"persisted {templated_name}")
             elif self.break_lineage_method == "checkpoint":
+                if re.match(r"|".join(names_to_repartition), templated_name):
+                    spark_df = spark_df.repartition(num_partitions)
                 spark_df = spark_df.checkpoint()
                 logger.debug(f"Checkpointed {templated_name}")
+            elif self.break_lineage_method == "parquet":
+                # https://github.com/apache/spark/blob/301a13963808d1ad44be5cacf0a20f65b853d5a2/python/pyspark/context.py#L1323 # noqa
+                # getCheckpointDir method exists only in Spark 3.1+, use implementation
+                # from above link
+                if not self.spark._jsc.sc().getCheckpointDir().isEmpty():
+                    checkpoint_dir = self.spark._jsc.sc().getCheckpointDir().get()
+                else:
+                    # Raise checkpointing error
+                    spark_df.limit(1).checkpoint()
+                write_path = os.path.join(checkpoint_dir, physical_name)
+                if re.match(r"|".join(names_to_repartition), templated_name):
+                    spark_df = spark_df.repartition(num_partitions)
+                spark_df.write.mode("overwrite").parquet(write_path)
+
+                spark_df = self.spark.read.parquet(write_path)
+                logger.debug(f"Parqueted {templated_name}")
             else:
                 raise ValueError(
                     f"Unknown break_lineage_method: {self.break_lineage_method}"
@@ -153,8 +191,10 @@ class SparkLinker(Linker):
         spark_df = self.spark.sql(sql)
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))
-        spark_df = self._break_lineage(spark_df, templated_name)
+        spark_df = self._break_lineage(spark_df, templated_name, physical_name)
 
+        # After blocking, want to repartition
+        # if templated
         spark_df.createOrReplaceTempView(physical_name)
 
         output_df = self._table_to_splink_dataframe(templated_name, physical_name)

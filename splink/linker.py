@@ -493,7 +493,11 @@ class Linker:
 
     def _populate_proportion_of_matches_from_trained_values(self):
 
-        prop_matches_estimates = []
+        recip_prop_matches_estimates = []
+
+        logger.log(
+            15, "---- Using training sessions to compute proportion of matches ----"
+        )
         for em_training_session in self._em_training_sessions:
             training_lambda = em_training_session._settings_obj._proportion_of_matches
             training_lambda_bf = prob_to_bayes_factor(training_lambda)
@@ -543,15 +547,18 @@ class Linker:
                         f"with reciprocal {(1/as_prob):,.3f}"
                     ),
                 )
-
+            logger.log(15, "\n---------")
             p = bayes_factor_to_prob(training_lambda_bf)
-            prop_matches_estimates.append(p)
+            recip_prop_matches_estimates.append(1 / p)
 
-        self._settings_obj._proportion_of_matches = median(prop_matches_estimates)
+        prop_matches_estimate = 1 / median(recip_prop_matches_estimates)
+
+        self._settings_obj._proportion_of_matches = prop_matches_estimate
         logger.log(
             15,
             "\nMedian of prop of matches estimates: "
-            f"{self._settings_obj._proportion_of_matches:,.3f}",
+            f"{self._settings_obj._proportion_of_matches:,.3f} "
+            f"reciprocal {1/self._settings_obj._proportion_of_matches:,.3f}",
         )
 
     def _records_to_table(records, as_table_name):
