@@ -1,4 +1,8 @@
 
+---
+tags:
+  - API
+---
 # Documentation for `Linker` object
 
 

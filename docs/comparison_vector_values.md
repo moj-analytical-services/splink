@@ -2,14 +2,13 @@
 tags:
   - API
 ---
-# Documentation for `Comparison` object
+# Documentation for `comparison_vector_values` 
 
-::: splink.comparison.Comparison
+::: splink.compute_comparison_vector_values
     handler: python
     selection:
       members:
-        - human_readable_description
-        - match_weights_chart
+        - compute_comparison_vector_values_sql
     rendering:
       show_root_heading: false
       show_source: true

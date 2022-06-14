@@ -1,3 +1,8 @@
+---
+tags:
+  - API
+  - comparisons
+---
 # Documentation for `comparison_library` 
 
 ::: splink.comparison_library

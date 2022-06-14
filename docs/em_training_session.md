@@ -1,3 +1,8 @@
+---
+tags:
+  - API
+  - Expectation Maximisation
+---
 # Documentation for `EMTrainingSession` object
 
 ::: splink.em_training_session.EMTrainingSession

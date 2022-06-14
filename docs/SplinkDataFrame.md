@@ -1,3 +1,7 @@
+---
+tags:
+  - API
+---
 # Documentation for `SplinkDataFrame` object
 
 ::: splink.splink_dataframe.SplinkDataFrame

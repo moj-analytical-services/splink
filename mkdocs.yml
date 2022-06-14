@@ -4,7 +4,14 @@ repo_url: https://github.com/moj-analytical-services/splink
 markdown_extensions:
   - abbr
   - attr_list
-  - pymdownx.snippets
+  - meta
+  - pymdownx.snippets:
+      auto_append:
+        - includes/tooltips.md
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
   - toc:
       permalink: True
 theme:
@@ -36,6 +43,7 @@ plugins:
   - search
   - semiliterate
   - mknotebooks
+  - tags
   - mkdocstrings:
       default_handler: python
       handlers:
