@@ -220,7 +220,8 @@ class EMTrainingSession:
 
             logger.log(
                 15,
-                f"Applying comparison {cl.comparison._output_column_name}"
+                f"Increasing proportion of matches using "
+                f"{cl.comparison._output_column_name} - {cl._label_for_charts}"
                 f" using bayes factor {cl._bayes_factor:,.3f}",
             )
 

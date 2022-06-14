@@ -533,11 +533,17 @@ class Linker:
 
                 training_lambda_bf = training_lambda_bf / bf
 
+                as_prob = bayes_factor_to_prob(training_lambda_bf)
+
                 logger.log(
                     15,
-                    "This estimate of proportion of matches now: "
-                    f" {bayes_factor_to_prob(training_lambda_bf):,.3f}",
+                    (
+                        "This estimate of proportion of matches now: "
+                        f" {as_prob:,.3f} "
+                        f"with reciprocal {(1/as_prob):,.3f}"
+                    ),
                 )
+
             p = bayes_factor_to_prob(training_lambda_bf)
             prop_matches_estimates.append(p)
 
