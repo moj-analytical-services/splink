@@ -1,6 +1,5 @@
 # Splink User Guide
 
-
 ## Background
 
 Record linkage is the process of using statistical and computational tools used to identify related records, remove duplicated entries,
