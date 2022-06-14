@@ -1,0 +1,24 @@
+name: autoblack
+on: [pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Black
+        run: pip install black
+      - name: If needed, commit black changes to the pull request
+        run: |
+          python3 -m black .
+          git config user.name "$(git log -n 1 --pretty=format:%an)"
+          git config user.email "$(git log -n 1 --pretty=format:%ae)"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
+          git checkout $GITHUB_HEAD_REF
+          git diff-index --quiet HEAD || (git commit -am 'lint with black' --allow-empty && git push -f)
+      - name: Run black --check .
+        run: python3 -m black --check .

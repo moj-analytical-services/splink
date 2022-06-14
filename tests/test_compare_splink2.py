@@ -257,8 +257,8 @@ def test_lambda():
     # p = bayes_factor_to_prob(bf/bf2)
     # p = 0.0023752954691593103
     actual = linker._settings_obj._proportion_of_matches
-    expected = (0.46722294374907014 + 0.0023752954691593103) / 2
-    assert actual == pytest.approx(expected)
+    expected = (1 / 0.46722294374907014 + 1 / 0.0023752954691593103) / 2
+    assert actual == pytest.approx(1 / expected)
 
 
 # The following code generates the comparisons in Splink 2 which are used in these tets

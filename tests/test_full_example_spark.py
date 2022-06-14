@@ -45,11 +45,16 @@ def test_full_example_spark(df_spark, tmp_path):
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
         "additional_columns_to_retain": ["group"],
-        "em_convergence": 0.001,
-        "max_iterations": 20,
+        "em_convergence": 0.01,
+        "max_iterations": 2,
     }
 
-    linker = SparkLinker(df_spark, settings, break_lineage_method="checkpoint")
+    linker = SparkLinker(
+        df_spark,
+        settings,
+        break_lineage_method="checkpoint",
+        num_partitions_on_repartition=2,
+    )
 
     linker.profile_columns(
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"]
@@ -57,7 +62,7 @@ def test_full_example_spark(df_spark, tmp_path):
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
-    linker.estimate_u_using_random_sampling(target_rows=1e6)
+    linker.estimate_u_using_random_sampling(target_rows=1e5)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
