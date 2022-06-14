@@ -33,7 +33,7 @@ jobs:
       - run: mkdir docs/settingseditor
       - run: curl https://raw.githubusercontent.com/moj-analytical-services/splink/splink3/splink/files/settings_jsonschema.json --output docs/settingseditor/settings_jsonschema.json
       - run: cat docs/settingseditor/settings_jsonschema.json
-      - run: echo '<iframe  height="1200" width="98%" src="https://www.robinlinacre.com/splink3_settings_editor_temp" >' >  docs/settingseditor/editor.md
+      - run: echo '<iframe  height="1200" frameborder="0" src="https://www.robinlinacre.com/splink3_settings_editor_temp" >' >  docs/settingseditor/editor.md
       - run: tree docs/
 
       #- run: find docs/demos/ \! -name '\docs\demos\*.ipynb'  | xargs --null rm -f
