@@ -12,7 +12,6 @@ Candidate record pairs are compared using a set of comparison functions called c
 However in order to make this process computationally tractable usually the process of blocking is used where in order to reduce the number of record pairs that need to be compared, only the most relevant pairs are processed.
 
 
-
 ## SQL backends
 
 ``` mermaid
@@ -22,9 +21,6 @@ graph LR
   B --> |sqlite| D[sqite3 backend];
   B ---->|duckdb| E[duckdb backend];
 ```
-
-
-
 
 
 *[blocking] : A type of indexing technique that has traditionally been employed in data matching to reduce the number of record pairs that need to be compared.

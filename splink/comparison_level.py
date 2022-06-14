@@ -98,9 +98,10 @@ class ComparisonLevel:
     be different to the method used to assess the similarity of a person's first name.
 
 
-    ``` ??? To summarise:
+    ??? note
+                To summarise:
 
-                Data Linking Model
+                ```Data Linking Model
                 ├─-- Comparison: Name
                 │    ├─-- ComparisonLevel: Exact match on first_name and surname
                 │    ├─-- ComparisonLevel: first_name and surname have JaroWinkler > 0.95
@@ -109,8 +110,8 @@ class ComparisonLevel:
                 │    ├─-- ComparisonLevel: Exact match
                 │    ├─-- ComparisonLevel: One character difference
                 │    ├─-- ComparisonLevel: All other
-                ├─-- etc.
-    ```
+                ├─-- etc.```
+
     """
 
     def __init__(
