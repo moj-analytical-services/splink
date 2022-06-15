@@ -36,7 +36,9 @@ def estimate_m_from_pairwise_labels(linker, table_name):
     param_records = df_params.as_record_dict()
 
     m_u_records = [
-        r for r in param_records if r["output_column_name"] != "_proportion_of_matches"
+        r
+        for r in param_records
+        if r["output_column_name"] != "_probability_two_random_records_match"
     ]
 
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)

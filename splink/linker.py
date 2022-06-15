@@ -491,15 +491,21 @@ class Linker:
                         "only a single input table",
                     )
 
-    def _populate_proportion_of_matches_from_trained_values(self):
+    def _populate_probability_two_random_records_match_from_trained_values(self):
 
         recip_prop_matches_estimates = []
 
         logger.log(
-            15, "---- Using training sessions to compute proportion of matches ----"
+            15,
+            (
+                "---- Using training sessions to compute "
+                "probability two random records match ----"
+            ),
         )
         for em_training_session in self._em_training_sessions:
-            training_lambda = em_training_session._settings_obj._proportion_of_matches
+            training_lambda = (
+                em_training_session._settings_obj._probability_two_random_records_match
+            )
             training_lambda_bf = prob_to_bayes_factor(training_lambda)
             reverse_levels = (
                 em_training_session._comparison_levels_to_reverse_blocking_rule
@@ -508,7 +514,7 @@ class Linker:
             logger.log(
                 15,
                 "\n"
-                f"Proportion of matches from trained model blocking on "
+                f"Probability two random records match from trained model blocking on "
                 f"{em_training_session._blocking_rule_for_training}: "
                 f"{training_lambda:,.3f}",
             )
@@ -542,7 +548,7 @@ class Linker:
                 logger.log(
                     15,
                     (
-                        "This estimate of proportion of matches now: "
+                        "This estimate of probability two random records match now: "
                         f" {as_prob:,.3f} "
                         f"with reciprocal {(1/as_prob):,.3f}"
                     ),
@@ -553,12 +559,13 @@ class Linker:
 
         prop_matches_estimate = 1 / median(recip_prop_matches_estimates)
 
-        self._settings_obj._proportion_of_matches = prop_matches_estimate
+        self._settings_obj._probability_two_random_records_match = prop_matches_estimate
         logger.log(
             15,
             "\nMedian of prop of matches estimates: "
-            f"{self._settings_obj._proportion_of_matches:,.3f} "
-            f"reciprocal {1/self._settings_obj._proportion_of_matches:,.3f}",
+            f"{self._settings_obj._probability_two_random_records_match:,.3f} "
+            "reciprocal "
+            f"{1/self._settings_obj._probability_two_random_records_match:,.3f}",
         )
 
     def _records_to_table(records, as_table_name):
@@ -735,7 +742,7 @@ class Linker:
         blocking_rule: str,
         comparisons_to_deactivate: list = None,
         comparison_levels_to_reverse_blocking_rule: list = None,
-        fix_proportion_of_matches: bool = False,
+        fix_probability_two_random_records_match: bool = False,
         fix_m_probabilities=False,
         fix_u_probabilities=True,
     ) -> EMTrainingSession:
@@ -755,13 +762,14 @@ class Linker:
         parameter esimates will be made for all comparison except those which use
         `first_name` in their sql_condition
 
-        By default, the proportion of matches is estimated for the blocked data, and
-        then the m and u parameters for the columns specified in the blocking rules are
-        used to estiamte the global proportion of matches.
+        By default, the probability two random records match is estimated for the
+        blocked data, and then the m and u parameters for the columns specified in the
+        blocking rules are used to estiamte the global probability two random records
+        match.
 
         To control which comparisons should have their parameter estimated, and the
-        process of 'reversing out' the global proportion of matches, the user
-        may specify `comparisons_to_deactivate` and
+        process of 'reversing out' the global probability two random records match, the
+        user may specify `comparisons_to_deactivate` and
         `comparison_levels_to_reverse_blocking_rule`.
 
         Args:
@@ -775,11 +783,12 @@ class Linker:
                 in the comparisons_to_deactivate list.  Defaults to None.
             comparison_levels_to_reverse_blocking_rule (list, optional): By default,
                 splink will analyse the blocking rule provided and adjust the
-                global proportion of matches to account for the matches specified
-                in the blocking rule. If provided, this argument will overrule
+                global probability two random records match to account for the matches
+                specified in the blocking rule. If provided, this argument will overrule
                 this default behaviour. Defaults to None.
-            fix_proportion_of_matches (bool, optional): If True, do not update the
-                proportion of matches after each iteration. Defaults to False.
+            fix_probability_two_random_records_match (bool, optional): If True, do not
+                update the probability two random records match after each iteration.
+                Defaults to False.
             fix_m_probabilities (bool, optional): If True, do not update the m
                 probabilities after each iteration. Defaults to False.
             fix_u_probabilities (bool, optional): If True, do not update the u
@@ -801,16 +810,16 @@ class Linker:
             blocking_rule,
             fix_u_probabilities=fix_u_probabilities,
             fix_m_probabilities=fix_m_probabilities,
-            fix_proportion_of_matches=fix_proportion_of_matches,
+            fix_probability_two_random_records_match=fix_probability_two_random_records_match,  # noqa 501
             comparisons_to_deactivate=comparisons_to_deactivate,
-            comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa
+            comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa 501
         )
 
         em_training_session._train()
 
         self._populate_m_u_from_trained_values()
 
-        self._populate_proportion_of_matches_from_trained_values()
+        self._populate_probability_two_random_records_match_from_trained_values()
 
         self._settings_obj._columns_without_estimated_parameters_message()
 

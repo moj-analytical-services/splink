@@ -41,12 +41,12 @@ def compute_new_parameters_sql(settings_obj: Settings):
         for cc in settings_obj.comparisons
     ]
 
-    # Proportion of matches
+    # Probability of two random records matching
     sql = """
     select 0 as comparison_vector_value,
            avg(match_probability) as m_probability,
            avg(1-match_probability) as u_probability,
-           '_proportion_of_matches' as output_column_name
+           '_probability_two_random_records_match' as output_column_name
     from __splink__df_predict
     """
     union_sqls.append(sql)
@@ -89,14 +89,16 @@ def maximisation_step(em_training_session: "EMTrainingSession", param_records):
 
     m_u_records = []
     for r in param_records:
-        if r["output_column_name"] == "_proportion_of_matches":
+        if r["output_column_name"] == "_probability_two_random_records_match":
             prop_record = r
         else:
             m_u_records.append(r)
 
-    if not em_training_session._training_fix_proportion_of_matches:
+    if not em_training_session._training_fix_probability_two_random_records_match:
 
-        settings_obj._proportion_of_matches = prop_record["m_probability"]
+        settings_obj._probability_two_random_records_match = prop_record[
+            "m_probability"
+        ]
 
     m_u_records_lookup = m_u_records_to_lookup_dict(m_u_records)
     for cc in settings_obj.comparisons:

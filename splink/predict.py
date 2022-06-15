@@ -36,9 +36,11 @@ def predict_from_comparison_vectors_sqls(
     for cc in settings_obj.comparisons:
         mult.extend(cc._match_weight_columns_to_multiply)
 
-    proportion_of_matches = settings_obj._proportion_of_matches
+    probability_two_random_records_match = (
+        settings_obj._probability_two_random_records_match
+    )
 
-    bayes_factor = prob_to_bayes_factor(proportion_of_matches)
+    bayes_factor = prob_to_bayes_factor(probability_two_random_records_match)
 
     bayes_factor_expr = " * ".join(mult)
     bayes_factor_expr = f"cast({bayes_factor} as double) * {bayes_factor_expr}"
