@@ -1497,8 +1497,8 @@ class Linker:
         sampling_method="random",
         sample_size=10,
         cluster_ids: list = None,
-        overwrite: bool = False,
         cluster_names: list = None,
+        overwrite: bool = False,
     ):
         """Generate an interactive html visualization of the predicted cluster and
         save to `out_path`.
@@ -1507,11 +1507,19 @@ class Linker:
             df_predict (SplinkDataFrame): The outputs of `linker.predict()`
             df_clustered (SplinkDataFrame): The outputs of
                 `linker.cluster_pairwise_predictions_at_threshold()`
-            cluster_ids (list): The IDs of the clusters that will be displayed in the
-                dashboard
             out_path (str): The path (including filename) to save the html file to.
+            sampling_method (str, optional): `random` or `by_cluster_size`. Defaults to
+                `random`.
+            sample_size (int, optional): Number of clusters to show in the dahboard.
+                Defaults to 10.
+            cluster_ids (list): The IDs of the clusters that will be displayed in the
+                dashboard.  If provided, ignore the `sampling_method` and `sample_size`
+                arguments. Defaults to None.
             overwrite (bool, optional): Overwrite the html file if it already exists?
                 Defaults to False.
+            cluster_names (list, optional): If provided, the dashboard will display
+                these names in the selection box. Ony works in conjunction with
+                `cluster_ids`.  Defaults to None.
 
         Examples:
             >>> df_p = linker.predict()
