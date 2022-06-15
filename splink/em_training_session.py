@@ -240,7 +240,7 @@ class EMTrainingSession:
         adjusted_prop_m = bayes_factor_to_prob(adj_bayes_factor)
         logger.log(
             15,
-            f"\Prob two random records match adjusted for blocking on "
+            f"\nProb two random records match adjusted for blocking on "
             f"{self._blocking_rule_for_training}: "
             f"{adjusted_prop_m:.3f}",
         )
