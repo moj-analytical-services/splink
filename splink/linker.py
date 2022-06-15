@@ -978,6 +978,13 @@ class Linker:
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
 
+        sql = compute_comparison_vector_values_sql(self._settings_obj)
+        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
+
+        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+
         predictions = self._execute_sql_pipeline(use_cache=False)
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
