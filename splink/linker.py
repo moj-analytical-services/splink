@@ -1495,7 +1495,7 @@ class Linker:
         df_clustered: SplinkDataFrame,
         out_path: str,
         sampling_method="random",
-        sample_size=10,
+        sample_size: int = 10,
         cluster_ids: list = None,
         cluster_names: list = None,
         overwrite: bool = False,
