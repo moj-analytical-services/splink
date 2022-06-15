@@ -25,7 +25,7 @@ def test_full_example_spark(df_spark, tmp_path):
     settings_dict["comparisons"][1] = cl.exact_match("surname")
 
     settings = {
-        "proportion_of_matches": 0.01,
+        "probability_two_random_records_match": 0.01,
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [
             "l.surname = r.surname",

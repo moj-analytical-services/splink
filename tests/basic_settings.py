@@ -131,7 +131,7 @@ glo = bayes_factor_to_prob(prob_to_bayes_factor(0.3) / bf_for_first_name)
 
 def get_settings_dict():
     settings = {
-        "proportion_of_matches": glo,
+        "probability_two_random_records_match": glo,
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [
             "l.surname = r.surname",

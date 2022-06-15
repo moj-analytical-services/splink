@@ -81,7 +81,7 @@ def test_link_type(input_name, input_tables):
     input_tables = dfs()[input_name]["input_tables"]
     aliases = dfs()[input_name]["input_table_aliases"]
     settings = {
-        "proportion_of_matches": 0.01,
+        "probability_two_random_records_match": 0.01,
         "unique_id_column_name": "id",
         "link_type": link_type,
         "blocking_rules_to_generate_predictions": [

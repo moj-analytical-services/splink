@@ -48,7 +48,9 @@ class Settings:
             self.comparisons.append(Comparison(cc, self))
 
         self._link_type = s_else_d("link_type")
-        self._proportion_of_matches = s_else_d("proportion_of_matches")
+        self._probability_two_random_records_match = s_else_d(
+            "probability_two_random_records_match"
+        )
         self._em_convergence = s_else_d("em_convergence")
         self._max_iterations = s_else_d("max_iterations")
         self._unique_id_column_name = s_else_d("unique_id_column_name")
@@ -246,8 +248,8 @@ class Settings:
         If we block on (say) first name and surname, then all blocked comparisons are
         guaranteed to have a match on first name and surname
 
-        The proportion of matches must be adjusted for the fact this is a subset of the
-        comparisons
+        The probability two random records match must be adjusted for the fact this is a
+        subset of the comparisons
 
         To correctly adjust, we need to find one or more comparison levels corresponding
         to the blocking rule and use their bayes factor
@@ -292,21 +294,24 @@ class Settings:
         for i, cc in enumerate(self.comparisons):
             records = cc._as_detailed_records
             for r in records:
-                r["proportion_of_matches"] = self._proportion_of_matches
+                r[
+                    "probability_two_random_records_match"
+                ] = self._probability_two_random_records_match
                 r["comparison_sort_order"] = i
             output.extend(records)
 
         prior_description = (
-            f"Proportion of matches is {self._proportion_of_matches:.3f}, equivalent "
-            f"to a starting match weight of "
-            f"{prob_to_match_weight(self._proportion_of_matches):.3f}."
-            "This means that if two records are drawn at random, one in "
-            f" {1/self._proportion_of_matches:,.1f} is expected to be a match"
+            "The probability that two random records drawn at random match is "
+            f"{self._probability_two_random_records_match:.3f} or one in "
+            f" {1/self._probability_two_random_records_match:,.1f} records."
+            "This is equivalent to a starting match weight of "
+            f"{prob_to_match_weight(self._probability_two_random_records_match):.3f}."
         )
 
-        # Finally add a record for proportion of matches
+        # Finally add a record for probability_two_random_records_match
+        rr_match = self._probability_two_random_records_match
         prop_record = {
-            "comparison_name": "proportion_of_matches",
+            "comparison_name": "probability_two_random_records_match",
             "sql_condition": None,
             "label_for_charts": "",
             "m_probability": None,
@@ -317,12 +322,16 @@ class Settings:
             "tf_adjustment_column": None,
             "tf_adjustment_weight": None,
             "is_null_level": False,
-            "bayes_factor": prob_to_bayes_factor(self._proportion_of_matches),
-            "log2_bayes_factor": prob_to_match_weight(self._proportion_of_matches),
+            "bayes_factor": prob_to_bayes_factor(
+                self._probability_two_random_records_match
+            ),
+            "log2_bayes_factor": prob_to_match_weight(
+                self._probability_two_random_records_match
+            ),
             "comparison_vector_value": 0,
             "max_comparison_vector_value": 0,
             "bayes_factor_description": prior_description,
-            "proportion_of_matches": self._proportion_of_matches,
+            "probability_two_random_records_match": rr_match,
             "comparison_sort_order": -1,
         }
         output.insert(0, prop_record)
@@ -342,17 +351,18 @@ class Settings:
         """Serialise the current settings (including any estimated model parameters)
         to a dictionary, enabling the settings to be saved to disk and reloaded
         """
-
+        rr_match = self._probability_two_random_records_match
         current_settings = {
             "comparisons": [cc.as_dict() for cc in self.comparisons],
-            "proportion_of_matches": self._proportion_of_matches,
+            "probability_two_random_records_match": rr_match,
         }
         return {**self._settings_dict, **current_settings}
 
     def _as_completed_dict(self):
+        rr_match = self._probability_two_random_records_match
         current_settings = {
             "comparisons": [cc._as_completed_dict() for cc in self.comparisons],
-            "proportion_of_matches": self._proportion_of_matches,
+            "probability_two_random_records_match": rr_match,
             "unique_id_column_name": self._unique_id_column_name,
             "source_dataset_column_name": self._source_dataset_column_name,
         }

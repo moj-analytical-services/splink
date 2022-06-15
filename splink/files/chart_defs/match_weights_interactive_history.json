@@ -47,7 +47,9 @@
         }
       },
       "transform": [
-        { "filter": "(datum.comparison_name == 'proportion_of_matches')" }
+        {
+          "filter": "(datum.comparison_name == 'probability_two_random_records_match')"
+        }
       ],
       "encoding": {
         "color": {
@@ -67,9 +69,9 @@
           },
           {
             "type": "nominal",
-            "field": "proportion_of_matches",
+            "field": "probability_two_random_records_match",
             "format": ".4f",
-            "title": "Proportion of matches"
+            "title": "Probability two random records match"
           },
           {
             "type": "quantitative",
@@ -117,7 +119,9 @@
         }
       },
       "transform": [
-        { "filter": "(datum.comparison_name != 'proportion_of_matches')" }
+        {
+          "filter": "(datum.comparison_name != 'probability_two_random_records_match')"
+        }
       ],
       "encoding": {
         "color": {
