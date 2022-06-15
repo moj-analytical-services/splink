@@ -185,8 +185,8 @@ def render_splink_cluster_studio_html(
     sampling_method="random",
     sample_size=10,
     cluster_ids: list = None,
-    overwrite: bool = False,
     cluster_names: list = None,
+    overwrite: bool = False,
 ):
     bundle_observable_notebook = True
 
