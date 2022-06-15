@@ -87,15 +87,15 @@ class ComparisonLevel:
     """Each ComparisonLevel defines a gradation (category) of similarity within a
         Comparison.
 
-        For example, a Comparison that uses the first_name and surname columns may define
-        three `ComparisonLevel`s:
+        For example, a Comparison that uses the first_name and surname columns may
+        define three `ComparisonLevel`s:
             An exact match on first name and surname
             First name and surname have a JaroWinkler score of above 0.95
             All other comparisons
 
-        The method used to assess similarity will depend on the type of data -
-        for instance, the method used to assess similarity of a company's turnover would
-        be different to the method used to assess the similarity of a person's first name.
+        The method used to assess similarity will depend on the type of data - for
+        instance, the method used to assess similarity of a company's turnover would be
+        different to the method used to assess the similarity of a person's first name.
 
         To summarise:
     ```

@@ -81,8 +81,9 @@ def test_full_example_spark(df_spark, tmp_path):
     linker.cluster_studio_dashboard(
         df_predict,
         df_clusters,
-        [0, 4],
-        os.path.join(tmp_path, "test_cluster_studio.html"),
+        cluster_ids=[0, 4],
+        cluster_names=["cluster_0", "cluster_4"],
+        out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
     linker.unlinkables_chart(source_dataset="Testing")
