@@ -6544,7 +6544,7 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	md`## Data processing`
 	)}
 
-	function _cluster_unique_ids(splink_vis_utils,raw_nodes_data,svu_options,named_clusters)
+	function _cluster_unique_ids(splink_vis_utils,raw_nodes_data,svu_options)
 	{
 	  let cluster_ids = splink_vis_utils.get_unique_cluster_ids_from_nodes_data(
 	    raw_nodes_data,
@@ -6700,7 +6700,7 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	  main.variable(observer("no_edge_selected")).define("no_edge_selected", ["selected_edge"], _no_edge_selected$1);
 	  main.variable(observer("no_node_selected")).define("no_node_selected", ["selected_node"], _no_node_selected);
 	  main.variable(observer()).define(["md"], _27);
-	  main.variable(observer("cluster_unique_ids")).define("cluster_unique_ids", ["splink_vis_utils","raw_nodes_data","svu_options","named_clusters"], _cluster_unique_ids);
+	  main.variable(observer("cluster_unique_ids")).define("cluster_unique_ids", ["splink_vis_utils","raw_nodes_data","svu_options"], _cluster_unique_ids);
 	  main.variable(observer("selected_edge")).define("selected_edge", ["observe_chart_data","force_directed_chart"], _selected_edge$1);
 	  main.variable(observer("observe_chart_data")).define("observe_chart_data", ["Generators"], _observe_chart_data$1);
 	  main.variable(observer("selected_node")).define("selected_node", ["observe_chart_data","force_directed_chart"], _selected_node);

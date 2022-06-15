@@ -1493,9 +1493,12 @@ class Linker:
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
-        cluster_ids: list,
         out_path: str,
-        overwrite=False,
+        sampling_method="random",
+        sample_size: int = 10,
+        cluster_ids: list = None,
+        cluster_names: list = None,
+        overwrite: bool = False,
     ):
         """Generate an interactive html visualization of the predicted cluster and
         save to `out_path`.
@@ -1504,11 +1507,19 @@ class Linker:
             df_predict (SplinkDataFrame): The outputs of `linker.predict()`
             df_clustered (SplinkDataFrame): The outputs of
                 `linker.cluster_pairwise_predictions_at_threshold()`
-            cluster_ids (list): The IDs of the clusters that will be displayed in the
-                dashboard
             out_path (str): The path (including filename) to save the html file to.
+            sampling_method (str, optional): `random` or `by_cluster_size`. Defaults to
+                `random`.
+            sample_size (int, optional): Number of clusters to show in the dahboard.
+                Defaults to 10.
+            cluster_ids (list): The IDs of the clusters that will be displayed in the
+                dashboard.  If provided, ignore the `sampling_method` and `sample_size`
+                arguments. Defaults to None.
             overwrite (bool, optional): Overwrite the html file if it already exists?
                 Defaults to False.
+            cluster_names (list, optional): If provided, the dashboard will display
+                these names in the selection box. Ony works in conjunction with
+                `cluster_ids`.  Defaults to None.
 
         Examples:
             >>> df_p = linker.predict()
@@ -1526,7 +1537,15 @@ class Linker:
         self._raise_error_if_necessary_waterfall_columns_not_computed()
 
         return render_splink_cluster_studio_html(
-            self, df_predict, df_clustered, cluster_ids, out_path, overwrite=overwrite
+            self,
+            df_predict,
+            df_clustered,
+            out_path,
+            sampling_method=sampling_method,
+            sample_size=sample_size,
+            cluster_ids=cluster_ids,
+            overwrite=overwrite,
+            cluster_names=cluster_names,
         )
 
     def save_settings_to_json(self, out_path: str, overwrite=False) -> dict:

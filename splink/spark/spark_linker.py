@@ -134,6 +134,7 @@ class SparkLinker(Linker):
             r"__splink__df_tf_.+",
             r"__splink__df_representatives_.+",
             r"__splink__df_neighbours",
+            r"__splink__df_connected_components_df",
         ]
 
         if self.break_lineage_after_blocking:
