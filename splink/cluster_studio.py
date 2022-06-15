@@ -216,7 +216,6 @@ def render_splink_cluster_studio_html(
     nodes_recs = df_nodes.as_record_dict()
     edges_recs = df_edges_as_records(linker, df_predicted_edges, df_nodes)
 
-    print(f"{cluster_ids}")
     # Render template with cluster, nodes and edges
     template_path = "files/splink_cluster_studio/cluster_template.j2"
     template = pkgutil.get_data(__name__, template_path).decode("utf-8")
