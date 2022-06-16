@@ -51,6 +51,11 @@ def _join_tf_to_input_df_sql(linker: "Linker"):
         tf_col = col.tf_name()
         select_cols.append(f"{tbl}.{tf_col}")
 
+    if settings_obj._salting > 1:
+        salt_parititions = settings_obj._salting
+        salt_sql = f"ceiling(random()*{salt_parititions}) as __splink_salt"
+        select_cols.append(salt_sql)
+
     select_cols.insert(0, "__splink__df_concat.*")
     select_cols = ", ".join(select_cols)
 
