@@ -220,6 +220,11 @@ class DuckDBLinker(Linker):
 
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
+    def initialise_settings(self, settings_dict: dict):
+        if "sql_dialect" not in settings_dict:
+            settings_dict["sql_dialect"] = "duckdb"
+        super().initialise_settings(settings_dict)
+
     def _random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
             return ""
