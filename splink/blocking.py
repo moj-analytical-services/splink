@@ -11,11 +11,11 @@ if TYPE_CHECKING:
 
 
 def _sql_gen_and_not_previous_rules(previous_rules: list):
-    if previous_rules:
+    if previous_rules[1]:
         # Note the isnull function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
-        or_clauses = [f"coalesce(({r}), false)" for r in previous_rules]
+        or_clauses = [f"coalesce(({r}), false)" for r in previous_rules[1]]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
     else:
@@ -75,9 +75,11 @@ def block_using_rules_sql(linker: "Linker"):
     # explicit about the difference between blocking for training
     # and blocking for predictions
     if settings_obj._blocking_rule_for_training:
-        blocking_rules = [settings_obj._blocking_rule_for_training]
+        blocking_rules = settings_obj._blocking_rule_for_training
+        salts = settings_obj._splink_salts
     else:
         blocking_rules = settings_obj._blocking_rules_to_generate_predictions
+        salts = settings_obj._splink_salts
 
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'
@@ -85,8 +87,11 @@ def block_using_rules_sql(linker: "Linker"):
     # that generates a cross join for the case of no blocking rules
     if not blocking_rules:
         blocking_rules = ["1=1"]
+        salts = settings_obj._generate_blank_salts(blocking_rules)
 
     for matchkey_number, rule in enumerate(blocking_rules):
+
+        previous_rules = salts[rule]
         not_previous_rules_statement = _sql_gen_and_not_previous_rules(previous_rules)
 
         sql = f"""
@@ -100,7 +105,7 @@ def block_using_rules_sql(linker: "Linker"):
         {not_previous_rules_statement}
         {where_condition}
         """
-        previous_rules.append(rule)
+
         sqls.append(sql)
 
     sql = "union all".join(sqls)
