@@ -200,6 +200,11 @@ class AthenaLinker(Linker):
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return AthenaDataFrame(templated_name, physical_name, self)
 
+    def initialise_settings(self, settings_dict: dict):
+        if "sql_dialect" not in settings_dict:
+            settings_dict["sql_dialect"] = "presto"
+        super().initialise_settings(settings_dict)
+
     def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
         # Deletes the table in the db, but not the object on s3.
