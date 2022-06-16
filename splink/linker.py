@@ -1,11 +1,10 @@
 import logging
+from typing import List, Union
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
 import os
 import json
-
-from typing import Union, List
 
 from splink.input_column import InputColumn
 
@@ -63,6 +62,9 @@ from .unique_id_concat import (
 )
 
 from .cluster_studio import render_splink_cluster_studio_html
+
+from .comparison_level import ComparisonLevel
+from .comparison import Comparison
 
 logger = logging.getLogger(__name__)
 
@@ -740,8 +742,8 @@ class Linker:
     def estimate_parameters_using_expectation_maximisation(
         self,
         blocking_rule: str,
-        comparisons_to_deactivate: list = None,
-        comparison_levels_to_reverse_blocking_rule: list = None,
+        comparisons_to_deactivate: List[Union[str, Comparison]] = None,
+        comparison_levels_to_reverse_blocking_rule: List[ComparisonLevel] = None,
         fix_probability_two_random_records_match: bool = False,
         fix_m_probabilities=False,
         fix_u_probabilities=True,
@@ -779,13 +781,16 @@ class Linker:
                 analyse the blocking rule provided and estimate the m parameters for
                 all comaprisons except those included in the blocking rule.  If
                 comparisons_to_deactivate are provided, spink will instead
-                estimate m parameters for all comparison except those specified by name
-                in the comparisons_to_deactivate list.  Defaults to None.
+                estimate m parameters for all comparison except those specified
+                in the comparisons_to_deactivate list.  This list can either contain
+                the output_column_name of the Comparison as a string, or Comparison
+                objects.  Defaults to None.
             comparison_levels_to_reverse_blocking_rule (list, optional): By default,
                 splink will analyse the blocking rule provided and adjust the
                 global probability two random records match to account for the matches
                 specified in the blocking rule. If provided, this argument will overrule
-                this default behaviour. Defaults to None.
+                this default behaviour. The user must provide a list of ComparisonLevel
+                objects.  Defaults to None.
             fix_probability_two_random_records_match (bool, optional): If True, do not
                 update the probability two random records match after each iteration.
                 Defaults to False.
@@ -805,6 +810,27 @@ class Linker:
         """
 
         self._initialise_df_concat_with_tf(materialise=True)
+
+        if comparisons_to_deactivate:
+            # If user provided a string, convert to Comparison object
+            comparisons_to_deactivate = [
+                self._settings_obj._get_comparison_by_output_column_name(n)
+                if isinstance(n, str)
+                else n
+                for n in comparisons_to_deactivate
+            ]
+            if comparison_levels_to_reverse_blocking_rule is None:
+                logger.warning(
+                    "\nWARNING: \n"
+                    "You have provided comparisons_to_deactivate but not "
+                    "comparison_levels_to_reverse_blocking_rule.\n"
+                    "If comparisons_to_deactivate is provided, then "
+                    "you usually need to provide corresponding "
+                    "comparison_levels_to_reverse_blocking_rule. "
+                    "because each comparison to deactivate if effectively treated "
+                    "as an exact match."
+                )
+
         em_training_session = EMTrainingSession(
             self,
             blocking_rule,
