@@ -198,7 +198,7 @@ def convert_settings_from_v2_to_v3(settings_dict_v2: dict) -> dict:
 
     settings_3["comparisons"] = comparisons_3
 
-    logger.warn(
+    logger.warning(
         "Settings converted from v2 to v3.  This has been done on a 'best "
         "efforts' basis.  Please check the settings to ensure they are correct."
     )
