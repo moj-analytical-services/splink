@@ -22,6 +22,10 @@ def number_of_comparisons_generated_by_blocking_rule_sql(
 
     if link_type is not None:
         # Minimal settings dict
+        if unique_id_column_name is None:
+            raise ValueError(
+                "If settings not provided, you must specify unique_id_column_name"
+            )
         settings_obj = Settings(
             {
                 "unique_id_column_name": unique_id_column_name,
