@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 
 def number_of_comparisons_generated_by_blocking_rule_sql(
-    linker: "Linker", blocking_rule, link_type=None
+    linker: "Linker", blocking_rule, link_type=None, unique_id_column_name=None
 ) -> str:
 
     if linker._settings_obj_ is not None:
@@ -23,7 +23,11 @@ def number_of_comparisons_generated_by_blocking_rule_sql(
     if link_type is not None:
         # Minimal settings dict
         settings_obj = Settings(
-            {"link_type": link_type, "comparisons": [exact_match("first_name")]}
+            {
+                "unique_id_column_name": unique_id_column_name,
+                "link_type": link_type,
+                "comparisons": [exact_match("first_name")],
+            }
         )
 
     # If link type not specified or inferrable, raise error
