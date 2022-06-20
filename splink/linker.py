@@ -712,9 +712,10 @@ class Linker:
         return self._execute_sql_pipeline()
 
     def estimate_u_using_random_sampling(self, target_rows: int):
-        """Estimate the u parameters of the linkage model using random sampling i.e.
-        amongst non matching records, what proportion of record comparisons fall
-        into each comparison level.
+        """Estimate the u parameters of the linkage model using random sampling.
+
+        The u parameters represent the proportion of record comparisons that fall
+        into each comparison level amongst truly non-matching records.
 
         This procedure takes a sample of the data and generates the cartesian
         product of pairwise record comparisons amongst the sampled records.
@@ -726,8 +727,9 @@ class Linker:
             target_rows (int): The target number of pairwise record comparisons from
             which to derive the u values.  Larger will give more accurate estimates
             but lead to longer runtimes.  In our experience at least 1e9 (one billion)
-            gives best results. 1e7 (ten million) is often adequate for rapid model
-            development.
+            gives best results but can take a long time to compute. 1e7 (ten million)
+            is often adequate whilst testing different model specifications, before
+            the final model is estimated.
 
         Examples:
             >>> linker.estimate_u_using_random_sampling(1e8)
@@ -745,6 +747,9 @@ class Linker:
     def estimate_m_from_label_column(self, label_colname: str):
         """Estimate the m parameters of the linkage model from a label (ground truth)
         column in the input dataframe(s).
+
+        The m parameters represent the proportion of record comparisons that fall
+        into each comparison level amongst truly matching records.
 
         The ground truth column is used to generate pairwise record comparisons
         which are then assumed to be matches.
