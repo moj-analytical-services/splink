@@ -676,14 +676,13 @@ class Linker:
         return self._execute_sql_pipeline(materialise_as_hash=False)
 
     def deterministic_link(self) -> SplinkDataFrame:
-        """Uses the blocking rules specified in the
-        `blocking_rules_to_generate_predictions` of the settings dictionary to
+        """Uses the blocking rules specified by
+        `blocking_rules_to_generate_predictions` in the settings dictionary to
         generate pairwise record comparisons.
 
-        `blocking_rules_to_generate_predictions` contains a list of blocking rules
-        which are strict enough to  generate only true links,  then the result
-        will be a dataframe of true links.  This methodology, however, is likely to
-        result in missed links (false negatives).
+        This should be a list of blocking rules which are strict enough to generate only
+        true links.  Deterministic linkage, however, is likely to result in missed links
+        (false negatives).
 
         Examples:
             >>> linker = DuckDBLinker(df, connection=":memory:")
