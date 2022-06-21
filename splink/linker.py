@@ -983,10 +983,24 @@ class Linker:
             match_weight_threshold (int, optional): Return matches with a match weight
                 above this threshold. Defaults to -4.
 
+        Examples:
+            >>> linker = DuckDBLinker(df)
+            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> # Pre-compute tf tables for any tables with
+            >>> # term frequency adjustments
+            >>> linker.compute_tf_table("first_name")
+            >>> record = {'unique_id': 1,
+            >>>     'first_name': "John",
+            >>>     'surname': "Smith",
+            >>>     'dob': "1971-05-24",
+            >>>     'city': "London",
+            >>>     'email': "john@smith.net"
+            >>>     }
+            >>> df = linker.find_matches_to_new_records([record], blocking_rules=[])
+
+
         Returns:
-            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
-                represents a table materialised in the database. Methods on the
-                SplinkDataFrame allow you to access the underlying data.
+            SplinkDataFrame: The pairwise comparisons.
         """
 
         original_blocking_rules = (
