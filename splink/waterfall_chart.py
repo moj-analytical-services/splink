@@ -10,7 +10,7 @@ def _prior_record(settings_obj):
     rec["column_name"] = "Prior"
     rec["label_for_charts"] = "Starting match weight (prior)"
     rec["sql_condition"] = None
-    bf = prob_to_bayes_factor(settings_obj._proportion_of_matches)
+    bf = prob_to_bayes_factor(settings_obj._probability_two_random_records_match)
     rec["log2_bayes_factor"] = math.log2(bf)
     rec["bayes_factor"] = bf
     rec["comparison_vector_value"] = None

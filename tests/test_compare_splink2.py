@@ -100,7 +100,7 @@ def test_splink_2_em_fixed_u():
     )
 
     for r in compare.to_dict(orient="records"):
-        assert r["proportion_of_matches"] == pytest.approx(r["λ"])
+        assert r["probability_two_random_records_match"] == pytest.approx(r["λ"])
 
     # Check history of m probabilities is the same for a column
     expected_m_u_history = pd.read_csv("tests/datasets/splink2_m_u_history_fixed_u.csv")
@@ -145,7 +145,7 @@ def test_splink_2_em_no_fix():
     )
 
     for r in compare.to_dict(orient="records"):
-        assert r["proportion_of_matches"] == pytest.approx(r["λ"])
+        assert r["probability_two_random_records_match"] == pytest.approx(r["λ"])
 
     # Check history of m probabilities is the same for a column
     expected_m_u_history = pd.read_csv("tests/datasets/splink2_m_u_history_no_fix.csv")
@@ -179,7 +179,7 @@ def test_lambda():
     bf_for_first_name = 0.9 / 0.1
     glo = bayes_factor_to_prob(prob_to_bayes_factor(0.3) / bf_for_first_name)
 
-    settings_dict["proportion_of_matches"] = glo
+    settings_dict["probability_two_random_records_match"] = glo
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -226,7 +226,7 @@ def test_lambda():
             cl.m_probability = 0.1
             cl.u_probability = 0.9
 
-    linker._settings_obj._proportion_of_matches = glo
+    linker._settings_obj._probability_two_random_records_match = glo
 
     training_session = linker.estimate_parameters_using_expectation_maximisation(
         "l.first_name = r.first_name and l.surname = r.surname",
@@ -237,7 +237,8 @@ def test_lambda():
 
     # from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 
-    # The model that blocks on DOB has proportion of matches of 0.588699831556479
+    # The model that blocks on DOB has probability_two_random_records_match of
+    # 0.588699831556479
 
     # The bayes factor for dob is 1.6321361225311535
 
@@ -247,8 +248,9 @@ def test_lambda():
     # 0.46722294374907014  (same result from
     # _estimate_global_lambda_from_blocking_specific_lambda in Splink2)
 
-    # The model that blocks on surname and first name has a proportion of matches
-    # of 0.5876227881218818
+    # The model that blocks on surname and first name has a
+    # probability_two_random_records_match of 0.5876227881218818
+
     # The first name comparison column has bf of 71.435024344641
     # The surname comparison column has bf of 8.378038065716774
 
@@ -256,7 +258,7 @@ def test_lambda():
     # bf2 = 71.435024344641 * 8.378038065716774
     # p = bayes_factor_to_prob(bf/bf2)
     # p = 0.0023752954691593103
-    actual = linker._settings_obj._proportion_of_matches
+    actual = linker._settings_obj._probability_two_random_records_match
     expected = (1 / 0.46722294374907014 + 1 / 0.0023752954691593103) / 2
     assert actual == pytest.approx(1 / expected)
 
@@ -279,7 +281,7 @@ def test_lambda():
 # ELSE 0 END as gamma_first_name"""
 
 # settings = {
-#     "proportion_of_matches": 0.3,
+#     "probability_two_random_records_match": 0.3,
 #     "link_type": "dedupe_only",
 #     "blocking_rules": ["l.surname = r.surname"],
 #     "comparisons": [

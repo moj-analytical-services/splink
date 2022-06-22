@@ -25,7 +25,7 @@ def test_full_example_spark(df_spark, tmp_path):
     settings_dict["comparisons"][1] = cl.exact_match("surname")
 
     settings = {
-        "proportion_of_matches": 0.01,
+        "probability_two_random_records_match": 0.01,
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [
             "l.surname = r.surname",
@@ -81,8 +81,9 @@ def test_full_example_spark(df_spark, tmp_path):
     linker.cluster_studio_dashboard(
         df_predict,
         df_clusters,
-        [0, 4],
-        os.path.join(tmp_path, "test_cluster_studio.html"),
+        cluster_ids=[0, 4],
+        cluster_names=["cluster_0", "cluster_4"],
+        out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
     linker.unlinkables_chart(source_dataset="Testing")

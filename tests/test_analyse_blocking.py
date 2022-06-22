@@ -23,39 +23,45 @@ def test_analyse_blocking():
 
     linker = DuckDBLinker(df_1)
 
-    res = linker.compute_number_of_comparisons_generated_by_blocking_rule("1=1")
-    assert res["count_of_pairwise_comparisons_generated"] == 4 * 3 / 2
+    res = linker.compute_number_of_comparisons_generated_by_blocking_rule(
+        "1=1", unique_id_column_name="unique_id"
+    )
+    assert res == 4 * 3 / 2
 
     res = linker.compute_number_of_comparisons_generated_by_blocking_rule(
-        "l.first_name = r.first_name"
+        "l.first_name = r.first_name", unique_id_column_name="unique_id"
     )
-    assert res["count_of_pairwise_comparisons_generated"] == 1
+    assert res == 1
 
     linker = DuckDBLinker([df_1, df_2])
     res = linker.compute_number_of_comparisons_generated_by_blocking_rule(
-        "1=1", link_type="link_only"
+        "1=1", link_type="link_only", unique_id_column_name="unique_id"
     )
-    assert res["count_of_pairwise_comparisons_generated"] == 4 * 3
+    assert res == 4 * 3
 
     res = linker.compute_number_of_comparisons_generated_by_blocking_rule(
-        "l.surname = r.surname", link_type="link_only"
+        "l.surname = r.surname",
+        link_type="link_only",
+        unique_id_column_name="unique_id",
     )
-    assert res["count_of_pairwise_comparisons_generated"] == 1
+    assert res == 1
 
     res = linker.compute_number_of_comparisons_generated_by_blocking_rule(
-        "l.first_name = r.first_name", link_type="link_only"
+        "l.first_name = r.first_name",
+        link_type="link_only",
+        unique_id_column_name="unique_id",
     )
-    assert res["count_of_pairwise_comparisons_generated"] == 3
+    assert res == 3
 
     res = linker.compute_number_of_comparisons_generated_by_blocking_rule(
-        "1=1", link_type="link_and_dedupe"
+        "1=1", link_type="link_and_dedupe", unique_id_column_name="unique_id"
     )
     expected = 4 * 3 + (4 * 3 / 2) + (3 * 2 / 2)
-    assert res["count_of_pairwise_comparisons_generated"] == expected
+    assert res == expected
 
     rule = "l.first_name = r.first_name and l.surname = r.surname"
     res = linker.compute_number_of_comparisons_generated_by_blocking_rule(
-        rule, link_type="link_and_dedupe"
+        rule, link_type="link_and_dedupe", unique_id_column_name="unique_id"
     )
 
-    assert res["count_of_pairwise_comparisons_generated"] == 1
+    assert res == 1
