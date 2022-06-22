@@ -1243,12 +1243,12 @@ class Linker:
 
         The table of labels should be in the following format, and should be registered
         with your database:
-        ```
+
         |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
         |----------------|-----------|----------------|-----------|--------------------|
         |df_1            |1          |df_2            |2          |0.99                |
         |df_1            |1          |df_2            |3          |0.2                 |
-        ```
+
         Note that `source_dataset` and `unique_id` should correspond to the values
         specified in the settings dict, and the `input_table_aliases` passed to the
         `linker` object.
@@ -1409,7 +1409,7 @@ class Linker:
         return match_weight_histogram(recs, width=width, height=height)
 
     def waterfall_chart(self, records: List[dict], filter_nulls=True):
-        """Visualise how the final match weight is computed for  the provided pairwise
+        """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
 
         Records must be provided as a list of dictionaries. This would usually be
@@ -1441,8 +1441,8 @@ class Linker:
         """Generate an interactive chart displaying the proportion of records that
         are "unlinkable" for a given splink score threshold and model parameters.
 
-        These are records that, even when compared with themselves, do not contain
-        enough information to confirm a match.
+        Unlinkable records are those that, even when compared with themselves, do not
+        contain enough information to confirm a match.
 
         Args:
             x_col (str, optional): Column to use for the x-axis.
