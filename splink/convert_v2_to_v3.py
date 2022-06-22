@@ -154,7 +154,6 @@ def convert_settings_from_v2_to_v3(settings_dict_v2: dict) -> dict:
 
     copy_keys = [
         "link_type",
-        "proportion_of_matches",
         "max_iterations",
         "em_convergence",
         "unique_id_column_name",
@@ -167,6 +166,10 @@ def convert_settings_from_v2_to_v3(settings_dict_v2: dict) -> dict:
     for k in copy_keys:
         if k in settings_dict_v2:
             settings_3[k] = settings_dict_v2[k]
+    if "proportion_of_matches" in settings_dict_v2:
+        settings_3["probability_two_random_records_match"] = settings_dict_v2[
+            "proportion_of_matches"
+        ]
 
     comparisons_3 = []
     for comparison_column in settings_dict_v2["comparison_columns"]:
@@ -195,7 +198,7 @@ def convert_settings_from_v2_to_v3(settings_dict_v2: dict) -> dict:
 
     settings_3["comparisons"] = comparisons_3
 
-    logger.warn(
+    logger.warning(
         "Settings converted from v2 to v3.  This has been done on a 'best "
         "efforts' basis.  Please check the settings to ensure they are correct."
     )

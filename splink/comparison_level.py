@@ -85,33 +85,31 @@ def _default_u_values(num_levels):
 
 class ComparisonLevel:
     """Each ComparisonLevel defines a gradation (category) of similarity within a
-    Comparison.
+        `Comparison`.
 
-    For example, a Comparison that uses the first_name and surname columns may define
-    three `ComparisonLevel`s:
-        An exact match on first name and surname
-        First name and surname have a JaroWinkler score of above 0.95
-        All other comparisons
+        For example, a `Comparison` that uses the first_name and surname columns may
+        define three `ComparisonLevel`s:
+            An exact match on first name and surname
+            First name and surname have a JaroWinkler score of above 0.95
+            All other comparisons
 
-    The method used to assess similarity will depend on the type of data -
-    for instance, the method used to assess similarity of a company's turnover would
-    be different to the method used to assess the similarity of a person's first name.
+        The method used to assess similarity will depend on the type of data - for
+        instance, the method used to assess similarity of a company's turnover would be
+        different to the method used to assess the similarity of a person's first name.
 
-
-    ??? note
-                To summarise:
-
-                ```Data Linking Model
-                ├─-- Comparison: Name
-                │    ├─-- ComparisonLevel: Exact match on first_name and surname
-                │    ├─-- ComparisonLevel: first_name and surname have JaroWinkler > 0.95
-                │    ├─-- ComparisonLevel: All other
-                ├─-- Comparison: Date of birth
-                │    ├─-- ComparisonLevel: Exact match
-                │    ├─-- ComparisonLevel: One character difference
-                │    ├─-- ComparisonLevel: All other
-                ├─-- etc.```
-
+        To summarise:
+    ```
+        Data Linking Model
+        ├─-- Comparison: Name
+        │    ├─-- ComparisonLevel: Exact match on first_name and surname
+        │    ├─-- ComparisonLevel: first_name and surname have JaroWinkler > 0.95
+        │    ├─-- ComparisonLevel: All other
+        ├─-- Comparison: Date of birth
+        │    ├─-- ComparisonLevel: Exact match
+        │    ├─-- ComparisonLevel: One character difference
+        │    ├─-- ComparisonLevel: All other
+        ├─-- etc.
+    ```
     """
 
     def __init__(
