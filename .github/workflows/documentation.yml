@@ -3,10 +3,8 @@ name: docswithmkdoc
 on:
   push:
     branches:
-      - splink3docs
-    paths:
-      - "**.md"
-      - "mkdocs.yml"
+      - splink3
+
   workflow_dispatch:
 
 jobs:
