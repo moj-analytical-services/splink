@@ -971,8 +971,8 @@ class Linker:
         """Given one or more records, find records in the input dataset(s) which match
         and return in order of the splink prediction score.
 
-        i.e. this effectively provides a way of searching the input datasets
-        for a given record
+        This effectively provides a way of searching the input datasets
+        for given record(s)
 
         Args:
             records (List[dict]): Input search record(s).
@@ -983,10 +983,24 @@ class Linker:
             match_weight_threshold (int, optional): Return matches with a match weight
                 above this threshold. Defaults to -4.
 
+        Examples:
+            >>> linker = DuckDBLinker(df)
+            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> # Pre-compute tf tables for any tables with
+            >>> # term frequency adjustments
+            >>> linker.compute_tf_table("first_name")
+            >>> record = {'unique_id': 1,
+            >>>     'first_name': "John",
+            >>>     'surname': "Smith",
+            >>>     'dob': "1971-05-24",
+            >>>     'city': "London",
+            >>>     'email': "john@smith.net"
+            >>>     }
+            >>> df = linker.find_matches_to_new_records([record], blocking_rules=[])
+
+
         Returns:
-            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
-                represents a table materialised in the database. Methods on the
-                SplinkDataFrame allow you to access the underlying data.
+            SplinkDataFrame: The pairwise comparisons.
         """
 
         original_blocking_rules = (
@@ -1033,13 +1047,19 @@ class Linker:
         return predictions
 
     def compare_two_records(self, record_1: dict, record_2: dict):
-        """Use the linkage model to compare and score two records
+        """Use the linkage model to compare and score a pairwise record comparison
+        based on the two input records provided
 
         Args:
             record_1 (dict): dictionary representing the first record.  Columns names
                 and data types must be the same as the columns in the settings object
             record_2 (dict): dictionary representing the second record.  Columns names
                 and data types must be the same as the columns in the settings object
+
+        Examples:
+            >>> linker = DuckDBLinker(df)
+            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.compare_two_records(record_left, record_right)
 
         Returns:
             SplinkDataFrame: Pairwise comparison with scored prediction
@@ -1089,12 +1109,12 @@ class Linker:
         return predictions
 
     def _self_link(self) -> SplinkDataFrame:
-        """Use the linkage model to compare and score all records in our input df,
-            with themselves.
+        """Use the linkage model to compare and score all records in our input df with
+            themselves.
 
         Returns:
-            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons for your
-                input records.
+            SplinkDataFrame: Scored pairwise comparisons of the input records to
+                themselves.
         """
 
         original_blocking_rules = (
