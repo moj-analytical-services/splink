@@ -139,6 +139,7 @@ class AthenaLinker(Linker):
         settings_dict: dict = None,
         input_table_aliases: Union[str, list] = None,
         set_up_basic_logging=True,
+        output_filepath: str = "splink_warehouse",
     ):
 
         """An athena backend for our main linker class. This funnels our generated SQL
@@ -162,8 +163,10 @@ class AthenaLinker(Linker):
                 a pandas df or a list of dfs are used as inputs. None by default, which
                 saves your tables under a custom name: '__splink__input_table_{n}';
                 where n is the list index.
-            set_up_basic_logging (bool): Set up basic logging for splink. This logs ...
-                True by default.
+            set_up_basic_logging (bool, optional): If true, sets ups up basic logging
+                so that Splink sends messages at INFO level to stdout. Defaults to True.
+            output_filepath (str, optional): Inside of your selected output bucket,
+                where to write output files to. Defaults to "splink_warehouse".
 
         Examples:
             >>> # Creating a database in athena and writing to it
@@ -213,6 +216,7 @@ class AthenaLinker(Linker):
         self.boto_utils = boto_utils(
             boto3_session,
             output_bucket,
+            output_filepath,
         )
         self.ctas_query_info = {}
 

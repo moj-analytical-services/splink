@@ -8,6 +8,7 @@ class boto_utils:
         self,
         boto3_session: boto3.session.Session,
         output_bucket: str,
+        output_filepath: str,
     ):
 
         if not type(boto3_session) == boto3.session.Session:
@@ -18,7 +19,7 @@ class boto_utils:
         self.session_id = uuid4().hex[:10]
 
         # specify some additional prefixes
-        self.s3_output_name_prefix = "splink_warehouse"
+        self.s3_output_name_prefix = output_filepath
         self.s3_output = self.get_table_dir()
 
     def get_table_dir(self):
