@@ -105,10 +105,10 @@ class AthenaLinker(Linker):
     def __init__(
         self,
         input_table_or_tables,
-        settings_dict: dict = None,
         boto3_session: boto3.session.Session,
         output_database: str,
         output_bucket: str,
+        settings_dict: dict = None,
         input_table_aliases: Union[str, list] = None,
         set_up_basic_logging=True,
     ):
