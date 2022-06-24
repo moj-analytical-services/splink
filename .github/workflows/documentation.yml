@@ -18,6 +18,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: splink3
       - uses: actions/checkout@v3
         with:
           repository: "moj-analytical-services/splink_demos"
