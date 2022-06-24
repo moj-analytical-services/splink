@@ -57,7 +57,6 @@ markdown_extensions:
 nav:
   - Home: "splink/README.md"
   - User Guide: "userguide.md"
-  - Changelog: "CHANGELOG.md"
   - API Reference:
       - Linker API: "linker.md"
       - EM Training Session API: "em_training_session.md"
