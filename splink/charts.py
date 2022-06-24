@@ -87,7 +87,7 @@ def save_offline_chart(
 
     fmt_dict["mychart"] = json.dumps(chart_dict)
 
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(template.format(**fmt_dict))
 
     if print_msg:
