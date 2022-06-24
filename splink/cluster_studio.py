@@ -257,5 +257,5 @@ def render_splink_cluster_studio_html(
             f"The path {out_path} already exists. Please provide a different path."
         )
     else:
-        with open(out_path, "w") as html_file:
+        with open(out_path, "w", encoding="utf-8") as html_file:
             html_file.write(rendered)

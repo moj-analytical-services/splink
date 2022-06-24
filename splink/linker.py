@@ -1719,7 +1719,7 @@ class Linker:
                     "path or set overwrite=True"
                 )
 
-            with open(out_path, "w") as f:
+            with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(model_dict, f, indent=4)
 
     def load_settings_from_json(self, in_path: str):
