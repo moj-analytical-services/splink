@@ -55,7 +55,7 @@ markdown_extensions:
   - toc:
       permalink: True
 nav:
-  - Home: "splink/README.md"
+  - Home: "README.md"
   - User Guide: "userguide.md"
   - API Reference:
       - Linker API: "linker.md"
