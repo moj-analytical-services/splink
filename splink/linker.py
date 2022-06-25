@@ -1,11 +1,10 @@
 import logging
+from typing import List, Union
 from copy import copy, deepcopy
 from statistics import median
 import hashlib
 import os
 import json
-
-from typing import Union, List
 
 from splink.input_column import InputColumn
 
@@ -63,6 +62,9 @@ from .unique_id_concat import (
 )
 
 from .cluster_studio import render_splink_cluster_studio_html
+
+from .comparison_level import ComparisonLevel
+from .comparison import Comparison
 
 logger = logging.getLogger(__name__)
 
@@ -491,11 +493,21 @@ class Linker:
                         "only a single input table",
                     )
 
-    def _populate_proportion_of_matches_from_trained_values(self):
+    def _populate_probability_two_random_records_match_from_trained_values(self):
 
-        prop_matches_estimates = []
+        recip_prop_matches_estimates = []
+
+        logger.log(
+            15,
+            (
+                "---- Using training sessions to compute "
+                "probability two random records match ----"
+            ),
+        )
         for em_training_session in self._em_training_sessions:
-            training_lambda = em_training_session._settings_obj._proportion_of_matches
+            training_lambda = (
+                em_training_session._settings_obj._probability_two_random_records_match
+            )
             training_lambda_bf = prob_to_bayes_factor(training_lambda)
             reverse_levels = (
                 em_training_session._comparison_levels_to_reverse_blocking_rule
@@ -504,7 +516,7 @@ class Linker:
             logger.log(
                 15,
                 "\n"
-                f"Proportion of matches from trained model blocking on "
+                f"Probability two random records match from trained model blocking on "
                 f"{em_training_session._blocking_rule_for_training}: "
                 f"{training_lambda:,.3f}",
             )
@@ -533,19 +545,29 @@ class Linker:
 
                 training_lambda_bf = training_lambda_bf / bf
 
+                as_prob = bayes_factor_to_prob(training_lambda_bf)
+
                 logger.log(
                     15,
-                    "This estimate of proportion of matches now: "
-                    f" {bayes_factor_to_prob(training_lambda_bf):,.3f}",
+                    (
+                        "This estimate of probability two random records match now: "
+                        f" {as_prob:,.3f} "
+                        f"with reciprocal {(1/as_prob):,.3f}"
+                    ),
                 )
+            logger.log(15, "\n---------")
             p = bayes_factor_to_prob(training_lambda_bf)
-            prop_matches_estimates.append(p)
+            recip_prop_matches_estimates.append(1 / p)
 
-        self._settings_obj._proportion_of_matches = median(prop_matches_estimates)
+        prop_matches_estimate = 1 / median(recip_prop_matches_estimates)
+
+        self._settings_obj._probability_two_random_records_match = prop_matches_estimate
         logger.log(
             15,
             "\nMedian of prop of matches estimates: "
-            f"{self._settings_obj._proportion_of_matches:,.3f}",
+            f"{self._settings_obj._probability_two_random_records_match:,.3f} "
+            "reciprocal "
+            f"{1/self._settings_obj._probability_two_random_records_match:,.3f}",
         )
 
     def _records_to_table(records, as_table_name):
@@ -605,6 +627,11 @@ class Linker:
         """Initialise settings for the linker.  To be used if settings were
         not passed to the linker on creation.
 
+        Examples:
+            >>> linker = DuckDBLinker(df, connection=":memory:")
+            >>> linker.profile_columns("first_name", "surname")
+            >>> linker.initialise_settings(settings_dict)
+
         Args:
             settings_dict (dict): A Splink settings dictionary
         """
@@ -616,7 +643,24 @@ class Linker:
         """Compute a term frequency table for a given column and persist to the database
 
         This method is useful if you want to pre-compute term frequency tables e.g.
-        so that real time linkage executes faster.
+        so that real time linkage executes faster, or so that you can estimate
+        various models without having to recompute term frequency tables each time
+
+        Examples:
+            >>> # Example 1: Real time linkage
+            >>> linker = DuckDBLinker(df, connection=":memory:")
+            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.compute_tf_table("surname")
+            >>> linker.compare_two_records(record_left, record_right)
+
+            >>> # Example 2: Pre-computed term frequency tables in Spark
+            >>> linker = SparkLinker(df)
+            >>> df_first_name_tf = linker.compute_tf_table("first_name")
+            >>> df_first_name_tf.write.parquet("folder/first_name_tf")
+            >>>
+            >>> # On subsequent data linking job, read this table rather than recompute
+            >>> df_first_name_tf = spark.read.parquet("folder/first_name_tf")
+            >>> df_first_name_tf.createOrReplaceTempView("__splink__df_tf_first_name")
 
         Args:
             column_name (str): The column name in the input table
@@ -632,15 +676,30 @@ class Linker:
         return self._execute_sql_pipeline(materialise_as_hash=False)
 
     def deterministic_link(self) -> SplinkDataFrame:
-        """Uses the blocking rules specified in the
-        `blocking_rules_to_generate_predictions` of the settings dictionary to
+        """Uses the blocking rules specified by
+        `blocking_rules_to_generate_predictions` in the settings dictionary to
         generate pairwise record comparisons.
 
+        This should be a list of blocking rules which are strict enough to generate only
+        true links.  Deterministic linkage, however, is likely to result in missed links
+        (false negatives).
 
-        `blocking_rules_to_generate_predictions` contains a list of blocking rules
-        which are strict enough to  generate only true links,  then the result
-        will be a dataframe of true links.  This methodology, however, is likely to
-        result in missed links (false negatives).
+        Examples:
+            >>> linker = DuckDBLinker(df, connection=":memory:")
+            >>>
+            >>> settings = {
+            >>>     "link_type": "dedupe_only",
+            >>>     "blocking_rules_to_generate_predictions": [
+            >>>         "l.first_name = r.first_name",
+            >>>         "l.surname = r.surname",
+            >>>     ],
+            >>>     "comparisons": []
+            >>> }
+            >>>
+            >>> from splink.duckdb.duckdb_linker import DuckDBLinker
+            >>>
+            >>> linker = DuckDBLinker(df, settings, connection=":memory:")
+            >>> df = linker.deterministic_link()
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
@@ -653,9 +712,10 @@ class Linker:
         return self._execute_sql_pipeline()
 
     def estimate_u_using_random_sampling(self, target_rows: int):
-        """Estimate the u parameters of the linkage model using random sampling i.e.
-        amongst non matching records, what proportion of record comparisons fall
-        into each comparison level.
+        """Estimate the u parameters of the linkage model using random sampling.
+
+        The u parameters represent the proportion of record comparisons that fall
+        into each comparison level amongst truly non-matching records.
 
         This procedure takes a sample of the data and generates the cartesian
         product of pairwise record comparisons amongst the sampled records.
@@ -667,11 +727,12 @@ class Linker:
             target_rows (int): The target number of pairwise record comparisons from
             which to derive the u values.  Larger will give more accurate estimates
             but lead to longer runtimes.  In our experience at least 1e9 (one billion)
-            gives best results. 1e7 (ten million) is often adequate for rapid model
-            development.
+            gives best results but can take a long time to compute. 1e7 (ten million)
+            is often adequate whilst testing different model specifications, before
+            the final model is estimated.
 
         Examples:
-            >>> linker.estimate_u_using_random_sampling(1e9)
+            >>> linker.estimate_u_using_random_sampling(1e8)
 
         Returns:
             Updates the estimated u parameters within the linker object
@@ -686,6 +747,9 @@ class Linker:
     def estimate_m_from_label_column(self, label_colname: str):
         """Estimate the m parameters of the linkage model from a label (ground truth)
         column in the input dataframe(s).
+
+        The m parameters represent the proportion of record comparisons that fall
+        into each comparison level amongst truly matching records.
 
         The ground truth column is used to generate pairwise record comparisons
         which are then assumed to be matches.
@@ -720,20 +784,22 @@ class Linker:
     def estimate_parameters_using_expectation_maximisation(
         self,
         blocking_rule: str,
-        comparisons_to_deactivate: list = None,
-        comparison_levels_to_reverse_blocking_rule: list = None,
-        fix_proportion_of_matches: bool = False,
+        comparisons_to_deactivate: List[Union[str, Comparison]] = None,
+        comparison_levels_to_reverse_blocking_rule: List[ComparisonLevel] = None,
+        fix_probability_two_random_records_match: bool = False,
         fix_m_probabilities=False,
         fix_u_probabilities=True,
     ) -> EMTrainingSession:
-        """Estimate the parameters of the linkage model using expectation maximisation
+        """Estimate the parameters of the linkage model using expectation maximisation.
 
-        By default, the m probabilities are estimate, but not the u probabilities,
+        By default, the m probabilities are estimated, but not the u probabilities,
         because good estiamtes for the u probabilities can be obtained from
-        `linker.estimate_u_using_random_sampling()`.  This can be controlled using the
-        `fix_u_probabilities` parameter.
+        `linker.estimate_u_using_random_sampling()`.  You can change this by setting
+        `fix_u_probabilities` to False.
 
         The blocking rule provided is used to generate pairwise record comparisons.
+        Usually, this should be a blocking rule that results in a dataframe where
+        matches are between about 1% and 99% of the comparisons.
 
         By default, m parameters are estimated for all comparisons except those which
         are included in the blocking rule.
@@ -742,14 +808,32 @@ class Linker:
         parameter esimates will be made for all comparison except those which use
         `first_name` in their sql_condition
 
-        By default, the proportion of matches is estimated for the blocked data, and
-        then the m and u parameters for the columns specified in the blocking rules are
-        used to estiamte the global proportion of matches.
+        By default, the probability two random records match is estimated for the
+        blocked data, and then the m and u parameters for the columns specified in the
+        blocking rules are used to estiamte the global probability two random records
+        match.
 
         To control which comparisons should have their parameter estimated, and the
-        process of 'reversing out' the global proportion of matches, the user
-        may specify `comparisons_to_deactivate` and
-        `comparison_levels_to_reverse_blocking_rule`.
+        process of 'reversing out' the global probability two random records match, the
+        user may specify `comparisons_to_deactivate` and
+        `comparison_levels_to_reverse_blocking_rule`.   This is useful, for example
+        if you block on the dmetaphone of a column but match on the original column.
+
+        Examples:
+            >>> # Default behaviour
+            >>> br_training = "l.first_name = r.first_name and l.dob = r.dob"
+            >>> linker.estimate_parameters_using_expectation_maximisation(br_training)
+
+            >>> # Specify which comparisons to deactivate
+            >>> br_training = "l.dmeta_first_name = r.dmeta_first_name"
+            >>> settings_obj = linker._settings_obj
+            >>> comp = settings_obj._get_comparison_by_output_column_name("first_name")
+            >>> dmeta_level = comp._get_comparison_level_by_comparison_vector_value(1)
+            >>> linker.estimate_parameters_using_expectation_maximisation(
+            >>>     br_training,
+            >>>     comparisons_to_deactivate=["first_name"],
+            >>>     comparison_levels_to_reverse_blocking_rule=[dmeta_level],
+            >>> )
 
         Args:
             blocking_rule (str): The blocking rule used to generate pairwise record
@@ -758,15 +842,19 @@ class Linker:
                 analyse the blocking rule provided and estimate the m parameters for
                 all comaprisons except those included in the blocking rule.  If
                 comparisons_to_deactivate are provided, spink will instead
-                estimate m parameters for all comparison except those specified by name
-                in the comparisons_to_deactivate list.  Defaults to None.
+                estimate m parameters for all comparison except those specified
+                in the comparisons_to_deactivate list.  This list can either contain
+                the output_column_name of the Comparison as a string, or Comparison
+                objects.  Defaults to None.
             comparison_levels_to_reverse_blocking_rule (list, optional): By default,
                 splink will analyse the blocking rule provided and adjust the
-                global proportion of matches to account for the matches specified
-                in the blocking rule. If provided, this argument will overrule
-                this default behaviour. Defaults to None.
-            fix_proportion_of_matches (bool, optional): If True, do not update the
-                proportion of matches after each iteration. Defaults to False.
+                global probability two random records match to account for the matches
+                specified in the blocking rule. If provided, this argument will overrule
+                this default behaviour. The user must provide a list of ComparisonLevel
+                objects.  Defaults to None.
+            fix_probability_two_random_records_match (bool, optional): If True, do not
+                update the probability two random records match after each iteration.
+                Defaults to False.
             fix_m_probabilities (bool, optional): If True, do not update the m
                 probabilities after each iteration. Defaults to False.
             fix_u_probabilities (bool, optional): If True, do not update the u
@@ -783,21 +871,42 @@ class Linker:
         """
 
         self._initialise_df_concat_with_tf(materialise=True)
+
+        if comparisons_to_deactivate:
+            # If user provided a string, convert to Comparison object
+            comparisons_to_deactivate = [
+                self._settings_obj._get_comparison_by_output_column_name(n)
+                if isinstance(n, str)
+                else n
+                for n in comparisons_to_deactivate
+            ]
+            if comparison_levels_to_reverse_blocking_rule is None:
+                logger.warning(
+                    "\nWARNING: \n"
+                    "You have provided comparisons_to_deactivate but not "
+                    "comparison_levels_to_reverse_blocking_rule.\n"
+                    "If comparisons_to_deactivate is provided, then "
+                    "you usually need to provide corresponding "
+                    "comparison_levels_to_reverse_blocking_rule. "
+                    "because each comparison to deactivate if effectively treated "
+                    "as an exact match."
+                )
+
         em_training_session = EMTrainingSession(
             self,
             blocking_rule,
             fix_u_probabilities=fix_u_probabilities,
             fix_m_probabilities=fix_m_probabilities,
-            fix_proportion_of_matches=fix_proportion_of_matches,
+            fix_probability_two_random_records_match=fix_probability_two_random_records_match,  # noqa 501
             comparisons_to_deactivate=comparisons_to_deactivate,
-            comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa
+            comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa 501
         )
 
         em_training_session._train()
 
         self._populate_m_u_from_trained_values()
 
-        self._populate_proportion_of_matches_from_trained_values()
+        self._populate_probability_two_random_records_match_from_trained_values()
 
         self._settings_obj._columns_without_estimated_parameters_message()
 
@@ -822,6 +931,12 @@ class Linker:
             threshold_match_weight (float, optional): If specified,
                 filter the results to include only pairwise comparisons with a
                 match_weight above this threshold. Defaults to None.
+
+        Examples:
+            >>> linker = DuckDBLinker(df, connection=":memory:")
+            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> df = linker.predict(threshold_match_probability=0.95)
+            >>> df.as_pandas_dataframe(limit=5)
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
@@ -858,8 +973,8 @@ class Linker:
         """Given one or more records, find records in the input dataset(s) which match
         and return in order of the splink prediction score.
 
-        i.e. this effectively provides a way of searching the input datasets
-        for a given record
+        This effectively provides a way of searching the input datasets
+        for given record(s)
 
         Args:
             records (List[dict]): Input search record(s).
@@ -870,10 +985,24 @@ class Linker:
             match_weight_threshold (int, optional): Return matches with a match weight
                 above this threshold. Defaults to -4.
 
+        Examples:
+            >>> linker = DuckDBLinker(df)
+            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> # Pre-compute tf tables for any tables with
+            >>> # term frequency adjustments
+            >>> linker.compute_tf_table("first_name")
+            >>> record = {'unique_id': 1,
+            >>>     'first_name': "John",
+            >>>     'surname': "Smith",
+            >>>     'dob': "1971-05-24",
+            >>>     'city': "London",
+            >>>     'email': "john@smith.net"
+            >>>     }
+            >>> df = linker.find_matches_to_new_records([record], blocking_rules=[])
+
+
         Returns:
-            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
-                represents a table materialised in the database. Methods on the
-                SplinkDataFrame allow you to access the underlying data.
+            SplinkDataFrame: The pairwise comparisons.
         """
 
         original_blocking_rules = (
@@ -920,13 +1049,19 @@ class Linker:
         return predictions
 
     def compare_two_records(self, record_1: dict, record_2: dict):
-        """Use the linkage model to compare and score two records
+        """Use the linkage model to compare and score a pairwise record comparison
+        based on the two input records provided
 
         Args:
             record_1 (dict): dictionary representing the first record.  Columns names
                 and data types must be the same as the columns in the settings object
             record_2 (dict): dictionary representing the second record.  Columns names
                 and data types must be the same as the columns in the settings object
+
+        Examples:
+            >>> linker = DuckDBLinker(df)
+            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.compare_two_records(record_left, record_right)
 
         Returns:
             SplinkDataFrame: Pairwise comparison with scored prediction
@@ -958,6 +1093,13 @@ class Linker:
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
 
+        sql = compute_comparison_vector_values_sql(self._settings_obj)
+        self._enqueue_sql(sql, "__splink__df_comparison_vectors")
+
+        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+
         predictions = self._execute_sql_pipeline(use_cache=False)
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
@@ -969,12 +1111,12 @@ class Linker:
         return predictions
 
     def _self_link(self) -> SplinkDataFrame:
-        """Use the linkage model to compare and score all records in our input df,
-            with themselves.
+        """Use the linkage model to compare and score all records in our input df with
+            themselves.
 
         Returns:
-            SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons for your
-                input records.
+            SplinkDataFrame: Scored pairwise comparisons of the input records to
+                themselves.
         """
 
         original_blocking_rules = (
@@ -1083,7 +1225,9 @@ class Linker:
 
         self._names_of_tables_created_by_splink = tables_remaining
 
-    def profile_columns(self, column_expressions, top_n=10, bottom_n=10):
+    def profile_columns(
+        self, column_expressions: Union[str, List[str]], top_n=10, bottom_n=10
+    ):
 
         return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
 
@@ -1101,12 +1245,12 @@ class Linker:
 
         The table of labels should be in the following format, and should be registered
         with your database:
-        ```
+
         |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
         |----------------|-----------|----------------|-----------|--------------------|
         |df_1            |1          |df_2            |2          |0.99                |
         |df_1            |1          |df_2            |3          |0.2                 |
-        ```
+
         Note that `source_dataset` and `unique_id` should correspond to the values
         specified in the settings dict, and the `input_table_aliases` passed to the
         `linker` object.
@@ -1267,7 +1411,7 @@ class Linker:
         return match_weight_histogram(recs, width=width, height=height)
 
     def waterfall_chart(self, records: List[dict], filter_nulls=True):
-        """Visualise how the final match weight is computed for  the provided pairwise
+        """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
 
         Records must be provided as a list of dictionaries. This would usually be
@@ -1299,8 +1443,8 @@ class Linker:
         """Generate an interactive chart displaying the proportion of records that
         are "unlinkable" for a given splink score threshold and model parameters.
 
-        These are records that, even when compared with themselves, do not contain
-        enough information to confirm a match.
+        Unlinkable records are those that, even when compared with themselves, do not
+        contain enough information to confirm a match.
 
         Args:
             x_col (str, optional): Column to use for the x-axis.
@@ -1310,15 +1454,15 @@ class Linker:
             as_dict (bool, optional): If True, return a dict version of the chart.
 
         Examples:
-            >>> # For the simplest code pipeline, simply load a pre-trained model
+            >>> # For the simplest code pipeline, load a pre-trained model
             >>> # and run this against the test data.
             >>> df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-            >>> linker = DuckDBLinker(df, settings)
+            >>> linker = DuckDBLinker(df)
+            >>> linker.load_settings_from_json("saved_settings.json")
             >>> linker.unlinkables_chart()
             >>>
             >>> # For more complex code pipelines, you can run an entire pipeline
-            >>> # that calculates your m and u values, before `unlinkables_chart().
-            >>> # Please note,
+            >>> # that estimates your m and u values, before `unlinkables_chart().
         """
 
         # Link our initial df on itself and calculate the % of unlinkable entries
@@ -1347,7 +1491,7 @@ class Linker:
 
         Examples:
             >>> df_predictions = linker.predict()
-            >>> linker.splink_comparison_viewer(df_predictions, "scv.html", True,2)
+            >>> linker.comparison_viewer_dashboard(df_predictions, "scv.html", True, 2)
             >>>
             >>> # Optionally, in Jupyter, you can display the results inline
             >>> # Otherwise you can just load the html file in your browser
@@ -1382,6 +1526,12 @@ class Linker:
         first_name, this chart will enable easy comparison of the different
         estimates
 
+        Args:
+            include_m (bool, optional): Show different estimates of m values. Defaults
+                to True.
+            include_u (bool, optional): Show different estimates of u values. Defaults
+                to True.
+
         """
         records = self._settings_obj._parameter_estimates_as_records
 
@@ -1404,13 +1554,20 @@ class Linker:
             input_dataset (str, optional): Name of one of the input tables in the
             database.  If provided, missingness will be computed for this table alone.
             Defaults to None.
+
+        Examples:
+            >>> linker.missingness_chart()
+
         """
         records = missingness_data(self, input_dataset)
         return missingness_chart(records, input_dataset)
 
     def compute_number_of_comparisons_generated_by_blocking_rule(
-        self, blocking_rule: str, link_type: str = None
-    ) -> dict:
+        self,
+        blocking_rule: str,
+        link_type: str = None,
+        unique_id_column_name: str = None,
+    ) -> int:
         """Compute the number of pairwise record comparisons that would be generated by
         a blocking rule
 
@@ -1419,25 +1576,31 @@ class Linker:
             link_type (str, optional): The link type.  This is needed only if the
                 linker has not yet been provided with a settings dictionary.  Defaults
                 to None.
+            unique_id_column_name (str, optional):  This is needed only if the
+                linker has not yet been provided with a settings dictionary.  Defaults
+                to None.
 
         Examples:
             >>> br = "l.first_name = r.first_name"
             >>> linker.compute_number_of_comparisons_generated_by_blocking_rule(br)
+            19387
+            >>> br = "l.name = r.name and substr(l.dob,1,4) = substr(r.dob,1,4)"
+            >>> linker.compute_number_of_comparisons_generated_by_blocking_rule(br)
+            394
 
         Returns:
-            dict: A dictionray containing the number of comparisons generated by the
-                blocking rule
+            int: The number of comparisons generated by the blocking rule
         """
 
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
 
         sql = number_of_comparisons_generated_by_blocking_rule_sql(
-            self, blocking_rule, link_type
+            self, blocking_rule, link_type, unique_id_column_name
         )
         self._enqueue_sql(sql, "__splink__analyse_blocking_rule")
         res = self._execute_sql_pipeline().as_record_dict()[0]
-        return res
+        return res["count_of_pairwise_comparisons_generated"]
 
     def match_weights_chart(self):
         """Display a chart of the (partial) match weights of the linkage model
@@ -1480,9 +1643,12 @@ class Linker:
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
-        cluster_ids: list,
         out_path: str,
-        overwrite=False,
+        sampling_method="random",
+        sample_size: int = 10,
+        cluster_ids: list = None,
+        cluster_names: list = None,
+        overwrite: bool = False,
     ):
         """Generate an interactive html visualization of the predicted cluster and
         save to `out_path`.
@@ -1491,11 +1657,19 @@ class Linker:
             df_predict (SplinkDataFrame): The outputs of `linker.predict()`
             df_clustered (SplinkDataFrame): The outputs of
                 `linker.cluster_pairwise_predictions_at_threshold()`
-            cluster_ids (list): The IDs of the clusters that will be displayed in the
-                dashboard
             out_path (str): The path (including filename) to save the html file to.
+            sampling_method (str, optional): `random` or `by_cluster_size`. Defaults to
+                `random`.
+            sample_size (int, optional): Number of clusters to show in the dahboard.
+                Defaults to 10.
+            cluster_ids (list): The IDs of the clusters that will be displayed in the
+                dashboard.  If provided, ignore the `sampling_method` and `sample_size`
+                arguments. Defaults to None.
             overwrite (bool, optional): Overwrite the html file if it already exists?
                 Defaults to False.
+            cluster_names (list, optional): If provided, the dashboard will display
+                these names in the selection box. Ony works in conjunction with
+                `cluster_ids`.  Defaults to None.
 
         Examples:
             >>> df_p = linker.predict()
@@ -1513,7 +1687,15 @@ class Linker:
         self._raise_error_if_necessary_waterfall_columns_not_computed()
 
         return render_splink_cluster_studio_html(
-            self, df_predict, df_clustered, cluster_ids, out_path, overwrite=overwrite
+            self,
+            df_predict,
+            df_clustered,
+            out_path,
+            sampling_method=sampling_method,
+            sample_size=sample_size,
+            cluster_ids=cluster_ids,
+            overwrite=overwrite,
+            cluster_names=cluster_names,
         )
 
     def save_settings_to_json(self, out_path: str, overwrite=False) -> dict:
@@ -1539,7 +1721,7 @@ class Linker:
                     "path or set overwrite=True"
                 )
 
-            with open(out_path, "w") as f:
+            with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(model_dict, f, indent=4)
 
     def load_settings_from_json(self, in_path: str):

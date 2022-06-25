@@ -12,14 +12,14 @@
       "examples": ["link_only", "link_and_dedupe"],
       "enum": ["dedupe_only", "link_only", "link_and_dedupe"]
     },
-    "proportion_of_matches": {
+    "probability_two_random_records_match": {
       "type": "number",
-      "title": "The proportion of record comparisons thought to be matches",
+      "title": "The probability that two records chosen at random (with no blocking) are a match.  For example, if there are a million input records and each has on average 1 match, then this value should be 1/1,000,000.",
       "description": "This provides the initial value (prior) from which the EM algorithm will start iterating",
       "default": 0.001,
       "minimum": 0,
       "maximum": 1,
-      "examples": [0.3, 0.1, 0.9]
+      "examples": [0.0001, 0.006, 0.9]
     },
     "em_convergence": {
       "type": "number",

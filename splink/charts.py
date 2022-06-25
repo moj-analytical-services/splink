@@ -87,7 +87,7 @@ def save_offline_chart(
 
     fmt_dict["mychart"] = json.dumps(chart_dict)
 
-    with open(filename, "w") as f:
+    with open(filename, "w", encoding="utf-8") as f:
         f.write(template.format(**fmt_dict))
 
     if print_msg:
@@ -135,14 +135,14 @@ def m_u_parameters_chart(records, as_dict=False):
         r
         for r in records
         if r["comparison_vector_value"] != -1
-        and r["comparison_name"] != "proportion_of_matches"
+        and r["comparison_name"] != "probability_two_random_records_match"
     ]
     chart["data"]["values"] = records
     return vegalite_or_json(chart, as_dict=as_dict)
 
 
-def proportion_of_matches_iteration_chart(records, as_dict=False):
-    chart_path = "proportion_of_matches_iteration.json"
+def probability_two_random_records_match_iteration_chart(records, as_dict=False):
+    chart_path = "probability_two_random_records_match_iteration.json"
     chart = load_chart_definition(chart_path)
 
     chart["data"]["values"] = records
@@ -174,7 +174,7 @@ def m_u_parameters_interactive_history_chart(records, as_dict=False):
         r
         for r in records
         if r["comparison_vector_value"] != -1
-        and r["comparison_name"] != "proportion_of_matches"
+        and r["comparison_name"] != "probability_two_random_records_match"
     ]
     chart["data"]["values"] = records
 

@@ -10,7 +10,7 @@ from .comparison_vector_values import compute_comparison_vector_values_sql
 from .charts import (
     m_u_parameters_interactive_history_chart,
     match_weights_interactive_history_chart,
-    proportion_of_matches_iteration_chart,
+    probability_two_random_records_match_iteration_chart,
 )
 from .comparison_level import ComparisonLevel
 from .comparison import Comparison
@@ -33,7 +33,7 @@ class EMTrainingSession:
         blocking_rule_for_training: str,
         fix_u_probabilities: bool = False,
         fix_m_probabilities: bool = False,
-        fix_proportion_of_matches: bool = False,
+        fix_probability_two_random_records_match: bool = False,
         comparisons_to_deactivate: List[Comparison] = None,
         comparison_levels_to_reverse_blocking_rule: List[ComparisonLevel] = None,
     ):
@@ -64,13 +64,15 @@ class EMTrainingSession:
                 blocking_rule_for_training
             )
 
-        self._settings_obj._proportion_of_matches = (
-            self._blocking_adjusted_proportion_of_matches
+        self._settings_obj._probability_two_random_records_match = (
+            self._blocking_adjusted_probability_two_random_records_match
         )
 
         self._training_fix_u_probabilities = fix_u_probabilities
         self._training_fix_m_probabilities = fix_m_probabilities
-        self._training_fix_proportion_of_matches = fix_proportion_of_matches
+        self._training_fix_probability_two_random_records_match = (
+            fix_probability_two_random_records_match
+        )
 
         # Remove comparison columns which are either 'used up' by the blocking rules
         # or alternatively, if the user has manually provided a list to remove,
@@ -141,6 +143,16 @@ class EMTrainingSession:
         sql = block_using_rules_sql(self._training_linker)
         self._training_linker._enqueue_sql(sql, "__splink__df_blocked")
 
+        is_spark = self._original_linker._settings_obj._sql_dialect == "spark"
+        break_after_blocking = getattr(
+            self._original_linker, "break_lineage_after_blocking", False
+        )
+        if is_spark and break_after_blocking:
+            df_blocked = self._training_linker._execute_sql_pipeline([])
+            sql = compute_comparison_vector_values_sql(self._settings_obj)
+            self._training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
+            return self._training_linker._execute_sql_pipeline([df_blocked])
+
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
         return self._training_linker._execute_sql_pipeline([])
@@ -204,13 +216,13 @@ class EMTrainingSession:
         self._settings_obj_history.append(deepcopy(self._settings_obj))
 
     @property
-    def _blocking_adjusted_proportion_of_matches(self):
+    def _blocking_adjusted_probability_two_random_records_match(self):
 
-        orig_prop_m = self._original_settings_obj._proportion_of_matches
+        orig_prop_m = self._original_settings_obj._probability_two_random_records_match
 
         adj_bayes_factor = prob_to_bayes_factor(orig_prop_m)
 
-        logger.log(15, f"Original proportion of matches: {orig_prop_m:.3f}")
+        logger.log(15, f"Original prob two random records match: {orig_prop_m:.3f}")
 
         comp_levels = self._comparison_levels_to_reverse_blocking_rule
         if not comp_levels:
@@ -223,14 +235,15 @@ class EMTrainingSession:
 
             logger.log(
                 15,
-                f"Applying comparison {cl.comparison._output_column_name}"
+                f"Increasing prob two random records match using "
+                f"{cl.comparison._output_column_name} - {cl._label_for_charts}"
                 f" using bayes factor {cl._bayes_factor:,.3f}",
             )
 
         adjusted_prop_m = bayes_factor_to_prob(adj_bayes_factor)
         logger.log(
             15,
-            f"\nProportion of matches adjusted for blocking on "
+            f"\nProb two random records match adjusted for blocking on "
             f"{self._blocking_rule_for_training}: "
             f"{adjusted_prop_m:.3f}",
         )
@@ -246,7 +259,9 @@ class EMTrainingSession:
 
             for r in records:
                 r["iteration"] = iteration
-                r["proportion_of_matches"] = self._settings_obj._proportion_of_matches
+                r[
+                    "probability_two_random_records_match"
+                ] = self._settings_obj._probability_two_random_records_match
 
             output_records.extend(records)
         return output_records
@@ -255,19 +270,19 @@ class EMTrainingSession:
     def _lambda_history_records(self):
         output_records = []
         for i, s in enumerate(self._settings_obj_history):
-            lam = s._proportion_of_matches
+            lam = s._probability_two_random_records_match
             r = {
-                "proportion_of_matches": lam,
-                "proportion_of_matches_reciprocal": 1 / lam,
+                "probability_two_random_records_match": lam,
+                "probability_two_random_records_match_reciprocal": 1 / lam,
                 "iteration": i,
             }
 
             output_records.append(r)
         return output_records
 
-    def proportion_of_matches_iteration_chart(self):
+    def probability_two_random_records_match_iteration_chart(self):
         records = self._lambda_history_records
-        return proportion_of_matches_iteration_chart(records)
+        return probability_two_random_records_match_iteration_chart(records)
 
     def match_weights_interactive_history_chart(self):
         records = self._iteration_history_records
@@ -282,10 +297,10 @@ class EMTrainingSession:
     def _max_change_message(self, max_change_dict):
         message = "Largest change in params was"
 
-        if max_change_dict["max_change_type"] == "proportion_of_matches":
+        if max_change_dict["max_change_type"] == "probability_two_random_records_match":
             message = (
                 f"{message} {max_change_dict['max_change_value']:,.3g} in "
-                "proportion_of_matches"
+                "probability_two_random_records_match"
             )
         else:
             cl = max_change_dict["current_comparison_level"]
@@ -341,19 +356,23 @@ class EMTrainingSession:
                     max_change_levels["max_change_value"] = change_value
                     max_change_levels["max_abs_change_value"] = abs(change_value)
 
-        change_proportion_of_matches = (
-            this_iteration._proportion_of_matches
-            - previous_iteration._proportion_of_matches
+        change_probability_two_random_records_match = (
+            this_iteration._probability_two_random_records_match
+            - previous_iteration._probability_two_random_records_match
         )
 
-        if abs(change_proportion_of_matches) > max_change:
-            max_change = abs(change_proportion_of_matches)
+        if abs(change_probability_two_random_records_match) > max_change:
+            max_change = abs(change_probability_two_random_records_match)
             max_change_levels["prev_comparison_level"] = None
             max_change_levels["current_comparison_level"] = None
-            max_change_levels["max_change_type"] = "proportion_of_matches"
-            max_change_levels["max_change_value"] = change_proportion_of_matches
+            max_change_levels[
+                "max_change_type"
+            ] = "probability_two_random_records_match"
+            max_change_levels[
+                "max_change_value"
+            ] = change_probability_two_random_records_match
             max_change_levels["max_abs_change_value"] = abs(
-                change_proportion_of_matches
+                change_probability_two_random_records_match
             )
 
         max_change_levels["message"] = self._max_change_message(max_change_levels)

@@ -19,18 +19,18 @@
         "title": "Estimated proportion of matches within block",
         "format": ".2f"
       },
-      "field": "proportion_of_matches"
+      "field": "probability_two_random_records_match"
     },
     "tooltip": [
       {
         "type": "quantitative",
-        "field": "proportion_of_matches",
+        "field": "probability_two_random_records_match",
         "title": "% of record comparisons estimated to be matches within block",
         "format": ".4g"
       },
       {
         "type": "quantitative",
-        "field": "proportion_of_matches_reciprocal",
+        "field": "probability_two_random_records_match_reciprocal",
         "title": "Reciprocal of % matches in block",
         "format": ",.2f"
       },
@@ -43,7 +43,7 @@
     ]
   },
   "title": {
-    "text": "Estimated proportion of matches by iteration"
+    "text": "Estimated probability two random records match matches by iteration"
   },
   "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
 }

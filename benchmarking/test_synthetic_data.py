@@ -147,7 +147,7 @@ occupation_cc = {
 }
 
 settings_dict = {
-    "proportion_of_matches": 0.01,
+    "probability_two_random_records_match": 0.01,
     "link_type": "dedupe_only",
     "blocking_rules_to_generate_predictions": [
         "l.postcode = r.postcode and substr(l.full_name,1,2) = substr(r.full_name,1,2)",

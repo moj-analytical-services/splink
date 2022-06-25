@@ -6,6 +6,7 @@ from ..comparison_level_library import (  # noqa: F401
     else_level,
     null_level,
     distance_function_level,
+    columns_reversed_level,
 )
 
 _mutable_params["dialect"] = "duckdb"

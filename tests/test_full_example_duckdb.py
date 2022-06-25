@@ -94,8 +94,8 @@ def test_full_example_duckdb(tmp_path):
     linker.cluster_studio_dashboard(
         df_predict,
         df_clusters,
-        [0, 4],
-        os.path.join(tmp_path, "test_cluster_studio.html"),
+        sampling_method="by_cluster_size",
+        out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
     linker.unlinkables_chart(source_dataset="Testing")

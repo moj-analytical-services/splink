@@ -5,6 +5,7 @@ from ..comparison_level_library import (  # noqa: F401
     else_level,
     null_level,
     distance_function_level,
+    columns_reversed_level,
 )
 from ..input_column import InputColumn
 from ..comparison_level import ComparisonLevel
@@ -18,7 +19,7 @@ def array_intersect_level(
 
     col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
 
-    sql = f"size(array_intersect({col.name_l()}, {col.name_l()})) >= {min_intersection}"
+    sql = f"size(array_intersect({col.name_l()}, {col.name_r()})) >= {min_intersection}"
 
     if min_intersection == 1:
         label = "Arrays intersect"

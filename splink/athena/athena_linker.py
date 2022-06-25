@@ -16,6 +16,34 @@ from ..input_column import InputColumn
 logger = logging.getLogger(__name__)
 
 
+def _verify_athena_inputs(database, bucket, boto3_session):
+    def generic_warning_text():
+        return (
+            f"\nThe supplied {database_bucket_txt} that you have requested to write to "
+            f"{do_does_grammar[0]} not currently exist. \n \nCreate "
+            "{do_does_grammar[1]} either directly from within AWS, or by using "
+            "'awswrangler.athena.create_athena_bucket' for buckets or "
+            "'awswrangler.catalog.create_database' for databases using the "
+            "awswrangler API."
+        )
+
+    errors = []
+
+    if (
+        database
+        not in wr.catalog.databases(limit=None, boto3_session=boto3_session).values
+    ):
+        errors.append(f"database, '{database}'")
+
+    if bucket not in wr.s3.list_buckets(boto3_session=boto3_session):
+        errors.append(f"bucket, '{bucket}'")
+
+    if errors:
+        database_bucket_txt = " and ".join(errors)
+        do_does_grammar = ["does", "it"] if len(errors) == 1 else ["do", "them"]
+        raise Exception(generic_warning_text())
+
+
 class AthenaDataFrame(SplinkDataFrame):
     def __init__(self, templated_name, physical_name, athena_linker):
         super().__init__(templated_name, physical_name)
@@ -111,6 +139,7 @@ class AthenaLinker(Linker):
         settings_dict: dict = None,
         input_table_aliases: Union[str, list] = None,
         set_up_basic_logging=True,
+        output_filepath: str = "splink_warehouse",
     ):
 
         """An athena backend for our main linker class. This funnels our generated SQL
@@ -134,8 +163,10 @@ class AthenaLinker(Linker):
                 a pandas df or a list of dfs are used as inputs. None by default, which
                 saves your tables under a custom name: '__splink__input_table_{n}';
                 where n is the list index.
-            set_up_basic_logging (bool): Set up basic logging for splink. This logs ...
-                True by default.
+            set_up_basic_logging (bool, optional): If true, sets ups up basic logging
+                so that Splink sends messages at INFO level to stdout. Defaults to True.
+            output_filepath (str, optional): Inside of your selected output bucket,
+                where to write output files to. Defaults to "splink_warehouse".
 
         Examples:
             >>> # Creating a database in athena and writing to it
@@ -185,6 +216,7 @@ class AthenaLinker(Linker):
         self.boto_utils = boto_utils(
             boto3_session,
             output_bucket,
+            output_filepath,
         )
         self.ctas_query_info = {}
 
@@ -199,6 +231,11 @@ class AthenaLinker(Linker):
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return AthenaDataFrame(templated_name, physical_name, self)
+
+    def initialise_settings(self, settings_dict: dict):
+        if "sql_dialect" not in settings_dict:
+            settings_dict["sql_dialect"] = "presto"
+        super().initialise_settings(settings_dict)
 
     def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
 
