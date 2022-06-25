@@ -21,6 +21,48 @@ The core linkage algorithm is an implementation of Fellegi-Sunter's canonical mo
 The homepage for the Splink documentation can be found [here](https://moj-analytical-services.github.io/splink/). Interactive demos can be found [here](https://github.com/moj-analytical-services/splink_demos/tree/splink3_demos), or by clicking the following Binder link:
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/splink3_demos?urlpath=lab)
 
+## Quickstart
+
+```
+from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.duckdb_comparison_library import (
+    exact_match,
+    levenshtein_at_thresholds,
+)
+
+import pandas as pd
+
+df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+
+settings = {
+    "link_type": "dedupe_only",
+    "blocking_rules_to_generate_predictions": [
+        "l.first_name = r.first_name",
+        "l.surname = r.surname",
+    ],
+    "comparisons": [
+        levenshtein_at_thresholds("first_name", 2),
+        exact_match("surname"),
+        exact_match("dob"),
+        exact_match("city", term_frequency_adjustments=True),
+        exact_match("email"),
+    ],
+}
+
+linker = DuckDBLinker(df, settings)
+linker.estimate_u_using_random_sampling(target_rows=1e6)
+
+blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
+linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+
+blocking_rule_for_training = "l.dob = r.dob"
+linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+
+scored_comparisons = linker.predict()
+
+```
+
 ## Acknowledgements
 
 We are very grateful to [ADR UK](https://www.adruk.org/) (Administrative Data Research UK) for providing funding for this work as part of the [Data First](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) project.
