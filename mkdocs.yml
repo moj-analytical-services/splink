@@ -58,7 +58,13 @@ nav:
   - Home: "README.md"
   - User Guide: "userguide.md"
   - API Reference:
-      - Linker API: "linker.md"
+      - Linker API:
+          - Full API: "linker.md"
+          - Exploratory analysis: "linkerexp.md"
+          - Estimating model parameters: "linkerest.md"
+          - Predicting results: "linkerpred.md"
+          - Quality assurance: "linkedqa.md"
+          - Visualisation: "linkervis.md"
       - EM Training Session API: "em_training_session.md"
       - SplinkDataFrame API: "SplinkDataFrame.md"
       - Comparisons API:
