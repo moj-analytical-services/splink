@@ -67,3 +67,10 @@ nav:
           - Comparison Level: "comparison_level.md"
           - Comparison Level Library: "comparison_level_library.md"
   - Settings Editor: "settingseditor/editor.md"
+  - Demo notebooks:
+      - 1.Exploratory analysis: "demos/1_exploratory_analysis.ipynb"
+      - 2.Estimating model parameters: "demos/2_Estimating_model_parameters.ipynb"
+      - 3.Predicting results: "demos/3_predicting_results.ipynb"
+      - 4.Quality assurance: "demos/4_quality_assurance.ipynb"
+      - real time record linkage: "demos/real_time_record_linkage.ipynb"
+      - deduplicate 50k rows of synthetic data: "demos/deduplicate_50k_synthetic.ipynb"
