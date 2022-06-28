@@ -140,6 +140,7 @@ class AthenaLinker(Linker):
         input_table_aliases: Union[str, list] = None,
         set_up_basic_logging=True,
         output_filepath: str = "splink_warehouse",
+        garbage_collection: bool = True,
     ):
 
         """An athena backend for our main linker class. This funnels our generated SQL
@@ -167,6 +168,13 @@ class AthenaLinker(Linker):
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
             output_filepath (str, optional): Inside of your selected output bucket,
                 where to write output files to. Defaults to "splink_warehouse".
+            garbage_collection (bool): If True, garbage collection will scan your
+                specified output database for any previously generated '__splink_df'
+                files and delete both the database table and backing s3 data. If False,
+                this will only delete the link between this s3 data and the database
+                (i.e. your previously created parquet files will still exist on s3
+                and can be relinked if desired).
+
 
         Examples:
             >>> # Creating a database in athena and writing to it
@@ -228,6 +236,7 @@ class AthenaLinker(Linker):
         )
 
         self.output_schema = output_database
+        self._drop_all_tables_created_by_splink(garbage_collection)
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return AthenaDataFrame(templated_name, physical_name, self)
@@ -289,7 +298,6 @@ class AthenaLinker(Linker):
             sql=sql,
             database=database,
             ctas_table=physical_name,
-            ctas_database=database,
             storage_format="parquet",
             write_compression="snappy",
             boto3_session=self.boto3_session,
@@ -318,3 +326,22 @@ class AthenaLinker(Linker):
         wr.s3.delete_objects(boto3_session=self.boto3_session, path=metadata_urls)
 
         self.ctas_query_info.pop(physical_name)
+
+    def _drop_all_tables_created_by_splink(self, garbage_collection):
+        # This will only delete tables created within the splink process. These are
+        # tables containing the specific prefix: "__splink"
+        tables = wr.catalog.get_tables(
+            database=self.output_schema, name_prefix="__splink"
+        )
+        delete_metadata_loc = []
+        for t in tables:
+            wr.catalog.delete_table_if_exists(
+                database=t["DatabaseName"], table=t["Name"]
+            )
+            if garbage_collection:
+                path = t["StorageDescriptor"]["Location"]
+                wr.s3.delete_objects(path=path, use_threads=True)
+                metadata_loc = f"{path.split('/__splink')[0]}/tables/"
+                if metadata_loc not in delete_metadata_loc:
+                    wr.s3.delete_objects(path=metadata_loc, use_threads=True)
+                    delete_metadata_loc.append(metadata_loc)
