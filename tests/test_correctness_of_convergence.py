@@ -1,4 +1,11 @@
-# Data generated using https://github.com/moj-analytical-services/splink_data_generation/commit/7524ad6a7b7deadbb7b28813b625e1e6b14af95c
+# This is a test of whether Splink can recover the true parameters of a record
+# linkage model using synthetic data generated using a known distribution
+# As such it provides a good end-to-end test of whether our implementation of
+# Fellegi Sunter is correct
+
+# Data generated using
+# github.com/moj-analytical-services/
+# splink_data_generation/commit/7524ad6a7b7deadbb7b28813b625e1e6b14af95c
 # settings_for_data_generation = {
 #     "link_type": "dedupe_only",
 #     "comparison_columns": [
