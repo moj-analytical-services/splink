@@ -240,6 +240,13 @@ class AthenaLinker(Linker):
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return AthenaDataFrame(templated_name, physical_name, self)
+    
+    def change_output_filepath(self, new_filepath):
+        self.boto_utils = boto_utils(
+            self.boto3_session,
+            self.boto_utils.bucket,
+            new_filepath,
+        )
 
     def initialise_settings(self, settings_dict: dict):
         if "sql_dialect" not in settings_dict:
@@ -294,6 +301,7 @@ class AthenaLinker(Linker):
 
     def create_table(self, sql, physical_name):
         database = self.output_schema
+#         print(sql)
         ctas_metadata = wr.athena.create_ctas_table(
             sql=sql,
             database=database,
