@@ -39,6 +39,7 @@ class Comparison:
 
     To summarise:
 
+    ```
     Data Linking Model
     ├─-- Comparison: Date of birth
     │    ├─-- ComparisonLevel: Exact match
@@ -48,6 +49,7 @@ class Comparison:
     │    ├─-- ComparisonLevel: Exact match on first name and surname
     │    ├─-- ComparisonLevel: Exact match on first name
     │    ├─-- etc.
+    ```
 
     """
 
