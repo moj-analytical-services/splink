@@ -10,6 +10,7 @@ from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
     _composite_unique_id_from_nodes_sql,
 )
+from .utils import NumpyEncoder
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -222,11 +223,13 @@ def render_splink_cluster_studio_html(
     template = Template(template)
 
     template_data = {
-        "raw_edge_data": json.dumps(edges_recs),
-        "raw_node_data": json.dumps(nodes_recs),
-        "raw_clusters_data": json.dumps(cluster_recs),
-        "splink_settings": json.dumps(linker._settings_obj._as_completed_dict()),
-        "svu_options": json.dumps(svu_options),
+        "raw_edge_data": json.dumps(edges_recs, cls=NumpyEncoder),
+        "raw_node_data": json.dumps(nodes_recs, cls=NumpyEncoder),
+        "raw_clusters_data": json.dumps(cluster_recs, cls=NumpyEncoder),
+        "splink_settings": json.dumps(
+            linker._settings_obj._as_completed_dict(), cls=NumpyEncoder
+        ),
+        "svu_options": json.dumps(svu_options, cls=NumpyEncoder),
     }
 
     if cluster_names:

@@ -3,6 +3,7 @@ import json
 import os
 import pkgutil
 from typing import TYPE_CHECKING, List
+from .utils import NumpyEncoder
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -136,7 +137,7 @@ def render_splink_comparison_viewer_html(
     template = Template(template)
 
     template_data = {
-        "comparison_vector_data": json.dumps(comparison_vector_data),
+        "comparison_vector_data": json.dumps(comparison_vector_data, cls=NumpyEncoder),
         "splink_settings": json.dumps(splink_settings),
     }
 
