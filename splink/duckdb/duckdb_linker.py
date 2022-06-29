@@ -139,7 +139,7 @@ class DuckDBLinker(Linker):
 
         if isinstance(connection, DuckDBPyConnection):
             con = connection
-        if connection == ":memory:":
+        elif connection == ":memory:":
             con = duckdb.connect(database=connection)
         elif connection == ":temporary:":
             self._temp_dir = tempfile.TemporaryDirectory(dir=".")
