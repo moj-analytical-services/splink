@@ -69,6 +69,8 @@ def create_and_upload_test_data(my_session):
     )
     upload_data("splink_awswrangler_test")
 
+    return db_name_read, db_name_write
+
 
 @pytest.mark.skip(reason="AWS Connection Required")
 def test_full_example_athena(tmp_path):
@@ -134,7 +136,7 @@ def test_athena_garbage_collection():
     db_name_read = "splink_awswrangler_test"
     db_name_write = f"{db_name_read}2"
 
-    linker = AthenaLinker(
+    AthenaLinker(
         settings_dict=settings_dict,
         input_table_or_tables=f"{db_name_read}.fake_1000_from_splink_demos",
         boto3_session=my_session,
