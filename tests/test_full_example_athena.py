@@ -160,3 +160,28 @@ def test_athena_garbage_collection():
         ignore_empty=True,
     )
     assert len(files) == 0
+
+
+@pytest.mark.skip(reason="AWS Connection Required")
+def test_athena_df_as_input():
+
+    import pandas as pd
+
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    # creates a session at least on the platform...
+    my_session = boto3.Session(region_name="eu-west-1")
+    settings_dict = get_settings_dict()
+    db_name_read = "splink_awswrangler_test"
+    db_name_write = f"{db_name_read}2"
+
+    linker = AthenaLinker(
+        input_table_or_tables=df,
+        settings_dict=settings_dict,
+        boto3_session=my_session,
+        output_bucket="alpha-splink-db-testing",
+        output_database=db_name_write,
+        garbage_collection=True,
+    )
+
+    linker.predict()
