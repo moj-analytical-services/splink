@@ -114,16 +114,18 @@ class DuckDBLinker(Linker):
                 Either a single string (the name of a table in a database) for
                 deduplication jobs, or a list of strings  (the name of tables in a
                 database) for link_only or link_and_dedupe
+            settings_dict (dict, optional): A Splink settings dictionary. If not
+                provided when the object is created, can later be added using
+                `linker.initialise_settings()` Defaults to None.
             connection (DuckDBPyConnection or str, optional):  Connection to duckdb.
                 If a a string, will instantiate a new connection.  Defaults to :memory:.
                 If the special :temporary: string is provided, an on-disk duckdb
                 database will be created in a temporary directory.  This can be used
                 if you are running out of memory using :memory:.
-            settings_dict (dict, optional): A Splink settings dictionary. If not
-                provided when the object is created, can later be added using
-                `linker.initialise_settings()` Defaults to None.
             set_up_basic_logging (bool, optional): If true, sets ups up basic logging
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
+            output_schema (str, optional): Set the schema along which all tables
+                will be created.
             input_table_aliases (Union[str, list], optional): Labels assigned to
                 input tables in Splink outputs.  If the names of the tables in the
                 input database are long or unspecific, this argument can be used
@@ -137,7 +139,7 @@ class DuckDBLinker(Linker):
 
         if isinstance(connection, DuckDBPyConnection):
             con = connection
-        elif connection == ":memory:":
+        if connection == ":memory:":
             con = duckdb.connect(database=connection)
         elif connection == ":temporary:":
             self._temp_dir = tempfile.TemporaryDirectory(dir=".")
