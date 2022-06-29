@@ -489,8 +489,8 @@ class Linker:
             if self._settings_obj._link_type == "dedupe_only":
                 if len(self._input_tables_dict) > 1:
                     raise ValueError(
-                        'If link_type = "dedupe only" then input tables must contain'
-                        "only a single input table",
+                        'If link_type = "dedupe only" then input tables must contain '
+                        'only a single input table',
                     )
 
     def _populate_probability_two_random_records_match_from_trained_values(self):
