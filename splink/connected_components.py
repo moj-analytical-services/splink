@@ -411,7 +411,7 @@ def solve_connected_components(
     representatives = linker._enqueue_and_execute_sql_pipeline(
         sql, "__splink__df_representatives"
     )
-    representatives_table = representatives.physical_name
+    prev_representatives_table = representatives
 
     # Loop while our representative table still has unsettled nodes
     iteration, root_rows = 0, 1
@@ -423,24 +423,27 @@ def solve_connected_components(
 
         # 1. Update our neighbours table.
         # 2. Join on the representatives table from the previous iteration
-        #  to create the "rep_match" column.
+        #    to create the "rep_match" column.
         # 3. Assess if our exit condition has been met.
 
         # Generates our representatives table for the next iteration
         # by joining our previous tables onto our neighbours table.
         sql = _cc_generate_representatives_loop_cond(
             neighbours_table,
-            representatives_table,
+            prev_representatives_table.physical_name,
         )
         linker._enqueue_sql(sql, "r")
         # Update our rep_match column in the representatives table.
-        sql = _cc_update_representatives_loop_cond(representatives_table)
+        sql = _cc_update_representatives_loop_cond(
+            prev_representatives_table.physical_name
+        )
         representatives = linker._enqueue_and_execute_sql_pipeline(
             sql,
-            f"__splink__df_representatives_{iteration}",
+            "__splink__df_representatives",
         )
         # Update table reference
-        representatives_table = representatives.physical_name
+        prev_representatives_table.drop_table_from_database()
+        prev_representatives_table = representatives
 
         # Check if our exit condition has been met...
         sql = _cc_assess_exit_condition(representatives.physical_name)
