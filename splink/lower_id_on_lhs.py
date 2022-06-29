@@ -12,8 +12,10 @@ def _sql_expr_move_left_to_right(
     col_name_r = f"{col_name}_r"
 
     if source_dataset_col is not None:
-        uid_expr_l = f"concat({sds_l}, '-__-', {uid_l})"
-        uid_expr_r = f"concat({sds_r}, '-__-', {uid_r})"
+        id_df_inputs = [sds_l, uid_l, sds_r, uid_r]
+        id_sds = [f"cast({input} as varchar)" for input in id_df_inputs]
+        uid_expr_l = f"concat({id_sds[0]}, '-__-', {id_sds[1]})"
+        uid_expr_r = f"concat({id_sds[2]}, '-__-', {id_sds[3]})"
     else:
         uid_expr_l = uid_l
         uid_expr_r = uid_r
