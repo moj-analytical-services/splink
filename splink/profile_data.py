@@ -57,7 +57,7 @@ def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, col_n
 
 
 def _get_df_percentiles():
-    """Take df_all_column_value_frequencies and
+    """Take __splink__df_all_column_value_frequencies and
     turn it into the raw data needed for the percentile cahrt
     """
 
@@ -70,7 +70,7 @@ def _get_df_percentiles():
     max(total_non_null_rows) as total_non_null_rows,
     max(total_rows_inc_nulls) as total_rows_inc_nulls,
     max(distinct_value_count) as distinct_value_count
-    from df_all_column_value_frequencies
+    from __splink__df_all_column_value_frequencies
     group by group_name, value_count
     order by group_name, value_count desc
     """
@@ -103,7 +103,7 @@ def _get_df_percentiles():
     from df_total_in_value_counts_cumulative
 
     """
-    sqls.append({"sql": sql, "output_table_name": "df_percentiles"})
+    sqls.append({"sql": sql, "output_table_name": "__splink__df_percentiles"})
     return sqls
 
 
@@ -112,7 +112,7 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     sql = """
     select * from
     (select *
-    from df_all_column_value_frequencies
+    from __splink__df_all_column_value_frequencies
     where group_name = '{gn}'
     order by value_count {value_order}
     limit {limit})
@@ -180,7 +180,7 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
 
     sql = _col_or_expr_frequencies_raw_data_sql(column_expressions, input_tablename)
 
-    linker._enqueue_sql(sql, "df_all_column_value_frequencies")
+    linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
     df_raw = linker._execute_sql_pipeline(materialise_as_hash=True, transpile=True)
 
     sqls = _get_df_percentiles()
@@ -191,16 +191,17 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
     percentile_rows_all = df_percentiles.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, top_n, "desc")
-    linker._enqueue_sql(sql, "df_top_n")
+    linker._enqueue_sql(sql, "__splink__df_top_n")
     df_top_n = linker._execute_sql_pipeline([df_raw], transpile=False)
     top_n_rows_all = df_top_n.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, bottom_n, "asc")
-    linker._enqueue_sql(sql, "df_bottom_n")
+    linker._enqueue_sql(sql, "__splink__df_bottom_n")
     df_bottom_n = linker._execute_sql_pipeline([df_raw], transpile=False)
     bottom_n_rows_all = df_bottom_n.as_record_dict()
 
     inner_charts = []
+
     for expression in column_expressions:
         percentile_rows = [
             p for p in percentile_rows_all if p["group_name"] == _group_name(expression)
