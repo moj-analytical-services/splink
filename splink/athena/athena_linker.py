@@ -149,8 +149,8 @@ class AthenaLinker(Linker):
         See linker.py for more information on the main linker class.
 
         Attributes:
-            input_table_or_tables: A list, str or pandas dataframe object that contains
-                your data or the name of your data to link and/or dedupe.
+            input_table_or_tables: A list or str that contains the name of your
+            table(s) in athena that you want to link and/or dedupe.
             boto3_session (boto3.session.Session): A working boto3 session, which
                 should contain user credentials and region information.
             output_database (str): The name of the database you wish to export the
@@ -236,7 +236,10 @@ class AthenaLinker(Linker):
         )
 
         self.output_schema = output_database
-        self._drop_all_tables_created_by_splink(garbage_collection)
+        self._drop_all_tables_created_by_splink(
+            garbage_collection,
+            input_table_or_tables,
+        )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return AthenaDataFrame(templated_name, physical_name, self)
@@ -301,7 +304,6 @@ class AthenaLinker(Linker):
 
     def create_table(self, sql, physical_name):
         database = self.output_schema
-        #         print(sql)
         ctas_metadata = wr.athena.create_ctas_table(
             sql=sql,
             database=database,
@@ -335,21 +337,40 @@ class AthenaLinker(Linker):
 
         self.ctas_query_info.pop(physical_name)
 
-    def _drop_all_tables_created_by_splink(self, garbage_collection):
+    def _drop_all_tables_created_by_splink(self, garbage_collection, input_tables):
+
+        if not isinstance(input_tables, list):
+            input_tables = [input_tables]
+
         # This will only delete tables created within the splink process. These are
         # tables containing the specific prefix: "__splink"
         tables = wr.catalog.get_tables(
-            database=self.output_schema, name_prefix="__splink"
+            database=self.output_schema,
+            name_prefix="__splink",
+            boto3_session=self.boto3_session,
         )
         delete_metadata_loc = []
         for t in tables:
-            wr.catalog.delete_table_if_exists(
-                database=t["DatabaseName"], table=t["Name"]
-            )
-            if garbage_collection:
-                path = t["StorageDescriptor"]["Location"]
-                wr.s3.delete_objects(path=path, use_threads=True)
-                metadata_loc = f"{path.split('/__splink')[0]}/tables/"
-                if metadata_loc not in delete_metadata_loc:
-                    wr.s3.delete_objects(path=metadata_loc, use_threads=True)
-                    delete_metadata_loc.append(metadata_loc)
+            # Don't overwrite input tables if they have been
+            # given the __splink prefix.
+            if t not in input_tables:
+                wr.catalog.delete_table_if_exists(
+                    database=t["DatabaseName"],
+                    table=t["Name"],
+                    boto3_session=self.boto3_session,
+                )
+                if garbage_collection:
+                    path = t["StorageDescriptor"]["Location"]
+                    wr.s3.delete_objects(
+                        path=path,
+                        use_threads=True,
+                        boto3_session=self.boto3_session,
+                    )
+                    metadata_loc = f"{path.split('/__splink')[0]}/tables/"
+                    if metadata_loc not in delete_metadata_loc:
+                        wr.s3.delete_objects(
+                            path=metadata_loc,
+                            use_threads=True,
+                            boto3_session=self.boto3_session,
+                        )
+                        delete_metadata_loc.append(metadata_loc)
