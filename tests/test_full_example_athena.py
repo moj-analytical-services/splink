@@ -17,10 +17,12 @@ if not skip:
     from dataengineeringutils3.s3 import delete_s3_folder_contents
 
 
-def setup_athena_db(db_name="splink_awswrangler_test"):
-
-    # creates a session at least on the platform...
-    my_session = boto3.Session(region_name="eu-west-1")
+def setup_athena_db(my_session, db_name="splink_awswrangler_test"):
+    
+    """
+    Run this function if you need to create, or recreate the database(s)
+    used in this test.
+    """
 
     # If our database already exists, delete and recreate it,
     # so we ensure we have no cached datasets to read from.
@@ -38,12 +40,13 @@ def setup_athena_db(db_name="splink_awswrangler_test"):
         time.sleep(3)
         wr.catalog.create_database(db_name, exist_ok=True)
 
-    return my_session, db_name
+    return db_name
 
 
 def upload_data(db_name):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     bucket = "alpha-splink-db-testing"
+    # ensure data is in a unique loc to __splink tables
     path = f"s3://{bucket}/data/"
 
     table_name = "fake_1000_from_splink_demos"
@@ -58,18 +61,34 @@ def upload_data(db_name):
     )
 
 
+def create_and_upload_test_data(my_session):
+    db_name_read = setup_athena_db(my_session)
+    db_name_write = setup_athena_db(
+        my_session,
+        db_name="splink_awswrangler_test2",
+    )
+    upload_data("splink_awswrangler_test")
+
+
 # @pytest.mark.skip(reason="AWS Connection Required")
 def test_full_example_athena(tmp_path):
-
-    session_read, db_name_read = setup_athena_db()
-    session_write, db_name_write = setup_athena_db(db_name="splink_awswrangler_test2")
-    upload_data("splink_awswrangler_test")
+    
+    """
+    NOTE - we've changed this test. The dbs are now hard coded and are not
+    created on a new test run. Instead, we are utilising garbage_collection
+    in the AthenaLinker to clean the process before we proceed.
+    """
+    
+    # creates a session at least on the platform...
+    my_session = boto3.Session(region_name="eu-west-1")
     settings_dict = get_settings_dict()
+    db_name_read = "splink_awswrangler_test"
+    db_name_write = f"{db_name_read}2"
 
     linker = AthenaLinker(
         settings_dict=settings_dict,
         input_table_or_tables=f"{db_name_read}.fake_1000_from_splink_demos",
-        boto3_session=session_write,
+        boto3_session=my_session,
         output_bucket="alpha-splink-db-testing",
         output_database=db_name_write,
     )
@@ -104,3 +123,38 @@ def test_full_example_athena(tmp_path):
     )
 
     linker.unlinkables_chart(source_dataset="Testing")
+
+
+# @pytest.mark.skip(reason="AWS Connection Required")
+def test_athena_garbage_collection():
+    
+    # creates a session at least on the platform...
+    my_session = boto3.Session(region_name="eu-west-1")
+    settings_dict = get_settings_dict()
+    db_name_read = "splink_awswrangler_test"
+    db_name_write = f"{db_name_read}2"
+
+    linker = AthenaLinker(
+        settings_dict=settings_dict,
+        input_table_or_tables=f"{db_name_read}.fake_1000_from_splink_demos",
+        boto3_session=my_session,
+        output_bucket="alpha-splink-db-testing",
+        output_database=db_name_write,
+        garbage_collection=True
+    )
+    
+    # Check everything gets cleaned up when initialising the linker
+    tables = wr.catalog.get_tables(
+        database="splink_awswrangler_test2", 
+        name_prefix="__splink",
+        boto3_session=my_session,
+    )
+    assert sum(1 for _ in tables) == 0
+    
+    # Check all files are also deleted (as gc = True)
+    files = wr.s3.list_objects(
+        path="s3://alpha-splink-db-testing/splink_warehouse",
+        boto3_session=my_session,
+        ignore_empty=True,
+    )
+    assert len(files) == 0
