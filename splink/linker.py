@@ -66,6 +66,9 @@ from .cluster_studio import render_splink_cluster_studio_html
 from .comparison_level import ComparisonLevel
 from .comparison import Comparison
 
+from .match_key_analysis import mtch_key_anlysis
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -490,7 +493,7 @@ class Linker:
                 if len(self._input_tables_dict) > 1:
                     raise ValueError(
                         'If link_type = "dedupe only" then input tables must contain '
-                        'only a single input table',
+                        "only a single input table",
                     )
 
     def _populate_probability_two_random_records_match_from_trained_values(self):
@@ -1599,6 +1602,15 @@ class Linker:
         self._enqueue_sql(sql, "__splink__analyse_blocking_rule")
         res = self._execute_sql_pipeline().as_record_dict()[0]
         return res["count_of_pairwise_comparisons_generated"]
+
+    def count_pairwise_comparisons_generated_by_prediction_blocking_rules(
+        self, df_predict
+    ):
+        sql = mtch_key_anlysis(df_predict)
+        match_key_analysis = self._enqueue_and_execute_sql_pipeline(
+            sql, "match_key_analysis"
+        )
+        return match_key_analysis
 
     def match_weights_chart(self):
         """Display a chart of the (partial) match weights of the linkage model
