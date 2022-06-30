@@ -56,7 +56,8 @@ markdown_extensions:
       permalink: True
 nav:
   - Home: "README.md"
-  - User Guide: "userguide.md"
+  - Topic Guide:
+      - Blocking rules for prediction vs estimation: "blocking_rules.md"
   - API Reference:
       - Linker API:
           - Full API: "linker.md"
