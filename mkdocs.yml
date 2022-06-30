@@ -63,8 +63,8 @@ nav:
           - Exploratory analysis: "linkerexp.md"
           - Estimating model parameters: "linkerest.md"
           - Predicting results: "linkerpred.md"
-          - Quality assurance: "linkerqa.md"
-          - Visualisation: "linkervis.md"
+          - Visualisation and quality assurance: "linkerqa.md"
+
       - EM Training Session API: "em_training_session.md"
       - SplinkDataFrame API: "SplinkDataFrame.md"
       - Comparisons API:

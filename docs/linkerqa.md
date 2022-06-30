@@ -9,8 +9,8 @@ tags:
     handler: python
     selection:
       members:
-        - cluster_pairwise_predictions_at_threshold
         - cluster_studio_dashboard
+        - comparison_viewer_dashboard
         - m_u_parameters_chart
         - match_weight_histogram
         - match_weights_chart
@@ -18,7 +18,8 @@ tags:
         - precision_recall_chart_from_labels
         - roc_chart_from_labels
         - roc_table_from_labels
- 
+        - unlinkables_chart
+        - waterfall_chart
     rendering:
       show_root_heading: false
       show_source: true
