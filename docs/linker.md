@@ -15,6 +15,7 @@ tags:
         - comparison_viewer_dashboard
         - compute_number_of_comparisons_generated_by_blocking_rule
         - compute_tf_table
+        - debug_mode
         - delete_tables_created_by_splink_from_db
         - deterministic_link
         - estimate_m_from_label_column
@@ -22,6 +23,7 @@ tags:
         - estimate_u_using_random_sampling
         - find_matches_to_new_records
         - initialise_settings
+        - load_settings_from_json
         - m_u_parameters_chart
         - match_weight_histogram
         - match_weights_chart
@@ -32,6 +34,7 @@ tags:
         - profile_columns
         - roc_chart_from_labels
         - roc_table_from_labels
+        - save_settings_to_json
         - train_m_from_pairwise_labels
         - unlinkables_chart
         - waterfall_chart

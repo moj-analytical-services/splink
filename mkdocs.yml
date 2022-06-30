@@ -64,14 +64,14 @@ nav:
           - Exploratory analysis: "linkerexp.md"
           - Estimating model parameters: "linkerest.md"
           - Predicting results: "linkerpred.md"
-          - Quality assurance: "linkerqa.md"
-          - Visualisation: "linkervis.md"
+          - Visualisation and quality assurance: "linkerqa.md"
       - EM Training Session API: "em_training_session.md"
       - SplinkDataFrame API: "SplinkDataFrame.md"
       - Comparisons API:
           - Comparison: "comparison.md"
-          - Comparison Library: "comparison_library.md"
           - Comparison Level: "comparison_level.md"
+      - Comparisons Library API:
+          - Comparison Library: "comparison_library.md"
           - Comparison Level Library: "comparison_level_library.md"
   - Settings Editor: "settingseditor/editor.md"
   - Tutorials:
