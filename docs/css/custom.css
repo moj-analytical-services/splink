@@ -1,0 +1,5 @@
+
+code.language-python > span:not(:first-child) {
+    font-size: small;
+    color: rgb(113 112 112);
+}
