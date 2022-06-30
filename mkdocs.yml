@@ -82,3 +82,5 @@ nav:
       - 4.Quality assurance: "demos/04_Quality_assurance.ipynb"
       - real time record linkage: "demos/real_time_record_linkage.ipynb"
       - deduplicate 50k rows of synthetic data: "demos/deduplicate_50k_synthetic.ipynb"
+extra_css:
+- css/custom.css
