@@ -13,6 +13,7 @@ from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..athena.athena_utils import boto_utils
 from ..input_column import InputColumn
 from ..misc import ensure_is_list
+from ..sql_transform import cast_concat_as_varchar
 
 
 logger = logging.getLogger(__name__)
@@ -153,9 +154,7 @@ class AthenaLinker(Linker):
 
         """An athena backend for our main linker class. This funnels our generated SQL
         through athena using awswrangler.
-
         See linker.py for more information on the main linker class.
-
         Attributes:
             input_table_or_tables (Union[str, list]): Input data into the linkage model.
                 Either a single string (the name of a table in a database) for
@@ -184,8 +183,6 @@ class AthenaLinker(Linker):
                 this will only delete the link between this s3 data and the database
                 (i.e. your previously created parquet files will still exist on s3
                 and can be relinked if desired).
-
-
         Examples:
             >>> # Creating a database in athena and writing to it
             >>> import awswrangler as wr
@@ -224,7 +221,6 @@ class AthenaLinker(Linker):
             >>>     output_bucket="alpha-splink-db-testing",
             >>>     output_database="splink_awswrangler_test2",
             >>> )
-
         """
 
         if settings_dict is not None and "sql_dialect" not in settings_dict:
@@ -309,6 +305,7 @@ class AthenaLinker(Linker):
         self.drop_table_from_database_if_exists(physical_name)
 
         if transpile:
+            sql = cast_concat_as_varchar(sql)
             sql = sqlglot.transpile(sql, read=None, write="presto")[0]
 
         sql = sql.replace("float", "real")
