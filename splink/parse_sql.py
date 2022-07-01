@@ -6,7 +6,6 @@ import sqlglot.expressions as exp
 def get_columns_used_from_sql(sql, dialect=None, retain_table_prefix=False):
     column_names = set()
     syntax_tree = sqlglot.parse_one(sql, read=dialect)
-    syntax_tree.find_all(exp.Column)
 
     for subtree in syntax_tree.find_all(exp.Column):
         # check if any parents are lambdas
