@@ -10,7 +10,7 @@ from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
 from .misc import dedupe_preserving_order
 from .validate_jsonschema import validate_settings_against_schema
-from .salting import _add_salt_to_blocking_rules
+from .blocking import BlockingRule
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +62,9 @@ class Settings:
             "retain_intermediate_calculation_columns"
         )
 
-        self._generate_blocking_rules_to_generate_predictions()
+        self._blocking_rules_to_generate_predictions = self._generate_blocking_rules(
+            rules=None
+        )
         self._gamma_prefix = s_else_d("comparison_vector_value_column_prefix")
         self._bf_prefix = s_else_d("bayes_factor_column_prefix")
         self._tf_prefix = s_else_d("term_frequency_adjustment_column_prefix")
@@ -156,37 +158,22 @@ class Settings:
 
         return len(self._blocking_rules_to_generate_predictions) > 1
 
-    def _generate_blank_salts(self, rules=[]):
-        return _add_salt_to_blocking_rules(rules)
+    def _generate_blocking_rules(self, rules):
 
-    def _generate_blocking_rules_to_generate_predictions(
-        self, blank=False
-    ) -> List[str]:
+        if rules is None:
+            rules = self._from_settings_dict_else_default(
+                "blocking_rules_to_generate_predictions"
+            )
 
-        if blank:
-            self._blocking_rules_to_generate_predictions = []
-            return
+        previous_rules = []
+        blocking_rules = {}
+        for rule in rules:
+            r = BlockingRule(rule, previous_rules)
+            r._add_salt_to_blocking_rule(self._salting)
+            blocking_rules = {**blocking_rules, rule: r}
+            previous_rules.append(rule)
 
-        # salts are set to the input rules within the settings dictionary
-        # if no salting is selected
-        rules = self._from_settings_dict_else_default(
-            "blocking_rules_to_generate_predictions"
-        )
-
-        self._splink_salts = _add_salt_to_blocking_rules(rules, self._salting)
-        self._blocking_rules_to_generate_predictions = self._splink_salts.keys()
-
-    @property
-    def _generate_blocking_rule_for_training(self):
-
-        rules = self._blocking_rule_for_training
-
-        if rules:
-            self._splink_salts = _add_salt_to_blocking_rules(rules, self._salting)
-            self._blocking_rule_for_training = self._splink_salts.keys()
-
-        else:
-            return
+        return blocking_rules
 
     @property
     def _columns_to_select_for_blocking(self):
