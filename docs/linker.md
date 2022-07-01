@@ -9,6 +9,7 @@ tags:
     handler: python
     selection:
       members:
+        - __init__
         - cluster_pairwise_predictions_at_threshold
         - cluster_studio_dashboard
         - compare_two_records
