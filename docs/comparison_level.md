@@ -9,6 +9,7 @@ tags:
     handler: python
     selection:
       members:
+        - __init__
         - m_probability
         - u_probability
     rendering:
