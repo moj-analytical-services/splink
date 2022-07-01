@@ -74,6 +74,7 @@ nav:
           - Comparison Library: "comparison_library.md"
           - Comparison Level Library: "comparison_level_library.md"
   - Settings Editor: "settingseditor/editor.md"
+  - Settings dictionary reference: "settings_dict_guide.md"
   - Tutorials:
       - 0. Tutorial introduction: "demos/00_Tutorial_Introduction.ipynb"
       - 1. Exploratory analysis: "demos/01_Exploratory_analysis.ipynb"
