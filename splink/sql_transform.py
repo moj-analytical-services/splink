@@ -32,7 +32,8 @@ def cast_as_varchar_transformer(node):
             return node
 
         if node.find_ancestor(exp.DPipe):
-            sql = f"cast({node.table}.{node.name} as varchar)"
+            # node.sql() = colname w/ table prefix
+            sql = f"cast({node.sql()} as varchar)"
             return sqlglot.parse_one(sql)
 
     return node
