@@ -18,7 +18,7 @@ You can find an interative settings editor
 
 def add_doc_for_key(schema, key, md):
     this_key = schema[key]
-    md += f"\n ### {k}\n"
+    md += f"\n### {k}\n\n"
     md += f"{this_key['title']}\n\n"
     if "description" in this_key:
         md += f"{this_key['description']}\n\n"
