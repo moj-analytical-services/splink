@@ -195,7 +195,7 @@ def test_athena_link_only():
     # creates a session at least on the platform...
     my_session = boto3.Session(region_name="eu-west-1")
     settings_dict = get_settings_dict()
-    settings_dict["link_type"]="link_and_dedupe"
+    settings_dict["link_type"] = "link_and_dedupe"
     db_name_read = "splink_awswrangler_test"
     db_name_write = f"{db_name_read}2"
 
