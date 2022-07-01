@@ -75,11 +75,12 @@ nav:
           - Comparison Level Library: "comparison_level_library.md"
   - Settings Editor: "settingseditor/editor.md"
   - Tutorials:
-      - 0.Tutorial introduction: "demos/00_Tutorial_Introduction.ipynb"
-      - 1.Exploratory analysis: "demos/01_Exploratory_analysis.ipynb"
-      - 2.Estimating model parameters: "demos/02_Estimating_model_parameters.ipynb"
-      - 3.Predicting results: "demos/03_Predicting_results.ipynb"
-      - 4.Visualising predictions: "demos/04_Visualising_predictions.ipynb"
+      - 0. Tutorial introduction: "demos/00_Tutorial_Introduction.ipynb"
+      - 1. Exploratory analysis: "demos/01_Exploratory_analysis.ipynb"
+      - 2. Estimating model parameters: "demos/02_Estimating_model_parameters.ipynb"
+      - 3. Predicting results: "demos/03_Predicting_results.ipynb"
+      - 4. Visualising predictions: "demos/04_Visualising_predictions.ipynb"
+      - 5. Quality assurance: "demos/05_Quality_assurance.ipynb"
       - real time record linkage: "demos/real_time_record_linkage.ipynb"
       - deduplicate 50k rows of synthetic data: "demos/deduplicate_50k_synthetic.ipynb"
 extra_css:
