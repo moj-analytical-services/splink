@@ -185,3 +185,30 @@ def test_athena_df_as_input():
     )
 
     linker.predict()
+
+
+@pytest.mark.skip(reason="AWS Connection Required")
+def test_athena_link_only():
+
+    import pandas as pd
+
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    # creates a session at least on the platform...
+    my_session = boto3.Session(region_name="eu-west-1")
+    settings_dict = get_settings_dict()
+    settings_dict["link_type"] = "link_and_dedupe"
+    db_name_read = "splink_awswrangler_test"
+    db_name_write = f"{db_name_read}2"
+
+    linker = AthenaLinker(
+        input_table_or_tables=[df, df],
+        settings_dict=settings_dict,
+        boto3_session=my_session,
+        output_bucket="alpha-splink-db-testing",
+        output_database=db_name_write,
+        garbage_collection=True,
+    )
+
+    df_predict = linker.predict()
+    df_predict.as_pandas_dataframe()
