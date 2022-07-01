@@ -49,8 +49,10 @@ class EMTrainingSession:
         self._settings_obj._retain_intermediate_calculation_columns = False
         self._settings_obj._training_mode = True
 
-        self._settings_obj._blocking_rule_for_training = blocking_rule_for_training
-        self._settings_obj._generate_blocking_rule_for_training
+        blocking_rule = self._settings_obj._generate_blocking_rules(
+            [blocking_rule_for_training]
+        )
+        self._settings_obj._blocking_rule_for_training = blocking_rule
         self._blocking_rule_for_training = (
             self._settings_obj._blocking_rule_for_training
         )
