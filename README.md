@@ -16,9 +16,43 @@ Its key features are:
 
 The core linkage algorithm is an implementation of Fellegi-Sunter's canonical model of record linkage, with various customisations to improve accuracy. Splink includes an implementation of the Expectation Maximisation algorithm, meaning that record linkage can be performed using an unsupervised approch (i.e. labelled training data is not needed).
 
+## What does Splink do?
+
+Suppose you have one or more datasets which contain records that refer to the same entity (e.g. a person). But your entities do not have a unique identifier, so you can't link them.
+
+For example, a few of your records may look like this:
+
+| row_id | first_name | surname | dob        | city       |
+| ------ | ---------- | ------- | ---------- | ---------- |
+| 1      | lucas      | smith   | 1984-01-02 | London     |
+| 2      | lucas      | smyth   | 1984-07-02 | Manchester |
+| 3      | lucas      | smyth   | 1984-07-02 |            |
+| 4      | david      | jones   |            | Leeds      |
+| 5      | david      | jones   | 1990-03-21 | Leeds      |
+
+Splink produces pairwise predictions of the links:
+
+| row_id_l | row_id_r | match_probability |
+| -------- | -------- | ----------------- |
+| 1        | 2        | 0.9               |
+| 1        | 3        | 0.85              |
+| 2        | 3        | 0.92              |
+| 4        | 5        | 0.7               |
+
+And clusters the predictions to produce an estimated unique id:
+
+| cluster_id | row_id |
+| ---------- | ------ |
+| a          | 1      |
+| a          | 2      |
+| a          | 3      |
+| b          | 4      |
+| b          | 5      |
+
 ## Documentation
 
 The homepage for the Splink documentation can be found [here](https://moj-analytical-services.github.io/splink/). Interactive demos can be found [here](https://github.com/moj-analytical-services/splink_demos/tree/splink3_demos), or by clicking the following Binder link:
+
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/splink3_demos?urlpath=lab)
 
 The specification of the Fellegi Sunter statistical model behind `splink` is similar as that used in the R [fastLink package](https://github.com/kosukeimai/fastLink). Accompanying the fastLink package is an [academic paper](http://imai.fas.harvard.edu/research/files/linkage.pdf) that describes this model. A [series of interactive articles](https://www.robinlinacre.com/probabilistic_linkage/) also explores the theory behind Splink.
