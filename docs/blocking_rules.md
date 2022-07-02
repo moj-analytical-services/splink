@@ -42,7 +42,7 @@ A blocking rule specifies a constraint on how Splink generates pairwise record c
 
 For example, the blocking rule `"l.first_name = r.first_name and l.surname = r.surname"` will generate pairwise record comparisons amongst pairwise comparisons where first name and surname match.
 
-## The purpsose of `blocking_rules_to_generate_predictions`
+## The purpose of `blocking_rules_to_generate_predictions`
 
 `blocking_rules_to_generate_predictions` are used by Splink when the user called `linker.predict()`.
 
@@ -77,7 +77,7 @@ settings = {
 }
 ```
 
-We will now generate a pairwise comparison for the record where there was a typo in the first name, so long as there isn't also a difference inthe postcode.
+We will now generate a pairwise comparison for the record where there was a typo in the first name, so long as there isn't also a difference in the postcode.
 
 By specifying a variety of `blocking_rules_to_generate_predictions`, it becomes implausible that a truly matching record would not be captured by at least one of the rules.
 
@@ -87,7 +87,7 @@ Note that Splink automatically deduplicates the record comparisons it generates.
 
 The purpose of this blocking rule is to reduce the number of pairwise generated to a computationally-tractable number to enable the expectation maximisation algorithm to work.
 
-The expectation maximisation algorithm seems to work best when the pairwise record comparisons are a balanced mix of anywhere between around 1% and 99% true matches. It works less effectively if there are very few examples of either matches or non-matches. It works less efficiently if there is a huge imbalance between the two (e.g. a billion non matches and only a hundred matches).
+The expectation maximisation algorithm seems to work best when the pairwise record comparisons are a mix of anywhere between around 0.1% and 99.9% true matches. It works less effectively if there are very few examples of either matches or non-matches. It works less efficiently if there is a huge imbalance between the two (e.g. a billion non matches and only a hundred matches).
 
 It does not matter if this blocking rule excludes some true matches - it just needs to generate examples of matches and non matches.
 
