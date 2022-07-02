@@ -9,7 +9,7 @@ import json
 from splink.input_column import InputColumn
 
 from .charts import (
-    match_weight_histogram,
+    match_weights_histogram,
     missingness_chart,
     precision_recall_chart,
     roc_chart,
@@ -42,7 +42,7 @@ from .vertically_concatenate import vertically_concatenate_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .accuracy import roc_table
 
-from .match_weight_histogram import histogram_data
+from .match_weights_histogram import histogram_data
 from .comparison_vector_distribution import comparison_vector_distribution_sql
 from .splink_comparison_viewer import (
     comparison_viewer_table_sqls,
@@ -1229,7 +1229,7 @@ class Linker:
 
         return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
 
-    def train_m_from_pairwise_labels(self, table_name):
+    def estimate_m_from_pairwise_labels(self, table_name):
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_from_pairwise_labels(self, table_name)
 
@@ -1390,7 +1390,7 @@ class Linker:
             match_weight_round_to_nearest=match_weight_round_to_nearest,
         )
 
-    def match_weight_histogram(
+    def match_weights_histogram(
         self, df_predict: SplinkDataFrame, target_bins: int = 30, width=600, height=250
     ):
         """Generate a histogram that shows the distribution of match weights in
@@ -1406,7 +1406,7 @@ class Linker:
         """
         df = histogram_data(self, df_predict, target_bins)
         recs = df.as_record_dict()
-        return match_weight_histogram(recs, width=width, height=height)
+        return match_weights_histogram(recs, width=width, height=height)
 
     def waterfall_chart(self, records: List[dict], filter_nulls=True):
         """Visualise how the final match weight is computed for the provided pairwise
