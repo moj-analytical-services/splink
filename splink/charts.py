@@ -21,7 +21,6 @@ try:
 
         return VegaliteNoValidate(spec)
 
-
 except ImportError:
     altair_installed = False
 
