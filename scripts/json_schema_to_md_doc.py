@@ -12,7 +12,7 @@ You can find an interative settings editor [here](https://moj-analytical-service
 
 ## Settings keys in the base setting dictionary
 
-"""
+"""  # noqa E501
 
 
 def add_doc_for_key(schema, key, md):
