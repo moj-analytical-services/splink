@@ -8,8 +8,7 @@ md = """
 This document enumerates all the settings and configuration options available when
 developing your data linkage model.
 
-You can find an interative settings editor
-[here](https://moj-analytical-services.github.io/splink/settingseditor/editor.html).
+You can find an interative settings editor [here](https://moj-analytical-services.github.io/splink/settingseditor/editor.html).
 
 ## Settings keys in the base setting dictionary
 
