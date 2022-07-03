@@ -680,9 +680,9 @@ class Linker:
         `blocking_rules_to_generate_predictions` in the settings dictionary to
         generate pairwise record comparisons.
 
-        For deterministic linkage, this should be a list of blocking rules which 
-        are strict enough to generate only true links. 
-        
+        For deterministic linkage, this should be a list of blocking rules which
+        are strict enough to generate only true links.
+
         Deterministic linkage, however, is likely to result in missed links
         (false negatives).
 
