@@ -86,7 +86,7 @@ class Linker:
         on the linker, such as `linker.predict()`, `linker.profile_columns()` etc.
 
         The Linker class is intended for subclassing for specific backends, e.g.
-        a DuckDBLinker.
+        a `DuckDBLinker`.
 
         Args:
             input_table_or_tables (Union[str, list]): Input data into the linkage model.
@@ -629,7 +629,7 @@ class Linker:
 
         Examples:
             >>> linker = DuckDBLinker(df, connection=":memory:")
-            >>> linker.profile_columns("first_name", "surname")
+            >>> linker.profile_columns(["first_name", "surname"])
             >>> linker.initialise_settings(settings_dict)
 
         Args:
@@ -680,12 +680,14 @@ class Linker:
         `blocking_rules_to_generate_predictions` in the settings dictionary to
         generate pairwise record comparisons.
 
-        This should be a list of blocking rules which are strict enough to generate only
-        true links.  Deterministic linkage, however, is likely to result in missed links
+        For deterministic linkage, this should be a list of blocking rules which 
+        are strict enough to generate only true links. 
+        
+        Deterministic linkage, however, is likely to result in missed links
         (false negatives).
 
         Examples:
-            >>> linker = DuckDBLinker(df, connection=":memory:")
+            >>> linker = DuckDBLinker(df)
             >>>
             >>> settings = {
             >>>     "link_type": "dedupe_only",
@@ -698,7 +700,7 @@ class Linker:
             >>>
             >>> from splink.duckdb.duckdb_linker import DuckDBLinker
             >>>
-            >>> linker = DuckDBLinker(df, settings, connection=":memory:")
+            >>> linker = DuckDBLinker(df, settings)
             >>> df = linker.deterministic_link()
 
         Returns:
