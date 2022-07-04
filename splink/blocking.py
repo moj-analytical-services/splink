@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING
 import logging
 
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
+from .misc import ensure_is_list
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class BlockingRule:
                 salting_rule = f"{rule} and {salt}"
                 salt_to_sprinkle.append(salting_rule)
         else:
-            salt_to_sprinkle = rule
+            salt_to_sprinkle = [rule]
 
         self.salt = salt_to_sprinkle
 
@@ -117,7 +118,7 @@ def block_using_rules_sql(linker: "Linker"):
         not_previous_rules_statement = _sql_gen_and_not_previous_rules(rule)
         matchkey_number = rule.match_key
 
-        # Apply our salted rules to resolve skew issues. If no salt was 
+        # Apply our salted rules to resolve skew issues. If no salt was
         # selected to be added, then apply the initial blocking rule.
         for bl_rule in rule.salt:
             sql = f"""
