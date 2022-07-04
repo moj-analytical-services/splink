@@ -117,7 +117,8 @@ def block_using_rules_sql(linker: "Linker"):
         not_previous_rules_statement = _sql_gen_and_not_previous_rules(rule)
         matchkey_number = rule.match_key
 
-        # Apply our salted rules (or if no salt is applied, the standard rule)
+        # Apply our salted rules to resolve skew issues. If no salt was 
+        # selected to be added, then apply the initial blocking rule.
         for bl_rule in rule.salt:
             sql = f"""
             select
