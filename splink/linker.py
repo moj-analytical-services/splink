@@ -1699,12 +1699,12 @@ class Linker:
         )
 
     def save_settings_to_json(self, out_path: str, overwrite=False) -> dict:
-        """Save the configuration and parameters the linkage model to a json file.
+        """Save the configuration and parameters the linkage model to a `.json` file.
 
-        Returns the model as a Python dictionary.
+        The model can later be loaded back in using `linker.load_settings_from_json()`
 
-        If an out_path is specified, also saves the settings to
-        a file
+        Examples:
+            >>> linker.save_settings_to_json("my_settings.json", overwrite=True)
 
         Args:
             out_path (str): File path for json file
@@ -1725,8 +1725,13 @@ class Linker:
                 json.dump(model_dict, f, indent=4)
 
     def load_settings_from_json(self, in_path: str):
-        """
-        Load settings from a file.
+        """Load settings from a `.json` file.
+
+        This `.json` file would usually be the output of
+        `linker.save_settings_to_json()`
+
+        Examples:
+            >>> linker.load_settings_from_json("my_settings.json")
 
         Args:
             in_path (str): Path to settings json file
