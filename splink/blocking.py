@@ -2,7 +2,6 @@ from typing import TYPE_CHECKING
 import logging
 
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
-from .misc import ensure_is_list
 
 logger = logging.getLogger(__name__)
 
