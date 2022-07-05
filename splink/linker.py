@@ -971,8 +971,7 @@ class Linker:
         # If the user only calls predict, it runs as a single pipeline with no
         # materialisation of anything unless the user has selected salting to be
         # applied.
-        # self._initialise_df_concat_with_tf(materialise=False)
-        self._initialise_df_concat_with_tf(True)
+        self._initialise_df_concat_with_tf(materialise=False)
 
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
