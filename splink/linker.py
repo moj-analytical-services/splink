@@ -70,7 +70,15 @@ logger = logging.getLogger(__name__)
 
 
 class Linker:
-    """Manages the data linkage process and holds the data linkage model."""
+    """The Linker object manages the data linkage process and holds the data linkage
+    model.
+
+    Most of Splink's functionality can  be accessed by calling methods (functions)
+    on the linker, such as `linker.predict()`, `linker.profile_columns()` etc.
+
+    The Linker class is intended for subclassing for specific backends, e.g.
+    a `DuckDBLinker`.
+    """
 
     def __init__(
         self,
@@ -79,20 +87,16 @@ class Linker:
         set_up_basic_logging: bool = True,
         input_table_aliases: Union[str, list] = None,
     ):
-        """The Linker object manages the data linkage process and holds the data linkage
-        model.
-
-        Most of Splink's functionality can  be accessed by calling methods (functions)
-        on the linker, such as `linker.predict()`, `linker.profile_columns()` etc.
-
-        The Linker class is intended for subclassing for specific backends, e.g.
-        a `DuckDBLinker`.
+        """Initialise the linker object, which manages the data linkage process and
+        holds the data linkage model.
 
         Args:
             input_table_or_tables (Union[str, list]): Input data into the linkage model.
                 Either a single string (the name of a table in a database) for
                 deduplication jobs, or a list of strings  (the name of tables in a
-                database) for link_only or link_and_dedupe
+                database) for link_only or link_and_dedupe.  For some linkers, such as
+                the DuckDBLinker and the SparkLinker, it's also possible to pass in
+                dataframes (Pandas and Spark respective) rather than strings.
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
                 `linker.initialise_settings()` Defaults to None.
@@ -737,7 +741,7 @@ class Linker:
             >>> linker.estimate_u_using_random_sampling(1e8)
 
         Returns:
-            Updates the estimated u parameters within the linker object
+            None: Updates the estimated u parameters within the linker object
             and returns nothing.
         """
         self._initialise_df_concat_with_tf(materialise=True)
@@ -1279,8 +1283,11 @@ class Linker:
             >>> labels.createDataFrame("labels")
             >>> linker.roc_chart_from_labels("labels")
 
+
         Returns:
-            SplinkDataFrame
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
         """
         df_truth_space = roc_table(
             self,
@@ -1329,8 +1336,11 @@ class Linker:
             >>> labels.createDataFrame("labels")
             >>> linker.precision_recall_chart_from_labels("labels")
 
+
         Returns:
-            SplinkDataFrame
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
         """
         df_truth_space = roc_table(self, labels_tablename)
         recs = df_truth_space.as_record_dict()
@@ -1382,7 +1392,7 @@ class Linker:
             >>> linker.roc_table_from_labels("labels")
 
         Returns:
-            SplinkDataFrame
+            SplinkDataFrame:  Table of truth statistics
         """
 
         return roc_table(
@@ -1404,6 +1414,12 @@ class Linker:
                 30.
             width (int, optional): Width of output. Defaults to 600.
             height (int, optional): Height of output chart. Defaults to 250.
+
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
 
         """
         df = histogram_data(self, df_predict, target_bins)
@@ -1428,6 +1444,12 @@ class Linker:
             filter_nulls (bool, optional): Whether the visualiation shows null
                 comparisons, which have no effect on final match weight. Defaults to
                 True.
+
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
 
         """
         self._raise_error_if_necessary_waterfall_columns_not_computed()
@@ -1463,6 +1485,11 @@ class Linker:
             >>>
             >>> # For more complex code pipelines, you can run an entire pipeline
             >>> # that estimates your m and u values, before `unlinkables_chart().
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
         """
 
         # Link our initial df on itself and calculate the % of unlinkable entries
@@ -1557,6 +1584,15 @@ class Linker:
 
         Examples:
             >>> linker.missingness_chart()
+            >>> # To view offline (if you don't have an internet connection):
+            >>>
+            >>> from splink.charts import save_offline_chart
+            >>> c = linker.missingness_chart()
+            >>> save_offline_chart(c.spec, "test_chart.html")
+            >>>
+            >>> # View resultant html file in Jupyter (or just load it in your browser)
+            >>> from IPython.display import IFrame
+            >>> IFrame(src="./test_chart.html", width=1000, height=500
 
         """
         records = missingness_data(self, input_dataset)
@@ -1617,6 +1653,12 @@ class Linker:
             >>> # View resultant html file in Jupyter (or just load it in your browser)
             >>> from IPython.display import IFrame
             >>> IFrame(src="./test_chart.html", width=1000, height=500)
+
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
         """
         return self._settings_obj.match_weights_chart()
 
@@ -1635,6 +1677,12 @@ class Linker:
             >>> # View resultant html file in Jupyter (or just load it in your browser)
             >>> from IPython.display import IFrame
             >>> IFrame(src="./test_chart.html", width=1000, height=500)
+
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
         """
 
         return self._settings_obj.m_u_parameters_chart()
