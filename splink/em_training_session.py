@@ -130,9 +130,11 @@ class EMTrainingSession:
         else:
             mu = "m and u probabilities"
 
+        blocking_rule = [r for r in self._blocking_rule_for_training][0]
+
         logger.info(
             f"Estimating the {mu} of the model by blocking on:\n"
-            f"{self._blocking_rule_for_training}\n\n"
+            f"{blocking_rule}\n\n"
             "Parameter estimates will be made for the following comparison(s):"
             f"{estimated}\n"
             "\nParameter estimates cannot be made for the following comparison(s)"
@@ -388,7 +390,8 @@ class EMTrainingSession:
                 for cc in self._comparisons_that_cannot_be_estimated
             ]
         )
+        blocking_rule = [r for r in self._blocking_rule_for_training][0]
         return (
-            f"<EMTrainingSession, blocking on {self._blocking_rule_for_training}, "
+            f"<EMTrainingSession, blocking on {blocking_rule}, "
             f"deactivating comparisons {deactivated_cols}>"
         )
