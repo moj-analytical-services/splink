@@ -967,10 +967,8 @@ class Linker:
 
         """
 
-        # materialise = True if self._settings_obj._salting > 1 else False
         # If the user only calls predict, it runs as a single pipeline with no
-        # materialisation of anything unless the user has selected salting to be
-        # applied.
+        # materialisation of anything
         self._initialise_df_concat_with_tf(materialise=False)
 
         sql = block_using_rules_sql(self)
