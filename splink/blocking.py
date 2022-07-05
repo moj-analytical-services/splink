@@ -26,8 +26,8 @@ class BlockingRule:
         rule = self.blocking_rule
 
         if salting > 1:
-            for n in range(1, salting + 1):
-                salt = f"l.__splink_salt = {n}"
+            for n in range(salting):
+                salt = f"l.__splink_salt = {n+1}"
                 salting_rule = f"{rule} and {salt}"
                 salt_to_sprinkle.append(salting_rule)
         else:
