@@ -104,12 +104,22 @@ class Linker:
                 to attach more easily readable/interpretable names. Defaults to None.
         """
 
+        if set_up_basic_logging:
+            logging.basicConfig(
+                format="%(message)s",
+            )
+            splink_logger = logging.getLogger("splink")
+            splink_logger.setLevel(logging.INFO)
+
         self._pipeline = SQLPipeline()
 
         self._settings_dict = settings_dict
         if settings_dict is None:
             self._settings_obj_ = None
         else:
+            settings_dict = self._check_valid_salting_linker(
+                settings_dict, self._linker_type
+            )
             self._settings_obj_ = Settings(settings_dict)
 
         self._input_tables_dict = self._get_input_tables_dict(
@@ -129,13 +139,6 @@ class Linker:
         self._output_schema = ""
 
         self.debug_mode = False
-
-        if set_up_basic_logging:
-            logging.basicConfig(
-                format="%(message)s",
-            )
-            splink_logger = logging.getLogger("splink")
-            splink_logger.setLevel(logging.INFO)
 
     @property
     def _settings_obj(self) -> Settings:
@@ -492,6 +495,25 @@ class Linker:
                         'If link_type = "dedupe only" then input tables must contain'
                         "only a single input table",
                     )
+
+    def _check_valid_salting_linker(self, settings_dict, linker_type):
+
+        salting = settings_dict["salting"]
+
+        if salting <= 1:
+            return settings_dict
+
+        salting_dialects = ["spark"]
+        if linker_type not in salting_dialects:
+            # Reset our salting value, as this feature is not supported
+            # by this linker variant.
+            settings_dict["salting"] = 1
+            logger.info(
+                "Salting is not currently supported by this linker variant and "
+                "will not be implemented for this run."
+            )
+
+        return settings_dict
 
     def _populate_probability_two_random_records_match_from_trained_values(self):
 
@@ -945,11 +967,9 @@ class Linker:
 
         """
 
-        # materialise = True if self._settings_obj._salting > 1 else False
         # If the user only calls predict, it runs as a single pipeline with no
-        # materialisation of anything unless the user has selected salting to be
-        # applied.
-        self._initialise_df_concat_with_tf(materialise=True)
+        # materialisation of anything
+        self._initialise_df_concat_with_tf(materialise=False)
 
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")

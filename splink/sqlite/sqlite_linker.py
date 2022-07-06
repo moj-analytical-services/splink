@@ -91,6 +91,7 @@ class SQLiteLinker(Linker):
 
         if settings_dict is not None and "sql_dialect" not in settings_dict:
             settings_dict["sql_dialect"] = "sqlite"
+        self._linker_type = "sqlite"
 
         self.con = connection
         self.con.row_factory = dict_factory

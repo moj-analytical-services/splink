@@ -38,18 +38,27 @@ def vertically_concatenate_sql(linker: "Linker") -> str:
             linker._settings_obj._source_dataset_column_name_is_required
         )
 
+    salting = linker._settings_obj_._salting
+    if salting > 1:
+        salt_parititions = salting
+        salt_sql = f"ceiling(random()*{salt_parititions}) as __splink_salt"
+    else:
+        salt_sql = ""
+
     if source_dataset_col_req:
         sqls_to_union = []
         for df_obj in linker._input_tables_dict.values():
             sql = f"""
-            select '{df_obj.templated_name}' as source_dataset, {select_columns_sql}
+            select '{df_obj.templated_name}' as source_dataset, {select_columns_sql},
+            {salt_sql}
             from {df_obj.physical_name}
             """
             sqls_to_union.append(sql)
         sql = " UNION ALL ".join(sqls_to_union)
     else:
         sql = f"""
-            select {select_columns_sql}
+            select {select_columns_sql},
+            {salt_sql}
             from {df_obj.physical_name}
             """
 

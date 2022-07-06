@@ -230,7 +230,7 @@
     },
     "salting": {
       "type": "integer",
-      "title": "Whether to salt the comparison vectors.  This is useful for preventing the same comparison vectors being used for multiple comparisons.  The salt is a random integer between 0 and 2^32-1.  If this is not supplied, no salt will be used.",
+      "title": "Whether to add a salt to the blocking rules to more equally distribute workload of the creation of pairwise comparisons. If this is not supplied, no salt will be used. Read more at https://towardsdatascience.com/skewed-data-in-spark-add-salt-to-compensate-16d44404088b#:~:text=In%20Spark%2C%20SALT%20is%20a,to%20change%20the%20key%20distribution.",
       "default": 1,
       "examples": [1, 10]
     }

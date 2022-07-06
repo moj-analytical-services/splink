@@ -10,12 +10,40 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def _sql_gen_and_not_previous_rules(previous_rules: list):
-    if previous_rules[1]:
-        # Note the isnull function is important here - otherwise
+class BlockingRule:
+    def __init__(
+        self,
+        blocking_rule,
+        previous_rules,
+    ):
+        self.blocking_rule = blocking_rule
+        self.previous_rules = previous_rules.copy()
+        self.match_key = len(previous_rules)
+
+    def _add_salt_to_blocking_rule(self, salting):
+
+        salt_to_sprinkle = []
+        rule = self.blocking_rule
+
+        if salting > 1:
+            for n in range(salting):
+                salt = f"l.__splink_salt = {n+1}"
+                salting_rule = f"{rule} and {salt}"
+                salt_to_sprinkle.append(salting_rule)
+        else:
+            salt_to_sprinkle = [rule]
+
+        self.salt = salt_to_sprinkle
+
+
+def _sql_gen_and_not_previous_rules(rule: BlockingRule):
+
+    previous_rules = rule.previous_rules
+    if previous_rules:
+        # Note the coalesce function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
-        or_clauses = [f"coalesce(({r}), false)" for r in previous_rules[1]]
+        or_clauses = [f"coalesce(({r}), false)" for r in previous_rules]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
     else:
@@ -67,46 +95,44 @@ def block_using_rules_sql(linker: "Linker"):
         link_type, settings_obj._unique_id_input_columns
     )
 
-    sqls = []
-    previous_rules = []
-
     # We could have had a single 'blocking rule'
     # property on the settings object, and avoided this logic but I wanted to be very
     # explicit about the difference between blocking for training
     # and blocking for predictions
     if settings_obj._blocking_rule_for_training:
         blocking_rules = settings_obj._blocking_rule_for_training
-        salts = settings_obj._splink_salts
     else:
         blocking_rules = settings_obj._blocking_rules_to_generate_predictions
-        salts = settings_obj._splink_salts
 
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'
     # you create a cartesian product, rather than having separate code
     # that generates a cross join for the case of no blocking rules
     if not blocking_rules:
-        blocking_rules = ["1=1"]
-        salts = settings_obj._generate_blank_salts(blocking_rules)
+        blocking_rules = settings_obj._generate_blocking_rules(["1=1"])
 
-    for matchkey_number, rule in enumerate(blocking_rules):
+    sqls = []
+    for rule in blocking_rules.values():
 
-        previous_rules = salts[rule]
-        not_previous_rules_statement = _sql_gen_and_not_previous_rules(previous_rules)
+        not_previous_rules_statement = _sql_gen_and_not_previous_rules(rule)
+        matchkey_number = rule.match_key
 
-        sql = f"""
-        select
-        {sql_select_expr}
-        , '{matchkey_number}' as match_key
-        from {linker._input_tablename_l} as l
-        inner join {linker._input_tablename_r} as r
-        on
-        {rule}
-        {not_previous_rules_statement}
-        {where_condition}
-        """
+        # Apply our salted rules to resolve skew issues. If no salt was
+        # selected to be added, then apply the initial blocking rule.
+        for bl_rule in rule.salt:
+            sql = f"""
+            select
+            {sql_select_expr}
+            , '{matchkey_number}' as match_key
+            from {linker._input_tablename_l} as l
+            inner join {linker._input_tablename_r} as r
+            on
+            {bl_rule}
+            {not_previous_rules_statement}
+            {where_condition}
+            """
 
-        sqls.append(sql)
+            sqls.append(sql)
 
     sql = "union all".join(sqls)
 
