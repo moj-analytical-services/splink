@@ -38,7 +38,7 @@ def vertically_concatenate_sql(linker: "Linker") -> str:
             linker._settings_obj._source_dataset_column_name_is_required
         )
 
-    salting = linker._settings_obj_._salting
+    salting = linker._settings_obj_._salting_partitions
     if salting > 1:
         salt_parititions = salting
         salt_sql = f"ceiling(random()*{salt_parititions}) as __splink_salt"

@@ -5,7 +5,7 @@ import logging
 from .expectation_maximisation import expectation_maximisation
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor
 from .parse_sql import get_columns_used_from_sql
-from .blocking import block_using_rules_sql
+from .blocking import BlockingRule, block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .charts import (
     m_u_parameters_interactive_history_chart,
@@ -49,13 +49,13 @@ class EMTrainingSession:
         self._settings_obj._retain_intermediate_calculation_columns = False
         self._settings_obj._training_mode = True
 
-        blocking_rule = self._settings_obj._generate_blocking_rules(
-            [blocking_rule_for_training]
-        )
+        if not isinstance(blocking_rule_for_training, BlockingRule):
+            blocking_rule = BlockingRule(
+                blocking_rule_for_training, [blocking_rule_for_training]
+            )
+
         self._settings_obj._blocking_rule_for_training = blocking_rule
-        self._blocking_rule_for_training = (
-            self._settings_obj._blocking_rule_for_training
-        )
+        self._blocking_rule_for_training = blocking_rule
 
         if comparison_levels_to_reverse_blocking_rule:
             self._comparison_levels_to_reverse_blocking_rule = (
@@ -130,7 +130,7 @@ class EMTrainingSession:
         else:
             mu = "m and u probabilities"
 
-        blocking_rule = [r for r in self._blocking_rule_for_training][0]
+        blocking_rule = self._blocking_rule_for_training.blocking_rule
 
         logger.info(
             f"Estimating the {mu} of the model by blocking on:\n"

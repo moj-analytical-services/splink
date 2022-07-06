@@ -117,9 +117,6 @@ class Linker:
         if settings_dict is None:
             self._settings_obj_ = None
         else:
-            settings_dict = self._check_valid_salting_linker(
-                settings_dict, self._linker_type
-            )
             self._settings_obj_ = Settings(settings_dict)
 
         self._input_tables_dict = self._get_input_tables_dict(
@@ -495,25 +492,6 @@ class Linker:
                         'If link_type = "dedupe only" then input tables must contain'
                         "only a single input table",
                     )
-
-    def _check_valid_salting_linker(self, settings_dict, linker_type):
-
-        salting = settings_dict["salting"]
-
-        if salting <= 1:
-            return settings_dict
-
-        salting_dialects = ["spark"]
-        if linker_type not in salting_dialects:
-            # Reset our salting value, as this feature is not supported
-            # by this linker variant.
-            settings_dict["salting"] = 1
-            logger.info(
-                "Salting is not currently supported by this linker variant and "
-                "will not be implemented for this run."
-            )
-
-        return settings_dict
 
     def _populate_probability_two_random_records_match_from_trained_values(self):
 

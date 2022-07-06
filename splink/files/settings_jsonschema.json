@@ -228,9 +228,9 @@
       "default": null,
       "examples": ["spark", "duckdb", "presto"]
     },
-    "salting": {
+    "salting_partitions": {
       "type": "integer",
-      "title": "Whether to add a salt to the blocking rules to more equally distribute workload of the creation of pairwise comparisons. If this is not supplied, no salt will be used. Read more at https://towardsdatascience.com/skewed-data-in-spark-add-salt-to-compensate-16d44404088b#:~:text=In%20Spark%2C%20SALT%20is%20a,to%20change%20the%20key%20distribution.",
+      "title": "Whether to add a salt to the blocking rules to more equally distribute workload of the creation of pairwise comparisons. If this is not supplied, no salt will be used. Read more at https://github.com/moj-analytical-services/splink/issues/527",
       "default": 1,
       "examples": [1, 10]
     }
