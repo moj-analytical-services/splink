@@ -65,6 +65,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
+# flake8: noqa: C901
 def block_using_rules_sql(linker: "Linker"):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions

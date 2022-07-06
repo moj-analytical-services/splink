@@ -74,7 +74,6 @@ class SparkLinker(Linker):
 
         if settings_dict is not None and "sql_dialect" not in settings_dict:
             settings_dict["sql_dialect"] = "spark"
-        self._linker_type = "spark"
 
         self.break_lineage_method = break_lineage_method
 

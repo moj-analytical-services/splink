@@ -132,7 +132,6 @@ class DuckDBLinker(Linker):
 
         if settings_dict is not None and "sql_dialect" not in settings_dict:
             settings_dict["sql_dialect"] = "duckdb"
-        self._linker_type = "duckdb"
 
         validate_duckdb_connection(connection)
 
