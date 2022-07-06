@@ -9,7 +9,7 @@ import json
 from splink.input_column import InputColumn
 
 from .charts import (
-    match_weight_histogram,
+    match_weights_histogram,
     missingness_chart,
     precision_recall_chart,
     roc_chart,
@@ -42,7 +42,7 @@ from .vertically_concatenate import vertically_concatenate_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .accuracy import roc_table
 
-from .match_weight_histogram import histogram_data
+from .match_weights_histogram import histogram_data
 from .comparison_vector_distribution import comparison_vector_distribution_sql
 from .splink_comparison_viewer import (
     comparison_viewer_table_sqls,
@@ -70,7 +70,15 @@ logger = logging.getLogger(__name__)
 
 
 class Linker:
-    """Manages the data linkage process and holds the data linkage model."""
+    """The Linker object manages the data linkage process and holds the data linkage
+    model.
+
+    Most of Splink's functionality can  be accessed by calling methods (functions)
+    on the linker, such as `linker.predict()`, `linker.profile_columns()` etc.
+
+    The Linker class is intended for subclassing for specific backends, e.g.
+    a `DuckDBLinker`.
+    """
 
     def __init__(
         self,
@@ -79,20 +87,16 @@ class Linker:
         set_up_basic_logging: bool = True,
         input_table_aliases: Union[str, list] = None,
     ):
-        """The Linker object manages the data linkage process and holds the data linkage
-        model.
-
-        Most of Splink's functionality can  be accessed by calling methods (functions)
-        on the linker, such as `linker.predict()`, `linker.profile_columns()` etc.
-
-        The Linker class is intended for subclassing for specific backends, e.g.
-        a DuckDBLinker.
+        """Initialise the linker object, which manages the data linkage process and
+        holds the data linkage model.
 
         Args:
             input_table_or_tables (Union[str, list]): Input data into the linkage model.
                 Either a single string (the name of a table in a database) for
                 deduplication jobs, or a list of strings  (the name of tables in a
-                database) for link_only or link_and_dedupe
+                database) for link_only or link_and_dedupe.  For some linkers, such as
+                the DuckDBLinker and the SparkLinker, it's also possible to pass in
+                dataframes (Pandas and Spark respective) rather than strings.
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
                 `linker.initialise_settings()` Defaults to None.
@@ -489,7 +493,7 @@ class Linker:
             if self._settings_obj._link_type == "dedupe_only":
                 if len(self._input_tables_dict) > 1:
                     raise ValueError(
-                        'If link_type = "dedupe only" then input tables must contain'
+                        'If link_type = "dedupe only" then input tables must contain '
                         "only a single input table",
                     )
 
@@ -629,7 +633,7 @@ class Linker:
 
         Examples:
             >>> linker = DuckDBLinker(df, connection=":memory:")
-            >>> linker.profile_columns("first_name", "surname")
+            >>> linker.profile_columns(["first_name", "surname"])
             >>> linker.initialise_settings(settings_dict)
 
         Args:
@@ -680,12 +684,14 @@ class Linker:
         `blocking_rules_to_generate_predictions` in the settings dictionary to
         generate pairwise record comparisons.
 
-        This should be a list of blocking rules which are strict enough to generate only
-        true links.  Deterministic linkage, however, is likely to result in missed links
+        For deterministic linkage, this should be a list of blocking rules which
+        are strict enough to generate only true links.
+
+        Deterministic linkage, however, is likely to result in missed links
         (false negatives).
 
         Examples:
-            >>> linker = DuckDBLinker(df, connection=":memory:")
+            >>> linker = DuckDBLinker(df)
             >>>
             >>> settings = {
             >>>     "link_type": "dedupe_only",
@@ -698,7 +704,7 @@ class Linker:
             >>>
             >>> from splink.duckdb.duckdb_linker import DuckDBLinker
             >>>
-            >>> linker = DuckDBLinker(df, settings, connection=":memory:")
+            >>> linker = DuckDBLinker(df, settings)
             >>> df = linker.deterministic_link()
 
         Returns:
@@ -735,7 +741,7 @@ class Linker:
             >>> linker.estimate_u_using_random_sampling(1e8)
 
         Returns:
-            Updates the estimated u parameters within the linker object
+            None: Updates the estimated u parameters within the linker object
             and returns nothing.
         """
         self._initialise_df_concat_with_tf(materialise=True)
@@ -1229,7 +1235,7 @@ class Linker:
 
         return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
 
-    def train_m_from_pairwise_labels(self, table_name):
+    def estimate_m_from_pairwise_labels(self, table_name):
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_from_pairwise_labels(self, table_name)
 
@@ -1277,8 +1283,11 @@ class Linker:
             >>> labels.createDataFrame("labels")
             >>> linker.roc_chart_from_labels("labels")
 
+
         Returns:
-            SplinkDataFrame
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
         """
         df_truth_space = roc_table(
             self,
@@ -1327,8 +1336,11 @@ class Linker:
             >>> labels.createDataFrame("labels")
             >>> linker.precision_recall_chart_from_labels("labels")
 
+
         Returns:
-            SplinkDataFrame
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
         """
         df_truth_space = roc_table(self, labels_tablename)
         recs = df_truth_space.as_record_dict()
@@ -1380,7 +1392,7 @@ class Linker:
             >>> linker.roc_table_from_labels("labels")
 
         Returns:
-            SplinkDataFrame
+            SplinkDataFrame:  Table of truth statistics
         """
 
         return roc_table(
@@ -1390,7 +1402,7 @@ class Linker:
             match_weight_round_to_nearest=match_weight_round_to_nearest,
         )
 
-    def match_weight_histogram(
+    def match_weights_histogram(
         self, df_predict: SplinkDataFrame, target_bins: int = 30, width=600, height=250
     ):
         """Generate a histogram that shows the distribution of match weights in
@@ -1403,10 +1415,16 @@ class Linker:
             width (int, optional): Width of output. Defaults to 600.
             height (int, optional): Height of output chart. Defaults to 250.
 
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
+
         """
         df = histogram_data(self, df_predict, target_bins)
         recs = df.as_record_dict()
-        return match_weight_histogram(recs, width=width, height=height)
+        return match_weights_histogram(recs, width=width, height=height)
 
     def waterfall_chart(self, records: List[dict], filter_nulls=True):
         """Visualise how the final match weight is computed for the provided pairwise
@@ -1426,6 +1444,12 @@ class Linker:
             filter_nulls (bool, optional): Whether the visualiation shows null
                 comparisons, which have no effect on final match weight. Defaults to
                 True.
+
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
 
         """
         self._raise_error_if_necessary_waterfall_columns_not_computed()
@@ -1461,6 +1485,11 @@ class Linker:
             >>>
             >>> # For more complex code pipelines, you can run an entire pipeline
             >>> # that estimates your m and u values, before `unlinkables_chart().
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
         """
 
         # Link our initial df on itself and calculate the % of unlinkable entries
@@ -1555,6 +1584,15 @@ class Linker:
 
         Examples:
             >>> linker.missingness_chart()
+            >>> # To view offline (if you don't have an internet connection):
+            >>>
+            >>> from splink.charts import save_offline_chart
+            >>> c = linker.missingness_chart()
+            >>> save_offline_chart(c.spec, "test_chart.html")
+            >>>
+            >>> # View resultant html file in Jupyter (or just load it in your browser)
+            >>> from IPython.display import IFrame
+            >>> IFrame(src="./test_chart.html", width=1000, height=500
 
         """
         records = missingness_data(self, input_dataset)
@@ -1615,6 +1653,12 @@ class Linker:
             >>> # View resultant html file in Jupyter (or just load it in your browser)
             >>> from IPython.display import IFrame
             >>> IFrame(src="./test_chart.html", width=1000, height=500)
+
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
         """
         return self._settings_obj.match_weights_chart()
 
@@ -1633,6 +1677,12 @@ class Linker:
             >>> # View resultant html file in Jupyter (or just load it in your browser)
             >>> from IPython.display import IFrame
             >>> IFrame(src="./test_chart.html", width=1000, height=500)
+
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
         """
 
         return self._settings_obj.m_u_parameters_chart()
@@ -1697,12 +1747,12 @@ class Linker:
         )
 
     def save_settings_to_json(self, out_path: str, overwrite=False) -> dict:
-        """Save the configuration and parameters the linkage model to a json file.
+        """Save the configuration and parameters the linkage model to a `.json` file.
 
-        Returns the model as a Python dictionary.
+        The model can later be loaded back in using `linker.load_settings_from_json()`
 
-        If an out_path is specified, also saves the settings to
-        a file
+        Examples:
+            >>> linker.save_settings_to_json("my_settings.json", overwrite=True)
 
         Args:
             out_path (str): File path for json file
@@ -1723,8 +1773,13 @@ class Linker:
                 json.dump(model_dict, f, indent=4)
 
     def load_settings_from_json(self, in_path: str):
-        """
-        Load settings from a file.
+        """Load settings from a `.json` file.
+
+        This `.json` file would usually be the output of
+        `linker.save_settings_to_json()`
+
+        Examples:
+            >>> linker.load_settings_from_json("my_settings.json")
 
         Args:
             in_path (str): Path to settings json file
