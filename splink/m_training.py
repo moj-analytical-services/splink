@@ -1,7 +1,7 @@
 from copy import deepcopy
 import logging
 
-from .blocking import block_using_rules_sql
+from .blocking import BlockingRule, block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import compute_new_parameters_sql
 from .m_u_records_to_parameters import (
@@ -27,7 +27,10 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
             cl._level_dict["tf_adjustment_column"] = None
 
     settings_obj._blocking_rules_to_generate_predictions = [
-        f"l.{label_colname} = r.{label_colname}"
+        BlockingRule(
+            f"l.{label_colname} = r.{label_colname}",
+            [f"l.{label_colname} = r.{label_colname}"],
+        )
     ]
 
     sql = block_using_rules_sql(training_linker)

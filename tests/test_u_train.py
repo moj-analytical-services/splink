@@ -33,6 +33,6 @@ def test_u_train():
     assert cl_lev.u_probability == 1 / denom
     cl_no = cc_name._get_comparison_level_by_comparison_vector_value(0)
     assert cl_no.u_probability == (denom - 2) / denom
-    assert linker._settings_obj._blocking_rules_to_generate_predictions == [
-        "l.name = r.name"
-    ]
+
+    br = linker._settings_obj._blocking_rules_to_generate_predictions[0]
+    assert br.blocking_rule == "l.name = r.name"

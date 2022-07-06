@@ -231,7 +231,7 @@ class EMTrainingSession:
         comp_levels = self._comparison_levels_to_reverse_blocking_rule
         if not comp_levels:
             comp_levels = self._original_settings_obj._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
-                self._blocking_rule_for_training
+                self._blocking_rule_for_training.blocking_rule
             )
 
         for cl in comp_levels:
