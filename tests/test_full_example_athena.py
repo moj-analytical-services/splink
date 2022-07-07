@@ -23,7 +23,7 @@ def setup_athena_db(my_session, db_name="splink_awswrangler_test"):
     =====
     Partially deprecated by the new garbage_collection function.
     =====
-    
+
     Run this function if you need to create, or recreate the database(s)
     used in this test.
     """
