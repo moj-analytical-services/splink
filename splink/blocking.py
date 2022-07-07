@@ -75,7 +75,7 @@ def block_using_rules_sql(linker: "Linker"):
     so that duplicate comparisons are not generated.
     """
 
-    if "SparkLinker" in type(linker).__name__:
+    if type(linker).__name__ in ["SparkLinker"]:
         apply_salt = True
     else:
         apply_salt = False
