@@ -80,7 +80,7 @@ def test_salting_spark():
         {"blocking_rule": "l.first_name = r.first_name", "salting_partitions": 7},
         "l.dob = r.dob",
     ]
-
+    spark.catalog.dropTempView("__splink__df_concat_with_tf")
     df3 = generate_linker_output(
         df=df_spark,
         blocking_rules=blocking_rules_no_salt,
