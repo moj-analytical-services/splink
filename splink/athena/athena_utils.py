@@ -1,6 +1,13 @@
 import os
 import boto3
-from uuid import uuid4
+import datetime
+
+
+def create_session_id():
+    """
+    Create a filepath suffix for more human readable session IDs.
+    """
+    return datetime.datetime.now().strftime("%Y%m%d_%H-%M-%S")
 
 
 class boto_utils:
@@ -16,7 +23,7 @@ class boto_utils:
 
         self.boto3_session = boto3_session
         self.bucket = output_bucket
-        self.session_id = uuid4().hex[:10]
+        self.session_id = create_session_id()
 
         # specify some additional prefixes
         self.s3_output_name_prefix = output_filepath

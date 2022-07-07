@@ -3,6 +3,7 @@ import json
 import os
 import pkgutil
 from typing import TYPE_CHECKING, List
+from .misc import NumpyEncoder
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -14,15 +15,12 @@ def row_examples(linker: "Linker", example_rows_per_category=2):
     sqls = []
 
     uid_cols = linker._settings_obj._unique_id_input_columns
-    uid_cols_l = [f"cast({uid_col.name_l()} as varchar)" for uid_col in uid_cols]
-    uid_cols_r = [f"cast({uid_col.name_r()} as varchar)" for uid_col in uid_cols]
+    uid_cols_l = [uid_col.name_l() for uid_col in uid_cols]
+    uid_cols_r = [uid_col.name_r() for uid_col in uid_cols]
     uid_cols = uid_cols_l + uid_cols_r
     uid_expr = " || '-' ||".join(uid_cols)
 
-    gamma_columns = [
-        f"cast({c._gamma_column_name} as varchar)"
-        for c in linker._settings_obj.comparisons
-    ]
+    gamma_columns = [c._gamma_column_name for c in linker._settings_obj.comparisons]
 
     gam_concat = " || ',' || ".join(gamma_columns)
 
@@ -136,7 +134,7 @@ def render_splink_comparison_viewer_html(
     template = Template(template)
 
     template_data = {
-        "comparison_vector_data": json.dumps(comparison_vector_data),
+        "comparison_vector_data": json.dumps(comparison_vector_data, cls=NumpyEncoder),
         "splink_settings": json.dumps(splink_settings),
     }
 

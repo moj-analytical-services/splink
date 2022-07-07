@@ -5,12 +5,15 @@ import numpy as np
 import boto3
 import sqlglot
 from typing import Union
+import uuid
 
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..athena.athena_utils import boto_utils
 from ..input_column import InputColumn
+from ..misc import ensure_is_list
+from ..sql_transform import cast_concat_as_varchar
 
 
 logger = logging.getLogger(__name__)
@@ -52,7 +55,11 @@ class AthenaDataFrame(SplinkDataFrame):
     @property
     def columns(self):
         t = self.get_schema_info(self.physical_name)
-        d = wr.catalog.get_table_types(database=t[0], table=t[1])
+        d = wr.catalog.get_table_types(
+            database=t[0],
+            table=t[1],
+            boto3_session=self.athena_linker.boto3_session,
+        )
 
         cols = list(d.keys())
         return [InputColumn(c, sql_dialect="presto") for c in cols]
@@ -114,6 +121,8 @@ class AthenaDataFrame(SplinkDataFrame):
             s3_output=self.athena_linker.boto_utils.s3_output,
             keep_files=False,
             ctas_approach=True,
+            use_threads=True,
+            boto3_session=self.athena_linker.boto3_session,
         )
         return out_df
 
@@ -140,16 +149,17 @@ class AthenaLinker(Linker):
         input_table_aliases: Union[str, list] = None,
         set_up_basic_logging=True,
         output_filepath: str = "splink_warehouse",
+        garbage_collection: bool = True,
     ):
 
         """An athena backend for our main linker class. This funnels our generated SQL
         through athena using awswrangler.
-
         See linker.py for more information on the main linker class.
-
         Attributes:
-            input_table_or_tables: A list, str or pandas dataframe object that contains
-                your data or the name of your data to link and/or dedupe.
+            input_table_or_tables (Union[str, list]): Input data into the linkage model.
+                Either a single string (the name of a table in a database) for
+                deduplication jobs, or a list of strings  (the name of tables in a
+                database) for link_only or link_and_dedupe.
             boto3_session (boto3.session.Session): A working boto3 session, which
                 should contain user credentials and region information.
             output_database (str): The name of the database you wish to export the
@@ -167,7 +177,12 @@ class AthenaLinker(Linker):
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
             output_filepath (str, optional): Inside of your selected output bucket,
                 where to write output files to. Defaults to "splink_warehouse".
-
+            garbage_collection (bool): If True, garbage collection will scan your
+                specified output database for any previously generated '__splink_df'
+                files and delete both the database table and backing s3 data. If False,
+                this will only delete the link between this s3 data and the database
+                (i.e. your previously created parquet files will still exist on s3
+                and can be relinked if desired).
         Examples:
             >>> # Creating a database in athena and writing to it
             >>> import awswrangler as wr
@@ -206,7 +221,6 @@ class AthenaLinker(Linker):
             >>>     output_bucket="alpha-splink-db-testing",
             >>>     output_database="splink_awswrangler_test2",
             >>> )
-
         """
 
         if settings_dict is not None and "sql_dialect" not in settings_dict:
@@ -220,17 +234,65 @@ class AthenaLinker(Linker):
         )
         self.ctas_query_info = {}
 
+        # If user has provided pandas dataframes, need to register
+        # them with the database, using user-provided aliases
+        # if provided or a created alias if not
+
+        input_tables = ensure_is_list(input_table_or_tables)
+
+        input_aliases = self._ensure_aliases_populated_and_is_list(
+            input_table_or_tables, input_table_aliases
+        )
+
+        # 'homogenised' means all entries are strings representing tables
+        homogenised_tables = []
+        homogenised_aliases = []
+
+        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
+
+            if type(table).__name__ == "DataFrame":
+                if type(alias).__name__ == "DataFrame":
+                    df_id = uuid.uuid4().hex[:7]
+                    alias = f"__splink__input_table_{df_id}"
+
+                # register table here...
+                wr.s3.to_parquet(
+                    df=table,
+                    path=self.boto_utils.s3_output,
+                    dataset=True,
+                    mode="overwrite",
+                    database=output_database,
+                    table=alias,
+                    boto3_session=boto3_session,
+                    compression="snappy",
+                    use_threads=True,
+                )
+
+            homogenised_tables.append(alias)
+            homogenised_aliases.append(alias)
+
         super().__init__(
-            input_table_or_tables,
+            homogenised_tables,
             settings_dict,
             set_up_basic_logging,
-            input_table_aliases=input_table_aliases,
+            input_table_aliases=homogenised_aliases,
         )
 
         self.output_schema = output_database
+        self._drop_all_tables_created_by_splink(
+            garbage_collection,
+            homogenised_aliases,
+        )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return AthenaDataFrame(templated_name, physical_name, self)
+
+    def change_output_filepath(self, new_filepath):
+        self.boto_utils = boto_utils(
+            self.boto3_session,
+            self.boto_utils.bucket,
+            new_filepath,
+        )
 
     def initialise_settings(self, settings_dict: dict):
         if "sql_dialect" not in settings_dict:
@@ -244,6 +306,7 @@ class AthenaLinker(Linker):
         self.drop_table_from_database_if_exists(physical_name)
 
         if transpile:
+            sql = cast_concat_as_varchar(sql)
             sql = sqlglot.transpile(sql, read=None, write="presto")[0]
 
         sql = sql.replace("float", "real")
@@ -289,7 +352,6 @@ class AthenaLinker(Linker):
             sql=sql,
             database=database,
             ctas_table=physical_name,
-            ctas_database=database,
             storage_format="parquet",
             write_compression="snappy",
             boto3_session=self.boto3_session,
@@ -313,8 +375,51 @@ class AthenaLinker(Linker):
             metadata["ctas_query_metadata"].manifest_location,
         ]
         # delete our folder
-        wr.s3.delete_objects(boto3_session=self.boto3_session, path=path)
+        wr.s3.delete_objects(
+            path=path,
+            use_threads=True,
+            boto3_session=self.boto3_session,
+        )
         # delete our metadata
-        wr.s3.delete_objects(boto3_session=self.boto3_session, path=metadata_urls)
+        wr.s3.delete_objects(
+            path=metadata_urls,
+            use_threads=True,
+            boto3_session=self.boto3_session,
+        )
 
         self.ctas_query_info.pop(physical_name)
+
+    def _drop_all_tables_created_by_splink(self, garbage_collection, input_tables):
+
+        # This will only delete tables created within the splink process. These are
+        # tables containing the specific prefix: "__splink"
+        tables = wr.catalog.get_tables(
+            database=self.output_schema,
+            name_prefix="__splink",
+            boto3_session=self.boto3_session,
+        )
+        delete_metadata_loc = []
+        for t in tables:
+            # Don't overwrite input tables if they have been
+            # given the __splink prefix.
+            if t["Name"] not in input_tables:
+                wr.catalog.delete_table_if_exists(
+                    database=t["DatabaseName"],
+                    table=t["Name"],
+                    boto3_session=self.boto3_session,
+                )
+                if garbage_collection:
+                    path = t["StorageDescriptor"]["Location"]
+                    wr.s3.delete_objects(
+                        path=path,
+                        use_threads=True,
+                        boto3_session=self.boto3_session,
+                    )
+                    metadata_loc = f"{path.split('/__splink')[0]}/tables/"
+                    if metadata_loc not in delete_metadata_loc:
+                        wr.s3.delete_objects(
+                            path=metadata_loc,
+                            use_threads=True,
+                            boto3_session=self.boto3_session,
+                        )
+                        delete_metadata_loc.append(metadata_loc)
