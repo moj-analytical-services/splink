@@ -50,9 +50,7 @@ class EMTrainingSession:
         self._settings_obj._training_mode = True
 
         if not isinstance(blocking_rule_for_training, BlockingRule):
-            blocking_rule = BlockingRule(
-                blocking_rule_for_training, [blocking_rule_for_training]
-            )
+            blocking_rule = BlockingRule(blocking_rule_for_training)
 
         self._settings_obj._blocking_rule_for_training = blocking_rule
         self._blocking_rule_for_training = blocking_rule

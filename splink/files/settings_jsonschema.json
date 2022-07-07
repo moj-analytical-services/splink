@@ -177,18 +177,7 @@
           "l.first_name = r.first_name AND l.surname = r.surname",
           "l.dob = r.dob"
         ]
-      ],
-      "items": {
-        "type": "string",
-        "title": "Each item in the array is a SQL expression represing a left join ON condition",
-        "default": [],
-        "examples": [
-          [
-            "l.first_name = r.first_name AND l.surname = r.surname",
-            "l.dob = r.dob"
-          ]
-        ]
-      }
+      ]
     },
     "additional_columns_to_retain": {
       "type": "array",
@@ -226,12 +215,6 @@
       "default": null,
       "examples": ["spark", "duckdb", "presto"],
       "enum": ["spark", "duckdb", "presto", "sqlite"]
-    },
-    "salting_partitions": {
-      "type": "integer",
-      "title": "Whether to add a salt to the blocking rules to more equally distribute workload of the creation of pairwise comparisons. If this is not supplied, no salt will be used. Read more at https://github.com/moj-analytical-services/splink/issues/527",
-      "default": 1,
-      "examples": [1, 10]
     }
   }
 }

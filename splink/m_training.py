@@ -27,10 +27,7 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
             cl._level_dict["tf_adjustment_column"] = None
 
     settings_obj._blocking_rules_to_generate_predictions = [
-        BlockingRule(
-            f"l.{label_colname} = r.{label_colname}",
-            [f"l.{label_colname} = r.{label_colname}"],
-        )
+        BlockingRule(f"l.{label_colname} = r.{label_colname}")
     ]
 
     sql = block_using_rules_sql(training_linker)

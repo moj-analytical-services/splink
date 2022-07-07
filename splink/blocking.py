@@ -14,15 +14,15 @@ class BlockingRule:
     def __init__(
         self,
         blocking_rule,
-        all_blocking_rules: List[str] = [],
         salting_partitions=1,
     ):
         self.blocking_rule = blocking_rule
-
-        position = all_blocking_rules.index(blocking_rule)
-        self.match_key = position
-        self.preceding_rules = all_blocking_rules[:position]
+        self.preceding_rules = []
         self.salting_partitions = salting_partitions
+
+    @property
+    def match_key(self):
+        return len(self.preceding_rules)
 
     @property
     def and_not_preceding_rules_sql(self):
@@ -33,7 +33,9 @@ class BlockingRule:
         # Note the coalesce function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
-        or_clauses = [f"coalesce(({r}), false)" for r in self.preceding_rules]
+        or_clauses = [
+            f"coalesce(({r.blocking_rule}), false)" for r in self.preceding_rules
+        ]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
 
@@ -43,7 +45,7 @@ class BlockingRule:
             yield self.blocking_rule
         else:
             for n in range(self.salting_partitions):
-                yield f"{self.blocking_rule} and l.__splink_salt = {n+1}"
+                yield f"{self.blocking_rule} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):
@@ -75,15 +77,18 @@ def block_using_rules_sql(linker: "Linker"):
     so that duplicate comparisons are not generated.
     """
 
-    if type(linker).__name__ in ["SparkLinker"]:
+    if type(linker).__name__ in ["SparkLinker", "DuckDBLinker"]:
         apply_salt = True
     else:
         apply_salt = False
-        if linker._settings_obj._salting_partitions > 1:
-            logger.warning(
-                "Salting is not currently supported by this linker variant and "
-                "will not be implemented for this run."
-            )
+
+        for rule in linker._settings_obj._blocking_rules_to_generate_predictions:
+            if rule.salting_partitions > 1:
+                logger.warning(
+                    "Salting is not currently supported by this linker variant and "
+                    "will not be implemented for this run."
+                )
+            break
 
     settings_obj = linker._settings_obj
 
@@ -116,7 +121,7 @@ def block_using_rules_sql(linker: "Linker"):
     # you create a cartesian product, rather than having separate code
     # that generates a cross join for the case of no blocking rules
     if not blocking_rules:
-        blocking_rules = [BlockingRule("1=1", ["1=1"])]
+        blocking_rules = [BlockingRule("1=1")]
 
     sqls = []
     for br in blocking_rules:

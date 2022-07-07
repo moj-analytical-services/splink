@@ -61,7 +61,6 @@ def test_dedupe_only_join_condition():
 
     settings_salt = deepcopy(settings_template)
     settings_salt["link_type"] = "dedupe_only"
-    settings_salt["salting_partitions"] = 4
 
     for s in [settings, settings_salt]:
         linker = DuckDBLinker(df, s)
@@ -86,7 +85,6 @@ def test_link_only_two_join_condition():
 
     settings_salt = deepcopy(settings_template)
     settings_salt["link_type"] = "link_only"
-    settings_salt["salting_partitions"] = 4
 
     for s in [settings, settings_salt]:
         linker = DuckDBLinker([sds_d_only, sds_b_only], s)
@@ -115,7 +113,6 @@ def test_link_only_three_join_condition():
 
     settings_salt = deepcopy(settings_template)
     settings_salt["link_type"] = "link_only"
-    settings_salt["salting_partitions"] = 4
 
     for s in [settings, settings_salt]:
 
@@ -145,7 +142,6 @@ def test_link_and_dedupe_two_join_condition():
 
     settings_salt = deepcopy(settings_template)
     settings_salt["link_type"] = "link_and_dedupe"
-    settings_salt["salting_partitions"] = 4
 
     for s in [settings, settings_salt]:
         linker = DuckDBLinker([sds_d_only, sds_b_only], s)
@@ -174,7 +170,6 @@ def test_link_and_dedupe_three_join_condition():
 
     settings_salt = deepcopy(settings_template)
     settings_salt["link_type"] = "link_and_dedupe"
-    settings_salt["salting_partitions"] = 4
 
     for s in [settings, settings_salt]:
         linker = DuckDBLinker([sds_d_only, sds_b_only, sds_c_only], s)

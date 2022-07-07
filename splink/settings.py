@@ -55,17 +55,28 @@ class Settings:
         self._em_convergence = s_else_d("em_convergence")
         self._max_iterations = s_else_d("max_iterations")
         self._unique_id_column_name = s_else_d("unique_id_column_name")
-        self._salting_partitions = s_else_d("salting_partitions")
 
         self._retain_matching_columns = s_else_d("retain_matching_columns")
         self._retain_intermediate_calculation_columns = s_else_d(
             "retain_intermediate_calculation_columns"
         )
 
-        brs = s_else_d("blocking_rules_to_generate_predictions")
-        br_as_obj = [BlockingRule(br, brs, self._salting_partitions) for br in brs]
+        brs_as_strings = s_else_d("blocking_rules_to_generate_predictions")
 
-        self._blocking_rules_to_generate_predictions = br_as_obj
+        brs_as_objs = []
+        for br in brs_as_strings:
+            if isinstance(br, dict):
+                br = BlockingRule(
+                    br["blocking_rule"], salting_partitions=br["salting_partitions"]
+                )
+                br.preceding_rules = brs_as_objs.copy()
+                brs_as_objs.append(br)
+            else:
+                br = BlockingRule(br)
+                br.preceding_rules = brs_as_objs.copy()
+                brs_as_objs.append(br)
+
+        self._blocking_rules_to_generate_predictions = brs_as_objs
 
         self._gamma_prefix = s_else_d("comparison_vector_value_column_prefix")
         self._bf_prefix = s_else_d("bayes_factor_column_prefix")
@@ -424,3 +435,10 @@ class Settings:
             f"assessed as follows:\n\n{comparison_descs}"
         )
         return desc
+
+    @property
+    def salting_required(self):
+        for br in self._blocking_rules_to_generate_predictions:
+            if br.salting_partitions > 1:
+                return True
+        return False
