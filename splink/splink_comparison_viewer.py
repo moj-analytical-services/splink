@@ -3,7 +3,7 @@ import json
 import os
 import pkgutil
 from typing import TYPE_CHECKING, List
-from .utils import NumpyEncoder
+from .misc import NumpyEncoder
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
