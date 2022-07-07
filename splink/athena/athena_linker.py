@@ -250,9 +250,10 @@ class AthenaLinker(Linker):
 
         for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
 
-            if type(alias).__name__ == "DataFrame":
-                df_id = uuid.uuid4().hex[:7]
-                alias = f"__splink__input_table_{df_id}"
+            if type(table).__name__ == "DataFrame":
+                if type(alias).__name__ == "DataFrame":
+                    df_id = uuid.uuid4().hex[:7]
+                    alias = f"__splink__input_table_{df_id}"
 
                 # register table here...
                 wr.s3.to_parquet(
