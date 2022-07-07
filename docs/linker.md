@@ -5,11 +5,11 @@ tags:
 # Documentation for `Linker` object
 
 
-
 ::: splink.linker.Linker
     handler: python
     selection:
       members:
+        - __init__
         - cluster_pairwise_predictions_at_threshold
         - cluster_studio_dashboard
         - compare_two_records
@@ -23,6 +23,7 @@ tags:
         - estimate_u_using_random_sampling
         - find_matches_to_new_records
         - initialise_settings
+        - load_settings_from_json
         - m_u_parameters_chart
         - match_weight_histogram
         - match_weights_chart
@@ -33,6 +34,7 @@ tags:
         - profile_columns
         - roc_chart_from_labels
         - roc_table_from_labels
+        - save_settings_to_json
         - train_m_from_pairwise_labels
         - unlinkables_chart
         - waterfall_chart

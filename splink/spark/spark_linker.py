@@ -74,7 +74,6 @@ class SparkLinker(Linker):
 
         if settings_dict is not None and "sql_dialect" not in settings_dict:
             settings_dict["sql_dialect"] = "spark"
-        self._linker_type = "spark"
 
         self.break_lineage_method = break_lineage_method
 
@@ -138,7 +137,7 @@ class SparkLinker(Linker):
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
-            r"__splink__df_representatives_.+",
+            r"__splink__df_representatives+",
             r"__splink__df_neighbours",
             r"__splink__df_connected_components_df",
         ]
@@ -150,8 +149,7 @@ class SparkLinker(Linker):
             r"__splink__df_comparison_vectors",
             r"__splink__df_blocked",
             r"__splink__df_neighbours",
-            r"__splink__df_representatives_.+",
-            r"__splink__df_predict",
+            r"__splink__df_representatives+",
         ]
 
         num_partitions = self.num_partitions_on_repartition

@@ -32,9 +32,6 @@ def test_m_train():
     assert cl_lev.m_probability == 2 / 4
     cl_no = cc_name._get_comparison_level_by_comparison_vector_value(0)
     assert cl_no.m_probability == 1 / 4
-    assert linker._settings_obj._blocking_rules_to_generate_predictions == [
-        "l.name = r.name"
-    ]
 
     # Train from pairwise labels
     df["source_dataset"] = "fake_data_1"
@@ -56,7 +53,7 @@ def test_m_train():
     linker_pairwise = DuckDBLinker(df, settings)
 
     linker_pairwise._con.register("labels", df_labels)
-    linker_pairwise.train_m_from_pairwise_labels("labels")
+    linker_pairwise.estimate_m_from_pairwise_labels("labels")
     cc_name = linker_pairwise._settings_obj.comparisons[0]
 
     cl_exact = cc_name._get_comparison_level_by_comparison_vector_value(2)

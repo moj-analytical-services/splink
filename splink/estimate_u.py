@@ -85,8 +85,7 @@ def estimate_u_values(linker: "Linker", target_rows):
         transpile=False,
     )
 
-    blank_rule = settings_obj._generate_blocking_rules([])
-    settings_obj._blocking_rules_to_generate_predictions = blank_rule
+    settings_obj._blocking_rules_to_generate_predictions = []
 
     sql = block_using_rules_sql(training_linker)
     training_linker._enqueue_sql(sql, "__splink__df_blocked")

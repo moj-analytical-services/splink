@@ -55,16 +55,18 @@ class Settings:
         self._em_convergence = s_else_d("em_convergence")
         self._max_iterations = s_else_d("max_iterations")
         self._unique_id_column_name = s_else_d("unique_id_column_name")
-        self._salting = s_else_d("salting")
+        self._salting_partitions = s_else_d("salting_partitions")
 
         self._retain_matching_columns = s_else_d("retain_matching_columns")
         self._retain_intermediate_calculation_columns = s_else_d(
             "retain_intermediate_calculation_columns"
         )
 
-        self._blocking_rules_to_generate_predictions = self._generate_blocking_rules(
-            rules=None
-        )
+        brs = s_else_d("blocking_rules_to_generate_predictions")
+        br_as_obj = [BlockingRule(br, brs, self._salting_partitions) for br in brs]
+
+        self._blocking_rules_to_generate_predictions = br_as_obj
+
         self._gamma_prefix = s_else_d("comparison_vector_value_column_prefix")
         self._bf_prefix = s_else_d("bayes_factor_column_prefix")
         self._tf_prefix = s_else_d("term_frequency_adjustment_column_prefix")
@@ -157,23 +159,6 @@ class Settings:
         """
 
         return len(self._blocking_rules_to_generate_predictions) > 1
-
-    def _generate_blocking_rules(self, rules):
-
-        if rules is None:
-            rules = self._from_settings_dict_else_default(
-                "blocking_rules_to_generate_predictions"
-            )
-
-        previous_rules = []
-        blocking_rules = {}
-        for rule in rules:
-            r = BlockingRule(rule, previous_rules)
-            r._add_salt_to_blocking_rule(self._salting)
-            blocking_rules = {**blocking_rules, rule: r}
-            previous_rules.append(rule)
-
-        return blocking_rules
 
     @property
     def _columns_to_select_for_blocking(self):

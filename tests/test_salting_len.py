@@ -33,7 +33,7 @@ def generate_linker_output(
 ):
     # Adjust our settings object
     settings = get_settings_dict()
-    settings["salting"] = salting
+    settings["salting_partitions"] = salting
     if blocking_rules:
         settings["blocking_rules_to_generate_predictions"] = blocking_rules
     settings["link_type"] = link_type

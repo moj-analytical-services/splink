@@ -33,12 +33,13 @@ def vertically_concatenate_sql(linker: "Linker") -> str:
     # but user may not have provided a settings dict yet
     if linker._settings_obj_ is None:
         source_dataset_col_req = True
+        salting = 1
     else:
         source_dataset_col_req = (
             linker._settings_obj._source_dataset_column_name_is_required
         )
+        salting = linker._settings_obj_._salting_partitions
 
-    salting = linker._settings_obj_._salting
     if salting > 1:
         salt_parititions = salting
         salt_sql = f"ceiling(random()*{salt_parititions}) as __splink_salt"

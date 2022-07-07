@@ -5,16 +5,17 @@ import sqlglot.expressions as exp
 def _add_l_or_r_to_identifier(node):
     if isinstance(node, exp.Identifier):
         if isinstance(node.parent, exp.Bracket):
-            l_r = node.parent.parent.table.this
+            l_r = node.parent.parent.table
         else:
-            l_r = node.parent.table.this
+            l_r = node.parent.table
         node.args["this"] += f"_{l_r}"
     return node
 
 
 def _remove_table_prefix(node):
     if isinstance(node, exp.Column):
-        node.table.args["this"] = None
+        n = node.sql().replace(f"{node.table}.", "")
+        return sqlglot.parse_one(n)
     return node
 
 

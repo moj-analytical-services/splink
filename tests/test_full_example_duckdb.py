@@ -106,3 +106,20 @@ def test_full_example_duckdb(tmp_path):
 
     linker_2 = DuckDBLinker(df, connection=":memory:")
     linker_2.load_settings_from_json(path)
+
+
+def test_small_link_example_duckdb():
+
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    settings_dict = get_settings_dict()
+
+    settings_dict["link_type"] = "link_only"
+
+    linker = DuckDBLinker(
+        [df, df],
+        settings_dict,
+        connection=":memory:",
+        output_schema="splink_in_duckdb",
+    )
+
+    linker.predict()
