@@ -109,7 +109,7 @@ def block_using_rules_sql(linker: "Linker"):
         blocking_rules = settings_obj._blocking_rules_to_generate_predictions
 
     for rule in blocking_rules:
-        if rule.salting_partitions > 1:
+        if rule.salting_partitions > 1 and apply_salt == False:
             logger.warning(
                 "WARNING: Salting is not currently supported by this linker backend and"
                 " will not be implemented for this run."

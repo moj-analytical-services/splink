@@ -4,6 +4,8 @@ from tests.basic_settings import get_settings_dict
 
 from splink.spark.spark_linker import SparkLinker
 
+from splink.spark.spark_comparison_level_library import _mutable_params
+
 
 def check_same_ids(df1, df2, unique_id_col="unique_id"):
     col_l = f"{unique_id_col}_l"
@@ -42,10 +44,11 @@ def generate_linker_output(
     return df_predict.sort_values(by=["unique_id_l", "unique_id_r"], ignore_index=True)
 
 
-# @pytest.mark.skip(reason="Slow")
 def test_salting_spark(spark):
     # Test that the number of rows in salted link jobs is identical
     # to those not salted.
+
+    _mutable_params["dialect"] = "spark"
 
     df_spark = spark.read.csv(
         "./tests/datasets/fake_1000_from_splink_demos.csv", header=True
