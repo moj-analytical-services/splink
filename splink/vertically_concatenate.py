@@ -42,7 +42,7 @@ def vertically_concatenate_sql(linker: "Linker") -> str:
         salting_reqiured = linker._settings_obj.salting_required
 
     if salting_reqiured:
-        salt_sql = "random() as __splink_salt"
+        salt_sql = ", random() as __splink_salt"
     else:
         salt_sql = ""
 
@@ -50,7 +50,7 @@ def vertically_concatenate_sql(linker: "Linker") -> str:
         sqls_to_union = []
         for df_obj in linker._input_tables_dict.values():
             sql = f"""
-            select '{df_obj.templated_name}' as source_dataset, {select_columns_sql},
+            select '{df_obj.templated_name}' as source_dataset, {select_columns_sql}
             {salt_sql}
             from {df_obj.physical_name}
             """
@@ -58,7 +58,7 @@ def vertically_concatenate_sql(linker: "Linker") -> str:
         sql = " UNION ALL ".join(sqls_to_union)
     else:
         sql = f"""
-            select {select_columns_sql},
+            select {select_columns_sql}
             {salt_sql}
             from {df_obj.physical_name}
             """
