@@ -1,18 +1,54 @@
+from copy import deepcopy
 import pandas as pd
-import numpy as np
-import pytest
 from splink.comparison_library import exact_match
+from splink.duckdb.duckdb_linker import DuckDBLinker
+
+settings_template = {
+    "probability_two_random_records_match": 0.01,
+    "unique_id_column_name": "id",
+    "blocking_rules_to_generate_predictions": [
+        "l.first_name = r.first_name",
+        "l.surname = r.surname",
+    ],
+    "comparisons": [
+        exact_match("first_name", term_frequency_adjustments=True),
+        exact_match("surname"),
+        exact_match("dob"),
+    ],
+    "retain_matching_columns": True,
+    "retain_intermediate_calculation_columns": True,
+}
+
+data = [
+    {"id": 1, "source_ds": "d"},
+    {"id": 2, "source_ds": "d"},
+    {"id": 1, "source_ds": "b"},
+    {"id": 2, "source_ds": "b"},
+    {"id": 3, "source_ds": "c"},
+    {"id": 4, "source_ds": "c"},
+]
 
 
-def dfs():
+df = pd.DataFrame(data)
+df["first_name"] = "John"
+df["surname"] = "Smith"
+df["dob"] = "01/01/1980"
 
+sds_b_only = df.query("source_ds == 'b'").drop(columns=["source_ds"], axis=1)
+
+sds_c_only = df.query("source_ds == 'c'").drop(columns=["source_ds"], axis=1)
+
+sds_d_only = df.query("source_ds == 'd'").drop(columns=["source_ds"], axis=1)
+
+
+def test_dedupe_only_join_condition():
     data = [
-        {"id_link": 1, "id_dedupe": 1, "source_ds": "d"},
-        {"id_link": 2, "id_dedupe": 2, "source_ds": "d"},
-        {"id_link": 1, "id_dedupe": 3, "source_ds": "b"},
-        {"id_link": 2, "id_dedupe": 4, "source_ds": "b"},
-        {"id_link": 3, "id_dedupe": 5, "source_ds": "c"},
-        {"id_link": 4, "id_dedupe": 6, "source_ds": "c"},
+        {"id": 1},
+        {"id": 2},
+        {"id": 3},
+        {"id": 4},
+        {"id": 5},
+        {"id": 6},
     ]
 
     df = pd.DataFrame(data)
@@ -20,172 +56,136 @@ def dfs():
     df["surname"] = "Smith"
     df["dob"] = "01/01/1980"
 
-    dedupe_only = df.rename(columns={"id_dedupe": "id"}).drop(
-        columns=[
-            "source_ds",
-            "id_link",
-        ],
-        axis=1,
-    )
+    settings = deepcopy(settings_template)
+    settings["link_type"] = "dedupe_only"
 
-    sds_d_only = (
-        df.query("source_ds == 'd'")
-        .rename(columns={"id_link": "id"})
-        .drop(columns=["id_dedupe", "source_ds"], axis=1)
-    )
+    settings_salt = deepcopy(settings_template)
+    settings_salt["link_type"] = "dedupe_only"
 
-    sds_b_only = (
-        df.query("source_ds == 'b'")
-        .rename(columns={"id_link": "id"})
-        .drop(columns=["id_dedupe", "source_ds"], axis=1)
-    )
+    for s in [settings, settings_salt]:
+        linker = DuckDBLinker(df, s)
 
-    sds_c_only = (
-        df.query("source_ds == 'c'")
-        .rename(columns={"id_link": "id"})
-        .drop(columns=["id_dedupe", "source_ds"], axis=1)
-    )
+        df_predict = linker.predict().as_pandas_dataframe()
 
-    return {
-        "dedupe_only__pass": {"input_tables": dedupe_only, "input_table_aliases": "df"},
-        "link_only__two": {
-            "input_tables": [sds_d_only, sds_b_only],
-            "input_table_aliases": [
-                "df_d",
-                "df_b",
-            ],
-        },
-        "link_only__three": {
-            "input_tables": [sds_d_only, sds_b_only, sds_c_only],
-            "input_table_aliases": ["df_d", "df_b", "df_c"],
-        },
-        "link_and_dedupe__two": {
-            "input_tables": [sds_d_only, sds_b_only],
-            "input_table_aliases": [
-                "df_d",
-                "df_b",
-            ],
-        },
-        "link_and_dedupe__three": {
-            "input_tables": [sds_d_only, sds_b_only, sds_c_only],
-            "input_table_aliases": ["df_d", "df_b", "df_c"],
-        },
-    }
+        assert len(df_predict) == (6 * 5) / 2
+
+        # Check that the lower ID is always on the left hand side
+        assert all(df_predict["id_l"] < df_predict["id_r"])
+
+        # self_link = linker._self_link().as_pandas_dataframe()
+        # assert len(self_link) == len(data)
 
 
-@pytest.mark.parametrize("input_name,input_tables", dfs().items())
-def test_link_type(input_name, input_tables):
-    # Basic check that no errors are generated for any of the link types
-    link_type, test_name = input_name.split("__")
+def test_link_only_two_join_condition():
 
-    input_tables = dfs()[input_name]["input_tables"]
-    aliases = dfs()[input_name]["input_table_aliases"]
-    settings = {
-        "probability_two_random_records_match": 0.01,
-        "unique_id_column_name": "id",
-        "link_type": link_type,
-        "blocking_rules_to_generate_predictions": [
-            "l.first_name = r.first_name",
-            "l.surname = r.surname",
-        ],
-        "comparisons": [
-            exact_match("first_name"),
-            exact_match("surname"),
-            exact_match("dob"),
-        ],
-        "retain_matching_columns": True,
-        "retain_intermediate_calculation_columns": True,
-        "max_iterations": 2,
-    }
+    settings = deepcopy(settings_template)
 
-    from splink.duckdb.duckdb_linker import DuckDBLinker
+    settings = deepcopy(settings_template)
+    settings["link_type"] = "link_only"
 
-    linker = DuckDBLinker(
-        input_tables, settings, connection=":memory:", input_table_aliases=aliases
-    )
+    settings_salt = deepcopy(settings_template)
+    settings_salt["link_type"] = "link_only"
 
-    linker.estimate_u_using_random_sampling(target_rows=1e6)
+    for s in [settings, settings_salt]:
+        linker = DuckDBLinker([sds_d_only, sds_b_only], s)
 
-    blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+        df_predict = linker.predict().as_pandas_dataframe()
 
-    blocking_rule = "l.dob = r.dob"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+        assert len(df_predict) == 4
 
-    df_e = linker.predict()
+        # Check that the lower ID is always on the left hand side
+        df_predict["id_concat_l"] = (
+            df_predict["source_dataset_l"] + "-__-" + df_predict["id_l"].astype(str)
+        )
+        df_predict["id_concat_r"] = (
+            df_predict["source_dataset_r"] + "-__-" + df_predict["id_r"].astype(str)
+        )
+        assert all(df_predict["id_concat_l"] < df_predict["id_concat_r"])
 
-    self_link = linker._self_link().as_pandas_dataframe()
+        # self_link = linker._self_link().as_pandas_dataframe()
+        # assert len(self_link) == 4
 
-    df_len = len(df_e.as_pandas_dataframe())
-    self_link_len = len(self_link)
-    self_link_expe_len = sum([len(df) for df in input_tables])
 
-    if input_name == "dedupe_only__pass":
-        assert df_len == (6 * 5) / 2
-        assert self_link_len == len(input_tables)
-    if input_name == "link_only__two":
-        assert df_len == 4
-        assert self_link_len == self_link_expe_len
-    if input_name == "link_only__three":
-        assert df_len == 12
-        assert self_link_len == self_link_expe_len
-    if input_name == "link_and_dedupe__two":
-        assert df_len == (4 * 3) / 2
-        assert self_link_len == self_link_expe_len
-    if input_name == "link_and_dedupe__three":
-        assert df_len == (6 * 5) / 2
-        assert self_link_len == self_link_expe_len
+def test_link_only_three_join_condition():
 
-    # Check that the lower ID is always on the left hand side
-    df_e_pd = df_e.as_pandas_dataframe()
-    if link_type == "dedupe_only":
-        df_e_pd["id_concat_l"] = df_e_pd["id_l"]
-        df_e_pd["id_concat_r"] = df_e_pd["id_r"]
-    else:
-        df_e_pd["id_l"] = df_e_pd["id_l"].astype(str)
-        df_e_pd["id_r"] = df_e_pd["id_r"].astype(str)
-        df_e_pd["id_concat_l"] = df_e_pd["source_dataset_l"] + "-__-" + df_e_pd["id_l"]
-        df_e_pd["id_concat_r"] = df_e_pd["source_dataset_r"] + "-__-" + df_e_pd["id_r"]
+    settings = deepcopy(settings_template)
+    settings["link_type"] = "link_only"
 
-    assert all(df_e_pd["id_concat_l"] < df_e_pd["id_concat_r"])
-    assert all(self_link.id_l == self_link.id_r)
-    if input_name != "dedupe_only__pass":
-        assert all(self_link.source_dataset_l == self_link.source_dataset_r)
+    settings_salt = deepcopy(settings_template)
+    settings_salt["link_type"] = "link_only"
 
-        self_ids_to_check = [
-            list(map(lambda x: f"{alias} -__- {x}", input.id))
-            for alias, input in zip(aliases, input_tables)
-        ]
-        self_ids_to_check = list(np.array(self_ids_to_check).flat)
+    for s in [settings, settings_salt]:
 
-        self_left_ids = [
-            f"{df} -__- {id}"
-            for df, id in zip(self_link.source_dataset_l, self_link.id_l)
-        ]
-        self_right_ids = [
-            f"{df} -__- {id}"
-            for df, id in zip(self_link.source_dataset_r, self_link.id_r)
-        ]
+        linker = DuckDBLinker([sds_d_only, sds_b_only, sds_c_only], s)
 
-        assert self_ids_to_check == self_left_ids
-        assert self_ids_to_check == self_right_ids
+        df_predict = linker.predict().as_pandas_dataframe()
 
-    record_1 = {
-        "id": 1,
-        "first_name": "George",
-        "surname": "Smith",
-        "dob": "1957-02-17",
-    }
+        assert len(df_predict) == 12
 
-    record_2 = {
-        "id": 2,
-        "first_name": "George",
-        "surname": "Smith",
-        "dob": "1957-02-17",
-    }
+        # Check that the lower ID is always on the left hand side
+        df_predict["id_concat_l"] = (
+            df_predict["source_dataset_l"] + "-__-" + df_predict["id_l"].astype(str)
+        )
+        df_predict["id_concat_r"] = (
+            df_predict["source_dataset_r"] + "-__-" + df_predict["id_r"].astype(str)
+        )
+        assert all(df_predict["id_concat_l"] < df_predict["id_concat_r"])
 
-    linker.compare_two_records(record_1, record_2)
+        # self_link = linker._self_link().as_pandas_dataframe()
+        # assert len(self_link) == 6
 
-    linker.find_matches_to_new_records(
-        [record_1], blocking_rules=[]
-    ).as_pandas_dataframe()
+
+def test_link_and_dedupe_two_join_condition():
+
+    settings = deepcopy(settings_template)
+    settings["link_type"] = "link_and_dedupe"
+
+    settings_salt = deepcopy(settings_template)
+    settings_salt["link_type"] = "link_and_dedupe"
+
+    for s in [settings, settings_salt]:
+        linker = DuckDBLinker([sds_d_only, sds_b_only], s)
+
+        df_predict = linker.predict().as_pandas_dataframe()
+
+        assert len(df_predict) == (4 * 3) / 2
+
+        # Check that the lower ID is always on the left hand side
+        df_predict["id_concat_l"] = (
+            df_predict["source_dataset_l"] + "-__-" + df_predict["id_l"].astype(str)
+        )
+        df_predict["id_concat_r"] = (
+            df_predict["source_dataset_r"] + "-__-" + df_predict["id_r"].astype(str)
+        )
+        assert all(df_predict["id_concat_l"] < df_predict["id_concat_r"])
+
+        # self_link = linker._self_link().as_pandas_dataframe()
+        # assert len(self_link) == 4
+
+
+def test_link_and_dedupe_three_join_condition():
+
+    settings = deepcopy(settings_template)
+    settings["link_type"] = "link_and_dedupe"
+
+    settings_salt = deepcopy(settings_template)
+    settings_salt["link_type"] = "link_and_dedupe"
+
+    for s in [settings, settings_salt]:
+        linker = DuckDBLinker([sds_d_only, sds_b_only, sds_c_only], s)
+
+        df_predict = linker.predict().as_pandas_dataframe()
+
+        assert len(df_predict) == (6 * 5) / 2
+
+        # Check that the lower ID is always on the left hand side
+        df_predict["id_concat_l"] = (
+            df_predict["source_dataset_l"] + "-__-" + df_predict["id_l"].astype(str)
+        )
+        df_predict["id_concat_r"] = (
+            df_predict["source_dataset_r"] + "-__-" + df_predict["id_r"].astype(str)
+        )
+        assert all(df_predict["id_concat_l"] < df_predict["id_concat_r"])
+
+        # self_link = linker._self_link().as_pandas_dataframe()
+        # assert len(self_link) == 4

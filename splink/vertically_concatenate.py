@@ -29,6 +29,8 @@ def vertically_concatenate_sql(linker: "Linker") -> str:
 
     select_columns_sql = ", ".join(columns)
 
+    salting_reqiured = False
+
     # For data profiling, we need to vertically concat
     # but user may not have provided a settings dict yet
     if linker._settings_obj_ is None:
@@ -37,12 +39,19 @@ def vertically_concatenate_sql(linker: "Linker") -> str:
         source_dataset_col_req = (
             linker._settings_obj._source_dataset_column_name_is_required
         )
+        salting_reqiured = linker._settings_obj.salting_required
+
+    if salting_reqiured:
+        salt_sql = ", random() as __splink_salt"
+    else:
+        salt_sql = ""
 
     if source_dataset_col_req:
         sqls_to_union = []
         for df_obj in linker._input_tables_dict.values():
             sql = f"""
             select '{df_obj.templated_name}' as source_dataset, {select_columns_sql}
+            {salt_sql}
             from {df_obj.physical_name}
             """
             sqls_to_union.append(sql)
@@ -50,6 +59,7 @@ def vertically_concatenate_sql(linker: "Linker") -> str:
     else:
         sql = f"""
             select {select_columns_sql}
+            {salt_sql}
             from {df_obj.physical_name}
             """
 

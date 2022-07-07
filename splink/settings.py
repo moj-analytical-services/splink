@@ -10,6 +10,7 @@ from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
 from .misc import dedupe_preserving_order
 from .validate_jsonschema import validate_settings_against_schema
+from .blocking import BlockingRule
 
 logger = logging.getLogger(__name__)
 
@@ -59,9 +60,24 @@ class Settings:
         self._retain_intermediate_calculation_columns = s_else_d(
             "retain_intermediate_calculation_columns"
         )
-        self._blocking_rules_to_generate_predictions = s_else_d(
-            "blocking_rules_to_generate_predictions"
-        )
+
+        brs_as_strings = s_else_d("blocking_rules_to_generate_predictions")
+
+        brs_as_objs = []
+        for br in brs_as_strings:
+            if isinstance(br, dict):
+                br = BlockingRule(
+                    br["blocking_rule"], salting_partitions=br["salting_partitions"]
+                )
+                br.preceding_rules = brs_as_objs.copy()
+                brs_as_objs.append(br)
+            else:
+                br = BlockingRule(br)
+                br.preceding_rules = brs_as_objs.copy()
+                brs_as_objs.append(br)
+
+        self._blocking_rules_to_generate_predictions = brs_as_objs
+
         self._gamma_prefix = s_else_d("comparison_vector_value_column_prefix")
         self._bf_prefix = s_else_d("bayes_factor_column_prefix")
         self._tf_prefix = s_else_d("term_frequency_adjustment_column_prefix")
@@ -419,3 +435,10 @@ class Settings:
             f"assessed as follows:\n\n{comparison_descs}"
         )
         return desc
+
+    @property
+    def salting_required(self):
+        for br in self._blocking_rules_to_generate_predictions:
+            if br.salting_partitions > 1:
+                return True
+        return False

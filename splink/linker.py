@@ -18,7 +18,7 @@ from .charts import (
     unlinkables_chart,
 )
 
-from .blocking import block_using_rules_sql
+from .blocking import block_using_rules_sql, BlockingRule
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .em_training_session import EMTrainingSession
 from .misc import bayes_factor_to_prob, prob_to_bayes_factor, ensure_is_list
@@ -108,6 +108,13 @@ class Linker:
                 to attach more easily readable/interpretable names. Defaults to None.
         """
 
+        if set_up_basic_logging:
+            logging.basicConfig(
+                format="%(message)s",
+            )
+            splink_logger = logging.getLogger("splink")
+            splink_logger.setLevel(logging.INFO)
+
         self._pipeline = SQLPipeline()
 
         self._settings_dict = settings_dict
@@ -133,13 +140,6 @@ class Linker:
         self._output_schema = ""
 
         self.debug_mode = False
-
-        if set_up_basic_logging:
-            logging.basicConfig(
-                format="%(message)s",
-            )
-            splink_logger = logging.getLogger("splink")
-            splink_logger.setLevel(logging.INFO)
 
     @property
     def _settings_obj(self) -> Settings:
@@ -1140,7 +1140,7 @@ class Linker:
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
         self._settings_obj._blocking_rules_to_generate_predictions = [
-            f"{uid_l} = {uid_r}"
+            BlockingRule(f"{uid_l} = {uid_r}")
         ]
 
         self._initialise_df_concat_with_tf()

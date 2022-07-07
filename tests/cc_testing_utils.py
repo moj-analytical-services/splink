@@ -84,7 +84,7 @@ def networkx_solve(G):
     return pd.DataFrame(rows)
 
 
-def check_df_equality(df1, df2):
+def check_df_equality(df1, df2, columns=None):
     """
     Test if two dataframes are equal
     :param df1: First dataframe
@@ -97,7 +97,10 @@ def check_df_equality(df1, df2):
         return False
     if df1.dtypes.tolist() != df2.dtypes.tolist():
         return False
-    for col in df1.columns:
+
+    if columns is None:
+        columns = df1.columns
+    for col in columns:
         if df1[col].tolist() != df2[col].tolist():
             return False
     return True

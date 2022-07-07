@@ -25,7 +25,7 @@ def predict_scores_for_labels_sql(linker):
 
     brs = linker._settings_obj._blocking_rules_to_generate_predictions
     if brs:
-        brs = [move_l_r_table_prefix_to_column_suffix(b) for b in brs]
+        brs = [move_l_r_table_prefix_to_column_suffix(b.blocking_rule) for b in brs]
         brs = [f"(coalesce({b}, false))" for b in brs]
         brs = " OR ".join(brs)
         br_col = f"({brs})"

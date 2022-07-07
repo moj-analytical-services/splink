@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 import logging
 
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
@@ -10,16 +10,42 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def _sql_gen_and_not_previous_rules(previous_rules: list):
-    if previous_rules:
-        # Note the isnull function is important here - otherwise
+class BlockingRule:
+    def __init__(
+        self,
+        blocking_rule,
+        salting_partitions=1,
+    ):
+        self.blocking_rule = blocking_rule
+        self.preceding_rules = []
+        self.salting_partitions = salting_partitions
+
+    @property
+    def match_key(self):
+        return len(self.preceding_rules)
+
+    @property
+    def and_not_preceding_rules_sql(self):
+
+        if not self.preceding_rules:
+            return ""
+
+        # Note the coalesce function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
-        or_clauses = [f"coalesce(({r}), false)" for r in previous_rules]
+        or_clauses = [
+            f"coalesce(({r.blocking_rule}), false)" for r in self.preceding_rules
+        ]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
-    else:
-        return ""
+
+    @property
+    def salted_blocking_rules(self):
+        if self.salting_partitions == 1:
+            yield self.blocking_rule
+        else:
+            for n in range(self.salting_partitions):
+                yield f"{self.blocking_rule} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):
@@ -41,6 +67,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
+# flake8: noqa: C901
 def block_using_rules_sql(linker: "Linker"):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
@@ -49,6 +76,11 @@ def block_using_rules_sql(linker: "Linker"):
     Where there are multiple blocking rules, the SQL statement contains logic
     so that duplicate comparisons are not generated.
     """
+
+    if type(linker).__name__ in ["SparkLinker"]:
+        apply_salt = True
+    else:
+        apply_salt = False
 
     settings_obj = linker._settings_obj
 
@@ -67,9 +99,6 @@ def block_using_rules_sql(linker: "Linker"):
         link_type, settings_obj._unique_id_input_columns
     )
 
-    sqls = []
-    previous_rules = []
-
     # We could have had a single 'blocking rule'
     # property on the settings object, and avoided this logic but I wanted to be very
     # explicit about the difference between blocking for training
@@ -79,29 +108,43 @@ def block_using_rules_sql(linker: "Linker"):
     else:
         blocking_rules = settings_obj._blocking_rules_to_generate_predictions
 
+    if settings_obj.salting_required and apply_salt == False:
+        logger.warning(
+            "WARNING: Salting is not currently supported by this linker backend and"
+            " will not be implemented for this run."
+        )
+
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'
     # you create a cartesian product, rather than having separate code
     # that generates a cross join for the case of no blocking rules
     if not blocking_rules:
-        blocking_rules = ["1=1"]
+        blocking_rules = [BlockingRule("1=1")]
 
-    for matchkey_number, rule in enumerate(blocking_rules):
-        not_previous_rules_statement = _sql_gen_and_not_previous_rules(previous_rules)
+    sqls = []
+    for br in blocking_rules:
 
-        sql = f"""
-        select
-        {sql_select_expr}
-        , '{matchkey_number}' as match_key
-        from {linker._input_tablename_l} as l
-        inner join {linker._input_tablename_r} as r
-        on
-        {rule}
-        {not_previous_rules_statement}
-        {where_condition}
-        """
-        previous_rules.append(rule)
-        sqls.append(sql)
+        # Apply our salted rules to resolve skew issues. If no salt was
+        # selected to be added, then apply the initial blocking rule.
+        if apply_salt:
+            salted_blocking_rules = br.salted_blocking_rules
+        else:
+            salted_blocking_rules = [br.blocking_rule]
+
+        for salted_br in salted_blocking_rules:
+            sql = f"""
+            select
+            {sql_select_expr}
+            , '{br.match_key}' as match_key
+            from {linker._input_tablename_l} as l
+            inner join {linker._input_tablename_r} as r
+            on
+            {salted_br}
+            {br.and_not_preceding_rules_sql}
+            {where_condition}
+            """
+
+            sqls.append(sql)
 
     sql = "union all".join(sqls)
 
