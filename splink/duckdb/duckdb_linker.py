@@ -136,6 +136,9 @@ class DuckDBLinker(Linker):
             settings_dict["sql_dialect"] = "duckdb"
 
         validate_duckdb_connection(connection)
+        
+        if isinstance(connection, str):
+            connection = connection.lower()
 
         if isinstance(connection, DuckDBPyConnection):
             con = connection
