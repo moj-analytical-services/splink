@@ -1,7 +1,5 @@
 import pytest
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
-import pandas as pd
 from tests.basic_settings import get_settings_dict
 
 from splink.spark.spark_linker import SparkLinker
