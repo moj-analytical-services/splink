@@ -77,18 +77,10 @@ def block_using_rules_sql(linker: "Linker"):
     so that duplicate comparisons are not generated.
     """
 
-    if type(linker).__name__ in ["SparkLinker", "DuckDBLinker"]:
+    if type(linker).__name__ in ["SparkLinker"]:
         apply_salt = True
     else:
         apply_salt = False
-
-        for rule in linker._settings_obj._blocking_rules_to_generate_predictions:
-            if rule.salting_partitions > 1:
-                logger.warning(
-                    "Salting is not currently supported by this linker variant and "
-                    "will not be implemented for this run."
-                )
-            break
 
     settings_obj = linker._settings_obj
 
@@ -115,6 +107,14 @@ def block_using_rules_sql(linker: "Linker"):
         blocking_rules = [settings_obj._blocking_rule_for_training]
     else:
         blocking_rules = settings_obj._blocking_rules_to_generate_predictions
+
+    for rule in blocking_rules:
+        if rule.salting_partitions > 1:
+            logger.warning(
+                "WARNING: Salting is not currently supported by this linker backend and"
+                " will not be implemented for this run."
+            )
+            break
 
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'
