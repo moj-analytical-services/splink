@@ -1203,32 +1203,6 @@ class Linker:
 
         return cc
 
-    def delete_tables_created_by_splink_from_db(
-        self, retain_term_frequency=True, retain_df_concat_with_tf=True
-    ):
-        tables_remaining = []
-        current_tables = self._names_of_tables_created_by_splink
-        for splink_df in current_tables:
-            name = splink_df.templated_name
-            # Only delete tables explicitly marked as having been created by splink
-            if "__splink__" not in name:
-                tables_remaining.append(splink_df)
-                continue
-            if name == "__splink__df_concat_with_tf":
-                if retain_df_concat_with_tf:
-                    tables_remaining.append(splink_df)
-                else:
-                    self._delete_table_from_database(name)
-            elif name.startswith("__splink__df_tf_"):
-                if retain_term_frequency:
-                    tables_remaining.append(splink_df)
-                else:
-                    self._delete_table_from_database(name)
-            else:
-                self._delete_table_from_database(name)
-
-        self._names_of_tables_created_by_splink = tables_remaining
-
     def profile_columns(
         self, column_expressions: Union[str, List[str]], top_n=10, bottom_n=10
     ):
