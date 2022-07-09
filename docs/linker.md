@@ -16,7 +16,6 @@ tags:
         - comparison_viewer_dashboard
         - compute_number_of_comparisons_generated_by_blocking_rule
         - compute_tf_table
-        - delete_tables_created_by_splink_from_db
         - deterministic_link
         - estimate_m_from_label_column
         - estimate_parameters_using_expectation_maximisation
