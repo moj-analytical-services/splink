@@ -13,7 +13,7 @@ import duckdb
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..logging_messages import execute_sql_logging_message_info, log_sql
-from ..misc import ensure_is_list
+from ..misc import ensure_is_list, all_letter_combos
 from ..input_column import InputColumn
 
 logger = logging.getLogger(__name__)
@@ -167,10 +167,14 @@ class DuckDBLinker(Linker):
         homogenised_tables = []
         homogenised_aliases = []
 
-        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
+        default_aliases = all_letter_combos(len(input_tables))
+
+        for (table, alias, default_alias) in zip(
+            input_tables, input_aliases, default_aliases
+        ):
 
             if type(alias).__name__ == "DataFrame":
-                alias = f"__splink__input_table_{i}"
+                alias = f"_{default_alias}"
 
             if type(table).__name__ == "DataFrame":
                 con.register(alias, table)
