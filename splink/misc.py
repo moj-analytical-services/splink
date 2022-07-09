@@ -2,6 +2,8 @@ from math import log2
 from typing import Iterable
 import numpy as np
 import json
+from string import ascii_lowercase
+import itertools
 
 
 def dedupe_preserving_order(list_of_items):
@@ -71,3 +73,14 @@ class NumpyEncoder(json.JSONEncoder):
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
+
+
+def all_letter_combos(n):
+    """a,b,....,z,aa,ab,...,aaa"""
+
+    combos = []
+    for size in itertools.count(1):
+        for s in itertools.product(ascii_lowercase, repeat=size):
+            combos.append("".join(s))
+            if len(combos) >= n:
+                return combos
