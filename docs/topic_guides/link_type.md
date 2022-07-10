@@ -39,7 +39,7 @@ input_aliases = ["table_1", "table_2", "table_3"]
 linker = DuckDBLinker([df_1, df_2, df_3], settings, input_table_aliases=input_aliases)
 ```
 
-The `input_table_aliases`, are optional are are used to label the tables in the outputs. If not provided, defaults will be automatically chosen by Splink.
+The `input_table_aliases` argument is optional and are used to label the tables in the outputs. If not provided, defaults will be automatically chosen by Splink.
 
 ## Link and dedupe
 
@@ -56,4 +56,4 @@ input_aliases = ["table_1", "table_2", "table_3"]
 linker = DuckDBLinker([df_1, df_2, df_3], settings, input_table_aliases=input_aliases)
 ```
 
-The `input_table_aliases`, are optional are are used to label the tables in the outputs. If not provided, defaults will be automatically chosen by Splink.
+The `input_table_aliases` argument is optional and are used to label the tables in the outputs. If not provided, defaults will be automatically chosen by Splink.
