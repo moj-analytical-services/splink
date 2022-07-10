@@ -12,7 +12,7 @@ This guide shows how to specify the settings dictionary and initialise the linke
 
 The `dedupe_only` link type expects the user to provide a single input table, and is specified as follows
 
-```
+```python
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
 settings = {
@@ -27,7 +27,7 @@ linker = DuckDBLinker(df, settings)
 
 The `link_only` link type expects the user to provide a list of input tables, and is specified as follows:
 
-```
+```python
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
 settings = {
@@ -43,9 +43,9 @@ The `input_table_aliases`, are optional are are used to label the tables in the 
 
 ## Link and dedupe
 
-The `link_only` link type expects the user to provide a list of input tables, and is specified as follows:
+The `link_and_dedupe` link type expects the user to provide a list of input tables, and is specified as follows:
 
-```
+```python
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
 settings = {
