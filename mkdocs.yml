@@ -57,7 +57,8 @@ markdown_extensions:
 nav:
   - Home: "README.md"
   - Topic Guide:
-      - Blocking rules for prediction vs estimation: "blocking_rules.md"
+      - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
+      - Link type: linkings vs deduping: "topic_guides/link_type.md"
   - API Reference:
       - Linker API:
           - Full API: "linker.md"
