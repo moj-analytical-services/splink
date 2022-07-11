@@ -525,7 +525,7 @@ class Linker:
                 15,
                 "\n"
                 f"Probability two random records match from trained model blocking on "
-                f"{em_training_session._blocking_rule_for_training}: "
+                f"{em_training_session._blocking_rule_for_training.blocking_rule}: "
                 f"{training_lambda:,.3f}",
             )
 
