@@ -246,7 +246,7 @@ class EMTrainingSession:
         logger.log(
             15,
             f"\nProb two random records match adjusted for blocking on "
-            f"{self._blocking_rule_for_training}: "
+            f"{self._blocking_rule_for_training.blocking_rule}: "
             f"{adjusted_prop_m:.3f}",
         )
         return adjusted_prop_m
