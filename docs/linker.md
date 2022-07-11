@@ -14,7 +14,8 @@ tags:
         - cluster_studio_dashboard
         - compare_two_records
         - comparison_viewer_dashboard
-        - compute_number_of_comparisons_generated_by_blocking_rule
+        - count_num_comparisons_from_blocking_rule
+        - count_num_comparisons_from_blocking_rules_for_prediction
         - compute_tf_table
         - deterministic_link
         - estimate_m_from_label_column
