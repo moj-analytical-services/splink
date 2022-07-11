@@ -59,6 +59,7 @@ nav:
   - Topic Guide:
       - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
       - Link type - linkings vs deduping: "topic_guides/link_type.md"
+      - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
   - API Reference:
       - Linker API:
           - Full API: "linker.md"
