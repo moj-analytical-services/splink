@@ -1,6 +1,6 @@
-# Fast, accurate and scalable probabilistic data linkage using your choice of SQL backend.
-
 ![image](https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png)
+
+# Fast, accurate and scalable probabilistic data linkage using your choice of SQL backend.
 
 `splink` is a Python package for probabilistic record linkage (entity resolution).
 
@@ -10,15 +10,17 @@ Its key features are:
 
 - It is highly accurate, with support for term frequency adjustments, and sophisticated fuzzy matching logic.
 
-- It supports running linkage against multiple SQL backends, meaning it's capable of running at any scale. For smaller linkages of up to a few million records, no additional infrastructure is needed . For larger linkages, Splink currently supports Apache Spark or AWS Athena as backends.
+- Linking jobs can be executed in Python (using the `DuckDB` package), or using big-data backends like `AWS Athena` and `Spark` to link 100+ million records.
+
+- Training data is not required because models can be trained using an unsupervised approach.
 
 - It produces a wide variety of interactive outputs, helping users to understand their model and diagnose linkage problems.
 
-The core linkage algorithm is an implementation of Fellegi-Sunter's canonical model of record linkage, with various customisations to improve accuracy. Splink includes an implementation of the Expectation Maximisation algorithm, meaning that record linkage can be performed using an unsupervised approch (i.e. labelled training data is not needed).
+The core linkage algorithm is an implementation of Fellegi-Sunter's model of record linkage, with various customisations to improve accuracy.
 
 ## What does Splink do?
 
-Suppose you have one or more datasets which contain records that refer to the same entity (e.g. a person). But your entities do not have a unique identifier, so you can't link them.
+Splink deduplicates and links records from datasets that lack a unique identifier.
 
 For example, a few of your records may look like this:
 
@@ -56,6 +58,14 @@ The homepage for the Splink documentation can be found [here](https://moj-analyt
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/splink3_demos?urlpath=lab)
 
 The specification of the Fellegi Sunter statistical model behind `splink` is similar as that used in the R [fastLink package](https://github.com/kosukeimai/fastLink). Accompanying the fastLink package is an [academic paper](http://imai.fas.harvard.edu/research/files/linkage.pdf) that describes this model. A [series of interactive articles](https://www.robinlinacre.com/probabilistic_linkage/) also explores the theory behind Splink.
+
+## Installation
+
+Splink supports python 3.7+. To obtain the latest released version of splink:
+
+```
+pip install splink
+```
 
 ## Quickstart
 
