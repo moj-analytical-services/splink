@@ -9,7 +9,7 @@ tags:
     handler: python
     selection:
       members:
-        - compute_number_of_comparisons_generated_by_blocking_rule
+        - count_num_comparisons_from_blocking_rule
         - missingness_chart
         - profile_columns
         - unlinkables_chart

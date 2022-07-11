@@ -1,4 +1,6 @@
-def count_pairwise_comparisons_by_prediction_blocking_rules_sql(df_predict):
+def count_num_comparisons_from_blocking_rules_for_prediction_sql(
+    df_predict,
+):
     sql = f"""
         select count(*) as count_of_edges,
         sum(match_probability) as est_num_matches, match_key

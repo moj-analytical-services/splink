@@ -29,7 +29,7 @@ def test_full_example_duckdb(tmp_path):
         output_schema="splink_in_duckdb",
     )
 
-    linker.compute_number_of_comparisons_generated_by_blocking_rule(
+    linker.count_num_comparisons_from_blocking_rule(
         'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     )
 

@@ -13,7 +13,8 @@ tags:
         - cluster_studio_dashboard
         - compare_two_records
         - comparison_viewer_dashboard
-        - compute_number_of_comparisons_generated_by_blocking_rule
+        - count_num_comparisons_from_blocking_rule
+        - count_num_comparisons_from_blocking_rules_for_prediction
         - compute_tf_table
         - debug_mode
         - delete_tables_created_by_splink_from_db
