@@ -22,7 +22,7 @@ class boto_utils:
             raise ValueError("Please enter a valid boto3 session object.")
 
         self.boto3_session = boto3_session
-        self.bucket = output_bucket
+        self.bucket = output_bucket.replace("s3://", "")
         self.session_id = create_session_id()
 
         # specify some additional prefixes
@@ -31,11 +31,19 @@ class boto_utils:
 
     def get_table_dir(self):
 
+        # If the default folder is selected,
+        # add a unique session id
+        if self.s3_output_name_prefix:
+            id = ""
+        else:
+            self.s3_output_name_prefix = "splink_warehouse"
+            id = self.session_id
+
         out_path = os.path.join(
             "s3://",
             self.bucket,
             self.s3_output_name_prefix,
-            self.session_id,
+            id,
         )
         if out_path[-1] != "/":
             out_path += "/"
