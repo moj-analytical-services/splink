@@ -141,7 +141,7 @@ def test_athena_garbage_collection():
     settings_dict = get_settings_dict()
     db_name_read = "splink_awswrangler_test"
     db_name_write = f"{db_name_read}2"
-    
+
     # No cleaning...
     AthenaLinker(
         settings_dict=settings_dict,
@@ -168,8 +168,7 @@ def test_athena_garbage_collection():
         ignore_empty=True,
     )
     assert len(files) > 0
-    
-        
+
     # Perform cleaning
     AthenaLinker(
         settings_dict=settings_dict,
@@ -180,7 +179,7 @@ def test_athena_garbage_collection():
         garbage_collection_level=2,
         output_filepath="test_full_example",
     )
-    
+
     # Check everything gets cleaned up when initialising the linker
     tables = wr.catalog.get_tables(
         database="splink_awswrangler_test2",
