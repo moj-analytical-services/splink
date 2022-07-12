@@ -23,27 +23,25 @@ class boto_utils:
 
         self.boto3_session = boto3_session
         self.bucket = output_bucket.replace("s3://", "")
-        self.session_id = create_session_id()
 
-        # specify some additional prefixes
-        self.s3_output_name_prefix = output_filepath
+        # If the default folder is blank, name it splink_warehouse
+        # add a unique session id
+        if output_filepath:
+            self.s3_output_name_prefix = output_filepath
+            self.session_id = ""
+        else:
+            self.s3_output_name_prefix = "splink_warehouse"
+            self.session_id = create_session_id()
+
         self.s3_output = self.get_table_dir()
 
     def get_table_dir(self):
-
-        # If the default folder is selected,
-        # add a unique session id
-        if self.s3_output_name_prefix:
-            id = ""
-        else:
-            self.s3_output_name_prefix = "splink_warehouse"
-            id = self.session_id
 
         out_path = os.path.join(
             "s3://",
             self.bucket,
             self.s3_output_name_prefix,
-            id,
+            self.session_id,
         )
         if out_path[-1] != "/":
             out_path += "/"

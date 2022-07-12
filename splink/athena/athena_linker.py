@@ -1,5 +1,6 @@
 import logging
 
+import os
 import awswrangler as wr
 import numpy as np
 import boto3
@@ -77,13 +78,15 @@ class AthenaDataFrame(SplinkDataFrame):
     def _check_drop_folder_created_by_splink(self, force_non_splink_table=False):
 
         filepath = self.athena_linker.boto_utils.s3_output
-        filepath = filepath.split("/")[-3:-1]
-        # validate that the write path is valid
-        valid_path = [
-            self.athena_linker.boto_utils.s3_output_name_prefix,
-            self.athena_linker.boto_utils.session_id,
-        ] == filepath
-        if not valid_path:
+        filename = self.physical_name
+        # Validate that the folder is a splink generated folder...
+        files = wr.s3.list_objects(
+            path=os.path.join(filepath, filename),
+            boto3_session=self.athena_linker.boto3_session,
+            ignore_empty=True,
+        )
+
+        if len(files) == 0:
             if not force_non_splink_table:
                 raise ValueError(
                     f"You've asked to drop data housed under the filepath "
