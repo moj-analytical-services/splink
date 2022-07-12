@@ -3,7 +3,7 @@ name: docswithmkdoc
 on:
   push:
     branches:
-      - splink3
+      - master
 
   workflow_dispatch:
 
