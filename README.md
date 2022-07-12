@@ -1,111 +1,118 @@
 ![image](https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png)
 
-[![Coverage Status](https://coveralls.io/repos/github/moj-analytical-services/splink/badge.svg?branch=master)](https://coveralls.io/github/moj-analytical-services/splink?branch=master)
-![issues-status](https://img.shields.io/github/issues-raw/moj-analytical-services/splink)
-![python-version-dependency](https://img.shields.io/badge/python-%3E%3D3.6-blue)
+# Fast, accurate and scalable probabilistic data linkage using your choice of SQL backend.
 
-✨✨ **Note to new users:** ✨✨
+`splink` is a Python package for probabilistic record linkage (entity resolution).
 
-Version 3 of Splink is in development that will make it simpler and more intuitive to use.  It also removes the need for PySpark for smaller data linkages of up to around 1 million records.  You can find the documentation [here](https://moj-analytical-services.github.io/splink/index.html). You can try it by installing a [pre-release](https://pypi.org/project/splink/#history), or in the new demos [here](https://github.com/moj-analytical-services/splink_demos/tree/splink3_demos).  For new users, it may make sense to work with the new version, because it is quicker to learn.  However, note that the new code is not yet fully tested.
+Its key features are:
 
+- It is extremely fast. It is capable of linking a million records on a laptop in around a minute.
 
-# Splink: Probabilistic record linkage and deduplication at scale
+- It is highly accurate, with support for term frequency adjustments, and sophisticated fuzzy matching logic.
 
-`splink` implements Fellegi-Sunter's canonical model of record linkage in Apache Spark, including the EM algorithm to estimate parameters of the model.
+- Linking jobs can be executed in Python (using the `DuckDB` package), or using big-data backends like `AWS Athena` and `Spark` to link 100+ million records.
 
-It:
+- Training data is not required because models can be trained using an unsupervised approach.
 
-- Works at much greater scale than current open source implementations (100 million records+).
+- It produces a wide variety of interactive outputs, helping users to understand their model and diagnose linkage problems.
 
-- Runs quickly - with runtimes of less than an hour.
+The core linkage algorithm is an implementation of Fellegi-Sunter's model of record linkage, with various customisations to improve accuracy.
 
-- Has a highly transparent methodology; match scores can be easily explained both graphically and in words
+## What does Splink do?
 
-- Is highly accurate
+Splink deduplicates and links records from datasets that lack a unique identifier.
 
-It is assumed that users of Splink are familiar with the probabilistic record linkage theory, and the Fellegi-Sunter model in particular. A [series of interactive articles](https://www.robinlinacre.com/probabilistic_linkage/) explores the theory behind Splink.
+For example, a few of your records may look like this:
 
-The statistical model behind `splink` is the same as that used in the R [fastLink package](https://github.com/kosukeimai/fastLink). Accompanying the fastLink package is an [academic paper](http://imai.fas.harvard.edu/research/files/linkage.pdf) that describes this model. This is the best place to start for users wanting to understand the theory about how `splink` works.
+| row_id | first_name | surname | dob        | city       |
+| ------ | ---------- | ------- | ---------- | ---------- |
+| 1      | lucas      | smith   | 1984-01-02 | London     |
+| 2      | lucas      | smyth   | 1984-07-02 | Manchester |
+| 3      | lucas      | smyth   | 1984-07-02 |            |
+| 4      | david      | jones   |            | Leeds      |
+| 5      | david      | jones   | 1990-03-21 | Leeds      |
 
-[Data Matching](https://link.springer.com/book/10.1007/978-3-642-31164-2), a book by Peter Christen, is another excellent resource.
+Splink produces pairwise predictions of the links:
 
-## Installation
+| row_id_l | row_id_r | match_probability |
+| -------- | -------- | ----------------- |
+| 1        | 2        | 0.9               |
+| 1        | 3        | 0.85              |
+| 2        | 3        | 0.92              |
+| 4        | 5        | 0.7               |
 
-`splink` is a Python package. It uses the Spark Python API to execute data linking jobs in a Spark cluster. It has been tested in Apache Spark 2.3, 2.4 and 3.1.
+And clusters the predictions to produce an estimated unique id:
 
-Install splink using:
-
-`pip install splink`
-
-Note that Splink requires `pyspark` and a working Spark installation. These are not specified as explicit dependencies becuase it is assumed users have an existing pyspark setup they wish to use.
-
-## Interactive demo
-
-You can run demos of `splink` in an interactive Jupyter notebook by clicking the button below:
-
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab/tree/index.ipynb)
+| cluster_id | row_id |
+| ---------- | ------ |
+| a          | 1      |
+| a          | 2      |
+| a          | 3      |
+| b          | 4      |
+| b          | 5      |
 
 ## Documentation
 
-The best documentation is currently a series of demonstrations notebooks in the [splink_demos](https://github.com/moj-analytical-services/splink_demos) repo.
+The homepage for the Splink documentation can be found [here](https://moj-analytical-services.github.io/splink/). Interactive demos can be found [here](https://github.com/moj-analytical-services/splink_demos/tree/splink3_demos), or by clicking the following Binder link:
 
-## Other tools in the Splink family
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/splink3_demos?urlpath=lab)
 
-### Splink Graph
+The specification of the Fellegi Sunter statistical model behind `splink` is similar as that used in the R [fastLink package](https://github.com/kosukeimai/fastLink). Accompanying the fastLink package is an [academic paper](http://imai.fas.harvard.edu/research/files/linkage.pdf) that describes this model. A [series of interactive articles](https://www.robinlinacre.com/probabilistic_linkage/) also explores the theory behind Splink.
 
-[`splink_graph`](https://github.com/moj-analytical-services/splink_graph) is a graph utility library for use in Apache Spark. It computes graph metrics on the outputs of data linking. The repo is [here](<(https://github.com/moj-analytical-services/splink_graph)>)
+## Installation
 
-- Quality assurance of linkage results and identifying false positive links
-- Computing quality metrics associated with groups (clusters) of linked records
-- Automatically identifying possible false positive links in clusters
+Splink supports python 3.7+. To obtain the latest released version of splink:
 
+```
+pip install splink
+```
 
-### Splink Comparison Viewer
+## Quickstart
 
-[`splink_comparison_viewer`](https://github.com/moj-analytical-services/splink_comparison_viewer) produces interactive dashboards that help you rapidly understand and quality assure the outputs of record linkage.    A tutorial video is available [here](https://www.youtube.com/watch?v=DNvCMqjipis).
+The following code demonstrates how to estimate the parameters of a deduplication model, and then use it to identify duplicate records.
 
-### Splink Cluster Studio
+For more detailed tutorials, please see [here](https://github.com/moj-analytical-services/splink_demos/tree/splink3_demos).
 
-[`splink_cluster_studio`](http://github.com/moj-analytical-services/splink_cluster_studio) creates an interactive html dashboard from Splink output that allows you to visualise and analyse a sample of clusters from your record linkage. The repo is [here](http://github.com/moj-analytical-services/splink_cluster_studio).
+```
+from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.duckdb_comparison_library import (
+    exact_match,
+    levenshtein_at_thresholds,
+)
 
-### Splink Synthetic Data
+import pandas as pd
+df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-This [code](https://github.com/moj-analytical-services/splink_synthetic_data) is able to generate realistic test datasets for linkage using the WikiData Query Service.
+settings = {
+    "link_type": "dedupe_only",
+    "blocking_rules_to_generate_predictions": [
+        "l.first_name = r.first_name",
+        "l.surname = r.surname",
+    ],
+    "comparisons": [
+        levenshtein_at_thresholds("first_name", 2),
+        exact_match("surname"),
+        exact_match("dob"),
+        exact_match("city", term_frequency_adjustments=True),
+        exact_match("email"),
+    ],
+}
 
-It has been used to [performance test the accuracy of various Splink models](https://www.robinlinacre.com/comparing_splink_models/).
+linker = DuckDBLinker(df, settings)
+linker.estimate_u_using_random_sampling(target_rows=1e6)
 
-### Interactive settings editor with autocomplete
+blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
+linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
-We also provide an interactive `splink` settings editor and example settings [here](https://moj-analytical-services.github.io/splink_settings_editor/).
+blocking_rule_for_training = "l.dob = r.dob"
+linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
-### Starting parameter generation tools
+scored_comparisons = linker.predict()
 
-A tool to generate custom `m` and `u` probabilities can be found [here](https://www.robinlinacre.com/m_u_generator/).
-
-## Blog
-
-You can read a short blog post about `splink` [here](https://robinlinacre.com/introducing_splink/).
-
-## Videos
-
-You can find an introductory video showcasing Splink's features and running through an demo of functionality [here](https://www.youtube.com/watch?v=msz3T741KQI).  
-
-## How to make changes to Splink
-
-(Steps 5 onwards for repo admins only)
-
-1. Raise new issue or target existing issue
-2. Create new branch (usually off master).  Or fork for external contributors.
-3. Make changes, commit and push to GitHub
-4. Make pull request, referencing the issue
-5. Wait for tests to pass
-6. Review pull request
-7. Bump Splink version in [pyproject.toml](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml) and update [CHANGELOG.md](https://github.com/moj-analytical-services/splink/blob/master/CHANGELOG.md) as part of pull request
-8. Merge
-9. Create tagged release on Github.  This will trigger autopublish to PyPi
+```
 
 ## Acknowledgements
 
-We are very grateful to [ADR UK](https://www.adruk.org/) (Administrative Data Research UK) for providing funding for this work as part of the [Data First](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) project.
+We are very grateful to [ADR UK](https://www.adruk.org/) (Administrative Data Research UK) for providing the initial funding for this work as part of the [Data First](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) project.
 
 We are also very grateful to colleagues at the UK's Office for National Statistics for their expert advice and peer review of this work.

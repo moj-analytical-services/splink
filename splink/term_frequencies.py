@@ -2,90 +2,105 @@
 # https://github.com/moj-analytical-services/splink/pull/107
 
 import logging
+from typing import List, TYPE_CHECKING
 
-from pyspark.sql.dataframe import DataFrame
-from pyspark.sql.session import SparkSession
+from .input_column import InputColumn
 
-from .logging_utils import _format_sql
-from .model import Model
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
 logger = logging.getLogger(__name__)
 
 
-def sql_gen_term_frequencies(column_name, table_name="df"):
+def colname_to_tf_tablename(input_column: InputColumn):
+    input_column = input_column.name(escape=False).replace(" ", "_")
+    return f"__splink__df_tf_{input_column}"
+
+
+def term_frequencies_for_single_column_sql(
+    input_column: InputColumn, table_name="__splink__df_concat"
+):
+
+    # TODO: Not escaped so if col name has a space, will fail in Spark
+
+    col_name = input_column.name(escape=True)
 
     sql = f"""
     select
-    {column_name}, count(*) / (select
-        count({column_name}) as total from {table_name}) as tf_{column_name}
+    {col_name}, cast(count(*) as double) / (select
+        count({col_name}) as total from {table_name})
+            as {input_column.tf_name()}
     from {table_name}
-    where {column_name} is not null
-    group by {column_name}
+    where {col_name} is not null
+    group by {col_name}
     """
 
     return sql
 
 
-def _sql_gen_add_term_frequencies(model: Model, table_name: str = "df"):
-    """Build SQL statement that adds gamma columns to the comparison dataframe
+def _join_tf_to_input_df_sql(linker: "Linker"):
 
-    Args:
-        settings (dict): `splink` settings dict
-        table_name (str, optional): Name of the source df. Defaults to "df".
+    settings_obj = linker._settings_obj
+    tf_cols = settings_obj._term_frequency_columns
 
-    Returns:
-        str: A SQL string
-    """
+    select_cols = []
 
-    cc_dict = model.current_settings_obj.comparison_column_dict
+    for col in tf_cols:
+        tbl = colname_to_tf_tablename(col)
+        tf_col = col.tf_name()
+        select_cols.append(f"{tbl}.{tf_col}")
 
-    cols = [name for name, cc in cc_dict.items() if cc.term_frequency_adjustments]
-    # cols = [cc.name for cc in settings["comparison_columns"] if cc["term_frequency_adjustments"]]
-    tf_tables = ", ".join(
-        [f"tf_{col} as ({sql_gen_term_frequencies(col, table_name)})" for col in cols]
-    )
+    select_cols.insert(0, "__splink__df_concat.*")
+    select_cols = ", ".join(select_cols)
 
-    tf_cols = ", ".join(f"tf_{col}.tf_{col}" for col in cols)
+    templ = "left join {tbl} on __splink__df_concat.{col} = {tbl}.{col}"
 
-    joins = "".join(
-        [
-            f"""
-    left join tf_{col}
-    on {table_name}.{col} = tf_{col}.{col}
-    """
-            for col in cols
-        ]
-    )
+    left_joins = [
+        templ.format(tbl=colname_to_tf_tablename(col), col=col.name())
+        for col in tf_cols
+    ]
+    left_joins = " ".join(left_joins)
 
     sql = f"""
-    with {tf_tables}
-    select {table_name}.*, {tf_cols}
-    from {table_name}
-    {joins}
+    select {select_cols}
+    from __splink__df_concat
+    {left_joins}
     """
 
     return sql
 
 
-def add_term_frequencies(df: DataFrame, model: Model, spark: SparkSession):
-    """Compute the term frequencies of the required columns and add to the dataframe.
-    Args:
-        df (spark dataframe): A Spark dataframe containing source records for linking
-        settings_dict (dict): The `splink` settings dictionary
-        spark (Spark session): The Spark session object
+def compute_all_term_frequencies_sqls(linker: "Linker") -> List[dict]:
 
-    Returns:
-        Spark dataframe: A dataframe containing new columns representing the term frequencies
-        of the corresponding values
-    """
+    settings_obj = linker._settings_obj
+    tf_cols = settings_obj._term_frequency_columns
 
-    if model.current_settings_obj.any_cols_have_tf_adjustments:
-        sql = _sql_gen_add_term_frequencies(model, "df_no_tf")
+    if not tf_cols:
+        return [
+            {
+                "sql": "select * from __splink__df_concat",
+                "output_table_name": "__splink__df_concat_with_tf",
+            }
+        ]
 
-        logger.debug(_format_sql(sql))
-        df.createOrReplaceTempView("df_no_tf")
-        df_with_tf = spark.sql(sql)
+    sqls = []
+    for tf_col in tf_cols:
+        tf_table_name = colname_to_tf_tablename(tf_col)
 
-        return df_with_tf
-    else:
-        return df
+        if not linker._table_exists_in_database(tf_table_name):
+            sql = term_frequencies_for_single_column_sql(tf_col)
+            sql = {
+                "sql": sql,
+                "output_table_name": colname_to_tf_tablename(tf_col),
+            }
+            sqls.append(sql)
+
+    sql = _join_tf_to_input_df_sql(linker)
+    sql = {
+        "sql": sql,
+        "output_table_name": "__splink__df_concat_with_tf",
+    }
+    sqls.append(sql)
+
+    return sqls

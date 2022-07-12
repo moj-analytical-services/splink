@@ -1,0 +1,244 @@
+{
+  "config": {
+    "view": {
+      "width": 400,
+      "height": 300
+    },
+    "title": {
+      "anchor": "middle",
+      "offset": 10
+    },
+    "header": {
+      "title": null
+    }
+  },
+  "params": [
+    {
+      "name": "iteration_number",
+      "value": 0,
+      "bind": {
+        "input": "range",
+        "min": 0,
+        "max": 10,
+        "step": 1
+      },
+      "description": "Filter by the interation number"
+    }
+  ],
+  "hconcat": [
+    {
+      "mark": "bar",
+      "title": {
+        "text": "Amongst matching record comparisons:",
+        "fontWeight": "bold",
+        "fontSize": 12
+      },
+      "encoding": {
+        "row": {
+          "type": "nominal",
+          "field": "comparison_name",
+          "sort": {
+            "field": "comparison_sort_order"
+          },
+          "header": {
+            "labelAngle": 0,
+            "labelAnchor": "middle",
+            "labelAlign": "left"
+          }
+        },
+        "x": {
+          "type": "quantitative",
+          "field": "m_probability",
+          "axis": {
+            "title": "Proportion of record comparisons"
+          }
+        },
+        "y": {
+          "type": "nominal",
+          "axis": {
+            "title": null
+          },
+          "field": "label_for_charts",
+          "sort": {
+            "field": "comparison_vector_value",
+            "order": "descending"
+          }
+        },
+        "tooltip": [
+          {
+            "type": "nominal",
+            "field": "m_probability_description",
+            "title": "m probability description"
+          },
+          {
+            "type": "nominal",
+            "field": "comparison_name",
+            "title": "Comparison column name"
+          },
+          {
+            "type": "ordinal",
+            "field": "label_for_charts",
+            "title": "Label"
+          },
+          {
+            "type": "nominal",
+            "field": "sql_condition",
+            "title": "SQL condition"
+          },
+          {
+            "type": "quantitative",
+            "field": "m_probability",
+            "format": ".4p",
+            "title": "m probability"
+          },
+          {
+            "type": "quantitative",
+            "field": "u_probability",
+            "format": ".4p",
+            "title": "u probability"
+          },
+          {
+            "type": "quantitative",
+            "field": "bayes_factor",
+            "title": "Bayes factor = m/u",
+            "format": ",.4f"
+          },
+          {
+            "type": "quantitative",
+            "field": "log2_bayes_factor",
+            "title": "Match weight = log2(m/u)",
+            "format": ",.4f"
+          }
+        ],
+        "color": {
+          "value": "green"
+        }
+      },
+      "resolve": {
+        "scale": {
+          "y": "independent"
+        }
+      },
+      "transform": [
+        {
+          "filter": "(datum.bayes_factor != 'no-op filter due to vega lite issue 4680')"
+        }
+      ],
+      "width": 150,
+      "height": 50
+    },
+    {
+      "mark": "bar",
+      "title": {
+        "text": "Amongst non-matching record comparisons:",
+        "fontWeight": "bold",
+        "fontSize": 12
+      },
+      "encoding": {
+        "row": {
+          "type": "nominal",
+          "field": "comparison_name",
+          "sort": {
+            "field": "comparison_sort_order"
+          },
+          "header": {
+            "labels": false
+          }
+        },
+        "x": {
+          "type": "quantitative",
+          "field": "u_probability",
+          "axis": {
+            "title": "Proportion of record comparisons"
+          }
+        },
+        "y": {
+          "type": "nominal",
+          "axis": {
+            "title": null
+          },
+          "field": "label_for_charts",
+          "sort": {
+            "field": "comparison_vector_value",
+            "order": "descending"
+          }
+        },
+        "tooltip": [
+          {
+            "type": "nominal",
+            "field": "u_probability_description",
+            "title": "u probability description"
+          },
+          {
+            "type": "nominal",
+            "field": "comparison_name",
+            "title": "Comparison column name"
+          },
+          {
+            "type": "ordinal",
+            "field": "label_for_charts",
+            "title": "Label"
+          },
+          {
+            "type": "nominal",
+            "field": "sql_condition",
+            "title": "SQL condition"
+          },
+          {
+            "type": "quantitative",
+            "field": "m_probability",
+            "format": ".4p",
+            "title": "m probability"
+          },
+          {
+            "type": "quantitative",
+            "field": "u_probability",
+            "format": ".4p",
+            "title": "u probability"
+          },
+          {
+            "type": "quantitative",
+            "field": "bayes_factor",
+            "title": "Bayes factor = m/u",
+            "format": ",.4f"
+          },
+          {
+            "type": "quantitative",
+            "field": "log2_bayes_factor",
+            "title": "Match weight = log2(m/u)",
+            "format": ",.4f"
+          }
+        ],
+        "color": {
+          "value": "red"
+        }
+      },
+      "resolve": {
+        "scale": {
+          "y": "independent"
+        }
+      },
+      "transform": [
+        {
+          "filter": "(datum.bayes_factor != 'no-op filter2 due to vega lite issue 4680')"
+        }
+      ],
+      "width": 150,
+      "height": 50
+    }
+  ],
+  "data": {
+    "values": null
+  },
+  "transform": [
+    {
+      "filter": "(datum.iteration == iteration_number)"
+    }
+  ],
+
+  "title": {
+    "text": "Proportion of record comparisons in each comparison level by match status",
+    "subtitle": "(m and u probabilities)"
+  },
+  "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+}

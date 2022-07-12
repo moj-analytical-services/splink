@@ -11,7 +11,7 @@ def _sql_expr_move_left_to_right(
     col_name_l = f"{col_name}_l"
     col_name_r = f"{col_name}_r"
 
-    if source_dataset_col:
+    if source_dataset_col is not None:
         uid_expr_l = f"concat({sds_l}, '-__-', {uid_l})"
         uid_expr_r = f"concat({sds_r}, '-__-', {uid_r})"
     else:
@@ -49,29 +49,25 @@ def lower_id_to_left_hand_side(
 ):
     """Take a dataframe in the format of splink record comparisons (with _l and _r suffixes)
     and return a dataframe where the _l columns correspond to the record with the lower id.
-
     For example:
     | source_dataset_l   |   unique_id_l | source_dataset_r   |   unique_id_r |   a_l |   a_r | other_col   |
     |:-------------------|--------------:|:-------------------|--------------:|------:|------:|:------------|
     | df                 |             0 | df                 |             1 |     0 |     1 | a           |
     | df                 |             2 | df                 |             0 |     2 |     0 | b           |
     | df                 |             0 | df                 |             3 |     0 |     3 | c           |
-
     Becomes
-
     | source_dataset_l   |   unique_id_l | source_dataset_r   |   unique_id_r |   a_l |   a_r | other_col   |
     |:-------------------|--------------:|:-------------------|--------------:|------:|------:|:------------|
     | df                 |             0 | df                 |             1 |     0 |     1 | a           |
     | df                 |             0 | df                 |             2 |     0 |     2 | b           |
     | df                 |             0 | df                 |             3 |     0 |     3 | c           |
-
-
     Returns:
         df: a dataframe with the columns _l and _r swapped in the case where
             the unique_id_r < unique_id_l
-    """
-    spark = df.sql_ctx.sparkSession
-    cols = list(df.columns)
+    """  # noqa
+
+    cols = df.columns
+    cols = [c.name(escape=False) for c in cols]
 
     l_cols = [c for c in cols if c.endswith("_l")]
     r_cols = [c for c in cols if c.endswith("_r")]
@@ -85,11 +81,9 @@ def lower_id_to_left_hand_side(
     case_exprs.extend(other_cols)
     select_expr = ", ".join(case_exprs)
 
-    df.createOrReplaceTempView("df")
     sql = f"""
     select {select_expr}
-    from df
+    from {df.physical_name}
     """
 
-    df = spark.sql(sql)
-    return df.select(cols)
+    return sql

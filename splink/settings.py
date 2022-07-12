@@ -1,489 +1,444 @@
+import logging
 from copy import deepcopy
-from math import log2
-import re
-
-from .validate import get_default_value_from_schema
-
-from .charts import load_chart_definition, altair_if_installed_else_json
-
-
-class ComparisonLevel:
-    def __init__(self, level_dict, comparison_column_obj=None, settings_obj=None):
-        self.level_dict = level_dict
-        self.comparison_column = comparison_column_obj
-        self.settings = settings_obj
-
-    def __getitem__(self, i):
-        return self.level_dict[i]
-
-    @property
-    def is_null(self):
-        vector_value = self.comparison_vector_value
-        if vector_value:
-            if str(vector_value) == "-1":
-                return True
-            else:
-                return False
-        else:
-            return None
-
-    @property
-    def comparison_vector_value(self):
-        sql_expr = self.level_dict.get("sql_expr")
-
-        if sql_expr:
-            # sql_expr is either in the form 'when ... then x' or 'else y'
-            # we want to extract the value of x or y
-            # sqlglot needs a full sql case expression, it can't parse e.g. 'else 0'
-
-            # capture value after else using regex
-            sql_expr = sql_expr.strip()
-            if sql_expr.lower().startswith("else"):
-                return sql_expr[4:].strip()
-
-            # https://stackoverflow.com/a/33233868/1779128
-            case_value = re.search(r"(?s:.*)then (.*)$", sql_expr, re.IGNORECASE).group(
-                1
-            )
-            if case_value:
-                return case_value.strip()
-        else:
-            return None
-
-    @property
-    def not_null(self):
-        if self.is_null is None:
-            return None
-        return not self.is_null
-
-    @property
-    def has_m_u(self):
-
-        if self.is_null:
-            return True
-
-        m = self.level_dict.get("m_probability")
-        u = self.level_dict.get("u_probability")
-
-        if m and u:
-            return True
-
-        return False
-
-    @property
-    def m(self):
-        if self.is_null:
-            return 1
-
-        if "m_probability" in self.level_dict:
-            return self.level_dict["m_probability"]
-        return None
-
-    @property
-    def u(self):
-        if self.is_null:
-            return 1
-
-        if "u_probability" in self.level_dict:
-            return self.level_dict["u_probability"]
-        return None
-
-    @property
-    def bayes_factor(self):
-        if self.has_m_u and self.u != 0:
-            return self.m / self.u
-        else:
-            return None
-
-    @property
-    def log2_bayes_factor(self):
-        bf = self.bayes_factor
-        if bf and self.m != 0:
-            return log2(bf)
-
-    @property
-    def gamma_index(self):
-        if "gamma_index" in self.level_dict:
-            return self.level_dict["gamma_index"]
-        else:
-            return None
-
-    @property
-    def proportion_of_nonnull_records_in_level(self):
-
-        if self.settings:
-            sd = self.settings.settings_dict
-            lam = sd.get("proportion_of_matches")
-
-        if lam and self.has_m_u:
-            return self.m * lam + self.u * (1 - lam)
-        else:
-            return None
-
-    def as_dict(self):
-
-        d = {}
-        d["label"] = self["label"]
-
-        d["sql_expr"] = self["sql_expr"]
-
-        d["gamma_column_name"] = f"gamma_{self.comparison_column.name}"
-        d["level_name"] = self["label"]
-
-        d["gamma_index"] = self.gamma_index
-        d["comparison_vector_value"] = self.comparison_vector_value
-        d["column_name"] = self.comparison_column.name
-        d["num_levels"] = self.comparison_column.num_levels
-
-        d["m_probability"] = self.m
-        d["u_probability"] = self.u
-        d["bayes_factor"] = self.bayes_factor
-        d["log2_bayes_factor"] = self.log2_bayes_factor
-
-        d["level_proportion"] = self.proportion_of_nonnull_records_in_level
-        d["is_null"] = self.is_null
-
-        return d
-
-
-class ComparisonColumn:
-    def __init__(self, column_dict, settings_obj=None):
-        self.column_dict = column_dict
-        self.settings_obj = settings_obj
-
-    def __getitem__(self, i):
-        return self.column_dict[i]
-
-    def _dict_key_else_default_value(self, key):
-        cd = self.column_dict
-
-        if key in cd:
-            return cd[key]
-        else:
-            return get_default_value_from_schema(key, True)
-
-    @property
-    def custom_comparison(self):
-        cd = self.column_dict
-        if "custom_name" in cd:
-            return True
-        elif "col_name" in cd:
-            return False
-
-    @property
-    def columns_used(self):
-        cd = self.column_dict
-        if "col_name" in cd:
-            return [cd["col_name"]]
-        elif "custom_name" in cd:
-            return cd["custom_columns_used"]
-
-    @property
-    def name(self):
-        cd = self.column_dict
-        if "custom_name" in cd:
-            return cd["custom_name"]
-        elif "col_name" in cd:
-            return cd["col_name"]
-
-    @property
-    def has_case_expression_or_comparison_levels(self):
-        cd = self.column_dict
-        if "case_expression" in cd:
-            return True
-        elif "comparison_levels" in cd:
-            return True
-        else:
-            return False
-
-    @property
-    def gamma_name(self):
-        return f"gamma_{self.name}"
-
-    @property
-    def num_levels(self):
-        cd = self.column_dict
-
-        cld = self.comparison_levels_dict
-        if cld:
-            comparison_levels_keys = cld.keys()
-
-            comparison_levels_keys = [
-                k for k in comparison_levels_keys if str(k) != "-1"
-            ]
-            return len(comparison_levels_keys)
-        if "num_levels" in cd:
-            return cd["num_levels"]
-
-    @property
-    def input_cols_used(self):
-        cd = self.column_dict
-        if "custom_name" in cd:
-            return cd["custom_columns_used"]
-        elif "col_name" in cd:
-            return [cd["col_name"]]
-
-    def _attach_m_u_to_comparison_levels(self, comparison_levels):
-
-        m_probabilities = self.column_dict.get("m_probabilities")
-        if m_probabilities:
-
-            for level in comparison_levels:
-                cl = ComparisonLevel(level)
-                m_index = int(cl.comparison_vector_value)
-                if cl.not_null:
-                    level["m_probability"] = m_probabilities[m_index]
-
-        u_probabilities = self.column_dict.get("u_probabilities")
-        if u_probabilities:
-            counter = 0
-            for level in comparison_levels:
-                cl = ComparisonLevel(level)
-                u_index = int(cl.comparison_vector_value)
-                if cl.not_null:
-                    level["u_probability"] = u_probabilities[u_index]
-
-        return comparison_levels
-
-    @property
-    def comparison_levels_dict(self):
-        cd = self.column_dict
-
-        if "comparison_levels" not in cd:
-            return None
-
-        comparison_levels = deepcopy(cd["comparison_levels"])
-
-        results = {}
-        for level in comparison_levels:
-            cl = ComparisonLevel(level, self, self.settings_obj)
-            key = cl.comparison_vector_value
-            results[key] = cl
-            cl.level_dict["gamma_index"] = int(key)
-
-        comparison_levels = self._attach_m_u_to_comparison_levels(comparison_levels)
-        return results
-
-    @property
-    def comparison_levels_list(self):
-        return list(self.comparison_levels_dict.values())
-
-    @property
-    def term_frequency_adjustments(self):
-        cd = self.column_dict
-        return cd["term_frequency_adjustments"]
-
-    def df_e_row_intuition_dict(self, row_dict):
-
-        gamma_value = str(int(row_dict[self.gamma_name]))
-        cl = self.comparison_levels_dict[gamma_value]
-        row_desc = cl.as_dict()
-
-        row_desc["value_l"] = ", ".join(
-            [str(row_dict[c + "_l"]) for c in self.columns_used]
-        )
-        row_desc["value_r"] = ", ".join(
-            [str(row_dict[c + "_r"]) for c in self.columns_used]
-        )
-
-        return row_desc
-
-    def set_m_probability(self, level: int, prob: float, force: bool = False):
-        cd = self.column_dict
-        fixed = self._dict_key_else_default_value("fix_m_probabilities")
-        if not fixed or force:
-            cd["m_probabilities"][level] = prob
-
-    def set_u_probability(self, level: int, prob: float, force: bool = False):
-        cd = self.column_dict
-        fixed = self._dict_key_else_default_value("fix_u_probabilities")
-        if not fixed or force:
-            cd["u_probabilities"][level] = prob
-
-    def reset_probabilities(self, force: bool = False):
-        cd = self.column_dict
-        fixed_m = self._dict_key_else_default_value("fix_m_probabilities")
-        fixed_u = self._dict_key_else_default_value("fix_u_probabilities")
-        if not fixed_m or force:
-            if "m_probabilities" in cd:
-                cd["m_probabilities"] = [None for c in cd["m_probabilities"]]
-
-        if not fixed_u or force:
-            if "u_probabilities" in cd:
-                cd["u_probabilities"] = [None for c in cd["u_probabilities"]]
-
-    def as_rows(self, proportion_of_matches=None):
-        """Convert to rows e.g. to use to plot
-        in a chart"""
-        rows = []
-        # This should iterate over the `comparison_levels` dict
-        for comparison_level in self.comparison_levels_list:
-            r = comparison_level.as_dict()
-            rows.append(r)
-        return rows
-
-    def _repr_pretty_(self, p, cycle):
-
-        p.text("------------------------------------")
-        p.break_()
-        p.text(f"Comparison of {self.name}")
-        p.break_()
-        for row in self.as_rows():
-            p.text(f"{row['level_name']}")
-            p.break_()
-            value_m = (
-                f"{row['m_probability']*100:.3g}%" if row["m_probability"] else "None"
-            )
-            p.text(f"   Proportion in level amongst matches:       {value_m}")
-            p.break_()
-            value_u = (
-                f"{row['u_probability']*100:.3g}%" if row["u_probability"] else "None"
-            )
-            p.text(f"   Proportion in level amongst non-matches:   {value_u}%")
-            p.break_()
-            value_b = (
-                f"{row['bayes_factor']*100:.3g}%" if row["bayes_factor"] else "None"
-            )
-            p.text(f"   Bayes factor:                              {value_b}")
-            p.break_()
+from typing import List
+from .parse_sql import get_columns_used_from_sql
+from .misc import prob_to_bayes_factor, prob_to_match_weight
+from .charts import m_u_parameters_chart, match_weights_chart
+from .comparison import Comparison
+from .comparison_level import ComparisonLevel
+from .default_from_jsonschema import default_value_from_schema
+from .input_column import InputColumn
+from .misc import dedupe_preserving_order
+from .validate_jsonschema import validate_settings_against_schema
+from .blocking import BlockingRule
+
+logger = logging.getLogger(__name__)
 
 
 class Settings:
+    """The settings object contains the configuration and parameters of the data
+    linking model"""
+
     def __init__(self, settings_dict):
-        self.settings_dict = deepcopy(settings_dict)
 
-    def __getitem__(self, i):
-        return self.settings_dict[i]
+        settings_dict = deepcopy(settings_dict)
 
-    def __setitem__(self, key, value):
-        self.settings_dict[key] = value
+        # If incoming comparisons are of type Comparison not dict, turn back into dict
+        ccs = settings_dict["comparisons"]
+        ccs = [cc.as_dict() if isinstance(cc, Comparison) else cc for cc in ccs]
 
-    def complete_settings_dict(self, spark):
-        """Complete all fields in the setting dictionary
-        taking values from defaults"""
-        from .default_settings import complete_settings_dict
+        settings_dict["comparisons"] = ccs
 
-        self.settings_dict = complete_settings_dict(self.settings_dict, spark)
+        # In incoming comparisons have nested ComparisonLevels, turn back into dict
+        for comparison_dict in settings_dict["comparisons"]:
+            comparison_dict["comparison_levels"] = [
+                cl.as_dict() if isinstance(cl, ComparisonLevel) else cl
+                for cl in comparison_dict["comparison_levels"]
+            ]
 
-    @property
-    def comparison_column_dict(self):
-        sd = self.settings_dict
-        lookup = {}
-        for c in sd["comparison_columns"]:
+        validate_settings_against_schema(settings_dict)
 
-            cc = ComparisonColumn(c, self)
-            name = cc.name
-            lookup[name] = cc
-        return lookup
+        self._settings_dict = settings_dict
 
-    @property
-    def comparison_columns_list(self):
-        return list(self.comparison_column_dict.values())
+        ccs = self._settings_dict["comparisons"]
+        s_else_d = self._from_settings_dict_else_default
+        self._sql_dialect = s_else_d("sql_dialect")
 
-    @property
-    def any_cols_have_tf_adjustments(self):
-        return any([c.term_frequency_adjustments for c in self.comparison_columns_list])
+        self.comparisons: List[Comparison] = []
+        for cc in ccs:
+            self.comparisons.append(Comparison(cc, self))
 
-    def get_comparison_column(self, col_name_or_custom_name):
-        if col_name_or_custom_name in self.comparison_column_dict:
-            return self.comparison_column_dict[col_name_or_custom_name]
-        else:
-            raise KeyError(
-                f"You requested comparison column {col_name_or_custom_name}"
-                " but it does not exist in the settings object"
-            )
+        self._link_type = s_else_d("link_type")
+        self._probability_two_random_records_match = s_else_d(
+            "probability_two_random_records_match"
+        )
+        self._em_convergence = s_else_d("em_convergence")
+        self._max_iterations = s_else_d("max_iterations")
+        self._unique_id_column_name = s_else_d("unique_id_column_name")
 
-    def reset_all_probabilities(self, force: bool = False):
-        sd = self.settings_dict
-        sd["proportion_of_matches"] = None
-        for c in self.comparison_columns_list:
-            c.reset_probabilities(force=force)
+        self._retain_matching_columns = s_else_d("retain_matching_columns")
+        self._retain_intermediate_calculation_columns = s_else_d(
+            "retain_intermediate_calculation_columns"
+        )
 
-    def m_u_as_rows(self, drop_null=True):
-        """Convert to rows e.g. to use to plot
-        in a chart"""
-        rows = []
-        for cc in self.comparison_columns_list:
-            rows.extend(cc.as_rows())
-        if drop_null:
-            rows = [r for r in rows if not r["is_null"]]
-        return rows
+        brs_as_strings = s_else_d("blocking_rules_to_generate_predictions")
 
-    def set_m_probability(
-        self, name: str, level: int, prob: float, force: bool = False
-    ):
-        cc = self.get_comparison_column(name)
-        cc.set_m_probability(level, prob, force)
-
-    def set_u_probability(
-        self, name: str, level: int, prob: float, force: bool = False
-    ):
-        cc = self.get_comparison_column(name)
-        cc.set_u_probability(level, prob, force)
-
-    def overwrite_m_u_probs_from_other_settings_dict(
-        self, incoming_settings_dict, overwrite_m=True, overwrite_u=True
-    ):
-        """Overwrite the m and u probabilities with
-        the values from another settings dict where comparison column exists
-        in this settings object
-        """
-        incoming_settings_obj = Settings(incoming_settings_dict)
-
-        for cc_incoming in incoming_settings_obj.comparison_columns_list:
-            if cc_incoming.name in self.comparison_column_dict:
-                cc_existing = self.get_comparison_column(cc_incoming.name)
-
-                if overwrite_m:
-                    if "m_probabilities" in cc_incoming.column_dict:
-                        cc_existing.column_dict["m_probabilities"] = cc_incoming[
-                            "m_probabilities"
-                        ]
-
-                if overwrite_u:
-                    if "u_probabilities" in cc_incoming.column_dict:
-                        cc_existing.column_dict["u_probabilities"] = cc_incoming[
-                            "u_probabilities"
-                        ]
-
-    def remove_comparison_column(self, name):
-        removed = False
-        new_ccs = []
-        for cc in self.comparison_columns_list:
-            if cc.name != name:
-                new_ccs.append(cc.column_dict)
+        brs_as_objs = []
+        for br in brs_as_strings:
+            if isinstance(br, dict):
+                br = BlockingRule(
+                    br["blocking_rule"], salting_partitions=br["salting_partitions"]
+                )
+                br.preceding_rules = brs_as_objs.copy()
+                brs_as_objs.append(br)
             else:
-                removed = True
-        self.settings_dict["comparison_columns"] = new_ccs
-        if not removed:
-            raise ValueError(f"Could not find a column named {name}")
+                br = BlockingRule(br)
+                br.preceding_rules = brs_as_objs.copy()
+                brs_as_objs.append(br)
 
-    def probability_distribution_chart(self):  # pragma: no cover
-        chart_path = "probability_distribution_chart.json"
-        chart = load_chart_definition(chart_path)
-        chart["data"]["values"] = self.m_u_as_rows()
-        chart["title"]["subtitle"] += f" {self['proportion_of_matches']:.3g}"
+        self._blocking_rules_to_generate_predictions = brs_as_objs
 
-        return altair_if_installed_else_json(chart)
+        self._gamma_prefix = s_else_d("comparison_vector_value_column_prefix")
+        self._bf_prefix = s_else_d("bayes_factor_column_prefix")
+        self._tf_prefix = s_else_d("term_frequency_adjustment_column_prefix")
+        self._blocking_rule_for_training = None
+        self._training_mode = False
 
-    def bayes_factor_chart(self):  # pragma: no cover
-        chart_path = "bayes_factor_chart_def.json"
-        chart = load_chart_definition(chart_path)
-        rows = self.m_u_as_rows()
+        self._warn_if_no_null_level_in_comparisons()
 
-        chart["data"]["values"] = rows
-        return altair_if_installed_else_json(chart)
+    def __deepcopy__(self, memo) -> "Settings":
+        """When we do EM training, we need a copy of the Settings which is independent
+        of the original e.g. modifying the copy will not affect the original.
+        This method implements ensures the Settings can be deepcopied."""
+        cc = Settings(self.as_dict())
+        return cc
 
-    def _repr_pretty_(self, p, cycle):  # pragma: no cover
-        if cycle:
-            p.text("ComparisonColumn()")
+    def _from_settings_dict_else_default(self, key):
+        # Don't want a default of None because that's a valid value sometimes
+        # i.e. need to distinguish between None and 'not found in settings dict'
+        val = self._settings_dict.get(key, "__val_not_found_in_settings_dict__")
+        if val == "__val_not_found_in_settings_dict__":
+            val = default_value_from_schema(key, "root")
+        return val
+
+    def _warn_if_no_null_level_in_comparisons(self):
+        for c in self.comparisons:
+            if not c._has_null_level:
+                logger.warning(
+                    "Warning: No null level found for comparison "
+                    f"{c._output_column_name}.\n"
+                    "In most cases you want to define a comparison level that deals"
+                    " with the case that one or both sides of the comparison are null."
+                    "\nThis comparison level should have the `is_null_level` flag to "
+                    "True in the settings for that comparison level"
+                    "\nIf the column does not contain null values, or you know what "
+                    "you're doing, you can ignore this warning"
+                )
+
+    @property
+    def _additional_columns_to_retain(self):
+        cols = self._from_settings_dict_else_default("additional_columns_to_retain")
+        return [InputColumn(c, tf_adjustments=False, settings_obj=self) for c in cols]
+
+    @property
+    def _source_dataset_column_name_is_required(self):
+        return self._link_type not in [
+            "dedupe_only",
+            "link_only_find_matches_to_new_records",
+        ]
+
+    @property
+    def _source_dataset_column_name(self):
+        if self._source_dataset_column_name_is_required:
+            s_else_d = self._from_settings_dict_else_default
+            return s_else_d("source_dataset_column_name")
         else:
-            value = (
-                f"{self['proportion_of_matches']:.4g}"
-                if self["proportion_of_matches"]
-                else "None"
+            return None
+
+    @property
+    def _unique_id_input_columns(self) -> List[InputColumn]:
+        cols = []
+
+        if self._source_dataset_column_name_is_required:
+            col = InputColumn(
+                self._source_dataset_column_name,
+                settings_obj=self,
             )
-            p.text(f"λ (proportion of matches) = {value}")
-            for c in self.comparison_columns_list:
-                p.break_()
-                p.pretty(c)
+            cols.append(col)
+
+        col = InputColumn(self._unique_id_column_name, settings_obj=self)
+        cols.append(col)
+
+        return cols
+
+    @property
+    def _term_frequency_columns(self) -> List[InputColumn]:
+        cols = set()
+        for cc in self.comparisons:
+            cols.update(cc._tf_adjustment_input_col_names)
+        return [
+            InputColumn(c, settings_obj=self, tf_adjustments=True) for c in list(cols)
+        ]
+
+    @property
+    def _needs_matchkey_column(self) -> bool:
+        """Where multiple `blocking_rules_to_generate_predictions` are specified,
+        it's useful to include a matchkey column, that indicates from which blocking
+        rule the pairwise record comparisons arose.
+
+        This column is only needed if multiple rules are specified.
+        """
+
+        return len(self._blocking_rules_to_generate_predictions) > 1
+
+    @property
+    def _columns_to_select_for_blocking(self):
+        cols = []
+
+        for uid_col in self._unique_id_input_columns:
+            cols.append(uid_col.l_name_as_l())
+        for uid_col in self._unique_id_input_columns:
+            cols.append(uid_col.r_name_as_r())
+
+        for cc in self.comparisons:
+            cols.extend(cc._columns_to_select_for_blocking)
+
+        for add_col in self._additional_columns_to_retain:
+            cols.extend(add_col.l_r_names_as_l_r())
+
+        return cols
+
+    @property
+    def _columns_to_select_for_comparison_vector_values(self):
+        cols = []
+
+        for uid_col in self._unique_id_input_columns:
+            cols.append(uid_col.name_l())
+        for uid_col in self._unique_id_input_columns:
+            cols.append(uid_col.name_r())
+
+        for cc in self.comparisons:
+            cols.extend(cc._columns_to_select_for_comparison_vector_values)
+
+        for add_col in self._additional_columns_to_retain:
+            cols.extend(add_col.names_l_r())
+
+        if self._needs_matchkey_column:
+            cols.append("match_key")
+
+        cols = dedupe_preserving_order(cols)
+        return cols
+
+    @property
+    def _columns_to_select_for_bayes_factor_parts(self):
+        cols = []
+
+        for uid_col in self._unique_id_input_columns:
+            cols.append(uid_col.name_l())
+        for uid_col in self._unique_id_input_columns:
+            cols.append(uid_col.name_r())
+
+        for cc in self.comparisons:
+            cols.extend(cc._columns_to_select_for_bayes_factor_parts)
+
+        for add_col in self._additional_columns_to_retain:
+            cols.extend(add_col.names_l_r())
+
+        if self._needs_matchkey_column:
+            cols.append("match_key")
+
+        cols = dedupe_preserving_order(cols)
+        return cols
+
+    @property
+    def _columns_to_select_for_predict(self):
+        cols = []
+
+        for uid_col in self._unique_id_input_columns:
+            cols.append(uid_col.name_l())
+        for uid_col in self._unique_id_input_columns:
+            cols.append(uid_col.name_r())
+
+        for cc in self.comparisons:
+            cols.extend(cc._columns_to_select_for_predict)
+
+        for add_col in self._additional_columns_to_retain:
+            cols.extend(add_col.names_l_r())
+
+        if self._needs_matchkey_column:
+            cols.append("match_key")
+
+        cols = dedupe_preserving_order(cols)
+        return cols
+
+    def _get_comparison_by_output_column_name(self, name):
+        for cc in self.comparisons:
+            if cc._output_column_name == name:
+                return cc
+        raise ValueError(f"No comparison column with name {name}")
+
+    def _get_comparison_levels_corresponding_to_training_blocking_rule(
+        self, blocking_rule
+    ):
+        """
+        If we block on (say) first name and surname, then all blocked comparisons are
+        guaranteed to have a match on first name and surname
+
+        The probability two random records match must be adjusted for the fact this is a
+        subset of the comparisons
+
+        To correctly adjust, we need to find one or more comparison levels corresponding
+        to the blocking rule and use their bayes factor
+
+        In the example, we need to find a comparison level for an exact match on first
+        name, and one for an exact match on surname
+
+        Or alternatively (and preferably, to avoid correlation issues), a comparison
+        level for an exact match on first_name AND surname.   i.e. a single level for
+        exact match on full name
+
+        """
+        blocking_exact_match_columns = set(get_columns_used_from_sql(blocking_rule))
+
+        ccs = self.comparisons
+
+        exact_comparison_levels = []
+        for cc in ccs:
+            for cl in cc.comparison_levels:
+                if cl._is_exact_match:
+                    exact_comparison_levels.append(cl)
+
+        # Where exact match on multiple columns exists, use that instead of individual
+        # exact match columns
+        # So for example, if we have a param estimate for exact match on first name AND
+        # surname, prefer that
+        # over individual estimtes for exact match first name and surname.
+        exact_comparison_levels.sort(key=lambda x: -len(x._exact_match_colnames))
+
+        comparison_levels_corresponding_to_blocking_rule = []
+        for cl in exact_comparison_levels:
+            exact_cols = set(cl._exact_match_colnames)
+            if exact_cols.issubset(blocking_exact_match_columns):
+                blocking_exact_match_columns = blocking_exact_match_columns - exact_cols
+                comparison_levels_corresponding_to_blocking_rule.append(cl)
+
+        return comparison_levels_corresponding_to_blocking_rule
+
+    @property
+    def _parameters_as_detailed_records(self):
+        output = []
+        for i, cc in enumerate(self.comparisons):
+            records = cc._as_detailed_records
+            for r in records:
+                r[
+                    "probability_two_random_records_match"
+                ] = self._probability_two_random_records_match
+                r["comparison_sort_order"] = i
+            output.extend(records)
+
+        prior_description = (
+            "The probability that two random records drawn at random match is "
+            f"{self._probability_two_random_records_match:.3f} or one in "
+            f" {1/self._probability_two_random_records_match:,.1f} records."
+            "This is equivalent to a starting match weight of "
+            f"{prob_to_match_weight(self._probability_two_random_records_match):.3f}."
+        )
+
+        # Finally add a record for probability_two_random_records_match
+        rr_match = self._probability_two_random_records_match
+        prop_record = {
+            "comparison_name": "probability_two_random_records_match",
+            "sql_condition": None,
+            "label_for_charts": "",
+            "m_probability": None,
+            "u_probability": None,
+            "m_probability_description": None,
+            "u_probability_description": None,
+            "has_tf_adjustments": False,
+            "tf_adjustment_column": None,
+            "tf_adjustment_weight": None,
+            "is_null_level": False,
+            "bayes_factor": prob_to_bayes_factor(
+                self._probability_two_random_records_match
+            ),
+            "log2_bayes_factor": prob_to_match_weight(
+                self._probability_two_random_records_match
+            ),
+            "comparison_vector_value": 0,
+            "max_comparison_vector_value": 0,
+            "bayes_factor_description": prior_description,
+            "probability_two_random_records_match": rr_match,
+            "comparison_sort_order": -1,
+        }
+        output.insert(0, prop_record)
+        return output
+
+    @property
+    def _parameter_estimates_as_records(self):
+        output = []
+        for i, cc in enumerate(self.comparisons):
+            records = cc._parameter_estimates_as_records
+            for r in records:
+                r["comparison_sort_order"] = i
+            output.extend(records)
+        return output
+
+    def as_dict(self):
+        """Serialise the current settings (including any estimated model parameters)
+        to a dictionary, enabling the settings to be saved to disk and reloaded
+        """
+        rr_match = self._probability_two_random_records_match
+        current_settings = {
+            "comparisons": [cc.as_dict() for cc in self.comparisons],
+            "probability_two_random_records_match": rr_match,
+        }
+        return {**self._settings_dict, **current_settings}
+
+    def _as_completed_dict(self):
+        rr_match = self._probability_two_random_records_match
+        current_settings = {
+            "comparisons": [cc._as_completed_dict() for cc in self.comparisons],
+            "probability_two_random_records_match": rr_match,
+            "unique_id_column_name": self._unique_id_column_name,
+            "source_dataset_column_name": self._source_dataset_column_name,
+        }
+        return {**self._settings_dict, **current_settings}
+
+    def match_weights_chart(self, as_dict=False):
+        records = self._parameters_as_detailed_records
+
+        return match_weights_chart(records, as_dict=as_dict)
+
+    def m_u_parameters_chart(self, as_dict=False):
+        records = self._parameters_as_detailed_records
+        return m_u_parameters_chart(records, as_dict=as_dict)
+
+    def _columns_without_estimated_parameters_message(self):
+        message_lines = []
+        for c in self.comparisons:
+            msg = c._is_trained_message
+            if msg is not None:
+                message_lines.append(c._is_trained_message)
+
+        if len(message_lines) == 0:
+            message = (
+                "\nYour model is fully trained. All comparisons have at least "
+                "one estimate for their m and u values"
+            )
+        else:
+            message = "\nYour model is not yet fully trained. Missing estimates for:"
+            message_lines.insert(0, message)
+            message = "\n".join(message_lines)
+
+        logger.info(message)
+
+    @property
+    def _is_fully_trained(self):
+        return all([c._is_trained for c in self.comparisons])
+
+    def _not_trained_messages(self):
+        messages = []
+        for c in self.comparisons:
+            messages.extend(c._not_trained_messages)
+        return messages
+
+    @property
+    def human_readable_description(self):
+        comparison_descs = [
+            c._human_readable_description_succinct for c in self.comparisons
+        ]
+        comparison_descs = "\n".join(comparison_descs)
+        desc = (
+            "SUMMARY OF LINKING MODEL\n"
+            "------------------------\n"
+            "The similarity of pairwise record comparison in your model will be "
+            f"assessed as follows:\n\n{comparison_descs}"
+        )
+        return desc
+
+    @property
+    def salting_required(self):
+        for br in self._blocking_rules_to_generate_predictions:
+            if br.salting_partitions > 1:
+                return True
+        return False

@@ -1,0 +1,49 @@
+{
+  "config": {
+    "mark": {
+      "tooltip": null
+    }
+  },
+  "data": {
+    "values": null
+  },
+  "mark": "bar",
+  "encoding": {
+    "x": {
+      "type": "ordinal",
+      "field": "iteration"
+    },
+    "y": {
+      "type": "quantitative",
+      "axis": {
+        "title": "Estimated proportion of matches within block",
+        "format": ".2f"
+      },
+      "field": "probability_two_random_records_match"
+    },
+    "tooltip": [
+      {
+        "type": "quantitative",
+        "field": "probability_two_random_records_match",
+        "title": "% of record comparisons estimated to be matches within block",
+        "format": ".4g"
+      },
+      {
+        "type": "quantitative",
+        "field": "probability_two_random_records_match_reciprocal",
+        "title": "Reciprocal of % matches in block",
+        "format": ",.2f"
+      },
+
+      {
+        "type": "ordinal",
+        "field": "iteration",
+        "title": "EM iteration"
+      }
+    ]
+  },
+  "title": {
+    "text": "Estimated probability two random records match matches by iteration"
+  },
+  "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+}

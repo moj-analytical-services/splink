@@ -1,36 +1,63 @@
-from pyspark.sql.dataframe import DataFrame
-from pyspark.sql.functions import col, count, when
+def missingness_sqls(columns, input_tablename):
 
-from .charts import load_chart_definition, altair_if_installed_else_json
+    sqls = []
+    col_template = """
+                select
+                    count({col_name_escaped}) as non_null_count,
+                    '{col_name}' as column_name
+                from {input_tablename}"""
 
-import pandas as pd
+    selects = [
+        col_template.format(
+            col_name_escaped=col.name(),
+            col_name=col.name(escape=False),
+            input_tablename=input_tablename,
+        )
+        for col in columns
+    ]
 
+    sql = " union all ".join(selects)
 
-def missingness_chart(df: DataFrame):
-    """Produce bar chart of missingness in standardised nodes
-    Args:
-        df (DataFrame): Input Spark dataframe
-    Returns:
-        Bar chart of missingness
+    sqls.append(
+        {
+            "sql": sql,
+            "output_table_name": "null_counts_for_columns",
+        }
+    )
+
+    sql = f"""
+    select
+        1.0 - non_null_count/(select cast(count(*) as float)
+        from {input_tablename}) as null_proportion,
+        (select count(*) from {input_tablename}) - non_null_count as null_count,
+        (select count(*) from {input_tablename}) as total_record_count,
+        column_name
+    from null_counts_for_columns
     """
-    # Load JSON definition of missingness chart
-    chart_path = "missingness_chart_def.json"
-    missingness_chart_def = load_chart_definition(chart_path)
 
-    # Data for plot
-    # Count and percentage of nulls in each columns as pandas dataframe
-    df_nulls = df.select([count(when(col(c).isNull(), c)).alias(c) for c in df.columns])
-    pd_nulls = df_nulls.toPandas()
-    pd_nulls = pd.melt(pd_nulls)
+    sqls.append({"sql": sql, "output_table_name": "missingness_data_for_chart"})
 
-    record_count = df.count()
-    pd_nulls["percentage"] = pd_nulls["value"] / record_count
+    return sqls
 
-    # Add data to JSON chart definition
-    missingness_chart_def["data"]["values"] = pd_nulls.to_dict("records")
 
-    # Update chart title
-    for c in missingness_chart_def["layer"]:
-        c["title"] = f"Missingness per column out of {record_count:,.0f} records"
+def missingness_data(linker, input_tablename):
 
-    return altair_if_installed_else_json(missingness_chart_def)
+    if input_tablename is None:
+        input_tablename = "__splink__df_concat_with_tf"
+        if not linker._table_exists_in_database("__splink__df_concat_with_tf"):
+            linker._initialise_df_concat()
+            input_tablename = "__splink__df_concat"
+
+    splink_dataframe = linker._table_to_splink_dataframe(
+        input_tablename, input_tablename
+    )
+    columns = splink_dataframe.columns
+
+    sqls = missingness_sqls(columns, input_tablename)
+
+    for sql in sqls:
+        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+    df = linker._execute_sql_pipeline()
+
+    return df.as_record_dict()

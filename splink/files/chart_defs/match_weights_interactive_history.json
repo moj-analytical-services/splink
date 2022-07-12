@@ -1,0 +1,228 @@
+{
+  "config": {
+    "view": {
+      "width": 400,
+      "height": 60
+    },
+    "mark": {
+      "tooltip": null
+    },
+    "title": {
+      "anchor": "middle"
+    },
+    "header": {
+      "title": null
+    }
+  },
+  "params": [
+    {
+      "name": "iteration_number",
+      "value": 0,
+      "bind": {
+        "input": "range",
+        "min": 0,
+        "max": 10,
+        "step": 1
+      },
+      "description": "Filter by the interation number"
+    }
+  ],
+  "data": {
+    "values": []
+  },
+  "transform": [
+    {
+      "filter": "(datum.iteration == iteration_number)"
+    }
+  ],
+  "vconcat": [
+    {
+      "height": 30,
+      "mark": { "type": "bar", "clip": true, "height": 20 },
+      "selection": {
+        "zoom_selector": {
+          "type": "interval",
+          "bind": "scales",
+          "encodings": ["x"]
+        }
+      },
+      "transform": [
+        {
+          "filter": "(datum.comparison_name == 'probability_two_random_records_match')"
+        }
+      ],
+      "encoding": {
+        "color": {
+          "type": "quantitative",
+          "field": "log2_bayes_factor",
+          "title": "Match weight",
+          "scale": {
+            "range": ["red", "orange", "green"],
+            "domain": [-10, 0, 10]
+          }
+        },
+        "tooltip": [
+          {
+            "type": "nominal",
+            "field": "comparison_name",
+            "title": "Comparison name"
+          },
+          {
+            "type": "nominal",
+            "field": "probability_two_random_records_match",
+            "format": ".4f",
+            "title": "Probability two random records match"
+          },
+          {
+            "type": "quantitative",
+            "field": "log2_bayes_factor",
+            "title": "Equivalent match weight",
+            "format": ",.4f"
+          },
+          {
+            "type": "nominal",
+            "field": "bayes_factor_description",
+            "title": "Match weight description"
+          }
+        ],
+        "x": {
+          "type": "quantitative",
+          "axis": {
+            "labels": false,
+            "domain": false,
+            "title": "",
+            "ticks": false
+          },
+          "field": "log2_bayes_factor",
+          "scale": { "domain": [-10, 10] }
+        },
+        "y": {
+          "type": "nominal",
+          "field": "label_for_charts",
+          "axis": {
+            "title": "Prior (starting) match weight",
+            "titleAngle": 0,
+            "titleAlign": "right",
+            "titleFontWeight": "normal"
+          },
+          "sort": { "field": "comparison_vector_value", "order": "descending" }
+        }
+      }
+    },
+    {
+      "mark": { "type": "bar", "clip": true },
+      "selection": {
+        "zoom_selector": {
+          "type": "interval",
+          "bind": "scales",
+          "encodings": ["x"]
+        }
+      },
+      "transform": [
+        {
+          "filter": "(datum.comparison_name != 'probability_two_random_records_match')"
+        }
+      ],
+      "encoding": {
+        "color": {
+          "type": "quantitative",
+          "field": "log2_bayes_factor",
+          "title": "Match weight",
+          "scale": {
+            "range": ["red", "orange", "green"],
+            "domain": [-10, 0, 10]
+          }
+        },
+        "row": {
+          "type": "nominal",
+          "field": "comparison_name",
+          "sort": { "field": "comparison_sort_order" },
+          "header": {
+            "labelAngle": 0,
+            "labelAnchor": "middle",
+            "labelAlign": "left"
+          }
+        },
+        "tooltip": [
+          {
+            "type": "nominal",
+            "field": "comparison_name",
+            "title": "Comparison name"
+          },
+          { "type": "ordinal", "field": "label_for_charts", "title": "Label" },
+          {
+            "type": "nominal",
+            "field": "sql_condition",
+            "title": "SQL condition"
+          },
+          {
+            "type": "quantitative",
+            "field": "m_probability",
+            "format": ".4f",
+            "title": "M probability"
+          },
+          {
+            "type": "quantitative",
+            "field": "u_probability",
+            "format": ".4f",
+            "title": "U probability"
+          },
+          {
+            "type": "quantitative",
+            "field": "bayes_factor",
+            "title": "Bayes factor = m/u",
+            "format": ",.4f"
+          },
+          {
+            "type": "quantitative",
+            "field": "log2_bayes_factor",
+            "title": "Match weight = log2(m/u)",
+            "format": ",.4f"
+          },
+          {
+            "type": "nominal",
+            "field": "bayes_factor_description",
+            "title": "Match weight description"
+          }
+        ],
+        "x": {
+          "type": "quantitative",
+          "axis": {
+            "title": "Comparison level match weight = log2(m/u)"
+          },
+          "field": "log2_bayes_factor",
+          "scale": { "domain": [-10, 10] }
+        },
+        "y": {
+          "type": "nominal",
+          "field": "label_for_charts",
+          "axis": { "title": null },
+          "sort": { "field": "comparison_vector_value", "order": "descending" }
+        }
+      },
+      "resolve": {
+        "axis": { "y": "independent" },
+        "scale": { "y": "independent" }
+      }
+    }
+  ],
+  "selection": {
+    "zoom_selector": {
+      "type": "interval",
+      "bind": "scales",
+      "encodings": ["x"]
+    }
+  },
+
+  "resolve": {
+    "axis": { "y": "independent" },
+    "scale": {
+      "y": "independent"
+    }
+  },
+  "title": {
+    "text": "Model parameters (components of final match weight)",
+    "subtitle": "Use mousewheel to zoom"
+  },
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.2.json"
+}

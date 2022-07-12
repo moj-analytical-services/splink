@@ -1,0 +1,44 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+  "title": "Receiver operating characteristic curve",
+  "height": 600,
+  "width": 600,
+  "data": { "values": [] },
+  "mark": { "type": "line", "clip": true, "point": true },
+  "encoding": {
+    "tooltip": [
+      { "type": "quantitative", "field": "truth_threshold", "format": ".4f" },
+      { "type": "quantitative", "field": "FP_rate", "format": ".4f" },
+      { "type": "quantitative", "field": "TP_rate", "format": ".4f" },
+      { "type": "quantitative", "field": "TP", "format": ",.0f" },
+      { "type": "quantitative", "field": "TN", "format": ",.0f" },
+      { "type": "quantitative", "field": "FP", "format": ",.0f" },
+      { "type": "quantitative", "field": "FN", "format": ",.0f" },
+      { "type": "quantitative", "field": "precision", "format": ".4f" },
+      { "type": "quantitative", "field": "recall", "format": ".4f" }
+    ],
+    "x": {
+      "type": "quantitative",
+      "field": "FP_rate",
+      "sort": ["truth_threshold"],
+      "title": "False Positive Rate amongst clerically reviewed records"
+    },
+    "y": {
+      "type": "quantitative",
+      "field": "TP_rate",
+      "sort": ["truth_threshold"],
+      "title": "True Positive Rate amongst clerically reviewed records"
+    },
+    "color": {
+      "type": "nominal",
+      "field": "curve_label"
+    }
+  },
+  "selection": {
+    "selector076": {
+      "type": "interval",
+      "bind": "scales",
+      "encodings": ["x"]
+    }
+  }
+}
