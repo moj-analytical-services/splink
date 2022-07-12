@@ -97,6 +97,8 @@ def test_full_example_athena(tmp_path):
         boto3_session=my_session,
         output_bucket="alpha-splink-db-testing",
         output_database=db_name_write,
+        output_filepath="test_full_example",
+        garbage_collection_level=2,
     )
 
     linker.profile_columns(
@@ -139,16 +141,46 @@ def test_athena_garbage_collection():
     settings_dict = get_settings_dict()
     db_name_read = "splink_awswrangler_test"
     db_name_write = f"{db_name_read}2"
-
+    
+    # No cleaning...
     AthenaLinker(
         settings_dict=settings_dict,
         input_table_or_tables=f"{db_name_read}.fake_1000_from_splink_demos",
         boto3_session=my_session,
         output_bucket="alpha-splink-db-testing",
         output_database=db_name_write,
-        garbage_collection=True,
+        garbage_collection_level=0,
+        output_filepath="test_full_example",
     )
 
+    # Check everything gets cleaned up when initialising the linker
+    tables = wr.catalog.get_tables(
+        database="splink_awswrangler_test2",
+        name_prefix="__splink__df_predict",  # check if the predict table exists...
+        boto3_session=my_session,
+    )
+    assert sum(1 for _ in tables) > 0
+
+    # Check all files are also deleted (as gc = True)
+    files = wr.s3.list_objects(
+        path="s3://alpha-splink-db-testing/test_full_example/",
+        boto3_session=my_session,
+        ignore_empty=True,
+    )
+    assert len(files) > 0
+    
+        
+    # Perform cleaning
+    AthenaLinker(
+        settings_dict=settings_dict,
+        input_table_or_tables=f"{db_name_read}.fake_1000_from_splink_demos",
+        boto3_session=my_session,
+        output_bucket="alpha-splink-db-testing",
+        output_database=db_name_write,
+        garbage_collection_level=2,
+        output_filepath="test_full_example",
+    )
+    
     # Check everything gets cleaned up when initialising the linker
     tables = wr.catalog.get_tables(
         database="splink_awswrangler_test2",
@@ -185,7 +217,8 @@ def test_athena_df_as_input():
         boto3_session=my_session,
         output_bucket="alpha-splink-db-testing",
         output_database=db_name_write,
-        garbage_collection=True,
+        garbage_collection_level=2,
+        output_filepath="test_full_example",
     )
 
     linker.predict()
@@ -211,7 +244,8 @@ def test_athena_link_only():
         boto3_session=my_session,
         output_bucket="alpha-splink-db-testing",
         output_database=db_name_write,
-        garbage_collection=True,
+        garbage_collection_level=2,
+        output_filepath="test_full_example",
     )
 
     df_predict = linker.predict()
