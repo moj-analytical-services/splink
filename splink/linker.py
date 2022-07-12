@@ -976,7 +976,7 @@ class Linker:
         return predictions
 
     def find_matches_to_new_records(
-        self, records: List[dict], blocking_rules=None, match_weight_threshold=-4
+        self, records: List[dict], blocking_rules=[], match_weight_threshold=-4
     ) -> SplinkDataFrame:
         """Given one or more records, find records in the input dataset(s) which match
         and return in order of the splink prediction score.
@@ -986,10 +986,10 @@ class Linker:
 
         Args:
             records (List[dict]): Input search record(s).
-            blocking_rules (str, optional): Blocking rules to select
-                which records to find and score. If None, do not use a blocking
+            blocking_rules (list, optional): Blocking rules to select
+                which records to find and score. If [], do not use a blocking
                 rule - meaning the input records will be compared to all records
-                provided to the linker when it was instantiated. Defaults to None.
+                provided to the linker when it was instantiated. Defaults to [].
             match_weight_threshold (int, optional): Return matches with a match weight
                 above this threshold. Defaults to -4.
 
@@ -1020,8 +1020,13 @@ class Linker:
 
         self._records_to_table(records, "__splink__df_new_records")
 
-        if blocking_rules is not None:
-            self._settings_obj._blocking_rules_to_generate_predictions = blocking_rules
+        blocking_rules = [
+            BlockingRule(r) if not isinstance(r, BlockingRule) else r
+            for r in blocking_rules
+        ]
+
+        self._settings_obj._blocking_rules_to_generate_predictions = blocking_rules
+
         self._settings_obj._link_type = "link_only_find_matches_to_new_records"
         self._find_new_matches_mode = True
 
