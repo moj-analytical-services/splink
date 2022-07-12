@@ -236,7 +236,9 @@ def render_splink_cluster_studio_html(
         named_clusters_dict = dict(zip(cluster_ids, cluster_names))
 
     if named_clusters_dict:
-        template_data["named_clusters"] = json.dumps(named_clusters_dict)
+        template_data["named_clusters"] = json.dumps(
+            named_clusters_dict, cls=NumpyEncoder
+        )
 
     files = {
         "embed": "files/external_js/vega-embed@6.20.2",
