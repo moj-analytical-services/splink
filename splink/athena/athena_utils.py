@@ -30,7 +30,7 @@ class boto_utils:
         self.s3_output = self.get_table_dir()
 
     def get_table_dir(self):
-        
+
         # If the default folder is selected,
         # add a unique session id
         if self.s3_output_name_prefix:

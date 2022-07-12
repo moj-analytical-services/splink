@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 
 
 def _verify_athena_inputs(database, bucket, boto3_session):
-    
     def generic_warning_text():
         return (
             f"\nThe supplied {database_bucket_txt} that you have requested to write to "
@@ -397,21 +396,21 @@ class AthenaLinker(Linker):
     def _drop_all_tables_created_by_splink(
         self, garbage_collection_level=1, input_tables=[]
     ):
-        """A method that runs a cleanup process for the tables created by splink and 
+        """A method that runs a cleanup process for the tables created by splink and
         currently contained in your designated database.
 
-        Historic tables will not be wiped by this process, only those currently 
+        Historic tables will not be wiped by this process, only those currently
         contained on the database selected by the user.
 
         Attributes:
-            garbage_collection_level (int): The amount of cleaning you wish to be 
+            garbage_collection_level (int): The amount of cleaning you wish to be
             performed.
                 0 performs no cleaning. Existing tables will not be unlinked or deleted.
-                1 will unlink any tables with the '__splink_df' prefix within the database 
+                1 will unlink any tables with the '__splink_df' prefix within the database
                 you've specified for linking, but leaves the underlying s3 files intact.
                 2 scans your specified output database for any tables with the '__splink_df'
                 prefix and both unlinks the database table and deletes the backing data on s3.
-            input_tables (list): A list of input tables you wish to add to an ignore list. 
+            input_tables (list): A list of input tables you wish to add to an ignore list.
                 These will not be removed during garbage collection.
         """
         # No collection requested
