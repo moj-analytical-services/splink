@@ -5,7 +5,7 @@ import pandas as pd
 
 
 full_name_cc = {
-    "column_name": "full_name",
+    "output_column_name": "full_name",
     "comparison_levels": [
         {
             "sql_condition": """full_name_l IS NULL OR full_name_r IS NULL
@@ -50,7 +50,7 @@ full_name_cc = {
 
 
 dob_cc = {
-    "column_name": "dob",
+    "output_column_name": "dob",
     "comparison_levels": [
         {
             "sql_condition": "dob_l IS NULL OR dob_r IS NULL",
@@ -73,7 +73,7 @@ dob_cc = {
 }
 
 birth_place_cc = {
-    "column_name": "birth_place",
+    "output_column_name": "birth_place",
     "comparison_levels": [
         {
             "sql_condition": "birth_place_l IS NULL OR birth_place_r IS NULL",
@@ -96,7 +96,7 @@ birth_place_cc = {
 }
 
 postcode_cc = {
-    "column_name": "postcode",
+    "output_column_name": "postcode",
     "comparison_levels": [
         {
             "sql_condition": "postcode_l IS NULL OR postcode_r IS NULL",
@@ -122,7 +122,7 @@ postcode_cc = {
 
 
 occupation_cc = {
-    "column_name": "occupation",
+    "output_column_name": "occupation",
     "comparison_levels": [
         {
             "sql_condition": "occupation_l IS NULL OR occupation_r IS NULL",
