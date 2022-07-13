@@ -150,6 +150,7 @@ class SparkLinker(Linker):
             r"__splink__df_blocked",
             r"__splink__df_neighbours",
             r"__splink__df_representatives+",
+            r"__splink__df_concat_with_tf_sample",
         ]
 
         num_partitions = self.num_partitions_on_repartition
