@@ -17,20 +17,15 @@ logger = logging.getLogger(__name__)
 
 
 def compute_new_parameters_sql(settings_obj: Settings):
-    """compute m and u from results of predict"""
+    """compute u from results of predict"""
 
     sql_template = """
-    select {gamma_column} as comparison_vector_value,
-
-           sum(match_probability)/(select sum(match_probability)
-            from __splink__df_predict where {gamma_column} != -1) as m_probability,
-
-           sum(1 - match_probability)/(select sum(1 - match_probability)
-            from __splink__df_predict where {gamma_column} != -1) as u_probability,
-
-           '{output_column_name}' as output_column_name
+    select
+    {gamma_column} as comparison_vector_value,
+    sum(match_probability) as m_probability,
+    sum(1-match_probability) as u_probability,
+    '{output_column_name}' as output_column_name
     from __splink__df_predict
-    where {gamma_column} != -1
     group by {gamma_column}
     """
     union_sqls = [
@@ -54,6 +49,26 @@ def compute_new_parameters_sql(settings_obj: Settings):
     sql = " union all ".join(union_sqls)
 
     return sql
+
+
+def calculate_m_and_u_probability_averages(m_u_df):
+
+    data = m_u_df.copy()
+
+    data = data[data.comparison_vector_value != -1]
+    index = data.index.tolist()[:-1]
+
+    m_probs = data.loc[index, "m_probability"] / data.groupby("output_column_name")[
+        "m_probability"
+    ].transform("sum").head(-1)
+    u_probs = data.loc[index, "u_probability"] / data.groupby("output_column_name")[
+        "u_probability"
+    ].transform("sum").head(-1)
+
+    data.loc[index, "m_probability"] = m_probs
+    data.loc[index, "u_probability"] = u_probs
+
+    return data.to_dict("records")
 
 
 def populate_m_u_from_lookup(
@@ -137,7 +152,8 @@ def expectation_maximisation(
         sql = compute_new_parameters_sql(settings_obj)
         linker._enqueue_sql(sql, "__splink__df_new_params")
         df_params = linker._execute_sql_pipeline([df_comparison_vector_values])
-        param_records = df_params.as_record_dict()
+        param_records = df_params.as_pandas_dataframe()
+        param_records = calculate_m_and_u_probability_averages(param_records)
 
         df_params.drop_table_from_database()
 

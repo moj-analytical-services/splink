@@ -1,6 +1,9 @@
 import logging
 from .comparison_vector_values import compute_comparison_vector_values_sql
-from .expectation_maximisation import compute_new_parameters_sql
+from .expectation_maximisation import (
+    compute_new_parameters_sql,
+    calculate_m_and_u_probability_averages,
+)
 from .block_from_labels import block_from_labels
 from .m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
@@ -33,7 +36,8 @@ def estimate_m_from_pairwise_labels(linker, table_name):
 
     df_params = linker._execute_sql_pipeline()
 
-    param_records = df_params.as_record_dict()
+    param_records = df_params.as_pandas_dataframe()
+    param_records = calculate_m_and_u_probability_averages(param_records)
 
     m_u_records = [
         r

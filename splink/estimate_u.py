@@ -4,7 +4,10 @@ from typing import TYPE_CHECKING
 
 from .blocking import block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
-from .expectation_maximisation import compute_new_parameters_sql
+from .expectation_maximisation import (
+    compute_new_parameters_sql,
+    calculate_m_and_u_probability_averages,
+)
 
 from .m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
@@ -98,6 +101,7 @@ def estimate_u_values(linker: "Linker", target_rows):
     select *, cast(0.0 as double) as match_probability
     from __splink__df_comparison_vectors
     """
+
     training_linker._enqueue_sql(sql, "__splink__df_predict")
 
     sql = compute_new_parameters_sql(settings_obj)
@@ -105,9 +109,11 @@ def estimate_u_values(linker: "Linker", target_rows):
 
     df_params = training_linker._execute_sql_pipeline([df_sample])
 
-    param_records = df_params.as_record_dict()
+    param_records = df_params.as_pandas_dataframe()
     df_params.drop_table_from_database()
     df_sample.drop_table_from_database()
+
+    param_records = calculate_m_and_u_probability_averages(param_records)
 
     m_u_records = [
         r
