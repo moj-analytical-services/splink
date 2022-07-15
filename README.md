@@ -109,6 +109,7 @@ linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_trai
 
 scored_comparisons = linker.predict()
 scored_comparisons.as_pandas_dataframe(limit=5)
+
 ```
 
 ## Acknowledgements
