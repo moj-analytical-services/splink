@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def compute_new_parameters_sql(settings_obj: Settings):
-    """compute u from results of predict"""
+    """compute m and u from results of predict"""
 
     sql_template = """
     select
