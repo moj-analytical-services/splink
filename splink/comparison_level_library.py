@@ -117,17 +117,16 @@ def levenshtein_level(
         lev_name,
         distance_threshold,
         False,
-        m_probability=None,
+        m_probability=m_probability,
     )
 
 
-def jaccard_level(
+def jaro_winkler_level(
     col_name: str,
     distance_threshold: Union[int, float],
-    higher_is_more_similar: bool = True,
     m_probability=None,
 ) -> ComparisonLevel:
-    """Represents a comparison using a jaccard distance function,
+    """Represents a comparison using the jaro winkler distance function
 
     Args:
         col_name (str): Input column name
@@ -137,14 +136,66 @@ def jaccard_level(
             None.
 
     Returns:
-        ComparisonLevel:
+        ComparisonLevel: A comparison level that evaluates the jaro winkler similarity
+    """
+    return distance_function_level(
+        col_name,
+        "jaro_winkler",
+        distance_threshold,
+        True,
+        m_probability=m_probability,
+    )
+
+
+def cosine_distance_level(
+    col_name: str,
+    distance_threshold: Union[int, float],
+    m_probability=None,
+) -> ComparisonLevel:
+    """Represents a comparison using the cosine similarity function
+
+    Args:
+        col_name (str): Input column name
+        distance_threshold (Union[int, float]): The threshold to use to assess
+            similarity
+        m_probability (float, optional): Starting value for m probability. Defaults to
+            None.
+
+    Returns:
+        ComparisonLevel: A comparison level that evaluates the cosine similarity
+    """
+    return distance_function_level(
+        col_name,
+        "cosine_distance",
+        distance_threshold,
+        True,
+        m_probability=m_probability,
+    )
+
+
+def jaccard_level(
+    col_name: str,
+    distance_threshold: Union[int, float],
+    m_probability=None,
+) -> ComparisonLevel:
+    """Represents a comparison using a jaccard distance function
+
+    Args:
+        col_name (str): Input column name
+        distance_threshold (Union[int, float]): The threshold to use to assess
+            similarity
+        m_probability (float, optional): Starting value for m probability. Defaults to
+            None.
+
+    Returns:
+        ComparisonLevel: A comparison level that evaluates the jaccard similarity
     """
     return distance_function_level(
         col_name,
         "jaccard",
         distance_threshold,
         True,
-        m_probability=None,
+        m_probability=m_probability,
     )
 
 
