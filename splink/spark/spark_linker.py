@@ -158,7 +158,7 @@ class SparkLinker(Linker):
             num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
 
         if re.match(r"__splink__df_concat_with_tf_sample", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
+            num_partitions = math.ceil(self.num_partitions_on_repartition)
 
         if re.match(r"|".join(regex_to_persist), templated_name):
             if self.break_lineage_method == "persist":
