@@ -1,4 +1,6 @@
 ![image](https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png)
+![](https://img.shields.io/github/v/release/moj-analytical-services/splink?include_prereleases)
+[![Downloads](https://pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
 
 # Fast, accurate and scalable probabilistic data linkage using your choice of SQL backend.
 
