@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splink"
-version = "3.0.0"
+version = "3.0.1"
 description = "Fast probabilistic data linkage at scale"
 authors = ["Robin Linacre <robinlinacre@hotmail.com>", "Sam Lindsay", "Theodore Manassis", "Tom Hepworth"]
 license = "MIT"
@@ -12,8 +12,8 @@ readme = "README.md"
 python = "^3.7"
 jsonschema = "^3.2"
 pandas = "^1.0.0"
-duckdb = "0.3.2"
-sqlglot = "^3.0.0"
+duckdb = "^0.4.0"
+sqlglot = "^4.0.0"
 altair = "^4.2.0"
 Jinja2 = "^3.0.3"
 
