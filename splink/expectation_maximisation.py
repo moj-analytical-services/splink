@@ -1,6 +1,7 @@
 import logging
 from typing import TYPE_CHECKING
 import time
+import duckdb
 
 from .predict import predict_from_comparison_vectors_sqls
 from .settings import Settings
@@ -17,20 +18,15 @@ logger = logging.getLogger(__name__)
 
 
 def compute_new_parameters_sql(settings_obj: Settings):
-    """compute m and u from results of predict"""
+    """compute m and u counts from the results of predict"""
 
     sql_template = """
-    select {gamma_column} as comparison_vector_value,
-
-           sum(match_probability)/(select sum(match_probability)
-            from __splink__df_predict where {gamma_column} != -1) as m_probability,
-
-           sum(1 - match_probability)/(select sum(1 - match_probability)
-            from __splink__df_predict where {gamma_column} != -1) as u_probability,
-
-           '{output_column_name}' as output_column_name
+    select
+    {gamma_column} as comparison_vector_value,
+    sum(match_probability) as m_count,
+    sum(1-match_probability) as u_count,
+    '{output_column_name}' as output_column_name
     from __splink__df_predict
-    where {gamma_column} != -1
     group by {gamma_column}
     """
     union_sqls = [
@@ -44,8 +40,8 @@ def compute_new_parameters_sql(settings_obj: Settings):
     # Probability of two random records matching
     sql = """
     select 0 as comparison_vector_value,
-           avg(match_probability) as m_probability,
-           avg(1-match_probability) as u_probability,
+           avg(match_probability) as m_count,
+           avg(1-match_probability) as u_count,
            '_probability_two_random_records_match' as output_column_name
     from __splink__df_predict
     """
@@ -54,6 +50,38 @@ def compute_new_parameters_sql(settings_obj: Settings):
     sql = " union all ".join(union_sqls)
 
     return sql
+
+
+def compute_proportions_for_new_parameters(m_u_df):
+    """Using the results from compute_new_parameters_sql, compute
+    m and u
+    """
+
+    sql = """
+    select
+        comparison_vector_value,
+        output_column_name,
+        m_count/sum(m_count) over (PARTITION BY output_column_name)
+            as m_probability,
+        u_count/sum(u_count) over (PARTITION BY output_column_name)
+            as u_probability
+    from m_u_df
+    where comparison_vector_value != -1
+    and output_column_name != '_probability_two_random_records_match'
+
+    union all
+
+    select
+        comparison_vector_value,
+        output_column_name,
+        m_count as m_probability,
+        u_count as u_probability
+    from m_u_df
+    where output_column_name = '_probability_two_random_records_match'
+    order by output_column_name, comparison_vector_value asc
+    """
+
+    return duckdb.query(sql).to_df().to_dict("records")
 
 
 def populate_m_u_from_lookup(
@@ -135,9 +163,10 @@ def expectation_maximisation(
             linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_new_parameters_sql(settings_obj)
-        linker._enqueue_sql(sql, "__splink__df_new_params")
+        linker._enqueue_sql(sql, "__splink__m_u_counts")
         df_params = linker._execute_sql_pipeline([df_comparison_vector_values])
-        param_records = df_params.as_record_dict()
+        param_records = df_params.as_pandas_dataframe()
+        param_records = compute_proportions_for_new_parameters(param_records)
 
         df_params.drop_table_from_database()
 

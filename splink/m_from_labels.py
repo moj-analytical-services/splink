@@ -1,6 +1,9 @@
 import logging
 from .comparison_vector_values import compute_comparison_vector_values_sql
-from .expectation_maximisation import compute_new_parameters_sql
+from .expectation_maximisation import (
+    compute_new_parameters_sql,
+    compute_proportions_for_new_parameters,
+)
 from .block_from_labels import block_from_labels
 from .m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
@@ -29,11 +32,11 @@ def estimate_m_from_pairwise_labels(linker, table_name):
     linker._enqueue_sql(sql, "__splink__df_predict")
 
     sql = compute_new_parameters_sql(linker._settings_obj)
-    linker._enqueue_sql(sql, "__splink__df_new_params")
+    linker._enqueue_sql(sql, "__splink__m_u_counts")
 
     df_params = linker._execute_sql_pipeline()
-
-    param_records = df_params.as_record_dict()
+    param_records = df_params.as_pandas_dataframe()
+    param_records = compute_proportions_for_new_parameters(param_records)
 
     m_u_records = [
         r
