@@ -5,7 +5,7 @@ from .blocking import BlockingRule, block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import (
     compute_new_parameters_sql,
-    calculate_m_and_u_probability_averages,
+    compute_proportions_for_new_parameters,
 )
 from .m_u_records_to_parameters import (
     m_u_records_to_lookup_dict,
@@ -47,11 +47,11 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
     training_linker._enqueue_sql(sql, "__splink__df_predict")
 
     sql = compute_new_parameters_sql(settings_obj)
-    training_linker._enqueue_sql(sql, "__splink__df_new_params")
+    training_linker._enqueue_sql(sql, "__splink__m_u_counts")
 
     df_params = training_linker._execute_sql_pipeline()
     param_records = df_params.as_pandas_dataframe()
-    param_records = calculate_m_and_u_probability_averages(param_records)
+    param_records = compute_proportions_for_new_parameters(param_records)
 
     m_u_records = [
         r
