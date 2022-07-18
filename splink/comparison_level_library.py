@@ -96,7 +96,7 @@ def exact_match_level(
 
 def levenshtein_level(
     col_name: str,
-    distance_threshold: Union[int, float],
+    distance_threshold: int,
     m_probability=None,
 ) -> ComparisonLevel:
     """Represents a comparison using a levenshtein distance function,
@@ -123,7 +123,7 @@ def levenshtein_level(
 
 def jaro_winkler_level(
     col_name: str,
-    distance_threshold: Union[int, float],
+    distance_threshold: float,
     m_probability=None,
 ) -> ComparisonLevel:
     """Represents a comparison using the jaro winkler distance function
@@ -141,32 +141,6 @@ def jaro_winkler_level(
     return distance_function_level(
         col_name,
         "jaro_winkler",
-        distance_threshold,
-        True,
-        m_probability=m_probability,
-    )
-
-
-def cosine_distance_level(
-    col_name: str,
-    distance_threshold: Union[int, float],
-    m_probability=None,
-) -> ComparisonLevel:
-    """Represents a comparison using the cosine similarity function
-
-    Args:
-        col_name (str): Input column name
-        distance_threshold (Union[int, float]): The threshold to use to assess
-            similarity
-        m_probability (float, optional): Starting value for m probability. Defaults to
-            None.
-
-    Returns:
-        ComparisonLevel: A comparison level that evaluates the cosine similarity
-    """
-    return distance_function_level(
-        col_name,
-        "cosine_distance",
         distance_threshold,
         True,
         m_probability=m_probability,
