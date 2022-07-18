@@ -150,11 +150,15 @@ class SparkLinker(Linker):
             r"__splink__df_blocked",
             r"__splink__df_neighbours",
             r"__splink__df_representatives+",
+            r"__splink__df_concat_with_tf_sample",
         ]
 
         num_partitions = self.num_partitions_on_repartition
         if re.match(r"__splink__df_representatives_.+", templated_name):
             num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
+
+        if re.match(r"__splink__df_concat_with_tf_sample", templated_name):
+            num_partitions = math.ceil(self.num_partitions_on_repartition / 2)
 
         if re.match(r"|".join(regex_to_persist), templated_name):
             if self.break_lineage_method == "persist":
