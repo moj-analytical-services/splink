@@ -6,6 +6,8 @@ from ..comparison_level_library import (  # noqa: F401
     null_level,
     distance_function_level,
     columns_reversed_level,
+    jaccard_level,
+    jaro_winkler_level,
 )
 from ..input_column import InputColumn
 from ..comparison_level import ComparisonLevel

@@ -240,3 +240,55 @@ def jaccard_at_thresholds(
         m_probability_or_probabilities_lev,
         m_probability_else,
     )
+
+
+def jaro_winkler_at_thresholds(
+    col_name: str,
+    distance_threshold_or_thresholds: Union[int, list] = [0.9, 0.7],
+    include_exact_match_level=True,
+    term_frequency_adjustments=False,
+    m_probability_exact_match=None,
+    m_probability_or_probabilities_lev: Union[float, list] = None,
+    m_probability_else=None,
+) -> Comparison:
+    """A comparison of the data in `col_name` with the jaro_winkler distance used to
+    assess middle similarity levels.
+
+    An example of the output with default arguments and setting
+    `distance_threshold_or_thresholds = [1,2]` would be
+    - Exact match
+    - jaro_winkler distance <= 0.9
+    - jaro_winkler distance <= 0.7
+    - Anything else
+
+    Args:
+        col_name (str): The name of the column to compare
+        distance_threshold_or_thresholds (Union[int, list], optional): The threshold(s)
+            to use for the middle similarity level(s). Defaults to [0.9, 0.7].
+        include_exact_match_level (bool, optional): If True, include an exact match
+            level. Defaults to True.
+        term_frequency_adjustments (bool, optional): If True, apply term frequency
+            adjustments to the exact match level. Defaults to False.
+        m_probability_exact_match (_type_, optional): If provided, overrides the
+            default m probability for the exact match level. Defaults to None.
+        m_probability_or_probabilities_lev (Union[float, list], optional):
+            _description_. If provided, overrides the default m probabilities
+            for the thresholds specified. Defaults to None.
+        m_probability_else (_type_, optional): If provided, overrides the
+            default m probability for the 'anything else' level. Defaults to None.
+
+    Returns:
+        Comparison:
+    """
+
+    return distance_function_at_thresholds(
+        col_name,
+        "jaro_winkler",
+        distance_threshold_or_thresholds,
+        True,
+        include_exact_match_level,
+        term_frequency_adjustments,
+        m_probability_exact_match,
+        m_probability_or_probabilities_lev,
+        m_probability_else,
+    )
