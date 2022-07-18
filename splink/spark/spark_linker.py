@@ -99,6 +99,11 @@ class SparkLinker(Linker):
                 " argument when you initialise the linker"
             )
 
+        for table in self.spark.catalog.listTables():
+            if table.isTemporary:
+                if "__splink__" in table.name:
+                    self.spark.catalog.dropTempView(table.name)
+
         homogenised_tables = []
         homogenised_aliases = []
 
