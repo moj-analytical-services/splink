@@ -28,7 +28,7 @@ def test_full_example_spark(df_spark, tmp_path):
         "probability_two_random_records_match": 0.01,
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [
-            "l.surname = r.surname",
+            {"blocking_rule": "l.surname = r.surname", "salting_partitions": 3},
         ],
         "comparisons": [
             cl.levenshtein_at_thresholds("first_name", 2),
