@@ -976,7 +976,10 @@ class Linker:
         return predictions
 
     def find_matches_to_new_records(
-        self, records: List[dict], blocking_rules=[], match_weight_threshold=-4
+        self,
+        records_or_tablename,
+        blocking_rules=[],
+        match_weight_threshold=-4,
     ) -> SplinkDataFrame:
         """Given one or more records, find records in the input dataset(s) which match
         and return in order of the splink prediction score.
@@ -985,7 +988,8 @@ class Linker:
         for given record(s)
 
         Args:
-            records (List[dict]): Input search record(s).
+            records_or_tablename (List[dict]): Input search record(s) as list of dict,
+                or a table registered to the database.
             blocking_rules (list, optional): Blocking rules to select
                 which records to find and score. If [], do not use a blocking
                 rule - meaning the input records will be compared to all records
@@ -1018,7 +1022,11 @@ class Linker:
         )
         original_link_type = self._settings_obj._link_type
 
-        self._records_to_table(records, "__splink__df_new_records")
+        if not isinstance(records_or_tablename, str):
+            self._records_to_table(records_or_tablename, "__splink__df_new_records")
+            new_records_tablename = "__splink__df_new_records"
+        else:
+            new_records_tablename = records_or_tablename
 
         blocking_rules = [
             BlockingRule(r) if not isinstance(r, BlockingRule) else r
@@ -1031,7 +1039,7 @@ class Linker:
         self._find_new_matches_mode = True
 
         sql = _join_tf_to_input_df_sql(self)
-        sql = sql.replace("__splink__df_concat", "__splink__df_new_records")
+        sql = sql.replace("__splink__df_concat", new_records_tablename)
         self._enqueue_sql(sql, "__splink__df_new_records_with_tf")
 
         sql = block_using_rules_sql(self)
