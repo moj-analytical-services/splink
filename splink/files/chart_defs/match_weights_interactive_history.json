@@ -24,7 +24,7 @@
         "max": 10,
         "step": 1
       },
-      "description": "Filter by the interation number"
+      "description": "Filter by the iteration number"
     }
   ],
   "data": {
