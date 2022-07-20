@@ -138,7 +138,8 @@ def cumulative_comparisons_generated_by_blocking_rules(
 
         rr_text = f"""
             The rolling reduction ratio with your given blocking rule(s) is {rr}.
-            This represents the reduction in the total number of comparisons due to your rule(s).
+            This represents the reduction in the total number of comparisons due
+            to your rule(s).
         """
 
         out_dict = {

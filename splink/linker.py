@@ -1651,7 +1651,8 @@ class Linker:
         Examples:
             >>> blocking_rules = [
             >>>    "l.surname = r.surname",
-            >>>    "l.first_name = r.first_name and substr(l.dob,1,4) = substr(r.dob,1,4)"
+            >>>    "l.first_name = r.first_name
+            >>>     and substr(l.dob,1,4) = substr(r.dob,1,4)"
             >>> ]
             >>> linker.cumulative_num_comparisons_from_blocking_rules_chart()
 
