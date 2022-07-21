@@ -168,7 +168,8 @@ class EMTrainingSession:
         # in the original (main) setting object
         expectation_maximisation(self, cvv)
 
-        training_desc = f"EM, blocked on: {self._blocking_rule_for_training}"
+        rule = self._blocking_rule_for_training.blocking_rule
+        training_desc = f"EM, blocked on: {rule}"
 
         # Add m and u values to original settings
         for cc in self._settings_obj.comparisons:
