@@ -1597,8 +1597,8 @@ class Linker:
 
         Args:
             input_dataset (str, optional): Name of one of the input tables in the
-                database.  If provided, completeness will be computed for this table alone.
-                Defaults to None.
+                database.  If provided, completeness will be computed for this table
+                alone. Defaults to None.
             cols (List[str], optional): List of column names to calculate completeness.
                 Default to None.
 
