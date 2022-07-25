@@ -95,8 +95,8 @@ def completeness_data(linker, input_tablename=None, cols=None):
 
     sql = " union all ".join(sqls)
 
-    linker._enqueue_sql(sql, "__splink__df_all_column_completeness")
-
-    df = linker._execute_sql_pipeline()
+    df = linker._enqueue_and_execute_sql_pipeline(
+        sql, "__splink__df_all_column_completeness"
+    )
 
     return df.as_record_dict()
