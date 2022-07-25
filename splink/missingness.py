@@ -61,3 +61,42 @@ def missingness_data(linker, input_tablename):
     df = linker._execute_sql_pipeline()
 
     return df.as_record_dict()
+
+
+def completeness_data(linker, input_tablename=None, cols=None):
+    sqls = []
+
+    if input_tablename is None:
+        input_tablename = "__splink__df_concat_with_tf"
+        if not linker._table_exists_in_database("__splink__df_concat_with_tf"):
+            linker._initialise_df_concat()
+            input_tablename = "__splink__df_concat"
+
+    splink_dataframe = linker._table_to_splink_dataframe(
+        input_tablename, input_tablename
+    )
+    columns = splink_dataframe.columns
+    if cols is not None:
+        columns = [c for c in columns if c.name() in cols]
+
+    for col in columns:
+        sql = f"""
+        (select
+            {linker._settings_obj._source_dataset_column_name} as source_dataset,
+            '{col.name()}' as column_name,
+            count(*) - count({col.name()}) as total_null_rows,
+            count(*) as total_rows_inc_nulls,
+            count({col.name()})*1.0/count(*) as completeness
+        from {input_tablename}
+        group by source_dataset
+        order by count(*) desc)
+        """
+        sqls.append(sql)
+
+    sql = " union all ".join(sqls)
+
+    linker._enqueue_sql(sql, "__splink__df_all_column_completeness")
+
+    df = linker._execute_sql_pipeline()
+
+    return df.as_record_dict()
