@@ -1627,7 +1627,7 @@ class Linker:
 
     def cumulative_num_comparisons_from_blocking_rules_chart(
         self,
-        blocking_rules=None,
+        blocking_rules: str or list = None,
         link_type: str = None,
         unique_id_column_name: str = None,
     ):
@@ -1639,11 +1639,10 @@ class Linker:
         total.
 
         Args:
-            blocking_rule (str or list): The blocking rules to compute comparisons for.
+            blocking_rules (str or list): The blocking rule(s) to compute comparisons for.
                 If null, the rules set out in your settings object will be used.
-            link_type (str, optional): The link type.  This is needed only if the
-                linker has not yet been provided with a settings dictionary.  Defaults
-                to None.
+            link_type (str, optional): The link type.  This defaults to the link type
+                outlined in your settings object.
             unique_id_column_name (str, optional):  This is needed only if the
                 linker has not yet been provided with a settings dictionary.  Defaults
                 to None.
@@ -1654,7 +1653,7 @@ class Linker:
             >>>    "l.first_name = r.first_name
             >>>     and substr(l.dob,1,4) = substr(r.dob,1,4)"
             >>> ]
-            >>> linker.cumulative_num_comparisons_from_blocking_rules_chart()
+            >>> linker.cumulative_num_comparisons_from_blocking_rules_chart(blocking_rules)
 
         Returns:
             VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
@@ -1662,17 +1661,11 @@ class Linker:
                 attribute.
         """
 
-        sql = vertically_concatenate_sql(self)
-        concat_df = self._enqueue_and_execute_sql_pipeline(sql, "__splink__df_concat")
-
-        if blocking_rules is None:
-            blocking_rules = self._settings_obj_._blocking_rules_to_generate_predictions
-        else:
+        if blocking_rules:
             blocking_rules = ensure_is_list(blocking_rules)
 
         records = cumulative_comparisons_generated_by_blocking_rules(
             self,
-            concat_df.physical_name,
             blocking_rules,
             link_type,
             unique_id_column_name,

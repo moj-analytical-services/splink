@@ -88,13 +88,26 @@ def all_letter_combos(n):
                 return combos
 
 
-def calculate_cartesian(df_rows):
+def calculate_cartesian(df_rows, link_type):
     """
     Calculates the cartesian product for the input df(s).
     """
     n = df_rows
-    numerator = n * (n - 1)
-    return numerator / 2
+
+    if link_type == "link_only":
+        return np.product([m["count"] for m in n])
+
+    if link_type == "dedupe_only":
+        return sum([m["count"] * (m["count"] - 1) for m in n])/2
+
+    if link_type == "link_and_dedupe":
+        if len(n) > 1:
+            prod = np.product([m["count"] for m in n])
+        else:
+            prod = 0
+
+        c = sum([m["count"] * (m["count"] - 1) for m in n])/2
+        return prod+c
 
 
 def calculate_reduction_ratio(N, cartesian):
