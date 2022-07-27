@@ -101,7 +101,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
         )
 
     # Calculate the Cartesian Product
-    if len(linker._input_tables_dict) is 1:
+    if len(linker._input_tables_dict) == 1:
         group_by_statement = ""
     else:
         group_by_statement = "group by source_dataset"
