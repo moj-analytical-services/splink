@@ -13,7 +13,9 @@ if TYPE_CHECKING:
 
 
 def get_link_type_settings_obj(
-    linker: "Linker", link_type=None, unique_id_column_name=None,
+    linker: "Linker",
+    link_type=None,
+    unique_id_column_name=None,
 ):
 
     if linker._settings_obj_ is not None:
@@ -94,7 +96,9 @@ def cumulative_comparisons_generated_by_blocking_rules(
     copied_linker = deepcopy(linker)
     if blocking_rules:
         brs_as_objs = settings_obj._brs_as_objs(blocking_rules)
-        copied_linker._settings_obj_._blocking_rules_to_generate_predictions = brs_as_objs
+        copied_linker._settings_obj_._blocking_rules_to_generate_predictions = (
+            brs_as_objs
+        )
 
     # Calculate the Cartesian Product
     if len(linker._input_tables_dict) is 1:
@@ -156,7 +160,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
             "cumulative_rows": cumulative_sum,
             "cartesian": int(cartesian),
             "reduction_ratio": rr_text,
-            "start": cumulative_sum-row["row_count"],
+            "start": cumulative_sum - row["row_count"],
         }
         br_comparisons.append(out_dict.copy())
 

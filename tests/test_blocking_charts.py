@@ -11,11 +11,11 @@ from splink.analyse_blocking import (
 def validate_blocking_output(linker, expected_out, **kwargs):
     records = cumulative_comparisons_generated_by_blocking_rules(linker, **kwargs)
 
-    assert (expected_out["row_count"] ==
-        list(map(lambda x: x["row_count"], records)))
+    assert expected_out["row_count"] == list(map(lambda x: x["row_count"], records))
 
-    assert (expected_out["cumulative_rows"] ==
-        list(map(lambda x: x["cumulative_rows"], records)))
+    assert expected_out["cumulative_rows"] == list(
+        map(lambda x: x["cumulative_rows"], records)
+    )
 
     assert expected_out["cartesian"] == records[0]["cartesian"]
 
@@ -23,16 +23,16 @@ def validate_blocking_output(linker, expected_out, **kwargs):
 def test_blocking_records_accuracy():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker_settings = DuckDBLinker(df,get_settings_dict())
+    linker_settings = DuckDBLinker(df, get_settings_dict())
     linker_no_settings = DuckDBLinker([df, df])
 
     # dedupe only
     validate_blocking_output(
         linker_settings,
-        expected_out= {
-            "row_count":[3167],
-            "cumulative_rows":[3167],
-            "cartesian": 499500
+        expected_out={
+            "row_count": [3167],
+            "cumulative_rows": [3167],
+            "cartesian": 499500,
         },
         blocking_rules=None,
     )
@@ -45,10 +45,10 @@ def test_blocking_records_accuracy():
 
     validate_blocking_output(
         linker_settings,
-        expected_out= {
-            "row_count":[3167, 1654],
-            "cumulative_rows":[3167, 4821],
-            "cartesian": 499500
+        expected_out={
+            "row_count": [3167, 1654],
+            "cumulative_rows": [3167, 4821],
+            "cartesian": 499500,
         },
         blocking_rules=blocking_rules,
     )
@@ -62,10 +62,10 @@ def test_blocking_records_accuracy():
 
     validate_blocking_output(
         linker_no_settings,
-        expected_out= {
+        expected_out={
             "row_count": [13591, 53472, 137280],
-            "cumulative_rows":[13591, 67063, 204343],
-            "cartesian": 1999000
+            "cumulative_rows": [13591, 67063, 204343],
+            "cartesian": 1999000,
         },
         blocking_rules=blocking_rules,
         link_type="link_and_dedupe",
@@ -74,10 +74,10 @@ def test_blocking_records_accuracy():
 
     validate_blocking_output(
         linker_no_settings,
-        expected_out= {
+        expected_out={
             "row_count": [7257, 27190, 68640],
-            "cumulative_rows":[7257, 34447, 103087],
-            "cartesian": 1000000
+            "cumulative_rows": [7257, 34447, 103087],
+            "cartesian": 1000000,
         },
         blocking_rules=blocking_rules,
         link_type="link_only",

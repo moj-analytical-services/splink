@@ -98,7 +98,7 @@ def calculate_cartesian(df_rows, link_type):
         return np.product([m["count"] for m in n])
 
     if link_type == "dedupe_only":
-        return sum([m["count"] * (m["count"] - 1) for m in n])/2
+        return sum([m["count"] * (m["count"] - 1) for m in n]) / 2
 
     if link_type == "link_and_dedupe":
         if len(n) > 1:
@@ -106,8 +106,8 @@ def calculate_cartesian(df_rows, link_type):
         else:
             prod = 0
 
-        c = sum([m["count"] * (m["count"] - 1) for m in n])/2
-        return prod+c
+        c = sum([m["count"] * (m["count"] - 1) for m in n]) / 2
+        return prod + c
 
 
 def calculate_reduction_ratio(N, cartesian):
