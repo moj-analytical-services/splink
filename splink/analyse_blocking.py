@@ -92,7 +92,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
     linker._settings_obj_ = settings_obj
     # Deepcopy our original linker so we can safely adjust our settings.
     # This is particularly important to ensure we don't overwrite our
-    # original nlocking rules.
+    # original blocking rules.
     copied_linker = deepcopy(linker)
     if blocking_rules:
         brs_as_objs = settings_obj._brs_as_objs(blocking_rules)
