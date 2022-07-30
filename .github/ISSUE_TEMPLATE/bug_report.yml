@@ -1,0 +1,54 @@
+name: Bug report
+description: Create a report to help us improve
+body:
+  - type: textarea
+    attributes:
+      label: What happens?
+      description: A short, clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: To Reproduce
+      description: Steps to reproduce the behavior.
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: "# Environment (please complete the following information):"
+  - type: input
+    attributes:
+      label: "OS:"
+      placeholder: e.g. iOS
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: "Splink version:"
+      placeholder: e.g. 3.0.1
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        # Before Submitting
+
+  - type: checkboxes
+    attributes:
+      label: Have you tried this on the latest `master` branch?
+      description: |
+        * **Python**: `pip install splink --upgrade --pre`
+
+      options:
+        - label: I agree
+          required: true
+
+  - type: checkboxes
+    attributes:
+      label: Have you tried the steps to reproduce? Do they include all relevant data and configuration? Does the issue you report still appear there?
+      options:
+        - label: I agree
+          required: true
