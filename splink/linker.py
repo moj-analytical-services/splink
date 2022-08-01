@@ -98,13 +98,28 @@ class Linker:
         """Initialise the linker object, which manages the data linkage process and
         holds the data linkage model.
 
+        Examples:
+            >>> # Example 1: DuckDB
+            >>> df = pd.read_csv("data_to_dedupe.csv")
+            >>> linker = DuckDBLinker(df, settings_dict)
+
+
+            >>> # Example 2: Spark
+            >>> df_1 = spark.read.parquet("table_1/")
+            >>> df_2 = spark.read.parquet("table_2/")
+            >>> linker = SparkLinker(
+            >>>     [df_1, df_2],
+            >>>     settings_dict,
+            >>>     input_table_aliases=["customers", "contact_center_callers"]
+            >>>     )
+
         Args:
             input_table_or_tables (Union[str, list]): Input data into the linkage model.
                 Either a single string (the name of a table in a database) for
                 deduplication jobs, or a list of strings  (the name of tables in a
                 database) for link_only or link_and_dedupe.  For some linkers, such as
                 the DuckDBLinker and the SparkLinker, it's also possible to pass in
-                dataframes (Pandas and Spark respective) rather than strings.
+                dataframes (Pandas and Spark respectively) rather than strings.
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
                 `linker.initialise_settings()` Defaults to None.

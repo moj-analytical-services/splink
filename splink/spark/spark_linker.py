@@ -71,6 +71,36 @@ class SparkLinker(Linker):
         break_lineage_after_blocking=False,
         num_partitions_on_repartition=100,
     ):
+        """Initialise the linker object, which manages the data linkage process and
+        holds the data linkage model.
+
+        Args:
+            input_table_or_tables: Input data into the linkage model.  Either a
+                single table or a list of tables.  Tables can be provided either as
+                a Spark DataFrame, or as the name of the table as a string, as
+                registered in the Spark catalog
+            settings_dict (dict, optional): A Splink settings dictionary. If not
+                provided when the object is created, can later be added using
+                `linker.initialise_settings()` Defaults to None.
+            break_lineage_method (str, optional): Method to use to cache intermediate
+                results.  Can be "checkpoint", "persist" or "parquet".  Defaults to
+                "persist".
+            set_up_basic_logging (bool, optional): If true, sets ups up basic logging
+                so that Splink sends messages at INFO level to stdout. Defaults to True.
+            input_table_aliases (Union[str, list], optional): Labels assigned to
+                input tables in Splink outputs.  If the names of the tables in the
+                input database are long or unspecific, this argument can be used
+                to attach more easily readable/interpretable names. Defaults to None.
+            spark: The SparkSession. Required only if `input_table_or_tables` are
+                provided as string - otherwise will be inferred from the provided
+                Spark Dataframes.
+            break_lineage_after_blocking (bool, optional): Will be removed.
+                Defaults to False.
+            num_partitions_on_repartition (int, optional): When saving out intermediate
+                results, how many partitions to use?  This should be set so that
+                partitions are roughly 100Mb. Defaults to 100.
+
+        """
 
         if settings_dict is not None and "sql_dialect" not in settings_dict:
             settings_dict["sql_dialect"] = "spark"
