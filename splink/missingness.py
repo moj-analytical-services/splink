@@ -72,13 +72,6 @@ def completeness_data(linker, input_tablename=None, cols=None):
             linker._initialise_df_concat()
             input_tablename = "__splink__df_concat"
 
-    # splink_dataframe = linker._table_to_splink_dataframe(
-    #     input_tablename, input_tablename
-    # )
-    # columns = splink_dataframe.columns
-    # if cols is not None:
-    #     columns = [c for c in columns if c.name() in cols]
-
     columns = linker._settings_obj._columns_used_by_comparisons
 
     if linker._settings_obj._source_dataset_column_name_is_required:
