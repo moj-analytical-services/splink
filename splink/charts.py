@@ -317,3 +317,12 @@ def unlinkables_chart(
         unlinkables_chart_def["title"]["text"] += f" - {source_dataset}"
 
     return vegalite_or_json(unlinkables_chart_def, as_dict=as_dict)
+
+
+def cumulative_blocking_rule_comparisons_generated(records, as_dict=False):
+    chart_path = "blocking_rule_generated_comparisons.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["data"]["values"] = records
+
+    return vegalite_or_json(chart, as_dict=as_dict)
