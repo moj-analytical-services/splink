@@ -56,13 +56,13 @@ def validate_duckdb_connection(connection):
 
 
 def duckdb_load_from_file(path):
-    duckdb_fun = {
+    file_functions = {
         ".csv": f"read_csv_auto('{path}')",
         ".parquet": f"read_parquet('{path}')",
     }
     file_ext = Path(path).suffix
-    if file_ext:
-        return duckdb_fun[file_ext]
+    if file_ext in file_functions.keys():
+        return file_functions[file_ext]
     else:
         return path
 
