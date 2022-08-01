@@ -172,6 +172,19 @@ class Settings:
         return len(self._blocking_rules_to_generate_predictions) > 1
 
     @property
+    def _columns_used_by_comparisons(self):
+        cols_used = []
+        if self._source_dataset_column_name_is_required:
+            cols_used.append(self._source_dataset_column_name)
+        cols_used.append(self._unique_id_column_name)
+        for cc in self.comparisons:
+            cols = cc._input_columns_used_by_case_statement
+            cols = [c.name() for c in cols]
+
+            cols_used.extend(cols)
+        return dedupe_preserving_order(cols_used)
+
+    @property
     def _columns_to_select_for_blocking(self):
         cols = []
 
