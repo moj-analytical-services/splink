@@ -148,11 +148,11 @@ def cumulative_comparisons_generated_by_blocking_rules(
         cumulative_sum += row["row_count"]
         rr = round(calculate_reduction_ratio(cumulative_sum, cartesian), 3)
 
-        rr_text = f"""
-            The rolling reduction ratio with your given blocking rule(s) is {rr}.
-            This represents the reduction in the total number of comparisons due
-            to your rule(s).
-        """
+        rr_text = (
+            f"The rolling reduction ratio with your given blocking rule(s) is {rr}. "
+            "\nThis represents the reduction in the total number of comparisons due "
+            "to your rule(s)."
+        )
 
         out_dict = {
             "row_count": row["row_count"],
