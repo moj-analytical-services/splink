@@ -65,6 +65,8 @@ sc = SparkContext.getOrCreate(conf=conf)
 spark = SparkSession(sc)
 ```
 
+In general, increasing parallelism will make Spark 'chunk' your job into a larger amount of smaller tasks. This may solve memory issues. But note there is a tradeoff here: if you increase parallelism too high, Spark may take too much time scheduling large numbers of tasks, and may even run out of memory performing this work. See [here](https://stackoverflow.com/a/58251799/1779128). Also note that when blocking, jobs cannot be split into a large number of tasks than the cardinality of the blocking rule. For example, if you block on month of birth, this will be split into 12 tasks, irrespective of the parallelism setting. See [here](https://stackoverflow.com/questions/61073551/increase-parallelism-of-reading-a-parquet-file-spark-optimize-self-join/61077643#61077643). You can use salting (below) to partially address this limitation.
+
 ## Salting
 
 For very large jobs, you may find that [salting your blocking keys](https://moj-analytical-services.github.io/splink/topic_guides/salting.html) results in faster run times.
