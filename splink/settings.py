@@ -169,7 +169,7 @@ class Settings:
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_blocking)
 
-        for add_col in self._additionamns_to_retain:
+        for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.l_r_names_as_l_r())
 
         return dedupe_preserving_order(cols)
