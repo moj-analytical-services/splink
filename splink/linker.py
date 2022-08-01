@@ -11,6 +11,7 @@ from splink.input_column import InputColumn
 from .charts import (
     match_weights_histogram,
     missingness_chart,
+    completeness_chart,
     precision_recall_chart,
     roc_chart,
     parameter_estimate_comparisons,
@@ -32,7 +33,7 @@ from .term_frequencies import (
     _join_tf_to_input_df_sql,
 )
 from .profile_data import profile_columns
-from .missingness import missingness_data
+from .missingness import missingness_data, completeness_data
 from .unlinkables import unlinkables_data
 
 from .m_training import estimate_m_values_from_label_column
@@ -1607,6 +1608,34 @@ class Linker:
         """
         records = missingness_data(self, input_dataset)
         return missingness_chart(records, input_dataset)
+
+    def completeness_chart(self, input_dataset: str = None, cols: List[str] = None):
+        """Generate a summary chart of the completeness (proportion of non-nulls) of
+        columns in each of the input datasets. By default, completeness is assessed for
+        all column in the input data.
+
+        Args:
+            input_dataset (str, optional): Name of one of the input tables in the
+                database.  If provided, completeness will be computed for this table
+                alone. Defaults to None.
+            cols (List[str], optional): List of column names to calculate completeness.
+                Default to None.
+
+        Examples:
+            >>> linker.completeness_chart()
+            >>> # To view offline (if you don't have an internet connection):
+            >>>
+            >>> from splink.charts import save_offline_chart
+            >>> c = linker.completeness_chart()
+            >>> save_offline_chart(c.spec, "test_chart.html")
+            >>>
+            >>> # View resultant html file in Jupyter (or just load it in your browser)
+            >>> from IPython.display import IFrame
+            >>> IFrame(src="./test_chart.html", width=1000, height=500
+
+        """
+        records = completeness_data(self, input_dataset, cols)
+        return completeness_chart(records, input_dataset)
 
     def count_num_comparisons_from_blocking_rule(
         self,

@@ -1,0 +1,107 @@
+{
+    "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
+    "layer": [
+      {
+        "mark": "rect",
+        "encoding": {
+          "color": {
+            "field": "completeness",
+            "legend": null,
+            "scale": {"scheme": "redyellowgreen"},
+            "type": "quantitative"
+          },
+          "tooltip": [
+            {
+              "field": "source_dataset", 
+              "type": "nominal", 
+              "title":"Source dataset"},
+            {
+              "field": "total_rows_inc_nulls",
+              "format": ",",
+              "title": "# of records",
+              "type": "quantitative"
+            },
+            {
+              "field": "column_name", 
+              "type": "nominal",
+              "title": "Column name"
+            },
+            {
+              "field": "total_null_rows",
+              "format": ",",
+              "title": "# of nulls",
+              "type": "quantitative"
+            },
+            {"field": "completeness", "format": ".1%", "type": "quantitative"}
+          ],
+          "x": {
+            "axis": {"labelAngle": 20},
+            "field": "column_name",
+            "sort": {"field": "mean_comp", "order": "descending"},
+            "title": "Column name",
+            "type": "nominal"
+          },
+          "y": {
+            "field": "source_dataset",
+            "title": "Source dataset",
+            "sort": [
+              "mags_hocas",
+              "crown_xhibit",
+              "prison_nomis",
+              "prison_oasys",
+              "probation_delius"
+            ],
+            "type": "nominal"
+          }
+        },
+        "title": "Column completeness by source dataset",
+        "transform": [
+          {
+            "joinaggregate": [
+              {"op": "mean", "field": "completeness", "as": "mean_comp"}
+            ],
+            "groupby": ["column_name"]
+          }
+        ]
+      },
+      {
+        "mark": {"type": "text", "color": "white"},
+        "encoding": {
+          "text": {
+            "field": "completeness",
+            "format": ".0%",
+            "type": "quantitative"
+          },
+          "x": {
+            "axis": {"labelAngle": 0},
+            "field": "column_name",
+            "sort": {"field": "mean_comp", "order": "descending"},
+            "type": "nominal"
+          },
+          "y": {
+            "field": "source_dataset",
+            "sort": [
+              "mags_hocas",
+              "crown_xhibit",
+              "prison_nomis",
+              "prison_oasys",
+              "probation_delius"
+            ],
+            "type": "nominal"
+          }
+        },
+        "transform": [
+          {
+            "joinaggregate": [
+              {"op": "mean", "field": "completeness", "as": "mean_comp"}
+            ],
+            "groupby": ["column_name"]
+          }
+        ]
+      }
+    ],
+    "data": {},
+    "height": {"step": 40},
+    "width": {"step": 40},
+    "$schema": "https://vega.github.io/schema/vega-lite/v4.17.0.json"
+}

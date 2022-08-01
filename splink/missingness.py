@@ -61,3 +61,43 @@ def missingness_data(linker, input_tablename):
     df = linker._execute_sql_pipeline()
 
     return df.as_record_dict()
+
+
+def completeness_data(linker, input_tablename=None, cols=None):
+    sqls = []
+
+    if input_tablename is None:
+        input_tablename = "__splink__df_concat_with_tf"
+        if not linker._table_exists_in_database("__splink__df_concat_with_tf"):
+            linker._initialise_df_concat()
+            input_tablename = "__splink__df_concat"
+
+    columns = linker._settings_obj._columns_used_by_comparisons
+
+    if linker._settings_obj._source_dataset_column_name_is_required:
+        source_name = linker._settings_obj._source_dataset_column_name
+    else:
+        # Set source dataset to a literal string if dedupe_only
+        source_name = "'_a'"
+
+    for col in columns:
+        sql = f"""
+        (select
+            {source_name} as source_dataset,
+            '{col}' as column_name,
+            count(*) - count({col}) as total_null_rows,
+            count(*) as total_rows_inc_nulls,
+            count({col})*1.0/count(*) as completeness
+        from {input_tablename}
+        group by source_dataset
+        order by count(*) desc)
+        """
+        sqls.append(sql)
+
+    sql = " union all ".join(sqls)
+
+    df = linker._enqueue_and_execute_sql_pipeline(
+        sql, "__splink__df_all_column_completeness"
+    )
+
+    return df.as_record_dict()
