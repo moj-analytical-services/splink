@@ -174,7 +174,6 @@ class Settings:
             cols.extend(add_col.l_r_names_as_l_r())
 
         return unique_ordered_list(cols)
-        # return cols
 
     @property
     def _columns_to_select_for_comparison_vector_values(self):
