@@ -63,20 +63,7 @@ class Settings:
 
         brs_as_strings = s_else_d("blocking_rules_to_generate_predictions")
 
-        brs_as_objs = []
-        for br in brs_as_strings:
-            if isinstance(br, dict):
-                br = BlockingRule(
-                    br["blocking_rule"], salting_partitions=br["salting_partitions"]
-                )
-                br.preceding_rules = brs_as_objs.copy()
-                brs_as_objs.append(br)
-            else:
-                br = BlockingRule(br)
-                br.preceding_rules = brs_as_objs.copy()
-                brs_as_objs.append(br)
-
-        self._blocking_rules_to_generate_predictions = brs_as_objs
+        self._blocking_rules_to_generate_predictions = self._brs_as_objs(brs_as_strings)
 
         self._gamma_prefix = s_else_d("comparison_vector_value_column_prefix")
         self._bf_prefix = s_else_d("bayes_factor_column_prefix")
@@ -269,6 +256,22 @@ class Settings:
             if cc._output_column_name == name:
                 return cc
         raise ValueError(f"No comparison column with name {name}")
+
+    def _brs_as_objs(self, brs_as_strings):
+        brs_as_objs = []
+        for br in brs_as_strings:
+            if isinstance(br, dict):
+                br = BlockingRule(
+                    br["blocking_rule"], salting_partitions=br["salting_partitions"]
+                )
+                br.preceding_rules = brs_as_objs.copy()
+                brs_as_objs.append(br)
+            else:
+                br = BlockingRule(br)
+                br.preceding_rules = brs_as_objs.copy()
+                brs_as_objs.append(br)
+
+        return brs_as_objs
 
     def _get_comparison_levels_corresponding_to_training_blocking_rule(
         self, blocking_rule

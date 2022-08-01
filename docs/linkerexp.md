@@ -10,6 +10,7 @@ tags:
     selection:
       members:
         - count_num_comparisons_from_blocking_rule
+        - cumulative_num_comparisons_from_blocking_rules_chart
         - missingness_chart
         - profile_columns
         - unlinkables_chart

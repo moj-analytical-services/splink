@@ -61,6 +61,8 @@ nav:
       - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
       - Link type - linkings vs deduping: "topic_guides/link_type.md"
       - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
+      - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
+      - Optimising Spark performance: "topic_guides/optimising_spark.md"
       - Salting blocking rules: "topic_guides/salting.md"
   - API Reference:
       - Linker API:
