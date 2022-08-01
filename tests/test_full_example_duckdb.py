@@ -123,3 +123,27 @@ def test_small_link_example_duckdb():
     )
 
     linker.predict()
+
+
+def test_duckdb_load_from_file():
+
+    settings = get_settings_dict()
+
+    f = "./tests/datasets/fake_1000_from_splink_demos.csv"
+
+    linker = DuckDBLinker(
+        f,
+        settings,
+    )
+
+    assert len(linker.predict().as_pandas_dataframe()) == 3167
+
+    settings["link_type"] = "link_only"
+
+    linker = DuckDBLinker(
+        [f, f],
+        settings,
+        input_table_aliases=["testing1", "testing2"],
+    )
+
+    assert len(linker.predict().as_pandas_dataframe()) == 7257

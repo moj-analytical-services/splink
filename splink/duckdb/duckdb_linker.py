@@ -5,6 +5,7 @@ from typing import Union, List
 import uuid
 import sqlglot
 from tempfile import TemporaryDirectory
+from pathlib import Path
 
 from duckdb import DuckDBPyConnection
 import duckdb
@@ -52,6 +53,18 @@ def validate_duckdb_connection(connection):
         "We recommend that you add a clear suffix of '.db' or '.duckdb' "
         "to the connection string, when generating an on-disk database."
     )
+
+
+def duckdb_load_from_file(path):
+    duckdb_fun = {
+        ".csv": f"read_csv_auto('{path}')",
+        ".parquet": f"read_parquet('{path}')",
+    }
+    file_ext = Path(path).suffix
+    if file_ext:
+        return duckdb_fun[file_ext]
+    else:
+        return path
 
 
 class DuckDBLinkerDataFrame(SplinkDataFrame):
@@ -173,14 +186,14 @@ class DuckDBLinker(Linker):
             input_tables, input_aliases, default_aliases
         ):
 
-            if type(alias).__name__ == "DataFrame":
+            if type(alias).__name__ in ["DataFrame", "Table"]:
                 alias = f"_{default_alias}"
 
-            if type(table).__name__ == "DataFrame":
+            if type(table).__name__ in ["DataFrame", "Table"]:
                 con.register(alias, table)
                 table = alias
 
-            homogenised_tables.append(table)
+            homogenised_tables.append(duckdb_load_from_file(table))
             homogenised_aliases.append(alias)
 
         super().__init__(
