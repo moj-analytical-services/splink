@@ -124,9 +124,3 @@ def calculate_reduction_ratio(N, cartesian):
     the total search space.
     """
     return 1 - (N / cartesian)
-
-
-def dedupe_list_preserving_order(list):
-    uniq_val = []
-    [uniq_val.append(x) for x in list if x not in uniq_val]
-    return uniq_val
