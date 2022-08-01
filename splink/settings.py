@@ -8,7 +8,7 @@ from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
-from .misc import dedupe_preserving_order, unique_ordered_list
+from .misc import dedupe_preserving_order, dedupe_list_preserving_order
 from .validate_jsonschema import validate_settings_against_schema
 from .blocking import BlockingRule
 
@@ -173,7 +173,7 @@ class Settings:
         for add_col in self._additional_columns_to_retain:
             cols.extend(add_col.l_r_names_as_l_r())
 
-        return unique_ordered_list(cols)
+        return dedupe_list_preserving_order(cols)
 
     @property
     def _columns_to_select_for_comparison_vector_values(self):
