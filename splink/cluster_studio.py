@@ -262,6 +262,9 @@ def render_splink_cluster_studio_html(
             f"The path {out_path} already exists. Please provide a different path."
         )
     else:
-        # with open(out_path, "w", encoding="utf-8") as html_file:
-        #     html_file.write(rendered)
-        return rendered
+        if "DATABRICKS_RUNTIME_VERSION" in os.environ:
+            return rendered  # to view the dashboard in notebook displayHTML(linker.comparison_viewer_dashboard(df_predictions, "scv.html", overwrite=True))
+        else:
+            with open(out_path, "w", encoding="utf-8") as html_file:
+            html_file.write(rendered)
+        

@@ -160,7 +160,7 @@ def render_splink_comparison_viewer_html(
         )
     else:
         if "DATABRICKS_RUNTIME_VERSION" in os.environ:
-            return rendered  # to view the plot  displayHTML(linker.comparison_viewer_dashboard(df_predictions, "scv.html", overwrite=True))
+            return rendered  # to view the dashboard in notebook displayHTML(linker.comparison_viewer_dashboard(df_predictions, "scv.html", overwrite=True))
         else:
             with open(out_path, "w", encoding="utf-8") as html_file:
                 html_file.write(rendered)
