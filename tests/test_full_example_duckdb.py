@@ -1,10 +1,10 @@
 import os
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.duckdb.duckdb_comparison_library import jaccard_at_thresholds
+from splink.duckdb.duckdb_comparison_library import jaccard_at_thresholds, exact_match
 from splink.duckdb.duckdb_comparison_level_library import _mutable_params
 import pandas as pd
-
+import pyarrow.parquet as pq
 from basic_settings import get_settings_dict
 
 
@@ -123,3 +123,56 @@ def test_small_link_example_duckdb():
     )
 
     linker.predict()
+
+
+def test_duckdb_load_from_file():
+
+    settings = get_settings_dict()
+
+    f = "./tests/datasets/fake_1000_from_splink_demos.csv"
+
+    linker = DuckDBLinker(
+        f,
+        settings,
+    )
+
+    assert len(linker.predict().as_pandas_dataframe()) == 3167
+
+    settings["link_type"] = "link_only"
+
+    linker = DuckDBLinker(
+        [f, f],
+        settings,
+        input_table_aliases=["testing1", "testing2"],
+    )
+
+    assert len(linker.predict().as_pandas_dataframe()) == 7257
+
+
+def test_duckdb_arrow_array():
+
+    # Checking array fixes problem identified here:
+    # https://github.com/moj-analytical-services/splink/issues/680
+
+    f = "./tests/datasets/test_array.parquet"
+    array_data = pq.read_table(f)
+
+    # data is:
+    # data_list = [
+    # {"uid": 1, "a": ['robin', 'john'], "b": 1},
+    # {"uid": 1, "a": ['robin', 'john'], "b": 1},
+    # {"uid": 1, "a": ['james', 'karen'], "b": 1},
+    # {"uid": 1, "a": ['james', 'john'], "b": 1},
+    #     ]
+
+    linker = DuckDBLinker(
+        array_data,
+        {
+            "link_type": "dedupe_only",
+            "unique_id_column_name": "uid",
+            "comparisons": [exact_match("b")],
+            "blocking_rules_to_generate_predictions": ["l.a[1] = r.a[1]"],
+        },
+    )
+    df = linker.deterministic_link().as_pandas_dataframe()
+    assert len(df) == 2
