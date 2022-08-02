@@ -92,5 +92,6 @@ nav:
       - deduplicate 50k rows of synthetic data: "demos/deduplicate_50k_synthetic.ipynb"
   - Developers' guides:
       - Caching and pipelining: "dev_guides/caching.md"
+      - Understanding and debugging Splink: "dev_guides/debug_modes.md"
 extra_css:
 - css/custom.css
