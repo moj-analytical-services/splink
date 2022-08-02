@@ -1554,6 +1554,7 @@ class Linker:
             out_path,
             overwrite,
         )
+        return rendered
 
     def parameter_estimate_comparisons_chart(self, include_m=True, include_u=True):
         """Show a chart that shows how parameter estimates have differed across
