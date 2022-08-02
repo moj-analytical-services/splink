@@ -1548,7 +1548,7 @@ class Linker:
 
         df = self._execute_sql_pipeline([df_predict])
 
-        render_splink_comparison_viewer_html(
+        rendered = render_splink_comparison_viewer_html(
             df.as_record_dict(),
             self._settings_obj._as_completed_dict(),
             out_path,
