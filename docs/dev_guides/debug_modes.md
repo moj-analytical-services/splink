@@ -1,4 +1,4 @@
-## Understanding and debugging Splink execution and
+## Understanding and debugging Splink's computations
 
 Splink contains tooling to help developers understand the underlying computations, how caching and pipelining is working, and debug problems.
 
