@@ -114,9 +114,8 @@ def cumulative_comparisons_generated_by_blocking_rules(
         from __splink__df_concat
         {group_by_statement}
     """
-    cartesian_count = linker._enqueue_and_execute_sql_pipeline(
-        sql, "__splink__cartesian_product"
-    )
+    linker._enqueue_sql(sql, "__splink__cartesian_product")
+    cartesian_count = linker._execute_sql_pipeline()
     row_count_df = cartesian_count.as_record_dict()
     cartesian_count.drop_table_from_database()
 

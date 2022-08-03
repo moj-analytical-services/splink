@@ -42,7 +42,7 @@ def df_clusters_as_records(
     linker: "Linker", df_clustered_nodes: SplinkDataFrame, cluster_ids: list
 ):
     sql = _clusters_sql(df_clustered_nodes, cluster_ids)
-    df_clusters = linker._enqueue_and_execute_sql_pipeline(
+    df_clusters = linker._sql_to_splink_dataframe_checking_cache(
         sql, "__splink__scs_clusters"
     )
     return df_clusters.as_record_dict()
@@ -66,7 +66,9 @@ def create_df_nodes(
     linker: "Linker", df_clustered_nodes: SplinkDataFrame, cluster_ids: list
 ):
     sql = _nodes_sql(df_clustered_nodes, cluster_ids)
-    df_nodes = linker._enqueue_and_execute_sql_pipeline(sql, "__splink__scs_clusters")
+    df_nodes = linker._sql_to_splink_dataframe_checking_cache(
+        sql, "__splink__scs_clusters"
+    )
     return df_nodes
 
 
@@ -108,7 +110,9 @@ def df_edges_as_records(
     linker: "Linker", df_predicted_edges: SplinkDataFrame, df_nodes: SplinkDataFrame
 ):
     sql = _edges_sql(linker, df_predicted_edges, df_nodes)
-    df_edges = linker._enqueue_and_execute_sql_pipeline(sql, "__splink__scs_edges")
+    df_edges = linker._sql_to_splink_dataframe_checking_cache(
+        sql, "__splink__scs_edges"
+    )
     return df_edges.as_record_dict()
 
 
@@ -119,7 +123,7 @@ def _get_random_cluster_ids(
     select count(distinct cluster_id) as count
     from {connected_components.physical_name}
     """
-    df_cluster_count = linker._enqueue_and_execute_sql_pipeline(
+    df_cluster_count = linker._sql_to_splink_dataframe_checking_cache(
         sql, "__splink__cluster_count"
     )
     cluster_count = df_cluster_count.as_record_dict()[0]["count"]
@@ -136,7 +140,7 @@ def _get_random_cluster_ids(
     {linker._random_sample_sql(proportion, sample_size)}
     """
 
-    df_sample = linker._sql_to_splink_dataframe(
+    df_sample = linker._sql_to_splink_dataframe_checking_cache(
         sql,
         "__splink__df_concat_with_tf_sample",
         transpile=False,

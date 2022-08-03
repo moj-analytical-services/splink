@@ -216,7 +216,9 @@ class DuckDBLinker(Linker):
     ) -> DuckDBLinkerDataFrame:
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
-    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _execute_sql_against_backend(
+        self, sql, templated_name, physical_name, transpile=True
+    ):
 
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
