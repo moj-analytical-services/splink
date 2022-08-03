@@ -190,10 +190,10 @@ class SparkLinker(Linker):
         num_partitions = self.num_partitions_on_repartition
 
         if re.fullmatch(r"__splink__df_representatives", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 10)
+            num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
 
         if re.fullmatch(r"__splink__df_neighbours", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 10)
+            num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
 
         if re.fullmatch(r"__splink__df_concat_with_tf_sample", templated_name):
             num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
@@ -219,10 +219,6 @@ class SparkLinker(Linker):
     def _break_lineage_and_repartition(self, spark_df, templated_name, physical_name):
 
         spark_df = self._repartition_if_needed(spark_df, templated_name)
-
-        # Note if self.repartition_after_blocking
-        # lineage is broken within predict() and _comparison_vectors() in EM
-        # So there's no need for special logic here
 
         regex_to_persist = [
             r"__splink__df_comparison_vectors",
