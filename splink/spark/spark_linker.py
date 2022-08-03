@@ -187,10 +187,10 @@ class SparkLinker(Linker):
         num_partitions = self.num_partitions_on_repartition
 
         if re.match(r"__splink__df_representatives", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
+            num_partitions = math.ceil(self.num_partitions_on_repartition / 10)
 
         if re.match(r"__splink__df_neighbours", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
+            num_partitions = math.ceil(self.num_partitions_on_repartition / 10)
 
         if re.match(r"__splink__df_concat_with_tf_sample", templated_name):
             num_partitions = math.ceil(self.num_partitions_on_repartition / 2)
