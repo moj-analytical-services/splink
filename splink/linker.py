@@ -978,11 +978,10 @@ class Linker:
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
 
-        is_spark = self._settings_obj._sql_dialect == "spark"
-        break_lineage_after_blocking = getattr(
-            self, "repartition_after_blocking", False
-        )
-        if is_spark and break_lineage_after_blocking:
+        repartition_after_blocking = getattr(self, "repartition_after_blocking", False)
+
+        # repartition after blocking only exists on the SparkLinker
+        if repartition_after_blocking:
             df_blocked = self._execute_sql_pipeline()
             input_dataframes = [df_blocked]
         else:

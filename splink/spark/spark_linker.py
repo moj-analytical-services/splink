@@ -60,6 +60,8 @@ class SparkDataframe(SplinkDataFrame):
 
 
 class SparkLinker(Linker):
+
+    # flake8: noqa: C901
     def __init__(
         self,
         input_table_or_tables,
