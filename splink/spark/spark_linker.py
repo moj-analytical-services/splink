@@ -228,7 +228,9 @@ class SparkLinker(Linker):
                 )
         return spark_df
 
-    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _execute_sql_against_backend(
+        self, sql, templated_name, physical_name, transpile=True
+    ):
 
         if transpile:
             sql = sqlglot.transpile(sql, read=None, write="spark", pretty=True)[0]

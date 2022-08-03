@@ -136,7 +136,7 @@ def _get_random_cluster_ids(
     {linker._random_sample_sql(proportion, sample_size)}
     """
 
-    df_sample = linker._sql_to_splink_dataframe(
+    df_sample = linker._sql_to_splink_dataframe_checking_cache(
         sql,
         "__splink__df_concat_with_tf_sample",
         transpile=False,

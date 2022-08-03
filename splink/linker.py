@@ -340,7 +340,7 @@ class Linker:
 
             output_tablename_templated = self._pipeline.queue[-1].output_table_name
 
-            dataframe = self._sql_to_splink_dataframe(
+            dataframe = self._sql_to_splink_dataframe_checking_cache(
                 sql_gen,
                 output_tablename_templated,
                 materialise_as_hash,
@@ -357,7 +357,7 @@ class Linker:
                 print("------")
                 print(f"--------Creating table: {output_tablename}--------")
 
-                dataframe = self._sql_to_splink_dataframe(
+                dataframe = self._sql_to_splink_dataframe_checking_cache(
                     sql,
                     output_tablename,
                     materialise_as_hash=False,
@@ -367,8 +367,12 @@ class Linker:
 
             return dataframe
 
-    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
-        raise NotImplementedError(f"execute_sql not implemented for {type(self)}")
+    def _execute_sql_against_backend(
+        self, sql, templated_name, physical_name, transpile=True
+    ):
+        raise NotImplementedError(
+            f"_execute_sql_against_backend not implemented for {type(self)}"
+        )
 
     def _enqueue_and_execute_sql_pipeline(
         self,
@@ -383,7 +387,7 @@ class Linker:
         self._enqueue_sql(sql, output_table_name)
         return self._execute_sql_pipeline([], materialise_as_hash, use_cache, transpile)
 
-    def _sql_to_splink_dataframe(
+    def _sql_to_splink_dataframe_checking_cache(
         self,
         sql,
         output_tablename_templated,
@@ -422,11 +426,11 @@ class Linker:
             print(sql)
 
         if materialise_as_hash:
-            splink_dataframe = self._execute_sql(
+            splink_dataframe = self._execute_sql_against_backend(
                 sql, output_tablename_templated, table_name_hash, transpile=transpile
             )
         else:
-            splink_dataframe = self._execute_sql(
+            splink_dataframe = self._execute_sql_against_backend(
                 sql,
                 output_tablename_templated,
                 output_tablename_templated,
