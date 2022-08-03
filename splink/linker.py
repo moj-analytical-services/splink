@@ -978,6 +978,15 @@ class Linker:
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
 
+        repartition_after_blocking = getattr(self, "repartition_after_blocking", False)
+
+        # repartition after blocking only exists on the SparkLinker
+        if repartition_after_blocking:
+            df_blocked = self._execute_sql_pipeline()
+            input_dataframes = [df_blocked]
+        else:
+            input_dataframes = []
+
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
@@ -987,7 +996,7 @@ class Linker:
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        predictions = self._execute_sql_pipeline()
+        predictions = self._execute_sql_pipeline(input_dataframes)
         self._predict_warning()
         return predictions
 

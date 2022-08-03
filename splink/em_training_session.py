@@ -145,19 +145,20 @@ class EMTrainingSession:
         sql = block_using_rules_sql(self._training_linker)
         self._training_linker._enqueue_sql(sql, "__splink__df_blocked")
 
-        is_spark = self._original_linker._settings_obj._sql_dialect == "spark"
-        break_after_blocking = getattr(
-            self._original_linker, "break_lineage_after_blocking", False
+        # repartition after blocking only exists on the SparkLinker
+        repartition_after_blocking = getattr(
+            self._original_linker, "repartition_after_blocking", False
         )
-        if is_spark and break_after_blocking:
+
+        if repartition_after_blocking:
             df_blocked = self._training_linker._execute_sql_pipeline([])
-            sql = compute_comparison_vector_values_sql(self._settings_obj)
-            self._training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
-            return self._training_linker._execute_sql_pipeline([df_blocked])
+            input_dataframes = [df_blocked]
+        else:
+            input_dataframes = []
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
-        return self._training_linker._execute_sql_pipeline([])
+        return self._training_linker._execute_sql_pipeline(input_dataframes)
 
     def _train(self):
 
