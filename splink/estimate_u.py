@@ -93,6 +93,16 @@ def estimate_u_values(linker: "Linker", target_rows):
     sql = block_using_rules_sql(training_linker)
     training_linker._enqueue_sql(sql, "__splink__df_blocked")
 
+    is_spark = training_linker._settings_obj._sql_dialect == "spark"
+    break_lineage_after_blocking = getattr(
+        training_linker, "repartition_after_blocking", False
+    )
+    if is_spark and break_lineage_after_blocking:
+        df_blocked = training_linker._execute_sql_pipeline([df_sample])
+        input_dataframes = [df_blocked]
+    else:
+        input_dataframes = [df_sample]
+
     sql = compute_comparison_vector_values_sql(settings_obj)
 
     training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
@@ -106,7 +116,7 @@ def estimate_u_values(linker: "Linker", target_rows):
 
     sql = compute_new_parameters_sql(settings_obj)
     linker._enqueue_sql(sql, "__splink__m_u_counts")
-    df_params = training_linker._execute_sql_pipeline([df_sample])
+    df_params = training_linker._execute_sql_pipeline(input_dataframes)
 
     param_records = df_params.as_pandas_dataframe()
     param_records = compute_proportions_for_new_parameters(param_records)
