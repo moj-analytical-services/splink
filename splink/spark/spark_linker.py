@@ -187,19 +187,19 @@ class SparkLinker(Linker):
 
         num_partitions = self.num_partitions_on_repartition
 
-        if re.match(r"__splink__df_representatives", templated_name):
+        if re.fullmatch(r"__splink__df_representatives", templated_name):
             num_partitions = math.ceil(self.num_partitions_on_repartition / 10)
 
-        if re.match(r"__splink__df_neighbours", templated_name):
+        if re.fullmatch(r"__splink__df_neighbours", templated_name):
             num_partitions = math.ceil(self.num_partitions_on_repartition / 10)
 
-        if re.match(r"__splink__df_concat_with_tf_sample", templated_name):
+        if re.fullmatch(r"__splink__df_concat_with_tf_sample", templated_name):
             num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
 
-        if re.match(r"__splink__df_concat_with_tf", templated_name):
+        if re.fullmatch(r"__splink__df_concat_with_tf", templated_name):
             num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
 
-        if re.match(r"|".join(names_to_repartition), templated_name):
+        if re.fullmatch(r"|".join(names_to_repartition), templated_name):
             spark_df = spark_df.repartition(num_partitions)
 
         return spark_df
@@ -227,13 +227,12 @@ class SparkLinker(Linker):
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
-            r"__splink__df_representatives+",
+            r"__splink__df_representatives",
             r"__splink__df_neighbours",
             r"__splink__df_connected_components_df",
-            r"__splink__df_blocked",
         ]
 
-        if re.match(r"|".join(regex_to_persist), templated_name):
+        if re.fullmatch(r"|".join(regex_to_persist), templated_name):
             if self.break_lineage_method == "persist":
                 spark_df = spark_df.persist()
                 logger.debug(f"persisted {templated_name}")
