@@ -160,6 +160,10 @@ def render_splink_comparison_viewer_html(
         )
     else:
         if "DATABRICKS_RUNTIME_VERSION" in os.environ:
+            from pyspark.sql import SparkSession
+            from pyspark.dbutils import DBUtils
+            spark = SparkSession.builder.getOrCreate()
+            dbutils = DBUtils(spark)
             dbutils.fs.put(out_path, rendered, overwrite=True) # if you are on a databricks cluster you already have dbutils imported?
             return rendered  # to view the dashboard in notebook displayHTML(rendered)
         else:
