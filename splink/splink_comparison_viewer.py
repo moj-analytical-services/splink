@@ -164,8 +164,8 @@ def render_splink_comparison_viewer_html(
             from pyspark.dbutils import DBUtils
             spark = SparkSession.builder.getOrCreate()
             dbutils = DBUtils(spark)
-            dbutils.fs.put(out_path, rendered, overwrite=True) # if you are on a databricks cluster you already have dbutils imported?
-            return rendered  # to view the dashboard in notebook displayHTML(rendered)
+            dbutils.fs.put(out_path, rendered, overwrite=True) 
+            return rendered  # to view the dashboard inline in notebook displayHTML(rendered)
         else:
             with open(out_path, "w", encoding="utf-8") as html_file:
                 html_file.write(rendered)
