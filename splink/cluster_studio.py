@@ -263,8 +263,9 @@ def render_splink_cluster_studio_html(
         )
     else:
         if "DATABRICKS_RUNTIME_VERSION" in os.environ:
-            return rendered  # to view the dashboard in notebook displayHTML(linker.comparison_viewer_dashboard(df_predictions, "scv.html", overwrite=True))
+            dbutils.fs.put(out_path, rendered, overwrite=True) # if you are on a databricks cluster you already have dbutils imported?
+            return rendered  # to view the dashboard in notebook displayHTML(rendered)
         else:
             with open(out_path, "w", encoding="utf-8") as html_file:
             html_file.write(rendered)
-        
+            return rendered # return the rendered dashboard html for inline viewing in the notebook
