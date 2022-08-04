@@ -267,5 +267,5 @@ def render_splink_cluster_studio_html(
             return rendered  # to view the dashboard in notebook displayHTML(rendered)
         else:
             with open(out_path, "w", encoding="utf-8") as html_file:
-            html_file.write(rendered)
+                html_file.write(rendered)
             return rendered # return the rendered dashboard html for inline viewing in the notebook
