@@ -47,10 +47,8 @@ def unlinkables_data(linker, x_col="match_weight"):
         from __splink__df_unlinkables_proportions
         where match_probability < 1
     """
-
-    data = linker._enqueue_and_execute_sql_pipeline(
-        sql, "__splink__df_unlinkables", materialise_as_hash=False, use_cache=False
-    )
+    linker._enqueue_sql(sql, "__splink__df_unlinkables_proportions_cumulative")
+    data = linker._execute_sql_pipeline(materialise_as_hash=False, use_cache=False)
 
     unlinkables_dict = data.as_record_dict()
 

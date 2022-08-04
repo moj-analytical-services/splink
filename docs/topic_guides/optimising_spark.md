@@ -7,8 +7,8 @@ It is assumed readers have already read the more general [guide to linking big d
 ## Summary:
 
 - Ensure blocking rules are not generating too many comparisons.
-- We recommend setting the `break_lineage_method` to `"parquet"`
-- `num_partitions_on_repartition` should be set so that each output file is roughly 100MB.
+- We recommend setting the `break_lineage_method` to `"parquet"`, which is the default
+- `num_partitions_on_repartition` should be set so that each file in the output of `predict()` is roughly 100MB.
 - Try setting `spark.default.parallelism` to around 5x the number of CPUs in your cluster
 
 For a cluster with 10 CPUs, that outputs about 8GB of data in parquet format, the following setup may be appropriate:
@@ -66,6 +66,10 @@ spark = SparkSession(sc)
 ```
 
 In general, increasing parallelism will make Spark 'chunk' your job into a larger amount of smaller tasks. This may solve memory issues. But note there is a tradeoff here: if you increase parallelism too high, Spark may take too much time scheduling large numbers of tasks, and may even run out of memory performing this work. See [here](https://stackoverflow.com/a/58251799/1779128). Also note that when blocking, jobs cannot be split into a large number of tasks than the cardinality of the blocking rule. For example, if you block on month of birth, this will be split into 12 tasks, irrespective of the parallelism setting. See [here](https://stackoverflow.com/questions/61073551/increase-parallelism-of-reading-a-parquet-file-spark-optimize-self-join/61077643#61077643). You can use salting (below) to partially address this limitation.
+
+## Repartition after blocking
+
+For some jobs, setting `repartition_after_blocking=True` when you initialise the `SparkLinker` may improve performance.
 
 ## Salting
 

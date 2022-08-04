@@ -96,7 +96,7 @@ def completeness_data(linker, input_tablename=None, cols=None):
 
     sql = " union all ".join(sqls)
 
-    df = linker._enqueue_and_execute_sql_pipeline(
+    df = linker._sql_to_splink_dataframe_checking_cache(
         sql, "__splink__df_all_column_completeness"
     )
 

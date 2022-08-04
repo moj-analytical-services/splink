@@ -60,15 +60,17 @@ class SparkDataframe(SplinkDataFrame):
 
 
 class SparkLinker(Linker):
+
+    # flake8: noqa: C901
     def __init__(
         self,
         input_table_or_tables,
         settings_dict=None,
-        break_lineage_method="persist",
+        break_lineage_method="parquet",
         set_up_basic_logging=True,
         input_table_aliases: Union[str, list] = None,
         spark=None,
-        break_lineage_after_blocking=False,
+        repartition_after_blocking=False,
         num_partitions_on_repartition=100,
     ):
         """Initialise the linker object, which manages the data linkage process and
@@ -84,7 +86,7 @@ class SparkLinker(Linker):
                 `linker.initialise_settings()` Defaults to None.
             break_lineage_method (str, optional): Method to use to cache intermediate
                 results.  Can be "checkpoint", "persist" or "parquet".  Defaults to
-                "persist".
+                "parquet".
             set_up_basic_logging (bool, optional): If true, sets ups up basic logging
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
             input_table_aliases (Union[str, list], optional): Labels assigned to
@@ -94,8 +96,11 @@ class SparkLinker(Linker):
             spark: The SparkSession. Required only if `input_table_or_tables` are
                 provided as string - otherwise will be inferred from the provided
                 Spark Dataframes.
-            break_lineage_after_blocking (bool, optional): Will be removed.
-                Defaults to False.
+            repartition_after_blocking (bool, optional): In some cases, especially when
+                the comparisons are very computationally intensive, performance may be
+                improved by repartitioning after blocking to distribute the workload of
+                computing the comparison vectors more evenly and reduce the number of
+                tasks. Defaults to False.
             num_partitions_on_repartition (int, optional): When saving out intermediate
                 results, how many partitions to use?  This should be set so that
                 partitions are roughly 100Mb. Defaults to 100.
@@ -107,7 +112,7 @@ class SparkLinker(Linker):
 
         self.break_lineage_method = break_lineage_method
 
-        self.break_lineage_after_blocking = break_lineage_after_blocking
+        self.repartition_after_blocking = repartition_after_blocking
         self.num_partitions_on_repartition = num_partitions_on_repartition
 
         input_tables = ensure_is_list(input_table_or_tables)
@@ -164,71 +169,89 @@ class SparkLinker(Linker):
             settings_dict["sql_dialect"] = "spark"
         super().initialise_settings(settings_dict)
 
-    # flake8: noqa: C901
-    def _break_lineage(self, spark_df, templated_name, physical_name):
+    def _repartition_if_needed(self, spark_df, templated_name):
+        # Repartitioning has two effects:
+        # 1. When we persist out results to disk, it results in a predictable
+        #    number of output files.  Some splink operations result in a very large
+        #    number of output files, so this reduces the number of files and therefore
+        #    avoids slow reads and writes
+        # 2. When we repartition, it results in a more evenly distributed workload
+        #    across the cluster, which is useful for large datasets.
+
+        names_to_repartition = [
+            r"__splink__df_comparison_vectors",
+            r"__splink__df_blocked",
+            r"__splink__df_neighbours",
+            r"__splink__df_representatives",
+            r"__splink__df_concat_with_tf_sample",
+            r"__splink__df_concat_with_tf",
+        ]
+
+        num_partitions = self.num_partitions_on_repartition
+
+        if re.fullmatch(r"__splink__df_representatives", templated_name):
+            num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
+
+        if re.fullmatch(r"__splink__df_neighbours", templated_name):
+            num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
+
+        if re.fullmatch(r"__splink__df_concat_with_tf_sample", templated_name):
+            num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
+
+        if re.fullmatch(r"__splink__df_concat_with_tf", templated_name):
+            num_partitions = math.ceil(self.num_partitions_on_repartition / 4)
+
+        if re.fullmatch(r"|".join(names_to_repartition), templated_name):
+            spark_df = spark_df.repartition(num_partitions)
+
+        return spark_df
+
+    def _get_checkpoint_dir_path(self, spark_df):
+        # https://github.com/apache/spark/blob/301a13963808d1ad44be5cacf0a20f65b853d5a2/python/pyspark/context.py#L1323 # noqa
+        # getCheckpointDir method exists only in Spark 3.1+, use implementation
+        # from above link
+        if not self.spark._jsc.sc().getCheckpointDir().isEmpty():
+            return self.spark._jsc.sc().getCheckpointDir().get()
+        else:
+            # Raise checkpointing error
+            spark_df.limit(1).checkpoint()
+
+    def _break_lineage_and_repartition(self, spark_df, templated_name, physical_name):
+
+        spark_df = self._repartition_if_needed(spark_df, templated_name)
 
         regex_to_persist = [
             r"__splink__df_comparison_vectors",
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
-            r"__splink__df_representatives+",
+            r"__splink__df_representatives",
             r"__splink__df_neighbours",
             r"__splink__df_connected_components_df",
         ]
 
-        if self.break_lineage_after_blocking:
-            regex_to_persist.append(r"__splink__df_blocked")
-
-        names_to_repartition = [
-            r"__splink__df_comparison_vectors",
-            r"__splink__df_blocked",
-            r"__splink__df_neighbours",
-            r"__splink__df_representatives+",
-            r"__splink__df_concat_with_tf_sample",
-        ]
-
-        num_partitions = self.num_partitions_on_repartition
-        if re.match(r"__splink__df_representatives_.+", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
-
-        if re.match(r"__splink__df_concat_with_tf_sample", templated_name):
-            num_partitions = math.ceil(self.num_partitions_on_repartition / 2)
-
-        if re.match(r"|".join(regex_to_persist), templated_name):
+        if re.fullmatch(r"|".join(regex_to_persist), templated_name):
             if self.break_lineage_method == "persist":
-
                 spark_df = spark_df.persist()
-
                 logger.debug(f"persisted {templated_name}")
             elif self.break_lineage_method == "checkpoint":
-                if re.match(r"|".join(names_to_repartition), templated_name):
-                    spark_df = spark_df.repartition(num_partitions)
                 spark_df = spark_df.checkpoint()
                 logger.debug(f"Checkpointed {templated_name}")
             elif self.break_lineage_method == "parquet":
-                # https://github.com/apache/spark/blob/301a13963808d1ad44be5cacf0a20f65b853d5a2/python/pyspark/context.py#L1323 # noqa
-                # getCheckpointDir method exists only in Spark 3.1+, use implementation
-                # from above link
-                if not self.spark._jsc.sc().getCheckpointDir().isEmpty():
-                    checkpoint_dir = self.spark._jsc.sc().getCheckpointDir().get()
-                else:
-                    # Raise checkpointing error
-                    spark_df.limit(1).checkpoint()
+                checkpoint_dir = self._get_checkpoint_dir_path(spark_df)
                 write_path = os.path.join(checkpoint_dir, physical_name)
-                if re.match(r"|".join(names_to_repartition), templated_name):
-                    spark_df = spark_df.repartition(num_partitions)
                 spark_df.write.mode("overwrite").parquet(write_path)
-
                 spark_df = self.spark.read.parquet(write_path)
-                logger.debug(f"Parqueted {templated_name}")
+                logger.debug(f"Wrote {templated_name} to parquet")
             else:
                 raise ValueError(
                     f"Unknown break_lineage_method: {self.break_lineage_method}"
                 )
         return spark_df
 
-    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _execute_sql_against_backend(
+        self, sql, templated_name, physical_name, transpile=True
+    ):
 
         if transpile:
             sql = sqlglot.transpile(sql, read=None, write="spark", pretty=True)[0]
@@ -236,7 +259,9 @@ class SparkLinker(Linker):
         spark_df = self.spark.sql(sql)
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))
-        spark_df = self._break_lineage(spark_df, templated_name, physical_name)
+        spark_df = self._break_lineage_and_repartition(
+            spark_df, templated_name, physical_name
+        )
 
         # After blocking, want to repartition
         # if templated

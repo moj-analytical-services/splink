@@ -112,7 +112,9 @@ class SQLiteLinker(Linker):
             settings_dict["sql_dialect"] = "sqlite"
         super().initialise_settings(settings_dict)
 
-    def _execute_sql(self, sql, templated_name, physical_name, transpile=True):
+    def _execute_sql_against_backend(
+        self, sql, templated_name, physical_name, transpile=True
+    ):
 
         if transpile:
             sql = sqlglot.transpile(sql, read=None, write="sqlite")[0]

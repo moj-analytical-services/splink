@@ -349,7 +349,7 @@ def _cc_create_unique_id_cols(
         from __splink__df_concat_with_tf
     """
 
-    return linker._enqueue_and_execute_sql_pipeline(
+    return linker._sql_to_splink_dataframe_checking_cache(
         sql, "__splink__df_connected_components_df"
     )
 
@@ -391,9 +391,8 @@ def solve_connected_components(
     sql = _cc_create_nodes_table(linker, edges_table, _generated_graph)
     linker._enqueue_sql(sql, "nodes")
     sql = _cc_generate_neighbours_representation(edges_table)
-    neighbours = linker._enqueue_and_execute_sql_pipeline(
-        sql, "__splink__df_neighbours"
-    )
+    linker._enqueue_sql(sql, "__splink__df_neighbours")
+    neighbours = linker._execute_sql_pipeline()
 
     # Extract our generated neighbours table name.
     # This utilises our caching system to ensure that
@@ -408,9 +407,8 @@ def solve_connected_components(
     linker._enqueue_sql(sql, "neighbours_first_iter")
     sql = _cc_update_representatives_first_iter()
     # Execute if we have no batching, otherwise add it to our batched process
-    representatives = linker._enqueue_and_execute_sql_pipeline(
-        sql, "__splink__df_representatives"
-    )
+    linker._enqueue_sql(sql, "__splink__df_representatives")
+    representatives = linker._execute_sql_pipeline()
     prev_representatives_table = representatives
 
     # Loop while our representative table still has unsettled nodes
@@ -437,10 +435,12 @@ def solve_connected_components(
         sql = _cc_update_representatives_loop_cond(
             prev_representatives_table.physical_name
         )
-        representatives = linker._enqueue_and_execute_sql_pipeline(
+        representatives = linker._enqueue_sql(
             sql,
             "__splink__df_representatives",
         )
+
+        representatives = linker._execute_sql_pipeline()
         # Update table reference
         prev_representatives_table.drop_table_from_database()
         prev_representatives_table = representatives
@@ -448,8 +448,10 @@ def solve_connected_components(
         # Check if our exit condition has been met...
         sql = _cc_assess_exit_condition(representatives.physical_name)
 
-        root_rows_df = linker._enqueue_and_execute_sql_pipeline(
-            sql, "__splink__df_root_rows", materialise_as_hash=False, use_cache=False
+        linker._enqueue_sql(sql, "__splink__df_root_rows")
+
+        root_rows_df = linker._execute_sql_pipeline(
+            materialise_as_hash=False, use_cache=False
         )
 
         root_rows = root_rows_df.as_record_dict()
@@ -474,7 +476,7 @@ def solve_connected_components(
 
     """
 
-    representatives = linker._enqueue_and_execute_sql_pipeline(
+    representatives = linker._sql_to_splink_dataframe_checking_cache(
         exit_query,
         "__splink__df_representatives",
     )

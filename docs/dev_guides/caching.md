@@ -79,3 +79,15 @@ An example of this is `__splink__df_concat_with_tf`, which represents the concat
 To create this table, we can execute [`_sql_to_splink_dataframe`](https://github.com/moj-analytical-services/splink/blob/6e978a6a61058a73ef6c49039e0d796b12673c1b/splink/linker.py#L386-L387) with `materialise_as_hash` set to `False`. The resultant materialised table will not have a hash appended, and will simply be called `__splink__df_concat_with_tf`. This is useful, because when performing calculations Splink can now check the cache for `__splink__df_concat_with_tf` each time it is needed.
 
 In fact, many Splink pipelines begin with the assumption that this table exists in the database, because the first `SQLTask` in the pipeline refers to a table named `__splink__df_concat_with_tf`. To ensure this is the case, a [function is used to create this table if it doesn't exist.](https://github.com/moj-analytical-services/splink/blob/6e978a6a61058a73ef6c49039e0d796b12673c1b/splink/linker.py#L980)
+
+### Using pipelining to optimise Splink workloads
+
+At what point should a pipeline of `SQLTask`s be executed (materialised into a physical table)?
+
+For any individual output, it will usually be fastest to pipeline the full linage of tasks, right from raw data through to the end result.
+
+However, there are many intermediate outputs which are used by many different Splink operations.
+
+Performance can therefore be improved by computing and saving these intermediate outputs to a cache, to ensure they don't need to be computed repeatedly.
+
+This is achieved by enqueueing SQL to a pipline and strategically calling `execute_sql_pipeline` to materialise results that need to cached.
