@@ -13,8 +13,7 @@ def cast_as_double_edit(self, expression):
 
 
 class CustomSpark(Dialect):
-
     class Generator(Generator):
         TRANSFORMS = {
             exp.Cast: cast_as_double_edit,
-            }
+        }
