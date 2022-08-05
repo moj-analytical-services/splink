@@ -2,6 +2,15 @@ import sqlglot
 import sqlglot.expressions as exp
 
 
+def transformer_base(func):
+    def wrapper(sql):
+        syntax_tree = sqlglot.parse_one(sql, read=None)
+        transformed_tree = syntax_tree.transform(func)
+        return transformed_tree.sql()
+
+    return wrapper
+
+
 def _add_l_or_r_to_identifier(node):
     if isinstance(node, exp.Identifier):
         if isinstance(node.parent, exp.Bracket):
@@ -26,7 +35,8 @@ def move_l_r_table_prefix_to_column_suffix(blocking_rule):
     return transformed_tree.sql()
 
 
-def cast_as_varchar_transformer(node):
+@transformer_base
+def cast_concat_as_varchar(node):
     if isinstance(node, exp.Column):
 
         if isinstance(node.parent, exp.Cast):
@@ -38,9 +48,3 @@ def cast_as_varchar_transformer(node):
             return sqlglot.parse_one(sql)
 
     return node
-
-
-def cast_concat_as_varchar(sql):
-    syntax_tree = sqlglot.parse_one(sql, read=None)
-    transformed_tree = syntax_tree.transform(cast_as_varchar_transformer)
-    return transformed_tree.sql()
