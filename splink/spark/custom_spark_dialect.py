@@ -1,6 +1,6 @@
 from sqlglot import exp
 from sqlglot.generator import Generator
-from sqlglot.dialects import Dialect
+from sqlglot.dialects import Dialect, Spark
 
 
 def cast_as_double_edit(self, expression):
@@ -9,11 +9,15 @@ def cast_as_double_edit(self, expression):
         if expression.this.key == "literal":
             return f"{expression.name}D"
 
-    return expression.sql()
+    return expression.sql(dialect="spark")
 
 
-class CustomSpark(Dialect):
+class CustomSpark(Spark):
     class Generator(Generator):
         TRANSFORMS = {
             exp.Cast: cast_as_double_edit,
+            exp.TryCast: cast_as_double_edit,
         }
+
+
+Dialect["customspark"]
