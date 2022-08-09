@@ -2,7 +2,6 @@ import logging
 from typing import Union, List
 import sqlglot
 from tempfile import TemporaryDirectory
-from pathlib import Path
 
 from duckdb import DuckDBPyConnection
 import duckdb
@@ -10,6 +9,7 @@ import duckdb
 from .duckdb_helpers import (
     validate_duckdb_connection,
     create_temporary_duckdb_connection,
+    duckdb_load_from_file,
 )
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
@@ -18,18 +18,6 @@ from ..misc import ensure_is_list, all_letter_combos
 from ..input_column import InputColumn
 
 logger = logging.getLogger(__name__)
-
-
-def duckdb_load_from_file(path):
-    file_functions = {
-        ".csv": f"read_csv_auto('{path}')",
-        ".parquet": f"read_parquet('{path}')",
-    }
-    file_ext = Path(path).suffix
-    if file_ext in file_functions.keys():
-        return file_functions[file_ext]
-    else:
-        return path
 
 
 class DuckDBLinkerDataFrame(SplinkDataFrame):

@@ -2,6 +2,7 @@ import duckdb
 import uuid
 import os
 import tempfile
+from pathlib import Path
 
 
 def validate_duckdb_connection(connection, logger):
@@ -48,3 +49,15 @@ def create_temporary_duckdb_connection(self):
     path = os.path.join(self._temp_dir.name, f"{fname}.duckdb")
     con = duckdb.connect(database=path, read_only=False)
     return con
+
+
+def duckdb_load_from_file(path):
+    file_functions = {
+        ".csv": f"read_csv_auto('{path}')",
+        ".parquet": f"read_parquet('{path}')",
+    }
+    file_ext = Path(path).suffix
+    if file_ext in file_functions.keys():
+        return file_functions[file_ext]
+    else:
+        return path
