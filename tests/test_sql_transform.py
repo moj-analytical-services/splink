@@ -3,6 +3,7 @@ from splink.sql_transform import (
     move_l_r_table_prefix_to_column_suffix,
     cast_concat_as_varchar,
 )
+from splink.spark.custom_spark_dialect import Dialect  # noqa 401
 
 
 def test_move_l_r_table_prefix_to_column_suffix():
@@ -52,3 +53,13 @@ def test_cast_concat_as_varchar():
     sql = "select source_dataset || '-__-' || unique_id as concat_id"
     transformed_sql = cast_concat_as_varchar(sql)
     assert transformed_sql == output.replace("l.", "")
+
+
+def test_set_numeric_as_double():
+    sql = "select cast('a' as double), cast(0.12345 as double)"
+    transformed_sql = sqlglot.transpile(sql, write="customspark")[0]
+    assert transformed_sql == "SELECT aD, 0.12345D"
+
+    sql = "select cast('a' as string), cast(0.12345 as double)"
+    transformed_sql = sqlglot.transpile(sql, write="customspark")[0]
+    assert transformed_sql == "SELECT CAST('a' AS STRING), 0.12345D"
