@@ -7,7 +7,10 @@ from pathlib import Path
 from duckdb import DuckDBPyConnection
 import duckdb
 
-from .duckdb_helpers import validate_duckdb_connection, create_temporary_duckdb_connection
+from .duckdb_helpers import (
+    validate_duckdb_connection,
+    create_temporary_duckdb_connection,
+)
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..logging_messages import execute_sql_logging_message_info, log_sql

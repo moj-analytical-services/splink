@@ -38,6 +38,7 @@ def validate_duckdb_connection(connection, logger):
         "to the connection string, when generating an on-disk database."
     )
 
+
 def create_temporary_duckdb_connection(self):
     """
     Create a temporary duckdb connection.
