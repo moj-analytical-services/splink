@@ -1,8 +1,5 @@
 import logging
-import os
-import tempfile
 from typing import Union, List
-import uuid
 import sqlglot
 from tempfile import TemporaryDirectory
 from pathlib import Path
@@ -10,7 +7,7 @@ from pathlib import Path
 from duckdb import DuckDBPyConnection
 import duckdb
 
-
+from .duckdb_helpers import validate_duckdb_connection, create_temporary_duckdb_connection
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..logging_messages import execute_sql_logging_message_info, log_sql
@@ -18,41 +15,6 @@ from ..misc import ensure_is_list, all_letter_combos
 from ..input_column import InputColumn
 
 logger = logging.getLogger(__name__)
-
-
-def validate_duckdb_connection(connection):
-
-    """Check if the duckdb connection requested by the user is valid.
-
-    Raises:
-        Exception: If the connection is invalid or a warning if
-        the naming convention is ambiguous (not adhering to the
-        duckdb convention).
-    """
-
-    if isinstance(connection, DuckDBPyConnection):
-        return
-
-    if not isinstance(connection, str):
-        raise Exception(
-            "Connection must be a string in the form: :memory:, :temporary: "
-            "or the name of a new or existing duckdb database."
-        )
-
-    connection = connection.lower()
-
-    if connection in [":memory:", ":temporary:"]:
-        return
-
-    suffixes = (".duckdb", ".db")
-    if connection.endswith(suffixes):
-        return
-
-    logger.info(
-        f"The registered connection -- {connection} -- has an uncommon file type. "
-        "We recommend that you add a clear suffix of '.db' or '.duckdb' "
-        "to the connection string, when generating an on-disk database."
-    )
 
 
 def duckdb_load_from_file(path):
@@ -148,7 +110,7 @@ class DuckDBLinker(Linker):
         if settings_dict is not None and "sql_dialect" not in settings_dict:
             settings_dict["sql_dialect"] = "duckdb"
 
-        validate_duckdb_connection(connection)
+        validate_duckdb_connection(connection, logger)
 
         if isinstance(connection, str):
             con_lower = connection.lower()
@@ -157,10 +119,7 @@ class DuckDBLinker(Linker):
         elif con_lower == ":memory:":
             con = duckdb.connect(database=connection)
         elif con_lower == ":temporary:":
-            self._temp_dir = tempfile.TemporaryDirectory(dir=".")
-            fname = uuid.uuid4().hex[:7]
-            path = os.path.join(self._temp_dir.name, f"{fname}.duckdb")
-            con = duckdb.connect(database=path, read_only=False)
+            con = create_temporary_duckdb_connection(self)
         else:
             con = duckdb.connect(database=connection)
 
