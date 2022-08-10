@@ -26,7 +26,7 @@ black = "^22.1.0"
 flake8 = "^4.0.1"
 pyarrow = "^7.0.0"
 networkx = "2.5.1"
-pyspark = "^3.2.1"
+pyspark = "^3.2.2"
 rapidfuzz = "^2.0.3"
 
 [build-system]
