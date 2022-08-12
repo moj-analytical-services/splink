@@ -362,6 +362,9 @@ def _exit_query(
     pairwise_filter=False,
 ):
 
+    representatives = representatives.physical_name if representatives else None
+    df_predict = df_predict.physical_name if df_predict else None
+
     if pairwise_mode:
 
         uid_concat_l = _composite_unique_id_from_edges_sql(uid_cols, "l", "n")
@@ -517,8 +520,8 @@ def solve_connected_components(
 
     exit_query = _exit_query(
         pairwise_mode=pairwise_output,
-        df_predict=df_predict.physical_name,
-        representatives=representatives.physical_name,
+        df_predict=df_predict,
+        representatives=representatives,
         uid_cols=uid_cols,
         pairwise_filter=filter_pairwise_format_for_clusters,
     )
