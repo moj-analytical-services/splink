@@ -20,7 +20,7 @@ Note however, that not all comparison functions are available in all backends. F
 
 ```python
 from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.duckdb.duckdb_comparison_library as cl
+import splink.duckdb.duckdb_comparison_library as cl
 import splink.duckdb.duckdb_comparison_level_library as cll
 
 linker = DuckDBLinker(your_args)
