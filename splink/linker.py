@@ -1210,7 +1210,11 @@ class Linker:
         return predictions
 
     def cluster_pairwise_predictions_at_threshold(
-        self, df_predict: SplinkDataFrame, threshold_match_probability: float
+        self,
+        df_predict: SplinkDataFrame,
+        threshold_match_probability: float,
+        pairwise_formatting: bool = False,
+        filter_pairwise_format_for_clusters: bool = True,
     ) -> SplinkDataFrame:
         """Clusters the pairwise match predictions that result from `linker.predict()`
         into groups of connected record using the connected components graph clustering
@@ -1226,6 +1230,13 @@ class Linker:
                 to include only pairwise comparisons with a match_probability above this
                 threshold. This dataframe is then fed into the clustering
                 algorithm.
+            pairwise_formatting (bool): Whether to output the pairwise match predictions
+                from linker.predict() with cluster IDs.
+                If this is set to false, the output will be a list of all IDs, clustered
+                into groups based on the desired match threshold.
+            filter_pairwise_format_for_clusters (bool): If pairwise formatting has been
+                selected, whether to output all columns found within linker.predict(),
+                or just return clusters.
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame containing a list of all IDs, clustered
@@ -1241,7 +1252,13 @@ class Linker:
             threshold_match_probability,
         )
 
-        cc = solve_connected_components(self, edges_table)
+        cc = solve_connected_components(
+            self,
+            edges_table,
+            df_predict,
+            pairwise_formatting,
+            filter_pairwise_format_for_clusters,
+        )
 
         return cc
 
