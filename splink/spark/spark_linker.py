@@ -257,7 +257,9 @@ class SparkLinker(Linker):
     ):
 
         if transpile:
-            sql = sqlglot.transpile(sql, read=None, write="customspark", pretty=True)[0]
+            sql = sqlglot.transpile(
+                sql, read="spark", write="customspark", pretty=True
+            )[0]
 
         spark_df = self.spark.sql(sql)
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))

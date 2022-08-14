@@ -3,6 +3,7 @@
 
 .benchmarks/
 tmp_spark/
+temp_spark_checkpoint/
 *tmp
 tmp_checkpoints/
 try_*.py

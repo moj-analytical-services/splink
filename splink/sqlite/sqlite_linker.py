@@ -117,7 +117,7 @@ class SQLiteLinker(Linker):
     ):
 
         if transpile:
-            sql = sqlglot.transpile(sql, read=None, write="sqlite")[0]
+            sql = sqlglot.transpile(sql, read="sqlite", write="sqlite")[0]
 
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))

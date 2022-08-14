@@ -175,7 +175,7 @@ class DuckDBLinker(Linker):
         self._delete_table_from_database(physical_name)
 
         if transpile:
-            sql = sqlglot.transpile(sql, read=None, write="duckdb", pretty=True)[0]
+            sql = sqlglot.transpile(sql, read="duckdb", write="duckdb", pretty=True)[0]
 
         logger.debug(
             execute_sql_logging_message_info(
