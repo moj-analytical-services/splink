@@ -319,7 +319,7 @@ class AthenaLinker(Linker):
 
         if transpile:
             sql = cast_concat_as_varchar(sql)
-            sql = sqlglot.transpile(sql, read=None, write="presto")[0]
+            sql = sqlglot.transpile(sql, read="presto", write="presto")[0]
 
         sql = sql.replace("float", "real")
 

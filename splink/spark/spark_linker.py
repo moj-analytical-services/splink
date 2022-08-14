@@ -260,10 +260,13 @@ class SparkLinker(Linker):
             sql = sqlglot.transpile(
                 sql, read="spark", write="customspark", pretty=True
             )[0]
+            # Nasty hack to see if tests pass, don't leave this in!
+            sql = sql.replace("ARRAY_SIZE", "SIZE")
 
-        spark_df = self.spark.sql(sql)
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))
+        spark_df = self.spark.sql(sql)
+
         spark_df = self._break_lineage_and_repartition(
             spark_df, templated_name, physical_name
         )
