@@ -259,9 +259,10 @@ class SparkLinker(Linker):
         if transpile:
             sql = sqlglot.transpile(sql, read=None, write="customspark", pretty=True)[0]
 
-        spark_df = self.spark.sql(sql)
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))
+        spark_df = self.spark.sql(sql)
+
         spark_df = self._break_lineage_and_repartition(
             spark_df, templated_name, physical_name
         )
