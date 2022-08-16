@@ -6,6 +6,7 @@ import os
 import math
 
 from pyspark.sql import Row
+from .custom_spark_dialect import Dialect
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
@@ -14,6 +15,8 @@ from ..misc import ensure_is_list
 from ..input_column import InputColumn
 
 logger = logging.getLogger(__name__)
+
+Dialect["customspark"]
 
 
 class SparkDataframe(SplinkDataFrame):
@@ -254,11 +257,12 @@ class SparkLinker(Linker):
     ):
 
         if transpile:
-            sql = sqlglot.transpile(sql, read=None, write="spark", pretty=True)[0]
+            sql = sqlglot.transpile(sql, read=None, write="customspark", pretty=True)[0]
 
-        spark_df = self.spark.sql(sql)
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))
+        spark_df = self.spark.sql(sql)
+
         spark_df = self._break_lineage_and_repartition(
             spark_df, templated_name, physical_name
         )

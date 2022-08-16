@@ -72,7 +72,7 @@ pip install splink
 
 ## Quickstart
 
-The following code demonstrates how to estimate the parameters of a deduplication model, and then use it to identify duplicate records.
+The following code demonstrates how to estimate the parameters of a deduplication model, use it to identify duplicate records, and then use clustering to generate an estimated unique person ID.
 
 For more detailed tutorials, please see [here](https://github.com/moj-analytical-services/splink_demos/tree/splink3_demos).
 
@@ -84,6 +84,7 @@ from splink.duckdb.duckdb_comparison_library import (
 )
 
 import pandas as pd
+
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
 settings = {
@@ -110,9 +111,10 @@ linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_trai
 blocking_rule_for_training = "l.dob = r.dob"
 linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
-scored_comparisons = linker.predict()
-scored_comparisons.as_pandas_dataframe(limit=5)
+pairwise_predictions = linker.predict()
 
+clusters = linker.cluster_pairwise_predictions_at_threshold(pairwise_predictions, 0.95)
+clusters.as_pandas_dataframe(limit=5)
 ```
 
 ## Acknowledgements

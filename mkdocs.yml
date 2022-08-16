@@ -94,5 +94,7 @@ nav:
       - Caching and pipelining: "dev_guides/caching.md"
       - Understanding and debugging Splink: "dev_guides/debug_modes.md"
       - Spark caching: "dev_guides/spark_pipelining_and_caching.md"
+      - Transpilation using sqlglot: "dev_guides/transpilation.md"
+
 extra_css:
 - css/custom.css
