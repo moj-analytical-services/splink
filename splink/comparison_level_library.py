@@ -73,7 +73,7 @@ def null_level(col_name, array=False) -> ComparisonLevel:
 
     sql_cond = f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL"
     if array:
-          sql_cond+=f"\nOR (SIZE({col.name_l()}) = 0 OR SIZE({col.name_r()}) = 0)"
+        sql_cond += f"\nOR (SIZE({col.name_l()}) = 0 OR SIZE({col.name_r()}) = 0)"
 
     level_dict = {
         "sql_condition": f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL",
@@ -234,7 +234,9 @@ def columns_reversed_level(
 
 
 def compare_multiple_columns_to_single_column_level(
-    anchor_column: str, col_list: list, m_probability=None,
+    anchor_column: str,
+    col_list: list,
+    m_probability=None,
 ) -> ComparisonLevel:
     """Compare the exact match of multiple columns against a given anchor column. For example,
     surname could be compared against both forename1 and forename2, which would compute whether
@@ -255,11 +257,11 @@ def compare_multiple_columns_to_single_column_level(
     anchor_column = InputColumn(anchor_column, sql_dialect=_mutable_params["dialect"])
     comparison_cols = InputColumn(col_list, sql_dialect=_mutable_params["dialect"])
 
-    cc = [InputColumn(c, sql_dialect=_mutable_params["dialect"]) for c in comparison_cols]
+    cc = [
+        InputColumn(c, sql_dialect=_mutable_params["dialect"]) for c in comparison_cols
+    ]
 
-    sql_cond = " OR ".join([
-        f"{anchor_column.name_l()} = {c.name_r()}" for c in cc
-    ])
+    sql_cond = " OR ".join([f"{anchor_column.name_l()} = {c.name_r()}" for c in cc])
     level_dict = {
         "sql_condition": sql_cond,
         "label_for_charts": "Exact match on reversed cols",
@@ -271,13 +273,13 @@ def compare_multiple_columns_to_single_column_level(
 
 
 def distance_in_km_level(
-        km_threshold: Union[int, float],
-        lat_lng_array:str=None,
-        lat_col:str=None,
-        long_col:str=None,
-        not_null:bool=False,
-        m_probability=None,
-    ) -> ComparisonLevel:
+    km_threshold: Union[int, float],
+    lat_lng_array: str = None,
+    lat_col: str = None,
+    long_col: str = None,
+    not_null: bool = False,
+    m_probability=None,
+) -> ComparisonLevel:
     """Use the haversine formula to transform comparisons of lat,lngs
     into distances measured in kilometers
 
@@ -309,7 +311,6 @@ def distance_in_km_level(
         long = InputColumn(long_col, sql_dialect=_mutable_params["dialect"])
         lat_l, lat_r = lat.name_l(), lat.name_r()
         long_l, long_r = long.name_l(), long.name_r()
-
 
     partial_distance_sql = f"""
     (
