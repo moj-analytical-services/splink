@@ -225,3 +225,75 @@ def columns_reversed_level(
         level_dict["tf_adjustment_column"] = tf_adjustment_column
 
     return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
+
+
+def distance_in_km_level(
+    km_threshold: Union[int, float],
+    lat_lng_array: str = None,
+    lat_col: str = None,
+    long_col: str = None,
+    not_null: bool = False,
+    m_probability=None,
+) -> ComparisonLevel:
+    """Use the haversine formula to transform comparisons of lat,lngs
+    into distances measured in kilometers
+
+    Arguments:
+        km_threshold (int): The total distance in kilometers to evaluate your
+            comparisons against
+        lat_lng_array (str): The column name for a concatenated array containing both
+            latitude and longitude in the format: {lat: 53.111111, long: -1.111111}.
+        lat_col (str): If your data is not in array form, you can provide the name of
+            the latitude column indepedently.
+        long_col (str): If your data is not in array form, you can provide the name of
+            the longitudinal column indepedently.
+        not_null (bool): If true, remove any . This is only necessary if you are not
+            capturing nulls elsewhere in your comparison level.
+        m_probability (float, optional): Starting value for m probability. Defaults to
+            None.
+
+
+    Returns:
+        ComparisonLevel: A comparison level that evaluates the distance between
+            two coordinates
+    """
+
+    if lat_lng_array:
+        lat_long = InputColumn(lat_lng_array, sql_dialect=_mutable_params["dialect"])
+        lat_l, lat_r = f"{lat_long.name_l()}['lat']", f"{lat_long.name_r()}['lat']"
+        long_l, long_r = f"{lat_long.name_l()}['long']", f"{lat_long.name_r()}['long']"
+    else:
+        lat = InputColumn(lat_col, sql_dialect=_mutable_params["dialect"])
+        long = InputColumn(long_col, sql_dialect=_mutable_params["dialect"])
+        lat_l, lat_r = lat.name_l(), lat.name_r()
+        long_l, long_r = long.name_l(), long.name_r()
+
+    partial_distance_sql = f"""
+    (
+    pow(sin(radians({lat_r} - {lat_l}))/2, 2) +
+    cos(radians({lat_l})) * cos(radians({lat_r})) *
+    pow(sin(radians({long_r} - {long_l})/2),2)
+    )
+    """
+
+    distance_km_sql = f"""
+        cast(atan2(sqrt({partial_distance_sql}),
+        sqrt(-1*{partial_distance_sql} + 1)) * 12742 as float)
+        <= {km_threshold}
+    """
+
+    if not_null:
+        null_sql = " AND ".join(
+            [f"{c} is not null" for c in [lat_r, lat_l, long_l, long_r]]
+        )
+        distance_km_sql = f"({null_sql}) AND {distance_km_sql}"
+
+    level_dict = {
+        "sql_condition": distance_km_sql,
+        "label_for_charts": f"Distance less than {km_threshold}km",
+    }
+
+    if m_probability:
+        level_dict["m_probability"] = m_probability
+
+    return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
