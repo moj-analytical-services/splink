@@ -5,8 +5,8 @@ from .comparison_level import ComparisonLevel
 
 
 # So that we can pass in a sql_dialect to the comparison levels
-# tht depending on whether we're in a SparkComparionLevel,
-# Du
+# that is different depending on whether we're in a SparkComparionLevel,
+# DuckDBComparisonLevel etc.
 _mutable_params = {"dialect": None, "levenshtein": "levenshtein"}
 
 
@@ -213,7 +213,8 @@ def columns_reversed_level(
             adjustments if an exact match is observed. Defaults to None.
 
     Returns:
-        ComparisonLevel: A comparison level that evaluates the exact match of two columns.
+        ComparisonLevel: A comparison level that evaluates the exact match of two
+            columns.
     """
 
     col_1 = InputColumn(col_name_1, sql_dialect=_mutable_params["dialect"])
@@ -238,10 +239,11 @@ def compare_multiple_columns_to_single_column_level(
     col_list: list,
     m_probability=None,
 ) -> ComparisonLevel:
-    """Compare the exact match of multiple columns against a given anchor column. For example,
-    surname could be compared against both forename1 and forename2, which would compute whether
-    the surname of person 1 matches either forename of person 2. This is useful for comparing
-    columns which can be accidentally swapped, such as names and dates (American vs European dates).
+    """Compare the exact match of multiple columns against a given anchor column. For
+    example, surname could be compared against both forename1 and forename2, which
+    would compute whether the surname of person 1 matches either forename of person 2.
+    This is useful for comparing columns which can be accidentally swapped, such as
+    names and dates (American vs European dates).
 
     Args:
         anchor_column (str): The column to use as the main comparison column
@@ -288,18 +290,19 @@ def distance_in_km_level(
             comparisons against
         lat_lng_array (str): The column name for a concatenated array containing both
             latitude and longitude in the format: {lat: 53.111111, long: -1.111111}.
-        lat_col (str): If your data is not in array form, you can provide the name of the
-            latitude column indepedently.
-        long_col (str): If your data is not in array form, you can provide the name of the
-            longitudinal column indepedently.
-        not_null (bool): If true, remove any . This is only necessary if you are not capturing
-            nulls elsewhere in your comparison level.
+        lat_col (str): If your data is not in array form, you can provide the name of
+            the latitude column indepedently.
+        long_col (str): If your data is not in array form, you can provide the name of
+            the longitudinal column indepedently.
+        not_null (bool): If true, remove any . This is only necessary if you are not
+            capturing nulls elsewhere in your comparison level.
         m_probability (float, optional): Starting value for m probability. Defaults to
             None.
 
 
     Returns:
-        ComparisonLevel: A comparison level that evaluates the distance between two coordinates
+        ComparisonLevel: A comparison level that evaluates the distance between
+            two coordinates
     """
 
     if lat_lng_array:
@@ -320,7 +323,10 @@ def distance_in_km_level(
     )
     """
 
-    distance_km_sql = f"cast(atan2(sqrt({partial_distance_sql}), sqrt(-1*{partial_distance_sql} + 1)) * 12742 as float)"
+    distance_km_sql = f"""
+        cast(atan2(sqrt({partial_distance_sql}),
+        sqrt(-1*{partial_distance_sql} + 1)) * 12742 as float)
+    """
 
     if not_null:
         null_sql = " AND ".join(
