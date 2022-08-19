@@ -32,7 +32,7 @@ def distance_function_level(
             None.
 
     Returns:
-        ComparisonLevel:
+        ComparisonLevel: A comparison level for a given distance function
     """
     col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
 
@@ -109,7 +109,7 @@ def levenshtein_level(
             None.
 
     Returns:
-        ComparisonLevel:
+        ComparisonLevel: A comparison level that evaluates the levenshtein similarity
     """
     lev_name = _mutable_params["levenshtein"]
     return distance_function_level(
@@ -207,7 +207,8 @@ def columns_reversed_level(
             adjustments if an exact match is observed. Defaults to None.
 
     Returns:
-        ComparisonLevel:
+        ComparisonLevel: A comparison level that evaluates the exact match of two
+            columns.
     """
 
     col_1 = InputColumn(col_name_1, sql_dialect=_mutable_params["dialect"])
