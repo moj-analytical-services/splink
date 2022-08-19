@@ -5,6 +5,8 @@ from ..comparison_level_library import (  # noqa: F401
     else_level,
     null_level,
     columns_reversed_level,
+    compare_multiple_columns_to_single_column_level,
+    distance_in_km_level,
 )
 
 _mutable_params["dialect"] = "presto"
