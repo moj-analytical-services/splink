@@ -60,6 +60,7 @@ def test_haversine_level():
     # Add another the array version of the lat_long column
     for d in data:
         d["lat_long"] = {"lat": d["lat"], "long": d["lon"]}
+        d["lat_long_arr"] = [d["lat"], d["lon"]]
 
     df = pa.Table.from_pylist(data)
 
@@ -78,8 +79,14 @@ def test_haversine_level():
                         long_col="lon",
                     ),
                     distance_in_km_level(
-                        10000,
-                        "lat_long",
+                        lat_col="lat_long['lat']",
+                        long_col="lat_long['long']",
+                        km_threshold=10000,
+                    ),
+                    distance_in_km_level(
+                        lat_col="lat_long_arr[1]",
+                        long_col="lat_long_arr[2]",
+                        km_threshold=100000,
                     ),
                     else_level(),
                 ],
@@ -93,10 +100,15 @@ def test_haversine_level():
     df_e = linker.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])
-    assert row["gamma_lat_long"] == 2
+    assert row["gamma_lat_long"] == 3
 
     # id comparisons w/ dist < 10000km
     id_comb = {(1, 3), (2, 3), (3, 4)}
+    for id_pair in id_comb:
+        row = dict(df_e.query("id_l == {} and id_r == {}".format(*id_pair)).iloc[0])
+        assert row["gamma_lat_long"] == 2
+
+    id_comb = {(1,4), (2,4)}
     for id_pair in id_comb:
         row = dict(df_e.query("id_l == {} and id_r == {}".format(*id_pair)).iloc[0])
         assert row["gamma_lat_long"] == 1
