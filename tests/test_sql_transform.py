@@ -6,6 +6,7 @@ from splink.sql_transform import (
 from splink.spark.custom_spark_dialect import Dialect  # noqa 401
 from splink.input_column import InputColumn
 
+
 def test_move_l_r_table_prefix_to_column_suffix():
 
     br = "l.first_name = r.first_name"
@@ -67,20 +68,22 @@ def test_set_numeric_as_double():
 
 def test_add_pref_and_suffix():
     dull = InputColumn("dull")
-    dull_l_r = ['l.dull as dull_l', 'r.dull as dull_r']
+    dull_l_r = ["l.dull as dull_l", "r.dull as dull_r"]
     assert dull.l_r_names_as_l_r() == dull_l_r
 
     assert dull.bf_name() == "bf_dull"
     dull._has_tf_adjustments = True
     assert dull.tf_name_l() == "tf_dull_l"
-    tf_dull_l_r = ['l.tf_dull as tf_dull_l', 'r.tf_dull as tf_dull_r']
+    tf_dull_l_r = ["l.tf_dull as tf_dull_l", "r.tf_dull as tf_dull_r"]
     assert dull.l_r_tf_names_as_l_r() == tf_dull_l_r
 
     ll = InputColumn("lat['long']")
     assert ll.name_l() == "lat_l['long']"
     ll._has_tf_adjustments = True
-    ll_tf_l_r = ["l.tf_lat['long'] as tf_lat_l['long']",
-            "r.tf_lat['long'] as tf_lat_r['long']"]
+    ll_tf_l_r = [
+        "l.tf_lat['long'] as tf_lat_l['long']",
+        "r.tf_lat['long'] as tf_lat_r['long']",
+    ]
     assert ll.l_r_tf_names_as_l_r() == ll_tf_l_r
 
     group = InputColumn("group")
@@ -92,8 +95,8 @@ def test_add_pref_and_suffix():
     group_tf_l_r = ['l."tf_group" as "tf_group_l"', 'r."tf_group" as "tf_group_r"']
     assert group.l_r_tf_names_as_l_r() == group_tf_l_r
 
-    cols = ['unique_id', 'SUR name', 'group']
-    out_cols = ['unique_id', '"SUR name"', '"group"']
+    cols = ["unique_id", "SUR name", "group"]
+    out_cols = ["unique_id", '"SUR name"', '"group"']
     cols_class = [InputColumn(c) for c in cols]
     assert [c.name() for c in cols_class] == out_cols
     assert [InputColumn(c).name(escape=False) for c in cols] == cols

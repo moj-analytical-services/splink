@@ -108,7 +108,7 @@ def test_haversine_level():
         row = dict(df_e.query("id_l == {} and id_r == {}".format(*id_pair)).iloc[0])
         assert row["gamma_lat_long"] == 2
 
-    id_comb = {(1,4), (2,4)}
+    id_comb = {(1, 4), (2, 4)}
     for id_pair in id_comb:
         row = dict(df_e.query("id_l == {} and id_r == {}".format(*id_pair)).iloc[0])
         assert row["gamma_lat_long"] == 1

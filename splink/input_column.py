@@ -5,6 +5,7 @@ from sqlglot.expressions import Column, Identifier, Bracket
 from .default_from_jsonschema import default_value_from_schema
 from splink.sql_transform import add_prefix_or_suffix_to_colname
 
+
 def _detect_if_name_needs_escaping(name):
     if name in ("group", "index"):
         return True
@@ -49,7 +50,7 @@ class InputColumn:
     @property
     def col(self):
         if self._escape_needed:
-            return exp.Column(this = exp.Identifier(this = self.input_name, quoted=False))
+            return exp.Column(this=exp.Identifier(this=self.input_name, quoted=False))
         else:
             return self.input_name
 
@@ -79,10 +80,14 @@ class InputColumn:
         return add_prefix_or_suffix_to_colname(self.col, self._escape(escape))
 
     def name_l(self, escape=True):
-        return add_prefix_or_suffix_to_colname(self.col, self._escape(escape), suffix="_l")
+        return add_prefix_or_suffix_to_colname(
+            self.col, self._escape(escape), suffix="_l"
+        )
 
     def name_r(self, escape=True):
-        return add_prefix_or_suffix_to_colname(self.col, self._escape(escape), suffix="_r")
+        return add_prefix_or_suffix_to_colname(
+            self.col, self._escape(escape), suffix="_r"
+        )
 
     def names_l_r(self, escape=True):
         e = self._escape(escape)

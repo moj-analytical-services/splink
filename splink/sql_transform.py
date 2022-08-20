@@ -14,7 +14,7 @@ def transformer_base(func):
         """
 
         if isinstance(sql, exp.Expression):
-            syntax_tree=sql
+            syntax_tree = sql
         else:
             syntax_tree = sqlglot.parse_one(sql, read=None)
         transformed_tree = syntax_tree.transform(func, *args, **kwargs)
@@ -48,9 +48,9 @@ def move_l_r_table_prefix_to_column_suffix(blocking_rule):
 
 
 @transformer_base
-def add_prefix_or_suffix_to_colname(node, escape=True, prefix = "", suffix=""):
+def add_prefix_or_suffix_to_colname(node, escape=True, prefix="", suffix=""):
     if isinstance(node, exp.Column):
-        node.this.args['this'] = f"{prefix}{node.sql()}{suffix}"
+        node.this.args["this"] = f"{prefix}{node.sql()}{suffix}"
         if escape:
             node.this.args["quoted"] = True
 
