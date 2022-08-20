@@ -1,13 +1,17 @@
 import sqlglot
-from sqlglot.expressions import Column, Identifier
+import sqlglot.expressions as exp
+from sqlglot.expressions import Column, Identifier, Bracket
 
 from .default_from_jsonschema import default_value_from_schema
-
+from splink.sql_transform import add_prefix_or_suffix_to_colname
 
 def _detect_if_name_needs_escaping(name):
     if name in ("group", "index"):
         return True
     tree = sqlglot.parse_one(name)
+    if isinstance(tree, Bracket):
+        tree = tree.this
+
     if isinstance(tree, Column) and isinstance(tree.this, Identifier):
         return False
     else:
@@ -31,7 +35,7 @@ class InputColumn:
         else:
             self._sql_dialect = None
 
-        self._name_needs_escaping = _detect_if_name_needs_escaping(name)
+        self._escape_needed = _detect_if_name_needs_escaping(name)
 
     def from_settings_obj_else_default(self, key, schema_key=None):
         # Covers the case where no settings obj is set on the comparison level
@@ -41,6 +45,13 @@ class InputColumn:
             if not schema_key:
                 schema_key = key
             return default_value_from_schema(schema_key, "root")
+
+    @property
+    def col(self):
+        if self._escape_needed:
+            return exp.Column(this = exp.Identifier(this = self.input_name, quoted=False))
+        else:
+            return self.input_name
 
     @property
     def gamma_prefix(self):
@@ -60,47 +71,40 @@ class InputColumn:
             "_tf_prefix", "term_frequency_adjustment_column_prefix"
         )
 
-    def _escape_if_requested(self, column_name, escape):
-        if not escape:
-            return column_name
-        if self._name_needs_escaping:
-            # Create parse tree
-            parsed = sqlglot.parse_one("col")
-
-            # Quote it and replace 'col' with true column_name
-            parsed.this.args["quoted"] = True
-            parsed.this.args["this"] = column_name
-
-            return parsed.sql(dialect=self._sql_dialect)
-        else:
-            return column_name
+    def _escape(self, e=True):
+        # Allows for overriding of self._escape_needed.
+        return min(e, self._escape_needed)
 
     def name(self, escape=True):
-        return self._escape_if_requested(self.input_name, escape)
+        return add_prefix_or_suffix_to_colname(self.col, self._escape(escape))
 
     def name_l(self, escape=True):
-        return self._escape_if_requested(f"{self.input_name}_l", escape)
+        return add_prefix_or_suffix_to_colname(self.col, self._escape(escape), suffix="_l")
 
     def name_r(self, escape=True):
-        return self._escape_if_requested(f"{self.input_name}_r", escape)
+        return add_prefix_or_suffix_to_colname(self.col, self._escape(escape), suffix="_r")
 
     def names_l_r(self, escape=True):
-        return [self.name_l(escape), self.name_r(escape)]
+        e = self._escape(escape)
+        return [self.name_l(e), self.name_r(e)]
 
     def l_name_as_l(self, escape=True):
-        return f"l.{self.name(escape)} as {self.name_l(escape)}"
+        e = self._escape(escape)
+        return f"l.{self.name(e)} as {self.name_l(e)}"
 
     def r_name_as_r(self, escape=True):
-        return f"r.{self.name(escape)} as {self.name_r(escape)}"
+        e = self._escape(escape)
+        return f"r.{self.name(e)} as {self.name_r(e)}"
 
     def l_r_names_as_l_r(self, escape=True):
-        return [self.l_name_as_l(escape), self.r_name_as_r(escape)]
+        e = self._escape(escape)
+        return [self.l_name_as_l(e), self.r_name_as_r(e)]
 
     def bf_name(self, escape=True):
-        bf_prefix = self.from_settings_obj_else_default(
-            "_bf_prefix", "bayes_factor_column_prefix"
+        bf_pref = self.bf_prefix
+        return add_prefix_or_suffix_to_colname(
+            self.col, self._escape(escape), prefix=bf_pref
         )
-        return self._escape_if_requested(f"{bf_prefix}{self.input_name}", escape)
 
     @property
     def has_tf_adjustment(self):
@@ -108,28 +112,29 @@ class InputColumn:
             return self._has_tf_adjustments
 
         if self._settings_obj:
-            if self.input_name in self._settings_obj._term_frequency_columns:
+            if self.col in self._settings_obj._term_frequency_columns:
                 return True
         return False
 
     def tf_name(self, escape=True):
 
-        tf_prefix = self.from_settings_obj_else_default(
-            "_tf_prefix", "term_frequency_adjustment_column_prefix"
-        )
-
-        name = f"{tf_prefix}{self.input_name}"
-
+        tf_pref = self.tf_prefix
         if self.has_tf_adjustment:
-            return self._escape_if_requested(name, escape)
+            return add_prefix_or_suffix_to_colname(
+                self.col, self._escape(escape), prefix=tf_pref
+            )
 
     def tf_name_l(self, escape=True):
         if self.has_tf_adjustment:
-            return self._escape_if_requested(f"{self.tf_name(escape=False)}_l", escape)
+            return add_prefix_or_suffix_to_colname(
+                self.tf_name(escape=False), self._escape(escape), suffix="_l"
+            )
 
     def tf_name_r(self, escape=True):
         if self.has_tf_adjustment:
-            return self._escape_if_requested(f"{self.tf_name(escape=False)}_r", escape)
+            return add_prefix_or_suffix_to_colname(
+                self.tf_name(escape=False), self._escape(escape), suffix="_r"
+            )
 
     def tf_name_l_r(self, escape=True):
         if self.has_tf_adjustment:
