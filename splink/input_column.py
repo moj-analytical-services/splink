@@ -36,7 +36,7 @@ class InputColumn:
         else:
             self._sql_dialect = None
 
-        self._escape_needed = _detect_if_name_needs_escaping(name)
+        self._name_needs_escaping = _detect_if_name_needs_escaping(name)
 
     def from_settings_obj_else_default(self, key, schema_key=None):
         # Covers the case where no settings obj is set on the comparison level
@@ -49,7 +49,7 @@ class InputColumn:
 
     @property
     def col(self):
-        if self._escape_needed:
+        if self._name_needs_escaping:
             return exp.Column(this=exp.Identifier(this=self.input_name, quoted=False))
         else:
             return self.input_name
@@ -74,7 +74,7 @@ class InputColumn:
 
     def _escape(self, e=True):
         # Allows for overriding of self._escape_needed.
-        return min(e, self._escape_needed)
+        return min(e, self._name_needs_escaping)
 
     def name(self, escape=True):
         return add_prefix_or_suffix_to_colname(self.col, self._escape(escape))
@@ -117,7 +117,7 @@ class InputColumn:
             return self._has_tf_adjustments
 
         if self._settings_obj:
-            if self.col in self._settings_obj._term_frequency_columns:
+            if self.input_name in self._settings_obj._term_frequency_columns:
                 return True
         return False
 

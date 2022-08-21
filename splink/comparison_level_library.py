@@ -55,17 +55,27 @@ def distance_function_level(
     return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
 
 
-def null_level(col_name) -> ComparisonLevel:
+def null_level(col_name, array=False) -> ComparisonLevel:
     """Represents comparisons where one or both sides of the comparison
     contains null values so the similarity cannot be evaluated.
+
     Assumed to have a partial match weight of zero (null effect on overall match weight)
+
     Args:
         col_name (str): Input column name
+        array (bool): If true, the comparison also checks if the array len is 0.
+
     Returns:
-        ComparisonLevel: Comparison level
+        ComparisonLevel: Comparison level for null comparisons. Wherever a null is
+            found, the system will remove them from the classification checks.
     """
 
     col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
+
+    sql_cond = f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL"
+    if array:
+        sql_cond += f"\nOR (SIZE({col.name_l()}) = 0 OR SIZE({col.name_r()}) = 0)"
+
     level_dict = {
         "sql_condition": f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL",
         "label_for_charts": "Null",
@@ -257,8 +267,8 @@ def distance_in_km_level(
 
     lat = InputColumn(lat_col, sql_dialect=_mutable_params["dialect"])
     long = InputColumn(long_col, sql_dialect=_mutable_params["dialect"])
-    lat_l, lat_r = lat.name_l(), lat.name_r()
-    long_l, long_r = long.name_l(), long.name_r()
+    lat_l, lat_r = lat.names_l_r()
+    long_l, long_r = long.names_l_r()
 
     partial_distance_sql = f"""
     (
