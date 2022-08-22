@@ -32,7 +32,7 @@ def distance_function_level(
             None.
 
     Returns:
-        ComparisonLevel:
+        ComparisonLevel: A comparison level for a given distance function
     """
     col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
 
@@ -58,12 +58,9 @@ def distance_function_level(
 def null_level(col_name) -> ComparisonLevel:
     """Represents comparisons where one or both sides of the comparison
     contains null values so the similarity cannot be evaluated.
-
     Assumed to have a partial match weight of zero (null effect on overall match weight)
-
     Args:
         col_name (str): Input column name
-
     Returns:
         ComparisonLevel: Comparison level
     """
@@ -109,7 +106,7 @@ def levenshtein_level(
             None.
 
     Returns:
-        ComparisonLevel:
+        ComparisonLevel: A comparison level that evaluates the levenshtein similarity
     """
     lev_name = _mutable_params["levenshtein"]
     return distance_function_level(
@@ -207,7 +204,8 @@ def columns_reversed_level(
             adjustments if an exact match is observed. Defaults to None.
 
     Returns:
-        ComparisonLevel:
+        ComparisonLevel: A comparison level that evaluates the exact match of two
+            columns.
     """
 
     col_1 = InputColumn(col_name_1, sql_dialect=_mutable_params["dialect"])
@@ -223,5 +221,71 @@ def columns_reversed_level(
 
     if tf_adjustment_column:
         level_dict["tf_adjustment_column"] = tf_adjustment_column
+
+    return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
+
+
+def distance_in_km_level(
+    lat_col: str,
+    long_col: str,
+    km_threshold: Union[int, float],
+    not_null: bool = False,
+    m_probability=None,
+) -> ComparisonLevel:
+    """Use the haversine formula to transform comparisons of lat,lngs
+    into distances measured in kilometers
+
+    Arguments:
+        lat_col (str): The name of a latitude column or the respective array
+            or struct column column containing the information
+            For example: long_lat['lat'] or long_lat[0]
+        long_col (str): The name of a longitudinal column or the respective array
+            or struct column column containing the information, plus an index.
+            For example: long_lat['long'] or long_lat[1]
+        km_threshold (int): The total distance in kilometers to evaluate your
+            comparisons against
+        not_null (bool): If true, remove any . This is only necessary if you are not
+            capturing nulls elsewhere in your comparison level.
+        m_probability (float, optional): Starting value for m probability. Defaults to
+            None.
+
+
+    Returns:
+        ComparisonLevel: A comparison level that evaluates the distance between
+            two coordinates
+    """
+
+    lat = InputColumn(lat_col, sql_dialect=_mutable_params["dialect"])
+    long = InputColumn(long_col, sql_dialect=_mutable_params["dialect"])
+    lat_l, lat_r = lat.names_l_r()
+    long_l, long_r = long.names_l_r()
+
+    partial_distance_sql = f"""
+    (
+    pow(sin(radians({lat_r} - {lat_l}))/2, 2) +
+    cos(radians({lat_l})) * cos(radians({lat_r})) *
+    pow(sin(radians({long_r} - {long_l})/2),2)
+    )
+    """
+
+    distance_km_sql = f"""
+        cast(atan2(sqrt({partial_distance_sql}),
+        sqrt(-1*{partial_distance_sql} + 1)) * 12742 as float)
+        <= {km_threshold}
+    """
+
+    if not_null:
+        null_sql = " AND ".join(
+            [f"{c} is not null" for c in [lat_r, lat_l, long_l, long_r]]
+        )
+        distance_km_sql = f"({null_sql}) AND {distance_km_sql}"
+
+    level_dict = {
+        "sql_condition": distance_km_sql,
+        "label_for_charts": f"Distance less than {km_threshold}km",
+    }
+
+    if m_probability:
+        level_dict["m_probability"] = m_probability
 
     return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
