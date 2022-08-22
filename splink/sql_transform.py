@@ -3,9 +3,21 @@ import sqlglot.expressions as exp
 
 
 def transformer_base(func):
-    def wrapper(sql):
-        syntax_tree = sqlglot.parse_one(sql, read=None)
-        transformed_tree = syntax_tree.transform(func)
+    def wrapper(sql, *args, **kwargs):
+        """
+        Args:
+            sql Union(str or sqlglot.SyntaxTree): If a sqlglot object
+                is passed to the transformer, it is simply given to the
+                transformer and the resulting sql is returned.
+                If a sql expression is passed, this will be parsed by the
+                sqlglot parser and the resulting syntax tree will be transformed.
+        """
+
+        if isinstance(sql, exp.Expression):
+            syntax_tree = sql
+        else:
+            syntax_tree = sqlglot.parse_one(sql, read=None)
+        transformed_tree = syntax_tree.transform(func, *args, **kwargs)
         return transformed_tree.sql()
 
     return wrapper
@@ -36,6 +48,16 @@ def move_l_r_table_prefix_to_column_suffix(blocking_rule):
 
 
 @transformer_base
+def add_prefix_or_suffix_to_colname(node, escape=True, prefix="", suffix=""):
+    if isinstance(node, exp.Column):
+        node.this.args["this"] = f"{prefix}{node.sql()}{suffix}"
+        if escape:
+            node.this.args["quoted"] = True
+
+    return node
+
+
+@transformer_base
 def cast_concat_as_varchar(node):
     if isinstance(node, exp.Column):
 
@@ -43,7 +65,6 @@ def cast_concat_as_varchar(node):
             return node
 
         if node.find_ancestor(exp.DPipe):
-            # node.sql() = colname w/ table prefix
             sql = f"cast({node.sql()} as varchar)"
             return sqlglot.parse_one(sql)
 

@@ -262,6 +262,7 @@ def test_3_rounds_20k_spark(benchmark):
         conf.set("spark.default.parallelism", "8")
 
         sc = SparkContext.getOrCreate(conf=conf)
+        sc.setCheckpointDir("./tmp/splink_checkpoints")
         spark = SparkSession(sc)
 
         for table in spark.catalog.listTables():

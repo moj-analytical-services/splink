@@ -58,12 +58,9 @@ def distance_function_level(
 def null_level(col_name) -> ComparisonLevel:
     """Represents comparisons where one or both sides of the comparison
     contains null values so the similarity cannot be evaluated.
-
     Assumed to have a partial match weight of zero (null effect on overall match weight)
-
     Args:
         col_name (str): Input column name
-
     Returns:
         ComparisonLevel: Comparison level
     """
@@ -229,10 +226,9 @@ def columns_reversed_level(
 
 
 def distance_in_km_level(
+    lat_col: str,
+    long_col: str,
     km_threshold: Union[int, float],
-    lat_lng_array: str = None,
-    lat_col: str = None,
-    long_col: str = None,
     not_null: bool = False,
     m_probability=None,
 ) -> ComparisonLevel:
@@ -240,14 +236,14 @@ def distance_in_km_level(
     into distances measured in kilometers
 
     Arguments:
+        lat_col (str): The name of a latitude column or the respective array
+            or struct column column containing the information
+            For example: long_lat['lat'] or long_lat[0]
+        long_col (str): The name of a longitudinal column or the respective array
+            or struct column column containing the information, plus an index.
+            For example: long_lat['long'] or long_lat[1]
         km_threshold (int): The total distance in kilometers to evaluate your
             comparisons against
-        lat_lng_array (str): The column name for a concatenated array containing both
-            latitude and longitude in the format: {lat: 53.111111, long: -1.111111}.
-        lat_col (str): If your data is not in array form, you can provide the name of
-            the latitude column indepedently.
-        long_col (str): If your data is not in array form, you can provide the name of
-            the longitudinal column indepedently.
         not_null (bool): If true, remove any . This is only necessary if you are not
             capturing nulls elsewhere in your comparison level.
         m_probability (float, optional): Starting value for m probability. Defaults to
@@ -259,15 +255,10 @@ def distance_in_km_level(
             two coordinates
     """
 
-    if lat_lng_array:
-        lat_long = InputColumn(lat_lng_array, sql_dialect=_mutable_params["dialect"])
-        lat_l, lat_r = f"{lat_long.name_l()}['lat']", f"{lat_long.name_r()}['lat']"
-        long_l, long_r = f"{lat_long.name_l()}['long']", f"{lat_long.name_r()}['long']"
-    else:
-        lat = InputColumn(lat_col, sql_dialect=_mutable_params["dialect"])
-        long = InputColumn(long_col, sql_dialect=_mutable_params["dialect"])
-        lat_l, lat_r = lat.name_l(), lat.name_r()
-        long_l, long_r = long.name_l(), long.name_r()
+    lat = InputColumn(lat_col, sql_dialect=_mutable_params["dialect"])
+    long = InputColumn(long_col, sql_dialect=_mutable_params["dialect"])
+    lat_l, lat_r = lat.names_l_r()
+    long_l, long_r = long.names_l_r()
 
     partial_distance_sql = f"""
     (
