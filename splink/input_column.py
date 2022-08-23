@@ -4,7 +4,6 @@ import sqlglot.expressions as exp
 from sqlglot.errors import ParseError
 
 from .default_from_jsonschema import default_value_from_schema
-from splink.sql_transform import add_prefix_or_suffix_to_colname
 
 
 def sqlglot_tree_signature(tree):
@@ -20,12 +19,11 @@ def sqlglot_tree_signature(tree):
 
 
 class InputColumn:
-    def __init__(self, name, tf_adjustments=False, settings_obj=None, sql_dialect=None):
+    def __init__(self, name, settings_obj=None, sql_dialect=None):
 
         # If settings_obj is None, then default values will be used
         # from the jsonschama
         self._settings_obj = settings_obj
-        self._has_tf_adjustments = tf_adjustments
 
         self.input_name = name
 
@@ -54,9 +52,9 @@ class InputColumn:
         # Note we don't expect SUR name[1] since the user should have quoted this
 
         try:
-            tree = sqlglot.parse_one(self.input_name)
+            tree = sqlglot.parse_one(self.input_name, read=self._sql_dialect)
         except ParseError:
-            tree = sqlglot.parse_one(f'"{self.input_name}"')
+            tree = sqlglot.parse_one(f'"{self.input_name}"', read=self._sql_dialect)
 
         tree_signature = sqlglot_tree_signature(tree)
         valid_signatures = ["column identifier", "bracket column literal identifier"]
@@ -66,7 +64,7 @@ class InputColumn:
         else:
             # e.g. SUR name parses to 'alias column identifier identifier'
             # but we want "SUR name"
-            tree = sqlglot.parse_one(f'"{self.input_name}"')
+            tree = sqlglot.parse_one(f'"{self.input_name}"', read=self._sql_dialect)
             return tree
 
     def from_settings_obj_else_default(self, key, schema_key=None):
@@ -124,7 +122,7 @@ class InputColumn:
         return self.add_suffix(self.input_name_as_tree, suffix="_l").sql()
 
     def name_r(self):
-        return self.add_suffix(self.input_name_as_tree, suffix="_l").sql()
+        return self.add_suffix(self.input_name_as_tree, suffix="_r").sql()
 
     def names_l_r(self):
         return [self.name_l(), self.name_r()]
@@ -135,54 +133,37 @@ class InputColumn:
 
     def r_name_as_r(self):
         name_with_r_table = self.add_table(self.input_name_as_tree, "r").sql()
-        return f"{name_with_r_table} as {self.name_l()}"
+        return f"{name_with_r_table} as {self.name_r()}"
 
     def l_r_names_as_l_r(self):
         return [self.l_name_as_l(), self.r_name_as_r()]
 
     def bf_name(self):
-        return self.add_prefix(self.input_name_as_tree, suffix=self.bf_prefix).sql()
-
-    @property
-    def has_tf_adjustment(self):
-        if self._has_tf_adjustments is not None:
-            return self._has_tf_adjustments
-
-        if self._settings_obj:
-            if self.input_name in self._settings_obj._term_frequency_columns:
-                return True
-        return False
+        return self.add_prefix(self.input_name_as_tree, prefix=self.bf_prefix).sql()
 
     def tf_name(self):
-
-        tf_pref = self.tf_prefix
-        if self.has_tf_adjustment:
-            return add_prefix_or_suffix_to_colname(self.col, prefix=tf_pref)
+        return self.add_prefix(self.input_name_as_tree, prefix=self.tf_prefix).sql()
 
     def tf_name_l(self):
-        if self.has_tf_adjustment:
-            return add_prefix_or_suffix_to_colname(self.tf_name(), suffix="_l")
+        tree = self.add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
+        return self.add_suffix(tree, suffix="_l").sql()
 
     def tf_name_r(self):
-        if self.has_tf_adjustment:
-            return add_prefix_or_suffix_to_colname(self.tf_name(), suffix="_r")
+        tree = self.add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
+        return self.add_suffix(tree, suffix="_r").sql()
 
     def tf_name_l_r(self):
-        if self.has_tf_adjustment:
-            return [self.tf_name_l(), self.tf_name_r()]
-        else:
-            return []
+        return [self.tf_name_l(), self.tf_name_r()]
 
     def l_tf_name_as_l(self):
-        if self.has_tf_adjustment:
-            return f"l.{self.tf_name()} as {self.tf_name_l()}"
+        tree = self.add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
+        tf_name_with_l_table = self.add_table(tree, tablename="l").sql()
+        return f"{tf_name_with_l_table} as {self.tf_name_l()}"
 
     def r_tf_name_as_r(self):
-        if self.has_tf_adjustment:
-            return f"r.{self.tf_name()} as {self.tf_name_r()}"
+        tree = self.add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
+        tf_name_with_r_table = self.add_table(tree, tablename="r").sql()
+        return f"{tf_name_with_r_table} as {self.tf_name_r()}"
 
     def l_r_tf_names_as_l_r(self):
-        if self.has_tf_adjustment:
-            return [self.l_tf_name_as_l(), self.r_tf_name_as_r()]
-        else:
-            return []
+        return [self.l_tf_name_as_l(), self.r_tf_name_as_r()]
