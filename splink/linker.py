@@ -694,7 +694,7 @@ class Linker:
         """
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
-        input_col = InputColumn(column_name, tf_adjustments=True)
+        input_col = InputColumn(column_name)
         sql = term_frequencies_for_single_column_sql(input_col)
         self._enqueue_sql(sql, colname_to_tf_tablename(input_col))
         return self._execute_sql_pipeline(materialise_as_hash=False)

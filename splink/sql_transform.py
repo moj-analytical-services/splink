@@ -48,16 +48,6 @@ def move_l_r_table_prefix_to_column_suffix(blocking_rule):
 
 
 @transformer_base
-def add_prefix_or_suffix_to_colname(node, escape=True, prefix="", suffix=""):
-    if isinstance(node, exp.Column):
-        node.this.args["this"] = f"{prefix}{node.sql()}{suffix}"
-        if escape:
-            node.this.args["quoted"] = True
-
-    return node
-
-
-@transformer_base
 def cast_concat_as_varchar(node):
     if isinstance(node, exp.Column):
 

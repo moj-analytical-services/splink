@@ -161,7 +161,7 @@ class ComparisonLevel:
 
         val = self._level_dict_val_else_default("tf_adjustment_column")
         if val:
-            return InputColumn(val, tf_adjustments=True, sql_dialect=self._sql_dialect)
+            return InputColumn(val, sql_dialect=self._sql_dialect)
         else:
             return None
 
@@ -405,14 +405,8 @@ class ComparisonLevel:
             # We could have tf adjustments for surname on a dmeta_surname column
             # If so, we want to set the tf adjustments against the surname col,
             # not the dmeta_surname one
-            if c == self._tf_adjustment_input_column_name:
-                input_cols.append(
-                    InputColumn(c, tf_adjustments=True, sql_dialect=self._sql_dialect)
-                )
-            else:
-                input_cols.append(
-                    InputColumn(c, tf_adjustments=False, sql_dialect=self._sql_dialect)
-                )
+
+            input_cols.append(InputColumn(c, sql_dialect=self._sql_dialect))
 
         return input_cols
 
@@ -424,7 +418,8 @@ class ComparisonLevel:
 
         for c in cols:
             output_cols.extend(c.l_r_names_as_l_r())
-            output_cols.extend(c.l_r_tf_names_as_l_r())
+            if self._tf_adjustment_input_column:
+                output_cols.extend(c.l_r_tf_names_as_l_r())
 
         return dedupe_preserving_order(output_cols)
 

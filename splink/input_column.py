@@ -18,6 +18,37 @@ def sqlglot_tree_signature(tree):
     return " ".join(n[0].key for n in tree.walk())
 
 
+def add_suffix(tree, suffix):
+    tree = tree.copy()
+    identifier_string = tree.find(exp.Identifier).this
+    identifier_string = f"{identifier_string}{suffix}"
+    tree.find(exp.Identifier).set(arg="this", value=identifier_string)
+    return tree
+
+
+def add_prefix(tree, prefix):
+    tree = tree.copy()
+    identifier_string = tree.find(exp.Identifier).this
+    identifier_string = f"{prefix}{identifier_string}"
+    tree.find(exp.Identifier).set(arg="this", value=identifier_string)
+    return tree
+
+
+def add_table(tree, tablename):
+    tree = tree.copy()
+    table_identifier = exp.Identifier(this=tablename, quoted=True)
+    identifier = tree.find(exp.Column)
+    identifier.set(arg="table", value=table_identifier)
+    return tree
+
+
+def remove_quotes_from_identifiers(tree):
+    tree = tree.copy()
+    for identifier in tree.find_all(exp.Identifier):
+        identifier.set(arg="quoted", value=False)
+    return tree
+
+
 class InputColumn:
     def __init__(self, name, settings_obj=None, sql_dialect=None):
 
@@ -88,27 +119,6 @@ class InputColumn:
             "_bf_prefix", "bayes_factor_column_prefix"
         )
 
-    def add_suffix(self, tree, suffix):
-        tree = tree.copy()
-        identifier_string = tree.find(exp.Identifier).this
-        identifier_string = f"{identifier_string}{suffix}"
-        tree.find(exp.Identifier).set(arg="this", value=identifier_string)
-        return tree
-
-    def add_prefix(self, tree, prefix):
-        tree = tree.copy()
-        identifier_string = tree.find(exp.Identifier).this
-        identifier_string = f"{prefix}{identifier_string}"
-        tree.find(exp.Identifier).set(arg="this", value=identifier_string)
-        return tree
-
-    def add_table(self, tree, tablename):
-        tree = tree.copy()
-        table_identifier = exp.Identifier(this=tablename, quoted=True)
-        identifier = tree.find(exp.Column)
-        identifier.set(arg="table", value=table_identifier)
-        return tree
-
     @property
     def tf_prefix(self):
         return self.from_settings_obj_else_default(
@@ -119,50 +129,50 @@ class InputColumn:
         return self.input_name_as_tree.sql()
 
     def name_l(self):
-        return self.add_suffix(self.input_name_as_tree, suffix="_l").sql()
+        return add_suffix(self.input_name_as_tree, suffix="_l").sql()
 
     def name_r(self):
-        return self.add_suffix(self.input_name_as_tree, suffix="_r").sql()
+        return add_suffix(self.input_name_as_tree, suffix="_r").sql()
 
     def names_l_r(self):
         return [self.name_l(), self.name_r()]
 
     def l_name_as_l(self):
-        name_with_l_table = self.add_table(self.input_name_as_tree, "l").sql()
+        name_with_l_table = add_table(self.input_name_as_tree, "l").sql()
         return f"{name_with_l_table} as {self.name_l()}"
 
     def r_name_as_r(self):
-        name_with_r_table = self.add_table(self.input_name_as_tree, "r").sql()
+        name_with_r_table = add_table(self.input_name_as_tree, "r").sql()
         return f"{name_with_r_table} as {self.name_r()}"
 
     def l_r_names_as_l_r(self):
         return [self.l_name_as_l(), self.r_name_as_r()]
 
     def bf_name(self):
-        return self.add_prefix(self.input_name_as_tree, prefix=self.bf_prefix).sql()
+        return add_prefix(self.input_name_as_tree, prefix=self.bf_prefix).sql()
 
     def tf_name(self):
-        return self.add_prefix(self.input_name_as_tree, prefix=self.tf_prefix).sql()
+        return add_prefix(self.input_name_as_tree, prefix=self.tf_prefix).sql()
 
     def tf_name_l(self):
-        tree = self.add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
-        return self.add_suffix(tree, suffix="_l").sql()
+        tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
+        return add_suffix(tree, suffix="_l").sql()
 
     def tf_name_r(self):
-        tree = self.add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
-        return self.add_suffix(tree, suffix="_r").sql()
+        tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
+        return add_suffix(tree, suffix="_r").sql()
 
     def tf_name_l_r(self):
         return [self.tf_name_l(), self.tf_name_r()]
 
     def l_tf_name_as_l(self):
-        tree = self.add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
-        tf_name_with_l_table = self.add_table(tree, tablename="l").sql()
+        tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
+        tf_name_with_l_table = add_table(tree, tablename="l").sql()
         return f"{tf_name_with_l_table} as {self.tf_name_l()}"
 
     def r_tf_name_as_r(self):
-        tree = self.add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
-        tf_name_with_r_table = self.add_table(tree, tablename="r").sql()
+        tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
+        tf_name_with_r_table = add_table(tree, tablename="r").sql()
         return f"{tf_name_with_r_table} as {self.tf_name_r()}"
 
     def l_r_tf_names_as_l_r(self):

@@ -1,7 +1,5 @@
 import logging
 
-from .misc import escape_columns
-
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +23,7 @@ class SplinkDataFrame:
     @property
     def columns_escaped(self):
         cols = self.columns
-        return escape_columns(cols)
+        return [c.name() for c in cols]
 
     def validate():
         pass
