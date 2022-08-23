@@ -266,5 +266,14 @@ def render_splink_cluster_studio_html(
             f"The path {out_path} already exists. Please provide a different path."
         )
     else:
-        with open(out_path, "w", encoding="utf-8") as html_file:
-            html_file.write(rendered)
+        if "DATABRICKS_RUNTIME_VERSION" in os.environ:
+            from pyspark.sql import SparkSession
+            from pyspark.dbutils import DBUtils
+            spark = SparkSession.builder.getOrCreate()
+            dbutils = DBUtils(spark)
+            dbutils.fs.put(out_path, rendered, overwrite=True)
+            return rendered  # to view the dashboard inline in notebook displayHTML(rendered)
+        else:
+            with open(out_path, "w", encoding="utf-8") as html_file:
+                html_file.write(rendered)
+            return rendered # return the rendered dashboard html for inline viewing in the notebook
