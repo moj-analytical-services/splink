@@ -75,6 +75,7 @@ class InputColumn:
         self.input_name = name
 
         self.input_name_as_tree = self.parse_input_name_to_sqlglot_tree()
+        self.quote()
 
     def quote(self):
         for identifier in self.input_name_as_tree.find_all(exp.Identifier):
