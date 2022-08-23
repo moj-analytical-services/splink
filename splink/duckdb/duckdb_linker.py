@@ -1,6 +1,5 @@
 import logging
 from typing import Union, List
-import sqlglot
 from tempfile import TemporaryDirectory
 
 from duckdb import DuckDBPyConnection
