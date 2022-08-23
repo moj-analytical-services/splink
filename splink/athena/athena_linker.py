@@ -4,7 +4,6 @@ import os
 import awswrangler as wr
 import numpy as np
 import boto3
-import sqlglot
 from typing import Union
 import uuid
 
