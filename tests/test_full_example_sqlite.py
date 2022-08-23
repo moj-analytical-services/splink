@@ -11,7 +11,7 @@ def test_full_example_sqlite(tmp_path):
     from rapidfuzz.distance.Levenshtein import distance
 
     con = sqlite3.connect(":memory:")
-    con.create_function("editdist3", 2, distance)
+    con.create_function("levenshtein", 2, distance)
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     df.to_sql("input_df_tablename", con)
@@ -51,7 +51,7 @@ def test_small_link_example_sqlite():
     from rapidfuzz.distance.Levenshtein import distance
 
     con = sqlite3.connect(":memory:")
-    con.create_function("editdist3", 2, distance)
+    con.create_function("levenshtein", 2, distance)
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()

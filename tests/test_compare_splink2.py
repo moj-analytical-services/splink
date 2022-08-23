@@ -54,10 +54,11 @@ def test_splink_2_predict_sqlite():
     from rapidfuzz.distance.Levenshtein import distance
 
     con = sqlite3.connect(":memory:")
-    con.create_function("editdist3", 2, distance)
+    con.create_function("levenshtein", 2, distance)
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df.to_sql("fake_data_1", con, if_exists="replace")
     settings_dict = get_settings_dict()
+
     linker = SQLiteLinker(
         "fake_data_1",
         settings_dict,

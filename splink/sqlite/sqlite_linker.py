@@ -1,4 +1,3 @@
-import sqlglot
 from typing import Union, List
 import logging
 from math import pow, log2
@@ -112,12 +111,7 @@ class SQLiteLinker(Linker):
             settings_dict["sql_dialect"] = "sqlite"
         super().initialise_settings(settings_dict)
 
-    def _execute_sql_against_backend(
-        self, sql, templated_name, physical_name, transpile=True
-    ):
-
-        if transpile:
-            sql = sqlglot.transpile(sql, read=None, write="sqlite")[0]
+    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
 
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))

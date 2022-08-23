@@ -56,8 +56,6 @@ class InputColumn:
         # from the jsonschama
         self._settings_obj = settings_obj
 
-        self.input_name = name
-
         if sql_dialect:
             self._sql_dialect = sql_dialect
         elif settings_obj:
@@ -65,10 +63,28 @@ class InputColumn:
         else:
             self._sql_dialect = None
 
+        if self._sql_dialect == "spark":
+            quote_character = "`"
+        else:
+            quote_character = '"'
+
+        # Quote SQL keywords
+        if name in ("group", "index"):
+            name = f"{quote_character}{name}{quote_character}"
+
+        self.input_name = name
+
         self.input_name_as_tree = self.parse_input_name_to_sqlglot_tree()
 
-        # Make sure the identifier (column name) is quoted in all cases
-        self.input_name_as_tree.find(exp.Identifier).set(arg="quoted", value=True)
+    def quote(self):
+        for identifier in self.input_name_as_tree.find_all(exp.Identifier):
+            identifier.set(arg="quoted", value=True)
+        return self
+
+    def unquote(self):
+        for identifier in self.input_name_as_tree.find_all(exp.Identifier):
+            identifier.set(arg="quoted", value=False)
+        return self
 
     def parse_input_name_to_sqlglot_tree(self):
 
@@ -126,53 +142,69 @@ class InputColumn:
         )
 
     def name(self):
-        return self.input_name_as_tree.sql()
+        return self.input_name_as_tree.sql(dialect=self._sql_dialect)
 
     def name_l(self):
-        return add_suffix(self.input_name_as_tree, suffix="_l").sql()
+        return add_suffix(self.input_name_as_tree, suffix="_l").sql(
+            dialect=self._sql_dialect
+        )
 
     def name_r(self):
-        return add_suffix(self.input_name_as_tree, suffix="_r").sql()
+        return add_suffix(self.input_name_as_tree, suffix="_r").sql(
+            dialect=self._sql_dialect
+        )
 
     def names_l_r(self):
         return [self.name_l(), self.name_r()]
 
     def l_name_as_l(self):
-        name_with_l_table = add_table(self.input_name_as_tree, "l").sql()
+        name_with_l_table = add_table(self.input_name_as_tree, "l").sql(
+            dialect=self._sql_dialect
+        )
         return f"{name_with_l_table} as {self.name_l()}"
 
     def r_name_as_r(self):
-        name_with_r_table = add_table(self.input_name_as_tree, "r").sql()
+        name_with_r_table = add_table(self.input_name_as_tree, "r").sql(
+            dialect=self._sql_dialect
+        )
         return f"{name_with_r_table} as {self.name_r()}"
 
     def l_r_names_as_l_r(self):
         return [self.l_name_as_l(), self.r_name_as_r()]
 
     def bf_name(self):
-        return add_prefix(self.input_name_as_tree, prefix=self.bf_prefix).sql()
+        return add_prefix(self.input_name_as_tree, prefix=self.bf_prefix).sql(
+            dialect=self._sql_dialect
+        )
 
     def tf_name(self):
-        return add_prefix(self.input_name_as_tree, prefix=self.tf_prefix).sql()
+        return add_prefix(self.input_name_as_tree, prefix=self.tf_prefix).sql(
+            dialect=self._sql_dialect
+        )
 
     def tf_name_l(self):
         tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
-        return add_suffix(tree, suffix="_l").sql()
+        return add_suffix(tree, suffix="_l").sql(dialect=self._sql_dialect)
 
     def tf_name_r(self):
         tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
-        return add_suffix(tree, suffix="_r").sql()
+        return add_suffix(tree, suffix="_r").sql(dialect=self._sql_dialect)
 
     def tf_name_l_r(self):
         return [self.tf_name_l(), self.tf_name_r()]
 
     def l_tf_name_as_l(self):
         tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
-        tf_name_with_l_table = add_table(tree, tablename="l").sql()
+        tf_name_with_l_table = add_table(tree, tablename="l").sql(
+            dialect=self._sql_dialect
+        )
         return f"{tf_name_with_l_table} as {self.tf_name_l()}"
 
     def r_tf_name_as_r(self):
         tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
-        tf_name_with_r_table = add_table(tree, tablename="r").sql()
+        tf_name_with_r_table = add_table(tree, tablename="r").sql(
+            dialect=self._sql_dialect
+        )
         return f"{tf_name_with_r_table} as {self.tf_name_r()}"
 
     def l_r_tf_names_as_l_r(self):

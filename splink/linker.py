@@ -312,7 +312,6 @@ class Linker:
         input_dataframes: List[SplinkDataFrame] = [],
         materialise_as_hash=True,
         use_cache=True,
-        transpile=True,
     ) -> SplinkDataFrame:
 
         """Execute the SQL queued in the current pipeline as a single statement
@@ -326,8 +325,6 @@ class Linker:
                 in a unique identifer. Defaults to True.
             use_cache (bool, optional): If true, look at whether the SQL pipeline has
                 been executed before, and if so, use the existing result. Defaults to
-                True.
-            transpile (bool, optional): Transpile the SQL using SQLGlot. Defaults to
                 True.
 
         Returns:
@@ -345,7 +342,6 @@ class Linker:
                 output_tablename_templated,
                 materialise_as_hash,
                 use_cache,
-                transpile,
             )
             self._pipeline.reset()
             return dataframe
@@ -363,14 +359,11 @@ class Linker:
                     output_tablename,
                     materialise_as_hash=False,
                     use_cache=False,
-                    transpile=transpile,
                 )
             self._pipeline.reset()
             return dataframe
 
-    def _execute_sql_against_backend(
-        self, sql, templated_name, physical_name, transpile=True
-    ):
+    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
         raise NotImplementedError(
             f"_execute_sql_against_backend not implemented for {type(self)}"
         )
@@ -381,7 +374,6 @@ class Linker:
         output_tablename_templated,
         materialise_as_hash=True,
         use_cache=True,
-        transpile=True,
     ) -> SplinkDataFrame:
         """Execute sql, or if identical sql has been run before, return cached results.
 
@@ -419,14 +411,13 @@ class Linker:
 
         if materialise_as_hash:
             splink_dataframe = self._execute_sql_against_backend(
-                sql, output_tablename_templated, table_name_hash, transpile=transpile
+                sql, output_tablename_templated, table_name_hash
             )
         else:
             splink_dataframe = self._execute_sql_against_backend(
                 sql,
                 output_tablename_templated,
                 output_tablename_templated,
-                transpile=transpile,
             )
 
         self._names_of_tables_created_by_splink.append(splink_dataframe.physical_name)

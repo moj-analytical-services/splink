@@ -671,7 +671,7 @@ class ComparisonLevel:
     def human_readable_description(self):
 
         input_cols = join_list_with_commas_final_and(
-            [c.name(escape=False) for c in self._input_columns_used_by_sql_condition]
+            [c.name() for c in self._input_columns_used_by_sql_condition]
         )
         desc = (
             f"Comparison level: {self._label_for_charts} of {input_cols}\n"

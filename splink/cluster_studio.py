@@ -143,7 +143,6 @@ def _get_random_cluster_ids(
     df_sample = linker._sql_to_splink_dataframe_checking_cache(
         sql,
         "__splink__df_concat_with_tf_sample",
-        transpile=False,
     )
     return [r["cluster_id"] for r in df_sample.as_record_dict()]
 

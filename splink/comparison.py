@@ -448,7 +448,7 @@ class Comparison:
     def _human_readable_description_succinct(self):
 
         input_cols = join_list_with_commas_final_and(
-            [c.name(escape=False) for c in self._input_columns_used_by_case_statement]
+            [c.name() for c in self._input_columns_used_by_case_statement]
         )
 
         comp_levels = self._comparison_level_description_list
@@ -467,7 +467,7 @@ class Comparison:
     def human_readable_description(self):
 
         input_cols = join_list_with_commas_final_and(
-            [c.name(escape=False) for c in self._input_columns_used_by_case_statement]
+            [c.name() for c in self._input_columns_used_by_case_statement]
         )
 
         comp_levels = self._comparison_level_description_list

@@ -181,23 +181,23 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
     sql = _col_or_expr_frequencies_raw_data_sql(column_expressions, input_tablename)
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-    df_raw = linker._execute_sql_pipeline(materialise_as_hash=True, transpile=True)
+    df_raw = linker._execute_sql_pipeline(materialise_as_hash=True)
 
     sqls = _get_df_percentiles()
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    df_percentiles = linker._execute_sql_pipeline([df_raw], transpile=False)
+    df_percentiles = linker._execute_sql_pipeline([df_raw])
     percentile_rows_all = df_percentiles.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, top_n, "desc")
     linker._enqueue_sql(sql, "__splink__df_top_n")
-    df_top_n = linker._execute_sql_pipeline([df_raw], transpile=False)
+    df_top_n = linker._execute_sql_pipeline([df_raw])
     top_n_rows_all = df_top_n.as_record_dict()
 
     sql = _get_df_top_bottom_n(column_expressions, bottom_n, "asc")
     linker._enqueue_sql(sql, "__splink__df_bottom_n")
-    df_bottom_n = linker._execute_sql_pipeline([df_raw], transpile=False)
+    df_bottom_n = linker._execute_sql_pipeline([df_raw])
     bottom_n_rows_all = df_bottom_n.as_record_dict()
 
     inner_charts = []

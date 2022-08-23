@@ -166,16 +166,11 @@ class DuckDBLinker(Linker):
     ) -> DuckDBLinkerDataFrame:
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
-    def _execute_sql_against_backend(
-        self, sql, templated_name, physical_name, transpile=True
-    ):
+    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
 
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
-
-        if transpile:
-            sql = sqlglot.transpile(sql, read=None, write="duckdb", pretty=True)[0]
 
         logger.debug(
             execute_sql_logging_message_info(

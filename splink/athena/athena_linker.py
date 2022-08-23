@@ -309,17 +309,13 @@ class AthenaLinker(Linker):
             settings_dict["sql_dialect"] = "presto"
         super().initialise_settings(settings_dict)
 
-    def _execute_sql_against_backend(
-        self, sql, templated_name, physical_name, transpile=True
-    ):
+    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
 
         # Deletes the table in the db, but not the object on s3.
         # This needs to be removed manually (full s3 path provided)
         self.drop_table_from_database_if_exists(physical_name)
 
-        if transpile:
-            sql = cast_concat_as_varchar(sql)
-            sql = sqlglot.transpile(sql, read=None, write="presto")[0]
+        sql = cast_concat_as_varchar(sql)
 
         sql = sql.replace("float", "real")
 
