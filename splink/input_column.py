@@ -51,7 +51,7 @@ def remove_quotes_from_identifiers(tree):
 
 def unquote(sql_string):
 
-    return sql_string.replace("`", "", '"', "")
+    return sql_string.replace("`", "").replace('"', "")
 
 
 class InputColumn:
