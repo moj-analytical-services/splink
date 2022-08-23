@@ -10,7 +10,7 @@ import sqlglot
 from sqlglot.expressions import EQ, Column, Identifier
 
 from .default_from_jsonschema import default_value_from_schema
-from .input_column import InputColumn
+from .input_column import InputColumn, unquote
 from .misc import (
     dedupe_preserving_order,
     interpolate,
@@ -27,8 +27,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _is_exact_match(sql):
-    syntax_tree = sqlglot.parse_one(sql, read=None)
+def _is_exact_match(sql, sql_dialect=None):
+    syntax_tree = sqlglot.parse_one(sql, read=sql_dialect)
 
     expected_types = {0: EQ, 1: Column, 2: Identifier}
     for tup in syntax_tree.walk():
@@ -41,14 +41,18 @@ def _is_exact_match(sql):
     return True
 
 
-def _exact_match_colname(sql):
+def _exact_match_colname(sql, sql_dialect=None):
     cols = []
-    syntax_tree = sqlglot.parse_one(sql.lower(), read=None)
+    syntax_tree = sqlglot.parse_one(sql.lower(), read=sql_dialect)
+
+    for identifier in syntax_tree.find_all(Identifier):
+        identifier.set(arg="quoted", value=False)
+
     for tup in syntax_tree.walk():
         subtree = tup[0]
         depth = getattr(subtree, "depth", None)
         if depth == 2:
-            cols.append(subtree.this)
+            cols.append(subtree.sql())
 
     cols = [c[:-2] for c in cols]  # Remove _l and _r
     cols = list(set(cols))
@@ -169,9 +173,7 @@ class ComparisonLevel:
     def _tf_adjustment_input_column_name(self):
         input_column = self._tf_adjustment_input_column
         if input_column:
-            return input_column.input_name
-        else:
-            return None
+            return unquote(input_column.input_name)
 
     @property
     def _has_comparison(self):
@@ -364,20 +366,13 @@ class ComparisonLevel:
         col = self._level_dict.get("tf_adjustment_column")
         return col is not None
 
-    @property
-    def _sql_read_dialect(self):
-        read_dialect = None
-        if self._sql_dialect is not None:
-            read_dialect = self._sql_dialect
-        return read_dialect
-
     def _validate_sql(self):
         sql = self._sql_condition
         if self._is_else_level:
             return True
 
         try:
-            sqlglot.parse_one(sql, read=self._sql_read_dialect)
+            sqlglot.parse_one(sql, read=self._sql_dialect)
         except sqlglot.ParseError as e:
             raise ValueError(f"Error parsing sql_statement:\n{sql}") from e
 
@@ -390,9 +385,7 @@ class ComparisonLevel:
         if self._is_else_level:
             return []
 
-        cols = get_columns_used_from_sql(
-            self._sql_condition, dialect=self._sql_read_dialect
-        )
+        cols = get_columns_used_from_sql(self._sql_condition, dialect=self._sql_dialect)
         # Parsed order seems to be roughly in reverse order of apearance
         cols = cols[::-1]
 
@@ -445,7 +438,7 @@ class ComparisonLevel:
 
         sqls = re.split(r" and ", self._sql_condition, flags=re.IGNORECASE)
         for sql in sqls:
-            if not _is_exact_match(sql):
+            if not _is_exact_match(sql, self._sql_dialect):
                 return False
         return True
 
@@ -461,7 +454,7 @@ class ComparisonLevel:
 
         cols = []
         for sql in sqls:
-            col = _exact_match_colname(sql)
+            col = _exact_match_colname(sql, sql_dialect=self._sql_dialect)
             cols.append(col)
         return cols
 
