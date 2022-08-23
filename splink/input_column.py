@@ -49,6 +49,11 @@ def remove_quotes_from_identifiers(tree):
     return tree
 
 
+def unquote(sql_string):
+
+    return sql_string.replace("`", "", '"', "")
+
+
 class InputColumn:
     def __init__(self, name, settings_obj=None, sql_dialect=None):
 
@@ -80,12 +85,6 @@ class InputColumn:
     def quote(self):
         for identifier in self.input_name_as_tree.find_all(exp.Identifier):
             identifier.set(arg="quoted", value=True)
-        return self
-
-    def unquote(self):
-        for identifier in self.input_name_as_tree.find_all(exp.Identifier):
-            identifier.set(arg="quoted", value=False)
-        return self
 
     def parse_input_name_to_sqlglot_tree(self):
 
