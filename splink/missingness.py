@@ -1,6 +1,3 @@
-from .input_column import unquote
-
-
 def missingness_sqls(columns, input_tablename):
 
     sqls = []
@@ -13,7 +10,7 @@ def missingness_sqls(columns, input_tablename):
     selects = [
         col_template.format(
             col_name_escaped=col.name(),
-            col_name=unquote(col.name()),
+            col_name=col.unquote.name(),
             input_tablename=input_tablename,
         )
         for col in columns

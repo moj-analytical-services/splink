@@ -1,5 +1,6 @@
 import sqlglot
 import sqlglot.expressions as exp
+from copy import deepcopy
 
 from sqlglot.errors import ParseError
 
@@ -49,11 +50,6 @@ def remove_quotes_from_identifiers(tree):
     return tree
 
 
-def unquote(sql_string):
-
-    return sql_string.replace("`", "").replace('"', "")
-
-
 class InputColumn:
     def __init__(self, name, settings_obj=None, sql_dialect=None):
 
@@ -80,11 +76,21 @@ class InputColumn:
         self.input_name = name
 
         self.input_name_as_tree = self.parse_input_name_to_sqlglot_tree()
-        self.quote()
 
-    def quote(self):
         for identifier in self.input_name_as_tree.find_all(exp.Identifier):
             identifier.set(arg="quoted", value=True)
+
+    def quote(self):
+        self_copy = deepcopy(self)
+        for identifier in self_copy.input_name_as_tree.find_all(exp.Identifier):
+            identifier.set(arg="quoted", value=True)
+        return self_copy
+
+    def unquote(self):
+        self_copy = deepcopy(self)
+        for identifier in self_copy.input_name_as_tree.find_all(exp.Identifier):
+            identifier.set(arg="quoted", value=False)
+        return self_copy
 
     def parse_input_name_to_sqlglot_tree(self):
 
