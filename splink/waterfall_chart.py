@@ -79,10 +79,10 @@ def _comparison_records(record_as_dict, comparison: Comparison):
 
         if cl._tf_adjustment_input_column is not None:
             waterfall_record_2["value_l"] = str(
-                record_as_dict[cl._tf_adjustment_input_column.unquote.name_l()]
+                record_as_dict[cl._tf_adjustment_input_column.unquote().name_l()]
             )
             waterfall_record_2["value_r"] = str(
-                record_as_dict[cl._tf_adjustment_input_column.unquote.name_r()]
+                record_as_dict[cl._tf_adjustment_input_column.unquote().name_r()]
             )
         else:
             waterfall_record_2["value_l"] = ""
