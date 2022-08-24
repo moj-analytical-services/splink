@@ -10,7 +10,7 @@ import sqlglot
 from sqlglot.expressions import EQ, Column, Identifier
 
 from .default_from_jsonschema import default_value_from_schema
-from .input_column import InputColumn, unquote
+from .input_column import InputColumn
 from .misc import (
     dedupe_preserving_order,
     interpolate,
@@ -173,7 +173,7 @@ class ComparisonLevel:
     def _tf_adjustment_input_column_name(self):
         input_column = self._tf_adjustment_input_column
         if input_column:
-            return unquote(input_column.input_name)
+            return input_column.unquote().name()
 
     @property
     def _has_comparison(self):
