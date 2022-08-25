@@ -450,7 +450,7 @@ class Linker:
         """
         new_linker = copy(self)
         new_linker._em_training_sessions = []
-        new_settings = deepcopy(self._settings_obj)
+        new_settings = deepcopy(self._settings_obj_)
         new_linker._settings_obj_ = new_settings
         return new_linker
 
