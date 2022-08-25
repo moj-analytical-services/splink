@@ -1919,3 +1919,26 @@ class Linker:
         with open(in_path, "r") as f:
             model_dict = json.load(f)
         self.initialise_settings(model_dict)
+
+    def estimate_probability_two_random_records_match(
+        self, deterministic_matching_rules, recall
+    ):
+
+        link_type = self._settings_obj._link_type
+        unique_id_column_name = self._settings_obj._unique_id_column_name
+
+        records = cumulative_comparisons_generated_by_blocking_rules(
+            self,
+            deterministic_matching_rules,
+            link_type,
+            unique_id_column_name,
+        )
+
+        summary_record = records[-1]
+        prob = summary_record["cumulative_rows"] / summary_record["cartesian"]
+        self._settings_obj._probability_two_random_records_match = prob
+
+        logger.info(
+            f"Probability two random records match is estimated to be  {prob:.3g} (i.e."
+            f" one in {1/prob:,.2f} records match)"
+        )
