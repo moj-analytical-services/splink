@@ -231,6 +231,7 @@ def test_lambda():
     training_session = linker.estimate_parameters_using_expectation_maximisation(
         "l.first_name = r.first_name and l.surname = r.surname",
         fix_u_probabilities=False,
+        populate_probability_two_random_records_match_from_trained_values=True,
     )
 
     # linker._settings_obj.match_weights_chart()

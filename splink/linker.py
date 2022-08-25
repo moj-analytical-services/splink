@@ -815,6 +815,7 @@ class Linker:
         fix_probability_two_random_records_match: bool = False,
         fix_m_probabilities=False,
         fix_u_probabilities=True,
+        populate_probability_two_random_records_match_from_trained_values=False,
     ) -> EMTrainingSession:
         """Estimate the parameters of the linkage model using expectation maximisation.
 
@@ -885,6 +886,9 @@ class Linker:
                 probabilities after each iteration. Defaults to False.
             fix_u_probabilities (bool, optional): If True, do not update the u
                 probabilities after each iteration. Defaults to True.
+            populate_probability_two_random_records_match_from_trained_values
+                (bool, optional): If True, derive this parameter from
+                the blocked value. Defaults to False.
 
         Examples:
             >>> blocking_rule = "l.first_name = r.first_name and l.dob = r.dob"
@@ -932,7 +936,8 @@ class Linker:
 
         self._populate_m_u_from_trained_values()
 
-        self._populate_probability_two_random_records_match_from_trained_values()
+        if populate_probability_two_random_records_match_from_trained_values:
+            self._populate_probability_two_random_records_match_from_trained_values()
 
         self._settings_obj._columns_without_estimated_parameters_message()
 
