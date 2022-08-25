@@ -1923,6 +1923,24 @@ class Linker:
     def estimate_probability_two_random_records_match(
         self, deterministic_matching_rules, recall
     ):
+        """Estimate the model parameter `probability_two_random_records_match` using
+        a direct estimation approach.
+
+        See [here](https://github.com/moj-analytical-services/splink/issues/462)
+        for discussion of methodology
+
+        Args:
+            deterministic_matching_rules (list): A list of deterministic matching
+                rules that should be designed to admit very few (none if possible)
+                false positives
+            recall (float): A guess at the recall the deterministic matching rules
+                will attain.  i.e. what proportion of true matches will be recovered
+                by these deterministic rules
+        """
+
+        # If user, by error, provides a single rule as a string
+        if isinstance(deterministic_matching_rules, str):
+            deterministic_matching_rules = [deterministic_matching_rules]
 
         link_type = self._settings_obj._link_type
         unique_id_column_name = self._settings_obj._unique_id_column_name
