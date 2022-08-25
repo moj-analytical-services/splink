@@ -129,7 +129,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
 
     brs_as_objs = linker._settings_obj_._blocking_rules_to_generate_predictions
     group_by = (
-        "group by match_key order by cast(match_key as int) desc"
+        "group by match_key order by cast(match_key as int) asc"
         if len(brs_as_objs) > 1
         else ""
     )
