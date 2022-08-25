@@ -1935,10 +1935,15 @@ class Linker:
         )
 
         summary_record = records[-1]
-        prob = summary_record["cumulative_rows"] / summary_record["cartesian"]
+        cartesian = summary_record["cartesian"]
+        prob = summary_record["cumulative_rows"] / cartesian
+
         self._settings_obj._probability_two_random_records_match = prob
 
         logger.info(
-            f"Probability two random records match is estimated to be  {prob:.3g} (i.e."
-            f" one in {1/prob:,.2f} records match)"
+            f"Probability two random records match is estimated to be  {prob:.3g}.\n"
+            f"This means that amongst all possible pairwise record comparisons, one in "
+            f"{1/prob:,.2f} are expected to match.  With {cartesian:,.0f} total"
+            " possible comparisons, we expect a total of around "
+            f"{prob*cartesian:,.2f} matching pairs"
         )
