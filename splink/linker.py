@@ -1936,7 +1936,8 @@ class Linker:
 
         summary_record = records[-1]
         cartesian = summary_record["cartesian"]
-        prob = summary_record["cumulative_rows"] / cartesian
+        num_rows = summary_record["cumulative_rows"] / recall
+        prob = num_rows / cartesian
 
         self._settings_obj._probability_two_random_records_match = prob
 
