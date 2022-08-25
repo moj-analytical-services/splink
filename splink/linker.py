@@ -1518,6 +1518,7 @@ class Linker:
         out_path: str,
         overwrite=False,
         num_example_rows=2,
+        return_html_as_string=False,
     ):
         """Generate an interactive html visualization of the linker's predictions and
         save to `out_path`.  For more information see
@@ -1531,6 +1532,7 @@ class Linker:
                 Defaults to False.
             num_example_rows (int, optional): Number of example rows per comparison
                 vector. Defaults to 2.
+            return_html_as_string: If True, return the html as a string
 
         Examples:
             >>> df_predictions = linker.predict()
@@ -1559,7 +1561,8 @@ class Linker:
             out_path,
             overwrite,
         )
-        return rendered
+        if return_html_as_string:
+            return rendered
 
     def parameter_estimate_comparisons_chart(self, include_m=True, include_u=True):
         """Show a chart that shows how parameter estimates have differed across
@@ -1829,6 +1832,7 @@ class Linker:
         cluster_ids: list = None,
         cluster_names: list = None,
         overwrite: bool = False,
+        return_html_as_string=False,
     ):
         """Generate an interactive html visualization of the predicted cluster and
         save to `out_path`.
@@ -1850,6 +1854,7 @@ class Linker:
             cluster_names (list, optional): If provided, the dashboard will display
                 these names in the selection box. Ony works in conjunction with
                 `cluster_ids`.  Defaults to None.
+            return_html_as_string: If True, return the html as a string
 
         Examples:
             >>> df_p = linker.predict()
@@ -1866,7 +1871,7 @@ class Linker:
         """
         self._raise_error_if_necessary_waterfall_columns_not_computed()
 
-        return render_splink_cluster_studio_html(
+        rendered = render_splink_cluster_studio_html(
             self,
             df_predict,
             df_clustered,
@@ -1877,6 +1882,9 @@ class Linker:
             overwrite=overwrite,
             cluster_names=cluster_names,
         )
+
+        if return_html_as_string:
+            return rendered
 
     def save_settings_to_json(self, out_path: str, overwrite=False) -> dict:
         """Save the configuration and parameters the linkage model to a `.json` file.
