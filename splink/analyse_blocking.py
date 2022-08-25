@@ -127,7 +127,11 @@ def cumulative_comparisons_generated_by_blocking_rules(
     linker._enqueue_sql(sql, "__splink__df_blocked_data")
 
     brs_as_objs = copied_linker._settings_obj_._blocking_rules_to_generate_predictions
-    group_by = "group by match_key" if len(brs_as_objs) > 1 else ""
+    group_by = (
+        "group by match_key order by cast(match_key as int) desc"
+        if len(brs_as_objs) > 1
+        else ""
+    )
 
     sql = f"""
         select count(*) as row_count

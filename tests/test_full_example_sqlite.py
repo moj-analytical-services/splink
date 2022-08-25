@@ -27,6 +27,10 @@ def test_full_example_sqlite(tmp_path):
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
+    linker.estimate_probability_two_random_records_match(
+        ["l.email = r.email"], recall=0.3
+    )
+
     linker.estimate_u_using_random_sampling(target_rows=1e6)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"

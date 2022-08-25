@@ -46,6 +46,9 @@ def test_full_example_duckdb(tmp_path):
     linker.compute_tf_table("first_name")
 
     linker.estimate_u_using_random_sampling(target_rows=1e6)
+    linker.estimate_probability_two_random_records_match(
+        ["l.email = r.email"], recall=0.3
+    )
 
     blocking_rule = 'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
