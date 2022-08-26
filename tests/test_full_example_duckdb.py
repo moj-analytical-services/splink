@@ -10,7 +10,9 @@ from basic_settings import get_settings_dict
 from splink.comparison_level_library import (
     _mutable_params,
 )
+
 _mutable_params["dialect"] = "duckdb"
+
 
 def test_full_example_duckdb(tmp_path):
 

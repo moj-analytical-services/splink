@@ -5,6 +5,7 @@ import os
 from splink.comparison_level_library import (
     _mutable_params,
 )
+
 _mutable_params["dialect"] = "presto"
 _mutable_params["levenshtein"] = "levenshtein_distance"
 

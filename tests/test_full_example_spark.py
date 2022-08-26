@@ -15,7 +15,9 @@ from pyspark.sql.functions import array
 from splink.comparison_level_library import (
     _mutable_params,
 )
+
 _mutable_params["dialect"] = "spark"
+
 
 def test_full_example_spark(df_spark, tmp_path):
 

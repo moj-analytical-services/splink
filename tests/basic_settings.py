@@ -3,7 +3,9 @@ from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.comparison_library import levenshtein_at_thresholds, exact_match
 
 
-first_name_cc = levenshtein_at_thresholds("first_name", 2, term_frequency_adjustments=True)
+first_name_cc = levenshtein_at_thresholds(
+    "first_name", 2, term_frequency_adjustments=True
+)
 dob_cc = exact_match("dob")
 email_cc = exact_match("email")
 city_cc = exact_match("city")

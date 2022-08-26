@@ -89,7 +89,10 @@ def _get_df_percentiles():
     from __splink__df_total_in_value_counts
     """
     sqls.append(
-        {"sql": sql, "output_table_name": "__splink__df_total_in_value_counts_cumulative"}
+        {
+            "sql": sql,
+            "output_table_name": "__splink__df_total_in_value_counts_cumulative",
+        }
     )
 
     sql = """

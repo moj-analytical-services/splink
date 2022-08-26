@@ -317,7 +317,7 @@ class AthenaLinker(Linker):
         self.drop_table_from_database_if_exists(physical_name)
         sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
         sql = sql.replace("FLOAT", "double").replace("float", "double")
-#         sql = sql
+        #         sql = sql
 
         logger.debug(
             execute_sql_logging_message_info(
