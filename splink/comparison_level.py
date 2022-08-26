@@ -46,7 +46,7 @@ def _exact_match_colname(sql, sql_dialect=None):
     syntax_tree = sqlglot.parse_one(sql.lower(), read=sql_dialect)
 
     for identifier in syntax_tree.find_all(Identifier):
-        identifier.set(arg="quoted", value=False)
+        identifier.args["quoted"] = False
 
     for tup in syntax_tree.walk():
         subtree = tup[0]
