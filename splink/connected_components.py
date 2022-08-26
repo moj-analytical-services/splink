@@ -354,10 +354,62 @@ def _cc_create_unique_id_cols(
     )
 
 
+def _exit_query(
+    pairwise_mode=False,
+    df_predict=None,
+    representatives=None,
+    uid_cols=None,
+    pairwise_filter=False,
+):
+
+    representatives = representatives.physical_name if representatives else None
+    df_predict = df_predict.physical_name if df_predict else None
+
+    if pairwise_mode:
+
+        uid_concat_l = _composite_unique_id_from_edges_sql(uid_cols, "l", "n")
+        uid_concat_r = _composite_unique_id_from_edges_sql(uid_cols, "r", "n")
+
+        filter_cond = "where cluster_id_l = cluster_id_r" if pairwise_filter else ""
+
+        return f"""
+            select
+                n.*,
+                repr_l.representative as cluster_id_l,
+                repr_r.representative as cluster_id_r
+            from {df_predict} as n
+            left join
+            {representatives} as repr_l
+                on {uid_concat_l} = repr_l.node_id
+            left join
+            {representatives} as repr_r
+                on {uid_concat_r} = repr_r.node_id
+            {filter_cond}
+            order by
+                cluster_id_l, cluster_id_r
+        """
+
+    else:
+
+        uid_concat = _composite_unique_id_from_nodes_sql(uid_cols, "n")
+
+        return f"""
+            select
+                c.representative as cluster_id, n.*
+            from {representatives} as c
+
+            left join __splink__df_concat_with_tf as n
+            on {uid_concat} = c.node_id
+        """
+
+
 def solve_connected_components(
     linker: "Linker",
     edges_table: SplinkDataFrame,
-    _generated_graph=False,
+    df_predict: SplinkDataFrame,
+    pairwise_output: bool = False,
+    filter_pairwise_format_for_clusters: bool = False,
+    _generated_graph: bool = False,
 ):
     """Connected Components main algorithm.
 
@@ -464,17 +516,15 @@ def solve_connected_components(
     # Create our final representatives table
     # Need to edit how we export the table based on whether we are
     # performing a link or dedupe job.
-
     uid_cols = linker._settings_obj._unique_id_input_columns
-    uid_concat = _composite_unique_id_from_nodes_sql(uid_cols, "n")
 
-    exit_query = f"""
-        select c.representative as cluster_id, n.*
-        from {representatives.physical_name} as c
-        left join __splink__df_concat_with_tf as n
-        on {uid_concat} = c.node_id
-
-    """
+    exit_query = _exit_query(
+        pairwise_mode=pairwise_output,
+        df_predict=df_predict,
+        representatives=representatives,
+        uid_cols=uid_cols,
+        pairwise_filter=filter_pairwise_format_for_clusters,
+    )
 
     representatives = linker._sql_to_splink_dataframe_checking_cache(
         exit_query,

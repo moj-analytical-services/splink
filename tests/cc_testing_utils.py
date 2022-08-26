@@ -51,7 +51,7 @@ def run_cc_implementation(splink_df):
 
     # finally, run our connected components algorithm
     cc = solve_connected_components(
-        splink_df.duckdb_linker, splink_df, _generated_graph=True
+        splink_df.duckdb_linker, splink_df, df_predict=None, _generated_graph=True
     ).as_pandas_dataframe()
     cc = cc.rename(columns={"unique_id": "node_id", "cluster_id": "representative"})
     cc = cc[["node_id", "representative"]]
