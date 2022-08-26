@@ -2,6 +2,13 @@ import pandas as pd
 import pytest
 import os
 
+from splink.comparison_level_library import (
+    _mutable_params,
+)
+
+_mutable_params["dialect"] = "presto"
+_mutable_params["levenshtein"] = "levenshtein_distance"
+
 from basic_settings import get_settings_dict
 
 skip = False
