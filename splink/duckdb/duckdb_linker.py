@@ -208,7 +208,7 @@ class DuckDBLinker(Linker):
         sql = f"PRAGMA table_info('{table_name}');"
         try:
             self._con.execute(sql)
-        except RuntimeError:
+        except (RuntimeError, duckdb.CatalogException):
             return False
         return True
 
