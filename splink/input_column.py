@@ -23,7 +23,7 @@ def add_suffix(tree, suffix):
     tree = tree.copy()
     identifier_string = tree.find(exp.Identifier).this
     identifier_string = f"{identifier_string}{suffix}"
-    tree.find(exp.Identifier).set(arg="this", value=identifier_string)
+    tree.find(exp.Identifier).args["this"] = identifier_string
     return tree
 
 
@@ -31,7 +31,7 @@ def add_prefix(tree, prefix):
     tree = tree.copy()
     identifier_string = tree.find(exp.Identifier).this
     identifier_string = f"{prefix}{identifier_string}"
-    tree.find(exp.Identifier).set(arg="this", value=identifier_string)
+    tree.find(exp.Identifier).args["this"] = identifier_string
     return tree
 
 
@@ -39,14 +39,14 @@ def add_table(tree, tablename):
     tree = tree.copy()
     table_identifier = exp.Identifier(this=tablename, quoted=True)
     identifier = tree.find(exp.Column)
-    identifier.set(arg="table", value=table_identifier)
+    identifier.args["table"] = table_identifier
     return tree
 
 
 def remove_quotes_from_identifiers(tree):
     tree = tree.copy()
     for identifier in tree.find_all(exp.Identifier):
-        identifier.set(arg="quoted", value=False)
+        identifier.args["quoted"] = False
     return tree
 
 
@@ -64,8 +64,10 @@ class InputColumn:
         else:
             self._sql_dialect = None
 
-        if self._sql_dialect == "spark":
-            quote_character = "`"
+        valid_dialects = [name.lower() for name in sqlglot.Dialects._member_names_]
+        if self._sql_dialect in valid_dialects:
+            quote_characters = sqlglot.Dialect[self._sql_dialect.lower()].identifiers
+            quote_character = '"' if '"' in quote_characters else quote_characters[0]
         else:
             quote_character = '"'
 
@@ -78,18 +80,18 @@ class InputColumn:
         self.input_name_as_tree = self.parse_input_name_to_sqlglot_tree()
 
         for identifier in self.input_name_as_tree.find_all(exp.Identifier):
-            identifier.set(arg="quoted", value=True)
+            identifier.args["quoted"] = True
 
     def quote(self):
         self_copy = deepcopy(self)
         for identifier in self_copy.input_name_as_tree.find_all(exp.Identifier):
-            identifier.set(arg="quoted", value=True)
+            identifier.args["quoted"] = True
         return self_copy
 
     def unquote(self):
         self_copy = deepcopy(self)
         for identifier in self_copy.input_name_as_tree.find_all(exp.Identifier):
-            identifier.set(arg="quoted", value=False)
+            identifier.args["quoted"] = False
         return self_copy
 
     def parse_input_name_to_sqlglot_tree(self):
