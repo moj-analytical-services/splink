@@ -75,7 +75,7 @@ def _get_df_percentiles():
     order by group_name, value_count desc
     """
 
-    sqls.append({"sql": sql, "output_table_name": "df_total_in_value_counts"})
+    sqls.append({"sql": sql, "output_table_name": "__splink__df_total_in_value_counts"})
 
     sql = """
     select sum(sum_tokens_in_value_count_group)
@@ -86,10 +86,10 @@ def _get_df_percentiles():
     total_non_null_rows,
     total_rows_inc_nulls,
     distinct_value_count
-    from df_total_in_value_counts
+    from __splink__df_total_in_value_counts
     """
     sqls.append(
-        {"sql": sql, "output_table_name": "df_total_in_value_counts_cumulative"}
+        {"sql": sql, "output_table_name": "__splink__df_total_in_value_counts_cumulative"}
     )
 
     sql = """
@@ -100,7 +100,7 @@ def _get_df_percentiles():
         as percentile_inc_nulls,
     value_count, group_name, total_non_null_rows, total_rows_inc_nulls,
     sum_tokens_in_value_count_group, distinct_value_count
-    from df_total_in_value_counts_cumulative
+    from __splink__df_total_in_value_counts_cumulative
 
     """
     sqls.append({"sql": sql, "output_table_name": "__splink__df_percentiles"})

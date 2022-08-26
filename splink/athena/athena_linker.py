@@ -315,10 +315,9 @@ class AthenaLinker(Linker):
         # Deletes the table in the db, but not the object on s3.
         # This needs to be removed manually (full s3 path provided)
         self.drop_table_from_database_if_exists(physical_name)
-
         sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
-
-        sql = sql.replace("float", "real")
+        sql = sql.replace("FLOAT", "double").replace("float", "double")
+#         sql = sql
 
         logger.debug(
             execute_sql_logging_message_info(
