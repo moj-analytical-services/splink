@@ -2,6 +2,12 @@ import pandas as pd
 import pytest
 import os
 
+from splink.comparison_level_library import (
+    _mutable_params,
+)
+_mutable_params["dialect"] = "presto"
+_mutable_params["levenshtein"] = "levenshtein_distance"
+
 from basic_settings import get_settings_dict
 
 skip = False
@@ -76,7 +82,7 @@ def create_and_upload_test_data(my_session):
     return db_name_read, db_name_write
 
 
-@pytest.mark.skip(reason="AWS Connection Required")
+# @pytest.mark.skip(reason="AWS Connection Required")
 def test_full_example_athena(tmp_path):
 
     """
@@ -133,7 +139,7 @@ def test_full_example_athena(tmp_path):
     linker.unlinkables_chart(source_dataset="Testing")
 
 
-@pytest.mark.skip(reason="AWS Connection Required")
+# @pytest.mark.skip(reason="AWS Connection Required")
 def test_athena_garbage_collection():
 
     # creates a session at least on the platform...
@@ -197,7 +203,7 @@ def test_athena_garbage_collection():
     assert len(files) == 0
 
 
-@pytest.mark.skip(reason="AWS Connection Required")
+# @pytest.mark.skip(reason="AWS Connection Required")
 def test_athena_df_as_input():
 
     import pandas as pd
@@ -223,7 +229,7 @@ def test_athena_df_as_input():
     linker.predict()
 
 
-@pytest.mark.skip(reason="AWS Connection Required")
+# @pytest.mark.skip(reason="AWS Connection Required")
 def test_athena_link_only():
 
     import pandas as pd
