@@ -17,9 +17,14 @@ def get_link_type_settings_obj(
     link_type=None,
     unique_id_column_name=None,
 ):
+    """This is needed because the user may want to know
+    number_of_comparisons_generated_by_blocking_rule_sql before they've passed
+    settings into the linker
+    """
 
     if linker._settings_obj_ is not None:
         settings_obj = linker._settings_obj
+        return settings_obj
 
     if link_type is None and linker._settings_obj_ is None:
         if len(linker._input_tables_dict.values()) == 1:

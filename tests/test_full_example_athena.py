@@ -2,6 +2,8 @@ import pandas as pd
 import pytest
 import os
 
+from basic_settings import get_settings_dict
+
 skip = False
 try:
     import awswrangler as wr
@@ -83,8 +85,6 @@ def test_full_example_athena(tmp_path):
     created on a new test run. Instead, we are utilising garbage_collection
     in the AthenaLinker to clean the process before we proceed.
     """
-
-    from basic_settings import get_settings_dict
 
     # creates a session at least on the platform...
     my_session = boto3.Session(region_name="eu-west-1")
