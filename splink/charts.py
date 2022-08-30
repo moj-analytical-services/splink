@@ -70,10 +70,6 @@ IFrame(src="./{filename}", width=1000, height=500)
 """
 
 
-# """Save Splink charting outputs to disk as a standalone .html file
-# whichw works offline
-
-
 def save_offline_chart(
     chart_dict, filename="my_chart.html", overwrite=False, print_msg=True
 ):
