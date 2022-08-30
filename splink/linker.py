@@ -441,7 +441,7 @@ class Linker:
         """
         new_linker = copy(self)
         new_linker._em_training_sessions = []
-        new_settings = deepcopy(self._settings_obj)
+        new_settings = deepcopy(self._settings_obj_)
         new_linker._settings_obj_ = new_settings
         return new_linker
 
@@ -806,6 +806,7 @@ class Linker:
         fix_probability_two_random_records_match: bool = False,
         fix_m_probabilities=False,
         fix_u_probabilities=True,
+        populate_probability_two_random_records_match_from_trained_values=False,
     ) -> EMTrainingSession:
         """Estimate the parameters of the linkage model using expectation maximisation.
 
@@ -876,6 +877,9 @@ class Linker:
                 probabilities after each iteration. Defaults to False.
             fix_u_probabilities (bool, optional): If True, do not update the u
                 probabilities after each iteration. Defaults to True.
+            populate_probability_two_random_records_match_from_trained_values
+                (bool, optional): If True, derive this parameter from
+                the blocked value. Defaults to False.
 
         Examples:
             >>> blocking_rule = "l.first_name = r.first_name and l.dob = r.dob"
@@ -923,7 +927,8 @@ class Linker:
 
         self._populate_m_u_from_trained_values()
 
-        self._populate_probability_two_random_records_match_from_trained_values()
+        if populate_probability_two_random_records_match_from_trained_values:
+            self._populate_probability_two_random_records_match_from_trained_values()
 
         self._settings_obj._columns_without_estimated_parameters_message()
 
@@ -1935,3 +1940,50 @@ class Linker:
         with open(in_path, "r") as f:
             model_dict = json.load(f)
         self.initialise_settings(model_dict)
+
+    def estimate_probability_two_random_records_match(
+        self, deterministic_matching_rules, recall
+    ):
+        """Estimate the model parameter `probability_two_random_records_match` using
+        a direct estimation approach.
+
+        See [here](https://github.com/moj-analytical-services/splink/issues/462)
+        for discussion of methodology
+
+        Args:
+            deterministic_matching_rules (list): A list of deterministic matching
+                rules that should be designed to admit very few (none if possible)
+                false positives
+            recall (float): A guess at the recall the deterministic matching rules
+                will attain.  i.e. what proportion of true matches will be recovered
+                by these deterministic rules
+        """
+
+        # If user, by error, provides a single rule as a string
+        if isinstance(deterministic_matching_rules, str):
+            deterministic_matching_rules = [deterministic_matching_rules]
+
+        link_type = self._settings_obj._link_type
+        unique_id_column_name = self._settings_obj._unique_id_column_name
+
+        records = cumulative_comparisons_generated_by_blocking_rules(
+            self,
+            deterministic_matching_rules,
+            link_type,
+            unique_id_column_name,
+        )
+
+        summary_record = records[-1]
+        cartesian = summary_record["cartesian"]
+        num_rows = summary_record["cumulative_rows"] / recall
+        prob = num_rows / cartesian
+
+        self._settings_obj._probability_two_random_records_match = prob
+
+        logger.info(
+            f"Probability two random records match is estimated to be  {prob:.3g}.\n"
+            f"This means that amongst all possible pairwise record comparisons, one in "
+            f"{1/prob:,.2f} are expected to match.  With {cartesian:,.0f} total"
+            " possible comparisons, we expect a total of around "
+            f"{prob*cartesian:,.2f} matching pairs"
+        )

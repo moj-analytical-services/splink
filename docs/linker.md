@@ -21,6 +21,7 @@ tags:
         - deterministic_link
         - estimate_m_from_label_column
         - estimate_parameters_using_expectation_maximisation
+        - estimate_probability_two_random_records_match
         - estimate_u_using_random_sampling
         - find_matches_to_new_records
         - initialise_settings
