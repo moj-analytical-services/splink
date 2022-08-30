@@ -70,14 +70,32 @@ IFrame(src="./{filename}", width=1000, height=500)
 """
 
 
+# """Save Splink charting outputs to disk as a standalone .html file
+# whichw works offline
+
+
 def save_offline_chart(
     chart_dict, filename="my_chart.html", overwrite=False, print_msg=True
 ):
+    """Save Splink charting outputs to disk as a standalone .html file
+    which works offline
+
+    Args:
+        chart_dict (dict): A vega lite spec as a dictionary
+        filename (str, optional): Name of output file. Defaults to "my_chart.html".
+        overwrite (bool, optional): Overwrite file if it exists. Defaults to False.
+        print_msg (bool, optional): Print a message instructing the user how to view
+            the outputs. Defaults to True.
+
+    """
 
     if os.path.isfile(filename) and not overwrite:
         raise ValueError(
             f"The path {filename} already exists. Please provide a different path."
         )
+
+    if type(chart_dict).__name__ == "VegaliteNoValidate":
+        chart_dict = chart_dict.spec
 
     # get altair chart as json
     path = "files/templates/single_chart_template.txt"
