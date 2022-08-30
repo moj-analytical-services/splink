@@ -6,13 +6,14 @@ import os
 import math
 
 from pyspark.sql import Row
-from .custom_spark_dialect import Dialect
+
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import ensure_is_list
 from ..input_column import InputColumn
+from .custom_spark_dialect import Dialect
 
 logger = logging.getLogger(__name__)
 
@@ -252,12 +253,9 @@ class SparkLinker(Linker):
                 )
         return spark_df
 
-    def _execute_sql_against_backend(
-        self, sql, templated_name, physical_name, transpile=True
-    ):
+    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
 
-        if transpile:
-            sql = sqlglot.transpile(sql, read=None, write="customspark", pretty=True)[0]
+        sql = sqlglot.transpile(sql, read="spark", write="customspark", pretty=True)[0]
 
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))

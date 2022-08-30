@@ -85,7 +85,6 @@ def estimate_u_values(linker: "Linker", target_rows):
     df_sample = training_linker._sql_to_splink_dataframe_checking_cache(
         sql,
         "__splink__df_concat_with_tf_sample",
-        transpile=False,
     )
 
     settings_obj._blocking_rules_to_generate_predictions = []

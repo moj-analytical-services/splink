@@ -10,10 +10,6 @@ def dedupe_preserving_order(list_of_items):
     return list(dict.fromkeys(list_of_items))
 
 
-def escape_columns(cols):
-    return [c.name(escape=True) for c in cols]
-
-
 def prob_to_bayes_factor(prob):
     return prob / (1 - prob)
 

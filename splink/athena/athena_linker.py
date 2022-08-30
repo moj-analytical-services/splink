@@ -4,9 +4,9 @@ import os
 import awswrangler as wr
 import numpy as np
 import boto3
-import sqlglot
 from typing import Union
 import uuid
+
 
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
@@ -14,7 +14,8 @@ from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..athena.athena_utils import boto_utils
 from ..input_column import InputColumn
 from ..misc import ensure_is_list
-from ..sql_transform import cast_concat_as_varchar
+from ..sql_transform import sqlglot_transform_sql
+from ..athena.athena_transforms import cast_concat_as_varchar
 
 
 logger = logging.getLogger(__name__)
@@ -309,19 +310,14 @@ class AthenaLinker(Linker):
             settings_dict["sql_dialect"] = "presto"
         super().initialise_settings(settings_dict)
 
-    def _execute_sql_against_backend(
-        self, sql, templated_name, physical_name, transpile=True
-    ):
+    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
 
         # Deletes the table in the db, but not the object on s3.
         # This needs to be removed manually (full s3 path provided)
         self.drop_table_from_database_if_exists(physical_name)
-
-        if transpile:
-            sql = cast_concat_as_varchar(sql)
-            sql = sqlglot.transpile(sql, read=None, write="presto")[0]
-
-        sql = sql.replace("float", "real")
+        sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
+        sql = sql.replace("FLOAT", "double").replace("float", "double")
+        #         sql = sql
 
         logger.debug(
             execute_sql_logging_message_info(

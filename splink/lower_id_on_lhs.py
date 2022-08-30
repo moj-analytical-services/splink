@@ -67,7 +67,7 @@ def lower_id_to_left_hand_side(
     """  # noqa
 
     cols = df.columns
-    cols = [c.name(escape=False) for c in cols]
+    cols = [c.name() for c in cols]
 
     l_cols = [c for c in cols if c.endswith("_l")]
     r_cols = [c for c in cols if c.endswith("_r")]

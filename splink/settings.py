@@ -104,7 +104,7 @@ class Settings:
     @property
     def _additional_columns_to_retain(self):
         cols = self._from_settings_dict_else_default("additional_columns_to_retain")
-        return [InputColumn(c, tf_adjustments=False, settings_obj=self) for c in cols]
+        return [InputColumn(c, settings_obj=self) for c in cols]
 
     @property
     def _source_dataset_column_name_is_required(self):
@@ -142,9 +142,7 @@ class Settings:
         cols = set()
         for cc in self.comparisons:
             cols.update(cc._tf_adjustment_input_col_names)
-        return [
-            InputColumn(c, settings_obj=self, tf_adjustments=True) for c in list(cols)
-        ]
+        return [InputColumn(c, settings_obj=self) for c in list(cols)]
 
     @property
     def _needs_matchkey_column(self) -> bool:

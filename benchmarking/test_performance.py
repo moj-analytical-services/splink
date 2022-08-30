@@ -306,7 +306,7 @@ def test_2_rounds_1k_sqlite(benchmark):
 
     def setup():
         con = sqlite3.connect(":memory:")
-        con.create_function("editdist3", 2, distance)
+        con.create_function("levenshtein", 2, distance)
         df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
         df.to_sql("input_df_tablename", con)
         return (con,), {"target_rows": 1e6}
@@ -325,7 +325,7 @@ def test_10_rounds_20k_sqlite(benchmark):
 
     def setup():
         con = sqlite3.connect(":memory:")
-        con.create_function("editdist3", 2, distance)
+        con.create_function("levenshtein", 2, distance)
         df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
         df.to_sql("input_df_tablename", con)
         return (con,), {"target_rows": 3e6}

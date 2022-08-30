@@ -32,7 +32,6 @@ first_name_cc = {
     ],
 }
 
-
 surname_cc = {
     "output_column_name": "surname",
     "comparison_levels": [

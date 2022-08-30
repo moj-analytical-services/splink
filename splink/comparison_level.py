@@ -27,8 +27,8 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _is_exact_match(sql):
-    syntax_tree = sqlglot.parse_one(sql, read=None)
+def _is_exact_match(sql, sql_dialect=None):
+    syntax_tree = sqlglot.parse_one(sql, read=sql_dialect)
 
     expected_types = {0: EQ, 1: Column, 2: Identifier}
     for tup in syntax_tree.walk():
@@ -41,14 +41,18 @@ def _is_exact_match(sql):
     return True
 
 
-def _exact_match_colname(sql):
+def _exact_match_colname(sql, sql_dialect=None):
     cols = []
-    syntax_tree = sqlglot.parse_one(sql.lower(), read=None)
+    syntax_tree = sqlglot.parse_one(sql.lower(), read=sql_dialect)
+
+    for identifier in syntax_tree.find_all(Identifier):
+        identifier.args["quoted"] = False
+
     for tup in syntax_tree.walk():
         subtree = tup[0]
         depth = getattr(subtree, "depth", None)
         if depth == 2:
-            cols.append(subtree.this)
+            cols.append(subtree.sql())
 
     cols = [c[:-2] for c in cols]  # Remove _l and _r
     cols = list(set(cols))
@@ -161,7 +165,7 @@ class ComparisonLevel:
 
         val = self._level_dict_val_else_default("tf_adjustment_column")
         if val:
-            return InputColumn(val, tf_adjustments=True, sql_dialect=self._sql_dialect)
+            return InputColumn(val, sql_dialect=self._sql_dialect)
         else:
             return None
 
@@ -169,9 +173,7 @@ class ComparisonLevel:
     def _tf_adjustment_input_column_name(self):
         input_column = self._tf_adjustment_input_column
         if input_column:
-            return input_column.input_name
-        else:
-            return None
+            return input_column.unquote().name()
 
     @property
     def _has_comparison(self):
@@ -364,20 +366,13 @@ class ComparisonLevel:
         col = self._level_dict.get("tf_adjustment_column")
         return col is not None
 
-    @property
-    def _sql_read_dialect(self):
-        read_dialect = None
-        if self._sql_dialect is not None:
-            read_dialect = self._sql_dialect
-        return read_dialect
-
     def _validate_sql(self):
         sql = self._sql_condition
         if self._is_else_level:
             return True
 
         try:
-            sqlglot.parse_one(sql, read=self._sql_read_dialect)
+            sqlglot.parse_one(sql, read=self._sql_dialect)
         except sqlglot.ParseError as e:
             raise ValueError(f"Error parsing sql_statement:\n{sql}") from e
 
@@ -390,9 +385,7 @@ class ComparisonLevel:
         if self._is_else_level:
             return []
 
-        cols = get_columns_used_from_sql(
-            self._sql_condition, dialect=self._sql_read_dialect
-        )
+        cols = get_columns_used_from_sql(self._sql_condition, dialect=self._sql_dialect)
         # Parsed order seems to be roughly in reverse order of apearance
         cols = cols[::-1]
 
@@ -405,14 +398,8 @@ class ComparisonLevel:
             # We could have tf adjustments for surname on a dmeta_surname column
             # If so, we want to set the tf adjustments against the surname col,
             # not the dmeta_surname one
-            if c == self._tf_adjustment_input_column_name:
-                input_cols.append(
-                    InputColumn(c, tf_adjustments=True, sql_dialect=self._sql_dialect)
-                )
-            else:
-                input_cols.append(
-                    InputColumn(c, tf_adjustments=False, sql_dialect=self._sql_dialect)
-                )
+
+            input_cols.append(InputColumn(c, sql_dialect=self._sql_dialect))
 
         return input_cols
 
@@ -424,7 +411,8 @@ class ComparisonLevel:
 
         for c in cols:
             output_cols.extend(c.l_r_names_as_l_r())
-            output_cols.extend(c.l_r_tf_names_as_l_r())
+            if self._tf_adjustment_input_column:
+                output_cols.extend(c.l_r_tf_names_as_l_r())
 
         return dedupe_preserving_order(output_cols)
 
@@ -450,7 +438,7 @@ class ComparisonLevel:
 
         sqls = re.split(r" and ", self._sql_condition, flags=re.IGNORECASE)
         for sql in sqls:
-            if not _is_exact_match(sql):
+            if not _is_exact_match(sql, self._sql_dialect):
                 return False
         return True
 
@@ -466,7 +454,7 @@ class ComparisonLevel:
 
         cols = []
         for sql in sqls:
-            col = _exact_match_colname(sql)
+            col = _exact_match_colname(sql, sql_dialect=self._sql_dialect)
             cols.append(col)
         return cols
 
@@ -676,7 +664,7 @@ class ComparisonLevel:
     def human_readable_description(self):
 
         input_cols = join_list_with_commas_final_and(
-            [c.name(escape=False) for c in self._input_columns_used_by_sql_condition]
+            [c.name() for c in self._input_columns_used_by_sql_condition]
         )
         desc = (
             f"Comparison level: {self._label_for_charts} of {input_cols}\n"

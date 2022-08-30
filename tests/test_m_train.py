@@ -1,6 +1,7 @@
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.duckdb.duckdb_comparison_library import levenshtein_at_thresholds
 import pandas as pd
+from splink.comparison_level_library import _mutable_params
 
 
 def test_m_train():
@@ -14,6 +15,7 @@ def test_m_train():
     ]
     df = pd.DataFrame(data)
 
+    _mutable_params["dialect"] = "duckdb"
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [levenshtein_at_thresholds("name", 2)],

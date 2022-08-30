@@ -8,20 +8,18 @@ from splink.spark.spark_comparison_level_library import (
     else_level,
 )
 
-from basic_settings import get_settings_dict
-
 from pyspark.sql.functions import array
+from basic_settings import get_settings_dict
 
 
 def test_full_example_spark(df_spark, tmp_path):
 
     # Convert a column to an array to enable testing intersection
     df_spark = df_spark.withColumn("email", array("email"))
-
+    _mutable_params["dialect"] = "spark"
     settings_dict = get_settings_dict()
 
     # Only needed because the value can be overwritten by other tests
-    _mutable_params["dialect"] = "spark"
     settings_dict["comparisons"][1] = cl.exact_match("surname")
 
     settings = {

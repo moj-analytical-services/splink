@@ -4,7 +4,7 @@
 import logging
 from typing import List, TYPE_CHECKING
 
-from .input_column import InputColumn
+from .input_column import InputColumn, remove_quotes_from_identifiers
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -14,7 +14,11 @@ logger = logging.getLogger(__name__)
 
 
 def colname_to_tf_tablename(input_column: InputColumn):
-    input_column = input_column.name(escape=False).replace(" ", "_")
+    input_col_no_quotes = remove_quotes_from_identifiers(
+        input_column.input_name_as_tree
+    )
+
+    input_column = input_col_no_quotes.sql().replace(" ", "_")
     return f"__splink__df_tf_{input_column}"
 
 
@@ -22,9 +26,7 @@ def term_frequencies_for_single_column_sql(
     input_column: InputColumn, table_name="__splink__df_concat"
 ):
 
-    # TODO: Not escaped so if col name has a space, will fail in Spark
-
-    col_name = input_column.name(escape=True)
+    col_name = input_column.name()
 
     sql = f"""
     select
