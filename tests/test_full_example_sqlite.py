@@ -21,6 +21,9 @@ def test_full_example_sqlite(tmp_path):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     df.to_sql("input_df_tablename", con)
+
+    _mutable_params["dialect"] = "sqlite"
+    _mutable_params["levenshtein"] = "levenshtein"
     settings_dict = get_settings_dict()
     linker = SQLiteLinker(
         "input_df_tablename",
@@ -64,6 +67,9 @@ def test_small_link_example_sqlite():
     con.create_function("levenshtein", 2, distance)
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    _mutable_params["dialect"] = "sqlite"
+    _mutable_params["levenshtein"] = "levenshtein"
     settings_dict = get_settings_dict()
 
     settings_dict["link_type"] = "link_only"
