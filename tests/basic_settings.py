@@ -1,14 +1,36 @@
 from copy import deepcopy
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
-from splink.comparison_library import levenshtein_at_thresholds, exact_match
 
-
-first_name_cc = levenshtein_at_thresholds(
-    "first_name", 2, term_frequency_adjustments=True
-)
-dob_cc = exact_match("dob")
-email_cc = exact_match("email")
-city_cc = exact_match("city")
+first_name_cc = {
+    "output_column_name": "first_name",
+    "comparison_levels": [
+        {
+            "sql_condition": "first_name_l IS NULL OR first_name_r IS NULL",
+            "label_for_charts": "Comparison includes null",
+            "is_null_level": True,
+        },
+        {
+            "sql_condition": "first_name_l = first_name_r",
+            "label_for_charts": "Exact match",
+            "m_probability": 0.7,
+            "u_probability": 0.1,
+            "tf_adjustment_column": "first_name",
+            "tf_adjustment_weight": 0.6,
+        },
+        {
+            "sql_condition": "levenshtein(first_name_l, first_name_r) <= 2",
+            "m_probability": 0.2,
+            "u_probability": 0.1,
+            "label_for_charts": "levenshtein <= 2",
+        },
+        {
+            "sql_condition": "ELSE",
+            "label_for_charts": "All other comparisons",
+            "m_probability": 0.1,
+            "u_probability": 0.8,
+        },
+    ],
+}
 
 surname_cc = {
     "output_column_name": "surname",
@@ -20,6 +42,75 @@ surname_cc = {
         },
         {
             "sql_condition": "surname_l = surname_r",
+            "label_for_charts": "Exact match",
+            "m_probability": 0.9,
+            "u_probability": 0.1,
+        },
+        {
+            "sql_condition": "ELSE",
+            "label_for_charts": "All other comparisons",
+            "m_probability": 0.1,
+            "u_probability": 0.9,
+        },
+    ],
+}
+
+dob_cc = {
+    "output_column_name": "dob",
+    "comparison_levels": [
+        {
+            "sql_condition": "dob_l IS NULL OR dob_r IS NULL",
+            "label_for_charts": "Comparison includes null",
+            "is_null_level": True,
+        },
+        {
+            "sql_condition": "dob_l = dob_r",
+            "label_for_charts": "Exact match",
+            "m_probability": 0.9,
+            "u_probability": 0.1,
+        },
+        {
+            "sql_condition": "ELSE",
+            "label_for_charts": "All other comparisons",
+            "m_probability": 0.1,
+            "u_probability": 0.9,
+        },
+    ],
+}
+
+email_cc = {
+    "output_column_name": "email",
+    "comparison_levels": [
+        {
+            "sql_condition": "email_l IS NULL OR email_r IS NULL",
+            "label_for_charts": "Comparison includes null",
+            "is_null_level": True,
+        },
+        {
+            "sql_condition": "email_l = email_r",
+            "label_for_charts": "Exact match",
+            "m_probability": 0.9,
+            "u_probability": 0.1,
+        },
+        {
+            "sql_condition": "ELSE",
+            "label_for_charts": "All other comparisons",
+            "m_probability": 0.1,
+            "u_probability": 0.9,
+        },
+    ],
+}
+
+city_cc = {
+    "output_column_name": "city",
+    "comparison_levels": [
+        {
+            "sql_condition": "city_l IS NULL OR city_r IS NULL",
+            "label_for_charts": "Comparison includes null",
+            "is_null_level": True,
+        },
+        {
+            "sql_condition": "city_l = city_r",
             "label_for_charts": "Exact match",
             "m_probability": 0.9,
             "u_probability": 0.1,

@@ -5,14 +5,11 @@ from splink.duckdb.duckdb_comparison_library import jaccard_at_thresholds, exact
 from splink.duckdb.duckdb_comparison_level_library import _mutable_params
 import pandas as pd
 import pyarrow.parquet as pq
-from basic_settings import get_settings_dict
-
 from splink.comparison_level_library import (
     _mutable_params,
 )
 
-_mutable_params["dialect"] = "duckdb"
-
+from basic_settings import get_settings_dict
 
 def test_full_example_duckdb(tmp_path):
 
@@ -23,6 +20,7 @@ def test_full_example_duckdb(tmp_path):
     # Overwrite the surname comparison to include duck-db specific syntax
 
     _mutable_params["dialect"] = "duckdb"
+    _mutable_params["levenshtein"] = "levenshtein"
     settings_dict["comparisons"][1] = jaccard_at_thresholds("SUR name")
     settings_dict["blocking_rules_to_generate_predictions"] = [
         'l."SUR name" = r."SUR name"',
