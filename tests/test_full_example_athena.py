@@ -85,6 +85,7 @@ def test_full_example_athena(tmp_path):
     """
 
     from basic_settings import get_settings_dict
+
     # creates a session at least on the platform...
     my_session = boto3.Session(region_name="eu-west-1")
     settings_dict = get_settings_dict()
@@ -100,12 +101,12 @@ def test_full_example_athena(tmp_path):
     )
 
     # Update tf weight and u probabilities to match v2 settings
-    first_name_cc._comparison_dict[
-        'comparison_levels'
-        ][1]._tf_adjustment_weight = 0.6
+    first_name_cc._comparison_dict["comparison_levels"][1]._tf_adjustment_weight = 0.6
     u_probabilities_first_name = [0.1, 0.1, 0.8]
-    for u_prob, level in zip(u_probabilities_first_name,
-        first_name_cc._comparison_dict['comparison_levels'][1:]):
+    for u_prob, level in zip(
+        u_probabilities_first_name,
+        first_name_cc._comparison_dict["comparison_levels"][1:],
+    ):
         level._u_probability = u_prob
 
     # Update settings w/ our edited first_name col

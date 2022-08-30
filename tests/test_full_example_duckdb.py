@@ -11,6 +11,7 @@ from splink.comparison_level_library import (
 
 from basic_settings import get_settings_dict
 
+
 def test_full_example_duckdb(tmp_path):
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
