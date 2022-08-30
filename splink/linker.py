@@ -1959,14 +1959,9 @@ class Linker:
         if isinstance(deterministic_matching_rules, str):
             deterministic_matching_rules = [deterministic_matching_rules]
 
-        link_type = self._settings_obj._link_type
-        unique_id_column_name = self._settings_obj._unique_id_column_name
-
         records = cumulative_comparisons_generated_by_blocking_rules(
             self,
             deterministic_matching_rules,
-            link_type,
-            unique_id_column_name,
         )
 
         summary_record = records[-1]
