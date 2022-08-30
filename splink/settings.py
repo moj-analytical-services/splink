@@ -23,7 +23,10 @@ class Settings:
         settings_dict = deepcopy(settings_dict)
 
         # If incoming comparisons are of type Comparison not dict, turn back into dict
-        ccs = settings_dict["comparisons"]
+        if "comparisons" in settings_dict:
+            ccs = settings_dict["comparisons"]
+        else:
+            ccs = []
         ccs = [cc.as_dict() if isinstance(cc, Comparison) else cc for cc in ccs]
 
         settings_dict["comparisons"] = ccs

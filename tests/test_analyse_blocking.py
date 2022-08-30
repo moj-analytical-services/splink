@@ -24,48 +24,49 @@ def test_analyse_blocking():
             {"unique_id": 3, "first_name": "Jayne", "surname": "Tailor"},
         ]
     )
-
-    linker = DuckDBLinker(df_1)
+    settings = {"link_type": "dedupe_only"}
+    linker = DuckDBLinker(df_1, settings)
 
     res = linker.count_num_comparisons_from_blocking_rule(
-        "1=1", unique_id_column_name="unique_id"
+        "1=1",
     )
     assert res == 4 * 3 / 2
 
     res = linker.count_num_comparisons_from_blocking_rule(
-        "l.first_name = r.first_name", unique_id_column_name="unique_id"
+        "l.first_name = r.first_name",
     )
     assert res == 1
 
-    linker = DuckDBLinker([df_1, df_2])
+    settings = {"link_type": "link_only"}
+    linker = DuckDBLinker([df_1, df_2], settings)
     res = linker.count_num_comparisons_from_blocking_rule(
-        "1=1", link_type="link_only", unique_id_column_name="unique_id"
+        "1=1",
     )
     assert res == 4 * 3
 
     res = linker.count_num_comparisons_from_blocking_rule(
         "l.surname = r.surname",
-        link_type="link_only",
-        unique_id_column_name="unique_id",
     )
     assert res == 1
 
     res = linker.count_num_comparisons_from_blocking_rule(
         "l.first_name = r.first_name",
-        link_type="link_only",
-        unique_id_column_name="unique_id",
     )
     assert res == 3
 
+    settings = {"link_type": "link_and_dedupe"}
+
+    linker = DuckDBLinker([df_1, df_2], settings)
+
     res = linker.count_num_comparisons_from_blocking_rule(
-        "1=1", link_type="link_and_dedupe", unique_id_column_name="unique_id"
+        "1=1",
     )
     expected = 4 * 3 + (4 * 3 / 2) + (3 * 2 / 2)
     assert res == expected
 
     rule = "l.first_name = r.first_name and l.surname = r.surname"
     res = linker.count_num_comparisons_from_blocking_rule(
-        rule, link_type="link_and_dedupe", unique_id_column_name="unique_id"
+        rule,
     )
 
     assert res == 1
@@ -87,7 +88,6 @@ def test_blocking_records_accuracy():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     linker_settings = DuckDBLinker(df, get_settings_dict())
-    linker_no_settings = DuckDBLinker([df, df])
 
     # dedupe only
     validate_blocking_output(
@@ -123,26 +123,26 @@ def test_blocking_records_accuracy():
         "l.city = r.city",
     ]
 
+    settings = {"link_type": "link_and_dedupe"}
+    settings = DuckDBLinker([df, df], settings)
     validate_blocking_output(
-        linker_no_settings,
+        settings,
         expected_out={
             "row_count": [13591, 53472, 137280],
             "cumulative_rows": [13591, 67063, 204343],
             "cartesian": 1999000,
         },
         blocking_rules=blocking_rules,
-        link_type="link_and_dedupe",
-        unique_id_column_name="unique_id",
     )
 
+    settings = {"link_type": "link_only"}
+    settings = DuckDBLinker([df, df], settings)
     validate_blocking_output(
-        linker_no_settings,
+        settings,
         expected_out={
             "row_count": [7257, 27190, 68640],
             "cumulative_rows": [7257, 34447, 103087],
             "cartesian": 1000000,
         },
         blocking_rules=blocking_rules,
-        link_type="link_only",
-        unique_id_column_name="unique_id",
     )

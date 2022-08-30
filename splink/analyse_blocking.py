@@ -12,58 +12,12 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def get_link_type_settings_obj(
-    linker: "Linker",
-    link_type=None,
-    unique_id_column_name=None,
-):
-    """This is needed because the user may want to know
-    number_of_comparisons_generated_by_blocking_rule_sql before they've passed
-    settings into the linker
-    """
-
-    if linker._settings_obj_ is not None:
-        settings_obj = linker._settings_obj
-        return settings_obj
-
-    if link_type is None and linker._settings_obj_ is None:
-        if len(linker._input_tables_dict.values()) == 1:
-            link_type = "dedupe_only"
-
-    if link_type is not None:
-        # Minimal settings dict
-        if unique_id_column_name is None:
-            raise ValueError(
-                "If settings not provided, you must specify unique_id_column_name"
-            )
-        settings_obj = Settings(
-            {
-                "unique_id_column_name": unique_id_column_name,
-                "link_type": link_type,
-                "comparisons": [exact_match("first_name")],
-            }
-        )
-
-    # If link type not specified or inferrable, raise error
-    if link_type is None:
-        if linker._settings_obj_ is None:
-            raise ValueError(
-                "Must provide a link_type argument to analyse_blocking_rule_sql "
-                "if linker has no settings object"
-            )
-
-    return settings_obj
-
-
 def number_of_comparisons_generated_by_blocking_rule_sql(
-    linker: "Linker", blocking_rule, link_type=None, unique_id_column_name=None
+    linker: "Linker",
+    blocking_rule,
 ) -> str:
 
-    settings_obj = get_link_type_settings_obj(
-        linker,
-        link_type,
-        unique_id_column_name,
-    )
+    settings_obj = linker._settings_obj
 
     where_condition = _sql_gen_where_condition(
         settings_obj._link_type, settings_obj._unique_id_input_columns
@@ -85,17 +39,11 @@ def number_of_comparisons_generated_by_blocking_rule_sql(
 def cumulative_comparisons_generated_by_blocking_rules(
     linker: "Linker",
     blocking_rules,
-    link_type=None,
-    unique_id_column_name=None,
 ):
 
     linker = deepcopy(linker)
 
-    settings_obj = get_link_type_settings_obj(
-        linker=linker,
-        link_type=link_type,
-        unique_id_column_name=unique_id_column_name,
-    )
+    settings_obj = linker._settings_obj
     linker._settings_obj_ = settings_obj
 
     # Deepcopy our original linker so we can safely adjust our settings.
