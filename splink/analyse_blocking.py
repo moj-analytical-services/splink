@@ -2,8 +2,7 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from .blocking import _sql_gen_where_condition, block_using_rules_sql
-from .settings import Settings
-from .comparison_library import exact_match
+
 from .misc import calculate_cartesian, calculate_reduction_ratio
 from .vertically_concatenate import vertically_concatenate_sql
 
