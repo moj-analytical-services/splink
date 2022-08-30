@@ -20,6 +20,7 @@ def get_link_type_settings_obj(
 
     if linker._settings_obj_ is not None:
         settings_obj = linker._settings_obj
+        return settings_obj
 
     if link_type is None and linker._settings_obj_ is None:
         if len(linker._input_tables_dict.values()) == 1:
