@@ -206,9 +206,20 @@ class DuckDBLinker(Linker):
 
     def _table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
+
+        # From duckdb 0.5.0, duckdb will raise a CatalogException
+        # which does not exist in 0.4.0 or before
+
+        try:
+            from duckdb import CatalogException
+
+            error = CatalogException
+        except ImportError:
+            error = RuntimeError
+
         try:
             self._con.execute(sql)
-        except (RuntimeError, duckdb.CatalogException):
+        except error:
             return False
         return True
 
