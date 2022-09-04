@@ -51,11 +51,13 @@ def join_list_with_commas_final_and(lst):
     return ", ".join(lst[:-1]) + " and " + lst[-1]
 
 
-class NumpyEncoder(json.JSONEncoder):
+class EverythingEncoder(json.JSONEncoder):
     """
-    Used to correctly encode numpy columns within a pd dataframe
-    when dumping it to json. Without this, json.dumps errors if
-    given an a column of class int32, int64 or np.array.
+    Used to correctly encode data when dumping it to json where we need to
+    hardcode json into javascript in a .html file for e.g. comparison viewer
+
+    Without this, json.dumps errors if given an a column of class int32, int64
+    np.array, datetime.date etc.
 
     Thanks to:
     https://github.com/mpld3/mpld3/issues/434#issuecomment-340255689
@@ -70,7 +72,10 @@ class NumpyEncoder(json.JSONEncoder):
             return bool(obj)
         elif isinstance(obj, np.ndarray):
             return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
+        try:
+            return json.JSONEncoder.default(self, obj)
+        except TypeError:
+            return obj.__str__()
 
 
 def all_letter_combos(n):
