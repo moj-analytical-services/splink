@@ -207,7 +207,7 @@ class DuckDBLinker(Linker):
         try:
             from duckdb import CatalogException
 
-            error = CatalogException
+            error = (RuntimeError, CatalogException)
         except ImportError:
             error = RuntimeError
 
