@@ -8,6 +8,7 @@ from ..comparison_level_library import (  # noqa: F401
     distance_function_level,
     columns_reversed_level,
     distance_in_km_level,
+    percentage_difference_level,
 )
 
 _mutable_params["dialect"] = "duckdb"
