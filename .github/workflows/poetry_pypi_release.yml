@@ -3,6 +3,7 @@ on:
   push:
     tags:
       - "v*.*.*"
+  workflow_dispatch:
 jobs:
   poetry-publish:
     runs-on: ubuntu-latest
