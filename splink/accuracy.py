@@ -184,16 +184,8 @@ def truth_space_table_from_labels_with_predictions_sqls(
 def roc_table(
     linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
-    sqls = block_from_labels(linker, labels_tablename)
 
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-    sql = compute_comparison_vector_values_sql(linker._settings_obj)
-
-    linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
-
-    sqls = predict_from_comparison_vectors_sqls(linker._settings_obj)
+    sqls = predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename)
 
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])
@@ -216,3 +208,74 @@ def roc_table(
     df_truth_space_table = linker._execute_sql_pipeline()
 
     return df_truth_space_table
+
+
+def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
+    sqls = block_from_labels(linker, labels_tablename)
+
+    sql = {
+        "sql": compute_comparison_vector_values_sql(linker._settings_obj),
+        "output_table_name": "__splink__df_comparison_vectors",
+    }
+
+    sqls.append(sql)
+
+    sqls_2 = predict_from_comparison_vectors_sqls(linker._settings_obj)
+
+    sqls.extend(sqls_2)
+
+    return sqls
+
+
+def false_predictions_from_labels_table(
+    linker,
+    labels_tablename,
+    include_false_positives=True,
+    include_false_negatives=True,
+    threshold=0.5,
+):
+    sqls = predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename)
+
+    for sql in sqls:
+        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+    # Select only necessary columns from labels table
+    sql = labels_table_with_minimal_columns_sql(linker)
+    linker._enqueue_sql(sql, "__splink__labels_minimal")
+
+    sql = predict_scores_for_labels_sql(linker)
+    linker._enqueue_sql(sql, "__splink__labels_with_predictions")
+
+    false_positives = f"""
+    (clerical_match_score < {threshold} and
+    match_probability > {threshold})
+    """
+
+    false_negatives = f"""
+    (clerical_match_score > {threshold} and
+    match_probability < {threshold})
+    """
+
+    where_conditions = []
+    if include_false_positives:
+        where_conditions.append(false_positives)
+
+    if include_false_negatives:
+        where_conditions.append(false_negatives)
+
+    where_condition = " OR ".join(where_conditions)
+
+    sql = f"""
+    select *
+    from __splink__labels_with_predictions
+    where
+    {where_condition}
+    """
+
+    linker._enqueue_sql(sql, "__splink__labels_with_fp_fn_status")
+
+    return linker._execute_sql_pipeline()
+
+
+def false_predictions_from_label_table():
+    pass
