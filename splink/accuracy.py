@@ -2,6 +2,7 @@ from .block_from_labels import block_from_labels
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .predict import predict_from_comparison_vectors_sqls
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
+from .blocking import BlockingRule
 
 
 def labels_table_with_minimal_columns_sql(linker):
@@ -227,7 +228,7 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
     return sqls
 
 
-def false_predictions_from_labels_table(
+def prediction_errors_from_labels_table(
     linker,
     labels_tablename,
     include_false_positives=True,
@@ -277,5 +278,82 @@ def false_predictions_from_labels_table(
     return linker._execute_sql_pipeline()
 
 
-def false_predictions_from_label_table():
-    pass
+# from splink.linker import Linker
+
+
+def prediction_errors_from_label_column(
+    linker,
+    label_colname,
+    include_false_positives=True,
+    include_false_negatives=True,
+    threshold=0.5,
+):
+    # In the case of labels, we use them to block
+    # In the case we have a label column, we want to apply the model's blocking rules
+    # but add in blocking on the label colname
+
+    settings = linker._settings_obj
+    brs = settings._blocking_rules_to_generate_predictions
+
+    label_blocking_rule = BlockingRule(f"l.{label_colname} = r.{label_colname}")
+    label_blocking_rule.preceding_rules = brs.copy()
+    brs.append(label_blocking_rule)
+
+    # TODO: Check that the labels colname is included in 'additional columns to retain'
+    # Probably want to tackle this at the same time as
+    #  https://github.com/moj-analytical-services/splink/issues/656
+
+    # Now we want to create predictions
+    df_predict = linker.predict()
+
+    # Clerical match score is 1 where the label_colname is equal else zero
+
+    sql = f"""
+    select
+    cast(({label_colname}_l = {label_colname}_r) as float) as clerical_match_score,
+    match_key = {label_blocking_rule.match_key} as found_by_blocking_rules,
+    *
+    from {df_predict.physical_name}
+    """
+
+    # found_by_blocking_rules
+
+    linker._enqueue_sql(sql, "__splink__predictions_from_label_column")
+
+    false_positives = f"""
+    (clerical_match_score < {threshold} and
+    match_probability > {threshold})
+    """
+
+    false_negatives = f"""
+    ((clerical_match_score > {threshold} and
+    match_probability < {threshold})
+    or
+    (clerical_match_score > {threshold} and
+     found_by_blocking_rules = False)
+    )
+    """
+
+    where_conditions = []
+    if include_false_positives:
+        where_conditions.append(false_positives)
+
+    if include_false_negatives:
+        where_conditions.append(false_negatives)
+
+    where_condition = " OR ".join(where_conditions)
+
+    sql = f"""
+    select * from __splink__predictions_from_label_column
+    where {where_condition}
+
+    """
+
+    linker._enqueue_sql(sql, "__splink__predictions_from_label_column_fp_fn_only")
+
+    predictions = linker._execute_sql_pipeline()
+
+    # Remove the blocking rule we added
+    brs.pop()
+
+    return predictions
