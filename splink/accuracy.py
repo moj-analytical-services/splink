@@ -316,7 +316,8 @@ def prediction_errors_from_label_column(
     sql = f"""
     select
     cast(({label_colname}_l = {label_colname}_r) as float) as clerical_match_score,
-    match_key = {label_blocking_rule.match_key} as found_by_blocking_rules,
+    not (cast(match_key as int) = {label_blocking_rule.match_key})
+        as found_by_blocking_rules,
     *
     from {df_predict.physical_name}
     """
@@ -351,7 +352,6 @@ def prediction_errors_from_label_column(
     sql = f"""
     select * from __splink__predictions_from_label_column
     where {where_condition}
-
     """
 
     linker._enqueue_sql(sql, "__splink__predictions_from_label_column_fp_fn_only")
