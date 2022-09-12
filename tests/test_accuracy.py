@@ -267,6 +267,7 @@ def test_prediction_errors_from_labels_table():
     df_labels["source_dataset_l"] = "fake_data_1"
     df_labels["source_dataset_r"] = "fake_data_1"
 
+    sql = '"first_name_l" IS NULL OR "first_name_r" IS NULL'
     settings = {
         "link_type": "dedupe_only",
         "probability_two_random_records_match": 0.5,
@@ -275,7 +276,7 @@ def test_prediction_errors_from_labels_table():
                 "output_column_name": "first_name",
                 "comparison_levels": [
                     {
-                        "sql_condition": '"first_name_l" IS NULL OR "first_name_r" IS NULL',
+                        "sql_condition": sql,
                         "label_for_charts": "Null",
                         "is_null_level": True,
                     },
@@ -355,6 +356,7 @@ def test_prediction_errors_from_labels_column():
     ]
     df = pd.DataFrame(data)
 
+    sql = '"first_name_l" IS NULL OR "first_name_r" IS NULL'
     settings = {
         "link_type": "dedupe_only",
         "probability_two_random_records_match": 0.5,
@@ -363,7 +365,7 @@ def test_prediction_errors_from_labels_column():
                 "output_column_name": "first_name",
                 "comparison_levels": [
                     {
-                        "sql_condition": '"first_name_l" IS NULL OR "first_name_r" IS NULL',
+                        "sql_condition": sql,
                         "label_for_charts": "Null",
                         "is_null_level": True,
                     },
