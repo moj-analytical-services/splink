@@ -1,3 +1,5 @@
+from copy import copy
+
 from .block_from_labels import block_from_labels
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .predict import predict_from_comparison_vectors_sqls
@@ -299,9 +301,12 @@ def prediction_errors_from_label_column(
     label_blocking_rule.preceding_rules = brs.copy()
     brs.append(label_blocking_rule)
 
-    # TODO: Check that the labels colname is included in 'additional columns to retain'
-    # Probably want to tackle this at the same time as
-    #  https://github.com/moj-analytical-services/splink/issues/656
+    # Need the label colname to be in additional columns to retain
+
+    add_cols = settings._additional_columns_to_retain_list
+    add_columns_to_restore = copy(add_cols)
+    if label_colname not in add_cols:
+        settings._additional_columns_to_retain_list.append(label_colname)
 
     # Now we want to create predictions
     df_predict = linker.predict()
@@ -353,7 +358,8 @@ def prediction_errors_from_label_column(
 
     predictions = linker._execute_sql_pipeline()
 
-    # Remove the blocking rule we added
+    # Remove the blocking rule we added and restore original add cols to ret
     brs.pop()
+    settings._additional_columns_to_retain_list = add_columns_to_restore
 
     return predictions

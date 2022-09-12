@@ -75,6 +75,9 @@ class Settings:
 
         self._warn_if_no_null_level_in_comparisons()
 
+        a_cols = self._from_settings_dict_else_default("additional_columns_to_retain")
+        self._additional_columns_to_retain_list = a_cols
+
     def __deepcopy__(self, memo) -> "Settings":
         """When we do EM training, we need a copy of the Settings which is independent
         of the original e.g. modifying the copy will not affect the original.
@@ -106,7 +109,7 @@ class Settings:
 
     @property
     def _additional_columns_to_retain(self):
-        cols = self._from_settings_dict_else_default("additional_columns_to_retain")
+        cols = self._additional_columns_to_retain_list
         return [InputColumn(c, settings_obj=self) for c in cols]
 
     @property
