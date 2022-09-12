@@ -3,6 +3,7 @@ from ..comparison_level_library import (  # noqa: F401
     exact_match_level,
     levenshtein_level,
     jaccard_level,
+    jaro_winkler_level,
     else_level,
     null_level,
     distance_function_level,
