@@ -117,6 +117,13 @@ clusters = linker.cluster_pairwise_predictions_at_threshold(pairwise_predictions
 clusters.as_pandas_dataframe(limit=5)
 ```
 
+## Videos
+
+- [A introductory presentation on Splink](https://www.youtube.com/watch?v=msz3T741KQI)
+- [An introduction to the Splink Comparison Viewer dashboard](https://www.youtube.com/watch?v=DNvCMqjipis)
+
+
+
 ## Acknowledgements
 
 We are very grateful to [ADR UK](https://www.adruk.org/) (Administrative Data Research UK) for providing the initial funding for this work as part of the [Data First](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) project.
