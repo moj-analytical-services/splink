@@ -289,3 +289,28 @@ def distance_in_km_level(
         level_dict["m_probability"] = m_probability
 
     return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
+
+
+def percentage_difference_level(
+    col_name: str,
+    percentage_distance_threshold: float,
+    m_probability=None,
+):
+    col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
+
+    s = f"""(abs({col.name_l()} - {col.name_r()})/
+        (case
+            when {col.name_r()} > {col.name_l()}
+            then {col.name_r()}
+            else {col.name_l()}
+        end))
+        < {percentage_distance_threshold}"""
+
+    level_dict = {
+        "sql_condition": s,
+        "label_for_charts": f"< {percentage_distance_threshold:,.2%} diff",
+    }
+    if m_probability:
+        level_dict["m_probability"] = m_probability
+
+    return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
