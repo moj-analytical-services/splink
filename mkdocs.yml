@@ -91,6 +91,9 @@ nav:
       - 6. Quality assurance: "demos/06_Quality_assurance.ipynb"
       - real time record linkage: "demos/real_time_record_linkage.ipynb"
       - deduplicate 50k rows of synthetic data: "demos/deduplicate_50k_synthetic.ipynb"
+  - Examples:
+      - Linking financial transactions: "demos/example_transactions.ipynb"
+      - Quick and dirty persons model: "demos/example_quick_and_dirty_persons.ipynb"
   - Developers' guides:
       - Caching and pipelining: "dev_guides/caching.md"
       - Understanding and debugging Splink: "dev_guides/debug_modes.md"
