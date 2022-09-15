@@ -185,7 +185,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
     return sqls
 
 
-def roc_table(
+def truth_space_table_from_labels_table(
     linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
 
@@ -214,7 +214,7 @@ def roc_table(
     return df_truth_space_table
 
 
-def roc_table_from_labels_column(
+def truth_space_table_from_labels_column(
     linker, label_colname, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
 
