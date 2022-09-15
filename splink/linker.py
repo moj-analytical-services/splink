@@ -1436,6 +1436,35 @@ class Linker:
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
 
+    def prediction_errors_from_labels_table(
+        self,
+        labels_tablename,
+        include_false_positives=True,
+        include_false_negatives=True,
+        threshold=0.5,
+    ):
+        """Generate a dataframe containing false positives and false negatives
+        based on the comparison between the clerical_match_score in the labels
+        table compared with the splink predicted match probability
+
+        Args:
+            labels_tablename (str): Name of labels table
+            include_false_positives (bool, optional): Defaults to True.
+            include_false_negatives (bool, optional): Defaults to True.
+            threshold (float, optional): Threshold above which a score is considered
+                to be a match. Defaults to 0.5.
+
+        Returns:
+            SplinkDataFrame:  Table containing false positives and negatives
+        """
+        return prediction_errors_from_labels_table(
+            self,
+            labels_tablename,
+            include_false_positives,
+            include_false_negatives,
+            threshold,
+        )
+
     def truth_space_table_from_labels_column(
         self,
         labels_column_name,
@@ -1477,6 +1506,36 @@ class Linker:
         )
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
+
+    def prediction_errors_from_labels_column(
+        self,
+        label_colname,
+        include_false_positives=True,
+        include_false_negatives=True,
+        threshold=0.5,
+    ):
+        """Generate a dataframe containing false positives and false negatives
+        based on the comparison between the splink match probability and the
+        labels column.  A label column is a column in the input dataset that contains
+        the 'ground truth' cluster to which the record belongs
+
+        Args:
+            label_colname (str): Name of labels column in input data
+            include_false_positives (bool, optional): Defaults to True.
+            include_false_negatives (bool, optional): Defaults to True.
+            threshold (float, optional): Threshold above which a score is considered
+                to be a match. Defaults to 0.5.
+
+        Returns:
+            SplinkDataFrame:  Table containing false positives and negatives
+        """
+        return prediction_errors_from_label_column(
+            self,
+            label_colname,
+            include_false_positives,
+            include_false_negatives,
+            threshold,
+        )
 
     def match_weights_histogram(
         self, df_predict: SplinkDataFrame, target_bins: int = 30, width=600, height=250
@@ -2015,63 +2074,4 @@ class Linker:
             f"{1/prob:,.2f} are expected to match.  With {cartesian:,.0f} total"
             " possible comparisons, we expect a total of around "
             f"{prob*cartesian:,.2f} matching pairs"
-        )
-
-    def prediction_errors_from_labels_table(
-        self,
-        labels_tablename,
-        include_false_positives=True,
-        include_false_negatives=True,
-        threshold=0.5,
-    ):
-        """Generate a dataframe containing false positives and false negatives
-        based on the comparison between the clerical_match_score in the labels
-        table compared with the splink predicted match probability
-
-        Args:
-            labels_tablename (str): Name of labels table
-            include_false_positives (bool, optional): Defaults to True.
-            include_false_negatives (bool, optional): Defaults to True.
-            threshold (float, optional): Threshold above which a score is considered
-                to be a match. Defaults to 0.5.
-
-        Returns:
-            SplinkDataFrame:  Table containing false positives and negatives
-        """
-        return prediction_errors_from_labels_table(
-            self,
-            labels_tablename,
-            include_false_positives,
-            include_false_negatives,
-            threshold,
-        )
-
-    def prediction_errors_from_labels_column(
-        self,
-        label_colname,
-        include_false_positives=True,
-        include_false_negatives=True,
-        threshold=0.5,
-    ):
-        """Generate a dataframe containing false positives and false negatives
-        based on the comparison between the splink match probability and the
-        labels column.  A label column is a column in the input dataset that contains
-        the 'ground truth' cluster to which the record belongs
-
-        Args:
-            label_colname (str): Name of labels column in input data
-            include_false_positives (bool, optional): Defaults to True.
-            include_false_negatives (bool, optional): Defaults to True.
-            threshold (float, optional): Threshold above which a score is considered
-                to be a match. Defaults to 0.5.
-
-        Returns:
-            SplinkDataFrame:  Table containing false positives and negatives
-        """
-        return prediction_errors_from_label_column(
-            self,
-            label_colname,
-            include_false_positives,
-            include_false_negatives,
-            threshold,
         )
