@@ -207,7 +207,7 @@ def test_roc_chart_dedupe_only():
 
     linker._con.register("labels", df_labels)
 
-    linker.roc_chart_from_labels("labels")
+    linker.roc_chart_from_labels_table("labels")
 
 
 def test_roc_chart_link_and_dedupe():
@@ -240,7 +240,7 @@ def test_roc_chart_link_and_dedupe():
 
     linker._con.register("labels", df_labels)
 
-    linker.roc_chart_from_labels("labels")
+    linker.roc_chart_from_labels_table("labels")
 
 
 def test_prediction_errors_from_labels_table():
@@ -390,7 +390,9 @@ def test_prediction_errors_from_labels_column():
     #
     linker = DuckDBLinker(df, settings)
 
-    df_res = linker.prediction_errors_from_label_column("cluster").as_pandas_dataframe()
+    df_res = linker.prediction_errors_from_labels_column(
+        "cluster"
+    ).as_pandas_dataframe()
     df_res = df_res[["unique_id_l", "unique_id_r"]]
     records = list(df_res.to_records(index=False))
     records = [tuple(p) for p in records]
@@ -403,7 +405,7 @@ def test_prediction_errors_from_labels_column():
 
     linker = DuckDBLinker(df, settings)
 
-    df_res = linker.prediction_errors_from_label_column(
+    df_res = linker.prediction_errors_from_labels_column(
         "cluster", include_false_positives=False
     ).as_pandas_dataframe()
     df_res = df_res[["unique_id_l", "unique_id_r"]]
@@ -418,7 +420,7 @@ def test_prediction_errors_from_labels_column():
 
     linker = DuckDBLinker(df, settings)
 
-    df_res = linker.prediction_errors_from_label_column(
+    df_res = linker.prediction_errors_from_labels_column(
         "cluster", include_false_negatives=False
     ).as_pandas_dataframe()
     df_res = df_res[["unique_id_l", "unique_id_r"]]
