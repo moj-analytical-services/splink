@@ -93,7 +93,7 @@ def test_full_example_duckdb(tmp_path):
     linker._con.register("labels", df_labels)
     # Finish create labels
 
-    linker.roc_chart_from_labels("labels")
+    linker.roc_chart_from_labels_table("labels")
 
     df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
 

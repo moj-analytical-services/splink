@@ -43,9 +43,10 @@ from .pipeline import SQLPipeline
 from .vertically_concatenate import vertically_concatenate_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .accuracy import (
-    roc_table,
+    truth_space_table_from_labels_table,
     prediction_errors_from_labels_table,
     prediction_errors_from_label_column,
+    truth_space_table_from_labels_column,
 )
 
 from .match_weights_histogram import histogram_data
@@ -1272,114 +1273,7 @@ class Linker:
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_from_pairwise_labels(self, table_name)
 
-    def roc_chart_from_labels(
-        self,
-        labels_tablename,
-        threshold_actual=0.5,
-        match_weight_round_to_nearest: float = None,
-    ):
-        """Generate a ROC chart from labelled (ground truth) data.
-
-        The table of labels should be in the following format, and should be registered
-        with your database:
-
-        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
-        |----------------|-----------|----------------|-----------|--------------------|
-        |df_1            |1          |df_2            |2          |0.99                |
-        |df_1            |1          |df_2            |3          |0.2                 |
-
-        Note that `source_dataset` and `unique_id` should correspond to the values
-        specified in the settings dict, and the `input_table_aliases` passed to the
-        `linker` object.
-
-        For `dedupe_only` links, the `source_dataset` columns can be ommitted.
-
-        Args:
-            labels_tablename (str): Name of table containing labels in the database
-            threshold_actual (float, optional): Where the `clerical_match_score`
-                provided by the user is a probability rather than binary, this value
-                is used as the threshold to classify `clerical_match_score`s as binary
-                matches or non matches. Defaults to 0.5.
-            match_weight_round_to_nearest (float, optional): When provided, thresholds
-                are rounded.  When large numbers of labels are provided, this is
-                sometimes necessary to reduce the size of the ROC table, and therefore
-                the number of points plotted on the ROC chart. Defaults to None.
-
-        Examples:
-            >>> # DuckDBLinker
-            >>> labels = pd.read_csv("my_labels.csv")
-            >>> linker._con.register("labels", labels)
-            >>> linker.roc_chart_from_labels("labels")
-            >>>
-            >>> # SparkLinker
-            >>> labels = spark.read.csv("my_labels.csv", header=True)
-            >>> labels.createDataFrame("labels")
-            >>> linker.roc_chart_from_labels("labels")
-
-
-        Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
-        """
-        df_truth_space = roc_table(
-            self,
-            labels_tablename,
-            threshold_actual=threshold_actual,
-            match_weight_round_to_nearest=match_weight_round_to_nearest,
-        )
-        recs = df_truth_space.as_record_dict()
-        return roc_chart(recs)
-
-    def precision_recall_chart_from_labels(self, labels_tablename):
-        """Generate a precision-recall chart from labelled (ground truth) data.
-
-        The table of labels should be in the following format, and should be registered
-        as a table with your database:
-
-        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
-        |----------------|-----------|----------------|-----------|--------------------|
-        |df_1            |1          |df_2            |2          |0.99                |
-        |df_1            |1          |df_2            |3          |0.2                 |
-
-        Note that `source_dataset` and `unique_id` should correspond to the values
-        specified in the settings dict, and the `input_table_aliases` passed to the
-        `linker` object.
-
-        For `dedupe_only` links, the `source_dataset` columns can be ommitted.
-
-        Args:
-            labels_tablename (str): Name of table containing labels in the database
-            threshold_actual (float, optional): Where the `clerical_match_score`
-                provided by the user is a probability rather than binary, this value
-                is used as the threshold to classify `clerical_match_score`s as binary
-                matches or non matches. Defaults to 0.5.
-            match_weight_round_to_nearest (float, optional): When provided, thresholds
-                are rounded.  When large numbers of labels are provided, this is
-                sometimes necessary to reduce the size of the ROC table, and therefore
-                the number of points plotted on the ROC chart. Defaults to None.
-        Examples:
-            >>> # DuckDBLinker
-            >>> labels = pd.read_csv("my_labels.csv")
-            >>> linker._con.register("labels", labels)
-            >>> linker.precision_recall_chart_from_labels("labels")
-            >>>
-            >>> # SparkLinker
-            >>> labels = spark.read.csv("my_labels.csv", header=True)
-            >>> labels.createDataFrame("labels")
-            >>> linker.precision_recall_chart_from_labels("labels")
-
-
-        Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
-        """
-        df_truth_space = roc_table(self, labels_tablename)
-        recs = df_truth_space.as_record_dict()
-        return precision_recall_chart(recs)
-
-    def roc_table_from_labels(
+    def truth_space_table_from_labels_table(
         self,
         labels_tablename,
         threshold_actual=0.5,
@@ -1417,22 +1311,298 @@ class Linker:
             >>> # DuckDBLinker
             >>> labels = pd.read_csv("my_labels.csv")
             >>> linker._con.register("labels", labels)
-            >>> linker.roc_table_from_labels("labels")
+            >>> linker.truth_space_table_from_labels_table("labels")
             >>>
             >>> # SparkLinker
             >>> labels = spark.read.csv("my_labels.csv", header=True)
             >>> labels.createDataFrame("labels")
-            >>> linker.roc_table_from_labels("labels")
+            >>> linker.truth_space_table_from_labels_table("labels")
 
         Returns:
             SplinkDataFrame:  Table of truth statistics
         """
 
-        return roc_table(
+        return truth_space_table_from_labels_table(
             self,
             labels_tablename,
             threshold_actual=threshold_actual,
             match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
+
+    def roc_chart_from_labels_table(
+        self,
+        labels_tablename,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+    ):
+        """Generate a ROC chart from labelled (ground truth) data.
+
+        The table of labels should be in the following format, and should be registered
+        with your database:
+
+        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
+        |----------------|-----------|----------------|-----------|--------------------|
+        |df_1            |1          |df_2            |2          |0.99                |
+        |df_1            |1          |df_2            |3          |0.2                 |
+
+        Note that `source_dataset` and `unique_id` should correspond to the values
+        specified in the settings dict, and the `input_table_aliases` passed to the
+        `linker` object.
+
+        For `dedupe_only` links, the `source_dataset` columns can be ommitted.
+
+        Args:
+            labels_tablename (str): Name of table containing labels in the database
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the ROC chart. Defaults to None.
+
+        Examples:
+            >>> # DuckDBLinker
+            >>> labels = pd.read_csv("my_labels.csv")
+            >>> linker._con.register("labels", labels)
+            >>> linker.roc_chart_from_labels_table("labels")
+            >>>
+            >>> # SparkLinker
+            >>> labels = spark.read.csv("my_labels.csv", header=True)
+            >>> labels.createDataFrame("labels")
+            >>> linker.roc_chart_from_labels_table("labels")
+
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
+        """
+        df_truth_space = truth_space_table_from_labels_table(
+            self,
+            labels_tablename,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
+        recs = df_truth_space.as_record_dict()
+        return roc_chart(recs)
+
+    def precision_recall_chart_from_labels_table(self, labels_tablename):
+        """Generate a precision-recall chart from labelled (ground truth) data.
+
+        The table of labels should be in the following format, and should be registered
+        as a table with your database:
+
+        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
+        |----------------|-----------|----------------|-----------|--------------------|
+        |df_1            |1          |df_2            |2          |0.99                |
+        |df_1            |1          |df_2            |3          |0.2                 |
+
+        Note that `source_dataset` and `unique_id` should correspond to the values
+        specified in the settings dict, and the `input_table_aliases` passed to the
+        `linker` object.
+
+        For `dedupe_only` links, the `source_dataset` columns can be ommitted.
+
+        Args:
+            labels_tablename (str): Name of table containing labels in the database
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the ROC chart. Defaults to None.
+        Examples:
+            >>> # DuckDBLinker
+            >>> labels = pd.read_csv("my_labels.csv")
+            >>> linker._con.register("labels", labels)
+            >>> linker.precision_recall_chart_from_labels_table("labels")
+            >>>
+            >>> # SparkLinker
+            >>> labels = spark.read.csv("my_labels.csv", header=True)
+            >>> labels.createDataFrame("labels")
+            >>> linker.precision_recall_chart_from_labels_table("labels")
+
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
+        """
+        df_truth_space = truth_space_table_from_labels_table(self, labels_tablename)
+        recs = df_truth_space.as_record_dict()
+        return precision_recall_chart(recs)
+
+    def prediction_errors_from_labels_table(
+        self,
+        labels_tablename,
+        include_false_positives=True,
+        include_false_negatives=True,
+        threshold=0.5,
+    ):
+        """Generate a dataframe containing false positives and false negatives
+        based on the comparison between the clerical_match_score in the labels
+        table compared with the splink predicted match probability
+
+        Args:
+            labels_tablename (str): Name of labels table
+            include_false_positives (bool, optional): Defaults to True.
+            include_false_negatives (bool, optional): Defaults to True.
+            threshold (float, optional): Threshold above which a score is considered
+                to be a match. Defaults to 0.5.
+
+        Returns:
+            SplinkDataFrame:  Table containing false positives and negatives
+        """
+        return prediction_errors_from_labels_table(
+            self,
+            labels_tablename,
+            include_false_positives,
+            include_false_negatives,
+            threshold,
+        )
+
+    def truth_space_table_from_labels_column(
+        self,
+        labels_column_name,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+    ):
+        """Generate truth statistics (false positive etc.) for each threshold value of
+        match_probability, suitable for plotting a ROC chart.
+
+        Your labels_column_name should include the ground truth cluster (unique
+        identifier) that groups entities which are the same
+
+        Args:
+            labels_tablename (str): Name of table containing labels in the database
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the ROC chart. Defaults to None.
+
+        Examples:
+            >>> linker.truth_space_table_from_labels_column("cluster")
+
+        Returns:
+            SplinkDataFrame:  Table of truth statistics
+        """
+        return truth_space_table_from_labels_column(
+            self, labels_column_name, threshold_actual, match_weight_round_to_nearest
+        )
+
+    def roc_chart_from_labels_column(
+        self,
+        labels_column_name,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+    ):
+        """Generate a ROC chart from ground truth data, whereby the ground truth
+        is in a column in the input dataset called `labels_column_name`
+
+        Args:
+            labels_column_name (str): Column name containing labels in the input table
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the ROC chart. Defaults to None.
+
+        Examples:
+            >>> linker.roc_chart_from_labels_column("labels")
+
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
+        """
+
+        df_truth_space = truth_space_table_from_labels_column(
+            self,
+            labels_column_name,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
+        recs = df_truth_space.as_record_dict()
+        return roc_chart(recs)
+
+    def precision_recall_chart_from_labels_column(
+        self,
+        labels_column_name,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+    ):
+        """Generate a precision-recall chart from ground truth data, whereby the ground
+        truth is in a column in the input dataset called `labels_column_name`
+
+        Args:
+            labels_column_name (str): Column name containing labels in the input table
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the ROC chart. Defaults to None.
+        Examples:
+            >>> linker.precision_recall_chart_from_labels_column("ground_truth")
+
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
+        """
+
+        df_truth_space = truth_space_table_from_labels_column(
+            self,
+            labels_column_name,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
+        recs = df_truth_space.as_record_dict()
+        return precision_recall_chart(recs)
+
+    def prediction_errors_from_labels_column(
+        self,
+        label_colname,
+        include_false_positives=True,
+        include_false_negatives=True,
+        threshold=0.5,
+    ):
+        """Generate a dataframe containing false positives and false negatives
+        based on the comparison between the splink match probability and the
+        labels column.  A label column is a column in the input dataset that contains
+        the 'ground truth' cluster to which the record belongs
+
+        Args:
+            label_colname (str): Name of labels column in input data
+            include_false_positives (bool, optional): Defaults to True.
+            include_false_negatives (bool, optional): Defaults to True.
+            threshold (float, optional): Threshold above which a score is considered
+                to be a match. Defaults to 0.5.
+
+        Returns:
+            SplinkDataFrame:  Table containing false positives and negatives
+        """
+        return prediction_errors_from_label_column(
+            self,
+            label_colname,
+            include_false_positives,
+            include_false_negatives,
+            threshold,
         )
 
     def match_weights_histogram(
@@ -1972,63 +2142,4 @@ class Linker:
             f"{1/prob:,.2f} are expected to match.  With {cartesian:,.0f} total"
             " possible comparisons, we expect a total of around "
             f"{prob*cartesian:,.2f} matching pairs"
-        )
-
-    def prediction_errors_from_labels_table(
-        self,
-        labels_tablename,
-        include_false_positives=True,
-        include_false_negatives=True,
-        threshold=0.5,
-    ):
-        """Generate a dataframe containing false positives and false negatives
-        based on the comparison between the clerical_match_score in the labels
-        table compared with the splink predicted match probability
-
-        Args:
-            labels_tablename (str): Name of labels table
-            include_false_positives (bool, optional): Defaults to True.
-            include_false_negatives (bool, optional): Defaults to True.
-            threshold (float, optional): Threshold above which a score is considered
-                to be a match. Defaults to 0.5.
-
-        Returns:
-            SplinkDataFrame:  Table containing false positives and negatives
-        """
-        return prediction_errors_from_labels_table(
-            self,
-            labels_tablename,
-            include_false_positives,
-            include_false_negatives,
-            threshold,
-        )
-
-    def prediction_errors_from_label_column(
-        self,
-        label_colname,
-        include_false_positives=True,
-        include_false_negatives=True,
-        threshold=0.5,
-    ):
-        """Generate a dataframe containing false positives and false negatives
-        based on the comparison between the splink match probability and the
-        labels column.  A label column is a column in the input dataset that contains
-        the 'ground truth' cluster to which the record belongs
-
-        Args:
-            label_colname (str): Name of labels column in input data
-            include_false_positives (bool, optional): Defaults to True.
-            include_false_negatives (bool, optional): Defaults to True.
-            threshold (float, optional): Threshold above which a score is considered
-                to be a match. Defaults to 0.5.
-
-        Returns:
-            SplinkDataFrame:  Table containing false positives and negatives
-        """
-        return prediction_errors_from_label_column(
-            self,
-            label_colname,
-            include_false_positives,
-            include_false_negatives,
-            threshold,
         )

@@ -1,4 +1,5 @@
-from copy import copy
+from copy import deepcopy
+
 
 from .block_from_labels import block_from_labels
 from .comparison_vector_values import compute_comparison_vector_values_sql
@@ -184,7 +185,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
     return sqls
 
 
-def roc_table(
+def truth_space_table_from_labels_table(
     linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
 
@@ -198,6 +199,41 @@ def roc_table(
     linker._enqueue_sql(sql, "__splink__labels_minimal")
 
     sql = predict_scores_for_labels_sql(linker)
+    linker._enqueue_sql(sql, "__splink__labels_with_predictions")
+
+    # c_P and c_N are clerical positive and negative, respectively
+    sqls = truth_space_table_from_labels_with_predictions_sqls(
+        threshold_actual, match_weight_round_to_nearest
+    )
+
+    for sql in sqls:
+        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+    df_truth_space_table = linker._execute_sql_pipeline()
+
+    return df_truth_space_table
+
+
+def truth_space_table_from_labels_column(
+    linker, label_colname, threshold_actual=0.5, match_weight_round_to_nearest=None
+):
+
+    new_matchkey = len(linker._settings_obj._blocking_rules_to_generate_predictions)
+
+    df_predict = _predict_from_label_column_sql(
+        linker,
+        label_colname,
+    )
+
+    sql = f"""
+    select
+    cast(({label_colname}_l = {label_colname}_r) as float) as clerical_match_score,
+    not (cast(match_key as int) = {new_matchkey})
+        as found_by_blocking_rules,
+    *
+    from {df_predict.physical_name}
+    """
+
     linker._enqueue_sql(sql, "__splink__labels_with_predictions")
 
     # c_P and c_N are clerical positive and negative, respectively
@@ -280,20 +316,12 @@ def prediction_errors_from_labels_table(
     return linker._execute_sql_pipeline()
 
 
-# from splink.linker import Linker
+def _predict_from_label_column_sql(linker, label_colname):
 
-
-def prediction_errors_from_label_column(
-    linker,
-    label_colname,
-    include_false_positives=True,
-    include_false_negatives=True,
-    threshold=0.5,
-):
     # In the case of labels, we use them to block
     # In the case we have a label column, we want to apply the model's blocking rules
     # but add in blocking on the label colname
-
+    linker = deepcopy(linker)
     settings = linker._settings_obj
     brs = settings._blocking_rules_to_generate_predictions
 
@@ -304,19 +332,38 @@ def prediction_errors_from_label_column(
     # Need the label colname to be in additional columns to retain
 
     add_cols = settings._additional_columns_to_retain_list
-    add_columns_to_restore = copy(add_cols)
+
     if label_colname not in add_cols:
         settings._additional_columns_to_retain_list.append(label_colname)
 
     # Now we want to create predictions
     df_predict = linker.predict()
 
+    return df_predict
+
+
+def prediction_errors_from_label_column(
+    linker,
+    label_colname,
+    include_false_positives=True,
+    include_false_negatives=True,
+    threshold=0.5,
+):
+
+    df_predict = _predict_from_label_column_sql(
+        linker,
+        label_colname,
+    )
+
     # Clerical match score is 1 where the label_colname is equal else zero
+
+    # _predict_from_label_column_sql will add a match key for matching on labels
+    new_matchkey = len(linker._settings_obj._blocking_rules_to_generate_predictions)
 
     sql = f"""
     select
     cast(({label_colname}_l = {label_colname}_r) as float) as clerical_match_score,
-    not (cast(match_key as int) = {label_blocking_rule.match_key})
+    not (cast(match_key as int) = {new_matchkey})
         as found_by_blocking_rules,
     *
     from {df_predict.physical_name}
@@ -357,9 +404,5 @@ def prediction_errors_from_label_column(
     linker._enqueue_sql(sql, "__splink__predictions_from_label_column_fp_fn_only")
 
     predictions = linker._execute_sql_pipeline()
-
-    # Remove the blocking rule we added and restore original add cols to ret
-    brs.pop()
-    settings._additional_columns_to_retain_list = add_columns_to_restore
 
     return predictions
