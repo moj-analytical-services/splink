@@ -46,6 +46,7 @@ from .accuracy import (
     roc_table,
     prediction_errors_from_labels_table,
     prediction_errors_from_label_column,
+    roc_table_from_labels_column,
 )
 
 from .match_weights_histogram import histogram_data
@@ -1434,6 +1435,32 @@ class Linker:
             threshold_actual=threshold_actual,
             match_weight_round_to_nearest=match_weight_round_to_nearest,
         )
+
+    def roc_table_from_labels_column(
+        self,
+        labels_column_name,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+    ):
+        return roc_table_from_labels_column(
+            self, labels_column_name, threshold_actual, match_weight_round_to_nearest
+        )
+
+    def roc_chart_from_labels_column(
+        self,
+        labels_column_name,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+    ):
+
+        df_truth_space = roc_table_from_labels_column(
+            self,
+            labels_column_name,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
+        recs = df_truth_space.as_record_dict()
+        return roc_chart(recs)
 
     def match_weights_histogram(
         self, df_predict: SplinkDataFrame, target_bins: int = 30, width=600, height=250
