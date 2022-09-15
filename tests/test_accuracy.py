@@ -241,3 +241,192 @@ def test_roc_chart_link_and_dedupe():
     linker._con.register("labels", df_labels)
 
     linker.roc_chart_from_labels("labels")
+
+
+def test_prediction_errors_from_labels_table():
+
+    data = [
+        {"unique_id": 1, "first_name": "robin", "cluster": 1},
+        {"unique_id": 2, "first_name": "robin", "cluster": 1},
+        {"unique_id": 3, "first_name": "john", "cluster": 1},
+        {"unique_id": 4, "first_name": "david", "cluster": 2},
+        {"unique_id": 5, "first_name": "david", "cluster": 3},
+    ]
+    df = pd.DataFrame(data)
+
+    labels = [
+        (1, 2, 0.8),
+        (1, 3, 0.8),
+        (2, 3, 0.8),
+        (4, 5, 0.1),
+    ]
+
+    df_labels = pd.DataFrame(
+        labels, columns=["unique_id_l", "unique_id_r", "clerical_match_score"]
+    )
+    df_labels["source_dataset_l"] = "fake_data_1"
+    df_labels["source_dataset_r"] = "fake_data_1"
+
+    sql = '"first_name_l" IS NULL OR "first_name_r" IS NULL'
+    settings = {
+        "link_type": "dedupe_only",
+        "probability_two_random_records_match": 0.5,
+        "comparisons": [
+            {
+                "output_column_name": "first_name",
+                "comparison_levels": [
+                    {
+                        "sql_condition": sql,
+                        "label_for_charts": "Null",
+                        "is_null_level": True,
+                    },
+                    {
+                        "sql_condition": '"first_name_l" = "first_name_r"',
+                        "label_for_charts": "Exact match",
+                        "m_probability": 0.95,
+                        "u_probability": 1e-5,
+                    },
+                    {
+                        "sql_condition": "ELSE",
+                        "label_for_charts": "All other comparisons",
+                        "m_probability": 0.05,
+                        "u_probability": 1 - 1e-5,
+                    },
+                ],
+            }
+        ],
+    }
+
+    linker = DuckDBLinker(df, settings)
+
+    linker._con.register("labels", df_labels)
+
+    linker._initialise_df_concat_with_tf()
+    df_res = linker.prediction_errors_from_labels_table("labels").as_pandas_dataframe()
+    df_res = df_res[["unique_id_l", "unique_id_r"]]
+    records = list(df_res.to_records(index=False))
+    records = [tuple(p) for p in records]
+
+    assert (1, 3) in records  # fn
+    assert (2, 3) in records  # fn
+    assert (4, 5) in records  # fp
+    assert (1, 2) not in records  # tp
+
+    linker = DuckDBLinker(df, settings)
+
+    linker._con.register("labels", df_labels)
+
+    linker._initialise_df_concat_with_tf()
+    df_res = linker.prediction_errors_from_labels_table(
+        "labels", include_false_negatives=False
+    ).as_pandas_dataframe()
+    df_res = df_res[["unique_id_l", "unique_id_r"]]
+    records = list(df_res.to_records(index=False))
+    records = [tuple(p) for p in records]
+
+    assert (1, 3) not in records  # fn
+    assert (2, 3) not in records  # fn
+    assert (4, 5) in records  # fp
+    assert (1, 2) not in records  # tp
+
+    linker = DuckDBLinker(df, settings)
+    linker._con.register("labels", df_labels)
+    linker._initialise_df_concat_with_tf()
+    df_res = linker.prediction_errors_from_labels_table(
+        "labels", include_false_positives=False
+    ).as_pandas_dataframe()
+    df_res = df_res[["unique_id_l", "unique_id_r"]]
+    records = list(df_res.to_records(index=False))
+    records = [tuple(p) for p in records]
+
+    assert (1, 3) in records  # fn
+    assert (2, 3) in records  # fn
+    assert (4, 5) not in records  # fp
+    assert (1, 2) not in records  # tp
+
+
+def test_prediction_errors_from_labels_column():
+
+    data = [
+        {"unique_id": 1, "first_name": "robin", "cluster": 1},
+        {"unique_id": 2, "first_name": "robin", "cluster": 1},
+        {"unique_id": 3, "first_name": "john", "cluster": 1},
+        {"unique_id": 4, "first_name": "david", "cluster": 2},
+        {"unique_id": 5, "first_name": "david", "cluster": 3},
+    ]
+    df = pd.DataFrame(data)
+
+    sql = '"first_name_l" IS NULL OR "first_name_r" IS NULL'
+    settings = {
+        "link_type": "dedupe_only",
+        "probability_two_random_records_match": 0.5,
+        "comparisons": [
+            {
+                "output_column_name": "first_name",
+                "comparison_levels": [
+                    {
+                        "sql_condition": sql,
+                        "label_for_charts": "Null",
+                        "is_null_level": True,
+                    },
+                    {
+                        "sql_condition": '"first_name_l" = "first_name_r"',
+                        "label_for_charts": "Exact match",
+                        "m_probability": 0.95,
+                        "u_probability": 1e-5,
+                    },
+                    {
+                        "sql_condition": "ELSE",
+                        "label_for_charts": "All other comparisons",
+                        "m_probability": 0.05,
+                        "u_probability": 1 - 1e-5,
+                    },
+                ],
+            }
+        ],
+        "blocking_rules_to_generate_predictions": ["1=1"],
+    }
+
+    #
+    linker = DuckDBLinker(df, settings)
+
+    df_res = linker.prediction_errors_from_label_column("cluster").as_pandas_dataframe()
+    df_res = df_res[["unique_id_l", "unique_id_r"]]
+    records = list(df_res.to_records(index=False))
+    records = [tuple(p) for p in records]
+
+    assert (1, 3) in records  # FN
+    assert (2, 3) in records  # FN
+    assert (4, 5) in records  # FP
+    assert (1, 2) not in records  # TP
+    assert (1, 5) not in records  # TN
+
+    linker = DuckDBLinker(df, settings)
+
+    df_res = linker.prediction_errors_from_label_column(
+        "cluster", include_false_positives=False
+    ).as_pandas_dataframe()
+    df_res = df_res[["unique_id_l", "unique_id_r"]]
+    records = list(df_res.to_records(index=False))
+    records = [tuple(p) for p in records]
+
+    assert (1, 3) in records  # FN
+    assert (2, 3) in records  # FN
+    assert (4, 5) not in records  # FP
+    assert (1, 2) not in records  # TP
+    assert (1, 5) not in records  # TN
+
+    linker = DuckDBLinker(df, settings)
+
+    df_res = linker.prediction_errors_from_label_column(
+        "cluster", include_false_negatives=False
+    ).as_pandas_dataframe()
+    df_res = df_res[["unique_id_l", "unique_id_r"]]
+    records = list(df_res.to_records(index=False))
+    records = [tuple(p) for p in records]
+
+    assert (1, 3) not in records  # FN
+    assert (2, 3) not in records  # FN
+    assert (4, 5) in records  # FP
+    assert (1, 2) not in records  # TP
+    assert (1, 5) not in records  # TN

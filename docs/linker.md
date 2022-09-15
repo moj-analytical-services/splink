@@ -33,6 +33,8 @@ tags:
         - parameter_estimate_comparisons_chart
         - precision_recall_chart_from_labels
         - predict
+        - prediction_errors_from_label_column
+        - prediction_errors_from_labels_table
         - profile_columns
         - roc_chart_from_labels
         - roc_table_from_labels

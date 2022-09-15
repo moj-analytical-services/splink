@@ -1,8 +1,9 @@
+from copy import deepcopy
 from .validate_jsonschema import get_schema
 
 
 def default_value_from_schema(key, schema_part):
-    schema = get_schema()
+    schema = deepcopy(get_schema())
     if schema_part == "root":
         return schema["properties"][key]["default"]
 

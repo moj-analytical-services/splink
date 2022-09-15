@@ -1,7 +1,10 @@
+from copy import copy
+
 from .block_from_labels import block_from_labels
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .predict import predict_from_comparison_vectors_sqls
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
+from .blocking import BlockingRule
 
 
 def labels_table_with_minimal_columns_sql(linker):
@@ -184,16 +187,8 @@ def truth_space_table_from_labels_with_predictions_sqls(
 def roc_table(
     linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
-    sqls = block_from_labels(linker, labels_tablename)
 
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-    sql = compute_comparison_vector_values_sql(linker._settings_obj)
-
-    linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
-
-    sqls = predict_from_comparison_vectors_sqls(linker._settings_obj)
+    sqls = predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename)
 
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])
@@ -216,3 +211,155 @@ def roc_table(
     df_truth_space_table = linker._execute_sql_pipeline()
 
     return df_truth_space_table
+
+
+def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
+    sqls = block_from_labels(linker, labels_tablename)
+
+    sql = {
+        "sql": compute_comparison_vector_values_sql(linker._settings_obj),
+        "output_table_name": "__splink__df_comparison_vectors",
+    }
+
+    sqls.append(sql)
+
+    sqls_2 = predict_from_comparison_vectors_sqls(linker._settings_obj)
+
+    sqls.extend(sqls_2)
+
+    return sqls
+
+
+def prediction_errors_from_labels_table(
+    linker,
+    labels_tablename,
+    include_false_positives=True,
+    include_false_negatives=True,
+    threshold=0.5,
+):
+    sqls = predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename)
+
+    for sql in sqls:
+        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+    # Select only necessary columns from labels table
+    sql = labels_table_with_minimal_columns_sql(linker)
+    linker._enqueue_sql(sql, "__splink__labels_minimal")
+
+    sql = predict_scores_for_labels_sql(linker)
+    linker._enqueue_sql(sql, "__splink__labels_with_predictions")
+
+    false_positives = f"""
+    (clerical_match_score < {threshold} and
+    match_probability > {threshold})
+    """
+
+    false_negatives = f"""
+    (clerical_match_score > {threshold} and
+    match_probability < {threshold})
+    """
+
+    where_conditions = []
+    if include_false_positives:
+        where_conditions.append(false_positives)
+
+    if include_false_negatives:
+        where_conditions.append(false_negatives)
+
+    where_condition = " OR ".join(where_conditions)
+
+    sql = f"""
+    select *
+    from __splink__labels_with_predictions
+    where
+    {where_condition}
+    """
+
+    linker._enqueue_sql(sql, "__splink__labels_with_fp_fn_status")
+
+    return linker._execute_sql_pipeline()
+
+
+# from splink.linker import Linker
+
+
+def prediction_errors_from_label_column(
+    linker,
+    label_colname,
+    include_false_positives=True,
+    include_false_negatives=True,
+    threshold=0.5,
+):
+    # In the case of labels, we use them to block
+    # In the case we have a label column, we want to apply the model's blocking rules
+    # but add in blocking on the label colname
+
+    settings = linker._settings_obj
+    brs = settings._blocking_rules_to_generate_predictions
+
+    label_blocking_rule = BlockingRule(f"l.{label_colname} = r.{label_colname}")
+    label_blocking_rule.preceding_rules = brs.copy()
+    brs.append(label_blocking_rule)
+
+    # Need the label colname to be in additional columns to retain
+
+    add_cols = settings._additional_columns_to_retain_list
+    add_columns_to_restore = copy(add_cols)
+    if label_colname not in add_cols:
+        settings._additional_columns_to_retain_list.append(label_colname)
+
+    # Now we want to create predictions
+    df_predict = linker.predict()
+
+    # Clerical match score is 1 where the label_colname is equal else zero
+
+    sql = f"""
+    select
+    cast(({label_colname}_l = {label_colname}_r) as float) as clerical_match_score,
+    not (cast(match_key as int) = {label_blocking_rule.match_key})
+        as found_by_blocking_rules,
+    *
+    from {df_predict.physical_name}
+    """
+
+    # found_by_blocking_rules
+
+    linker._enqueue_sql(sql, "__splink__predictions_from_label_column")
+
+    false_positives = f"""
+    (clerical_match_score < {threshold} and
+    match_probability > {threshold})
+    """
+
+    false_negatives = f"""
+    ((clerical_match_score > {threshold} and
+    match_probability < {threshold})
+    or
+    (clerical_match_score > {threshold} and
+     found_by_blocking_rules = False)
+    )
+    """
+
+    where_conditions = []
+    if include_false_positives:
+        where_conditions.append(false_positives)
+
+    if include_false_negatives:
+        where_conditions.append(false_negatives)
+
+    where_condition = " OR ".join(where_conditions)
+
+    sql = f"""
+    select * from __splink__predictions_from_label_column
+    where {where_condition}
+    """
+
+    linker._enqueue_sql(sql, "__splink__predictions_from_label_column_fp_fn_only")
+
+    predictions = linker._execute_sql_pipeline()
+
+    # Remove the blocking rule we added and restore original add cols to ret
+    brs.pop()
+    settings._additional_columns_to_retain_list = add_columns_to_restore
+
+    return predictions
