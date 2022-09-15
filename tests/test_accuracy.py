@@ -16,7 +16,7 @@ from splink.comparison_vector_values import compute_comparison_vector_values_sql
 from splink.predict import predict_from_comparison_vectors_sqls
 
 
-def test_scored_labels():
+def test_scored_labels_table():
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df = df.head(5)
@@ -432,3 +432,135 @@ def test_prediction_errors_from_labels_column():
     assert (4, 5) in records  # FP
     assert (1, 2) not in records  # TP
     assert (1, 5) not in records  # TN
+
+
+def test_truth_space_table_from_labels_column_dedupe_only():
+
+    data = [
+        {"unique_id": 1, "first_name": "john", "cluster": 1},
+        {"unique_id": 2, "first_name": "john", "cluster": 1},
+        {"unique_id": 3, "first_name": "john", "cluster": 1},
+        {"unique_id": 4, "first_name": "john", "cluster": 2},
+        {"unique_id": 5, "first_name": "edith", "cluster": 3},
+        {"unique_id": 6, "first_name": "mary", "cluster": 3},
+    ]
+
+    df = pd.DataFrame(data)
+
+    settings = {
+        "link_type": "dedupe_only",
+        "probability_two_random_records_match": 0.5,
+        "blocking_rules_to_generate_predictions": [
+            "1=1",
+        ],
+        "comparisons": [
+            {
+                "output_column_name": "First name",
+                "comparison_levels": [
+                    {
+                        "sql_condition": "first_name_l IS NULL OR first_name_r IS NULL",
+                        "label_for_charts": "Null",
+                        "is_null_level": True,
+                    },
+                    {
+                        "sql_condition": "first_name_l = first_name_r",
+                        "label_for_charts": "Exact match",
+                        "m_probability": 0.9,
+                        "u_probability": 0.1,
+                    },
+                    {
+                        "sql_condition": "ELSE",
+                        "label_for_charts": "All other comparisons",
+                        "m_probability": 0.1,
+                        "u_probability": 0.9,
+                    },
+                ],
+            },
+        ],
+    }
+
+    linker = DuckDBLinker(df, settings)
+
+    tt = linker.truth_space_table_from_labels_column("cluster").as_record_dict()
+    # Truth threshold -3.17, meaning all comparisons get classified as positive
+    truth_dict = tt[0]
+    assert truth_dict["TP"] == 4
+    assert truth_dict["FP"] == 11
+    assert truth_dict["TN"] == 0
+    assert truth_dict["FN"] == 0
+
+    # Truth threshold 3.17, meaning only comparisons where forename match get classified
+    # as positive
+    truth_dict = tt[1]
+    assert truth_dict["TP"] == 3
+    assert truth_dict["FP"] == 3
+    assert truth_dict["TN"] == 8
+    assert truth_dict["FN"] == 1
+
+
+def test_truth_space_table_from_labels_column_link_only():
+
+    data_left = [
+        {"unique_id": 1, "first_name": "john", "ground_truth": 1},
+        {"unique_id": 2, "first_name": "mary", "ground_truth": 2},
+        {"unique_id": 3, "first_name": "edith", "ground_truth": 3},
+    ]
+
+    data_right = [
+        {"unique_id": 1, "first_name": "john", "ground_truth": 1},
+        {"unique_id": 2, "first_name": "john", "ground_truth": 2},
+        {"unique_id": 3, "first_name": "eve", "ground_truth": 3},
+    ]
+
+    df_left = pd.DataFrame(data_left)
+    df_right = pd.DataFrame(data_right)
+
+    settings = {
+        "link_type": "link_only",
+        "probability_two_random_records_match": 0.5,
+        "blocking_rules_to_generate_predictions": [
+            "1=1",
+        ],
+        "comparisons": [
+            {
+                "output_column_name": "First name",
+                "comparison_levels": [
+                    {
+                        "sql_condition": "first_name_l IS NULL OR first_name_r IS NULL",
+                        "label_for_charts": "Null",
+                        "is_null_level": True,
+                    },
+                    {
+                        "sql_condition": "first_name_l = first_name_r",
+                        "label_for_charts": "Exact match",
+                        "m_probability": 0.9,
+                        "u_probability": 0.1,
+                    },
+                    {
+                        "sql_condition": "ELSE",
+                        "label_for_charts": "All other comparisons",
+                        "m_probability": 0.1,
+                        "u_probability": 0.9,
+                    },
+                ],
+            },
+        ],
+    }
+
+    linker = DuckDBLinker([df_left, df_right], settings)
+
+    tt = linker.truth_space_table_from_labels_column("ground_truth").as_record_dict()
+    # Truth threshold -3.17, meaning all comparisons get classified as positive
+    truth_dict = tt[0]
+    assert truth_dict["TP"] == 3
+    assert truth_dict["FP"] == 6
+    assert truth_dict["TN"] == 0
+    assert truth_dict["FN"] == 0
+
+    # Truth threshold 3.17, meaning only comparisons where forename match get classified
+    # as positive
+    truth_dict = tt[1]
+    assert truth_dict["TP"] == 1
+    assert truth_dict["FP"] == 1
+    assert truth_dict["TN"] == 5
+    assert truth_dict["FN"] == 2
