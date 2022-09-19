@@ -7,7 +7,11 @@ from .comparison_level import ComparisonLevel
 # So that we can pass in a sql_dialect to the comparison levels
 # that is different depending on whether we're in a SparkComparionLevel,
 # DuckDBComparisonLevel etc.
-_mutable_params = {"dialect": None, "levenshtein": "levenshtein"}
+_mutable_params = {
+    "dialect": None,
+    "levenshtein": "levenshtein",
+    "jaro_winkler": "jaro_winkler",
+}
 
 
 def distance_function_level(
