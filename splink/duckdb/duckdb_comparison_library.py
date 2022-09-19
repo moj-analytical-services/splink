@@ -1,3 +1,7 @@
+from typing import Union
+
+from ..comparison import Comparison
+
 from ..comparison_level_library import (
     _mutable_params,
 )
@@ -11,4 +15,5 @@ from ..comparison_library import (  # noqa: F401
     jaro_winkler_at_thresholds,
 )
 
+_mutable_params["jaro_winkler"] = "jaro_winkler_similarity"
 _mutable_params["dialect"] = "duckdb"
