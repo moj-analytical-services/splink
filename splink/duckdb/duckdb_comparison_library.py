@@ -1,7 +1,3 @@
-from typing import Union
-
-from ..comparison import Comparison
-
 from ..comparison_level_library import (
     _mutable_params,
 )
