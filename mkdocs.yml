@@ -97,6 +97,7 @@ nav:
       - Linking two tables of persons: "demos/example_link_only.ipynb"
       - Real time record linkage: "demos/example_real_time_record_linkage.ipynb"
       - Quick and dirty persons model: "demos/example_quick_and_dirty_persons.ipynb"
+      - QA from ground truth column: "demos/example_accuracy_analysis_from_labels_column.ipynb"
   - Developers' guides:
       - Caching and pipelining: "dev_guides/caching.md"
       - Understanding and debugging Splink: "dev_guides/debug_modes.md"
