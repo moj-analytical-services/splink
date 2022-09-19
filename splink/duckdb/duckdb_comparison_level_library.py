@@ -13,3 +13,4 @@ from ..comparison_level_library import (  # noqa: F401
 )
 
 _mutable_params["dialect"] = "duckdb"
+_mutable_params["jaro_winkler"] = "jaro_winkler_similarity"

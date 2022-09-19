@@ -283,7 +283,7 @@ def jaro_winkler_at_thresholds(
 
     return distance_function_at_thresholds(
         col_name,
-        "jaro_winkler",
+        cl._mutable_params["jaro_winkler"],
         distance_threshold_or_thresholds,
         True,
         include_exact_match_level,
