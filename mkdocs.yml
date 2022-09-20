@@ -89,8 +89,8 @@ nav:
       - 4. Predicting results: "demos/04_Predicting_results.ipynb"
       - 5. Visualising predictions: "demos/05_Visualising_predictions.ipynb"
       - 6. Quality assurance: "demos/06_Quality_assurance.ipynb"
-      - deduplicate 50k rows of synthetic data: "demos/deduplicate_50k_synthetic.ipynb"
   - Examples:
+      - Deduplicate 50k rows historial persons: "demos/example_deduplicate_50k_synthetic.ipynb"
       - Linking financial transactions: "demos/example_transactions.ipynb"
       - Deduplication using Pyspark: "demos/example_simple_pyspark.ipynb"
       - Linking two tables of persons: "demos/example_link_only.ipynb"
