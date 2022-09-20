@@ -7,7 +7,7 @@ import logging
 
 
 import sqlglot
-from sqlglot.expressions import EQ, Column, Identifier
+from sqlglot.expressions import Identifier
 
 from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
@@ -19,6 +19,7 @@ from .misc import (
 )
 from .parse_sql import get_columns_used_from_sql
 
+from .input_column import sqlglot_tree_signature
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -30,15 +31,19 @@ logger = logging.getLogger(__name__)
 def _is_exact_match(sql, sql_dialect=None):
     syntax_tree = sqlglot.parse_one(sql, read=sql_dialect)
 
-    expected_types = {0: EQ, 1: Column, 2: Identifier}
+    signature = sqlglot_tree_signature(syntax_tree)
+    if signature != "eq column column identifier identifier":
+        return False
+
+    identifiers = []
     for tup in syntax_tree.walk():
         subtree = tup[0]
-        depth = getattr(subtree, "depth", None)
-        expected_type = expected_types.get(depth, None)
-        if expected_type:
-            if not type(subtree) is expected_type:
-                return False
-    return True
+        if type(subtree) is Identifier:
+            identifiers.append(subtree.this[:-2])
+    if identifiers[0] == identifiers[1]:
+        return True
+    else:
+        return False
 
 
 def _exact_match_colname(sql, sql_dialect=None):
