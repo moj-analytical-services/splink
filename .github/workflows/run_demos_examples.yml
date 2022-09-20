@@ -1,4 +1,4 @@
-name: Run splink_demos tutorial notebooks
+name: Run splink_demos example notebooks
 
 on:
   pull_request:
@@ -34,6 +34,6 @@ jobs:
             pip install ..
             grep -v "splink==" requirements.txt > temp && mv temp requirements.txt
             pip install -r requirements.txt
-            python -m pytest --nbmake --nbmake-kernel=python3 0[0-6]_*ipynb
+            python -m pytest --nbmake --nbmake-kernel=python3 example_*ipynb
 
 
