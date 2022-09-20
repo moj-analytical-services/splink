@@ -255,7 +255,7 @@ def precision_recall_chart(records, width=400, height=400, as_dict=False):
 
 
 def match_weights_histogram(records, width=500, height=250, as_dict=False):
-    chart_path = "match_weights_histogram.json"
+    chart_path = "match_weight_histogram.json"
     chart = load_chart_definition(chart_path)
 
     chart["data"]["values"] = records
