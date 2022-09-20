@@ -90,13 +90,16 @@ nav:
       - 5. Visualising predictions: "demos/05_Visualising_predictions.ipynb"
       - 6. Quality assurance: "demos/06_Quality_assurance.ipynb"
   - Examples:
-      - Deduplicate 50k rows historial persons: "demos/example_deduplicate_50k_synthetic.ipynb"
-      - Linking financial transactions: "demos/example_transactions.ipynb"
-      - Deduplication using Pyspark: "demos/example_simple_pyspark.ipynb"
-      - Linking two tables of persons: "demos/example_link_only.ipynb"
-      - Real time record linkage: "demos/example_real_time_record_linkage.ipynb"
-      - Quick and dirty persons model: "demos/example_quick_and_dirty_persons.ipynb"
-      - QA from ground truth column: "demos/example_accuracy_analysis_from_labels_column.ipynb"
+      - Examples index: "examples_index.md"
+      - DuckDB:
+        - Deduplicate 50k rows historial persons: "demos/example_deduplicate_50k_synthetic.ipynb"
+        - Linking financial transactions: "demos/example_transactions.ipynb"
+        - Linking two tables of persons: "demos/example_link_only.ipynb"
+        - Real time record linkage: "demos/example_real_time_record_linkage.ipynb"
+        - QA from ground truth column: "demos/example_accuracy_analysis_from_labels_column.ipynb"
+        - Quick and dirty persons model: "demos/example_quick_and_dirty_persons.ipynb"
+      - PySpark:
+        - Deduplication using Pyspark: "demos/example_simple_pyspark.ipynb"
   - Developers' guides:
       - Caching and pipelining: "dev_guides/caching.md"
       - Understanding and debugging Splink: "dev_guides/debug_modes.md"
