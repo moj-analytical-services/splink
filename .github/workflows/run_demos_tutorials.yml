@@ -33,7 +33,7 @@ jobs:
             pip install --upgrade pip
             pip install ..
             grep -v "splink==" requirements.txt > temp && mv temp requirements.txt
-            pip install -r splink_demos/requirements.txt
+            pip install -r requirements.txt
             python -m pytest --nbmake --nbmake-kernel=python3 0[0-6]_*ipynb
 
 
