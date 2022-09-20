@@ -1,6 +1,6 @@
 import logging
 from typing import List, Union
-from copy import copy, deepcopy
+from copy import Error, copy, deepcopy
 from statistics import median
 import hashlib
 import os
@@ -342,13 +342,19 @@ class Linker:
 
             output_tablename_templated = self._pipeline.queue[-1].output_table_name
 
-            dataframe = self._sql_to_splink_dataframe_checking_cache(
-                sql_gen,
-                output_tablename_templated,
-                materialise_as_hash,
-                use_cache,
-            )
-            self._pipeline.reset()
+            try:
+                dataframe = self._sql_to_splink_dataframe_checking_cache(
+                    sql_gen,
+                    output_tablename_templated,
+                    materialise_as_hash,
+                    use_cache,
+                )
+            except Error as e:
+                raise e
+            finally:
+                print("finally")
+                self._pipeline.reset()
+
             return dataframe
         else:
             # In debug mode, we do not pipeline the sql and print the
