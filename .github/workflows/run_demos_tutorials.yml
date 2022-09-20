@@ -23,7 +23,7 @@ jobs:
         with:
           repository: "moj-analytical-services/splink_demos"
           ref: master
-          path: "demos/"
+          path: "splink_demos/"
 
       - name: Install environment and check notebooks
         run: |
