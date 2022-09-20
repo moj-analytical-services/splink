@@ -25,6 +25,7 @@ jobs:
           ref: master
           path: "demos/"
 
+      - name: Install environment and check notebooks
         run: |
             cd splink_demos
             python3 -m venv venv
