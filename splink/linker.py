@@ -352,7 +352,6 @@ class Linker:
             except Error as e:
                 raise e
             finally:
-                print("finally")
                 self._pipeline.reset()
 
             return dataframe
