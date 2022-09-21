@@ -216,10 +216,10 @@ class Comparison:
 
         output_cols.append(self._case_statement)
 
-        for col in input_cols:
-
-            if self._has_tf_adjustments:
-                output_cols.extend(col.tf_name_l_r())
+        for cl in self.comparison_levels:
+            if cl._has_tf_adjustments:
+                for col in cl._input_columns_used_by_sql_condition:
+                    output_cols.extend(col.tf_name_l_r())
 
         return dedupe_preserving_order(output_cols)
 
