@@ -75,8 +75,9 @@ class Settings:
 
         self._warn_if_no_null_level_in_comparisons()
 
-        a_cols = self._from_settings_dict_else_default("additional_columns_to_retain")
-        self._additional_columns_to_retain_list = a_cols
+        self._additional_columns_to_retain_list = (
+            self._get_additional_columns_to_retain()
+        )
 
     def __deepcopy__(self, memo) -> "Settings":
         """When we do EM training, we need a copy of the Settings which is independent
@@ -106,6 +107,28 @@ class Settings:
                     "\nIf the column does not contain null values, or you know what "
                     "you're doing, you can ignore this warning"
                 )
+
+    def _get_additional_columns_to_retain(self):
+        a_cols = self._from_settings_dict_else_default("additional_columns_to_retain")
+
+        # Add any columns used in blocking rules but not model
+        if self._retain_matching_columns:
+            # Want to add any columns not already by the model
+            used_by_brs = []
+            for br in self._blocking_rules_to_generate_predictions:
+                used_by_brs.extend(get_columns_used_from_sql(br.blocking_rule))
+
+            used_by_brs = [InputColumn(c) for c in used_by_brs]
+
+            used_by_brs = [c.unquote().name() for c in used_by_brs]
+            already_used = self._columns_used_by_comparisons
+            already_used = [InputColumn(c) for c in already_used]
+            already_used = [c.unquote().name() for c in already_used]
+
+            new_cols = list(set(used_by_brs) - set(already_used))
+            a_cols.extend(new_cols)
+
+        return a_cols
 
     @property
     def _additional_columns_to_retain(self):

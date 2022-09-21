@@ -648,6 +648,17 @@ class Linker:
                 "Please re-run your linkage with them both set to True."
             )
 
+    def _raise_error_if_necessary_accuracy_columns_not_computed(self):
+        rmc = self._settings_obj._retain_matching_columns
+        if not (rmc):
+            raise ValueError(
+                "retain_matching_columns must be set to True in your settings"
+                " dictionary to use this function, because otherwise the necessary "
+                "columns will not be available in the input records."
+                f" Its current value is {rmc}. "
+                "Please re-run your linkage with it set to True."
+            )
+
     def initialise_settings(self, settings_dict: dict):
         """Initialise settings for the linker.  To be used if settings were
         not passed to the linker on creation.
@@ -1326,7 +1337,7 @@ class Linker:
         Returns:
             SplinkDataFrame:  Table of truth statistics
         """
-
+        self._raise_error_if_necessary_accuracy_columns_not_computed()
         return truth_space_table_from_labels_table(
             self,
             labels_tablename,
@@ -1384,6 +1395,7 @@ class Linker:
                 The vegalite spec is available as a dictionary using the `spec`
                 attribute.
         """
+        self._raise_error_if_necessary_accuracy_columns_not_computed()
         df_truth_space = truth_space_table_from_labels_table(
             self,
             labels_tablename,
@@ -1437,6 +1449,7 @@ class Linker:
                 The vegalite spec is available as a dictionary using the `spec`
                 attribute.
         """
+        self._raise_error_if_necessary_accuracy_columns_not_computed()
         df_truth_space = truth_space_table_from_labels_table(self, labels_tablename)
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
@@ -1462,6 +1475,7 @@ class Linker:
         Returns:
             SplinkDataFrame:  Table containing false positives and negatives
         """
+
         return prediction_errors_from_labels_table(
             self,
             labels_tablename,
@@ -1499,6 +1513,7 @@ class Linker:
         Returns:
             SplinkDataFrame:  Table of truth statistics
         """
+
         return truth_space_table_from_labels_column(
             self, labels_column_name, threshold_actual, match_weight_round_to_nearest
         )
