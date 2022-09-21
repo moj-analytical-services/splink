@@ -238,12 +238,13 @@ class Comparison:
 
         output_cols.append(self._gamma_column_name)
 
-        for col in input_cols:
-
-            if self._has_tf_adjustments:
-                if self._settings_obj._retain_intermediate_calculation_columns:
-
-                    output_cols.extend(col.tf_name_l_r())
+        for cl in self.comparison_levels:
+            if (
+                cl._has_tf_adjustments
+                and self._settings_obj._retain_intermediate_calculation_columns
+            ):
+                col = cl._tf_adjustment_input_column
+                output_cols.extend(col.tf_name_l_r())
 
         # Bayes factor case when statement
         sqls = [cl._bayes_factor_sql for cl in self.comparison_levels]
@@ -280,13 +281,18 @@ class Comparison:
         ):
             output_cols.append(self._gamma_column_name)
 
+        for cl in self.comparison_levels:
+            if (
+                cl._has_tf_adjustments
+                and self._settings_obj._retain_intermediate_calculation_columns
+            ):
+                col = cl._tf_adjustment_input_column
+                output_cols.extend(col.tf_name_l_r())
+
         for col in input_cols:
             if self._settings_obj._retain_intermediate_calculation_columns:
                 if self._has_tf_adjustments:
-
-                    output_cols.extend(col.tf_name_l_r())
-
-                output_cols.extend(self._match_weight_columns_to_multiply)
+                    output_cols.extend(self._match_weight_columns_to_multiply)
 
         return dedupe_preserving_order(output_cols)
 
