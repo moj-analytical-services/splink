@@ -56,7 +56,12 @@ def block_from_labels(linker: "Linker", labels_table_name: str):
         join_condition_r = f"r.{unique_id_col} = df_labels.{unique_id_col}_r"
 
     sql = f"""
-    select {sql_select_expr}, 'from_labels' as match_key from
+    select
+        {sql_select_expr},
+        'from_labels' as match_key,
+        clerical_match_score
+
+    from
     __splink__labels_prepared_for_joining as df_labels
     inner join __splink__df_concat_with_tf as l
     on {join_condition_l}

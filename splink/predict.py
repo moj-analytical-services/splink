@@ -12,6 +12,7 @@ def predict_from_comparison_vectors_sqls(
     settings_obj: Settings,
     threshold_match_probability=None,
     threshold_match_weight=None,
+    include_clerical_match_score=False,
 ) -> List[dict]:
 
     sqls = []
@@ -19,8 +20,13 @@ def predict_from_comparison_vectors_sqls(
     select_cols = settings_obj._columns_to_select_for_bayes_factor_parts
     select_cols_expr = ",".join(select_cols)
 
+    if include_clerical_match_score:
+        clerical_match_score = ", clerical_match_score"
+    else:
+        clerical_match_score = ""
+
     sql = f"""
-    select {select_cols_expr}
+    select {select_cols_expr} {clerical_match_score}
     from __splink__df_comparison_vectors
     """
 
@@ -64,7 +70,7 @@ def predict_from_comparison_vectors_sqls(
     select
     log2({bayes_factor_expr}) as match_weight,
     (({bayes_factor_expr})/(1+({bayes_factor_expr}))) as match_probability,
-    {select_cols_expr}
+    {select_cols_expr} {clerical_match_score}
     from __splink__df_match_weight_parts
     {threshold_expr}
     """

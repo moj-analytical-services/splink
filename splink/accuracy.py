@@ -52,7 +52,7 @@ def predict_scores_for_labels_sql(linker):
     {br_col} as found_by_blocking_rules,
      pred.*
     from __splink__df_predict as pred
-    left join __splink__labels_minimal as lab
+    left join __splink__labels_prepared_for_joining as lab
     on {join_conditions}
 
     """
@@ -253,13 +253,17 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
     sqls = block_from_labels(linker, labels_tablename)
 
     sql = {
-        "sql": compute_comparison_vector_values_sql(linker._settings_obj),
+        "sql": compute_comparison_vector_values_sql(
+            linker._settings_obj, include_clerical_match_score=True
+        ),
         "output_table_name": "__splink__df_comparison_vectors",
     }
 
     sqls.append(sql)
 
-    sqls_2 = predict_from_comparison_vectors_sqls(linker._settings_obj)
+    sqls_2 = predict_from_comparison_vectors_sqls(
+        linker._settings_obj, include_clerical_match_score=True
+    )
 
     sqls.extend(sqls_2)
 
@@ -277,13 +281,6 @@ def prediction_errors_from_labels_table(
 
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-    # Select only necessary columns from labels table
-    sql = labels_table_with_minimal_columns_sql(linker)
-    linker._enqueue_sql(sql, "__splink__labels_minimal")
-
-    sql = predict_scores_for_labels_sql(linker)
-    linker._enqueue_sql(sql, "__splink__labels_with_predictions")
 
     false_positives = f"""
     (clerical_match_score < {threshold} and
@@ -305,13 +302,20 @@ def prediction_errors_from_labels_table(
     where_condition = " OR ".join(where_conditions)
 
     sql = f"""
-    select *
-    from __splink__labels_with_predictions
+    select *,
+    case
+    when {false_positives} then 'FP'
+    when {false_negatives} then 'FN'
+    END as truth_status
+
+    from __splink__df_predict
     where
     {where_condition}
     """
 
     linker._enqueue_sql(sql, "__splink__labels_with_fp_fn_status")
+
+    # return linker._execute_sql_pipeline()
 
     return linker._execute_sql_pipeline()
 
