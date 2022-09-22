@@ -2,18 +2,13 @@ import pandas as pd
 import pytest
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.accuracy import (
-    predict_scores_for_labels_sql,
     truth_space_table_from_labels_with_predictions_sqls,
-    labels_table_with_minimal_columns_sql,
+    predictions_from_sample_of_pairwise_labels_sql,
 )
 
 from splink.duckdb.duckdb_comparison_library import exact_match
 
 from basic_settings import get_settings_dict
-
-from splink.block_from_labels import block_from_labels
-from splink.comparison_vector_values import compute_comparison_vector_values_sql
-from splink.predict import predict_from_comparison_vectors_sqls
 
 
 def test_scored_labels_table():
@@ -53,25 +48,11 @@ def test_scored_labels_table():
     linker._initialise_df_concat_with_tf()
     linker._con.register("labels", df_labels)
 
-    sqls = block_from_labels(linker, "labels")
+    sqls = predictions_from_sample_of_pairwise_labels_sql(linker, "labels")
 
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    sql = compute_comparison_vector_values_sql(linker._settings_obj)
-
-    linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
-
-    sqls = predict_from_comparison_vectors_sqls(linker._settings_obj)
-
-    for sql in sqls:
-        linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-
-    sql = labels_table_with_minimal_columns_sql(linker)
-    linker._enqueue_sql(sql, "__splink__labels_minimal")
-
-    sql = predict_scores_for_labels_sql(linker)
-    linker._enqueue_sql(sql, "__splink__labels_with_predictions")
     df_scores_labels = linker._execute_sql_pipeline()
 
     df_scores_labels = df_scores_labels.as_pandas_dataframe()

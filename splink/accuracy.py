@@ -5,6 +5,7 @@ from .block_from_labels import block_from_labels
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .predict import predict_from_comparison_vectors_sqls
 from .blocking import BlockingRule
+from .sql_transform import move_l_r_table_prefix_to_column_suffix
 
 
 def truth_space_table_from_labels_with_predictions_sqls(
@@ -132,6 +133,19 @@ def truth_space_table_from_labels_with_predictions_sqls(
     return sqls
 
 
+def _select_found_by_blocking_rules(linker):
+    brs = linker._settings_obj._blocking_rules_to_generate_predictions
+    if brs:
+        brs = [move_l_r_table_prefix_to_column_suffix(b.blocking_rule) for b in brs]
+        brs = [f"(coalesce({b}, false))" for b in brs]
+        brs = " OR ".join(brs)
+        br_col = f" ({brs}) "
+    else:
+        br_col = " 1=1 "
+
+    return f"{br_col} as found_by_blocking_rules"
+
+
 def truth_space_table_from_labels_table(
     linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
@@ -206,9 +220,20 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
     )
 
     sqls.extend(sqls_2)
+    br_col = _select_found_by_blocking_rules(linker)
+
+    sql = f"""
+    select *, {br_col}
+    from __splink__df_predict
+    """
+
+    sql = {
+        "sql": sql,
+        "output_table_name": "__splink__labels_with_predictions",
+    }
 
     # Clearer name than just df_predict
-    sqls[-1]["output_table_name"] = "__splink__labels_with_predictions"
+    sqls.append(sql)
 
     return sqls
 
