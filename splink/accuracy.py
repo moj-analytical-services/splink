@@ -4,60 +4,7 @@ from copy import deepcopy
 from .block_from_labels import block_from_labels
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .predict import predict_from_comparison_vectors_sqls
-from .sql_transform import move_l_r_table_prefix_to_column_suffix
 from .blocking import BlockingRule
-
-
-def labels_table_with_minimal_columns_sql(linker):
-    columns_to_select = []
-    id_cols = linker._settings_obj._unique_id_input_columns
-    for id_col in id_cols:
-        columns_to_select.append(f"{id_col.name_l()}")
-        columns_to_select.append(f"{id_col.name_r()}")
-    columns_to_select.append("clerical_match_score")
-    columns_to_select = ", ".join(columns_to_select)
-
-    sql = f"""
-    select {columns_to_select}
-    from __splink__labels_prepared_for_joining
-    """
-
-    return sql
-
-
-def predict_scores_for_labels_sql(linker):
-
-    brs = linker._settings_obj._blocking_rules_to_generate_predictions
-    if brs:
-        brs = [move_l_r_table_prefix_to_column_suffix(b.blocking_rule) for b in brs]
-        brs = [f"(coalesce({b}, false))" for b in brs]
-        brs = " OR ".join(brs)
-        br_col = f"({brs})"
-    else:
-        br_col = " 1=1 "
-
-    id_cols = linker._settings_obj._unique_id_input_columns
-
-    join_conditions = []
-    for id_col in id_cols:
-        cond = f"pred.{id_col.name_l()} = lab.{id_col.name_l()}"
-        join_conditions.append(cond)
-        cond = f"pred.{id_col.name_r()} = lab.{id_col.name_r()}"
-        join_conditions.append(cond)
-
-    join_conditions = " AND ".join(join_conditions)
-
-    sql = f"""
-    select lab.clerical_match_score,
-    {br_col} as found_by_blocking_rules,
-     pred.*
-    from __splink__df_predict as pred
-    left join __splink__labels_prepared_for_joining as lab
-    on {join_conditions}
-
-    """
-
-    return sql
 
 
 def truth_space_table_from_labels_with_predictions_sqls(
@@ -194,13 +141,6 @@ def truth_space_table_from_labels_table(
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    # Select only necessary columns from labels table
-    sql = labels_table_with_minimal_columns_sql(linker)
-    linker._enqueue_sql(sql, "__splink__labels_minimal")
-
-    sql = predict_scores_for_labels_sql(linker)
-    linker._enqueue_sql(sql, "__splink__labels_with_predictions")
-
     # c_P and c_N are clerical positive and negative, respectively
     sqls = truth_space_table_from_labels_with_predictions_sqls(
         threshold_actual, match_weight_round_to_nearest
@@ -267,6 +207,9 @@ def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
 
     sqls.extend(sqls_2)
 
+    # Clearer name than just df_predict
+    sqls[-1]["output_table_name"] = "__splink__labels_with_predictions"
+
     return sqls
 
 
@@ -308,14 +251,12 @@ def prediction_errors_from_labels_table(
     when {false_negatives} then 'FN'
     END as truth_status
 
-    from __splink__df_predict
+    from __splink__labels_with_predictions
     where
     {where_condition}
     """
 
     linker._enqueue_sql(sql, "__splink__labels_with_fp_fn_status")
-
-    # return linker._execute_sql_pipeline()
 
     return linker._execute_sql_pipeline()
 
