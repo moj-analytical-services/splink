@@ -6,7 +6,9 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def block_from_labels(linker: "Linker", labels_table_name: str):
+def block_from_labels(
+    linker: "Linker", labels_table_name: str, include_clerical_match_score=False
+):
     """Create pairwise record comparisons corresponding to the ID pairs in a labels
     table
 
@@ -55,11 +57,17 @@ def block_from_labels(linker: "Linker", labels_table_name: str):
         join_condition_l = f"l.{unique_id_col} = df_labels.{unique_id_col}_l"
         join_condition_r = f"r.{unique_id_col} = df_labels.{unique_id_col}_r"
 
+    if include_clerical_match_score:
+        clerical_match_score = ", clerical_match_score"
+    else:
+        clerical_match_score = ""
+
     sql = f"""
     select
         {sql_select_expr},
-        'from_labels' as match_key,
-        clerical_match_score
+        'from_labels' as match_key
+        {clerical_match_score}
+
 
     from
     __splink__labels_prepared_for_joining as df_labels

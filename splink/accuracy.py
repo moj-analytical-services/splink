@@ -204,7 +204,9 @@ def truth_space_table_from_labels_column(
 
 
 def predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename):
-    sqls = block_from_labels(linker, labels_tablename)
+    sqls = block_from_labels(
+        linker, labels_tablename, include_clerical_match_score=True
+    )
 
     sql = {
         "sql": compute_comparison_vector_values_sql(
