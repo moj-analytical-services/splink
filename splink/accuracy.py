@@ -109,22 +109,23 @@ def truth_space_table_from_labels_with_predictions_sqls(
 
     sql = """
     select
-    truth_threshold,
-    row_count,
-    P,
-    N,
-    TP,
-    TN,
-    FP,
-    FN,
-    P/row_count as P_rate,
-    cast(N as float)/row_count as N_rate,
-    cast(TP as float)/P as TP_rate,
-    cast(TN as float)/N as TN_rate,
-    cast(FP as float)/N as FP_rate,
-    cast(FN as float)/P as FN_rate,
-    cast(TP as float)/(TP+FP) as precision,
-    cast(TP as float)/(TP+FN) as recall
+        truth_threshold,
+        row_count,
+        P,
+        N,
+        TP,
+        TN,
+        FP,
+        FN,
+        P/row_count as P_rate,
+        cast(N as float)/row_count as N_rate,
+        cast(TP as float)/P as TP_rate,
+        cast(TN as float)/N as TN_rate,
+        cast(FP as float)/N as FP_rate,
+        cast(FN as float)/P as FN_rate,
+        cast(TP as float)/(TP+FP) as precision,
+        cast(TP as float)/(TP+FN) as recall,
+        cast(TP as float)/(TP + (FP + FN)/2) as F1,
     from __splink__labels_with_pos_neg_grouped_with_truth_stats
     """
 
