@@ -1070,10 +1070,12 @@ class Linker:
         else:
             new_records_tablename = records_or_tablename
 
-        blocking_rules = [
-            BlockingRule(r) if not isinstance(r, BlockingRule) else r
-            for r in blocking_rules
-        ]
+        rules = []
+        for r in blocking_rules:
+            br_as_obj = BlockingRule(r) if not isinstance(r, BlockingRule) else r
+            br_as_obj.preceding_rules = rules.copy()
+            rules.append(br_as_obj)
+        blocking_rules = rules
 
         self._settings_obj._blocking_rules_to_generate_predictions = blocking_rules
 
