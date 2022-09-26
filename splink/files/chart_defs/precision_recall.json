@@ -13,7 +13,8 @@
       { "type": "quantitative", "field": "FP", "format": ",.0f" },
       { "type": "quantitative", "field": "FN", "format": ",.0f" },
       { "type": "quantitative", "field": "precision", "format": ".4f" },
-      { "type": "quantitative", "field": "recall", "format": ".4f" }
+      { "type": "quantitative", "field": "recall", "format": ".4f" },
+      { "type": "quantitative", "field": "F1", "format": ".4f" }
     ],
     "x": {
       "type": "quantitative",
