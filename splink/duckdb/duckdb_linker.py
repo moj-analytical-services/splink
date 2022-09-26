@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 
 from duckdb import DuckDBPyConnection
 import duckdb
+import pandas as pd
 
 from .duckdb_helpers import (
     validate_duckdb_connection,
@@ -187,6 +188,27 @@ class DuckDBLinker(Linker):
 
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
+    def query_sql(self, sql):
+        return self._con.execute(sql).fetch_df()
+
+    def register_table(self, input, table_name, overwrite=False):
+
+        # Check if table name is already in use
+        exists = self._table_exists_in_database(table_name)
+        if exists:
+            if not overwrite:
+                raise ValueError(f"Table '{table_name}' already exists in database.")
+            else:
+                self._con.unregister(table_name)
+
+        if isinstance(input, dict):
+            input = pd.DataFrame(input)
+        elif isinstance(input, list):
+            input = pd.DataFrame.from_records(input)
+
+        # Will error if an invalid data type is passed
+        self._con.register(table_name, input)
+
     def initialise_settings(self, settings_dict: dict):
         if "sql_dialect" not in settings_dict:
             settings_dict["sql_dialect"] = "duckdb"
@@ -216,15 +238,6 @@ class DuckDBLinker(Linker):
         except error:
             return False
         return True
-
-    def _records_to_table(self, records, as_table_name):
-        for r in records:
-            r["source_dataset"] = as_table_name
-
-        import pandas as pd
-
-        df = pd.DataFrame(records)
-        self._con.register(as_table_name, df)
 
     def _delete_table_from_database(self, name):
         drop_sql = f"""
