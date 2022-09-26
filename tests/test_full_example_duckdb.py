@@ -12,6 +12,7 @@ import pyarrow.parquet as pq
 
 
 from basic_settings import get_settings_dict
+from linker_utils import _test_table_registration, register_roc_data
 
 
 def test_full_example_duckdb(tmp_path):
@@ -76,30 +77,7 @@ def test_full_example_duckdb(tmp_path):
     records = df_e.to_dict(orient="records")
     linker.waterfall_chart(records)
 
-    # Create labels
-    df_10 = df.head(10).copy()
-    df_10["merge"] = 1
-    df_10["source_dataset"] = "fake_data_1"
-
-    df_l = df_10[["unique_id", "source_dataset", "group", "merge"]].copy()
-    df_r = df_l.copy()
-
-    df_labels = df_l.merge(df_r, on="merge", suffixes=("_l", "_r"))
-    f1 = df_labels["unique_id_l"] < df_labels["unique_id_r"]
-    df_labels = df_labels[f1]
-
-    df_labels["clerical_match_score"] = (
-        df_labels["group_l"] == df_labels["group_r"]
-    ).astype(float)
-
-    df_labels = df_labels.drop(
-        ["group_l", "group_r", "source_dataset_l", "source_dataset_r", "merge"],
-        axis=1,
-    )
-
-    linker._con.register("labels", df_labels)
-    # Finish create labels
-
+    register_roc_data(linker)
     linker.roc_chart_from_labels_table("labels")
 
     df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
@@ -112,6 +90,25 @@ def test_full_example_duckdb(tmp_path):
     )
 
     linker.unlinkables_chart(source_dataset="Testing")
+
+    _test_table_registration(linker)
+
+    record = {
+        "unique_id": 1,
+        "first_name": "John",
+        "SUR name": "Smith",
+        "dob": "1971-05-24",
+        "city": "London",
+        "email": "john@smith.net",
+        "group": 10000,
+    }
+
+    linker.compute_tf_table("first_name")
+    linker._initialise_df_concat_with_tf()
+
+    matches = linker.find_matches_to_new_records(
+        [record], blocking_rules=[], match_weight_threshold=-10000
+    )
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
