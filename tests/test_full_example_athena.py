@@ -156,7 +156,7 @@ def test_full_example_athena(tmp_path):
     )
 
     linker.unlinkables_chart(source_dataset="Testing")
-    
+
     _test_table_registration(linker)
 
 
