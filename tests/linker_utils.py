@@ -1,7 +1,6 @@
 import pandas as pd
 from tests.cc_testing_utils import check_df_equality
 import pytest
-import pyarrow as pa
 
 
 def _test_table_registration(linker):
@@ -9,22 +8,22 @@ def _test_table_registration(linker):
     # Standard pandas df...
     a = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
-    linker.register_table(a, "pd")
-    pd_df = linker.query_sql("select * from pd")
+    linker.register_table(a, "__splink_df_pd")
+    pd_df = linker.query_sql("select * from __splink_df_pd")
     assert check_df_equality(pd_df, a)
 
     # Standard dictionary
     test_dict = {"a": [666, 777, 888], "b": [4, 5, 6]}
-    linker.register_table(test_dict, "test_dict")
-    t_dict = linker.query_sql("select * from test_dict")
+    linker.register_table(test_dict, "__splink_df_test_dict")
+    t_dict = linker.query_sql("select * from __splink_df_test_dict")
     assert check_df_equality(t_dict, pd.DataFrame(test_dict))
 
     # Duplicate table name (check for error)
     with pytest.raises(ValueError):
-        linker.register_table(test_dict, "pd")
+        linker.register_table(test_dict, "__splink_df_pd")
     # Test overwriting works
     try:
-        linker.register_table(test_dict, "pd", overwrite=True)
+        linker.register_table(test_dict, "__splink_df_pd", overwrite=True)
     except:
         assert False
 
@@ -35,8 +34,8 @@ def _test_table_registration(linker):
         {"a": 3, "b": 44, "c": 555},
     ]
 
-    linker.register_table(b, "record_df")
-    record_df = linker.query_sql("select * from record_df")
+    linker.register_table(b, "__splink_df_record_df")
+    record_df = linker.query_sql("select * from __splink_df_record_df")
     assert check_df_equality(record_df, pd.DataFrame.from_records(b))
 
 

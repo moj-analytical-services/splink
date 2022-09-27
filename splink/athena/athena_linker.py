@@ -6,6 +6,7 @@ import numpy as np
 import boto3
 from typing import Union
 import uuid
+import pandas as pd
 
 
 from ..linker import Linker
@@ -238,6 +239,7 @@ class AthenaLinker(Linker):
             settings_dict["sql_dialect"] = "presto"
 
         self.boto3_session = boto3_session
+        self.output_schema = output_database
         self.boto_utils = boto_utils(
             boto3_session,
             output_bucket,
@@ -267,17 +269,7 @@ class AthenaLinker(Linker):
                     alias = f"__splink__input_table_{df_id}"
 
                 # register table here...
-                wr.s3.to_parquet(
-                    df=table,
-                    path=self.boto_utils.s3_output,
-                    dataset=True,
-                    mode="overwrite",
-                    database=output_database,
-                    table=alias,
-                    boto3_session=boto3_session,
-                    compression="snappy",
-                    use_threads=True,
-                )
+                self.register_data_on_s3(table, alias)
 
             homogenised_tables.append(alias)
             homogenised_aliases.append(alias)
@@ -289,7 +281,6 @@ class AthenaLinker(Linker):
             input_table_aliases=homogenised_aliases,
         )
 
-        self.output_schema = output_database
         self._drop_all_tables_created_by_splink(
             garbage_collection_level,
             homogenised_aliases,
@@ -310,6 +301,20 @@ class AthenaLinker(Linker):
             settings_dict["sql_dialect"] = "presto"
         super().initialise_settings(settings_dict)
 
+    def register_data_on_s3(self, table, alias):
+        # register table here...
+        wr.s3.to_parquet(
+            df=table,
+            path=self.boto_utils.s3_output,
+            dataset=True,
+            mode="overwrite",
+            database=self.output_schema,
+            table=alias,
+            boto3_session=self.boto3_session,
+            compression="snappy",
+            use_threads=True,
+        )
+
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
 
         # Deletes the table in the db, but not the object on s3.
@@ -317,7 +322,6 @@ class AthenaLinker(Linker):
         self.drop_table_from_database_if_exists(physical_name)
         sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
         sql = sql.replace("FLOAT", "double").replace("float", "double")
-        #         sql = sql
 
         logger.debug(
             execute_sql_logging_message_info(
@@ -337,6 +341,35 @@ class AthenaLinker(Linker):
         output_obj = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_obj
 
+    def query_sql(self, sql):
+        return wr.athena.read_sql_query(
+            sql=sql,
+            database=self.output_schema,
+            s3_output=self.boto_utils.s3_output,
+            keep_files=False,
+            ctas_approach=True,
+            use_threads=True,
+            boto3_session=self.boto3_session,
+        )
+
+    def register_table(self, input, table_name, overwrite=False):
+
+        # Check if table name is already in use
+        exists = self._table_exists_in_database(table_name)
+        if exists:
+            if not overwrite:
+                raise ValueError(f"Table '{table_name}' already exists in database.")
+            else:
+                self.drop_table_from_database_if_exists(table_name)
+
+        if isinstance(input, dict):
+            input = pd.DataFrame(input)
+        elif isinstance(input, list):
+            input = pd.DataFrame.from_records(input)
+
+        # Will error if an invalid data type is passed
+        self.register_data_on_s3(input, table_name)
+
     def _random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
             return ""
@@ -344,15 +377,11 @@ class AthenaLinker(Linker):
         return f" TABLESAMPLE BERNOULLI ({percent})"
 
     def _table_exists_in_database(self, table_name):
-        rec = wr.catalog.does_table_exist(
+        return wr.catalog.does_table_exist(
             database=self.output_schema,
             table=table_name,
             boto3_session=self.boto3_session,
         )
-        if not rec:
-            return False
-        else:
-            return True
 
     def create_table(self, sql, physical_name):
         database = self.output_schema
