@@ -93,7 +93,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
     cumulative_blocking_rule_count = linker._execute_sql_pipeline()
     br_n = cumulative_blocking_rule_count.as_pandas_dataframe()
     cumulative_blocking_rule_count.drop_table_from_database()
-    br_count, br_keys = list(br_n.row_count), list(br_n['match_key'].astype('int'))
+    br_count, br_keys = list(br_n.row_count), list(br_n["match_key"].astype("int"))
 
     if len(br_count) != len(brs_as_objs):
         missing_br = [x for x in range(len(brs_as_objs)) if x not in br_keys]
