@@ -291,8 +291,7 @@ class Comparison:
 
         for col in input_cols:
             if self._settings_obj._retain_intermediate_calculation_columns:
-                if self._has_tf_adjustments:
-                    output_cols.extend(self._match_weight_columns_to_multiply)
+                output_cols.extend(self._match_weight_columns_to_multiply)
 
         return dedupe_preserving_order(output_cols)
 
