@@ -80,29 +80,32 @@ def cumulative_comparisons_generated_by_blocking_rules(
     linker._enqueue_sql(sql, "__splink__df_blocked_data")
 
     brs_as_objs = linker._settings_obj_._blocking_rules_to_generate_predictions
-    group_by = (
-        "group by match_key order by cast(match_key as int) asc"
-        if len(brs_as_objs) > 1
-        else ""
-    )
 
-    sql = f"""
-        select count(*) as row_count
+    sql = """
+        select
+        count(*) as row_count,
+        match_key
         from __splink__df_blocked_data
-        {group_by}
-
+        group by match_key
+        order by cast(match_key as int) asc
     """
     linker._enqueue_sql(sql, "__splink__df_count_cumulative_blocks")
     cumulative_blocking_rule_count = linker._execute_sql_pipeline()
-    br_count = cumulative_blocking_rule_count.as_record_dict()
+    br_n = cumulative_blocking_rule_count.as_pandas_dataframe()
     cumulative_blocking_rule_count.drop_table_from_database()
+    br_count, br_keys = list(br_n.row_count), list(br_n['match_key'].astype('int'))
+
+    if len(br_count) != len(brs_as_objs):
+        missing_br = [x for x in range(len(brs_as_objs)) if x not in br_keys]
+        for n in missing_br:
+            br_count.insert(n, 0)
 
     br_comparisons = []
     cumulative_sum = 0
     # Wrap everything into an output dictionary
     for row, br in zip(br_count, brs_as_objs):
 
-        cumulative_sum += row["row_count"]
+        cumulative_sum += row
         rr = round(calculate_reduction_ratio(cumulative_sum, cartesian), 3)
 
         rr_text = (
@@ -112,12 +115,12 @@ def cumulative_comparisons_generated_by_blocking_rules(
         )
 
         out_dict = {
-            "row_count": row["row_count"],
+            "row_count": row,
             "rule": br.blocking_rule,
             "cumulative_rows": cumulative_sum,
             "cartesian": int(cartesian),
             "reduction_ratio": rr_text,
-            "start": cumulative_sum - row["row_count"],
+            "start": cumulative_sum - row,
         }
         br_comparisons.append(out_dict.copy())
 
