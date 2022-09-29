@@ -63,7 +63,7 @@ def test_splink_converges_to_known_params():
     linker = DuckDBLinker(df, settings)
 
     # need to register df_blocked and go from there
-    linker._con.register("__splink__df_comparison_vectors_2fc9d5a", df)
+    linker._con.register("__splink__df_comparison_vectors_0de5e3a", df)
 
     em_training_session = EMTrainingSession(
         linker,
@@ -83,7 +83,7 @@ def test_splink_converges_to_known_params():
 
     cv = DuckDBLinkerDataFrame(
         "__splink__df_comparison_vectors",
-        "__splink__df_comparison_vectors_2fc9d5a",
+        "__splink__df_comparison_vectors_0de5e3a",
         linker,
     )
 
