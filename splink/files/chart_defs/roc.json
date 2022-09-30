@@ -8,6 +8,7 @@
   "encoding": {
     "tooltip": [
       { "type": "quantitative", "field": "truth_threshold", "format": ".4f" },
+      { "type": "quantitative", "field": "match_probability", "format": ".4%" },
       { "type": "quantitative", "field": "FP_rate", "format": ".4f" },
       { "type": "quantitative", "field": "TP_rate", "format": ".4f" },
       { "type": "quantitative", "field": "TP", "format": ",.0f" },
