@@ -10,6 +10,7 @@ def exact_match(
     term_frequency_adjustments=False,
     m_probability_exact_match=None,
     m_probability_else=None,
+    include_colname_in_charts_label=False,
 ) -> Comparison:
     """A comparison of the data in `col_name` with two levels:
     - Exact match
@@ -23,6 +24,8 @@ def exact_match(
             default m probability for the exact match level. Defaults to None.
         m_probability_else (_type_, optional): If provided, overrides the
             default m probability for the 'anything else' level. Defaults to None.
+        include_colname_in_charts_label: If true, append col name to label for charts.
+            Defaults to False.
 
     Returns:
         Comparison: A comparison that can be inclued in the Splink settings dictionary
@@ -36,6 +39,7 @@ def exact_match(
                 col_name,
                 term_frequency_adjustments=term_frequency_adjustments,
                 m_probability=m_probability_exact_match,
+                include_colname_in_charts_label=include_colname_in_charts_label,
             ),
             cl.else_level(m_probability=m_probability_else),
         ],
