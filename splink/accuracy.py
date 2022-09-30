@@ -110,6 +110,8 @@ def truth_space_table_from_labels_with_predictions_sqls(
     sql = """
     select
         truth_threshold,
+        power(2, truth_threshold) / (1 + power(2, truth_threshold))
+            as match_probability,
         row_count,
         P,
         N,
@@ -125,7 +127,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
         cast(FN as float)/P as FN_rate,
         cast(TP as float)/(TP+FP) as precision,
         cast(TP as float)/(TP+FN) as recall,
-        cast(TP as float)/(TP + (FP + FN)/2) as F1,
+        cast(TP as float)/(TP + (FP + FN)/2) as F1
     from __splink__labels_with_pos_neg_grouped_with_truth_stats
     """
 
