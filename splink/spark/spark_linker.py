@@ -62,9 +62,9 @@ class SparkDataframe(SplinkDataFrame):
         return self.spark_linker.query_sql(sql, output_type)
 
     def as_record_dict(self, limit=None):
-        return self.as_dataframe(
-            output_type="pandas", limit=limit
-            ).to_dict(orient="records")
+        return self.as_dataframe(output_type="pandas", limit=limit).to_dict(
+            orient="records"
+        )
 
     def as_pandas_dataframe(self, limit=None):
         return self.as_dataframe(output_type="pandas", limit=limit)
@@ -292,7 +292,7 @@ class SparkLinker(Linker):
         else:
             raise ValueError(
                 f"output_type '{output_type}' is not supported.",
-                "Must be one of 'splink_df'/'splinkdf', 'pandas' or 'spark'"
+                "Must be one of 'splink_df'/'splinkdf', 'pandas' or 'spark'",
             )
 
     def register_table(self, input, table_name, overwrite=False):

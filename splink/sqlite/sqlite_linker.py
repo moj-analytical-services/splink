@@ -146,7 +146,7 @@ class SQLiteLinker(Linker):
         else:
             raise ValueError(
                 f"output_type '{output_type}' is not supported.",
-                "Must be one of 'splink_df'/'splinkdf' or 'pandas'"
+                "Must be one of 'splink_df'/'splinkdf' or 'pandas'",
             )
 
     def register_table(self, input, table_name, overwrite=False):

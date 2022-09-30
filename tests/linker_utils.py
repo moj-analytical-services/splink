@@ -35,18 +35,26 @@ def _test_table_registration(linker, query_types=[]):
     ]
 
     linker.register_table(b, "__splink_df_record_df")
-    record_df = linker.query_sql("select * from __splink_df_record_df", output_type="pandas")
+    record_df = linker.query_sql(
+        "select * from __splink_df_record_df", output_type="pandas"
+    )
     assert check_df_equality(record_df, pd.DataFrame.from_records(b))
 
     with pytest.raises(ValueError):
-        linker.query_sql("select * from __splink_df_test_dict", output_type = "testing")
-    df=linker.query_sql("select * from __splink_df_test_dict", output_type = "splinkdf").as_pandas_dataframe()
+        linker.query_sql("select * from __splink_df_test_dict", output_type="testing")
+    df = linker.query_sql(
+        "select * from __splink_df_test_dict", output_type="splinkdf"
+    ).as_pandas_dataframe()
     assert check_df_equality(df, test_dict_df)
-    r_dict=linker.query_sql("select * from __splink_df_record_df", output_type = "splinkdf").as_record_dict()
-    assert check_df_equality(pd.DataFrame.from_records(r_dict), pd.DataFrame.from_records(b))
+    r_dict = linker.query_sql(
+        "select * from __splink_df_record_df", output_type="splinkdf"
+    ).as_record_dict()
+    assert check_df_equality(
+        pd.DataFrame.from_records(r_dict), pd.DataFrame.from_records(b)
+    )
     # Just check any additional output types are working as expected
     for out_type in query_types:
-        linker.query_sql("select * from __splink_df_test_dict", output_type = out_type)
+        linker.query_sql("select * from __splink_df_test_dict", output_type=out_type)
 
 
 def register_roc_data(linker):

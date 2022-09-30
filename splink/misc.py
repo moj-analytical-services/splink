@@ -135,8 +135,8 @@ def _check_dependency_installed(module):
     except pkg_resources.DistributionNotFound:
         raise ValueError(
             f"{module} is not installed.",
-            "Please install and import it before continuing."
-            )
+            "Please install and import it before continuing.",
+        )
 
 
 def query_sql_to_splink_df(linker, sql):
