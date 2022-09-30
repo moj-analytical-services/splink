@@ -4,6 +4,7 @@ from tempfile import TemporaryDirectory
 
 from duckdb import DuckDBPyConnection
 import duckdb
+import hashlib
 import pandas as pd
 
 from .duckdb_helpers import (
@@ -14,7 +15,12 @@ from .duckdb_helpers import (
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..logging_messages import execute_sql_logging_message_info, log_sql
-from ..misc import ensure_is_list, all_letter_combos
+from ..misc import (
+    ensure_is_list,
+    all_letter_combos,
+    _check_dependency_installed,
+    query_sql_to_splink_df,
+)
 from ..input_column import InputColumn
 
 logger = logging.getLogger(__name__)
@@ -41,20 +47,23 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
 
         self.duckdb_linker._delete_table_from_database(self.physical_name)
 
-    def as_record_dict(self, limit=None):
-
+    def as_dataframe(self, output_type, limit=None):
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
 
-        return self.duckdb_linker._con.query(sql).to_df().to_dict(orient="records")
+        return self.duckdb_linker.query_sql(sql, output_type)
+
+    def as_record_dict(self, limit=None):
+        return self.as_dataframe(
+            output_type="pandas", limit=limit
+            ).to_dict(orient="records")
 
     def as_pandas_dataframe(self, limit=None):
-        sql = f"select * from {self.physical_name}"
-        if limit:
-            sql += f" limit {limit}"
+        return self.as_dataframe(output_type="pandas", limit=limit)
 
-        return self.duckdb_linker._con.query(sql).to_df()
+    def as_arrow_table(self, limit=None):
+        return self.as_dataframe(output_type="arrow", limit=limit)
 
 
 class DuckDBLinker(Linker):
@@ -188,8 +197,19 @@ class DuckDBLinker(Linker):
 
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
-    def query_sql(self, sql):
-        return self._con.execute(sql).fetch_df()
+    def query_sql(self, sql, output_type="pandas"):
+        if output_type in ("splink_df", "splinkdf"):
+            return query_sql_to_splink_df(self, sql)
+        elif output_type == "pandas":
+            return self._con.execute(sql).fetch_df()
+        elif output_type in ("arrow", "pyarrow"):
+            _check_dependency_installed("pyarrow")
+            return self._con.execute(sql).arrow()
+        else:
+            raise ValueError(
+                f"output_type '{output_type}' is not supported.",
+                "Must be one of 'splink_df'/'splinkdf', 'pandas' or 'arrow'/'pyarrow'"
+            )
 
     def register_table(self, input, table_name, overwrite=False):
 
@@ -208,6 +228,7 @@ class DuckDBLinker(Linker):
 
         # Will error if an invalid data type is passed
         self._con.register(table_name, input)
+        return DuckDBLinkerDataFrame(table_name, table_name, self)
 
     def initialise_settings(self, settings_dict: dict):
         if "sql_dialect" not in settings_dict:

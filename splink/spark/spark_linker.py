@@ -4,6 +4,7 @@ from typing import Union, List
 import re
 import os
 import math
+import hashlib
 
 import pandas as pd
 
@@ -13,7 +14,7 @@ from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
 from ..logging_messages import execute_sql_logging_message_info, log_sql
-from ..misc import ensure_is_list
+from ..misc import ensure_is_list, query_sql_to_splink_df
 from ..input_column import InputColumn
 from .custom_spark_dialect import Dialect
 
@@ -53,16 +54,23 @@ class SparkDataframe(SplinkDataFrame):
         # But there's no real need to clean these up, so we'll just do nothing
         pass
 
-    def as_pandas_dataframe(self, limit=None):
-
+    def as_dataframe(self, output_type, limit=None):
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
 
-        return self.spark_linker.spark.sql(sql).toPandas()
+        return self.spark_linker.query_sql(sql, output_type)
+
+    def as_record_dict(self, limit=None):
+        return self.as_dataframe(
+            output_type="pandas", limit=limit
+            ).to_dict(orient="records")
+
+    def as_pandas_dataframe(self, limit=None):
+        return self.as_dataframe(output_type="pandas", limit=limit)
 
     def as_spark_dataframe(self):
-        return self.spark_linker.spark.table(self.physical_name)
+        return self.as_dataframe(output_type="spark", limit=None)
 
 
 class SparkLinker(Linker):
@@ -82,34 +90,34 @@ class SparkLinker(Linker):
         """Initialise the linker object, which manages the data linkage process and
                 holds the data linkage model.
 
-                Args:
-                    input_table_or_tables: Input data into the linkage model.  Either a
-                        single table or a list of tables.  Tables can be provided either as
-                        a Spark DataFrame, or as the name of the table as a string, as
-                        registered in the Spark catalog
-                    settings_dict (dict, optional): A Splink settings dictionary. If not
-                        provided when the object is created, can later be added using
-                        `linker.initialise_settings()` Defaults to None.
-                    break_lineage_method (str, optional): Method to use to cache intermediate
-                        results.  Can be "checkpoint", "persist" or "parquet".  Defaults to
-                        "parquet".
-                    set_up_basic_logging (bool, optional): If true, sets ups up basic logging
-                        so that Splink sends messages at INFO level to stdout. Defaults to True.
-                    input_table_aliases (Union[str, list], optional): Labels assigned to
-                        input tables in Splink outputs.  If the names of the tables in the
-                        input database are long or unspecific, this argument can be used
-                        to attach more easily readable/interpretable names. Defaults to None.
-                    spark: The SparkSession. Required only if `input_table_or_tables` are
-                        provided as string - otherwise will be inferred from the provided
-                        Spark Dataframes.
-                    repartition_after_blocking (bool, optional): In some cases, especially when
-                        the comparisons are very computationally intensive, performance may be
-                        improved by repartitioning after blocking to distribute the workload of
-        omputing the comparison vectors more evenly and reduce the number of
-                        tasks. Defaults to False.
-                    num_partitions_on_repartition (int, optional): When saving out intermediate
-                        results, how many partitions to use?  This should be set so that
-                        partitions are roughly 100Mb. Defaults to 100.
+        Args:
+            input_table_or_tables: Input data into the linkage model.  Either a
+                single table or a list of tables.  Tables can be provided either as
+                a Spark DataFrame, or as the name of the table as a string, as
+                registered in the Spark catalog
+            settings_dict (dict, optional): A Splink settings dictionary. If not
+                provided when the object is created, can later be added using
+                `linker.initialise_settings()` Defaults to None.
+            break_lineage_method (str, optional): Method to use to cache intermediate
+                results.  Can be "checkpoint", "persist" or "parquet".  Defaults to
+                "parquet".
+            set_up_basic_logging (bool, optional): If true, sets ups up basic logging
+                so that Splink sends messages at INFO level to stdout. Defaults to True.
+            input_table_aliases (Union[str, list], optional): Labels assigned to
+                input tables in Splink outputs.  If the names of the tables in the
+                input database are long or unspecific, this argument can be used
+                to attach more easily readable/interpretable names. Defaults to None.
+            spark: The SparkSession. Required only if `input_table_or_tables` are
+                provided as string - otherwise will be inferred from the provided
+                Spark Dataframes.
+            repartition_after_blocking (bool, optional): In some cases, especially when
+                the comparisons are very computationally intensive, performance may be
+                improved by repartitioning after blocking to distribute the workload of
+                computing the comparison vectors more evenly and reduce the number of
+                tasks. Defaults to False.
+            num_partitions_on_repartition (int, optional): When saving out intermediate
+                results, how many partitions to use?  This should be set so that
+                partitions are roughly 100Mb. Defaults to 100.
 
         """
 
@@ -274,8 +282,18 @@ class SparkLinker(Linker):
         output_df = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_df
 
-    def query_sql(self, sql):
-        return self.spark.sql(sql).toPandas()
+    def query_sql(self, sql, output_type="pandas"):
+        if output_type in ("splink_df", "splinkdf"):
+            return query_sql_to_splink_df(self, sql)
+        elif output_type == "pandas":
+            return self.spark.sql(sql).toPandas()
+        elif output_type in ("spark", "sparkdf"):
+            return self.spark.sql(sql)
+        else:
+            raise ValueError(
+                f"output_type '{output_type}' is not supported.",
+                "Must be one of 'splink_df'/'splinkdf', 'pandas' or 'spark'"
+            )
 
     def register_table(self, input, table_name, overwrite=False):
 
@@ -295,6 +313,7 @@ class SparkLinker(Linker):
             input = self.spark.createDataFrame(input)
 
         input.createOrReplaceTempView(table_name)
+        return self._table_to_splink_dataframe(table_name, table_name)
 
     def _random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
@@ -309,5 +328,5 @@ class SparkLinker(Linker):
                 return True
         return False
 
-    def register_tf_table(self, df, col_name):
-        df.createOrReplaceTempView(colname_to_tf_tablename(col_name))
+    def register_tf_table(self, df, col_name, overwrite=False):
+        self.register_table(df, colname_to_tf_tablename(col_name), overwrite)
