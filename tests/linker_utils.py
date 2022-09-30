@@ -3,20 +3,20 @@ from tests.cc_testing_utils import check_df_equality
 import pytest
 
 
-def _test_table_registration(linker):
+def _test_table_registration(linker, query_types=[]):
 
     # Standard pandas df...
     a = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
     linker.register_table(a, "__splink_df_pd")
-    pd_df = linker.query_sql("select * from __splink_df_pd")
+    pd_df = linker.query_sql("select * from __splink_df_pd", output_type="pandas")
     assert check_df_equality(pd_df, a)
 
     # Standard dictionary
     test_dict = {"a": [666, 777, 888], "b": [4, 5, 6]}
-    linker.register_table(test_dict, "__splink_df_test_dict")
-    t_dict = linker.query_sql("select * from __splink_df_test_dict")
-    assert check_df_equality(t_dict, pd.DataFrame(test_dict))
+    t_dict = linker.register_table(test_dict, "__splink_df_test_dict")
+    test_dict_df = pd.DataFrame(test_dict)
+    assert check_df_equality(t_dict.as_pandas_dataframe(), test_dict_df)
 
     # Duplicate table name (check for error)
     with pytest.raises(ValueError):
@@ -35,8 +35,18 @@ def _test_table_registration(linker):
     ]
 
     linker.register_table(b, "__splink_df_record_df")
-    record_df = linker.query_sql("select * from __splink_df_record_df")
+    record_df = linker.query_sql("select * from __splink_df_record_df", output_type="pandas")
     assert check_df_equality(record_df, pd.DataFrame.from_records(b))
+
+    with pytest.raises(ValueError):
+        linker.query_sql("select * from __splink_df_test_dict", output_type = "testing")
+    df=linker.query_sql("select * from __splink_df_test_dict", output_type = "splinkdf").as_pandas_dataframe()
+    assert check_df_equality(df, test_dict_df)
+    r_dict=linker.query_sql("select * from __splink_df_record_df", output_type = "splinkdf").as_record_dict()
+    assert check_df_equality(pd.DataFrame.from_records(r_dict), pd.DataFrame.from_records(b))
+    # Just check any additional output types are working as expected
+    for out_type in query_types:
+        linker.query_sql("select * from __splink_df_test_dict", output_type = out_type)
 
 
 def register_roc_data(linker):

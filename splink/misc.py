@@ -4,6 +4,8 @@ import numpy as np
 import json
 from string import ascii_lowercase
 import itertools
+import pkg_resources
+import hashlib
 
 
 def dedupe_preserving_order(list_of_items):
@@ -125,3 +127,23 @@ def calculate_reduction_ratio(N, cartesian):
     the total search space.
     """
     return 1 - (N / cartesian)
+
+
+def _check_dependency_installed(module):
+    try:
+        dist = pkg_resources.get_distribution(module)
+    except pkg_resources.DistributionNotFound:
+        raise ValueError(
+            f"{module} is not installed.",
+            "Please install and import it before continuing."
+            )
+
+
+def query_sql_to_splink_df(linker, sql):
+    """
+    Quick wrapper for querying SQL -> outputting a splink df.
+    This is used in all of our linker classes currently.
+    """
+    hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
+    out_name = "__splink__df_dummy"
+    return linker._execute_sql_against_backend(sql, out_name, f"{out_name}_{hash}")
