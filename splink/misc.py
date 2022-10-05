@@ -4,6 +4,7 @@ import numpy as np
 import json
 from string import ascii_lowercase
 import itertools
+import pkg_resources
 
 
 def dedupe_preserving_order(list_of_items):
@@ -125,3 +126,13 @@ def calculate_reduction_ratio(N, cartesian):
     the total search space.
     """
     return 1 - (N / cartesian)
+
+
+def _check_dependency_installed(module):
+    try:
+        pkg_resources.get_distribution(module)
+    except pkg_resources.DistributionNotFound:
+        raise ValueError(
+            f"{module} is not installed.",
+            "Please install and import it before continuing.",
+        )

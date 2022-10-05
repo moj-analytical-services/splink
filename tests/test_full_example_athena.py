@@ -3,6 +3,8 @@ import pytest
 import os
 
 from basic_settings import get_settings_dict
+from linker_utils import _test_table_registration
+from splink.athena.athena_comparison_library import levenshtein_at_thresholds
 
 skip = False
 try:
@@ -15,7 +17,31 @@ if not skip:
     from splink.athena.athena_linker import AthenaLinker
     import boto3
     from dataengineeringutils3.s3 import delete_s3_folder_contents
-    from splink.athena.athena_comparison_library import levenshtein_at_thresholds
+
+
+settings_dict = get_settings_dict()
+
+first_name_cc = levenshtein_at_thresholds(
+    col_name="first_name",
+    distance_threshold_or_thresholds=2,
+    include_exact_match_level=True,
+    term_frequency_adjustments=True,
+    m_probability_exact_match=0.7,
+    m_probability_or_probabilities_lev=0.2,
+    m_probability_else=0.1,
+)
+
+# Update tf weight and u probabilities to match v2 settings
+first_name_cc._comparison_dict["comparison_levels"][1]._tf_adjustment_weight = 0.6
+u_probabilities_first_name = [0.1, 0.1, 0.8]
+for u_prob, level in zip(
+    u_probabilities_first_name,
+    first_name_cc._comparison_dict["comparison_levels"][1:],
+):
+    level._u_probability = u_prob
+
+# Update settings w/ our edited first_name col
+settings_dict["comparisons"][0] = first_name_cc
 
 
 def setup_athena_db(my_session, db_name="splink_awswrangler_test"):
@@ -88,30 +114,6 @@ def test_full_example_athena(tmp_path):
 
     # creates a session at least on the platform...
     my_session = boto3.Session(region_name="eu-west-1")
-    settings_dict = get_settings_dict()
-
-    first_name_cc = levenshtein_at_thresholds(
-        col_name="first_name",
-        distance_threshold_or_thresholds=2,
-        include_exact_match_level=True,
-        term_frequency_adjustments=True,
-        m_probability_exact_match=0.7,
-        m_probability_or_probabilities_lev=0.2,
-        m_probability_else=0.1,
-    )
-
-    # Update tf weight and u probabilities to match v2 settings
-    first_name_cc._comparison_dict["comparison_levels"][1]._tf_adjustment_weight = 0.6
-    u_probabilities_first_name = [0.1, 0.1, 0.8]
-    for u_prob, level in zip(
-        u_probabilities_first_name,
-        first_name_cc._comparison_dict["comparison_levels"][1:],
-    ):
-        level._u_probability = u_prob
-
-    # Update settings w/ our edited first_name col
-    settings_dict["comparisons"][0] = first_name_cc
-
     db_name_read = "splink_awswrangler_test"
     db_name_write = f"{db_name_read}2"
 
@@ -156,13 +158,14 @@ def test_full_example_athena(tmp_path):
 
     linker.unlinkables_chart(source_dataset="Testing")
 
+    _test_table_registration(linker)
+
 
 @pytest.mark.skip(reason="AWS Connection Required")
 def test_athena_garbage_collection():
 
     # creates a session at least on the platform...
     my_session = boto3.Session(region_name="eu-west-1")
-    settings_dict = get_settings_dict()
     db_name_read = "splink_awswrangler_test"
     db_name_write = f"{db_name_read}2"
 
@@ -230,7 +233,6 @@ def test_athena_df_as_input():
 
     # creates a session at least on the platform...
     my_session = boto3.Session(region_name="eu-west-1")
-    settings_dict = get_settings_dict()
     db_name_read = "splink_awswrangler_test"
     db_name_write = f"{db_name_read}2"
 
@@ -256,7 +258,6 @@ def test_athena_link_only():
 
     # creates a session at least on the platform...
     my_session = boto3.Session(region_name="eu-west-1")
-    settings_dict = get_settings_dict()
     settings_dict["link_type"] = "link_and_dedupe"
     db_name_read = "splink_awswrangler_test"
     db_name_write = f"{db_name_read}2"

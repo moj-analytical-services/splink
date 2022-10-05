@@ -7,6 +7,7 @@ from splink.comparison_level_library import (
     _mutable_params,
 )
 from basic_settings import get_settings_dict
+from linker_utils import _test_table_registration, register_roc_data
 
 _mutable_params["dialect"] = "sqlite"
 _mutable_params["levenshtein"] = "levenshtein"
@@ -63,6 +64,11 @@ def test_full_example_sqlite(tmp_path):
     linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.5)
 
     linker.unlinkables_chart(source_dataset="Testing")
+
+    _test_table_registration(linker)
+
+    register_roc_data(linker)
+    linker.roc_chart_from_labels_table("labels")
 
 
 def test_small_link_example_sqlite():

@@ -5,6 +5,8 @@ import re
 import os
 import math
 
+import pandas as pd
+
 from pyspark.sql import Row
 
 from ..linker import Linker
@@ -78,7 +80,7 @@ class SparkLinker(Linker):
         num_partitions_on_repartition=100,
     ):
         """Initialise the linker object, which manages the data linkage process and
-        holds the data linkage model.
+                holds the data linkage model.
 
         Args:
             input_table_or_tables: Input data into the linkage model.  Either a
@@ -272,6 +274,26 @@ class SparkLinker(Linker):
         output_df = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_df
 
+    def register_table(self, input, table_name, overwrite=False):
+
+        # Check if table name is already in use
+        exists = self._table_exists_in_database(table_name)
+        if exists:
+            if not overwrite:
+                raise ValueError(f"Table '{table_name}' already exists in database.")
+
+        if isinstance(input, dict):
+            input = pd.DataFrame(input)
+            input = self.spark.createDataFrame(input)
+        elif isinstance(input, list):
+            input = pd.DataFrame.from_records(input)
+            input = self.spark.createDataFrame(input)
+        elif type(input).__name__ in ["DataFrame", "Table"]:
+            input = self.spark.createDataFrame(input)
+
+        input.createOrReplaceTempView(table_name)
+        return self._table_to_splink_dataframe(table_name, table_name)
+
     def _random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
             return ""
@@ -285,9 +307,5 @@ class SparkLinker(Linker):
                 return True
         return False
 
-    def _records_to_table(self, records, as_table_name):
-        df = self.spark.createDataFrame(Row(**x) for x in records)
-        df.createOrReplaceTempView(as_table_name)
-
-    def register_tf_table(self, df, col_name):
-        df.createOrReplaceTempView(colname_to_tf_tablename(col_name))
+    def register_tf_table(self, df, col_name, overwrite=False):
+        self.register_table(df, colname_to_tf_tablename(col_name), overwrite)

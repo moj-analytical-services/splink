@@ -37,6 +37,8 @@ tags:
         - prediction_errors_from_label_column
         - prediction_errors_from_labels_table
         - profile_columns
+        - query_sql
+        - register_table
         - roc_chart_from_labels_column
         - roc_chart_from_labels_table
         - save_settings_to_json
