@@ -22,10 +22,7 @@ def _test_table_registration(linker):
     with pytest.raises(ValueError):
         linker.register_table(test_dict, "__splink_df_pd")
     # Test overwriting works
-    try:
-        linker.register_table(test_dict, "__splink_df_pd", overwrite=True)
-    except:
-        raise Exception("Overwriting of table failed")
+    linker.register_table(test_dict, "__splink_df_pd", overwrite=True)
 
     # Record level dictionary
     b = [
