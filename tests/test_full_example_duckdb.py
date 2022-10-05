@@ -91,7 +91,7 @@ def test_full_example_duckdb(tmp_path):
 
     linker.unlinkables_chart(source_dataset="Testing")
 
-    _test_table_registration(linker, ["arrow"])
+    _test_table_registration(linker)
 
     record = {
         "unique_id": 1,

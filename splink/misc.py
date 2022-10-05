@@ -137,13 +137,3 @@ def _check_dependency_installed(module):
             f"{module} is not installed.",
             "Please install and import it before continuing.",
         )
-
-
-def query_sql_to_splink_df(linker, sql):
-    """
-    Quick wrapper for querying SQL -> outputting a splink df.
-    This is used in all of our linker classes currently.
-    """
-    hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
-    out_name = "__splink__df_dummy"
-    return linker._execute_sql_against_backend(sql, out_name, f"{out_name}_{hash}")

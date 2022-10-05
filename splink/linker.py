@@ -399,7 +399,7 @@ class Linker:
 
         raise NotImplementedError(f"register_table not implemented for {type(self)}")
 
-    def query_sql(self, sql):
+    def query_sql(self, sql, output_type="pandas"):
         """
         Run a SQL query against your backend database and return
         the resulting output.
@@ -411,9 +411,30 @@ class Linker:
 
         Args:
             sql (str): The SQL to be queried.
+            output_type (str): One of splink_df/splinkdf or pandas.
+                This determines the type of table that your results are output in.
         """
 
-        raise NotImplementedError(f"query_sql not implemented for {type(self)}")
+        hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
+        # Ensure hash is valid sql table name
+        output_tablename_templated = "__splink__df_sql_query"
+        hashed_tablename = f"{output_tablename_templated}_{hash}"
+
+        splink_dataframe = self._sql_to_splink_dataframe_checking_cache(
+            sql,
+            hashed_tablename,
+        )
+        if output_type in ("splink_df", "splinkdf"):
+            return splink_dataframe
+        elif output_type == "pandas":
+            out = splink_dataframe.as_pandas_dataframe()
+            splink_dataframe.drop_table_from_database()
+            return out
+        else:
+            raise ValueError(
+                f"output_type '{output_type}' is not supported.",
+                "Must be one of 'splink_df'/'splinkdf' or 'pandas'",
+            )
 
     def _sql_to_splink_dataframe_checking_cache(
         self,

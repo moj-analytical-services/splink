@@ -90,7 +90,7 @@ def test_full_example_spark(df_spark, tmp_path):
 
     linker.unlinkables_chart(source_dataset="Testing")
 
-    _test_table_registration(linker, ["spark"])
+    _test_table_registration(linker)
 
     register_roc_data(linker)
     linker.roc_chart_from_labels_table("labels")

@@ -8,7 +8,6 @@ from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..input_column import InputColumn
-from ..misc import query_sql_to_splink_df
 
 logger = logging.getLogger(__name__)
 
@@ -69,16 +68,6 @@ class SQLiteDataFrame(SplinkDataFrame):
         cur = self.sqlite_linker.con.cursor()
         cur.execute(drop_sql)
 
-    def as_dataframe(self, output_type, limit=None):
-        sql = f"select * from {self.physical_name}"
-        if limit:
-            sql += f" limit {limit}"
-
-        return self.sqlite_linker.query_sql(sql, output_type)
-
-    def as_pandas_dataframe(self, limit=None):
-        return self.as_dataframe(output_type="pandas", limit=limit)
-
     def as_record_dict(self, limit=None):
         sql = f"""
         select *
@@ -137,17 +126,6 @@ class SQLiteLinker(Linker):
 
         output_obj = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_obj
-
-    def query_sql(self, sql, output_type="pandas"):
-        if output_type in ("splink_df", "splinkdf"):
-            return query_sql_to_splink_df(self, sql)
-        elif output_type == "pandas":
-            return pd.read_sql_query(sql, self.con)
-        else:
-            raise ValueError(
-                f"output_type '{output_type}' is not supported.",
-                "Must be one of 'splink_df'/'splinkdf' or 'pandas'",
-            )
 
     def register_table(self, input, table_name, overwrite=False):
 

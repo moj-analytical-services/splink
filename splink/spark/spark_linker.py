@@ -14,7 +14,7 @@ from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
 from ..logging_messages import execute_sql_logging_message_info, log_sql
-from ..misc import ensure_is_list, query_sql_to_splink_df
+from ..misc import ensure_is_list
 from ..input_column import InputColumn
 from .custom_spark_dialect import Dialect
 
@@ -54,23 +54,16 @@ class SparkDataframe(SplinkDataFrame):
         # But there's no real need to clean these up, so we'll just do nothing
         pass
 
-    def as_dataframe(self, output_type, limit=None):
+    def as_pandas_dataframe(self, limit=None):
+
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
 
-        return self.spark_linker.query_sql(sql, output_type)
-
-    def as_record_dict(self, limit=None):
-        return self.as_dataframe(output_type="pandas", limit=limit).to_dict(
-            orient="records"
-        )
-
-    def as_pandas_dataframe(self, limit=None):
-        return self.as_dataframe(output_type="pandas", limit=limit)
+        return self.spark_linker.spark.sql(sql).toPandas()
 
     def as_spark_dataframe(self):
-        return self.as_dataframe(output_type="spark", limit=None)
+        return self.spark_linker.spark.table(self.physical_name)
 
 
 class SparkLinker(Linker):
@@ -281,19 +274,6 @@ class SparkLinker(Linker):
 
         output_df = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_df
-
-    def query_sql(self, sql, output_type="pandas"):
-        if output_type in ("splink_df", "splinkdf"):
-            return query_sql_to_splink_df(self, sql)
-        elif output_type == "pandas":
-            return self.spark.sql(sql).toPandas()
-        elif output_type in ("spark", "sparkdf"):
-            return self.spark.sql(sql)
-        else:
-            raise ValueError(
-                f"output_type '{output_type}' is not supported.",
-                "Must be one of 'splink_df'/'splinkdf', 'pandas' or 'spark'",
-            )
 
     def register_table(self, input, table_name, overwrite=False):
 

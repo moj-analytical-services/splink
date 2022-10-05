@@ -3,14 +3,14 @@ from tests.cc_testing_utils import check_df_equality
 import pytest
 
 
-def _test_table_registration(linker, query_types=[]):
+def _test_table_registration(linker):
 
     # Standard pandas df...
     a = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
     linker.register_table(a, "__splink_df_pd")
-    pd_df = linker.query_sql("select * from __splink_df_pd", output_type="pandas")
-    assert check_df_equality(pd_df, a)
+    pd_df = linker.query_sql("select * from __splink_df_pd", output_type="splinkdf")
+    assert check_df_equality(pd_df.as_pandas_dataframe(), a)
 
     # Standard dictionary
     test_dict = {"a": [666, 777, 888], "b": [4, 5, 6]}
@@ -52,9 +52,6 @@ def _test_table_registration(linker, query_types=[]):
     assert check_df_equality(
         pd.DataFrame.from_records(r_dict), pd.DataFrame.from_records(b)
     )
-    # Just check any additional output types are working as expected
-    for out_type in query_types:
-        linker.query_sql("select * from __splink_df_test_dict", output_type=out_type)
 
 
 def register_roc_data(linker):
