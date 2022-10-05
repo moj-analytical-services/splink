@@ -1,4 +1,4 @@
-def unlinkables_data(linker, x_col="match_weight"):
+def unlinkables_data(linker):
     """Generate data displaying the proportion of records that are "unlinkable"
     for a given splink score threshold and model parameters. These are records that,
     even when compared with themselves, do not contain enough information to confirm
@@ -6,19 +6,9 @@ def unlinkables_data(linker, x_col="match_weight"):
 
     Args:
         linker (Splink): A Splink data linker
-        x_col (str, optional): The column name to use as the x-axis in the chart.
-            This can be either the "match_weight" or "match_probability" columns.
-            Defaults to "match_weight".
-        source_dataset (str, optional): Name of the source dataset (used in chart
-            title). Defaults to None.
     """
 
     self_link = linker._self_link()
-
-    if x_col not in ["match_weight", "match_probability"]:
-        raise ValueError(
-            f"{x_col} must be 'match_weight' (default) or 'match_probability'."
-        )
 
     sql = f"""
         select

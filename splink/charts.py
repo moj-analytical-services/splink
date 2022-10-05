@@ -295,6 +295,12 @@ def unlinkables_chart(
     source_dataset=None,
     as_dict=False,
 ):
+
+    if x_col not in ["match_weight", "match_probability"]:
+        raise ValueError(
+            f"{x_col} must be 'match_weight' (default) or 'match_probability'."
+        )
+
     chart_path = "unlinkables_chart_def.json"
     unlinkables_chart_def = load_chart_definition(chart_path)
     unlinkables_chart_def["data"]["values"] = records

@@ -1718,8 +1718,8 @@ class Linker:
         """
 
         # Link our initial df on itself and calculate the % of unlinkable entries
-        records = unlinkables_data(self, x_col)
-        return unlinkables_chart(records, x_col, source_dataset)
+        records = unlinkables_data(self)
+        return unlinkables_chart(records, x_col, source_dataset, as_dict)
 
     def comparison_viewer_dashboard(
         self,
