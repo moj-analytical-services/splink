@@ -4,7 +4,6 @@ from tempfile import TemporaryDirectory
 
 from duckdb import DuckDBPyConnection
 import duckdb
-import hashlib
 import pandas as pd
 
 from .duckdb_helpers import (

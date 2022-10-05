@@ -2,7 +2,6 @@ from typing import Union, List
 import logging
 from math import pow, log2
 import pandas as pd
-import hashlib
 
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..linker import Linker

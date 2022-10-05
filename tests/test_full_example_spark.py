@@ -107,6 +107,6 @@ def test_full_example_spark(df_spark, tmp_path):
 
     linker.compute_tf_table("first_name")
 
-    matches = linker.find_matches_to_new_records(
+    linker.find_matches_to_new_records(
         [record], blocking_rules=[], match_weight_threshold=-10000
     )

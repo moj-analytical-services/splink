@@ -268,7 +268,6 @@ class AthenaLinker(Linker):
                     df_id = uuid.uuid4().hex[:7]
                     alias = f"__splink__input_table_{df_id}"
 
-                # register table here...
                 self.register_data_on_s3(table, alias)
 
             homogenised_tables.append(alias)
@@ -302,10 +301,9 @@ class AthenaLinker(Linker):
         super().initialise_settings(settings_dict)
 
     def register_data_on_s3(self, table, alias):
-        # register table here...
         wr.s3.to_parquet(
             df=table,
-            path=self.boto_utils.s3_output,
+            path=f"{self.boto_utils.s3_output}{alias}",
             dataset=True,
             mode="overwrite",
             database=self.output_schema,
@@ -341,17 +339,6 @@ class AthenaLinker(Linker):
         output_obj = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_obj
 
-    def query_sql(self, sql):
-        return wr.athena.read_sql_query(
-            sql=sql,
-            database=self.output_schema,
-            s3_output=self.boto_utils.s3_output,
-            keep_files=False,
-            ctas_approach=True,
-            use_threads=True,
-            boto3_session=self.boto3_session,
-        )
-
     def register_table(self, input, table_name, overwrite=False):
 
         # Check if table name is already in use
@@ -369,6 +356,7 @@ class AthenaLinker(Linker):
 
         # Will error if an invalid data type is passed
         self.register_data_on_s3(input, table_name)
+        return self._table_to_splink_dataframe(table_name, table_name)
 
     def _random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
