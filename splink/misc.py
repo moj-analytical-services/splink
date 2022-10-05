@@ -5,7 +5,6 @@ import json
 from string import ascii_lowercase
 import itertools
 import pkg_resources
-import hashlib
 
 
 def dedupe_preserving_order(list_of_items):
@@ -131,7 +130,7 @@ def calculate_reduction_ratio(N, cartesian):
 
 def _check_dependency_installed(module):
     try:
-        dist = pkg_resources.get_distribution(module)
+        pkg_resources.get_distribution(module)
     except pkg_resources.DistributionNotFound:
         raise ValueError(
             f"{module} is not installed.",

@@ -25,7 +25,7 @@ def _test_table_registration(linker):
     try:
         linker.register_table(test_dict, "__splink_df_pd", overwrite=True)
     except:
-        assert False
+        raise Exception("Overwriting of table failed")
 
     # Record level dictionary
     b = [
