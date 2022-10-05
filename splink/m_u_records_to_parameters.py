@@ -74,7 +74,7 @@ def append_m_probability_to_comparison_level_trained_probabilities(
     except KeyError:
         m_probability = "level not observed in training dataset"
 
-        logger.info(f"u probability {not_trained_message(cl)}")
+        logger.info(f"m probability {not_trained_message(cl)}")
     cl._add_trained_m_probability(
         m_probability,
         training_description,

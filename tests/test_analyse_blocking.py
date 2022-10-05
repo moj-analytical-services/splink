@@ -116,6 +116,22 @@ def test_blocking_records_accuracy():
         blocking_rules=blocking_rules,
     )
 
+    blocking_rules = [
+        "l.first_name = r.first_name",
+        "l.first_name = r.first_name and l.surname = r.surname",
+        "l.dob = r.dob",
+    ]
+
+    validate_blocking_output(
+        linker_settings,
+        expected_out={
+            "row_count": [2253, 0, 1244],
+            "cumulative_rows": [2253, 2253, 3497],
+            "cartesian": 499500,
+        },
+        blocking_rules=blocking_rules,
+    )
+
     # link and dedupe + link only without settings
     blocking_rules = [
         "l.surname = r.surname",

@@ -6739,7 +6739,7 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	function _sort_bars_option(splink_vis_utils)
 	{
 	  let select_options = new Map([
-	    ["Sort historam by match weight", "sort_match_weight"],
+	    ["Sort histogram by match weight", "sort_match_weight"],
 	    ["Sort histogram by sum of matches in bar", "sort_sum_matches"]
 	  ]);
 	  return splink_vis_utils.select(select_options, {

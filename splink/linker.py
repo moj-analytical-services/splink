@@ -378,6 +378,64 @@ class Linker:
             f"_execute_sql_against_backend not implemented for {type(self)}"
         )
 
+    def register_table(self, input, table_name):
+        """
+        Register a table to your backend database, to be used in one of the
+        splink methods, or simply to allow querying.
+
+        Tables can be of type: dictionary, record level dictionary,
+        pandas dataframe, pyarrow table and in the spark case, a spark df.
+
+        Examples:
+            >>> test_dict = {"a": [666,777,888],"b": [4,5,6]}
+            >>> linker.register_table(test_dict, "test_dict")
+            >>> linker.query_sql("select * from test_dict")
+
+        Args:
+            input: The data you wish to register. This can be either a dictionary,
+                pandas dataframe, pyarrow table or a spark dataframe.
+            table_name (str): The name you wish to assign to the table.
+        """
+
+        raise NotImplementedError(f"register_table not implemented for {type(self)}")
+
+    def query_sql(self, sql, output_type="pandas"):
+        """
+        Run a SQL query against your backend database and return
+        the resulting output.
+
+        Examples:
+            >>> linker = DuckDBLinker(df, settings)
+            >>> df_predict = linker.predict()
+            >>> linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
+
+        Args:
+            sql (str): The SQL to be queried.
+            output_type (str): One of splink_df/splinkdf or pandas.
+                This determines the type of table that your results are output in.
+        """
+
+        hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
+        # Ensure hash is valid sql table name
+        output_tablename_templated = "__splink__df_sql_query"
+        hashed_tablename = f"{output_tablename_templated}_{hash}"
+
+        splink_dataframe = self._sql_to_splink_dataframe_checking_cache(
+            sql,
+            hashed_tablename,
+        )
+        if output_type in ("splink_df", "splinkdf"):
+            return splink_dataframe
+        elif output_type == "pandas":
+            out = splink_dataframe.as_pandas_dataframe()
+            splink_dataframe.drop_table_from_database()
+            return out
+        else:
+            raise ValueError(
+                f"output_type '{output_type}' is not supported.",
+                "Must be one of 'splink_df'/'splinkdf' or 'pandas'",
+            )
+
     def _sql_to_splink_dataframe_checking_cache(
         self,
         sql,
@@ -594,12 +652,6 @@ class Linker:
             "reciprocal "
             f"{1/self._settings_obj._probability_two_random_records_match:,.3f}",
         )
-
-    def _records_to_table(records, as_table_name):
-        # Create table in database containing records
-        # Probably quite difficult to implement correctly
-        # Due to data type issues.
-        raise NotImplementedError
 
     def _populate_m_u_from_trained_values(self):
         ccs = self._settings_obj.comparisons
@@ -1065,15 +1117,17 @@ class Linker:
         original_link_type = self._settings_obj._link_type
 
         if not isinstance(records_or_tablename, str):
-            self._records_to_table(records_or_tablename, "__splink__df_new_records")
+            self.register_table(records_or_tablename, "__splink__df_new_records")
             new_records_tablename = "__splink__df_new_records"
         else:
             new_records_tablename = records_or_tablename
 
-        blocking_rules = [
-            BlockingRule(r) if not isinstance(r, BlockingRule) else r
-            for r in blocking_rules
-        ]
+        rules = []
+        for r in blocking_rules:
+            br_as_obj = BlockingRule(r) if not isinstance(r, BlockingRule) else r
+            br_as_obj.preceding_rules = rules.copy()
+            rules.append(br_as_obj)
+        blocking_rules = rules
 
         self._settings_obj._blocking_rules_to_generate_predictions = blocking_rules
 
@@ -1137,8 +1191,8 @@ class Linker:
         self._compare_two_records_mode = True
         self._settings_obj._blocking_rules_to_generate_predictions = []
 
-        self._records_to_table([record_1], "__splink__compare_two_records_left")
-        self._records_to_table([record_2], "__splink__compare_two_records_right")
+        self.register_table([record_1], "__splink__compare_two_records_left")
+        self.register_table([record_2], "__splink__compare_two_records_right")
 
         sql_join_tf = _join_tf_to_input_df_sql(self)
 
@@ -1716,8 +1770,8 @@ class Linker:
         """
 
         # Link our initial df on itself and calculate the % of unlinkable entries
-        records = unlinkables_data(self, x_col)
-        return unlinkables_chart(records, x_col, source_dataset)
+        records = unlinkables_data(self)
+        return unlinkables_chart(records, x_col, source_dataset, as_dict)
 
     def comparison_viewer_dashboard(
         self,

@@ -362,6 +362,22 @@ class ComparisonLevel:
         )
 
     @property
+    def _label_for_charts_no_duplicates(self):
+
+        if self._has_comparison:
+            labels = []
+            for cl in self.comparison.comparison_levels:
+                labels.append(cl._label_for_charts)
+
+        if len(labels) == len(set(labels)):
+            return self._label_for_charts
+
+        # Make label unique
+        cvv = str(self._comparison_vector_value)
+        label = self._level_dict["label_for_charts"]
+        return f"{cvv}. {label}"
+
+    @property
     def _is_else_level(self):
         if self._sql_condition.strip().upper() == "ELSE":
             return True
@@ -599,7 +615,7 @@ class ComparisonLevel:
         "A detailed representation of this level to describe it in charting outputs"
         output = {}
         output["sql_condition"] = self._sql_condition
-        output["label_for_charts"] = self._label_for_charts
+        output["label_for_charts"] = self._label_for_charts_no_duplicates
 
         output["m_probability"] = self.m_probability
         output["u_probability"] = self.u_probability

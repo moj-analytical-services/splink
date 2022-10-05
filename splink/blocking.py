@@ -148,7 +148,4 @@ def block_using_rules_sql(linker: "Linker"):
 
     sql = "union all".join(sqls)
 
-    if not settings_obj._needs_matchkey_column:
-        sql = sql.replace(", '0' as match_key", "")
-
     return sql

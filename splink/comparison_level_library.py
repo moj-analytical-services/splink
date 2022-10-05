@@ -79,13 +79,18 @@ def null_level(col_name) -> ComparisonLevel:
 
 
 def exact_match_level(
-    col_name, m_probability=None, term_frequency_adjustments=False
+    col_name,
+    m_probability=None,
+    term_frequency_adjustments=False,
+    include_colname_in_charts_label=False,
 ) -> ComparisonLevel:
 
     col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
+
+    label_suffix = f" {col_name}" if include_colname_in_charts_label else ""
     level_dict = {
         "sql_condition": f"{col.name_l()} = {col.name_r()}",
-        "label_for_charts": "Exact match",
+        "label_for_charts": f"Exact match{label_suffix}",
     }
     if m_probability:
         level_dict["m_probability"] = m_probability
