@@ -3,7 +3,7 @@ from math import log10, ceil
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from .blocking import block_using_rules_sql
+from .blocking import block_using_rules_sql, BlockingRule
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import (
     compute_new_parameters_sql,
@@ -108,53 +108,82 @@ def estimate_u_values(linker: "Linker", target_rows):
         result = dataframe.as_record_dict()
         dataframe.drop_table_from_database()
         count_rows = result[0]
-        print("county")
-        print(count_rows)
 
         total_rows = count_rows["count_l"] * count_rows["count_r"]
-        if target_rows > total_rows:
-            target_rows = total_rows - 1
+        if target_rows >= total_rows:
+            # TODO: complete hack, soz, should really use different sql
+            samps = int(100 * total_rows)
+        else:
 
-        # TODO just duckdb for the mo
-        samps = _num_target_rows_to_pairs_to_sample(total_rows, target_rows)
+            # TODO just duckdb for the mo
+            samps = _num_target_rows_to_pairs_to_sample(total_rows, target_rows)
         print([total_rows, target_rows])
         print(samps)
+
+        # new custom table defining the join
+        # __splink_df_concat_sampled_for_join
         sql = f"""
-        select * from __splink_df_concat_with_tf_left
-        USING SAMPLE reservoir({samps} ROWS)
+        select 1 + floor(random() * {count_rows['count_l']})::int as row_l,
+        1 + floor(random() * {count_rows['count_r']})::int as row_r,
+        g.generate_series as sample
+        from generate_series(1, {samps}) g
         """
+
         sql = f"""
+        select distinct row_l, row_r, first_value(sample) over(partition by row_l, row_r) as sample
+        from (
+        select 1 + floor(random() * {count_rows['count_l']})::int as row_l,
+        1 + floor(random() * {count_rows['count_r']})::int as row_r,
+        g.generate_series as sample
+        from generate_series(1, {samps}) g
+        )
+        """
+        training_linker._enqueue_sql(
+            sql, "__splink__df_concat_sampled_for_join"
+        )
+        df_join = training_linker._execute_sql_pipeline()
+
+        # __splink_df_concat_with_tf_left_sample is join of _splink_df_concat_with_tf_left with above
+        # and sim. for right
+        sql = """
         with l as (select *, row_number() over () AS row_l from
         __splink_df_concat_with_tf_left),
-        r as (select *, row_number() over () AS row_r from
-        __splink_df_concat_with_tf_right)
-        select * from
-        l
+        jn as (
+        select row_l, sample from
+        __splink__df_concat_sampled_for_join
+        )
+        select * from l
         right join
-        (
-        select distinct 1 + floor(random() * {count_rows['count_l']})::int as row_l,
-        1 + floor(random() * {count_rows['count_r']})::int as row_r
-        from generate_series(1, {samps})
-        group by row_l, row_r
-        ) as inds on l.row_l = inds.row_l
-        left join r on inds.row_r = r.row_r
+        jn
+        on l.row_l = jn.row_l
         """
-        df = training_linker._con.execute(sql).fetch_df()
-        print(df)
-        # result = dataframe.as_record_dict()
-        # dataframe.drop_table_from_database()
-        # print(result)
-        #
-        # sql = f"""
-        # __splink_df_concat_with_tf_left
-        # __splink_df_concat_with_tf_right
-        # """
-        # df_sample = training_linker._sql_to_splink_dataframe_checking_cache(
-        #     sql,
-        #     "__splink__df_concat_with_tf_sample",
-        # )
+        df_l = training_linker._sql_to_splink_dataframe_checking_cache(
+            sql, "__splink__df_concat_with_tf_left_sample"
+        )
 
-    settings_obj._blocking_rules_to_generate_predictions = []
+        sql = """
+        with r as (select *, row_number() over () AS row_r from
+        __splink_df_concat_with_tf_right),
+        jn as (
+        select row_r, sample from
+        __splink__df_concat_sampled_for_join
+        )
+        select * from r
+        right join
+        jn
+        on r.row_r = jn.row_r
+        """
+        df_r = training_linker._sql_to_splink_dataframe_checking_cache(
+            sql, "__splink__df_concat_with_tf_right_sample"
+        )
+        df_join.drop_table_from_database()
+
+
+    if settings_obj._link_type == "link_only":
+        # TODO: just a sketch, might need to change names
+        settings_obj._blocking_rules_to_generate_predictions = [BlockingRule("l.sample = r.sample")]
+    else:
+        settings_obj._blocking_rules_to_generate_predictions = []
 
     sql = block_using_rules_sql(training_linker)
     training_linker._enqueue_sql(sql, "__splink__df_blocked")
@@ -163,34 +192,18 @@ def estimate_u_values(linker: "Linker", target_rows):
     repartition_after_blocking = getattr(
         training_linker, "repartition_after_blocking", False
     )
-    df_sample = None
+
     if repartition_after_blocking:
-        df_blocked = training_linker._execute_sql_pipeline([df_sample])
+        if settings_obj._link_type == "link_only":
+            df_blocked = training_linker._execute_sql_pipeline([df_l, df_r])
+        else:
+            df_blocked = training_linker._execute_sql_pipeline([df_sample])
         input_dataframes = [df_blocked]
     else:
-        input_dataframes = [df_sample]
-
-    if settings_obj._link_type == "link_only":
-        # sample_size = target_rows**0.5
-        # proportion = sample_size / count_rows
-        # full proportion as we sample post-blocking in this case
-        sql = """
-        select count(*) as count
-        from __splink__df_blocked
-        """
-        dataframe = training_linker._sql_to_splink_dataframe_checking_cache(
-            sql, "__splink__df_concat_count"
-        )
-        result = dataframe.as_record_dict()
-        dataframe.drop_table_from_database()
-        total_comparisons = result[0]["count"]
-
-        proportion = target_rows / total_comparisons
-        sql = f"""
-        select *
-        from __splink__df_concat_with_tf
-        {training_linker._random_sample_sql(proportion, target_rows)}
-        """
+        if settings_obj._link_type == "link_only":
+            input_dataframes = [df_l, df_r]
+        else:
+            input_dataframes = [df_sample]
 
     sql = compute_comparison_vector_values_sql(settings_obj)
 
@@ -211,7 +224,12 @@ def estimate_u_values(linker: "Linker", target_rows):
     param_records = df_params.as_pandas_dataframe()
     param_records = compute_proportions_for_new_parameters(param_records)
     df_params.drop_table_from_database()
-    df_sample.drop_table_from_database()
+
+    if settings_obj._link_type == "link_only":
+        df_l.drop_table_from_database()
+        df_r.drop_table_from_database()
+    else:
+        df_sample.drop_table_from_database()
 
     m_u_records = [
         r

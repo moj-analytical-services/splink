@@ -194,6 +194,8 @@ class Linker:
             return "__splink__compare_two_records_left_with_tf"
 
         if self._train_u_using_random_sample_mode:
+            if self._two_dataset_link_only:
+                return "__splink__df_concat_with_tf_left_sample"
             return "__splink__df_concat_with_tf_sample"
 
         if self._two_dataset_link_only:
@@ -213,6 +215,8 @@ class Linker:
             return "__splink__compare_two_records_right_with_tf"
 
         if self._train_u_using_random_sample_mode:
+            if self._two_dataset_link_only:
+                return "__splink__df_concat_with_tf_right_sample"
             return "__splink__df_concat_with_tf_sample"
 
         if self._two_dataset_link_only:
