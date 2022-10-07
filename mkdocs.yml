@@ -99,6 +99,7 @@ nav:
         - QA from ground truth column: "demos/example_accuracy_analysis_from_labels_column.ipynb"
         - Quick and dirty persons model: "demos/example_quick_and_dirty_persons.ipynb"
         - Febrl3 Dedupe: "demos/example_febrl3.ipynb"
+        - Febrl4 link-only: "demos/example_febrl4.ipynb"
       - PySpark:
         - Deduplication using Pyspark: "demos/example_simple_pyspark.ipynb"
   - Developers' guides:

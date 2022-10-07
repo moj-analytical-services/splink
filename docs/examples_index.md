@@ -20,6 +20,8 @@ You can try these demos live in your web browser using the following link:
 
 [Deduplicating the febrl3 dataset](https://moj-analytical-services.github.io/splink/demos/example_febrl3.html). Note this dataset comes from [febrl](http://users.cecs.anu.edu.au/~Peter.Christen/Febrl/febrl-0.3/febrldoc-0.3/manual.html), as referenced in A.2 [here](https://arxiv.org/pdf/2008.04443.pdf) and replicated [here](https://recordlinkage.readthedocs.io/en/latest/ref-datasets.html).
 
+[Linking the febrl4 datasets](https://moj-analytical-services.github.io/splink/demos/example_febrl4.html). As above, these datasets are from [febrl](http://users.cecs.anu.edu.au/~Peter.Christen/Febrl/febrl-0.3/febrldoc-0.3/manual.html), replicated [here](https://recordlinkage.readthedocs.io/en/latest/ref-datasets.html).
+
 ##### Entity type: Financial transactions
 
 [Linking financial transactions](https://moj-analytical-services.github.io/splink/demos/example_transactions.html)
