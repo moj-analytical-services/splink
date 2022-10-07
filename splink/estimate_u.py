@@ -1,4 +1,5 @@
 import logging
+from math import log10, ceil
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 logger = logging.getLogger(__name__)
+logging.getLogger("splink").setLevel(logging.DEBUG)
 
 
 def _num_target_rows_to_rows_to_sample(target_rows):
@@ -31,6 +33,15 @@ def _num_target_rows_to_rows_to_sample(target_rows):
     #     https://www.wolframalpha.com/input/?i=Solve%5Bt%3Dn+*+%28n+-+1%29+%2F+2%2C+n%5D
     sample_rows = 0.5 * ((8 * target_rows + 1) ** 0.5 + 1)
     return sample_rows
+
+
+def _num_target_rows_to_pairs_to_sample(total_rows, target_rows):
+    # if we are sampling k values with replacement from total_rows N
+    # and dropping duplicates, the expected number of
+    # unique values is N(1 - (1-1/N)^k)
+    # solving this for k in terms of target number t
+    # gives k = log(1 - t/N)/log(1 - 1/N)
+    return ceil(log10(1 - target_rows/total_rows)/log10(1 - 1/total_rows))
 
 
 def estimate_u_values(linker: "Linker", target_rows):
@@ -66,26 +77,82 @@ def estimate_u_values(linker: "Linker", target_rows):
         sample_size = _num_target_rows_to_rows_to_sample(target_rows)
         proportion = sample_size / count_rows
 
+        if sample_size > count_rows:
+            sample_size = count_rows
+
+        if proportion >= 1.0:
+            proportion = 1.0
+
+        sql = f"""
+        select *
+        from __splink__df_concat_with_tf
+        {training_linker._random_sample_sql(proportion, sample_size)}
+        """
+        df_sample = training_linker._sql_to_splink_dataframe_checking_cache(
+            sql,
+            "__splink__df_concat_with_tf_sample",
+        )
+
     if settings_obj._link_type == "link_only":
-        sample_size = target_rows**0.5
-        proportion = sample_size / count_rows
+        # just sketching out
+        sql = """
+        select 
+        l.count as count_l, r.count as count_r
+        from 
+        (select count(*) as count FROM __splink_df_concat_with_tf_left) as l, 
+        (select count(*) as count FROM __splink_df_concat_with_tf_right) as r
+        """
+        dataframe = training_linker._sql_to_splink_dataframe_checking_cache(
+            sql, "__splink__df_concat_counts_lr"
+        )
+        result = dataframe.as_record_dict()
+        dataframe.drop_table_from_database()
+        count_rows = result[0]
+        print("county")
+        print(count_rows)
 
-    if proportion >= 1.0:
-        proportion = 1.0
+        total_rows = count_rows["count_l"] * count_rows["count_r"]
+        if target_rows > total_rows:
+            target_rows = total_rows - 1
 
-    if sample_size > count_rows:
-        sample_size = count_rows
-
-    sql = f"""
-    select *
-    from __splink__df_concat_with_tf
-    {training_linker._random_sample_sql(proportion, sample_size)}
-    """
-
-    df_sample = training_linker._sql_to_splink_dataframe_checking_cache(
-        sql,
-        "__splink__df_concat_with_tf_sample",
-    )
+        # TODO just duckdb for the mo
+        samps = _num_target_rows_to_pairs_to_sample(total_rows, target_rows)
+        print([total_rows, target_rows])
+        print(samps)
+        sql = f"""
+        select * from __splink_df_concat_with_tf_left
+        USING SAMPLE reservoir({samps} ROWS)
+        """
+        sql = f"""
+        with l as (select *, row_number() over () AS row_l from
+        __splink_df_concat_with_tf_left),
+        r as (select *, row_number() over () AS row_r from
+        __splink_df_concat_with_tf_right)
+        select * from
+        l
+        right join
+        (
+        select distinct 1 + floor(random() * {count_rows['count_l']})::int as row_l,
+        1 + floor(random() * {count_rows['count_r']})::int as row_r
+        from generate_series(1, {samps})
+        group by row_l, row_r
+        ) as inds on l.row_l = inds.row_l
+        left join r on inds.row_r = r.row_r
+        """
+        df = training_linker._con.execute(sql).fetch_df()
+        print(df)
+        # result = dataframe.as_record_dict()
+        # dataframe.drop_table_from_database()
+        # print(result)
+        #
+        # sql = f"""
+        # __splink_df_concat_with_tf_left
+        # __splink_df_concat_with_tf_right
+        # """
+        # df_sample = training_linker._sql_to_splink_dataframe_checking_cache(
+        #     sql,
+        #     "__splink__df_concat_with_tf_sample",
+        # )
 
     settings_obj._blocking_rules_to_generate_predictions = []
 
@@ -96,11 +163,34 @@ def estimate_u_values(linker: "Linker", target_rows):
     repartition_after_blocking = getattr(
         training_linker, "repartition_after_blocking", False
     )
+    df_sample = None
     if repartition_after_blocking:
         df_blocked = training_linker._execute_sql_pipeline([df_sample])
         input_dataframes = [df_blocked]
     else:
         input_dataframes = [df_sample]
+
+    if settings_obj._link_type == "link_only":
+        # sample_size = target_rows**0.5
+        # proportion = sample_size / count_rows
+        # full proportion as we sample post-blocking in this case
+        sql = """
+        select count(*) as count
+        from __splink__df_blocked
+        """
+        dataframe = training_linker._sql_to_splink_dataframe_checking_cache(
+            sql, "__splink__df_concat_count"
+        )
+        result = dataframe.as_record_dict()
+        dataframe.drop_table_from_database()
+        total_comparisons = result[0]["count"]
+
+        proportion = target_rows / total_comparisons
+        sql = f"""
+        select *
+        from __splink__df_concat_with_tf
+        {training_linker._random_sample_sql(proportion, target_rows)}
+        """
 
     sql = compute_comparison_vector_values_sql(settings_obj)
 
@@ -115,6 +205,7 @@ def estimate_u_values(linker: "Linker", target_rows):
 
     sql = compute_new_parameters_sql(settings_obj)
     linker._enqueue_sql(sql, "__splink__m_u_counts")
+    # TODO: here is where the blocking logic comes back into things:
     df_params = training_linker._execute_sql_pipeline(input_dataframes)
 
     param_records = df_params.as_pandas_dataframe()
