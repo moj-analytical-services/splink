@@ -66,7 +66,7 @@ The specification of the Fellegi Sunter statistical model behind `splink` is sim
 
 Splink supports python 3.7+. To obtain the latest released version of splink:
 
-```
+```sh
 pip install splink
 ```
 
@@ -76,7 +76,7 @@ The following code demonstrates how to estimate the parameters of a deduplicatio
 
 For more detailed tutorials, please see [here](https://moj-analytical-services.github.io/splink/demos/00_Tutorial_Introduction.html).
 
-```
+```py
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.duckdb.duckdb_comparison_library import (
     exact_match,
