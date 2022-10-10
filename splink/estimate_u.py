@@ -41,7 +41,7 @@ def _num_target_rows_to_pairs_to_sample(total_rows, target_rows):
     # unique values is N(1 - (1-1/N)^k)
     # solving this for k in terms of target number t
     # gives k = log(1 - t/N)/log(1 - 1/N)
-    return ceil(log10(1 - target_rows/total_rows)/log10(1 - 1/total_rows))
+    return ceil(log10(1 - target_rows / total_rows) / log10(1 - 1 / total_rows))
 
 
 def estimate_u_values(linker: "Linker", target_rows):
@@ -139,7 +139,9 @@ def estimate_u_values(linker: "Linker", target_rows):
 
             # we may end up with duplicates, so we need to sample pairs more than we need
             # this calculation gives the correct _expected_ number of unique pairings
-            number_of_rows_to_sample = _num_target_rows_to_pairs_to_sample(total_rows, target_rows)
+            number_of_rows_to_sample = _num_target_rows_to_pairs_to_sample(
+                total_rows, target_rows
+            )
 
             # new custom table defining the pairs of row numbers for the sample
             # __splink__df_concat_sampled_row_pairs
@@ -152,9 +154,7 @@ def estimate_u_values(linker: "Linker", target_rows):
                 from generate_series(1, {number_of_rows_to_sample}) g
             )
             """
-            training_linker._enqueue_sql(
-                sql, "__splink__df_concat_sampled_row_pairs"
-            )
+            training_linker._enqueue_sql(sql, "__splink__df_concat_sampled_row_pairs")
             df_join = training_linker._execute_sql_pipeline()
 
             # __splink_df_concat_with_tf_left_sample is join of _splink_df_concat_with_tf_left with above
@@ -196,9 +196,10 @@ def estimate_u_values(linker: "Linker", target_rows):
             )
             df_join.drop_table_from_database()
 
-
     if settings_obj._link_type == "link_only" and sample_tables_on_link_only:
-        settings_obj._blocking_rules_to_generate_predictions = [BlockingRule("l.sample_id = r.sample_id")]
+        settings_obj._blocking_rules_to_generate_predictions = [
+            BlockingRule("l.sample_id = r.sample_id")
+        ]
     else:
         settings_obj._blocking_rules_to_generate_predictions = []
 
