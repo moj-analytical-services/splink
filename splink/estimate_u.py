@@ -52,6 +52,7 @@ def estimate_u_values(linker: "Linker", target_rows):
 
     training_linker = deepcopy(linker)
 
+    sample_tables_on_link_only = True
     training_linker._train_u_using_random_sample_mode = True
 
     settings_obj = training_linker._settings_obj
@@ -94,7 +95,6 @@ def estimate_u_values(linker: "Linker", target_rows):
         )
 
     if settings_obj._link_type == "link_only":
-        # just sketching out
         sql = """
         select 
         l.count as count_l, r.count as count_r
@@ -111,77 +111,94 @@ def estimate_u_values(linker: "Linker", target_rows):
 
         total_rows = count_rows["count_l"] * count_rows["count_r"]
         if target_rows >= total_rows:
-            # TODO: complete hack, soz, should really use different sql
-            samps = int(100 * total_rows)
+            # don't need to bother with sampling in this case!
+            # we will just generate all pairings
+            sample_tables_on_link_only = False
+            sql = """
+            select * from
+            __splink_df_concat_with_tf_left
+            """
+            df_l = training_linker._sql_to_splink_dataframe_checking_cache(
+                sql, "__splink__df_concat_with_tf_left_sample"
+            )
+            sql = """
+            select * from
+            __splink_df_concat_with_tf_right
+            """
+            df_r = training_linker._sql_to_splink_dataframe_checking_cache(
+                sql, "__splink__df_concat_with_tf_right_sample"
+            )
         else:
+            # strategy:
+            # get sample of random row numbers from left table, and right table, of equal length,
+            # allowing for repititions
+            # pair them up one-to-one with a sample_id, and remove any duplicate pairings
+            # then when we come to block we join oversampled tables on sample_id
 
             # TODO just duckdb for the mo
-            samps = _num_target_rows_to_pairs_to_sample(total_rows, target_rows)
-        print([total_rows, target_rows])
-        print(samps)
 
-        # new custom table defining the join
-        # __splink_df_concat_sampled_for_join
-        sql = f"""
-        select 1 + floor(random() * {count_rows['count_l']})::int as row_l,
-        1 + floor(random() * {count_rows['count_r']})::int as row_r,
-        g.generate_series as sample
-        from generate_series(1, {samps}) g
-        """
+            # we may end up with duplicates, so we need to sample pairs more than we need
+            # this calculation gives the correct _expected_ number of unique pairings
+            number_of_rows_to_sample = _num_target_rows_to_pairs_to_sample(total_rows, target_rows)
 
-        sql = f"""
-        select distinct row_l, row_r, first_value(sample) over(partition by row_l, row_r) as sample
-        from (
-        select 1 + floor(random() * {count_rows['count_l']})::int as row_l,
-        1 + floor(random() * {count_rows['count_r']})::int as row_r,
-        g.generate_series as sample
-        from generate_series(1, {samps}) g
-        )
-        """
-        training_linker._enqueue_sql(
-            sql, "__splink__df_concat_sampled_for_join"
-        )
-        df_join = training_linker._execute_sql_pipeline()
+            # new custom table defining the pairs of row numbers for the sample
+            # __splink__df_concat_sampled_row_pairs
+            sql = f"""
+            select distinct row_l, row_r, first_value(sample) over(partition by row_l, row_r) as sample_id
+            from (
+                select 1 + floor(random() * {count_rows['count_l']})::int as row_l,
+                1 + floor(random() * {count_rows['count_r']})::int as row_r,
+                g.generate_series as sample
+                from generate_series(1, {number_of_rows_to_sample}) g
+            )
+            """
+            training_linker._enqueue_sql(
+                sql, "__splink__df_concat_sampled_row_pairs"
+            )
+            df_join = training_linker._execute_sql_pipeline()
 
-        # __splink_df_concat_with_tf_left_sample is join of _splink_df_concat_with_tf_left with above
-        # and sim. for right
-        sql = """
-        with l as (select *, row_number() over () AS row_l from
-        __splink_df_concat_with_tf_left),
-        jn as (
-        select row_l, sample from
-        __splink__df_concat_sampled_for_join
-        )
-        select * from l
-        right join
-        jn
-        on l.row_l = jn.row_l
-        """
-        df_l = training_linker._sql_to_splink_dataframe_checking_cache(
-            sql, "__splink__df_concat_with_tf_left_sample"
-        )
+            # __splink_df_concat_with_tf_left_sample is join of _splink_df_concat_with_tf_left with above
+            # and sim. for right
+            sql = """
+            with l as (
+                select *, row_number() over () AS row_l from
+                __splink_df_concat_with_tf_left
+            ),
+            sampled_row_pairs as (
+                select row_l, sample_id from
+                __splink__df_concat_sampled_row_pairs
+            )
+            select * from l
+            right join
+            sampled_row_pairs
+            on l.row_l = sampled_row_pairs.row_l
+            """
+            df_l = training_linker._sql_to_splink_dataframe_checking_cache(
+                sql, "__splink__df_concat_with_tf_left_sample"
+            )
 
-        sql = """
-        with r as (select *, row_number() over () AS row_r from
-        __splink_df_concat_with_tf_right),
-        jn as (
-        select row_r, sample from
-        __splink__df_concat_sampled_for_join
-        )
-        select * from r
-        right join
-        jn
-        on r.row_r = jn.row_r
-        """
-        df_r = training_linker._sql_to_splink_dataframe_checking_cache(
-            sql, "__splink__df_concat_with_tf_right_sample"
-        )
-        df_join.drop_table_from_database()
+            sql = """
+            with r as (
+                select *, row_number() over () AS row_r from
+                __splink_df_concat_with_tf_right
+            ),
+            sampled_row_pairs as (
+                select row_r, sample_id from
+                __splink__df_concat_sampled_row_pairs
+            )
+            select * from r
+            right join
+            sampled_row_pairs
+            on r.row_r = sampled_row_pairs.row_r
+            """
+            df_r = training_linker._sql_to_splink_dataframe_checking_cache(
+                sql, "__splink__df_concat_with_tf_right_sample"
+            )
+            df_join.drop_table_from_database()
 
 
-    if settings_obj._link_type == "link_only":
-        # TODO: just a sketch, might need to change names
-        settings_obj._blocking_rules_to_generate_predictions = [BlockingRule("l.sample = r.sample")]
+    if settings_obj._link_type == "link_only" and sample_tables_on_link_only:
+        settings_obj._blocking_rules_to_generate_predictions = [BlockingRule("l.sample_id = r.sample_id")]
     else:
         settings_obj._blocking_rules_to_generate_predictions = []
 
@@ -218,7 +235,7 @@ def estimate_u_values(linker: "Linker", target_rows):
 
     sql = compute_new_parameters_sql(settings_obj)
     linker._enqueue_sql(sql, "__splink__m_u_counts")
-    # TODO: here is where the blocking logic comes back into things:
+
     df_params = training_linker._execute_sql_pipeline(input_dataframes)
 
     param_records = df_params.as_pandas_dataframe()
