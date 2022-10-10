@@ -20,7 +20,6 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 logger = logging.getLogger(__name__)
-logging.getLogger("splink").setLevel(logging.DEBUG)
 
 
 def _num_target_rows_to_rows_to_sample(target_rows):
