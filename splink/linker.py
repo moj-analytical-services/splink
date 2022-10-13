@@ -1380,7 +1380,7 @@ class Linker:
         Examples:
             >>> # DuckDBLinker
             >>> labels = pd.read_csv("my_labels.csv")
-            >>> linker._con.register("labels", labels)
+            >>> linker.register_table(labels, "labels")
             >>> linker.truth_space_table_from_labels_table("labels")
             >>>
             >>> # SparkLinker
@@ -1435,7 +1435,7 @@ class Linker:
         Examples:
             >>> # DuckDBLinker
             >>> labels = pd.read_csv("my_labels.csv")
-            >>> linker._con.register("labels", labels)
+            >>> linker.register_table(labels, "labels")
             >>> linker.roc_chart_from_labels_table("labels")
             >>>
             >>> # SparkLinker
@@ -1489,7 +1489,7 @@ class Linker:
         Examples:
             >>> # DuckDBLinker
             >>> labels = pd.read_csv("my_labels.csv")
-            >>> linker._con.register("labels", labels)
+            >>> linker.register_table(labels, "labels")
             >>> linker.precision_recall_chart_from_labels_table("labels")
             >>>
             >>> # SparkLinker

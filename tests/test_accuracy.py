@@ -46,7 +46,7 @@ def test_scored_labels_table():
     linker = DuckDBLinker(df, settings)
 
     linker._initialise_df_concat_with_tf()
-    linker._con.register("labels", df_labels)
+    linker.register_table(df_labels, "labels")
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, "labels")
 
@@ -130,7 +130,7 @@ def test_truth_space_table():
     ]
     labels_with_predictions = pd.DataFrame(labels_with_predictions)
 
-    linker._con.register("__splink__labels_with_predictions", labels_with_predictions)
+    linker.register_table(labels_with_predictions, "__splink__labels_with_predictions")
 
     sqls = truth_space_table_from_labels_with_predictions_sqls(0.5)
     for sql in sqls:
@@ -186,7 +186,7 @@ def test_roc_chart_dedupe_only():
 
     linker._initialise_df_concat_with_tf()
 
-    linker._con.register("labels", df_labels)
+    linker.register_table(df_labels, "labels")
 
     linker.roc_chart_from_labels_table("labels")
 
@@ -219,7 +219,7 @@ def test_roc_chart_link_and_dedupe():
 
     linker._initialise_df_concat_with_tf()
 
-    linker._con.register("labels", df_labels)
+    linker.register_table(df_labels, "labels")
 
     linker.roc_chart_from_labels_table("labels")
 
@@ -280,7 +280,7 @@ def test_prediction_errors_from_labels_table():
 
     linker = DuckDBLinker(df, settings)
 
-    linker._con.register("labels", df_labels)
+    linker.register_table(df_labels, "labels")
 
     linker._initialise_df_concat_with_tf()
     df_res = linker.prediction_errors_from_labels_table("labels").as_pandas_dataframe()
@@ -295,7 +295,7 @@ def test_prediction_errors_from_labels_table():
 
     linker = DuckDBLinker(df, settings)
 
-    linker._con.register("labels", df_labels)
+    linker.register_table(df_labels, "labels")
 
     linker._initialise_df_concat_with_tf()
     df_res = linker.prediction_errors_from_labels_table(
@@ -311,7 +311,7 @@ def test_prediction_errors_from_labels_table():
     assert (1, 2) not in records  # tp
 
     linker = DuckDBLinker(df, settings)
-    linker._con.register("labels", df_labels)
+    linker.register_table(df_labels, "labels")
     linker._initialise_df_concat_with_tf()
     df_res = linker.prediction_errors_from_labels_table(
         "labels", include_false_positives=False
