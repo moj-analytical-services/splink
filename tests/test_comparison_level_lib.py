@@ -63,7 +63,7 @@ def test_haversine_level():
         d["lat_long"] = {"lat": d["lat"], "long": d["lon"]}
         d["lat_long_arr"] = [d["lat"], d["lon"]]
 
-    df = pa.Table.from_pylist(data)
+    df = pd.DataFrame(data)
 
     settings = {
         "unique_id_column_name": "id",
