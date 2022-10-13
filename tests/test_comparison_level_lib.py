@@ -1,6 +1,4 @@
 import pandas as pd
-import pyarrow as pa
-
 from splink.comparison_level_library import (
     columns_reversed_level,
     else_level,
@@ -63,7 +61,7 @@ def test_haversine_level():
         d["lat_long"] = {"lat": d["lat"], "long": d["lon"]}
         d["lat_long_arr"] = [d["lat"], d["lon"]]
 
-    df = pa.Table.from_pylist(data)
+    df = pd.DataFrame(data)
 
     settings = {
         "unique_id_column_name": "id",
