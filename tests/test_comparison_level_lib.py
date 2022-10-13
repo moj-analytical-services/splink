@@ -1,6 +1,4 @@
 import pandas as pd
-import pyarrow as pa
-
 from splink.comparison_level_library import (
     columns_reversed_level,
     else_level,
