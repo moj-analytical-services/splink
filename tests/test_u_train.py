@@ -103,17 +103,17 @@ def test_u_train_link_only():
 def test_u_train_link_only_sample():
 
     df_l = (
-        pd.DataFrame(np.random.randint(0, 1000, size=(1000, 1)), columns=["name"])
+        pd.DataFrame(np.random.randint(0, 3000, size=(3000, 1)), columns=["name"])
         .reset_index()
         .rename(columns={"index": "unique_id"})
     )
     df_r = (
-        pd.DataFrame(np.random.randint(0, 1000, size=(1000, 1)), columns=["name"])
+        pd.DataFrame(np.random.randint(0, 3000, size=(3000, 1)), columns=["name"])
         .reset_index()
         .rename(columns={"index": "unique_id"})
     )
 
-    target_rows = 100000
+    target_rows = 1800000
 
     _mutable_params["dialect"] = "duckdb"
     settings = {
@@ -139,7 +139,8 @@ def test_u_train_link_only_sample():
     self_table_count.drop_table_from_database()
     target_rows_proportion = result[0]["count"] / target_rows
     # equality only holds probabilistically
-    assert approx(target_rows_proportion, 0.1) == 1.0
+    # chance of failure is approximately 1e-06
+    assert approx(target_rows_proportion, 0.15) == 1.0
 
 
 def test_u_train_multilink():
