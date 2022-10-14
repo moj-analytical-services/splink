@@ -51,24 +51,38 @@ def estimate_u_values(linker: "Linker", target_rows):
         for cl in cc.comparison_levels:
             cl._level_dict["tf_adjustment_column"] = None
 
-    sql = """
-    select count(*) as count
-    from __splink__df_concat_with_tf
-    """
-    dataframe = training_linker._sql_to_splink_dataframe_checking_cache(
-        sql, "__splink__df_concat_count"
-    )
-    result = dataframe.as_record_dict()
-    dataframe.drop_table_from_database()
-    count_rows = result[0]["count"]
 
     if settings_obj._link_type in ["dedupe_only", "link_and_dedupe"]:
+        sql = """
+        select count(*) as count
+        from __splink__df_concat_with_tf
+        """
+        dataframe = training_linker._sql_to_splink_dataframe_checking_cache(
+            sql, "__splink__df_concat_count"
+        )
+        result = dataframe.as_record_dict()
+        dataframe.drop_table_from_database()
+        count_rows = result[0]["count"]
         sample_size = _num_target_rows_to_rows_to_sample(target_rows)
         proportion = sample_size / count_rows
 
     if settings_obj._link_type == "link_only":
-        sample_size = target_rows**0.5
-        proportion = sample_size / count_rows
+        sql = """
+        select count(source_dataset) as count
+        from __splink__df_concat_with_tf
+        group by source_dataset
+        """
+        dataframe = training_linker._sql_to_splink_dataframe_checking_cache(
+            sql, "__splink__df_concat_count"
+        )
+        result = dataframe.as_record_dict()
+        dataframe.drop_table_from_database()
+        frame_counts = [res["count"] for res in result]
+        # total valid links is sum of pairwise product of individual row counts
+        count_rows = (sum(frame_counts)**2 - sum([count**2 for count in frame_counts]))/2
+
+        proportion = (target_rows / count_rows)**0.5
+        sample_size = proportion * count_rows
 
     if proportion >= 1.0:
         proportion = 1.0
