@@ -230,6 +230,12 @@ class Linker:
         if self._compare_two_records_mode:
             return True
 
+        # in u-train sample mode we are joining the concatenated table mixing
+        # both data sets - hence if we inner join on True we will end up with
+        # samples which both originate from the same dataset
+        if self._train_u_using_random_sample_mode:
+            return False
+
         if (
             len(self._input_tables_dict) == 2
             and self._settings_obj._link_type == "link_only"
