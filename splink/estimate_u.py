@@ -51,7 +51,6 @@ def estimate_u_values(linker: "Linker", target_rows):
         for cl in cc.comparison_levels:
             cl._level_dict["tf_adjustment_column"] = None
 
-
     if settings_obj._link_type in ["dedupe_only", "link_and_dedupe"]:
         sql = """
         select count(*) as count
@@ -79,9 +78,11 @@ def estimate_u_values(linker: "Linker", target_rows):
         dataframe.drop_table_from_database()
         frame_counts = [res["count"] for res in result]
         # total valid links is sum of pairwise product of individual row counts
-        count_rows = (sum(frame_counts)**2 - sum([count**2 for count in frame_counts]))/2
+        count_rows = (
+            sum(frame_counts) ** 2 - sum([count**2 for count in frame_counts])
+        ) / 2
 
-        sample_size = (target_rows * count_rows)**0.5
+        sample_size = (target_rows * count_rows) ** 0.5
         proportion = sample_size / count_rows
 
     if proportion >= 1.0:

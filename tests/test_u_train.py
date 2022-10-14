@@ -169,16 +169,12 @@ def test_u_train_multilink():
             {"unique_id": 5, "name": "Adil"},
             {"unique_id": 6, "name": "Adil"},
             {"unique_id": 7, "name": "Adil"},
-        ]
+        ],
     ]
     dfs = list(map(pd.DataFrame, datas))
 
-    expected_total_links = (
-        2*3 + 2*4 + 2*7 + 3*4 + 3*7 + 4*7
-    )
-    expected_total_links_with_dedupes = (
-        (2 + 3 + 4 + 7) * (2 + 3 + 4 + 7 - 1) / 2
-    )
+    expected_total_links = 2 * 3 + 2 * 4 + 2 * 7 + 3 * 4 + 3 * 7 + 4 * 7
+    expected_total_links_with_dedupes = (2 + 3 + 4 + 7) * (2 + 3 + 4 + 7 - 1) / 2
 
     _mutable_params["dialect"] = "duckdb"
     settings = {
@@ -235,13 +231,13 @@ def test_u_train_multilink():
 
     result = self_table_count.as_record_dict()
     self_table_count.drop_table_from_database()
-    assert result[0]["count"] == (2 * 1 / 2 + 3 * 2 / 2 + 4 * 3 / 2 + 7 * 6 /2)
+    assert result[0]["count"] == (2 * 1 / 2 + 3 * 2 / 2 + 4 * 3 / 2 + 7 * 6 / 2)
 
     denom = expected_total_links_with_dedupes
     cl_exact = cc_name._get_comparison_level_by_comparison_vector_value(2)
 
     # David and Adil
-    assert cl_exact.u_probability == (3 + 6)/ denom
+    assert cl_exact.u_probability == (3 + 6) / denom
     # John, Jon
     cl_lev = cc_name._get_comparison_level_by_comparison_vector_value(1)
 
