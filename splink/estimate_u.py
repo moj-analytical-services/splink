@@ -81,8 +81,8 @@ def estimate_u_values(linker: "Linker", target_rows):
         # total valid links is sum of pairwise product of individual row counts
         count_rows = (sum(frame_counts)**2 - sum([count**2 for count in frame_counts]))/2
 
-        proportion = (target_rows / count_rows)**0.5
-        sample_size = proportion * count_rows
+        sample_size = (target_rows * count_rows)**0.5
+        proportion = sample_size / count_rows
 
     if proportion >= 1.0:
         proportion = 1.0
