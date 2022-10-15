@@ -60,9 +60,9 @@ And clusters the predictions to produce an estimated unique id:
 
 Splink works best when the input data has multiple columns, and the data in the columns is not highly correlated. For example, if the entity type is persons, you may have their full name, date of birth and city. If the entity type is companies, you may have their name, turnover, sector and telephone number.
 
-Splink will work less well if all of your input columns are highly correlated - for instance, city, county and postal code. In this case, it would often be sufficient to choose the most granular measure of location, so long as you have other matching columns (name, date of birth etc.)
+Splink will work less well if _all_ of your input columns are highly correlated - for instance, city, county and postal code. You would need to have additional, less correlated columns such as full name or date or birth, for the linkage to work effectively.
 
-Splink is not designed for linking a single column containing a 'bag of words'. For example, a table with a single 'company name' column, and no other details.
+Splink is also not designed for linking a single column containing a 'bag of words'. For example, a table with a single 'company name' column, and no other details.
 
 ## Documentation
 
