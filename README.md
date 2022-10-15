@@ -23,7 +23,9 @@ The core linkage algorithm is an implementation of Fellegi-Sunter's model of rec
 
 ## What does Splink do?
 
-Splink deduplicates and links records from datasets that lack a unique identifier.
+Splink deduplicates and/or links records from datasets that lack a unique identifier.
+
+It assumes that prior to using Splink your datasets have been standardised so they all have the same column names, and consistent formatting (e.g. lowercased, punctuation cleaned up).
 
 For example, a few of your records may look like this:
 
@@ -53,6 +55,14 @@ And clusters the predictions to produce an estimated unique id:
 | a          | 3      |
 | b          | 4      |
 | b          | 5      |
+
+## When data does Splink work best with?
+
+Splink works best when the input data has multiple columns, and the data in the columns is not highly correlated. For example, if the entity type is persons, you may have their full name, date of birth and city. If the entity type is companies, you may have their name, turnover, sector and telephone number.
+
+Splink will work less well if all of your input columns are highly correlated - for instance, city, county and postal code. In this case, it would often be sufficient to choose the most granular measure of location, so long as you have other matching columns (name, date of birth etc.)
+
+Splink is not designed for linking a single column containing a 'bag of words'. For example, a table with a single 'company name' column, and no other details.
 
 ## Documentation
 
@@ -121,8 +131,6 @@ clusters.as_pandas_dataframe(limit=5)
 
 - [A introductory presentation on Splink](https://www.youtube.com/watch?v=msz3T741KQI)
 - [An introduction to the Splink Comparison Viewer dashboard](https://www.youtube.com/watch?v=DNvCMqjipis)
-
-
 
 ## Acknowledgements
 
