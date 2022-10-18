@@ -395,6 +395,10 @@ class Linker:
             input: The data you wish to register. This can be either a dictionary,
                 pandas dataframe, pyarrow table or a spark dataframe.
             table_name (str): The name you wish to assign to the table.
+
+        Returns:
+            SplinkDataFrame: An abstraction representing the table created by the sql
+                pipeline
         """
 
         raise NotImplementedError(f"register_table not implemented for {type(self)}")
