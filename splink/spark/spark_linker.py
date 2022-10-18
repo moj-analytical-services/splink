@@ -275,7 +275,27 @@ class SparkLinker(Linker):
         return output_df
 
     def register_table(self, input, table_name, overwrite=False):
+        """
+        Register a table to your backend database, to be used in one of the
+        splink methods, or simply to allow querying.
 
+        Tables can be of type: dictionary, record level dictionary,
+        pandas dataframe, pyarrow table and in the spark case, a spark df.
+
+        Examples:
+            >>> test_dict = {"a": [666,777,888],"b": [4,5,6]}
+            >>> linker.register_table(test_dict, "test_dict")
+            >>> linker.query_sql("select * from test_dict")
+
+        Args:
+            input: The data you wish to register. This can be either a dictionary,
+                pandas dataframe, pyarrow table or a spark dataframe.
+            table_name (str): The name you wish to assign to the table.
+
+        Returns:
+            SplinkDataFrame: An abstraction representing the table created by the sql
+                pipeline
+        """
         # Check if table name is already in use
         exists = self._table_exists_in_database(table_name)
         if exists:
