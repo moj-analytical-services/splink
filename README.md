@@ -56,7 +56,7 @@ And clusters the predictions to produce an estimated unique id:
 | b          | 4      |
 | b          | 5      |
 
-## When data does Splink work best with?
+## What data does Splink work best with?
 
 Splink works best when the input data has multiple columns, and the data in the columns is not highly correlated. For example, if the entity type is persons, you may have their full name, date of birth and city. If the entity type is companies, you may have their name, turnover, sector and telephone number.
 
