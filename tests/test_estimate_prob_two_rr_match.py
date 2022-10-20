@@ -181,9 +181,7 @@ def test_prob_rr_match_link_only_multitable():
     prob = linker._settings_obj._probability_two_random_records_match
     # 6 matches (1 John, 3 Mary, 1 Jones (ignoring already matched Mary), 1 Taylor)
     # 4*3 + 4*5 + 4*7 + 3*5 + 3*7 + 5*7 = 131 comparisons
-    # assert pytest.approx(prob) == 6 / 131
-    # existing miscounting:
-    assert pytest.approx(prob) == 6 / 420
+    assert pytest.approx(prob) == 6 / 131
 
 
 def test_prob_rr_match_link_and_dedupe_multitable():
@@ -242,6 +240,4 @@ def test_prob_rr_match_link_and_dedupe_multitable():
     prob = linker._settings_obj._probability_two_random_records_match
     # 10 matches (1 John, 3 Mary, 2 Jones (ignoring already matched Mary), 1 Taylor, 3 Graham, 0 Roberts (ignoring already counted Graham))
     # (3 + 4 + 5 + 7)(3 + 4 + 5 + 7 - 1)/2 = 171 comparisons
-    # assert pytest.approx(prob) == 10 / 171
-    # existing miscounting:
-    assert pytest.approx(prob) == 10 / 460
+    assert pytest.approx(prob) == 10 / 171
