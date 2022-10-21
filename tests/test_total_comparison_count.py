@@ -18,7 +18,8 @@ def test_calculate_cartesian_dedupe_only():
     assert calculate_cartesian(list_to_row_count([5]), "dedupe_only") == 10
     assert calculate_cartesian(list_to_row_count([8]), "dedupe_only") == 28
     assert calculate_cartesian(list_to_row_count([10]), "dedupe_only") == 45
-    # TODO: define behaviour for n > 1 tables? error? would also need to think about n = 1 for link_only
+    with pytest.raises(ValueError):
+        calculate_cartesian(list_to_row_count([10, 20]), "dedupe_only")
 
 
 def test_calculate_cartesian_link_only():
@@ -30,6 +31,8 @@ def test_calculate_cartesian_link_only():
     assert calculate_cartesian(list_to_row_count([1, 1, 1]), "link_only") == 3
     assert calculate_cartesian(list_to_row_count([2, 2, 2, 2, 2]), "link_only") == 40
     assert calculate_cartesian(list_to_row_count([5, 5, 5, 5]), "link_only") == 150
+    with pytest.raises(ValueError):
+        calculate_cartesian(list_to_row_count([12]), "link_only")
 
 
 def test_calculate_cartesian_link_and_dedupe():
