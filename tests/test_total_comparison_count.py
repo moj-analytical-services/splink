@@ -43,8 +43,8 @@ def test_calculate_cartesian_link_and_dedupe():
     assert calculate_cartesian(list_to_row_count([7, 11]), "link_and_dedupe") == 77 + 21 + 55
     assert calculate_cartesian(list_to_row_count([2, 2, 2]), "link_and_dedupe") == 15
     assert calculate_cartesian(list_to_row_count([1, 1, 1]), "link_and_dedupe") == 3
-    assert calculate_cartesian(list_to_row_count([2, 2, 2, 2, 2]), "link_only") == 45
-    assert calculate_cartesian(list_to_row_count([5, 5, 5, 5]), "link_only") == 190
+    assert calculate_cartesian(list_to_row_count([2, 2, 2, 2, 2]), "link_and_dedupe") == 45
+    assert calculate_cartesian(list_to_row_count([5, 5, 5, 5]), "link_and_dedupe") == 190
 
 
 @pytest.mark.parametrize(
