@@ -40,11 +40,18 @@ def test_calculate_cartesian_link_and_dedupe():
     # alternatively can think of this as 'link only' links + dedupe links for each frame in list
     assert calculate_cartesian(list_to_row_count([8]), "link_and_dedupe") == 28
     assert calculate_cartesian(list_to_row_count([2, 3]), "link_and_dedupe") == 10
-    assert calculate_cartesian(list_to_row_count([7, 11]), "link_and_dedupe") == 77 + 21 + 55
+    assert (
+        calculate_cartesian(list_to_row_count([7, 11]), "link_and_dedupe")
+        == 77 + 21 + 55
+    )
     assert calculate_cartesian(list_to_row_count([2, 2, 2]), "link_and_dedupe") == 15
     assert calculate_cartesian(list_to_row_count([1, 1, 1]), "link_and_dedupe") == 3
-    assert calculate_cartesian(list_to_row_count([2, 2, 2, 2, 2]), "link_and_dedupe") == 45
-    assert calculate_cartesian(list_to_row_count([5, 5, 5, 5]), "link_and_dedupe") == 190
+    assert (
+        calculate_cartesian(list_to_row_count([2, 2, 2, 2, 2]), "link_and_dedupe") == 45
+    )
+    assert (
+        calculate_cartesian(list_to_row_count([5, 5, 5, 5]), "link_and_dedupe") == 190
+    )
 
 
 @pytest.mark.parametrize(
@@ -52,10 +59,12 @@ def test_calculate_cartesian_link_and_dedupe():
     [
         ("dedupe_only", [97], ""),
         ("link_only", [97, 209, 104, 2], "group by source_dataset"),
-        ("link_and_dedupe", [97, 209, 104, 2], "group by source_dataset")
-    ]
+        ("link_and_dedupe", [97, 209, 104, 2], "group by source_dataset"),
+    ],
 )
-def test_calculate_cartesian_equals_total_number_of_links(link_type, frame_sizes, group_by):
+def test_calculate_cartesian_equals_total_number_of_links(
+    link_type, frame_sizes, group_by
+):
     # test that the count we get from calculate_cartesian
     # is the same as the actual number we get if we generate _all_ links
     # (i.e. using dummy blocking rule "1=1")
@@ -63,10 +72,10 @@ def test_calculate_cartesian_equals_total_number_of_links(link_type, frame_sizes
     def make_dummy_frame(row_count):
         # don't need meaningful differences as only interested in total countdf = pd.DataFrame(
         return pd.DataFrame(
-            data = {
+            data={
                 "unique_id": range(0, row_count),
                 "forename": "Claire",
-                "surname": "Brown"
+                "surname": "Brown",
             },
         )
 
@@ -80,7 +89,7 @@ def test_calculate_cartesian_equals_total_number_of_links(link_type, frame_sizes
 
     # calculate full number of comparisons
     full_count_sql = number_of_comparisons_generated_by_blocking_rule_sql(linker, "1=1")
-    linker._enqueue_sql(full_count_sql , "__splink__analyse_blocking_rule")
+    linker._enqueue_sql(full_count_sql, "__splink__analyse_blocking_rule")
     res = linker._execute_sql_pipeline().as_record_dict()[0]
 
     # compare with count from each frame

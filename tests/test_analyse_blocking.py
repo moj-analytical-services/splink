@@ -170,8 +170,12 @@ def test_blocking_records_accuracy():
         linker_settings,
         expected_out={
             # number of links per block simply related to two-frame case
-            "row_count": [3*7257, 3*27190, 3*68640],
-            "cumulative_rows": [3*7257, 3*7257 + 3*27190, 3*7257 + 3*27190 + 3*68640],
+            "row_count": [3 * 7257, 3 * 27190, 3 * 68640],
+            "cumulative_rows": [
+                3 * 7257,
+                3 * 7257 + 3 * 27190,
+                3 * 7257 + 3 * 27190 + 3 * 68640,
+            ],
             "cartesian": 3_000_000,
         },
         blocking_rules=blocking_rules,
@@ -182,10 +186,10 @@ def test_blocking_records_accuracy():
     validate_blocking_output(
         linker_settings,
         expected_out={
-            # and as above, 
+            # and as above,
             "row_count": [31272, 120993, 308880],
             "cumulative_rows": [31272, 31272 + 120993, 31272 + 120993 + 308880],
-            "cartesian": (3000 * 2999)//2,
+            "cartesian": (3000 * 2999) // 2,
         },
         blocking_rules=blocking_rules,
     )
