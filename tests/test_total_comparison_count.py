@@ -1,10 +1,12 @@
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.misc import calculate_cartesian
+from splink.vertically_concatenate import vertically_concatenate_sql
+from splink.analyse_blocking import number_of_comparisons_generated_by_blocking_rule_sql
 
 import pandas as pd
 
+import pytest
 
-# TODO: (somwehere, maybe not here) cross-check calculation with the blocked frame we get using rule 1=1
 
 # convenience to get list into format as though it was result of a count query
 def list_to_row_count(l):
@@ -40,3 +42,57 @@ def test_calculate_cartesian_link_and_dedupe():
     assert calculate_cartesian(list_to_row_count([1, 1, 1]), "link_and_dedupe") == 3
     assert calculate_cartesian(list_to_row_count([2, 2, 2, 2, 2]), "link_only") == 45
     assert calculate_cartesian(list_to_row_count([5, 5, 5, 5]), "link_only") == 190
+
+
+@pytest.mark.parametrize(
+    "link_type,frame_sizes,group_by",
+    [
+        ("dedupe_only", [97], ""),
+        ("link_only", [97, 209, 104, 2], "group by source_dataset"),
+        ("link_and_dedupe", [97, 209, 104, 2], "group by source_dataset")
+    ]
+)
+def test_calculate_cartesian_equals_total_number_of_links(link_type, frame_sizes, group_by):
+    # test that the count we get from calculate_cartesian
+    # is the same as the actual number we get if we generate _all_ links
+    # (i.e. using dummy blocking rule "1=1")
+
+    def make_dummy_frame(row_count):
+        # don't need meaningful differences as only interested in total countdf = pd.DataFrame(
+        return pd.DataFrame(
+            data = {
+                "unique_id": range(0, row_count),
+                "forename": "Claire",
+                "surname": "Brown"
+            },
+        )
+
+    dfs = list(map(make_dummy_frame, frame_sizes))
+    settings = {"link_type": link_type}
+
+    linker = DuckDBLinker(dfs, settings)
+    sql = vertically_concatenate_sql(linker)
+    linker._enqueue_sql(sql, "__splink__df_concat")
+    concat = linker._execute_sql_pipeline(materialise_as_hash=False)
+
+    # calculate full number of comparisons
+    full_count_sql = number_of_comparisons_generated_by_blocking_rule_sql(linker, "1=1")
+    linker._enqueue_sql(full_count_sql , "__splink__analyse_blocking_rule")
+    res = linker._execute_sql_pipeline().as_record_dict()[0]
+
+    # compare with count from each frame
+    sql = f"""
+        select count(*) as count
+        from __splink__df_concat
+        {group_by}
+    """
+    linker._enqueue_sql(sql, "__splink__cartesian_product")
+    cartesian_count = linker._execute_sql_pipeline()
+    row_count_df = cartesian_count.as_record_dict()
+    cartesian_count.drop_table_from_database()
+    # check this is what we expect from input
+    assert frame_sizes == [frame["count"] for frame in row_count_df]
+
+    computed_value_count = calculate_cartesian(row_count_df, link_type)
+
+    assert computed_value_count == res["count_of_pairwise_comparisons_generated"]
