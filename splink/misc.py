@@ -141,6 +141,22 @@ def calculate_reduction_ratio(N, cartesian):
     return 1 - (N / cartesian)
 
 
+def great_circle_distance_km_sql(lat_l, lat_r, long_l, long_r):
+    partial_distance_sql = f"""
+    (
+    pow(sin(radians({lat_r} - {lat_l}))/2, 2) +
+    cos(radians({lat_l})) * cos(radians({lat_r})) *
+    pow(sin(radians({long_r} - {long_l})/2),2)
+    )
+    """
+
+    distance_km_sql = f"""
+        cast(atan2(sqrt({partial_distance_sql}),
+        sqrt(-1*{partial_distance_sql} + 1)) * 12742 as float)
+    """
+    return distance_km_sql
+
+
 def _check_dependency_installed(module):
     try:
         pkg_resources.get_distribution(module)
