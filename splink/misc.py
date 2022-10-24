@@ -97,19 +97,32 @@ def calculate_cartesian(df_rows, link_type):
     n = df_rows
 
     if link_type == "link_only":
-        return np.product([m["count"] for m in n])
+        if len(n) <= 1:
+            raise ValueError(
+                "if 'link_type 'is 'link_only' should have " "at least two input frames"
+            )
+        # sum of pairwise product can be found as
+        # half of [(sum)-squared - (sum of squares)]
+        return (
+            sum([m["count"] for m in n]) ** 2 - sum([m["count"] ** 2 for m in n])
+        ) / 2
 
     if link_type == "dedupe_only":
-        return sum([m["count"] * (m["count"] - 1) for m in n]) / 2
+        if len(n) > 1:
+            raise ValueError(
+                "if 'link_type' is 'dedupe_only' should have only "
+                "a single input frame"
+            )
+        return n[0]["count"] * (n[0]["count"] - 1) / 2
 
     if link_type == "link_and_dedupe":
-        if len(n) > 1:
-            prod = np.product([m["count"] for m in n])
-        else:
-            prod = 0
+        total_rows = sum([m["count"] for m in n])
+        return total_rows * (total_rows - 1) / 2
 
-        c = sum([m["count"] * (m["count"] - 1) for m in n]) / 2
-        return prod + c
+    raise ValueError(
+        "'link_type' should be either 'link_only', 'dedupe_only', "
+        "or 'link_and_dedupe'"
+    )
 
 
 def calculate_reduction_ratio(N, cartesian):
