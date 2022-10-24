@@ -149,7 +149,7 @@ def great_circle_distance_km_sql(lat_l, lat_r, long_l, long_r):
     partial_distance_sql = f"""
     (
         pow(
-            sin( radians({lat_r} - {lat_l}) ) / 2,
+            sin( radians({lat_r} - {lat_l}) / 2 ) ,
             2
         ) +
         cos( radians({lat_l}) ) * cos( radians({lat_r} )) *
