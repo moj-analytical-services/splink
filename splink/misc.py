@@ -142,6 +142,10 @@ def calculate_reduction_ratio(N, cartesian):
 
 
 def great_circle_distance_km_sql(lat_l, lat_r, long_l, long_r):
+    # equivalent to radius 6371 km (= mean radius)
+    # see e.g. https://www.wolframalpha.com/input?i=earth+mean+radius+in+km
+    EARTH_DIAMETER_KM = 12742
+
     partial_distance_sql = f"""
     (
     pow(sin(radians({lat_r} - {lat_l}))/2, 2) +
@@ -152,7 +156,7 @@ def great_circle_distance_km_sql(lat_l, lat_r, long_l, long_r):
 
     distance_km_sql = f"""
         cast(atan2(sqrt({partial_distance_sql}),
-        sqrt(-1*{partial_distance_sql} + 1)) * 12742 as float)
+        sqrt(-1*{partial_distance_sql} + 1)) * {EARTH_DIAMETER_KM} as float)
     """
     return distance_km_sql
 
