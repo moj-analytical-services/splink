@@ -162,9 +162,8 @@ def great_circle_distance_km_sql(lat_l, lat_r, long_l, long_r):
 
     distance_km_sql = f"""
         cast(
-            atan2(
-                sqrt({partial_distance_sql}),
-                sqrt(-1*{partial_distance_sql} + 1)
+            asin(
+                sqrt({partial_distance_sql})
             ) * {EARTH_DIAMETER_KM}
             as float
         )
