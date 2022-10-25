@@ -9,6 +9,7 @@ import pytest
 # using 12742 km diameter (as in splink.misc)
 QUARTER_CIRCUMFERENCE_KM = 10007
 
+
 @pytest.mark.parametrize(
     "lat_l,long_l,lat_r,long_r,expected_distance",
     [
@@ -20,8 +21,8 @@ QUARTER_CIRCUMFERENCE_KM = 10007
         # same points
         (40, -20, 40, -20, 0),
         # antipodal points
-        (20, 40, -20, -140, 2*QUARTER_CIRCUMFERENCE_KM),
-        (89, -60, -89, 120, 2*QUARTER_CIRCUMFERENCE_KM),
+        (20, 40, -20, -140, 2 * QUARTER_CIRCUMFERENCE_KM),
+        (89, -60, -89, 120, 2 * QUARTER_CIRCUMFERENCE_KM),
         # some arbitrary point-spreads
         (51.484, -0.115, -37.82, 144.983, 16905),
         (-78.525483, -85.617147, 68.919500, -29.898533, 16783),
@@ -35,9 +36,6 @@ QUARTER_CIRCUMFERENCE_KM = 10007
 def test_lat_long_distance_formula(lat_l, long_l, lat_r, long_r, expected_distance):
     con = connect()
 
-    sql = great_circle_distance_km_sql(
-        lat_l, lat_r,
-        long_l, long_r
-    )
+    sql = great_circle_distance_km_sql(lat_l, lat_r, long_l, long_r)
     res = con.execute(f"SELECT {sql} AS dist_km").fetchone()
     assert res[0] == pytest.approx(expected_distance, rel=1e-4)
