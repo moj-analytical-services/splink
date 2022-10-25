@@ -32,7 +32,7 @@ QUARTER_CIRCUMFERENCE_KM = 10007
         (0, -24, 0, -24.2, 22.24),
     ],
 )
-def test_haversine_formula(lat_l, long_l, lat_r, long_r, expected_distance):
+def test_lat_long_distance_formula(lat_l, long_l, lat_r, long_r, expected_distance):
     con = connect()
 
     sql = great_circle_distance_km_sql(
