@@ -25,6 +25,11 @@ QUARTER_CIRCUMFERENCE_KM = 10007
         # some arbitrary point-spreads
         (51.484, -0.115, -37.82, 144.983, 16905),
         (-78.525483, -85.617147, 68.919500, -29.898533, 16783),
+        (37.814056, -122.477898, 37.825531, -122.479236, 1.2814),
+        # 0.2 degree difference
+        (89.9, 0, 89.9, 180, 22.24),
+        (90, 30, 89.8, 40, 22.24),
+        (0, -24, 0, -24.2, 22.24),
     ],
 )
 def test_haversine_formula(lat_l, long_l, lat_r, long_r, expected_distance):
