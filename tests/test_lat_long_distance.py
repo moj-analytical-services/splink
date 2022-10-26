@@ -1,6 +1,6 @@
 from duckdb import connect
 
-from splink.misc import great_circle_distance_km_sql
+from splink.comparison_level_sql import great_circle_distance_km_sql
 
 import pytest
 

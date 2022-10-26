@@ -2,7 +2,7 @@ from typing import Union
 
 from .input_column import InputColumn
 from .comparison_level import ComparisonLevel
-from .misc import great_circle_distance_km_sql
+from .comparison_level_sql import great_circle_distance_km_sql
 
 
 # So that we can pass in a sql_dialect to the comparison levels
