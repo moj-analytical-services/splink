@@ -38,4 +38,6 @@ def test_lat_long_distance_formula(lat_l, long_l, lat_r, long_r, expected_distan
 
     sql = great_circle_distance_km_sql(lat_l, lat_r, long_l, long_r)
     res = con.execute(f"SELECT {sql} AS dist_km").fetchone()
-    assert res[0] == pytest.approx(expected_distance, rel=1e-4)
+    # allow relative error of 0.01% (as expected distances are not precise),
+    # or absolute error of 0.1% i.e. within 1 metre
+    assert res[0] == pytest.approx(expected_distance, rel=1e-4, abs=1e-3)
