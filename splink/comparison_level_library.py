@@ -278,7 +278,7 @@ def distance_in_km_level(
         null_sql = " AND ".join(
             [f"{c} is not null" for c in [lat_r, lat_l, long_l, long_r]]
         )
-        distance_km_sql = f"{null_sql}) AND {distance_km_sql}"
+        distance_km_sql = f"({null_sql}) AND {distance_km_sql}"
 
     level_dict = {
         "sql_condition": distance_km_sql,
