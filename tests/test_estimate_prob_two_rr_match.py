@@ -184,7 +184,7 @@ def test_prob_rr_match_link_only_multitable():
     # 4*3 + 4*5 + 4*7 + 3*5 + 3*7 + 5*7 = 131 comparisons
     assert pytest.approx(prob) == 6 / 131
 
-    # if we define all record pairs to be a match match, then the probability should be 1
+    # if we define all record pairs to be a match, then the probability should be 1
     dfs = list(map(lambda df: df.assign(city="Brighton"), dfs))
     linker = DuckDBLinker(dfs, settings)
     linker.estimate_probability_two_random_records_match(
@@ -249,7 +249,8 @@ def test_prob_rr_match_link_and_dedupe_multitable():
     )
 
     prob = linker._settings_obj._probability_two_random_records_match
-    # 10 matches (1 John, 3 Mary, 2 Jones (ignoring already matched Mary), 1 Taylor, 3 Graham, 0 Roberts (ignoring already counted Graham))
+    # 10 matches (1 John, 3 Mary, 2 Jones (ignoring already matched Mary),
+    # 1 Taylor, 3 Graham, 0 Roberts (ignoring already counted Graham))
     # (3 + 4 + 5 + 7)(3 + 4 + 5 + 7 - 1)/2 = 171 comparisons
     assert pytest.approx(prob) == 10 / 171
 

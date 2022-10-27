@@ -125,7 +125,7 @@ def test_u_train_link_only_sample():
     linker = DuckDBLinker([df_l, df_r], settings)
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(target_rows=target_rows)
-    cc_name = linker._settings_obj.comparisons[0]
+    linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
     SELECT COUNT(*) AS count FROM __splink__df_blocked
