@@ -9,8 +9,8 @@ import pytest
 
 
 # convenience to get list into format as though it was result of a count query
-def list_to_row_count(l):
-    return [{"count": el} for el in l]
+def list_to_row_count(list_of_numbers):
+    return [{"count": el} for el in list_of_numbers]
 
 
 def test_calculate_cartesian_dedupe_only():
@@ -36,8 +36,10 @@ def test_calculate_cartesian_link_only():
 
 
 def test_calculate_cartesian_link_and_dedupe():
-    # link_and_dedupe - much like dedupe, N(N - 1)/2 comparisons with N = sum of rows of all frames
-    # alternatively can think of this as 'link only' links + dedupe links for each frame in list
+    # link_and_dedupe - much like dedupe,
+    # N(N - 1)/2 comparisons with N = sum of rows of all frames
+    # alternatively can think of this as
+    # 'link only' links + dedupe links for each frame in list
     assert calculate_cartesian(list_to_row_count([8]), "link_and_dedupe") == 28
     assert calculate_cartesian(list_to_row_count([2, 3]), "link_and_dedupe") == 10
     assert (
@@ -70,7 +72,7 @@ def test_calculate_cartesian_equals_total_number_of_links(
     # (i.e. using dummy blocking rule "1=1")
 
     def make_dummy_frame(row_count):
-        # don't need meaningful differences as only interested in total countdf = pd.DataFrame(
+        # don't need meaningful differences as only interested in total count
         return pd.DataFrame(
             data={
                 "unique_id": range(0, row_count),
@@ -85,7 +87,7 @@ def test_calculate_cartesian_equals_total_number_of_links(
     linker = DuckDBLinker(dfs, settings)
     sql = vertically_concatenate_sql(linker)
     linker._enqueue_sql(sql, "__splink__df_concat")
-    concat = linker._execute_sql_pipeline(materialise_as_hash=False)
+    linker._execute_sql_pipeline(materialise_as_hash=False)
 
     # calculate full number of comparisons
     full_count_sql = number_of_comparisons_generated_by_blocking_rule_sql(linker, "1=1")
