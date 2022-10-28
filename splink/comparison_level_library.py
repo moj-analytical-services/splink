@@ -145,9 +145,10 @@ def jaro_winkler_level(
     Returns:
         ComparisonLevel: A comparison level that evaluates the jaro winkler similarity
     """
+    jaro_name = _mutable_params["jaro_winkler"]
     return distance_function_level(
         col_name,
-        "jaro_winkler",
+        jaro_name,
         distance_threshold,
         True,
         m_probability=m_probability,
