@@ -2214,16 +2214,51 @@ class Linker:
         )
 
         summary_record = records[-1]
+        observed_matches = summary_record["cumulative_rows"]
         cartesian = summary_record["cartesian"]
-        num_rows = summary_record["cumulative_rows"] / recall
+
+        if observed_matches > cartesian * recall:
+            raise ValueError(
+                f"Deterministic matching rules led to more "
+                f"observed matches than is consistent with supplied recall. "
+                f"With these rules, recall must be at least "
+                f"{observed_matches/cartesian:,.2f}."
+            )
+
+        num_rows = observed_matches / recall
         prob = num_rows / cartesian
+
+        # warn about boundary values, as these will usually be in error
+        if observed_matches == 0:
+            logger.warning(
+                f"WARNING: Deterministic matching rules led to no observed matches! "
+                f"This means that no possible record pairs are matches, "
+                f"and no records are linked to one another.\n"
+                f"If this is truly the case then you do not need "
+                f"to run the linkage model.\n"
+                f"However this is usually in error; "
+                f"expected rules to have recall of {100*recall:,.0f}%. "
+                f"Consider revising rules as they may have an error."
+            )
+        if prob == 1:
+            logger.warning(
+                f"WARNING: Probability two random records match is estimated to be 1.\n"
+                f"This means that all possible record pairs are matches, "
+                f"and all records are linked to one another.\n"
+                f"If this is truly the case then you do not need "
+                f"to run the linkage model.\n"
+                f"However, it is more likely that this estimate is faulty. "
+                f"Perhaps your deterministic matching rules include "
+                f"too many false positives?"
+            )
 
         self._settings_obj._probability_two_random_records_match = prob
 
+        reciprocal_prob = "Infinity" if prob == 0 else f"{1/prob:,.2f}"
         logger.info(
             f"Probability two random records match is estimated to be  {prob:.3g}.\n"
             f"This means that amongst all possible pairwise record comparisons, one in "
-            f"{1/prob:,.2f} are expected to match.  With {cartesian:,.0f} total"
+            f"{reciprocal_prob} are expected to match.  With {cartesian:,.0f} total"
             " possible comparisons, we expect a total of around "
-            f"{prob*cartesian:,.2f} matching pairs"
+            f"{num_rows:,.2f} matching pairs"
         )
