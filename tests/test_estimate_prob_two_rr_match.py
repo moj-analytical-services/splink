@@ -354,3 +354,17 @@ def test_prob_rr_valid_range(caplog):
         )
         assert "WARNING:" in caplog.text
     check_range(linker._settings_obj._probability_two_random_records_match)
+
+    # check we get errors if we pass bogus values for recall
+    with pytest.raises(ValueError):
+        linker.estimate_probability_two_random_records_match(
+            "l.first_name = r.first_name", recall=0.0
+        )
+    with pytest.raises(ValueError):
+        linker.estimate_probability_two_random_records_match(
+            "l.first_name = r.first_name", recall=1.2
+        )
+    with pytest.raises(ValueError):
+        linker.estimate_probability_two_random_records_match(
+            "l.first_name = r.first_name", recall=-0.4
+        )

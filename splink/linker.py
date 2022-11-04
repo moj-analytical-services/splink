@@ -2204,6 +2204,12 @@ class Linker:
                 by these deterministic rules
         """
 
+        if (recall > 1) or (recall <= 0):
+            raise ValueError(
+                f"Estimated recall must be greater than 0 "
+                f"and no more than 1. Supplied value {recall}."
+            )
+
         # If user, by error, provides a single rule as a string
         if isinstance(deterministic_matching_rules, str):
             deterministic_matching_rules = [deterministic_matching_rules]
