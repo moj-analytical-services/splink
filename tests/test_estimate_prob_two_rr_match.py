@@ -1,3 +1,4 @@
+import logging
 import pandas as pd
 from splink.duckdb.duckdb_linker import DuckDBLinker
 import pytest
@@ -261,3 +262,109 @@ def test_prob_rr_match_link_and_dedupe_multitable():
     )
     prob = linker._settings_obj._probability_two_random_records_match
     assert prob == 1
+
+
+def test_prob_rr_valid_range(caplog):
+    def check_range(p):
+        assert p <= 1
+        assert p >= 0
+
+    df = pd.DataFrame(
+        [
+            {
+                "unique_id": 1,
+                "first_name": "John",
+                "surname": "Smith",
+                "city": "Brighton",
+            },
+            {
+                "unique_id": 2,
+                "first_name": "John",
+                "surname": "Williams",
+                "city": "Brighton",
+            },
+            {
+                "unique_id": 3,
+                "first_name": "John",
+                "surname": "Jones",
+                "city": "Brighton",
+            },
+            {
+                "unique_id": 4,
+                "first_name": "John",
+                "surname": "Davis",
+                "city": "Swansea",
+            },
+            {
+                "unique_id": 5,
+                "first_name": "John",
+                "surname": "Evans",
+                "city": "Swansea",
+            },
+            {
+                "unique_id": 6,
+                "first_name": "John",
+                "surname": "Wright",
+                "city": "Swansea",
+            },
+        ]
+    )
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [],
+    }
+
+    # Test dedupe only
+    linker = DuckDBLinker(df, settings)
+    with pytest.raises(ValueError):
+        # all comparisons matches using this rule, so we must have perfect recall
+        # using recall = 80% is inconsistent, so should get an error
+        linker.estimate_probability_two_random_records_match(
+            "l.first_name = r.first_name", recall=0.8
+        )
+    check_range(linker._settings_obj._probability_two_random_records_match)
+
+    # matching on city gives 6 matches out of 15, so recall must be at least 6/15
+    recall_min_city = 6 / 15
+    with pytest.raises(ValueError):
+        linker.estimate_probability_two_random_records_match(
+            "l.city = r.city", recall=(recall_min_city - 1e-6)
+        )
+    linker.estimate_probability_two_random_records_match(
+        "l.city = r.city", recall=recall_min_city
+    )
+    check_range(linker._settings_obj._probability_two_random_records_match)
+
+    # no comparisons matches using this rule, so we will estimate value as 0
+    # this gives a linkage model that always predicts match_probability as 0,
+    # so should give a warning at this stage
+    with caplog.at_level(logging.WARNING):
+        linker.estimate_probability_two_random_records_match(
+            "l.surname = r.surname", recall=0.7
+        )
+        assert "WARNING:" in caplog.text
+    check_range(linker._settings_obj._probability_two_random_records_match)
+
+    # this gives prob as 1, so again should get a warning
+    # as we have a trivial linkage model
+    with caplog.at_level(logging.WARNING):
+        linker.estimate_probability_two_random_records_match(
+            "l.first_name = r.first_name", recall=1.0
+        )
+        assert "WARNING:" in caplog.text
+    check_range(linker._settings_obj._probability_two_random_records_match)
+
+    # check we get errors if we pass bogus values for recall
+    with pytest.raises(ValueError):
+        linker.estimate_probability_two_random_records_match(
+            "l.first_name = r.first_name", recall=0.0
+        )
+    with pytest.raises(ValueError):
+        linker.estimate_probability_two_random_records_match(
+            "l.first_name = r.first_name", recall=1.2
+        )
+    with pytest.raises(ValueError):
+        linker.estimate_probability_two_random_records_match(
+            "l.first_name = r.first_name", recall=-0.4
+        )

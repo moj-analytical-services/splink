@@ -2204,6 +2204,12 @@ class Linker:
                 by these deterministic rules
         """
 
+        if (recall > 1) or (recall <= 0):
+            raise ValueError(
+                f"Estimated recall must be greater than 0 "
+                f"and no more than 1. Supplied value {recall}."
+            )
+
         # If user, by error, provides a single rule as a string
         if isinstance(deterministic_matching_rules, str):
             deterministic_matching_rules = [deterministic_matching_rules]
@@ -2214,16 +2220,52 @@ class Linker:
         )
 
         summary_record = records[-1]
-        cartesian = summary_record["cartesian"]
-        num_rows = summary_record["cumulative_rows"] / recall
-        prob = num_rows / cartesian
+        num_observed_matches = summary_record["cumulative_rows"]
+        num_total_comparisons = summary_record["cartesian"]
+
+        if num_observed_matches > num_total_comparisons * recall:
+            raise ValueError(
+                f"Deterministic matching rules led to more "
+                f"observed matches than is consistent with supplied recall. "
+                f"With these rules, recall must be at least "
+                f"{num_observed_matches/num_total_comparisons:,.2f}."
+            )
+
+        num_expected_matches = num_observed_matches / recall
+        prob = num_expected_matches / num_total_comparisons
+
+        # warn about boundary values, as these will usually be in error
+        if num_observed_matches == 0:
+            logger.warning(
+                f"WARNING: Deterministic matching rules led to no observed matches! "
+                f"This means that no possible record pairs are matches, "
+                f"and no records are linked to one another.\n"
+                f"If this is truly the case then you do not need "
+                f"to run the linkage model.\n"
+                f"However this is usually in error; "
+                f"expected rules to have recall of {100*recall:,.0f}%. "
+                f"Consider revising rules as they may have an error."
+            )
+        if prob == 1:
+            logger.warning(
+                "WARNING: Probability two random records match is estimated to be 1.\n"
+                "This means that all possible record pairs are matches, "
+                "and all records are linked to one another.\n"
+                "If this is truly the case then you do not need "
+                "to run the linkage model.\n"
+                "However, it is more likely that this estimate is faulty. "
+                "Perhaps your deterministic matching rules include "
+                "too many false positives?"
+            )
 
         self._settings_obj._probability_two_random_records_match = prob
 
+        reciprocal_prob = "Infinity" if prob == 0 else f"{1/prob:,.2f}"
         logger.info(
             f"Probability two random records match is estimated to be  {prob:.3g}.\n"
             f"This means that amongst all possible pairwise record comparisons, one in "
-            f"{1/prob:,.2f} are expected to match.  With {cartesian:,.0f} total"
+            f"{reciprocal_prob} are expected to match.  "
+            f"With {num_total_comparisons:,.0f} total"
             " possible comparisons, we expect a total of around "
-            f"{prob*cartesian:,.2f} matching pairs"
+            f"{num_expected_matches:,.2f} matching pairs"
         )
