@@ -2220,22 +2220,22 @@ class Linker:
         )
 
         summary_record = records[-1]
-        observed_matches = summary_record["cumulative_rows"]
-        cartesian = summary_record["cartesian"]
+        num_observed_matches = summary_record["cumulative_rows"]
+        num_total_comparisons = summary_record["cartesian"]
 
-        if observed_matches > cartesian * recall:
+        if num_observed_matches > num_total_comparisons * recall:
             raise ValueError(
                 f"Deterministic matching rules led to more "
                 f"observed matches than is consistent with supplied recall. "
                 f"With these rules, recall must be at least "
-                f"{observed_matches/cartesian:,.2f}."
+                f"{num_observed_matches/num_total_comparisons:,.2f}."
             )
 
-        num_rows = observed_matches / recall
-        prob = num_rows / cartesian
+        num_expected_matches = num_observed_matches / recall
+        prob = num_expected_matches / num_total_comparisons
 
         # warn about boundary values, as these will usually be in error
-        if observed_matches == 0:
+        if num_observed_matches == 0:
             logger.warning(
                 f"WARNING: Deterministic matching rules led to no observed matches! "
                 f"This means that no possible record pairs are matches, "
@@ -2264,7 +2264,8 @@ class Linker:
         logger.info(
             f"Probability two random records match is estimated to be  {prob:.3g}.\n"
             f"This means that amongst all possible pairwise record comparisons, one in "
-            f"{reciprocal_prob} are expected to match.  With {cartesian:,.0f} total"
+            f"{reciprocal_prob} are expected to match.  "
+            f"With {num_total_comparisons:,.0f} total"
             " possible comparisons, we expect a total of around "
-            f"{num_rows:,.2f} matching pairs"
+            f"{num_expected_matches:,.2f} matching pairs"
         )
