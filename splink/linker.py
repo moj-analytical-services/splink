@@ -2242,14 +2242,14 @@ class Linker:
             )
         if prob == 1:
             logger.warning(
-                f"WARNING: Probability two random records match is estimated to be 1.\n"
-                f"This means that all possible record pairs are matches, "
-                f"and all records are linked to one another.\n"
-                f"If this is truly the case then you do not need "
-                f"to run the linkage model.\n"
-                f"However, it is more likely that this estimate is faulty. "
-                f"Perhaps your deterministic matching rules include "
-                f"too many false positives?"
+                "WARNING: Probability two random records match is estimated to be 1.\n"
+                "This means that all possible record pairs are matches, "
+                "and all records are linked to one another.\n"
+                "If this is truly the case then you do not need "
+                "to run the linkage model.\n"
+                "However, it is more likely that this estimate is faulty. "
+                "Perhaps your deterministic matching rules include "
+                "too many false positives?"
             )
 
         self._settings_obj._probability_two_random_records_match = prob
