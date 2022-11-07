@@ -1,6 +1,6 @@
 from splink.spark.jar_location import similarity_jar_location
 
-def enable_splink():
+def enable_splink(spark):
     sc = spark.sparkContext
     _jar_path = similarity_jar_location()
     JavaURI = getattr(sc._jvm.java.net, "URI")
