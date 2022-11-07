@@ -246,8 +246,8 @@ class SparkLinker(Linker):
             elif self.break_lineage_method == "delta":
                 checkpoint_dir = self._get_checkpoint_dir_path(spark_df)
                 write_path = os.path.join(checkpoint_dir, physical_name)
-                spark_df.write.mode("overwrite").delta(write_path)
-                spark_df = self.spark.read.delta(write_path)
+                spark_df.write.mode("overwrite").format("delta").save(write_path)
+                spark_df = self.spark.read.format("delta").load(write_path)
                 logger.debug(f"Wrote {templated_name} to delta")
             else:
                 raise ValueError(
