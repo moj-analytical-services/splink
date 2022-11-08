@@ -71,7 +71,8 @@ class SparkLinker(Linker):
     def __init__(
         self,
         input_table_or_tables,
-        dbfs_checkpoint_dir,
+        catalog,
+        schema,
         settings_dict=None,
         break_lineage_method="delta",
         set_up_basic_logging=True,
@@ -88,7 +89,8 @@ class SparkLinker(Linker):
                 single table or a list of tables.  Tables can be provided either as
                 a Spark DataFrame, or as the name of the table as a string, as
                 registered in the Spark catalog
-            dbfs_checkpoint_dir (str): Location on the Databricks File System to write out working files
+            catalog (str): Catalog for storing working tables
+            schema (str): Schema for storing working tables
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
                 `linker.initialise_settings()` Defaults to None.
@@ -133,7 +135,7 @@ class SparkLinker(Linker):
         if spark is None:
             for t in input_tables:
                 if type(t).__name__ == "DataFrame":
-                    self.spark = t.sql_ctx.sparkSession
+                    self.spark = t.sparkSession
                     break
         if self.spark is None:
             raise ValueError(
@@ -142,10 +144,16 @@ class SparkLinker(Linker):
                 " argument when you initialise the linker"
             )
 
-        for table in self.spark.catalog.listTables():
-            if table.isTemporary:
-                if "__splink__" in table.name:
-                    self.spark.catalog.dropTempView(table.name)
+        # set default catalog and schema
+        spark.sql(f"use catalog {catalog}")
+        spark.sql(f"use database {schema}")
+        splink_tables = spark.sql("show tables like '*__splink__*'")
+        temp_tables = splink_tables.filter("isTemporary").collect()
+        drop_tables = list(map(lambda x: x.tableName, filter(lambda x: x.isTemporary, temp_tables)))
+        # drop old temp tables
+        for x in drop_tables:
+            spark.sql(f"drop table {x}")
+
 
         homogenised_tables = []
         homogenised_aliases = []
@@ -239,10 +247,9 @@ class SparkLinker(Linker):
                 spark_df = spark_df.checkpoint()
                 logger.debug(f"Checkpointed {templated_name}")
             elif self.break_lineage_method == "delta":
-                checkpoint_dir = self._get_checkpoint_dir_path(spark_df)
-                write_path = os.path.join(checkpoint_dir, physical_name)
-                spark_df.write.mode("overwrite").format("delta").save(write_path)
-                spark_df = self.spark.read.format("delta").load(write_path)
+                write_path = os.path.join(physical_name)
+                spark_df.write.mode("overwrite").saveAsTable(write_path)
+                spark_df = self.spark.table(write_path)
                 logger.debug(f"Wrote {templated_name} to delta")
             else:
                 raise ValueError(
