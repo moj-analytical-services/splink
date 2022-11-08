@@ -71,6 +71,7 @@ class SparkLinker(Linker):
     def __init__(
         self,
         input_table_or_tables,
+        dbfs_checkpoint_dir,
         settings_dict=None,
         break_lineage_method="delta",
         set_up_basic_logging=True,
@@ -87,6 +88,7 @@ class SparkLinker(Linker):
                 single table or a list of tables.  Tables can be provided either as
                 a Spark DataFrame, or as the name of the table as a string, as
                 registered in the Spark catalog
+            dbfs_checkpoint_dir (str): Location on the Databricks File System to write out working files
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
                 `linker.initialise_settings()` Defaults to None.
@@ -213,14 +215,7 @@ class SparkLinker(Linker):
         return spark_df
 
     def _get_checkpoint_dir_path(self, spark_df):
-        # https://github.com/apache/spark/blob/301a13963808d1ad44be5cacf0a20f65b853d5a2/python/pyspark/context.py#L1323 # noqa
-        # getCheckpointDir method exists only in Spark 3.1+, use implementation
-        # from above link
-        if not self.spark._jsc.sc().getCheckpointDir().isEmpty():
-            return self.spark._jsc.sc().getCheckpointDir().get()
-        else:
-            # Raise checkpointing error
-            spark_df.limit(1).checkpoint()
+        return self.dbfs_checkpoint_dir
 
     def _break_lineage_and_repartition(self, spark_df, templated_name, physical_name):
 
