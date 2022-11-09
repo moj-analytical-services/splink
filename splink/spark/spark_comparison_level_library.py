@@ -17,17 +17,19 @@ _mutable_params["dialect"] = "spark"
 
 
 def array_intersect_level(
-    col_name, m_probability=None, term_frequency_adjustments=False, min_intersection=1
+    col_name, m_probability=None, term_frequency_adjustments=False, min_intersection=1,
+    include_colname_in_charts_label=False
 ) -> ComparisonLevel:
 
     col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
 
     sql = f"size(array_intersect({col.name_l()}, {col.name_r()})) >= {min_intersection}"
 
+    label_prefix = f"{col_name} arrays" if include_colname_in_charts_label else "Arrays"
     if min_intersection == 1:
-        label = "Arrays intersect"
+        label = f"{label_prefix} intersect"
     else:
-        label = f"Array intersect size >= {min_intersection}"
+        label = f"{label_prefix} intersect size >= {min_intersection}"
 
     level_dict = {"sql_condition": sql, "label_for_charts": label}
     if m_probability:
