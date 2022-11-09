@@ -16,6 +16,10 @@ from ..comparison_level import ComparisonLevel
 _mutable_params["dialect"] = "spark"
 
 
+def size_array_intersect_sql(col_name_l, col_name_r):
+    return f"size(array_intersect({col_name_l}, {col_name_r}))"
+
+
 def array_intersect_level(
     col_name, m_probability=None, term_frequency_adjustments=False, min_intersection=1,
     include_colname_in_charts_label=False
@@ -23,7 +27,8 @@ def array_intersect_level(
 
     col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
 
-    sql = f"size(array_intersect({col.name_l()}, {col.name_r()})) >= {min_intersection}"
+    size_array_intersection = f"{size_array_intersect_sql(col.name_l(), col.name_r())}"
+    sql = f"{size_array_intersection} >= {min_intersection}"
 
     label_prefix = f"{col_name} arrays" if include_colname_in_charts_label else "Arrays"
     if min_intersection == 1:
