@@ -12,6 +12,7 @@ _mutable_params = {
     "dialect": None,
     "levenshtein": "levenshtein",
     "jaro_winkler": "jaro_winkler",
+    "size_array_intersect_function": None,
 }
 
 
@@ -313,5 +314,34 @@ def percentage_difference_level(
     }
     if m_probability:
         level_dict["m_probability"] = m_probability
+
+    return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
+
+
+def array_intersect_level(
+    col_name, m_probability=None, term_frequency_adjustments=False, min_intersection=1,
+    include_colname_in_charts_label=False
+) -> ComparisonLevel:
+
+    col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
+
+    size_array_intersect_function = _mutable_params["size_array_intersect_function"]
+    if size_array_intersect_function is None:
+        pass # or better, raise an error!
+
+    size_array_intersection = f"{size_array_intersect_function(col.name_l(), col.name_r())}"
+    sql = f"{size_array_intersection} >= {min_intersection}"
+
+    label_prefix = f"{col_name} arrays" if include_colname_in_charts_label else "Arrays"
+    if min_intersection == 1:
+        label = f"{label_prefix} intersect"
+    else:
+        label = f"{label_prefix} intersect size >= {min_intersection}"
+
+    level_dict = {"sql_condition": sql, "label_for_charts": label}
+    if m_probability:
+        level_dict["m_probability"] = m_probability
+    if term_frequency_adjustments:
+        level_dict["tf_adjustment_column"] = col_name
 
     return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
