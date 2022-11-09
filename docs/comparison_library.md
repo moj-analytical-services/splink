@@ -13,6 +13,7 @@ tags:
         - distance_function_at_thresholds
         - levenshtein_at_thresholds
         - jaccard_at_thresholds
+        - array_intersect_at_sizes
     rendering:
       show_root_heading: false
       show_source: true
