@@ -297,20 +297,21 @@ def jaro_winkler_at_thresholds(
         m_probability_else,
     )
 
+
 def array_intersect_at_sizes(
     col_name: str,
     size_or_sizes: Union[int, list] = [1],
     m_probability_or_probabilities_sizes: Union[float, list] = None,
     m_probability_else=None,
 ) -> Comparison:
-    """A comparison of the data in `col_name` with a user-provided distance function
-    used to assess middle similarity levels.
+    """A comparison of the data in array column `col_name` with various
+    intersection sizes to assess similarity levels.
 
     An example of the output with default arguments and setting
     `size_or_sizes = [3, 1]` would be
-    - Intersection has 3 elements
-    - Intersection has 1 element
-    - Anything else
+    - Intersection has at least 3 elements
+    - Intersection has at least 1 element (i.e. 1 or 2)
+    - Anything else (i.e. empty intersection)
 
     Args:
         col_name (str): The name of the column to compare
@@ -325,4 +326,40 @@ def array_intersect_at_sizes(
     Returns:
         Comparison:
     """
-    pass
+
+    sizes = ensure_is_iterable(size_or_sizes)
+    if len(sizes) == 0:
+        raise ValueError(
+            "`size_or_sizes` must have at least one element, so that Comparison "
+            "has more than just an 'else' level"
+        )
+
+    if m_probability_or_probabilities_sizes is None:
+        m_probability_or_probabilities_sizes = [None] * len(sizes)
+    m_probabilities = ensure_is_iterable(m_probability_or_probabilities_sizes)
+
+    comparison_levels = []
+    comparison_levels.append(cl.null_level(col_name))
+
+    for size_intersect, m_prob in zip(sizes, m_probabilities):
+        level = cl.array_intersect_level(
+            col_name, m_probability=m_prob, min_intersection=size_intersect
+        )
+        comparison_levels.append(level)
+
+    comparison_levels.append(
+        cl.else_level(m_probability=m_probability_else),
+    )
+
+    comparison_desc = ""
+
+    size_desc = ", ".join([str(s) for s in sizes])
+    plural = "" if len(sizes) == 1 else "s"
+    comparison_desc += f"Array intersection at minimum size{plural} {size_desc} vs. "
+    comparison_desc += "anything else"
+
+    comparison_dict = {
+        "comparison_description": comparison_desc,
+        "comparison_levels": comparison_levels,
+    }
+    return Comparison(comparison_dict)
