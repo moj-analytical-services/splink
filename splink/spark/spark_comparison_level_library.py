@@ -11,11 +11,11 @@ from ..comparison_level_library import (  # noqa: F401
     distance_in_km_level,
     array_intersect_level,
 )
-from ..input_column import InputColumn
-from ..comparison_level import ComparisonLevel
+
 
 def size_array_intersect_sql(col_name_l, col_name_r):
     return f"size(array_intersect({col_name_l}, {col_name_r}))"
+
 
 _mutable_params["dialect"] = "spark"
 _mutable_params["size_array_intersect_function"] = size_array_intersect_sql

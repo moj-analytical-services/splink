@@ -13,12 +13,14 @@ from ..comparison_level_library import (  # noqa: F401
     array_intersect_level,
 )
 
+
 def size_array_intersect_sql(col_name_l, col_name_r):
     # sum of individual (unique) array sizes, minus the (unique) union
     return (
         f"list_unique({col_name_l}) + list_unique({col_name_r})"
         f" - list_unique(list_concat({col_name_l}, {col_name_r}))"
     )
+
 
 _mutable_params["dialect"] = "duckdb"
 _mutable_params["jaro_winkler"] = "jaro_winkler_similarity"

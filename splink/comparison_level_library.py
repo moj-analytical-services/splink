@@ -319,8 +319,11 @@ def percentage_difference_level(
 
 
 def array_intersect_level(
-    col_name, m_probability=None, term_frequency_adjustments=False, min_intersection=1,
-    include_colname_in_charts_label=False
+    col_name,
+    m_probability=None,
+    term_frequency_adjustments=False,
+    min_intersection=1,
+    include_colname_in_charts_label=False,
 ) -> ComparisonLevel:
     """Represents a comparison level based around the size of an intersection of
     arrays
@@ -345,9 +348,11 @@ def array_intersect_level(
 
     size_array_intersect_function = _mutable_params["size_array_intersect_function"]
     if size_array_intersect_function is None:
-        pass # or better, raise an error!
+        pass  # or better, raise an error!
 
-    size_array_intersection = f"{size_array_intersect_function(col.name_l(), col.name_r())}"
+    size_array_intersection = (
+        f"{size_array_intersect_function(col.name_l(), col.name_r())}"
+    )
     sql = f"{size_array_intersection} >= {min_intersection}"
 
     label_prefix = f"{col_name} arrays" if include_colname_in_charts_label else "Arrays"
