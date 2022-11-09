@@ -322,6 +322,24 @@ def array_intersect_level(
     col_name, m_probability=None, term_frequency_adjustments=False, min_intersection=1,
     include_colname_in_charts_label=False
 ) -> ComparisonLevel:
+    """Represents a comparison level based around the size of an intersection of
+    arrays
+
+    Args:
+        col_name (str): Input column name
+        m_probability (float, optional): Starting value for m probability. Defaults to
+            None.
+        tf_adjustment_column (str, optional): Column to use for term frequency
+            adjustments if an exact match is observed. Defaults to None.
+        min_intersection (int, optional): The minimum cardinality of the intersection
+            of arrays for this comparison level. Defaults to 1
+        include_colname_in_charts_label (bool, optional): Should the charts label
+            contain the column name? Defaults to False
+
+    Returns:
+        ComparisonLevel: A comparison level that evaluates the size of intersection
+            of arrays
+    """
 
     col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
 
