@@ -343,7 +343,12 @@ def array_intersect_at_sizes(
 
     for size_intersect, m_prob in zip(sizes, m_probabilities):
         level = cl.array_intersect_level(
-            col_name, m_probability=m_prob, min_intersection=size_intersect
+            col_name,
+            m_probability=m_prob,
+            min_intersection=size_intersect,
+            size_array_intersect_function=cl._mutable_params[
+                "size_array_intersect_function"
+            ],
         )
         comparison_levels.append(level)
 
