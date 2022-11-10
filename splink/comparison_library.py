@@ -316,7 +316,8 @@ def array_intersect_at_sizes(
     Args:
         col_name (str): The name of the column to compare
         size_or_sizes (Union[int, list], optional): The size(s) of intersection
-            to use for the non-'else' similarity level(s). Defaults to [1].
+            to use for the non-'else' similarity level(s). Should be in
+            descending order. Defaults to [1].
         m_probability_or_probabilities_sizes (Union[float, list], optional):
             _description_. If provided, overrides the default m probabilities
             for the sizes specified. Defaults to None.
