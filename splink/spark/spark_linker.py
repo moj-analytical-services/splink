@@ -76,6 +76,8 @@ class SparkLinker(Linker):
         set_up_basic_logging=True,
         input_table_aliases: Union[str, list] = None,
         spark=None,
+        catalog=None,
+        database=None,
         repartition_after_blocking=False,
         num_partitions_on_repartition=100,
     ):
@@ -91,8 +93,8 @@ class SparkLinker(Linker):
                 provided when the object is created, can later be added using
                 `linker.initialise_settings()` Defaults to None.
             break_lineage_method (str, optional): Method to use to cache intermediate
-                results.  Can be "checkpoint", "persist" or "parquet".  Defaults to
-                "parquet".
+                results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files", "delta_lake_table".
+                Defaults to "parquet".
             set_up_basic_logging (bool, optional): If true, sets ups up basic logging
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
             input_table_aliases (Union[str, list], optional): Labels assigned to
@@ -140,10 +142,17 @@ class SparkLinker(Linker):
                 " argument when you initialise the linker"
             )
 
-        for table in self.spark.catalog.listTables():
-            if table.isTemporary:
-                if "__splink__" in table.name:
-                    self.spark.catalog.dropTempView(table.name)
+        # set the catalog and database of where to write output tables
+        self.catalog = catalog if catalog is not None else spark.catalog.currentCatalog()
+        self.database = database if database is not None else spark.catalog.currentDatabase()
+
+        # if we use spark.sql("USE DATABASE db") commands we change the default. This approach prevents side effects.
+        splink_tables = spark.sql(f"show tables from {self.catalog}.{self.database} like '*__splink__*'")
+        temp_tables = splink_tables.filter("isTemporary").collect()
+        drop_tables = list(map(lambda x: x.tableName, filter(lambda x: x.isTemporary, temp_tables)))
+        # drop old temp tables
+        for x in drop_tables:
+            spark.sql(f"drop table {self.catalog}.{self.database}.{x}")
 
         homogenised_tables = []
         homogenised_aliases = []
@@ -166,6 +175,9 @@ class SparkLinker(Linker):
             set_up_basic_logging,
             input_table_aliases=homogenised_aliases,
         )
+
+        # check to see if running in databricks.
+        self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
@@ -249,6 +261,17 @@ class SparkLinker(Linker):
                 spark_df.write.mode("overwrite").parquet(write_path)
                 spark_df = self.spark.read.parquet(write_path)
                 logger.debug(f"Wrote {templated_name} to parquet")
+            elif self.break_lineage_method == "delta_lake_files":
+                checkpoint_dir = self._get_checkpoint_dir_path(spark_df)
+                write_path = os.path.join(checkpoint_dir, physical_name)
+                spark_df.write.mode("overwrite").format("delta").save()
+                spark_df = self.spark.read.format("delta").load(write_path)
+                logger.debug(f"Wrote {templated_name} to Delta files at {write_path}")
+            elif self.break_lineage_method == "delta_lake_table":
+                write_path = f"{self.catalog}.{self.database}.{physical_name}"
+                spark_df.write.mode("overwrite").saveAsTable(write_path)
+                spark_df = self.spark.table(write_path)
+                logger.debug(f"Wrote {templated_name} to Delta Table at {self.catalog}.{self.database}.{physical_name}")
             else:
                 raise ValueError(
                     f"Unknown break_lineage_method: {self.break_lineage_method}"
