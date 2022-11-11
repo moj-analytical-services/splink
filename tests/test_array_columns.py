@@ -1,16 +1,7 @@
-<<<<<<< HEAD
-=======
-import importlib
-
->>>>>>> 1e7631a16ac4feffc8450db518830bb05777ae63
 import pandas as pd
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
 import splink.duckdb.duckdb_comparison_library as cl
-<<<<<<< HEAD
-=======
-importlib.reload(cl)
->>>>>>> 1e7631a16ac4feffc8450db518830bb05777ae63
 
 
 def postcode(num):
@@ -110,11 +101,7 @@ def test_array_comparisons():
     # now levels encompass multiple size intersections
     intersection_size_ids = {
         3: intersection_size_ids[3].union(intersection_size_ids[4]),
-<<<<<<< HEAD
         1: intersection_size_ids[1].union(intersection_size_ids[2]),
-=======
-        1: intersection_size_ids[1].union(intersection_size_ids[2])
->>>>>>> 1e7631a16ac4feffc8450db518830bb05777ae63
     }
     postcode_comparison = linker._settings_obj.comparisons[0]
     # size: gamma_level value
