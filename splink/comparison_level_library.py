@@ -345,7 +345,7 @@ class ArrayIntersectLevelBase(ComparisonLevel):
             ComparisonLevel: A comparison level that evaluates the size of intersection
                 of arrays
         """
-        col = InputColumn(col_name, sql_dialect=self._sql_dialect_)
+        col = InputColumn(col_name, sql_dialect=self._sql_dialect)
 
         size_array_intersection = (
             f"{self._size_array_intersect_function(col.name_l(), col.name_r())}"
@@ -366,11 +366,7 @@ class ArrayIntersectLevelBase(ComparisonLevel):
         if term_frequency_adjustments:
             level_dict["tf_adjustment_column"] = col_name
 
-        super().__init__(level_dict, sql_dialect=self._sql_dialect_)
-
-    @property
-    def _sql_dialect_(self):
-        raise NotImplementedError("Dialect not defined on base class")
+        super().__init__(level_dict, sql_dialect=self._sql_dialect)
 
     @property
     def _size_array_intersect_function(self):

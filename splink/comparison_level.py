@@ -133,7 +133,8 @@ class ComparisonLevel:
         self._level_dict = level_dict
 
         self.comparison: "Comparison" = comparison
-        self._sql_dialect = sql_dialect
+        if not hasattr(self, "_sql_dialect"):
+            self._sql_dialect = sql_dialect
 
         self._sql_condition = self._level_dict["sql_condition"]
         self._is_null_level = self._level_dict_val_else_default("is_null_level")

@@ -20,7 +20,7 @@ _mutable_params["levenshtein"] = "levenshtein_distance"
 
 class array_intersect_level(ArrayIntersectLevelBase):
     @property
-    def _sql_dialect_(self):
+    def _sql_dialect(self):
         return "presto"
 
     @property
