@@ -318,56 +318,60 @@ def percentage_difference_level(
     return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
 
 
-def array_intersect_level(
-    col_name,
-    m_probability=None,
-    term_frequency_adjustments=False,
-    min_intersection=1,
-    include_colname_in_charts_label=False,
-    size_array_intersect_function=None,
-) -> ComparisonLevel:
-    """Represents a comparison level based around the size of an intersection of
-    arrays
+class ArrayIntersectLevelBase(ComparisonLevel):
+    def __init__(
+        self,
+        col_name,
+        m_probability=None,
+        term_frequency_adjustments=False,
+        min_intersection=1,
+        include_colname_in_charts_label=False,
+    ):
+        """Represents a comparison level based around the size of an intersection of
+        arrays
 
-    Args:
-        col_name (str): Input column name
-        m_probability (float, optional): Starting value for m probability. Defaults to
-            None.
-        tf_adjustment_column (str, optional): Column to use for term frequency
-            adjustments if an exact match is observed. Defaults to None.
-        min_intersection (int, optional): The minimum cardinality of the intersection
-            of arrays for this comparison level. Defaults to 1
-        include_colname_in_charts_label (bool, optional): Should the charts label
-            contain the column name? Defaults to False
+        Args:
+            col_name (str): Input column name
+            m_probability (float, optional): Starting value for m probability. Defaults
+                to None.
+            tf_adjustment_column (str, optional): Column to use for term frequency
+                adjustments if an exact match is observed. Defaults to None.
+            min_intersection (int, optional): The minimum cardinality of the
+                intersection of arrays for this comparison level. Defaults to 1
+            include_colname_in_charts_label (bool, optional): Should the charts label
+                contain the column name? Defaults to False
 
-    Returns:
-        ComparisonLevel: A comparison level that evaluates the size of intersection
-            of arrays
-    """
+        Returns:
+            ComparisonLevel: A comparison level that evaluates the size of intersection
+                of arrays
+        """
+        col = InputColumn(col_name, sql_dialect=self._sql_dialect_)
 
-    col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
+        size_array_intersection = (
+            f"{self._size_array_intersect_function(col.name_l(), col.name_r())}"
+        )
+        sql = f"{size_array_intersection} >= {min_intersection}"
 
-    if size_array_intersect_function is None:
-        size_array_intersect_function = _mutable_params["size_array_intersect_function"]
-        # if it's still None, then we are not using a dialect properly
-        if size_array_intersect_function is None:
-            raise Exception("TODO")
+        label_prefix = (
+            f"{col_name} arrays" if include_colname_in_charts_label else "Arrays"
+        )
+        if min_intersection == 1:
+            label = f"{label_prefix} intersect"
+        else:
+            label = f"{label_prefix} intersect size >= {min_intersection}"
 
-    size_array_intersection = (
-        f"{size_array_intersect_function(col.name_l(), col.name_r())}"
-    )
-    sql = f"{size_array_intersection} >= {min_intersection}"
+        level_dict = {"sql_condition": sql, "label_for_charts": label}
+        if m_probability:
+            level_dict["m_probability"] = m_probability
+        if term_frequency_adjustments:
+            level_dict["tf_adjustment_column"] = col_name
 
-    label_prefix = f"{col_name} arrays" if include_colname_in_charts_label else "Arrays"
-    if min_intersection == 1:
-        label = f"{label_prefix} intersect"
-    else:
-        label = f"{label_prefix} intersect size >= {min_intersection}"
+        super().__init__(level_dict, sql_dialect=self._sql_dialect_)
 
-    level_dict = {"sql_condition": sql, "label_for_charts": label}
-    if m_probability:
-        level_dict["m_probability"] = m_probability
-    if term_frequency_adjustments:
-        level_dict["tf_adjustment_column"] = col_name
+    @property
+    def _sql_dialect_(self):
+        raise NotImplementedError("Dialect not defined on base class")
 
-    return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
+    @property
+    def _size_array_intersect_function(self):
+        raise NotImplementedError("Intersect function not defined on base class")

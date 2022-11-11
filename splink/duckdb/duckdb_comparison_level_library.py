@@ -10,7 +10,7 @@ from ..comparison_level_library import (  # noqa: F401
     columns_reversed_level,
     distance_in_km_level,
     percentage_difference_level,
-    array_intersect_level,
+    ArrayIntersectLevelBase,
 )
 
 
@@ -24,4 +24,13 @@ def size_array_intersect_sql(col_name_l, col_name_r):
 
 _mutable_params["dialect"] = "duckdb"
 _mutable_params["jaro_winkler"] = "jaro_winkler_similarity"
-_mutable_params["size_array_intersect_function"] = size_array_intersect_sql
+
+
+class array_intersect_level(ArrayIntersectLevelBase):
+    @property
+    def _sql_dialect_(self):
+        return "duckdb"
+
+    @property
+    def _size_array_intersect_function(self):
+        return size_array_intersect_sql
