@@ -8,6 +8,7 @@ import logging
 
 import sqlglot
 from sqlglot.expressions import Identifier
+from sqlglot.optimizer.normalize import normalize
 
 from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
@@ -29,14 +30,14 @@ logger = logging.getLogger(__name__)
 
 
 def _is_exact_match(sql, sql_dialect=None):
-    syntax_tree = sqlglot.parse_one(sql, read=sql_dialect)
+    sql_syntax_tree = sqlglot.parse_one(sql, read=sql_dialect)
 
-    signature = sqlglot_tree_signature(syntax_tree)
+    signature = sqlglot_tree_signature(sql_syntax_tree)
     if signature != "eq column column identifier identifier":
         return False
 
     identifiers = []
-    for tup in syntax_tree.walk():
+    for tup in sql_syntax_tree.walk():
         subtree = tup[0]
         if type(subtree) is Identifier:
             identifiers.append(subtree.this[:-2])
@@ -457,7 +458,10 @@ class ComparisonLevel:
         if self._is_else_level:
             return False
 
-        sqls = re.split(r" and ", self._sql_condition, flags=re.IGNORECASE)
+        sql_syntax_tree = sqlglot.parse_one(self._sql_condition, read=self._sql_dialect)
+        # better to use the tree directly, but for now:
+        sql_cnf = normalize(sql_syntax_tree).sql()
+        sqls = re.split(r" and ", sql_cnf, flags=re.IGNORECASE)
         for sql in sqls:
             if not _is_exact_match(sql, self._sql_dialect):
                 return False
