@@ -235,8 +235,7 @@ class AthenaLinker(Linker):
             >>> )
         """
 
-        if settings_dict is not None and "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "presto"
+        self._sql_dialect_ = "presto"
 
         self.boto3_session = boto3_session
         self.output_schema = output_database

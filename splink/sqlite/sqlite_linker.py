@@ -88,8 +88,7 @@ class SQLiteLinker(Linker):
         input_table_aliases: Union[str, list] = None,
     ):
 
-        if settings_dict is not None and "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "sqlite"
+        self._sql_dialect_ = "sqlite"
 
         self.con = connection
         self.con.row_factory = dict_factory

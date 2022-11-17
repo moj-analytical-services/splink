@@ -146,6 +146,17 @@ class Linker:
 
         self._pipeline = SQLPipeline()
 
+        # if settings_dict is passed, set sql_dialect on it if missing, and make sure
+        # incompatible dialect not passed
+        if settings_dict is not None:
+            if settings_dict.get("sql_dialect", None) is None:
+                settings_dict["sql_dialect"] = self._sql_dialect
+            elif settings_dict["sql_dialect"] != self._sql_dialect:
+                raise ValueError(
+                    f"Incompatible SQL dialect! `settings` dictionary uses "
+                    f"dialect {settings_dict['sql_dialect']}, but expecting "
+                    f"'{self._sql_dialect}' for Linker of type {type(self)}"
+                )
         self._settings_dict = settings_dict
         if settings_dict is None:
             self._settings_obj_ = None
@@ -243,6 +254,15 @@ class Linker:
             return True
         else:
             return False
+
+    @property
+    def _sql_dialect(self):
+        if self._sql_dialect_ is None:
+            raise NotImplementedError(
+                f"No SQL dialect set on object of type {type(self)}. "
+                "Did you make sure to create a dialect-specific Linker?"
+            )
+        return self._sql_dialect_
 
     def _prepend_schema_to_table_name(self, table_name):
         if self._output_schema:
