@@ -363,6 +363,10 @@ class AthenaLinker(Linker):
         percent = proportion * 100
         return f" TABLESAMPLE BERNOULLI ({percent})"
 
+    @property
+    def _infinity_expression(self):
+        return "infinity()"
+
     def _table_exists_in_database(self, table_name):
         return wr.catalog.does_table_exist(
             database=self.output_schema,

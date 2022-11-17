@@ -158,7 +158,10 @@ def expectation_maximisation(
         start_time = time.time()
 
         # Expectation step
-        sqls = predict_from_comparison_vectors_sqls(settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(
+            settings_obj,
+            sql_infinity_expression=linker._infinity_expression,
+        )
         for sql in sqls:
             linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 

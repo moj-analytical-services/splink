@@ -259,6 +259,12 @@ class Linker:
             )
         return self._sql_dialect_
 
+    @property
+    def _infinity_expression(self):
+        raise NotImplementedError(
+            f"infinity sql expression not available for {type(self)}"
+        )
+
     def _prepend_schema_to_table_name(self, table_name):
         if self._output_schema:
             return f"{self._output_schema}.{table_name}"
@@ -1095,7 +1101,8 @@ class Linker:
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls(
-            self._settings_obj, threshold_match_probability, threshold_match_weight
+            self._settings_obj, threshold_match_probability, threshold_match_weight,
+            sql_infinity_expression=self._infinity_expression,
         )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
@@ -1179,7 +1186,10 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(
+            self._settings_obj,
+            sql_infinity_expression=self._infinity_expression,
+        )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -1248,7 +1258,10 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(
+            self._settings_obj,
+            sql_infinity_expression=self._infinity_expression,
+        )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -1301,7 +1314,10 @@ class Linker:
 
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(
+            self._settings_obj,
+            sql_infinity_expression=self._infinity_expression,
+        )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 

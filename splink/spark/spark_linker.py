@@ -273,6 +273,10 @@ class SparkLinker(Linker):
         output_df = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_df
 
+    @property
+    def _infinity_expression(self):
+        return "'infinity'"
+
     def register_table(self, input, table_name, overwrite=False):
         """
         Register a table to your backend database, to be used in one of the

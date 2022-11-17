@@ -220,6 +220,10 @@ class DuckDBLinker(Linker):
         percent = proportion * 100
         return f"USING SAMPLE {percent}% (bernoulli)"
 
+    @property
+    def _infinity_expression(self):
+        return "cast('infinity' as double)"
+
     def _table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
 

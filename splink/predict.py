@@ -13,6 +13,7 @@ def predict_from_comparison_vectors_sqls(
     threshold_match_probability=None,
     threshold_match_weight=None,
     include_clerical_match_score=False,
+    sql_infinity_expression="\'infinity\'",
 ) -> List[dict]:
 
     sqls = []
@@ -55,9 +56,9 @@ def predict_from_comparison_vectors_sqls(
     # spark 'infinity'
     # duckdb cast('infinity' as double)
     # TODO: deal with ptrrm in python
-    any_bf_inf = " OR ".join(map(lambda col: f"{col} = 'infinity'", mult))
+    any_bf_inf = " OR ".join(map(lambda col: f"{col} = {sql_infinity_expression}", mult))
     bayes_factor_expr = f"""
-    CASE WHEN {any_bf_inf} THEN 'infinity' ELSE {bayes_factor_expr} END
+    CASE WHEN {any_bf_inf} THEN {sql_infinity_expression} ELSE {bayes_factor_expr} END
     """
     match_prob_expr = f"""
     CASE WHEN {any_bf_inf} THEN 1.0 ELSE (({bayes_factor_expr})/(1+({bayes_factor_expr}))) END
@@ -78,8 +79,6 @@ def predict_from_comparison_vectors_sqls(
     else:
         threshold_expr = ""
 
-    # issue is that if any bf = inf, then (inf/(1 + inf)) will give error
-    # want to interpret this as +1
     sql = f"""
     select
     log2({bayes_factor_expr}) as match_weight,

@@ -155,6 +155,10 @@ class SQLiteLinker(Linker):
             f" ORDER BY RANDOM() LIMIT {sample_size})"
         )
 
+    @property
+    def _infinity_expression(self):
+        return "'infinity'"
+
     def _table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
 
