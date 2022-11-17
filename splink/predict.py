@@ -51,6 +51,18 @@ def predict_from_comparison_vectors_sqls(
     bayes_factor_expr = " * ".join(mult)
     bayes_factor_expr = f"cast({bayes_factor} as double) * {bayes_factor_expr}"
 
+    # if any BF is Infinity then we need to adjust expression, as arithmetic won't go through directly
+    # spark 'infinity'
+    # duckdb cast('infinity' as double)
+    # TODO: deal with ptrrm in python
+    any_bf_inf = " OR ".join(map(lambda col: f"{col} = 'infinity'", mult))
+    bayes_factor_expr = f"""
+    CASE WHEN {any_bf_inf} THEN 'infinity' ELSE {bayes_factor_expr} END
+    """
+    match_prob_expr = f"""
+    CASE WHEN {any_bf_inf} THEN 1.0 ELSE (({bayes_factor_expr})/(1+({bayes_factor_expr}))) END
+    """
+
     # In case user provided both, take the minimum of the two thresholds
     if threshold_match_probability is not None:
         thres_prob_as_weight = prob_to_match_weight(threshold_match_probability)
@@ -66,10 +78,12 @@ def predict_from_comparison_vectors_sqls(
     else:
         threshold_expr = ""
 
+    # issue is that if any bf = inf, then (inf/(1 + inf)) will give error
+    # want to interpret this as +1
     sql = f"""
     select
     log2({bayes_factor_expr}) as match_weight,
-    (({bayes_factor_expr})/(1+({bayes_factor_expr}))) as match_probability,
+    {match_prob_expr} as match_probability,
     {select_cols_expr} {clerical_match_score}
     from __splink__df_match_weight_parts
     {threshold_expr}

@@ -1,8 +1,8 @@
 import pandas as pd
-import numpy as np
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
 import splink.duckdb.duckdb_comparison_library as cl
+from splink.charts import save_offline_chart
 
 
 # ground truth:
@@ -11,21 +11,113 @@ import splink.duckdb.duckdb_comparison_library as cl
 # surname can be any match level
 df = pd.DataFrame(
     [
-        {"unique_id": 1, "true_match_id": 1, "first_name": "John", "surname": "Smith", "gender": "m", "tm_partial": 1},
-        {"unique_id": 2, "true_match_id": 1, "first_name": "Jon", "surname": "Smith", "gender": "m", "tm_partial": 1},
-        {"unique_id": 3, "true_match_id": 2, "first_name": "Mary", "surname": "Jones", "gender": "f", "tm_partial": None},
-        {"unique_id": 4, "true_match_id": 2, "first_name": "May", "surname": "Jones", "gender": "f", "tm_partial": 2},
-        {"unique_id": 5, "true_match_id": 2, "first_name": "Mary", "surname": "J", "gender": "f", "tm_partial": 2},
-        {"unique_id": 6, "true_match_id": 3, "first_name": "David", "surname": "Greene", "gender": "m", "tm_partial": 3},
-        {"unique_id": 7, "true_match_id": 3, "first_name": "David", "surname": "Green", "gender": "m", "tm_partial": None},
-        {"unique_id": 8, "true_match_id": 4, "first_name": "Sara", "surname": "Smith", "gender": "f", "tm_partial": 4},
-        {"unique_id": 9, "true_match_id": 4, "first_name": "Sarah", "surname": "Smith", "gender": "f", "tm_partial": 4},
-        {"unique_id": 10, "true_match_id": 4, "first_name": "Sarah", "surname": "Smt", "gender": "f", "tm_partial": 4},
-        {"unique_id": 11, "true_match_id": 5, "first_name": "Joan", "surname": "Smith", "gender": "f", "tm_partial": None},
-        {"unique_id": 12, "true_match_id": 6, "first_name": "Kim", "surname": "Greene", "gender": "f", "tm_partial": None},
-        {"unique_id": 13, "true_match_id": 7, "first_name": "Kim", "surname": "Greene", "gender": "m", "tm_partial": 7},
+        {
+            "unique_id": 1,
+            "true_match_id": 1,
+            "first_name": "John",
+            "surname": "Smith",
+            "gender": "m",
+            "tm_partial": 1,
+        },
+        {
+            "unique_id": 2,
+            "true_match_id": 1,
+            "first_name": "Jon",
+            "surname": "Smith",
+            "gender": "m",
+            "tm_partial": 1,
+        },
+        {
+            "unique_id": 3,
+            "true_match_id": 2,
+            "first_name": "Mary",
+            "surname": "Jones",
+            "gender": "f",
+            "tm_partial": None,
+        },
+        {
+            "unique_id": 4,
+            "true_match_id": 2,
+            "first_name": "May",
+            "surname": "Jones",
+            "gender": "f",
+            "tm_partial": 2,
+        },
+        {
+            "unique_id": 5,
+            "true_match_id": 2,
+            "first_name": "Mary",
+            "surname": "J",
+            "gender": "f",
+            "tm_partial": 2,
+        },
+        {
+            "unique_id": 6,
+            "true_match_id": 3,
+            "first_name": "David",
+            "surname": "Greene",
+            "gender": "m",
+            "tm_partial": 3,
+        },
+        {
+            "unique_id": 7,
+            "true_match_id": 3,
+            "first_name": "David",
+            "surname": "Green",
+            "gender": "m",
+            "tm_partial": None,
+        },
+        {
+            "unique_id": 8,
+            "true_match_id": 4,
+            "first_name": "Sara",
+            "surname": "Smith",
+            "gender": "f",
+            "tm_partial": 4,
+        },
+        {
+            "unique_id": 9,
+            "true_match_id": 4,
+            "first_name": "Sarah",
+            "surname": "Smith",
+            "gender": "f",
+            "tm_partial": 4,
+        },
+        {
+            "unique_id": 10,
+            "true_match_id": 4,
+            "first_name": "Sarah",
+            "surname": "Smt",
+            "gender": "f",
+            "tm_partial": 4,
+        },
+        {
+            "unique_id": 11,
+            "true_match_id": 5,
+            "first_name": "Joan",
+            "surname": "Smith",
+            "gender": "f",
+            "tm_partial": None,
+        },
+        {
+            "unique_id": 12,
+            "true_match_id": 6,
+            "first_name": "Kim",
+            "surname": "Greene",
+            "gender": "f",
+            "tm_partial": None,
+        },
+        {
+            "unique_id": 13,
+            "true_match_id": 7,
+            "first_name": "Kim",
+            "surname": "Greene",
+            "gender": "m",
+            "tm_partial": 7,
+        },
     ]
 )
+
 
 def test_m_u_charts():
     settings = {
@@ -33,11 +125,12 @@ def test_m_u_charts():
         "comparisons": [
             cl.exact_match("gender"),
             cl.exact_match("tm_partial"),
-            cl.levenshtein_at_thresholds("first_name", [1]),
+            # cl.levenshtein_at_thresholds("first_name", [1]),
             cl.levenshtein_at_thresholds("surname", [1]),
         ],
     }
     linker = DuckDBLinker(df, settings)
+    linker.debug_mode = True
 
     linker.estimate_probability_two_random_records_match(
         "l.true_match_id = r.true_match_id", recall=1.0
@@ -47,13 +140,14 @@ def test_m_u_charts():
     linker.estimate_parameters_using_expectation_maximisation(
         "l.surname = r.surname",
         fix_u_probabilities=False,
-        fix_probability_two_random_records_match=True
+        fix_probability_two_random_records_match=True,
     )
     # linker.estimate_parameters_using_expectation_maximisation("l.first_name = r.first_name", fix_u_probabilities=False, fix_probability_two_random_records_match=True)
 
     print(linker._settings_obj.as_dict())
 
-    linker.match_weights_chart()
+    chart = linker.match_weights_chart()
+    save_offline_chart(chart, "tmp_test_mw.html", overwrite=True)
 
 
 def test_parameter_estimate_charts():
@@ -66,15 +160,25 @@ def test_parameter_estimate_charts():
         ],
     }
     linker = DuckDBLinker(df, settings)
+    linker.debug_mode = True
 
     linker.estimate_probability_two_random_records_match(
         "l.true_match_id = r.true_match_id", recall=1.0
     )
 
     # linker.estimate_u_using_random_sampling(1e6)
-    linker.estimate_parameters_using_expectation_maximisation("l.surname = r.surname", fix_u_probabilities=False, fix_probability_two_random_records_match=True)
-    linker.estimate_parameters_using_expectation_maximisation("l.first_name = r.first_name", fix_u_probabilities=False, fix_probability_two_random_records_match=True)
+    linker.estimate_parameters_using_expectation_maximisation(
+        "l.surname = r.surname",
+        fix_u_probabilities=False,
+        fix_probability_two_random_records_match=True,
+    )
+    linker.estimate_parameters_using_expectation_maximisation(
+        "l.first_name = r.first_name",
+        fix_u_probabilities=False,
+        fix_probability_two_random_records_match=True,
+    )
 
     print(linker._settings_obj.as_dict())
 
-    linker.parameter_estimate_comparisons_chart()
+    chart = linker.parameter_estimate_comparisons_chart()
+    save_offline_chart(chart, "tmp_test_pe.html", overwrite=True)

@@ -333,6 +333,8 @@ class ComparisonLevel:
             return 1.0
         if self.m_probability is None or self.u_probability is None:
             return None
+        elif self.u_probability == 0:
+            return math.inf
         else:
             return self.m_probability / self.u_probability
 
@@ -349,6 +351,7 @@ class ComparisonLevel:
             f"If comparison level is `{self._label_for_charts.lower()}` "
             "then comparison is"
         )
+        # TODO: bf in case of Inf
         if self._bayes_factor >= 1.0:
             return f"{text} {self._bayes_factor:,.2f} times more likely to be a match"
         else:
@@ -503,10 +506,13 @@ class ComparisonLevel:
 
     @property
     def _bayes_factor_sql(self):
+        bayes_factor = self._bayes_factor if self._bayes_factor != math.inf else "\'Infinity\'"
+        # bayes_factor = self._bayes_factor if self._bayes_factor != math.inf else 1e200
+        # bayes_factor = self._bayes_factor if self._bayes_factor != math.inf else 10
         sql = f"""
         WHEN
         {self.comparison._gamma_column_name} = {self._comparison_vector_value}
-        THEN cast({self._bayes_factor} as double)
+        THEN cast({bayes_factor} as double)
         """
         return dedent(sql)
 
