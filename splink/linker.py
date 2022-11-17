@@ -148,20 +148,15 @@ class Linker:
 
         # if settings_dict is passed, set sql_dialect on it if missing, and make sure
         # incompatible dialect not passed
-        if settings_dict is not None:
-            if settings_dict.get("sql_dialect", None) is None:
-                settings_dict["sql_dialect"] = self._sql_dialect
-            elif settings_dict["sql_dialect"] != self._sql_dialect:
-                raise ValueError(
-                    f"Incompatible SQL dialect! `settings` dictionary uses "
-                    f"dialect {settings_dict['sql_dialect']}, but expecting "
-                    f"'{self._sql_dialect}' for Linker of type {type(self)}"
-                )
+        if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
+            settings_dict["sql_dialect"] = self._sql_dialect
+
         self._settings_dict = settings_dict
         if settings_dict is None:
             self._settings_obj_ = None
         else:
             self._settings_obj_ = Settings(settings_dict)
+            self._validate_dialect()
 
         self._input_tables_dict = self._get_input_tables_dict(
             input_table_or_tables, input_table_aliases
@@ -606,6 +601,15 @@ class Linker:
                         "only a single input table",
                     )
 
+    def _validate_dialect(self):
+        settings_dialect = self._settings_obj._sql_dialect
+        if settings_dialect != self._sql_dialect:
+            raise ValueError(
+                f"Incompatible SQL dialect! `settings` dictionary uses "
+                f"dialect {settings_dialect}, but expecting "
+                f"'{self._sql_dialect}' for Linker of type {type(self)}"
+            )
+
     def _populate_probability_two_random_records_match_from_trained_values(self):
 
         recip_prop_matches_estimates = []
@@ -756,6 +760,7 @@ class Linker:
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
+        self._validate_dialect()
 
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
         """Compute a term frequency table for a given column and persist to the database
