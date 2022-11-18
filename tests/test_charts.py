@@ -2,7 +2,6 @@ import pandas as pd
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
 import splink.duckdb.duckdb_comparison_library as cl
-from splink.charts import save_offline_chart
 
 
 # ground truth:
@@ -125,7 +124,6 @@ def test_m_u_charts():
         "comparisons": [
             cl.exact_match("gender"),
             cl.exact_match("tm_partial"),
-            # cl.levenshtein_at_thresholds("first_name", [1]),
             cl.levenshtein_at_thresholds("surname", [1]),
         ],
     }
@@ -136,18 +134,16 @@ def test_m_u_charts():
         "l.true_match_id = r.true_match_id", recall=1.0
     )
 
-    # linker.estimate_u_using_random_sampling(1e6)
     linker.estimate_parameters_using_expectation_maximisation(
         "l.surname = r.surname",
         fix_u_probabilities=False,
         fix_probability_two_random_records_match=True,
     )
-    # linker.estimate_parameters_using_expectation_maximisation("l.first_name = r.first_name", fix_u_probabilities=False, fix_probability_two_random_records_match=True)
 
     print(linker._settings_obj.as_dict())
+    assert linker._settings_obj.comparisons[1].comparison_levels[2].u_probability == 1.0
 
     chart = linker.match_weights_chart()
-    save_offline_chart(chart, "tmp_test_mw.html", overwrite=True)
 
 
 def test_parameter_estimate_charts():
@@ -166,7 +162,6 @@ def test_parameter_estimate_charts():
         "l.true_match_id = r.true_match_id", recall=1.0
     )
 
-    # linker.estimate_u_using_random_sampling(1e6)
     linker.estimate_parameters_using_expectation_maximisation(
         "l.surname = r.surname",
         fix_u_probabilities=False,
@@ -179,6 +174,26 @@ def test_parameter_estimate_charts():
     )
 
     print(linker._settings_obj.as_dict())
+    exact_gender_m_estimates = [
+        prob["probability"]
+        for prob in linker._settings_obj.comparisons[0]
+        .comparison_levels[1]
+        ._trained_m_probabilities
+    ]
+    assert 1.0 in exact_gender_m_estimates
 
     chart = linker.parameter_estimate_comparisons_chart()
-    save_offline_chart(chart, "tmp_test_pe.html", overwrite=True)
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            # no observations of levenshtein == 1 in this data
+            cl.levenshtein_at_thresholds("gender", [1]),
+            cl.levenshtein_at_thresholds("first_name", [1]),
+        ],
+    }
+    linker = DuckDBLinker(df, settings)
+    linker.debug_mode = True
+    linker.estimate_u_using_random_sampling(1e6)
+
+    chart = linker.parameter_estimate_comparisons_chart()
