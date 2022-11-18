@@ -146,6 +146,7 @@ class Linker:
 
         self._pipeline = SQLPipeline()
 
+        settings_dict = deepcopy(settings_dict)
         # if settings_dict is passed, set sql_dialect on it if missing, and make sure
         # incompatible dialect not passed
         if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:

@@ -61,12 +61,14 @@ def predict_from_comparison_vectors_sqls(
         any_bf_inf = " OR ".join(
             map(lambda col: f"{col} = {sql_infinity_expression}", mult)
         )
-        bayes_factor_expr = f"""
-        CASE WHEN {any_bf_inf} THEN {sql_infinity_expression} ELSE {bayes_factor_expr} END
-        """
-        match_prob_expr = f"""
-        CASE WHEN {any_bf_inf} THEN 1.0 ELSE (({bayes_factor_expr})/(1+({bayes_factor_expr}))) END
-        """
+        bayes_factor_expr = (
+            f"CASE WHEN {any_bf_inf} THEN {sql_infinity_expression} "
+            f"ELSE {bayes_factor_expr} END"
+        )
+        match_prob_expr = (
+            f"CASE WHEN {any_bf_inf} THEN 1.0 "
+            f"ELSE (({bayes_factor_expr})/(1+({bayes_factor_expr}))) END"
+        )
 
     # In case user provided both, take the minimum of the two thresholds
     if threshold_match_probability is not None:
