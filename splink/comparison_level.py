@@ -18,6 +18,7 @@ from .misc import (
     match_weight_to_bayes_factor,
 )
 from .parse_sql import get_columns_used_from_sql
+from .constants import LEVEL_NOT_OBSERVED_TEXT
 
 from .input_column import sqlglot_tree_signature
 
@@ -190,7 +191,7 @@ class ComparisonLevel:
     def m_probability(self):
         if self._is_null_level:
             return None
-        if self._m_probability == "level not observed in training dataset":
+        if self._m_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
         if self._m_probability is None and self._has_comparison:
             vals = _default_m_values(self.comparison._num_levels)
@@ -201,7 +202,7 @@ class ComparisonLevel:
     def m_probability(self, value):
         if self._is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
-        if value == "level not observed in training dataset":
+        if value == LEVEL_NOT_OBSERVED_TEXT:
             cc_n = self.comparison._output_column_name
             cl_n = self._label_for_charts
             logger.warning(
@@ -216,7 +217,7 @@ class ComparisonLevel:
     def u_probability(self):
         if self._is_null_level:
             return None
-        if self._u_probability == "level not observed in training dataset":
+        if self._u_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
         if self._u_probability is None:
             vals = _default_u_values(self.comparison._num_levels)
@@ -227,7 +228,7 @@ class ComparisonLevel:
     def u_probability(self, value):
         if self._is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
-        if value == "level not observed in training dataset":
+        if value == LEVEL_NOT_OBSERVED_TEXT:
             cc_n = self.comparison._output_column_name
             cl_n = self._label_for_charts
             logger.warning(

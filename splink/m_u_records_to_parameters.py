@@ -1,6 +1,7 @@
 import logging
 
 from .comparison_level import ComparisonLevel
+from .constants import LEVEL_NOT_OBSERVED_TEXT
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ def append_u_probability_to_comparison_level_trained_probabilities(
         ]["u_probability"]
 
     except KeyError:
-        u_probability = "level not observed in training dataset"
+        u_probability = LEVEL_NOT_OBSERVED_TEXT
 
         logger.info(f"u probability {not_trained_message(cl)}")
     cl._add_trained_u_probability(
@@ -72,7 +73,7 @@ def append_m_probability_to_comparison_level_trained_probabilities(
         ]["m_probability"]
 
     except KeyError:
-        m_probability = "level not observed in training dataset"
+        m_probability = LEVEL_NOT_OBSERVED_TEXT
 
         logger.info(f"m probability {not_trained_message(cl)}")
     cl._add_trained_m_probability(
