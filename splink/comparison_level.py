@@ -513,8 +513,6 @@ class ComparisonLevel:
         bayes_factor = (
             self._bayes_factor if self._bayes_factor != math.inf else "'Infinity'"
         )
-        # bayes_factor = self._bayes_factor if self._bayes_factor != math.inf else 1e200
-        # bayes_factor = self._bayes_factor if self._bayes_factor != math.inf else 10
         sql = f"""
         WHEN
         {self.comparison._gamma_column_name} = {self._comparison_vector_value}
