@@ -664,7 +664,7 @@ class ComparisonLevel:
             p = trained_value["probability"]
             record["estimated_probability"] = p
             record["estimate_description"] = trained_value["description"]
-            if p is not None and p > 0.0 and p < 1.0:
+            if p is not None and p != LEVEL_NOT_OBSERVED_TEXT and p > 0.0 and p < 1.0:
                 record["estimated_probability_as_log_odds"] = math.log2(p / (1 - p))
             else:
                 record["estimated_probability_as_log_odds"] = None

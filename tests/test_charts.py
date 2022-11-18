@@ -128,7 +128,6 @@ def test_m_u_charts():
         ],
     }
     linker = DuckDBLinker(df, settings)
-    linker.debug_mode = True
 
     linker.estimate_probability_two_random_records_match(
         "l.true_match_id = r.true_match_id", recall=1.0
@@ -143,7 +142,7 @@ def test_m_u_charts():
     print(linker._settings_obj.as_dict())
     assert linker._settings_obj.comparisons[1].comparison_levels[2].u_probability == 1.0
 
-    chart = linker.match_weights_chart()
+    linker.match_weights_chart()
 
 
 def test_parameter_estimate_charts():
@@ -156,7 +155,6 @@ def test_parameter_estimate_charts():
         ],
     }
     linker = DuckDBLinker(df, settings)
-    linker.debug_mode = True
 
     linker.estimate_probability_two_random_records_match(
         "l.true_match_id = r.true_match_id", recall=1.0
@@ -182,7 +180,7 @@ def test_parameter_estimate_charts():
     ]
     assert 1.0 in exact_gender_m_estimates
 
-    chart = linker.parameter_estimate_comparisons_chart()
+    linker.parameter_estimate_comparisons_chart()
 
     settings = {
         "link_type": "dedupe_only",
@@ -193,7 +191,6 @@ def test_parameter_estimate_charts():
         ],
     }
     linker = DuckDBLinker(df, settings)
-    linker.debug_mode = True
     linker.estimate_u_using_random_sampling(1e6)
 
-    chart = linker.parameter_estimate_comparisons_chart()
+    linker.parameter_estimate_comparisons_chart()
