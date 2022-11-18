@@ -351,8 +351,11 @@ class ComparisonLevel:
             f"If comparison level is `{self._label_for_charts.lower()}` "
             "then comparison is"
         )
-        # TODO: bf in case of Inf
-        if self._bayes_factor >= 1.0:
+        if self._bayes_factor == math.inf:
+            return f"{text} certain to be a match"
+        elif self._bayes_factor == 0.0:
+            return f"{text} impossible to be a match"
+        elif self._bayes_factor >= 1.0:
             return f"{text} {self._bayes_factor:,.2f} times more likely to be a match"
         else:
             mult = 1 / self._bayes_factor
@@ -506,7 +509,9 @@ class ComparisonLevel:
 
     @property
     def _bayes_factor_sql(self):
-        bayes_factor = self._bayes_factor if self._bayes_factor != math.inf else "\'Infinity\'"
+        bayes_factor = (
+            self._bayes_factor if self._bayes_factor != math.inf else "'Infinity'"
+        )
         # bayes_factor = self._bayes_factor if self._bayes_factor != math.inf else 1e200
         # bayes_factor = self._bayes_factor if self._bayes_factor != math.inf else 10
         sql = f"""

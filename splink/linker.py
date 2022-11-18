@@ -1101,7 +1101,9 @@ class Linker:
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls(
-            self._settings_obj, threshold_match_probability, threshold_match_weight,
+            self._settings_obj,
+            threshold_match_probability,
+            threshold_match_weight,
             sql_infinity_expression=self._infinity_expression,
         )
         for sql in sqls:

@@ -13,7 +13,7 @@ def predict_from_comparison_vectors_sqls(
     threshold_match_probability=None,
     threshold_match_weight=None,
     include_clerical_match_score=False,
-    sql_infinity_expression="\'infinity\'",
+    sql_infinity_expression="'infinity'",
 ) -> List[dict]:
 
     sqls = []
@@ -58,7 +58,9 @@ def predict_from_comparison_vectors_sqls(
 
         # if any BF is Infinity then we need to adjust expression,
         # as arithmetic won't go through directly
-        any_bf_inf = " OR ".join(map(lambda col: f"{col} = {sql_infinity_expression}", mult))
+        any_bf_inf = " OR ".join(
+            map(lambda col: f"{col} = {sql_infinity_expression}", mult)
+        )
         bayes_factor_expr = f"""
         CASE WHEN {any_bf_inf} THEN {sql_infinity_expression} ELSE {bayes_factor_expr} END
         """
