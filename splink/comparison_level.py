@@ -68,6 +68,8 @@ def _exact_match_colname(sql_syntax_tree):
 
 
 def _get_sub_expressions(expr):
+    # get list of subclauses joined together by 'AND' at top-level
+    # e.g. 'A AND B AND C' -> ['A', 'B', 'C']
     if isinstance(expr, sqlglot.exp.And):
         return [*_get_sub_expressions(expr.left), *_get_sub_expressions(expr.right)]
     return [expr]
