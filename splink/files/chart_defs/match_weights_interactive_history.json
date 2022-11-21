@@ -37,8 +37,8 @@
   ],
   "vconcat": [
     {
-      "height": 30,
-      "mark": { "type": "bar", "clip": true, "height": 20 },
+      "height": 20,
+      "mark": { "type": "bar", "clip": true, "height": 15 },
       "selection": {
         "zoom_selector": {
           "type": "interval",
@@ -110,6 +110,7 @@
       }
     },
     {
+      "height": {"step": 12},
       "mark": { "type": "bar", "clip": true },
       "selection": {
         "zoom_selector": {
