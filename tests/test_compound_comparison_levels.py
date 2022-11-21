@@ -121,3 +121,91 @@ def test_compound_comparison_level():
     linker = DuckDBLinker(df, settings)
 
     linker.estimate_parameters_using_expectation_maximisation("l.city = r.city")
+
+
+def test_complex_compound_comparison_level():
+
+    # non-realistic example
+    df = pd.DataFrame(
+        [
+            {
+                "unique_id": 1,
+                "col_1": "a",
+                "col_2": "b",
+                "col_3": "c",
+                "col_4": "d",
+                "col_5": "e",
+                "col_6": "f",
+                "col_7": "g",
+            },
+            {
+                "unique_id": 2,
+                "col_1": "aa",
+                "col_2": "b",
+                "col_3": "cc",
+                "col_4": "d",
+                "col_5": "ee",
+                "col_6": "f",
+                "col_7": "gg",
+            },
+            {
+                "unique_id": 3,
+                "col_1": "a",
+                "col_2": "bb",
+                "col_3": "c",
+                "col_4": "dd",
+                "col_5": "e",
+                "col_6": "ff",
+                "col_7": "g",
+            },
+            {
+                "unique_id": 4,
+                "col_1": "aa",
+                "col_2": "bb",
+                "col_3": "cc",
+                "col_4": "d",
+                "col_5": "ee",
+                "col_6": "ff",
+                "col_7": "gg",
+            },
+        ]
+    )
+    A, B, C, D, E, F, G = (
+        "col_1_l = col_1_r",
+        "col_2_l = col_2_r",
+        "col_3_l = col_3_r",
+        "col_4_l = col_4_r",
+        "col_5_l = col_5_r",
+        "col_6_l = col_6_r",
+        "col_7_l = col_7_r",
+    )
+
+    complex_condition_sql = " OR ".join(
+        [
+            f"({A} AND {B})",
+            f"NOT ({C} AND {D})",
+            f"({B} AND NOT {E})",
+            f"({F} AND (NOT {A} AND {G}))",
+        ]
+    )
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            {
+                "output_column_name": "my_comparison",
+                "comparison_levels": [
+                    cll.null_level("col_1"),
+                    cll.exact_match_level("col_7"),
+                    cll.exact_match_level("col_3"),
+                    {
+                        "sql_condition": complex_condition_sql,
+                        "label_for_charts": "complex condition",
+                    },
+                    cll.else_level(),
+                ],
+            }
+        ],
+    }
+    linker = DuckDBLinker(df, settings)
+
+    linker.estimate_parameters_using_expectation_maximisation("1=1")

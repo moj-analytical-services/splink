@@ -462,12 +462,13 @@ class ComparisonLevel:
         if self._is_else_level:
             return False
 
-        sql_syntax_tree = sqlglot.parse_one(self._sql_condition.lower(), read=self._sql_dialect)
+        sql_syntax_tree = sqlglot.parse_one(
+            self._sql_condition.lower(), read=self._sql_dialect
+        )
         sql_cnf = normalize(sql_syntax_tree)
 
         exprs = _get_sub_expressions(sql_cnf)
         for expr in exprs:
-            print(f"\tprocessing {expr}")
             if not _is_exact_match(expr):
                 return False
         return True
@@ -475,7 +476,9 @@ class ComparisonLevel:
     @property
     def _exact_match_colnames(self):
 
-        sql_syntax_tree = sqlglot.parse_one(self._sql_condition.lower(), read=self._sql_dialect)
+        sql_syntax_tree = sqlglot.parse_one(
+            self._sql_condition.lower(), read=self._sql_dialect
+        )
         sql_cnf = normalize(sql_syntax_tree)
 
         exprs = _get_sub_expressions(sql_cnf)
