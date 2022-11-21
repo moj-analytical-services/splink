@@ -991,8 +991,8 @@ class Linker:
                     "comparison_levels_to_reverse_blocking_rule.\n"
                     "If comparisons_to_deactivate is provided, then "
                     "you usually need to provide corresponding "
-                    "comparison_levels_to_reverse_blocking_rule. "
-                    "because each comparison to deactivate if effectively treated "
+                    "comparison_levels_to_reverse_blocking_rule "
+                    "because each comparison to deactivate is effectively treated "
                     "as an exact match."
                 )
 
