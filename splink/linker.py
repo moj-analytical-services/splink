@@ -894,7 +894,7 @@ class Linker:
         """Estimate the parameters of the linkage model using expectation maximisation.
 
         By default, the m probabilities are estimated, but not the u probabilities,
-        because good estiamtes for the u probabilities can be obtained from
+        because good estimates for the u probabilities can be obtained from
         `linker.estimate_u_using_random_sampling()`.  You can change this by setting
         `fix_u_probabilities` to False.
 
