@@ -119,6 +119,13 @@ def test_compound_comparison_level():
     }
 
     linker = DuckDBLinker(df, settings)
+    all_cols_match_level = linker._settings_obj.comparisons[1].comparison_levels[1]
+    assert all_cols_match_level._is_exact_match
+    assert set(all_cols_match_level._exact_match_colnames) == {
+        "first_name",
+        "middle_name",
+        "surname",
+    }
 
     linker.estimate_parameters_using_expectation_maximisation("l.city = r.city")
 
