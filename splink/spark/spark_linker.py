@@ -176,8 +176,11 @@ class SparkLinker(Linker):
             input_table_aliases=homogenised_aliases,
         )
 
-        # check to see if running in databricks.
+        # check to see if running in databricks and use delta lake tables as break lineage method.
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
+        if self.in_databricks:
+            self.break_lineage_method = "delta_lake_table"
+            logger.info("Setting lineage method to use delta lake tables.")
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
