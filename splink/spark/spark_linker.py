@@ -7,7 +7,7 @@ import math
 
 import pandas as pd
 
-from pyspark.sql import Row
+from pyspark.sql import types, Row
 
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
@@ -133,7 +133,7 @@ class SparkLinker(Linker):
         if spark is None:
             for t in input_tables:
                 if type(t).__name__ == "DataFrame":
-                    self.spark = t.sql_ctx.sparkSession
+                    self.spark = t.sparkSession
                     break
         if self.spark is None:
             raise ValueError(
@@ -180,7 +180,18 @@ class SparkLinker(Linker):
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         if self.in_databricks:
             self.break_lineage_method = "delta_lake_table"
-            logger.info("Setting lineage method to use delta lake tables.")
+            logger.info(f"Intermediate results will be written as Delta Lake tables at {catalog}.{database}.")
+
+
+        # register udf functions
+        # will for loop through this list to register UDFs.
+        # List is a tuple of structure (UDF Name, class path, spark return type)
+        #
+        udfs_register = [
+            ("jaro_winkler", "uk.gov.moj.dash.linkage.JaroWinklerSimilarity", types.DoubleType())
+        ]
+        for udf in udfs_register:
+            spark.udf.registerJavaFunction(*udf)
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)

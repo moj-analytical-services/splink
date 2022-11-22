@@ -4,8 +4,7 @@ user_name = dbutils.notebook.entry_point.getDbutils().notebook().getContext().us
 # COMMAND ----------
 
 import splink.spark.spark_comparison_library as cl
-import pandas as pd 
-from splink.databricks.enable_splink import enable_splink
+from splink.spark.enable_splink import enable_splink
 
 # COMMAND ----------
 
