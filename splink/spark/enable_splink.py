@@ -1,4 +1,4 @@
-from splink.databricks.jar_location import similarity_jar_location
+from splink.spark.jar_location import similarity_jar_location
 
 def enable_splink(spark):
     sc = spark.sparkContext
