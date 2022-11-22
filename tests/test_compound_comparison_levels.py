@@ -74,7 +74,7 @@ def test_compound_comparison_level():
     def col_is_null(col):
         return f"({col}_l IS NULL OR {col}_r IS NULL)"
 
-    sql_two_out_of_three_match = (
+    sql_and_clauses_joined_with_ors = (
         f"(({col_is_match('first_name')} AND {col_is_match('middle_name')}) OR "
         f"({col_is_match('middle_name')} AND {col_is_match('surname')}) OR "
         f"({col_is_match('surname')} AND {col_is_match('first_name')}))"
@@ -106,8 +106,8 @@ def test_compound_comparison_level():
                         "label_for_charts": "All three match",
                     },
                     {
-                        "sql_condition": sql_two_out_of_three_match,
-                        "label_for_charts": "2/3 match",
+                        "sql_condition": sql_and_clauses_joined_with_ors,
+                        "label_for_charts": "2 out of 3 columns match",
                     },
                     cll.exact_match_level("first_name"),
                     cll.exact_match_level("middle_name"),
