@@ -47,6 +47,8 @@ def _is_exact_match(sql_syntax_tree):
 
 
 def _exact_match_colname(sql_syntax_tree):
+    # only interested in expression directly, not context
+    sql_syntax_tree.parent = None
     cols = []
 
     for identifier in sql_syntax_tree.find_all(Identifier):
@@ -67,11 +69,12 @@ def _exact_match_colname(sql_syntax_tree):
     return cols[0]
 
 
-def _get_sub_expressions(expr):
+def _get_and_subclauses(expr):
     # get list of subclauses joined together by 'AND' at top-level
     # e.g. 'A AND B AND C' -> ['A', 'B', 'C']
+    # or if no AND, return expression as a list, e.g. 'A' -> ['A']
     if isinstance(expr, sqlglot.exp.And):
-        return [*_get_sub_expressions(expr.left), *_get_sub_expressions(expr.right)]
+        return list(expr.flatten())
     return [expr]
 
 
@@ -469,7 +472,7 @@ class ComparisonLevel:
         )
         sql_cnf = normalize(sql_syntax_tree)
 
-        exprs = _get_sub_expressions(sql_cnf)
+        exprs = _get_and_subclauses(sql_cnf)
         for expr in exprs:
             if not _is_exact_match(expr):
                 return False
@@ -483,7 +486,7 @@ class ComparisonLevel:
         )
         sql_cnf = normalize(sql_syntax_tree)
 
-        exprs = _get_sub_expressions(sql_cnf)
+        exprs = _get_and_subclauses(sql_cnf)
         for expr in exprs:
             if not _is_exact_match(expr):
                 raise ValueError(
