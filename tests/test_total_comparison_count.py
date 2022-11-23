@@ -60,8 +60,8 @@ def test_calculate_cartesian_link_and_dedupe():
     "link_type,frame_sizes,group_by",
     [
         ("dedupe_only", [97], ""),
-        ("link_only", [97, 209, 104, 2], "group by source_dataset"),
-        ("link_and_dedupe", [97, 209, 104, 2], "group by source_dataset"),
+        ("link_only", [209, 104, 97, 2], "group by source_dataset"),
+        ("link_and_dedupe", [209, 104, 97, 2], "group by source_dataset"),
     ],
 )
 def test_calculate_cartesian_equals_total_number_of_links(
@@ -99,6 +99,7 @@ def test_calculate_cartesian_equals_total_number_of_links(
         select count(*) as count
         from __splink__df_concat
         {group_by}
+        order by count desc
     """
     linker._enqueue_sql(sql, "__splink__cartesian_product")
     cartesian_count = linker._execute_sql_pipeline()
