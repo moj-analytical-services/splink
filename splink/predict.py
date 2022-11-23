@@ -13,6 +13,7 @@ def predict_from_comparison_vectors_sqls(
     threshold_match_probability=None,
     threshold_match_weight=None,
     include_clerical_match_score=False,
+    sql_infinity_expression="'infinity'",
 ) -> List[dict]:
 
     sqls = []
@@ -46,10 +47,28 @@ def predict_from_comparison_vectors_sqls(
         settings_obj._probability_two_random_records_match
     )
 
-    bayes_factor = prob_to_bayes_factor(probability_two_random_records_match)
+    if probability_two_random_records_match == 1.0:
+        bayes_factor_expr = sql_infinity_expression
+        match_prob_expr = "1.0"
+    else:
+        bayes_factor = prob_to_bayes_factor(probability_two_random_records_match)
 
-    bayes_factor_expr = " * ".join(mult)
-    bayes_factor_expr = f"cast({bayes_factor} as double) * {bayes_factor_expr}"
+        bayes_factor_expr = " * ".join(mult)
+        bayes_factor_expr = f"cast({bayes_factor} as double) * {bayes_factor_expr}"
+
+        # if any BF is Infinity then we need to adjust expression,
+        # as arithmetic won't go through directly
+        any_bf_inf = " OR ".join(
+            map(lambda col: f"{col} = {sql_infinity_expression}", mult)
+        )
+        bayes_factor_expr = (
+            f"CASE WHEN {any_bf_inf} THEN {sql_infinity_expression} "
+            f"ELSE {bayes_factor_expr} END"
+        )
+        match_prob_expr = (
+            f"CASE WHEN {any_bf_inf} THEN 1.0 "
+            f"ELSE (({bayes_factor_expr})/(1+({bayes_factor_expr}))) END"
+        )
 
     # In case user provided both, take the minimum of the two thresholds
     if threshold_match_probability is not None:
@@ -69,7 +88,7 @@ def predict_from_comparison_vectors_sqls(
     sql = f"""
     select
     log2({bayes_factor_expr}) as match_weight,
-    (({bayes_factor_expr})/(1+({bayes_factor_expr}))) as match_probability,
+    {match_prob_expr} as match_probability,
     {select_cols_expr} {clerical_match_score}
     from __splink__df_match_weight_parts
     {threshold_expr}

@@ -113,8 +113,7 @@ class SparkLinker(Linker):
 
         """
 
-        if settings_dict is not None and "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "spark"
+        self._sql_dialect_ = "spark"
 
         self.break_lineage_method = break_lineage_method
 
@@ -273,6 +272,10 @@ class SparkLinker(Linker):
 
         output_df = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_df
+
+    @property
+    def _infinity_expression(self):
+        return "'infinity'"
 
     def register_table(self, input, table_name, overwrite=False):
         """

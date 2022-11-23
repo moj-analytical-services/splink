@@ -235,8 +235,7 @@ class AthenaLinker(Linker):
             >>> )
         """
 
-        if settings_dict is not None and "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "presto"
+        self._sql_dialect_ = "presto"
 
         self.boto3_session = boto3_session
         self.output_schema = output_database
@@ -363,6 +362,10 @@ class AthenaLinker(Linker):
             return ""
         percent = proportion * 100
         return f" TABLESAMPLE BERNOULLI ({percent})"
+
+    @property
+    def _infinity_expression(self):
+        return "infinity()"
 
     def _table_exists_in_database(self, table_name):
         return wr.catalog.does_table_exist(

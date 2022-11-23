@@ -146,11 +146,18 @@ class Linker:
 
         self._pipeline = SQLPipeline()
 
+        settings_dict = deepcopy(settings_dict)
+        # if settings_dict is passed, set sql_dialect on it if missing, and make sure
+        # incompatible dialect not passed
+        if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
+            settings_dict["sql_dialect"] = self._sql_dialect
+
         self._settings_dict = settings_dict
         if settings_dict is None:
             self._settings_obj_ = None
         else:
             self._settings_obj_ = Settings(settings_dict)
+            self._validate_dialect()
 
         self._input_tables_dict = self._get_input_tables_dict(
             input_table_or_tables, input_table_aliases
@@ -243,6 +250,21 @@ class Linker:
             return True
         else:
             return False
+
+    @property
+    def _sql_dialect(self):
+        if self._sql_dialect_ is None:
+            raise NotImplementedError(
+                f"No SQL dialect set on object of type {type(self)}. "
+                "Did you make sure to create a dialect-specific Linker?"
+            )
+        return self._sql_dialect_
+
+    @property
+    def _infinity_expression(self):
+        raise NotImplementedError(
+            f"infinity sql expression not available for {type(self)}"
+        )
 
     def _prepend_schema_to_table_name(self, table_name):
         if self._output_schema:
@@ -586,6 +608,15 @@ class Linker:
                         "only a single input table",
                     )
 
+    def _validate_dialect(self):
+        settings_dialect = self._settings_obj._sql_dialect
+        if settings_dialect != self._sql_dialect:
+            raise ValueError(
+                f"Incompatible SQL dialect! `settings` dictionary uses "
+                f"dialect {settings_dialect}, but expecting "
+                f"'{self._sql_dialect}' for Linker of type {type(self)}"
+            )
+
     def _populate_probability_two_random_records_match_from_trained_values(self):
 
         recip_prop_matches_estimates = []
@@ -736,6 +767,7 @@ class Linker:
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
+        self._validate_dialect()
 
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
         """Compute a term frequency table for a given column and persist to the database
@@ -1070,7 +1102,10 @@ class Linker:
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls(
-            self._settings_obj, threshold_match_probability, threshold_match_weight
+            self._settings_obj,
+            threshold_match_probability,
+            threshold_match_weight,
+            sql_infinity_expression=self._infinity_expression,
         )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
@@ -1154,7 +1189,10 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(
+            self._settings_obj,
+            sql_infinity_expression=self._infinity_expression,
+        )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -1223,7 +1261,10 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(
+            self._settings_obj,
+            sql_infinity_expression=self._infinity_expression,
+        )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -1276,7 +1317,10 @@ class Linker:
 
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(
+            self._settings_obj,
+            sql_infinity_expression=self._infinity_expression,
+        )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 

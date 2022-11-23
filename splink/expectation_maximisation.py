@@ -8,6 +8,7 @@ from .settings import Settings
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
 from .splink_dataframe import SplinkDataFrame
 from .comparison_level import ComparisonLevel
+from .constants import LEVEL_NOT_OBSERVED_TEXT
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -96,7 +97,7 @@ def populate_m_u_from_lookup(
             ]["m_probability"]
 
         except KeyError:
-            m_probability = "level not observed in training dataset"
+            m_probability = LEVEL_NOT_OBSERVED_TEXT
         cl.m_probability = m_probability
 
     if not em_training_session._training_fix_u_probabilities:
@@ -106,7 +107,7 @@ def populate_m_u_from_lookup(
             ]["u_probability"]
 
         except KeyError:
-            u_probability = "level not observed in training dataset"
+            u_probability = LEVEL_NOT_OBSERVED_TEXT
 
         cl.u_probability = u_probability
 
@@ -158,7 +159,10 @@ def expectation_maximisation(
         start_time = time.time()
 
         # Expectation step
-        sqls = predict_from_comparison_vectors_sqls(settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(
+            settings_obj,
+            sql_infinity_expression=linker._infinity_expression,
+        )
         for sql in sqls:
             linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 

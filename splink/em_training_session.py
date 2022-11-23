@@ -14,6 +14,7 @@ from .charts import (
 )
 from .comparison_level import ComparisonLevel
 from .comparison import Comparison
+from .constants import LEVEL_NOT_OBSERVED_TEXT
 
 logger = logging.getLogger(__name__)
 
@@ -184,7 +185,7 @@ class EMTrainingSession:
                 )
 
                 if not self._training_fix_m_probabilities:
-                    not_observed = "level not observed in training dataset"
+                    not_observed = LEVEL_NOT_OBSERVED_TEXT
                     if cl._m_probability == not_observed:
                         orig_cl._add_trained_m_probability(not_observed, training_desc)
                         logger.info(
@@ -199,7 +200,7 @@ class EMTrainingSession:
                         )
 
                 if not self._training_fix_u_probabilities:
-                    not_observed = "level not observed in training dataset"
+                    not_observed = LEVEL_NOT_OBSERVED_TEXT
                     if cl._u_probability == not_observed:
                         orig_cl._add_trained_u_probability(not_observed, training_desc)
                         logger.info(
