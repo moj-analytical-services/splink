@@ -151,8 +151,9 @@ class SparkLinker(Linker):
         temp_tables = splink_tables.filter("isTemporary").collect()
         drop_tables = list(map(lambda x: x.tableName, filter(lambda x: x.isTemporary, temp_tables)))
         # drop old temp tables
+        # specifying a catalog and database doesn't work for temp tables.
         for x in drop_tables:
-            spark.sql(f"drop table {self.catalog}.{self.database}.{x}")
+            spark.sql(f"drop table {x}")
 
         homogenised_tables = []
         homogenised_aliases = []
