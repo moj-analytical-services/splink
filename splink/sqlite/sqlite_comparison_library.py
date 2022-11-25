@@ -9,6 +9,9 @@ from ..comparison_library import (  # noqa: F401
 from .sqlite_base import (
     SqliteBase,
 )
+from .sqlite_comparison_level_library import (
+    distance_function_level,
+)
 
 _mutable_params["dialect"] = "sqlite"
 
@@ -16,5 +19,7 @@ _mutable_params["dialect"] = "sqlite"
 class distance_function_at_thresholds(
     SqliteBase, DistanceFunctionAtThresholdsComparisonBase
 ):
-    pass
+    @property
+    def _distance_level(self):
+        return distance_function_level
 

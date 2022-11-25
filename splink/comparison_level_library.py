@@ -63,6 +63,10 @@ class DistanceFunctionLevelBase(ComparisonLevel):
 
         super().__init__(level_dict, sql_dialect=self._sql_dialect)
 
+    @property
+    def _distance_level(self):
+        raise NotImplementedError("Distance function not supported in this dialect")
+
 
 def null_level(col_name) -> ComparisonLevel:
     """Represents comparisons where one or both sides of the comparison
@@ -125,7 +129,7 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
             ComparisonLevel: A comparison level that evaluates the
                 levenshtein similarity
         """
-        super.__init__(
+        super().__init__(
             col_name,
             self._levenshtein_name,
             distance_threshold,
@@ -189,7 +193,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
         Returns:
             ComparisonLevel: A comparison level that evaluates the jaccard similarity
         """
-        super.__init__(
+        super().__init__(
             col_name,
             self._jaccard_name,
             distance_threshold,

@@ -74,7 +74,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
 
         Args:
             col_name (str): The name of the column to compare
-            distance_function_name (str): The name of the distance function
+            distance_function_name (str): The name of the distance function.
             distance_threshold_or_thresholds (Union[int, list], optional): The threshold(s)
                 to use for the middle similarity level(s). Defaults to [1, 2].
             higher_is_more_similar (bool): If True, a higher value of the distance function
@@ -113,14 +113,21 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             comparison_levels.append(level)
 
         for thres, m_prob in zip(distance_thresholds, m_probabilities):
-            # need to rethink the logic of how this all flows:
-            level = cl.DistanceFunctionLevelBase(
-                col_name,
-                distance_function_name=distance_function_name,
-                higher_is_more_similar=higher_is_more_similar,
+            # we want to allow people to pass a string (if they have some custom function)
+            # but also need derived classes to pass their types
+            # i.e. IF we are being called with a distance_function_name (as a distance function)
+            # then call the appropiate distance_function_level
+            # otherwise call the custom level function
+            kwargs = dict(
+                col_name=col_name,
                 distance_threshold=thres,
                 m_probability=m_prob,
             )
+            # feels a bit hacky, but will do at least for time being
+            if not self._is_distance_subclass:
+                kwargs["distance_function_name"] = distance_function_name
+                kwargs["igher_is_more_similar"] = higher_is_more_similar
+            level = self._distance_level(**kwargs)
             comparison_levels.append(level)
 
         comparison_levels.append(
@@ -143,6 +150,10 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             "comparison_levels": comparison_levels,
         }
         super().__init__(comparison_dict)
+
+    @property
+    def _is_distance_subclass(self):
+        return False
 
 
 class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase):
@@ -198,6 +209,10 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             m_probability_else,
         )
 
+    @property
+    def _is_distance_subclass(self):
+        return True
+
 
 class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase):
     def __init__(
@@ -240,7 +255,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
             Comparison:
         """
 
-        super.__init__(
+        super().__init__(
             col_name,
             self._jaccard_name,
             distance_threshold_or_thresholds,
@@ -251,6 +266,10 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
             m_probability_or_probabilities_lev,
             m_probability_else,
         )
+
+    @property
+    def _is_distance_subclass(self):
+        return True
 
 
 class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase):
@@ -305,6 +324,10 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             m_probability_or_probabilities_lev,
             m_probability_else,
         )
+
+    @property
+    def _is_distance_subclass(self):
+        return True
 
 
 class ArrayIntersectAtSizesComparisonBase(Comparison):
