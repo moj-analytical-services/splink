@@ -258,60 +258,61 @@ def columns_reversed_level(
     return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
 
 
-def distance_in_km_level(
-    lat_col: str,
-    long_col: str,
-    km_threshold: Union[int, float],
-    not_null: bool = False,
-    m_probability=None,
-) -> ComparisonLevel:
-    """Use the haversine formula to transform comparisons of lat,lngs
-    into distances measured in kilometers
+class DistanceInKMLevelBase(ComparisonLevel):
+    def __init__(
+        self,
+        lat_col: str,
+        long_col: str,
+        km_threshold: Union[int, float],
+        not_null: bool = False,
+        m_probability=None,
+    ) -> ComparisonLevel:
+        """Use the haversine formula to transform comparisons of lat,lngs
+        into distances measured in kilometers
 
-    Arguments:
-        lat_col (str): The name of a latitude column or the respective array
-            or struct column column containing the information
-            For example: long_lat['lat'] or long_lat[0]
-        long_col (str): The name of a longitudinal column or the respective array
-            or struct column column containing the information, plus an index.
-            For example: long_lat['long'] or long_lat[1]
-        km_threshold (int): The total distance in kilometers to evaluate your
-            comparisons against
-        not_null (bool): If true, remove any . This is only necessary if you are not
-            capturing nulls elsewhere in your comparison level.
-        m_probability (float, optional): Starting value for m probability. Defaults to
-            None.
+        Arguments:
+            lat_col (str): The name of a latitude column or the respective array
+                or struct column column containing the information
+                For example: long_lat['lat'] or long_lat[0]
+            long_col (str): The name of a longitudinal column or the respective array
+                or struct column column containing the information, plus an index.
+                For example: long_lat['long'] or long_lat[1]
+            km_threshold (int): The total distance in kilometers to evaluate your
+                comparisons against
+            not_null (bool): If true, remove any . This is only necessary if you are not
+                capturing nulls elsewhere in your comparison level.
+            m_probability (float, optional): Starting value for m probability.
+                Defaults to None.
 
+        Returns:
+            ComparisonLevel: A comparison level that evaluates the distance between
+                two coordinates
+        """
 
-    Returns:
-        ComparisonLevel: A comparison level that evaluates the distance between
-            two coordinates
-    """
+        lat = InputColumn(lat_col, sql_dialect=self._sql_dialect)
+        long = InputColumn(long_col, sql_dialect=self._sql_dialect)
+        lat_l, lat_r = lat.names_l_r()
+        long_l, long_r = long.names_l_r()
 
-    lat = InputColumn(lat_col, sql_dialect=_mutable_params["dialect"])
-    long = InputColumn(long_col, sql_dialect=_mutable_params["dialect"])
-    lat_l, lat_r = lat.names_l_r()
-    long_l, long_r = long.names_l_r()
-
-    distance_km_sql = f"""
+        distance_km_sql = f"""
         {great_circle_distance_km_sql(lat_l, lat_r, long_l, long_r)} <= {km_threshold}
-    """
+        """
 
-    if not_null:
-        null_sql = " AND ".join(
-            [f"{c} is not null" for c in [lat_r, lat_l, long_l, long_r]]
-        )
-        distance_km_sql = f"({null_sql}) AND {distance_km_sql}"
+        if not_null:
+            null_sql = " AND ".join(
+                [f"{c} is not null" for c in [lat_r, lat_l, long_l, long_r]]
+            )
+            distance_km_sql = f"({null_sql}) AND {distance_km_sql}"
 
-    level_dict = {
-        "sql_condition": distance_km_sql,
-        "label_for_charts": f"Distance less than {km_threshold}km",
-    }
+        level_dict = {
+            "sql_condition": distance_km_sql,
+            "label_for_charts": f"Distance less than {km_threshold}km",
+        }
 
-    if m_probability:
-        level_dict["m_probability"] = m_probability
+        if m_probability:
+            level_dict["m_probability"] = m_probability
 
-    return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
+        super().__init__(level_dict, sql_dialect=self._sql_dialect)
 
 
 def percentage_difference_level(

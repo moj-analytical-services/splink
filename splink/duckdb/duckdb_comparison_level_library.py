@@ -8,7 +8,7 @@ from ..comparison_level_library import (  # noqa: F401
     null_level,
     DistanceFunctionLevelBase,
     columns_reversed_level,
-    distance_in_km_level,
+    DistanceInKMLevelBase,
     percentage_difference_level,
     ArrayIntersectLevelBase,
 )
@@ -36,4 +36,8 @@ class jaccard_level(DuckDBBase, JaccardLevelBase):
 
 
 class array_intersect_level(DuckDBBase, ArrayIntersectLevelBase):
+    pass
+
+
+class distance_in_km_level(DuckDBBase, DistanceInKMLevelBase):
     pass

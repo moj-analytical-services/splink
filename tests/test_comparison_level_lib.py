@@ -1,12 +1,11 @@
 import pandas as pd
-from splink.comparison_level_library import (
+from splink.duckdb.duckdb_comparison_level_library import (
     columns_reversed_level,
     else_level,
     exact_match_level,
     null_level,
     distance_in_km_level,
     percentage_difference_level,
-    _mutable_params,
 )
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
@@ -63,8 +62,6 @@ def test_haversine_level():
         d["lat_long_arr"] = [d["lat"], d["lon"]]
 
     df = pd.DataFrame(data)
-
-    _mutable_params["dialect"] = "duckdb"
 
     settings = {
         "unique_id_column_name": "id",

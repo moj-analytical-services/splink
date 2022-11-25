@@ -8,7 +8,7 @@ from ..comparison_level_library import (  # noqa: F401
     columns_reversed_level,
     JaccardLevelBase,
     JaroWinklerLevelBase,
-    distance_in_km_level,
+    DistanceInKMLevelBase,
     ArrayIntersectLevelBase,
 )
 from .spark_base import (
@@ -35,4 +35,8 @@ class jaccard_level(SparkBase, JaccardLevelBase):
 
 
 class array_intersect_level(SparkBase, ArrayIntersectLevelBase):
+    pass
+
+
+class distance_in_km_level(SparkBase, DistanceInKMLevelBase):
     pass

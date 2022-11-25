@@ -30,7 +30,6 @@ def test_full_example_sqlite(tmp_path):
     df.to_sql("input_df_tablename", con)
 
     _mutable_params["dialect"] = "sqlite"  # noqa: F811
-    _mutable_params["levenshtein"] = "levenshtein"  # noqa: F811
     settings_dict = get_settings_dict()
     linker = SQLiteLinker(
         "input_df_tablename",
@@ -81,7 +80,6 @@ def test_small_link_example_sqlite():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     _mutable_params["dialect"] = "sqlite"  # noqa: F811
-    _mutable_params["levenshtein"] = "levenshtein"  # noqa: F811
     settings_dict = get_settings_dict()
 
     settings_dict["link_type"] = "link_only"

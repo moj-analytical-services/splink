@@ -6,7 +6,7 @@ from ..comparison_level_library import (  # noqa: F401
     else_level,
     null_level,
     columns_reversed_level,
-    distance_in_km_level,
+    DistanceInKMLevelBase,
     ArrayIntersectLevelBase,
 )
 from .athena_base import (
@@ -24,5 +24,9 @@ class levenshtein_level(AthenaBase, LevenshteinLevelBase):
     pass
 
 
-class array_intersect_level(ArrayIntersectLevelBase):
+class array_intersect_level(AthenaBase, ArrayIntersectLevelBase):
+    pass
+
+
+class distance_in_km_level(AthenaBase, DistanceInKMLevelBase):
     pass
