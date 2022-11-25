@@ -15,6 +15,7 @@ _mutable_params = {
     # "size_array_intersect_function": None,
 }
 
+
 class DistanceFunctionLevelBase(ComparisonLevel):
     def __init__(
         self,

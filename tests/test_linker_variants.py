@@ -2,9 +2,7 @@ from copy import deepcopy
 import pandas as pd
 from splink.comparison_library import exact_match
 from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.comparison_level_library import _mutable_params
 
-_mutable_params["dialect"] = "duckdb"
 settings_template = {
     "probability_two_random_records_match": 0.01,
     "unique_id_column_name": "id",

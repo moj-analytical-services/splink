@@ -2,7 +2,6 @@ from splink.duckdb.duckdb_comparison_library import levenshtein_at_thresholds
 from splink.duckdb.duckdb_linker import DuckDBLinker
 import pandas as pd
 import numpy as np
-from splink.comparison_level_library import _mutable_params
 
 from pytest import approx
 
@@ -19,7 +18,6 @@ def test_u_train():
     ]
     df = pd.DataFrame(data)
 
-    _mutable_params["dialect"] = "duckdb"
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [levenshtein_at_thresholds("name", 2)],
@@ -65,7 +63,6 @@ def test_u_train_link_only():
     df_l = pd.DataFrame(data_l)
     df_r = pd.DataFrame(data_r)
 
-    _mutable_params["dialect"] = "duckdb"
     settings = {
         "link_type": "link_only",
         "comparisons": [levenshtein_at_thresholds("name", 2)],
@@ -115,7 +112,6 @@ def test_u_train_link_only_sample():
 
     target_rows = 1800000
 
-    _mutable_params["dialect"] = "duckdb"
     settings = {
         "link_type": "link_only",
         "comparisons": [levenshtein_at_thresholds("name", 2)],
@@ -176,7 +172,6 @@ def test_u_train_multilink():
     expected_total_links = 2 * 3 + 2 * 4 + 2 * 7 + 3 * 4 + 3 * 7 + 4 * 7
     expected_total_links_with_dedupes = (2 + 3 + 4 + 7) * (2 + 3 + 4 + 7 - 1) / 2
 
-    _mutable_params["dialect"] = "duckdb"
     settings = {
         "link_type": "link_only",
         "comparisons": [levenshtein_at_thresholds("name", 2)],

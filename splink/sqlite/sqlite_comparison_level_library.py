@@ -11,5 +11,6 @@ from .sqlite_base import (
 
 _mutable_params["dialect"] = "sqlite"
 
+
 class distance_function_level(SqliteBase, DistanceFunctionLevelBase):
     pass

@@ -26,7 +26,6 @@ from .duckdb_comparison_level_library import (
 _mutable_params["dialect"] = "duckdb"
 
 
-
 class distance_function_at_thresholds(
     DuckDBBase, DistanceFunctionAtThresholdsComparisonBase
 ):
@@ -35,17 +34,13 @@ class distance_function_at_thresholds(
         return distance_function_level
 
 
-class levenshtein_at_thresholds(
-    DuckDBBase, LevenshteinAtThresholdsComparisonBase
-):
+class levenshtein_at_thresholds(DuckDBBase, LevenshteinAtThresholdsComparisonBase):
     @property
     def _distance_level(self):
         return levenshtein_level
 
 
-class jaro_winkler_at_thresholds(
-    DuckDBBase, JaroWinklerAtThresholdsComparisonBase
-):
+class jaro_winkler_at_thresholds(DuckDBBase, JaroWinklerAtThresholdsComparisonBase):
     @property
     def _distance_level(self):
         return jaro_winkler_level

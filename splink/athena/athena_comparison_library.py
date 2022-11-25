@@ -30,9 +30,7 @@ class distance_function_at_thresholds(
         return distance_function_level
 
 
-class levenshtein_at_thresholds(
-    AthenaBase, LevenshteinAtThresholdsComparisonBase
-):
+class levenshtein_at_thresholds(AthenaBase, LevenshteinAtThresholdsComparisonBase):
     @property
     def _distance_level(self):
         return levenshtein_level

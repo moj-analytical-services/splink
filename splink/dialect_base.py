@@ -15,4 +15,3 @@ class DialectBase:
     @property
     def _jaccard_name(self):
         return "jaccard"
-

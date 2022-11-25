@@ -65,8 +65,9 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
 
         The user-provided distance function must exist in the SQL backend.
 
-        An example of the output with default arguments and setting `distance_function_name`
-        to `jaccard` and `distance_threshold_or_thresholds = [0.9,0.7]` would be
+        An example of the output with default arguments and setting
+        `distance_function_name` to `jaccard` and
+        `distance_threshold_or_thresholds = [0.9,0.7]` would be
         - Exact match
         - Jaccard distance <= 0.9
         - Jaccard distance <= 0.7
@@ -75,11 +76,13 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         Args:
             col_name (str): The name of the column to compare
             distance_function_name (str): The name of the distance function.
-            distance_threshold_or_thresholds (Union[int, list], optional): The threshold(s)
-                to use for the middle similarity level(s). Defaults to [1, 2].
-            higher_is_more_similar (bool): If True, a higher value of the distance function
-                indicates a higher similarity (e.g. jaro_winkler).  If false, a higher
-                value indicates a lower similarity (e.g. levenshtein).
+            distance_threshold_or_thresholds (Union[int, list], optional): The
+                threshold(s) to use for the middle similarity level(s).
+                Defaults to [1, 2].
+            higher_is_more_similar (bool): If True, a higher value of the distance
+                function indicates a higher similarity (e.g. jaro_winkler).
+                If false, a higher value indicates a lower similarity
+                (e.g. levenshtein).
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -113,16 +116,14 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             comparison_levels.append(level)
 
         for thres, m_prob in zip(distance_thresholds, m_probabilities):
-            # we want to allow people to pass a string (if they have some custom function)
-            # but also need derived classes to pass their types
-            # i.e. IF we are being called with a distance_function_name (as a distance function)
-            # then call the appropiate distance_function_level
-            # otherwise call the custom level function
+            # these function arguments hold for all cases.
             kwargs = dict(
                 col_name=col_name,
                 distance_threshold=thres,
                 m_probability=m_prob,
             )
+            # separate out the two that are only used
+            # when we have a user-supplied function, rather than a predefined subclass
             # feels a bit hacky, but will do at least for time being
             if not self._is_distance_subclass:
                 kwargs["distance_function_name"] = distance_function_name
@@ -179,8 +180,9 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
 
         Args:
             col_name (str): The name of the column to compare
-            distance_threshold_or_thresholds (Union[int, list], optional): The threshold(s)
-                to use for the middle similarity level(s). Defaults to [1, 2].
+            distance_threshold_or_thresholds (Union[int, list], optional): The
+                threshold(s) to use for the middle similarity level(s).
+                Defaults to [1, 2].
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -237,8 +239,9 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
 
         Args:
             col_name (str): The name of the column to compare
-            distance_threshold_or_thresholds (Union[int, list], optional): The threshold(s)
-                to use for the middle similarity level(s). Defaults to [0.9, 0.7].
+            distance_threshold_or_thresholds (Union[int, list], optional): The
+                threshold(s) to use for the middle similarity level(s).
+                Defaults to [0.9, 0.7].
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -295,8 +298,9 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
 
         Args:
             col_name (str): The name of the column to compare
-            distance_threshold_or_thresholds (Union[int, list], optional): The threshold(s)
-                to use for the middle similarity level(s). Defaults to [0.9, 0.7].
+            distance_threshold_or_thresholds (Union[int, list], optional): The
+                threshold(s) to use for the middle similarity level(s).
+                Defaults to [0.9, 0.7].
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency

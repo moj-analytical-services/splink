@@ -22,4 +22,3 @@ class distance_function_at_thresholds(
     @property
     def _distance_level(self):
         return distance_function_level
-
