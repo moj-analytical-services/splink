@@ -19,6 +19,7 @@ from .duckdb_comparison_level_library import (
     levenshtein_level,
     jaro_winkler_level,
     jaccard_level,
+    array_intersect_level,
 )
 
 # _mutable_params["jaro_winkler"] = "jaro_winkler_similarity"
@@ -57,4 +58,6 @@ class jaccard_at_thresholds(DuckDBBase, JaccardAtThresholdsComparisonBase):
 
 
 class array_intersect_at_sizes(DuckDBBase, ArrayIntersectAtSizesComparisonBase):
-    pass
+    @property
+    def _array_intersect_level(self):
+        return array_intersect_level

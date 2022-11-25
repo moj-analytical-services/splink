@@ -16,6 +16,7 @@ from .athena_base import (
 from .athena_comparison_level_library import (
     distance_function_level,
     levenshtein_level,
+    array_intersect_level,
 )
 
 _mutable_params["dialect"] = "presto"
@@ -38,4 +39,6 @@ class levenshtein_at_thresholds(
 
 
 class array_intersect_at_sizes(AthenaBase, ArrayIntersectAtSizesComparisonBase):
-    pass
+    @property
+    def _array_intersect_level(self):
+        return array_intersect_level

@@ -20,6 +20,7 @@ from .spark_comparison_level_library import (
     levenshtein_level,
     jaro_winkler_level,
     jaccard_level,
+    array_intersect_level,
 )
 
 
@@ -62,4 +63,6 @@ class jaccard_at_thresholds(
 class array_intersect_at_sizes(
     SparkBase, ArrayIntersectAtSizesComparisonBase
 ):
-    pass
+    @property
+    def _array_intersect_level(self):
+        return array_intersect_level
