@@ -11,7 +11,6 @@ _mutable_params["dialect"] = "sqlite"
 
 
 class SqliteLevel(DialectLevel):
-
     @property
     def _sql_dialect(self):
         return "sqlite"

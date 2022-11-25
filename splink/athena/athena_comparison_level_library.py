@@ -3,7 +3,6 @@ from ..comparison_level_library import (  # noqa: F401
     DialectLevel,
     exact_match_level,
     LevenshteinLevelBase,
-    levenshtein_level,
     DistanceFunctionLevelBase,
     else_level,
     null_level,
@@ -33,11 +32,14 @@ class AthenaLevel(DialectLevel):
     def _size_array_intersect_function(self):
         return size_array_intersect_sql
 
+
 class distance_function_level(AthenaLevel, DistanceFunctionLevelBase):
     pass
 
+
 class levenshtein_level(AthenaLevel, LevenshteinLevelBase):
     pass
+
 
 class array_intersect_level(ArrayIntersectLevelBase):
     pass

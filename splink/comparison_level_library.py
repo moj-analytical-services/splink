@@ -14,9 +14,10 @@ _mutable_params = {
     # "jaro_winkler": "jaro_winkler",
     # "size_array_intersect_function": None,
 }
-# defines default values for dialect-dependent properties
-class DialectLevel():
 
+
+# defines default values for dialect-dependent properties
+class DialectLevel:
     @property
     def _sql_dialect(self):
         raise NotImplementedError("No SQL dialect specified")
@@ -28,6 +29,10 @@ class DialectLevel():
     @property
     def _jaro_winkler_name(self):
         return "jaro_winkler"
+
+    @property
+    def _jaccard_name(self):
+        return "jaccard"
 
 
 class DistanceFunctionLevelBase(ComparisonLevel):
@@ -47,11 +52,12 @@ class DistanceFunctionLevelBase(ComparisonLevel):
             distance_function_name (str): The name of the distance function
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
-            higher_is_more_similar (bool): If True, a higher value of the distance function
-                indicates a higher similarity (e.g. jaro_winkler).  If false, a higher
-                value indicates a lower similarity (e.g. levenshtein).
-            m_probability (float, optional): Starting value for m probability. Defaults to
-                None.
+            higher_is_more_similar (bool): If True, a higher value of the
+                distance function indicates a higher similarity (e.g. jaro_winkler).
+                If false, a higher value indicates a lower similarity
+                (e.g. levenshtein).
+            m_probability (float, optional): Starting value for m probability
+                Defaults to None.
 
         Returns:
             ComparisonLevel: A comparison level for a given distance function
@@ -67,9 +73,10 @@ class DistanceFunctionLevelBase(ComparisonLevel):
             f"{distance_function_name}({col.name_l()}, {col.name_r()}) "
             f"{operator} {distance_threshold}"
         )
+        chart_label = f"{distance_function_name} {operator} {distance_threshold}"
         level_dict = {
             "sql_condition": sql_cond,
-            "label_for_charts": f"{distance_function_name} {operator} {distance_threshold}",
+            "label_for_charts": chart_label,
         }
         if m_probability:
             level_dict["m_probability"] = m_probability
@@ -131,11 +138,12 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
-            m_probability (float, optional): Starting value for m probability. Defaults to
-                None.
+            m_probability (float, optional): Starting value for m probability.
+                Defaults to None.
 
         Returns:
-            ComparisonLevel: A comparison level that evaluates the levenshtein similarity
+            ComparisonLevel: A comparison level that evaluates the
+                levenshtein similarity
         """
         super.__init__(
             col_name,
@@ -159,11 +167,12 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
-            m_probability (float, optional): Starting value for m probability. Defaults to
-                None.
+            m_probability (float, optional): Starting value for m probability.
+                Defaults to None.
 
         Returns:
-            ComparisonLevel: A comparison level that evaluates the jaro winkler similarity
+            ComparisonLevel: A comparison level that evaluates the
+                jaro winkler similarity
         """
 
         super().__init__(
@@ -176,33 +185,37 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
 
     @property
     def _jaro_winkler_name(self):
-        raise NotImplementedError("Jaro-winkler function name not defined on base class")
+        raise NotImplementedError(
+            "Jaro-winkler function name not defined on base class"
+        )
 
 
-def jaccard_level(
-    col_name: str,
-    distance_threshold: Union[int, float],
-    m_probability=None,
-) -> ComparisonLevel:
-    """Represents a comparison using a jaccard distance function
+class JaccardLevelBase(DistanceFunctionLevelBase):
+    def __init__(
+        self,
+        col_name: str,
+        distance_threshold: Union[int, float],
+        m_probability=None,
+    ) -> ComparisonLevel:
+        """Represents a comparison using a jaccard distance function
 
-    Args:
-        col_name (str): Input column name
-        distance_threshold (Union[int, float]): The threshold to use to assess
-            similarity
-        m_probability (float, optional): Starting value for m probability. Defaults to
-            None.
+        Args:
+            col_name (str): Input column name
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+            m_probability (float, optional): Starting value for m probability.
+                Defaults to None.
 
-    Returns:
-        ComparisonLevel: A comparison level that evaluates the jaccard similarity
-    """
-    return distance_function_level(
-        col_name,
-        "jaccard",
-        distance_threshold,
-        True,
-        m_probability=m_probability,
-    )
+        Returns:
+            ComparisonLevel: A comparison level that evaluates the jaccard similarity
+        """
+        super.__init__(
+            col_name,
+            self._jaccard_name,
+            distance_threshold,
+            True,
+            m_probability=m_probability,
+        )
 
 
 def else_level(

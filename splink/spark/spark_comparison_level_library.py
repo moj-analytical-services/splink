@@ -7,7 +7,7 @@ from ..comparison_level_library import (  # noqa: F401
     null_level,
     DistanceFunctionLevelBase,
     columns_reversed_level,
-    jaccard_level,
+    JaccardLevelBase,
     JaroWinklerLevelBase,
     distance_in_km_level,
     ArrayIntersectLevelBase,
@@ -21,9 +21,7 @@ def size_array_intersect_sql(col_name_l, col_name_r):
 _mutable_params["dialect"] = "spark"
 
 
-
 class SparkLevel(DialectLevel):
-
     @property
     def _sql_dialect(self):
         return "spark"
@@ -36,11 +34,18 @@ class SparkLevel(DialectLevel):
 class distance_function_level(SparkLevel, DistanceFunctionLevelBase):
     pass
 
+
 class levenshtein_level(SparkLevel, LevenshteinLevelBase):
     pass
 
+
 class jaro_winkler_level(SparkLevel, JaroWinklerLevelBase):
     pass
+
+
+class jaccard_level(SparkLevel, JaccardLevelBase):
+    pass
+
 
 class array_intersect_level(SparkLevel, ArrayIntersectLevelBase):
     pass
