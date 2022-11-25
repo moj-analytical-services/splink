@@ -1,12 +1,13 @@
 from ..comparison_level_library import (  # noqa: F401
     _mutable_params,
+    DialectLevel,
     exact_match_level,
     levenshtein_level,
     jaccard_level,
     JaroWinklerLevelBase,
     else_level,
     null_level,
-    distance_function_level,
+    DistanceFunctionLevelBase,
     columns_reversed_level,
     distance_in_km_level,
     percentage_difference_level,
@@ -25,7 +26,7 @@ def size_array_intersect_sql(col_name_l, col_name_r):
 _mutable_params["dialect"] = "duckdb"
 
 
-class DuckDBLevel():
+class DuckDBLevel(DialectLevel):
 
     @property
     def _sql_dialect(self):
@@ -39,6 +40,8 @@ class DuckDBLevel():
     def _jaro_winkler_name(self):
         return "jaro_winkler_similarity"
 
+class distance_function_level(DuckDBLevel, DistanceFunctionLevelBase):
+    pass
 
 class jaro_winkler_level(DuckDBLevel, JaroWinklerLevelBase):
     pass

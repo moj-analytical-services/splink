@@ -26,7 +26,7 @@ class DialectLevel():
         return "jaro_winkler"
 
 
-class distance_function_level(ComparisonLevel):
+class DistanceFunctionLevelBase(ComparisonLevel):
     def __init__(
         self,
         col_name: str,
@@ -52,7 +52,7 @@ class distance_function_level(ComparisonLevel):
         Returns:
             ComparisonLevel: A comparison level for a given distance function
         """
-        col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
+        col = InputColumn(col_name, sql_dialect=self._sql_dialect)
 
         if higher_is_more_similar:
             operator = ">="
@@ -70,7 +70,7 @@ class distance_function_level(ComparisonLevel):
         if m_probability:
             level_dict["m_probability"] = m_probability
 
-        super().__init__(level_dict, sql_dialect=_mutable_params["dialect"])
+        super().__init__(level_dict, sql_dialect=self._sql_dialect)
 
 
 def null_level(col_name) -> ComparisonLevel:
@@ -141,7 +141,7 @@ def levenshtein_level(
     )
 
 
-class JaroWinklerLevelBase(distance_function_level):
+class JaroWinklerLevelBase(DistanceFunctionLevelBase):
     def __init__(
         self,
         col_name: str,
