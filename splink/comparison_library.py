@@ -336,6 +336,10 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
                 "`size_or_sizes` must have at least one element, so that Comparison "
                 "has more than just an 'else' level"
             )
+        if any(size <= 0 for size in sizes):
+            raise ValueError(
+                "All entries of `size_or_sizes` must be postive"
+            )
 
         if m_probability_or_probabilities_sizes is None:
             m_probability_or_probabilities_sizes = [None] * len(sizes)

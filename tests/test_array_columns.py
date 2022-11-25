@@ -1,5 +1,7 @@
 import pandas as pd
 
+import pytest
+
 from splink.duckdb.duckdb_linker import DuckDBLinker
 import splink.duckdb.duckdb_comparison_library as cl
 
@@ -123,3 +125,13 @@ def test_array_comparisons():
             )
             print(id_pair)
             assert row["gamma_postcode"] == gamma_val
+
+    # check we get an error if we try to pass -ve sizes
+    with pytest.raises(ValueError):
+        settings = {
+            "link_type": "dedupe_only",
+            "comparisons": [
+                cl.array_intersect_at_sizes("postcode", [-1, 2]),
+                cl.exact_match("first_name"),
+            ],
+        }
