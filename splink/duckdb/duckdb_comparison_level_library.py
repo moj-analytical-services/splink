@@ -9,7 +9,7 @@ from ..comparison_level_library import (  # noqa: F401
     DistanceFunctionLevelBase,
     columns_reversed_level,
     DistanceInKMLevelBase,
-    percentage_difference_level,
+    PercentageDifferenceLevelBase,
     ArrayIntersectLevelBase,
 )
 from .duckb_base import (
@@ -36,6 +36,10 @@ class jaccard_level(DuckDBBase, JaccardLevelBase):
 
 
 class array_intersect_level(DuckDBBase, ArrayIntersectLevelBase):
+    pass
+
+
+class percentage_difference_level(DuckDBBase, PercentageDifferenceLevelBase):
     pass
 
 
