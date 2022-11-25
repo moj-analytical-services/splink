@@ -9,30 +9,22 @@ from ..comparison_level_library import (  # noqa: F401
     jaccard_level,
     jaro_winkler_level,
     distance_in_km_level,
+    ArrayIntersectLevelBase,
 )
-from ..input_column import InputColumn
-from ..comparison_level import ComparisonLevel
+
+
+def size_array_intersect_sql(col_name_l, col_name_r):
+    return f"size(array_intersect({col_name_l}, {col_name_r}))"
+
 
 _mutable_params["dialect"] = "spark"
 
 
-def array_intersect_level(
-    col_name, m_probability=None, term_frequency_adjustments=False, min_intersection=1
-) -> ComparisonLevel:
+class array_intersect_level(ArrayIntersectLevelBase):
+    @property
+    def _sql_dialect(self):
+        return "spark"
 
-    col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
-
-    sql = f"size(array_intersect({col.name_l()}, {col.name_r()})) >= {min_intersection}"
-
-    if min_intersection == 1:
-        label = "Arrays intersect"
-    else:
-        label = f"Array intersect size >= {min_intersection}"
-
-    level_dict = {"sql_condition": sql, "label_for_charts": label}
-    if m_probability:
-        level_dict["m_probability"] = m_probability
-    if term_frequency_adjustments:
-        level_dict["tf_adjustment_column"] = col_name
-
-    return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
+    @property
+    def _size_array_intersect_function(self):
+        return size_array_intersect_sql
