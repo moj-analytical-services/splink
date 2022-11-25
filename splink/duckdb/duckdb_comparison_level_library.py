@@ -26,7 +26,8 @@ _mutable_params["dialect"] = "duckdb"
 _mutable_params["jaro_winkler"] = "jaro_winkler_similarity"
 
 
-class array_intersect_level(ArrayIntersectLevelBase):
+class DuckDBLevel():
+
     @property
     def _sql_dialect(self):
         return "duckdb"
@@ -34,3 +35,7 @@ class array_intersect_level(ArrayIntersectLevelBase):
     @property
     def _size_array_intersect_function(self):
         return size_array_intersect_sql
+
+
+class array_intersect_level(DuckDBLevel, ArrayIntersectLevelBase):
+    pass
