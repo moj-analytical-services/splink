@@ -14,51 +14,63 @@ _mutable_params = {
     "jaro_winkler": "jaro_winkler",
     "size_array_intersect_function": None,
 }
+# defines default values for dialect-dependent properties
+class DialectLevel():
+
+    @property
+    def _sql_dialect(self):
+        raise NotImplementedError("No SQL dialect specified")
+
+    @property
+    def _jaro_winkler_name(self):
+        return "jaro_winkler"
 
 
-def distance_function_level(
-    col_name: str,
-    distance_function_name: str,
-    distance_threshold: Union[int, float],
-    higher_is_more_similar: bool = True,
-    m_probability=None,
-) -> ComparisonLevel:
-    """Represents a comparison using a user-provided distance function,
-    where the similarity
+class distance_function_level(ComparisonLevel):
+    def __init__(
+        self,
+        col_name: str,
+        distance_function_name: str,
+        distance_threshold: Union[int, float],
+        higher_is_more_similar: bool = True,
+        m_probability=None,
+    ):
+        """Represents a comparison using a user-provided distance function,
+        where the similarity
 
-    Args:
-        col_name (str): Input column name
-        distance_function_name (str): The name of the distance function
-        distance_threshold (Union[int, float]): The threshold to use to assess
-            similarity
-        higher_is_more_similar (bool): If True, a higher value of the distance function
-            indicates a higher similarity (e.g. jaro_winkler).  If false, a higher
-            value indicates a lower similarity (e.g. levenshtein).
-        m_probability (float, optional): Starting value for m probability. Defaults to
-            None.
+        Args:
+            col_name (str): Input column name
+            distance_function_name (str): The name of the distance function
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+            higher_is_more_similar (bool): If True, a higher value of the distance function
+                indicates a higher similarity (e.g. jaro_winkler).  If false, a higher
+                value indicates a lower similarity (e.g. levenshtein).
+            m_probability (float, optional): Starting value for m probability. Defaults to
+                None.
 
-    Returns:
-        ComparisonLevel: A comparison level for a given distance function
-    """
-    col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
+        Returns:
+            ComparisonLevel: A comparison level for a given distance function
+        """
+        col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
 
-    if higher_is_more_similar:
-        operator = ">="
-    else:
-        operator = "<="
+        if higher_is_more_similar:
+            operator = ">="
+        else:
+            operator = "<="
 
-    sql_cond = (
-        f"{distance_function_name}({col.name_l()}, {col.name_r()}) "
-        f"{operator} {distance_threshold}"
-    )
-    level_dict = {
-        "sql_condition": sql_cond,
-        "label_for_charts": f"{distance_function_name} {operator} {distance_threshold}",
-    }
-    if m_probability:
-        level_dict["m_probability"] = m_probability
+        sql_cond = (
+            f"{distance_function_name}({col.name_l()}, {col.name_r()}) "
+            f"{operator} {distance_threshold}"
+        )
+        level_dict = {
+            "sql_condition": sql_cond,
+            "label_for_charts": f"{distance_function_name} {operator} {distance_threshold}",
+        }
+        if m_probability:
+            level_dict["m_probability"] = m_probability
 
-    return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
+        super().__init__(level_dict, sql_dialect=_mutable_params["dialect"])
 
 
 def null_level(col_name) -> ComparisonLevel:
@@ -129,31 +141,37 @@ def levenshtein_level(
     )
 
 
-def jaro_winkler_level(
-    col_name: str,
-    distance_threshold: float,
-    m_probability=None,
-) -> ComparisonLevel:
-    """Represents a comparison using the jaro winkler distance function
+class JaroWinklerLevelBase(distance_function_level):
+    def __init__(
+        self,
+        col_name: str,
+        distance_threshold: float,
+        m_probability=None,
+    ):
+        """Represents a comparison using the jaro winkler distance function
 
-    Args:
-        col_name (str): Input column name
-        distance_threshold (Union[int, float]): The threshold to use to assess
-            similarity
-        m_probability (float, optional): Starting value for m probability. Defaults to
-            None.
+        Args:
+            col_name (str): Input column name
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+            m_probability (float, optional): Starting value for m probability. Defaults to
+                None.
 
-    Returns:
-        ComparisonLevel: A comparison level that evaluates the jaro winkler similarity
-    """
-    jaro_name = _mutable_params["jaro_winkler"]
-    return distance_function_level(
-        col_name,
-        jaro_name,
-        distance_threshold,
-        True,
-        m_probability=m_probability,
-    )
+        Returns:
+            ComparisonLevel: A comparison level that evaluates the jaro winkler similarity
+        """
+
+        super().__init__(
+            col_name,
+            self._jaro_winkler_name,
+            distance_threshold,
+            True,
+            m_probability=m_probability,
+        )
+
+    @property
+    def _jaro_winkler_name(self):
+        raise NotImplementedError("Jaro-winkler function name not defined on base class")
 
 
 def jaccard_level(
