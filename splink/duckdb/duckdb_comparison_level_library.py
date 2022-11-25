@@ -2,7 +2,7 @@ from ..comparison_level_library import (  # noqa: F401
     _mutable_params,
     DialectLevel,
     exact_match_level,
-    levenshtein_level,
+    LevenshteinLevelBase,
     jaccard_level,
     JaroWinklerLevelBase,
     else_level,
@@ -41,6 +41,9 @@ class DuckDBLevel(DialectLevel):
         return "jaro_winkler_similarity"
 
 class distance_function_level(DuckDBLevel, DistanceFunctionLevelBase):
+    pass
+
+class levenshtein_level(DuckDBLevel, LevenshteinLevelBase):
     pass
 
 class jaro_winkler_level(DuckDBLevel, JaroWinklerLevelBase):

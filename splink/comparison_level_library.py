@@ -10,9 +10,9 @@ from .comparison_level_sql import great_circle_distance_km_sql
 # DuckDBComparisonLevel etc.
 _mutable_params = {
     "dialect": None,
-    "levenshtein": "levenshtein",
-    "jaro_winkler": "jaro_winkler",
-    "size_array_intersect_function": None,
+    # "levenshtein": "levenshtein",
+    # "jaro_winkler": "jaro_winkler",
+    # "size_array_intersect_function": None,
 }
 # defines default values for dialect-dependent properties
 class DialectLevel():
@@ -20,6 +20,10 @@ class DialectLevel():
     @property
     def _sql_dialect(self):
         raise NotImplementedError("No SQL dialect specified")
+
+    @property
+    def _levenshtein_name(self):
+        return "levenshtein"
 
     @property
     def _jaro_winkler_name(self):
@@ -114,31 +118,32 @@ def exact_match_level(
     return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
 
 
-def levenshtein_level(
-    col_name: str,
-    distance_threshold: int,
-    m_probability=None,
-) -> ComparisonLevel:
-    """Represents a comparison using a levenshtein distance function,
+class LevenshteinLevelBase(DistanceFunctionLevelBase):
+    def __init__(
+        self,
+        col_name: str,
+        distance_threshold: int,
+        m_probability=None,
+    ) -> ComparisonLevel:
+        """Represents a comparison using a levenshtein distance function,
 
-    Args:
-        col_name (str): Input column name
-        distance_threshold (Union[int, float]): The threshold to use to assess
-            similarity
-        m_probability (float, optional): Starting value for m probability. Defaults to
-            None.
+        Args:
+            col_name (str): Input column name
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+            m_probability (float, optional): Starting value for m probability. Defaults to
+                None.
 
-    Returns:
-        ComparisonLevel: A comparison level that evaluates the levenshtein similarity
-    """
-    lev_name = _mutable_params["levenshtein"]
-    return distance_function_level(
-        col_name,
-        lev_name,
-        distance_threshold,
-        False,
-        m_probability=m_probability,
-    )
+        Returns:
+            ComparisonLevel: A comparison level that evaluates the levenshtein similarity
+        """
+        super.__init__(
+            col_name,
+            self._levenshtein_name,
+            distance_threshold,
+            False,
+            m_probability=m_probability,
+        )
 
 
 class JaroWinklerLevelBase(DistanceFunctionLevelBase):

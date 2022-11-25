@@ -2,7 +2,7 @@ from ..comparison_level_library import (  # noqa: F401
     _mutable_params,
     DialectLevel,
     exact_match_level,
-    levenshtein_level,
+    LevenshteinLevelBase,
     else_level,
     null_level,
     DistanceFunctionLevelBase,
@@ -34,6 +34,9 @@ class SparkLevel(DialectLevel):
 
 
 class distance_function_level(SparkLevel, DistanceFunctionLevelBase):
+    pass
+
+class levenshtein_level(SparkLevel, LevenshteinLevelBase):
     pass
 
 class jaro_winkler_level(SparkLevel, JaroWinklerLevelBase):

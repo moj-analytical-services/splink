@@ -2,6 +2,7 @@ from ..comparison_level_library import (  # noqa: F401
     _mutable_params,
     DialectLevel,
     exact_match_level,
+    LevenshteinLevelBase,
     levenshtein_level,
     DistanceFunctionLevelBase,
     else_level,
@@ -17,7 +18,6 @@ def size_array_intersect_sql(col_name_l, col_name_r):
 
 
 _mutable_params["dialect"] = "presto"
-_mutable_params["levenshtein"] = "levenshtein_distance"
 
 
 class AthenaLevel(DialectLevel):
@@ -26,12 +26,18 @@ class AthenaLevel(DialectLevel):
         return "presto"
 
     @property
+    def _levenshtein_name(self):
+        return "levenshtein_distance"
+
+    @property
     def _size_array_intersect_function(self):
         return size_array_intersect_sql
 
 class distance_function_level(AthenaLevel, DistanceFunctionLevelBase):
     pass
 
+class levenshtein_level(AthenaLevel, LevenshteinLevelBase):
+    pass
 
 class array_intersect_level(ArrayIntersectLevelBase):
     pass
