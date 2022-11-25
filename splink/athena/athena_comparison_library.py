@@ -5,19 +5,29 @@ from ..comparison_level_library import (
 
 from ..comparison_library import (  # noqa: F401
     exact_match,
-    levenshtein_at_thresholds,
+    DistanceFunctionAtThresholdsComparisonBase,
+    LevenshteinAtThresholdsComparisonBase,
     ArrayIntersectAtSizesComparisonBase,
 )
 
-from .athena_comparison_level_library import (
-    array_intersect_level,
+from .athena_base import (
+    AthenaBase,
 )
 
 _mutable_params["dialect"] = "presto"
-_mutable_params["levenshtein"] = "levenshtein_distance"
 
 
-class array_intersect_at_sizes(ArrayIntersectAtSizesComparisonBase):
-    @property
-    def _array_intersect_level(self):
-        return array_intersect_level
+class distance_function_at_thresholds(
+    AthenaBase, DistanceFunctionAtThresholdsComparisonBase
+):
+    pass
+
+
+class levenshtein_at_thresholds(
+    AthenaBase, LevenshteinAtThresholdsComparisonBase
+):
+    pass
+
+
+class array_intersect_at_sizes(AthenaBase, ArrayIntersectAtSizesComparisonBase):
+    pass

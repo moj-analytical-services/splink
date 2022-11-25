@@ -1,6 +1,5 @@
 from ..comparison_level_library import (  # noqa: F401
     _mutable_params,
-    DialectLevel,
     exact_match_level,
     LevenshteinLevelBase,
     else_level,
@@ -12,40 +11,28 @@ from ..comparison_level_library import (  # noqa: F401
     distance_in_km_level,
     ArrayIntersectLevelBase,
 )
-
-
-def size_array_intersect_sql(col_name_l, col_name_r):
-    return f"size(array_intersect({col_name_l}, {col_name_r}))"
-
+from .spark_base import (
+    SparkBase,
+)
 
 _mutable_params["dialect"] = "spark"
 
 
-class SparkLevel(DialectLevel):
-    @property
-    def _sql_dialect(self):
-        return "spark"
-
-    @property
-    def _size_array_intersect_function(self):
-        return size_array_intersect_sql
-
-
-class distance_function_level(SparkLevel, DistanceFunctionLevelBase):
+class distance_function_level(SparkBase, DistanceFunctionLevelBase):
     pass
 
 
-class levenshtein_level(SparkLevel, LevenshteinLevelBase):
+class levenshtein_level(SparkBase, LevenshteinLevelBase):
     pass
 
 
-class jaro_winkler_level(SparkLevel, JaroWinklerLevelBase):
+class jaro_winkler_level(SparkBase, JaroWinklerLevelBase):
     pass
 
 
-class jaccard_level(SparkLevel, JaccardLevelBase):
+class jaccard_level(SparkBase, JaccardLevelBase):
     pass
 
 
-class array_intersect_level(SparkLevel, ArrayIntersectLevelBase):
+class array_intersect_level(SparkBase, ArrayIntersectLevelBase):
     pass

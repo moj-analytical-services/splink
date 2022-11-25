@@ -5,22 +5,42 @@ from ..comparison_level_library import (
 
 from ..comparison_library import (  # noqa: F401
     exact_match,
-    levenshtein_at_thresholds,
-    distance_function_at_thresholds,
-    jaccard_at_thresholds,
-    jaro_winkler_at_thresholds,
+    DistanceFunctionAtThresholdsComparisonBase,
+    LevenshteinAtThresholdsComparisonBase,
+    JaroWinklerAtThresholdsComparisonBase,
+    JaccardAtThresholdsComparisonBase,
     ArrayIntersectAtSizesComparisonBase,
 )
 
-from .spark_comparison_level_library import (
-    array_intersect_level,
+from .spark_base import (
+    SparkBase,
 )
 
 
 _mutable_params["dialect"] = "spark"
 
 
-class array_intersect_at_sizes(ArrayIntersectAtSizesComparisonBase):
-    @property
-    def _array_intersect_level(self):
-        return array_intersect_level
+class distance_function_at_thresholds(
+    SparkBase, DistanceFunctionAtThresholdsComparisonBase
+):
+    pass
+
+
+class levenshtein_at_thresholds(
+    SparkBase, LevenshteinAtThresholdsComparisonBase
+):
+    pass
+
+
+class jaro_winkler_at_thresholds(
+    SparkBase, JaroWinklerAtThresholdsComparisonBase
+):
+    pass
+
+
+class jaccard_at_thresholds(SparkBase, JaccardAtThresholdsComparisonBase):
+    pass
+
+
+class array_intersect_at_sizes(SparkBase, ArrayIntersectAtSizesComparisonBase):
+    pass
