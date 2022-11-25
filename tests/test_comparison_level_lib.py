@@ -6,6 +6,7 @@ from splink.comparison_level_library import (
     null_level,
     distance_in_km_level,
     percentage_difference_level,
+    _mutable_params,
 )
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
@@ -62,6 +63,8 @@ def test_haversine_level():
         d["lat_long_arr"] = [d["lat"], d["lon"]]
 
     df = pd.DataFrame(data)
+
+    _mutable_params["dialect"] = "duckdb"
 
     settings = {
         "unique_id_column_name": "id",

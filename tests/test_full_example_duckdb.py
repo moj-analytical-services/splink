@@ -6,7 +6,6 @@ from splink.duckdb.duckdb_comparison_library import (
     exact_match,
     jaro_winkler_at_thresholds,
 )
-from splink.duckdb.duckdb_comparison_level_library import _mutable_params
 import pandas as pd
 import pyarrow.parquet as pq
 
@@ -22,11 +21,6 @@ def test_full_example_duckdb(tmp_path):
     settings_dict = get_settings_dict()
 
     # Overwrite the surname comparison to include duck-db specific syntax
-
-    _mutable_params["dialect"] = "duckdb"  # noqa: F811
-    _mutable_params["levenshtein"] = "levenshtein"
-    _mutable_params["jaro_winkler"] = "jaro_winkler_similarity"
-
     settings_dict["comparisons"][0] = jaro_winkler_at_thresholds("first_name")
     settings_dict["comparisons"][1] = jaccard_at_thresholds("SUR name")
     settings_dict["blocking_rules_to_generate_predictions"] = [
