@@ -12,7 +12,7 @@ class ExactMatchBase(Comparison):
         m_probability_exact_match=None,
         m_probability_else=None,
         include_colname_in_charts_label=False,
-    ) -> Comparison:
+    ):
         """A comparison of the data in `col_name` with two levels:
         - Exact match
         - Anything else
@@ -61,7 +61,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         m_probability_exact_match=None,
         m_probability_or_probabilities_lev: Union[float, list] = None,
         m_probability_else=None,
-    ) -> Comparison:
+    ):
         """A comparison of the data in `col_name` with a user-provided distance
         function used to assess middle similarity levels.
 
@@ -169,7 +169,7 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         m_probability_exact_match=None,
         m_probability_or_probabilities_lev: Union[float, list] = None,
         m_probability_else=None,
-    ) -> Comparison:
+    ):
         """A comparison of the data in `col_name` with the levenshtein distance used to
         assess middle similarity levels.
 
@@ -228,7 +228,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
         m_probability_exact_match=None,
         m_probability_or_probabilities_lev: Union[float, list] = None,
         m_probability_else=None,
-    ) -> Comparison:
+    ):
         """A comparison of the data in `col_name` with the jaccard distance used to
         assess middle similarity levels.
 
@@ -287,7 +287,7 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         m_probability_exact_match=None,
         m_probability_or_probabilities_lev: Union[float, list] = None,
         m_probability_else=None,
-    ) -> Comparison:
+    ):
         """A comparison of the data in `col_name` with the jaro_winkler distance used to
         assess middle similarity levels.
 
@@ -343,7 +343,7 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
         size_or_sizes: Union[int, list] = [1],
         m_probability_or_probabilities_sizes: Union[float, list] = None,
         m_probability_else=None,
-    ) -> Comparison:
+    ):
         """A comparison of the data in array column `col_name` with various
         intersection sizes to assess similarity levels.
 

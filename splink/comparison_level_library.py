@@ -5,6 +5,72 @@ from .comparison_level import ComparisonLevel
 from .comparison_level_sql import great_circle_distance_km_sql
 
 
+class NullLevelBase(ComparisonLevel):
+    def __init__(self, col_name):
+        """Represents comparisons where one or both sides of the comparison
+        contains null values so the similarity cannot be evaluated.
+        Assumed to have a partial match weight of zero (null effect
+        on overall match weight)
+        Args:
+            col_name (str): Input column name
+        Returns:
+            ComparisonLevel: Comparison level
+        """
+
+        col = InputColumn(col_name, sql_dialect=self._sql_dialect)
+        level_dict = {
+            "sql_condition": f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL",
+            "label_for_charts": "Null",
+            "is_null_level": True,
+        }
+        super().__init__(level_dict, sql_dialect=self._sql_dialect)
+
+
+class ExactMatchLevelBase(ComparisonLevel):
+    def __init__(
+        self,
+        col_name,
+        m_probability=None,
+        term_frequency_adjustments=False,
+        include_colname_in_charts_label=False,
+    ):
+
+        col = InputColumn(col_name, sql_dialect=self._sql_dialect)
+
+        label_suffix = f" {col_name}" if include_colname_in_charts_label else ""
+        level_dict = {
+            "sql_condition": f"{col.name_l()} = {col.name_r()}",
+            "label_for_charts": f"Exact match{label_suffix}",
+        }
+        if m_probability:
+            level_dict["m_probability"] = m_probability
+        if term_frequency_adjustments:
+            level_dict["tf_adjustment_column"] = col_name
+
+        super().__init__(level_dict, sql_dialect=self._sql_dialect)
+
+
+class ElseLevelBase(ComparisonLevel):
+    def __init__(
+        self,
+        m_probability=None,
+    ):
+
+        if isinstance(m_probability, str):
+            raise ValueError(
+                "You provided a string for the value of m probability when it should "
+                "be numeric.  Perhaps you passed a column name.  Note that you do "
+                "not need to pass a column name into the else level."
+            )
+        level_dict = {
+            "sql_condition": "ELSE",
+            "label_for_charts": "All other comparisons",
+        }
+        if m_probability:
+            level_dict["m_probability"] = m_probability
+        super().__init__(level_dict)
+
+
 class DistanceFunctionLevelBase(ComparisonLevel):
     def __init__(
         self,
@@ -58,58 +124,13 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         raise NotImplementedError("Distance function not supported in this dialect")
 
 
-class NullLevelBase(ComparisonLevel):
-    def __init__(self, col_name) -> ComparisonLevel:
-        """Represents comparisons where one or both sides of the comparison
-        contains null values so the similarity cannot be evaluated.
-        Assumed to have a partial match weight of zero (null effect
-        on overall match weight)
-        Args:
-            col_name (str): Input column name
-        Returns:
-            ComparisonLevel: Comparison level
-        """
-
-        col = InputColumn(col_name, sql_dialect=self._sql_dialect)
-        level_dict = {
-            "sql_condition": f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL",
-            "label_for_charts": "Null",
-            "is_null_level": True,
-        }
-        super().__init__(level_dict, sql_dialect=self._sql_dialect)
-
-
-class ExactMatchLevelBase(ComparisonLevel):
-    def __init__(
-        self,
-        col_name,
-        m_probability=None,
-        term_frequency_adjustments=False,
-        include_colname_in_charts_label=False,
-    ) -> ComparisonLevel:
-
-        col = InputColumn(col_name, sql_dialect=self._sql_dialect)
-
-        label_suffix = f" {col_name}" if include_colname_in_charts_label else ""
-        level_dict = {
-            "sql_condition": f"{col.name_l()} = {col.name_r()}",
-            "label_for_charts": f"Exact match{label_suffix}",
-        }
-        if m_probability:
-            level_dict["m_probability"] = m_probability
-        if term_frequency_adjustments:
-            level_dict["tf_adjustment_column"] = col_name
-
-        super().__init__(level_dict, sql_dialect=self._sql_dialect)
-
-
 class LevenshteinLevelBase(DistanceFunctionLevelBase):
     def __init__(
         self,
         col_name: str,
         distance_threshold: int,
         m_probability=None,
-    ) -> ComparisonLevel:
+    ):
         """Represents a comparison using a levenshtein distance function,
 
         Args:
@@ -174,7 +195,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
         col_name: str,
         distance_threshold: Union[int, float],
         m_probability=None,
-    ) -> ComparisonLevel:
+    ):
         """Represents a comparison using a jaccard distance function
 
         Args:
@@ -196,27 +217,6 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
         )
 
 
-class ElseLevelBase(ComparisonLevel):
-    def __init__(
-        self,
-        m_probability=None,
-    ) -> ComparisonLevel:
-
-        if isinstance(m_probability, str):
-            raise ValueError(
-                "You provided a string for the value of m probability when it should "
-                "be numeric.  Perhaps you passed a column name.  Note that you do "
-                "not need to pass a column name into the else level."
-            )
-        level_dict = {
-            "sql_condition": "ELSE",
-            "label_for_charts": "All other comparisons",
-        }
-        if m_probability:
-            level_dict["m_probability"] = m_probability
-        super().__init__(level_dict)
-
-
 class ColumnsReversedLevelBase(ComparisonLevel):
     def __init__(
         self,
@@ -224,7 +224,7 @@ class ColumnsReversedLevelBase(ComparisonLevel):
         col_name_2: str,
         m_probability=None,
         tf_adjustment_column=None,
-    ) -> ComparisonLevel:
+    ):
         """Represents a comparison where the columns are reversed.  For example, if
         surname is in the forename field and vice versa
 
@@ -269,7 +269,7 @@ class DistanceInKMLevelBase(ComparisonLevel):
         km_threshold: Union[int, float],
         not_null: bool = False,
         m_probability=None,
-    ) -> ComparisonLevel:
+    ):
         """Use the haversine formula to transform comparisons of lat,lngs
         into distances measured in kilometers
 
