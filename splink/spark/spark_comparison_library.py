@@ -1,9 +1,4 @@
-from ..comparison_level_library import (
-    _mutable_params,
-)
-
-
-from ..comparison_library import (  # noqa: F401
+from ..comparison_library import (
     ExactMatchBase,
     DistanceFunctionAtThresholdsComparisonBase,
     LevenshteinAtThresholdsComparisonBase,
@@ -25,9 +20,6 @@ from .spark_comparison_level_library import (
     jaccard_level,
     array_intersect_level,
 )
-
-
-_mutable_params["dialect"] = "spark"
 
 
 class SparkComparison(SparkBase):

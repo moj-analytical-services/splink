@@ -1,9 +1,4 @@
-from ..comparison_level_library import (
-    _mutable_params,
-)
-
-
-from ..comparison_library import (  # noqa: F401
+from ..comparison_library import (
     ExactMatchBase,
     DistanceFunctionAtThresholdsComparisonBase,
     LevenshteinAtThresholdsComparisonBase,
@@ -21,8 +16,6 @@ from .athena_comparison_level_library import (
     levenshtein_level,
     array_intersect_level,
 )
-
-_mutable_params["dialect"] = "presto"
 
 
 class AthenaComparison(AthenaBase):

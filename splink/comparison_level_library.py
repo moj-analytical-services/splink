@@ -5,17 +5,6 @@ from .comparison_level import ComparisonLevel
 from .comparison_level_sql import great_circle_distance_km_sql
 
 
-# So that we can pass in a sql_dialect to the comparison levels
-# that is different depending on whether we're in a SparkComparionLevel,
-# DuckDBComparisonLevel etc.
-_mutable_params = {
-    "dialect": None,
-    # "levenshtein": "levenshtein",
-    # "jaro_winkler": "jaro_winkler",
-    # "size_array_intersect_function": None,
-}
-
-
 class DistanceFunctionLevelBase(ComparisonLevel):
     def __init__(
         self,

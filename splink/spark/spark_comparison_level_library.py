@@ -1,5 +1,4 @@
-from ..comparison_level_library import (  # noqa: F401
-    _mutable_params,
+from ..comparison_level_library import (
     ExactMatchLevelBase,
     LevenshteinLevelBase,
     ElseLevelBase,
@@ -14,8 +13,6 @@ from ..comparison_level_library import (  # noqa: F401
 from .spark_base import (
     SparkBase,
 )
-
-_mutable_params["dialect"] = "spark"
 
 
 class null_level(SparkBase, NullLevelBase):

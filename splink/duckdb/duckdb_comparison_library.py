@@ -1,9 +1,4 @@
-from ..comparison_level_library import (
-    _mutable_params,
-)
-
-
-from ..comparison_library import (  # noqa: F401
+from ..comparison_library import (
     ExactMatchBase,
     DistanceFunctionAtThresholdsComparisonBase,
     LevenshteinAtThresholdsComparisonBase,
@@ -24,9 +19,6 @@ from .duckdb_comparison_level_library import (
     jaccard_level,
     array_intersect_level,
 )
-
-# _mutable_params["jaro_winkler"] = "jaro_winkler_similarity"
-_mutable_params["dialect"] = "duckdb"
 
 
 class DuckDBComparison(DuckDBBase):

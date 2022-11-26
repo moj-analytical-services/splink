@@ -1,5 +1,4 @@
-from ..comparison_level_library import (  # noqa: F401
-    _mutable_params,
+from ..comparison_level_library import (
     ExactMatchLevelBase,
     LevenshteinLevelBase,
     JaccardLevelBase,
@@ -15,8 +14,6 @@ from ..comparison_level_library import (  # noqa: F401
 from .duckb_base import (
     DuckDBBase,
 )
-
-_mutable_params["dialect"] = "duckdb"
 
 
 class null_level(DuckDBBase, NullLevelBase):

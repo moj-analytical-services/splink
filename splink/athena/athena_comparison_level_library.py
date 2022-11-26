@@ -1,5 +1,4 @@
-from ..comparison_level_library import (  # noqa: F401
-    _mutable_params,
+from ..comparison_level_library import (
     ExactMatchLevelBase,
     LevenshteinLevelBase,
     DistanceFunctionLevelBase,
@@ -12,8 +11,6 @@ from ..comparison_level_library import (  # noqa: F401
 from .athena_base import (
     AthenaBase,
 )
-
-_mutable_params["dialect"] = "presto"
 
 
 class null_level(AthenaBase, NullLevelBase):

@@ -1,8 +1,4 @@
-from ..comparison_level_library import (
-    _mutable_params,
-)
-
-from ..comparison_library import (  # noqa: F401
+from ..comparison_library import (
     ExactMatchBase,
     DistanceFunctionAtThresholdsComparisonBase,
 )
@@ -15,8 +11,6 @@ from .sqlite_comparison_level_library import (
     else_level,
     distance_function_level,
 )
-
-_mutable_params["dialect"] = "sqlite"
 
 
 class SqliteComparison(SqliteBase):
