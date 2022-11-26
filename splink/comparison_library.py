@@ -1,7 +1,6 @@
 from typing import Union
 
 from .comparison import Comparison
-from . import comparison_level_library as cl
 from .misc import ensure_is_iterable
 
 
@@ -37,8 +36,8 @@ class ExactMatchBase(Comparison):
         comparison_dict = {
             "comparison_description": "Exact match vs. anything else",
             "comparison_levels": [
-                cl.null_level(col_name),
-                cl.exact_match_level(
+                self._null_level(col_name),
+                self._exact_match_level(
                     col_name,
                     term_frequency_adjustments=term_frequency_adjustments,
                     m_probability=m_probability_exact_match,
@@ -109,9 +108,9 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         m_probabilities = ensure_is_iterable(m_probability_or_probabilities_lev)
 
         comparison_levels = []
-        comparison_levels.append(cl.null_level(col_name))
+        comparison_levels.append(self._null_level(col_name))
         if include_exact_match_level:
-            level = cl.exact_match_level(
+            level = self._exact_match_level(
                 col_name,
                 term_frequency_adjustments=term_frequency_adjustments,
                 m_probability=m_probability_exact_match,
@@ -383,7 +382,7 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
         m_probabilities = ensure_is_iterable(m_probability_or_probabilities_sizes)
 
         comparison_levels = []
-        comparison_levels.append(cl.null_level(col_name))
+        comparison_levels.append(self._null_level(col_name))
 
         for size_intersect, m_prob in zip(sizes, m_probabilities):
             level = self._array_intersect_level(

@@ -69,45 +69,49 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         raise NotImplementedError("Distance function not supported in this dialect")
 
 
-def null_level(col_name) -> ComparisonLevel:
-    """Represents comparisons where one or both sides of the comparison
-    contains null values so the similarity cannot be evaluated.
-    Assumed to have a partial match weight of zero (null effect on overall match weight)
-    Args:
-        col_name (str): Input column name
-    Returns:
-        ComparisonLevel: Comparison level
-    """
+class NullLevelBase(ComparisonLevel):
+    def __init__(self, col_name) -> ComparisonLevel:
+        """Represents comparisons where one or both sides of the comparison
+        contains null values so the similarity cannot be evaluated.
+        Assumed to have a partial match weight of zero (null effect
+        on overall match weight)
+        Args:
+            col_name (str): Input column name
+        Returns:
+            ComparisonLevel: Comparison level
+        """
 
-    col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
-    level_dict = {
-        "sql_condition": f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL",
-        "label_for_charts": "Null",
-        "is_null_level": True,
-    }
-    return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
+        col = InputColumn(col_name, sql_dialect=self._sql_dialect)
+        level_dict = {
+            "sql_condition": f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL",
+            "label_for_charts": "Null",
+            "is_null_level": True,
+        }
+        super().__init__(level_dict, sql_dialect=self._sql_dialect)
 
 
-def exact_match_level(
-    col_name,
-    m_probability=None,
-    term_frequency_adjustments=False,
-    include_colname_in_charts_label=False,
-) -> ComparisonLevel:
+class ExactMatchLevelBase(ComparisonLevel):
+    def __init__(
+        self,
+        col_name,
+        m_probability=None,
+        term_frequency_adjustments=False,
+        include_colname_in_charts_label=False,
+    ) -> ComparisonLevel:
 
-    col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
+        col = InputColumn(col_name, sql_dialect=self._sql_dialect)
 
-    label_suffix = f" {col_name}" if include_colname_in_charts_label else ""
-    level_dict = {
-        "sql_condition": f"{col.name_l()} = {col.name_r()}",
-        "label_for_charts": f"Exact match{label_suffix}",
-    }
-    if m_probability:
-        level_dict["m_probability"] = m_probability
-    if term_frequency_adjustments:
-        level_dict["tf_adjustment_column"] = col_name
+        label_suffix = f" {col_name}" if include_colname_in_charts_label else ""
+        level_dict = {
+            "sql_condition": f"{col.name_l()} = {col.name_r()}",
+            "label_for_charts": f"Exact match{label_suffix}",
+        }
+        if m_probability:
+            level_dict["m_probability"] = m_probability
+        if term_frequency_adjustments:
+            level_dict["tf_adjustment_column"] = col_name
 
-    return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
+        super().__init__(level_dict, sql_dialect=self._sql_dialect)
 
 
 class LevenshteinLevelBase(DistanceFunctionLevelBase):

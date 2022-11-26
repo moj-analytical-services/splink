@@ -10,6 +10,8 @@ from .sqlite_base import (
     SqliteBase,
 )
 from .sqlite_comparison_level_library import (
+    exact_match_level,
+    null_level,
     else_level,
     distance_function_level,
 )
@@ -18,6 +20,14 @@ _mutable_params["dialect"] = "sqlite"
 
 
 class SqliteComparison(SqliteBase):
+    @property
+    def _exact_match_level(self):
+        return exact_match_level
+
+    @property
+    def _null_level(self):
+        return null_level
+
     @property
     def _else_level(self):
         return else_level

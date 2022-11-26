@@ -1,9 +1,9 @@
 from ..comparison_level_library import (  # noqa: F401
     _mutable_params,
-    exact_match_level,
+    ExactMatchLevelBase,
     LevenshteinLevelBase,
     ElseLevelBase,
-    null_level,
+    NullLevelBase,
     DistanceFunctionLevelBase,
     ColumnsReversedLevelBase,
     JaccardLevelBase,
@@ -16,6 +16,14 @@ from .spark_base import (
 )
 
 _mutable_params["dialect"] = "spark"
+
+
+class null_level(SparkBase, NullLevelBase):
+    pass
+
+
+class exact_match_level(SparkBase, ExactMatchLevelBase):
+    pass
 
 
 class else_level(SparkBase, ElseLevelBase):

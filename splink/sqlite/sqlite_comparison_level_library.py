@@ -1,8 +1,8 @@
 from ..comparison_level_library import (  # noqa: F401
     _mutable_params,
-    exact_match_level,
+    NullLevelBase,
+    ExactMatchLevelBase,
     ElseLevelBase,
-    null_level,
     DistanceFunctionLevelBase,
 )
 from .sqlite_base import (
@@ -10,6 +10,14 @@ from .sqlite_base import (
 )
 
 _mutable_params["dialect"] = "sqlite"
+
+
+class null_level(SqliteBase, NullLevelBase):
+    pass
+
+
+class exact_match_level(SqliteBase, ExactMatchLevelBase):
+    pass
 
 
 class else_level(SqliteBase, ElseLevelBase):
