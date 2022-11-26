@@ -1,7 +1,7 @@
 # Regression test for https://github.com/moj-analytical-services/splink/issues/795
 
 import os
-from splink.comparison_level_library import else_level
+from splink.duckdb.duckdb_comparison_level_library import else_level
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
 

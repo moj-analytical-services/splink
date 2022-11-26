@@ -2,10 +2,10 @@ from ..comparison_level_library import (  # noqa: F401
     _mutable_params,
     exact_match_level,
     LevenshteinLevelBase,
-    else_level,
+    ElseLevelBase,
     null_level,
     DistanceFunctionLevelBase,
-    columns_reversed_level,
+    ColumnsReversedLevelBase,
     JaccardLevelBase,
     JaroWinklerLevelBase,
     DistanceInKMLevelBase,
@@ -16,6 +16,14 @@ from .spark_base import (
 )
 
 _mutable_params["dialect"] = "spark"
+
+
+class else_level(SparkBase, ElseLevelBase):
+    pass
+
+
+class columns_reversed_level(SparkBase, ColumnsReversedLevelBase):
+    pass
 
 
 class distance_function_level(SparkBase, DistanceFunctionLevelBase):

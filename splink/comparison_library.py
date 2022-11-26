@@ -5,46 +5,49 @@ from . import comparison_level_library as cl
 from .misc import ensure_is_iterable
 
 
-def exact_match(
-    col_name,
-    term_frequency_adjustments=False,
-    m_probability_exact_match=None,
-    m_probability_else=None,
-    include_colname_in_charts_label=False,
-) -> Comparison:
-    """A comparison of the data in `col_name` with two levels:
-    - Exact match
-    - Anything else
+class ExactMatchBase(Comparison):
+    def __init__(
+        self,
+        col_name,
+        term_frequency_adjustments=False,
+        m_probability_exact_match=None,
+        m_probability_else=None,
+        include_colname_in_charts_label=False,
+    ) -> Comparison:
+        """A comparison of the data in `col_name` with two levels:
+        - Exact match
+        - Anything else
 
-    Args:
-        col_name (str): The name of the column to compare
-        term_frequency_adjustments (bool, optional): If True, term frequency adjustments
-            will be made on the exact match level. Defaults to False.
-        m_probability_exact_match (_type_, optional): If provided, overrides the
-            default m probability for the exact match level. Defaults to None.
-        m_probability_else (_type_, optional): If provided, overrides the
-            default m probability for the 'anything else' level. Defaults to None.
-        include_colname_in_charts_label: If true, append col name to label for charts.
-            Defaults to False.
+        Args:
+            col_name (str): The name of the column to compare
+            term_frequency_adjustments (bool, optional): If True, term frequency
+                adjustments will be made on the exact match level. Defaults to False.
+            m_probability_exact_match (_type_, optional): If provided, overrides the
+                default m probability for the exact match level. Defaults to None.
+            m_probability_else (_type_, optional): If provided, overrides the
+                default m probability for the 'anything else' level. Defaults to None.
+            include_colname_in_charts_label: If true, append col name to label for
+                charts.  Defaults to False.
 
-    Returns:
-        Comparison: A comparison that can be inclued in the Splink settings dictionary
-    """
+        Returns:
+            Comparison: A comparison that can be inclued in the Splink settings
+                dictionary
+        """
 
-    comparison_dict = {
-        "comparison_description": "Exact match vs. anything else",
-        "comparison_levels": [
-            cl.null_level(col_name),
-            cl.exact_match_level(
-                col_name,
-                term_frequency_adjustments=term_frequency_adjustments,
-                m_probability=m_probability_exact_match,
-                include_colname_in_charts_label=include_colname_in_charts_label,
-            ),
-            cl.else_level(m_probability=m_probability_else),
-        ],
-    }
-    return Comparison(comparison_dict)
+        comparison_dict = {
+            "comparison_description": "Exact match vs. anything else",
+            "comparison_levels": [
+                cl.null_level(col_name),
+                cl.exact_match_level(
+                    col_name,
+                    term_frequency_adjustments=term_frequency_adjustments,
+                    m_probability=m_probability_exact_match,
+                    include_colname_in_charts_label=include_colname_in_charts_label,
+                ),
+                self._else_level(m_probability=m_probability_else),
+            ],
+        }
+        super().__init__(comparison_dict)
 
 
 class DistanceFunctionAtThresholdsComparisonBase(Comparison):
@@ -60,8 +63,8 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         m_probability_or_probabilities_lev: Union[float, list] = None,
         m_probability_else=None,
     ) -> Comparison:
-        """A comparison of the data in `col_name` with a user-provided distance function
-        used to assess middle similarity levels.
+        """A comparison of the data in `col_name` with a user-provided distance
+        function used to assess middle similarity levels.
 
         The user-provided distance function must exist in the SQL backend.
 
@@ -132,7 +135,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             comparison_levels.append(level)
 
         comparison_levels.append(
-            cl.else_level(m_probability=m_probability_else),
+            self._else_level(m_probability=m_probability_else),
         )
 
         comparison_desc = ""
@@ -389,7 +392,7 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
             comparison_levels.append(level)
 
         comparison_levels.append(
-            cl.else_level(m_probability=m_probability_else),
+            self._else_level(m_probability=m_probability_else),
         )
 
         comparison_desc = ""

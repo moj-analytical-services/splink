@@ -4,10 +4,10 @@ from ..comparison_level_library import (  # noqa: F401
     LevenshteinLevelBase,
     JaccardLevelBase,
     JaroWinklerLevelBase,
-    else_level,
+    ElseLevelBase,
     null_level,
     DistanceFunctionLevelBase,
-    columns_reversed_level,
+    ColumnsReversedLevelBase,
     DistanceInKMLevelBase,
     PercentageDifferenceLevelBase,
     ArrayIntersectLevelBase,
@@ -17,6 +17,14 @@ from .duckb_base import (
 )
 
 _mutable_params["dialect"] = "duckdb"
+
+
+class else_level(DuckDBBase, ElseLevelBase):
+    pass
+
+
+class columns_reversed_level(DuckDBBase, ColumnsReversedLevelBase):
+    pass
 
 
 class distance_function_level(DuckDBBase, DistanceFunctionLevelBase):

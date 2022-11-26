@@ -203,59 +203,69 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
         )
 
 
-def else_level(
-    m_probability=None,
-) -> ComparisonLevel:
+class ElseLevelBase(ComparisonLevel):
+    def __init__(
+        self,
+        m_probability=None,
+    ) -> ComparisonLevel:
 
-    if isinstance(m_probability, str):
-        raise ValueError(
-            "You provided a string for the value of m probability when it should be "
-            "numeric.  Perhaps you passed a column name.  Note that you do not need to "
-            "pass a column name into the else level."
+        if isinstance(m_probability, str):
+            raise ValueError(
+                "You provided a string for the value of m probability when it should "
+                "be numeric.  Perhaps you passed a column name.  Note that you do "
+                "not need to pass a column name into the else level."
+            )
+        level_dict = {
+            "sql_condition": "ELSE",
+            "label_for_charts": "All other comparisons",
+        }
+        if m_probability:
+            level_dict["m_probability"] = m_probability
+        super().__init__(level_dict)
+
+
+class ColumnsReversedLevelBase(ComparisonLevel):
+    def __init__(
+        self,
+        col_name_1: str,
+        col_name_2: str,
+        m_probability=None,
+        tf_adjustment_column=None,
+    ) -> ComparisonLevel:
+        """Represents a comparison where the columns are reversed.  For example, if
+        surname is in the forename field and vice versa
+
+        Args:
+            col_name_1 (str): First column, e.g. forename
+            col_name_2 (str): Second column, e.g. surname
+            m_probability (float, optional): Starting value for m probability.
+                Defaults to None.
+            tf_adjustment_column (str, optional): Column to use for term frequency
+                adjustments if an exact match is observed. Defaults to None.
+
+        Returns:
+            ComparisonLevel: A comparison level that evaluates the exact match of two
+                columns.
+        """
+
+        col_1 = InputColumn(col_name_1, sql_dialect=self._sql_dialect)
+        col_2 = InputColumn(col_name_2, sql_dialect=self._sql_dialect)
+
+        s = (
+            f"{col_1.name_l()} = {col_2.name_r()} and "
+            f"{col_1.name_r()} = {col_2.name_l()}"
         )
-    level_dict = {
-        "sql_condition": "ELSE",
-        "label_for_charts": "All other comparisons",
-    }
-    if m_probability:
-        level_dict["m_probability"] = m_probability
-    return ComparisonLevel(level_dict)
+        level_dict = {
+            "sql_condition": s,
+            "label_for_charts": "Exact match on reversed cols",
+        }
+        if m_probability:
+            level_dict["m_probability"] = m_probability
 
+        if tf_adjustment_column:
+            level_dict["tf_adjustment_column"] = tf_adjustment_column
 
-def columns_reversed_level(
-    col_name_1: str, col_name_2: str, m_probability=None, tf_adjustment_column=None
-) -> ComparisonLevel:
-    """Represents a comparison where the columns are reversed.  For example, if
-    surname is in the forename field and vice versa
-
-    Args:
-        col_name_1 (str): First column, e.g. forename
-        col_name_2 (str): Second column, e.g. surname
-        m_probability (float, optional): Starting value for m probability. Defaults to
-            None.
-        tf_adjustment_column (str, optional): Column to use for term frequency
-            adjustments if an exact match is observed. Defaults to None.
-
-    Returns:
-        ComparisonLevel: A comparison level that evaluates the exact match of two
-            columns.
-    """
-
-    col_1 = InputColumn(col_name_1, sql_dialect=_mutable_params["dialect"])
-    col_2 = InputColumn(col_name_2, sql_dialect=_mutable_params["dialect"])
-
-    s = f"{col_1.name_l()} = {col_2.name_r()} and {col_1.name_r()} = {col_2.name_l()}"
-    level_dict = {
-        "sql_condition": s,
-        "label_for_charts": "Exact match on reversed cols",
-    }
-    if m_probability:
-        level_dict["m_probability"] = m_probability
-
-    if tf_adjustment_column:
-        level_dict["tf_adjustment_column"] = tf_adjustment_column
-
-    return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
+        super().__init__(level_dict, sql_dialect=self._sql_dialect)
 
 
 class DistanceInKMLevelBase(ComparisonLevel):
