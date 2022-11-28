@@ -1,28 +1,50 @@
-from ..comparison_level_library import (  # noqa: F401
-    _mutable_params,
-    exact_match_level,
-    levenshtein_level,
-    else_level,
-    null_level,
-    columns_reversed_level,
-    distance_in_km_level,
+from ..comparison_level_library import (
+    ExactMatchLevelBase,
+    LevenshteinLevelBase,
+    DistanceFunctionLevelBase,
+    ElseLevelBase,
+    NullLevelBase,
+    ColumnsReversedLevelBase,
+    PercentageDifferenceLevelBase,
+    DistanceInKMLevelBase,
     ArrayIntersectLevelBase,
+)
+from .athena_base import (
+    AthenaBase,
 )
 
 
-def size_array_intersect_sql(col_name_l, col_name_r):
-    return f"cardinality(array_intersect({col_name_l}, {col_name_r}))"
+class null_level(AthenaBase, NullLevelBase):
+    pass
 
 
-_mutable_params["dialect"] = "presto"
-_mutable_params["levenshtein"] = "levenshtein_distance"
+class exact_match_level(AthenaBase, ExactMatchLevelBase):
+    pass
 
 
-class array_intersect_level(ArrayIntersectLevelBase):
-    @property
-    def _sql_dialect(self):
-        return "presto"
+class else_level(AthenaBase, ElseLevelBase):
+    pass
 
-    @property
-    def _size_array_intersect_function(self):
-        return size_array_intersect_sql
+
+class columns_reversed_level(AthenaBase, ColumnsReversedLevelBase):
+    pass
+
+
+class distance_function_level(AthenaBase, DistanceFunctionLevelBase):
+    pass
+
+
+class levenshtein_level(AthenaBase, LevenshteinLevelBase):
+    pass
+
+
+class array_intersect_level(AthenaBase, ArrayIntersectLevelBase):
+    pass
+
+
+class percentage_difference_level(AthenaBase, PercentageDifferenceLevelBase):
+    pass
+
+
+class distance_in_km_level(AthenaBase, DistanceInKMLevelBase):
+    pass
