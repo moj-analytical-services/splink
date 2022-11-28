@@ -5,6 +5,7 @@ from ..comparison_level_library import (
     ElseLevelBase,
     NullLevelBase,
     ColumnsReversedLevelBase,
+    PercentageDifferenceLevelBase,
     DistanceInKMLevelBase,
     ArrayIntersectLevelBase,
 )
@@ -38,6 +39,10 @@ class levenshtein_level(AthenaBase, LevenshteinLevelBase):
 
 
 class array_intersect_level(AthenaBase, ArrayIntersectLevelBase):
+    pass
+
+
+class percentage_difference_level(AthenaBase, PercentageDifferenceLevelBase):
     pass
 
 

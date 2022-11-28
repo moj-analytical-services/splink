@@ -7,6 +7,7 @@ from ..comparison_level_library import (
     ColumnsReversedLevelBase,
     JaccardLevelBase,
     JaroWinklerLevelBase,
+    PercentageDifferenceLevelBase,
     DistanceInKMLevelBase,
     ArrayIntersectLevelBase,
 )
@@ -48,6 +49,10 @@ class jaccard_level(SparkBase, JaccardLevelBase):
 
 
 class array_intersect_level(SparkBase, ArrayIntersectLevelBase):
+    pass
+
+
+class percentage_difference_level(SparkBase, PercentageDifferenceLevelBase):
     pass
 
 
