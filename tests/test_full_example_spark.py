@@ -92,13 +92,19 @@ def test_full_example_spark(df_spark, tmp_path):
     linker.unlinkables_chart(source_dataset="Testing")
 
     # Check spark tables are being registered correctly
-    data = [("Thomas","FakeName"),]
+    data = [
+        ("Thomas", "FakeName"),
+    ]
     schema = StructType(
-        [StructField("firstname",StringType(),True),
-        StructField("lastname",StringType(),True),]
+        [
+            StructField("firstname", StringType(), True),
+            StructField("lastname", StringType(), True),
+        ]
     )
     df = linker.spark.createDataFrame(data=data, schema=schema)
-    _test_table_registration(linker, [df, linker.spark.createDataFrame([], StructType([]))])
+    _test_table_registration(
+        linker, [df, linker.spark.createDataFrame([], StructType([]))]
+    )
 
     register_roc_data(linker)
     linker.roc_chart_from_labels_table("labels")

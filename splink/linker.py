@@ -449,7 +449,6 @@ class Linker:
                 This determines the type of table that your results are output in.
         """
 
-
         output_tablename_templated = "__splink__df_sql_query"
 
         splink_dataframe = self._sql_to_splink_dataframe_checking_cache(
