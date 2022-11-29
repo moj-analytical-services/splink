@@ -1,4 +1,8 @@
 # Databricks notebook source
+# MAGIC %pip install splink
+
+# COMMAND ----------
+
 user_name = dbutils.notebook.entry_point.getDbutils().notebook().getContext().userName().get()
 
 # COMMAND ----------
@@ -11,6 +15,10 @@ from splink.databricks.enable_splink import enable_splink
 
 # this attachs the splink JAR to the cluster
 enable_splink(spark)
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
@@ -42,17 +50,16 @@ settings = {
 # COMMAND ----------
 
 # this defines where we are going to store the splink tables
-catalog_name = "splink"
-database_name = user_name
-spark.sql(f"create catalog if not exists {catalog_name};")
-spark.sql(f"use catalog {catalog_name};")
-spark.sql(f"create database if not exists {database_name};")
-spark.sql(f"use database {database_name};")
+spark.sql(f"create catalog if not exists {user_name}")
+spark.sql(f"use catalog {user_name}")
+spark.sql(f"create database if not exists splink")
+spark.sql(f"use database splink")
+
 
 # COMMAND ----------
 
-from splink.databricks.spark_linker import SparkLinker
-linker = SparkLinker(df, catalog = "splink", schema = "robert_whiffin", settings_dict=settings, spark=spark)
+from splink.spark.spark_linker import SparkLinker
+linker = SparkLinker(df, database = "splink", catalog = user_name, settings_dict=settings, spark=spark)
 deterministic_rules = [
     "l.first_name = r.first_name and levenshtein(r.dob, l.dob) <= 1",
     "l.surname = r.surname and levenshtein(r.dob, l.dob) <= 1",
