@@ -449,19 +449,26 @@ class Linker:
                 This determines the type of table that your results are output in.
         """
 
-        hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
-        # Ensure hash is valid sql table name
+
         output_tablename_templated = "__splink__df_sql_query"
-        hashed_tablename = f"{output_tablename_templated}_{hash}"
+        # Pandas outputs are instantly cleaned up, so there's no need to check the cache
+        use_cache = False if output_type == "pandas" else True
+        # if output_type != "pandas":
+        #     hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
+        #     output_tablename_templated = f"{output_tablename_templated}{hash}"
 
         splink_dataframe = self._sql_to_splink_dataframe_checking_cache(
             sql,
-            hashed_tablename,
+            output_tablename_templated,
+            materialise_as_hash=False,
+            use_cache=False,
         )
+
         if output_type in ("splink_df", "splinkdf"):
             return splink_dataframe
         elif output_type == "pandas":
             out = splink_dataframe.as_pandas_dataframe()
+            # If pandas, drop the table to cleanup the db
             splink_dataframe.drop_table_from_database()
             return out
         else:

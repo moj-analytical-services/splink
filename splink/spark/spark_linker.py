@@ -7,7 +7,7 @@ import math
 
 import pandas as pd
 
-from pyspark.sql import Row
+from pyspark.sql import Row, DataFrame
 
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
@@ -311,7 +311,7 @@ class SparkLinker(Linker):
         elif isinstance(input, list):
             input = pd.DataFrame.from_records(input)
             input = self.spark.createDataFrame(input)
-        elif type(input).__name__ in ["DataFrame", "Table"]:
+        elif isinstance(input, pd.DataFrame):
             input = self.spark.createDataFrame(input)
 
         input.createOrReplaceTempView(table_name)
