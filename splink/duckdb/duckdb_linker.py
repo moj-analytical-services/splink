@@ -205,9 +205,10 @@ class DuckDBLinker(Linker):
         elif isinstance(input, list):
             input = pd.DataFrame.from_records(input)
 
-        # Will error if an invalid data type is passed
+        # Registration errors will automatically
+        # occur if an invalid data type is passed as an argument
         self._con.register(table_name, input)
-        return DuckDBLinkerDataFrame(table_name, table_name, self)
+        return self._table_to_splink_dataframe(table_name, table_name)
 
     def initialise_settings(self, settings_dict: dict):
         if "sql_dialect" not in settings_dict:

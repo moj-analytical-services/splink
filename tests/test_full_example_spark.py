@@ -8,6 +8,7 @@ from splink.spark.spark_comparison_level_library import (
 )
 
 from pyspark.sql.functions import array
+from pyspark.sql.types import StructType, StructField, StringType
 from basic_settings import get_settings_dict
 from linker_utils import _test_table_registration, register_roc_data
 
@@ -88,7 +89,20 @@ def test_full_example_spark(df_spark, tmp_path):
 
     linker.unlinkables_chart(source_dataset="Testing")
 
-    _test_table_registration(linker)
+    # Check spark tables are being registered correctly
+    data = [
+        ("Thomas", "FakeName"),
+    ]
+    schema = StructType(
+        [
+            StructField("firstname", StringType(), True),
+            StructField("lastname", StringType(), True),
+        ]
+    )
+    df = linker.spark.createDataFrame(data=data, schema=schema)
+    _test_table_registration(
+        linker, [df, linker.spark.createDataFrame([], StructType([]))]
+    )
 
     register_roc_data(linker)
     linker.roc_chart_from_labels_table("labels")
