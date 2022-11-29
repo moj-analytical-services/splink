@@ -112,6 +112,10 @@ class SQLiteLinker(Linker):
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
 
+        # In the case of a table already existing in the database,
+        # execute sql is only reached if the user has explicitly turned off the cache
+        self._delete_table_from_database(physical_name)
+
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))
 
