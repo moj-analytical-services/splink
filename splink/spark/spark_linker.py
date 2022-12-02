@@ -72,7 +72,7 @@ class SparkLinker(Linker):
         self,
         input_table_or_tables,
         settings_dict=None,
-        break_lineage_method="parquet",
+        break_lineage_method=None,
         set_up_basic_logging=True,
         input_table_aliases: Union[str, list] = None,
         spark=None,
@@ -177,11 +177,16 @@ class SparkLinker(Linker):
             input_table_aliases=homogenised_aliases,
         )
 
-        # check to see if running in databricks and use delta lake tables as break lineage method.
+        # check to see if running in databricks and use delta lake tables
+        # as break lineage method if nothing else specified.
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
-        if self.in_databricks:
+        if self.in_databricks and not self.break_lineage_method:
             self.break_lineage_method = "delta_lake_table"
             logger.info(f"Intermediate results will be written as Delta Lake tables at {catalog}.{database}.")
+        # set non-databricks environment default method as parquest in case nothing else specified.
+        elif not self.break_lineage_method:
+            self.break_lineage_method = "parquet"
+
 
 
         # register udf functions
