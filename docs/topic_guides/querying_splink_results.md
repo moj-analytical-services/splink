@@ -1,4 +1,4 @@
-# Querying Splink results and the SplinkDataFrame
+# Retrieving and Querying Splink results with the SplinkDataFrame
 
 Splink returns tables of results using a class called a `SplinkDataFrame`. e.g. when you run `df_predict = linker.predict()` `df_predict` is a `SplinkDataFrame`
 
