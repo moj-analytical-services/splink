@@ -408,7 +408,7 @@ class Linker:
             f"_execute_sql_against_backend not implemented for {type(self)}"
         )
 
-    def register_table(self, input, table_name):
+    def register_table(self, input, table_name, overwrite=False):
         """
         Register a table to your backend database, to be used in one of the
         splink methods, or simply to allow querying.
@@ -425,6 +425,8 @@ class Linker:
             input: The data you wish to register. This can be either a dictionary,
                 pandas dataframe, pyarrow table or a spark dataframe.
             table_name (str): The name you wish to assign to the table.
+            overwrite (bool): Overwrite the table in the underlying database if it
+                exists
 
         Returns:
             SplinkDataFrame: An abstraction representing the table created by the sql
@@ -1165,7 +1167,9 @@ class Linker:
         original_link_type = self._settings_obj._link_type
 
         if not isinstance(records_or_tablename, str):
-            self.register_table(records_or_tablename, "__splink__df_new_records")
+            self.register_table(
+                records_or_tablename, "__splink__df_new_records", overwrite=True
+            )
             new_records_tablename = "__splink__df_new_records"
         else:
             new_records_tablename = records_or_tablename
@@ -1204,7 +1208,7 @@ class Linker:
         where match_weight > {match_weight_threshold}
         """
 
-        self._enqueue_sql(sql, "__splink_find_matches_predictions")
+        self._enqueue_sql(sql, "__splink__find_matches_predictions")
 
         predictions = self._execute_sql_pipeline(use_cache=False)
 
@@ -1242,8 +1246,12 @@ class Linker:
         self._compare_two_records_mode = True
         self._settings_obj._blocking_rules_to_generate_predictions = []
 
-        self.register_table([record_1], "__splink__compare_two_records_left")
-        self.register_table([record_2], "__splink__compare_two_records_right")
+        self.register_table(
+            [record_1], "__splink__compare_two_records_left", overwrite=True
+        )
+        self.register_table(
+            [record_2], "__splink__compare_two_records_right", overwrite=True
+        )
 
         sql_join_tf = _join_tf_to_input_df_sql(self)
 
