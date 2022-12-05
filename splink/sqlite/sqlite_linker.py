@@ -135,7 +135,10 @@ class SQLiteLinker(Linker):
         exists = self._table_exists_in_database(table_name)
         if exists:
             if not overwrite:
-                raise ValueError(f"Table '{table_name}' already exists in database.")
+                raise ValueError(
+                    f"Table '{table_name}' already exists in database. "
+                    "Please use the 'overwrite' argument if you wish to overwrite"
+                )
             else:
                 self._delete_table_from_database(table_name)
 

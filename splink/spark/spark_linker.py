@@ -294,6 +294,8 @@ class SparkLinker(Linker):
             input: The data you wish to register. This can be either a dictionary,
                 pandas dataframe, pyarrow table or a spark dataframe.
             table_name (str): The name you wish to assign to the table.
+            overwrite (bool): Overwrite the table in the underlying database if it
+                exists
 
         Returns:
             SplinkDataFrame: An abstraction representing the table created by the sql
@@ -303,7 +305,10 @@ class SparkLinker(Linker):
         exists = self._table_exists_in_database(table_name)
         if exists:
             if not overwrite:
-                raise ValueError(f"Table '{table_name}' already exists in database.")
+                raise ValueError(
+                    f"Table '{table_name}' already exists in database. "
+                    "Please use the 'overwrite' argument if you wish to overwrite"
+                )
 
         if isinstance(input, dict):
             input = pd.DataFrame(input)
