@@ -1208,7 +1208,7 @@ class Linker:
         where match_weight > {match_weight_threshold}
         """
 
-        self._enqueue_sql(sql, "__splink_find_matches_predictions")
+        self._enqueue_sql(sql, "__splink__find_matches_predictions")
 
         predictions = self._execute_sql_pipeline(use_cache=False)
 
