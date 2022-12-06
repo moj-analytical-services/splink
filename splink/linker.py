@@ -2053,7 +2053,7 @@ class Linker:
 
         return records
 
-    def cumulative_comparisons_from_blocking_rules_chart(
+    def cumulative_num_comparisons_from_blocking_rules_chart(
         self,
         blocking_rules: str or list = None,
     ):
