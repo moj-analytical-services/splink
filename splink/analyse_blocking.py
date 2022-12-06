@@ -38,7 +38,7 @@ def number_of_comparisons_generated_by_blocking_rule_sql(
 def cumulative_comparisons_generated_by_blocking_rules(
     linker: "Linker",
     blocking_rules,
-    output_chart,
+    output_chart = True,
 ):
 
     linker = deepcopy(linker)
