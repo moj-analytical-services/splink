@@ -8,6 +8,7 @@ import math
 import pandas as pd
 
 from pyspark.sql import types
+from pyspark.sql.utils import AnalysisException
 
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
@@ -143,16 +144,16 @@ class SparkLinker(Linker):
             )
 
         # set the catalog and database of where to write output tables
-        self.catalog = (
-            catalog if catalog is not None else spark.catalog.currentCatalog()
-        )
+        # self.catalog = (
+        #     catalog if catalog is not None else self.spark.catalog.currentCatalog()
+        # )
         self.database = (
-            database if database is not None else spark.catalog.currentDatabase()
+            database if database is not None else self.spark.catalog.currentDatabase()
         )
 
         # if we use spark.sql("USE DATABASE db") commands we change the default. This approach prevents side effects.
-        splink_tables = spark.sql(
-            f"show tables from {self.catalog}.{self.database} like '*__splink__*'"
+        splink_tables = self.spark.sql(
+            f"show tables from {self.database} like '*__splink__*'"
         )
         temp_tables = splink_tables.filter("isTemporary").collect()
         drop_tables = list(
@@ -161,7 +162,7 @@ class SparkLinker(Linker):
         # drop old temp tables
         # specifying a catalog and database doesn't work for temp tables.
         for x in drop_tables:
-            spark.sql(f"drop table {x}")
+            self.spark.sql(f"drop table {x}")
 
         homogenised_tables = []
         homogenised_aliases = []
@@ -200,7 +201,6 @@ class SparkLinker(Linker):
         # register udf functions
         # will for loop through this list to register UDFs.
         # List is a tuple of structure (UDF Name, class path, spark return type)
-        #
         udfs_register = [
             (
                 "jaro_winkler",
@@ -208,8 +208,20 @@ class SparkLinker(Linker):
                 types.DoubleType(),
             )
         ]
-        for udf in udfs_register:
-            spark.udf.registerJavaFunction(*udf)
+        try:
+            for udf in udfs_register:
+                self.spark.udf.registerJavaFunction(*udf)
+        except AnalysisException:
+            logger.warning(
+                "Unable to load custom Spark SQL functions such as jaro_winkler from "
+                "the jar that's provided with Splink.\n"
+                "You need to ensure the Splink jar is registered./n"
+                "See https://moj-analytical-services.github.io/splink/demos/example_simple_pyspark.html"  # NOQA: E501
+                "for an example.\n"
+                "You will not be able to use these functions in your linkage.\n"
+                "You can find the location of the jar by calling the following function"
+                ":\nfrom splink.spark.jar_location import similarity_jar_location"
+            )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
