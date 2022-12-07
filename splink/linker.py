@@ -2035,7 +2035,7 @@ class Linker:
             >>>     and substr(l.dob,1,4) = substr(r.dob,1,4)"
             >>> ]
             >>>
-            >>> linker.cumulative_num_comparisons_from_blocking_rules_chart(
+            >>> linker.cumulative_comparisons_from_blocking_rules_records(
             >>>     blocking_rules
             >>>  )
 
