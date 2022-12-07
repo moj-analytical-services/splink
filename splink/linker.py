@@ -2040,9 +2040,8 @@ class Linker:
             >>>  )
 
         Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
+            List: A list of blocking rules and the corresponding number of
+                comparisons it is forecast to generate.
         """
         if blocking_rules:
             blocking_rules = ensure_is_list(blocking_rules)
