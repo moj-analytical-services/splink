@@ -3,7 +3,7 @@ from tests.cc_testing_utils import check_df_equality
 import pytest
 
 
-def _test_table_registration(linker):
+def _test_table_registration(linker, additional_tables_to_register=[]):
 
     # Standard pandas df...
     a = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
@@ -22,7 +22,9 @@ def _test_table_registration(linker):
     with pytest.raises(ValueError):
         linker.register_table(test_dict, "__splink_df_pd")
     # Test overwriting works
-    linker.register_table(test_dict, "__splink_df_pd", overwrite=True)
+    linker.register_table(test_dict_df, "__splink_df_pd", overwrite=True)
+    out = linker.query_sql("select * from __splink_df_pd", output_type="pandas")
+    assert check_df_equality(out, test_dict_df)
 
     # Record level dictionary
     b = [
@@ -49,6 +51,11 @@ def _test_table_registration(linker):
     assert check_df_equality(
         pd.DataFrame.from_records(r_dict), pd.DataFrame.from_records(b)
     )
+
+    # Test registration on additional data types for specific linkers
+    if additional_tables_to_register:
+        for table in additional_tables_to_register:
+            linker.register_table(table, "test_table", overwrite=True)
 
 
 def register_roc_data(linker):

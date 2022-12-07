@@ -7,7 +7,7 @@ import math
 
 import pandas as pd
 
-from pyspark.sql import types, Row
+from pyspark.sql import types
 
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
@@ -115,8 +115,7 @@ class SparkLinker(Linker):
 
         """
 
-        if settings_dict is not None and "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "spark"
+        self._sql_dialect_ = "spark"
 
         self.break_lineage_method = break_lineage_method
 
@@ -143,13 +142,21 @@ class SparkLinker(Linker):
             )
 
         # set the catalog and database of where to write output tables
-        self.catalog = catalog if catalog is not None else spark.catalog.currentCatalog()
-        self.database = database if database is not None else spark.catalog.currentDatabase()
+        self.catalog = (
+            catalog if catalog is not None else spark.catalog.currentCatalog()
+        )
+        self.database = (
+            database if database is not None else spark.catalog.currentDatabase()
+        )
 
         # if we use spark.sql("USE DATABASE db") commands we change the default. This approach prevents side effects.
-        splink_tables = spark.sql(f"show tables from {self.catalog}.{self.database} like '*__splink__*'")
+        splink_tables = spark.sql(
+            f"show tables from {self.catalog}.{self.database} like '*__splink__*'"
+        )
         temp_tables = splink_tables.filter("isTemporary").collect()
-        drop_tables = list(map(lambda x: x.tableName, filter(lambda x: x.isTemporary, temp_tables)))
+        drop_tables = list(
+            map(lambda x: x.tableName, filter(lambda x: x.isTemporary, temp_tables))
+        )
         # drop old temp tables
         # specifying a catalog and database doesn't work for temp tables.
         for x in drop_tables:
@@ -182,19 +189,23 @@ class SparkLinker(Linker):
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         if self.in_databricks and not self.break_lineage_method:
             self.break_lineage_method = "delta_lake_table"
-            logger.info(f"Intermediate results will be written as Delta Lake tables at {catalog}.{database}.")
+            logger.info(
+                f"Intermediate results will be written as Delta Lake tables at {catalog}.{database}."
+            )
         # set non-databricks environment default method as parquest in case nothing else specified.
         elif not self.break_lineage_method:
             self.break_lineage_method = "parquet"
-
-
 
         # register udf functions
         # will for loop through this list to register UDFs.
         # List is a tuple of structure (UDF Name, class path, spark return type)
         #
         udfs_register = [
-            ("jaro_winkler", "uk.gov.moj.dash.linkage.JaroWinklerSimilarity", types.DoubleType())
+            (
+                "jaro_winkler",
+                "uk.gov.moj.dash.linkage.JaroWinklerSimilarity",
+                types.DoubleType(),
+            )
         ]
         for udf in udfs_register:
             spark.udf.registerJavaFunction(*udf)
@@ -291,7 +302,9 @@ class SparkLinker(Linker):
                 write_path = f"{self.catalog}.{self.database}.{physical_name}"
                 spark_df.write.mode("overwrite").saveAsTable(write_path)
                 spark_df = self.spark.table(write_path)
-                logger.debug(f"Wrote {templated_name} to Delta Table at {self.catalog}.{self.database}.{physical_name}")
+                logger.debug(
+                    f"Wrote {templated_name} to Delta Table at {self.catalog}.{self.database}.{physical_name}"
+                )
             else:
                 raise ValueError(
                     f"Unknown break_lineage_method: {self.break_lineage_method}"
@@ -317,6 +330,10 @@ class SparkLinker(Linker):
         output_df = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_df
 
+    @property
+    def _infinity_expression(self):
+        return "'infinity'"
+
     def register_table(self, input, table_name, overwrite=False):
         """
         Register a table to your backend database, to be used in one of the
@@ -334,6 +351,8 @@ class SparkLinker(Linker):
             input: The data you wish to register. This can be either a dictionary,
                 pandas dataframe, pyarrow table or a spark dataframe.
             table_name (str): The name you wish to assign to the table.
+            overwrite (bool): Overwrite the table in the underlying database if it
+                exists
 
         Returns:
             SplinkDataFrame: An abstraction representing the table created by the sql
@@ -343,7 +362,10 @@ class SparkLinker(Linker):
         exists = self._table_exists_in_database(table_name)
         if exists:
             if not overwrite:
-                raise ValueError(f"Table '{table_name}' already exists in database.")
+                raise ValueError(
+                    f"Table '{table_name}' already exists in database. "
+                    "Please use the 'overwrite' argument if you wish to overwrite"
+                )
 
         if isinstance(input, dict):
             input = pd.DataFrame(input)
@@ -351,7 +373,7 @@ class SparkLinker(Linker):
         elif isinstance(input, list):
             input = pd.DataFrame.from_records(input)
             input = self.spark.createDataFrame(input)
-        elif type(input).__name__ in ["DataFrame", "Table"]:
+        elif isinstance(input, pd.DataFrame):
             input = self.spark.createDataFrame(input)
 
         input.createOrReplaceTempView(table_name)

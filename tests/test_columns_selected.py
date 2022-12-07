@@ -1,11 +1,10 @@
 # Regression test for https://github.com/moj-analytical-services/splink/issues/795
 
 import os
-from splink.comparison_level_library import else_level
+from splink.duckdb.duckdb_comparison_level_library import else_level
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
-from splink.duckdb.duckdb_comparison_level_library import _mutable_params
 import splink.duckdb.duckdb_comparison_level_library as cll
 
 
@@ -17,11 +16,6 @@ def test_regression(tmp_path):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(20)
 
     # Overwrite the surname comparison to include duck-db specific syntax
-
-    _mutable_params["dialect"] = "duckdb"  # noqa: F811
-    _mutable_params["levenshtein"] = "levenshtein"
-    _mutable_params["jaro_winkler"] = "jaro_winkler_similarity"
-
     for rmc in [True, False]:
         for ricc in [True, False]:
             levels = [
@@ -81,10 +75,6 @@ def test_discussion_example(tmp_path):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(20)
 
     # Overwrite the surname comparison to include duck-db specific syntax
-
-    _mutable_params["dialect"] = "duckdb"  # noqa: F811
-    _mutable_params["levenshtein"] = "levenshtein"
-    _mutable_params["jaro_winkler"] = "jaro_winkler_similarity"
 
     df = df.rename(columns={"first_name": "fname"})
     df["canonicals_fname"] = df["fname"]

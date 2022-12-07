@@ -101,8 +101,7 @@ class DuckDBLinker(Linker):
                 to attach more easily readable/interpretable names. Defaults to None.
         """
 
-        if settings_dict is not None and "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "duckdb"
+        self._sql_dialect_ = "duckdb"
 
         validate_duckdb_connection(connection, logger)
 
@@ -197,7 +196,10 @@ class DuckDBLinker(Linker):
         exists = self._table_exists_in_database(table_name)
         if exists:
             if not overwrite:
-                raise ValueError(f"Table '{table_name}' already exists in database.")
+                raise ValueError(
+                    f"Table '{table_name}' already exists in database. "
+                    "Please use the 'overwrite' argument if you wish to overwrite"
+                )
             else:
                 self._con.unregister(table_name)
 
@@ -206,9 +208,10 @@ class DuckDBLinker(Linker):
         elif isinstance(input, list):
             input = pd.DataFrame.from_records(input)
 
-        # Will error if an invalid data type is passed
+        # Registration errors will automatically
+        # occur if an invalid data type is passed as an argument
         self._con.register(table_name, input)
-        return DuckDBLinkerDataFrame(table_name, table_name, self)
+        return self._table_to_splink_dataframe(table_name, table_name)
 
     def initialise_settings(self, settings_dict: dict):
         if "sql_dialect" not in settings_dict:
@@ -220,6 +223,10 @@ class DuckDBLinker(Linker):
             return ""
         percent = proportion * 100
         return f"USING SAMPLE {percent}% (bernoulli)"
+
+    @property
+    def _infinity_expression(self):
+        return "cast('infinity' as double)"
 
     def _table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"

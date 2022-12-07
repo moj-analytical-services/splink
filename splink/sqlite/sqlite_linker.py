@@ -88,8 +88,7 @@ class SQLiteLinker(Linker):
         input_table_aliases: Union[str, list] = None,
     ):
 
-        if settings_dict is not None and "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "sqlite"
+        self._sql_dialect_ = "sqlite"
 
         self.con = connection
         self.con.row_factory = dict_factory
@@ -113,6 +112,10 @@ class SQLiteLinker(Linker):
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
 
+        # In the case of a table already existing in the database,
+        # execute sql is only reached if the user has explicitly turned off the cache
+        self._delete_table_from_database(physical_name)
+
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))
 
@@ -132,7 +135,10 @@ class SQLiteLinker(Linker):
         exists = self._table_exists_in_database(table_name)
         if exists:
             if not overwrite:
-                raise ValueError(f"Table '{table_name}' already exists in database.")
+                raise ValueError(
+                    f"Table '{table_name}' already exists in database. "
+                    "Please use the 'overwrite' argument if you wish to overwrite"
+                )
             else:
                 self._delete_table_from_database(table_name)
 
@@ -155,6 +161,10 @@ class SQLiteLinker(Linker):
             "where unique_id IN (SELECT unique_id FROM __splink__df_concat_with_tf"
             f" ORDER BY RANDOM() LIMIT {sample_size})"
         )
+
+    @property
+    def _infinity_expression(self):
+        return "'infinity'"
 
     def _table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"
