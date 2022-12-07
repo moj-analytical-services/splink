@@ -132,7 +132,8 @@ class SparkLinker(Linker):
         if spark is None:
             for t in input_tables:
                 if type(t).__name__ == "DataFrame":
-                    self.spark = t.sparkSession
+                    # t.sparkSession can be used only from spark 3.3.0 onwards
+                    self.spark = t.sql_ctx.sparkSession
                     break
         if self.spark is None:
             raise ValueError(
