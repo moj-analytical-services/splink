@@ -20,6 +20,7 @@ from ..misc import ensure_is_list
 from ..input_column import InputColumn
 from .custom_spark_dialect import Dialect
 from ..databricks.enable_splink import enable_splink
+
 logger = logging.getLogger(__name__)
 
 Dialect["customspark"]
@@ -145,10 +146,10 @@ class SparkLinker(Linker):
                 " argument when you initialise the linker"
             )
 
-        # spark.catalog.currentCatalog() is not available in versions of spark before 3.3.0
+        # spark.catalog.currentCatalog() is not available in versions of spark before 3.4.0
         # we will only handle catalogs in spark versions greater than that
-        threshold = version.parse("3.3.0")
-        if version.parse(spark.version) >= threshold:
+        threshold = version.parse("3.4.0")
+        if version.parse(self.spark.version) >= threshold:
             # set the catalog and database of where to write output tables
             self.catalog = (
                 catalog if catalog is not None else self.spark.catalog.currentCatalog()
@@ -161,7 +162,7 @@ class SparkLinker(Linker):
         # the filter will remove none, so if catalog is not provided and spark version is < 3.3.0 we will use
         # the default catalog.
 
-        self.splink_data_store = '.'.join(
+        self.splink_data_store = ".".join(
             filter(lambda x: x, [self.catalog, self.database])
         )
 
@@ -237,8 +238,6 @@ class SparkLinker(Linker):
         # set non-databricks environment default method as parquest in case nothing else specified.
         elif not self.break_lineage_method:
             self.break_lineage_method = "parquet"
-
-
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
@@ -420,7 +419,7 @@ class SparkLinker(Linker):
             f"show tables from {self.splink_data_store} like '{table_name}'"
         ).collect()
         if len(query_result) > 1:
-            raise ValueError ("Table name not unique. Does it contain a wild card?")
+            raise ValueError("Table name not unique. Does it contain a wild card?")
         elif len(query_result) == 1:
             return True
         elif len(query_result) == 0:
