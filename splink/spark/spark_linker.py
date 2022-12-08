@@ -417,7 +417,7 @@ class SparkLinker(Linker):
 
     def _table_exists_in_database(self, table_name):
         query_result = self.spark.sql(
-            f"show tables from {self.splink_data_store} like {table_name}"
+            f"show tables from {self.splink_data_store} like '{table_name}'"
         ).collect()
         if len(query_result) > 1:
             raise ValueError ("Table name not unique. Does it contain a wild card?")
