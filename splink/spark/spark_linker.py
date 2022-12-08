@@ -19,7 +19,7 @@ from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import ensure_is_list
 from ..input_column import InputColumn
 from .custom_spark_dialect import Dialect
-from ..databricks import enable_splink
+from ..databricks.enable_splink import enable_splink
 logger = logging.getLogger(__name__)
 
 Dialect["customspark"]
