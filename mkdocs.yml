@@ -84,12 +84,13 @@ nav:
   - Settings dictionary reference: "settings_dict_guide.md"
   - Tutorials:
       - 0. Tutorial introduction: "demos/00_Tutorial_Introduction.ipynb"
-      - 1. Exploratory analysis: "demos/01_Exploratory_analysis.ipynb"
-      - 2. Blocking: "demos/02_Blocking.ipynb"
-      - 3. Estimating model parameters: "demos/03_Estimating_model_parameters.ipynb"
-      - 4. Predicting results: "demos/04_Predicting_results.ipynb"
-      - 5. Visualising predictions: "demos/05_Visualising_predictions.ipynb"
-      - 6. Quality assurance: "demos/06_Quality_assurance.ipynb"
+      - 1. Data prep prerequisites: "demos/01_Prerequisites.ipynb"
+      - 2. Exploratory analysis: "demos/02_Exploratory_analysis.ipynb"
+      - 3. Blocking: "demos/03_Blocking.ipynb"
+      - 4. Estimating model parameters: "demos/04_Estimating_model_parameters.ipynb"
+      - 5. Predicting results: "demos/05_Predicting_results.ipynb"
+      - 6. Visualising predictions: "demos/06_Visualising_predictions.ipynb"
+      - 7. Quality assurance: "demos/07_Quality_assurance.ipynb"
   - Examples:
       - Examples index: "examples_index.md"
       - DuckDB:
