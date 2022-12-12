@@ -2,9 +2,13 @@ import pandas as pd
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
 import splink.duckdb.duckdb_comparison_library as cl
+from splink.exceptions import EMTrainingException
+
+import pytest
+
 
 def test_clear_error_when_empty_block():
-    
+
     data = [
         {"unique_id": 1, "name": "Amanda", "surname": "Smith"},
         {"unique_id": 2, "name": "Robin", "surname": "Jones"},
@@ -17,7 +21,10 @@ def test_clear_error_when_empty_block():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [cl.levenshtein_at_thresholds("name", 1), cl.exact_match("surname")],
+        "comparisons": [
+            cl.levenshtein_at_thresholds("name", 1),
+            cl.exact_match("surname"),
+        ],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
@@ -26,4 +33,7 @@ def test_clear_error_when_empty_block():
     linker.estimate_u_using_random_sampling(target_rows=1e6)
     linker.estimate_parameters_using_expectation_maximisation("l.name = r.name")
     # this raises an error as block is empty, but should be a nicer error!
-    linker.estimate_parameters_using_expectation_maximisation("l.surname = r.surname")
+    with pytest.raises(EMTrainingException):
+        linker.estimate_parameters_using_expectation_maximisation(
+            "l.surname = r.surname"
+        )
