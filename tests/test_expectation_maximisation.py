@@ -32,7 +32,7 @@ def test_clear_error_when_empty_block():
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(target_rows=1e6)
     linker.estimate_parameters_using_expectation_maximisation("l.name = r.name")
-    # this raises an error as block is empty, but should be a nicer error!
+    # No record pairs for which surname matches, so we should get a nice handled error
     with pytest.raises(EMTrainingException):
         linker.estimate_parameters_using_expectation_maximisation(
             "l.surname = r.surname"
