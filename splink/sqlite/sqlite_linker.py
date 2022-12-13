@@ -70,10 +70,11 @@ class SQLiteDataFrame(SplinkDataFrame):
     def as_record_dict(self, limit=None):
         sql = f"""
         select *
-        from {self.physical_name};
+        from {self.physical_name}
         """
         if limit:
             sql += f" limit {limit}"
+        sql += ";"
         cur = self.sqlite_linker.con.cursor()
         return cur.execute(sql).fetchall()
 
