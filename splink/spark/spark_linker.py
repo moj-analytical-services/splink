@@ -7,7 +7,10 @@ import math
 
 import pandas as pd
 
-from pyspark.sql import Row, DataFrame
+from packaging import version
+
+from pyspark.sql import types
+from pyspark.sql.utils import AnalysisException
 
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
@@ -16,6 +19,7 @@ from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import ensure_is_list
 from ..input_column import InputColumn
 from .custom_spark_dialect import Dialect
+from ..databricks.enable_splink import enable_splink
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +76,12 @@ class SparkLinker(Linker):
         self,
         input_table_or_tables,
         settings_dict=None,
-        break_lineage_method="parquet",
+        break_lineage_method=None,
         set_up_basic_logging=True,
         input_table_aliases: Union[str, list] = None,
         spark=None,
+        catalog=None,
+        database=None,
         repartition_after_blocking=False,
         num_partitions_on_repartition=100,
     ):
@@ -91,8 +97,8 @@ class SparkLinker(Linker):
                 provided when the object is created, can later be added using
                 `linker.initialise_settings()` Defaults to None.
             break_lineage_method (str, optional): Method to use to cache intermediate
-                results.  Can be "checkpoint", "persist" or "parquet".  Defaults to
-                "parquet".
+                results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files", "delta_lake_table".
+                Defaults to "parquet".
             set_up_basic_logging (bool, optional): If true, sets ups up basic logging
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
             input_table_aliases (Union[str, list], optional): Labels assigned to
@@ -130,6 +136,7 @@ class SparkLinker(Linker):
         if spark is None:
             for t in input_tables:
                 if type(t).__name__ == "DataFrame":
+                    # t.sparkSession can be used only from spark 3.3.0 onwards
                     self.spark = t.sql_ctx.sparkSession
                     break
         if self.spark is None:
@@ -139,10 +146,39 @@ class SparkLinker(Linker):
                 " argument when you initialise the linker"
             )
 
-        for table in self.spark.catalog.listTables():
-            if table.isTemporary:
-                if "__splink__" in table.name:
-                    self.spark.catalog.dropTempView(table.name)
+        # spark.catalog.currentCatalog() is not available in versions of spark before 3.4.0
+        # we will only handle catalogs in spark versions greater than that
+        threshold = version.parse("3.4.0")
+        self.catalog = None
+        if version.parse(self.spark.version) >= threshold:
+            # set the catalog and database of where to write output tables
+            self.catalog = (
+                catalog if catalog is not None else self.spark.catalog.currentCatalog()
+            )
+        self.database = (
+            database if database is not None else self.spark.catalog.currentDatabase()
+        )
+
+        # this defines the catalog.database location where splink's data outputs will be stored.
+        # the filter will remove none, so if catalog is not provided and spark version is < 3.3.0 we will use
+        # the default catalog.
+
+        self.splink_data_store = ".".join(
+            filter(lambda x: x, [self.catalog, self.database])
+        )
+
+        # if we use spark.sql("USE DATABASE db") commands we change the default. This approach prevents side effects.
+        splink_tables = self.spark.sql(
+            f"show tables from {self.splink_data_store} like '*__splink__*'"
+        )
+        temp_tables = splink_tables.filter("isTemporary").collect()
+        drop_tables = list(
+            map(lambda x: x.tableName, filter(lambda x: x.isTemporary, temp_tables))
+        )
+        # drop old temp tables
+        # specifying a catalog and database doesn't work for temp tables.
+        for x in drop_tables:
+            self.spark.sql(f"drop table {x}")
 
         homogenised_tables = []
         homogenised_aliases = []
@@ -165,6 +201,44 @@ class SparkLinker(Linker):
             set_up_basic_logging,
             input_table_aliases=homogenised_aliases,
         )
+
+        # check to see if running in databricks and use delta lake tables
+        # as break lineage method if nothing else specified.
+        self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
+        if self.in_databricks and not self.break_lineage_method:
+            self.break_lineage_method = "delta_lake_table"
+            logger.info(
+                f"Intermediate results will be written as Delta Lake tables at {self.splink_data_store}."
+            )
+            enable_splink(spark)
+
+            # register udf functions
+            # will for loop through this list to register UDFs.
+            # List is a tuple of structure (UDF Name, class path, spark return type)
+            udfs_register = [
+                (
+                    "jaro_winkler",
+                    "uk.gov.moj.dash.linkage.JaroWinklerSimilarity",
+                    types.DoubleType(),
+                )
+            ]
+            try:
+                for udf in udfs_register:
+                    self.spark.udf.registerJavaFunction(*udf)
+            except AnalysisException:
+                logger.warning(
+                    "Unable to load custom Spark SQL functions such as jaro_winkler from "
+                    "the jar that's provided with Splink.\n"
+                    "You need to ensure the Splink jar is registered./n"
+                    "See https://moj-analytical-services.github.io/splink/demos/example_simple_pyspark.html"  # NOQA: E501
+                    "for an example.\n"
+                    "You will not be able to use these functions in your linkage.\n"
+                    "You can find the location of the jar by calling the following function"
+                    ":\nfrom splink.spark.jar_location import similarity_jar_location"
+                )
+        # set non-databricks environment default method as parquest in case nothing else specified.
+        elif not self.break_lineage_method:
+            self.break_lineage_method = "parquet"
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
@@ -248,6 +322,19 @@ class SparkLinker(Linker):
                 spark_df.write.mode("overwrite").parquet(write_path)
                 spark_df = self.spark.read.parquet(write_path)
                 logger.debug(f"Wrote {templated_name} to parquet")
+            elif self.break_lineage_method == "delta_lake_files":
+                checkpoint_dir = self._get_checkpoint_dir_path(spark_df)
+                write_path = os.path.join(checkpoint_dir, physical_name)
+                spark_df.write.mode("overwrite").format("delta").save()
+                spark_df = self.spark.read.format("delta").load(write_path)
+                logger.debug(f"Wrote {templated_name} to Delta files at {write_path}")
+            elif self.break_lineage_method == "delta_lake_table":
+                write_path = f"{self.splink_data_store}.{physical_name}"
+                spark_df.write.mode("overwrite").saveAsTable(write_path)
+                spark_df = self.spark.table(write_path)
+                logger.debug(
+                    f"Wrote {templated_name} to Delta Table at {self.splink_data_store}.{physical_name}"
+                )
             else:
                 raise ValueError(
                     f"Unknown break_lineage_method: {self.break_lineage_method}"
@@ -329,11 +416,15 @@ class SparkLinker(Linker):
         return f" TABLESAMPLE ({percent} PERCENT) "
 
     def _table_exists_in_database(self, table_name):
-        tables = self.spark.catalog.listTables()
-        for t in tables:
-            if t.name == table_name:
-                return True
-        return False
+        query_result = self.spark.sql(
+            f"show tables from {self.splink_data_store} like '{table_name}'"
+        ).collect()
+        if len(query_result) > 1:
+            raise ValueError("Table name not unique. Does it contain a wild card?")
+        elif len(query_result) == 1:
+            return True
+        elif len(query_result) == 0:
+            return False
 
     def register_tf_table(self, df, col_name, overwrite=False):
         self.register_table(df, colname_to_tf_tablename(col_name), overwrite)
