@@ -146,9 +146,9 @@ class SparkLinker(Linker):
                 " argument when you initialise the linker"
             )
 
-        # spark.catalog.currentCatalog() is not available in versions of spark before 3.4.0
-        # in Spark versions less that 3.4.0 we will require explicit catalog setting, but will revert to default
-        # in Spark versions greater than 3.4.0
+        # spark.catalog.currentCatalog() is not available in versions of spark before
+        # 3.4.0. In Spark versions less that 3.4.0 we will require explicit catalog
+        # setting, but will revert to default in Spark versions greater than 3.4.0
         threshold = version.parse("3.4.0")
         self.catalog = catalog
         if version.parse(self.spark.version) >= threshold and not self.catalog:
@@ -160,15 +160,16 @@ class SparkLinker(Linker):
             database if database is not None else self.spark.catalog.currentDatabase()
         )
 
-        # this defines the catalog.database location where splink's data outputs will be stored.
-        # the filter will remove none, so if catalog is not provided and spark version is < 3.3.0 we will use
-        # the default catalog.
+        # this defines the catalog.database location where splink's data outputs will
+        # be stored. The filter will remove none, so if catalog is not provided and
+        # spark version is < 3.3.0 we will use the default catalog.
 
         self.splink_data_store = ".".join(
             filter(lambda x: x, [self.catalog, self.database])
         )
 
-        # if we use spark.sql("USE DATABASE db") commands we change the default. This approach prevents side effects.
+        # if we use spark.sql("USE DATABASE db") commands we change the default. This
+        # approach prevents side effects.
         splink_tables = self.spark.sql(
             f"show tables from {self.splink_data_store} like '*__splink__*'"
         )
