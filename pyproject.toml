@@ -10,7 +10,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.6"
-jsonschema = "^3.2"
+jsonschema = ">=3.2,<5.0"
 pandas = "^1.0.0"
 duckdb = "^0.6.0"
 sqlglot = "5.1.0"
