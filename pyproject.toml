@@ -9,8 +9,8 @@ repository = "https://github.com/moj-analytical-services/splink"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.6"
-jsonschema = "^3.2"
+python = "^3.7"
+jsonschema = "^4.0.0"
 pandas = "^1.0.0"
 duckdb = "^0.6.0"
 sqlglot = "5.1.0"
