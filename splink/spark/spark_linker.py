@@ -147,10 +147,11 @@ class SparkLinker(Linker):
             )
 
         # spark.catalog.currentCatalog() is not available in versions of spark before 3.4.0
-        # we will only handle catalogs in spark versions greater than that
+        # in Spark versions less that 3.4.0 we will require explicit catalog setting, but will revert to default
+        # in Spark versions greater than 3.4.0
         threshold = version.parse("3.4.0")
-        self.catalog = None
-        if version.parse(self.spark.version) >= threshold:
+        self.catalog = catalog
+        if version.parse(self.spark.version) >= threshold and not self.catalog:
             # set the catalog and database of where to write output tables
             self.catalog = (
                 catalog if catalog is not None else self.spark.catalog.currentCatalog()
