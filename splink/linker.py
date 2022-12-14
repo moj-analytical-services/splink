@@ -1405,20 +1405,22 @@ class Linker:
         return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
 
     def estimate_m_from_pairwise_labels(self, table_name):
-        """Estimate the m parameters of the linkage model from a dataframe of pairwise labels.
-        
-        The table of labels should be in the following format, and should 
+        """Estimate the m parameters of the linkage model from a dataframe of pairwise
+        labels.
+
+        The table of labels should be in the following format, and should
         be registered with your database:
-        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
-        |----------------|-----------|----------------|-----------|--------------------|
-        |df_1            |1          |df_2            |2          |0.99                |
-        |df_1            |1          |df_2            |3          |0.2                 |
-        
-        Note that `source_dataset` and `unique_id` should correspond to the 
-        values specified in the settings dict, and the `input_table_aliases` 
-        passed to the `linker` object. Note that at the moment 
-        `clerical_match_score` is ignored and it is assumed that every row in 
-        the table of labels is a score of 1, i.e. a perfect match.
+        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|
+        |----------------|-----------|----------------|-----------|
+        |df_1            |1          |df_2            |2          |
+        |df_1            |1          |df_2            |3          |
+
+        Note that `source_dataset` and `unique_id` should correspond to the
+        values specified in the settings dict, and the `input_table_aliases`
+        passed to the `linker` object. Note that at the moment, this method does
+        not respect values in a `clerical_match_score` column.  If provided, these
+        are ignored and it is assumed that every row in the table of labels is a score
+        of 1, i.e. a perfect match.
 
         Args:
           labels_tablename (str): Name of table containing labels in the database
