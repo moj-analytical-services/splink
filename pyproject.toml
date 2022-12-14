@@ -14,7 +14,7 @@ jsonschema = "^4.0.0"
 pandas = "^1.0.0"
 duckdb = "^0.6.0"
 sqlglot = "5.1.0"
-altair = "^4.2.0",
+altair = "^4.2.0"
 Jinja2 = "^3.0.3"
 
 [tool.poetry.dev-dependencies]
