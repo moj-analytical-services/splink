@@ -235,8 +235,7 @@ class AthenaLinker(Linker):
             >>> )
         """
 
-        if settings_dict is not None and "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "presto"
+        self._sql_dialect_ = "presto"
 
         self.boto3_session = boto3_session
         self.output_schema = output_database
@@ -345,7 +344,10 @@ class AthenaLinker(Linker):
         exists = self._table_exists_in_database(table_name)
         if exists:
             if not overwrite:
-                raise ValueError(f"Table '{table_name}' already exists in database.")
+                raise ValueError(
+                    f"Table '{table_name}' already exists in database. "
+                    "Please use the 'overwrite' argument if you wish to overwrite"
+                )
             else:
                 self.drop_table_from_database_if_exists(table_name)
 
@@ -363,6 +365,10 @@ class AthenaLinker(Linker):
             return ""
         percent = proportion * 100
         return f" TABLESAMPLE BERNOULLI ({percent})"
+
+    @property
+    def _infinity_expression(self):
+        return "infinity()"
 
     def _table_exists_in_database(self, table_name):
         return wr.catalog.does_table_exist(

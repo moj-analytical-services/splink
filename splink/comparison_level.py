@@ -8,6 +8,7 @@ import logging
 
 import sqlglot
 from sqlglot.expressions import Identifier
+from sqlglot.optimizer.normalize import normalize
 
 from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
@@ -18,6 +19,7 @@ from .misc import (
     match_weight_to_bayes_factor,
 )
 from .parse_sql import get_columns_used_from_sql
+from .constants import LEVEL_NOT_OBSERVED_TEXT
 
 from .input_column import sqlglot_tree_signature
 
@@ -28,15 +30,14 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _is_exact_match(sql, sql_dialect=None):
-    syntax_tree = sqlglot.parse_one(sql, read=sql_dialect)
+def _is_exact_match(sql_syntax_tree):
 
-    signature = sqlglot_tree_signature(syntax_tree)
+    signature = sqlglot_tree_signature(sql_syntax_tree)
     if signature != "eq column column identifier identifier":
         return False
 
     identifiers = []
-    for tup in syntax_tree.walk():
+    for tup in sql_syntax_tree.walk():
         subtree = tup[0]
         if type(subtree) is Identifier:
             identifiers.append(subtree.this[:-2])
@@ -46,14 +47,15 @@ def _is_exact_match(sql, sql_dialect=None):
         return False
 
 
-def _exact_match_colname(sql, sql_dialect=None):
+def _exact_match_colname(sql_syntax_tree):
+    # only interested in expression directly, not context
+    sql_syntax_tree.parent = None
     cols = []
-    syntax_tree = sqlglot.parse_one(sql.lower(), read=sql_dialect)
 
-    for identifier in syntax_tree.find_all(Identifier):
+    for identifier in sql_syntax_tree.find_all(Identifier):
         identifier.args["quoted"] = False
 
-    for tup in syntax_tree.walk():
+    for tup in sql_syntax_tree.walk():
         subtree = tup[0]
         depth = getattr(subtree, "depth", None)
         if depth == 2:
@@ -66,6 +68,15 @@ def _exact_match_colname(sql, sql_dialect=None):
             f"Expected sql condition to refer to one column but got {cols}"
         )
     return cols[0]
+
+
+def _get_and_subclauses(expr: sqlglot.Expression):
+    # get list of subclauses joined together by 'AND' at top-level
+    # e.g. 'A AND B AND C' -> ['A', 'B', 'C']
+    # or if no AND, return expression as a list, e.g. 'A' -> ['A']
+    if isinstance(expr, sqlglot.exp.And):
+        return list(expr.flatten())
+    return [expr]
 
 
 def _default_m_values(num_levels):
@@ -133,7 +144,8 @@ class ComparisonLevel:
         self._level_dict = level_dict
 
         self.comparison: "Comparison" = comparison
-        self._sql_dialect = sql_dialect
+        if not hasattr(self, "_sql_dialect"):
+            self._sql_dialect = sql_dialect
 
         self._sql_condition = self._level_dict["sql_condition"]
         self._is_null_level = self._level_dict_val_else_default("is_null_level")
@@ -190,7 +202,7 @@ class ComparisonLevel:
     def m_probability(self):
         if self._is_null_level:
             return None
-        if self._m_probability == "level not observed in training dataset":
+        if self._m_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
         if self._m_probability is None and self._has_comparison:
             vals = _default_m_values(self.comparison._num_levels)
@@ -201,7 +213,7 @@ class ComparisonLevel:
     def m_probability(self, value):
         if self._is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
-        if value == "level not observed in training dataset":
+        if value == LEVEL_NOT_OBSERVED_TEXT:
             cc_n = self.comparison._output_column_name
             cl_n = self._label_for_charts
             logger.warning(
@@ -216,7 +228,7 @@ class ComparisonLevel:
     def u_probability(self):
         if self._is_null_level:
             return None
-        if self._u_probability == "level not observed in training dataset":
+        if self._u_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
         if self._u_probability is None:
             vals = _default_u_values(self.comparison._num_levels)
@@ -227,7 +239,7 @@ class ComparisonLevel:
     def u_probability(self, value):
         if self._is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
-        if value == "level not observed in training dataset":
+        if value == LEVEL_NOT_OBSERVED_TEXT:
             cc_n = self.comparison._output_column_name
             cl_n = self._label_for_charts
             logger.warning(
@@ -333,6 +345,8 @@ class ComparisonLevel:
             return 1.0
         if self.m_probability is None or self.u_probability is None:
             return None
+        elif self.u_probability == 0:
+            return math.inf
         else:
             return self.m_probability / self.u_probability
 
@@ -349,7 +363,11 @@ class ComparisonLevel:
             f"If comparison level is `{self._label_for_charts.lower()}` "
             "then comparison is"
         )
-        if self._bayes_factor >= 1.0:
+        if self._bayes_factor == math.inf:
+            return f"{text} certain to be a match"
+        elif self._bayes_factor == 0.0:
+            return f"{text} impossible to be a match"
+        elif self._bayes_factor >= 1.0:
             return f"{text} {self._bayes_factor:,.2f} times more likely to be a match"
         else:
             mult = 1 / self._bayes_factor
@@ -457,25 +475,35 @@ class ComparisonLevel:
         if self._is_else_level:
             return False
 
-        sqls = re.split(r" and ", self._sql_condition, flags=re.IGNORECASE)
-        for sql in sqls:
-            if not _is_exact_match(sql, self._sql_dialect):
+        sql_syntax_tree = sqlglot.parse_one(
+            self._sql_condition.lower(), read=self._sql_dialect
+        )
+        sql_cnf = normalize(sql_syntax_tree)
+
+        exprs = _get_and_subclauses(sql_cnf)
+        for expr in exprs:
+            if not _is_exact_match(expr):
                 return False
         return True
 
     @property
     def _exact_match_colnames(self):
 
-        sqls = re.split(r" and ", self._sql_condition, flags=re.IGNORECASE)
-        for sql in sqls:
-            if not _is_exact_match(sql):
+        sql_syntax_tree = sqlglot.parse_one(
+            self._sql_condition.lower(), read=self._sql_dialect
+        )
+        sql_cnf = normalize(sql_syntax_tree)
+
+        exprs = _get_and_subclauses(sql_cnf)
+        for expr in exprs:
+            if not _is_exact_match(expr):
                 raise ValueError(
                     "sql_cond not an exact match so can't get exact match column name"
                 )
 
         cols = []
-        for sql in sqls:
-            col = _exact_match_colname(sql, sql_dialect=self._sql_dialect)
+        for expr in exprs:
+            col = _exact_match_colname(expr)
             cols.append(col)
         return cols
 
@@ -503,10 +531,13 @@ class ComparisonLevel:
 
     @property
     def _bayes_factor_sql(self):
+        bayes_factor = (
+            self._bayes_factor if self._bayes_factor != math.inf else "'Infinity'"
+        )
         sql = f"""
         WHEN
         {self.comparison._gamma_column_name} = {self._comparison_vector_value}
-        THEN cast({self._bayes_factor} as double)
+        THEN cast({bayes_factor} as double)
         """
         return dedent(sql)
 
@@ -652,7 +683,7 @@ class ComparisonLevel:
             p = trained_value["probability"]
             record["estimated_probability"] = p
             record["estimate_description"] = trained_value["description"]
-            if p is not None and p > 0.0:
+            if p is not None and p != LEVEL_NOT_OBSERVED_TEXT and p > 0.0 and p < 1.0:
                 record["estimated_probability_as_log_odds"] = math.log2(p / (1 - p))
             else:
                 record["estimated_probability_as_log_odds"] = None

@@ -87,7 +87,10 @@ def test_splink_converges_to_known_params():
         linker,
     )
 
-    sqls = predict_from_comparison_vectors_sqls(linker._settings_obj)
+    sqls = predict_from_comparison_vectors_sqls(
+        linker._settings_obj,
+        sql_infinity_expression=linker._infinity_expression,
+    )
 
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])

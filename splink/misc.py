@@ -1,4 +1,4 @@
-from math import log2
+from math import log2, inf
 from typing import Iterable
 import numpy as np
 import json
@@ -12,7 +12,7 @@ def dedupe_preserving_order(list_of_items):
 
 
 def prob_to_bayes_factor(prob):
-    return prob / (1 - prob)
+    return prob / (1 - prob) if prob != 1 else inf
 
 
 def prob_to_match_weight(prob):

@@ -125,7 +125,7 @@
         }
       ],
       "width": 150,
-      "height": 50
+      "height": {"step": 12} 
     },
     {
       "mark": "bar",
@@ -224,7 +224,7 @@
         }
       ],
       "width": 150,
-      "height": 50
+      "height": {"step": 12} 
     }
   ],
   "data": {

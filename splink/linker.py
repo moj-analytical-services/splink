@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import List, Union
 from copy import Error, copy, deepcopy
@@ -146,11 +148,18 @@ class Linker:
 
         self._pipeline = SQLPipeline()
 
+        settings_dict = deepcopy(settings_dict)
+        # if settings_dict is passed, set sql_dialect on it if missing, and make sure
+        # incompatible dialect not passed
+        if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
+            settings_dict["sql_dialect"] = self._sql_dialect
+
         self._settings_dict = settings_dict
         if settings_dict is None:
             self._settings_obj_ = None
         else:
             self._settings_obj_ = Settings(settings_dict)
+            self._validate_dialect()
 
         self._input_tables_dict = self._get_input_tables_dict(
             input_table_or_tables, input_table_aliases
@@ -243,6 +252,21 @@ class Linker:
             return True
         else:
             return False
+
+    @property
+    def _sql_dialect(self):
+        if self._sql_dialect_ is None:
+            raise NotImplementedError(
+                f"No SQL dialect set on object of type {type(self)}. "
+                "Did you make sure to create a dialect-specific Linker?"
+            )
+        return self._sql_dialect_
+
+    @property
+    def _infinity_expression(self):
+        raise NotImplementedError(
+            f"infinity sql expression not available for {type(self)}"
+        )
 
     def _prepend_schema_to_table_name(self, table_name):
         if self._output_schema:
@@ -384,7 +408,7 @@ class Linker:
             f"_execute_sql_against_backend not implemented for {type(self)}"
         )
 
-    def register_table(self, input, table_name):
+    def register_table(self, input, table_name, overwrite=False):
         """
         Register a table to your backend database, to be used in one of the
         splink methods, or simply to allow querying.
@@ -401,6 +425,8 @@ class Linker:
             input: The data you wish to register. This can be either a dictionary,
                 pandas dataframe, pyarrow table or a spark dataframe.
             table_name (str): The name you wish to assign to the table.
+            overwrite (bool): Overwrite the table in the underlying database if it
+                exists
 
         Returns:
             SplinkDataFrame: An abstraction representing the table created by the sql
@@ -425,19 +451,20 @@ class Linker:
                 This determines the type of table that your results are output in.
         """
 
-        hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
-        # Ensure hash is valid sql table name
         output_tablename_templated = "__splink__df_sql_query"
-        hashed_tablename = f"{output_tablename_templated}_{hash}"
 
         splink_dataframe = self._sql_to_splink_dataframe_checking_cache(
             sql,
-            hashed_tablename,
+            output_tablename_templated,
+            materialise_as_hash=False,
+            use_cache=False,
         )
+
         if output_type in ("splink_df", "splinkdf"):
             return splink_dataframe
         elif output_type == "pandas":
             out = splink_dataframe.as_pandas_dataframe()
+            # If pandas, drop the table to cleanup the db
             splink_dataframe.drop_table_from_database()
             return out
         else:
@@ -585,6 +612,15 @@ class Linker:
                         'If link_type = "dedupe only" then input tables must contain '
                         "only a single input table",
                     )
+
+    def _validate_dialect(self):
+        settings_dialect = self._settings_obj._sql_dialect
+        if settings_dialect != self._sql_dialect:
+            raise ValueError(
+                f"Incompatible SQL dialect! `settings` dictionary uses "
+                f"dialect {settings_dialect}, but expecting "
+                f"'{self._sql_dialect}' for Linker of type {type(self)}"
+            )
 
     def _populate_probability_two_random_records_match_from_trained_values(self):
 
@@ -736,6 +772,7 @@ class Linker:
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
+        self._validate_dialect()
 
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
         """Compute a term frequency table for a given column and persist to the database
@@ -894,7 +931,7 @@ class Linker:
         """Estimate the parameters of the linkage model using expectation maximisation.
 
         By default, the m probabilities are estimated, but not the u probabilities,
-        because good estiamtes for the u probabilities can be obtained from
+        because good estimates for the u probabilities can be obtained from
         `linker.estimate_u_using_random_sampling()`.  You can change this by setting
         `fix_u_probabilities` to False.
 
@@ -991,8 +1028,8 @@ class Linker:
                     "comparison_levels_to_reverse_blocking_rule.\n"
                     "If comparisons_to_deactivate is provided, then "
                     "you usually need to provide corresponding "
-                    "comparison_levels_to_reverse_blocking_rule. "
-                    "because each comparison to deactivate if effectively treated "
+                    "comparison_levels_to_reverse_blocking_rule "
+                    "because each comparison to deactivate is effectively treated "
                     "as an exact match."
                 )
 
@@ -1070,7 +1107,10 @@ class Linker:
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls(
-            self._settings_obj, threshold_match_probability, threshold_match_weight
+            self._settings_obj,
+            threshold_match_probability,
+            threshold_match_weight,
+            sql_infinity_expression=self._infinity_expression,
         )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
@@ -1127,7 +1167,9 @@ class Linker:
         original_link_type = self._settings_obj._link_type
 
         if not isinstance(records_or_tablename, str):
-            self.register_table(records_or_tablename, "__splink__df_new_records")
+            self.register_table(
+                records_or_tablename, "__splink__df_new_records", overwrite=True
+            )
             new_records_tablename = "__splink__df_new_records"
         else:
             new_records_tablename = records_or_tablename
@@ -1154,7 +1196,10 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(
+            self._settings_obj,
+            sql_infinity_expression=self._infinity_expression,
+        )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -1163,7 +1208,7 @@ class Linker:
         where match_weight > {match_weight_threshold}
         """
 
-        self._enqueue_sql(sql, "__splink_find_matches_predictions")
+        self._enqueue_sql(sql, "__splink__find_matches_predictions")
 
         predictions = self._execute_sql_pipeline(use_cache=False)
 
@@ -1201,8 +1246,12 @@ class Linker:
         self._compare_two_records_mode = True
         self._settings_obj._blocking_rules_to_generate_predictions = []
 
-        self.register_table([record_1], "__splink__compare_two_records_left")
-        self.register_table([record_2], "__splink__compare_two_records_right")
+        self.register_table(
+            [record_1], "__splink__compare_two_records_left", overwrite=True
+        )
+        self.register_table(
+            [record_2], "__splink__compare_two_records_right", overwrite=True
+        )
 
         sql_join_tf = _join_tf_to_input_df_sql(self)
 
@@ -1223,7 +1272,10 @@ class Linker:
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(
+            self._settings_obj,
+            sql_infinity_expression=self._infinity_expression,
+        )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -1276,7 +1328,10 @@ class Linker:
 
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
-        sqls = predict_from_comparison_vectors_sqls(self._settings_obj)
+        sqls = predict_from_comparison_vectors_sqls(
+            self._settings_obj,
+            sql_infinity_expression=self._infinity_expression,
+        )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
@@ -1350,6 +1405,31 @@ class Linker:
         return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
 
     def estimate_m_from_pairwise_labels(self, table_name):
+        """Estimate the m parameters of the linkage model from a dataframe of pairwise
+        labels.
+
+        The table of labels should be in the following format, and should
+        be registered with your database:
+        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|
+        |----------------|-----------|----------------|-----------|
+        |df_1            |1          |df_2            |2          |
+        |df_1            |1          |df_2            |3          |
+
+        Note that `source_dataset` and `unique_id` should correspond to the
+        values specified in the settings dict, and the `input_table_aliases`
+        passed to the `linker` object. Note that at the moment, this method does
+        not respect values in a `clerical_match_score` column.  If provided, these
+        are ignored and it is assumed that every row in the table of labels is a score
+        of 1, i.e. a perfect match.
+
+        Args:
+          labels_tablename (str): Name of table containing labels in the database
+
+        Examples:
+          >>> pairwise_labels = pd.read_csv("./data/pairwise_labels_to_estimate_m.csv")
+          >>> linker.register_table(pairwise_labels, "labels", overwrite=True)
+          >>> linker.estimate_m_from_pairwise_labels("labels")
+        """
         self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_from_pairwise_labels(self, table_name)
 
@@ -1953,6 +2033,50 @@ class Linker:
         res = self._execute_sql_pipeline().as_record_dict()[0]
         return res["count_of_pairwise_comparisons_generated"]
 
+    def cumulative_comparisons_from_blocking_rules_records(
+        self,
+        blocking_rules: str or list = None,
+    ):
+        """Output the number of comparisons generated by each successive blocking rule.
+
+        This is equivalent to the output size of df_predict and details how many
+        comparisons each of your individual blocking rules will contribute to the
+        total.
+
+        Args:
+            blocking_rules (str or list): The blocking rule(s) to compute comparisons
+                for. If null, the rules set out in your settings object will be used.
+
+        Examples:
+            >>> linker_settings = DuckDBLinker(df, settings)
+            >>> # Compute the cumulative number of comparisons generated by the rules
+            >>> # in your settings object.
+            >>> linker_settings.cumulative_comparisons_from_blocking_rules_records()
+            >>>
+            >>> # Generate total comparisons with custom blocking rules.
+            >>> blocking_rules = [
+            >>>    "l.surname = r.surname",
+            >>>    "l.first_name = r.first_name
+            >>>     and substr(l.dob,1,4) = substr(r.dob,1,4)"
+            >>> ]
+            >>>
+            >>> linker.cumulative_comparisons_from_blocking_rules_records(
+            >>>     blocking_rules
+            >>>  )
+
+        Returns:
+            List: A list of blocking rules and the corresponding number of
+                comparisons it is forecast to generate.
+        """
+        if blocking_rules:
+            blocking_rules = ensure_is_list(blocking_rules)
+
+        records = cumulative_comparisons_generated_by_blocking_rules(
+            self, blocking_rules, output_chart=False
+        )
+
+        return records
+
     def cumulative_num_comparisons_from_blocking_rules_chart(
         self,
         blocking_rules: str or list = None,
@@ -1967,7 +2091,6 @@ class Linker:
         Args:
             blocking_rules (str or list): The blocking rule(s) to compute comparisons
                 for. If null, the rules set out in your settings object will be used.
-
 
         Examples:
             >>> linker_settings = DuckDBLinker(df, settings)
@@ -1996,7 +2119,7 @@ class Linker:
             blocking_rules = ensure_is_list(blocking_rules)
 
         records = cumulative_comparisons_generated_by_blocking_rules(
-            self, blocking_rules
+            self, blocking_rules, output_chart=True
         )
 
         return cumulative_blocking_rule_comparisons_generated(records)
@@ -2025,7 +2148,9 @@ class Linker:
             SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons and
                 estimated pairwise comparisons generated by the blocking rules.
         """  # noqa: E501
-        sql = count_num_comparisons_from_blocking_rules_for_prediction_sql(df_predict)
+        sql = count_num_comparisons_from_blocking_rules_for_prediction_sql(
+            self, df_predict
+        )
         match_key_analysis = self._sql_to_splink_dataframe_checking_cache(
             sql, "__splink__match_key_analysis"
         )
@@ -2144,31 +2269,35 @@ class Linker:
         if return_html_as_string:
             return rendered
 
-    def save_settings_to_json(self, out_path: str, overwrite=False) -> dict:
-        """Save the configuration and parameters the linkage model to a `.json` file.
+    def save_settings_to_json(
+        self, out_path: str | None = None, overwrite: bool = False
+    ) -> dict:
+        """Save the configuration and parameters of the linkage model to a `.json` file.
 
-        The model can later be loaded back in using `linker.load_settings_from_json()`
+        The model can later be loaded back in using `linker.load_settings_from_json()`.
+        The settings dict is also returned in case you want to save it a different way.
 
         Examples:
             >>> linker.save_settings_to_json("my_settings.json", overwrite=True)
 
         Args:
-            out_path (str): File path for json file
+            out_path (str, optional): File path for json file. If None, don't save to
+                file. Defaults to None.
             overwrite (bool, optional): Overwrite if already exists? Defaults to False.
+
+        Returns:
+            dict: The settings as a dictionary.
         """
-
         model_dict = self._settings_obj.as_dict()
-
         if out_path:
-
             if os.path.isfile(out_path) and not overwrite:
                 raise ValueError(
                     f"The path {out_path} already exists. Please provide a different "
                     "path or set overwrite=True"
                 )
-
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(model_dict, f, indent=4)
+        return model_dict
 
     def load_settings_from_json(self, in_path: str):
         """Load settings from a `.json` file.

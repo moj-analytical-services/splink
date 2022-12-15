@@ -1,38 +1,60 @@
-from ..comparison_level_library import (  # noqa: F401
-    _mutable_params,
-    exact_match_level,
-    levenshtein_level,
-    else_level,
-    null_level,
-    distance_function_level,
-    columns_reversed_level,
-    jaccard_level,
-    jaro_winkler_level,
-    distance_in_km_level,
+from ..comparison_level_library import (
+    ExactMatchLevelBase,
+    LevenshteinLevelBase,
+    ElseLevelBase,
+    NullLevelBase,
+    DistanceFunctionLevelBase,
+    ColumnsReversedLevelBase,
+    JaccardLevelBase,
+    JaroWinklerLevelBase,
+    PercentageDifferenceLevelBase,
+    DistanceInKMLevelBase,
+    ArrayIntersectLevelBase,
 )
-from ..input_column import InputColumn
-from ..comparison_level import ComparisonLevel
+from .spark_base import (
+    SparkBase,
+)
 
-_mutable_params["dialect"] = "spark"
+
+class null_level(SparkBase, NullLevelBase):
+    pass
 
 
-def array_intersect_level(
-    col_name, m_probability=None, term_frequency_adjustments=False, min_intersection=1
-) -> ComparisonLevel:
+class exact_match_level(SparkBase, ExactMatchLevelBase):
+    pass
 
-    col = InputColumn(col_name, sql_dialect=_mutable_params["dialect"])
 
-    sql = f"size(array_intersect({col.name_l()}, {col.name_r()})) >= {min_intersection}"
+class else_level(SparkBase, ElseLevelBase):
+    pass
 
-    if min_intersection == 1:
-        label = "Arrays intersect"
-    else:
-        label = f"Array intersect size >= {min_intersection}"
 
-    level_dict = {"sql_condition": sql, "label_for_charts": label}
-    if m_probability:
-        level_dict["m_probability"] = m_probability
-    if term_frequency_adjustments:
-        level_dict["tf_adjustment_column"] = col_name
+class columns_reversed_level(SparkBase, ColumnsReversedLevelBase):
+    pass
 
-    return ComparisonLevel(level_dict, sql_dialect=_mutable_params["dialect"])
+
+class distance_function_level(SparkBase, DistanceFunctionLevelBase):
+    pass
+
+
+class levenshtein_level(SparkBase, LevenshteinLevelBase):
+    pass
+
+
+class jaro_winkler_level(SparkBase, JaroWinklerLevelBase):
+    pass
+
+
+class jaccard_level(SparkBase, JaccardLevelBase):
+    pass
+
+
+class array_intersect_level(SparkBase, ArrayIntersectLevelBase):
+    pass
+
+
+class percentage_difference_level(SparkBase, PercentageDifferenceLevelBase):
+    pass
+
+
+class distance_in_km_level(SparkBase, DistanceInKMLevelBase):
+    pass

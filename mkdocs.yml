@@ -58,6 +58,7 @@ nav:
   - Home: "README.md"
   - Topic Guide:
       - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/backends.md"
+      - Retrieving and querying Splink results: "topic_guides/querying_splink_results.md"
       - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
       - Link type - linkings vs deduping: "topic_guides/link_type.md"
       - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
@@ -83,12 +84,13 @@ nav:
   - Settings dictionary reference: "settings_dict_guide.md"
   - Tutorials:
       - 0. Tutorial introduction: "demos/00_Tutorial_Introduction.ipynb"
-      - 1. Exploratory analysis: "demos/01_Exploratory_analysis.ipynb"
-      - 2. Blocking: "demos/02_Blocking.ipynb"
-      - 3. Estimating model parameters: "demos/03_Estimating_model_parameters.ipynb"
-      - 4. Predicting results: "demos/04_Predicting_results.ipynb"
-      - 5. Visualising predictions: "demos/05_Visualising_predictions.ipynb"
-      - 6. Quality assurance: "demos/06_Quality_assurance.ipynb"
+      - 1. Data prep prerequisites: "demos/01_Prerequisites.ipynb"
+      - 2. Exploratory analysis: "demos/02_Exploratory_analysis.ipynb"
+      - 3. Blocking: "demos/03_Blocking.ipynb"
+      - 4. Estimating model parameters: "demos/04_Estimating_model_parameters.ipynb"
+      - 5. Predicting results: "demos/05_Predicting_results.ipynb"
+      - 6. Visualising predictions: "demos/06_Visualising_predictions.ipynb"
+      - 7. Quality assurance: "demos/07_Quality_assurance.ipynb"
   - Examples:
       - Examples index: "examples_index.md"
       - DuckDB:
@@ -97,6 +99,7 @@ nav:
         - Linking two tables of persons: "demos/example_link_only.ipynb"
         - Real time record linkage: "demos/example_real_time_record_linkage.ipynb"
         - QA from ground truth column: "demos/example_accuracy_analysis_from_labels_column.ipynb"
+        - Estimating m probabilities from labels: "demos/example_pairwise_labels.ipynb"
         - Quick and dirty persons model: "demos/example_quick_and_dirty_persons.ipynb"
         - Febrl3 Dedupe: "demos/example_febrl3.ipynb"
         - Febrl4 link-only: "demos/example_febrl4.ipynb"
