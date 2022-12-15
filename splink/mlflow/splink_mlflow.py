@@ -72,7 +72,7 @@ def _save_splink_model_to_mlflow(linker, model_name):
 
 # ======================================================================
 # ======================================================================
-def log_splink_model_to_mlflow(linker, model_name="linker", log_charts=True):
+def log_splink_model_to_mlflow(linker, model_name, log_charts=True, params=None, metrics=None):
     splink_model_json = linker._settings_obj.as_dict()
 
     with mlflow.start_run() as run:
@@ -82,6 +82,10 @@ def log_splink_model_to_mlflow(linker, model_name="linker", log_charts=True):
         _save_splink_model_to_mlflow(linker, model_name)
         if log_charts:
             _log_linker_charts(linker)
+        if params:
+            mlflow.log_params(params)
+        if metrics:
+            mlflow.log_metrics(metrics)
 
     return run
 
@@ -134,7 +138,7 @@ def get_model_json(artifact_uri):
         - artifact_uri – URI pointing to the artifacts, such as "runs:/500cf58bee2b40a4a82861cc31a617b1/my_model.pkl",
         "models:/my_model/Production", or "s3://my_bucket/my/file.txt".
     """
-    temp_file_path = f"/tmp/{model_uri.split('/')[1]}/splink_mlflow_artifacts_download"
+    temp_file_path = f"/tmp/{artifact_uri.split('/')[1]}/splink_mlflow_artifacts_download"
     os.makedirs(temp_file_path)
     mlflow.artifacts.download_artifacts(
         artifact_uri=artifact_uri
