@@ -8,6 +8,17 @@ from ..charts import save_offline_chart
 # ======================================================================
 # ======================================================================
 def _log_comparison_details(comparison):
+    """
+    Traverse a single comparison item from the splink settings JSON and log the sql condition the comparison was made
+    under and the m and u values
+    Parameters
+    ----------
+    comparison :
+
+    Returns
+    -------
+
+    """
     output_column_name = comparison['output_column_name']
 
     comparison_levels = comparison['comparison_levels']
@@ -20,13 +31,25 @@ def _log_comparison_details(comparison):
             f"output column {output_column_name} compared through condition {sql_condition} u_probability": u_probability
 
         }
-        if m_probability:
+        if m_probability: # this means we don't log the null comparison as it doesnt have a m and u value
             mlflow.log_params(log_dict)
 
 
 # ======================================================================
 # ======================================================================
 def _log_comparisons(splink_model_json):
+    """
+    Traverse the comparisons part of the splink settings and extract the learned values.
+    This allows you to easily compare values across different training conditions.
+
+    Parameters
+    ----------
+    splink_model_json : the settings json from a splink model.
+
+    Returns
+    -------
+
+    """
     comparisons = splink_model_json['comparisons']
     for _ in comparisons:
         _log_comparison_details(_)
@@ -35,6 +58,16 @@ def _log_comparisons(splink_model_json):
 # ======================================================================
 # ======================================================================
 def _log_hyperparameters(splink_model_json):
+    """
+    Simple method for extracting parameters from the splink settings and logging as parameters in MLFlow
+    Parameters
+    ----------
+    splink_model_json : the settings json from a splink model.
+
+    Returns
+    -------
+
+    """
     hyper_param_keys = ['link_type', 'probability_two_random_records_match', 'sql_dialect', 'unique_id_column_name',
                         'em_convergence', 'retain_matching_columns', 'blocking_rules_to_generate_predictions']
     for key in hyper_param_keys:
@@ -44,23 +77,46 @@ def _log_hyperparameters(splink_model_json):
 # ======================================================================
 # ======================================================================
 def _log_splink_model_json(splink_model_json):
+    """
+    Log the splink settings json in its entirery under the name "linker.json"
+    Parameters
+    ----------
+    splink_model_json : the settings json from a splink model.
+
+    Returns
+    -------
+
+    """
     mlflow.log_dict(splink_model_json, "linker.json")
 
 
 # ======================================================================
 # ======================================================================
 class splinkSparkMLFlowWrapper(mlflow.pyfunc.PythonModel):
+    """
+    Wrapper class necessary for storing and retrieving the splink model JSON from the MLFlow model repository.
+    """
 
     def load_context(self, context):
+        # this simply stores the json with the MLFLow model.
         self.linker_json = context.artifacts['linker_json_path']
 
-    def model_json(self):
-        return self.json
 
 
 # ======================================================================
 # ======================================================================
 def _save_splink_model_to_mlflow(linker, model_name):
+    """
+    Simple method for logging a splink model
+    Parameters
+    ----------
+    linker : Splink model object
+    model_name : name to save model under
+
+    Returns
+    -------
+
+    """
     path = "linker.json"
     if os.path.isfile(path):
         os.remove(path)
@@ -72,7 +128,35 @@ def _save_splink_model_to_mlflow(linker, model_name):
 
 # ======================================================================
 # ======================================================================
-def log_splink_model_to_mlflow(linker, model_name, log_charts=True, params=None, metrics=None):
+def log_splink_model_to_mlflow(linker, model_name, log_charts=True, params=None, metrics=None, artifacts=None):
+    """
+    Comprehensive logging of Splink attributes, parameters, charts and model JSON to MLFlow to provide easy
+    reproducability and tracking during model development and deployment. This will create a new run under which
+    to log everything. Additional parameters and metrics can be logged through the params and metrics arguments.
+
+    For details on MLFlow please visit https://mlflow.org/.
+
+    This will log
+    - All the m and u values trained along with their training condition
+    - All the hyperparameters set during training (blocking rules, link type, sql_dialect etc)
+
+    Parameters
+    ----------
+    linker : a trained Splink linkage model
+    model_name : str, the name to log the model under
+    log_charts : bool, whether to log charts or not. This requires executing Spark jobs so can slow things
+    down during iterative development.
+    params : dict[str: str]. Dictionary is of param_name :param_value. Optional argument for logging arbitrary
+    parameters
+    metrics : dict[str: double or int]. Dictionary is of metric_name :metric_value. Optional argument for logging
+    arbitrary metrics
+    artifacts : dict[str: str]. Dictionary is of artifact_name :artifact_filepath. Optional argument for logging
+    arbitrary artifacts (NB - artifacts must be written to disk before logging).
+    Returns
+    -------
+
+    """
+
     splink_model_json = linker._settings_obj.as_dict()
 
     with mlflow.start_run() as run:
@@ -86,6 +170,8 @@ def log_splink_model_to_mlflow(linker, model_name, log_charts=True, params=None,
             mlflow.log_params(params)
         if metrics:
             mlflow.log_metrics(metrics)
+        if artifacts:
+            mlflow.log_artifacts(artifacts)
 
     return run
 
@@ -93,10 +179,20 @@ def log_splink_model_to_mlflow(linker, model_name, log_charts=True, params=None,
 # ======================================================================
 # ======================================================================
 def _log_linker_charts(linker):
+    '''
+    Log all the non-data related charts to MLFlow
+    Parameters
+    ----------
+    linker : a Splink linker object
+
+    Returns
+    -------
+
+    '''
     weights_chart = linker.match_weights_chart()
     mu_chart = linker.m_u_parameters_chart()
     missingness_chart = linker.missingness_chart()
-    # completeness = linker.completeness_chart()
+    # completeness = linker.completeness_chart() # Note to Splink team - this method behaves differently to the others
     compare_chart = linker.parameter_estimate_comparisons_chart()
     unlinkables = linker.unlinkables_chart()
     blocking_rules_chart = linker.cumulative_num_comparisons_from_blocking_rules_chart()
@@ -116,17 +212,29 @@ def _log_linker_charts(linker):
 # ======================================================================
 # ======================================================================
 def _log_chart(chart_name, chart):
+    '''
+    Save a chart to MLFlow. This writes the chart out temporarily for MLFlow to pick up and save.
+    Parameters
+    ----------
+    chart_name : str, the name the chart will be given in MLFlow
+    chart : chart object from Splink
+
+    Returns
+    -------
+
+    '''
     path = f"{chart_name}.html"
     if os.path.isfile(path):
         os.remove(path)
     save_offline_chart(chart.spec, path)
     mlflow.log_artifact(path)
-
+    os.remove(path)
 
 # ======================================================================
 # ======================================================================
 def get_model_json(artifact_uri):
     """
+
     Returns a Splink model JSON from a model tracked with MLFlow. This can be retrieved either from a run or
     from the MLFlow Model Registry, if and only if the model was logged to MLFlow using the method
     splink.mlflow.log_splink_model_to_mlflow().
@@ -134,9 +242,15 @@ def get_model_json(artifact_uri):
     Extracting the linker's JSON specification requires temporarily writing to /tmp on the local file system. All
     written files are deleted before the function returns.
 
-    Params:
-        - artifact_uri – URI pointing to the artifacts, such as "runs:/500cf58bee2b40a4a82861cc31a617b1/my_model.pkl",
+    Parameters
+    ----------
+    artifact_uri : URI pointing to the artifacts, such as "runs:/500cf58bee2b40a4a82861cc31a617b1/my_model.pkl",
         "models:/my_model/Production", or "s3://my_bucket/my/file.txt".
+
+    Returns
+    -------
+    A splink setting json as a python dict.
+
     """
     temp_file_path = f"/tmp/{artifact_uri.split('/')[1]}/splink_mlflow_artifacts_download"
     os.makedirs(temp_file_path)
