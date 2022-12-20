@@ -422,7 +422,14 @@ class SparkLinker(Linker):
             f"show tables from {self.splink_data_store} like '{table_name}'"
         ).collect()
         if len(query_result) > 1:
-            raise ValueError("Table name not unique. Does it contain a wild card?")
+            # this clause accounts for temp tables which can have the same name as persistent table without  issue
+            if (
+                    (len(set([x.tableName for x in query_result])) == 1) # table names are the same
+                    and (len(set([x.isTemporary for x in query_result])) == 2) # isTemporary is boolean
+            ):
+                return True
+            else:
+                raise ValueError(f"Table name {table_name} not unique. Does it contain a wild card?")
         elif len(query_result) == 1:
             return True
         elif len(query_result) == 0:
