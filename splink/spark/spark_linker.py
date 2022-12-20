@@ -70,8 +70,6 @@ class SparkDataframe(SplinkDataFrame):
 
 
 class SparkLinker(Linker):
-
-    # flake8: noqa: C901
     def __init__(
         self,
         input_table_or_tables,
@@ -97,7 +95,8 @@ class SparkLinker(Linker):
                 provided when the object is created, can later be added using
                 `linker.initialise_settings()` Defaults to None.
             break_lineage_method (str, optional): Method to use to cache intermediate
-                results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files", "delta_lake_table".
+                results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files"
+                or "delta_lake_table".
                 Defaults to "parquet".
             set_up_basic_logging (bool, optional): If true, sets ups up basic logging
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
@@ -210,7 +209,8 @@ class SparkLinker(Linker):
         if self.in_databricks and not self.break_lineage_method:
             self.break_lineage_method = "delta_lake_table"
             logger.info(
-                f"Intermediate results will be written as Delta Lake tables at {self.splink_data_store}."
+                "Intermediate results will be written as Delta Lake tables at"
+                f" {self.splink_data_store}."
             )
             enable_splink(spark)
 
@@ -229,16 +229,18 @@ class SparkLinker(Linker):
                     self.spark.udf.registerJavaFunction(*udf)
             except AnalysisException:
                 logger.warning(
-                    "Unable to load custom Spark SQL functions such as jaro_winkler from "
-                    "the jar that's provided with Splink.\n"
+                    "Unable to load custom Spark SQL functions such as jaro_winkler "
+                    "from the jar that's provided with Splink.\n"
                     "You need to ensure the Splink jar is registered./n"
                     "See https://moj-analytical-services.github.io/splink/demos/example_simple_pyspark.html"  # NOQA: E501
                     "for an example.\n"
                     "You will not be able to use these functions in your linkage.\n"
-                    "You can find the location of the jar by calling the following function"
-                    ":\nfrom splink.spark.jar_location import similarity_jar_location"
+                    "You can find the location of the jar by calling the following "
+                    "function:"
+                    "\nfrom splink.spark.jar_location import similarity_jar_location"
                 )
-        # set non-databricks environment default method as parquest in case nothing else specified.
+        # set non-databricks environment default method as parquest in case nothing
+        # else specified.
         elif not self.break_lineage_method:
             self.break_lineage_method = "parquet"
 
@@ -288,7 +290,7 @@ class SparkLinker(Linker):
         return spark_df
 
     def _get_checkpoint_dir_path(self, spark_df):
-        # https://github.com/apache/spark/blob/301a13963808d1ad44be5cacf0a20f65b853d5a2/python/pyspark/context.py#L1323 # noqa
+        # https://github.com/apache/spark/blob/301a13963808d1ad44be5cacf0a20f65b853d5a2/python/pyspark/context.py#L1323 # NOQA: E501
         # getCheckpointDir method exists only in Spark 3.1+, use implementation
         # from above link
         if not self.spark._jsc.sc().getCheckpointDir().isEmpty():
@@ -335,7 +337,8 @@ class SparkLinker(Linker):
                 spark_df.write.mode("overwrite").saveAsTable(write_path)
                 spark_df = self.spark.table(write_path)
                 logger.debug(
-                    f"Wrote {templated_name} to Delta Table at {self.splink_data_store}.{physical_name}"
+                    f"Wrote {templated_name} to Delta Table "
+                    f"at {self.splink_data_store}.{physical_name}"
                 )
             else:
                 raise ValueError(
@@ -422,14 +425,18 @@ class SparkLinker(Linker):
             f"show tables from {self.splink_data_store} like '{table_name}'"
         ).collect()
         if len(query_result) > 1:
-            # this clause accounts for temp tables which can have the same name as persistent table without  issue
+            # This clause accounts for temp tables which can have the same name as
+            # persistent table without issue
             if (
-                    (len(set([x.tableName for x in query_result])) == 1) # table names are the same
-                    and (len(set([x.isTemporary for x in query_result])) == 2) # isTemporary is boolean
-            ):
+                len(set([x.tableName for x in query_result])) == 1
+            ) and (  # table names are the same
+                len(set([x.isTemporary for x in query_result])) == 2
+            ):  # isTemporary is boolean
                 return True
             else:
-                raise ValueError(f"Table name {table_name} not unique. Does it contain a wild card?")
+                raise ValueError(
+                    f"Table name {table_name} not unique. Does it contain a wild card?"
+                )
         elif len(query_result) == 1:
             return True
         elif len(query_result) == 0:
