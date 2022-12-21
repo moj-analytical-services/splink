@@ -149,3 +149,13 @@ def _check_dependency_installed(module):
             f"{module} is not installed.",
             "Please install and import it before continuing.",
         )
+
+
+def major_minor_version_greater_equal_than(this_version, base_comparison_version):
+    this_version = this_version.split(".")[:2]
+    this_version = [v.zfill(10) for v in this_version]
+
+    base_version = base_comparison_version.split(".")[:2]
+    base_version = [v.zfill(10) for v in base_version]
+
+    return this_version >= base_version

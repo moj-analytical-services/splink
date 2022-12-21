@@ -7,7 +7,6 @@ import math
 
 import pandas as pd
 
-from packaging import version
 
 from pyspark.sql import types
 from pyspark.sql.utils import AnalysisException
@@ -20,6 +19,7 @@ from ..misc import ensure_is_list
 from ..input_column import InputColumn
 from .custom_spark_dialect import Dialect
 from ..databricks.enable_splink import enable_splink
+from ..misc import major_minor_version_greater_equal_than
 
 logger = logging.getLogger(__name__)
 
@@ -149,9 +149,12 @@ class SparkLinker(Linker):
         # spark.catalog.currentCatalog() is not available in versions of spark before
         # 3.4.0. In Spark versions less that 3.4.0 we will require explicit catalog
         # setting, but will revert to default in Spark versions greater than 3.4.0
-        threshold = version.parse("3.4.0")
+        threshold = "3.4.0"
         self.catalog = catalog
-        if version.parse(self.spark.version) >= threshold and not self.catalog:
+        if (
+            major_minor_version_greater_equal_than(self.spark.version, threshold)
+            and not self.catalog
+        ):
             # set the catalog and database of where to write output tables
             self.catalog = (
                 catalog if catalog is not None else self.spark.catalog.currentCatalog()
@@ -424,12 +427,15 @@ class SparkLinker(Linker):
         if len(query_result) > 1:
             # this clause accounts for temp tables which can have the same name as persistent table without  issue
             if (
-                    (len(set([x.tableName for x in query_result])) == 1) # table names are the same
-                    and (len(set([x.isTemporary for x in query_result])) == 2) # isTemporary is boolean
-            ):
+                len(set([x.tableName for x in query_result])) == 1
+            ) and (  # table names are the same
+                len(set([x.isTemporary for x in query_result])) == 2
+            ):  # isTemporary is boolean
                 return True
             else:
-                raise ValueError(f"Table name {table_name} not unique. Does it contain a wild card?")
+                raise ValueError(
+                    f"Table name {table_name} not unique. Does it contain a wild card?"
+                )
         elif len(query_result) == 1:
             return True
         elif len(query_result) == 0:
