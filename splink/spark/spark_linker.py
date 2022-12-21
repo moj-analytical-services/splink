@@ -291,7 +291,7 @@ class SparkLinker(Linker):
         return spark_df
 
     def _get_checkpoint_dir_path(self, spark_df):
-        # https://github.com/apache/spark/blob/301a13963808d1ad44be5cacf0a20f65b853d5a2/python/pyspark/context.py#L1323 # noqa
+        # https://github.com/apache/spark/blob/301a13963808d1ad44be5cacf0a20f65b853d5a2/python/pyspark/context.py#L1323 # noqa E501
         # getCheckpointDir method exists only in Spark 3.1+, use implementation
         # from above link
         if not self.spark._jsc.sc().getCheckpointDir().isEmpty():
