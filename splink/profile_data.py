@@ -179,7 +179,7 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
     sql = _col_or_expr_frequencies_raw_data_sql(column_expressions, input_tablename)
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-    df_raw = linker._execute_sql_pipeline(materialise_as_hash=True)
+    df_raw = linker._execute_sql_pipeline()
 
     sqls = _get_df_percentiles()
     for sql in sqls:
