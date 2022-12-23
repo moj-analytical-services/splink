@@ -7,6 +7,7 @@ from statistics import median
 import hashlib
 import os
 import json
+import uuid
 
 from splink.input_column import InputColumn
 
@@ -31,7 +32,7 @@ from .settings import Settings
 from .term_frequencies import (
     compute_all_term_frequencies_sqls,
     term_frequencies_for_single_column_sql,
-    colname_to_tf_tablename,
+    input_col_to_tf_tablename,
     _join_tf_to_input_df_sql,
 )
 from .profile_data import profile_columns
@@ -177,7 +178,20 @@ class Linker:
 
         self._output_schema = ""
 
+        self._cache_uid = str(uuid.uuid4())[-8:]
+
         self.debug_mode = False
+
+    @property
+    def _table_prefix(self):
+        return f"__splink__{self._cache_uid}__"
+
+    def _splink_tablename(self, name):
+        """All tables created by Splink are 'namespaced'
+        with this prefix
+        """
+        prefix = self._table_prefix
+        return f"{prefix}{name}"
 
     @property
     def _settings_obj(self) -> Settings:
@@ -194,39 +208,40 @@ class Linker:
     def _input_tablename_l(self):
 
         if self._find_new_matches_mode:
-            return "__splink__df_concat_with_tf"
+            return self._splink_tablename("nodes_concat_with_tf")
 
         if self._self_link_mode:
-            return "__splink__df_concat_with_tf"
+            return self._splink_tablename("nodes_concat_with_tf")
 
         if self._compare_two_records_mode:
-            return "__splink__compare_two_records_left_with_tf"
+            return self._splink_tablename("compare_two_records_left_with_tf")
 
         if self._train_u_using_random_sample_mode:
-            return "__splink__df_concat_with_tf_sample"
+            return self._splink_tablename("nodes_concat_with_tf_sample")
 
         if self._two_dataset_link_only:
-            return "__splink_df_concat_with_tf_left"
-        return "__splink__df_concat_with_tf"
+            return self._splink_tablename("nodes_concat_with_tf_left")
+
+        return self._splink_tablename("nodes_concat_with_tf")
 
     @property
     def _input_tablename_r(self):
 
         if self._find_new_matches_mode:
-            return "__splink__df_new_records_with_tf"
+            return self._splink_tablename("df_new_records_with_tf")
 
         if self._self_link_mode:
-            return "__splink__df_concat_with_tf"
+            return self._splink_tablename("nodes_concat_with_tf")
 
         if self._compare_two_records_mode:
-            return "__splink__compare_two_records_right_with_tf"
+            return self._splink_tablename("compare_two_records_right_with_tf")
 
         if self._train_u_using_random_sample_mode:
-            return "__splink__df_concat_with_tf_sample"
+            return self._splink_tablename("nodes_concat_with_tf_sample")
 
         if self._two_dataset_link_only:
-            return "__splink_df_concat_with_tf_right"
-        return "__splink__df_concat_with_tf"
+            return self._splink_tablename("nodes_concat_with_tf_right")
+        return self._splink_tablename("nodes_concat_with_tf")
 
     @property
     def _two_dataset_link_only(self):
@@ -274,24 +289,23 @@ class Linker:
         else:
             return table_name
 
-    def _initialise_df_concat(self, materialise=True):
-        if self._table_exists_in_database("__splink__df_concat"):
-            return
+    def _initialise_nodes_concat(self, materialise=True):
+
         sql = vertically_concatenate_sql(self)
-        self._enqueue_sql(sql, "__splink__df_concat")
+        self._enqueue_sql(sql, self._splink_tablename("nodes_concat"))
         self._execute_sql_pipeline()
 
-    def _initialise_df_concat_with_tf(self, materialise=True):
+    def _input_nodes_concat_with_tf(self, materialise=True):
 
         sql = vertically_concatenate_sql(self)
-        self._enqueue_sql(sql, "__splink__df_concat")
+        self._enqueue_sql(sql, self._splink_tablename("nodes_concat"))
 
         sqls = compute_all_term_frequencies_sqls(self)
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         if self._two_dataset_link_only:
-            # If we do not materialise __splink_df_concat_with_tf
+            # If we do not materialise nodes_concat_with_tf
             # we'd have to run all the code up to this point twice
             self._execute_sql_pipeline()
 
@@ -304,21 +318,21 @@ class Linker:
             df_r = self._input_tables_dict[keys[1]]
 
             sql = f"""
-            select * from __splink__df_concat_with_tf
+            select * from {self._table_prefix}nodes_concat_with_tf
             where {source_dataset_col} = '{df_l.templated_name}'
             """
-            self._enqueue_sql(sql, "__splink_df_concat_with_tf_left")
+            self._enqueue_sql(sql, f"{self._table_prefix}nodes_concat_with_tf_left")
             self._execute_sql_pipeline()
 
             sql = f"""
-            select * from __splink__df_concat_with_tf
+            select * from {self._table_prefix}nodes_concat_with_tf
             where {source_dataset_col} = '{df_r.templated_name}'
             """
-            self._enqueue_sql(sql, "__splink_df_concat_with_tf_right")
-            self._execute_sql_pipeline()
+            self._enqueue_sql(sql, f"{self._table_prefix}nodes_concat_with_tf_right")
+            return self._execute_sql_pipeline()
         else:
             if materialise:
-                self._execute_sql_pipeline()
+                return self._execute_sql_pipeline()
 
     def _table_to_splink_dataframe(
         self, templated_name, physical_name
@@ -482,7 +496,9 @@ class Linker:
         Return a SplinkDataFrame representing the results of the SQL
         """
 
-        hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
+        # When the `_cache_uid` changes, the cache will be invalidated
+        sql_with_cache_invalidation_uid = sql + self._cache_uid
+        hash = hashlib.sha256(sql_with_cache_invalidation_uid.encode()).hexdigest()[:7]
         # Ensure hash is valid sql table name
         table_name_hash = f"{output_tablename_templated}_{hash}"
 
@@ -561,7 +577,7 @@ class Linker:
     def _get_input_tf_dict(self, df_dict):
         d = {}
         for df_name, df_value in df_dict.items():
-            renamed = colname_to_tf_tablename(df_name)
+            renamed = input_col_to_tf_tablename(df_name)
             d[renamed] = self._table_to_splink_dataframe(renamed, df_value)
         return d
 
@@ -789,10 +805,10 @@ class Linker:
             SplinkDataFrame: The resultant table as a splink data frame
         """
         sql = vertically_concatenate_sql(self)
-        self._enqueue_sql(sql, "__splink__df_concat")
+        self._enqueue_sql(sql, self._splink_tablename("nodes_concat"))
         input_col = InputColumn(column_name, settings_obj=self._settings_obj)
         sql = term_frequencies_for_single_column_sql(input_col)
-        self._enqueue_sql(sql, colname_to_tf_tablename(input_col))
+        self._enqueue_sql(sql, input_col_to_tf_tablename(input_col))
         return self._execute_sql_pipeline()
 
     def deterministic_link(self) -> SplinkDataFrame:
@@ -828,7 +844,7 @@ class Linker:
                 represents a table materialised in the database. Methods on the
                 SplinkDataFrame allow you to access the underlying data.
         """
-        self._initialise_df_concat_with_tf()
+        self._input_nodes_concat_with_tf()
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
         return self._execute_sql_pipeline()
@@ -860,8 +876,8 @@ class Linker:
             None: Updates the estimated u parameters within the linker object
             and returns nothing.
         """
-        self._initialise_df_concat_with_tf(materialise=True)
-        estimate_u_values(self, target_rows)
+        df_nodes_concat_with_tf = self._input_nodes_concat_with_tf()
+        estimate_u_values(self, df_nodes_concat_with_tf, target_rows)
         self._populate_m_u_from_trained_values()
 
         self._settings_obj._columns_without_estimated_parameters_message()
@@ -895,7 +911,7 @@ class Linker:
             Updates the estimated m parameters within the linker object
             and returns nothing.
         """
-        self._initialise_df_concat_with_tf(materialise=True)
+        self._input_nodes_concat_with_tf(materialise=True)
         estimate_m_values_from_label_column(
             self, self._input_tables_dict, label_colname
         )
@@ -996,7 +1012,7 @@ class Linker:
 
         """
 
-        self._initialise_df_concat_with_tf(materialise=True)
+        self._input_nodes_concat_with_tf(materialise=True)
 
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
@@ -1074,7 +1090,7 @@ class Linker:
 
         # If the user only calls predict, it runs as a single pipeline with no
         # materialisation of anything
-        self._initialise_df_concat_with_tf(materialise=False)
+        self._input_nodes_concat_with_tf(materialise=False)
 
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
@@ -1303,7 +1319,7 @@ class Linker:
             BlockingRule(f"{uid_l} = {uid_r}")
         ]
 
-        self._initialise_df_concat_with_tf()
+        self._input_nodes_concat_with_tf()
 
         sql = block_using_rules_sql(self)
 
@@ -1365,7 +1381,7 @@ class Linker:
 
         """
 
-        self._initialise_df_concat_with_tf(df_predict)
+        self._input_nodes_concat_with_tf(df_predict)
 
         edges_table = _cc_create_unique_id_cols(
             self,
@@ -1415,7 +1431,7 @@ class Linker:
           >>> linker.register_table(pairwise_labels, "labels", overwrite=True)
           >>> linker.estimate_m_from_pairwise_labels("labels")
         """
-        self._initialise_df_concat_with_tf(materialise=True)
+        self._input_nodes_concat_with_tf(materialise=True)
         estimate_m_from_pairwise_labels(self, table_name)
 
     def truth_space_table_from_labels_table(
@@ -2011,7 +2027,7 @@ class Linker:
         """
 
         sql = vertically_concatenate_sql(self)
-        self._enqueue_sql(sql, "__splink__df_concat")
+        self._enqueue_sql(sql, f"{self._table_prefix}nodes_concat")
 
         sql = number_of_comparisons_generated_by_blocking_rule_sql(self, blocking_rule)
         self._enqueue_sql(sql, "__splink__analyse_blocking_rule")
@@ -2383,3 +2399,22 @@ class Linker:
             " possible comparisons, we expect a total of around "
             f"{num_expected_matches:,.2f} matching pairs"
         )
+
+    def invalidate_cache(self):
+        """Invalidate the Splink cache.  Any previously-computed tables
+        will be recomputed.
+
+        This is useful, for example, if the input data tables have changed.
+        """
+        # Before Splink executes a SQL command, it checks the cache to see
+        # whether a table already exists with the name of the output table
+
+        # This function has the effect of changing the names of the output tables
+        # to include a different unique id
+
+        # As a result, any previously cached tables will not be found
+        self._cache_uid = str(uuid.uuid4())[-8:]
+
+        # Also drop any existing splink tables from the cache
+        # Note, this is not actually necessary, it's just good housekeeping
+        self._delete_tables_created_by_splink_from_db()

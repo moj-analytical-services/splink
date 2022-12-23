@@ -33,7 +33,7 @@ def _num_target_rows_to_rows_to_sample(target_rows):
     return sample_rows
 
 
-def estimate_u_values(linker: "Linker", target_rows):
+def estimate_u_values(linker: "Linker", df_nodes_concat_with_tf, target_rows):
 
     logger.info("----- Estimating u probabilities using random sampling -----")
 
@@ -51,31 +51,32 @@ def estimate_u_values(linker: "Linker", target_rows):
         for cl in cc.comparison_levels:
             cl._level_dict["tf_adjustment_column"] = None
 
+    tbl_prefix = linker._table_prefix
+
     if settings_obj._link_type in ["dedupe_only", "link_and_dedupe"]:
-        sql = """
+        sql = f"""
         select count(*) as count
-        from __splink__df_concat_with_tf
+        from {tbl_prefix}nodes_concat_with_tf
         """
-        dataframe = training_linker._sql_to_splink_dataframe_checking_cache(
-            sql, "__splink__df_concat_count"
-        )
+
+        training_linker._enqueue_sql(sql, f"{tbl_prefix}df_concat_count")
+
+        dataframe = training_linker._execute_sql_pipeline([df_nodes_concat_with_tf])
         result = dataframe.as_record_dict()
-        dataframe.drop_table_from_database()
         count_rows = result[0]["count"]
         sample_size = _num_target_rows_to_rows_to_sample(target_rows)
         proportion = sample_size / count_rows
 
     if settings_obj._link_type == "link_only":
-        sql = """
+        sql = f"""
         select count(source_dataset) as count
-        from __splink__df_concat_with_tf
+        from {tbl_prefix}nodes_concat_with_tf
         group by source_dataset
         """
-        dataframe = training_linker._sql_to_splink_dataframe_checking_cache(
-            sql, "__splink__df_concat_count"
-        )
+        training_linker._enqueue_sql(sql, f"{tbl_prefix}df_concat_count")
+        dataframe = training_linker._execute_sql_pipeline([df_nodes_concat_with_tf])
         result = dataframe.as_record_dict()
-        dataframe.drop_table_from_database()
+
         frame_counts = [res["count"] for res in result]
         # total valid links is sum of pairwise product of individual row counts
         count_rows = (
@@ -93,19 +94,17 @@ def estimate_u_values(linker: "Linker", target_rows):
 
     sql = f"""
     select *
-    from __splink__df_concat_with_tf
+    from {tbl_prefix}nodes_concat_with_tf
     {training_linker._random_sample_sql(proportion, sample_size)}
     """
 
-    df_sample = training_linker._sql_to_splink_dataframe_checking_cache(
-        sql,
-        "__splink__df_concat_with_tf_sample",
-    )
+    training_linker._enqueue_sql(sql, f"{tbl_prefix}nodes_concat_with_tf_sample")
+    df_sample = training_linker._execute_sql_pipeline([df_nodes_concat_with_tf])
 
     settings_obj._blocking_rules_to_generate_predictions = []
 
     sql = block_using_rules_sql(training_linker)
-    training_linker._enqueue_sql(sql, "__splink__df_blocked")
+    training_linker._enqueue_sql(sql, f"{tbl_prefix}df_blocked")
 
     # repartition after blocking only exists on the SparkLinker
     repartition_after_blocking = getattr(
@@ -119,17 +118,17 @@ def estimate_u_values(linker: "Linker", target_rows):
 
     sql = compute_comparison_vector_values_sql(settings_obj)
 
-    training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
+    training_linker._enqueue_sql(sql, f"{tbl_prefix}df_comparison_vectors")
 
-    sql = """
+    sql = f"""
     select *, cast(0.0 as double) as match_probability
-    from __splink__df_comparison_vectors
+    from {tbl_prefix}df_comparison_vectors
     """
 
-    training_linker._enqueue_sql(sql, "__splink__df_predict")
+    training_linker._enqueue_sql(sql, f"{tbl_prefix}df_predict")
 
     sql = compute_new_parameters_sql(settings_obj)
-    linker._enqueue_sql(sql, "__splink__m_u_counts")
+    linker._enqueue_sql(sql, f"{tbl_prefix}m_u_counts")
     df_params = training_linker._execute_sql_pipeline(input_dataframes)
 
     param_records = df_params.as_pandas_dataframe()

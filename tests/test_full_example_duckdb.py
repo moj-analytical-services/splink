@@ -98,7 +98,7 @@ def test_full_example_duckdb(tmp_path):
     }
 
     linker.compute_tf_table("first_name")
-    linker._initialise_df_concat_with_tf()
+    linker._input_nodes_with_tf()
 
     linker.find_matches_to_new_records(
         [record], blocking_rules=[], match_weight_threshold=-10000

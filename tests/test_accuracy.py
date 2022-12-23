@@ -45,7 +45,7 @@ def test_scored_labels_table():
 
     linker = DuckDBLinker(df, settings)
 
-    linker._initialise_df_concat_with_tf()
+    linker._input_nodes_with_tf()
     linker.register_table(df_labels, "labels")
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, "labels")
@@ -184,7 +184,7 @@ def test_roc_chart_dedupe_only():
     settings_dict = get_settings_dict()
     linker = DuckDBLinker(df, settings_dict, connection=":memory:")
 
-    linker._initialise_df_concat_with_tf()
+    linker._input_nodes_with_tf()
 
     linker.register_table(df_labels, "labels")
 
@@ -217,7 +217,7 @@ def test_roc_chart_link_and_dedupe():
         df, settings_dict, connection=":memory:", input_table_aliases="fake_data_1"
     )
 
-    linker._initialise_df_concat_with_tf()
+    linker._input_nodes_with_tf()
 
     linker.register_table(df_labels, "labels")
 
@@ -282,7 +282,7 @@ def test_prediction_errors_from_labels_table():
 
     linker.register_table(df_labels, "labels")
 
-    linker._initialise_df_concat_with_tf()
+    linker._input_nodes_with_tf()
     df_res = linker.prediction_errors_from_labels_table("labels").as_pandas_dataframe()
     df_res = df_res[["unique_id_l", "unique_id_r"]]
     records = list(df_res.to_records(index=False))
@@ -297,7 +297,7 @@ def test_prediction_errors_from_labels_table():
 
     linker.register_table(df_labels, "labels")
 
-    linker._initialise_df_concat_with_tf()
+    linker._input_nodes_with_tf()
     df_res = linker.prediction_errors_from_labels_table(
         "labels", include_false_negatives=False
     ).as_pandas_dataframe()
@@ -312,7 +312,7 @@ def test_prediction_errors_from_labels_table():
 
     linker = DuckDBLinker(df, settings)
     linker.register_table(df_labels, "labels")
-    linker._initialise_df_concat_with_tf()
+    linker._input_nodes_with_tf()
     df_res = linker.prediction_errors_from_labels_table(
         "labels", include_false_positives=False
     ).as_pandas_dataframe()
