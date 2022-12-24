@@ -13,16 +13,18 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def input_col_to_tf_tablename(input_column: InputColumn, table_prefix):
+def colname_to_tf_tablename(input_column: InputColumn):
     input_col_no_quotes = remove_quotes_from_identifiers(
         input_column.input_name_as_tree
     )
 
     input_column = input_col_no_quotes.sql().replace(" ", "_")
-    return f"{table_prefix}tf_{input_column}"
+    return f"__splink__df_tf_{input_column}"
 
 
-def term_frequencies_for_single_column_sql(input_column: InputColumn, table_name):
+def term_frequencies_for_single_column_sql(
+    input_column: InputColumn, table_name="__splink__df_concat"
+):
 
     col_name = input_column.name()
 
@@ -43,33 +45,28 @@ def _join_tf_to_input_df_sql(linker: "Linker"):
 
     settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
-    table_prefix = linker._table_prefix
 
     select_cols = []
 
     for col in tf_cols:
-        tbl = input_col_to_tf_tablename(col, table_prefix)
+        tbl = colname_to_tf_tablename(col)
         tf_col = col.tf_name()
         select_cols.append(f"{tbl}.{tf_col}")
 
-    select_cols.insert(0, f"{table_prefix}nodes_concat.*")
+    select_cols.insert(0, "__splink__df_concat.*")
     select_cols = ", ".join(select_cols)
 
-    templ = "left join {tbl} on {table_prefix}nodes_concat.{col} = {tbl}.{col}"
+    templ = "left join {tbl} on __splink__df_concat.{col} = {tbl}.{col}"
 
     left_joins = [
-        templ.format(
-            tbl=input_col_to_tf_tablename(col, table_prefix),
-            table_prefix=table_prefix,
-            col=col.name(),
-        )
+        templ.format(tbl=colname_to_tf_tablename(col), col=col.name())
         for col in tf_cols
     ]
     left_joins = " ".join(left_joins)
 
     sql = f"""
     select {select_cols}
-    from {table_prefix}nodes_concat
+    from __splink__df_concat
     {left_joins}
     """
 
@@ -80,33 +77,31 @@ def compute_all_term_frequencies_sqls(linker: "Linker") -> List[dict]:
 
     settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
-    table_prefix = linker._table_prefix
 
     if not tf_cols:
         return [
             {
-                "sql": f"select * from {table_prefix}nodes_concat",
-                "output_table_name": f"{table_prefix}nodes_concat_with_tf",
+                "sql": "select * from __splink__df_concat",
+                "output_table_name": "__splink__df_concat_with_tf",
             }
         ]
 
     sqls = []
     for tf_col in tf_cols:
-        tf_table_name = input_col_to_tf_tablename(tf_col, table_prefix)
+        tf_table_name = colname_to_tf_tablename(tf_col)
 
         if not linker._table_exists_in_database(tf_table_name):
-            tablename = f"{table_prefix}nodes_concat"
-            sql = term_frequencies_for_single_column_sql(tf_col, tablename)
+            sql = term_frequencies_for_single_column_sql(tf_col)
             sql = {
                 "sql": sql,
-                "output_table_name": input_col_to_tf_tablename(tf_col, table_prefix),
+                "output_table_name": colname_to_tf_tablename(tf_col),
             }
             sqls.append(sql)
 
     sql = _join_tf_to_input_df_sql(linker)
     sql = {
         "sql": sql,
-        "output_table_name": f"{table_prefix}nodes_concat_with_tf",
+        "output_table_name": "__splink__df_concat_with_tf",
     }
     sqls.append(sql)
 

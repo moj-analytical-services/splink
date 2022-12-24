@@ -13,7 +13,7 @@ from pyspark.sql.utils import AnalysisException
 
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
-from ..term_frequencies import input_col_to_tf_tablename
+from ..term_frequencies import colname_to_tf_tablename
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import ensure_is_list
 from ..input_column import InputColumn
@@ -442,4 +442,4 @@ class SparkLinker(Linker):
             return False
 
     def register_tf_table(self, df, col_name, overwrite=False):
-        self.register_table(df, input_col_to_tf_tablename(col_name), overwrite)
+        self.register_table(df, colname_to_tf_tablename(col_name), overwrite)

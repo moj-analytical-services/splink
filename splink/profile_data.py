@@ -1,8 +1,6 @@
 import re
 from copy import deepcopy
 from .charts import vegalite_or_json, load_chart_definition
-from .misc import ensure_is_list
-from .vertically_concatenate import vertically_concatenate_sql
 
 
 def _group_name(cols_or_expr):
@@ -170,18 +168,18 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 
 def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
 
-    sql = vertically_concatenate_sql(linker)
-    linker._enqueue_sql(sql, linker._splink_tablename("df_concat"))
-    nodes_vconcat = linker._execute_sql_pipeline()
+    input_tablename = "__splink__df_concat_with_tf"
+    if not linker._table_exists_in_database("__splink__df_concat_with_tf"):
+        linker._initialise_df_concat()
+        input_tablename = "__splink__df_concat"
 
-    column_expressions = ensure_is_list(column_expressions)
+    if type(column_expressions) == str:
+        column_expressions = [column_expressions]
 
-    sql = _col_or_expr_frequencies_raw_data_sql(
-        column_expressions, linker._splink_tablename("df_concat")
-    )
+    sql = _col_or_expr_frequencies_raw_data_sql(column_expressions, input_tablename)
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-    df_raw = linker._execute_sql_pipeline([nodes_vconcat])
+    df_raw = linker._execute_sql_pipeline()
 
     sqls = _get_df_percentiles()
     for sql in sqls:
