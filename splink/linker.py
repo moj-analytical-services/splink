@@ -279,10 +279,11 @@ class Linker:
             return
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
-        self._execute_sql_pipeline()
+        self._execute_sql_pipeline(materialise_as_hash=False)
 
     def _initialise_df_concat_with_tf(self, materialise=True):
-
+        if self._table_exists_in_database("__splink__df_concat_with_tf"):
+            return
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
 
@@ -293,7 +294,7 @@ class Linker:
         if self._two_dataset_link_only:
             # If we do not materialise __splink_df_concat_with_tf
             # we'd have to run all the code up to this point twice
-            self._execute_sql_pipeline()
+            self._execute_sql_pipeline(materialise_as_hash=False)
 
             source_dataset_col = self._settings_obj._source_dataset_column_name
             # Need df_l to be the one with the lowest id to preeserve the property
@@ -308,17 +309,17 @@ class Linker:
             where {source_dataset_col} = '{df_l.templated_name}'
             """
             self._enqueue_sql(sql, "__splink_df_concat_with_tf_left")
-            self._execute_sql_pipeline()
+            self._execute_sql_pipeline(materialise_as_hash=False)
 
             sql = f"""
             select * from __splink__df_concat_with_tf
             where {source_dataset_col} = '{df_r.templated_name}'
             """
             self._enqueue_sql(sql, "__splink_df_concat_with_tf_right")
-            self._execute_sql_pipeline()
+            self._execute_sql_pipeline(materialise_as_hash=False)
         else:
             if materialise:
-                self._execute_sql_pipeline()
+                self._execute_sql_pipeline(materialise_as_hash=False)
 
     def _table_to_splink_dataframe(
         self, templated_name, physical_name
@@ -344,6 +345,7 @@ class Linker:
     def _execute_sql_pipeline(
         self,
         input_dataframes: List[SplinkDataFrame] = [],
+        materialise_as_hash=True,
         use_cache=True,
     ) -> SplinkDataFrame:
 
@@ -354,6 +356,8 @@ class Linker:
         Args:
             input_dataframes (List[SplinkDataFrame], optional): A 'starting point' of
                 SplinkDataFrames if needed. Defaults to [].
+            materialise_as_hash (bool, optional): If true, the output tablename will end
+                in a unique identifer. Defaults to True.
             use_cache (bool, optional): If true, look at whether the SQL pipeline has
                 been executed before, and if so, use the existing result. Defaults to
                 True.
@@ -372,6 +376,7 @@ class Linker:
                 dataframe = self._sql_to_splink_dataframe_checking_cache(
                     sql_gen,
                     output_tablename_templated,
+                    materialise_as_hash,
                     use_cache,
                 )
             except Error as e:
@@ -392,6 +397,7 @@ class Linker:
                 dataframe = self._sql_to_splink_dataframe_checking_cache(
                     sql,
                     output_tablename,
+                    materialise_as_hash=False,
                     use_cache=False,
                 )
             self._pipeline.reset()
@@ -450,6 +456,7 @@ class Linker:
         splink_dataframe = self._sql_to_splink_dataframe_checking_cache(
             sql,
             output_tablename_templated,
+            materialise_as_hash=False,
             use_cache=False,
         )
 
@@ -470,6 +477,7 @@ class Linker:
         self,
         sql,
         output_tablename_templated,
+        materialise_as_hash=True,
         use_cache=True,
     ) -> SplinkDataFrame:
         """Execute sql, or if identical sql has been run before, return cached results.
@@ -506,9 +514,16 @@ class Linker:
         if self.debug_mode:
             print(sql)
 
-        splink_dataframe = self._execute_sql_against_backend(
-            sql, output_tablename_templated, table_name_hash
-        )
+        if materialise_as_hash:
+            splink_dataframe = self._execute_sql_against_backend(
+                sql, output_tablename_templated, table_name_hash
+            )
+        else:
+            splink_dataframe = self._execute_sql_against_backend(
+                sql,
+                output_tablename_templated,
+                output_tablename_templated,
+            )
 
         self._names_of_tables_created_by_splink.append(splink_dataframe.physical_name)
 
@@ -793,7 +808,7 @@ class Linker:
         input_col = InputColumn(column_name, settings_obj=self._settings_obj)
         sql = term_frequencies_for_single_column_sql(input_col)
         self._enqueue_sql(sql, colname_to_tf_tablename(input_col))
-        return self._execute_sql_pipeline()
+        return self._execute_sql_pipeline(materialise_as_hash=False)
 
     def deterministic_link(self) -> SplinkDataFrame:
         """Uses the blocking rules specified by

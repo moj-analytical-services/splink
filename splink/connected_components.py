@@ -502,7 +502,9 @@ def solve_connected_components(
 
         linker._enqueue_sql(sql, "__splink__df_root_rows")
 
-        root_rows_df = linker._execute_sql_pipeline(use_cache=False)
+        root_rows_df = linker._execute_sql_pipeline(
+            materialise_as_hash=False, use_cache=False
+        )
 
         root_rows = root_rows_df.as_record_dict()
         root_rows_df.drop_table_from_database()

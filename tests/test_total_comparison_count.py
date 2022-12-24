@@ -87,7 +87,7 @@ def test_calculate_cartesian_equals_total_number_of_links(
     linker = DuckDBLinker(dfs, settings)
     sql = vertically_concatenate_sql(linker)
     linker._enqueue_sql(sql, "__splink__df_concat")
-    linker._execute_sql_pipeline()
+    linker._execute_sql_pipeline(materialise_as_hash=False)
 
     # calculate full number of comparisons
     full_count_sql = number_of_comparisons_generated_by_blocking_rule_sql(linker, "1=1")
