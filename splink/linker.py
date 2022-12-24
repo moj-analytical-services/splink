@@ -355,6 +355,13 @@ class Linker:
         """Add sql to the current pipeline, but do not execute the pipeline."""
         self._pipeline.enqueue_sql(sql, output_table_name)
 
+    def _try_replace_sql_queue_with_cache(self):
+        """Look at the current queue, and compare with cache.  If queue is in cache,
+        replace queue with cache.
+        """
+        print("not implemented yet")
+        pass
+
     def _execute_sql_pipeline(
         self,
         input_dataframes: List[SplinkDataFrame] = [],
@@ -1059,6 +1066,7 @@ class Linker:
         self,
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
+        materialise_nodes_concat_with_tf=False,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons using the parameters
         of the linkage model.
@@ -1090,10 +1098,16 @@ class Linker:
 
         # If the user only calls predict, it runs as a single pipeline with no
         # materialisation of anything
-        self._input_nodes_concat_with_tf(materialise=False)
+        if materialise_nodes_concat_with_tf:
+            df_nodes_concat_with_tf = self._input_nodes_concat_with_tf()
+        else:
+            self._input_nodes_concat_with_tf(materialise=False)
+            # If _input_nodes_concat_with_tf has already been calculated,
+            # use it rather than recomputing
+            self._try_replace_sql_queue_with_cache()
 
         sql = block_using_rules_sql(self)
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        self._enqueue_sql(sql, self._splink_tablename("blocked"))
 
         repartition_after_blocking = getattr(self, "repartition_after_blocking", False)
 
@@ -1104,7 +1118,9 @@ class Linker:
         else:
             input_dataframes = []
 
-        sql = compute_comparison_vector_values_sql(self._settings_obj)
+        sql = compute_comparison_vector_values_sql(
+            self._settings_obj, self._table_prefix
+        )
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
         sqls = predict_from_comparison_vectors_sqls(

@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def compute_new_parameters_sql(settings_obj: Settings):
+def compute_new_parameters_sql(settings_obj: Settings, splink_table_prefix):
     """compute m and u counts from the results of predict"""
 
     sql_template = """
@@ -27,24 +27,25 @@ def compute_new_parameters_sql(settings_obj: Settings):
     sum(match_probability) as m_count,
     sum(1-match_probability) as u_count,
     '{output_column_name}' as output_column_name
-    from __splink__df_predict
+    from {splink_table_prefix}df_predict
     group by {gamma_column}
     """
     union_sqls = [
         sql_template.format(
             gamma_column=cc._gamma_column_name,
             output_column_name=cc._output_column_name,
+            splink_table_prefix=splink_table_prefix,
         )
         for cc in settings_obj.comparisons
     ]
 
     # Probability of two random records matching
-    sql = """
+    sql = f"""
     select 0 as comparison_vector_value,
            avg(match_probability) as m_count,
            avg(1-match_probability) as u_count,
            '_probability_two_random_records_match' as output_column_name
-    from __splink__df_predict
+    from {splink_table_prefix}df_predict
     """
     union_sqls.append(sql)
 
@@ -150,6 +151,8 @@ def expectation_maximisation(
 
     settings_obj = em_training_session._settings_obj
     linker = em_training_session._original_linker
+    em_training_linker = em_training_session._training_linker
+    table_prefix = em_training_linker._table_prefix
 
     max_iterations = settings_obj._max_iterations
     em_convergece = settings_obj._em_convergence
@@ -167,7 +170,7 @@ def expectation_maximisation(
             linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_new_parameters_sql(settings_obj)
-        linker._enqueue_sql(sql, "__splink__m_u_counts")
+        linker._enqueue_sql(sql, f"{table_prefix}m_u_counts")
         df_params = linker._execute_sql_pipeline([df_comparison_vector_values])
         param_records = df_params.as_pandas_dataframe()
         param_records = compute_proportions_for_new_parameters(param_records)

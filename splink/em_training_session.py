@@ -145,7 +145,8 @@ class EMTrainingSession:
         self._training_log_message()
 
         sql = block_using_rules_sql(self._training_linker)
-        self._training_linker._enqueue_sql(sql, "__splink__df_blocked")
+        table_prefix = self._training_linker._table_prefix
+        self._training_linker._enqueue_sql(sql, f"{table_prefix}blocked")
 
         # repartition after blocking only exists on the SparkLinker
         repartition_after_blocking = getattr(
