@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 def compute_comparison_vector_values_sql(
-    settings_obj: Settings, splink_table_prefix, include_clerical_match_score=False
+    settings_obj: Settings, include_clerical_match_score=False
 ) -> str:
     """Compute the comparison vectors from __splink__df_blocked, the
     dataframe of blocked pairwise record comparisons.
@@ -26,7 +26,7 @@ def compute_comparison_vector_values_sql(
 
     sql = f"""
     select {select_cols_expr} {clerical_match_score}
-    from {splink_table_prefix}blocked
+    from __splink__df_blocked
     """
 
     return sql

@@ -104,7 +104,7 @@ def estimate_u_values(linker: "Linker", df_nodes_concat_with_tf, target_rows):
     settings_obj._blocking_rules_to_generate_predictions = []
 
     sql = block_using_rules_sql(training_linker)
-    training_linker._enqueue_sql(sql, f"{tbl_prefix}blocked")
+    training_linker._enqueue_sql(sql, f"{tbl_prefix}df_blocked")
 
     # repartition after blocking only exists on the SparkLinker
     repartition_after_blocking = getattr(
@@ -116,9 +116,7 @@ def estimate_u_values(linker: "Linker", df_nodes_concat_with_tf, target_rows):
     else:
         input_dataframes = [df_sample]
 
-    sql = compute_comparison_vector_values_sql(
-        settings_obj, training_linker._table_prefix
-    )
+    sql = compute_comparison_vector_values_sql(settings_obj)
 
     training_linker._enqueue_sql(sql, f"{tbl_prefix}df_comparison_vectors")
 
@@ -129,7 +127,7 @@ def estimate_u_values(linker: "Linker", df_nodes_concat_with_tf, target_rows):
 
     training_linker._enqueue_sql(sql, f"{tbl_prefix}df_predict")
 
-    sql = compute_new_parameters_sql(settings_obj, tbl_prefix)
+    sql = compute_new_parameters_sql(settings_obj)
     linker._enqueue_sql(sql, f"{tbl_prefix}m_u_counts")
     df_params = training_linker._execute_sql_pipeline(input_dataframes)
 
