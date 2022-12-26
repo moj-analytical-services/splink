@@ -206,7 +206,7 @@ class Linker:
             return "__splink__df_concat_with_tf_sample"
 
         if self._two_dataset_link_only:
-            return "__splink_df_concat_with_tf_left"
+            return "__splink__df_concat_with_tf_left"
         return "__splink__df_concat_with_tf"
 
     @property
@@ -308,7 +308,7 @@ class Linker:
             select * from __splink__df_concat_with_tf
             where {source_dataset_col} = '{df_l.templated_name}'
             """
-            self._enqueue_sql(sql, "__splink_df_concat_with_tf_left")
+            self._enqueue_sql(sql, "__splink__df_concat_with_tf_left")
             self._execute_sql_pipeline(materialise_as_hash=False)
 
             sql = f"""
