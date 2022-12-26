@@ -109,7 +109,9 @@ class DistanceFunctionLevelBase(ComparisonLevel):
             f"{distance_function_name}({col.name_l()}, {col.name_r()}) "
             f"{operator} {distance_threshold}"
         )
-        chart_label = f"{distance_function_name} {operator} {distance_threshold}"
+        chart_label = (
+            f"{distance_function_name.capitalize()} {operator} {distance_threshold}"
+        )
         level_dict = {
             "sql_condition": sql_cond,
             "label_for_charts": chart_label,

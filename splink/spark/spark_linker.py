@@ -8,7 +8,7 @@ import math
 import pandas as pd
 
 
-from pyspark.sql import types
+from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql.utils import AnalysisException
 
 from ..linker import Linker
@@ -70,8 +70,6 @@ class SparkDataframe(SplinkDataFrame):
 
 
 class SparkLinker(Linker):
-
-    # flake8: noqa: C901
     def __init__(
         self,
         input_table_or_tables,
@@ -97,8 +95,8 @@ class SparkLinker(Linker):
                 provided when the object is created, can later be added using
                 `linker.initialise_settings()` Defaults to None.
             break_lineage_method (str, optional): Method to use to cache intermediate
-                results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files", "delta_lake_table".
-                Defaults to "parquet".
+                results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files",
+                "delta_lake_table". Defaults to "parquet".
             set_up_basic_logging (bool, optional): If true, sets ups up basic logging
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
             input_table_aliases (Union[str, list], optional): Labels assigned to
@@ -132,58 +130,11 @@ class SparkLinker(Linker):
             input_table_or_tables, input_table_aliases
         )
 
-        self.spark = spark
-        if spark is None:
-            for t in input_tables:
-                if type(t).__name__ == "DataFrame":
-                    # t.sparkSession can be used only from spark 3.3.0 onwards
-                    self.spark = t.sql_ctx.sparkSession
-                    break
-        if self.spark is None:
-            raise ValueError(
-                "If input_table_or_tables are strings rather than "
-                "Spark dataframes, you must pass in the spark session using the spark="
-                " argument when you initialise the linker"
-            )
+        self._get_spark_from_input_tables_if_not_provided(spark, input_tables)
 
-        # spark.catalog.currentCatalog() is not available in versions of spark before
-        # 3.4.0. In Spark versions less that 3.4.0 we will require explicit catalog
-        # setting, but will revert to default in Spark versions greater than 3.4.0
-        threshold = "3.4.0"
-        self.catalog = catalog
-        if (
-            major_minor_version_greater_equal_than(self.spark.version, threshold)
-            and not self.catalog
-        ):
-            # set the catalog and database of where to write output tables
-            self.catalog = (
-                catalog if catalog is not None else self.spark.catalog.currentCatalog()
-            )
-        self.database = (
-            database if database is not None else self.spark.catalog.currentDatabase()
-        )
+        self._set_catalog_and_database_if_not_provided(catalog, database)
 
-        # this defines the catalog.database location where splink's data outputs will
-        # be stored. The filter will remove none, so if catalog is not provided and
-        # spark version is < 3.3.0 we will use the default catalog.
-
-        self.splink_data_store = ".".join(
-            filter(lambda x: x, [self.catalog, self.database])
-        )
-
-        # if we use spark.sql("USE DATABASE db") commands we change the default. This
-        # approach prevents side effects.
-        splink_tables = self.spark.sql(
-            f"show tables from {self.splink_data_store} like '*__splink__*'"
-        )
-        temp_tables = splink_tables.filter("isTemporary").collect()
-        drop_tables = list(
-            map(lambda x: x.tableName, filter(lambda x: x.isTemporary, temp_tables))
-        )
-        # drop old temp tables
-        # specifying a catalog and database doesn't work for temp tables.
-        for x in drop_tables:
-            self.spark.sql(f"drop table {x}")
+        self._drop_splink_cached_tables()
 
         homogenised_tables = []
         homogenised_aliases = []
@@ -207,43 +158,113 @@ class SparkLinker(Linker):
             input_table_aliases=homogenised_aliases,
         )
 
+        self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
+        if self.in_databricks:
+            enable_splink()
+
+        self._set_default_break_lineage_method()
+
+        self._register_udfs_from_jar()
+
+    def _get_spark_from_input_tables_if_not_provided(self, spark, input_tables):
+        self.spark = spark
+        if spark is None:
+            for t in input_tables:
+                if type(t).__name__ == "DataFrame":
+                    # t.sparkSession can be used only from spark 3.3.0 onwards
+                    self.spark = t.sql_ctx.sparkSession
+                    break
+        if self.spark is None:
+            raise ValueError(
+                "If input_table_or_tables are strings rather than "
+                "Spark dataframes, you must pass in the spark session using the spark="
+                " argument when you initialise the linker"
+            )
+
+    def _set_catalog_and_database_if_not_provided(self, catalog, database):
+        # spark.catalog.currentCatalog() is not available in versions of spark before
+        # 3.4.0. In Spark versions less that 3.4.0 we will require explicit catalog
+        # setting, but will revert to default in Spark versions greater than 3.4.0
+        threshold = "3.4.0"
+        self.catalog = catalog
+        if (
+            major_minor_version_greater_equal_than(self.spark.version, threshold)
+            and not self.catalog
+        ):
+            # set the catalog and database of where to write output tables
+            self.catalog = (
+                catalog if catalog is not None else self.spark.catalog.currentCatalog()
+            )
+        self.database = (
+            database if database is not None else self.spark.catalog.currentDatabase()
+        )
+
+        # this defines the catalog.database location where splink's data outputs will
+        # be stored. The filter will remove none, so if catalog is not provided and
+        # spark version is < 3.3.0 we will use the default catalog.
+        self.splink_data_store = ".".join(
+            filter(lambda x: x, [self.catalog, self.database])
+        )
+
+    def _drop_splink_cached_tables(self):
+        # Clean up Splink cache that may exist from any previous splink session
+
+        # if we use spark.sql("USE DATABASE db") commands we change the default. This
+        # approach prevents side effects.
+        splink_tables = self.spark.sql(
+            f"show tables from {self.splink_data_store} like '__splink__*'"
+        )
+        temp_tables = splink_tables.filter("isTemporary").collect()
+        drop_tables = list(
+            map(lambda x: x.tableName, filter(lambda x: x.isTemporary, temp_tables))
+        )
+        # drop old temp tables
+        # specifying a catalog and database doesn't work for temp tables.
+        for x in drop_tables:
+            self.spark.sql(f"drop table {x}")
+
+    def _set_default_break_lineage_method(self):
         # check to see if running in databricks and use delta lake tables
         # as break lineage method if nothing else specified.
-        self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
+
         if self.in_databricks and not self.break_lineage_method:
             self.break_lineage_method = "delta_lake_table"
             logger.info(
-                f"Intermediate results will be written as Delta Lake tables at {self.splink_data_store}."
+                "Intermediate results will be written as Delta Lake tables at "
+                f"{self.splink_data_store}."
             )
-            enable_splink(spark)
 
-            # register udf functions
-            # will for loop through this list to register UDFs.
-            # List is a tuple of structure (UDF Name, class path, spark return type)
-            udfs_register = [
-                (
-                    "jaro_winkler",
-                    "uk.gov.moj.dash.linkage.JaroWinklerSimilarity",
-                    types.DoubleType(),
-                )
-            ]
-            try:
-                for udf in udfs_register:
-                    self.spark.udf.registerJavaFunction(*udf)
-            except AnalysisException:
-                logger.warning(
-                    "Unable to load custom Spark SQL functions such as jaro_winkler from "
-                    "the jar that's provided with Splink.\n"
-                    "You need to ensure the Splink jar is registered./n"
-                    "See https://moj-analytical-services.github.io/splink/demos/example_simple_pyspark.html"  # NOQA: E501
-                    "for an example.\n"
-                    "You will not be able to use these functions in your linkage.\n"
-                    "You can find the location of the jar by calling the following function"
-                    ":\nfrom splink.spark.jar_location import similarity_jar_location"
-                )
-        # set non-databricks environment default method as parquest in case nothing else specified.
+        # set non-databricks environment default method as parquest in case nothing else
+        # specified.
         elif not self.break_lineage_method:
             self.break_lineage_method = "parquet"
+
+    def _register_udfs_from_jar(self):
+        # register udf functions
+        # will for loop through this list to register UDFs.
+        # List is a tuple of structure (UDF Name, class path, spark return type)
+        udfs_register = [
+            ("jaro_winkler_sim", "JaroWinklerSimilarity", DoubleType()),
+            ("jaccard_sim", "JaccardSimilarity", DoubleType()),
+            ("cosine_distance", "CosineDistance", DoubleType()),
+            ("Dmetaphone", "DoubleMetaphone", StringType()),
+            ("Dmetaphone", "DoubleMetaphone", StringType()),
+            ("DmetaphoneAlt", "DoubleMetaphoneAlt", StringType()),
+        ]
+        try:
+            for udf in udfs_register:
+                self.spark.udf.registerJavaFunction(*udf)
+        except AnalysisException:
+            logger.warning(
+                "Unable to load custom Spark SQL functions such as jaro_winkler from "
+                "the jar that's provided with Splink.\n"
+                "You need to ensure the Splink jar is registered./n"
+                "See https://moj-analytical-services.github.io/splink/demos/example_simple_pyspark.html"  # NOQA: E501
+                "for an example.\n"
+                "You will not be able to use these functions in your linkage.\n"
+                "You can find the location of the jar by calling the following function"
+                ":\nfrom splink.spark.jar_location import similarity_jar_location"
+            )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
@@ -338,7 +359,8 @@ class SparkLinker(Linker):
                 spark_df.write.mode("overwrite").saveAsTable(write_path)
                 spark_df = self.spark.table(write_path)
                 logger.debug(
-                    f"Wrote {templated_name} to Delta Table at {self.splink_data_store}.{physical_name}"
+                    f"Wrote {templated_name} to Delta Table at "
+                    f"{self.splink_data_store}.{physical_name}"
                 )
             else:
                 raise ValueError(
@@ -425,7 +447,8 @@ class SparkLinker(Linker):
             f"show tables from {self.splink_data_store} like '{table_name}'"
         ).collect()
         if len(query_result) > 1:
-            # this clause accounts for temp tables which can have the same name as persistent table without  issue
+            # this clause accounts for temp tables which can have the same name as
+            # persistent table without issue
             if (
                 len(set([x.tableName for x in query_result])) == 1
             ) and (  # table names are the same
