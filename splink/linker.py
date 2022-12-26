@@ -7,6 +7,7 @@ from statistics import median
 import hashlib
 import os
 import json
+import uuid
 
 from splink.input_column import InputColumn
 
@@ -175,6 +176,7 @@ class Linker:
         self._compare_two_records_mode = False
         self._self_link_mode = False
 
+        self._cache_uid = str(uuid.uuid4())[-8:]
         self._output_schema = ""
 
         self.debug_mode = False
@@ -489,8 +491,8 @@ class Linker:
 
         Return a SplinkDataFrame representing the results of the SQL
         """
-
-        hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
+        sql_with_cache_invalidation_uid = f"{sql}{self._cache_uid}"
+        hash = hashlib.sha256(sql_with_cache_invalidation_uid.encode()).hexdigest()[:7]
         # Ensure hash is valid sql table name
         table_name_hash = f"{output_tablename_templated}_{hash}"
 
@@ -2398,3 +2400,21 @@ class Linker:
             " possible comparisons, we expect a total of around "
             f"{num_expected_matches:,.2f} matching pairs"
         )
+
+    def invalidate_cache(self):
+        """Invalidate the Splink cache.  Any previously-computed tables
+        will be recomputed.
+        This is useful, for example, if the input data tables have changed.
+        """
+        # Before Splink executes a SQL command, it checks the cache to see
+        # whether a table already exists with the name of the output table
+
+        # This function has the effect of changing the names of the output tables
+        # to include a different unique id
+
+        # As a result, any previously cached tables will not be found
+        self._cache_uid = str(uuid.uuid4())[-8:]
+
+        # Also drop any existing splink tables from the cache
+        # Note, this is not actually necessary, it's just good housekeeping
+        self._delete_tables_created_by_splink_from_db()
