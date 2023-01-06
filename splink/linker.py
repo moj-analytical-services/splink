@@ -1549,7 +1549,12 @@ class Linker:
         recs = df_truth_space.as_record_dict()
         return roc_chart(recs)
 
-    def precision_recall_chart_from_labels_table(self, labels_tablename):
+    def precision_recall_chart_from_labels_table(
+            self, 
+            labels_tablename, 
+            threshold_actual=0.5,
+            match_weight_round_to_nearest: float = None
+    ):
         """Generate a precision-recall chart from labelled (ground truth) data.
 
         The table of labels should be in the following format, and should be registered
@@ -1594,7 +1599,12 @@ class Linker:
                 attribute.
         """
         self._raise_error_if_necessary_accuracy_columns_not_computed()
-        df_truth_space = truth_space_table_from_labels_table(self, labels_tablename)
+        df_truth_space = truth_space_table_from_labels_table(
+            self, 
+            labels_tablename, 
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest
+        )
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
 
