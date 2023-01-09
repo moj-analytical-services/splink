@@ -128,7 +128,8 @@ def _save_splink_model_to_mlflow(linker, model_name):
 
 # ======================================================================
 # ======================================================================
-def log_splink_model_to_mlflow(linker, model_name, log_charts=True, params=None, metrics=None, artifacts=None):
+def log_splink_model_to_mlflow(linker, model_name, log_parameters_charts=True,
+                               log_profiling_charts=False, params=None, metrics=None, artifacts=None):
     """
     Comprehensive logging of Splink attributes, parameters, charts and model JSON to MLFlow to provide easy
     reproducability and tracking during model development and deployment. This will create a new run under which
@@ -144,8 +145,9 @@ def log_splink_model_to_mlflow(linker, model_name, log_charts=True, params=None,
     ----------
     linker : a trained Splink linkage model
     model_name : str, the name to log the model under
-    log_charts : bool, whether to log charts or not. This requires executing Spark jobs so can slow things
-    down during iterative development.
+    log_parameters_charts: boolean, whether to log parameter charts or not. Default to True as this is a quick operation.
+    log_profiling_charts: boolean, whether to log data profiling charts or not. Default to False as this requires running
+    Spark jobs and can take time.
     params : dict[str: str]. Dictionary is of param_name :param_value. Optional argument for logging arbitrary
     parameters
     metrics : dict[str: double or int]. Dictionary is of metric_name :metric_value. Optional argument for logging
@@ -164,8 +166,8 @@ def log_splink_model_to_mlflow(linker, model_name, log_charts=True, params=None,
         _log_hyperparameters(splink_model_json)
         _log_comparisons(splink_model_json)
         _save_splink_model_to_mlflow(linker, model_name)
-        if log_charts:
-            _log_linker_charts(linker)
+        if log_profiling_charts or log_parameters_charts:
+            _log_linker_charts(linker, log_parameters_charts, log_profiling_charts)
         if params:
             mlflow.log_params(params)
         if metrics:
@@ -178,33 +180,39 @@ def log_splink_model_to_mlflow(linker, model_name, log_charts=True, params=None,
 
 # ======================================================================
 # ======================================================================
-def _log_linker_charts(linker):
+def _log_linker_charts(linker, log_parameters_charts, log_profiling_charts):
     '''
     Log all the non-data related charts to MLFlow
     Parameters
     ----------
     linker : a Splink linker object
+    log_parameters_charts: boolean, whether to log parameter charts or not
+    log_profiling_charts: boolean, whether to log data profiling charts or not
 
     Returns
     -------
 
     '''
-    weights_chart = linker.match_weights_chart()
-    mu_chart = linker.m_u_parameters_chart()
-    missingness_chart = linker.missingness_chart()
-    # completeness = linker.completeness_chart() # Note to Splink team - this method behaves differently to the others
-    compare_chart = linker.parameter_estimate_comparisons_chart()
-    unlinkables = linker.unlinkables_chart()
-    blocking_rules_chart = linker.cumulative_num_comparisons_from_blocking_rules_chart()
-    charts_dict = {
-        "weights_chart": weights_chart,
-        "mu_chart": mu_chart,
-        "missingness_chart": missingness_chart,
-        #  "completeness": completeness,
-        "compare_chart": compare_chart,
-        "unlinkables": unlinkables,
-        "blocking_rules_chart": blocking_rules_chart,
-    }
+
+    charts_dict = {}
+    if log_parameters_charts:
+        weights_chart = linker.match_weights_chart()
+        mu_chart = linker.m_u_parameters_chart()
+        compare_chart = linker.parameter_estimate_comparisons_chart()
+        charts_dict["weights_chart"] = weights_chart
+        charts_dict["mu_chart"] = mu_chart
+        charts_dict["compare_chart"] = compare_chart
+
+    if log_profiling_charts:
+        missingness_chart = linker.missingness_chart()
+        # completeness = linker.completeness_chart() # Note to Splink team - this method behaves differently to the others
+        unlinkables = linker.unlinkables_chart()
+        blocking_rules_chart = linker.cumulative_num_comparisons_from_blocking_rules_chart()
+        charts_dict["missingness_chart"] = missingness_chart
+       # charts_dict["completeness"] = completeness
+        charts_dict["unlinkables"] = unlinkables
+        charts_dict["blocking_rules_chart"] = blocking_rules_chart
+
     for name, chart in charts_dict.items():
         _log_chart(name, chart)
 
