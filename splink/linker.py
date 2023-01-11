@@ -1565,10 +1565,10 @@ class Linker:
         return roc_chart(recs)
 
     def precision_recall_chart_from_labels_table(
-            self,
-            labels_tablename,
-            threshold_actual=0.5,
-            match_weight_round_to_nearest: float = None
+        self,
+        labels_tablename,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
     ):
         """Generate a precision-recall chart from labelled (ground truth) data.
 
@@ -1618,7 +1618,7 @@ class Linker:
             self,
             labels_tablename,
             threshold_actual=threshold_actual,
-            match_weight_round_to_nearest=match_weight_round_to_nearest
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
         )
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
