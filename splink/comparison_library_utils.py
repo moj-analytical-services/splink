@@ -38,11 +38,9 @@ def datediff_error_logger(thresholds, metrics):
         error_logger.insert(
             0,
             "The following error(s) were identified while validating "
-            "your arguments for `datediff_at_thresholds`:"
+            "your arguments for `datediff_at_thresholds`:",
         )
 
-        raise ValueError(
-            "\n\n".join(error_logger)
-        )
+        raise ValueError("\n\n".join(error_logger))
 
     return

@@ -182,26 +182,16 @@ def test_datediff_error_logger():
 
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
-        cld.datediff_at_thresholds(
-            "dob", [1], ["day", "month", "year", "year"]
-        )
+        cld.datediff_at_thresholds("dob", [1], ["day", "month", "year", "year"])
     # Negative threshold
     with pytest.raises(ValueError):
-        cld.datediff_at_thresholds(
-            "dob", [-1], ["day"]
-        )
+        cld.datediff_at_thresholds("dob", [-1], ["day"])
     # Invalid metric
     with pytest.raises(ValueError):
-        cld.datediff_at_thresholds(
-            "dob", [1], ["dy"]
-        )
+        cld.datediff_at_thresholds("dob", [1], ["dy"])
     # Threshold len == 0
     with pytest.raises(ValueError):
-        cld.datediff_at_thresholds(
-            "dob", [], ["dy"]
-        )
+        cld.datediff_at_thresholds("dob", [], ["dy"])
     # Metric len == 0
     with pytest.raises(ValueError):
-        cld.datediff_at_thresholds(
-            "dob", [1], []
-        )
+        cld.datediff_at_thresholds("dob", [1], [])
