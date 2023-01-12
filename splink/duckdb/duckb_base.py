@@ -11,6 +11,12 @@ def size_array_intersect_sql(col_name_l, col_name_r):
     )
 
 
+def datediff_sql(col_name_l, col_name_r, date_threshold, date_metric):
+    return f"""
+        abs(date_diff('{date_metric}', {col_name_l}, {col_name_r})) <= {date_threshold}
+    """
+
+
 class DuckDBBase(DialectBase):
     @property
     def _sql_dialect(self):
@@ -19,6 +25,10 @@ class DuckDBBase(DialectBase):
     @property
     def _size_array_intersect_function(self):
         return size_array_intersect_sql
+
+    @property
+    def _datediff_function(self):
+        return datediff_sql
 
     @property
     def _jaro_winkler_name(self):
