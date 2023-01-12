@@ -51,14 +51,15 @@ def estimate_u_values(linker: "Linker", target_rows):
         for cl in cc.comparison_levels:
             cl._level_dict["tf_adjustment_column"] = None
 
+    input_nodes_with_tf = linker._input_nodes_concat_with_tf()
+
     if settings_obj._link_type in ["dedupe_only", "link_and_dedupe"]:
         sql = """
         select count(*) as count
         from __splink__df_concat_with_tf
         """
-        dataframe = training_linker._sql_to_splink_dataframe_checking_cache(
-            sql, "__splink__df_concat_count"
-        )
+        training_linker._enqueue_sql(sql, "__splink__df_concat_count")
+        dataframe = training_linker._execute_sql_pipeline([input_nodes_with_tf])
         result = dataframe.as_record_dict()
         dataframe.drop_table_from_database()
         count_rows = result[0]["count"]
@@ -71,9 +72,8 @@ def estimate_u_values(linker: "Linker", target_rows):
         from __splink__df_concat_with_tf
         group by source_dataset
         """
-        dataframe = training_linker._sql_to_splink_dataframe_checking_cache(
-            sql, "__splink__df_concat_count"
-        )
+        training_linker._enqueue_sql(sql, "__splink__df_concat_count")
+        dataframe = training_linker._execute_sql_pipeline([input_nodes_with_tf])
         result = dataframe.as_record_dict()
         dataframe.drop_table_from_database()
         frame_counts = [res["count"] for res in result]
@@ -96,12 +96,14 @@ def estimate_u_values(linker: "Linker", target_rows):
     from __splink__df_concat_with_tf
     {training_linker._random_sample_sql(proportion, sample_size)}
     """
+    training_linker._enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
 
-    df_sample = training_linker._sql_to_splink_dataframe_checking_cache(
-        sql,
-        "__splink__df_concat_with_tf_sample",
+    df_sample = training_linker._execute_sql_pipeline(
+        [input_nodes_with_tf],
     )
 
+    # This is being done on the training linker (a copy), so don't need to worry about
+    # overwriting the user-provided blocking rules
     settings_obj._blocking_rules_to_generate_predictions = []
 
     sql = block_using_rules_sql(training_linker)
