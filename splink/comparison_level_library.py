@@ -426,8 +426,8 @@ class DateDiffLevelBase(ComparisonLevel):
                 Defaults to None.
 
         Returns:
-            ComparisonLevel: A comparison level that evaluates the distance between
-                two coordinates
+            ComparisonLevel: A comparison level that evaluates whether two dates fall
+                within a given interval.
         """
 
         date = InputColumn(date_col, sql_dialect=self._sql_dialect)
