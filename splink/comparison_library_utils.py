@@ -4,6 +4,7 @@ def datediff_error_logger(thresholds, metrics):
     # verbose and failing the lint.
 
     error_logger = []
+
     if len(thresholds) == 0:
         error_logger.append(
             "`date_thresholds` must have at least one element, so that Comparison "
@@ -34,8 +35,13 @@ def datediff_error_logger(thresholds, metrics):
 
     if len(error_logger) > 0:
 
+        error_logger.insert(
+            0,
+            "The following error(s) were identified while validating "
+            "your arguments for `datediff_at_thresholds`:"
+        )
+
         raise ValueError(
-            "The following errors were identified in your arguments:\n"
             "\n\n".join(error_logger)
         )
 

@@ -71,7 +71,7 @@ def gen_settings(type, comparison_library=False):
 
 
 def test_datediff_levels(spark):
-    # def test_datediff_levels():
+
     df = pd.DataFrame(
         [
             {
@@ -125,7 +125,6 @@ def test_datediff_levels(spark):
     # DuckDBFrame
     dlinker = DuckDBLinker(df, duck_settings)
     duck_df_e = dlinker.predict().as_pandas_dataframe()
-    duck_df_e.to_csv("duck_df_e.csv")
     dlinker = DuckDBLinker(df, duck_settings_cll)
     duck_cl_df_e = dlinker.predict().as_pandas_dataframe()
 
@@ -177,3 +176,32 @@ def test_datediff_levels(spark):
                     ]["gamma_dob"].values[0]
                     == k
                 )
+
+
+def test_datediff_error_logger():
+
+    # Differing lengths between thresholds and units
+    with pytest.raises(ValueError):
+        cld.datediff_at_thresholds(
+            "dob", [1], ["day", "month", "year", "year"]
+        )
+    # Negative threshold
+    with pytest.raises(ValueError):
+        cld.datediff_at_thresholds(
+            "dob", [-1], ["day"]
+        )
+    # Invalid metric
+    with pytest.raises(ValueError):
+        cld.datediff_at_thresholds(
+            "dob", [1], ["dy"]
+        )
+    # Threshold len == 0
+    with pytest.raises(ValueError):
+        cld.datediff_at_thresholds(
+            "dob", [], ["dy"]
+        )
+    # Metric len == 0
+    with pytest.raises(ValueError):
+        cld.datediff_at_thresholds(
+            "dob", [1], []
+        )
