@@ -2,6 +2,7 @@ from typing import Union
 
 from .comparison import Comparison
 from .misc import ensure_is_iterable
+from .comparison_library_utils import datediff_error_logger
 
 
 class ExactMatchBase(Comparison):
@@ -445,7 +446,8 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         Args:
             col_name (str): The name of the date column to compare.
             date_thresholds (Union[int, list], optional): The size(s) of given date
-                thresholds, to assess whether two dates fall within a given time interval.
+                thresholds, to assess whether two dates fall within a given time
+                interval.
                 These values can be any integer value and should be used in tandem with
                 `date_metrics`.
             date_metrics (Union[str, list], optional): The unit of time you wish your
@@ -471,40 +473,8 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         thresholds = ensure_is_iterable(date_thresholds)
         metrics = ensure_is_iterable(date_metrics)
 
-        error_logger = []
-        if len(thresholds) == 0:
-            error_logger.append(
-                "`date_thresholds` must have at least one element, so that Comparison "
-                "has more than just an 'else' level"
-            )
-
-        if len(metrics) == 0:
-            error_logger.append(
-                "`date_metrics` must have at least one element, so that Comparison "
-                "has more than just an 'else' level"
-            )
-
-        if len(thresholds) != len(metrics):
-            error_logger.append(
-                "There is a difference in length between your supplied `date_thresholds` "
-                "and `date_metrics`. Please ensure that both arguments are of the same length "
-                "before continuing."
-            )
-
-        if any(size <= 0 for size in thresholds):
-            error_logger.append("All entries of `date_thresholds` must be postive")
-
-        if any(metric not in ["day", "month", "year"] for metric in metrics):
-            error_logger.append(
-                "`date_metrics` only accepts `day`, `month` and `year` as valid arguments."
-            )
-
-        if len(error_logger) > 0:
-
-            raise ValueError(
-                "The following errors were identified in your arguments:\n"
-                "\n\n".join(error_logger)
-            )
+        # Validate user inputs
+        datediff_error_logger(thresholds, metrics)
 
         if m_probability_or_probabilities_sizes is None:
             m_probability_or_probabilities_sizes = [None] * len(thresholds)
