@@ -1,6 +1,7 @@
 import re
 from copy import deepcopy
 from .charts import vegalite_or_json, load_chart_definition
+from .misc import ensure_is_list
 
 
 def _group_name(cols_or_expr):
@@ -8,6 +9,18 @@ def _group_name(cols_or_expr):
     cols_or_expr = re.sub(r"[^0-9a-zA-Z_]", " ", cols_or_expr)
     cols_or_expr = re.sub(r"\s+", "_", cols_or_expr)
     return cols_or_expr
+
+
+def expressions_to_sql(expressions):
+
+    e = []
+    for expr in expressions:
+        if isinstance(expr, list):
+            expr = ", ' ', ".join(expr)
+            expr = f"concat({expr})"
+        e.append(expr)
+
+    return e
 
 
 _outer_chart_spec_freq = {
@@ -129,11 +142,29 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
 
 def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
 
-    if type(cols_or_exprs) == str:
-        cols_or_exprs = [cols_or_exprs]
+    cols_or_exprs = ensure_is_list(cols_or_exprs)
+    column_expressions = expressions_to_sql(cols_or_exprs)
     sqls = []
-    for col_or_expr in cols_or_exprs:
+    for col_or_expr, raw_expr in zip(column_expressions, cols_or_exprs):
+
         gn = _group_name(col_or_expr)
+
+        # If the original input is supplied as a list of columns to concatenate,
+        # add a quick clause to filter out any instances where both cols contain
+        # null values.
+        if isinstance(raw_expr, list):
+
+            null_exprs = [f"{c} is null" for c in raw_expr]
+            null_exprs = " OR ".join(null_exprs)
+
+            col_or_expr = f"""
+                case when
+                {null_exprs} then null
+                else
+                {col_or_expr}
+                end
+            """
+
         sql = f"""
         select * from
         (select
@@ -174,11 +205,12 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
     if df_concat:
         input_dataframes.append(df_concat)
 
-    if type(column_expressions) == str:
-        column_expressions = [column_expressions]
+    column_expressions_raw = ensure_is_list(column_expressions)
+    column_expressions = expressions_to_sql(column_expressions_raw)
 
     sql = _col_or_expr_frequencies_raw_data_sql(
-        column_expressions, "__splink__df_concat"
+        column_expressions_raw,
+        input_tablename
     )
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
