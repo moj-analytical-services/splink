@@ -850,10 +850,10 @@ class Linker:
                 represents a table materialised in the database. Methods on the
                 SplinkDataFrame allow you to access the underlying data.
         """
-        self._input_nodes_concat_with_tf()
+        input_nodes = self._input_nodes_concat_with_tf()
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
-        return self._execute_sql_pipeline()
+        return self._execute_sql_pipeline([input_nodes])
 
     def estimate_u_using_random_sampling(self, target_rows: int):
         """Estimate the u parameters of the linkage model using random sampling.
