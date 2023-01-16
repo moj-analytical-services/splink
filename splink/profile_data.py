@@ -168,18 +168,17 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 
 def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
 
-    input_tablename = "__splink__df_concat_with_tf"
-    if not linker._table_exists_in_database("__splink__df_concat_with_tf"):
-        linker._initialise_df_concat()
-        input_tablename = "__splink__df_concat"
+    input_nodes_concat = linker._input_nodes_concat()
 
     if type(column_expressions) == str:
         column_expressions = [column_expressions]
 
-    sql = _col_or_expr_frequencies_raw_data_sql(column_expressions, input_tablename)
+    sql = _col_or_expr_frequencies_raw_data_sql(
+        column_expressions, "__splink__df_concat"
+    )
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-    df_raw = linker._execute_sql_pipeline(materialise_as_hash=True)
+    df_raw = linker._execute_sql_pipeline([input_nodes_concat])
 
     sqls = _get_df_percentiles()
     for sql in sqls:

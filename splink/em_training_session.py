@@ -144,8 +144,8 @@ class EMTrainingSession:
     def _comparison_vectors(self):
         self._training_log_message()
 
-        input_nodes = self._original_linker._input_nodes_concat_with_tf()
-        input_dataframes = [input_nodes]
+        input_dataframes = self._original_linker._input_nodes_concat_with_tf()
+
         sql = block_using_rules_sql(self._training_linker)
         self._training_linker._enqueue_sql(sql, "__splink__df_blocked")
 

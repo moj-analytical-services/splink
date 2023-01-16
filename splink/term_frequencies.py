@@ -89,7 +89,8 @@ def compute_all_term_frequencies_sqls(linker: "Linker") -> List[dict]:
     sqls = []
     for tf_col in tf_cols:
         tf_table_name = colname_to_tf_tablename(tf_col)
-
+        # TODO: Checking table exists prob slow if lots of tf tables
+        # consider efficiency gains here
         if not linker._table_exists_in_database(tf_table_name):
             sql = term_frequencies_for_single_column_sql(tf_col)
             sql = {
