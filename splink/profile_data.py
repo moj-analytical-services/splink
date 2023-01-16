@@ -149,9 +149,9 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
 
         gn = _group_name(col_or_expr)
 
-        # If the original input is supplied as a list of columns to concatenate,
-        # add a quick clause to filter out any instances where both cols contain
-        # null values.
+        # If the supplied column string is a list of columns to be concatenated,
+        # add a quick clause to filter out any instances whereby either column contains
+        # a null value.
         if isinstance(raw_expr, list):
 
             null_exprs = [f"{c} is null" for c in raw_expr]
