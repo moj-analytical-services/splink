@@ -11,12 +11,12 @@ def sqlglot_transform_sql(sql, func):
 def _add_l_or_r_to_identifier(node):
     if isinstance(node, exp.Identifier):
         if isinstance(node.parent, exp.Bracket):
-            l_r = f'_{node.parent.parent.table}'
+            l_r = f"_{node.parent.parent.table}"
         elif isinstance(node.parent, exp.Lambda):
-            l_r = ''
+            l_r = ""
         else:
-            l_r = f'_{node.parent.table}'
-        node.args["this"] += l_r if l_r != '_' else ''
+            l_r = f"_{node.parent.table}"
+        node.args["this"] += l_r if l_r != "_" else ""
     return node
 
 
