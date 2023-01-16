@@ -59,7 +59,7 @@
         "format": ","
       },
       {
-        "type": "quantitative",
+        "type": "nominal",
         "field": "reduction_ratio",
         "title": "Reduction Ratio (cumulative rows/cartesian product)"
       }
