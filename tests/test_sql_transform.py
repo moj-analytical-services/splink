@@ -24,7 +24,7 @@ def test_move_l_r_table_prefix_to_column_suffix():
     res = move_l_r_table_prefix_to_column_suffix(br)
     expected = "name_l['first'] = name_r['first'] and levenshtein(dob_l, dob_r) < 2"
     assert res.lower() == expected.lower()
-    
+
     br = """
         len(list_filter(l.list_of_names, x -> list_contains(r.list_of_names, x))) >= 1
     """
