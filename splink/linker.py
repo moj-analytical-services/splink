@@ -286,6 +286,12 @@ class Linker:
             return None
 
     def _input_nodes_concat_with_tf(self, materialise=True):
+        """
+        Returns the vertical concatenation of the input nodes
+
+        It's returned as a list, because in the case of a two
+        dataset link only, we need to return two dataframes
+        """
 
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
@@ -296,9 +302,11 @@ class Linker:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         if self._two_dataset_link_only:
-            # If we do not materialise __splink_df_concat_with_tf
-            # we'd have to run all the code up to this point twice
-            self._execute_sql_pipeline()
+            if materialise:
+                # If we do not materialise __splink_df_concat_with_tf
+                # And we want to materialies both the left and right dfs
+                # we'd have to run all the code up to this point twice
+                df_nodes = self._execute_sql_pipeline()
 
             source_dataset_col = self._settings_obj._source_dataset_column_name
             # Need df_l to be the one with the lowest id to preeserve the property
@@ -313,20 +321,27 @@ class Linker:
             where {source_dataset_col} = '{df_l.templated_name}'
             """
             self._enqueue_sql(sql, "__splink__df_concat_with_tf_left")
-            df_left = self._execute_sql_pipeline()
+            if materialise:
+                df_left = self._execute_sql_pipeline([df_nodes])
 
             sql = f"""
             select * from __splink__df_concat_with_tf
             where {source_dataset_col} = '{df_r.templated_name}'
             """
             self._enqueue_sql(sql, "__splink_df_concat_with_tf_right")
-            df_right = self._execute_sql_pipeline()
-            return [df_left, df_right]
+            if materialise:
+                df_right = self._execute_sql_pipeline([df_nodes])
+
+            if materialise:
+                return [df_left, df_right, df_nodes]
+            else:
+                return []
         else:
             if materialise:
-                return self._execute_sql_pipeline()
+                df = self._execute_sql_pipeline()
+                return [df]
             else:
-                return None
+                return []
 
     def _table_to_splink_dataframe(
         self, templated_name, physical_name
@@ -850,10 +865,10 @@ class Linker:
                 represents a table materialised in the database. Methods on the
                 SplinkDataFrame allow you to access the underlying data.
         """
-        input_nodes = self._input_nodes_concat_with_tf()
+        input_dataframes = self._input_nodes_concat_with_tf()
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
-        return self._execute_sql_pipeline([input_nodes])
+        return self._execute_sql_pipeline(input_dataframes)
 
     def estimate_u_using_random_sampling(self, target_rows: int):
         """Estimate the u parameters of the linkage model using random sampling.
@@ -1018,8 +1033,6 @@ class Linker:
 
         """
 
-        self._input_nodes_concat_with_tf(materialise=True)
-
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
             comparisons_to_deactivate = [
@@ -1065,6 +1078,7 @@ class Linker:
         self,
         threshold_match_probability: float = None,
         threshold_match_weight: float = None,
+        materialise_input_nodes_with_tf=True,
     ) -> SplinkDataFrame:
         """Create a dataframe of scored pairwise comparisons using the parameters
         of the linkage model.
@@ -1094,9 +1108,10 @@ class Linker:
 
         """
 
-        # If the user only calls predict, it runs as a single pipeline with no
-        # materialisation of anything
-        self._input_nodes_concat_with_tf(materialise=False)
+        # If materialise is false, input nodes will be
+        input_dataframes = self._input_nodes_concat_with_tf(
+            materialise=materialise_input_nodes_with_tf
+        )
 
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
@@ -1106,9 +1121,7 @@ class Linker:
         # repartition after blocking only exists on the SparkLinker
         if repartition_after_blocking:
             df_blocked = self._execute_sql_pipeline()
-            input_dataframes = [df_blocked]
-        else:
-            input_dataframes = []
+            input_dataframes.append(df_blocked)
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
