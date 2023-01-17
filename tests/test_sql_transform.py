@@ -25,6 +25,11 @@ def test_move_l_r_table_prefix_to_column_suffix():
     expected = "name_l['first'] = name_r['first'] and levenshtein(dob_l, dob_r) < 2"
     assert res.lower() == expected.lower()
 
+    br = "len(list_filter(l.name_list, x -> list_contains(r.name_list, x))) >= 1"
+    res = move_l_r_table_prefix_to_column_suffix(br)
+    expected = "len(list_filter(name_list_l, x -> list_contains(name_list_r, x))) >= 1"
+    assert res.lower() == expected.lower()
+
 
 def test_cast_concat_as_varchar():
 
