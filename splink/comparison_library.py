@@ -129,7 +129,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             # feels a bit hacky, but will do at least for time being
             if not self._is_distance_subclass:
                 kwargs["distance_function_name"] = distance_function_name
-                kwargs["igher_is_more_similar"] = higher_is_more_similar
+                kwargs["higher_is_more_similar"] = higher_is_more_similar
             level = self._distance_level(**kwargs)
             comparison_levels.append(level)
 
