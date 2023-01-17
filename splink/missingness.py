@@ -43,10 +43,8 @@ def missingness_sqls(columns, input_tablename):
 def missingness_data(linker, input_tablename):
 
     if input_tablename is None:
-        input_tablename = "__splink__df_concat_with_tf"
-        if not linker._table_exists_in_database("__splink__df_concat_with_tf"):
-            linker._initialise_df_concat()
-            input_tablename = "__splink__df_concat"
+        nodes_concat = linker._input_nodes_concat(materialise=True)
+        input_tablename = nodes_concat.physical_name
 
     splink_dataframe = linker._table_to_splink_dataframe(
         input_tablename, input_tablename
