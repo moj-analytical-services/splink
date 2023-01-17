@@ -420,7 +420,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         self,
         col_name: str,
         date_thresholds: Union[int, list] = [1],
-        date_metrics: Union[str, list] = ["day"],
+        date_metrics: Union[str, list] = ["year"],
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
