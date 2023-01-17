@@ -2,6 +2,7 @@ from typing import Union
 
 from .comparison import Comparison
 from .misc import ensure_is_iterable
+from .comparison_library_utils import datediff_error_logger
 
 
 class ExactMatchBase(Comparison):
@@ -412,3 +413,115 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
     @property
     def _array_intersect_level(self):
         raise NotImplementedError("Intersect level not defined on base class")
+
+
+class DateDiffAtThresholdsComparisonBase(Comparison):
+    def __init__(
+        self,
+        col_name: str,
+        date_thresholds: Union[int, list] = [1],
+        date_metrics: Union[str, list] = ["year"],
+        include_exact_match_level=True,
+        term_frequency_adjustments=False,
+        m_probability_exact_match=None,
+        m_probability_or_probabilities_sizes: Union[float, list] = None,
+        m_probability_else=None,
+    ):
+        """A comparison of the data in the date column `col_name` with various
+        date thresholds and metrics to assess similarity levels.
+
+        An example of the output with default arguments and settings
+        `date_thresholds = [1]` and `date_metrics = ['day']` would be
+        - The two input dates are within 1 day of one another
+        - Anything else (i.e. all other dates lie outside this range)
+
+        `date_thresholds` and `date_metrics` should be used in conjunction
+        with one another.
+        For example, `date_thresholds = [10, 12, 15]` with
+        `date_metrics = ['day', 'month', 'year']` would result in the following checks:
+        - The two dates are within 10 days of one another
+        - The two dates are within 12 months of one another
+        - And the two dates are within 15 years of one another
+
+        Args:
+            col_name (str): The name of the date column to compare.
+            date_thresholds (Union[int, list], optional): The size(s) of given date
+                thresholds, to assess whether two dates fall within a given time
+                interval.
+                These values can be any integer value and should be used in tandem with
+                `date_metrics`.
+            date_metrics (Union[str, list], optional): The unit of time you wish your
+                `date_thresholds` to be measured against.
+                Metrics should be one of `day`, `month` or `year`.
+            include_exact_match_level (bool, optional): If True, include an exact match
+                level. Defaults to True.
+            term_frequency_adjustments (bool, optional): If True, apply term frequency
+                adjustments to the exact match level. Defaults to False.
+            m_probability_exact_match (_type_, optional): If provided, overrides the
+                default m probability for the exact match level. Defaults to None.
+            m_probability_or_probabilities_sizes (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the sizes specified. Defaults to None.
+            m_probability_else (_type_, optional): If provided, overrides the
+                default m probability for the 'anything else' level. Defaults to None.
+
+        Returns:
+            Comparison: A comparison that can be inclued in the Splink settings
+                dictionary.
+        """
+
+        thresholds = ensure_is_iterable(date_thresholds)
+        metrics = ensure_is_iterable(date_metrics)
+
+        # Validate user inputs
+        datediff_error_logger(thresholds, metrics)
+
+        if m_probability_or_probabilities_sizes is None:
+            m_probability_or_probabilities_sizes = [None] * len(thresholds)
+        m_probabilities = ensure_is_iterable(m_probability_or_probabilities_sizes)
+
+        comparison_levels = []
+        comparison_levels.append(self._null_level(col_name))
+        if include_exact_match_level:
+            level = self._exact_match_level(
+                col_name,
+                term_frequency_adjustments=term_frequency_adjustments,
+                m_probability=m_probability_exact_match,
+            )
+            comparison_levels.append(level)
+
+        for date_thres, date_metr, m_prob in zip(thresholds, metrics, m_probabilities):
+            level = self._datediff_level(
+                col_name,
+                date_threshold=date_thres,
+                date_metric=date_metr,
+                m_probability=m_prob,
+            )
+            comparison_levels.append(level)
+
+        comparison_levels.append(
+            self._else_level(m_probability=m_probability_else),
+        )
+
+        comparison_desc = ""
+        if include_exact_match_level:
+            comparison_desc += "Exact match vs. "
+
+        thres_desc = ", ".join(
+            [f"{m.title()}(s): {v}" for m, v in zip(metrics, thresholds)]
+        )
+        plural = "" if len(thresholds) == 1 else "s"
+        comparison_desc += (
+            f"Dates within the following threshold{plural} {thres_desc} vs. "
+        )
+        comparison_desc += "anything else"
+
+        comparison_dict = {
+            "comparison_description": comparison_desc,
+            "comparison_levels": comparison_levels,
+        }
+        super().__init__(comparison_dict)
+
+    @property
+    def _datediff_level(self):
+        raise NotImplementedError("Datediff level not defined on base class")

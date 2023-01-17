@@ -400,3 +400,56 @@ class ArrayIntersectLevelBase(ComparisonLevel):
     @property
     def _size_array_intersect_function(self):
         raise NotImplementedError("Intersect function not defined on base class")
+
+
+class DateDiffLevelBase(ComparisonLevel):
+    def __init__(
+        self,
+        date_col: str,
+        date_threshold: int,
+        date_metric: str = "day",
+        m_probability=None,
+    ):
+        """Use the ...
+
+        Arguments:
+            date_col (str): Input column name
+            date_threshold (int): The total difference in time between two given
+                dates. This is used in tandem with `date_metric` to determine .
+                If you are using `year` as your metric, then a value of 1 would
+                require that your dates lie within 1 year of one another.
+            date_metric (str): The unit of time with which to measure your
+                `date_threshold`.
+                Your metric should be one of `day`, `month` or `year`.
+                Defaults to `day`.
+            m_probability (float, optional): Starting value for m probability.
+                Defaults to None.
+
+        Returns:
+            ComparisonLevel: A comparison level that evaluates whether two dates fall
+                within a given interval.
+        """
+
+        date = InputColumn(date_col, sql_dialect=self._sql_dialect)
+        date_l, date_r = date.names_l_r()
+
+        datediff_sql = self._datediff_function(
+            date_l, date_r, date_threshold, date_metric
+        )
+        label = f"Within {date_threshold} {date_metric}"
+        if date_threshold > 1:
+            label += "s"
+
+        level_dict = {
+            "sql_condition": datediff_sql,
+            "label_for_charts": label,
+        }
+
+        if m_probability:
+            level_dict["m_probability"] = m_probability
+
+        super().__init__(level_dict, sql_dialect=self._sql_dialect)
+
+    @property
+    def _datediff_function(self):
+        raise NotImplementedError("Datediff function not defined on base class")

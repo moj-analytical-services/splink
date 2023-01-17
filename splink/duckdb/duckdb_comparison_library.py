@@ -5,6 +5,7 @@ from ..comparison_library import (
     JaroWinklerAtThresholdsComparisonBase,
     JaccardAtThresholdsComparisonBase,
     ArrayIntersectAtSizesComparisonBase,
+    DateDiffAtThresholdsComparisonBase,
 )
 from .duckb_base import (
     DuckDBBase,
@@ -18,6 +19,7 @@ from .duckdb_comparison_level_library import (
     jaro_winkler_level,
     jaccard_level,
     array_intersect_level,
+    datediff_level,
 )
 
 
@@ -73,3 +75,9 @@ class array_intersect_at_sizes(DuckDBComparison, ArrayIntersectAtSizesComparison
     @property
     def _array_intersect_level(self):
         return array_intersect_level
+
+
+class datediff_at_thresholds(DuckDBComparison, DateDiffAtThresholdsComparisonBase):
+    @property
+    def _datediff_level(self):
+        return datediff_level

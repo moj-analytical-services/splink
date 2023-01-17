@@ -10,6 +10,7 @@ from ..comparison_level_library import (
     PercentageDifferenceLevelBase,
     DistanceInKMLevelBase,
     ArrayIntersectLevelBase,
+    DateDiffLevelBase,
 )
 from .spark_base import (
     SparkBase,
@@ -57,4 +58,8 @@ class percentage_difference_level(SparkBase, PercentageDifferenceLevelBase):
 
 
 class distance_in_km_level(SparkBase, DistanceInKMLevelBase):
+    pass
+
+
+class datediff_level(SparkBase, DateDiffLevelBase):
     pass

@@ -5,6 +5,7 @@ from ..comparison_library import (
     JaroWinklerAtThresholdsComparisonBase,
     JaccardAtThresholdsComparisonBase,
     ArrayIntersectAtSizesComparisonBase,
+    DateDiffAtThresholdsComparisonBase,
 )
 
 from .spark_base import (
@@ -19,6 +20,7 @@ from .spark_comparison_level_library import (
     jaro_winkler_level,
     jaccard_level,
     array_intersect_level,
+    datediff_level,
 )
 
 
@@ -72,3 +74,9 @@ class array_intersect_at_sizes(SparkComparison, ArrayIntersectAtSizesComparisonB
     @property
     def _array_intersect_level(self):
         return array_intersect_level
+
+
+class datediff_at_thresholds(SparkComparison, DateDiffAtThresholdsComparisonBase):
+    @property
+    def _datediff_level(self):
+        return datediff_level
