@@ -1333,7 +1333,9 @@ class Linker:
             sql_infinity_expression=self._infinity_expression,
         )
         for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+            output_table_name = sql["output_table_name"]
+            output_table_name = output_table_name.replace("predict", "self_link")
+            self._enqueue_sql(sql["sql"], output_table_name)
 
         predictions = self._execute_sql_pipeline(use_cache=False)
 
