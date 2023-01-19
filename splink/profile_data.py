@@ -168,7 +168,7 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 
 def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
 
-    input_nodes_concat = linker._input_nodes_concat()
+    linker._input_nodes_concat()
 
     if type(column_expressions) == str:
         column_expressions = [column_expressions]
@@ -178,7 +178,7 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
     )
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-    df_raw = linker._execute_sql_pipeline([input_nodes_concat])
+    df_raw = linker._execute_sql_pipeline()
 
     sqls = _get_df_percentiles()
     for sql in sqls:

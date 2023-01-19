@@ -276,7 +276,11 @@ class Linker:
         else:
             return table_name
 
-    def _input_nodes_concat(self, materialise=True):
+    def _input_nodes_concat(self, materialise=False):
+        """This is often a no-op, and a fairly trivial
+        statement.  It's unclear whether materialising
+        would ever improve performance.
+        """
 
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
@@ -295,7 +299,6 @@ class Linker:
 
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
-        self._try_replace_sql_queue_with_cached_table()
 
         sqls = compute_all_term_frequencies_sqls(self)
         for sql in sqls:
@@ -1338,7 +1341,7 @@ class Linker:
             BlockingRule(f"{uid_l} = {uid_r}")
         ]
 
-        self._input_nodes_concat_with_tf()
+        input_dataframes = self._input_nodes_concat_with_tf()
 
         sql = block_using_rules_sql(self)
 
@@ -1355,7 +1358,7 @@ class Linker:
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        predictions = self._execute_sql_pipeline(use_cache=False)
+        predictions = self._execute_sql_pipeline(input_dataframes, use_cache=False)
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
@@ -1987,7 +1990,7 @@ class Linker:
 
         """
         records = missingness_data(self, input_dataset)
-        return missingness_chart(records, input_dataset)
+        return missingness_chart(records)
 
     def completeness_chart(self, input_dataset: str = None, cols: List[str] = None):
         """Generate a summary chart of the completeness (proportion of non-nulls) of
@@ -2436,10 +2439,3 @@ class Linker:
         # Also drop any existing splink tables from the cache
         # Note, this is not actually necessary, it's just good housekeeping
         self._delete_tables_created_by_splink_from_db()
-
-    def _try_replace_sql_queue_with_cached_table(self):
-        """Look at the current queue, and compare with cache.  If queue is in cache,
-        replace queue with cache.
-        """
-        print("not implemented yet")
-        pass
