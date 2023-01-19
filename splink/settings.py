@@ -203,7 +203,6 @@ class Settings:
 
         for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.l_name_as_l())
-        for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.r_name_as_r())
 
         for cc in self.comparisons:
@@ -220,7 +219,6 @@ class Settings:
 
         for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_l())
-        for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_r())
 
         for cc in self.comparisons:
@@ -241,7 +239,6 @@ class Settings:
 
         for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_l())
-        for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_r())
 
         for cc in self.comparisons:
@@ -262,7 +259,6 @@ class Settings:
 
         for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_l())
-        for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_r())
 
         for cc in self.comparisons:

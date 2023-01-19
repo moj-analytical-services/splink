@@ -73,6 +73,18 @@ def _join_tf_to_input_df_sql(linker: "Linker"):
     return sql
 
 
+def term_frequencies_from_concat_with_tf(input_column):
+
+    sql = f"""
+        select
+        distinct {input_column.name()},
+        {input_column.tf_name()}
+        from __splink__df_concat_with_tf
+    """
+
+    return sql
+
+
 def compute_all_term_frequencies_sqls(linker: "Linker") -> List[dict]:
 
     settings_obj = linker._settings_obj
@@ -104,5 +116,34 @@ def compute_all_term_frequencies_sqls(linker: "Linker") -> List[dict]:
         "output_table_name": "__splink__df_concat_with_tf",
     }
     sqls.append(sql)
+
+    return sqls
+
+
+def compute_term_frequencies_from_concat_with_tf(linker):
+
+    """If __splink__df_concat_with_tf already exists in your database,
+    reverse engineer the underlying tf tables.
+
+    __splink__df_concat_with_tf is a cached table and often output by
+    users to disk, for use at a later point in time. As a result, it
+    often exists in the database or is easily accessible by the user,
+    while the underlying tf tables are not.
+    """
+
+    settings_obj = linker._settings_obj
+    tf_cols = settings_obj._term_frequency_columns
+
+    sqls = []
+    for tf_col in tf_cols:
+        tf_table_name = colname_to_tf_tablename(tf_col)
+
+        if not linker._table_exists_in_database(tf_table_name):
+            sql = term_frequencies_from_concat_with_tf(tf_col)
+            sql = {
+                "sql": sql,
+                "output_table_name": colname_to_tf_tablename(tf_col),
+            }
+            sqls.append(sql)
 
     return sqls
