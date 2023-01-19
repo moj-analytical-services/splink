@@ -40,6 +40,13 @@ def test_tf_tables_init_works():
             s,
         )
 
+        # Compute tf table for first name
+        # This:
+        # 1. Does nothing if term frequencies are not used
+        # 2. Should use the cache and not break if tf adj is requested for fn
+        # 3. Use both the cache and also create surname in our final example
+        linker.compute_tf_table("first_name")
+
         # Running without _df_concat_with_tf
         linker.__deepcopy__(None).find_matches_to_new_records(
             [record], blocking_rules=[], match_weight_threshold=-10000
