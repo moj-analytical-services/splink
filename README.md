@@ -144,7 +144,7 @@ clusters.as_pandas_dataframe(limit=5)
 
 ## Citation
 
-If you would use Splink in your reserach, we'd be grateful for a citation in the following format (modify the version and date accordingly).
+If you use Splink in your reserach, we'd be grateful for a citation in the following format (modify the version and date accordingly).
 
 ```
 @misc{ministry_of_justice_2023_splink,
