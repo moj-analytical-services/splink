@@ -152,7 +152,7 @@ If you use Splink in your reserach, we'd be grateful for a citation in the follo
   title        = {Splink: v3.5.2},
   month        = jan,
   year         = 2023,
-  version      = {3.5.2},
+  version      = {3.5.3},
   url          = {http://github.com/moj-analytical-services/splink}
 }
 ```
