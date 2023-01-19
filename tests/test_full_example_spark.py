@@ -117,8 +117,6 @@ def test_full_example_spark(df_spark, tmp_path):
         "group": 10000,
     }
 
-    linker.compute_tf_table("first_name")
-
     linker.find_matches_to_new_records(
         [record], blocking_rules=[], match_weight_threshold=-10000
     )

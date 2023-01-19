@@ -122,11 +122,12 @@ def cumulative_comparisons_generated_by_blocking_rules(
         if output_chart:
 
             cumulative_sum += row
-            rr = round(calculate_reduction_ratio(cumulative_sum, cartesian), 3)
+            # Increase round threshold to capture more info on larger datasets
+            rr = round(calculate_reduction_ratio(cumulative_sum, cartesian), 6)
 
             rr_text = (
                 "The rolling reduction ratio with your given blocking rule(s) "
-                f"is {rr}. \nThis represents the reduction in the total number "
+                f"is {rr}. This represents the reduction in the total number "
                 "of comparisons due to your rule(s)."
             )
 

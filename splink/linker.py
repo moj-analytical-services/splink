@@ -34,6 +34,7 @@ from .term_frequencies import (
     term_frequencies_for_single_column_sql,
     colname_to_tf_tablename,
     _join_tf_to_input_df_sql,
+    compute_term_frequencies_from_concat_with_tf,
 )
 from .profile_data import profile_columns
 from .missingness import missingness_data, completeness_data
@@ -1197,6 +1198,18 @@ class Linker:
         else:
             new_records_tablename = records_or_tablename
 
+        # If our df_concat_with_tf table already exists, use backwards induction to
+        # find  all underlying term frequency tables.
+        if self._table_exists_in_database("__splink__df_concat_with_tf"):
+            sqls = compute_term_frequencies_from_concat_with_tf(self)
+
+            for sql in sqls:
+                self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        else:
+            # This queues up our cols_with_tf and df_concat_with_tf tables.
+            # self._initialise_df_concat_with_tf(materialise=False)
+            self._initialise_df_concat_with_tf(materialise=False)
+
         rules = []
         for r in blocking_rules:
             br_as_obj = BlockingRule(r) if not isinstance(r, BlockingRule) else r
@@ -1356,7 +1369,9 @@ class Linker:
             sql_infinity_expression=self._infinity_expression,
         )
         for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+            output_table_name = sql["output_table_name"]
+            output_table_name = output_table_name.replace("predict", "self_link")
+            self._enqueue_sql(sql["sql"], output_table_name)
 
         predictions = self._execute_sql_pipeline(input_dataframes, use_cache=False)
 
@@ -2083,7 +2098,7 @@ class Linker:
             >>>     and substr(l.dob,1,4) = substr(r.dob,1,4)"
             >>> ]
             >>>
-            >>> linker.cumulative_comparisons_from_blocking_rules_records(
+            >>> linker_settings.cumulative_comparisons_from_blocking_rules_records(
             >>>     blocking_rules
             >>>  )
 
@@ -2128,7 +2143,7 @@ class Linker:
             >>>     and substr(l.dob,1,4) = substr(r.dob,1,4)"
             >>> ]
             >>>
-            >>> linker.cumulative_num_comparisons_from_blocking_rules_chart(
+            >>> linker_settings.cumulative_num_comparisons_from_blocking_rules_chart(
             >>>     blocking_rules
             >>>  )
 
