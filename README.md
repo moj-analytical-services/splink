@@ -145,12 +145,12 @@ clusters.as_pandas_dataframe(limit=5)
 If you would use Splink in your reserach, we'd be grateful for a citation in the following format (modify the version and date accordingly).
 
 ```
-@misc{ministry_of_justice_2022_splink,
+@misc{ministry_of_justice_2023_splink,
   author       = {Ministry of Justice},
-  title        = {Splink: v3.4.5},
-  month        = dec,
-  year         = 2022,
-  version      = {3.4.5},
+  title        = {Splink: v3.5.2},
+  month        = jan,
+  year         = 2023,
+  version      = {3.5.2},
   url          = {http://github.com/moj-analytical-services/splink}
 }
 ```
