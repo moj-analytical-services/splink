@@ -33,6 +33,7 @@ from .term_frequencies import (
     term_frequencies_for_single_column_sql,
     colname_to_tf_tablename,
     _join_tf_to_input_df_sql,
+    compute_term_frequencies_from_concat_with_tf,
 )
 from .profile_data import profile_columns
 from .missingness import missingness_data, completeness_data
@@ -1173,6 +1174,18 @@ class Linker:
             new_records_tablename = "__splink__df_new_records"
         else:
             new_records_tablename = records_or_tablename
+
+        # If our df_concat_with_tf table already exists, use backwards induction to
+        # find  all underlying term frequency tables.
+        if self._table_exists_in_database("__splink__df_concat_with_tf"):
+            sqls = compute_term_frequencies_from_concat_with_tf(self)
+
+            for sql in sqls:
+                self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        else:
+            # This queues up our cols_with_tf and df_concat_with_tf tables.
+            # self._initialise_df_concat_with_tf(materialise=False)
+            self._initialise_df_concat_with_tf(materialise=False)
 
         rules = []
         for r in blocking_rules:
