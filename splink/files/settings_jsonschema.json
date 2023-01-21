@@ -215,6 +215,12 @@
       "default": null,
       "examples": ["spark", "duckdb", "presto"],
       "enum": ["spark", "duckdb", "presto", "sqlite"]
+    },
+    "linker_uuid": {
+      "type": "string",
+      "title": "A unique identifier that allows a linker-specific cache to be built and re-used between sessions",
+      "default": null,
+      "examples": ["abCD1234"]
     }
   }
 }
