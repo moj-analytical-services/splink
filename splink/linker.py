@@ -169,8 +169,8 @@ class Linker:
         self._validate_input_dfs()
         self._em_training_sessions = []
 
-        self._names_of_tables_created_by_splink: set = {}
-        self._intermediate_table_cache_lookup: dict = {}
+        self._names_of_tables_created_by_splink: set = set()
+        self._intermediate_table_cache: dict = {}
 
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
@@ -284,19 +284,36 @@ class Linker:
         self._execute_sql_pipeline(materialise_as_hash=False)
 
     def _initialise_df_concat_with_tf(self, materialise=True):
-        if self._table_exists_in_database("__splink__df_concat_with_tf"):
-            return
-        sql = vertically_concatenate_sql(self)
-        self._enqueue_sql(sql, "__splink__df_concat")
 
-        sqls = compute_all_term_frequencies_sqls(self)
-        for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        cache = self._intermediate_table_cache
 
+        if "__splink__df_concat_with_tf" in cache:
+            physical_name = cache["__splink__df_concat_with_tf"]
+            nodes_with_tf = SplinkDataFrame(
+                "__splink__df_concat_with_tf", physical_name
+            )
+            logger.debug(
+                "Using cache for __splink__df_concat_with_tf"
+                f" with physical name {physical_name}"
+            )
+        else:
+            sql = vertically_concatenate_sql(self)
+            self._enqueue_sql(sql, "__splink__df_concat")
+
+            sqls = compute_all_term_frequencies_sqls(self)
+            for sql in sqls:
+                self._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+            if materialise:
+                nodes_with_tf = self._execute_sql_pipeline()
+                cache["__splink__df_concat_with_tf"] = nodes_with_tf.physical_name
+
+        # These are simple derivations from __splink__df_concat_with_tf
+        # so we don't materialise them, just add them to the queue
+        # otherwise you run into the problem of having to return multiple dfs
+        # from this method.  (Which isn't that bad, you'd just
+        # need to return a list rather than a single df)
         if self._two_dataset_link_only:
-            # If we do not materialise __splink_df_concat_with_tf
-            # we'd have to run all the code up to this point twice
-            self._execute_sql_pipeline(materialise_as_hash=False)
 
             source_dataset_col = self._settings_obj._source_dataset_column_name
             # Need df_l to be the one with the lowest id to preeserve the property
@@ -311,17 +328,14 @@ class Linker:
             where {source_dataset_col} = '{df_l.templated_name}'
             """
             self._enqueue_sql(sql, "__splink__df_concat_with_tf_left")
-            self._execute_sql_pipeline(materialise_as_hash=False)
 
             sql = f"""
             select * from __splink__df_concat_with_tf
             where {source_dataset_col} = '{df_r.templated_name}'
             """
             self._enqueue_sql(sql, "__splink_df_concat_with_tf_right")
-            self._execute_sql_pipeline(materialise_as_hash=False)
-        else:
-            if materialise:
-                self._execute_sql_pipeline(materialise_as_hash=False)
+
+        return nodes_with_tf
 
     def _table_to_splink_dataframe(
         self, templated_name, physical_name
@@ -875,7 +889,7 @@ class Linker:
             None: Updates the estimated u parameters within the linker object
             and returns nothing.
         """
-        self._initialise_df_concat_with_tf(materialise=True)
+
         estimate_u_values(self, target_rows)
         self._populate_m_u_from_trained_values()
 

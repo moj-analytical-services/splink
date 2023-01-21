@@ -37,6 +37,8 @@ def estimate_u_values(linker: "Linker", target_rows):
 
     logger.info("----- Estimating u probabilities using random sampling -----")
 
+    nodes_with_tf = linker._initialise_df_concat_with_tf(materialise=True)
+
     original_settings_obj = linker._settings_obj
 
     training_linker = deepcopy(linker)
@@ -56,9 +58,10 @@ def estimate_u_values(linker: "Linker", target_rows):
         select count(*) as count
         from __splink__df_concat_with_tf
         """
-        dataframe = training_linker._sql_to_splink_dataframe_checking_cache(
-            sql, "__splink__df_concat_count"
-        )
+
+        training_linker._enqueue_sql(sql, "__splink__df_concat_count")
+        dataframe = training_linker._execute_sql_pipeline([nodes_with_tf])
+
         result = dataframe.as_record_dict()
         dataframe.drop_table_from_database()
         count_rows = result[0]["count"]
@@ -71,9 +74,8 @@ def estimate_u_values(linker: "Linker", target_rows):
         from __splink__df_concat_with_tf
         group by source_dataset
         """
-        dataframe = training_linker._sql_to_splink_dataframe_checking_cache(
-            sql, "__splink__df_concat_count"
-        )
+        training_linker._enqueue_sql(sql, "__splink__df_concat_count")
+        dataframe = training_linker._execute_sql_pipeline([nodes_with_tf])
         result = dataframe.as_record_dict()
         dataframe.drop_table_from_database()
         frame_counts = [res["count"] for res in result]
@@ -96,11 +98,8 @@ def estimate_u_values(linker: "Linker", target_rows):
     from __splink__df_concat_with_tf
     {training_linker._random_sample_sql(proportion, sample_size)}
     """
-
-    df_sample = training_linker._sql_to_splink_dataframe_checking_cache(
-        sql,
-        "__splink__df_concat_with_tf_sample",
-    )
+    training_linker._enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
+    df_sample = training_linker._execute_sql_pipeline([nodes_with_tf])
 
     settings_obj._blocking_rules_to_generate_predictions = []
 
@@ -113,9 +112,9 @@ def estimate_u_values(linker: "Linker", target_rows):
     )
     if repartition_after_blocking:
         df_blocked = training_linker._execute_sql_pipeline([df_sample])
-        input_dataframes = [df_blocked]
+        sample_dataframe = [df_blocked]
     else:
-        input_dataframes = [df_sample]
+        sample_dataframe = [df_sample]
 
     sql = compute_comparison_vector_values_sql(settings_obj)
 
@@ -130,7 +129,7 @@ def estimate_u_values(linker: "Linker", target_rows):
 
     sql = compute_new_parameters_sql(settings_obj)
     linker._enqueue_sql(sql, "__splink__m_u_counts")
-    df_params = training_linker._execute_sql_pipeline(input_dataframes)
+    df_params = training_linker._execute_sql_pipeline(sample_dataframe)
 
     param_records = df_params.as_pandas_dataframe()
     param_records = compute_proportions_for_new_parameters(param_records)
