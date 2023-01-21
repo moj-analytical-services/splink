@@ -86,6 +86,25 @@ from .match_key_analysis import (
 logger = logging.getLogger(__name__)
 
 
+from collections import UserDict
+
+# TODO:  Moddify this to be the _intermediate_table_cache
+# So that it logs on getitem and setitem
+class MyDict(UserDict):
+    def __getitem__(self, key):
+        print(f"got item: {key}")
+        return super().__getitem__(key)
+
+    def __setitem__(self, key, value):
+        print(f"set item: {key} {value}")
+        return super().__setitem__(key, value)
+
+
+a = MyDict()
+a["hi"] = 1
+a["hi"]
+
+
 class Linker:
     """The Linker object manages the data linkage process and holds the data linkage
     model.
