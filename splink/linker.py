@@ -1198,17 +1198,50 @@ class Linker:
         else:
             new_records_tablename = records_or_tablename
 
-        # If our df_concat_with_tf table already exists, use backwards induction to
-        # find  all underlying term frequency tables.
-        if self._table_exists_in_database("__splink__df_concat_with_tf"):
-            sqls = compute_term_frequencies_from_concat_with_tf(self)
+        # This logic is a bit complicated because we don't know what the user has
+        # already computed, and what they have already cached (materialised) to
+        # the database
 
-            for sql in sqls:
-                self._enqueue_sql(sql["sql"], sql["output_table_name"])
-        else:
-            # This queues up our cols_with_tf and df_concat_with_tf tables.
-            # self._initialise_df_concat_with_tf(materialise=False)
-            self._initialise_df_concat_with_tf(materialise=False)
+        # There are three options here:
+        # (1) __splink__df_concat_with_tf already exists in the db, and so do the
+        # individual tf tables.   In which case we want to use them
+        # (2) __splink__df_concat_with_tf already exists, but the individual tf tables
+        # do not.  In which case we use __splink__df_concat_with_tf to derive the
+        # tf tables on the fly (and do not materialise them)
+        # (3) __splink__df_concat_with_tf does not exist, in which we want to create
+        # it and materialise it. On the basis that the user is likely to want to call
+        # `find_matches_to_new_records` repeatedly, we will create and materialise
+        # each of the individual tf tables too
+
+        self._cache_of_templated_name_exists_in_cache()
+        self._retrieve_df_from_caches_using_templated_name(
+            "__splink__df_concat_with_tf"
+        )
+
+        # Option 1
+        if (
+            self._table_exists_in_database("__splink__df_concat_with_tf")
+            and self._tf_tables_all_present
+        ):
+            pass
+        # Option 2:
+        if (
+            self._table_exists_in_database("__splink__df_concat_with_tf")
+            and not self._tf_tables_all_present
+        ):
+            pass
+
+        # # If our df_concat_with_tf table already exists, use backwards induction to
+        # # find  all underlying term frequency tables.
+        # if self._table_exists_in_database("__splink__df_concat_with_tf"):
+        #     sqls = compute_term_frequencies_from_concat_with_tf(self)
+
+        #     for sql in sqls:
+        #         self._enqueue_sql(sql["sql"], sql["output_table_name"])
+        # else:
+        #     # This queues up our cols_with_tf and df_concat_with_tf tables.
+        #     # self._initialise_df_concat_with_tf(materialise=False)
+        #     self._initialise_df_concat_with_tf(materialise=False)
 
         rules = []
         for r in blocking_rules:
