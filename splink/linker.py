@@ -169,7 +169,8 @@ class Linker:
         self._validate_input_dfs()
         self._em_training_sessions = []
 
-        self._names_of_tables_created_by_splink: list = []
+        self._names_of_tables_created_by_splink: set = {}
+        self._intermediate_table_cache_lookup: dict = {}
 
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
@@ -526,7 +527,7 @@ class Linker:
                 output_tablename_templated,
             )
 
-        self._names_of_tables_created_by_splink.append(splink_dataframe.physical_name)
+        self._names_of_tables_created_by_splink.add(splink_dataframe.physical_name)
 
         if self.debug_mode:
 
@@ -713,26 +714,24 @@ class Linker:
     def _delete_tables_created_by_splink_from_db(
         self, retain_term_frequency=True, retain_df_concat_with_tf=True
     ):
-        tables_remaining = []
+        to_remove = {}
         for name in self._names_of_tables_created_by_splink:
             # Only delete tables explicitly marked as having been created by splink
             if "__splink__" not in name:
-                tables_remaining.append(name)
                 continue
             if name == "__splink__df_concat_with_tf":
-                if retain_df_concat_with_tf:
-                    tables_remaining.append(name)
-                else:
+                if not retain_df_concat_with_tf:
                     self._delete_table_from_database(name)
+                    to_remove.add(name)
             elif name.startswith("__splink__df_tf_"):
-                if retain_term_frequency:
-                    tables_remaining.append(name)
-                else:
+                if not retain_term_frequency:
                     self._delete_table_from_database(name)
+                    to_remove.add(name)
             else:
                 self._delete_table_from_database(name)
+                to_remove.add(name)
 
-        self._names_of_tables_created_by_splink = tables_remaining
+        self._names_of_tables_created_by_splink.remove(to_remove)
 
     def _raise_error_if_necessary_waterfall_columns_not_computed(self):
         ricc = self._settings_obj._retain_intermediate_calculation_columns
