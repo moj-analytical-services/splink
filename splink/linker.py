@@ -228,6 +228,7 @@ class Linker:
 
         if self._two_dataset_link_only:
             return "__splink__df_concat_with_tf_left"
+
         return "__splink__df_concat_with_tf"
 
     @property
@@ -305,7 +306,7 @@ class Linker:
     def _initialise_df_concat_with_tf(self, materialise=True):
 
         cache = self._intermediate_table_cache
-
+        nodes_with_tf = None
         if "__splink__df_concat_with_tf" in cache:
             physical_name = cache["__splink__df_concat_with_tf"]
             nodes_with_tf = SplinkDataFrame(
@@ -2442,3 +2443,28 @@ class Linker:
             " possible comparisons, we expect a total of around "
             f"{num_expected_matches:,.2f} matching pairs"
         )
+
+    def invalidate_cache(self):
+        """Invalidate the Splink cache.  Any previously-computed tables
+        will be recomputed.
+        This is useful, for example, if the input data tables have changed.
+        """
+
+        # TODO:
+        # We still want to implement a unique cache id on the linker
+        # which will ensure that SQL statements which are cached using the
+        # SQL hashing method are invalidated
+        b = a
+
+        # Before Splink executes a SQL command, it checks the cache to see
+        # whether a table already exists with the name of the output table
+
+        # This function has the effect of changing the names of the output tables
+        # to include a different unique id
+
+        # As a result, any previously cached tables will not be found
+        self._intermediate_table_cache.invalidate_cache()
+
+        # Also drop any existing splink tables from the database
+        # Note, this is not actually necessary, it's just good housekeeping
+        self._delete_tables_created_by_splink_from_db()
