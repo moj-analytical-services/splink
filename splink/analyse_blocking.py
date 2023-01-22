@@ -54,6 +54,13 @@ def cumulative_comparisons_generated_by_blocking_rules(
         brs_as_objs = settings_obj._brs_as_objs(blocking_rules)
         linker._settings_obj_._blocking_rules_to_generate_predictions = brs_as_objs
 
+    # Turn tf off.  No need to apply term frequencies to perform these calcs
+    settings_obj._retain_matching_columns = False
+    settings_obj._retain_intermediate_calculation_columns = False
+    for cc in settings_obj.comparisons:
+        for cl in cc.comparison_levels:
+            cl._level_dict["tf_adjustment_column"] = None
+
     # Calculate the Cartesian Product
     if output_chart:
         # We only need the cartesian product if we want to output the chart view
