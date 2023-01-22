@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from collections import UserDict
 from typing import List, Union
 from copy import Error, copy, deepcopy
 from statistics import median
@@ -86,23 +87,22 @@ from .match_key_analysis import (
 logger = logging.getLogger(__name__)
 
 
-from collections import UserDict
-
-# TODO:  Moddify this to be the _intermediate_table_cache
-# So that it logs on getitem and setitem
-class MyDict(UserDict):
+class CacheDictWithLogging(UserDict):
     def __getitem__(self, key):
-        print(f"got item: {key}")
-        return super().__getitem__(key)
+        value = super().__getitem__(key)
+        logger.debug(
+            f"Using cache for template name {key}" f" with physical name {value}"
+        )
+        return value
 
     def __setitem__(self, key, value):
-        print(f"set item: {key} {value}")
-        return super().__setitem__(key, value)
+        super().__setitem__(key, value)
+        logger.log(
+            1, f"Setting cache for template name {key}" f" with physical name {value}"
+        )
 
-
-a = MyDict()
-a["hi"] = 1
-a["hi"]
+    def invalidate_cache(self):
+        self.data = dict()
 
 
 class Linker:
@@ -189,7 +189,7 @@ class Linker:
         self._em_training_sessions = []
 
         self._names_of_tables_created_by_splink: set = set()
-        self._intermediate_table_cache: dict = {}
+        self._intermediate_table_cache: dict = CacheDictWithLogging()
 
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
@@ -311,10 +311,7 @@ class Linker:
             nodes_with_tf = SplinkDataFrame(
                 "__splink__df_concat_with_tf", physical_name
             )
-            logger.debug(
-                "Using cache for __splink__df_concat_with_tf"
-                f" with physical name {physical_name}"
-            )
+
         else:
             sql = vertically_concatenate_sql(self)
             self._enqueue_sql(sql, "__splink__df_concat")
