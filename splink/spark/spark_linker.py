@@ -160,7 +160,7 @@ class SparkLinker(Linker):
 
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         if self.in_databricks:
-            enable_splink()
+            enable_splink(spark)
 
         self._set_default_break_lineage_method()
 
