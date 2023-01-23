@@ -1,3 +1,8 @@
+> > ## :ballot_box_with_check: Vote for Splink in the _Analysis in Government People's Choice Award_
+> > --> **https://www.smartsurvey.co.uk/s/80C7VA/**
+> > 
+> > [_Full details of all nominees_](https://analysisfunction.civilservice.gov.uk/news/peoples-choice-award-for-the-third-annual-analysis-in-government-awards-aig-awards)
+
 ![image](https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png)
 [![pypi](https://img.shields.io/github/v/release/moj-analytical-services/splink?include_prereleases)](https://pypi.org/project/splink/#history)
 [![Downloads](https://pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
