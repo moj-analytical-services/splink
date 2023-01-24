@@ -1102,15 +1102,18 @@ files = [
 
 [[package]]
 name = "sqlglot"
-version = "5.1.0"
+version = "10.5.6"
 description = "An easily customizable SQL parser and transpiler"
 category = "main"
 optional = false
 python-versions = "*"
 files = [
-    {file = "sqlglot-5.1.0-py3-none-any.whl", hash = "sha256:dac8b6c35170aab8f6b7eadf036ffde9ece971395b53686b2c280911970fa38b"},
-    {file = "sqlglot-5.1.0.tar.gz", hash = "sha256:8f90a0119aaf52cbb3c3cc589ca74661bc0a5be73b9cedaae0f00827f67beaf9"},
+    {file = "sqlglot-10.5.6-py3-none-any.whl", hash = "sha256:3c0752bb4f05dcce4784c14321c689af4d3c5f8340eb14cfe567ebb885df1784"},
+    {file = "sqlglot-10.5.6.tar.gz", hash = "sha256:3f4af6d109254c7a3ad48bd86dea49d1ea6a41f945c543411c88ba0742e2cc12"},
 ]
+
+[package.extras]
+dev = ["autoflake", "black", "duckdb", "isort", "mypy (>=0.990)", "pandas", "pdoc", "pre-commit", "pyspark", "python-dateutil"]
 
 [[package]]
 name = "tabulate"
@@ -1216,4 +1219,4 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=4.6)", "pytest-black (
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.6.2,<4.0"
-content-hash = "7daad467020fbd6d013441d65b9fad96465e74f2eb34a07f4af856a569a8ede0"
+content-hash = "9143bd231ac1444281875f02e2a40ac47dff1d384abdae8bf178fd866b5ef1be"
