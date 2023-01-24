@@ -131,6 +131,15 @@ class Settings:
         return a_cols
 
     @property
+    def _cache_uuid(self):
+        s_else_d = self._from_settings_dict_else_default
+        return s_else_d("linker_uuid")
+
+    @_cache_uuid.setter
+    def _cache_uuid(self, value):
+        self._settings_dict["linker_uuid"] = value
+
+    @property
     def _additional_columns_to_retain(self):
         cols = self._additional_columns_to_retain_list
         return [InputColumn(c, settings_obj=self) for c in cols]

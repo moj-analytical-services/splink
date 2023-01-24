@@ -26,7 +26,7 @@ from .charts import (
 from .blocking import block_using_rules_sql, BlockingRule
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .em_training_session import EMTrainingSession
-from .misc import bayes_factor_to_prob, prob_to_bayes_factor, ensure_is_list
+from .misc import bayes_factor_to_prob, prob_to_bayes_factor, ensure_is_list, ascii_uuid
 from .predict import predict_from_comparison_vectors_sqls
 from .settings import Settings
 from .term_frequencies import (
@@ -174,6 +174,8 @@ class Linker:
         if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
             settings_dict["sql_dialect"] = self._sql_dialect
 
+        settings_dict["linker_uuid"] = settings_dict.get("linker_uuid", ascii_uuid(8))
+
         self._settings_dict = settings_dict
         if settings_dict is None:
             self._settings_obj_ = None
@@ -195,10 +197,19 @@ class Linker:
         self._train_u_using_random_sample_mode = False
         self._compare_two_records_mode = False
         self._self_link_mode = False
+        self._analyse_blocking_mode = False
 
         self._output_schema = ""
 
         self.debug_mode = False
+
+    @property
+    def _cache_uid(self):
+        return self._settings_obj._cache_uuid
+
+    @_cache_uid.setter
+    def _cache_uid(self, value):
+        self._settings_obj._cache_uuid = value
 
     @property
     def _settings_obj(self) -> Settings:
@@ -226,6 +237,9 @@ class Linker:
         if self._train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
 
+        if self._analyse_blocking_mode:
+            return "__splink__df_concat"
+
         if self._two_dataset_link_only:
             return "__splink__df_concat_with_tf_left"
 
@@ -246,6 +260,9 @@ class Linker:
         if self._train_u_using_random_sample_mode:
             return "__splink__df_concat_with_tf_sample"
 
+        if self._analyse_blocking_mode:
+            return "__splink__df_concat"
+
         if self._two_dataset_link_only:
             return "__splink_df_concat_with_tf_right"
         return "__splink__df_concat_with_tf"
@@ -265,6 +282,9 @@ class Linker:
         # both data sets - hence if we inner join on True we will end up with
         # samples which both originate from the same dataset
         if self._train_u_using_random_sample_mode:
+            return False
+
+        if self._analyse_blocking_mode:
             return False
 
         if (
@@ -296,12 +316,13 @@ class Linker:
         else:
             return table_name
 
-    def _initialise_df_concat(self, materialise=True):
-        if self._table_exists_in_database("__splink__df_concat"):
-            return
+    def _initialise_df_concat(self, materialise=False):
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
-        self._execute_sql_pipeline(materialise_as_hash=False)
+        if materialise:
+            return self._execute_sql_pipeline()
+        else:
+            return None
 
     def _initialise_df_concat_with_tf(self, materialise=True):
 
@@ -523,7 +544,8 @@ class Linker:
         Return a SplinkDataFrame representing the results of the SQL
         """
 
-        hash = hashlib.sha256(sql.encode()).hexdigest()[:7]
+        to_hash = (sql + self._cache_uid).encode("utf-8")
+        hash = hashlib.sha256(to_hash).hexdigest()[:9]
         # Ensure hash is valid sql table name
         table_name_hash = f"{output_tablename_templated}_{hash}"
 
@@ -745,7 +767,7 @@ class Linker:
     def _delete_tables_created_by_splink_from_db(
         self, retain_term_frequency=True, retain_df_concat_with_tf=True
     ):
-        to_remove = {}
+        to_remove = set()
         for name in self._names_of_tables_created_by_splink:
             # Only delete tables explicitly marked as having been created by splink
             if "__splink__" not in name:
@@ -762,7 +784,9 @@ class Linker:
                 self._delete_table_from_database(name)
                 to_remove.add(name)
 
-        self._names_of_tables_created_by_splink.remove(to_remove)
+        self._names_of_tables_created_by_splink = (
+            self._names_of_tables_created_by_splink - to_remove
+        )
 
     def _raise_error_if_necessary_waterfall_columns_not_computed(self):
         ricc = self._settings_obj._retain_intermediate_calculation_columns
@@ -2449,13 +2473,6 @@ class Linker:
         will be recomputed.
         This is useful, for example, if the input data tables have changed.
         """
-
-        # TODO:
-        # We still want to implement a unique cache id on the linker
-        # which will ensure that SQL statements which are cached using the
-        # SQL hashing method are invalidated
-        b = a
-
         # Before Splink executes a SQL command, it checks the cache to see
         # whether a table already exists with the name of the output table
 
@@ -2463,8 +2480,52 @@ class Linker:
         # to include a different unique id
 
         # As a result, any previously cached tables will not be found
+        self._cache_uid = ascii_uuid(8)
+
+        # As a result, any previously cached tables will not be found
         self._intermediate_table_cache.invalidate_cache()
 
         # Also drop any existing splink tables from the database
         # Note, this is not actually necessary, it's just good housekeeping
         self._delete_tables_created_by_splink_from_db()
+
+    def register_table_input_nodes_concat_with_tf(self, input_data, overwrite=False):
+        """Register a pre-computed version of the input_nodes_concat_with_tf table that
+        you want to re-use e.g. that you created in a previous run
+
+        This method allowed you to register this table in the Splink cache
+        so it will be used rather than Splink computing this table anew.
+
+        Args:
+            input_data: The data you wish to register. This can be either a dictionary,
+                pandas dataframe, pyarrow table or a spark dataframe.
+            table_name (str): The name you wish to assign to the table.
+            overwrite (bool): Overwrite the table in the underlying database if it
+                exists
+        """
+
+        table_name_physical = "__splink__df_concat_with_tf_" + self._cache_uid
+        splink_dataframe = self.register_table(
+            input_data, table_name_physical, overwrite=overwrite
+        )
+        self._intermediate_table_cache[
+            "__splink__df_concat_with_tf"
+        ] = table_name_physical
+        return splink_dataframe
+
+    def register_table_predict(self, input_data, overwrite=False):
+        table_name_physical = "__splink__df_predict_" + self._cache_uid
+        splink_dataframe = self.register_table(
+            input_data, table_name_physical, overwrite=overwrite
+        )
+        self._intermediate_table_cache["__splink__df_predict"] = table_name_physical
+        return splink_dataframe
+
+    def register_term_frequency_lookup(self, input_data, col_name, overwrite=False):
+        table_name_templated = colname_to_tf_tablename(col_name)
+        table_name_physical = f"{table_name_templated}_{self._cache_uid}"
+        splink_dataframe = self.register_table(
+            input_data, table_name_physical, overwrite=overwrite
+        )
+        self._intermediate_table_cache["__splink__df_predict"] = table_name_physical
+        return splink_dataframe
