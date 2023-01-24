@@ -37,6 +37,14 @@ class SparkComparison(SparkBase):
     def _else_level(self):
         return else_level
 
+    @property
+    def _array_intersect_level(self):
+        return array_intersect_level
+
+    @property
+    def _datediff_level(self):
+        return datediff_level
+
 
 class exact_match(SparkComparison, ExactMatchBase):
     pass
@@ -71,12 +79,8 @@ class jaccard_at_thresholds(SparkComparison, JaccardAtThresholdsComparisonBase):
 
 
 class array_intersect_at_sizes(SparkComparison, ArrayIntersectAtSizesComparisonBase):
-    @property
-    def _array_intersect_level(self):
-        return array_intersect_level
+    pass
 
 
 class datediff_at_thresholds(SparkComparison, DateDiffAtThresholdsComparisonBase):
-    @property
-    def _datediff_level(self):
-        return datediff_level
+    pass

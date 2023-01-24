@@ -26,6 +26,10 @@ class SqliteComparison(SqliteBase):
     def _else_level(self):
         return else_level
 
+    @property
+    def _distance_level(self):
+        return distance_function_level
+
 
 class exact_match(SqliteComparison, ExactMatchBase):
     pass
@@ -34,6 +38,4 @@ class exact_match(SqliteComparison, ExactMatchBase):
 class distance_function_at_thresholds(
     SqliteComparison, DistanceFunctionAtThresholdsComparisonBase
 ):
-    @property
-    def _distance_level(self):
-        return distance_function_level
+    pass

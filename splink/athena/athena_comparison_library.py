@@ -31,6 +31,10 @@ class AthenaComparison(AthenaBase):
     def _else_level(self):
         return else_level
 
+    @property
+    def _array_intersect_level(self):
+        return array_intersect_level
+
 
 class exact_match(AthenaComparison, ExactMatchBase):
     pass
@@ -53,6 +57,4 @@ class levenshtein_at_thresholds(
 
 
 class array_intersect_at_sizes(AthenaComparison, ArrayIntersectAtSizesComparisonBase):
-    @property
-    def _array_intersect_level(self):
-        return array_intersect_level
+    pass
