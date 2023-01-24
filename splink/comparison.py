@@ -3,7 +3,6 @@ from typing import TYPE_CHECKING, List
 from .comparison_level import ComparisonLevel
 from .misc import dedupe_preserving_order, join_list_with_commas_final_and
 
-
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from .settings import Settings
@@ -92,13 +91,17 @@ class Comparison:
                     level._max_level = False
                 counter -= 1
 
+    @classmethod
+    def from_dict(cls, comparison_dict: dict, settings_obj: "Settings" = None):
+        """Inverse of as_dict()"""
+        return cls(comparison_dict, settings_obj)
+
     def __deepcopy__(self, memo):
         """When we do EM training, we need a copy of the Comparison which is independent
         of the original e.g. modifying the copy will not affect the original.
         This method implements ensures the Comparison can be deepcopied.
         """
-        cc = Comparison(self.as_dict(), self._settings_obj)
-        return cc
+        return self.__class__.from_dict(self.as_dict(), self._settings_obj)
 
     @property
     def _num_levels(self):
@@ -412,7 +415,7 @@ class Comparison:
 
     def __repr__(self):
         return (
-            f"<Comparison {self._comparison_description} with "
+            f"<{self.__class__.__name__} {self._comparison_description} with "
             f"{self._num_levels} levels at {hex(id(self))}>"
         )
 

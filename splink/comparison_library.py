@@ -1,11 +1,22 @@
 from typing import Union
 
 from .comparison import Comparison
-from .misc import ensure_is_iterable
 from .comparison_library_utils import datediff_error_logger
+from .misc import ensure_is_iterable
+from .settings import Settings
 
 
-class ExactMatchBase(Comparison):
+class _FromDictComparison(Comparison):
+    """Adapter class so that from_dict() works."""
+
+    @classmethod
+    def from_dict(cls, comparison_dict, settings: Settings = None):
+        obj = cls.__new__(cls)
+        Comparison.__init__(obj, comparison_dict, settings)
+        return obj
+
+
+class ExactMatchBase(_FromDictComparison):
     def __init__(
         self,
         col_name,
@@ -50,7 +61,7 @@ class ExactMatchBase(Comparison):
         super().__init__(comparison_dict)
 
 
-class DistanceFunctionAtThresholdsComparisonBase(Comparison):
+class DistanceFunctionAtThresholdsComparisonBase(_FromDictComparison):
     def __init__(
         self,
         col_name: str,
@@ -337,7 +348,7 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         return True
 
 
-class ArrayIntersectAtSizesComparisonBase(Comparison):
+class ArrayIntersectAtSizesComparisonBase(_FromDictComparison):
     def __init__(
         self,
         col_name: str,
@@ -415,7 +426,7 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
         raise NotImplementedError("Intersect level not defined on base class")
 
 
-class DateDiffAtThresholdsComparisonBase(Comparison):
+class DateDiffAtThresholdsComparisonBase(_FromDictComparison):
     def __init__(
         self,
         col_name: str,
