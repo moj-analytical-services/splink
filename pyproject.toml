@@ -9,25 +9,31 @@ repository = "https://github.com/moj-analytical-services/splink"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = ">=3.6.2,<4.0"
 jsonschema = ">=3.2,<5.0"
 pandas = "^1.0.0"
 duckdb = "^0.6.0"
 sqlglot = "5.1.0"
 altair = [
-    {version = "=4.1.0", python = "=3.6"},
+    {version = "=4.1.0", python = "<3.7"},
     {version = "^4.2.0", python = ">=3.7"}
 ]
 Jinja2 = "^3.0.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0"
-pytest-benchmark = "^3.4.1"
+pytest-benchmark = [
+    {version = "^3.4.1", python = "<3.7"},
+    {version = "^4", python = ">=3.7"},
+]
 tabulate = "0.8.9"
 lzstring = "1.0.4"
 black = "^22.1.0"
 flake8 = "^4.0.1"
-pyarrow = "^7.0.0"
+pyarrow = [
+    {version = "^6.0.0", python = "<3.7"},
+    {version = "^7.0.0", python = ">=3.7"},
+]
 networkx = "2.5.1"
 pyspark = "^3.2.1"
 rapidfuzz = "^2.0.3"
