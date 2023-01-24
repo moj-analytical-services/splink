@@ -102,11 +102,15 @@ def compute_all_term_frequencies_sqls(linker: "Linker") -> List[dict]:
     for tf_col in tf_cols:
         tf_table_name = colname_to_tf_tablename(tf_col)
 
-        if not linker._table_exists_in_database(tf_table_name):
+        if tf_table_name not in linker._intermediate_table_cache:
             sql = term_frequencies_for_single_column_sql(tf_col)
+            sql = {"sql": sql, "output_table_name": tf_table_name}
+            sqls.append(sql)
+        else:
+            tf_physical_name = linker._intermediate_table_cache[tf_table_name]
             sql = {
-                "sql": sql,
-                "output_table_name": colname_to_tf_tablename(tf_col),
+                "sql": f"select * from {tf_physical_name}",
+                "output_table_name": tf_table_name,
             }
             sqls.append(sql)
 
@@ -120,7 +124,7 @@ def compute_all_term_frequencies_sqls(linker: "Linker") -> List[dict]:
     return sqls
 
 
-def compute_term_frequencies_from_concat_with_tf(linker):
+def compute_term_frequencies_from_concat_with_tf(linker: "Linker"):
 
     """If __splink__df_concat_with_tf already exists in your database,
     reverse engineer the underlying tf tables.
@@ -138,7 +142,7 @@ def compute_term_frequencies_from_concat_with_tf(linker):
     for tf_col in tf_cols:
         tf_table_name = colname_to_tf_tablename(tf_col)
 
-        if not linker._table_exists_in_database(tf_table_name):
+        if tf_table_name not in linker._intermediate_table_cache:
             sql = term_frequencies_from_concat_with_tf(tf_col)
             sql = {
                 "sql": sql,
