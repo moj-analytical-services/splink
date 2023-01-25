@@ -1346,7 +1346,9 @@ class Linker:
             sql_infinity_expression=self._infinity_expression,
         )
         for sql in sqls:
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+            output_table_name = sql["output_table_name"]
+            output_table_name = output_table_name.replace("predict", "self_link")
+            self._enqueue_sql(sql["sql"], output_table_name)
 
         predictions = self._execute_sql_pipeline(use_cache=False)
 
@@ -1562,7 +1564,12 @@ class Linker:
         recs = df_truth_space.as_record_dict()
         return roc_chart(recs)
 
-    def precision_recall_chart_from_labels_table(self, labels_tablename):
+    def precision_recall_chart_from_labels_table(
+        self,
+        labels_tablename,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+    ):
         """Generate a precision-recall chart from labelled (ground truth) data.
 
         The table of labels should be in the following format, and should be registered
@@ -1607,7 +1614,12 @@ class Linker:
                 attribute.
         """
         self._raise_error_if_necessary_accuracy_columns_not_computed()
-        df_truth_space = truth_space_table_from_labels_table(self, labels_tablename)
+        df_truth_space = truth_space_table_from_labels_table(
+            self,
+            labels_tablename,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
 
@@ -2073,7 +2085,7 @@ class Linker:
             >>>     and substr(l.dob,1,4) = substr(r.dob,1,4)"
             >>> ]
             >>>
-            >>> linker.cumulative_comparisons_from_blocking_rules_records(
+            >>> linker_settings.cumulative_comparisons_from_blocking_rules_records(
             >>>     blocking_rules
             >>>  )
 
@@ -2118,7 +2130,7 @@ class Linker:
             >>>     and substr(l.dob,1,4) = substr(r.dob,1,4)"
             >>> ]
             >>>
-            >>> linker.cumulative_num_comparisons_from_blocking_rules_chart(
+            >>> linker_settings.cumulative_num_comparisons_from_blocking_rules_chart(
             >>>     blocking_rules
             >>>  )
 

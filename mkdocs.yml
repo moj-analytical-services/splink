@@ -44,6 +44,8 @@ markdown_extensions:
   - meta
   - admonition
   - pymdownx.details
+  - pymdownx.arithmatex:
+      generic: true
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
@@ -64,6 +66,8 @@ nav:
       - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
       - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
       - Optimising Spark performance: "topic_guides/optimising_spark.md"
+      - Comparators: "topic_guides/comparators.md"
+      - Phonetic transformations for blocking: "topic_guides/phonetic.md"
       - Salting blocking rules: "topic_guides/salting.md"
   - API Reference:
       - Linker API:
@@ -114,3 +118,7 @@ nav:
 
 extra_css:
 - css/custom.css
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

@@ -8,21 +8,40 @@ from splink.spark.custom_spark_dialect import Dialect  # noqa 401
 from splink.input_column import InputColumn
 
 
+def move_l_r_test(br, expected):
+    res = move_l_r_table_prefix_to_column_suffix(br)
+    assert res.lower() == expected.lower()
+
+
 def test_move_l_r_table_prefix_to_column_suffix():
 
     br = "l.first_name = r.first_name"
-    res = move_l_r_table_prefix_to_column_suffix(br)
     expected = "first_name_l = first_name_r"
-    assert res.lower() == expected.lower()
+    move_l_r_test(br, expected)
 
     br = "substr(l.last_name, 1, 2) = substr(r.last_name, 1, 2)"
-    res = move_l_r_table_prefix_to_column_suffix(br)
     expected = "substr(last_name_l, 1, 2) = substr(last_name_r, 1, 2)"
-    assert res.lower() == expected.lower()
+    move_l_r_test(br, expected)
 
     br = "l.name['first'] = r.name['first'] and levenshtein(l.dob, r.dob) < 2"
-    res = move_l_r_table_prefix_to_column_suffix(br)
     expected = "name_l['first'] = name_r['first'] and levenshtein(dob_l, dob_r) < 2"
+    move_l_r_test(br, expected)
+
+    br = "concat_ws(', ', l.name, r.name)"
+    expected = "concat_ws(', ', name_l, name_r)"
+    move_l_r_test(br, expected)
+
+    br = "my_custom_function(l.name, r.name)"
+    expected = "my_custom_function(name_l, name_r)"
+    move_l_r_test(br, expected)
+
+    br = "len(list_filter(l.name_list, x -> list_contains(r.name_list, x))) >= 1"
+    expected = "len(list_filter(name_list_l, x -> list_contains(name_list_r, x))) >= 1"
+    move_l_r_test(br, expected)
+
+    br = "len(list_filter(l.name_list, x -> list_contains(r.name_list, x))) >= 1"
+    res = move_l_r_table_prefix_to_column_suffix(br)
+    expected = "len(list_filter(name_list_l, x -> list_contains(name_list_r, x))) >= 1"
     assert res.lower() == expected.lower()
 
 

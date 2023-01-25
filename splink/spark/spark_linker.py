@@ -160,7 +160,7 @@ class SparkLinker(Linker):
 
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         if self.in_databricks:
-            enable_splink()
+            enable_splink(spark)
 
         self._set_default_break_lineage_method()
 
@@ -254,7 +254,7 @@ class SparkLinker(Linker):
         try:
             for udf in udfs_register:
                 self.spark.udf.registerJavaFunction(*udf)
-        except AnalysisException:
+        except AnalysisException as e:
             logger.warning(
                 "Unable to load custom Spark SQL functions such as jaro_winkler from "
                 "the jar that's provided with Splink.\n"
@@ -264,6 +264,8 @@ class SparkLinker(Linker):
                 "You will not be able to use these functions in your linkage.\n"
                 "You can find the location of the jar by calling the following function"
                 ":\nfrom splink.spark.jar_location import similarity_jar_location"
+                "\n\nFull error:\n"
+                f"{e}"
             )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):

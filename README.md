@@ -1,3 +1,5 @@
+[![VoteSplink](https://user-images.githubusercontent.com/7570107/214026201-80f647dd-54a3-45e8-bb58-e388c220e94e.png)](https://www.smartsurvey.co.uk/s/80C7VA/)
+
 ![image](https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png)
 [![pypi](https://img.shields.io/github/v/release/moj-analytical-services/splink?include_prereleases)](https://pypi.org/project/splink/#history)
 [![Downloads](https://pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
@@ -72,7 +74,7 @@ The homepage for the Splink documentation can be found [here](https://moj-analyt
 
 The specification of the Fellegi Sunter statistical model behind `splink` is similar as that used in the R [fastLink package](https://github.com/kosukeimai/fastLink). Accompanying the fastLink package is an [academic paper](http://imai.fas.harvard.edu/research/files/linkage.pdf) that describes this model. A [series of interactive articles](https://www.robinlinacre.com/probabilistic_linkage/) also explores the theory behind Splink.
 
-The Office for National Statistics have written a [case study about using Splink](https://github.com/Data-Linkage/Splink-census-linkage/blob/main/SplinkCaseStudy.pdf) to link 2021 Census data to itself. 
+The Office for National Statistics have written a [case study about using Splink](https://github.com/Data-Linkage/Splink-census-linkage/blob/main/SplinkCaseStudy.pdf) to link 2021 Census data to itself.
 
 ## Installation
 
@@ -133,6 +135,29 @@ clusters.as_pandas_dataframe(limit=5)
 
 - [A introductory presentation on Splink](https://www.youtube.com/watch?v=msz3T741KQI)
 - [An introduction to the Splink Comparison Viewer dashboard](https://www.youtube.com/watch?v=DNvCMqjipis)
+
+## Awards
+
+🥇 Analysis in Government Awards 2020: Innovative Methods: [Winner](https://www.gov.uk/government/news/launch-of-the-analysis-in-government-awards)
+
+🥇 MoJ DASD Awards 2020: Innovation and Impact - Winner
+
+🥈 Analysis in Government Awards 2023: Innovative Methods [Runner up](https://twitter.com/gov_analysis/status/1616073633692274689?s=20&t=6TQyNLJRjnhsfJy28Zd6UQ)
+
+## Citation
+
+If you use Splink in your reserach, we'd be grateful for a citation in the following format (modify the version and date accordingly).
+
+```
+@misc{ministry_of_justice_2023_splink,
+  author       = {Ministry of Justice},
+  title        = {Splink: v3.5.2},
+  month        = jan,
+  year         = 2023,
+  version      = {3.5.3},
+  url          = {http://github.com/moj-analytical-services/splink}
+}
+```
 
 ## Acknowledgements
 

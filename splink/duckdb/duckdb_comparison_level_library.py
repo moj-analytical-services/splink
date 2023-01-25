@@ -10,6 +10,7 @@ from ..comparison_level_library import (
     DistanceInKMLevelBase,
     PercentageDifferenceLevelBase,
     ArrayIntersectLevelBase,
+    DateDiffLevelBase,
 )
 from .duckb_base import (
     DuckDBBase,
@@ -57,4 +58,8 @@ class percentage_difference_level(DuckDBBase, PercentageDifferenceLevelBase):
 
 
 class distance_in_km_level(DuckDBBase, DistanceInKMLevelBase):
+    pass
+
+
+class datediff_level(DuckDBBase, DateDiffLevelBase):
     pass
