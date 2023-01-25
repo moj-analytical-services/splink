@@ -49,10 +49,12 @@ settings = {
     "max_iterations": 1,
 }
 
+
 def setup_spark():
     from splink.spark.jar_location import similarity_jar_location
     from pyspark import SparkContext, SparkConf
     from pyspark.sql import SparkSession
+
     conf = SparkConf()
     # Add custom similarity functions, which are bundled with Splink
     # documented here: https://github.com/moj-analytical-services/splink_scalaudfs
@@ -77,7 +79,7 @@ def test_udf_registration():
         settings,
     )
     linker.estimate_u_using_random_sampling(target_rows=1e6)
-    blocking_rule = 'l.first_name = r.first_name'
+    blocking_rule = "l.first_name = r.first_name"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
     blocking_rule = "l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
@@ -88,14 +90,14 @@ def test_udf_registration():
 def test_udf_functionality():
     spark = setup_spark()
     data = ["dave", "david", "", "dave"]
-    df = pd.DataFrame(data, columns=['test_names'])
-    df['id'] = df.index
+    df = pd.DataFrame(data, columns=["test_names"])
+    df["id"] = df.index
     df_spark = spark.createDataFrame(df)
 
     linker = SparkLinker(
         df_spark,
         settings,
-        input_table_aliases = "test_df",
+        input_table_aliases="test_df",
     )
 
     sql = """
@@ -123,31 +125,29 @@ def test_udf_functionality():
     jaro_expected = (0.848333, 0.0, 1.0, 0.0, 0.848333, 0.0)
 
     assert jaro_w_out == jaro_expected
-    
-    
-    
+
     # ensure that newest jar is calculating similarity . jw of strings below is 0.961111
     assert spark.sql("""SELECT jaro_winkler("MARHTA", "MARTHA")  """).first()[0] > 0.9
-    
+
     # ensure that when one or both of the strings compared is NULL jw sim is 0
-    
+
     assert spark.sql("""SELECT jaro_winkler(NULL, "John")  """).first()[0] == 0.0
     assert spark.sql("""SELECT jaro_winkler("Tom", NULL )  """).first()[0] == 0.0
-    assert spark.sql("""SELECT jaro_winkler(NULL, NULL )  """).first()[0]  == 0.0
-    
+    assert spark.sql("""SELECT jaro_winkler(NULL, NULL )  """).first()[0] == 0.0
+
     # ensure totally dissimilar strings have jw sim of 0
     assert spark.sql("""SELECT jaro_winkler("Local", "Pub")  """).first()[0] == 0.0
-    
+
     # ensure totally similar strings have jw sim of 1
     assert spark.sql("""SELECT jaro_winkler("Pub", "Pub")  """).first()[0] == 1.0
-    
+
     # testcases taken from jaro winkler article on jw sim
     assert spark.sql("""SELECT jaro_winkler("hello", "hallo")  """).first()[0] == 0.88
-    
-    assert spark.sql("""SELECT jaro_winkler("hippo", "elephant")  """).first()[0] < 0.45  # its 0.44166666666666665 
-    assert spark.sql("""SELECT jaro_winkler("elephant", "hippo")  """).first()[0] < 0.45  # its 0.44166666666666665 
-    assert spark.sql("""SELECT jaro_winkler("aaapppp", "")  """).first()[0] == 0.0
-    
-    
-    
 
+    assert (
+        spark.sql("""SELECT jaro_winkler("hippo", "elephant")  """).first()[0] < 0.45
+    )  # its 0.44166666666666665
+    assert (
+        spark.sql("""SELECT jaro_winkler("elephant", "hippo")  """).first()[0] < 0.45
+    )  # its 0.44166666666666665
+    assert spark.sql("""SELECT jaro_winkler("aaapppp", "")  """).first()[0] == 0.0
