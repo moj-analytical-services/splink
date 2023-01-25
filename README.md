@@ -151,10 +151,10 @@ If you use Splink in your reserach, we'd be grateful for a citation in the follo
 ```
 @misc{ministry_of_justice_2023_splink,
   author       = {Ministry of Justice},
-  title        = {Splink: v3.5.2},
+  title        = {Splink: v3.5.4},
   month        = jan,
   year         = 2023,
-  version      = {3.5.3},
+  version      = {3.5.4},
   url          = {http://github.com/moj-analytical-services/splink}
 }
 ```
