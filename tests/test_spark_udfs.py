@@ -123,4 +123,31 @@ def test_udf_functionality():
     jaro_expected = (0.848333, 0.0, 1.0, 0.0, 0.848333, 0.0)
 
     assert jaro_w_out == jaro_expected
+    
+    
+    
+    # ensure that newest jar is calculating similarity . jw of strings below is 0.961111
+    assert spark.sql("""SELECT jaro_winkler("MARHTA", "MARTHA")  """).first()[0] > 0.9
+    
+    # ensure that when one or both of the strings compared is NULL jw sim is 0
+    
+    assert spark.sql("""SELECT jaro_winkler(NULL, "John")  """).first()[0] == 0.0
+    assert spark.sql("""SELECT jaro_winkler("Tom", NULL )  """).first()[0] == 0.0
+    assert spark.sql("""SELECT jaro_winkler(NULL, NULL )  """).first()[0]  == 0.0
+    
+    # ensure totally dissimilar strings have jw sim of 0
+    assert spark.sql("""SELECT jaro_winkler("Local", "Pub")  """).first()[0] == 0.0
+    
+    # ensure totally similar strings have jw sim of 1
+    assert spark.sql("""SELECT jaro_winkler("Pub", "Pub")  """).first()[0] == 1.0
+    
+    # testcases taken from jaro winkler article on jw sim
+    assert spark.sql("""SELECT jaro_winkler("hello", "hallo")  """).first()[0] == 0.88
+    
+    assert spark.sql("""SELECT jaro_winkler("hippo", "elephant")  """).first()[0] < 0.45  # its 0.44166666666666665 
+    assert spark.sql("""SELECT jaro_winkler("elephant", "hippo")  """).first()[0] < 0.45  # its 0.44166666666666665 
+    assert spark.sql("""SELECT jaro_winkler("aaapppp", "")  """).first()[0] == 0.0
+    
+    
+    
 
