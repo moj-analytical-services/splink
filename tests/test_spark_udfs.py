@@ -50,26 +50,8 @@ settings = {
 }
 
 
-def setup_spark():
-    from splink.spark.jar_location import similarity_jar_location
-    from pyspark import SparkContext, SparkConf
-    from pyspark.sql import SparkSession
-
-    conf = SparkConf()
-    # Add custom similarity functions, which are bundled with Splink
-    # documented here: https://github.com/moj-analytical-services/splink_scalaudfs
-    path = similarity_jar_location()
-    conf.set("spark.jars", path)
-    sc = SparkContext.getOrCreate(conf=conf)
-    spark = SparkSession(sc)
-    spark.sparkContext.setCheckpointDir("./tmp_checkpoints")
-
-    return spark
-
-
-def test_udf_registration():
+def test_udf_registration(spark):
     # Integration test to ensure spark loads our udfs without any issues
-    spark = setup_spark()
     df_spark = spark.read.csv(
         "tests/datasets/fake_1000_from_splink_demos.csv", header=True
     )
@@ -87,8 +69,7 @@ def test_udf_registration():
     linker.predict()
 
 
-def test_udf_functionality():
-    spark = setup_spark()
+def test_udf_functionality(spark):
     data = ["dave", "david", "", "dave"]
     df = pd.DataFrame(data, columns=["test_names"])
     df["id"] = df.index
