@@ -245,11 +245,11 @@ class SparkLinker(Linker):
         # List is a tuple of structure (UDF Name, class path, spark return type)
         udfs_register = [
             (
-                "jaro_winkler_sim",
+                "jaro_winkler",
                 "uk.gov.moj.dash.linkage.JaroWinklerSimilarity",
                 DoubleType(),
             ),
-            ("jaccard_sim", "uk.gov.moj.dash.linkage.JaccardSimilarity", DoubleType()),
+            ("jaccard", "uk.gov.moj.dash.linkage.JaccardSimilarity", DoubleType()),
             ("cosine_distance", "uk.gov.moj.dash.linkage.CosineDistance", DoubleType()),
             ("Dmetaphone", "uk.gov.moj.dash.linkage.DoubleMetaphone", StringType()),
             (
@@ -257,6 +257,7 @@ class SparkLinker(Linker):
                 "uk.gov.moj.dash.linkage.DoubleMetaphoneAlt",
                 StringType(),
             ),
+            ("QgramTokeniser", "uk.gov.moj.dash.linkage.QgramTokeniser", StringType()),
         ]
         try:
             for udf in udfs_register:
@@ -265,8 +266,8 @@ class SparkLinker(Linker):
             logger.warning(
                 "Unable to load custom Spark SQL functions such as jaro_winkler from "
                 "the jar that's provided with Splink.\n"
-                "You need to ensure the Splink jar is registered./n"
-                "See https://moj-analytical-services.github.io/splink/demos/example_simple_pyspark.html"  # NOQA: E501
+                "You need to ensure the Splink jar is registered.\n"
+                "See https://moj-analytical-services.github.io/splink/demos/example_simple_pyspark.html "  # NOQA: E501
                 "for an example.\n"
                 "You will not be able to use these functions in your linkage.\n"
                 "You can find the location of the jar by calling the following function"
