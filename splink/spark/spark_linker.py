@@ -244,11 +244,19 @@ class SparkLinker(Linker):
         # will for loop through this list to register UDFs.
         # List is a tuple of structure (UDF Name, class path, spark return type)
         udfs_register = [
-            ("jaro_winkler_sim", "uk.gov.moj.dash.linkage.JaroWinklerSimilarity", DoubleType()),
+            (
+                "jaro_winkler_sim",
+                "uk.gov.moj.dash.linkage.JaroWinklerSimilarity",
+                DoubleType(),
+            ),
             ("jaccard_sim", "uk.gov.moj.dash.linkage.JaccardSimilarity", DoubleType()),
             ("cosine_distance", "uk.gov.moj.dash.linkage.CosineDistance", DoubleType()),
             ("Dmetaphone", "uk.gov.moj.dash.linkage.DoubleMetaphone", StringType()),
-            ("DmetaphoneAlt", "uk.gov.moj.dash.linkage.DoubleMetaphoneAlt", StringType()),
+            (
+                "DmetaphoneAlt",
+                "uk.gov.moj.dash.linkage.DoubleMetaphoneAlt",
+                StringType(),
+            ),
         ]
         try:
             for udf in udfs_register:
