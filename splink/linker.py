@@ -89,14 +89,20 @@ logger = logging.getLogger(__name__)
 
 class CacheDictWithLogging(UserDict):
     def __getitem__(self, key):
-        value = super().__getitem__(key)
+        splink_dataframe = super().__getitem__(key)
+        phy_name = splink_dataframe.physical_name
         logger.debug(
-            f"Using cache for template name {key}" f" with physical name {value}"
+            f"Using cache for template name {key}" f" with physical name {phy_name}"
         )
-        return value
+        splink_dataframe.templated_name = key
+        return splink_dataframe
 
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
+
+        if not isinstance(value, SplinkDataFrame):
+            raise TypeError("Cached items must be of type SplinkDataFrame")
+
         logger.log(
             1, f"Setting cache for template name {key}" f" with physical name {value}"
         )
@@ -329,10 +335,7 @@ class Linker:
         cache = self._intermediate_table_cache
         nodes_with_tf = None
         if "__splink__df_concat_with_tf" in cache:
-            physical_name = cache["__splink__df_concat_with_tf"]
-            nodes_with_tf = SplinkDataFrame(
-                "__splink__df_concat_with_tf", physical_name
-            )
+            nodes_with_tf = cache["__splink__df_concat_with_tf"]
 
         else:
             sql = vertically_concatenate_sql(self)
@@ -344,7 +347,7 @@ class Linker:
 
             if materialise:
                 nodes_with_tf = self._execute_sql_pipeline()
-                cache["__splink__df_concat_with_tf"] = nodes_with_tf.physical_name
+                cache["__splink__df_concat_with_tf"] = nodes_with_tf
 
         # These are simple derivations from __splink__df_concat_with_tf
         # so we don't materialise them, just add them to the queue
@@ -863,7 +866,9 @@ class Linker:
         input_col = InputColumn(column_name, settings_obj=self._settings_obj)
         sql = term_frequencies_for_single_column_sql(input_col)
         self._enqueue_sql(sql, colname_to_tf_tablename(input_col))
-        return self._execute_sql_pipeline(materialise_as_hash=False)
+        tf_df = self._execute_sql_pipeline(materialise_as_hash=True)
+        self._intermediate_table_cache[tf_df] = tf_df
+        return tf_df
 
     def deterministic_link(self) -> SplinkDataFrame:
         """Uses the blocking rules specified by
@@ -2508,9 +2513,7 @@ class Linker:
         splink_dataframe = self.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
-        self._intermediate_table_cache[
-            "__splink__df_concat_with_tf"
-        ] = table_name_physical
+        self._intermediate_table_cache["__splink__df_concat_with_tf"] = splink_dataframe
         return splink_dataframe
 
     def register_table_predict(self, input_data, overwrite=False):
@@ -2522,10 +2525,11 @@ class Linker:
         return splink_dataframe
 
     def register_term_frequency_lookup(self, input_data, col_name, overwrite=False):
-        table_name_templated = colname_to_tf_tablename(col_name)
+        input_col = InputColumn(col_name, settings_obj=self._settings_obj)
+        table_name_templated = colname_to_tf_tablename(input_col)
         table_name_physical = f"{table_name_templated}_{self._cache_uid}"
         splink_dataframe = self.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
-        self._intermediate_table_cache["__splink__df_predict"] = table_name_physical
+        self._intermediate_table_cache[table_name_templated] = splink_dataframe
         return splink_dataframe

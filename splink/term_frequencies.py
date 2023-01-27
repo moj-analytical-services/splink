@@ -107,7 +107,10 @@ def compute_all_term_frequencies_sqls(linker: "Linker") -> List[dict]:
             sql = {"sql": sql, "output_table_name": tf_table_name}
             sqls.append(sql)
         else:
-            tf_physical_name = linker._intermediate_table_cache[tf_table_name]
+            tf_physical_name = linker._intermediate_table_cache[
+                tf_table_name
+            ].physical_name
+
             sql = {
                 "sql": f"select * from {tf_physical_name}",
                 "output_table_name": tf_table_name,
