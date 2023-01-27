@@ -32,3 +32,14 @@ rapidfuzz = "^2.0.3"
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+
+[tool.ruff]
+line-length = 88
+select = [
+    # Pyflakes
+    "F",
+    # Pycodestyle
+    "E",
+    "W",
+]
