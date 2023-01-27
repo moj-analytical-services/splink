@@ -44,4 +44,10 @@ select = [
     "W",
     # isort
     "I001",
+    # bugbear
+    "B",
+]
+ignore = [
+    "B905", # `zip()` without an explicit `strict=` parameter
+    "B006", # Do not use mutable data structures for argument defaults"
 ]
