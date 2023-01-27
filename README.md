@@ -78,10 +78,16 @@ The Office for National Statistics have written a [case study about using Splink
 
 ## Installation
 
-Splink supports python 3.7+. To obtain the latest released version of splink:
+Splink supports python 3.7+. To obtain the latest released version of splink you can install from PyPI using pip:
 
 ```sh
 pip install splink
+```
+
+or, if you prefer, you can instead install splink using conda:
+
+```sh
+conda install -c conda-forge splink
 ```
 
 ## Quickstart
@@ -146,7 +152,7 @@ clusters.as_pandas_dataframe(limit=5)
 
 ## Citation
 
-If you use Splink in your reserach, we'd be grateful for a citation in the following format (modify the version and date accordingly).
+If you use Splink in your research, we'd be grateful for a citation in the following format (modify the version and date accordingly).
 
 ```
 @misc{ministry_of_justice_2023_splink,
