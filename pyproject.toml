@@ -30,24 +30,5 @@ pyspark = "^3.2.1"
 rapidfuzz = "^2.0.3"
 
 [build-system]
-requires = ["poetry-core>=1.0.8"]
-build-backend = "poetry.core.masonry.api"
-
-
-[tool.ruff]
-line-length = 88
-select = [
-    # Pyflakes
-    "F",
-    # Pycodestyle
-    "E",
-    "W",
-    # isort
-    "I001",
-    # bugbear
-    "B",
-]
-ignore = [
-    "B905", # `zip()` without an explicit `strict=` parameter
-    "B006", # Do not use mutable data structures for argument defaults"
-]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
