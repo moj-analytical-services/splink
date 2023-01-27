@@ -1,8 +1,9 @@
-import duckdb
-import uuid
 import os
 import tempfile
+import uuid
 from pathlib import Path
+
+import duckdb
 
 
 def validate_duckdb_connection(connection, logger):

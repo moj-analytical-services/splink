@@ -31,14 +31,13 @@
 # df = add_match_prob(df, settings_for_data_generation)
 
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.duckdb.duckdb_linker import DuckDBLinkerDataFrame
-import splink.duckdb.duckdb_comparison_library as cl
-from splink.predict import predict_from_comparison_vectors_sqls
-
 import pandas as pd
-from splink.em_training_session import EMTrainingSession
 import pytest
+
+import splink.duckdb.duckdb_comparison_library as cl
+from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
+from splink.em_training_session import EMTrainingSession
+from splink.predict import predict_from_comparison_vectors_sqls
 
 
 def test_splink_converges_to_known_params():

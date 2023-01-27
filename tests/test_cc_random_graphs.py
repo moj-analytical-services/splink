@@ -1,11 +1,12 @@
 # python3 -m pytest tests/test_cc_random_graphs.py
 import pytest
+
 from tests.cc_testing_utils import (
-    run_cc_implementation,
-    register_cc_df,
+    check_df_equality,
     generate_random_graph,
     networkx_solve,
-    check_df_equality,
+    register_cc_df,
+    run_cc_implementation,
 )
 
 ###############################################################################

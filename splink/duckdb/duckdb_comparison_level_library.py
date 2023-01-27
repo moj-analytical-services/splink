@@ -1,16 +1,16 @@
 from ..comparison_level_library import (
+    ArrayIntersectLevelBase,
+    ColumnsReversedLevelBase,
+    DateDiffLevelBase,
+    DistanceFunctionLevelBase,
+    DistanceInKMLevelBase,
+    ElseLevelBase,
     ExactMatchLevelBase,
-    LevenshteinLevelBase,
     JaccardLevelBase,
     JaroWinklerLevelBase,
-    ElseLevelBase,
+    LevenshteinLevelBase,
     NullLevelBase,
-    DistanceFunctionLevelBase,
-    ColumnsReversedLevelBase,
-    DistanceInKMLevelBase,
     PercentageDifferenceLevelBase,
-    ArrayIntersectLevelBase,
-    DateDiffLevelBase,
 )
 from .duckb_base import (
     DuckDBBase,

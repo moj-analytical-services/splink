@@ -1,6 +1,7 @@
 import re
 from copy import deepcopy
-from .charts import vegalite_or_json, load_chart_definition
+
+from .charts import load_chart_definition, vegalite_or_json
 
 
 def _group_name(cols_or_expr):

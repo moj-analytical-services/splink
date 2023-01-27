@@ -1,10 +1,9 @@
 import pandas as pd
-
-from splink.duckdb.duckdb_linker import DuckDBLinker
-import splink.duckdb.duckdb_comparison_library as cl
-from splink.exceptions import EMTrainingException
-
 import pytest
+
+import splink.duckdb.duckdb_comparison_library as cl
+from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.exceptions import EMTrainingException
 
 
 def test_clear_error_when_empty_block():

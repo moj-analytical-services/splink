@@ -1,13 +1,11 @@
-import pytest
-
-from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.sqlite.sqlite_linker import SQLiteLinker
-from splink.spark.spark_linker import SparkLinker
-
 import pandas as pd
-
+import pytest
 from basic_settings import get_settings_dict
+
+from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
+from splink.spark.spark_linker import SparkLinker
+from splink.sqlite.sqlite_linker import SQLiteLinker
 
 
 def test_splink_2_predict():
@@ -51,6 +49,7 @@ def test_splink_2_predict_spark(df_spark):
 def test_splink_2_predict_sqlite():
 
     import sqlite3
+
     from rapidfuzz.distance.Levenshtein import distance
 
     con = sqlite3.connect(":memory:")

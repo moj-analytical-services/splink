@@ -1,9 +1,10 @@
-from math import log2, inf
-from typing import Iterable
-import numpy as np
-import json
-from string import ascii_lowercase
 import itertools
+import json
+from math import inf, log2
+from string import ascii_lowercase
+from typing import Iterable
+
+import numpy as np
 import pkg_resources
 
 

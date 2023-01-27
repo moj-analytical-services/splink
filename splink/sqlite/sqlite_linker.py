@@ -1,12 +1,13 @@
-from typing import Union, List
 import logging
-from math import pow, log2
+from math import log2, pow
+from typing import List, Union
+
 import pandas as pd
 
-from ..logging_messages import execute_sql_logging_message_info, log_sql
-from ..linker import Linker
-from ..splink_dataframe import SplinkDataFrame
 from ..input_column import InputColumn
+from ..linker import Linker
+from ..logging_messages import execute_sql_logging_message_info, log_sql
+from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 

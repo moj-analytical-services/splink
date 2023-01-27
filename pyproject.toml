@@ -45,4 +45,6 @@ select = [
     # Pycodestyle
     "E",
     "W",
+    # isort
+    "I001",
 ]

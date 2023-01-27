@@ -1,10 +1,11 @@
-import networkx as nx
-from networkx.algorithms import connected_components as cc_nx
-import pandas as pd
 import random
 
-from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
+import networkx as nx
+import pandas as pd
+from networkx.algorithms import connected_components as cc_nx
+
 from splink.connected_components import solve_connected_components
+from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
 
 
 def generate_random_graph(graph_size, seed=None):

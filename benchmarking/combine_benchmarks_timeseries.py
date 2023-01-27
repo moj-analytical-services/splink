@@ -1,12 +1,11 @@
 from benchmarking_functions import (
     append_output_to_timeseries,
-    load_timeseries,
-    format_timeseries_data_table,
     chart_to_markdown,
+    format_timeseries_data_table,
     get_chart,
     get_markdown_tables,
+    load_timeseries,
 )
-
 
 new_data = append_output_to_timeseries("benchmarking")
 this_cpu = new_data["machine_info"]["cpu"]["brand_raw"]

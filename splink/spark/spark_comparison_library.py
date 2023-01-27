@@ -1,26 +1,25 @@
 from ..comparison_library import (
-    ExactMatchBase,
-    DistanceFunctionAtThresholdsComparisonBase,
-    LevenshteinAtThresholdsComparisonBase,
-    JaroWinklerAtThresholdsComparisonBase,
-    JaccardAtThresholdsComparisonBase,
     ArrayIntersectAtSizesComparisonBase,
     DateDiffAtThresholdsComparisonBase,
+    DistanceFunctionAtThresholdsComparisonBase,
+    ExactMatchBase,
+    JaccardAtThresholdsComparisonBase,
+    JaroWinklerAtThresholdsComparisonBase,
+    LevenshteinAtThresholdsComparisonBase,
 )
-
 from .spark_base import (
     SparkBase,
 )
 from .spark_comparison_level_library import (
-    exact_match_level,
-    null_level,
-    else_level,
-    distance_function_level,
-    levenshtein_level,
-    jaro_winkler_level,
-    jaccard_level,
     array_intersect_level,
     datediff_level,
+    distance_function_level,
+    else_level,
+    exact_match_level,
+    jaccard_level,
+    jaro_winkler_level,
+    levenshtein_level,
+    null_level,
 )
 
 

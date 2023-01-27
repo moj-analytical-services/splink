@@ -1,10 +1,11 @@
 import pandas as pd
+
 from splink.duckdb.duckdb_comparison_level_library import (
     columns_reversed_level,
+    distance_in_km_level,
     else_level,
     exact_match_level,
     null_level,
-    distance_in_km_level,
     percentage_difference_level,
 )
 from splink.duckdb.duckdb_linker import DuckDBLinker

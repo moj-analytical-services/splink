@@ -1,7 +1,7 @@
-import pytest
-from splink.duckdb.duckdb_linker import DuckDBLinker
-
 import pandas as pd
+import pytest
+
+from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def get_data():

@@ -1,5 +1,5 @@
-from copy import deepcopy
 import logging
+from copy import deepcopy
 
 import sqlglot
 from sqlglot.expressions import Table

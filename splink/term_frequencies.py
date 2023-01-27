@@ -2,7 +2,7 @@
 # https://github.com/moj-analytical-services/splink/pull/107
 
 import logging
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from .input_column import InputColumn, remove_quotes_from_identifiers
 

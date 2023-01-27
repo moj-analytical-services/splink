@@ -1,10 +1,11 @@
-from splink.sqlite.sqlite_linker import SQLiteLinker
 import os
 import sqlite3
-import pandas as pd
 
+import pandas as pd
 from basic_settings import get_settings_dict
 from linker_utils import _test_table_registration, register_roc_data
+
+from splink.sqlite.sqlite_linker import SQLiteLinker
 
 
 def test_full_example_sqlite(tmp_path):

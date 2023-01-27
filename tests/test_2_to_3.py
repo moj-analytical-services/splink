@@ -1,5 +1,6 @@
-import pandas as pd
 import os
+
+import pandas as pd
 
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
 from splink.duckdb.duckdb_linker import DuckDBLinker

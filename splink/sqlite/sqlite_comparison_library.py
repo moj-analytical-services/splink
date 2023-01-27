@@ -1,15 +1,15 @@
 from ..comparison_library import (
-    ExactMatchBase,
     DistanceFunctionAtThresholdsComparisonBase,
+    ExactMatchBase,
 )
 from .sqlite_base import (
     SqliteBase,
 )
 from .sqlite_comparison_level_library import (
+    distance_function_level,
+    else_level,
     exact_match_level,
     null_level,
-    else_level,
-    distance_function_level,
 )
 
 

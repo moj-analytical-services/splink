@@ -1,7 +1,7 @@
-import sqlglot
-import sqlglot.expressions as exp
 from copy import deepcopy
 
+import sqlglot
+import sqlglot.expressions as exp
 from sqlglot.errors import ParseError
 
 from .default_from_jsonschema import default_value_from_schema
