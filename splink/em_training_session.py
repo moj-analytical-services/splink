@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from copy import deepcopy
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 import logging
 
 from .expectation_maximisation import expectation_maximisation
@@ -31,13 +33,13 @@ class EMTrainingSession:
 
     def __init__(
         self,
-        linker: "Linker",
+        linker: Linker,
         blocking_rule_for_training: str,
         fix_u_probabilities: bool = False,
         fix_m_probabilities: bool = False,
         fix_probability_two_random_records_match: bool = False,
-        comparisons_to_deactivate: List[Comparison] = None,
-        comparison_levels_to_reverse_blocking_rule: List[ComparisonLevel] = None,
+        comparisons_to_deactivate: list[Comparison] = None,
+        comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
     ):
 
         logger.info("\n----- Starting EM training session -----\n")
@@ -92,7 +94,7 @@ class EMTrainingSession:
         cc_names_to_deactivate = [
             cc._output_column_name for cc in comparisons_to_deactivate
         ]
-        self._comparisons_that_cannot_be_estimated: List[
+        self._comparisons_that_cannot_be_estimated: list[
             Comparison
         ] = comparisons_to_deactivate
 
