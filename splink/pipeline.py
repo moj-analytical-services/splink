@@ -19,7 +19,7 @@ class SQLTask:
         tree = sqlglot.parse_one(self.sql, read=None)
 
         table_names = set()
-        for subtree, parent, key in tree.walk():
+        for subtree, _parent, _key in tree.walk():
             if type(subtree) is Table:
                 table_names.add(subtree.sql())
         return list(table_names)

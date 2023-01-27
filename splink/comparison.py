@@ -288,7 +288,7 @@ class Comparison:
                 col = cl._tf_adjustment_input_column
                 output_cols.extend(col.tf_name_l_r())
 
-        for col in input_cols:
+        for _col in input_cols:
             if self._settings_obj._retain_intermediate_calculation_columns:
                 output_cols.extend(self._match_weight_columns_to_multiply)
 

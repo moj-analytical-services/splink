@@ -258,7 +258,7 @@ class AthenaLinker(Linker):
         homogenised_tables = []
         homogenised_aliases = []
 
-        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
+        for table, alias in zip(input_tables, input_aliases):
 
             if type(table).__name__ == "DataFrame":
                 if type(alias).__name__ == "DataFrame":

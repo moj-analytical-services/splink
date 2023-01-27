@@ -145,11 +145,11 @@ def calculate_reduction_ratio(N, cartesian):
 def _check_dependency_installed(module):
     try:
         pkg_resources.get_distribution(module)
-    except pkg_resources.DistributionNotFound:
+    except pkg_resources.DistributionNotFound as e:
         raise ValueError(
             f"{module} is not installed.",
             "Please install and import it before continuing.",
-        )
+        ) from e
 
 
 def major_minor_version_greater_equal_than(this_version, base_comparison_version):

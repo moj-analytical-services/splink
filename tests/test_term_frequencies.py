@@ -14,7 +14,7 @@ def get_data():
     data = []
     counter = 0
     for city, count in city_counts.items():
-        for i in range(count):
+        for _ in range(count):
             data.append({"unique_id": counter, "city": city})
             counter += 1
 

@@ -111,7 +111,8 @@ def test_splink_converges_to_known_params():
     assert s_obj._probability_two_random_records_match == pytest.approx(0.5, 0.01)
 
     param_dict = s_obj.comparisons[0].as_dict()
-    param_dict["comparison_levels"][1]["m_probability"] == pytest.approx(0.7, abs=0.01)
-    param_dict["comparison_levels"][1]["u_probability"] == pytest.approx(0.1, abs=0.01)
-    param_dict["comparison_levels"][2]["m_probability"] == pytest.approx(0.3, abs=0.01)
-    param_dict["comparison_levels"][2]["u_probability"] == pytest.approx(0.9, abs=0.01)
+    cls = param_dict["comparison_levels"]
+    assert cls[1]["m_probability"] == pytest.approx(0.7, abs=0.01)
+    assert cls[1]["u_probability"] == pytest.approx(0.1, abs=0.01)
+    assert cls[2]["m_probability"] == pytest.approx(0.3, abs=0.01)
+    assert cls[2]["u_probability"] == pytest.approx(0.9, abs=0.01)
