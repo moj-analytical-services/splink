@@ -1,12 +1,10 @@
-from jinja2 import Template
-
-from __future__ import annotations
-
-from jinja2 import Template
 import json
 import os
 import pkgutil
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, List
+
+from jinja2 import Template
+
 from .misc import EverythingEncoder
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
