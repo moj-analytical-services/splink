@@ -34,7 +34,7 @@ class SQLiteDataFrame(SplinkDataFrame):
         return [InputColumn(c, sql_dialect="sqlite") for c in cols]
 
     def validate(self):
-        if not type(self.physical_name) is str:
+        if type(self.physical_name) is not str:
             raise ValueError(
                 f"{self.df_name} is not a string dataframe.\n"
                 "SQLite Linker requires input data"
