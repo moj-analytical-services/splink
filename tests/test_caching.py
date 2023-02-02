@@ -8,6 +8,8 @@ df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
 
 def test_cache_id(tmp_path):
+
+    # Test saving and loading from settings
     linker = DuckDBLinker(
         df,
         get_settings_dict(),
@@ -15,7 +17,6 @@ def test_cache_id(tmp_path):
 
     prior = linker._settings_obj._cache_uuid
 
-    # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
     linker.save_settings_to_json(path, overwrite=True)
 
@@ -24,7 +25,7 @@ def test_cache_id(tmp_path):
 
     assert linker_2._settings_obj._cache_uuid == prior
 
-
+    # Test initialising settings
     linker = DuckDBLinker(
         df,
     )
@@ -32,6 +33,17 @@ def test_cache_id(tmp_path):
 
     linker.initialise_settings(get_settings_dict())
     assert prior == linker._cache_uuid
+
+    # Test uuid from settings
+    random_uuid = "my_random_uuid"
+    settings = get_settings_dict()
+    settings["linker_uuid"] = random_uuid
+    linker = DuckDBLinker(
+        df,
+        settings
+    )
+    linker_uuid = linker._cache_uuid
+    assert linker_uuid == random_uuid
 
 
 def test_materialising_works():
