@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import TYPE_CHECKING
 
@@ -8,7 +10,7 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def vertically_concatenate_sql(linker: "Linker") -> str:
+def vertically_concatenate_sql(linker: Linker) -> str:
     """
     Using `input_table_or_tables`, create a single table with the columns and
     rows required for linking.

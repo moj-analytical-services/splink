@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 import logging
 
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
@@ -68,7 +70,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
 
 
 # flake8: noqa: C901
-def block_using_rules_sql(linker: "Linker"):
+def block_using_rules_sql(linker: Linker):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).

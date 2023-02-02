@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import List, Union
 from copy import Error, copy, deepcopy
 from statistics import median
 import hashlib
@@ -99,10 +98,10 @@ class Linker:
 
     def __init__(
         self,
-        input_table_or_tables: Union[str, list],
+        input_table_or_tables: str | list,
         settings_dict: dict,
         set_up_basic_logging: bool = True,
-        input_table_aliases: Union[str, list] = None,
+        input_table_aliases: str | list = None,
     ):
         """Initialise the linker object, which manages the data linkage process and
         holds the data linkage model.
@@ -345,7 +344,7 @@ class Linker:
 
     def _execute_sql_pipeline(
         self,
-        input_dataframes: List[SplinkDataFrame] = [],
+        input_dataframes: list[SplinkDataFrame] = [],
         materialise_as_hash=True,
         use_cache=True,
     ) -> SplinkDataFrame:
@@ -922,8 +921,8 @@ class Linker:
     def estimate_parameters_using_expectation_maximisation(
         self,
         blocking_rule: str,
-        comparisons_to_deactivate: List[Union[str, Comparison]] = None,
-        comparison_levels_to_reverse_blocking_rule: List[ComparisonLevel] = None,
+        comparisons_to_deactivate: list[str | Comparison] = None,
+        comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
         fix_probability_two_random_records_match: bool = False,
         fix_m_probabilities=False,
         fix_u_probabilities=True,
@@ -1414,7 +1413,7 @@ class Linker:
         return cc
 
     def profile_columns(
-        self, column_expressions: Union[str, List[str]], top_n=10, bottom_n=10
+        self, column_expressions: str | list[str], top_n=10, bottom_n=10
     ):
 
         return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
@@ -1818,7 +1817,7 @@ class Linker:
         recs = df.as_record_dict()
         return match_weights_histogram(recs, width=width, height=height)
 
-    def waterfall_chart(self, records: List[dict], filter_nulls=True):
+    def waterfall_chart(self, records: list[dict], filter_nulls=True):
         """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
 
@@ -1994,7 +1993,7 @@ class Linker:
         records = missingness_data(self, input_dataset)
         return missingness_chart(records, input_dataset)
 
-    def completeness_chart(self, input_dataset: str = None, cols: List[str] = None):
+    def completeness_chart(self, input_dataset: str = None, cols: list[str] = None):
         """Generate a summary chart of the completeness (proportion of non-nulls) of
         columns in each of the input datasets. By default, completeness is assessed for
         all column in the input data.
@@ -2336,7 +2335,7 @@ class Linker:
         Args:
             in_path (str): Path to settings json file
         """
-        with open(in_path, "r") as f:
+        with open(in_path) as f:
             model_dict = json.load(f)
         self.initialise_settings(model_dict)
 

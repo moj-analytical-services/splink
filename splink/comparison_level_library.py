@@ -1,4 +1,4 @@
-from typing import Union
+from __future__ import annotations
 
 from .input_column import InputColumn
 from .comparison_level import ComparisonLevel
@@ -76,7 +76,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         self,
         col_name: str,
         distance_function_name: str,
-        distance_threshold: Union[int, float],
+        distance_threshold: int | float,
         higher_is_more_similar: bool = True,
         m_probability=None,
     ):
@@ -195,7 +195,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
     def __init__(
         self,
         col_name: str,
-        distance_threshold: Union[int, float],
+        distance_threshold: int | float,
         m_probability=None,
     ):
         """Represents a comparison using a jaccard distance function
@@ -268,7 +268,7 @@ class DistanceInKMLevelBase(ComparisonLevel):
         self,
         lat_col: str,
         long_col: str,
-        km_threshold: Union[int, float],
+        km_threshold: int | float,
         not_null: bool = False,
         m_probability=None,
     ):

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from typing import TYPE_CHECKING
 import time
@@ -112,7 +114,7 @@ def populate_m_u_from_lookup(
         cl.u_probability = u_probability
 
 
-def maximisation_step(em_training_session: "EMTrainingSession", param_records):
+def maximisation_step(em_training_session: EMTrainingSession, param_records):
 
     settings_obj = em_training_session._settings_obj
 
@@ -138,7 +140,7 @@ def maximisation_step(em_training_session: "EMTrainingSession", param_records):
 
 
 def expectation_maximisation(
-    em_training_session: "EMTrainingSession",
+    em_training_session: EMTrainingSession,
     df_comparison_vector_values: SplinkDataFrame,
 ):
     """In the expectation step, we use the current model parameters to estimate

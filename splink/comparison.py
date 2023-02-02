@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from .comparison_level import ComparisonLevel
 from .misc import dedupe_preserving_order, join_list_with_commas_final_and
@@ -53,12 +55,12 @@ class Comparison:
 
     """
 
-    def __init__(self, comparison_dict, settings_obj: "Settings" = None):
+    def __init__(self, comparison_dict, settings_obj: Settings = None):
 
         # Protected because we don't want to modify
         self._comparison_dict = comparison_dict
         comparison_level_list = comparison_dict["comparison_levels"]
-        self.comparison_levels: List[ComparisonLevel] = []
+        self.comparison_levels: list[ComparisonLevel] = []
 
         # If comparison_levels are already of type ComparisonLevel, register
         # the settings object on them
@@ -74,7 +76,7 @@ class Comparison:
 
             self.comparison_levels.append(cl)
 
-        self._settings_obj: "Settings" = settings_obj
+        self._settings_obj: Settings = settings_obj
 
         # Assign comparison vector values starting at highest level, count down to 0
         num_levels = self._num_levels
