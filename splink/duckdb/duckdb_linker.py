@@ -39,11 +39,13 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
         pass
 
     def drop_table_from_database(self, force_non_splink_table=False):
+
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
         self.duckdb_linker._delete_table_from_database(self.physical_name)
 
     def as_record_dict(self, limit=None):
+
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
@@ -132,9 +134,10 @@ class DuckDBLinker(Linker):
 
         default_aliases = all_letter_combos(len(input_tables))
 
-        for table, alias, default_alias in zip(
+        for (table, alias, default_alias) in zip(
             input_tables, input_aliases, default_aliases
         ):
+
             if type(alias).__name__ in ["DataFrame", "Table"]:
                 alias = f"_{default_alias}"
 
@@ -166,6 +169,7 @@ class DuckDBLinker(Linker):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
+
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
@@ -187,6 +191,7 @@ class DuckDBLinker(Linker):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
     def register_table(self, input, table_name, overwrite=False):
+
         # Check if table name is already in use
         exists = self._table_exists_in_database(table_name)
         if exists:

@@ -11,6 +11,7 @@ from basic_settings import get_settings_dict
 
 
 def test_splink_2_predict():
+
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
     linker = DuckDBLinker(df, settings_dict)
@@ -48,6 +49,7 @@ def test_splink_2_predict_spark(df_spark):
 
 
 def test_splink_2_predict_sqlite():
+
     import sqlite3
     from rapidfuzz.distance.Levenshtein import distance
 
@@ -79,6 +81,7 @@ def test_splink_2_predict_sqlite():
 
 
 def test_splink_2_em_fixed_u():
+
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
     linker = DuckDBLinker(df, settings_dict)
@@ -123,6 +126,7 @@ def test_splink_2_em_fixed_u():
 
 
 def test_splink_2_em_no_fix():
+
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
     linker = DuckDBLinker(df, settings_dict)
@@ -167,6 +171,7 @@ def test_splink_2_em_no_fix():
 
 
 def test_lambda():
+
     # Needs precisely 10 EM iterations
     settings_dict = get_settings_dict()
     settings_dict["max_iterations"] = 10

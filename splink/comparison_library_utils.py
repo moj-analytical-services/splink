@@ -1,4 +1,5 @@
 def datediff_error_logger(thresholds, metrics):
+
     # Extracted from the DateDiffAtThresholdsComparisonBase class as that was overly
     # verbose and failing the lint.
 
@@ -33,6 +34,7 @@ def datediff_error_logger(thresholds, metrics):
         )
 
     if len(error_logger) > 0:
+
         error_logger.insert(
             0,
             "The following error(s) were identified while validating "

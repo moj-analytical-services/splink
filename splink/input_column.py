@@ -52,6 +52,7 @@ def remove_quotes_from_identifiers(tree):
 
 class InputColumn:
     def __init__(self, name, settings_obj=None, sql_dialect=None):
+
         # If settings_obj is None, then default values will be used
         # from the jsonschama
         self._settings_obj = settings_obj
@@ -94,6 +95,7 @@ class InputColumn:
         return self_copy
 
     def parse_input_name_to_sqlglot_tree(self):
+
         # Cases that could occur for self.input_name:
         # SUR name  -> parses to 'alias column identifier identifier'
         # first and surname -> parses to 'and column column identifier identifier'

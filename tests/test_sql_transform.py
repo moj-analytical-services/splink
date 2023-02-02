@@ -14,6 +14,7 @@ def move_l_r_test(br, expected):
 
 
 def test_move_l_r_table_prefix_to_column_suffix():
+
     br = "l.first_name = r.first_name"
     expected = "first_name_l = first_name_r"
     move_l_r_test(br, expected)
@@ -45,6 +46,7 @@ def test_move_l_r_table_prefix_to_column_suffix():
 
 
 def test_cast_concat_as_varchar():
+
     output = """
         select cast(l.source_dataset as varchar) || '-__-' ||
         cast(l.unique_id as varchar) as concat_id

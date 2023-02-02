@@ -2,6 +2,7 @@ from splink.parse_sql import get_columns_used_from_sql
 
 
 def test_get_columns_used():
+
     sql = """
     jaro_winkler_sim(mytable.surname_l, surname_r) > 0.99 or
     substr(mytable.surname_l || initial_l ,1,2) = substr(surname_r || initial_r,1,2)

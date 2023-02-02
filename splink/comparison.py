@@ -54,6 +54,7 @@ class Comparison:
     """
 
     def __init__(self, comparison_dict, settings_obj: "Settings" = None):
+
         # Protected because we don't want to modify
         self._comparison_dict = comparison_dict
         comparison_level_list = comparison_dict["comparison_levels"]
@@ -138,6 +139,7 @@ class Comparison:
 
     @property
     def _case_statement(self):
+
         sqls = [
             cl._when_then_comparison_vector_value_sql for cl in self.comparison_levels
         ]
@@ -202,6 +204,7 @@ class Comparison:
 
     @property
     def _columns_to_select_for_comparison_vector_values(self):
+
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
@@ -222,6 +225,7 @@ class Comparison:
 
     @property
     def _columns_to_select_for_bayes_factor_parts(self):
+
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
@@ -229,6 +233,7 @@ class Comparison:
         output_cols = []
         for col in input_cols:
             if self._settings_obj._retain_matching_columns:
+
                 output_cols.extend(col.names_l_r())
 
         output_cols.append(self._gamma_column_name)
@@ -260,6 +265,7 @@ class Comparison:
 
     @property
     def _columns_to_select_for_predict(self):
+
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
@@ -399,6 +405,7 @@ class Comparison:
         self, value
     ) -> ComparisonLevel:
         for cl in self.comparison_levels:
+
             if cl._comparison_vector_value == value:
                 return cl
         raise ValueError(f"No comparison level with comparison vector value {value}")
@@ -411,6 +418,7 @@ class Comparison:
 
     @property
     def _not_trained_messages(self):
+
         msgs = []
 
         cname = self._output_column_name
@@ -443,6 +451,7 @@ class Comparison:
 
     @property
     def _human_readable_description_succinct(self):
+
         input_cols = join_list_with_commas_final_and(
             [c.name() for c in self._input_columns_used_by_case_statement]
         )
@@ -461,6 +470,7 @@ class Comparison:
 
     @property
     def human_readable_description(self):
+
         input_cols = join_list_with_commas_final_and(
             [c.name() for c in self._input_columns_used_by_case_statement]
         )

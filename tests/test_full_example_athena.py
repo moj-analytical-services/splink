@@ -45,6 +45,7 @@ settings_dict["comparisons"][0] = first_name_cc
 
 
 def setup_athena_db(my_session, db_name="splink_awswrangler_test"):
+
     """
     =====
     Partially deprecated by the new garbage_collection function.
@@ -104,6 +105,7 @@ def create_and_upload_test_data(my_session):
 
 @pytest.mark.skip(reason="AWS Connection Required")
 def test_full_example_athena(tmp_path):
+
     """
     NOTE - we've changed this test. The dbs are now hard coded and are not
     created on a new test run. Instead, we are utilising garbage_collection
@@ -161,6 +163,7 @@ def test_full_example_athena(tmp_path):
 
 @pytest.mark.skip(reason="AWS Connection Required")
 def test_athena_garbage_collection():
+
     # creates a session at least on the platform...
     my_session = boto3.Session(region_name="eu-west-1")
     db_name_read = "splink_awswrangler_test"
@@ -223,6 +226,7 @@ def test_athena_garbage_collection():
 
 @pytest.mark.skip(reason="AWS Connection Required")
 def test_athena_df_as_input():
+
     import pandas as pd
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -247,6 +251,7 @@ def test_athena_df_as_input():
 
 @pytest.mark.skip(reason="AWS Connection Required")
 def test_athena_link_only():
+
     import pandas as pd
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")

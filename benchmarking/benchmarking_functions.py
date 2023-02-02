@@ -8,6 +8,7 @@ import lzstring
 
 
 def append_output_to_timeseries(base_path="benchmarking"):
+
     with open(os.path.join(base_path, "time_series.json")) as f:
         time_series_data = []
         for line in f:
@@ -19,6 +20,7 @@ def append_output_to_timeseries(base_path="benchmarking"):
     time_series_data.append(new_data)
 
     with open(os.path.join(base_path, "time_series.json"), "w") as f:
+
         for entry in time_series_data:
             json.dump(entry, f)
             f.write("\n")
@@ -89,6 +91,7 @@ def get_latest(df, cpu):
 
 def get_markdown_tables(timeseries_df, cpu):
     def add_to_markdown(df):
+
         df1 = get_latest_on_branch(df, "splink3", cpu=None)
         df2 = get_latest(df, cpu=None)
 
@@ -126,6 +129,7 @@ def get_markdown_tables(timeseries_df, cpu):
 
 
 def get_chart(timeseries_df):
+
     df = timeseries_df
     df["machine_info_cpu_brand_raw"] = df["machine_info_cpu_brand_raw"].str.replace(
         "Intel(R)", "", regex=False

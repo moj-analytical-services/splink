@@ -17,6 +17,7 @@ def generate_random_graph(graph_size, seed=None):
 
 
 def register_cc_df(G):
+
     from tests.basic_settings import get_settings_dict
 
     settings_dict = get_settings_dict()
@@ -37,7 +38,11 @@ def register_cc_df(G):
     linker.register_table(df_concat, table_name, overwrite=True)
 
     df_nodes = pd.DataFrame({"unique_id": G.nodes})
-    linker.register_table(df_nodes, "__splink__df_concat_with_tf", overwrite=True)
+    linker.register_table(
+        df_nodes,
+        "__splink__df_concat_with_tf",
+        overwrite=True
+    )
 
     # add our prediction df to our list of created tables
     predict_df = DuckDBLinkerDataFrame(table_name, table_name, linker)
@@ -47,6 +52,7 @@ def register_cc_df(G):
 
 
 def run_cc_implementation(predict_df):
+
     linker = predict_df.duckdb_linker
     concat_with_tf = linker._initialise_df_concat_with_tf()
 
@@ -56,7 +62,7 @@ def run_cc_implementation(predict_df):
         predict_df,
         df_predict=None,
         concat_with_tf=concat_with_tf,
-        _generated_graph=True,
+        _generated_graph=True
     ).as_pandas_dataframe()
     cc = cc.rename(columns={"unique_id": "node_id", "cluster_id": "representative"})
     cc = cc[["node_id", "representative"]]
@@ -64,6 +70,7 @@ def run_cc_implementation(predict_df):
 
 
 def benchmark_cc_implementation(linker_df):
+
     # add a schema so we don't need to re-register our df
     linker_df.duckdb_linker._con.execute(
         """

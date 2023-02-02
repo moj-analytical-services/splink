@@ -18,6 +18,7 @@ comp_levels = {
 
 
 def gen_settings(type, comparison_library=False):
+
     c_levels = comp_levels[type]
     exact_match_fn = c_levels["cl"].exact_match("first_name")
 
@@ -70,6 +71,7 @@ def gen_settings(type, comparison_library=False):
 
 
 def test_datediff_levels(spark):
+
     df = pd.DataFrame(
         [
             {
@@ -164,6 +166,7 @@ def test_datediff_levels(spark):
     for k, v in size_gamma_lookup.items():
         for ids in v["id_pairs"]:
             for linker_name, linker_pred in linker_outputs.items():
+
                 print(f"Checking IDs: {ids} for {linker_name}")
 
                 assert (
@@ -176,6 +179,7 @@ def test_datediff_levels(spark):
 
 
 def test_datediff_error_logger():
+
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
         cld.datediff_at_thresholds("dob", [1], ["day", "month", "year", "year"])

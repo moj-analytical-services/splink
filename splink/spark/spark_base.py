@@ -8,6 +8,7 @@ def size_array_intersect_sql(col_name_l, col_name_r):
 
 
 def datediff_sql(col_name_l, col_name_r, date_threshold, date_metric):
+
     if date_metric == "day":
         date_f = f"abs(datediff({col_name_l}, {col_name_r}))"
     elif date_metric in ["month", "year"]:

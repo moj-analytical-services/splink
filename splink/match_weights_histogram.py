@@ -2,6 +2,7 @@ from math import floor
 
 
 def _bins(min, max, num_bins):
+
     bin_widths = [0.01, 0.1, 0.2, 0.25, 0.5, 1, 2, 5]
 
     rough_binwidth = (max - min) / num_bins
@@ -25,6 +26,7 @@ def _bins(min, max, num_bins):
 
 
 def _hist_sql(bin_width):
+
     sqls = []
 
     sql = f"""
@@ -57,6 +59,7 @@ def _hist_sql(bin_width):
 
 
 def histogram_data(linker, df_predict, num_bins=100):
+
     sql = """
     select min(match_weight) as min_weight, max(match_weight) as max_weight from
     __splink__df_predict

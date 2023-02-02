@@ -17,6 +17,7 @@ class boto_utils:
         output_bucket: str,
         output_filepath: str,
     ):
+
         if not type(boto3_session) == boto3.session.Session:
             raise ValueError("Please enter a valid boto3 session object.")
 
@@ -35,6 +36,7 @@ class boto_utils:
         self.s3_output = self.get_table_dir()
 
     def get_table_dir(self):
+
         out_path = os.path.join(
             "s3://",
             self.bucket,

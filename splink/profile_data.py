@@ -4,6 +4,7 @@ from .charts import vegalite_or_json, load_chart_definition
 
 
 def _group_name(cols_or_expr):
+
     cols_or_expr = re.sub(r"[^0-9a-zA-Z_]", " ", cols_or_expr)
     cols_or_expr = re.sub(r"\s+", "_", cols_or_expr)
     return cols_or_expr
@@ -20,6 +21,7 @@ _inner_chart_spec_freq = load_chart_definition(chart_path)
 
 
 def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, col_name):
+
     inner_spec = deepcopy(_inner_chart_spec_freq)
 
     total_rows_inc_nulls = percentile_data[0]["total_rows_inc_nulls"]
@@ -105,6 +107,7 @@ def _get_df_percentiles():
 
 
 def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
+
     sql = """
     select * from
     (select *
@@ -125,6 +128,7 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
 
 
 def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
+
     if type(cols_or_exprs) == str:
         cols_or_exprs = [cols_or_exprs]
     sqls = []
@@ -151,6 +155,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
 
 
 def _add_100_percentile_to_df_percentiles(percentile_rows):
+
     r = percentile_rows[0]
     if r["percentile_ex_nulls"] != 1.0:
         first_row = deepcopy(r)
@@ -162,6 +167,7 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 
 
 def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
+
     input_tablename = "__splink__df_concat_with_tf"
     if not linker._table_exists_in_database("__splink__df_concat_with_tf"):
         linker._initialise_df_concat()

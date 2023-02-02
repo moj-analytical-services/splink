@@ -4,6 +4,7 @@ from sqlglot import expressions as exp
 
 def cast_concat_as_varchar(node):
     if isinstance(node, exp.Column):
+
         if isinstance(node.parent, exp.Cast):
             return node
 

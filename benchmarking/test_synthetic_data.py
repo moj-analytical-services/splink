@@ -187,6 +187,7 @@ def duckdb_performance(df, target_rows):
 
 
 def test_3_rounds_100k_duckdb(benchmark):
+
     df = pd.read_parquet("./benchmarking/synthetic_data_all.parquet")
     df = df.head(100_000)
 
@@ -200,6 +201,7 @@ def test_3_rounds_100k_duckdb(benchmark):
 
 
 def test_3_rounds_300k_duckdb(benchmark):
+
     df = pd.read_parquet("./benchmarking/synthetic_data_all.parquet")
     df = df.head(300_000)
 
@@ -213,6 +215,7 @@ def test_3_rounds_300k_duckdb(benchmark):
 
 
 def test_3_rounds_1m_duckdb(benchmark):
+
     df = pd.read_parquet("./benchmarking/synthetic_data_all.parquet")
 
     benchmark.pedantic(
@@ -225,6 +228,7 @@ def test_3_rounds_1m_duckdb(benchmark):
 
 
 def spark_performance(df, target_rows=1e6):
+
     linker = SparkLinker(
         df,
         settings_dict,
@@ -245,6 +249,7 @@ def spark_performance(df, target_rows=1e6):
 
 
 def test_3_rounds_100k_spark(benchmark):
+
     from pyspark.context import SparkContext, SparkConf
     from pyspark.sql import SparkSession
 
@@ -277,6 +282,7 @@ def test_3_rounds_100k_spark(benchmark):
 
 
 def test_3_rounds_300k_spark(benchmark):
+
     from pyspark.context import SparkContext, SparkConf
     from pyspark.sql import SparkSession
 
@@ -308,6 +314,7 @@ def test_3_rounds_300k_spark(benchmark):
 
 
 def test_3_rounds_1m_spark(benchmark):
+
     from pyspark.context import SparkContext, SparkConf
     from pyspark.sql import SparkSession
 

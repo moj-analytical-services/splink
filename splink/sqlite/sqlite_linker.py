@@ -59,6 +59,7 @@ class SQLiteDataFrame(SplinkDataFrame):
             )
 
     def drop_table_from_database(self, force_non_splink_table=False):
+
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
         drop_sql = f"""
@@ -87,6 +88,7 @@ class SQLiteLinker(Linker):
         set_up_basic_logging=True,
         input_table_aliases: Union[str, list] = None,
     ):
+
         self._sql_dialect_ = "sqlite"
 
         self.con = connection
@@ -110,6 +112,7 @@ class SQLiteLinker(Linker):
         super().initialise_settings(settings_dict)
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
+
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
@@ -128,6 +131,7 @@ class SQLiteLinker(Linker):
         return output_obj
 
     def register_table(self, input, table_name, overwrite=False):
+
         # Check if table name is already in use
         exists = self._table_exists_in_database(table_name)
         if exists:

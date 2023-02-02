@@ -34,6 +34,7 @@ class ExactMatchLevelBase(ComparisonLevel):
         term_frequency_adjustments=False,
         include_colname_in_charts_label=False,
     ):
+
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
 
         label_suffix = f" {col_name}" if include_colname_in_charts_label else ""
@@ -54,6 +55,7 @@ class ElseLevelBase(ComparisonLevel):
         self,
         m_probability=None,
     ):
+
         if isinstance(m_probability, str):
             raise ValueError(
                 "You provided a string for the value of m probability when it should "

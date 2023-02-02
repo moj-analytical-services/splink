@@ -2,6 +2,7 @@ from splink.input_column import InputColumn
 
 
 def test_input_column():
+
     c = InputColumn("my_col")
     assert c.name() == '"my_col"'
     assert c.unquote().name() == "my_col"

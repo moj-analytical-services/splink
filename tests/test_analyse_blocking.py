@@ -7,6 +7,7 @@ from splink.analyse_blocking import (
 
 
 def test_analyse_blocking():
+
     df_1 = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},

@@ -3,6 +3,7 @@ def _sql_expr_move_left_to_right(
     unique_id_col: str = "unique_id",
     source_dataset_col: str = "source_dataset",
 ):
+
     sds_l = f"{source_dataset_col}_l"
     uid_l = f"{unique_id_col}_l"
     sds_r = f"{source_dataset_col}_r"

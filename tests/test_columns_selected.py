@@ -12,6 +12,7 @@ import pandas as pd
 
 
 def test_regression(tmp_path):
+
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(20)
 
     # Overwrite the surname comparison to include duck-db specific syntax
@@ -70,6 +71,7 @@ def test_regression(tmp_path):
 
 
 def test_discussion_example(tmp_path):
+
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(20)
 
     # Overwrite the surname comparison to include duck-db specific syntax

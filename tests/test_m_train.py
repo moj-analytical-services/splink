@@ -4,6 +4,7 @@ import pandas as pd
 
 
 def test_m_train():
+
     data = [
         {"unique_id": 1, "name": "Robin", "cluster": 1},
         {"unique_id": 2, "name": "Robyn", "cluster": 1},

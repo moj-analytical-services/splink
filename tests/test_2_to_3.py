@@ -6,6 +6,7 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def test_2_to_3(tmp_path):
+
     sql_col1 = """
     case
         when col_1_l is null or col_1_r is null then -1

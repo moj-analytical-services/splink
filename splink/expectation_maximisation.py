@@ -113,6 +113,7 @@ def populate_m_u_from_lookup(
 
 
 def maximisation_step(em_training_session: "EMTrainingSession", param_records):
+
     settings_obj = em_training_session._settings_obj
 
     m_u_records = []
@@ -123,6 +124,7 @@ def maximisation_step(em_training_session: "EMTrainingSession", param_records):
             m_u_records.append(r)
 
     if not em_training_session._training_fix_probability_two_random_records_match:
+
         settings_obj._probability_two_random_records_match = prop_record[
             "m_probability"
         ]
