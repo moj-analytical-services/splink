@@ -54,7 +54,6 @@ def validate_settings_against_schema(settings_dict: dict):
     e = next(v.iter_errors(settings_dict), None)
 
     if e:
-
         comparison_level = get_comparison_level(e, settings_dict)
         comparison = get_comparison(e, settings_dict)
 

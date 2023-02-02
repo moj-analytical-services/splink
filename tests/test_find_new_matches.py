@@ -34,7 +34,6 @@ record = {
 
 def test_tf_tables_init_works():
     for s in [settings_tf, settings_no_tf, settings]:
-
         linker = DuckDBLinker(
             df,
             s,

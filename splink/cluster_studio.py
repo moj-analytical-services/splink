@@ -25,7 +25,6 @@ def _quo_if_str(x):
 
 
 def _clusters_sql(df_clustered_nodes, cluster_ids: list) -> str:
-
     cluster_ids = [_quo_if_str(x) for x in cluster_ids]
     cluster_ids_joined = ", ".join(cluster_ids)
 
@@ -49,7 +48,6 @@ def df_clusters_as_records(
 
 
 def _nodes_sql(df_clustered_nodes, cluster_ids) -> str:
-
     cluster_ids = [_quo_if_str(x) for x in cluster_ids]
     cluster_ids_joined = ", ".join(cluster_ids)
 
@@ -75,7 +73,6 @@ def create_df_nodes(
 def _edges_sql(
     linker: "Linker", df_predicted_edges: SplinkDataFrame, df_nodes: SplinkDataFrame
 ):
-
     unique_id_cols = linker._settings_obj._unique_id_input_columns
 
     nodes_l_id_expr = _composite_unique_id_from_nodes_sql(unique_id_cols, "nodes_l")

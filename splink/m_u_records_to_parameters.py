@@ -42,7 +42,6 @@ def not_trained_message(comparison_level: ComparisonLevel):
 def append_u_probability_to_comparison_level_trained_probabilities(
     comparison_level: ComparisonLevel, m_u_records_lookup, training_description
 ):
-
     cl = comparison_level
     c = cl.comparison
 

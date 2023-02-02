@@ -5,7 +5,6 @@ import splink.duckdb.duckdb_comparison_library as cl
 
 
 def test_distance_function_comparison():
-
     data = [
         {"unique_id": 1, "forename": "Harry", "surname": "Jones"},
         {"unique_id": 2, "forename": "Garry", "surname": "Johns"},

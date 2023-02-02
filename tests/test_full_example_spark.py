@@ -14,7 +14,6 @@ from linker_utils import _test_table_registration, register_roc_data
 
 
 def test_full_example_spark(df_spark, tmp_path):
-
     # Convert a column to an array to enable testing intersection
     df_spark = df_spark.withColumn("email", array("email"))
     settings_dict = get_settings_dict()

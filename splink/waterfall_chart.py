@@ -41,7 +41,6 @@ def _final_score_record(record_as_dict):
 
 
 def _comparison_records(record_as_dict, comparison: Comparison):
-
     output_records = []
     waterfall_record = {}
 
@@ -138,7 +137,6 @@ def record_to_waterfall_data(record_as_dict, settings_obj):
 def records_to_waterfall_data(records, settings_obj):
     waterfall_data = []
     for i, record in enumerate(records):
-
         new_data = record_to_waterfall_data(record, settings_obj)
         for rec in new_data:
             rec["record_number"] = i

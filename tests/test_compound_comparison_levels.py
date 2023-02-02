@@ -8,7 +8,6 @@ import splink.duckdb.duckdb_comparison_level_library as cll
 
 
 def test_compound_comparison_level():
-
     df = pd.DataFrame(
         [
             {
@@ -133,7 +132,6 @@ def test_compound_comparison_level():
 
 
 def test_complex_compound_comparison_level():
-
     # non-realistic example
     df = pd.DataFrame(
         [

@@ -1,5 +1,4 @@
 def missingness_sqls(columns, input_tablename):
-
     sqls = []
     col_template = """
                 select
@@ -41,7 +40,6 @@ def missingness_sqls(columns, input_tablename):
 
 
 def missingness_data(linker, input_tablename):
-
     if input_tablename is None:
         cache = linker._intermediate_table_cache
         concat_with_tf = "__splink__df_concat_with_tf"

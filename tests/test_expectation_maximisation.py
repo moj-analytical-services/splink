@@ -8,7 +8,6 @@ import pytest
 
 
 def test_clear_error_when_empty_block():
-
     data = [
         {"unique_id": 1, "name": "Amanda", "surname": "Smith"},
         {"unique_id": 2, "name": "Robin", "surname": "Jones"},

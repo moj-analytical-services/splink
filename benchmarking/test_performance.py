@@ -160,7 +160,6 @@ settings_dict = {
 
 
 def duckdb_performance(df, target_rows=1e6):
-
     linker = DuckDBLinker(df, settings_dict)
 
     linker.estimate_u_using_random_sampling(target_rows=target_rows)
@@ -198,7 +197,6 @@ def test_10_rounds_20k_duckdb(benchmark):
 
 
 def duckdb_on_disk_performance(df, target_rows=1e6):
-
     linker = DuckDBLinker(df, settings_dict, connection=":temporary:")
 
     linker.estimate_u_using_random_sampling(target_rows=target_rows)
@@ -236,7 +234,6 @@ def test_10_rounds_20k_duckdb_on_disk_performance(benchmark):
 
 
 def spark_performance(df, target_rows=1e6):
-
     linker = SparkLinker(df, settings_dict)
 
     linker.estimate_u_using_random_sampling(target_rows=target_rows)
@@ -284,7 +281,6 @@ def test_3_rounds_20k_spark(benchmark):
 
 
 def sqlite_performance(con, target_rows=1e6):
-
     print("**** running sqlite benchmark ***")
     linker = SQLiteLinker(
         "input_df_tablename", settings_dict, connection=con, input_table_aliases="mydf"

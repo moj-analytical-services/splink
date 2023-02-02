@@ -15,7 +15,6 @@ def predict_from_comparison_vectors_sqls(
     include_clerical_match_score=False,
     sql_infinity_expression="'infinity'",
 ) -> List[dict]:
-
     sqls = []
 
     select_cols = settings_obj._columns_to_select_for_bayes_factor_parts

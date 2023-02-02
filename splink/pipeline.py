@@ -44,7 +44,6 @@ class SQLPipeline:
         self.queue.append(sql_task)
 
     def _generate_pipeline_parts(self, input_dataframes):
-
         parts = deepcopy(self.queue)
         for df in input_dataframes:
             if df is None:
@@ -58,9 +57,7 @@ class SQLPipeline:
         return parts
 
     def _log_pipeline(self, parts, input_dataframes):
-
         if logger.isEnabledFor(7):
-
             inputs = ", ".join(df.physical_name for df in input_dataframes)
             logger.log(
                 7,
@@ -72,7 +69,6 @@ class SQLPipeline:
                 logger.log(7, f"    Pipeline part {i+1}: {part._task_description}")
 
     def _generate_pipeline(self, input_dataframes):
-
         parts = self._generate_pipeline_parts(input_dataframes)
 
         self._log_pipeline(parts, input_dataframes)

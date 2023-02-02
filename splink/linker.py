@@ -181,9 +181,7 @@ class Linker:
             settings_dict["sql_dialect"] = self._sql_dialect
 
         if settings_dict is not None:
-            self._cache_uuid = settings_dict.get(
-                "linker_uuid", ascii_uuid(8)
-            )
+            self._cache_uuid = settings_dict.get("linker_uuid", ascii_uuid(8))
             settings_dict["linker_uuid"] = self._cache_uuid
         else:
             self._cache_uuid = ascii_uuid(8)
@@ -237,7 +235,6 @@ class Linker:
 
     @property
     def _input_tablename_l(self):
-
         if self._find_new_matches_mode:
             return "__splink__df_concat_with_tf"
 
@@ -260,7 +257,6 @@ class Linker:
 
     @property
     def _input_tablename_r(self):
-
         if self._find_new_matches_mode:
             return "__splink__df_new_records_with_tf"
 
@@ -330,7 +326,6 @@ class Linker:
             return table_name
 
     def _initialise_df_concat(self, materialise=False):
-
         cache = self._intermediate_table_cache
         concat_df = None
         if "__splink__df_concat" in cache:
@@ -348,7 +343,6 @@ class Linker:
         return concat_df
 
     def _initialise_df_concat_with_tf(self, materialise=True):
-
         cache = self._intermediate_table_cache
         nodes_with_tf = None
         if "__splink__df_concat_with_tf" in cache:
@@ -376,7 +370,6 @@ class Linker:
         # from this method.  (Which isn't that bad, you'd just
         # need to return a list rather than a single df)
         if self._two_dataset_link_only:
-
             source_dataset_col = self._settings_obj._source_dataset_column_name
             # Need df_l to be the one with the lowest id to preeserve the property
             # that the left dataset is the one with the lowest concatenated id
@@ -426,7 +419,6 @@ class Linker:
         materialise_as_hash=True,
         use_cache=True,
     ) -> SplinkDataFrame:
-
         """Execute the SQL queued in the current pipeline as a single statement
         e.g. `with a as (), b as , c as (), select ... from c`, then execute the
         pipeline, returning the resultant table as a SplinkDataFrame
@@ -574,7 +566,6 @@ class Linker:
         table_name_hash = f"{output_tablename_templated}_{hash}"
 
         if use_cache:
-
             if self._table_exists_in_database(output_tablename_templated):
                 logger.debug(f"Using existing table {output_tablename_templated}")
                 return self._table_to_splink_dataframe(
@@ -607,7 +598,6 @@ class Linker:
         self._names_of_tables_created_by_splink.add(splink_dataframe.physical_name)
 
         if self.debug_mode:
-
             df_pd = splink_dataframe.as_pandas_dataframe()
             try:
                 from IPython.display import display
@@ -640,7 +630,6 @@ class Linker:
         return input_table_aliases
 
     def _get_input_tables_dict(self, input_table_or_tables, input_table_aliases):
-
         input_table_or_tables = ensure_is_list(input_table_or_tables)
 
         input_table_aliases = self._ensure_aliases_populated_and_is_list(
@@ -660,7 +649,6 @@ class Linker:
         return d
 
     def _predict_warning(self):
-
         if not self._settings_obj._is_fully_trained:
             msg = (
                 "\n -- WARNING --\n"
@@ -702,7 +690,6 @@ class Linker:
             )
 
     def _populate_probability_two_random_records_match_from_trained_values(self):
-
         recip_prop_matches_estimates = []
 
         logger.log(
@@ -730,7 +717,6 @@ class Linker:
             )
 
             for reverse_level in reverse_levels:
-
                 # Get comparison level on current settings obj
                 cc = self._settings_obj._get_comparison_by_output_column_name(
                     reverse_level.comparison._output_column_name
@@ -849,7 +835,9 @@ class Linker:
             settings_dict (dict): A Splink settings dictionary
         """
         # If a uuid already exists in your settings object, prioritise this
-        settings_dict["linker_uuid"] = settings_dict.get("linker_uuid", self._cache_uuid)
+        settings_dict["linker_uuid"] = settings_dict.get(
+            "linker_uuid", self._cache_uuid
+        )
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
@@ -1004,7 +992,9 @@ class Linker:
         """
         concat_with_tf = self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_values_from_label_column(
-            self, self._input_tables_dict, label_colname,
+            self,
+            self._input_tables_dict,
+            label_colname,
         )
         self._populate_m_u_from_trained_values()
 
@@ -1525,7 +1515,6 @@ class Linker:
     def profile_columns(
         self, column_expressions: Union[str, List[str]], top_n=10, bottom_n=10
     ):
-
         return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
 
     def estimate_m_from_pairwise_labels(self, table_name):

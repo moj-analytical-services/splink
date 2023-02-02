@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 
 
 def estimate_m_values_from_label_column(linker, df_dict, label_colname):
-
     msg = f" Estimating m probabilities using from column {label_colname} "
     logger.info(f"{msg:-^70}")
 

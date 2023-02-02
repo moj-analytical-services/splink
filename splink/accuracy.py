@@ -11,7 +11,6 @@ from .sql_transform import move_l_r_table_prefix_to_column_suffix
 def truth_space_table_from_labels_with_predictions_sqls(
     threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
-
     # Round to match_weight_round_to_nearest.
     # e.g. if it's 0.25, 1.27 gets rounded to 1.25
     if match_weight_round_to_nearest is not None:
@@ -152,7 +151,6 @@ def _select_found_by_blocking_rules(linker):
 def truth_space_table_from_labels_table(
     linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
-
     # Read from the cache or generate
     concat_with_tf = linker._initialise_df_concat_with_tf()
 
@@ -177,7 +175,6 @@ def truth_space_table_from_labels_table(
 def truth_space_table_from_labels_column(
     linker, label_colname, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
-
     new_matchkey = len(linker._settings_obj._blocking_rules_to_generate_predictions)
 
     df_predict = _predict_from_label_column_sql(
@@ -255,7 +252,6 @@ def prediction_errors_from_labels_table(
     include_false_negatives=True,
     threshold=0.5,
 ):
-
     # Read from the cache or generate
     concat_with_tf = linker._initialise_df_concat_with_tf()
 
@@ -301,7 +297,6 @@ def prediction_errors_from_labels_table(
 
 
 def _predict_from_label_column_sql(linker, label_colname):
-
     # In the case of labels, we use them to block
     # In the case we have a label column, we want to apply the model's blocking rules
     # but add in blocking on the label colname
@@ -333,7 +328,6 @@ def prediction_errors_from_label_column(
     include_false_negatives=True,
     threshold=0.5,
 ):
-
     df_predict = _predict_from_label_column_sql(
         linker,
         label_colname,

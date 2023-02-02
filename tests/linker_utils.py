@@ -4,7 +4,6 @@ import pytest
 
 
 def _test_table_registration(linker, additional_tables_to_register=[]):
-
     # Standard pandas df...
     a = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 

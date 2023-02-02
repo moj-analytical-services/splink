@@ -77,7 +77,6 @@ def test_dedupe_only_join_condition():
 
 
 def test_link_only_two_join_condition():
-
     settings = deepcopy(settings_template)
 
     settings = deepcopy(settings_template)
@@ -107,7 +106,6 @@ def test_link_only_two_join_condition():
 
 
 def test_link_only_three_join_condition():
-
     settings = deepcopy(settings_template)
     settings["link_type"] = "link_only"
 
@@ -115,7 +113,6 @@ def test_link_only_three_join_condition():
     settings_salt["link_type"] = "link_only"
 
     for s in [settings, settings_salt]:
-
         linker = DuckDBLinker([sds_d_only, sds_b_only, sds_c_only], s)
 
         df_predict = linker.predict().as_pandas_dataframe()
@@ -136,7 +133,6 @@ def test_link_only_three_join_condition():
 
 
 def test_link_and_dedupe_two_join_condition():
-
     settings = deepcopy(settings_template)
     settings["link_type"] = "link_and_dedupe"
 
@@ -164,7 +160,6 @@ def test_link_and_dedupe_two_join_condition():
 
 
 def test_link_and_dedupe_three_join_condition():
-
     settings = deepcopy(settings_template)
     settings["link_type"] = "link_and_dedupe"
 

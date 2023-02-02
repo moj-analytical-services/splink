@@ -44,7 +44,6 @@ def _get_top_level_case(sql):
 
 
 def _parse_top_level_case_statement_from_sql(top_level_case_tree):
-
     parsed_case_expr = []
 
     ifs = top_level_case_tree.args["ifs"]
@@ -68,12 +67,10 @@ def _parse_top_level_case_statement_from_sql(top_level_case_tree):
 
 def _merge_duplicate_levels(parsed_case_expr):
     def _join_or(groupby_item):
-
         items = list(groupby_item[1])
 
         exprs = [x["sql_expr"] for x in items]
         if len(exprs) > 1:
-
             exprs = [f"({e})" for e in exprs]
         merged = "\n OR ".join(exprs)
 
@@ -95,7 +92,6 @@ def _merge_duplicate_levels(parsed_case_expr):
 
 
 def _parse_case_statement(sql):
-
     tree = _get_top_level_case(sql)
     parsed = _parse_top_level_case_statement_from_sql(tree)
 
@@ -173,18 +169,15 @@ def convert_settings_from_v2_to_v3(settings_dict_v2: dict) -> dict:
 
     comparisons_3 = []
     for comparison_column in settings_dict_v2["comparison_columns"]:
-
         parsed = _parse_case_statement(comparison_column["case_expression"])
 
         if "m_probabilities" in comparison_column:
-
             m = comparison_column["m_probabilities"]
             m.insert(0, None)
         else:
             m = [None] * (len(parsed) + 1)
 
         if "u_probabilities" in comparison_column:
-
             u = comparison_column["u_probabilities"]
             u.insert(0, None)
         else:
