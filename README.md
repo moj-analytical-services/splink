@@ -1,3 +1,5 @@
+[![VoteSplink](https://user-images.githubusercontent.com/7570107/214026201-80f647dd-54a3-45e8-bb58-e388c220e94e.png)](https://www.smartsurvey.co.uk/s/80C7VA/)
+
 ![image](https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png)
 [![pypi](https://img.shields.io/github/v/release/moj-analytical-services/splink?include_prereleases)](https://pypi.org/project/splink/#history)
 [![Downloads](https://pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
@@ -76,10 +78,16 @@ The Office for National Statistics have written a [case study about using Splink
 
 ## Installation
 
-Splink supports python 3.7+. To obtain the latest released version of splink:
+Splink supports python 3.7+. To obtain the latest released version of splink you can install from PyPI using pip:
 
 ```sh
 pip install splink
+```
+
+or, if you prefer, you can instead install splink using conda:
+
+```sh
+conda install -c conda-forge splink
 ```
 
 ## Quickstart
@@ -144,15 +152,15 @@ clusters.as_pandas_dataframe(limit=5)
 
 ## Citation
 
-If you use Splink in your reserach, we'd be grateful for a citation in the following format (modify the version and date accordingly).
+If you use Splink in your research, we'd be grateful for a citation in the following format (modify the version and date accordingly).
 
 ```
 @misc{ministry_of_justice_2023_splink,
   author       = {Ministry of Justice},
-  title        = {Splink: v3.5.2},
+  title        = {Splink: v3.5.4},
   month        = jan,
   year         = 2023,
-  version      = {3.5.3},
+  version      = {3.5.4},
   url          = {http://github.com/moj-analytical-services/splink}
 }
 ```

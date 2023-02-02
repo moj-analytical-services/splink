@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
@@ -12,7 +14,7 @@ if TYPE_CHECKING:
 
 
 def number_of_comparisons_generated_by_blocking_rule_sql(
-    linker: "Linker",
+    linker: Linker,
     blocking_rule,
 ) -> str:
 
@@ -36,7 +38,7 @@ def number_of_comparisons_generated_by_blocking_rule_sql(
 
 
 def cumulative_comparisons_generated_by_blocking_rules(
-    linker: "Linker",
+    linker: Linker,
     blocking_rules,
     output_chart=True,
 ):

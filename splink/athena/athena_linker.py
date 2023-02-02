@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import logging
 
 import os
 import awswrangler as wr
 import numpy as np
 import boto3
-from typing import Union
 import uuid
 import pandas as pd
 
@@ -151,7 +152,7 @@ class AthenaLinker(Linker):
         output_database: str,
         output_bucket: str,
         settings_dict: dict = None,
-        input_table_aliases: Union[str, list] = None,
+        input_table_aliases: str | list = None,
         set_up_basic_logging=True,
         output_filepath: str = "",
         garbage_collection_level: int = 1,

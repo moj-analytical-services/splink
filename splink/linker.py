@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from collections import UserDict
-from typing import List, Union
 from copy import Error, copy, deepcopy
 from statistics import median
 import hashlib
@@ -124,10 +123,10 @@ class Linker:
 
     def __init__(
         self,
-        input_table_or_tables: Union[str, list],
+        input_table_or_tables: str | list,
         settings_dict: dict,
         set_up_basic_logging: bool = True,
-        input_table_aliases: Union[str, list] = None,
+        input_table_aliases: str | list = None,
     ):
         """Initialise the linker object, which manages the data linkage process and
         holds the data linkage model.
@@ -181,9 +180,7 @@ class Linker:
             settings_dict["sql_dialect"] = self._sql_dialect
 
         if settings_dict is not None:
-            self._cache_uuid = settings_dict.get(
-                "linker_uuid", ascii_uuid(8)
-            )
+            self._cache_uuid = settings_dict.get("linker_uuid", ascii_uuid(8))
             settings_dict["linker_uuid"] = self._cache_uuid
         else:
             self._cache_uuid = ascii_uuid(8)
@@ -237,7 +234,6 @@ class Linker:
 
     @property
     def _input_tablename_l(self):
-
         if self._find_new_matches_mode:
             return "__splink__df_concat_with_tf"
 
@@ -260,7 +256,6 @@ class Linker:
 
     @property
     def _input_tablename_r(self):
-
         if self._find_new_matches_mode:
             return "__splink__df_new_records_with_tf"
 
@@ -330,7 +325,6 @@ class Linker:
             return table_name
 
     def _initialise_df_concat(self, materialise=False):
-
         cache = self._intermediate_table_cache
         concat_df = None
         if "__splink__df_concat" in cache:
@@ -348,7 +342,6 @@ class Linker:
         return concat_df
 
     def _initialise_df_concat_with_tf(self, materialise=True):
-
         cache = self._intermediate_table_cache
         nodes_with_tf = None
         if "__splink__df_concat_with_tf" in cache:
@@ -376,7 +369,6 @@ class Linker:
         # from this method.  (Which isn't that bad, you'd just
         # need to return a list rather than a single df)
         if self._two_dataset_link_only:
-
             source_dataset_col = self._settings_obj._source_dataset_column_name
             # Need df_l to be the one with the lowest id to preeserve the property
             # that the left dataset is the one with the lowest concatenated id
@@ -422,11 +414,10 @@ class Linker:
 
     def _execute_sql_pipeline(
         self,
-        input_dataframes: List[SplinkDataFrame] = [],
+        input_dataframes: list[SplinkDataFrame] = [],
         materialise_as_hash=True,
         use_cache=True,
     ) -> SplinkDataFrame:
-
         """Execute the SQL queued in the current pipeline as a single statement
         e.g. `with a as (), b as , c as (), select ... from c`, then execute the
         pipeline, returning the resultant table as a SplinkDataFrame
@@ -574,7 +565,6 @@ class Linker:
         table_name_hash = f"{output_tablename_templated}_{hash}"
 
         if use_cache:
-
             if self._table_exists_in_database(output_tablename_templated):
                 logger.debug(f"Using existing table {output_tablename_templated}")
                 return self._table_to_splink_dataframe(
@@ -607,7 +597,6 @@ class Linker:
         self._names_of_tables_created_by_splink.add(splink_dataframe.physical_name)
 
         if self.debug_mode:
-
             df_pd = splink_dataframe.as_pandas_dataframe()
             try:
                 from IPython.display import display
@@ -640,7 +629,6 @@ class Linker:
         return input_table_aliases
 
     def _get_input_tables_dict(self, input_table_or_tables, input_table_aliases):
-
         input_table_or_tables = ensure_is_list(input_table_or_tables)
 
         input_table_aliases = self._ensure_aliases_populated_and_is_list(
@@ -660,7 +648,6 @@ class Linker:
         return d
 
     def _predict_warning(self):
-
         if not self._settings_obj._is_fully_trained:
             msg = (
                 "\n -- WARNING --\n"
@@ -702,7 +689,6 @@ class Linker:
             )
 
     def _populate_probability_two_random_records_match_from_trained_values(self):
-
         recip_prop_matches_estimates = []
 
         logger.log(
@@ -730,7 +716,6 @@ class Linker:
             )
 
             for reverse_level in reverse_levels:
-
                 # Get comparison level on current settings obj
                 cc = self._settings_obj._get_comparison_by_output_column_name(
                     reverse_level.comparison._output_column_name
@@ -849,7 +834,9 @@ class Linker:
             settings_dict (dict): A Splink settings dictionary
         """
         # If a uuid already exists in your settings object, prioritise this
-        settings_dict["linker_uuid"] = settings_dict.get("linker_uuid", self._cache_uuid)
+        settings_dict["linker_uuid"] = settings_dict.get(
+            "linker_uuid", self._cache_uuid
+        )
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
@@ -1004,7 +991,9 @@ class Linker:
         """
         concat_with_tf = self._initialise_df_concat_with_tf(materialise=True)
         estimate_m_values_from_label_column(
-            self, self._input_tables_dict, label_colname,
+            self,
+            self._input_tables_dict,
+            label_colname,
         )
         self._populate_m_u_from_trained_values()
 
@@ -1013,8 +1002,8 @@ class Linker:
     def estimate_parameters_using_expectation_maximisation(
         self,
         blocking_rule: str,
-        comparisons_to_deactivate: List[Union[str, Comparison]] = None,
-        comparison_levels_to_reverse_blocking_rule: List[ComparisonLevel] = None,
+        comparisons_to_deactivate: list[str | Comparison] = None,
+        comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
         fix_probability_two_random_records_match: bool = False,
         fix_m_probabilities=False,
         fix_u_probabilities=True,
@@ -1523,9 +1512,8 @@ class Linker:
         return cc
 
     def profile_columns(
-        self, column_expressions: Union[str, List[str]], top_n=10, bottom_n=10
+        self, column_expressions: str | list[str], top_n=10, bottom_n=10
     ):
-
         return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
 
     def estimate_m_from_pairwise_labels(self, table_name):
@@ -1672,7 +1660,12 @@ class Linker:
         recs = df_truth_space.as_record_dict()
         return roc_chart(recs)
 
-    def precision_recall_chart_from_labels_table(self, labels_tablename):
+    def precision_recall_chart_from_labels_table(
+        self,
+        labels_tablename,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+    ):
         """Generate a precision-recall chart from labelled (ground truth) data.
 
         The table of labels should be in the following format, and should be registered
@@ -1717,7 +1710,12 @@ class Linker:
                 attribute.
         """
         self._raise_error_if_necessary_accuracy_columns_not_computed()
-        df_truth_space = truth_space_table_from_labels_table(self, labels_tablename)
+        df_truth_space = truth_space_table_from_labels_table(
+            self,
+            labels_tablename,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
 
@@ -1916,7 +1914,7 @@ class Linker:
         recs = df.as_record_dict()
         return match_weights_histogram(recs, width=width, height=height)
 
-    def waterfall_chart(self, records: List[dict], filter_nulls=True):
+    def waterfall_chart(self, records: list[dict], filter_nulls=True):
         """Visualise how the final match weight is computed for the provided pairwise
         record comparisons.
 
@@ -2092,7 +2090,7 @@ class Linker:
         records = missingness_data(self, input_dataset)
         return missingness_chart(records, input_dataset)
 
-    def completeness_chart(self, input_dataset: str = None, cols: List[str] = None):
+    def completeness_chart(self, input_dataset: str = None, cols: list[str] = None):
         """Generate a summary chart of the completeness (proportion of non-nulls) of
         columns in each of the input datasets. By default, completeness is assessed for
         all column in the input data.
@@ -2434,7 +2432,7 @@ class Linker:
         Args:
             in_path (str): Path to settings json file
         """
-        with open(in_path, "r") as f:
+        with open(in_path) as f:
             model_dict = json.load(f)
         self.initialise_settings(model_dict)
 

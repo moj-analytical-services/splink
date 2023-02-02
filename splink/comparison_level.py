@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import math
 import re
 from statistics import median
 from textwrap import dedent
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 import logging
 
 
@@ -136,14 +138,14 @@ class ComparisonLevel:
     def __init__(
         self,
         level_dict,
-        comparison: "Comparison" = None,
+        comparison: Comparison = None,
         sql_dialect: str = None,
     ):
 
         # Protected, because we don't want to modify the original dict
         self._level_dict = level_dict
 
-        self.comparison: "Comparison" = comparison
+        self.comparison: Comparison = comparison
         if not hasattr(self, "_sql_dialect"):
             self._sql_dialect = sql_dialect
 
@@ -418,7 +420,7 @@ class ComparisonLevel:
         return True
 
     @property
-    def _input_columns_used_by_sql_condition(self) -> List[InputColumn]:
+    def _input_columns_used_by_sql_condition(self) -> list[InputColumn]:
         # returns e.g. InputColumn(first_name), InputColumn(surname)
 
         if self._is_else_level:

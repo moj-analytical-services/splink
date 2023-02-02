@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 # For more information on where formulas came from, see
 # https://github.com/moj-analytical-services/splink/pull/107
 
 import logging
-from typing import List, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 from .input_column import InputColumn, remove_quotes_from_identifiers
 
@@ -41,7 +43,7 @@ def term_frequencies_for_single_column_sql(
     return sql
 
 
-def _join_tf_to_input_df_sql(linker: "Linker"):
+def _join_tf_to_input_df_sql(linker: Linker):
 
     settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
@@ -85,7 +87,7 @@ def term_frequencies_from_concat_with_tf(input_column):
     return sql
 
 
-def compute_all_term_frequencies_sqls(linker: "Linker") -> List[dict]:
+def compute_all_term_frequencies_sqls(linker: Linker) -> list[dict]:
 
     settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns

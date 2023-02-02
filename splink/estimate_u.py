@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from copy import deepcopy
 from typing import TYPE_CHECKING
@@ -33,7 +35,7 @@ def _num_target_rows_to_rows_to_sample(target_rows):
     return sample_rows
 
 
-def estimate_u_values(linker: "Linker", target_rows):
+def estimate_u_values(linker: Linker, target_rows):
 
     logger.info("----- Estimating u probabilities using random sampling -----")
 

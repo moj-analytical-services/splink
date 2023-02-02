@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import logging
 import sqlglot
-from typing import Union, List
 import re
 import os
 import math
@@ -32,7 +33,7 @@ class SparkDataframe(SplinkDataFrame):
         self.spark_linker = spark_linker
 
     @property
-    def columns(self) -> List[InputColumn]:
+    def columns(self) -> list[InputColumn]:
         sql = f"select * from {self.physical_name} limit 1"
         spark_df = self.spark_linker.spark.sql(sql)
 
@@ -76,7 +77,7 @@ class SparkLinker(Linker):
         settings_dict=None,
         break_lineage_method=None,
         set_up_basic_logging=True,
-        input_table_aliases: Union[str, list] = None,
+        input_table_aliases: str | list = None,
         spark=None,
         catalog=None,
         database=None,
@@ -160,7 +161,7 @@ class SparkLinker(Linker):
 
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         if self.in_databricks:
-            enable_splink()
+            enable_splink(spark)
 
         self._set_default_break_lineage_method()
 
@@ -244,26 +245,36 @@ class SparkLinker(Linker):
         # will for loop through this list to register UDFs.
         # List is a tuple of structure (UDF Name, class path, spark return type)
         udfs_register = [
-            ("jaro_winkler_sim", "JaroWinklerSimilarity", DoubleType()),
-            ("jaccard_sim", "JaccardSimilarity", DoubleType()),
-            ("cosine_distance", "CosineDistance", DoubleType()),
-            ("Dmetaphone", "DoubleMetaphone", StringType()),
-            ("Dmetaphone", "DoubleMetaphone", StringType()),
-            ("DmetaphoneAlt", "DoubleMetaphoneAlt", StringType()),
+            (
+                "jaro_winkler",
+                "uk.gov.moj.dash.linkage.JaroWinklerSimilarity",
+                DoubleType(),
+            ),
+            ("jaccard", "uk.gov.moj.dash.linkage.JaccardSimilarity", DoubleType()),
+            ("cosine_distance", "uk.gov.moj.dash.linkage.CosineDistance", DoubleType()),
+            ("Dmetaphone", "uk.gov.moj.dash.linkage.DoubleMetaphone", StringType()),
+            (
+                "DmetaphoneAlt",
+                "uk.gov.moj.dash.linkage.DoubleMetaphoneAlt",
+                StringType(),
+            ),
+            ("QgramTokeniser", "uk.gov.moj.dash.linkage.QgramTokeniser", StringType()),
         ]
         try:
             for udf in udfs_register:
                 self.spark.udf.registerJavaFunction(*udf)
-        except AnalysisException:
+        except AnalysisException as e:
             logger.warning(
                 "Unable to load custom Spark SQL functions such as jaro_winkler from "
                 "the jar that's provided with Splink.\n"
-                "You need to ensure the Splink jar is registered./n"
-                "See https://moj-analytical-services.github.io/splink/demos/example_simple_pyspark.html"  # NOQA: E501
+                "You need to ensure the Splink jar is registered.\n"
+                "See https://moj-analytical-services.github.io/splink/demos/example_simple_pyspark.html "  # NOQA: E501
                 "for an example.\n"
                 "You will not be able to use these functions in your linkage.\n"
                 "You can find the location of the jar by calling the following function"
                 ":\nfrom splink.spark.jar_location import similarity_jar_location"
+                "\n\nFull error:\n"
+                f"{e}"
             )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
@@ -450,9 +461,9 @@ class SparkLinker(Linker):
             # this clause accounts for temp tables which can have the same name as
             # persistent table without issue
             if (
-                len(set([x.tableName for x in query_result])) == 1
+                len({x.tableName for x in query_result}) == 1
             ) and (  # table names are the same
-                len(set([x.isTemporary for x in query_result])) == 2
+                len({x.isTemporary for x in query_result}) == 2
             ):  # isTemporary is boolean
                 return True
             else:

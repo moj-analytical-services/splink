@@ -1,4 +1,5 @@
-from typing import Union, List
+from __future__ import annotations
+
 import logging
 from math import pow, log2
 import pandas as pd
@@ -24,7 +25,7 @@ class SQLiteDataFrame(SplinkDataFrame):
         self.sqlite_linker = sqlite_linker
 
     @property
-    def columns(self) -> List[InputColumn]:
+    def columns(self) -> list[InputColumn]:
         sql = f"""
         PRAGMA table_info({self.physical_name});
         """
@@ -86,7 +87,7 @@ class SQLiteLinker(Linker):
         settings_dict=None,
         connection=":memory:",
         set_up_basic_logging=True,
-        input_table_aliases: Union[str, list] = None,
+        input_table_aliases: str | list = None,
     ):
 
         self._sql_dialect_ = "sqlite"
