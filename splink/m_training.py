@@ -33,6 +33,8 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
         BlockingRule(f"l.{label_colname} = r.{label_colname}")
     ]
 
+    concat_with_tf = linker._initialise_df_concat_with_tf(materialise=True)
+
     sql = block_using_rules_sql(training_linker)
     training_linker._enqueue_sql(sql, "__splink__df_blocked")
 
@@ -49,7 +51,7 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
     sql = compute_new_parameters_sql(settings_obj)
     training_linker._enqueue_sql(sql, "__splink__m_u_counts")
 
-    df_params = training_linker._execute_sql_pipeline()
+    df_params = training_linker._execute_sql_pipeline([concat_with_tf])
     param_records = df_params.as_pandas_dataframe()
     param_records = compute_proportions_for_new_parameters(param_records)
 
