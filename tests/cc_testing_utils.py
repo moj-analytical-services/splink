@@ -38,11 +38,7 @@ def register_cc_df(G):
     linker.register_table(df_concat, table_name, overwrite=True)
 
     df_nodes = pd.DataFrame({"unique_id": G.nodes})
-    linker.register_table(
-        df_nodes,
-        "__splink__df_concat_with_tf",
-        overwrite=True
-    )
+    linker.register_table(df_nodes, "__splink__df_concat_with_tf", overwrite=True)
 
     # add our prediction df to our list of created tables
     predict_df = DuckDBLinkerDataFrame(table_name, table_name, linker)
@@ -62,7 +58,7 @@ def run_cc_implementation(predict_df):
         predict_df,
         df_predict=None,
         concat_with_tf=concat_with_tf,
-        _generated_graph=True
+        _generated_graph=True,
     ).as_pandas_dataframe()
     cc = cc.rename(columns={"unique_id": "node_id", "cluster_id": "representative"})
     cc = cc[["node_id", "representative"]]

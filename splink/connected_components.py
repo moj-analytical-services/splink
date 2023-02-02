@@ -303,10 +303,7 @@ def _cc_assess_exit_condition(representatives_name):
 
 
 def _cc_create_unique_id_cols(
-    linker: "Linker",
-    concat_with_tf: str,
-    df_predict: str,
-    match_probability_threshold
+    linker: "Linker", concat_with_tf: str, df_predict: str, match_probability_threshold
 ):
 
     """Create SQL to pull unique ID columns for connected components.

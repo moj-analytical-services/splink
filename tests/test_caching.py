@@ -38,10 +38,7 @@ def test_cache_id(tmp_path):
     random_uuid = "my_random_uuid"
     settings = get_settings_dict()
     settings["linker_uuid"] = random_uuid
-    linker = DuckDBLinker(
-        df,
-        settings
-    )
+    linker = DuckDBLinker(df, settings)
     linker_uuid = linker._cache_uuid
     assert linker_uuid == random_uuid
 
@@ -63,12 +60,10 @@ def test_materialising_works():
     linker._initialise_df_concat(materialise=False)
     linker._initialise_df_concat_with_tf(materialise=True)
 
-
     linker = DuckDBLinker(df, settings)
     linker._initialise_df_concat_with_tf(materialise=False)
     linker._initialise_df_concat(materialise=True)
     linker.compute_tf_table("first_name")
-
 
     linker = DuckDBLinker(df, settings)
     linker._initialise_df_concat_with_tf(materialise=False)

@@ -83,8 +83,6 @@ def cumulative_comparisons_generated_by_blocking_rules(
         else:
             group_by_statement = "group by source_dataset"
 
-
-
         sql = f"""
             select count(*) as count
             from {concat.physical_name}
