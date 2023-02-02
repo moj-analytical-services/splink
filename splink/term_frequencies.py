@@ -140,17 +140,20 @@ def compute_term_frequencies_from_concat_with_tf(linker: "Linker"):
 
     settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
+    cache = linker._intermediate_table_cache
 
-    sqls = []
+    tf_table = []
     for tf_col in tf_cols:
         tf_table_name = colname_to_tf_tablename(tf_col)
 
-        if tf_table_name not in linker._intermediate_table_cache:
+        if tf_table_name not in cache:
             sql = term_frequencies_from_concat_with_tf(tf_col)
             sql = {
                 "sql": sql,
                 "output_table_name": colname_to_tf_tablename(tf_col),
             }
-            sqls.append(sql)
+            tf_table.append(sql)
+        else:
+            tf_table.append(cache[tf_table_name])
 
-    return sqls
+    return tf_table

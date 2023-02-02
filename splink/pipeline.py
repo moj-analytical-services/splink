@@ -47,6 +47,8 @@ class SQLPipeline:
 
         parts = deepcopy(self.queue)
         for df in input_dataframes:
+            if df is None:
+                continue
             if not df.physical_and_template_names_equal:
                 sql = f"select * from {df.physical_name}"
                 task = SQLTask(
@@ -86,6 +88,10 @@ class SQLPipeline:
         final_sql = with_parts + last_part.sql
 
         return final_sql
+
+    def _scan_pipeline_for_tables(self, table):
+        queued_tables = [pipe.output_table_name for pipe in self._pipeline.queue]
+        return table in queued_tables
 
     def reset(self):
         self.queue = []

@@ -153,6 +153,9 @@ def truth_space_table_from_labels_table(
     linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
 
+    # Read from the cache or generate
+    concat_with_tf = linker._initialise_df_concat_with_tf()
+
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename)
 
     for sql in sqls:
@@ -166,7 +169,7 @@ def truth_space_table_from_labels_table(
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    df_truth_space_table = linker._execute_sql_pipeline()
+    df_truth_space_table = linker._execute_sql_pipeline([concat_with_tf])
 
     return df_truth_space_table
 
@@ -252,6 +255,10 @@ def prediction_errors_from_labels_table(
     include_false_negatives=True,
     threshold=0.5,
 ):
+
+    # Read from the cache or generate
+    concat_with_tf = linker._initialise_df_concat_with_tf()
+
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, labels_tablename)
 
     for sql in sqls:
@@ -290,7 +297,7 @@ def prediction_errors_from_labels_table(
 
     linker._enqueue_sql(sql, "__splink__labels_with_fp_fn_status")
 
-    return linker._execute_sql_pipeline()
+    return linker._execute_sql_pipeline([concat_with_tf])
 
 
 def _predict_from_label_column_sql(linker, label_colname):
