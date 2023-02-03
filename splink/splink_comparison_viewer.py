@@ -44,7 +44,8 @@ def row_examples(linker: Linker, example_rows_per_category=2):
     sql = """
     select *,
         ROW_NUMBER() OVER (PARTITION BY gam_concat order by rand_order)
-            AS row_example_index
+            AS row_example_index,
+        COUNT(*) OVER (PARTITION BY gam_concat) AS count
     from __splink__df_predict_with_row_id
     """
 
