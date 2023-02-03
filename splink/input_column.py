@@ -1,7 +1,9 @@
-import sqlglot
-import sqlglot.expressions as exp
+from __future__ import annotations
+
 from copy import deepcopy
 
+import sqlglot
+import sqlglot.expressions as exp
 from sqlglot.errors import ParseError
 
 from .default_from_jsonschema import default_value_from_schema
@@ -64,18 +66,7 @@ class InputColumn:
         else:
             self._sql_dialect = None
 
-        valid_dialects = [name.lower() for name in sqlglot.Dialects._member_names_]
-        if self._sql_dialect in valid_dialects:
-            quote_characters = sqlglot.Dialect[self._sql_dialect.lower()].identifiers
-            quote_character = '"' if '"' in quote_characters else quote_characters[0]
-        else:
-            quote_character = '"'
-
-        # Quote SQL keywords
-        if name in ("group", "index"):
-            name = f"{quote_character}{name}{quote_character}"
-
-        self.input_name = name
+        self.input_name = self._quote_name(name)
 
         self.input_name_as_tree = self.parse_input_name_to_sqlglot_tree()
 
@@ -217,3 +208,35 @@ class InputColumn:
 
     def l_r_tf_names_as_l_r(self):
         return [self.l_tf_name_as_l(), self.r_tf_name_as_r()]
+
+    def _quote_name(self, name: str) -> str:
+        # Quote column names that are also SQL keywords
+        if name not in {"group", "index"}:
+            return name
+        start, end = _get_dialect_quotes(self._sql_dialect)
+        return start + name + end
+
+
+def _get_dialect_quotes(dialect: str | None):
+    start = end = '"'
+    if dialect is None:
+        return start, end
+    try:
+        sqlglot_dialect = sqlglot.Dialect[dialect.lower()]
+    except KeyError:
+        return start, end
+    return _get_sqlglot_dialect_quotes(sqlglot_dialect)
+
+
+def _get_sqlglot_dialect_quotes(dialect: sqlglot.Dialect):
+    # TODO: once we drop support for sqlglot < 6.0.0, we can simplify this
+    try:
+        # For sqlglot < 6.0.0
+        quotes = dialect.identifiers
+        quote = '"' if '"' in quotes else quotes[0]
+        start = end = quote
+    except AttributeError:
+        # For sqlglot >= 6.0.0
+        start = dialect.identifier_start
+        end = dialect.identifier_end
+    return start, end
