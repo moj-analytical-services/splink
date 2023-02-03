@@ -87,14 +87,16 @@ logger = logging.getLogger(__name__)
 
 
 class CacheDictWithLogging(UserDict):
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> SplinkDataFrame:
         splink_dataframe = super().__getitem__(key)
         phy_name = splink_dataframe.physical_name
         logger.debug(
             f"Using cache for template name {key}" f" with physical name {phy_name}"
         )
         splink_dataframe.templated_name = key
-        return splink_dataframe
+        # Return a copy so that user can modify physical or templated name
+        # without modifying the version in the cache
+        return copy(splink_dataframe)
 
     def __setitem__(self, key, value):
         super().__setitem__(key, value)
