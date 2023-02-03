@@ -58,12 +58,20 @@ def test_splink_converges_to_known_params():
         "additional_columns_to_retain": ["true_match", "true_match_probability"],
         "retain_intermediate_calculation_columns": False,
         "retain_matching_columns": False,
+        "linker_uuid": "abc",
     }
 
     linker = DuckDBLinker(df, settings)
 
-    # need to register df_blocked and go from there
-    linker.register_table(df, "__splink__df_comparison_vectors_0de5e3a")
+    # This test is fiddly because you need to know the hash of the
+    # comparison vector table, but to find this out you need to run the test
+
+    # If the test is failing, run it and look at the output for a line like
+    # CREATE TABLE __splink__df_comparison_vectors_abc123
+    # and modify the following line to include the value of the hash (abc123 above)
+
+    cvv_hashed_tablename = "__splink__df_comparison_vectors_44a6648a2"
+    linker.register_table(df, cvv_hashed_tablename)
 
     em_training_session = EMTrainingSession(
         linker,
@@ -83,7 +91,7 @@ def test_splink_converges_to_known_params():
 
     cv = DuckDBLinkerDataFrame(
         "__splink__df_comparison_vectors",
-        "__splink__df_comparison_vectors_0de5e3a",
+        cvv_hashed_tablename,
         linker,
     )
 
