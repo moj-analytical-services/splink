@@ -2607,7 +2607,7 @@ class Linker:
         splink_dataframe = self.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
-        self._intermediate_table_cache["__splink__df_predict"] = table_name_physical
+        self._intermediate_table_cache["__splink__df_predict"] = splink_dataframe
         return splink_dataframe
 
     def register_term_frequency_lookup(self, input_data, col_name, overwrite=False):
