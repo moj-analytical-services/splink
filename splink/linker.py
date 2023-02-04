@@ -1250,10 +1250,11 @@ class Linker:
         original_link_type = self._settings_obj._link_type
 
         if not isinstance(records_or_tablename, str):
+            uuid = ascii_uuid(8)
             self.register_table(
-                records_or_tablename, "__splink__df_new_records", overwrite=True
+                records_or_tablename, f"__splink__df_new_records_{uuid}", overwrite=True
             )
-            new_records_tablename = "__splink__df_new_records"
+            new_records_tablename = f"__splink__df_new_records_{uuid}"
         else:
             new_records_tablename = records_or_tablename
 
@@ -1354,12 +1355,16 @@ class Linker:
         self._compare_two_records_mode = True
         self._settings_obj._blocking_rules_to_generate_predictions = []
 
-        self.register_table(
-            [record_1], "__splink__compare_two_records_left", overwrite=True
+        uuid = ascii_uuid(8)
+        df_records_left = self.register_table(
+            [record_1], f"__splink__compare_two_records_left_{uuid}", overwrite=True
         )
-        self.register_table(
-            [record_2], "__splink__compare_two_records_right", overwrite=True
+        df_records_left.templated_name = "__splink__compare_two_records_left"
+
+        df_records_right = self.register_table(
+            [record_2], f"__splink__compare_two_records_right_{uuid}", overwrite=True
         )
+        df_records_right.templated_name = "__splink__compare_two_records_right"
 
         sql_join_tf = _join_tf_to_input_df_sql(self)
 
@@ -1387,7 +1392,9 @@ class Linker:
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-        predictions = self._execute_sql_pipeline(use_cache=False)
+        predictions = self._execute_sql_pipeline(
+            [df_records_left, df_records_right], use_cache=False
+        )
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
