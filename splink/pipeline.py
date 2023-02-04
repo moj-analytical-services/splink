@@ -51,8 +51,6 @@ class SQLPipeline:
 
         parts = deepcopy(self.queue)
         for df in input_dataframes:
-            if df is None:
-                continue
             if not df.physical_and_template_names_equal:
                 sql = f"select * from {df.physical_name}"
                 task = SQLTask(
