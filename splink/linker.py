@@ -331,9 +331,14 @@ class Linker:
         concat_df = None
         if "__splink__df_concat" in cache:
             concat_df = cache["__splink__df_concat"]
+        elif "__splink__df_concat_with_tf" in cache:
+            concat_df = cache["__splink__df_concat_with_tf"]
+            concat_df.templated_name = "__splink__df_concat"
         else:
             if materialise:
                 # Clear the pipeline if we are materialising
+                # There's no reason not to do this, since when
+                # we execute the pipeline, it'll get cleared anyway
                 self._pipeline.reset()
             sql = vertically_concatenate_sql(self)
             self._enqueue_sql(sql, "__splink__df_concat")
@@ -352,6 +357,8 @@ class Linker:
         else:
             if materialise:
                 # Clear the pipeline if we are materialising
+                # There's no reason not to do this, since when
+                # we execute the pipeline, it'll get cleared anyway
                 self._pipeline.reset()
 
             sql = vertically_concatenate_sql(self)

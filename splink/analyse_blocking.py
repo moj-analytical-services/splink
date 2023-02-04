@@ -6,7 +6,6 @@ from typing import TYPE_CHECKING
 from .blocking import _sql_gen_where_condition, block_using_rules_sql
 
 from .misc import calculate_cartesian, calculate_reduction_ratio
-from .vertically_concatenate import vertically_concatenate_sql
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -52,8 +51,6 @@ def cumulative_comparisons_generated_by_blocking_rules(
     linker._settings_obj_ = settings_obj
     linker._analyse_blocking_mode = True
 
-    cache = linker._intermediate_table_cache
-
     if blocking_rules:
         brs_as_objs = settings_obj._brs_as_objs(blocking_rules)
         linker._settings_obj_._blocking_rules_to_generate_predictions = brs_as_objs
@@ -65,15 +62,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
         for cl in cc.comparison_levels:
             cl._level_dict["tf_adjustment_column"] = None
 
-    # Check cache for `__splink__df_concat_with_tf`
-    concat_with_tf = "__splink__df_concat_with_tf"
-    if concat_with_tf in cache:
-        concat = cache[concat_with_tf]
-        # Rename templated name so we can utilise the cached
-        # __splink__df_concat_with_tf table
-        concat.templated_name = "__splink__df_concat"
-    else:
-        concat = linker._initialise_df_concat(materialise=True)
+    concat = linker._initialise_df_concat(materialise=True)
 
     # Calculate the Cartesian Product
     if output_chart:
