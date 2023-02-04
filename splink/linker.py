@@ -1544,7 +1544,23 @@ class Linker:
     ):
         return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
 
-    def estimate_m_from_pairwise_labels(self, table_name):
+    def _get_labels_tablename_from_input(
+        self, labels_splinkdataframe_or_table_name: str | SplinkDataFrame
+    ):
+
+        if isinstance(labels_splinkdataframe_or_table_name, SplinkDataFrame):
+            labels_tablename = labels_splinkdataframe_or_table_name.physical_name
+        elif isinstance(labels_splinkdataframe_or_table_name, str):
+            labels_tablename = labels_splinkdataframe_or_table_name
+        else:
+            raise ValueError(
+                "The 'labels_splinkdataframe_or_table_name' argument"
+                " must be of type SplinkDataframe or a string representing a tablename"
+                " in the input database"
+            )
+        return labels_tablename
+
+    def estimate_m_from_pairwise_labels(self, labels_splinkdataframe_or_table_name):
         """Estimate the m parameters of the linkage model from a dataframe of pairwise
         labels.
 
@@ -1563,18 +1579,22 @@ class Linker:
         of 1, i.e. a perfect match.
 
         Args:
-          labels_tablename (str): Name of table containing labels in the database
+          labels_splinkdataframe_or_table_name (str): Name of table containing labels
+            in the database or SplinkDataframe
 
         Examples:
           >>> pairwise_labels = pd.read_csv("./data/pairwise_labels_to_estimate_m.csv")
           >>> linker.register_table(pairwise_labels, "labels", overwrite=True)
           >>> linker.estimate_m_from_pairwise_labels("labels")
         """
-        estimate_m_from_pairwise_labels(self, table_name)
+        labels_tablename = self._get_labels_tablename_from_input(
+            labels_splinkdataframe_or_table_name
+        )
+        estimate_m_from_pairwise_labels(self, labels_tablename)
 
     def truth_space_table_from_labels_table(
         self,
-        labels_tablename,
+        labels_splinkdataframe_or_table_name,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
     ) -> SplinkDataFrame:
@@ -1596,7 +1616,8 @@ class Linker:
         For `dedupe_only` links, the `source_dataset` columns can be ommitted.
 
         Args:
-            labels_tablename (str): Name of table containing labels in the database
+            labels_splinkdataframe_or_table_name (str | SplinkDataFrame): Name of table
+                containing labels in the database
             threshold_actual (float, optional): Where the `clerical_match_score`
                 provided by the user is a probability rather than binary, this value
                 is used as the threshold to classify `clerical_match_score`s as binary
@@ -1620,6 +1641,10 @@ class Linker:
         Returns:
             SplinkDataFrame:  Table of truth statistics
         """
+        labels_tablename = self._get_labels_tablename_from_input(
+            labels_splinkdataframe_or_table_name
+        )
+
         self._raise_error_if_necessary_accuracy_columns_not_computed()
         return truth_space_table_from_labels_table(
             self,
@@ -1630,7 +1655,7 @@ class Linker:
 
     def roc_chart_from_labels_table(
         self,
-        labels_tablename,
+        labels_splinkdataframe_or_table_name: str | SplinkDataFrame,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
     ):
@@ -1651,7 +1676,8 @@ class Linker:
         For `dedupe_only` links, the `source_dataset` columns can be ommitted.
 
         Args:
-            labels_tablename (str): Name of table containing labels in the database
+            labels_splinkdataframe_or_table_name (str | SplinkDataFrame): Name of table
+                containing labels in the database
             threshold_actual (float, optional): Where the `clerical_match_score`
                 provided by the user is a probability rather than binary, this value
                 is used as the threshold to classify `clerical_match_score`s as binary
@@ -1678,6 +1704,10 @@ class Linker:
                 The vegalite spec is available as a dictionary using the `spec`
                 attribute.
         """
+        labels_tablename = self._get_labels_tablename_from_input(
+            labels_splinkdataframe_or_table_name
+        )
+
         self._raise_error_if_necessary_accuracy_columns_not_computed()
         df_truth_space = truth_space_table_from_labels_table(
             self,
@@ -1690,7 +1720,7 @@ class Linker:
 
     def precision_recall_chart_from_labels_table(
         self,
-        labels_tablename,
+        labels_splinkdataframe_or_table_name,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
     ):
@@ -1711,7 +1741,8 @@ class Linker:
         For `dedupe_only` links, the `source_dataset` columns can be ommitted.
 
         Args:
-            labels_tablename (str): Name of table containing labels in the database
+            labels_splinkdataframe_or_table_name (str | SplinkDataFrame): Name of table
+                containing labels in the database
             threshold_actual (float, optional): Where the `clerical_match_score`
                 provided by the user is a probability rather than binary, this value
                 is used as the threshold to classify `clerical_match_score`s as binary
@@ -1737,6 +1768,9 @@ class Linker:
                 The vegalite spec is available as a dictionary using the `spec`
                 attribute.
         """
+        labels_tablename = self._get_labels_tablename_from_input(
+            labels_splinkdataframe_or_table_name
+        )
         self._raise_error_if_necessary_accuracy_columns_not_computed()
         df_truth_space = truth_space_table_from_labels_table(
             self,
@@ -1749,7 +1783,7 @@ class Linker:
 
     def prediction_errors_from_labels_table(
         self,
-        labels_tablename,
+        labels_splinkdataframe_or_table_name,
         include_false_positives=True,
         include_false_negatives=True,
         threshold=0.5,
@@ -1759,7 +1793,8 @@ class Linker:
         table compared with the splink predicted match probability
 
         Args:
-            labels_tablename (str): Name of labels table
+            labels_splinkdataframe_or_table_name (str | SplinkDataFrame): Name of table
+                containing labels in the database
             include_false_positives (bool, optional): Defaults to True.
             include_false_negatives (bool, optional): Defaults to True.
             threshold (float, optional): Threshold above which a score is considered
@@ -1768,7 +1803,9 @@ class Linker:
         Returns:
             SplinkDataFrame:  Table containing false positives and negatives
         """
-
+        labels_tablename = self._get_labels_tablename_from_input(
+            labels_splinkdataframe_or_table_name
+        )
         return prediction_errors_from_labels_table(
             self,
             labels_tablename,
@@ -2607,4 +2644,11 @@ class Linker:
             input_data, table_name_physical, overwrite=overwrite
         )
         self._intermediate_table_cache[table_name_templated] = splink_dataframe
+        return splink_dataframe
+
+    def register_labels_table(self, input_data, overwrite=False):
+        table_name_physical = "__splink__df_labels_" + ascii_uuid(8)
+        splink_dataframe = self.register_table(
+            input_data, table_name_physical, overwrite=overwrite
+        )
         return splink_dataframe

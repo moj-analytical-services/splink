@@ -426,6 +426,11 @@ class SparkLinker(Linker):
             SplinkDataFrame: An abstraction representing the table created by the sql
                 pipeline
         """
+
+        # If the user has provided a table name, return it as a SplinkDataframe
+        if isinstance(input, str):
+            return self._table_to_splink_dataframe(table_name, input)
+
         # Check if table name is already in use
         exists = self._table_exists_in_database(table_name)
         if exists:
