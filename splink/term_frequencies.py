@@ -52,6 +52,8 @@ def _join_tf_to_input_df_sql(linker: Linker):
 
     for col in tf_cols:
         tbl = colname_to_tf_tablename(col)
+        if tbl in linker._intermediate_table_cache:
+            tbl = linker._intermediate_table_cache[tbl].physical_name
         tf_col = col.tf_name()
         select_cols.append(f"{tbl}.{tf_col}")
 
@@ -60,10 +62,18 @@ def _join_tf_to_input_df_sql(linker: Linker):
 
     templ = "left join {tbl} on __splink__df_concat.{col} = {tbl}.{col}"
 
-    left_joins = [
-        templ.format(tbl=colname_to_tf_tablename(col), col=col.name())
-        for col in tf_cols
-    ]
+    left_joins = []
+    for col in tf_cols:
+        tbl = colname_to_tf_tablename(col)
+        if tbl in linker._intermediate_table_cache:
+            tbl = linker._intermediate_table_cache[tbl].physical_name
+        sql = templ.format(tbl=tbl, col=col.name())
+        left_joins.append(sql)
+
+    # left_joins = [
+    #     templ.format(tbl=colname_to_tf_tablename(col), col=col.name())
+    #     for col in tf_cols
+    # ]
     left_joins = " ".join(left_joins)
 
     sql = f"""
@@ -107,16 +117,6 @@ def compute_all_term_frequencies_sqls(linker: Linker) -> list[dict]:
         if tf_table_name not in linker._intermediate_table_cache:
             sql = term_frequencies_for_single_column_sql(tf_col)
             sql = {"sql": sql, "output_table_name": tf_table_name}
-            sqls.append(sql)
-        else:
-            tf_physical_name = linker._intermediate_table_cache[
-                tf_table_name
-            ].physical_name
-
-            sql = {
-                "sql": f"select * from {tf_physical_name}",
-                "output_table_name": tf_table_name,
-            }
             sqls.append(sql)
 
     sql = _join_tf_to_input_df_sql(linker)
