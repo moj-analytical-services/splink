@@ -41,7 +41,7 @@ def _cc_create_nodes_table(linker: "Linker", generated_graph=False):
     uid_concat = _composite_unique_id_from_nodes_sql(uid_cols)
 
     if generated_graph:
-        sql = f"""
+        sql = """
         select unique_id_l as node_id
             from __splink__df_connected_components_df
 
@@ -78,7 +78,7 @@ def _cc_generate_neighbours_representation():
         clusters table.
     """
 
-    sql = f"""
+    sql = """
     select n.node_id,
         e_l.unique_id_r as neighbour
     from nodes as n
@@ -117,7 +117,7 @@ def _cc_generate_initial_representatives_table():
     and finding the minimum representative for each node.
     """
 
-    sql = f"""
+    sql = """
     select
         neighbours.node_id,
         min(neighbour) as representative
@@ -147,7 +147,7 @@ def _cc_update_neighbours_first_iter():
     (C -> B), then we can join on B to conclude that (C -> A).
     """
 
-    sql = f"""
+    sql = """
     select
         neighbours.node_id,
         min(representatives.representative) as representative
