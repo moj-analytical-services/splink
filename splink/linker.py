@@ -378,32 +378,6 @@ class Linker:
                 nodes_with_tf = self._execute_sql_pipeline()
                 cache["__splink__df_concat_with_tf"] = nodes_with_tf
 
-        # These are simple derivations from __splink__df_concat_with_tf
-        # so we don't materialise them, just add them to the queue
-        # otherwise you run into the problem of having to return multiple dfs
-        # from this method.  (Which isn't that bad, you'd just
-        # need to return a list rather than a single df)
-        if self._two_dataset_link_only:
-            source_dataset_col = self._settings_obj._source_dataset_column_name
-            # Need df_l to be the one with the lowest id to preeserve the property
-            # that the left dataset is the one with the lowest concatenated id
-            keys = self._input_tables_dict.keys()
-            keys = list(sorted(keys))
-            df_l = self._input_tables_dict[keys[0]]
-            df_r = self._input_tables_dict[keys[1]]
-
-            sql = f"""
-            select * from __splink__df_concat_with_tf
-            where {source_dataset_col} = '{df_l.templated_name}'
-            """
-            self._enqueue_sql(sql, "__splink__df_concat_with_tf_left")
-
-            sql = f"""
-            select * from __splink__df_concat_with_tf
-            where {source_dataset_col} = '{df_r.templated_name}'
-            """
-            self._enqueue_sql(sql, "__splink_df_concat_with_tf_right")
-
         if return_as_list:
             if nodes_with_tf:
                 return [nodes_with_tf]
