@@ -27,6 +27,7 @@ theme:
         icon: material/toggle-switch-off-outline
         name: Switch to light mode
 plugins:
+  - include-markdown
   - search
   - semiliterate
   - mknotebooks
