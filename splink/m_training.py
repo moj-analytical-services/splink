@@ -33,7 +33,7 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
         BlockingRule(f"l.{label_colname} = r.{label_colname}")
     ]
 
-    concat_with_tf = linker._initialise_df_concat_with_tf(materialise=True)
+    concat_with_tf = linker._initialise_df_concat_with_tf()
 
     sql = block_using_rules_sql(training_linker)
     training_linker._enqueue_sql(sql, "__splink__df_blocked")

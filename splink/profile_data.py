@@ -168,7 +168,11 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 
 def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
 
-    input_dataframes = linker._initialise_df_concat(return_as_list=True)
+    df_concat = linker._initialise_df_concat(return_as_list=True)
+
+    input_dataframes = []
+    if df_concat:
+        input_dataframes.append(df_concat)
 
     if type(column_expressions) == str:
         column_expressions = [column_expressions]
