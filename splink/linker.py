@@ -1145,6 +1145,12 @@ class Linker:
             threshold_match_weight (float, optional): If specified,
                 filter the results to include only pairwise comparisons with a
                 match_weight above this threshold. Defaults to None.
+            materialise_after_computing_term_frequencies (bool): If true, Splink
+                will materialise the table containing the input nodes (rows)
+                joined to any term frequencies which have been asked
+                for in the settings object.  If False, this will be
+                computed as part of one possibly gigantic CTE
+                pipeline.   Defaults to True
 
         Examples:
             >>> linker = DuckDBLinker(df, connection=":memory:")
