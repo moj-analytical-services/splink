@@ -11,9 +11,9 @@ tags:
 The `comparison_library` contains pre-made comparisons available for use directly [as described in this topic guide](../topic_guides/customising_comparisons.html#method-1-using-the-comparisonlibrary).
 However, not every comparison is available for every [Splink-compatible SQL backend](../topic_guides/backends.html).
 
-The pre-made comparisons available for each SQL dialect are as given in this table:
+The pre-made Splink comparisons available for each SQL dialect are as given in this table:
 {%
-  include-markdown "./includes/comparison_library_detailed.md"
+  include-markdown "./includes/comparison_library_dialect_table.md"
 %}
 
 The detailed API for each of these are outlined below.
