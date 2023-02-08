@@ -8,12 +8,16 @@ tags:
 ---
 # Documentation for `comparison_level_library` 
 
-The pre-made comparison levels available for each SQL dialect are detailed here:
+The `comparison_level_library` contains pre-made comparison levels available for use to
+construct custom comparisons [as described in this topic guide](../topic_guides/customising_comparisons.html#method-2-comparisonlevels).
+However, not every comparison level is available for every [Splink-compatible SQL backend](../topic_guides/backends.html).
+
+The pre-made comparison levels available for each SQL dialect are as given in this table:
 {%
   include-markdown "./includes/comparison_level_library_detailed.md"
 %}
 
-The details of how to use each of these are outlined below.
+The detailed API for each of these are outlined below.
 
 ## Library comparison level APIs
 

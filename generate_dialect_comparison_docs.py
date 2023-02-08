@@ -52,4 +52,3 @@ with open(Path("docs") / "includes" / "comparison_level_library_detailed.md", "w
     f.write(cll_table)
 with open(Path("docs") / "includes" / "comparison_library_detailed.md", "w+") as f:
     f.write(cl_table)
-
