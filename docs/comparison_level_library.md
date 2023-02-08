@@ -150,3 +150,15 @@ The detailed API for each of these are outlined below.
       show_root_heading: true
       show_source: false
       heading_level: 1
+
+---
+
+::: splink.comparison_level_library.DateDiffLevelBase
+    handler: python
+    selection:
+      members:
+        -  __init__
+    rendering:
+      show_root_heading: true
+      show_source: false
+      heading_level: 1
