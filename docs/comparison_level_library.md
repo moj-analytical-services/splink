@@ -10,7 +10,7 @@ tags:
 
 The pre-made comparison levels available for each SQL dialect are detailed here:
 {%
-   include-markdown "./includes/comparison_level_library_detailed.md"
+  include-markdown "./includes/comparison_level_library_detailed.md"
 %}
 
 The details of how to use each of these are outlined below.
