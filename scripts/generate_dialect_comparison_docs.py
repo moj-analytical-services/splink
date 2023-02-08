@@ -7,9 +7,7 @@ from splink.dialect_base import DialectBase
 
 # could always pick this up dynamically,
 # but this way we get to fix the order, and feels like not unreasonable upkeep
-dialects = (
-    "spark", "duckdb", "athena", "sqlite"
-)
+dialects = ("spark", "duckdb", "athena", "sqlite")
 
 dialect_levels = {}
 dialect_comparisons = {}
@@ -17,15 +15,19 @@ for dialect in dialects:
     dialect_levels[dialect] = []
     dialect_comparisons[dialect] = []
     for class_name, cls in inspect.getmembers(
-            importlib.import_module(f".{dialect}_comparison_level_library", package=f"splink.{dialect}"),
-            inspect.isclass
-        ):
+        importlib.import_module(
+            f".{dialect}_comparison_level_library", package=f"splink.{dialect}"
+        ),
+        inspect.isclass,
+    ):
         if issubclass(cls, ComparisonLevel) and issubclass(cls, DialectBase):
             dialect_levels[dialect].append(class_name)
     for class_name, cls in inspect.getmembers(
-            importlib.import_module(f".{dialect}_comparison_library", package=f"splink.{dialect}"),
-            inspect.isclass
-        ):
+        importlib.import_module(
+            f".{dialect}_comparison_library", package=f"splink.{dialect}"
+        ),
+        inspect.isclass,
+    ):
         if issubclass(cls, Comparison) and issubclass(cls, DialectBase):
             dialect_comparisons[dialect].append(class_name)
 
@@ -44,6 +46,7 @@ comparison_dialects = {
 # strings to use in md table for whether function appears in dialect or not
 yes_string, no_string = "✓", ""
 
+
 def make_md_table(opts):
     # start table with a header row of blank column + all dialects
     table = f"||{'|'.join(dialects)}|\n"
@@ -53,12 +56,12 @@ def make_md_table(opts):
     # then rows for each level indicating which dialects support it
     for level_name, level_dialects in opts.items():
         level_yes_no_dialect_string = (
-            yes_string if d in level_dialects else no_string
-            for d in dialects
+            yes_string if d in level_dialects else no_string for d in dialects
         )
         table += f"|`{level_name}`|"
         table += f"{'|'.join(level_yes_no_dialect_string)}|\n"
     return table
+
 
 cll_table = make_md_table(level_dialects)
 cll_table_file = "comparison_level_library_dialect_table.md"
