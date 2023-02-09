@@ -7,7 +7,7 @@
           "color": {
             "field": "completeness",
             "legend": null,
-            "scale": {"scheme": "redyellowgreen"},
+            "scale": {"scheme": "darkred", "zero": true},
             "type": "quantitative"
           },
           "tooltip": [
@@ -44,13 +44,6 @@
           "y": {
             "field": "source_dataset",
             "title": "Source dataset",
-            "sort": [
-              "mags_hocas",
-              "crown_xhibit",
-              "prison_nomis",
-              "prison_oasys",
-              "probation_delius"
-            ],
             "type": "nominal"
           }
         },
@@ -65,7 +58,7 @@
         ]
       },
       {
-        "mark": {"type": "text", "color": "white"},
+        "mark": {"type": "text"},
         "encoding": {
           "text": {
             "field": "completeness",
@@ -80,15 +73,12 @@
           },
           "y": {
             "field": "source_dataset",
-            "sort": [
-              "mags_hocas",
-              "crown_xhibit",
-              "prison_nomis",
-              "prison_oasys",
-              "probation_delius"
-            ],
             "type": "nominal"
-          }
+          },
+          "color": {
+              "condition": {"test": "datum['completeness'] < 0.5", "value": "white"},
+              "value": "black"
+          },
         },
         "transform": [
           {
