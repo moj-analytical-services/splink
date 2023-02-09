@@ -256,7 +256,7 @@ from splink.spark.spark_comparison_level_library import (
 )
 ...
 
-class SparkComparison(SparkBase):
+class SparkComparisonProperties(SparkBase):
     @property
     def _exact_match_level(self):
         return exact_match_level
@@ -271,7 +271,7 @@ Any dialect-specific version of comparisons will inherit from this (where it lea
 ```python
 ...
 class array_length_at_thresholds(
-    SparkComparison, ArrayLengthAtThresholds
+    SparkComparisonProperties, ArrayLengthAtThresholds
 ):
     pass
 ```

@@ -23,7 +23,7 @@ from .duckdb_comparison_level_library import (
 )
 
 
-class DuckDBComparison(DuckDBBase):
+class DuckDBComparisonProperties(DuckDBBase):
     @property
     def _exact_match_level(self):
         return exact_match_level
@@ -45,12 +45,12 @@ class DuckDBComparison(DuckDBBase):
         return array_intersect_level
 
 
-class exact_match(DuckDBComparison, ExactMatchBase):
+class exact_match(DuckDBComparisonProperties, ExactMatchBase):
     pass
 
 
 class distance_function_at_thresholds(
-    DuckDBComparison, DistanceFunctionAtThresholdsComparisonBase
+    DuckDBComparisonProperties, DistanceFunctionAtThresholdsComparisonBase
 ):
     @property
     def _distance_level(self):
@@ -58,7 +58,7 @@ class distance_function_at_thresholds(
 
 
 class levenshtein_at_thresholds(
-    DuckDBComparison, LevenshteinAtThresholdsComparisonBase
+    DuckDBComparisonProperties, LevenshteinAtThresholdsComparisonBase
 ):
     @property
     def _distance_level(self):
@@ -66,22 +66,28 @@ class levenshtein_at_thresholds(
 
 
 class jaro_winkler_at_thresholds(
-    DuckDBComparison, JaroWinklerAtThresholdsComparisonBase
+    DuckDBComparisonProperties, JaroWinklerAtThresholdsComparisonBase
 ):
     @property
     def _distance_level(self):
         return jaro_winkler_level
 
 
-class jaccard_at_thresholds(DuckDBComparison, JaccardAtThresholdsComparisonBase):
+class jaccard_at_thresholds(
+    DuckDBComparisonProperties, JaccardAtThresholdsComparisonBase
+):
     @property
     def _distance_level(self):
         return jaccard_level
 
 
-class array_intersect_at_sizes(DuckDBComparison, ArrayIntersectAtSizesComparisonBase):
+class array_intersect_at_sizes(
+    DuckDBComparisonProperties, ArrayIntersectAtSizesComparisonBase
+):
     pass
 
 
-class datediff_at_thresholds(DuckDBComparison, DateDiffAtThresholdsComparisonBase):
+class datediff_at_thresholds(
+    DuckDBComparisonProperties, DateDiffAtThresholdsComparisonBase
+):
     pass
