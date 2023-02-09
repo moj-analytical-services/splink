@@ -8,11 +8,13 @@ tags:
 The Fellegi-Sunter model that Splink implements depends on having several comparisons, which are each composed of two or more comparison levels.
 Splink provides several _ready-made_ [comparisons](../comparison_library.html) and [comparison levels](../comparison_level_library.html) to use out-of-the-box, but you may find in your particular application that you have to [create your own custom versions](../topic_guides/customising_comparisons.html#method-3-providing-the-spec-as-a-dictionary) if there is not a suitable comparison/level for the [SQL dialect you are working with](../topic_guides/backends.html) (or for any available dialects).
 
-Having created a custom comparison you may decide that is sufficiently general-use to want to contribute to Splink and add it to the library. This guide will take you through the process of doing so. Looking at existing examples should also prove to be useful for further guidance, and to perhaps serve as a starting template.
+Having created a custom comparison you may decide that is sufficiently general-use that you want to contribute to Splink and add it to the library for other users to benefit from. This guide will take you through the process of doing so. Looking at existing examples should also prove to be useful for further guidance, and to perhaps serve as a starting template.
+
+After having successfully added your new levels/comparisons, be sure to add some tests to help ensure that the code runs without error and behaves as expected.
 
 ## Comparison Level library
 
-For this example, let's consider a comparison level that compares if the length of two arrays are within `n` of one another (without reference to the contents of these arrays) for some non-negative integer `n`. An example of this might be if we were linking people with partial address information in two tables --- in one table we had an array of postcodes, and the other table we had an array of road-names. We don't expect them to match, but we are probably interested if the number is the same, or close - corresponding to the number of addresses per person.
+For this example, let's consider a comparison level that compares if the length of two arrays are within `n` of one another (without reference to the contents of these arrays) for some non-negative integer `n`. An example of this might be if we were linking people with partial address information in two tables --- in one table we have an array of postcodes, and the other table we have an array of road-names. We don't expect them to match, but we are probably interested if the number is the same, or close - each corresponding to the number of addresses per person.
 
 To create a new comparison level, you must create a new subclass of `ComparisonLevel` which will serve as the base comparison level for any SQL dialects that will allow this level, in the file [`splink/comparison_level_library.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/comparison_level_library.py).
 It will contain the full logic for creating the comparison level - any dialect dependencies will be implemented as properties on the specific dialect-dependent object.
@@ -29,6 +31,7 @@ class ArrayLengthLevelBase(ComparisonLevel):
         m_probability=None,
     ):
         """Compares two arrays whose sizes are within a fixed distance
+        | length(arr_1) - length(arr_2) | <= (length_difference)
 
         Arguments:
             col_name (str): Input column name
@@ -46,8 +49,8 @@ class ArrayLengthLevelBase(ComparisonLevel):
         sql_exp = (
             f"abs("
             f"{self._array_length_function_name}({col_l}) - "
-            f"{self._array_length_function_name}({col_r})
-            ) <= {length_difference}"
+            f"{self._array_length_function_name}({col_r})"
+            f") <= {length_difference}"
         )
         level_dict = {
             "sql_condition": sql_exp,
@@ -71,7 +74,7 @@ class DialectBase():
         return "array_length"
 ```
 
-and any dialects that use a different value can override this:
+Then any dialects that use a different value can override this (e.g in [`splink.spark.spark_base.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_base.py)):
 
 ```python
 class SparkBase(DialectBase):
@@ -81,17 +84,17 @@ class SparkBase(DialectBase):
         return "array_size"
 ```
 
-Then any dialects where this comparison level can be used can simply inherit from this (e.g. `DuckDBBase`), along with the comparison level base `ArrayLengthLevelBase`:
-
-```python
-class array_length_level(DuckDBBase, ArrayLengthLevelBase):
-    pass
-```
-
-or
+Then any dialects where this comparison level can be used can simply inherit from this dialect-specific base, along with the comparison level base `ArrayLengthLevelBase` - here in [`splink.spark.spark_comparison_level_library.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_comparison_level_library.py):
 
 ```python
 class array_length_level(SparkBase, ArrayLengthLevelBase):
+    pass
+```
+
+or for DuckDB in [`splink.duckdb.duckdb_comparison_level_library.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/duckdb/duckdb_comparison_level_library.py):
+
+```python
+class array_length_level(DuckDBBase, ArrayLengthLevelBase):
     pass
 ```
 
@@ -102,7 +105,7 @@ The names of these should be the same for all dialects (and written in snake-cas
 
 It may be that the level you want to create a shorthand for is simply a specialised version of an existing level.
 
-For this example, let's consider a comparison level that returns a match on two strings with a fixed [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance).
+For this example, let's consider a comparison level that returns a match on two strings within a fixed [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance).
 This is a specific example of the generic [string distance function comparison level](../comparison_level_library.html#splink.comparison_level_library.DistanceFunctionLevelBase).
 
 In this case we simply subclass the appropriate level, and call it's constructor, fixing whatever properties we need
@@ -142,7 +145,7 @@ The rest of the process is identical to that above for the general case.
 
 ## Comparison library
 
-The process for creating new library `Comparison`s is similar, but slightly more involved.
+The process for creating new library `Comparison`s is similar to the `ComparisonLevel` case, but slightly more involved.
 This is due to the fact that dialect-specific `Comparison`s need to 'know' about
 the dialect-specific `ComparisonLevel`s that they employ.
 
@@ -183,12 +186,12 @@ class ArrayLengthAtThresholdsComparisonBase(Comparison):
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_sizes (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the sizes specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Returns:
@@ -246,8 +249,8 @@ Crucially we needed to use `self._null_level`, `self._exact_match_level`, `self.
 but also the new `self._array_length_level` which relates to our new comparison level.
 We will need to make sure that the dialect-specific comparisons which will actually be _used_ will have this property.
 
-Each dialect has a comparison base, which stores information about all of the dialect-specific comparison levels used by all comparisons.
-We will need to add our new level to this, which we referred to above in `ArrayLengthAtThresholdsComparisonBase` - for this example in [`splink.spark.spark_base.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_base.py):
+Each dialect has a comparison properties base, which stores information about all of the dialect-specific comparison levels used by all comparisons.
+We will need to add our new level to this, which we referred to above in `ArrayLengthAtThresholdsComparisonBase` - for this example in [`splink.spark.spark_comparison_library.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_comparison_library.py):
 ```python
 from splink.spark.spark_comparison_level_library import (
     exact_match_level,
@@ -260,13 +263,13 @@ class SparkComparisonProperties(SparkBase):
     @property
     def _exact_match_level(self):
         return exact_match_level
-...
+    ...
     @property
     def _array_length_level(self):
         return array_length_level
 ```
 
-Any dialect-specific version of comparisons will inherit from this (where it learns about the comparison levels), and the comparison itself; in our case:
+Any dialect-specific version of comparisons will inherit from this (where it learns about the dialect-specific comparison levels), and the comparison itself; in our case, in the same file:
 
 ```python
 ...
