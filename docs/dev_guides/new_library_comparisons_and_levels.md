@@ -108,7 +108,7 @@ It may be that the level you want to create a shorthand for is simply a speciali
 For this example, let's consider a comparison level that returns a match on two strings within a fixed [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance).
 This is a specific example of the generic [string distance function comparison level](../comparison_level_library.html#splink.comparison_level_library.DistanceFunctionLevelBase).
 
-In this case we simply subclass the appropriate level, and call it's constructor, fixing whatever properties we need
+In this case, working again in [`splink/comparison_level_library.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/comparison_level_library.py), we simply subclass the appropriate level, and call it's constructor, fixing whatever properties we need
 (using dialect-specific properties where appropriate - in this case the name of the function which calculates Hamming distance, which will be stored in the property `self._hamming_name`):
 
 ```python
