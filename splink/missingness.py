@@ -46,7 +46,7 @@ def missingness_data(linker, input_tablename):
         cache = linker._intermediate_table_cache
         concat_with_tf = "__splink__df_concat_with_tf"
         if concat_with_tf in cache:
-            splink_dataframe = input_tablename[concat_with_tf]
+            splink_dataframe = cache[concat_with_tf]
         else:
             splink_dataframe = linker._initialise_df_concat(materialise=True)
     else:
