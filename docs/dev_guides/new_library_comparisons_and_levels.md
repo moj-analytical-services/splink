@@ -71,7 +71,9 @@ class DialectBase():
     ...
     @property
     def _array_length_function_name():
-        return "array_length"
+        raise NotImplementedError(
+            "`array_length_function_name` not implemented on base class"
+        )
 ```
 
 Then any dialects that use a different value can override this (e.g in [`splink.spark.spark_base.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_base.py)):
@@ -91,7 +93,17 @@ class array_length_level(SparkBase, ArrayLengthLevelBase):
     pass
 ```
 
-or for DuckDB in [`splink.duckdb.duckdb_comparison_level_library.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/duckdb/duckdb_comparison_level_library.py):
+Similarly for DuckDB define the appropriate function name in the base [`splink.duckdb.duckdb_base.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/duckdb/duckdb_base.py)
+
+```python
+class DuckDBBase(DialectBase):
+    ...
+    @property
+    def _array_length_function_name():
+        return "array_length"
+```
+
+and then simply create the level in the corresponding library [`splink.duckdb.duckdb_comparison_level_library.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/duckdb/duckdb_comparison_level_library.py):
 
 ```python
 class array_length_level(DuckDBBase, ArrayLengthLevelBase):
