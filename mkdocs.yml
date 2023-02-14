@@ -114,7 +114,9 @@ nav:
       - Understanding and debugging Splink: "dev_guides/debug_modes.md"
       - Spark caching: "dev_guides/spark_pipelining_and_caching.md"
       - Transpilation using sqlglot: "dev_guides/transpilation.md"
-      - Creating new Comparisons and Comparison Levels: "dev_guides/new_library_comparisons_and_levels.md"
+      - Comparisons and comparison levels:
+        - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
+        - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
       - Building docs: "dev_guides/build_docs_locally.md"
 
 extra_css:

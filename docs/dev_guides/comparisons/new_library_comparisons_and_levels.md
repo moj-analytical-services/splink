@@ -3,16 +3,18 @@ tags:
   - API
   - comparisons
 ---
-# Developing New Comparisons and Comparison Levels for Libraries
+# Creating new comparisons and comparison levels for libraries
 
 The Fellegi-Sunter model that Splink implements depends on having several comparisons, which are each composed of two or more comparison levels.
-Splink provides several _ready-made_ [comparisons](../comparison_library.html) and [comparison levels](../comparison_level_library.html) to use out-of-the-box, but you may find in your particular application that you have to [create your own custom versions](../topic_guides/customising_comparisons.html#method-3-providing-the-spec-as-a-dictionary) if there is not a suitable comparison/level for the [SQL dialect you are working with](../topic_guides/backends.html) (or for any available dialects).
+Splink provides several _ready-made_ [comparisons](../../comparison_library.html) and [comparison levels](../../comparison_level_library.html) to use out-of-the-box, but you may find in your particular application that you have to [create your own custom versions](../../topic_guides/customising_comparisons.html#method-3-providing-the-spec-as-a-dictionary) if there is not a suitable comparison/level for the [SQL dialect you are working with](../../topic_guides/backends.html) (or for any available dialects).
 
 Having created a custom comparison you may decide that is sufficiently general-use that you want to contribute to Splink and add it to the library for other users to benefit from. This guide will take you through the process of doing so. Looking at existing examples should also prove to be useful for further guidance, and to perhaps serve as a starting template.
 
 After having successfully added your new levels/comparisons, be sure to add some tests to help ensure that the code runs without error and behaves as expected.
 
-## Comparison Level library
+This guide is for adding new comparisons and comparison levels from scratch. If you instead want to create specialised versions of existing levels, be sure to also have a look at the [guide for extending existing library entries](./extending_library_comparisons_and_levels.html).
+
+## Creating new comparison levels
 
 For this example, let's consider a comparison level that compares if the length of two arrays are within `n` of one another (without reference to the contents of these arrays) for some non-negative integer `n`. An example of this might be if we were linking people with partial address information in two tables --- in one table we have an array of postcodes, and the other table we have an array of road-names. We don't expect them to match, but we are probably interested if the number is the same, or close - each corresponding to the number of addresses per person.
 
@@ -112,50 +114,7 @@ class array_length_level(DuckDBBase, ArrayLengthLevelBase):
 
 The names of these should be the same for all dialects (and written in snake-case), with them being distinguished solely by path.
 
-
-### Subclassing existing library comparison levels
-
-It may be that the level you want to create a shorthand for is simply a specialised version of an existing level.
-
-For this example, let's consider a comparison level that returns a match on two strings within a fixed [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance).
-This is a specific example of the generic [string distance function comparison level](../comparison_level_library.html#splink.comparison_level_library.DistanceFunctionLevelBase).
-
-In this case, working again in [`splink/comparison_level_library.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/comparison_level_library.py), we simply subclass the appropriate level, and call it's constructor, fixing whatever properties we need
-(using dialect-specific properties where appropriate - in this case the name of the function which calculates Hamming distance, which will be stored in the property `self._hamming_name`):
-
-```python
-class HammingLevelBase(DistanceFunctionLevelBase):
-    def __init__(
-        self,
-        col_name: str,
-        distance_threshold: int,
-        m_probability=None,
-    ):
-        """Represents a comparison using a Hamming distance function,
-
-        Args:
-            col_name (str): Input column name
-            distance_threshold (Union[int, float]): The threshold to use to assess
-                similarity
-            m_probability (float, optional): Starting value for m probability.
-                Defaults to None.
-
-        Returns:
-            ComparisonLevel: A comparison level that evaluates the
-                Hamming similarity
-        """
-        super().__init__(
-            col_name,
-            self._hamming_name,
-            distance_threshold,
-            higher_is_more_similar=False,
-            m_probability=m_probability,
-        )
-```
-
-The rest of the process is identical to that above for the general case.
-
-## Comparison library
+## Creating new comparisons
 
 The process for creating new library `Comparison`s is similar to the `ComparisonLevel` case, but slightly more involved.
 This is due to the fact that dialect-specific `Comparison`s need to 'know' about
@@ -292,7 +251,3 @@ class array_length_at_thresholds(
 ```
 
 This is now ready to import and be used, just as any other pre-existing comparisons.
-
-### Subclassing existing library comparisons
-
-As in our `hamming_level` example above, you can similarly subclass existing library `Comparisons`. The main difficulty here is that the subclassed comparison levels will have different function arguments, so we need to check within the constructor if we are in the generic version (`distance_function_at_thresholds`) or a specific version (`hamming_level`). See the [source code for `DistanceFunctionAtThreholdsComparisonBase`](https://github.com/moj-analytical-services/splink/blob/master/splink/comparison_library.py) for an example.
