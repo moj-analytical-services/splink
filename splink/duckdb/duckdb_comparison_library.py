@@ -7,7 +7,7 @@ from ..comparison_library import (
     ArrayIntersectAtSizesComparisonBase,
     DateDiffAtThresholdsComparisonBase,
 )
-from .duckb_base import (
+from .duckdb_base import (
     DuckDBBase,
 )
 from .duckdb_comparison_level_library import (
