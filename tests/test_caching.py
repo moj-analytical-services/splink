@@ -137,3 +137,51 @@ def test_cache_access_compute_tf_table(debug_mode):
 
         linker.compute_tf_table("first_name")
         mock_execute_sql_pipeline.assert_not_called()
+
+
+@pytest.mark.parametrize("debug_mode", (False, True))
+def test_invalidate_cache(debug_mode):
+    settings = get_settings_dict()
+
+    linker = DuckDBLinker(df, settings)
+    linker.debug_mode = debug_mode
+
+    with patch.object(
+            linker,
+            "_execute_sql_against_backend",
+            new=make_mock_execute(linker)
+            ) as mock_execute_sql_pipeline:
+
+        linker._initialise_df_concat_with_tf(materialise=True)
+        mock_execute_sql_pipeline.assert_called()
+        mock_execute_sql_pipeline.reset_mock()
+
+        # this should NOT touch the database, but instead use the cache
+        linker._initialise_df_concat_with_tf(materialise=True)
+        mock_execute_sql_pipeline.assert_not_called()
+
+        # create this:
+        linker.compute_tf_table("surname")
+        mock_execute_sql_pipeline.assert_called()
+        mock_execute_sql_pipeline.reset_mock()
+        # then check the cache
+        linker.compute_tf_table("surname")
+        mock_execute_sql_pipeline.assert_not_called()
+
+        linker.invalidate_cache()
+
+        # now we _SHOULD_ compute afresh:
+        linker._initialise_df_concat_with_tf(materialise=True)
+        mock_execute_sql_pipeline.assert_called()
+        mock_execute_sql_pipeline.reset_mock()
+        # but now draw from the cache
+        linker._initialise_df_concat_with_tf(materialise=True)
+        mock_execute_sql_pipeline.assert_not_called()
+        # and should compute this again:
+        linker.compute_tf_table("surname")
+        mock_execute_sql_pipeline.assert_called()
+        mock_execute_sql_pipeline.reset_mock()
+        # then check the cache
+        linker.compute_tf_table("surname")
+        mock_execute_sql_pipeline.assert_not_called()
+
