@@ -12,7 +12,7 @@ from ..comparison_level_library import (
     ArrayIntersectLevelBase,
     DateDiffLevelBase,
 )
-from .duckb_base import (
+from .duckdb_base import (
     DuckDBBase,
 )
 
