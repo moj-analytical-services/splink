@@ -13,7 +13,7 @@ from .sqlite_comparison_level_library import (
 )
 
 
-class SqliteComparison(SqliteBase):
+class SqliteComparisonProperties(SqliteBase):
     @property
     def _exact_match_level(self):
         return exact_match_level
@@ -26,14 +26,16 @@ class SqliteComparison(SqliteBase):
     def _else_level(self):
         return else_level
 
+    @property
+    def _distance_level(self):
+        return distance_function_level
 
-class exact_match(SqliteComparison, ExactMatchBase):
+
+class exact_match(SqliteComparisonProperties, ExactMatchBase):
     pass
 
 
 class distance_function_at_thresholds(
-    SqliteComparison, DistanceFunctionAtThresholdsComparisonBase
+    SqliteComparisonProperties, DistanceFunctionAtThresholdsComparisonBase
 ):
-    @property
-    def _distance_level(self):
-        return distance_function_level
+    pass
