@@ -243,10 +243,8 @@ def test_cache_register_compute_concat_with_tf_table(debug_mode):
     linker.debug_mode = debug_mode
 
     with patch.object(
-            linker,
-            "_execute_sql_against_backend",
-            new=make_mock_execute(linker)
-            ) as mock_execute_sql_pipeline:
+        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
+    ) as mock_execute_sql_pipeline:
         # can actually register frame, as that part not cached
         # don't need function so use any frame
         linker.register_table_input_nodes_concat_with_tf(df)
@@ -263,10 +261,8 @@ def test_cache_register_compute_tf_table(debug_mode):
     linker.debug_mode = debug_mode
 
     with patch.object(
-            linker,
-            "_execute_sql_against_backend",
-            new=make_mock_execute(linker)
-            ) as mock_execute_sql_pipeline:
+        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
+    ) as mock_execute_sql_pipeline:
         # can actually register frame, as that part not cached
         # don't need function so use any frame
         linker.register_term_frequency_lookup(df, "first_name")
