@@ -87,6 +87,24 @@ def test_materialising_works():
     linker.compute_tf_table("first_name")
 
 
+def test_cache_only_splink_dataframes():
+    settings = get_settings_dict()
+
+    linker = DuckDBLinker(df, settings)
+    linker._intermediate_table_cache["new_table"] = DuckDBLinkerDataFrame(
+        "template",
+        "dummy_frame",
+        linker
+    )
+    try:
+        linker._intermediate_table_cache["not_a_table"] = 30
+    except TypeError:
+        # error is raised, but need to check it hasn't made it to the cache
+        pass
+    for name, table in linker._intermediate_table_cache.items():
+        assert isinstance(table, SplinkDataFrame)
+
+
 # run test in/not in debug mode to check functionality in both - cache shouldn't care
 @pytest.mark.parametrize("debug_mode", (False, True))
 def test_cache_access_initialise_df_concat(debug_mode):
@@ -192,7 +210,6 @@ def test_cache_invalidates_with_new_linker(debug_mode):
 
     linker = DuckDBLinker(df, settings)
     linker.debug_mode = debug_mode
-    # do some stuff, check, new linker, check
     with patch.object(
             linker,
             "_execute_sql_against_backend",
@@ -200,15 +217,13 @@ def test_cache_invalidates_with_new_linker(debug_mode):
             ) as mock_execute_sql_pipeline:
 
         linker._initialise_df_concat_with_tf(materialise=True)
-        # NB don't specify amount of times it is called, as will depend on debug_mode
         mock_execute_sql_pipeline.assert_called()
-        # reset the call counter on the mock
         mock_execute_sql_pipeline.reset_mock()
 
-        # this should NOT touch the database, but instead use the cache
+        # should use cache
         linker._initialise_df_concat_with_tf(materialise=True)
         mock_execute_sql_pipeline.assert_not_called()
-    
+
     new_linker = DuckDBLinker(df, settings)
     new_linker.debug_mode = debug_mode
     with patch.object(
