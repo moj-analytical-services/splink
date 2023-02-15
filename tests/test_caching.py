@@ -185,3 +185,51 @@ def test_invalidate_cache(debug_mode):
         linker.compute_tf_table("surname")
         mock_execute_sql_pipeline.assert_not_called()
 
+
+@pytest.mark.parametrize("debug_mode", (False, True))
+def test_cache_invalidates_with_new_linker(debug_mode):
+    settings = get_settings_dict()
+
+    linker = DuckDBLinker(df, settings)
+    linker.debug_mode = debug_mode
+    # do some stuff, check, new linker, check
+    with patch.object(
+            linker,
+            "_execute_sql_against_backend",
+            new=make_mock_execute(linker)
+            ) as mock_execute_sql_pipeline:
+
+        linker._initialise_df_concat_with_tf(materialise=True)
+        # NB don't specify amount of times it is called, as will depend on debug_mode
+        mock_execute_sql_pipeline.assert_called()
+        # reset the call counter on the mock
+        mock_execute_sql_pipeline.reset_mock()
+
+        # this should NOT touch the database, but instead use the cache
+        linker._initialise_df_concat_with_tf(materialise=True)
+        mock_execute_sql_pipeline.assert_not_called()
+    
+    new_linker = DuckDBLinker(df, settings)
+    new_linker.debug_mode = debug_mode
+    with patch.object(
+            new_linker,
+            "_execute_sql_against_backend",
+            new=make_mock_execute(new_linker)
+            ) as mock_execute_sql_pipeline:
+        # new linker should recalculate df_concat_with_tf
+        new_linker._initialise_df_concat_with_tf(materialise=True)
+        mock_execute_sql_pipeline.assert_called()
+        mock_execute_sql_pipeline.reset_mock()
+
+        # but now read from the cache
+        new_linker._initialise_df_concat_with_tf(materialise=True)
+        mock_execute_sql_pipeline.assert_not_called()
+
+    with patch.object(
+            linker,
+            "_execute_sql_against_backend",
+            new=make_mock_execute(linker)
+            ) as mock_execute_sql_pipeline:
+        # original linker should still have result cached
+        linker._initialise_df_concat_with_tf(materialise=True)
+        mock_execute_sql_pipeline.assert_not_called()
