@@ -1,5 +1,6 @@
 import sqlite3
 import pandas as pd
+import numpy as np
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.sqlite.sqlite_linker import SQLiteLinker
@@ -31,6 +32,26 @@ def test_profile_using_duckdb_no_settings():
         bottom_n=5,
     )
 
+    
+def test_profile_with_arrays_duckdb():
+    dic = {'id': {0: 1, 1: 2, 2: 3, 3: 4}, 
+     'forename': {0: 'Juan', 1: "Sarah", 2: 'Leila', 3: 'Michaela'}, 
+     'surname': {0: "Pene", 1: 'Dowel', 2: "Idin", 3: "Bose"},
+     'offence_code_arr': {0:np.array((1,2,3)), 
+          1:np.array((1,2,3)), 
+          2:np.array((1,2,3)), 
+          3:np.array((1,2,3))}}
+
+    df= pd.DataFrame(dic)
+    settings_dict = get_settings_dict()
+    
+    linker = DuckDBLinker(df, settings_dict, connection=":memory:")
+    
+    linker.profile_columns(["forename", "surname", "offence_code_arr"],
+                           top_n=3, 
+                           bottom_n=3,
+    )
+    
 
 def test_profile_using_sqlite():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
