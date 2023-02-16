@@ -183,9 +183,8 @@ class Linker:
 
         if settings_dict is not None:
             self._cache_uid = settings_dict.get("linker_uid", ascii_uid(8))
-            settings_dict["linker_uid"] = self._cache_uid
         else:
-            self._cache_uid = ascii_uid(8)
+            self._cache_uid_no_settings = ascii_uid(8)
 
         self._settings_dict = settings_dict
         if settings_dict is None:
@@ -216,12 +215,17 @@ class Linker:
 
     @property
     def _cache_uid(self):
-        # return self._settings_obj._cache_uid
-        return self._cache_uid
+        if self._settings_dict:
+            return self._settings_obj._cache_uid
+        else:
+            return self._cache_uid_no_settings
 
     @_cache_uid.setter
     def _cache_uid(self, value):
-        self._settings_obj._cache_uid = value
+        if self._settings_dict:
+            self._settings_obj._cache_uid = value
+        else:
+            self._cache_uid_no_settings = value
 
     @property
     def _settings_obj(self) -> Settings:
@@ -829,9 +833,7 @@ class Linker:
             settings_dict (dict): A Splink settings dictionary
         """
         # If a uid already exists in your settings object, prioritise this
-        settings_dict["linker_uid"] = settings_dict.get(
-            "linker_uid", self._cache_uid
-        )
+        settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
