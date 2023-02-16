@@ -203,7 +203,7 @@ class Linker:
         self._validate_input_dfs()
         self._em_training_sessions = []
 
-        self._names_of_tables_created_by_splink: set = set()
+        self._splink_dataframes_created_by_splink: list[SplinkDataFrame] = []
         self._intermediate_table_cache: dict = CacheDictWithLogging()
 
         self._find_new_matches_mode = False
@@ -555,16 +555,17 @@ class Linker:
         table_name_hash = f"{output_tablename_templated}_{hash}"
 
         if use_cache:
-            if self._table_exists_in_database(output_tablename_templated):
-                logger.debug(f"Using existing table {output_tablename_templated}")
-                return self._table_to_splink_dataframe(
-                    output_tablename_templated, output_tablename_templated
-                )
+
+            if output_tablename_templated in self._intermediate_table_cache:
+                return self._intermediate_table_cache[table_name_hash]
+
+            if table_name_hash in self._intermediate_table_cache:
+                return self._intermediate_table_cache[table_name_hash]
 
             if self._table_exists_in_database(table_name_hash):
                 logger.debug(
-                    f"Using cache for {output_tablename_templated}"
-                    f" with physical name {table_name_hash}"
+                    f"Found cache for {output_tablename_templated} "
+                    f"in database using table name with physical name {table_name_hash}"
                 )
                 return self._table_to_splink_dataframe(
                     output_tablename_templated, table_name_hash
@@ -584,7 +585,9 @@ class Linker:
                 output_tablename_templated,
             )
 
-        self._names_of_tables_created_by_splink.add(splink_dataframe.physical_name)
+        physical_name = splink_dataframe.physical_name
+        self._names_of_tables_created_by_splink.append(splink_dataframe)
+        self._intermediate_table_cache[physical_name] = splink_dataframe
 
         if self.debug_mode:
             df_pd = splink_dataframe.as_pandas_dataframe()
@@ -763,29 +766,10 @@ class Linker:
                 if cl._has_estimated_m_values:
                     cl.m_probability = cl._trained_m_median
 
-    def _delete_tables_created_by_splink_from_db(
-        self, retain_term_frequency=True, retain_df_concat_with_tf=True
-    ):
-        to_remove = set()
-        for name in self._names_of_tables_created_by_splink:
-            # Only delete tables explicitly marked as having been created by splink
-            if "__splink__" not in name:
-                continue
-            if name == "__splink__df_concat_with_tf":
-                if not retain_df_concat_with_tf:
-                    self._delete_table_from_database(name)
-                    to_remove.add(name)
-            elif name.startswith("__splink__df_tf_"):
-                if not retain_term_frequency:
-                    self._delete_table_from_database(name)
-                    to_remove.add(name)
-            else:
-                self._delete_table_from_database(name)
-                to_remove.add(name)
+    def _delete_tables_created_by_splink_from_db(self):
 
-        self._names_of_tables_created_by_splink = (
-            self._names_of_tables_created_by_splink - to_remove
-        )
+        for df in self._splink_dataframes_created_by_splink:
+            df.drop_table_from_database_and_remove_from_cache()
 
     def _raise_error_if_necessary_waterfall_columns_not_computed(self):
         ricc = self._settings_obj._retain_intermediate_calculation_columns
@@ -2637,3 +2621,18 @@ class Linker:
             input_data, table_name_physical, overwrite=overwrite
         )
         return splink_dataframe
+
+    def remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):
+        cache_keys = list(self._intermediate_table_cache.keys())
+
+        for k in cache_keys:
+            if k == splink_dataframe.physical_name:
+                del self._intermediate_table_cache[k]
+            if k == splink_dataframe.templated_name:
+                del self._intermediate_table_cache
+        # Also remove from list of dataframes created by splink
+        self._splink_dataframes_created_by_splink = [
+            df
+            for df in self._splink_dataframes_created_by_splink
+            if not df.physical_name == splink_dataframe.physical_name
+        ]

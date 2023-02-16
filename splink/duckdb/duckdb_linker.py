@@ -25,10 +25,6 @@ logger = logging.getLogger(__name__)
 
 
 class DuckDBLinkerDataFrame(SplinkDataFrame):
-    def __init__(self, templated_name, physical_name, duckdb_linker):
-        super().__init__(templated_name, physical_name)
-        self.duckdb_linker = duckdb_linker
-
     @property
     def columns(self) -> list[InputColumn]:
         d = self.as_record_dict(1)[0]
@@ -39,11 +35,11 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
     def validate(self):
         pass
 
-    def drop_table_from_database(self, force_non_splink_table=False):
+    def _drop_table_from_database_backend_specific(self, force_non_splink_table=False):
 
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
-        self.duckdb_linker._delete_table_from_database(self.physical_name)
+        self.linker._delete_table_from_database(self.physical_name)
 
     def as_record_dict(self, limit=None):
 
@@ -51,14 +47,14 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
 
-        return self.duckdb_linker._con.query(sql).to_df().to_dict(orient="records")
+        return self.linker._con.query(sql).to_df().to_dict(orient="records")
 
     def as_pandas_dataframe(self, limit=None):
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
 
-        return self.duckdb_linker._con.query(sql).to_df()
+        return self.linker._con.query(sql).to_df()
 
 
 class DuckDBLinker(Linker):

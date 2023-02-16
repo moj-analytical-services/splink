@@ -12,9 +12,10 @@ class SplinkDataFrame:
     Uses methods like `as_pandas_dataframe()` and `as_record_dict()` to retrieve data
     """
 
-    def __init__(self, templated_name, physical_name):
+    def __init__(self, templated_name, physical_name, linker):
         self.templated_name = templated_name
         self.physical_name = physical_name
+        self.linker = linker
 
     @property
     def columns(self):
@@ -50,13 +51,21 @@ class SplinkDataFrame:
             f"physical name {self.physical_name}"
         )
 
+    def drop_table_from_database_and_remove_from_cache(
+        self, force_non_splink_table=False
+    ):
+        self.linker.remove_splinkdataframe_from_cache(self)
+        self.drop_table_from_database(
+            self, force_non_splink_table=force_non_splink_table
+        )
+
     def drop_table_from_database(self, force_non_splink_table=False):
         raise NotImplementedError(
             "Drop table from database not implemented for this linker"
         )
 
     def as_record_dict(self, limit=None):
-        pass
+        raise NotImplementedError("as_record_dict not implemented for this linker")
 
     def as_pandas_dataframe(self, limit=None):
         """Return the dataframe as a pandas dataframe.
