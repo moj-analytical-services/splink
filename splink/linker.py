@@ -2602,7 +2602,6 @@ class Linker:
         Args:
             input_data: The data you wish to register. This can be either a dictionary,
                 pandas dataframe, pyarrow table or a spark dataframe.
-            table_name (str): The name you wish to assign to the table.
             overwrite (bool): Overwrite the table in the underlying database if it
                 exists
         """
