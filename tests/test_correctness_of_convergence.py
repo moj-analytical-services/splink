@@ -58,7 +58,7 @@ def test_splink_converges_to_known_params():
         "additional_columns_to_retain": ["true_match", "true_match_probability"],
         "retain_intermediate_calculation_columns": False,
         "retain_matching_columns": False,
-        "linker_uuid": "abc",
+        "linker_uid": "abc",
     }
 
     linker = DuckDBLinker(df, settings)
