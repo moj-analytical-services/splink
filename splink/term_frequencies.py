@@ -52,6 +52,8 @@ def _join_tf_to_input_df_sql(linker: Linker):
 
     for col in tf_cols:
         tbl = colname_to_tf_tablename(col)
+        if tbl in linker._intermediate_table_cache:
+            tbl = linker._intermediate_table_cache[tbl].physical_name
         tf_col = col.tf_name()
         select_cols.append(f"{tbl}.{tf_col}")
 
@@ -60,10 +62,18 @@ def _join_tf_to_input_df_sql(linker: Linker):
 
     templ = "left join {tbl} on __splink__df_concat.{col} = {tbl}.{col}"
 
-    left_joins = [
-        templ.format(tbl=colname_to_tf_tablename(col), col=col.name())
-        for col in tf_cols
-    ]
+    left_joins = []
+    for col in tf_cols:
+        tbl = colname_to_tf_tablename(col)
+        if tbl in linker._intermediate_table_cache:
+            tbl = linker._intermediate_table_cache[tbl].physical_name
+        sql = templ.format(tbl=tbl, col=col.name())
+        left_joins.append(sql)
+
+    # left_joins = [
+    #     templ.format(tbl=colname_to_tf_tablename(col), col=col.name())
+    #     for col in tf_cols
+    # ]
     left_joins = " ".join(left_joins)
 
     sql = f"""
@@ -104,12 +114,9 @@ def compute_all_term_frequencies_sqls(linker: Linker) -> list[dict]:
     for tf_col in tf_cols:
         tf_table_name = colname_to_tf_tablename(tf_col)
 
-        if not linker._table_exists_in_database(tf_table_name):
+        if tf_table_name not in linker._intermediate_table_cache:
             sql = term_frequencies_for_single_column_sql(tf_col)
-            sql = {
-                "sql": sql,
-                "output_table_name": colname_to_tf_tablename(tf_col),
-            }
+            sql = {"sql": sql, "output_table_name": tf_table_name}
             sqls.append(sql)
 
     sql = _join_tf_to_input_df_sql(linker)
@@ -122,7 +129,7 @@ def compute_all_term_frequencies_sqls(linker: Linker) -> list[dict]:
     return sqls
 
 
-def compute_term_frequencies_from_concat_with_tf(linker):
+def compute_term_frequencies_from_concat_with_tf(linker: "Linker"):
 
     """If __splink__df_concat_with_tf already exists in your database,
     reverse engineer the underlying tf tables.
@@ -135,17 +142,20 @@ def compute_term_frequencies_from_concat_with_tf(linker):
 
     settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
+    cache = linker._intermediate_table_cache
 
-    sqls = []
+    tf_table = []
     for tf_col in tf_cols:
         tf_table_name = colname_to_tf_tablename(tf_col)
 
-        if not linker._table_exists_in_database(tf_table_name):
+        if tf_table_name not in cache:
             sql = term_frequencies_from_concat_with_tf(tf_col)
             sql = {
                 "sql": sql,
                 "output_table_name": colname_to_tf_tablename(tf_col),
             }
-            sqls.append(sql)
+            tf_table.append(sql)
+        else:
+            tf_table.append(cache[tf_table_name])
 
-    return sqls
+    return tf_table

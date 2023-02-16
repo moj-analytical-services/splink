@@ -3,6 +3,7 @@ import logging
 
 import sqlglot
 from sqlglot.expressions import Table
+from sqlglot.errors import ParseError
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,10 @@ class SQLTask:
 
     @property
     def _uses_tables(self):
-        tree = sqlglot.parse_one(self.sql, read=None)
+        try:
+            tree = sqlglot.parse_one(self.sql, read=None)
+        except ParseError:
+            return ["Failure to parse SQL - tablenames not known"]
 
         table_names = set()
         for subtree, parent, key in tree.walk():
@@ -86,6 +90,10 @@ class SQLPipeline:
         final_sql = with_parts + last_part.sql
 
         return final_sql
+
+    def _scan_pipeline_for_tables(self, table):
+        queued_tables = [pipe.output_table_name for pipe in self._pipeline.queue]
+        return table in queued_tables
 
     def reset(self):
         self.queue = []

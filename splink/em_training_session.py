@@ -146,6 +146,8 @@ class EMTrainingSession:
     def _comparison_vectors(self):
         self._training_log_message()
 
+        nodes_with_tf = self._original_linker._initialise_df_concat_with_tf()
+
         sql = block_using_rules_sql(self._training_linker)
         self._training_linker._enqueue_sql(sql, "__splink__df_blocked")
 
@@ -155,10 +157,10 @@ class EMTrainingSession:
         )
 
         if repartition_after_blocking:
-            df_blocked = self._training_linker._execute_sql_pipeline([])
-            input_dataframes = [df_blocked]
+            df_blocked = self._training_linker._execute_sql_pipeline([nodes_with_tf])
+            input_dataframes = [nodes_with_tf, df_blocked]
         else:
-            input_dataframes = []
+            input_dataframes = [nodes_with_tf]
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")

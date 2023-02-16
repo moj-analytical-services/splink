@@ -74,8 +74,8 @@ class SplinkDataFrame:
 
         return pd.DataFrame(self.as_record_dict(limit=limit))
 
-    def __repr__(self):
-        return (
+    def _repr_pretty_(self, p, cycle):
+        msg = (
             f"Table name in database: `{self.physical_name}`\n"
             "\nTo retrieve records, you can call the following methods on this object:"
             "\n`.as_record_dict(limit=5)` or "
@@ -84,3 +84,4 @@ class SplinkDataFrame:
             "\n\nThis table represents the following splink entity: "
             f"{self.templated_name}"
         )
+        p.text(msg)

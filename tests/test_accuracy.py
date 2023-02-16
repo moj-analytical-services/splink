@@ -45,7 +45,7 @@ def test_scored_labels_table():
 
     linker = DuckDBLinker(df, settings)
 
-    linker._initialise_df_concat_with_tf()
+    concat_with_tf = linker._initialise_df_concat_with_tf()
     linker.register_table(df_labels, "labels")
 
     sqls = predictions_from_sample_of_pairwise_labels_sql(linker, "labels")
@@ -53,7 +53,7 @@ def test_scored_labels_table():
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
-    df_scores_labels = linker._execute_sql_pipeline()
+    df_scores_labels = linker._execute_sql_pipeline([concat_with_tf])
 
     df_scores_labels = df_scores_labels.as_pandas_dataframe()
     df_scores_labels.sort_values(["unique_id_l", "unique_id_r"], inplace=True)
@@ -184,8 +184,6 @@ def test_roc_chart_dedupe_only():
     settings_dict = get_settings_dict()
     linker = DuckDBLinker(df, settings_dict, connection=":memory:")
 
-    linker._initialise_df_concat_with_tf()
-
     linker.register_table(df_labels, "labels")
 
     linker.roc_chart_from_labels_table("labels")
@@ -216,8 +214,6 @@ def test_roc_chart_link_and_dedupe():
     linker = DuckDBLinker(
         df, settings_dict, connection=":memory:", input_table_aliases="fake_data_1"
     )
-
-    linker._initialise_df_concat_with_tf()
 
     linker.register_table(df_labels, "labels")
 
