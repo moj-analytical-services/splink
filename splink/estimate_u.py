@@ -39,7 +39,7 @@ def estimate_u_values(linker: Linker, target_rows):
 
     logger.info("----- Estimating u probabilities using random sampling -----")
 
-    nodes_with_tf = linker._initialise_df_concat_with_tf(materialise=True)
+    nodes_with_tf = linker._initialise_df_concat_with_tf()
 
     original_settings_obj = linker._settings_obj
 
