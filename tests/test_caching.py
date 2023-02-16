@@ -31,7 +31,7 @@ def test_cache_id(tmp_path):
         get_settings_dict(),
     )
 
-    prior = linker._settings_obj._cache_uuid
+    prior = linker._settings_obj._cache_uid
 
     path = os.path.join(tmp_path, "model.json")
     linker.save_settings_to_json(path, overwrite=True)
@@ -39,24 +39,24 @@ def test_cache_id(tmp_path):
     linker_2 = DuckDBLinker(df, connection=":memory:")
     linker_2.load_settings_from_json(path)
 
-    assert linker_2._settings_obj._cache_uuid == prior
+    assert linker_2._settings_obj._cache_uid == prior
 
     # Test initialising settings
     linker = DuckDBLinker(
         df,
     )
-    prior = linker._cache_uuid
+    prior = linker._cache_uid
 
     linker.initialise_settings(get_settings_dict())
-    assert prior == linker._cache_uuid
+    assert prior == linker._cache_uid
 
-    # Test uuid from settings
-    random_uuid = "my_random_uuid"
+    # Test uid from settings
+    random_uid = "my_random_uid"
     settings = get_settings_dict()
-    settings["linker_uuid"] = random_uuid
+    settings["linker_uid"] = random_uid
     linker = DuckDBLinker(df, settings)
-    linker_uuid = linker._cache_uuid
-    assert linker_uuid == random_uuid
+    linker_uid = linker._cache_uid
+    assert linker_uid == random_uid
 
 
 def test_materialising_works():

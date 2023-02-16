@@ -176,21 +176,24 @@ class Linker:
         self._pipeline = SQLPipeline()
 
         settings_dict = deepcopy(settings_dict)
+        self._settings_dict = settings_dict
+
         # if settings_dict is passed, set sql_dialect on it if missing, and make sure
         # incompatible dialect not passed
         if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
             settings_dict["sql_dialect"] = self._sql_dialect
 
-        if settings_dict is not None:
-            self._cache_uid = settings_dict.get("linker_uid", ascii_uid(8))
-        else:
+        if settings_dict is None:
             self._cache_uid_no_settings = ascii_uid(8)
+        else:
+            uid = settings_dict.get("linker_uid", ascii_uid(8))
+            settings_dict["linker_uid"] = uid
 
-        self._settings_dict = settings_dict
         if settings_dict is None:
             self._settings_obj_ = None
         else:
             self._settings_obj_ = Settings(settings_dict)
+
             self._validate_dialect()
 
         self._input_tables_dict = self._get_input_tables_dict(
