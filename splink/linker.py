@@ -99,10 +99,10 @@ class CacheDictWithLogging(UserDict):
         return copy(splink_dataframe)
 
     def __setitem__(self, key, value):
-        super().__setitem__(key, value)
-
         if not isinstance(value, SplinkDataFrame):
             raise TypeError("Cached items must be of type SplinkDataFrame")
+
+        super().__setitem__(key, value)
 
         logger.log(
             1, f"Setting cache for template name {key}" f" with physical name {value}"
