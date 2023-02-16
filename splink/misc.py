@@ -163,5 +163,5 @@ def major_minor_version_greater_equal_than(this_version, base_comparison_version
     return this_version >= base_version
 
 
-def ascii_uuid(len):
+def ascii_uid(len):
     return "".join(random.choices(string.ascii_letters + string.digits, k=len))

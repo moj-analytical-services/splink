@@ -132,13 +132,13 @@ class Settings:
         return a_cols
 
     @property
-    def _cache_uuid(self):
+    def _cache_uid(self):
         s_else_d = self._from_settings_dict_else_default
-        return s_else_d("linker_uuid")
+        return s_else_d("linker_uid")
 
-    @_cache_uuid.setter
-    def _cache_uuid(self, value):
-        self._settings_dict["linker_uuid"] = value
+    @_cache_uid.setter
+    def _cache_uid(self, value):
+        self._settings_dict["linker_uid"] = value
 
     @property
     def _additional_columns_to_retain(self):

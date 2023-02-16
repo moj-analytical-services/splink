@@ -25,7 +25,7 @@ from .charts import (
 from .blocking import block_using_rules_sql, BlockingRule
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .em_training_session import EMTrainingSession
-from .misc import bayes_factor_to_prob, prob_to_bayes_factor, ensure_is_list, ascii_uuid
+from .misc import bayes_factor_to_prob, prob_to_bayes_factor, ensure_is_list, ascii_uid
 from .predict import predict_from_comparison_vectors_sqls
 from .settings import Settings
 from .term_frequencies import (
@@ -182,10 +182,10 @@ class Linker:
             settings_dict["sql_dialect"] = self._sql_dialect
 
         if settings_dict is not None:
-            self._cache_uuid = settings_dict.get("linker_uuid", ascii_uuid(8))
-            settings_dict["linker_uuid"] = self._cache_uuid
+            self._cache_uid = settings_dict.get("linker_uid", ascii_uid(8))
+            settings_dict["linker_uid"] = self._cache_uid
         else:
-            self._cache_uuid = ascii_uuid(8)
+            self._cache_uid = ascii_uid(8)
 
         self._settings_dict = settings_dict
         if settings_dict is None:
@@ -216,12 +216,12 @@ class Linker:
 
     @property
     def _cache_uid(self):
-        # return self._settings_obj._cache_uuid
-        return self._cache_uuid
+        # return self._settings_obj._cache_uid
+        return self._cache_uid
 
     @_cache_uid.setter
     def _cache_uid(self, value):
-        self._settings_obj._cache_uuid = value
+        self._settings_obj._cache_uid = value
 
     @property
     def _settings_obj(self) -> Settings:
@@ -828,9 +828,9 @@ class Linker:
         Args:
             settings_dict (dict): A Splink settings dictionary
         """
-        # If a uuid already exists in your settings object, prioritise this
-        settings_dict["linker_uuid"] = settings_dict.get(
-            "linker_uuid", self._cache_uuid
+        # If a uid already exists in your settings object, prioritise this
+        settings_dict["linker_uid"] = settings_dict.get(
+            "linker_uid", self._cache_uid
         )
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
@@ -1250,11 +1250,11 @@ class Linker:
         original_link_type = self._settings_obj._link_type
 
         if not isinstance(records_or_tablename, str):
-            uuid = ascii_uuid(8)
+            uid = ascii_uid(8)
             self.register_table(
-                records_or_tablename, f"__splink__df_new_records_{uuid}", overwrite=True
+                records_or_tablename, f"__splink__df_new_records_{uid}", overwrite=True
             )
-            new_records_tablename = f"__splink__df_new_records_{uuid}"
+            new_records_tablename = f"__splink__df_new_records_{uid}"
         else:
             new_records_tablename = records_or_tablename
 
@@ -1355,14 +1355,14 @@ class Linker:
         self._compare_two_records_mode = True
         self._settings_obj._blocking_rules_to_generate_predictions = []
 
-        uuid = ascii_uuid(8)
+        uid = ascii_uid(8)
         df_records_left = self.register_table(
-            [record_1], f"__splink__compare_two_records_left_{uuid}", overwrite=True
+            [record_1], f"__splink__compare_two_records_left_{uid}", overwrite=True
         )
         df_records_left.templated_name = "__splink__compare_two_records_left"
 
         df_records_right = self.register_table(
-            [record_2], f"__splink__compare_two_records_right_{uuid}", overwrite=True
+            [record_2], f"__splink__compare_two_records_right_{uid}", overwrite=True
         )
         df_records_right.templated_name = "__splink__compare_two_records_right"
 
@@ -2578,7 +2578,7 @@ class Linker:
         # to include a different unique id
 
         # As a result, any previously cached tables will not be found
-        self._cache_uid = ascii_uuid(8)
+        self._cache_uid = ascii_uid(8)
 
         # As a result, any previously cached tables will not be found
         self._intermediate_table_cache.invalidate_cache()
@@ -2628,7 +2628,7 @@ class Linker:
         return splink_dataframe
 
     def register_labels_table(self, input_data, overwrite=False):
-        table_name_physical = "__splink__df_labels_" + ascii_uuid(8)
+        table_name_physical = "__splink__df_labels_" + ascii_uid(8)
         splink_dataframe = self.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
