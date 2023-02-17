@@ -175,30 +175,19 @@ class Linker:
 
         self._pipeline = SQLPipeline()
 
-        settings_dict = deepcopy(settings_dict)
-        self._settings_dict = settings_dict
-
-        # if settings_dict is passed, set sql_dialect on it if missing, and make sure
-        # incompatible dialect not passed
-        if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
-            settings_dict["sql_dialect"] = self._sql_dialect
-
-        if settings_dict is None:
-            self._cache_uid_no_settings = ascii_uid(8)
-        else:
-            uid = settings_dict.get("linker_uid", ascii_uid(8))
-            settings_dict["linker_uid"] = uid
-
-        if settings_dict is None:
-            self._settings_obj_ = None
-        else:
-            self._settings_obj_ = Settings(settings_dict)
-
-            self._validate_dialect()
-
         self._input_tables_dict = self._get_input_tables_dict(
             input_table_or_tables, input_table_aliases
         )
+
+        if isinstance(settings_dict, str):
+            if settings_dict.endswith(".json"):
+                self._setup_settings_objs(None)  # feed it a blank settings dictionary
+                self.load_settings_from_json(settings_dict)
+            else:
+                raise ValueError("Invalid settings dictionary provided.")
+        else:
+            settings_dict = deepcopy(settings_dict)
+            self._setup_settings_objs(settings_dict)
 
         self._validate_input_dfs()
         self._em_training_sessions = []
@@ -326,6 +315,28 @@ class Linker:
         raise NotImplementedError(
             f"infinity sql expression not available for {type(self)}"
         )
+
+    def _setup_settings_objs(self, settings_dict):
+        # Setup the linker class's required settings
+        self._settings_dict = settings_dict
+
+        # if settings_dict is passed, set sql_dialect on it if missing, and make sure
+        # incompatible dialect not passed
+        if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
+            settings_dict["sql_dialect"] = self._sql_dialect
+
+        if settings_dict is None:
+            self._cache_uid_no_settings = ascii_uid(8)
+        else:
+            uid = settings_dict.get("linker_uid", ascii_uid(8))
+            settings_dict["linker_uid"] = uid
+
+        if settings_dict is None:
+            self._settings_obj_ = None
+        else:
+            self._settings_obj_ = Settings(settings_dict)
+
+            self._validate_dialect()
 
     def _prepend_schema_to_table_name(self, table_name):
         if self._output_schema:
@@ -1170,8 +1181,9 @@ class Linker:
 
         """
 
-        # If the user only calls predict, it runs as a single pipeline with no
-        # materialisation of anything.
+        # If materialise_after_computing_term_frequencies=False and the user only
+        # calls predict, it runs as a single pipeline with no materialisation
+        # of anything.
 
         # _initialise_df_concat_with_tf returns None if the table doesn't exist
         # and only SQL is queued in this step.
