@@ -55,7 +55,7 @@ class SQLiteDataFrame(SplinkDataFrame):
                 " sqlite table that exists in the provided db."
             )
 
-    def drop_table_from_database(self, force_non_splink_table=False):
+    def _drop_table_from_database_backend_specific(self, force_non_splink_table=False):
 
         self._check_drop_table_created_by_splink(force_non_splink_table)
 

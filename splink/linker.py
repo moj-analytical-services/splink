@@ -93,7 +93,6 @@ class CacheDictWithLogging(UserDict):
         logger.debug(
             f"Using cache for template name {key}" f" with physical name {phy_name}"
         )
-        splink_dataframe.templated_name = key
         # Return a copy so that user can modify physical or templated name
         # without modifying the version in the cache
         return copy(splink_dataframe)
@@ -586,7 +585,7 @@ class Linker:
             )
 
         physical_name = splink_dataframe.physical_name
-        self._names_of_tables_created_by_splink.append(splink_dataframe)
+        self._splink_dataframes_created_by_splink.append(splink_dataframe)
         self._intermediate_table_cache[physical_name] = splink_dataframe
 
         if self.debug_mode:
@@ -766,10 +765,9 @@ class Linker:
                 if cl._has_estimated_m_values:
                     cl.m_probability = cl._trained_m_median
 
-    def _delete_tables_created_by_splink_from_db(self):
-
+    def delete_tables_created_by_splink_from_db(self):
         for df in self._splink_dataframes_created_by_splink:
-            df.drop_table_from_database_and_remove_from_cache()
+            df.drop_table_from_database()
 
     def _raise_error_if_necessary_waterfall_columns_not_computed(self):
         ricc = self._settings_obj._retain_intermediate_calculation_columns
@@ -2572,7 +2570,7 @@ class Linker:
         # As a result, any previously cached tables will not be found
         self._intermediate_table_cache.invalidate_cache()
 
-        # Also drop any existing splink tables from the database
+        # Drop any existing splink tables from the database
         # Note, this is not actually necessary, it's just good housekeeping
         self._delete_tables_created_by_splink_from_db()
 
@@ -2622,17 +2620,18 @@ class Linker:
         )
         return splink_dataframe
 
-    def remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):
-        cache_keys = list(self._intermediate_table_cache.keys())
+    def _remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):
 
-        for k in cache_keys:
-            if k == splink_dataframe.physical_name:
-                del self._intermediate_table_cache[k]
-            if k == splink_dataframe.templated_name:
-                del self._intermediate_table_cache
-        # Also remove from list of dataframes created by splink
+        keys_to_delete = []
+        for key, df in self._intermediate_table_cache.items():
+            if df.physical_name == splink_dataframe.physical_name:
+                keys_to_delete.append(key)
+
+        for k in keys_to_delete:
+            del self._intermediate_table_cache[k]
+
         self._splink_dataframes_created_by_splink = [
             df
             for df in self._splink_dataframes_created_by_splink
-            if not df.physical_name == splink_dataframe.physical_name
+            if df.physical_name not in keys_to_delete
         ]

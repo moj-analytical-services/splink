@@ -42,7 +42,7 @@ def register_cc_df(G):
 
     # add our prediction df to our list of created tables
     predict_df = DuckDBLinkerDataFrame(table_name, table_name, linker)
-    linker._names_of_tables_created_by_splink.add(predict_df)
+    linker._splink_dataframes_created_by_splink.append(predict_df)
 
     return predict_df
 

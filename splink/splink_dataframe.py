@@ -1,5 +1,11 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
 import logging
 
+
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +18,7 @@ class SplinkDataFrame:
     Uses methods like `as_pandas_dataframe()` and `as_record_dict()` to retrieve data
     """
 
-    def __init__(self, templated_name, physical_name, linker):
+    def __init__(self, templated_name, physical_name, linker: Linker):
         self.templated_name = templated_name
         self.physical_name = physical_name
         self.linker = linker
@@ -51,17 +57,16 @@ class SplinkDataFrame:
             f"physical name {self.physical_name}"
         )
 
-    def drop_table_from_database_and_remove_from_cache(
-        self, force_non_splink_table=False
-    ):
-        self.linker.remove_splinkdataframe_from_cache(self)
-        self.drop_table_from_database(
-            self, force_non_splink_table=force_non_splink_table
+    def _drop_table_from_database_backend_specific(self, force_non_splink_table=False):
+        raise NotImplementedError(
+            "_drop_table_from_database_backend_specific from database not "
+            "implemented for this linker"
         )
 
     def drop_table_from_database(self, force_non_splink_table=False):
-        raise NotImplementedError(
-            "Drop table from database not implemented for this linker"
+        self.linker._remove_splinkdataframe_from_cache(self)
+        self._drop_table_from_database_backend_specific(
+            force_non_splink_table=force_non_splink_table
         )
 
     def as_record_dict(self, limit=None):
