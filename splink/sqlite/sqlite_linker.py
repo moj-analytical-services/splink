@@ -20,12 +20,19 @@ def dict_factory(cursor, row):
 
 
 class SQLiteDataFrame(SplinkDataFrame):
+    def __init__(self, templated_name, physical_name, sqlite_linker):
+        super().__init__(templated_name, physical_name, sqlite_linker)
+
+        # This alias is used to make it clearer when we are using
+        # linker methods specific to the DuckDBLinker
+        self.sqlite_linker = sqlite_linker
+
     @property
     def columns(self) -> list[InputColumn]:
         sql = f"""
         PRAGMA table_info({self.physical_name});
         """
-        pragma_result = self.linker.con.execute(sql).fetchall()
+        pragma_result = self.sqlite_linker.con.execute(sql).fetchall()
         cols = [r["name"] for r in pragma_result]
 
         return [InputColumn(c, sql_dialect="sqlite") for c in cols]
@@ -46,7 +53,7 @@ class SQLiteDataFrame(SplinkDataFrame):
         AND name='{self.physical_name}';
         """
 
-        res = self.linker.con.execute(sql).fetchall()
+        res = self.sqlite_linker.con.execute(sql).fetchall()
         if len(res) == 0:
             raise ValueError(
                 f"{self.physical_name} does not exist in the sqlite db provided.\n"
@@ -61,7 +68,7 @@ class SQLiteDataFrame(SplinkDataFrame):
 
         drop_sql = f"""
         DROP TABLE IF EXISTS {self.physical_name}"""
-        cur = self.linker.con.cursor()
+        cur = self.sqlite_linker.con.cursor()
         cur.execute(drop_sql)
 
     def as_record_dict(self, limit=None):
@@ -72,7 +79,7 @@ class SQLiteDataFrame(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
         sql += ";"
-        cur = self.linker.con.cursor()
+        cur = self.sqlite_linker.con.cursor()
         return cur.execute(sql).fetchall()
 
 

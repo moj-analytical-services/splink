@@ -28,10 +28,17 @@ Dialect["customspark"]
 
 
 class SparkDataframe(SplinkDataFrame):
+    def __init__(self, templated_name, physical_name, spark_linker):
+        super().__init__(templated_name, physical_name, spark_linker)
+
+        # This alias is used to make it clearer when we are using
+        # linker methods specific to the DuckDBLinker
+        self.spark_linker = spark_linker
+
     @property
     def columns(self) -> list[InputColumn]:
         sql = f"select * from {self.physical_name} limit 1"
-        spark_df = self.linker.spark.sql(sql)
+        spark_df = self.spark_linker.spark.sql(sql)
 
         col_strings = list(spark_df.columns)
         return [InputColumn(c, sql_dialect="spark") for c in col_strings]
@@ -45,7 +52,7 @@ class SparkDataframe(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
 
-        return self.linker.spark.sql(sql).toPandas().to_dict(orient="records")
+        return self.spark_linker.spark.sql(sql).toPandas().to_dict(orient="records")
 
     def _drop_table_from_database_backend_specific(self, force_non_splink_table=False):
 
@@ -60,10 +67,10 @@ class SparkDataframe(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
 
-        return self.linker.spark.sql(sql).toPandas()
+        return self.spark_linker.spark.sql(sql).toPandas()
 
     def as_spark_dataframe(self):
-        return self.linker.spark.table(self.physical_name)
+        return self.spark_linker.spark.table(self.physical_name)
 
 
 class SparkLinker(Linker):
