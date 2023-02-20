@@ -16,7 +16,7 @@ dummy_frame = pd.DataFrame(["id"])
 def make_mock_execute(linker):
     # creates a mock version of linker._execute_sql_against_backend,
     # so we can count calls
-    dummy_splink_df = DuckDBLinkerDataFrame("template", "dummy_frame", linker)
+    dummy_splink_df = DuckDBLinkerDataFrame("template", "__splink__dummy_frame", linker)
     mock_execute = create_autospec(
         linker._execute_sql_against_backend, return_value=dummy_splink_df
     )

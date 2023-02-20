@@ -2572,7 +2572,7 @@ class Linker:
 
         # Drop any existing splink tables from the database
         # Note, this is not actually necessary, it's just good housekeeping
-        self._delete_tables_created_by_splink_from_db()
+        self.delete_tables_created_by_splink_from_db()
 
     def register_table_input_nodes_concat_with_tf(self, input_data, overwrite=False):
         """Register a pre-computed version of the input_nodes_concat_with_tf table that
