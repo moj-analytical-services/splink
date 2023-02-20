@@ -202,7 +202,6 @@ class Linker:
         self._validate_input_dfs()
         self._em_training_sessions = []
 
-        self._splink_dataframes_created_by_splink: list[SplinkDataFrame] = []
         self._intermediate_table_cache: dict = CacheDictWithLogging()
 
         self._find_new_matches_mode = False
@@ -577,15 +576,17 @@ class Linker:
             splink_dataframe = self._execute_sql_against_backend(
                 sql, output_tablename_templated, table_name_hash
             )
+
         else:
             splink_dataframe = self._execute_sql_against_backend(
                 sql,
                 output_tablename_templated,
                 output_tablename_templated,
             )
+        splink_dataframe.created_by_splink = True
 
         physical_name = splink_dataframe.physical_name
-        self._splink_dataframes_created_by_splink.append(splink_dataframe)
+
         self._intermediate_table_cache[physical_name] = splink_dataframe
 
         if self.debug_mode:
@@ -766,8 +767,9 @@ class Linker:
                     cl.m_probability = cl._trained_m_median
 
     def delete_tables_created_by_splink_from_db(self):
-        for df in self._splink_dataframes_created_by_splink:
-            df.drop_table_from_database()
+        for splink_df in list(self._intermediate_table_cache.items()):
+            if splink_df.created_by_splink:
+                splink_df.drop_table_from_database()
 
     def _raise_error_if_necessary_waterfall_columns_not_computed(self):
         ricc = self._settings_obj._retain_intermediate_calculation_columns
@@ -2629,9 +2631,3 @@ class Linker:
 
         for k in keys_to_delete:
             del self._intermediate_table_cache[k]
-
-        self._splink_dataframes_created_by_splink = [
-            df
-            for df in self._splink_dataframes_created_by_splink
-            if df.physical_name not in keys_to_delete
-        ]

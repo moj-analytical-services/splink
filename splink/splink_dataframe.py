@@ -22,6 +22,7 @@ class SplinkDataFrame:
         self.templated_name = templated_name
         self.physical_name = physical_name
         self.linker = linker
+        self.created_by_splink = False
 
     @property
     def columns(self):
@@ -44,7 +45,7 @@ class SplinkDataFrame:
 
     def _check_drop_table_created_by_splink(self, force_non_splink_table=False):
 
-        if not self.physical_name.startswith("__splink__"):
+        if not self.created_by_splink:
             if not force_non_splink_table:
                 raise ValueError(
                     f"You've asked to drop table {self.physical_name} from your "
