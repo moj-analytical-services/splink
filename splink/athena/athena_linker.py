@@ -65,7 +65,7 @@ class AthenaDataFrame(SplinkDataFrame):
         d = wr.catalog.get_table_types(
             database=t[0],
             table=t[1],
-            boto3_session=self.linker.boto3_session,
+            boto3_session=self.athena_linker.boto3_session,
         )
 
         cols = list(d.keys())
