@@ -39,10 +39,16 @@ def test_profile_with_arrays_duckdb():
         "forename": {0: "Juan", 1: "Sarah", 2: "Leila", 3: "Michaela"},
         "surname": {0: "Pene", 1: "Dowel", 2: "Idin", 3: "Bose"},
         "offence_code_arr": {
-            0: np.array((1, 2, 3)),
+            0: np.nan,
             1: np.array((1, 2, 3)),
             2: np.array((1, 2, 3)),
             3: np.array((1, 2, 3)),
+        },
+        "lat_long": {
+            0: {"lat": 22.730590, "lon": 9.388589},
+            1: {"lat": 22.836322, "lon": 9.276112},
+            2: {"lat": 37.770850, "lon": 95.689880},
+            3: None,
         },
     }
 
@@ -51,8 +57,10 @@ def test_profile_with_arrays_duckdb():
 
     linker = DuckDBLinker(df, settings_dict, connection=":memory:")
 
+    column_expressions = ["forename", "surname", "offence_code_arr", "lat_long"]
+
     linker.profile_columns(
-        ["forename", "surname", "offence_code_arr"],
+        column_expressions,
         top_n=3,
         bottom_n=3,
     )
