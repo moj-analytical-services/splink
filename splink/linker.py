@@ -8,7 +8,7 @@ import hashlib
 import os
 import json
 
-from splink.input_column import InputColumn
+from splink.input_column import InputColumn, remove_quotes_from_identifiers
 
 from .charts import (
     match_weights_histogram,
@@ -34,6 +34,7 @@ from .term_frequencies import (
     colname_to_tf_tablename,
     _join_tf_to_input_df_sql,
     compute_term_frequencies_from_concat_with_tf,
+    term_frequencies_from_concat_with_tf,
 )
 from .profile_data import profile_columns
 from .missingness import missingness_data, completeness_data
@@ -874,9 +875,27 @@ class Linker:
         input_col = InputColumn(column_name, settings_obj=self._settings_obj)
         tf_tablename = colname_to_tf_tablename(input_col)
         cache = self._intermediate_table_cache
+        concat_tf_tables = [
+            remove_quotes_from_identifiers(tf_col.input_name_as_tree).sql()
+            for tf_col in self._settings_obj._term_frequency_columns
+        ]
 
         if tf_tablename in cache:
             tf_df = cache[tf_tablename]
+        elif "__splink__df_concat_with_tf" in cache and column_name in concat_tf_tables:
+            self._pipeline.reset()
+            # If our df_concat_with_tf table already exists, use backwards inference to
+            # find a given tf table
+            sql = term_frequencies_from_concat_with_tf(InputColumn(column_name))
+            sql = {
+                "sql": sql,
+                "output_table_name": colname_to_tf_tablename(InputColumn(column_name)),
+            }
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+            tf_df = self._execute_sql_pipeline(
+                [cache["__splink__df_concat_with_tf"]], materialise_as_hash=True
+            )
+            self._intermediate_table_cache[tf_tablename] = tf_df
         else:
             # Clear the pipeline if we are materialising
             self._pipeline.reset()
@@ -1279,8 +1298,8 @@ class Linker:
 
         cache = self._intermediate_table_cache
         input_dfs = []
-        # If our df_concat_with_tf table already exists, use backwards induction to
-        # find  all underlying term frequency tables.
+        # If our df_concat_with_tf table already exists, use backwards inference to
+        # find all underlying term frequency tables.
         if "__splink__df_concat_with_tf" in cache:
             concat_with_tf = cache["__splink__df_concat_with_tf"]
             tf_tables = compute_term_frequencies_from_concat_with_tf(self)
@@ -1442,7 +1461,7 @@ class Linker:
         self._self_link_mode = True
 
         # Block on uid i.e. create pairwise record comparisons where the uid matches
-        uid_cols = self._settings_obj._unique_id_input_columns
+        uid_cols = self._settings_obj._unique_id_8s
         uid_l = _composite_unique_id_from_edges_sql(uid_cols, None, "l")
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
