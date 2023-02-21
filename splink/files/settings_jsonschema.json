@@ -213,7 +213,7 @@
       "type": "string",
       "title": "The SQL dialect in which sql_conditions are written.  Must be a valid sqlglot dialect",
       "default": null,
-      "examples": ["spark", "duckdb", "presto"],
+      "examples": ["spark", "duckdb", "presto", "sqlite"],
       "enum": ["spark", "duckdb", "presto", "sqlite"]
     }
   }
