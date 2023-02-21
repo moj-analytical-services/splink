@@ -1,88 +1,84 @@
 ## Building docs locally
 
-To rapidly build the documentation and immediately see changes you've made you can use the following code:
+To rapidly build the documentation and immediately see changes you've made you can use [this script](https://github.com/moj-analytical-services/splink/scripts/make_docs_locally.sh):
 
-```
-git clone https://github.com/moj-analytical-services/splink_demos.git demos/
-mkdir docs/settingseditor
-curl https://raw.githubusercontent.com/moj-analytical-services/splink/splink3/splink/files/settings_jsonschema.json --output docs/settingseditor/settings_jsonschema.json
-cat docs/settingseditor/settings_jsonschema.json
-echo '<iframe  height="1200" width="100%" src="https://www.robinlinacre.com/splink3_settings_editor_temp" >' >  docs/settingseditor/editor.md
-
-source deactivate
-rm -rf venv/
-python3 -m venv venv
-source venv/bin/activate
-
-pip install --upgrade pip && pip install mkdocs==1.3.0 mknotebooks mkdocs-material mkdocs-autorefs mkdocs-include-markdown-plugin mkdocs-material-extensions mkdocs-simple-plugin mkdocstrings mkdocstrings-python mkdocstrings-python-legacy mkdocs-semiliterate
-pip install jinja2==3.0.3
-
-
-mkdocs serve
+```sh
+source scripts/make_docs_locally.sh
 ```
 
 This is much faster than waiting for github actions to run if you're trying to make fiddly changes to formatting etc.
 
-Here's a working `requirements.txt`
+The Splink repo contains a [working `requirements.txt` for building the docs](https://github.com/moj-analytical-services/splink/scripts/docs-requirements.txt), or a more complete version:
 
 ```
-astunparse==1.6.3
-attrs==22.1.0
-beautifulsoup4==4.11.1
-bleach==5.0.1
+attrs==22.2.0
+beautifulsoup4==4.11.2
+bleach==6.0.0
+certifi==2022.12.7
+charset-normalizer==3.0.1
 click==8.1.3
+colorama==0.4.6
 defusedxml==0.7.1
-entrypoints==0.4
-fastjsonschema==2.16.1
+EditorConfig==0.12.3
+fastjsonschema==2.16.2
 ghp-import==2.1.0
-gitdb==4.0.9
-GitPython==3.1.27
-griffe==0.22.0
-importlib-metadata==4.12.0
-importlib-resources==5.9.0
+gitdb==4.0.10
+GitPython==3.1.31
+griffe==0.25.5
+idna==3.4
+importlib-metadata==6.0.0
 Jinja2==3.0.3
-jsonschema==4.9.0
-jupyter-client==7.3.4
-jupyter-core==4.11.1
+jsbeautifier==1.14.7
+jsonschema==4.17.3
+jsonschema2md==0.4.0
+jupyter_client==8.0.3
+jupyter_core==5.2.0
 jupyterlab-pygments==0.2.2
-Markdown==3.4.1
-MarkupSafe==2.1.1
+Markdown==3.3.7
+MarkupSafe==2.1.2
 mergedeep==1.3.4
-mistune==0.8.4
-mkdocs==1.3.0
+mistune==2.0.5
+mkdocs==1.4.2
 mkdocs-autorefs==0.4.1
-mkdocs-include-markdown-plugin==3.6.1
-mkdocs-material==8.3.9
-mkdocs-material-extensions==1.0.3
-mkdocs-semiliterate==0.4.0
-mkdocs-simple-plugin==1.1.1
-mkdocstrings==0.19.0
-mkdocstrings-python==0.7.1
+mkdocs-click==0.8.0
+mkdocs-gen-files==0.4.0
+mkdocs-include-markdown-plugin==4.0.3
+mkdocs-material==8.5.11
+mkdocs-material-extensions==1.1.1
+mkdocs-mermaid2-plugin==0.6.0
+mkdocs-monorepo-plugin==1.0.4
+mkdocs-schema-reader==0.11.1
+mkdocs-semiliterate==0.7.0
+mkdocs-simple-plugin==2.1.2
+mkdocstrings==0.20.0
+mkdocstrings-python==0.8.3
 mkdocstrings-python-legacy==0.2.3
 mknotebooks==0.7.1
-nbclient==0.6.6
-nbconvert==6.5.0
-nbformat==5.4.0
-nest-asyncio==1.5.5
-packaging==21.3
+nbclient==0.7.2
+nbconvert==7.2.9
+nbformat==5.7.3
+packaging==23.0
 pandocfilters==1.5.0
-pkgutil_resolve_name==1.3.10
-Pygments==2.12.0
-pymdown-extensions==9.5
-pyparsing==3.0.9
-pyrsistent==0.18.1
+platformdirs==3.0.0
+Pygments==2.14.0
+pymdown-extensions==9.9.2
+pyrsistent==0.19.3
 python-dateutil==2.8.2
+python-slugify==8.0.0
 pytkdocs==0.16.1
 PyYAML==6.0
 pyyaml_env_tag==0.1
-pyzmq==23.2.0
+pyzmq==25.0.0
+requests==2.28.2
 six==1.16.0
 smmap==5.0.0
-soupsieve==2.3.2.post1
-tinycss2==1.1.1
+soupsieve==2.4
+text-unidecode==1.3
+tinycss2==1.2.1
 tornado==6.2
-traitlets==5.3.0
-watchdog==2.1.9
+traitlets==5.9.0
+urllib3==1.26.14
+watchdog==2.2.1
 webencodings==0.5.1
-zipp==3.8.1
+zipp==3.14.0
 ```
