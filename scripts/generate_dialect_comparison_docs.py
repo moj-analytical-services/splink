@@ -1,4 +1,5 @@
-import importlib, inspect
+import importlib
+import inspect
 from pathlib import Path
 
 from splink.comparison_level import ComparisonLevel
