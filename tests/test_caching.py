@@ -85,6 +85,10 @@ def test_materialising_works():
     linker._initialise_df_concat_with_tf(materialise=False)
     linker.compute_tf_table("first_name")
 
+    linker = DuckDBLinker(df, settings)
+    linker._initialise_df_concat_with_tf(materialise=True)
+    linker.compute_tf_table("first_name")
+
 
 def test_cache_only_splink_dataframes():
     settings = get_settings_dict()
