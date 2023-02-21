@@ -7,16 +7,15 @@
 # of the problem and come to a working solution.
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+import logging
 import time
 from typing import TYPE_CHECKING
 
-import logging
-from .unique_id_concat import (
-    _composite_unique_id_from_nodes_sql,
-    _composite_unique_id_from_edges_sql,
-)
-
 from .splink_dataframe import SplinkDataFrame
+from .unique_id_concat import (
+    _composite_unique_id_from_edges_sql,
+    _composite_unique_id_from_nodes_sql,
+)
 
 if TYPE_CHECKING:
     from .linker import Linker

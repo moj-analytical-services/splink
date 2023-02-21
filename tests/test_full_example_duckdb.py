@@ -1,17 +1,16 @@
 import os
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.duckdb.duckdb_comparison_library import (
-    jaccard_at_thresholds,
-    exact_match,
-    jaro_winkler_at_thresholds,
-)
 import pandas as pd
 import pyarrow.parquet as pq
-
-
 from basic_settings import get_settings_dict
 from linker_utils import _test_table_registration, register_roc_data
+
+from splink.duckdb.duckdb_comparison_library import (
+    exact_match,
+    jaccard_at_thresholds,
+    jaro_winkler_at_thresholds,
+)
+from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def test_full_example_duckdb(tmp_path):

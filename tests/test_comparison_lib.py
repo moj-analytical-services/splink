@@ -1,7 +1,7 @@
 import pandas as pd
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
 import splink.duckdb.duckdb_comparison_library as cl
+from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def test_distance_function_comparison():

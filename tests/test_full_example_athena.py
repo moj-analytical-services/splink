@@ -1,9 +1,10 @@
-import pandas as pd
-import pytest
 import os
 
+import pandas as pd
+import pytest
 from basic_settings import get_settings_dict
 from linker_utils import _test_table_registration
+
 from splink.athena.athena_comparison_library import levenshtein_at_thresholds
 
 skip = False
@@ -14,9 +15,10 @@ except ImportError:
     pass  # Prevent failures if awswrangler is not installed
 
 if not skip:
-    from splink.athena.athena_linker import AthenaLinker
     import boto3
     from dataengineeringutils3.s3 import delete_s3_folder_contents
+
+    from splink.athena.athena_linker import AthenaLinker
 
 
 settings_dict = get_settings_dict()

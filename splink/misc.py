@@ -1,11 +1,15 @@
+import itertools
 import random
 import string
 from math import log2, inf
 from typing import Iterable
 import numpy as np
 import json
+from math import inf, log2
 from string import ascii_lowercase
-import itertools
+from typing import Iterable
+
+import numpy as np
 import pkg_resources
 
 
@@ -146,11 +150,11 @@ def calculate_reduction_ratio(N, cartesian):
 def _check_dependency_installed(module):
     try:
         pkg_resources.get_distribution(module)
-    except pkg_resources.DistributionNotFound:
+    except pkg_resources.DistributionNotFound as e:
         raise ValueError(
             f"{module} is not installed.",
             "Please install and import it before continuing.",
-        )
+        ) from e
 
 
 def major_minor_version_greater_equal_than(this_version, base_comparison_version):

@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
+from typing import List
+
+from .blocking import BlockingRule
 from .parse_sql import get_columns_used_from_sql
 from .misc import prob_to_bayes_factor, prob_to_match_weight, dedupe_preserving_order
 from .charts import m_u_parameters_chart, match_weights_chart
@@ -9,8 +12,9 @@ from .comparison import Comparison
 from .comparison_level import ComparisonLevel
 from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
+from .misc import dedupe_preserving_order, prob_to_bayes_factor, prob_to_match_weight
+from .parse_sql import get_columns_used_from_sql
 from .validate_jsonschema import validate_settings_against_schema
-from .blocking import BlockingRule
 
 logger = logging.getLogger(__name__)
 

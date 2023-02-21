@@ -1,13 +1,13 @@
 from ..comparison_level_library import (
+    ArrayIntersectLevelBase,
+    ColumnsReversedLevelBase,
+    DistanceFunctionLevelBase,
+    DistanceInKMLevelBase,
+    ElseLevelBase,
     ExactMatchLevelBase,
     LevenshteinLevelBase,
-    DistanceFunctionLevelBase,
-    ElseLevelBase,
     NullLevelBase,
-    ColumnsReversedLevelBase,
     PercentageDifferenceLevelBase,
-    DistanceInKMLevelBase,
-    ArrayIntersectLevelBase,
 )
 from .athena_base import (
     AthenaBase,

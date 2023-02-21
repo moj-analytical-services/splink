@@ -5,7 +5,7 @@ import math
 import re
 from statistics import median
 from textwrap import dedent
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 import sqlglot
 from sqlglot.expressions import Identifier

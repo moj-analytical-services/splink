@@ -2,24 +2,25 @@ from __future__ import annotations
 
 import logging
 from tempfile import TemporaryDirectory
+from typing import List, Union
 
-from duckdb import DuckDBPyConnection
 import duckdb
 import pandas as pd
+from duckdb import DuckDBPyConnection
 
-from .duckdb_helpers import (
-    validate_duckdb_connection,
-    create_temporary_duckdb_connection,
-    duckdb_load_from_file,
-)
+from ..input_column import InputColumn
 from ..linker import Linker
-from ..splink_dataframe import SplinkDataFrame
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import (
-    ensure_is_list,
     all_letter_combos,
+    ensure_is_list,
 )
-from ..input_column import InputColumn
+from ..splink_dataframe import SplinkDataFrame
+from .duckdb_helpers import (
+    create_temporary_duckdb_connection,
+    duckdb_load_from_file,
+    validate_duckdb_connection,
+)
 
 logger = logging.getLogger(__name__)
 

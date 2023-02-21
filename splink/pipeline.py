@@ -1,5 +1,5 @@
-from copy import deepcopy
 import logging
+from copy import deepcopy
 
 import sqlglot
 from sqlglot.expressions import Table
@@ -23,7 +23,7 @@ class SQLTask:
             return ["Failure to parse SQL - tablenames not known"]
 
         table_names = set()
-        for subtree, parent, key in tree.walk():
+        for subtree, _parent, _key in tree.walk():
             if type(subtree) is Table:
                 table_names.add(subtree.sql())
         return list(table_names)

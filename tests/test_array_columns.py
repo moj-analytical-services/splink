@@ -1,9 +1,8 @@
 import pandas as pd
-
 import pytest
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
 import splink.duckdb.duckdb_comparison_library as cl
+from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def postcode(num):

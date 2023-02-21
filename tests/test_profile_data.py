@@ -1,11 +1,11 @@
 import sqlite3
+
 import pandas as pd
+from basic_settings import get_settings_dict
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.sqlite.sqlite_linker import SQLiteLinker
 from splink.spark.spark_linker import SparkLinker
-
-from basic_settings import get_settings_dict
+from splink.sqlite.sqlite_linker import SQLiteLinker
 
 
 def test_profile_using_duckdb():

@@ -1,10 +1,12 @@
+from jinja2 import Template
+
 from __future__ import annotations
 
 from jinja2 import Template
 import json
 import os
 import pkgutil
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 from .misc import EverythingEncoder
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -165,8 +167,8 @@ def render_splink_comparison_viewer_html(
         )
     else:
         if "DATABRICKS_RUNTIME_VERSION" in os.environ:
-            from pyspark.sql import SparkSession
             from pyspark.dbutils import DBUtils
+            from pyspark.sql import SparkSession
 
             spark = SparkSession.builder.getOrCreate()
             dbutils = DBUtils(spark)

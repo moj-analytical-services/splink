@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import logging
-from math import pow, log2
+from math import log2, pow
+from typing import List, Union
+
 import pandas as pd
 
-from ..logging_messages import execute_sql_logging_message_info, log_sql
-from ..linker import Linker
-from ..splink_dataframe import SplinkDataFrame
 from ..input_column import InputColumn
+from ..linker import Linker
+from ..logging_messages import execute_sql_logging_message_info, log_sql
+from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +37,7 @@ class SQLiteDataFrame(SplinkDataFrame):
         return [InputColumn(c, sql_dialect="sqlite") for c in cols]
 
     def validate(self):
-        if not type(self.physical_name) is str:
+        if type(self.physical_name) is not str:
             raise ValueError(
                 f"{self.df_name} is not a string dataframe.\n"
                 "SQLite Linker requires input data"

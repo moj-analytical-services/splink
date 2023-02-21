@@ -1,23 +1,22 @@
 from __future__ import annotations
-
-from copy import deepcopy
-from typing import TYPE_CHECKING
 import logging
+from copy import deepcopy
+from typing import TYPE_CHECKING, List
 
-from .expectation_maximisation import expectation_maximisation
-from .misc import bayes_factor_to_prob, prob_to_bayes_factor
-from .parse_sql import get_columns_used_from_sql
 from .blocking import BlockingRule, block_using_rules_sql
-from .comparison_vector_values import compute_comparison_vector_values_sql
 from .charts import (
     m_u_parameters_interactive_history_chart,
     match_weights_interactive_history_chart,
     probability_two_random_records_match_iteration_chart,
 )
-from .comparison_level import ComparisonLevel
 from .comparison import Comparison
+from .comparison_level import ComparisonLevel
+from .comparison_vector_values import compute_comparison_vector_values_sql
 from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .exceptions import EMTrainingException
+from .expectation_maximisation import expectation_maximisation
+from .misc import bayes_factor_to_prob, prob_to_bayes_factor
+from .parse_sql import get_columns_used_from_sql
 
 logger = logging.getLogger(__name__)
 
