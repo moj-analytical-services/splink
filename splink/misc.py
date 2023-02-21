@@ -1,4 +1,9 @@
 import itertools
+import random
+import string
+from math import log2, inf
+from typing import Iterable
+import numpy as np
 import json
 from math import inf, log2
 from string import ascii_lowercase
@@ -160,3 +165,7 @@ def major_minor_version_greater_equal_than(this_version, base_comparison_version
     base_version = [v.zfill(10) for v in base_version]
 
     return this_version >= base_version
+
+
+def ascii_uid(len):
+    return "".join(random.choices(string.ascii_letters + string.digits, k=len))

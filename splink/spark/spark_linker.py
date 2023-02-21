@@ -1,4 +1,9 @@
+from __future__ import annotations
+
 import logging
+import sqlglot
+import re
+import os
 import math
 import os
 import re
@@ -29,7 +34,7 @@ class SparkDataframe(SplinkDataFrame):
         self.spark_linker = spark_linker
 
     @property
-    def columns(self) -> List[InputColumn]:
+    def columns(self) -> list[InputColumn]:
         sql = f"select * from {self.physical_name} limit 1"
         spark_df = self.spark_linker.spark.sql(sql)
 
@@ -73,7 +78,7 @@ class SparkLinker(Linker):
         settings_dict=None,
         break_lineage_method=None,
         set_up_basic_logging=True,
-        input_table_aliases: Union[str, list] = None,
+        input_table_aliases: str | list = None,
         spark=None,
         catalog=None,
         database=None,
@@ -422,6 +427,11 @@ class SparkLinker(Linker):
             SplinkDataFrame: An abstraction representing the table created by the sql
                 pipeline
         """
+
+        # If the user has provided a table name, return it as a SplinkDataframe
+        if isinstance(input, str):
+            return self._table_to_splink_dataframe(table_name, input)
+
         # Check if table name is already in use
         exists = self._table_exists_in_database(table_name)
         if exists:
@@ -457,9 +467,9 @@ class SparkLinker(Linker):
             # this clause accounts for temp tables which can have the same name as
             # persistent table without issue
             if (
-                len(set([x.tableName for x in query_result])) == 1
+                len({x.tableName for x in query_result}) == 1
             ) and (  # table names are the same
-                len(set([x.isTemporary for x in query_result])) == 2
+                len({x.isTemporary for x in query_result}) == 2
             ):  # isTemporary is boolean
                 return True
             else:

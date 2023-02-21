@@ -17,7 +17,7 @@ from .athena_comparison_level_library import (
 )
 
 
-class AthenaComparison(AthenaBase):
+class AthenaComparisonProperties(AthenaBase):
     @property
     def _exact_match_level(self):
         return exact_match_level
@@ -30,13 +30,17 @@ class AthenaComparison(AthenaBase):
     def _else_level(self):
         return else_level
 
+    @property
+    def _array_intersect_level(self):
+        return array_intersect_level
 
-class exact_match(AthenaComparison, ExactMatchBase):
+
+class exact_match(AthenaComparisonProperties, ExactMatchBase):
     pass
 
 
 class distance_function_at_thresholds(
-    AthenaComparison, DistanceFunctionAtThresholdsComparisonBase
+    AthenaComparisonProperties, DistanceFunctionAtThresholdsComparisonBase
 ):
     @property
     def _distance_level(self):
@@ -44,14 +48,14 @@ class distance_function_at_thresholds(
 
 
 class levenshtein_at_thresholds(
-    AthenaComparison, LevenshteinAtThresholdsComparisonBase
+    AthenaComparisonProperties, LevenshteinAtThresholdsComparisonBase
 ):
     @property
     def _distance_level(self):
         return levenshtein_level
 
 
-class array_intersect_at_sizes(AthenaComparison, ArrayIntersectAtSizesComparisonBase):
-    @property
-    def _array_intersect_level(self):
-        return array_intersect_level
+class array_intersect_at_sizes(
+    AthenaComparisonProperties, ArrayIntersectAtSizesComparisonBase
+):
+    pass

@@ -23,7 +23,7 @@ from .spark_comparison_level_library import (
 )
 
 
-class SparkComparison(SparkBase):
+class SparkComparisonProperties(SparkBase):
     @property
     def _exact_match_level(self):
         return exact_match_level
@@ -36,46 +36,58 @@ class SparkComparison(SparkBase):
     def _else_level(self):
         return else_level
 
+    @property
+    def _array_intersect_level(self):
+        return array_intersect_level
 
-class exact_match(SparkComparison, ExactMatchBase):
+    @property
+    def _datediff_level(self):
+        return datediff_level
+
+
+class exact_match(SparkComparisonProperties, ExactMatchBase):
     pass
 
 
 class distance_function_at_thresholds(
-    SparkComparison, DistanceFunctionAtThresholdsComparisonBase
+    SparkComparisonProperties, DistanceFunctionAtThresholdsComparisonBase
 ):
     @property
     def _distance_level(self):
         return distance_function_level
 
 
-class levenshtein_at_thresholds(SparkComparison, LevenshteinAtThresholdsComparisonBase):
+class levenshtein_at_thresholds(
+    SparkComparisonProperties, LevenshteinAtThresholdsComparisonBase
+):
     @property
     def _distance_level(self):
         return levenshtein_level
 
 
 class jaro_winkler_at_thresholds(
-    SparkComparison, JaroWinklerAtThresholdsComparisonBase
+    SparkComparisonProperties, JaroWinklerAtThresholdsComparisonBase
 ):
     @property
     def _distance_level(self):
         return jaro_winkler_level
 
 
-class jaccard_at_thresholds(SparkComparison, JaccardAtThresholdsComparisonBase):
+class jaccard_at_thresholds(
+    SparkComparisonProperties, JaccardAtThresholdsComparisonBase
+):
     @property
     def _distance_level(self):
         return jaccard_level
 
 
-class array_intersect_at_sizes(SparkComparison, ArrayIntersectAtSizesComparisonBase):
-    @property
-    def _array_intersect_level(self):
-        return array_intersect_level
+class array_intersect_at_sizes(
+    SparkComparisonProperties, ArrayIntersectAtSizesComparisonBase
+):
+    pass
 
 
-class datediff_at_thresholds(SparkComparison, DateDiffAtThresholdsComparisonBase):
-    @property
-    def _datediff_level(self):
-        return datediff_level
+class datediff_at_thresholds(
+    SparkComparisonProperties, DateDiffAtThresholdsComparisonBase
+):
+    pass

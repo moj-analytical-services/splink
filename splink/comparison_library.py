@@ -1,4 +1,4 @@
-from typing import Union
+from __future__ import annotations
 
 from .comparison import Comparison
 from .comparison_library_utils import datediff_error_logger
@@ -55,12 +55,12 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         self,
         col_name: str,
         distance_function_name: str,
-        distance_threshold_or_thresholds: Union[int, list],
+        distance_threshold_or_thresholds: int | list,
         higher_is_more_similar: bool = True,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
-        m_probability_or_probabilities_lev: Union[float, list] = None,
+        m_probability_or_probabilities_lev: float | list = None,
         m_probability_else=None,
     ):
         """A comparison of the data in `col_name` with a user-provided distance
@@ -164,11 +164,11 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
     def __init__(
         self,
         col_name: str,
-        distance_threshold_or_thresholds: Union[int, list] = [1, 2],
+        distance_threshold_or_thresholds: int | list = [1, 2],
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
-        m_probability_or_probabilities_lev: Union[float, list] = None,
+        m_probability_or_probabilities_lev: float | list = None,
         m_probability_else=None,
     ):
         """A comparison of the data in `col_name` with the levenshtein distance used to
@@ -223,11 +223,11 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
     def __init__(
         self,
         col_name: str,
-        distance_threshold_or_thresholds: Union[int, list] = [0.9, 0.7],
+        distance_threshold_or_thresholds: int | list = [0.9, 0.7],
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
-        m_probability_or_probabilities_lev: Union[float, list] = None,
+        m_probability_or_probabilities_lev: float | list = None,
         m_probability_else=None,
     ):
         """A comparison of the data in `col_name` with the jaccard distance used to
@@ -282,11 +282,11 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
     def __init__(
         self,
         col_name: str,
-        distance_threshold_or_thresholds: Union[int, list] = [0.9, 0.7],
+        distance_threshold_or_thresholds: int | list = [0.9, 0.7],
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
-        m_probability_or_probabilities_lev: Union[float, list] = None,
+        m_probability_or_probabilities_lev: float | list = None,
         m_probability_else=None,
     ):
         """A comparison of the data in `col_name` with the jaro_winkler distance used to
@@ -341,8 +341,8 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
     def __init__(
         self,
         col_name: str,
-        size_or_sizes: Union[int, list] = [1],
-        m_probability_or_probabilities_sizes: Union[float, list] = None,
+        size_or_sizes: int | list = [1],
+        m_probability_or_probabilities_sizes: float | list = None,
         m_probability_else=None,
     ):
         """A comparison of the data in array column `col_name` with various
@@ -419,12 +419,12 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
     def __init__(
         self,
         col_name: str,
-        date_thresholds: Union[int, list] = [1],
-        date_metrics: Union[str, list] = ["year"],
+        date_thresholds: int | list = [1],
+        date_metrics: str | list = ["year"],
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
-        m_probability_or_probabilities_sizes: Union[float, list] = None,
+        m_probability_or_probabilities_sizes: float | list = None,
         m_probability_else=None,
     ):
         """A comparison of the data in the date column `col_name` with various

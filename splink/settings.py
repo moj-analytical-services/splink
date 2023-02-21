@@ -1,8 +1,12 @@
+from __future__ import annotations
+
 import logging
 from copy import deepcopy
 from typing import List
 
 from .blocking import BlockingRule
+from .parse_sql import get_columns_used_from_sql
+from .misc import prob_to_bayes_factor, prob_to_match_weight, dedupe_preserving_order
 from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -47,7 +51,7 @@ class Settings:
         s_else_d = self._from_settings_dict_else_default
         self._sql_dialect = s_else_d("sql_dialect")
 
-        self.comparisons: List[Comparison] = []
+        self.comparisons: list[Comparison] = []
         for cc in ccs:
             self.comparisons.append(Comparison(cc, self))
 
@@ -80,7 +84,7 @@ class Settings:
             self._get_additional_columns_to_retain()
         )
 
-    def __deepcopy__(self, memo) -> "Settings":
+    def __deepcopy__(self, memo) -> Settings:
         """When we do EM training, we need a copy of the Settings which is independent
         of the original e.g. modifying the copy will not affect the original.
         This method implements ensures the Settings can be deepcopied."""
@@ -132,6 +136,15 @@ class Settings:
         return a_cols
 
     @property
+    def _cache_uid(self):
+        s_else_d = self._from_settings_dict_else_default
+        return s_else_d("linker_uid")
+
+    @_cache_uid.setter
+    def _cache_uid(self, value):
+        self._settings_dict["linker_uid"] = value
+
+    @property
     def _additional_columns_to_retain(self):
         cols = self._additional_columns_to_retain_list
         return [InputColumn(c, settings_obj=self) for c in cols]
@@ -152,7 +165,7 @@ class Settings:
             return None
 
     @property
-    def _unique_id_input_columns(self) -> List[InputColumn]:
+    def _unique_id_input_columns(self) -> list[InputColumn]:
         cols = []
 
         if self._source_dataset_column_name_is_required:
@@ -168,7 +181,7 @@ class Settings:
         return cols
 
     @property
-    def _term_frequency_columns(self) -> List[InputColumn]:
+    def _term_frequency_columns(self) -> list[InputColumn]:
         cols = set()
         for cc in self.comparisons:
             cols.update(cc._tf_adjustment_input_col_names)

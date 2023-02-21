@@ -1,10 +1,12 @@
+from jinja2 import Template
+
+from __future__ import annotations
+
+from jinja2 import Template
 import json
 import os
 import pkgutil
 from typing import TYPE_CHECKING, List
-
-from jinja2 import Template
-
 from .misc import EverythingEncoder
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -12,7 +14,7 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def row_examples(linker: "Linker", example_rows_per_category=2):
+def row_examples(linker: Linker, example_rows_per_category=2):
 
     sqls = []
 
@@ -44,7 +46,8 @@ def row_examples(linker: "Linker", example_rows_per_category=2):
     sql = """
     select *,
         ROW_NUMBER() OVER (PARTITION BY gam_concat order by rand_order)
-            AS row_example_index
+            AS row_example_index,
+        COUNT(*) OVER (PARTITION BY gam_concat) AS count
     from __splink__df_predict_with_row_id
     """
 
@@ -74,8 +77,8 @@ def row_examples(linker: "Linker", example_rows_per_category=2):
 
 
 def comparison_viewer_table_sqls(
-    linker: "Linker", example_rows_per_category=2
-) -> List[dict]:
+    linker: Linker, example_rows_per_category=2
+) -> list[dict]:
 
     sqls = row_examples(linker, example_rows_per_category)
 

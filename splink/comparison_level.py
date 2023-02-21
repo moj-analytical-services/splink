@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import math
 import re
@@ -133,14 +135,14 @@ class ComparisonLevel:
     def __init__(
         self,
         level_dict,
-        comparison: "Comparison" = None,
+        comparison: Comparison = None,
         sql_dialect: str = None,
     ):
 
         # Protected, because we don't want to modify the original dict
         self._level_dict = level_dict
 
-        self.comparison: "Comparison" = comparison
+        self.comparison: Comparison = comparison
         if not hasattr(self, "_sql_dialect"):
             self._sql_dialect = sql_dialect
 
@@ -406,16 +408,20 @@ class ComparisonLevel:
         sql = self._sql_condition
         if self._is_else_level:
             return True
-
+        dialect = self._sql_dialect
+        # TODO: really self._sql_dialect should always be set, something gets
+        # messed up during the deepcopy()ing of a Comparison
+        if dialect is None:
+            dialect = "spark"
         try:
-            sqlglot.parse_one(sql, read=self._sql_dialect)
+            sqlglot.parse_one(sql, read=dialect)
         except sqlglot.ParseError as e:
             raise ValueError(f"Error parsing sql_statement:\n{sql}") from e
 
         return True
 
     @property
-    def _input_columns_used_by_sql_condition(self) -> List[InputColumn]:
+    def _input_columns_used_by_sql_condition(self) -> list[InputColumn]:
         # returns e.g. InputColumn(first_name), InputColumn(surname)
 
         if self._is_else_level:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import os
 import uuid
@@ -6,6 +8,7 @@ from typing import Union
 import awswrangler as wr
 import boto3
 import numpy as np
+import uuid
 import pandas as pd
 
 from ..athena.athena_transforms import cast_concat_as_varchar
@@ -149,7 +152,7 @@ class AthenaLinker(Linker):
         output_database: str,
         output_bucket: str,
         settings_dict: dict = None,
-        input_table_aliases: Union[str, list] = None,
+        input_table_aliases: str | list = None,
         set_up_basic_logging=True,
         output_filepath: str = "",
         garbage_collection_level: int = 1,
@@ -337,6 +340,10 @@ class AthenaLinker(Linker):
         return output_obj
 
     def register_table(self, input, table_name, overwrite=False):
+
+        # If the user has provided a table name, return it as a SplinkDataframe
+        if isinstance(input, str):
+            return self._table_to_splink_dataframe(table_name, input)
 
         # Check if table name is already in use
         exists = self._table_exists_in_database(table_name)

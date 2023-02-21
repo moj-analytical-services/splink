@@ -54,7 +54,7 @@ def test_tf_tables_init_works():
         )
 
         # Trial for if _df_concat_with_tf already exists...
-        linker._initialise_df_concat_with_tf()
+        linker._initialise_df_concat_with_tf(materialise=True)
         linker.find_matches_to_new_records(
             [record], blocking_rules=[], match_weight_threshold=-10000
         )

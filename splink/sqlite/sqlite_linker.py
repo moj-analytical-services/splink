@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from math import log2, pow
 from typing import List, Union
@@ -25,7 +27,7 @@ class SQLiteDataFrame(SplinkDataFrame):
         self.sqlite_linker = sqlite_linker
 
     @property
-    def columns(self) -> List[InputColumn]:
+    def columns(self) -> list[InputColumn]:
         sql = f"""
         PRAGMA table_info({self.physical_name});
         """
@@ -87,7 +89,7 @@ class SQLiteLinker(Linker):
         settings_dict=None,
         connection=":memory:",
         set_up_basic_logging=True,
-        input_table_aliases: Union[str, list] = None,
+        input_table_aliases: str | list = None,
     ):
 
         self._sql_dialect_ = "sqlite"
@@ -132,6 +134,10 @@ class SQLiteLinker(Linker):
         return output_obj
 
     def register_table(self, input, table_name, overwrite=False):
+
+        # If the user has provided a table name, return it as a SplinkDataframe
+        if isinstance(input, str):
+            return self._table_to_splink_dataframe(table_name, input)
 
         # Check if table name is already in use
         exists = self._table_exists_in_database(table_name)

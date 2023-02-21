@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 from copy import deepcopy
 from typing import TYPE_CHECKING, List
@@ -31,13 +32,13 @@ class EMTrainingSession:
 
     def __init__(
         self,
-        linker: "Linker",
+        linker: Linker,
         blocking_rule_for_training: str,
         fix_u_probabilities: bool = False,
         fix_m_probabilities: bool = False,
         fix_probability_two_random_records_match: bool = False,
-        comparisons_to_deactivate: List[Comparison] = None,
-        comparison_levels_to_reverse_blocking_rule: List[ComparisonLevel] = None,
+        comparisons_to_deactivate: list[Comparison] = None,
+        comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
     ):
 
         logger.info("\n----- Starting EM training session -----\n")
@@ -92,7 +93,7 @@ class EMTrainingSession:
         cc_names_to_deactivate = [
             cc._output_column_name for cc in comparisons_to_deactivate
         ]
-        self._comparisons_that_cannot_be_estimated: List[
+        self._comparisons_that_cannot_be_estimated: list[
             Comparison
         ] = comparisons_to_deactivate
 
@@ -144,6 +145,8 @@ class EMTrainingSession:
     def _comparison_vectors(self):
         self._training_log_message()
 
+        nodes_with_tf = self._original_linker._initialise_df_concat_with_tf()
+
         sql = block_using_rules_sql(self._training_linker)
         self._training_linker._enqueue_sql(sql, "__splink__df_blocked")
 
@@ -153,10 +156,10 @@ class EMTrainingSession:
         )
 
         if repartition_after_blocking:
-            df_blocked = self._training_linker._execute_sql_pipeline([])
-            input_dataframes = [df_blocked]
+            df_blocked = self._training_linker._execute_sql_pipeline([nodes_with_tf])
+            input_dataframes = [nodes_with_tf, df_blocked]
         else:
-            input_dataframes = []
+            input_dataframes = [nodes_with_tf]
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")

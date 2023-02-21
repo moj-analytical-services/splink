@@ -8,15 +8,22 @@ def sqlglot_transform_sql(sql, func):
     return transformed_tree.sql()
 
 
-def _add_l_or_r_to_identifier(node):
-    if isinstance(node, exp.Identifier):
-        if isinstance(node.parent, exp.Bracket):
-            l_r = f"_{node.parent.parent.table}"
-        elif isinstance(node.parent, exp.Lambda):
-            l_r = ""
-        else:
-            l_r = f"_{node.parent.table}"
-        node.args["this"] += l_r if l_r != "_" else ""
+def _add_l_or_r_to_identifier(node: exp.Expression):
+    if not isinstance(node, exp.Identifier):
+        return node
+
+    p = node.parent
+    if isinstance(p, (exp.Lambda, exp.Anonymous)):
+        # node is the `x` in the lambda `x -> list_contains(r.name_list, x))`
+        parent_table = ""
+    else:
+        parent_table = p.table
+
+    if parent_table != "":
+        l_r = "_" + parent_table
+    else:
+        l_r = ""
+    node.args["this"] += l_r
     return node
 
 

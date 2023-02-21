@@ -18,6 +18,11 @@ QUARTER_CIRCUMFERENCE_KM = 10007
         (45, -30, 45, 150, QUARTER_CIRCUMFERENCE_KM),
         # same points
         (40, -20, 40, -20, 0),
+        # same points, but due to rounding of floating point numbers,
+        # the argument to the ACOS function can be larger than 1,
+        # which causes an Out of Range error
+        # See https://github.com/moj-analytical-services/splink/issues/1005
+        (29.7517, -95.4054, 29.7517, -95.4054, 0),
         # antipodal points
         (20, 40, -20, -140, 2 * QUARTER_CIRCUMFERENCE_KM),
         (89, -60, -89, 120, 2 * QUARTER_CIRCUMFERENCE_KM),

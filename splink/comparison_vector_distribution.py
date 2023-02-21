@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -5,7 +7,7 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def comparison_vector_distribution_sql(linker: "Linker"):
+def comparison_vector_distribution_sql(linker: Linker):
 
     gamma_columns = [c._gamma_column_name for c in linker._settings_obj.comparisons]
     groupby_cols = " , ".join(gamma_columns)

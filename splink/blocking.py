@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 import logging
 
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
@@ -68,7 +70,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
 
 
 # flake8: noqa: C901
-def block_using_rules_sql(linker: "Linker"):
+def block_using_rules_sql(linker: Linker):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
@@ -113,6 +115,31 @@ def block_using_rules_sql(linker: "Linker"):
             "WARNING: Salting is not currently supported by this linker backend and"
             " will not be implemented for this run."
         )
+
+    if (
+        linker._two_dataset_link_only
+        and not linker._find_new_matches_mode
+        and not linker._compare_two_records_mode
+    ):
+        source_dataset_col = linker._settings_obj._source_dataset_column_name
+        # Need df_l to be the one with the lowest id to preeserve the property
+        # that the left dataset is the one with the lowest concatenated id
+        keys = linker._input_tables_dict.keys()
+        keys = list(sorted(keys))
+        df_l = linker._input_tables_dict[keys[0]]
+        df_r = linker._input_tables_dict[keys[1]]
+
+        sql = f"""
+        select * from __splink__df_concat_with_tf
+        where {source_dataset_col} = '{df_l.templated_name}'
+        """
+        linker._enqueue_sql(sql, "__splink__df_concat_with_tf_left")
+
+        sql = f"""
+        select * from __splink__df_concat_with_tf
+        where {source_dataset_col} = '{df_r.templated_name}'
+        """
+        linker._enqueue_sql(sql, "__splink_df_concat_with_tf_right")
 
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'

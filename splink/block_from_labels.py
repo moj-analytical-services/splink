@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 from .lower_id_on_lhs import lower_id_to_left_hand_side
@@ -8,7 +10,7 @@ if TYPE_CHECKING:
 
 
 def block_from_labels(
-    linker: "Linker", labels_table_name: str, include_clerical_match_score=False
+    linker: Linker, labels_table_name: str, include_clerical_match_score=False
 ):
     """Create pairwise record comparisons corresponding to the ID pairs in a labels
     table

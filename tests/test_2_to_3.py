@@ -12,7 +12,7 @@ def test_2_to_3(tmp_path):
     case
         when col_1_l is null or col_1_r is null then -1
         when col_1_l = col_1_r then 1
-        else 0 end as gamma_col_1'
+        else 0 end as gamma_col_1
     """
 
     sql_col2 = """

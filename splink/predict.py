@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 # This is otherwise known as the expectation step of the EM algorithm.
 import logging
-from typing import List
 
 from .misc import prob_to_bayes_factor, prob_to_match_weight
 from .settings import Settings
@@ -14,7 +15,7 @@ def predict_from_comparison_vectors_sqls(
     threshold_match_weight=None,
     include_clerical_match_score=False,
     sql_infinity_expression="'infinity'",
-) -> List[dict]:
+) -> list[dict]:
 
     sqls = []
 

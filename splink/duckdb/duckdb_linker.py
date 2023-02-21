@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from tempfile import TemporaryDirectory
 from typing import List, Union
@@ -29,7 +31,7 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
         self.duckdb_linker = duckdb_linker
 
     @property
-    def columns(self) -> List[InputColumn]:
+    def columns(self) -> list[InputColumn]:
         d = self.as_record_dict(1)[0]
 
         col_strings = list(d.keys())
@@ -65,12 +67,12 @@ class DuckDBLinker(Linker):
 
     def __init__(
         self,
-        input_table_or_tables: Union[str, list],
+        input_table_or_tables: str | list,
         settings_dict: dict = None,
-        connection: Union[str, DuckDBPyConnection] = ":memory:",
+        connection: str | DuckDBPyConnection = ":memory:",
         set_up_basic_logging: bool = True,
         output_schema: str = None,
-        input_table_aliases: Union[str, list] = None,
+        input_table_aliases: str | list = None,
     ):
         """The Linker object manages the data linkage process and holds the data linkage
         model.
@@ -191,6 +193,10 @@ class DuckDBLinker(Linker):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
     def register_table(self, input, table_name, overwrite=False):
+
+        # If the user has provided a table name, return it as a SplinkDataframe
+        if isinstance(input, str):
+            return self._table_to_splink_dataframe(table_name, input)
 
         # Check if table name is already in use
         exists = self._table_exists_in_database(table_name)
