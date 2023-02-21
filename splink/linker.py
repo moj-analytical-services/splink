@@ -886,12 +886,9 @@ class Linker:
             self._pipeline.reset()
             # If our df_concat_with_tf table already exists, use backwards inference to
             # find a given tf table
-            sql = term_frequencies_from_concat_with_tf(InputColumn(column_name))
-            sql = {
-                "sql": sql,
-                "output_table_name": colname_to_tf_tablename(InputColumn(column_name)),
-            }
-            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+            colname = InputColumn(column_name)
+            sql = term_frequencies_from_concat_with_tf(colname)
+            self._enqueue_sql(sql, colname_to_tf_tablename(colname))
             tf_df = self._execute_sql_pipeline(
                 [cache["__splink__df_concat_with_tf"]], materialise_as_hash=True
             )
@@ -1461,7 +1458,7 @@ class Linker:
         self._self_link_mode = True
 
         # Block on uid i.e. create pairwise record comparisons where the uid matches
-        uid_cols = self._settings_obj._unique_id_8s
+        uid_cols = self._settings_obj._unique_id_input_columns
         uid_l = _composite_unique_id_from_edges_sql(uid_cols, None, "l")
         uid_r = _composite_unique_id_from_edges_sql(uid_cols, None, "r")
 
