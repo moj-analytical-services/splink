@@ -13,7 +13,7 @@ However, not every comparison is available for every [Splink-compatible SQL back
 
 The pre-made Splink comparisons available for each SQL dialect are as given in this table:
 {%
-  include-markdown "./includes/comparison_library_dialect_table.md"
+  include-markdown "./includes/generated_files/comparison_library_dialect_table.md"
 %}
 
 The detailed API for each of these are outlined below.

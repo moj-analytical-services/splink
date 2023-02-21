@@ -14,7 +14,7 @@ However, not every comparison level is available for every [Splink-compatible SQ
 
 The pre-made Splink comparison levels available for each SQL dialect are as given in this table:
 {%
-  include-markdown "./includes/comparison_level_library_dialect_table.md"
+  include-markdown "./includes/generated_files/comparison_level_library_dialect_table.md"
 %}
 
 The detailed API for each of these are outlined below.

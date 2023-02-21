@@ -142,8 +142,6 @@ Pipfile*
 
 # mkdocs documentation
 /site
-# dynamically generated pages:
-docs/includes/comparison*
 
 # mypy
 .mypy_cache/

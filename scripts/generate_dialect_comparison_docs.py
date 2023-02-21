@@ -68,7 +68,7 @@ cll_table_file = "comparison_level_library_dialect_table.md"
 cl_table = make_md_table(comparison_dialects)
 cl_table_file = "comparison_library_dialect_table.md"
 
-with open(Path("docs") / "includes" / cll_table_file, "w+") as f:
+with open(Path("docs") / "includes" / "generated_files" / cll_table_file, "w+") as f:
     f.write(cll_table)
-with open(Path("docs") / "includes" / cl_table_file, "w+") as f:
+with open(Path("docs") / "includes" / "generated_files" / cl_table_file, "w+") as f:
     f.write(cl_table)
