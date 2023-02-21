@@ -67,7 +67,10 @@ jobs:
         run: poetry install --no-interaction
 
       - name: Generate comparison/level library dialect tables
-        run: mv scripts/generate_dialect_comparison_docs.py generate_dialect_comparison_docs.py && python generate_dialect_comparison_docs.py
+        run: |
+          source .venv/bin/activate
+          mv scripts/generate_dialect_comparison_docs.py generate_dialect_comparison_docs.py
+          python generate_dialect_comparison_docs.py
 
       - name: Upload generated docs files
         uses: actions/upload-artifact@v3
