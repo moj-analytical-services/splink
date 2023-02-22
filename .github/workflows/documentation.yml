@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - master
-      # temporary to test:
-      - comparison-level-enumerated-docs
 
   workflow_dispatch:
 
@@ -95,19 +93,16 @@ jobs:
           name: generated_files
           path: docs/includes/generated_files
 
-      # temporarily remove demos to check rest builds okay
-      # - uses: actions/checkout@v3
-      #   with:
-      #     repository: "moj-analytical-services/splink_demos"
-      #     ref: master
-      #     path: "docs/demos/"
+      - uses: actions/checkout@v3
+        with:
+          repository: "moj-analytical-services/splink_demos"
+          ref: master
+          path: "docs/demos/"
 
       - run: tree docs/
-      #- run: find docs/demos/ \! -name '\docs\demos\*.ipynb'  | xargs --null rm -f
       - run: pip install --upgrade pip
-      # - run: pip install -r scripts/docs-requirements.txt && mkdocs gh-deploy --force
-      - run: pip install -r scripts/docs-requirements.txt && mkdocs build -v
-      - run: tree site/
+      - run: pip install -r scripts/docs-requirements.txt && mkdocs gh-deploy --force
+
       - run: pip freeze
       - run: mkdocs --version
       - run: tree docs/
