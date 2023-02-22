@@ -102,11 +102,12 @@ jobs:
           path: "docs/demos/"
 
       - run: tree docs/
-
+      - run: pip install --upgrade pip && pip install mkdocs==1.4.2 mknotebooks mkdocs-schema-reader mkdocs-material==8.5.11 mkdocs-gen-files mkdocs-autorefs mkdocs-include-markdown-plugin mkdocs-material-extensions mkdocs-mermaid2-plugin mkdocs-monorepo-plugin mkdocs-semiliterate mkdocs-simple-plugin mkdocstrings mkdocstrings-python mkdocstrings-python-legacy mkdocs-semiliterate
+      - run: pip install jinja2==3.0.3 splink==3.0.0.dev18 && mkdocs build -v
       #- run: find docs/demos/ \! -name '\docs\demos\*.ipynb'  | xargs --null rm -f
-      - run: pip install --upgrade pip
+      # - run: pip install --upgrade pip
       # - run: pip install -r scripts/docs-requirements.txt && mkdocs gh-deploy --force
-      - run: pip install -r scripts/docs-requirements.txt && mkdocs build
+      # - run: pip install -r scripts/docs-requirements.txt && mkdocs build
       - run: tree site/
       - run: pip freeze
       - run: mkdocs --version
