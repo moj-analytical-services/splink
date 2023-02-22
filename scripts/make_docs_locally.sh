@@ -6,6 +6,7 @@
 
 # NB not including docs/demos, as 02_Exploratory_analysis.ipynb may
 # cause process to hang on: Running 3 `page_markdown` events
+# only an issue with `serve` or `build` - `gh-deploy` works okay
 
 # UPDATE="TRUE"
 # if [[ $UPDATE == "TRUE" ]]
