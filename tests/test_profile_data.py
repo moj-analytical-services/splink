@@ -8,7 +8,6 @@ from splink.spark.spark_linker import SparkLinker
 
 from basic_settings import get_settings_dict
 
-
 def test_profile_using_duckdb():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
@@ -53,9 +52,33 @@ def test_profile_with_arrays_duckdb():
     }
 
     df = pd.DataFrame(dic)
-    settings_dict = get_settings_dict()
+    settings = {
+        "link_type": "dedupe_only",
+        "unique_id_column_name": "id",
+    }
+    linker = DuckDBLinker(df, settings, connection=":memory:")
 
-    linker = DuckDBLinker(df, settings_dict, connection=":memory:")
+    column_expressions = ["forename", "surname", "offence_code_arr", "lat_long"]
+
+    linker.profile_columns(
+        column_expressions,
+        top_n=3,
+        bottom_n=3,
+    )
+
+
+def test_profile_with_arrays_spark(spark):
+    settings = {
+        "link_type": "dedupe_only",
+        "unique_id_column_name": "id",
+    }
+    spark_df = spark.read.parquet("tests/datasets/arrays_df.parquet")
+    spark_df.persist()
+
+    linker = SparkLinker(
+        spark_df,
+        settings,
+    )
 
     column_expressions = ["forename", "surname", "offence_code_arr", "lat_long"]
 
