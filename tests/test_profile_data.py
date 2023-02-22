@@ -8,6 +8,7 @@ from splink.spark.spark_linker import SparkLinker
 
 from basic_settings import get_settings_dict
 
+
 def test_profile_using_duckdb():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
