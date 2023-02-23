@@ -142,6 +142,9 @@ Pipfile*
 
 # mkdocs documentation
 /site
+# docs build:
+docs/demos/
+docs-venv
 
 # mypy
 .mypy_cache/
