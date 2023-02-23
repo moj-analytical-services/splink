@@ -1,3 +1,5 @@
+# this script to be run at the root of the repo
+# otherwise paths for generated files are incorrect
 import importlib
 import inspect
 from pathlib import Path
