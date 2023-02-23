@@ -8,6 +8,7 @@
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 from __future__ import annotations
+
 import logging
 import time
 from typing import TYPE_CHECKING
