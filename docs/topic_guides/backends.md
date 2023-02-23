@@ -14,7 +14,9 @@ Import the linker from the backend of your choosing, and the backend-specific co
 
 Once you have initialised the `linker` object, there is no difference in the subequent code between backends.
 
-Note however, that not all comparison functions are available in all backends. For example, the a Jaro Winkler comparison function doesn't exist in DuckDB or Athena.
+Note however, that not all comparison functions are available in all backends.
+There are tables detailing the available functions for each backend on
+the [comparison library API page](../comparison_library.html) and the [comparison level library API page](../comparison_level_library.html).
 
 #### DuckDB
 

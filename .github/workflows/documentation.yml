@@ -8,8 +8,77 @@ on:
   workflow_dispatch:
 
 jobs:
+  generate-files:
+    runs-on: ubuntu-20.04
+    # https://docs.github.com/en/actions/creating-actions/creating-a-composite-action
+    steps:
+      #----------------------------------------------
+      #       check-out repo and set-up python
+      #----------------------------------------------
+      - name: Check out repository
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - name: Set up python
+        id: setup-python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9.10
+
+      #----------------------------------------------
+      #  -- save a few section by caching poetry --
+      #----------------------------------------------
+      - name: Load cached Poetry installation
+        uses: actions/cache@v2
+        with:
+          path: ~/.local  # the path depends on the OS
+          key: poetry-0  # increment to reset cache
+      #----------------------------------------------
+      #  -----  install & configure poetry  -----
+      #----------------------------------------------
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
+
+      #----------------------------------------------
+      #       load cached venv if cache exists
+      #----------------------------------------------
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-00
+      #----------------------------------------------
+      # install dependencies if cache does not exist
+      #----------------------------------------------
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+      #----------------------------------------------
+      # install your root project, if required
+      #----------------------------------------------
+      - name: Install library
+        run: poetry install --no-interaction
+
+      - name: Generate comparison/level library dialect tables
+        run: |
+          source .venv/bin/activate
+          mv scripts/generate_dialect_comparison_docs.py generate_dialect_comparison_docs.py
+          python generate_dialect_comparison_docs.py
+
+      - name: Upload generated docs files
+        uses: actions/upload-artifact@v3
+        with:
+          name: generated_files
+          path: docs/includes/generated_files
+
   deploy:
     runs-on: ubuntu-latest
+    needs: generate-files
     steps:
       - uses: actions/setup-python@v2
         with:
@@ -18,20 +87,22 @@ jobs:
       - uses: actions/checkout@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: generated_files
+          path: docs/includes/generated_files
+
       - uses: actions/checkout@v3
         with:
           repository: "moj-analytical-services/splink_demos"
           ref: master
           path: "docs/demos/"
 
-      - run: mkdir docs/settingseditor
-      - run: curl https://raw.githubusercontent.com/moj-analytical-services/splink/splink3/splink/files/settings_jsonschema.json --output docs/settingseditor/settings_jsonschema.json
-      - run: cat docs/settingseditor/settings_jsonschema.json
-      - run: echo '<iframe  height="1200" width="100%" src="https://www.robinlinacre.com/splink3_settings_editor_temp" >' >  docs/settingseditor/editor.md
       - run: tree docs/
+      - run: pip install --upgrade pip
+      - run: pip install -r scripts/docs-requirements.txt && mkdocs gh-deploy --force
 
-      #- run: find docs/demos/ \! -name '\docs\demos\*.ipynb'  | xargs --null rm -f
-      - run: pip install --upgrade pip && pip install mkdocs==1.4.2 mknotebooks mkdocs-schema-reader mkdocs-material==8.5.11 mkdocs-gen-files mkdocs-autorefs mkdocs-include-markdown-plugin  mkdocs-material-extensions mkdocs-mermaid2-plugin mkdocs-monorepo-plugin mkdocs-semiliterate mkdocs-simple-plugin mkdocstrings mkdocstrings-python mkdocstrings-python-legacy mkdocs-semiliterate
-      - run: pip install jinja2==3.0.3 splink==3.0.0.dev18 && mkdocs gh-deploy --force
+      - run: pip freeze
       - run: mkdocs --version
       - run: tree docs/

@@ -140,7 +140,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
         (select
             count(*) as value_count,
             '{gn}' as group_name,
-            {col_or_expr} as value,
+            cast({col_or_expr} as varchar) as value,
             (select count({col_or_expr}) from {table_name}) as total_non_null_rows,
             (select count(*) from {table_name}) as total_rows_inc_nulls,
             (select count(distinct {col_or_expr}) from {table_name})
