@@ -3,12 +3,10 @@ from __future__ import annotations
 import logging
 import os
 import uuid
-from typing import Union
 
 import awswrangler as wr
 import boto3
 import numpy as np
-import uuid
 import pandas as pd
 
 from ..athena.athena_transforms import cast_concat_as_varchar

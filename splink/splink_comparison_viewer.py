@@ -1,12 +1,12 @@
-from jinja2 import Template
-
 from __future__ import annotations
 
-from jinja2 import Template
 import json
 import os
 import pkgutil
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
+
+from jinja2 import Template
+
 from .misc import EverythingEncoder
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -73,9 +73,6 @@ def row_examples(linker: Linker, example_rows_per_category=2):
     return sqls
 
 
-# def row_examples_correlated_subquery()
-
-
 def comparison_viewer_table_sqls(
     linker: Linker, example_rows_per_category=2
 ) -> list[dict]:
@@ -100,26 +97,6 @@ def comparison_viewer_table_sqls(
 
     sqls.append(sql)
     return sqls
-
-    # Correlated subquey approach to getting row examples does not work in DuckDB
-    # since the limit keyword doesn't seem to work as expected
-
-    # sql = f"""
-    # select *
-    # from __splink__df_predict_with_row_id as p1
-    # where  rec_comparison_id in
-    #     (select rec_comparison_id
-    #     from __splink__df_predict_with_row_id
-    #     where gam_concat
-    #           = p1.gam_concat
-
-    #     limit 1)
-    # """
-
-    # sql = {
-    #     "sql": sql,
-    #     "output_table_name": "__splink__df_predict_examples_per_category",
-    # }
 
 
 def render_splink_comparison_viewer_html(

@@ -2,8 +2,8 @@ import logging
 from copy import deepcopy
 
 import sqlglot
-from sqlglot.expressions import Table
 from sqlglot.errors import ParseError
+from sqlglot.expressions import Table
 
 logger = logging.getLogger(__name__)
 

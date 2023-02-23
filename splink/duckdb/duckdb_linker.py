@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 from tempfile import TemporaryDirectory
-from typing import List, Union
 
 import duckdb
 import pandas as pd

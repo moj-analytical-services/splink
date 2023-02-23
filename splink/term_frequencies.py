@@ -2,9 +2,8 @@ from __future__ import annotations
 
 # For more information on where formulas came from, see
 # https://github.com/moj-analytical-services/splink/pull/107
-
 import logging
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from .input_column import InputColumn, remove_quotes_from_identifiers
 

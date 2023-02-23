@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 import logging
 from copy import deepcopy
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from .blocking import BlockingRule, block_using_rules_sql
 from .charts import (

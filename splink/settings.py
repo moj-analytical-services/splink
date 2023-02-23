@@ -2,11 +2,8 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
-from typing import List
 
 from .blocking import BlockingRule
-from .parse_sql import get_columns_used_from_sql
-from .misc import prob_to_bayes_factor, prob_to_match_weight, dedupe_preserving_order
 from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
