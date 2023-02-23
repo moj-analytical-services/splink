@@ -4,7 +4,6 @@ import logging
 import math
 import os
 import re
-from typing import List, Union
 
 import pandas as pd
 import sqlglot

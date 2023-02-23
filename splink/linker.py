@@ -4,9 +4,9 @@ import hashlib
 import json
 import logging
 import os
+from collections import UserDict
 from copy import Error, copy, deepcopy
 from statistics import median
-from typing import List, Union
 
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
 
@@ -49,7 +49,7 @@ from .match_key_analysis import (
     count_num_comparisons_from_blocking_rules_for_prediction_sql,
 )
 from .match_weights_histogram import histogram_data
-from .misc import bayes_factor_to_prob, ensure_is_list, prob_to_bayes_factor
+from .misc import ascii_uid, bayes_factor_to_prob, ensure_is_list, prob_to_bayes_factor
 from .missingness import completeness_data, missingness_data
 from .pipeline import SQLPipeline
 from .predict import predict_from_comparison_vectors_sqls
@@ -66,6 +66,7 @@ from .term_frequencies import (
     compute_all_term_frequencies_sqls,
     compute_term_frequencies_from_concat_with_tf,
     term_frequencies_for_single_column_sql,
+    term_frequencies_from_concat_with_tf,
 )
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,

@@ -1,7 +1,7 @@
 import json
 import os
 import pkgutil
-from typing import TYPE_CHECKING, List, List
+from typing import TYPE_CHECKING
 
 from jinja2 import Template
 

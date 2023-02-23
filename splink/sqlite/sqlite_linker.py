@@ -1,6 +1,5 @@
 import logging
 from math import log2, pow
-from typing import List, Union
 
 import pandas as pd
 

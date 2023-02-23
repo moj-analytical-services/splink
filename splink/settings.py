@@ -2,10 +2,6 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
-from typing import List
-
-from .blocking import BlockingRule
-from typing import List
 
 from .blocking import BlockingRule
 from .charts import m_u_parameters_chart, match_weights_chart

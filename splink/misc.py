@@ -1,7 +1,8 @@
 import itertools
 import json
+import random
+import string
 from math import inf, log2
-from string import ascii_lowercase
 from typing import Iterable
 
 import numpy as np
@@ -85,7 +86,7 @@ def all_letter_combos(n):
 
     combos = []
     for size in itertools.count(1):
-        for s in itertools.product(ascii_lowercase, repeat=size):
+        for s in itertools.product(string.ascii_lowercase, repeat=size):
             combos.append("".join(s))
             if len(combos) >= n:
                 return combos
