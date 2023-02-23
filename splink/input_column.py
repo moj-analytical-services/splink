@@ -217,7 +217,7 @@ class InputColumn:
         return start + name + end
 
 
-def _get_dialect_quotes(dialect: str | None):
+def _get_dialect_quotes(dialect):
     start = end = '"'
     if dialect is None:
         return start, end
