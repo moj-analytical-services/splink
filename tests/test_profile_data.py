@@ -1,8 +1,8 @@
 import sqlite3
 
+import numpy as np
 import pandas as pd
 from basic_settings import get_settings_dict
-import numpy as np
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker

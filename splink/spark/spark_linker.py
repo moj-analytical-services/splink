@@ -8,9 +8,9 @@ from itertools import compress
 
 import pandas as pd
 import sqlglot
+from pyspark.sql.dataframe import DataFrame as spark_df
 from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql.utils import AnalysisException
-from pyspark.sql.dataframe import DataFrame as spark_df
 
 from ..databricks.enable_splink import enable_splink
 from ..input_column import InputColumn
