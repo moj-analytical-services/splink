@@ -120,3 +120,13 @@ def test_full_example_spark(df_spark, tmp_path):
     linker.find_matches_to_new_records(
         [record], blocking_rules=[], match_weight_threshold=-10000
     )
+
+    # Test differing inputs are accepted
+    settings["link_type"] = "link_only"
+
+    linker = SparkLinker(
+        [df_spark, df_spark.toPandas()],
+        settings,
+        break_lineage_method="checkpoint",
+        num_partitions_on_repartition=2,
+    )

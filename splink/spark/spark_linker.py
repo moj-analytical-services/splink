@@ -5,12 +5,14 @@ import sqlglot
 import re
 import os
 import math
+from itertools import compress
 
 import pandas as pd
 
 
 from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql.utils import AnalysisException
+from pyspark.sql.dataframe import DataFrame as spark_df
 
 from ..linker import Linker
 from ..splink_dataframe import SplinkDataFrame
@@ -146,7 +148,7 @@ class SparkLinker(Linker):
                 alias = f"__splink__input_table_{i}"
 
             if type(table).__name__ == "DataFrame":
-                table.createOrReplaceTempView(alias)
+                self.register_table(table, alias)
                 table = alias
 
             homogenised_tables.append(table)
@@ -170,16 +172,19 @@ class SparkLinker(Linker):
     def _get_spark_from_input_tables_if_not_provided(self, spark, input_tables):
         self.spark = spark
         if spark is None:
-            for t in input_tables:
-                if type(t).__name__ == "DataFrame":
+            # Ensure at least one of the input dataframes is a spark df
+            spark_inputs = [isinstance(d, spark_df) for d in input_tables]
+            if any(spark_inputs):
+                for t in list(compress(input_tables, spark_inputs)):
                     # t.sparkSession can be used only from spark 3.3.0 onwards
                     self.spark = t.sql_ctx.sparkSession
                     break
+
         if self.spark is None:
             raise ValueError(
-                "If input_table_or_tables are strings rather than "
+                "If input_table_or_tables are strings or pandas dataframes rather than "
                 "Spark dataframes, you must pass in the spark session using the spark="
-                " argument when you initialise the linker"
+                " argument when you initialise the linker."
             )
 
     def _set_catalog_and_database_if_not_provided(self, catalog, database):
