@@ -9,7 +9,7 @@ regex = (
     # include-markdown literal and more whitespace
     r"include-markdown\s*"
     # the path in double-quotes (unvalidated)
-    r'\"(.*)\"'
+    r"\"(.*)\""
     # more whitespace and closing tag
     r"\s*%}"
 )
@@ -17,7 +17,7 @@ regex = (
 
 for root, dirs, files in os.walk("docs"):
     for file in files:
-        # only process md files
+        # only process md files
         if re.fullmatch(r".*\.md", file):
             with open(Path(root) / file, "r") as f:
                 current_text = f.read()
