@@ -1,5 +1,5 @@
-from copy import deepcopy
 import logging
+from copy import deepcopy
 
 from .blocking import BlockingRule, block_using_rules_sql
 from .comparison_vector_values import compute_comparison_vector_values_sql
@@ -8,8 +8,8 @@ from .expectation_maximisation import (
     compute_proportions_for_new_parameters,
 )
 from .m_u_records_to_parameters import (
-    m_u_records_to_lookup_dict,
     append_m_probability_to_comparison_level_trained_probabilities,
+    m_u_records_to_lookup_dict,
 )
 
 logger = logging.getLogger(__name__)

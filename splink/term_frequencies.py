@@ -2,7 +2,6 @@ from __future__ import annotations
 
 # For more information on where formulas came from, see
 # https://github.com/moj-analytical-services/splink/pull/107
-
 import logging
 from typing import TYPE_CHECKING
 

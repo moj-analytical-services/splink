@@ -1,7 +1,8 @@
-import pytest
-from splink.spark.jar_location import similarity_jar_location
-
 import logging
+
+import pytest
+
+from splink.spark.jar_location import similarity_jar_location
 
 logger = logging.getLogger(__name__)
 
@@ -9,7 +10,7 @@ logger = logging.getLogger(__name__)
 @pytest.fixture(scope="module")
 def spark():
 
-    from pyspark import SparkContext, SparkConf
+    from pyspark import SparkConf, SparkContext
     from pyspark.sql import SparkSession
 
     conf = SparkConf()

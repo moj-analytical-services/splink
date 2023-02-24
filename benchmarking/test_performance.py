@@ -1,13 +1,13 @@
 # python3 -m pytest benchmarking/test_performance.py
+import logging
+import sys
+
+import pandas as pd
 from rapidfuzz.distance.Levenshtein import distance
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 from splink.sqlite.sqlite_linker import SQLiteLinker
-import pandas as pd
-
-import logging
-import sys
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
@@ -252,7 +252,7 @@ def spark_performance(df, target_rows=1e6):
 
 
 def test_3_rounds_20k_spark(benchmark):
-    from pyspark.context import SparkContext, SparkConf
+    from pyspark.context import SparkConf, SparkContext
     from pyspark.sql import SparkSession
 
     def setup():

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
 from .lower_id_on_lhs import lower_id_to_left_hand_side
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports

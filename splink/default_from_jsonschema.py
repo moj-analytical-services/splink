@@ -1,4 +1,5 @@
 from copy import deepcopy
+
 from .validate_jsonschema import get_schema
 
 

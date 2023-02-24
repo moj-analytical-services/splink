@@ -1,12 +1,11 @@
 import os
-from unittest.mock import patch, create_autospec
+from unittest.mock import create_autospec, patch
 
 import pandas as pd
 import pytest
 
 from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
 from splink.linker import SplinkDataFrame
-
 from tests.basic_settings import get_settings_dict
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -102,7 +101,7 @@ def test_cache_only_splink_dataframes():
     except TypeError:
         # error is raised, but need to check it hasn't made it to the cache
         pass
-    for name, table in linker._intermediate_table_cache.items():
+    for _, table in linker._intermediate_table_cache.items():
         assert isinstance(table, SplinkDataFrame)
 
 

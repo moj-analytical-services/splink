@@ -31,14 +31,13 @@
 # df = add_match_prob(df, settings_for_data_generation)
 
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.duckdb.duckdb_linker import DuckDBLinkerDataFrame
-import splink.duckdb.duckdb_comparison_library as cl
-from splink.predict import predict_from_comparison_vectors_sqls
-
 import pandas as pd
-from splink.em_training_session import EMTrainingSession
 import pytest
+
+import splink.duckdb.duckdb_comparison_library as cl
+from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
+from splink.em_training_session import EMTrainingSession
+from splink.predict import predict_from_comparison_vectors_sqls
 
 
 def test_splink_converges_to_known_params():
@@ -120,7 +119,8 @@ def test_splink_converges_to_known_params():
     assert s_obj._probability_two_random_records_match == pytest.approx(0.5, 0.01)
 
     param_dict = s_obj.comparisons[0].as_dict()
-    param_dict["comparison_levels"][1]["m_probability"] == pytest.approx(0.7, abs=0.01)
-    param_dict["comparison_levels"][1]["u_probability"] == pytest.approx(0.1, abs=0.01)
-    param_dict["comparison_levels"][2]["m_probability"] == pytest.approx(0.3, abs=0.01)
-    param_dict["comparison_levels"][2]["u_probability"] == pytest.approx(0.9, abs=0.01)
+    cls = param_dict["comparison_levels"]
+    assert cls[1]["m_probability"] == pytest.approx(0.7, abs=0.01)
+    assert cls[1]["u_probability"] == pytest.approx(0.1, abs=0.01)
+    assert cls[2]["m_probability"] == pytest.approx(0.3, abs=0.01)
+    assert cls[2]["u_probability"] == pytest.approx(0.9, abs=0.01)

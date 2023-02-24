@@ -1,28 +1,25 @@
 from __future__ import annotations
 
 import logging
-import sqlglot
-import re
-import os
 import math
+import os
+import re
 from itertools import compress
 
 import pandas as pd
-
-
+import sqlglot
+from pyspark.sql.dataframe import DataFrame as spark_df
 from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql.utils import AnalysisException
-from pyspark.sql.dataframe import DataFrame as spark_df
 
+from ..databricks.enable_splink import enable_splink
+from ..input_column import InputColumn
 from ..linker import Linker
+from ..logging_messages import execute_sql_logging_message_info, log_sql
+from ..misc import ensure_is_list, major_minor_version_greater_equal_than
 from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
-from ..logging_messages import execute_sql_logging_message_info, log_sql
-from ..misc import ensure_is_list
-from ..input_column import InputColumn
 from .custom_spark_dialect import Dialect
-from ..databricks.enable_splink import enable_splink
-from ..misc import major_minor_version_greater_equal_than
 
 logger = logging.getLogger(__name__)
 

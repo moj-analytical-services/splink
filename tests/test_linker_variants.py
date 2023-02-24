@@ -1,5 +1,7 @@
 from copy import deepcopy
+
 import pandas as pd
+
 from splink.duckdb.duckdb_comparison_library import exact_match
 from splink.duckdb.duckdb_linker import DuckDBLinker
 

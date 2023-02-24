@@ -10,10 +10,9 @@ from .expectation_maximisation import (
     compute_new_parameters_sql,
     compute_proportions_for_new_parameters,
 )
-
 from .m_u_records_to_parameters import (
-    m_u_records_to_lookup_dict,
     append_u_probability_to_comparison_level_trained_probabilities,
+    m_u_records_to_lookup_dict,
 )
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
