@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - master
-      - fix-docs-workflow
 
   workflow_dispatch:
 
