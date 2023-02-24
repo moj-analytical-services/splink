@@ -2,7 +2,6 @@ import re
 from copy import deepcopy
 from .charts import vegalite_or_json, load_chart_definition
 from .misc import ensure_is_list
-from .misc import ensure_is_list
 
 
 def _group_name(cols_or_expr):
@@ -10,18 +9,6 @@ def _group_name(cols_or_expr):
     cols_or_expr = re.sub(r"[^0-9a-zA-Z_]", " ", cols_or_expr)
     cols_or_expr = re.sub(r"\s+", "_", cols_or_expr)
     return cols_or_expr
-
-
-def expressions_to_sql(expressions):
-
-    e = []
-    for expr in expressions:
-        if isinstance(expr, list):
-            expr = ", ' ', ".join(expr)
-            expr = f"concat({expr})"
-        e.append(expr)
-
-    return e
 
 
 def expressions_to_sql(expressions):
@@ -157,13 +144,8 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
 
     cols_or_exprs = ensure_is_list(cols_or_exprs)
     column_expressions = expressions_to_sql(cols_or_exprs)
-    cols_or_exprs = ensure_is_list(cols_or_exprs)
-    column_expressions = expressions_to_sql(cols_or_exprs)
     sqls = []
     for col_or_expr, raw_expr in zip(column_expressions, cols_or_exprs):
-
-    for col_or_expr, raw_expr in zip(column_expressions, cols_or_exprs):
-
         gn = _group_name(col_or_expr)
 
         # If the supplied column string is a list of columns to be concatenated,
@@ -181,7 +163,6 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
                 {col_or_expr}
                 end
             """
-
 
         # If the supplied column string is a list of columns to be concatenated,
         # add a quick clause to filter out any instances whereby either column contains
@@ -241,16 +222,9 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
 
     column_expressions_raw = ensure_is_list(column_expressions)
     column_expressions = expressions_to_sql(column_expressions_raw)
-    column_expressions_raw = ensure_is_list(column_expressions)
-    column_expressions = expressions_to_sql(column_expressions_raw)
 
     sql = _col_or_expr_frequencies_raw_data_sql(
-        column_expressions_raw,
-        input_tablename
-    )
-    sql = _col_or_expr_frequencies_raw_data_sql(
-        column_expressions_raw,
-        input_tablename
+        column_expressions, "__splink__df_concat"
     )
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
@@ -286,7 +260,8 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
         bottom_n_rows = [
             p for p in bottom_n_rows_all if p["group_name"] == _group_name(expression)
         ]
-
+        # remove concat blank from expression title
+        expression = expression.replace(", ' '", "")
         inner_chart = _get_inner_chart_spec_freq(
             percentile_rows, top_n_rows, bottom_n_rows, expression
         )
