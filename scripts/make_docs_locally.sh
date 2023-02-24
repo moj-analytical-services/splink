@@ -4,16 +4,13 @@
 # python scripts/json_schema_to_md_doc.py
 # python scripts/generate_dialect_comparison_docs.py
 
-# NB not including docs/demos, as 02_Exploratory_analysis.ipynb may
-# cause process to hang on: Running 3 `page_markdown` events
-# only an issue with `serve` or `build` - `gh-deploy` works okay
 
-# UPDATE="TRUE"
-# if [[ $UPDATE == "TRUE" ]]
-# then
-#     rm -rf docs/demos/
-#     git clone https://github.com/moj-analytical-services/splink_demos.git docs/demos/
-# fi
+UPDATE="TRUE"
+if [[ $UPDATE == "TRUE" ]]
+then
+    rm -rf docs/demos/
+    git clone https://github.com/moj-analytical-services/splink_demos.git docs/demos/
+fi
 
 deactivate
 python3 -m venv docs-venv
