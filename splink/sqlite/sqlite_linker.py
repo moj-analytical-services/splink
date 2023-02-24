@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from math import log2, pow
 
