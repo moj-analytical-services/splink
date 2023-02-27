@@ -1,5 +1,3 @@
-[![VoteSplink](https://user-images.githubusercontent.com/7570107/214026201-80f647dd-54a3-45e8-bb58-e388c220e94e.png)](https://www.smartsurvey.co.uk/s/80C7VA/)
-
 ![image](https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png)
 [![pypi](https://img.shields.io/github/v/release/moj-analytical-services/splink?include_prereleases)](https://pypi.org/project/splink/#history)
 [![Downloads](https://pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
