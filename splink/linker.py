@@ -173,7 +173,7 @@ class Linker:
         if isinstance(settings_dict, str):
             if settings_dict.endswith(".json"):
                 self._setup_settings_objs(None)  # feed it a blank settings dictionary
-                self.load_settings_from_json(settings_dict)
+                self.load_settings(settings_dict)
             else:
                 raise ValueError("Invalid settings dictionary provided.")
         else:
@@ -813,20 +813,34 @@ class Linker:
                 "Please re-run your linkage with it set to True."
             )
 
-    def initialise_settings(self, settings_dict: dict):
+    def load_settings(self, settings_dict: dict | str):
         """Initialise settings for the linker.  To be used if settings were
-        not passed to the linker on creation.
+        not passed to the linker on creation. This can either be in the form
+        of a settings dictionary or a filepath to a json file containing a
+        valid settings dictionary.
 
         Examples:
             >>> linker = DuckDBLinker(df, connection=":memory:")
             >>> linker.profile_columns(["first_name", "surname"])
             >>> linker.initialise_settings(settings_dict)
 
+            >>> linker.load_settings_from_json("my_settings.json")
+
         Args:
-            settings_dict (dict): A Splink settings dictionary
+            settings_dict (dict | str): A Splink settings dictionary or
+                the path to your settings json file.
         """
+
+        if isinstance(settings_dict, str):
+            if settings_dict.endswith(".json"):
+                with open(settings_dict) as f:
+                    settings_dict = json.load(f)
+            else:
+                raise ValueError("Invalid settings dictionary provided.")
+
         # If a uid already exists in your settings object, prioritise this
         settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
+        settings_dict["sql_dialect"] = settings_dict.get("sql_dialect", self._sql_dialect)
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
@@ -2488,22 +2502,6 @@ class Linker:
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(model_dict, f, indent=4)
         return model_dict
-
-    def load_settings_from_json(self, in_path: str):
-        """Load settings from a `.json` file.
-
-        This `.json` file would usually be the output of
-        `linker.save_settings_to_json()`
-
-        Examples:
-            >>> linker.load_settings_from_json("my_settings.json")
-
-        Args:
-            in_path (str): Path to settings json file
-        """
-        with open(in_path) as f:
-            model_dict = json.load(f)
-        self.initialise_settings(model_dict)
 
     def estimate_probability_two_random_records_match(
         self, deterministic_matching_rules, recall

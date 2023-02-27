@@ -28,10 +28,10 @@ def test_full_example_duckdb(tmp_path):
 
     linker = DuckDBLinker(
         df,
-        settings_dict,
         connection=os.path.join(tmp_path, "duckdb.db"),
         output_schema="splink_in_duckdb",
     )
+    linker.load_settings(settings_dict)
 
     linker.count_num_comparisons_from_blocking_rule(
         'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
@@ -107,7 +107,7 @@ def test_full_example_duckdb(tmp_path):
     linker.save_settings_to_json(path)
 
     linker_2 = DuckDBLinker(df, connection=":memory:")
-    linker_2.load_settings_from_json(path)
+    linker_2.load_settings(path)
     DuckDBLinker(df, settings_dict=path)
 
 
