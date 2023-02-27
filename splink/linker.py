@@ -840,7 +840,9 @@ class Linker:
 
         # If a uid already exists in your settings object, prioritise this
         settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
-        settings_dict["sql_dialect"] = settings_dict.get("sql_dialect", self._sql_dialect)
+        settings_dict["sql_dialect"] = settings_dict.get(
+            "sql_dialect", self._sql_dialect
+        )
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
