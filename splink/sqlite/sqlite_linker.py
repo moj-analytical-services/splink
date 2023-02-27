@@ -108,11 +108,6 @@ class SQLiteLinker(Linker):
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SQLiteDataFrame(templated_name, physical_name, self)
 
-    def initialise_settings(self, settings_dict: dict):
-        if "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "sqlite"
-        super().initialise_settings(settings_dict)
-
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
 
         # In the case of a table already existing in the database,

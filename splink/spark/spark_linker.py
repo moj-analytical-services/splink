@@ -282,11 +282,6 @@ class SparkLinker(Linker):
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
 
-    def initialise_settings(self, settings_dict: dict):
-        if "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "spark"
-        super().initialise_settings(settings_dict)
-
     def _repartition_if_needed(self, spark_df, templated_name):
         # Repartitioning has two effects:
         # 1. When we persist out results to disk, it results in a predictable

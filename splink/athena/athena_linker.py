@@ -293,11 +293,6 @@ class AthenaLinker(Linker):
             new_filepath,
         )
 
-    def initialise_settings(self, settings_dict: dict):
-        if "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "presto"
-        super().initialise_settings(settings_dict)
-
     def register_data_on_s3(self, table, alias):
         wr.s3.to_parquet(
             df=table,
