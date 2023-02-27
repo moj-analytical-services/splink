@@ -36,7 +36,7 @@ def test_cache_id(tmp_path):
     linker.save_settings_to_json(path, overwrite=True)
 
     linker_2 = DuckDBLinker(df, connection=":memory:")
-    linker_2.load_settings_from_json(path)
+    linker_2.load_settings(path)
 
     assert linker_2._settings_obj._cache_uid == prior
 
