@@ -93,7 +93,7 @@ class SparkLinker(Linker):
                 registered in the Spark catalog
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
-                `linker.initialise_settings()` Defaults to None.
+                `linker.load_settings()` Defaults to None.
             break_lineage_method (str, optional): Method to use to cache intermediate
                 results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files",
                 "delta_lake_table". Defaults to "parquet".

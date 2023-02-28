@@ -64,7 +64,7 @@ df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=T
 linker = SparkLinker(df, settings)
 logging.getLogger("splink").setLevel(5)
 
-linker.initialise_settings(settings)
+linker.load_settings(settings)
 linker.deterministic_link()
 
 ```

@@ -86,7 +86,7 @@ class DuckDBLinker(Linker):
                 database) for link_only or link_and_dedupe
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
-                `linker.initialise_settings()` Defaults to None.
+                `linker.load_settings()` Defaults to None.
             connection (DuckDBPyConnection or str, optional):  Connection to duckdb.
                 If a a string, will instantiate a new connection.  Defaults to :memory:.
                 If the special :temporary: string is provided, an on-disk duckdb
