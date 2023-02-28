@@ -9,7 +9,6 @@ from splink.sqlite.sqlite_linker import SQLiteLinker
 
 
 def test_full_example_sqlite(tmp_path):
-
     from rapidfuzz.distance.Levenshtein import distance
 
     con = sqlite3.connect(":memory:")
@@ -40,7 +39,7 @@ def test_full_example_sqlite(tmp_path):
         ["l.email = r.email"], recall=0.3
     )
 
-    linker.estimate_u_using_random_sampling(target_rows=1e6)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
@@ -65,7 +64,6 @@ def test_full_example_sqlite(tmp_path):
 
 
 def test_small_link_example_sqlite():
-
     from rapidfuzz.distance.Levenshtein import distance
 
     con = sqlite3.connect(":memory:")

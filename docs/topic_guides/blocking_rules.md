@@ -22,7 +22,7 @@ settings = {
 
 
 linker = DuckDBLinker(df, settings)
-linker.estimate_u_using_random_sampling(target_rows=1e6)
+linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
 blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
 linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
