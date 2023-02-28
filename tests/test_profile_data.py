@@ -12,7 +12,7 @@ from splink.profile_data import (
     _col_or_expr_frequencies_raw_data_sql,
 )
 
-from basic_settings import get_settings_dict
+from .basic_settings import get_settings_dict
 
 from pyspark.sql.functions import lit
 from pyspark.sql.types import StringType
