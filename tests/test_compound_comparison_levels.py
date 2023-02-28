@@ -2,9 +2,9 @@ import pandas as pd
 from sqlglot import parse_one
 from sqlglot.optimizer.normalize import normalize
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
-import splink.duckdb.duckdb_comparison_library as cl
 import splink.duckdb.duckdb_comparison_level_library as cll
+import splink.duckdb.duckdb_comparison_library as cl
+from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def test_compound_comparison_level():

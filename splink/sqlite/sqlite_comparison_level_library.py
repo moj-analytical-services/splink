@@ -1,9 +1,9 @@
 from ..comparison_level_library import (
-    NullLevelBase,
-    ExactMatchLevelBase,
-    ElseLevelBase,
     ColumnsReversedLevelBase,
     DistanceFunctionLevelBase,
+    ElseLevelBase,
+    ExactMatchLevelBase,
+    NullLevelBase,
     PercentageDifferenceLevelBase,
 )
 from .sqlite_base import (

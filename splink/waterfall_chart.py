@@ -1,8 +1,8 @@
 import math
 from copy import deepcopy
 
-from .misc import prob_to_bayes_factor
 from .comparison import Comparison
+from .misc import prob_to_bayes_factor
 
 
 def _prior_record(settings_obj):

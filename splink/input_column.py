@@ -62,7 +62,7 @@ class InputColumn:
         if sql_dialect:
             self._sql_dialect = sql_dialect
         elif settings_obj:
-            self._sql_dialect = getattr(self._settings_obj, "_sql_dialect")
+            self._sql_dialect = self._settings_obj._sql_dialect
         else:
             self._sql_dialect = None
 
@@ -217,7 +217,7 @@ class InputColumn:
         return start + name + end
 
 
-def _get_dialect_quotes(dialect: str | None):
+def _get_dialect_quotes(dialect):
     start = end = '"'
     if dialect is None:
         return start, end

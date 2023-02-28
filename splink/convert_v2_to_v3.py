@@ -1,10 +1,9 @@
 import logging
+from itertools import groupby
 
 import sqlglot
-from sqlglot.expressions import Case, Alias
-from itertools import groupby
 from sqlglot.errors import ParseError
-
+from sqlglot.expressions import Alias, Case
 
 logger = logging.getLogger(__name__)
 

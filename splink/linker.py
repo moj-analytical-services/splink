@@ -1,88 +1,78 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
+import os
 from collections import UserDict
 from copy import Error, copy, deepcopy
 from statistics import median
-import hashlib
-import os
-import json
 
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
 
-from .charts import (
-    match_weights_histogram,
-    missingness_chart,
-    completeness_chart,
-    precision_recall_chart,
-    roc_chart,
-    parameter_estimate_comparisons,
-    waterfall_chart,
-    unlinkables_chart,
-    cumulative_blocking_rule_comparisons_generated,
-)
-
-from .blocking import block_using_rules_sql, BlockingRule
-from .comparison_vector_values import compute_comparison_vector_values_sql
-from .em_training_session import EMTrainingSession
-from .misc import bayes_factor_to_prob, prob_to_bayes_factor, ensure_is_list, ascii_uid
-from .predict import predict_from_comparison_vectors_sqls
-from .settings import Settings
-from .term_frequencies import (
-    compute_all_term_frequencies_sqls,
-    term_frequencies_for_single_column_sql,
-    colname_to_tf_tablename,
-    _join_tf_to_input_df_sql,
-    compute_term_frequencies_from_concat_with_tf,
-    term_frequencies_from_concat_with_tf,
-)
-from .profile_data import profile_columns
-from .missingness import missingness_data, completeness_data
-from .unlinkables import unlinkables_data
-
-from .m_training import estimate_m_values_from_label_column
-from .estimate_u import estimate_u_values
-from .pipeline import SQLPipeline
-
-from .vertically_concatenate import vertically_concatenate_sql
-from .m_from_labels import estimate_m_from_pairwise_labels
 from .accuracy import (
-    truth_space_table_from_labels_table,
-    prediction_errors_from_labels_table,
     prediction_errors_from_label_column,
+    prediction_errors_from_labels_table,
     truth_space_table_from_labels_column,
-)
-
-from .match_weights_histogram import histogram_data
-from .comparison_vector_distribution import comparison_vector_distribution_sql
-from .splink_comparison_viewer import (
-    comparison_viewer_table_sqls,
-    render_splink_comparison_viewer_html,
+    truth_space_table_from_labels_table,
 )
 from .analyse_blocking import (
-    number_of_comparisons_generated_by_blocking_rule_sql,
     cumulative_comparisons_generated_by_blocking_rules,
+    number_of_comparisons_generated_by_blocking_rule_sql,
 )
-
-from .splink_dataframe import SplinkDataFrame
-
+from .blocking import BlockingRule, block_using_rules_sql
+from .charts import (
+    completeness_chart,
+    cumulative_blocking_rule_comparisons_generated,
+    match_weights_histogram,
+    missingness_chart,
+    parameter_estimate_comparisons,
+    precision_recall_chart,
+    roc_chart,
+    unlinkables_chart,
+    waterfall_chart,
+)
+from .cluster_studio import render_splink_cluster_studio_html
+from .comparison import Comparison
+from .comparison_level import ComparisonLevel
+from .comparison_vector_distribution import comparison_vector_distribution_sql
+from .comparison_vector_values import compute_comparison_vector_values_sql
 from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )
-
-from .unique_id_concat import (
-    _composite_unique_id_from_edges_sql,
-)
-
-from .cluster_studio import render_splink_cluster_studio_html
-
-from .comparison_level import ComparisonLevel
-from .comparison import Comparison
-
+from .em_training_session import EMTrainingSession
+from .estimate_u import estimate_u_values
+from .m_from_labels import estimate_m_from_pairwise_labels
+from .m_training import estimate_m_values_from_label_column
 from .match_key_analysis import (
     count_num_comparisons_from_blocking_rules_for_prediction_sql,
 )
+from .match_weights_histogram import histogram_data
+from .misc import ascii_uid, bayes_factor_to_prob, ensure_is_list, prob_to_bayes_factor
+from .missingness import completeness_data, missingness_data
+from .pipeline import SQLPipeline
+from .predict import predict_from_comparison_vectors_sqls
+from .profile_data import profile_columns
+from .settings import Settings
+from .splink_comparison_viewer import (
+    comparison_viewer_table_sqls,
+    render_splink_comparison_viewer_html,
+)
+from .splink_dataframe import SplinkDataFrame
+from .term_frequencies import (
+    _join_tf_to_input_df_sql,
+    colname_to_tf_tablename,
+    compute_all_term_frequencies_sqls,
+    compute_term_frequencies_from_concat_with_tf,
+    term_frequencies_for_single_column_sql,
+    term_frequencies_from_concat_with_tf,
+)
+from .unique_id_concat import (
+    _composite_unique_id_from_edges_sql,
+)
+from .unlinkables import unlinkables_data
+from .vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
 

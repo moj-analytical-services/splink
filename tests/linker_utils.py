@@ -1,6 +1,7 @@
 import pandas as pd
-from tests.cc_testing_utils import check_df_equality
 import pytest
+
+from tests.cc_testing_utils import check_df_equality
 
 
 def _test_table_registration(linker, additional_tables_to_register=[]):

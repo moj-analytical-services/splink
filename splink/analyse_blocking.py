@@ -4,7 +4,6 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from .blocking import _sql_gen_where_condition, block_using_rules_sql
-
 from .misc import calculate_cartesian, calculate_reduction_ratio
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
