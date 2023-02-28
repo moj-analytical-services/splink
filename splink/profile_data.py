@@ -164,22 +164,6 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
                 end
             """
 
-        # If the supplied column string is a list of columns to be concatenated,
-        # add a quick clause to filter out any instances whereby either column contains
-        # a null value.
-        if isinstance(raw_expr, list):
-
-            null_exprs = [f"{c} is null" for c in raw_expr]
-            null_exprs = " OR ".join(null_exprs)
-
-            col_or_expr = f"""
-                case when
-                {null_exprs} then null
-                else
-                {col_or_expr}
-                end
-            """
-
         sql = f"""
         select * from
         (select
@@ -224,7 +208,7 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
     column_expressions = expressions_to_sql(column_expressions_raw)
 
     sql = _col_or_expr_frequencies_raw_data_sql(
-        column_expressions, "__splink__df_concat"
+        column_expressions_raw, "__splink__df_concat"
     )
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
