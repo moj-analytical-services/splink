@@ -78,7 +78,7 @@ from .vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
 
-warnings.simplefilter('always', DeprecationWarning)
+warnings.simplefilter("always", DeprecationWarning)
 
 
 class CacheDictWithLogging(UserDict):
@@ -875,8 +875,8 @@ class Linker:
         self._validate_dialect()
 
         warnings.warn(
-            "`initialise_settings` is deprecated. We advise you use " \
-            "`linker.load_settings()` when loading in your settings or a previously " \
+            "`initialise_settings` is deprecated. We advise you use "
+            "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
             DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
         )
@@ -896,8 +896,8 @@ class Linker:
         self.load_settings(in_path)
 
         warnings.warn(
-            "`load_settings_from_json` is deprecated. We advise you use " \
-            "`linker.load_settings()` when loading in your settings or a previously " \
+            "`load_settings_from_json` is deprecated. We advise you use "
+            "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
             DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
         )
