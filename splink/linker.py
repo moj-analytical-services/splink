@@ -4,6 +4,7 @@ import hashlib
 import json
 import logging
 import os
+import warnings
 from collections import UserDict
 from copy import Error, copy, deepcopy
 from pathlib import Path
@@ -76,6 +77,8 @@ from .unlinkables import unlinkables_data
 from .vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
+
+warnings.simplefilter('always', DeprecationWarning)
 
 
 class CacheDictWithLogging(UserDict):
@@ -171,7 +174,7 @@ class Linker:
             input_table_or_tables, input_table_aliases
         )
 
-        if not isinstance(settings_dict, dict | None):
+        if not isinstance(settings_dict, (dict, type(None))):
             self._setup_settings_objs(None)  # feed it a blank settings dictionary
             self.load_settings(settings_dict)
         else:
@@ -870,9 +873,12 @@ class Linker:
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
         self._validate_dialect()
-        logger.log(
-            "`initialise_settings` is deprecated. We advise you use ",
-            "`linker.load_settings()` when loading in your settings or a trained model.",
+
+        warnings.warn(
+            "`initialise_settings` is deprecated. We advise you use " \
+            "`linker.load_settings()` when loading in your settings or a previously " \
+            "trained model.",
+            DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
         )
 
     def load_settings_from_json(self, in_path: str | Path):
@@ -888,6 +894,13 @@ class Linker:
             in_path (str): Path to settings json file
         """
         self.load_settings(in_path)
+
+        warnings.warn(
+            "`load_settings_from_json` is deprecated. We advise you use " \
+            "`linker.load_settings()` when loading in your settings or a previously " \
+            "trained model.",
+            DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
+        )
 
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
         """Compute a term frequency table for a given column and persist to the database
