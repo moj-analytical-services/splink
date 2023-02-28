@@ -3,19 +3,18 @@ import sqlite3
 import numpy as np
 import pandas as pd
 from basic_settings import get_settings_dict
+from pyspark.sql.functions import lit
+from pyspark.sql.types import StringType
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
-from splink.sqlite.sqlite_linker import SQLiteLinker
 from splink.misc import ensure_is_list
 from splink.profile_data import (
     _col_or_expr_frequencies_raw_data_sql,
 )
+from splink.spark.spark_linker import SparkLinker
+from splink.sqlite.sqlite_linker import SQLiteLinker
 
-from .basic_settings import get_settings_dict
-
-from pyspark.sql.functions import lit
-from pyspark.sql.types import StringType
+from basic_settings import get_settings_dict
 
 
 def generate_raw_profile_dataset(columns_to_profile, linker):
