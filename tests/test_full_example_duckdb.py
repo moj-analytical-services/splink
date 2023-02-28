@@ -108,6 +108,7 @@ def test_full_example_duckdb(tmp_path):
 
     linker_2 = DuckDBLinker(df, connection=":memory:")
     linker_2.load_settings(path)
+    linker_2.load_settings_from_json(path)
     DuckDBLinker(df, settings_dict=path)
 
 

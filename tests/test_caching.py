@@ -46,7 +46,7 @@ def test_cache_id(tmp_path):
     )
     prior = linker._cache_uid
 
-    linker.initialise_settings(get_settings_dict())
+    linker.load_settings(get_settings_dict())
     assert prior == linker._cache_uid
 
     # Test uid from settings
