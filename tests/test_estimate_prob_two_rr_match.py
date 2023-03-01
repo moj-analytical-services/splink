@@ -1,7 +1,9 @@
 import logging
+
 import pandas as pd
-from splink.duckdb.duckdb_linker import DuckDBLinker
 import pytest
+
+from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def test_prob_rr_match_dedupe():

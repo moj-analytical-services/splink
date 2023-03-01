@@ -213,8 +213,14 @@
       "type": "string",
       "title": "The SQL dialect in which sql_conditions are written.  Must be a valid sqlglot dialect",
       "default": null,
-      "examples": ["spark", "duckdb", "presto"],
+      "examples": ["spark", "duckdb", "presto", "sqlite"],
       "enum": ["spark", "duckdb", "presto", "sqlite"]
+    },
+    "linker_uid": {
+      "type": "string",
+      "title": "A unique identifier that allows a linker-specific cache to be built and re-used between sessions",
+      "default": null,
+      "examples": ["abCD1234"]
     }
   }
 }

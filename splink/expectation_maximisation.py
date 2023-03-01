@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 import time
+from typing import TYPE_CHECKING
+
 import duckdb
 
-from .predict import predict_from_comparison_vectors_sqls
-from .settings import Settings
-from .m_u_records_to_parameters import m_u_records_to_lookup_dict
-from .splink_dataframe import SplinkDataFrame
 from .comparison_level import ComparisonLevel
 from .constants import LEVEL_NOT_OBSERVED_TEXT
+from .m_u_records_to_parameters import m_u_records_to_lookup_dict
+from .predict import predict_from_comparison_vectors_sqls
+from .settings import Settings
+from .splink_dataframe import SplinkDataFrame
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:

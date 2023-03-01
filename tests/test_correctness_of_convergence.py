@@ -31,14 +31,13 @@
 # df = add_match_prob(df, settings_for_data_generation)
 
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.duckdb.duckdb_linker import DuckDBLinkerDataFrame
-import splink.duckdb.duckdb_comparison_library as cl
-from splink.predict import predict_from_comparison_vectors_sqls
-
 import pandas as pd
-from splink.em_training_session import EMTrainingSession
 import pytest
+
+import splink.duckdb.duckdb_comparison_library as cl
+from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
+from splink.em_training_session import EMTrainingSession
+from splink.predict import predict_from_comparison_vectors_sqls
 
 
 def test_splink_converges_to_known_params():
@@ -58,12 +57,20 @@ def test_splink_converges_to_known_params():
         "additional_columns_to_retain": ["true_match", "true_match_probability"],
         "retain_intermediate_calculation_columns": False,
         "retain_matching_columns": False,
+        "linker_uid": "abc",
     }
 
     linker = DuckDBLinker(df, settings)
 
-    # need to register df_blocked and go from there
-    linker.register_table(df, "__splink__df_comparison_vectors_0de5e3a")
+    # This test is fiddly because you need to know the hash of the
+    # comparison vector table, but to find this out you need to run the test
+
+    # If the test is failing, run it and look at the output for a line like
+    # CREATE TABLE __splink__df_comparison_vectors_abc123
+    # and modify the following line to include the value of the hash (abc123 above)
+
+    cvv_hashed_tablename = "__splink__df_comparison_vectors_44a6648a2"
+    linker.register_table(df, cvv_hashed_tablename)
 
     em_training_session = EMTrainingSession(
         linker,
@@ -83,7 +90,7 @@ def test_splink_converges_to_known_params():
 
     cv = DuckDBLinkerDataFrame(
         "__splink__df_comparison_vectors",
-        "__splink__df_comparison_vectors_0de5e3a",
+        cvv_hashed_tablename,
         linker,
     )
 
@@ -112,7 +119,8 @@ def test_splink_converges_to_known_params():
     assert s_obj._probability_two_random_records_match == pytest.approx(0.5, 0.01)
 
     param_dict = s_obj.comparisons[0].as_dict()
-    param_dict["comparison_levels"][1]["m_probability"] == pytest.approx(0.7, abs=0.01)
-    param_dict["comparison_levels"][1]["u_probability"] == pytest.approx(0.1, abs=0.01)
-    param_dict["comparison_levels"][2]["m_probability"] == pytest.approx(0.3, abs=0.01)
-    param_dict["comparison_levels"][2]["u_probability"] == pytest.approx(0.9, abs=0.01)
+    cls = param_dict["comparison_levels"]
+    assert cls[1]["m_probability"] == pytest.approx(0.7, abs=0.01)
+    assert cls[1]["u_probability"] == pytest.approx(0.1, abs=0.01)
+    assert cls[2]["m_probability"] == pytest.approx(0.3, abs=0.01)
+    assert cls[2]["u_probability"] == pytest.approx(0.9, abs=0.01)

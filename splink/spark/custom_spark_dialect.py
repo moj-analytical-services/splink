@@ -1,5 +1,4 @@
 from sqlglot import exp
-
 from sqlglot.dialects import Dialect, Spark
 from sqlglot.generator import Generator
 

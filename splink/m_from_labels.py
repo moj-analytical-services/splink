@@ -1,20 +1,22 @@
 import logging
+
+from .block_from_labels import block_from_labels
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import (
     compute_new_parameters_sql,
     compute_proportions_for_new_parameters,
 )
-from .block_from_labels import block_from_labels
 from .m_u_records_to_parameters import (
-    m_u_records_to_lookup_dict,
     append_m_probability_to_comparison_level_trained_probabilities,
+    m_u_records_to_lookup_dict,
 )
-
 
 logger = logging.getLogger(__name__)
 
 
 def estimate_m_from_pairwise_labels(linker, table_name):
+
+    concat_with_tf = linker._initialise_df_concat_with_tf()
 
     sqls = block_from_labels(linker, table_name)
 
@@ -34,7 +36,7 @@ def estimate_m_from_pairwise_labels(linker, table_name):
     sql = compute_new_parameters_sql(linker._settings_obj)
     linker._enqueue_sql(sql, "__splink__m_u_counts")
 
-    df_params = linker._execute_sql_pipeline()
+    df_params = linker._execute_sql_pipeline([concat_with_tf])
     param_records = df_params.as_pandas_dataframe()
     param_records = compute_proportions_for_new_parameters(param_records)
 

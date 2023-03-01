@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splink"
-version = "3.6.0"
+version = "3.7.0.dev01"
 description = "Fast probabilistic data linkage at scale"
 authors = ["Robin Linacre <robinlinacre@hotmail.com>", "Sam Lindsay", "Theodore Manassis", "Tom Hepworth", "Andy Bond"]
 license = "MIT"
@@ -9,13 +9,13 @@ repository = "https://github.com/moj-analytical-services/splink"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = ">=3.7"
 jsonschema = ">=3.2,<5.0"
-pandas = "^1.0.0"
-duckdb = "^0.6.0"
+pandas = ">=1.0.0"
+duckdb = ">=0.6.0"
 sqlglot = ">=5.1.0"
-altair = "^4.2.0"
-Jinja2 = "^3.0.3"
+altair = ">=4.2.0"
+Jinja2 = ">=3.0.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0"
@@ -23,7 +23,7 @@ pytest-benchmark = "^4"
 tabulate = "0.8.9"
 lzstring = "1.0.4"
 black = "^22.1.0"
-flake8 = "^4.0.1"
+ruff = "^0.0.236"
 pyarrow = "^7.0.0"
 networkx = "2.5.1"
 pyspark = "^3.2.1"
@@ -34,6 +34,20 @@ requires = ["poetry-core>=1.0.8"]
 build-backend = "poetry.core.masonry.api"
 
 
-[flake8]
-max-line-length = 88
-extend-ignore = ["E203"]
+[tool.ruff]
+line-length = 88
+select = [
+    # Pyflakes
+    "F",
+    # Pycodestyle
+    "E",
+    "W",
+    # isort
+    "I001",
+    # bugbear
+    "B",
+]
+ignore = [
+    "B905", # `zip()` without an explicit `strict=` parameter
+    "B006", # Do not use mutable data structures for argument defaults"
+]

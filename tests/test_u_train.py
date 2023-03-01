@@ -1,9 +1,9 @@
+import numpy as np
+import pandas as pd
+from pytest import approx
+
 from splink.duckdb.duckdb_comparison_library import levenshtein_at_thresholds
 from splink.duckdb.duckdb_linker import DuckDBLinker
-import pandas as pd
-import numpy as np
-
-from pytest import approx
 
 
 def test_u_train():

@@ -1,6 +1,6 @@
 import sqlglot
-from sqlglot.expressions import Column, Bracket, Lambda
 import sqlglot.expressions as exp
+from sqlglot.expressions import Bracket, Column, Lambda
 
 
 def get_columns_used_from_sql(sql, dialect=None, retain_table_prefix=False):

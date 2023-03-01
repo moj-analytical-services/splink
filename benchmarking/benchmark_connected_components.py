@@ -1,8 +1,8 @@
 # python3 -m pytest benchmarking/benchmark_connected_components.py
 from tests.cc_testing_utils import (
     benchmark_cc_implementation,
-    register_cc_df,
     generate_random_graph,
+    register_cc_df,
 )
 
 ###############################################################################

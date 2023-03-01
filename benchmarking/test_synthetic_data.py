@@ -1,8 +1,7 @@
-from splink.duckdb.duckdb_linker import DuckDBLinker
-
-from splink.spark.spark_linker import SparkLinker
 import pandas as pd
 
+from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.spark.spark_linker import SparkLinker
 
 full_name_cc = {
     "output_column_name": "full_name",
@@ -250,7 +249,7 @@ def spark_performance(df, target_rows=1e6):
 
 def test_3_rounds_100k_spark(benchmark):
 
-    from pyspark.context import SparkContext, SparkConf
+    from pyspark.context import SparkConf, SparkContext
     from pyspark.sql import SparkSession
 
     def setup():
@@ -283,7 +282,7 @@ def test_3_rounds_100k_spark(benchmark):
 
 def test_3_rounds_300k_spark(benchmark):
 
-    from pyspark.context import SparkContext, SparkConf
+    from pyspark.context import SparkConf, SparkContext
     from pyspark.sql import SparkSession
 
     def setup():
@@ -315,7 +314,7 @@ def test_3_rounds_300k_spark(benchmark):
 
 def test_3_rounds_1m_spark(benchmark):
 
-    from pyspark.context import SparkContext, SparkConf
+    from pyspark.context import SparkConf, SparkContext
     from pyspark.sql import SparkSession
 
     def setup():

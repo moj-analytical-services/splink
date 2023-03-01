@@ -1,7 +1,7 @@
 import json
-from functools import lru_cache
-from functools import reduce
 import operator
+from functools import lru_cache, reduce
+
 import pkg_resources
 from jsonschema import Draft7Validator
 

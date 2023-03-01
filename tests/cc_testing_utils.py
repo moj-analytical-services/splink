@@ -1,10 +1,11 @@
-import networkx as nx
-from networkx.algorithms import connected_components as cc_nx
-import pandas as pd
 import random
 
-from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
+import networkx as nx
+import pandas as pd
+from networkx.algorithms import connected_components as cc_nx
+
 from splink.connected_components import solve_connected_components
+from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
 
 
 def generate_random_graph(graph_size, seed=None):
@@ -42,16 +43,23 @@ def register_cc_df(G):
 
     # add our prediction df to our list of created tables
     predict_df = DuckDBLinkerDataFrame(table_name, table_name, linker)
-    linker._names_of_tables_created_by_splink = [predict_df]
+    linker._names_of_tables_created_by_splink.add(predict_df)
 
     return predict_df
 
 
-def run_cc_implementation(splink_df):
+def run_cc_implementation(predict_df):
+
+    linker = predict_df.duckdb_linker
+    concat_with_tf = linker._initialise_df_concat_with_tf()
 
     # finally, run our connected components algorithm
     cc = solve_connected_components(
-        splink_df.duckdb_linker, splink_df, df_predict=None, _generated_graph=True
+        linker,
+        predict_df,
+        df_predict=None,
+        concat_with_tf=concat_with_tf,
+        _generated_graph=True,
     ).as_pandas_dataframe()
     cc = cc.rename(columns={"unique_id": "node_id", "cluster_id": "representative"})
     cc = cc[["node_id", "representative"]]

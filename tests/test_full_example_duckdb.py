@@ -1,17 +1,16 @@
 import os
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.duckdb.duckdb_comparison_library import (
-    jaccard_at_thresholds,
-    exact_match,
-    jaro_winkler_at_thresholds,
-)
 import pandas as pd
 import pyarrow.parquet as pq
-
-
 from basic_settings import get_settings_dict
 from linker_utils import _test_table_registration, register_roc_data
+
+from splink.duckdb.duckdb_comparison_library import (
+    exact_match,
+    jaccard_at_thresholds,
+    jaro_winkler_at_thresholds,
+)
+from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def test_full_example_duckdb(tmp_path):
@@ -54,6 +53,8 @@ def test_full_example_duckdb(tmp_path):
     linker.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
+    # try missingness chart again now that concat_with_tf is precomputed
+    linker.missingness_chart()
 
     blocking_rule = 'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
@@ -107,6 +108,7 @@ def test_full_example_duckdb(tmp_path):
 
     linker_2 = DuckDBLinker(df, connection=":memory:")
     linker_2.load_settings_from_json(path)
+    DuckDBLinker(df, settings_dict=path)
 
 
 def test_small_link_example_duckdb():

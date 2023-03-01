@@ -1,6 +1,7 @@
 import re
 from copy import deepcopy
-from .charts import vegalite_or_json, load_chart_definition
+
+from .charts import load_chart_definition, vegalite_or_json
 
 
 def _group_name(cols_or_expr):
@@ -139,7 +140,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
         (select
             count(*) as value_count,
             '{gn}' as group_name,
-            {col_or_expr} as value,
+            cast({col_or_expr} as varchar) as value,
             (select count({col_or_expr}) from {table_name}) as total_non_null_rows,
             (select count(*) from {table_name}) as total_rows_inc_nulls,
             (select count(distinct {col_or_expr}) from {table_name})
@@ -168,18 +169,21 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 
 def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
 
-    input_tablename = "__splink__df_concat_with_tf"
-    if not linker._table_exists_in_database("__splink__df_concat_with_tf"):
-        linker._initialise_df_concat()
-        input_tablename = "__splink__df_concat"
+    df_concat = linker._initialise_df_concat()
+
+    input_dataframes = []
+    if df_concat:
+        input_dataframes.append(df_concat)
 
     if type(column_expressions) == str:
         column_expressions = [column_expressions]
 
-    sql = _col_or_expr_frequencies_raw_data_sql(column_expressions, input_tablename)
+    sql = _col_or_expr_frequencies_raw_data_sql(
+        column_expressions, "__splink__df_concat"
+    )
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-    df_raw = linker._execute_sql_pipeline(materialise_as_hash=True)
+    df_raw = linker._execute_sql_pipeline(input_dataframes, materialise_as_hash=True)
 
     sqls = _get_df_percentiles()
     for sql in sqls:

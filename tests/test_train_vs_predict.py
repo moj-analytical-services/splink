@@ -1,11 +1,8 @@
+import pandas as pd
 import pytest
+from basic_settings import get_settings_dict
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
-
-
-import pandas as pd
-
-from basic_settings import get_settings_dict
 
 
 def test_train_vs_predict():

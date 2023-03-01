@@ -1,8 +1,9 @@
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.duckdb.duckdb_comparison_library import exact_match
-import pandas as pd
 from copy import deepcopy
 
+import pandas as pd
+
+from splink.duckdb.duckdb_comparison_library import exact_match
+from splink.duckdb.duckdb_linker import DuckDBLinker
 from tests.basic_settings import get_settings_dict
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -53,7 +54,7 @@ def test_tf_tables_init_works():
         )
 
         # Trial for if _df_concat_with_tf already exists...
-        linker._initialise_df_concat_with_tf()
+        linker._initialise_df_concat_with_tf(materialise=True)
         linker.find_matches_to_new_records(
             [record], blocking_rules=[], match_weight_threshold=-10000
         )

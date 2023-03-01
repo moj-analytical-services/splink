@@ -1,14 +1,12 @@
 # Regression test for https://github.com/moj-analytical-services/splink/issues/795
 
 import os
-from splink.duckdb.duckdb_comparison_level_library import else_level
-
-from splink.duckdb.duckdb_linker import DuckDBLinker
-
-import splink.duckdb.duckdb_comparison_level_library as cll
-
 
 import pandas as pd
+
+import splink.duckdb.duckdb_comparison_level_library as cll
+from splink.duckdb.duckdb_comparison_level_library import else_level
+from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def test_regression(tmp_path):

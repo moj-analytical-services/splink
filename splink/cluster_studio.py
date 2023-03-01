@@ -1,16 +1,19 @@
-from typing import TYPE_CHECKING
-from jinja2 import Template
+from __future__ import annotations
+
 import json
 import os
 import pkgutil
 import random
+from typing import TYPE_CHECKING
 
+from jinja2 import Template
+
+from .misc import EverythingEncoder
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
     _composite_unique_id_from_nodes_sql,
 )
-from .misc import EverythingEncoder
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -266,8 +269,8 @@ def render_splink_cluster_studio_html(
         )
     else:
         if "DATABRICKS_RUNTIME_VERSION" in os.environ:
-            from pyspark.sql import SparkSession
             from pyspark.dbutils import DBUtils
+            from pyspark.sql import SparkSession
 
             spark = SparkSession.builder.getOrCreate()
             dbutils = DBUtils(spark)

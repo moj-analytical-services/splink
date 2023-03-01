@@ -3,23 +3,23 @@ from __future__ import annotations
 import logging
 from tempfile import TemporaryDirectory
 
-from duckdb import DuckDBPyConnection
 import duckdb
 import pandas as pd
+from duckdb import DuckDBPyConnection
 
-from .duckdb_helpers import (
-    validate_duckdb_connection,
-    create_temporary_duckdb_connection,
-    duckdb_load_from_file,
-)
+from ..input_column import InputColumn
 from ..linker import Linker
-from ..splink_dataframe import SplinkDataFrame
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import (
-    ensure_is_list,
     all_letter_combos,
+    ensure_is_list,
 )
-from ..input_column import InputColumn
+from ..splink_dataframe import SplinkDataFrame
+from .duckdb_helpers import (
+    create_temporary_duckdb_connection,
+    duckdb_load_from_file,
+    validate_duckdb_connection,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -192,6 +192,10 @@ class DuckDBLinker(Linker):
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
     def register_table(self, input, table_name, overwrite=False):
+
+        # If the user has provided a table name, return it as a SplinkDataframe
+        if isinstance(input, str):
+            return self._table_to_splink_dataframe(table_name, input)
 
         # Check if table name is already in use
         exists = self._table_exists_in_database(table_name)
