@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [ "3.7.16", "3.8.16", "3.9.10", "3.10.10" ]
+        python-version: [ "3.7.15", "3.8.16", "3.9.10", "3.10.10" ]
     name: Test python ${{ matrix.python-version }}
     steps:
       #----------------------------------------------
