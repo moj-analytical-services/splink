@@ -86,7 +86,7 @@ class DuckDBLinker(Linker):
                 database) for link_only or link_and_dedupe
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
-                `linker.initialise_settings()` Defaults to None.
+                `linker.load_settings()` Defaults to None.
             connection (DuckDBPyConnection or str, optional):  Connection to duckdb.
                 If a a string, will instantiate a new connection.  Defaults to :memory:.
                 If the special :temporary: string is provided, an on-disk duckdb
@@ -217,11 +217,6 @@ class DuckDBLinker(Linker):
         # occur if an invalid data type is passed as an argument
         self._con.register(table_name, input)
         return self._table_to_splink_dataframe(table_name, table_name)
-
-    def initialise_settings(self, settings_dict: dict):
-        if "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "duckdb"
-        super().initialise_settings(settings_dict)
 
     def _random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
