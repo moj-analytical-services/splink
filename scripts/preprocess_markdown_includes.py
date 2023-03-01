@@ -1,9 +1,9 @@
 # this script to be run at the root of the repo
 # otherwise will not correctly traverse docs folder
-import re
-import os
-from pathlib import Path
 import logging
+import os
+import re
+from pathlib import Path
 
 regex = (
     # opening tag and any whitespace
@@ -17,7 +17,7 @@ regex = (
 )
 
 
-for root, dirs, files in os.walk("docs"):
+for root, _dirs, files in os.walk("docs"):
     for file in files:
         # only process md files
         if re.fullmatch(r".*\.md", file):
