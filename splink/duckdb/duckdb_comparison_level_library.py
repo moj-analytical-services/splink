@@ -12,6 +12,7 @@ from ..comparison_level_library import (
     NullLevelBase,
     PercentageDifferenceLevelBase,
 )
+from ..comparison_level_composition import cl_and, cl_or  # noqa: F401
 from .duckdb_base import (
     DuckDBBase,
 )

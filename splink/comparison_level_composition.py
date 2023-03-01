@@ -51,7 +51,7 @@ def cl_or(*clls: ComparisonLevel | dict, **overrides) -> ComparisonLevel:
 
 
 cl_and.__doc__ = _DOCSTRING_TEMPLATE.format(clause="and")
-cl_or.__doc__ = _DOCSTRING_TEMPLATE.format(clause="od")
+cl_or.__doc__ = _DOCSTRING_TEMPLATE.format(clause="of")
 
 
 def cl_not(cll: ComparisonLevel | dict, **overrides) -> ComparisonLevel:
@@ -94,6 +94,12 @@ def _cl_merge(
     result = {**overrides}
     conditions = ("(" + d["sql_condition"] + ")" for d in dicts)
     result["sql_condition"] = f" {clause} ".join(conditions)
+
+    # Set to null level if all supplied levels are "null levels"
+    if "is_null_level" not in result:
+        if all([d.setdefault('is_null_level', False) for d in dicts]):
+            result["is_null_level"] = True
+
     if "label_for_charts" not in result:
         labels = ("(" + _label_for_charts(d) + ")" for d in dicts)
         result["label_for_charts"] = f" {clause} ".join(labels)
@@ -102,7 +108,19 @@ def _cl_merge(
 
 def _label_for_charts(comparison_dict: dict) -> str:
     backup = comparison_dict["sql_condition"]
-    return comparison_dict.get("label_for_charts", backup)
+    label = comparison_dict.get("label_for_charts", backup)
+
+    colname = comparison_dict.get("column_name")
+    if colname is None:
+        return label
+    # if null level, prefix with the column name
+    if comparison_dict.get('is_null_level', False):
+        label = f"{colname} is {label.upper()}"
+    # if exact match, suffix w/ colname
+    elif label.lower() == "exact match":
+        label = f"{label} on {colname}"
+
+    return label
 
 
 def _parse_comparison_levels(
@@ -115,7 +133,7 @@ def _parse_comparison_levels(
 
 def _to_comparison_level_dict(cl: ComparisonLevel | dict) -> dict:
     if isinstance(cl, ComparisonLevel):
-        return cl.as_dict()
+        return {**cl.as_dict(), "column_name": cl.column_name}
     else:
         return cl
 

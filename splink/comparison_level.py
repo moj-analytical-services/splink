@@ -137,7 +137,10 @@ class ComparisonLevel:
         level_dict,
         comparison: Comparison = None,
         sql_dialect: str = None,
+        column_name: str = None,
     ):
+
+        self.column_name = column_name
 
         # Protected, because we don't want to modify the original dict
         self._level_dict = level_dict

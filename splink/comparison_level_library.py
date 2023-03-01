@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from .input_column import InputColumn
 from .comparison_level import ComparisonLevel
 from .comparison_level_sql import great_circle_distance_km_sql
-from .input_column import InputColumn
 
 
 class NullLevelBase(ComparisonLevel):
@@ -23,7 +23,7 @@ class NullLevelBase(ComparisonLevel):
             "label_for_charts": "Null",
             "is_null_level": True,
         }
-        super().__init__(level_dict, sql_dialect=self._sql_dialect)
+        super().__init__(level_dict, sql_dialect=self._sql_dialect, column_name=col_name)
 
 
 class ExactMatchLevelBase(ComparisonLevel):
@@ -47,7 +47,11 @@ class ExactMatchLevelBase(ComparisonLevel):
         if term_frequency_adjustments:
             level_dict["tf_adjustment_column"] = col_name
 
-        super().__init__(level_dict, sql_dialect=self._sql_dialect)
+        super().__init__(
+            level_dict,
+            sql_dialect=self._sql_dialect,
+            column_name=col_name
+        )
 
 
 class ElseLevelBase(ComparisonLevel):
@@ -68,7 +72,7 @@ class ElseLevelBase(ComparisonLevel):
         }
         if m_probability:
             level_dict["m_probability"] = m_probability
-        super().__init__(level_dict)
+        super().__init__(level_dict, column_name=None)
 
 
 class DistanceFunctionLevelBase(ComparisonLevel):
@@ -119,7 +123,11 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         if m_probability:
             level_dict["m_probability"] = m_probability
 
-        super().__init__(level_dict, sql_dialect=self._sql_dialect)
+        super().__init__(
+            level_dict,
+            sql_dialect=self._sql_dialect,
+            column_name=col_name
+        )
 
     @property
     def _distance_level(self):
