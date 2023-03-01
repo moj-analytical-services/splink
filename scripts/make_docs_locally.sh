@@ -4,10 +4,6 @@
 # python scripts/json_schema_to_md_doc.py
 # python scripts/generate_dialect_comparison_docs.py
 
-# and preprocess include files with python scripts/preprocess.py
-# as include-markdown plugin clashes with mknotebooks
-# make sure not to commit changes to files with inclusions
-
 UPDATE="TRUE"
 if [[ $UPDATE == "TRUE" ]]
 then
@@ -21,6 +17,8 @@ source docs-venv/bin/activate
 pip install --upgrade pip
 pip install -r scripts/docs-requirements.txt
 
+# manually preprocess include files as include-markdown plugin clashes with mknotebooks
+# make sure not to commit changes to files with inclusions!
 python3 scripts/preprocess_markdown_includes.py
 
 # can remove verbose flag if needed
