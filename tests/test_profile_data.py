@@ -14,8 +14,6 @@ from splink.profile_data import (
 from splink.spark.spark_linker import SparkLinker
 from splink.sqlite.sqlite_linker import SQLiteLinker
 
-from basic_settings import get_settings_dict
-
 
 def generate_raw_profile_dataset(columns_to_profile, linker):
 
