@@ -21,5 +21,7 @@ source docs-venv/bin/activate
 pip install --upgrade pip
 pip install -r scripts/docs-requirements.txt
 
+python3 scripts/preprocess_markdown_includes.py
+
 # can remove verbose flag if needed
 mkdocs serve -v

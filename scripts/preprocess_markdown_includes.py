@@ -1,3 +1,5 @@
+# this script to be run at the root of the repo
+# otherwise will not correctly traverse docs folder
 import re
 import os
 from pathlib import Path
