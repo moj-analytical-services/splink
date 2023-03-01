@@ -12,6 +12,7 @@ The `comparison_library` contains pre-made comparisons available for use directl
 However, not every comparison is available for every [Splink-compatible SQL backend](../topic_guides/backends.html).
 
 The pre-made Splink comparisons available for each SQL dialect are as given in this table:
+
 {%
   include-markdown "./includes/generated_files/comparison_library_dialect_table.md"
 %}

@@ -99,6 +99,9 @@ jobs:
           ref: master
           path: "docs/demos/"
 
+      - name: Preprocess markdown include files
+        run: python3 scripts/preprocess_markdown_includes.py
+
       - run: tree docs/
       - run: pip install --upgrade pip
       - run: pip install -r scripts/docs-requirements.txt && mkdocs gh-deploy --force
