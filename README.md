@@ -146,7 +146,7 @@ clusters.as_pandas_dataframe(limit=5)
 
 🥇 MoJ DASD Awards 2020: Innovation and Impact - Winner
 
-🥇 Analysis in Government Awards 2022: People's Choice Award - [Winner](https://twitter.com/gov_analysis/status/1630542796783337473)
+🥇 Analysis in Government Awards 2022: People's Choice Award - [Winner](https://analysisfunction.civilservice.gov.uk/news/announcing-the-winner-of-the-first-analysis-in-government-peoples-choice-award/)
 
 🥈 Analysis in Government Awards 2022: Innovative Methods [Runner up](https://twitter.com/gov_analysis/status/1616073633692274689?s=20&t=6TQyNLJRjnhsfJy28Zd6UQ)
 
