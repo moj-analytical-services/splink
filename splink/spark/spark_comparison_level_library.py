@@ -1,3 +1,4 @@
+from ..comparison_level_composition import cl_and, cl_not, cl_or  # noqa: F401
 from ..comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
@@ -12,7 +13,6 @@ from ..comparison_level_library import (
     NullLevelBase,
     PercentageDifferenceLevelBase,
 )
-from ..comparison_level_composition import cl_and, cl_or  # noqa: F401
 from .spark_base import (
     SparkBase,
 )

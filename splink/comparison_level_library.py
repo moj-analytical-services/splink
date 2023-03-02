@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from .input_column import InputColumn
 from .comparison_level import ComparisonLevel
 from .comparison_level_sql import great_circle_distance_km_sql
+from .input_column import InputColumn
 
 
 class NullLevelBase(ComparisonLevel):
@@ -23,7 +23,9 @@ class NullLevelBase(ComparisonLevel):
             "label_for_charts": "Null",
             "is_null_level": True,
         }
-        super().__init__(level_dict, sql_dialect=self._sql_dialect, column_name=col_name)
+        super().__init__(
+            level_dict, sql_dialect=self._sql_dialect, column_name=col_name
+        )
 
 
 class ExactMatchLevelBase(ComparisonLevel):
@@ -48,9 +50,7 @@ class ExactMatchLevelBase(ComparisonLevel):
             level_dict["tf_adjustment_column"] = col_name
 
         super().__init__(
-            level_dict,
-            sql_dialect=self._sql_dialect,
-            column_name=col_name
+            level_dict, sql_dialect=self._sql_dialect, column_name=col_name
         )
 
 
@@ -124,9 +124,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
             level_dict["m_probability"] = m_probability
 
         super().__init__(
-            level_dict,
-            sql_dialect=self._sql_dialect,
-            column_name=col_name
+            level_dict, sql_dialect=self._sql_dialect, column_name=col_name
         )
 
     @property

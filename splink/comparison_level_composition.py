@@ -14,47 +14,77 @@ By default, we generate a new ``label_for_charts`` for the new ComparisonLevel.
 You can override this, and any other ComparisonLevel attributes, by passing
 them as keyword arguments.
 
-Parameters
-----------
-*clls
-    ComparisonLevels or dicts to merge
-**overrides
-    Any attributes of the new ComparisonLevel that you want to override
+Args:
+    *clls (ComparisonLevel | dict): ComparisonLevels or comparison
+        level dictionaries to merge
+    label_for_charts (str, optional):
+    m_probability (float, optional): Starting value for m probability.
+        Defaults to None.
+    is_null_level=Non
 
-Returns
--------
-ComparisonLevel
-    A new ComparisonLevel with the merged SQL condition and label_for_charts
+Examples:
+    >>> # Simple null level composition with an `{clause}` clause
+    >>> import splink.duckdb.duckdb_comparison_level_library as cll
+    >>> cll.cl_{clause}(cll.null_level("first_name"), cll.null_level("surname"))
 
-Examples
---------
->>> import splink.duckdb.duckdb_comparison_level_library as cll
->>> misspelling = cll.levenshtein_level("name", 1)
->>> contains = {{
-...     "sql_condition": "(contains(name_l, name_r) OR contains(name_r, name_l))"
-... }}
->>> merged = cl_{clause}(misspelling, contains, label_for_charts="Spelling error")
->>> merged.as_dict()
-{{
-    'sql_condition': '(levenshtein("name_l", "name_r") <= 1) OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
-    'label_for_charts': 'Spelling error'
-}}
+    >>> # Composing a levenshtein level with a custom `contains` level
+    >>> import splink.duckdb.duckdb_comparison_level_library as cll
+    >>> misspelling = cll.levenshtein_level("name", 1)
+    >>> contains = {{
+    ...     "sql_condition": "(contains(name_l, name_r) OR contains(name_r, name_l))"
+    ... }}
+    >>> merged = cl_{clause}(misspelling, contains, label_for_charts="Spelling error")
+    >>> merged.as_dict()
+    {{
+        'sql_condition': '(levenshtein("name_l", "name_r") <= 1) OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+        'label_for_charts': 'Spelling error'
+    }}
+
+Returns:
+    ComparisonLevel: A new ComparisonLevel with the merged
+        SQL condition
 """.strip()  # noqa: E501
 
 
-def cl_and(*clls: ComparisonLevel | dict, **overrides) -> ComparisonLevel:
-    return _cl_merge(*clls, clause="AND", **overrides)
+def cl_and(
+    *clls: ComparisonLevel | dict,
+    label_for_charts=None,
+    m_probability=None,
+    is_null_level=None,
+) -> ComparisonLevel:
+    return _cl_merge(
+        *clls,
+        clause="AND",
+        label_for_charts=label_for_charts,
+        m_probability=m_probability,
+        is_null_level=is_null_level,
+    )
 
 
-def cl_or(*clls: ComparisonLevel | dict, **overrides) -> ComparisonLevel:
-    return _cl_merge(*clls, clause="OR", **overrides)
+def cl_or(
+    *clls: ComparisonLevel | dict,
+    label_for_charts=None,
+    m_probability=None,
+    is_null_level=None,
+) -> ComparisonLevel:
+    return _cl_merge(
+        *clls,
+        clause="OR",
+        label_for_charts=label_for_charts,
+        m_probability=m_probability,
+        is_null_level=is_null_level,
+    )
 
 
 cl_and.__doc__ = _DOCSTRING_TEMPLATE.format(clause="and")
-cl_or.__doc__ = _DOCSTRING_TEMPLATE.format(clause="of")
+cl_or.__doc__ = _DOCSTRING_TEMPLATE.format(clause="or")
 
 
-def cl_not(cll: ComparisonLevel | dict, **overrides) -> ComparisonLevel:
+def cl_not(
+    cll: ComparisonLevel | dict,
+    label_for_charts=None,
+    m_probability=None,
+) -> ComparisonLevel:
     """Negate a ComparisonLevel.
 
     Returns a ComparisonLevel with the same SQL condition as the input,
@@ -77,32 +107,49 @@ def cl_not(cll: ComparisonLevel | dict, **overrides) -> ComparisonLevel:
         A new ComparisonLevel with the negated SQL condition and label_for_charts
     """
     dicts, sql_dialect = _parse_comparison_levels(cll)
-    result = {**overrides}
+    result = {}
     cld = dicts[0]
     result["sql_condition"] = f"NOT ({cld['sql_condition']})"
-    if "label_for_charts" not in result:
-        result["label_for_charts"] = f"NOT ({_label_for_charts(cld)})"
+
+    result["label_for_charts"] = (
+        label_for_charts if label_for_charts else f"NOT ({_label_for_charts(cld)})"
+    )
+
+    if m_probability:
+        result["m_probability"] = m_probability
+
     return ComparisonLevel(result, sql_dialect=sql_dialect)
 
 
 def _cl_merge(
-    *clls: ComparisonLevel | dict, clause: str, **overrides
+    *clls: ComparisonLevel | dict,
+    clause: str,
+    label_for_charts=None,
+    m_probability=None,
+    is_null_level=None,
 ) -> ComparisonLevel:
     if len(clls) == 0:
         raise ValueError("Must provide at least one ComparisonLevel")
+
     dicts, sql_dialect = _parse_comparison_levels(*clls)
-    result = {**overrides}
+    result = {}
     conditions = ("(" + d["sql_condition"] + ")" for d in dicts)
     result["sql_condition"] = f" {clause} ".join(conditions)
 
     # Set to null level if all supplied levels are "null levels"
-    if "is_null_level" not in result:
-        if all([d.setdefault('is_null_level', False) for d in dicts]):
+    if is_null_level is None:
+        if all([d.setdefault("is_null_level", False) for d in dicts]):
             result["is_null_level"] = True
 
-    if "label_for_charts" not in result:
+    if label_for_charts:
+        result["label_for_charts"] = label_for_charts
+    else:
         labels = ("(" + _label_for_charts(d) + ")" for d in dicts)
         result["label_for_charts"] = f" {clause} ".join(labels)
+
+    if m_probability:
+        result["m_probability"] = m_probability
+
     return ComparisonLevel(result, sql_dialect=sql_dialect)
 
 
@@ -114,7 +161,7 @@ def _label_for_charts(comparison_dict: dict) -> str:
     if colname is None:
         return label
     # if null level, prefix with the column name
-    if comparison_dict.get('is_null_level', False):
+    if comparison_dict.get("is_null_level", False):
         label = f"{colname} is {label.upper()}"
     # if exact match, suffix w/ colname
     elif label.lower() == "exact match":
