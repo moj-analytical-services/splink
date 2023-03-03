@@ -4,47 +4,6 @@ from typing import Iterable
 
 from splink.comparison_level import ComparisonLevel
 
-_DOCSTRING_TEMPLATE = """
-Merge ComparisonLevels using logical "{clause}".
-
-Merge multiple ComparisonLevels into a single ComparisonLevel by
-merging their SQL conditions using a logical "{clause}".
-
-By default, we generate a new ``label_for_charts`` for the new ComparisonLevel.
-You can override this, and any other ComparisonLevel attributes, by passing
-them as keyword arguments.
-
-Args:
-    *clls (ComparisonLevel | dict): ComparisonLevels or comparison
-        level dictionaries to merge
-    label_for_charts (str, optional):
-    m_probability (float, optional): Starting value for m probability.
-        Defaults to None.
-    is_null_level=Non
-
-Examples:
-    >>> # Simple null level composition with an `{clause}` clause
-    >>> import splink.duckdb.duckdb_comparison_level_library as cll
-    >>> cll.cl_{clause}(cll.null_level("first_name"), cll.null_level("surname"))
-
-    >>> # Composing a levenshtein level with a custom `contains` level
-    >>> import splink.duckdb.duckdb_comparison_level_library as cll
-    >>> misspelling = cll.levenshtein_level("name", 1)
-    >>> contains = {{
-    ...     "sql_condition": "(contains(name_l, name_r) OR contains(name_r, name_l))"
-    ... }}
-    >>> merged = cl_{clause}(misspelling, contains, label_for_charts="Spelling error")
-    >>> merged.as_dict()
-    {{
-        'sql_condition': '(levenshtein("name_l", "name_r") <= 1) OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
-        'label_for_charts': 'Spelling error'
-    }}
-
-Returns:
-    ComparisonLevel: A new ComparisonLevel with the merged
-        SQL condition
-""".strip()  # noqa: E501
-
 
 def cl_and(
     *clls: ComparisonLevel | dict,
@@ -52,6 +11,51 @@ def cl_and(
     m_probability=None,
     is_null_level=None,
 ) -> ComparisonLevel:
+
+    """Merge ComparisonLevels using logical "AND".
+
+    Merge multiple ComparisonLevels into a single ComparisonLevel by
+    merging their SQL conditions using a logical "AND".
+
+    By default, we generate a new ``label_for_charts`` for the new ComparisonLevel.
+    You can override this, and any other ComparisonLevel attributes, by passing
+    them as keyword arguments.
+
+    Args:
+        *clls (ComparisonLevel | dict): ComparisonLevels or comparison
+            level dictionaries to merge
+        label_for_charts (str, optional): A label for this comparson level,
+            which will appear on charts as a reminder of what the level represents.
+            Defaults to a composition of - `label_1 AND label_2`
+        m_probability (float, optional): Starting value for m probability.
+            Defaults to None.
+        is_null_level (bool, optional): If true, m and u values will not be
+            estimated and instead the match weight will be zero for this column.
+            Defaults to None.
+
+    Examples:
+        >>> # Simple null level composition with an `AND` clause
+        >>> import splink.duckdb.duckdb_comparison_level_library as cll
+        >>> cll.cl_and(cll.null_level("first_name"), cll.null_level("surname"))
+
+        >>> # Composing a levenshtein level with a custom `contains` level
+        >>> import splink.duckdb.duckdb_comparison_level_library as cll
+        >>> misspelling = cll.levenshtein_level("name", 1)
+        >>> contains = {{
+        >>>     "sql_condition": "(contains(name_l, name_r) OR contains(name_r, name_l))"
+        >>> }}
+        >>> merged = cl_and(misspelling, contains, label_for_charts="Spelling error")
+        >>> merged.as_dict()
+        >>> {{
+        >>>    'sql_condition': '(levenshtein("name_l", "name_r") <= 1) AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+        >>>    'label_for_charts': 'Spelling error'
+        >>> }}
+
+    Returns:
+        ComparisonLevel: A new ComparisonLevel with the merged
+            SQL condition
+    """
+
     return _cl_merge(
         *clls,
         clause="AND",
@@ -60,13 +64,57 @@ def cl_and(
         is_null_level=is_null_level,
     )
 
-
 def cl_or(
     *clls: ComparisonLevel | dict,
     label_for_charts=None,
     m_probability=None,
     is_null_level=None,
 ) -> ComparisonLevel:
+
+    """Merge ComparisonLevels using logical "OR".
+
+    Merge multiple ComparisonLevels into a single ComparisonLevel by
+    merging their SQL conditions using a logical "OR".
+
+    By default, we generate a new `label_for_charts` for the new ComparisonLevel.
+    You can override this, and any other ComparisonLevel attributes, by passing
+    them as keyword arguments.
+
+    Args:
+        *clls (ComparisonLevel | dict): ComparisonLevels or comparison
+            level dictionaries to merge
+        label_for_charts (str, optional): A label for this comparson level,
+            which will appear on charts as a reminder of what the level represents.
+            Defaults to a composition of - `label_1 OR label_2`
+        m_probability (float, optional): Starting value for m probability.
+            Defaults to None.
+        is_null_level (bool, optional): If true, m and u values will not be
+            estimated and instead the match weight will be zero for this column.
+            Defaults to None.
+
+    Examples:
+        >>> # Simple null level composition with an `OR` clause
+        >>> import splink.duckdb.duckdb_comparison_level_library as cll
+        >>> cll.cl_or(cll.null_level("first_name"), cll.null_level("surname"))
+
+        >>> # Composing a levenshtein level with a custom `contains` level
+        >>> import splink.duckdb.duckdb_comparison_level_library as cll
+        >>> misspelling = cll.levenshtein_level("name", 1)
+        >>> contains = {{
+        >>>     "sql_condition": "(contains(name_l, name_r) OR contains(name_r, name_l))"
+        >>> }}
+        >>> merged = cl_or(misspelling, contains, label_for_charts="Spelling error")
+        >>> merged.as_dict()
+        >>> {{
+        >>>    'sql_condition': '(levenshtein("name_l", "name_r") <= 1) OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+        >>>    'label_for_charts': 'Spelling error'
+        >>> }}
+
+    Returns:
+        ComparisonLevel: A new ComparisonLevel with the merged
+            SQL condition
+    """
+
     return _cl_merge(
         *clls,
         clause="OR",
@@ -74,10 +122,6 @@ def cl_or(
         m_probability=m_probability,
         is_null_level=is_null_level,
     )
-
-
-cl_and.__doc__ = _DOCSTRING_TEMPLATE.format(clause="and")
-cl_or.__doc__ = _DOCSTRING_TEMPLATE.format(clause="or")
 
 
 def cl_not(
@@ -94,17 +138,35 @@ def cl_not(
     You can override this, and any other ComparisonLevel attributes, by passing
     them as keyword arguments.
 
-    Parameters
-    ----------
-    cll
-        ComparisonLevel or dict to negate
-    **overrides
-        Any attributes of the new ComparisonLevel that you want to override
+    Args:
+        cll (ComparisonLevel | dict): ComparisonLevel or comparison
+            level dictionary
+        label_for_charts (str, optional): A label for this comparson level,
+            which will appear on charts as a reminder of what the level represents.
+        m_probability (float, optional): Starting value for m probability.
+            Defaults to None.
 
-    Returns
-    -------
-    ComparisonLevel
-        A new ComparisonLevel with the negated SQL condition and label_for_charts
+    Examples:
+        >>> import splink.duckdb.duckdb_comparison_level_library as cll
+        >>> # *Not* a null on first name `first_name`
+        >>> cll.cl_not(cll.exact_match("first_name"))
+
+        >>> import splink.duckdb.duckdb_comparison_level_library as cll
+        >>> # Find all exact matches *not* on the first of January
+        >>> dob_first_jan =  {
+        >>>    "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
+        >>>    "label_for_charts": "Date is 1st Jan",
+        >>> }
+        >>> exact_match_not_first_jan = cll.cl_and(
+        >>>     cll.exact_match_level("dob"),
+        >>>     cll.cl_not(dob_first_jan),
+        >>>     label_for_charts = "Exact match and not the 1st Jan"
+        >>> )
+
+
+    Returns:
+        ComparisonLevel
+            A new ComparisonLevel with the negated SQL condition and label_for_charts
     """
     dicts, sql_dialect = _parse_comparison_levels(cll)
     result = {}
