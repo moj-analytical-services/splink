@@ -23,10 +23,10 @@ from splink.misc import ensure_is_iterable
 
 def DateComparison(
     # self,
-    col_name="date",
-    term_frequency_adjustments=False,
-    exclude_1st_january=True,
+    col_name="date",  
     include_exact_match_level=True,
+    term_frequency_adjustments=False,
+    separate_1st_january=True,
     levenshtein_thresholds=[2],
     datediff_thresholds=[["month", "year"], [1, 1]],
     m_probability_exact_match=None,
@@ -36,12 +36,51 @@ def DateComparison(
     m_probability_else=None,
     include_colname_in_charts_label=False,
 ):
+
+"""A wrapper to generate a comparison for a date column the data in `col_name` with preselected defaults.
+
+        The default arguments will give output would be
+        - Exact match (1st of January)
+        - Exact match (all other dates)
+        - Levenshtein distance <= 2
+        - Date difference <= 1 month
+        - Date difference <= 1 year
+        - Anything else
+
+        Args:
+            col_name (str): The name of the column to compare
+            include_exact_match_level (bool, optional): If True, include an exact match
+                level. Defaults to True.            
+            term_frequency_adjustments (bool, optional): If True, apply term frequency
+                adjustments to the exact match level. Defaults to False.
+            separate_1st_january (bool, optional): If True, include a separate comparison 
+                level for 1st January.
+            levenshtein_thresholds (Union[int, list], optional): The thresholds to use 
+                for levenshtein similarity level(s).
+                Defaults to [2]
+            datediff_thresholds (Union[int, str, list], optional): The thresholds to use
+                for datediff similarity level(s).
+                Defaults to [["month", "year"], [1, 1]].
+            m_probability_exact_match (_type_, optional): If provided, overrides the
+                default m probability for the exact match level. Defaults to None.
+            m_probability_or_probabilities_lev (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_datediff (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_else (_type_, optional): If provided, overrides the
+                default m probability for the 'anything else' level. Defaults to None.
+
+        Returns:
+            Comparison:
+        """
     # add check for date format to start
 
     comparison_levels = []
     comparison_levels.append(cll.null_level(col_name))
 
-    if exclude_1st_january:
+    if separate_1st_january:
         level_dict = {
             "sql_condition": f"{col_name}_l = {col_name}_r AND substr({col_name}_l, -5, 5) = '01-01'",
             "label_for_charts": "Matching and 1st Jan",
