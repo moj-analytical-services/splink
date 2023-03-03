@@ -158,24 +158,24 @@ def DateComparison(
             f"Dates within Levenshtein threshold{plural} {lev_desc} vs. "
         )
 
-    if len(datediff_thresholds[0]) > 0:
-        datediff_desc = ", ".join(
-            [
-                f"{m.title()}(s): {v}"
-                for m, v in zip(datediff_thresholds[0], datediff_thresholds[1])
-            ]
-        )
-        plural = "" if len(datediff_thresholds[0]) == 1 else "s"
-        comparison_desc += (
-            f"Dates within datediff threshold{plural} {datediff_desc} vs. "
-        )
+if len(datediff_thresholds[0]) > 0:
+    datediff_desc = ", ".join(
+        [f"{m.title()}(s): {v}" for m, v in zip(datediff_thresholds[0], datediff_thresholds[1])]
+    )
+    plural = "" if len(datediff_thresholds[0]) == 1 else "s"
+    comparison_desc += (
+        f"Dates within the following threshold{plural} {datediff_desc} vs. "
+    )
 
     comparison_desc += "anything else"
 
-    comparison_dic = {
-        "comparison_description": comparison_desc,
-        "comparison_levels": comparison_levels,
-    }
+
+
+
+comparison_dic = {
+     "comparison_description": comparison_desc,
+   "comparison_levels": comparison_levels
+        }
 
     return comparison_dic
 
