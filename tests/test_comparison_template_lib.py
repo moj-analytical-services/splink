@@ -9,15 +9,11 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 
 
-ctl.date_comparison("date")
-ctls.date_comparison("date")
-
-
 def test_duckdb_date_comparison_run():
 
-    ctld.date_comparison()
+    ctld.date_comparison("date")
 
 
 def test_spark_date_comparison_run():
 
-    ctls.date_comparison()
+    ctls.date_comparison("date")

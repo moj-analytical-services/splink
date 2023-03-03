@@ -111,9 +111,9 @@ class DateComparisonBase(Comparison):
             for thres, m_prob in zip(
                 levenshtein_thresholds, m_probability_or_probabilities_lev
             ):
-                level_dict = self.levenshtein_level(
+                level_dict = self._levenshtein_level(
                     col_name,
-                    thres,
+                    distance_threshold=thres,
                     m_probability=m_prob,
                 )
                 comparison_levels.append(level_dict)
