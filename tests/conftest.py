@@ -37,3 +37,36 @@ def df_spark(spark):
     df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=True)
     df.persist()
     yield df
+
+
+@pytest.fixture(scope="module")
+def first_name_and_surname_cc():
+    # A comparison level made up of composition between first_name and surname
+    def _first_name_and_surname_cc(cll, sn="surname"):
+        fn_sn_cc = {
+            "output_column_name": "first_name_and_surname",
+            "comparison_levels": [
+                # Null level
+                cll.cl_or(cll.null_level("first_name"), cll.null_level(sn)),
+                # Exact match on fn and sn
+                cll.cl_or(
+                    cll.exact_match_level("first_name"),
+                    cll.exact_match_level(sn),
+                    m_probability=0.8,
+                    label_for_charts="Exact match on first name or surname",
+                ),
+                # (Levenshtein(fn) and jaro_winkler(fn)) or levenshtein(sur)
+                cll.cl_and(
+                    cll.cl_or(
+                        cll.levenshtein_level("first_name", 2),
+                        cll.jaro_winkler_level("first_name", 0.8),
+                        m_probability=0.8,
+                    ),
+                    cll.levenshtein_level(sn, 3),
+                ),
+                cll.else_level(0.1),
+            ],
+        }
+        return fn_sn_cc
+
+    return _first_name_and_surname_cc

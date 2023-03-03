@@ -1,56 +1,29 @@
 import os
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.duckdb.duckdb_comparison_library import (
-    jaccard_at_thresholds,
-    exact_match,
-    jaro_winkler_at_thresholds,
-)
-import splink.duckdb.duckdb_comparison_level_library as cll
 import pandas as pd
 import pyarrow.parquet as pq
-
 from basic_settings import get_settings_dict
 from linker_utils import _test_table_registration, register_roc_data
 
+import splink.duckdb.duckdb_comparison_level_library as cll
+from splink.duckdb.duckdb_comparison_library import (
+    exact_match,
+    jaccard_at_thresholds,
+    jaro_winkler_at_thresholds,
+)
+from splink.duckdb.duckdb_linker import DuckDBLinker
 
-def test_full_example_duckdb(tmp_path):
+
+# @pytest.mark.parametrize(['first_name_and_surname_cc'], [(cll)])
+def test_full_example_duckdb(tmp_path, first_name_and_surname_cc):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df = df.rename(columns={"surname": "SUR name"})
     settings_dict = get_settings_dict()
 
-    # A comparison level made up of composition between first_name and surname
-    first_and_surname_name_cc = {
-        "output_column_name": "first_name_and_surname",
-            "comparison_levels": [
-                # Null level
-                cll.cl_or(
-                        cll.null_level("first_name"),
-                        cll.null_level("SUR name")
-                ),
-                # Exact match on fn and sn
-                cll.cl_or(
-                        cll.exact_match_level("first_name"),
-                        cll.exact_match_level("SUR name"),
-                        m_probability=0.8,
-                    label = "Exact match on first name or surname"
-                ),
-                # (Levenshtein(fn) and jaro_winkler(fn)) or levenshtein(sur)
-                cll.cl_and(
-                        cll.cl_or(
-                            cll.levenshtein_level('first_name', 2),
-                            cll.jaro_winkler_level('first_name', 0.8),
-                                m_probability=0.8),
-                        cll.levenshtein_level('SUR name', 3)
-                ),
-                cll.else_level(0.1)
-            ],
-        }
-
     # Overwrite the surname comparison to include duck-db specific syntax
     settings_dict["comparisons"][0] = jaro_winkler_at_thresholds("first_name")
     settings_dict["comparisons"][1] = jaccard_at_thresholds("SUR name")
-    settings_dict["comparisons"].append(first_and_surname_name_cc)
+    settings_dict["comparisons"].append(first_name_and_surname_cc(cll, "SUR name"))
     settings_dict["blocking_rules_to_generate_predictions"] = [
         'l."SUR name" = r."SUR name"',
     ]

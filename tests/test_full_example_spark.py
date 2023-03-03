@@ -1,44 +1,18 @@
 import os
 
-from splink.spark.spark_linker import SparkLinker
-import splink.spark.spark_comparison_library as cl
-import splink.spark.spark_comparison_level_library as cll
-
-from pyspark.sql.functions import array
-from pyspark.sql.types import StructType, StructField, StringType
+import pytest
 from basic_settings import get_settings_dict
 from linker_utils import _test_table_registration, register_roc_data
+from pyspark.sql.functions import array
+from pyspark.sql.types import StringType, StructField, StructType
+
+import splink.spark.spark_comparison_level_library as cll
+import splink.spark.spark_comparison_library as cl
+from splink.spark.spark_linker import SparkLinker
 
 
-def test_full_example_spark(df_spark, tmp_path):
-
-    # A comparison level made up of composition between first_name and surname
-    first_and_surname_name_cc = {
-        "output_column_name": "first_name_and_surname",
-            "comparison_levels": [
-                # Null level
-                cll.cl_or(
-                    cll.null_level("first_name"),
-                    cll.null_level("surname")
-                ),
-                # Exact match on fn and sn
-                cll.cl_or(
-                    cll.exact_match_level("first_name"),
-                    cll.exact_match_level("surname"),
-                    m_probability=0.8,
-                    label = "Exact match on first name or surname"
-                ),
-                # (Levenshtein(fn) and jaro_winkler(fn)) or levenshtein(sur)
-                cll.cl_and(
-                    cll.cl_or(
-                        cll.levenshtein_level('first_name', 2),
-                        cll.jaro_winkler_level('first_name', 0.8),
-                            m_probability=0.8),
-                    cll.levenshtein_level('surname', 3)
-                ),
-                cll.else_level(0.1)
-            ],
-        }
+@pytest.mark.parametrize("first_name_and_surname_cc", [[cll]], indirect=True)
+def test_full_example_spark(df_spark, tmp_path, first_name_and_surname_cc):
 
     # Convert a column to an array to enable testing intersection
     df_spark = df_spark.withColumn("email", array("email"))
@@ -46,7 +20,7 @@ def test_full_example_spark(df_spark, tmp_path):
 
     # Only needed because the value can be overwritten by other tests
     settings_dict["comparisons"][1] = cl.exact_match("surname")
-    settings_dict["comparisons"].append(first_and_surname_name_cc)
+    settings_dict["comparisons"].append(first_name_and_surname_cc(cll))
 
     settings = {
         "probability_two_random_records_match": 0.01,
@@ -145,4 +119,14 @@ def test_full_example_spark(df_spark, tmp_path):
 
     linker.find_matches_to_new_records(
         [record], blocking_rules=[], match_weight_threshold=-10000
+    )
+
+    # Test differing inputs are accepted
+    settings["link_type"] = "link_only"
+
+    linker = SparkLinker(
+        [df_spark, df_spark.toPandas()],
+        settings,
+        break_lineage_method="checkpoint",
+        num_partitions_on_repartition=2,
     )

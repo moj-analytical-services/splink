@@ -11,6 +11,9 @@ def test_composition_internals():
         "AND": cll.cl_and,
     }
 
+    level = cll.cl_not(cll.null_level("first_name")).__dict__
+    assert level["_level_dict"].get("is_null_level") is None
+
     for clause, c_fun in composition_funs.items():
 
         # Two null levels composed
@@ -20,8 +23,10 @@ def test_composition_internals():
             label_for_charts="This is a test",
         ).__dict__
 
-        null_sql = f'("first_name_l" IS NULL OR "first_name_r" IS NULL) {clause} ' \
-                    '("surname_l" IS NULL OR "surname_r" IS NULL)'
+        null_sql = (
+            f'("first_name_l" IS NULL OR "first_name_r" IS NULL) {clause} '
+            '("surname_l" IS NULL OR "surname_r" IS NULL)'
+        )
         assert level["_level_dict"]["sql_condition"] == null_sql
         # Default label
         assert level["_level_dict"]["label_for_charts"] == "This is a test"
@@ -35,7 +40,7 @@ def test_composition_internals():
         ).__dict__
         assert (
             level["_level_dict"]["sql_condition"]
-            == f'("first_name_l" = "first_name_r") {clause} ' \
+            == f'("first_name_l" = "first_name_r") {clause} '
             '("first_name_l" IS NULL OR "first_name_r" IS NULL)'
         )
         # Default label
@@ -47,17 +52,17 @@ def test_composition_internals():
         assert level["_level_dict"].get("is_null_level") is None
         assert level["_m_probability"] == 0.5
 
-
         # cll.cl_not(cl_or(...)) composition
         level = cll.cl_not(
             c_fun(
-                cll.exact_match_level("first_name"),
-                cll.exact_match_level("surname")),
+                cll.exact_match_level("first_name"), cll.exact_match_level("surname")
+            ),
             m_probability=0.5,
         ).__dict__
 
-        exact_match_sql = f'("first_name_l" = "first_name_r") {clause} ' \
-        '("surname_l" = "surname_r")'
+        exact_match_sql = (
+            f'("first_name_l" = "first_name_r") {clause} ' '("surname_l" = "surname_r")'
+        )
         assert level["_level_dict"]["sql_condition"] == f"NOT ({exact_match_sql})"
 
         # Check it fails when no inputs are added
