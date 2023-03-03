@@ -13,6 +13,7 @@ construct custom comparisons [as described in this topic guide](../topic_guides/
 However, not every comparison level is available for every [Splink-compatible SQL backend](../topic_guides/backends.html).
 
 The pre-made Splink comparison levels available for each SQL dialect are as given in this table:
+
 {%
   include-markdown "./includes/generated_files/comparison_level_library_dialect_table.md"
 %}

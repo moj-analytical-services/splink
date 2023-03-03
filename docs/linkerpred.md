@@ -14,6 +14,7 @@ tags:
         - compute_tf_table
         - deterministic_link
         - find_matches_to_new_records
+        - load_settings
         - load_settings_from_json
         - predict
     rendering:
