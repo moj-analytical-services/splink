@@ -22,7 +22,7 @@ class DateComparisonBase(Comparison):
         term_frequency_adjustments=False,
         separate_1st_january=True,
         levenshtein_thresholds=[2],
-        datediff_thresholds=[["month", "year"], [1, 1]],
+        datediff_thresholds=[[1, 1], ["month", "year"]],
         m_probability_exact_match=None,
         m_probability_1st_january=None,
         m_probability_or_probabilities_lev: float | list = None,
@@ -131,7 +131,7 @@ class DateComparisonBase(Comparison):
                 m_probability_or_probabilities_datediff
             )
 
-            for metric, thres, m_prob in zip(
+            for thres, metric, m_prob in zip(
                 datediff_thresholds[0],
                 datediff_thresholds[1],
                 m_probability_or_probabilities_datediff,
@@ -163,7 +163,7 @@ class DateComparisonBase(Comparison):
             datediff_desc = ", ".join(
                 [
                     f"{m.title()}(s): {v}"
-                    for m, v in zip(datediff_thresholds[0], datediff_thresholds[1])
+                    for v, m in zip(datediff_thresholds[0], datediff_thresholds[1])
                 ]
             )
             plural = "" if len(datediff_thresholds[0]) == 1 else "s"
