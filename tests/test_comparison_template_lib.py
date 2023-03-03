@@ -12,9 +12,11 @@ from splink.spark.spark_linker import SparkLinker
 ctl.date_comparison("date")
 ctls.date_comparison("date")
 
+
 def test_duckdb_date_comparison_run():
 
     ctld.date_comparison()
+
 
 def test_spark_date_comparison_run():
 
