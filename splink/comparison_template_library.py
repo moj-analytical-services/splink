@@ -4,43 +4,37 @@
 
 from __future__ import annotations
 
-from splink.comparison import Comparison  # change to self
+from .comparison import Comparison  # change to self
 
-# import splink.duckdb.comparison_level as cl
-import splink.duckdb.duckdb_comparison_level_library as cll  # change to self
+#import splink.duckdb.duckdb_comparison_level_library as cll  # change to self
 
 # from .comparison_level_library
 
 # from .comparison_library_utils import datediff_error_logger
-from splink.misc import ensure_is_iterable
+from .misc import ensure_is_iterable
 
 
-""" class DateComparisonBase(Comparison):
+class DateComparisonBase(Comparison):
     def __init__(
+        self,
+        col_name,  
+        include_exact_match_level=True,
+        term_frequency_adjustments=False,
+        separate_1st_january=True,
+        levenshtein_thresholds=[2],
+        datediff_thresholds=[["month", "year"], [1, 1]],
+        m_probability_exact_match=None,
+        m_probability_1st_january=None,
+        m_probability_or_probabilities_lev: float | list = None,
+        m_probability_or_probabilities_datediff: float | list = None,
+        m_probability_else=None,
+        include_colname_in_charts_label=False,
+    ):
 
-        """
+        """A wrapper to generate a comparison for a date column the data in `col_name` with preselected defaults.
 
-
-def DateComparison(
-    # self,
-    col_name="date",  
-    include_exact_match_level=True,
-    term_frequency_adjustments=False,
-    separate_1st_january=True,
-    levenshtein_thresholds=[2],
-    datediff_thresholds=[["month", "year"], [1, 1]],
-    m_probability_exact_match=None,
-    m_probability_1st_january=None,
-    m_probability_or_probabilities_lev: float | list = None,
-    m_probability_or_probabilities_datediff: float | list = None,
-    m_probability_else=None,
-    include_colname_in_charts_label=False,
-):
-
-"""A wrapper to generate a comparison for a date column the data in `col_name` with preselected defaults.
-
-        The default arguments will give output would be
-        - Exact match (1st of January)
+        The default arguments will give output:
+        - Exact match (1st of January only)
         - Exact match (all other dates)
         - Levenshtein distance <= 2
         - Date difference <= 1 month
@@ -73,113 +67,110 @@ def DateComparison(
                 default m probability for the 'anything else' level. Defaults to None.
 
         Returns:
-            Comparison:
+            Comparison: A comparison that can be inclued in the Splink settings
+                dictionary.
         """
-    # add check for date format to start
+        # add check for date format to start
 
-    comparison_levels = []
-    comparison_levels.append(cll.null_level(col_name))
+        comparison_levels = []
+        comparison_levels.append(self._null_level(col_name))
 
-    if separate_1st_january:
-        level_dict = {
-            "sql_condition": f"{col_name}_l = {col_name}_r AND substr({col_name}_l, -5, 5) = '01-01'",
-            "label_for_charts": "Matching and 1st Jan",
-        }
-        if m_probability_1st_january:
-            level_dict["m_probability"] = m_probability_1st_january
-        if term_frequency_adjustments:
-            level_dict["tf_adjustment_column"] = col_name
-        print(level_dict)
-        comparison_levels.append(level_dict)
-
-    if include_exact_match_level:
-        level_dict = cll.exact_match_level(  # change so self._exact_match_level
-            col_name,
-            term_frequency_adjustments=term_frequency_adjustments,
-            m_probability=m_probability_exact_match,
-        )
-
-        # description = "Exact match vs. "
-        print(level_dict)
-        comparison_levels.append(level_dict)
-
-    if len(levenshtein_thresholds) > 0:
-        # print(f"levenshtein: {levenshtein_thresholds}")
-        levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
-
-        if m_probability_or_probabilities_lev is None:
-            m_probability_or_probabilities_lev = [None] * len(levenshtein_thresholds)
-        m_probabilities = ensure_is_iterable(m_probability_or_probabilities_lev)
-
-        for thres, m_prob in zip(
-            levenshtein_thresholds, m_probability_or_probabilities_lev
-        ):
-            level_dict = cll.levenshtein_level(
-                col_name,
-                thres,
-                m_probability=m_prob,
-            )
+        if separate_1st_january:
+            level_dict = {
+                "sql_condition": f"{col_name}_l = {col_name}_r AND substr({col_name}_l, -5, 5) = '01-01'",
+                "label_for_charts": "Matching and 1st Jan",
+            }
+            if m_probability_1st_january:
+                level_dict["m_probability"] = m_probability_1st_january
+            if term_frequency_adjustments:
+                level_dict["tf_adjustment_column"] = col_name
+            print(level_dict)
             comparison_levels.append(level_dict)
 
-    if len(datediff_thresholds[0]) > 0:
-        print(f"datediff: {datediff_thresholds}")
-        # print(f"datediff: {datediff_thresholds}")
-        datediff_thresholds = ensure_is_iterable(datediff_thresholds)
-
-        if m_probability_or_probabilities_datediff is None:
-            m_probability_or_probabilities_datediff = [None] * len(datediff_thresholds)
-        m_probabilities = ensure_is_iterable(m_probability_or_probabilities_datediff)
-
-        for metric, thres, m_prob in zip(
-            datediff_thresholds[0],
-            datediff_thresholds[1],
-            m_probability_or_probabilities_datediff,
-        ):
-            level_dict = cll.datediff_level(
+        if include_exact_match_level:
+            level_dict = self._exact_match_level(  # change so self._exact_match_level
                 col_name,
-                date_metric=metric,
-                date_threshold=thres,
-                m_probability=m_prob,
+                term_frequency_adjustments=term_frequency_adjustments,
+                m_probability=m_probability_exact_match,
             )
+
+            # description = "Exact match vs. "
+            print(level_dict)
             comparison_levels.append(level_dict)
 
-    comparison_levels.append(
-        cll.else_level(m_probability=m_probability_else),
-    )
+        if len(levenshtein_thresholds) > 0:
+            # print(f"levenshtein: {levenshtein_thresholds}")
+            levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
 
-    comparison_desc = ""
-    if include_exact_match_level:
-        comparison_desc += "Exact match vs. "
+            if m_probability_or_probabilities_lev is None:
+                m_probability_or_probabilities_lev = [None] * len(levenshtein_thresholds)
+            m_probabilities = ensure_is_iterable(m_probability_or_probabilities_lev)
 
-    if len(levenshtein_thresholds) > 0:
-        lev_desc = ", ".join([str(d) for d in levenshtein_thresholds])
-        plural = "" if len(levenshtein_thresholds) == 1 else "s"
-        comparison_desc += (
-            f"Dates within Levenshtein threshold{plural} {lev_desc} vs. "
-        )
+            for thres, m_prob in zip(
+                levenshtein_thresholds, m_probability_or_probabilities_lev
+            ):
+                level_dict = self.levenshtein_level(
+                    col_name,
+                    thres,
+                    m_probability=m_prob,
+                )
+                comparison_levels.append(level_dict)
 
-if len(datediff_thresholds[0]) > 0:
-    datediff_desc = ", ".join(
-            [
-                f"{m.title()}(s): {v}"
-                for m, v in zip(datediff_thresholds[0], datediff_thresholds[1])
-            ]
-    )
-    plural = "" if len(datediff_thresholds[0]) == 1 else "s"
-    comparison_desc += (
-        f"Dates within the following threshold{plural} {datediff_desc} vs. "
-    )
+        if len(datediff_thresholds[0]) > 0:
+            print(f"datediff: {datediff_thresholds}")
+            # print(f"datediff: {datediff_thresholds}")
+            datediff_thresholds = ensure_is_iterable(datediff_thresholds)
 
-    comparison_desc += "anything else"
+            if m_probability_or_probabilities_datediff is None:
+                m_probability_or_probabilities_datediff = [None] * len(datediff_thresholds)
+            m_probabilities = ensure_is_iterable(m_probability_or_probabilities_datediff)
+
+            for metric, thres, m_prob in zip(
+                datediff_thresholds[0],
+                datediff_thresholds[1],
+                m_probability_or_probabilities_datediff,
+            ):
+                level_dict = self._datediff_level(
+                    col_name,
+                    date_metric=metric,
+                    date_threshold=thres,
+                    m_probability=m_prob,
+                )
+                comparison_levels.append(level_dict)
+
+            comparison_levels.append(
+                self._else_level(m_probability=m_probability_else),
+            )
+
+            comparison_desc = ""
+            if include_exact_match_level:
+                comparison_desc += "Exact match vs. "
+
+            if len(levenshtein_thresholds) > 0:
+                lev_desc = ", ".join([str(d) for d in levenshtein_thresholds])
+                plural = "" if len(levenshtein_thresholds) == 1 else "s"
+                comparison_desc += (
+                    f"Dates within Levenshtein threshold{plural} {lev_desc} vs. "
+                )
+
+        if len(datediff_thresholds[0]) > 0:
+            datediff_desc = ", ".join(
+                    [
+                        f"{m.title()}(s): {v}"
+                        for m, v in zip(datediff_thresholds[0], datediff_thresholds[1])
+                    ]
+            )
+            plural = "" if len(datediff_thresholds[0]) == 1 else "s"
+            comparison_desc += (
+                f"Dates within the following threshold{plural} {datediff_desc} vs. "
+            )
+
+        comparison_desc += "anything else"
+
+        comparison_dict = {
+            "comparison_description": comparison_desc,
+            "comparison_levels": comparison_levels
+                }
+        super().__init__(comparison_dict)
 
 
-
-
-comparison_dic = {
-     "comparison_description": comparison_desc,
-   "comparison_levels": comparison_levels
-        }
-
-    return comparison_dic
-
-DataComparison("date")
