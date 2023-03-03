@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from .comparison import Comparison  # change to self
 
-#import splink.duckdb.duckdb_comparison_level_library as cll  # change to self
+# import splink.duckdb.duckdb_comparison_level_library as cll  # change to self
 
 # from .comparison_level_library
 
@@ -17,7 +17,7 @@ from .misc import ensure_is_iterable
 class DateComparisonBase(Comparison):
     def __init__(
         self,
-        col_name,  
+        col_name,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         separate_1st_january=True,
@@ -44,12 +44,12 @@ class DateComparisonBase(Comparison):
         Args:
             col_name (str): The name of the column to compare
             include_exact_match_level (bool, optional): If True, include an exact match
-                level. Defaults to True.            
+                level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            separate_1st_january (bool, optional): If True, include a separate comparison 
+            separate_1st_january (bool, optional): If True, include a separate comparison
                 level for 1st January.
-            levenshtein_thresholds (Union[int, list], optional): The thresholds to use 
+            levenshtein_thresholds (Union[int, list], optional): The thresholds to use
                 for levenshtein similarity level(s).
                 Defaults to [2]
             datediff_thresholds (Union[int, str, list], optional): The thresholds to use
@@ -103,7 +103,9 @@ class DateComparisonBase(Comparison):
             levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
 
             if m_probability_or_probabilities_lev is None:
-                m_probability_or_probabilities_lev = [None] * len(levenshtein_thresholds)
+                m_probability_or_probabilities_lev = [None] * len(
+                    levenshtein_thresholds
+                )
             m_probabilities = ensure_is_iterable(m_probability_or_probabilities_lev)
 
             for thres, m_prob in zip(
@@ -122,8 +124,12 @@ class DateComparisonBase(Comparison):
             datediff_thresholds = ensure_is_iterable(datediff_thresholds)
 
             if m_probability_or_probabilities_datediff is None:
-                m_probability_or_probabilities_datediff = [None] * len(datediff_thresholds)
-            m_probabilities = ensure_is_iterable(m_probability_or_probabilities_datediff)
+                m_probability_or_probabilities_datediff = [None] * len(
+                    datediff_thresholds
+                )
+            m_probabilities = ensure_is_iterable(
+                m_probability_or_probabilities_datediff
+            )
 
             for metric, thres, m_prob in zip(
                 datediff_thresholds[0],
@@ -155,10 +161,10 @@ class DateComparisonBase(Comparison):
 
         if len(datediff_thresholds[0]) > 0:
             datediff_desc = ", ".join(
-                    [
-                        f"{m.title()}(s): {v}"
-                        for m, v in zip(datediff_thresholds[0], datediff_thresholds[1])
-                    ]
+                [
+                    f"{m.title()}(s): {v}"
+                    for m, v in zip(datediff_thresholds[0], datediff_thresholds[1])
+                ]
             )
             plural = "" if len(datediff_thresholds[0]) == 1 else "s"
             comparison_desc += (
@@ -169,8 +175,6 @@ class DateComparisonBase(Comparison):
 
         comparison_dict = {
             "comparison_description": comparison_desc,
-            "comparison_levels": comparison_levels
-                }
+            "comparison_levels": comparison_levels,
+        }
         super().__init__(comparison_dict)
-
-
