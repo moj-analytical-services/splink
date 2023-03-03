@@ -160,7 +160,10 @@ def DateComparison(
 
 if len(datediff_thresholds[0]) > 0:
     datediff_desc = ", ".join(
-        [f"{m.title()}(s): {v}" for m, v in zip(datediff_thresholds[0], datediff_thresholds[1])]
+            [
+                f"{m.title()}(s): {v}"
+                for m, v in zip(datediff_thresholds[0], datediff_thresholds[1])
+            ]
     )
     plural = "" if len(datediff_thresholds[0]) == 1 else "s"
     comparison_desc += (
