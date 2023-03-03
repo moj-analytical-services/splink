@@ -41,15 +41,17 @@ def cl_and(
         >>> # Composing a levenshtein level with a custom `contains` level
         >>> import splink.duckdb.duckdb_comparison_level_library as cll
         >>> misspelling = cll.levenshtein_level("name", 1)
-        >>> contains = {{
-        >>>     "sql_condition": "(contains(name_l, name_r) OR contains(name_r, name_l))"
-        >>> }}
+        >>> contains = {
+        >>>     "sql_condition": "(contains(name_l, name_r) OR " \
+        >>>     "contains(name_r, name_l))"
+        >>> }
         >>> merged = cl_and(misspelling, contains, label_for_charts="Spelling error")
         >>> merged.as_dict()
-        >>> {{
-        >>>    'sql_condition': '(levenshtein("name_l", "name_r") <= 1) AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+        >>> {
+        >>>    'sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
+        >>>    'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
         >>>    'label_for_charts': 'Spelling error'
-        >>> }}
+        >>> }
 
     Returns:
         ComparisonLevel: A new ComparisonLevel with the merged
@@ -63,6 +65,7 @@ def cl_and(
         m_probability=m_probability,
         is_null_level=is_null_level,
     )
+
 
 def cl_or(
     *clls: ComparisonLevel | dict,
@@ -100,15 +103,17 @@ def cl_or(
         >>> # Composing a levenshtein level with a custom `contains` level
         >>> import splink.duckdb.duckdb_comparison_level_library as cll
         >>> misspelling = cll.levenshtein_level("name", 1)
-        >>> contains = {{
-        >>>     "sql_condition": "(contains(name_l, name_r) OR contains(name_r, name_l))"
-        >>> }}
+        >>> contains = {
+        >>>     "sql_condition": "(contains(name_l, name_r) OR " \
+        >>>     "contains(name_r, name_l))"
+        >>> }
         >>> merged = cl_or(misspelling, contains, label_for_charts="Spelling error")
         >>> merged.as_dict()
-        >>> {{
-        >>>    'sql_condition': '(levenshtein("name_l", "name_r") <= 1) OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+        >>> {
+        >>>    'sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
+        >>>    'OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
         >>>    'label_for_charts': 'Spelling error'
-        >>> }}
+        >>> }
 
     Returns:
         ComparisonLevel: A new ComparisonLevel with the merged
