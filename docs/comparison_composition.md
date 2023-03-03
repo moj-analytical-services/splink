@@ -22,7 +22,3 @@ The detailed API for each of these are outlined below.
         - cl_and
         - cl_or
         - cl_not
-
-<!-- ::: splink.comparison_level_composition
-    handler: python
---- -->
