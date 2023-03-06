@@ -96,8 +96,8 @@ def test_datediff_levels(spark):
     size_gamma_lookup = {0: 17, 1: 3, 2: 0, 3: 1}
 
     linker_outputs = {
-        "dlinker": duck_df_e#,
-        #"slinker": sp_df_e,
+        "dlinker": duck_df_e  # ,
+        # "slinker": sp_df_e,
     }
 
     # Check gamma sizes are as expected
@@ -130,14 +130,11 @@ def test_datediff_levels(spark):
                 )
 
 
-
 def test_date_comparison_error_logger():
 
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
-        ctld.date_comparison("date",
-                             datediff_thresholds=[[1,2], ['month']]
-        )
+        ctld.date_comparison("date", datediff_thresholds=[[1, 2], ["month"]])
     """ # Check metric and threshold are the correct way around
     with pytest.raises(ValueError):
         ctld.date_comparison("date",
@@ -145,17 +142,10 @@ def test_date_comparison_error_logger():
         ) """
     # Invalid metric
     with pytest.raises(ValueError):
-        ctld.date_comparison("date", 
-                            datediff_thresholds=[[1], ["dy"]]
-        )
-    # Threshold len == 0
+        ctld.date_comparison("date", datediff_thresholds=[[1], ["dy"]])
+    # Threshold len == 0
     with pytest.raises(ValueError):
-        ctld.date_comparison("date", 
-                            datediff_thresholds=[[], ["day"]]
-        )
+        ctld.date_comparison("date", datediff_thresholds=[[], ["day"]])
     # Metric len == 0
     with pytest.raises(ValueError):
-        ctld.date_comparison("date", 
-                            datediff_thresholds=[[1], []]
-        )
-
+        ctld.date_comparison("date", datediff_thresholds=[[1], []])

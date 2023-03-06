@@ -71,13 +71,11 @@ class DateComparisonBase(Comparison):
         comparison_levels = []
         comparison_levels.append(self._null_level(col_name))
 
-        # Validate user inputs 
+        # Validate user inputs
 
         datediff_error_logger(
-            thresholds = datediff_thresholds[0], 
-            metrics = datediff_thresholds[1]
-            )
-
+            thresholds=datediff_thresholds[0], metrics=datediff_thresholds[1]
+        )
 
         if separate_1st_january:
             level_dict = {
