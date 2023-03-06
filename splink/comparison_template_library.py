@@ -6,11 +6,7 @@ from __future__ import annotations
 
 from .comparison import Comparison  # change to self
 
-# import splink.duckdb.duckdb_comparison_level_library as cll  # change to self
-
-# from .comparison_level_library
-
-# from .comparison_library_utils import datediff_error_logger
+from .comparison_library_utils import datediff_error_logger
 from .misc import ensure_is_iterable
 
 
@@ -75,6 +71,14 @@ class DateComparisonBase(Comparison):
         comparison_levels = []
         comparison_levels.append(self._null_level(col_name))
 
+        # Validate user inputs 
+
+        datediff_error_logger(
+            thresholds = datediff_thresholds[0], 
+            metrics = datediff_thresholds[1]
+            )
+
+
         if separate_1st_january:
             level_dict = {
                 "sql_condition": f"{col_name}_l = {col_name}_r AND substr({col_name}_l, -5, 5) = '01-01'",
@@ -88,18 +92,14 @@ class DateComparisonBase(Comparison):
             comparison_levels.append(level_dict)
 
         if include_exact_match_level:
-            level_dict = self._exact_match_level(  # change so self._exact_match_level
+            level_dict = self._exact_match_level(
                 col_name,
                 term_frequency_adjustments=term_frequency_adjustments,
                 m_probability=m_probability_exact_match,
             )
-
-            # description = "Exact match vs. "
-            print(level_dict)
             comparison_levels.append(level_dict)
 
         if len(levenshtein_thresholds) > 0:
-            # print(f"levenshtein: {levenshtein_thresholds}")
             levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
 
             if m_probability_or_probabilities_lev is None:
@@ -119,8 +119,6 @@ class DateComparisonBase(Comparison):
                 comparison_levels.append(level_dict)
 
         if len(datediff_thresholds[0]) > 0:
-            print(f"datediff: {datediff_thresholds}")
-            # print(f"datediff: {datediff_thresholds}")
             datediff_thresholds = ensure_is_iterable(datediff_thresholds)
 
             if m_probability_or_probabilities_datediff is None:
