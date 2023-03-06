@@ -1,7 +1,9 @@
 import os
 
 import pandas as pd
+import pyarrow as pa
 import pyarrow.parquet as pq
+import pytest
 from basic_settings import get_settings_dict
 from linker_utils import _test_table_registration, register_roc_data
 
@@ -180,3 +182,18 @@ def test_duckdb_arrow_array():
     )
     df = linker.deterministic_link().as_pandas_dataframe()
     assert len(df) == 2
+
+
+def test_cast_error():
+    from duckdb import InvalidInputException
+
+    forenames = [None, "jack", None] * 1000
+    data = {"id": range(0, len(forenames)), "forename": forenames}
+    df = pd.DataFrame(data)
+
+    with pytest.raises(InvalidInputException):
+        DuckDBLinker(df)
+
+    # convert to pyarrow table
+    df = pa.Table.from_pandas(df)
+    DuckDBLinker(df)
