@@ -11,17 +11,14 @@ from splink.spark.spark_linker import SparkLinker
 
 
 def test_duckdb_date_comparison_run():
-
     ctld.date_comparison("date")
 
 
 def test_spark_date_comparison_run():
-
     ctls.date_comparison("date")
 
 
 def test_datediff_levels(spark):
-
     df = pd.DataFrame(
         [
             {
@@ -118,7 +115,6 @@ def test_datediff_levels(spark):
     for k, v in size_gamma_lookup.items():
         for ids in v["id_pairs"]:
             for linker_name, linker_pred in linker_outputs.items():
-
                 print(f"Checking IDs: {ids} for {linker_name}")
 
                 assert (
@@ -131,7 +127,6 @@ def test_datediff_levels(spark):
 
 
 def test_date_comparison_error_logger():
-
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
         ctld.date_comparison("date", datediff_thresholds=[[1, 2], ["month"]])

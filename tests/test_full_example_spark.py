@@ -14,7 +14,6 @@ from splink.spark.spark_linker import SparkLinker
 
 
 def test_full_example_spark(df_spark, tmp_path):
-
     # Convert a column to an array to enable testing intersection
     df_spark = df_spark.withColumn("email", array("email"))
     settings_dict = get_settings_dict()

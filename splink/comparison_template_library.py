@@ -26,7 +26,6 @@ class DateComparisonBase(Comparison):
         m_probability_else=None,
         include_colname_in_charts_label=False,
     ):
-
         """A wrapper to generate a comparison for a date column the data in `col_name` with preselected defaults.
 
         The default arguments will give output:

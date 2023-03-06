@@ -35,7 +35,6 @@ class SplinkDataFrame:
         return self.templated_name == self.physical_name
 
     def _check_drop_table_created_by_splink(self, force_non_splink_table=False):
-
         if not self.physical_name.startswith("__splink__"):
             if not force_non_splink_table:
                 raise ValueError(

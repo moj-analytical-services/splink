@@ -5,7 +5,6 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def test_m_train():
-
     data = [
         {"unique_id": 1, "name": "Robin", "cluster": 1},
         {"unique_id": 2, "name": "Robyn", "cluster": 1},

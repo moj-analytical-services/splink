@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 def estimate_m_from_pairwise_labels(linker, table_name):
-
     concat_with_tf = linker._initialise_df_concat_with_tf()
 
     sqls = block_from_labels(linker, table_name)

@@ -7,7 +7,6 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def test_u_train():
-
     data = [
         {"unique_id": 1, "name": "Amanda"},
         {"unique_id": 2, "name": "Robin"},
@@ -42,7 +41,6 @@ def test_u_train():
 
 
 def test_u_train_link_only():
-
     data_l = [
         {"unique_id": 1, "name": "Amanda"},
         {"unique_id": 2, "name": "Robin"},
@@ -98,7 +96,6 @@ def test_u_train_link_only():
 
 
 def test_u_train_link_only_sample():
-
     df_l = (
         pd.DataFrame(np.random.randint(0, 3000, size=(3000, 1)), columns=["name"])
         .reset_index()
@@ -140,7 +137,6 @@ def test_u_train_link_only_sample():
 
 
 def test_u_train_multilink():
-
     datas = [
         [
             {"unique_id": 1, "name": "John"},

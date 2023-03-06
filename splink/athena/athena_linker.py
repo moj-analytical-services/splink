@@ -70,14 +70,12 @@ class AthenaDataFrame(SplinkDataFrame):
         pass
 
     def drop_table_from_database(self, force_non_splink_table=False):
-
         self._check_drop_folder_created_by_splink(force_non_splink_table)
         self._check_drop_table_created_by_splink(force_non_splink_table)
         self.athena_linker.drop_table_from_database_if_exists(self.physical_name)
         self.athena_linker.delete_table_from_s3(self.physical_name)
 
     def _check_drop_folder_created_by_splink(self, force_non_splink_table=False):
-
         filepath = self.athena_linker.boto_utils.s3_output
         filename = self.physical_name
         # Validate that the folder is a splink generated folder...
@@ -155,7 +153,6 @@ class AthenaLinker(Linker):
         output_filepath: str = "",
         garbage_collection_level: int = 1,
     ):
-
         """An athena backend for our main linker class. This funnels our generated SQL
         through athena using awswrangler.
         See linker.py for more information on the main linker class.
@@ -260,7 +257,6 @@ class AthenaLinker(Linker):
         homogenised_aliases = []
 
         for table, alias in zip(input_tables, input_aliases):
-
             if type(table).__name__ == "DataFrame":
                 if type(alias).__name__ == "DataFrame":
                     df_id = uuid.uuid4().hex[:7]
@@ -307,7 +303,6 @@ class AthenaLinker(Linker):
         )
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
-
         # Deletes the table in the db, but not the object on s3.
         # This needs to be removed manually (full s3 path provided)
         self.drop_table_from_database_if_exists(physical_name)
@@ -333,7 +328,6 @@ class AthenaLinker(Linker):
         return output_obj
 
     def register_table(self, input, table_name, overwrite=False):
-
         # If the user has provided a table name, return it as a SplinkDataframe
         if isinstance(input, str):
             return self._table_to_splink_dataframe(table_name, input)

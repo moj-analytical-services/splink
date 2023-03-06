@@ -43,7 +43,6 @@ class SparkDataframe(SplinkDataFrame):
         pass
 
     def as_record_dict(self, limit=None):
-
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
@@ -51,14 +50,12 @@ class SparkDataframe(SplinkDataFrame):
         return self.spark_linker.spark.sql(sql).toPandas().to_dict(orient="records")
 
     def drop_table_from_database(self, force_non_splink_table=False):
-
         # Spark, in general, does not persist its results to disk
         # There is a whitelist of dataframes to either perist() or checkpoint()
         # But there's no real need to clean these up, so we'll just do nothing
         pass
 
     def as_pandas_dataframe(self, limit=None):
-
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
@@ -140,7 +137,6 @@ class SparkLinker(Linker):
         homogenised_aliases = []
 
         for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
-
             if type(alias).__name__ == "DataFrame":
                 alias = f"__splink__input_table_{i}"
 
@@ -330,7 +326,6 @@ class SparkLinker(Linker):
             spark_df.limit(1).checkpoint()
 
     def _break_lineage_and_repartition(self, spark_df, templated_name, physical_name):
-
         spark_df = self._repartition_if_needed(spark_df, templated_name)
 
         regex_to_persist = [
@@ -377,7 +372,6 @@ class SparkLinker(Linker):
         return spark_df
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
-
         sql = sqlglot.transpile(sql, read="spark", write="customspark", pretty=True)[0]
 
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))

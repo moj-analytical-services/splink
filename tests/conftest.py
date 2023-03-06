@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope="module")
 def spark():
-
     from pyspark import SparkConf, SparkContext
     from pyspark.sql import SparkSession
 

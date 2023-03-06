@@ -26,7 +26,6 @@ class CustomSpark(Spark):
         }
 
     class Generator(Generator):
-
         TYPE_MAPPING = {
             **Spark.Generator.TYPE_MAPPING,
         }

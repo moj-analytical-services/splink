@@ -41,7 +41,6 @@ from splink.predict import predict_from_comparison_vectors_sqls
 
 
 def test_splink_converges_to_known_params():
-
     df = pd.read_csv("./tests/datasets/known_params_comparison_vectors.csv")
     df.head()
 

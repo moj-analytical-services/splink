@@ -21,7 +21,6 @@ class Settings:
     linking model"""
 
     def __init__(self, settings_dict):
-
         settings_dict = deepcopy(settings_dict)
 
         # If incoming comparisons are of type Comparison not dict, turn back into dict
