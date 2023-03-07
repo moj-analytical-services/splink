@@ -69,7 +69,7 @@ def test_datediff_levels(spark):
 
     spark_settings = {
         "link_type": "dedupe_only",
-        "comparisons": [ctld.date_comparison("dob")],
+        "comparisons": [ctls.date_comparison("dob")],
     }
 
     # We need to put our column in datetime format for this to work
