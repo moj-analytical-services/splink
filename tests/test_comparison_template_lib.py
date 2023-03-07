@@ -1,11 +1,8 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.duckdb_comparison_library as cld
 import splink.duckdb.duckdb_comparison_template_library as ctld
-import splink.spark.spark_comparison_library as cls
 import splink.spark.spark_comparison_template_library as ctls
-
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 
@@ -29,7 +26,7 @@ def test_datediff_levels(spark):
             {
                 "unique_id": 2,
                 "first_name": "Robin",
-                "dob": "2000-01-30",
+                "dob": "2000-01-20",
             },
             {
                 "unique_id": 3,
@@ -48,13 +45,23 @@ def test_datediff_levels(spark):
             },
             {
                 "unique_id": 6,
-                "first_name": "Alice",
-                "dob": "2000-03-25",
+                "first_name": "Andy's Twin",
+                "dob": "1996-03-25",
             },
             {
                 "unique_id": 7,
+                "first_name": "Alice",
+                "dob": "1999-12-28",
+            },
+            {
+                "unique_id": 8,
                 "first_name": "Afua",
                 "dob": "2000-01-01",
+            },
+            {
+                "unique_id": 9,
+                "first_name": "Ross",
+                "dob": "2000-10-20",
             },
         ]
     )
@@ -85,14 +92,14 @@ def test_datediff_levels(spark):
         sparkdf,
         spark_settings,
     )
-    sp_df_e = splinker.predict().as_pandas_dataframe()
+    sp_df_e =splinker.predict().as_pandas_dataframe()
 
     # # Dict key: {size: gamma_level value}
-    size_gamma_lookup = {0: 17, 1: 3, 2: 0, 3: 1}
+    size_gamma_lookup = {0: 23, 1: 5, 2: 3, 3: 3, 4: 2, 5:0}
 
     linker_outputs = {
-        "dlinker": duck_df_e  # ,
-        # "slinker": sp_df_e,
+        "dlinker": duck_df_e#,
+        #"slinker": sp_df_e,
     }
 
     # Check gamma sizes are as expected
@@ -105,8 +112,11 @@ def test_datediff_levels(spark):
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_value: tuple of ID pairs}
     size_gamma_lookup = {
-        3: {"id_pairs": [(1, 2)]},
-        1: {"id_pairs": [(3, 5), (2, 6), (2, 6)]},
+        5: {"id_pairs": [[1, 8]]},
+        4: {"id_pairs": [(5, 6)]},
+        3: {"id_pairs": [(2, 9)]},
+        2: {"id_pairs": [(7, 8)]},
+        1: {"id_pairs": [(3, 5), (1, 9)]},
         0: {"id_pairs": [(1, 3), (2, 3), (1, 5), (2, 5), (3, 6), (5, 6)]},
     }
 

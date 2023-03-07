@@ -1,7 +1,6 @@
 from ..comparison_template_library import DateComparisonBase
-
-from .spark_comparison_library import SparkComparisonProperties
 from .spark_comparison_level_library import levenshtein_level
+from .spark_comparison_library import SparkComparisonProperties
 
 
 class date_comparison(SparkComparisonProperties, DateComparisonBase):

@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 from .comparison import Comparison  # change to self
-
 from .comparison_library_utils import datediff_error_logger
 from .misc import ensure_is_iterable
 
@@ -26,7 +25,8 @@ class DateComparisonBase(Comparison):
         m_probability_else=None,
         include_colname_in_charts_label=False,
     ):
-        """A wrapper to generate a comparison for a date column the data in `col_name` with preselected defaults.
+        """A wrapper to generate a comparison for a date column the data in 
+        `col_name` with preselected defaults.
 
         The default arguments will give output:
         - Exact match (1st of January only)
@@ -42,8 +42,8 @@ class DateComparisonBase(Comparison):
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            separate_1st_january (bool, optional): If True, include a separate comparison
-                level for 1st January.
+            separate_1st_january (bool, optional): If True, include a separate 
+                comparison level for 1st January.
             levenshtein_thresholds (Union[int, list], optional): The thresholds to use
                 for levenshtein similarity level(s).
                 Defaults to [2]
@@ -78,7 +78,8 @@ class DateComparisonBase(Comparison):
 
         if separate_1st_january:
             level_dict = {
-                "sql_condition": f"{col_name}_l = {col_name}_r AND substr({col_name}_l, -5, 5) = '01-01'",
+                "sql_condition": f"""{col_name}_l = {col_name}_r AND
+                                    substr({col_name}_l, -5, 5) = '01-01'""",
                 "label_for_charts": "Matching and 1st Jan",
             }
             if m_probability_1st_january:
@@ -102,7 +103,7 @@ class DateComparisonBase(Comparison):
                 m_probability_or_probabilities_lev = [None] * len(
                     levenshtein_thresholds
                 )
-            m_probabilities = ensure_is_iterable(m_probability_or_probabilities_lev)
+            ensure_is_iterable(m_probability_or_probabilities_lev)
 
             for thres, m_prob in zip(
                 levenshtein_thresholds, m_probability_or_probabilities_lev
@@ -121,7 +122,7 @@ class DateComparisonBase(Comparison):
                 m_probability_or_probabilities_datediff = [None] * len(
                     datediff_thresholds
                 )
-            m_probabilities = ensure_is_iterable(
+            ensure_is_iterable(
                 m_probability_or_probabilities_datediff
             )
 
