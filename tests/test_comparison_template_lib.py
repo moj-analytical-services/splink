@@ -112,7 +112,7 @@ def test_datediff_levels(spark):
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_value: tuple of ID pairs}
     size_gamma_lookup = {
-        #5: {"id_pairs": [[1, 8]]},
+        # 5: {"id_pairs": [[1, 8]]},
         4: {"id_pairs": [(5, 6)]},
         3: {"id_pairs": [(2, 9)]},
         2: {"id_pairs": [(7, 8)]},
