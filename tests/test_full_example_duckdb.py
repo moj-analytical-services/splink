@@ -55,6 +55,8 @@ def test_full_example_duckdb(tmp_path, first_name_and_surname_cc):
     linker.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
+    # try missingness chart again now that concat_with_tf is precomputed
+    linker.missingness_chart()
 
     blocking_rule = 'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
@@ -108,6 +110,7 @@ def test_full_example_duckdb(tmp_path, first_name_and_surname_cc):
 
     linker_2 = DuckDBLinker(df, connection=":memory:")
     linker_2.load_settings_from_json(path)
+    DuckDBLinker(df, settings_dict=path)
 
 
 def test_small_link_example_duckdb():

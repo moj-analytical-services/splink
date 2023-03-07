@@ -5,7 +5,7 @@ from typing import Iterable
 from splink.comparison_level import ComparisonLevel
 
 
-def cl_and(
+def and_(
     *clls: ComparisonLevel | dict,
     label_for_charts=None,
     m_probability=None,
@@ -17,7 +17,7 @@ def cl_and(
     Merge multiple ComparisonLevels into a single ComparisonLevel by
     merging their SQL conditions using a logical "AND".
 
-    By default, we generate a new ``label_for_charts`` for the new ComparisonLevel.
+    By default, we generate a new `label_for_charts` for the new ComparisonLevel.
     You can override this, and any other ComparisonLevel attributes, by passing
     them as keyword arguments.
 
@@ -36,7 +36,7 @@ def cl_and(
     Examples:
         >>> # Simple null level composition with an `AND` clause
         >>> import splink.duckdb.duckdb_comparison_level_library as cll
-        >>> cll.cl_and(cll.null_level("first_name"), cll.null_level("surname"))
+        >>> cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
 
         >>> # Composing a levenshtein level with a custom `contains` level
         >>> import splink.duckdb.duckdb_comparison_level_library as cll
@@ -45,7 +45,7 @@ def cl_and(
         >>>     "sql_condition": "(contains(name_l, name_r) OR " \
         >>>     "contains(name_r, name_l))"
         >>> }
-        >>> merged = cl_and(misspelling, contains, label_for_charts="Spelling error")
+        >>> merged = cll.and_(misspelling, contains, label_for_charts="Spelling error")
         >>> merged.as_dict()
         >>> {
         >>>    'sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
@@ -67,7 +67,7 @@ def cl_and(
     )
 
 
-def cl_or(
+def or_(
     *clls: ComparisonLevel | dict,
     label_for_charts=None,
     m_probability=None,
@@ -98,7 +98,7 @@ def cl_or(
     Examples:
         >>> # Simple null level composition with an `OR` clause
         >>> import splink.duckdb.duckdb_comparison_level_library as cll
-        >>> cll.cl_or(cll.null_level("first_name"), cll.null_level("surname"))
+        >>> cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
 
         >>> # Composing a levenshtein level with a custom `contains` level
         >>> import splink.duckdb.duckdb_comparison_level_library as cll
@@ -107,7 +107,7 @@ def cl_or(
         >>>     "sql_condition": "(contains(name_l, name_r) OR " \
         >>>     "contains(name_r, name_l))"
         >>> }
-        >>> merged = cl_or(misspelling, contains, label_for_charts="Spelling error")
+        >>> merged = cll.or_(misspelling, contains, label_for_charts="Spelling error")
         >>> merged.as_dict()
         >>> {
         >>>    'sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
@@ -129,7 +129,7 @@ def cl_or(
     )
 
 
-def cl_not(
+def not_(
     cll: ComparisonLevel | dict,
     label_for_charts=None,
     m_probability=None,
@@ -139,7 +139,7 @@ def cl_not(
     Returns a ComparisonLevel with the same SQL condition as the input,
     but prefixed with "NOT".
 
-    By default, we generate a new ``label_for_charts`` for the new ComparisonLevel.
+    By default, we generate a new `label_for_charts` for the new ComparisonLevel.
     You can override this, and any other ComparisonLevel attributes, by passing
     them as keyword arguments.
 
@@ -154,7 +154,7 @@ def cl_not(
     Examples:
         >>> import splink.duckdb.duckdb_comparison_level_library as cll
         >>> # *Not* a null on first name `first_name`
-        >>> cll.cl_not(cll.exact_match("first_name"))
+        >>> cll.not_(cll.exact_match("first_name"))
 
         >>> import splink.duckdb.duckdb_comparison_level_library as cll
         >>> # Find all exact matches *not* on the first of January
@@ -162,9 +162,9 @@ def cl_not(
         >>>    "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
         >>>    "label_for_charts": "Date is 1st Jan",
         >>> }
-        >>> exact_match_not_first_jan = cll.cl_and(
+        >>> exact_match_not_first_jan = cll.and_(
         >>>     cll.exact_match_level("dob"),
-        >>>     cll.cl_not(dob_first_jan),
+        >>>     cll.not_(dob_first_jan),
         >>>     label_for_charts = "Exact match and not the 1st Jan"
         >>> )
 
@@ -177,6 +177,9 @@ def cl_not(
     result = {}
     cld = dicts[0]
     result["sql_condition"] = f"NOT ({cld['sql_condition']})"
+
+    if cld.get("is_null_level", False):  # invert if is_null_level
+        result["is_null_level"] = None
 
     result["label_for_charts"] = (
         label_for_charts if label_for_charts else f"NOT ({_label_for_charts(cld)})"
@@ -205,7 +208,7 @@ def _cl_merge(
 
     # Set to null level if all supplied levels are "null levels"
     if is_null_level is None:
-        if all([d.setdefault("is_null_level", False) for d in dicts]):
+        if all([d.get("is_null_level", False) for d in dicts]):
             result["is_null_level"] = True
 
     if label_for_charts:
@@ -247,7 +250,7 @@ def _parse_comparison_levels(
 
 def _to_comparison_level_dict(cl: ComparisonLevel | dict) -> dict:
     if isinstance(cl, ComparisonLevel):
-        return {**cl.as_dict(), "column_name": cl.column_name}
+        return cl.as_dict()
     else:
         return cl
 

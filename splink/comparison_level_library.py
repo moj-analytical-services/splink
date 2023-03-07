@@ -22,9 +22,10 @@ class NullLevelBase(ComparisonLevel):
             "sql_condition": f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL",
             "label_for_charts": "Null",
             "is_null_level": True,
+            "column_name": col_name,
         }
         super().__init__(
-            level_dict, sql_dialect=self._sql_dialect, column_name=col_name
+            level_dict, sql_dialect=self._sql_dialect,
         )
 
 
@@ -43,6 +44,7 @@ class ExactMatchLevelBase(ComparisonLevel):
         level_dict = {
             "sql_condition": f"{col.name_l()} = {col.name_r()}",
             "label_for_charts": f"Exact match{label_suffix}",
+            "column_name": col_name,
         }
         if m_probability:
             level_dict["m_probability"] = m_probability
@@ -50,7 +52,7 @@ class ExactMatchLevelBase(ComparisonLevel):
             level_dict["tf_adjustment_column"] = col_name
 
         super().__init__(
-            level_dict, sql_dialect=self._sql_dialect, column_name=col_name
+            level_dict, sql_dialect=self._sql_dialect,
         )
 
 
@@ -72,7 +74,7 @@ class ElseLevelBase(ComparisonLevel):
         }
         if m_probability:
             level_dict["m_probability"] = m_probability
-        super().__init__(level_dict, column_name=None)
+        super().__init__(level_dict)
 
 
 class DistanceFunctionLevelBase(ComparisonLevel):
@@ -119,12 +121,13 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         level_dict = {
             "sql_condition": sql_cond,
             "label_for_charts": chart_label,
+            "column_name": col_name,
         }
         if m_probability:
             level_dict["m_probability"] = m_probability
 
         super().__init__(
-            level_dict, sql_dialect=self._sql_dialect, column_name=col_name
+            level_dict, sql_dialect=self._sql_dialect,
         )
 
     @property
@@ -346,6 +349,7 @@ class PercentageDifferenceLevelBase(ComparisonLevel):
         level_dict = {
             "sql_condition": s,
             "label_for_charts": f"< {percentage_distance_threshold:,.2%} diff",
+            "column_name": col_name,
         }
         if m_probability:
             level_dict["m_probability"] = m_probability
@@ -395,7 +399,11 @@ class ArrayIntersectLevelBase(ComparisonLevel):
         else:
             label = f"{label_prefix} intersect size >= {min_intersection}"
 
-        level_dict = {"sql_condition": sql, "label_for_charts": label}
+        level_dict = {
+            "sql_condition": sql,
+            "label_for_charts": label,
+            "column_name": col_name,
+        }
         if m_probability:
             level_dict["m_probability"] = m_probability
         if term_frequency_adjustments:
@@ -449,6 +457,7 @@ class DateDiffLevelBase(ComparisonLevel):
         level_dict = {
             "sql_condition": datediff_sql,
             "label_for_charts": label,
+            "column_name": date_col,
         }
 
         if m_probability:

@@ -47,17 +47,17 @@ def first_name_and_surname_cc():
             "output_column_name": "first_name_and_surname",
             "comparison_levels": [
                 # Null level
-                cll.cl_or(cll.null_level("first_name"), cll.null_level(sn)),
+                cll.or_(cll.null_level("first_name"), cll.null_level(sn)),
                 # Exact match on fn and sn
-                cll.cl_or(
+                cll.or_(
                     cll.exact_match_level("first_name"),
                     cll.exact_match_level(sn),
                     m_probability=0.8,
                     label_for_charts="Exact match on first name or surname",
                 ),
                 # (Levenshtein(fn) and jaro_winkler(fn)) or levenshtein(sur)
-                cll.cl_and(
-                    cll.cl_or(
+                cll.and_(
+                    cll.or_(
                         cll.levenshtein_level("first_name", 2),
                         cll.jaro_winkler_level("first_name", 0.8),
                         m_probability=0.8,
