@@ -1,15 +1,15 @@
 #!/bin/bash
 
-echo "======================="
-echo "Running black to clean your files"
-echo "======================="
+line_block="=============="
+black_run="Running black to clean your files"
+echo "$line_block $black_run $line_block"
+
 black .
 
 OPTIND=1
 
-echo "======================="
-echo "Running the ruff linter"
-echo "======================="
+ruff_run="Running the ruff linter"
+echo "$line_block $ruff_run $line_block"
 
 while getopts ":f" opt; do
   case $opt in
