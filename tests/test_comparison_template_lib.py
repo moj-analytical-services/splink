@@ -92,14 +92,14 @@ def test_datediff_levels(spark):
         sparkdf,
         spark_settings,
     )
-    sp_df_e =splinker.predict().as_pandas_dataframe()
+    sp_df_e = splinker.predict().as_pandas_dataframe()
 
     # # Dict key: {size: gamma_level value}
-    size_gamma_lookup = {0: 23, 1: 5, 2: 3, 3: 3, 4: 2, 5:0}
+    size_gamma_lookup = {0: 23, 1: 5, 2: 3, 3: 3, 4: 2, 5: 0}
 
     linker_outputs = {
-        "dlinker": duck_df_e#,
-        #"slinker": sp_df_e,
+        "dlinker": duck_df_e  # ,
+        # "slinker": sp_df_e,
     }
 
     # Check gamma sizes are as expected

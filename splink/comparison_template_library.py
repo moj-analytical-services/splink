@@ -25,7 +25,7 @@ class DateComparisonBase(Comparison):
         m_probability_else=None,
         include_colname_in_charts_label=False,
     ):
-        """A wrapper to generate a comparison for a date column the data in 
+        """A wrapper to generate a comparison for a date column the data in
         `col_name` with preselected defaults.
 
         The default arguments will give output:
@@ -42,7 +42,7 @@ class DateComparisonBase(Comparison):
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            separate_1st_january (bool, optional): If True, include a separate 
+            separate_1st_january (bool, optional): If True, include a separate
                 comparison level for 1st January.
             levenshtein_thresholds (Union[int, list], optional): The thresholds to use
                 for levenshtein similarity level(s).
@@ -122,9 +122,7 @@ class DateComparisonBase(Comparison):
                 m_probability_or_probabilities_datediff = [None] * len(
                     datediff_thresholds
                 )
-            ensure_is_iterable(
-                m_probability_or_probabilities_datediff
-            )
+            ensure_is_iterable(m_probability_or_probabilities_datediff)
 
             for thres, metric, m_prob in zip(
                 datediff_thresholds[0],
