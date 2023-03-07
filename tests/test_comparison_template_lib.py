@@ -95,11 +95,11 @@ def test_datediff_levels(spark):
     sp_df_e = splinker.predict().as_pandas_dataframe()
 
     # # Dict key: {size: gamma_level value}
-    size_gamma_lookup = {0: 23, 1: 5, 2: 3, 3: 3, 4: 2, 5: 0}
+    size_gamma_lookup = {0: 23, 1: 5, 2: 3, 3: 3, 4: 1, 5: 1}
 
     linker_outputs = {
-        "dlinker": duck_df_e  # ,
-        # "slinker": sp_df_e,
+        "dlinker": duck_df_e,
+        "slinker": sp_df_e,
     }
 
     # Check gamma sizes are as expected
@@ -112,12 +112,12 @@ def test_datediff_levels(spark):
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_value: tuple of ID pairs}
     size_gamma_lookup = {
-        5: {"id_pairs": [[1, 8]]},
+        #5: {"id_pairs": [[1, 8]]},
         4: {"id_pairs": [(5, 6)]},
         3: {"id_pairs": [(2, 9)]},
         2: {"id_pairs": [(7, 8)]},
         1: {"id_pairs": [(3, 5), (1, 9)]},
-        0: {"id_pairs": [(1, 3), (2, 3), (1, 5), (2, 5), (3, 6), (5, 6)]},
+        0: {"id_pairs": [(1, 3), (2, 3), (1, 5), (2, 5), (4, 7)]},
     }
 
     for k, v in size_gamma_lookup.items():

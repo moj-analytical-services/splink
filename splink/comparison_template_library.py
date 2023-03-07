@@ -79,7 +79,7 @@ class DateComparisonBase(Comparison):
         if separate_1st_january:
             level_dict = {
                 "sql_condition": f"""{col_name}_l = {col_name}_r AND
-                                    substr({col_name}_l, -5, 5) = '01-01'""",
+                                    substr({col_name}_l, 6, 5) = '01-01'""",
                 "label_for_charts": "Matching and 1st Jan",
             }
             if m_probability_1st_january:
