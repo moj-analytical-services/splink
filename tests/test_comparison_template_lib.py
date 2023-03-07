@@ -65,8 +65,6 @@ def test_datediff_levels(spark):
         "comparisons": [ctld.date_comparison("dob")],
     }
 
-    print(duck_settings)
-
     spark_settings = {
         "link_type": "dedupe_only",
         "comparisons": [ctls.date_comparison("dob")],

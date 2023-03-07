@@ -85,7 +85,6 @@ class DateComparisonBase(Comparison):
                 level_dict["m_probability"] = m_probability_1st_january
             if term_frequency_adjustments:
                 level_dict["tf_adjustment_column"] = col_name
-            print(level_dict)
             comparison_levels.append(level_dict)
 
         if include_exact_match_level:
