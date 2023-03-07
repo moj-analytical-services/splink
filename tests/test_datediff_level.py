@@ -146,8 +146,8 @@ def test_datediff_levels(spark, cl, cll, Linker):
 
                 assert (
                     linker_pred.loc[
-                        (linker_pred.unique_id_l == left) &
-                        (linker_pred.unique_id_r == right)
+                        (linker_pred.unique_id_l == left)
+                        & (linker_pred.unique_id_r == right)
                     ]["gamma_dob"].values[0]
                     == gamma
                 )
