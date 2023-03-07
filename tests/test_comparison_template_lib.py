@@ -54,7 +54,7 @@ def test_datediff_levels(spark):
             {
                 "unique_id": 7,
                 "first_name": "Afua",
-                "dob": "1960-01-01",
+                "dob": "2000-01-01",
             },
         ]
     )
