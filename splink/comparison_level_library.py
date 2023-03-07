@@ -25,7 +25,8 @@ class NullLevelBase(ComparisonLevel):
             "column_name": col_name,
         }
         super().__init__(
-            level_dict, sql_dialect=self._sql_dialect,
+            level_dict,
+            sql_dialect=self._sql_dialect,
         )
 
 
@@ -52,7 +53,8 @@ class ExactMatchLevelBase(ComparisonLevel):
             level_dict["tf_adjustment_column"] = col_name
 
         super().__init__(
-            level_dict, sql_dialect=self._sql_dialect,
+            level_dict,
+            sql_dialect=self._sql_dialect,
         )
 
 
@@ -127,7 +129,8 @@ class DistanceFunctionLevelBase(ComparisonLevel):
             level_dict["m_probability"] = m_probability
 
         super().__init__(
-            level_dict, sql_dialect=self._sql_dialect,
+            level_dict,
+            sql_dialect=self._sql_dialect,
         )
 
     @property

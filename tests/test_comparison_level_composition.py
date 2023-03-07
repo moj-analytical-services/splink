@@ -12,23 +12,23 @@ def test_misc_checks():
     # Check that where column_name = None in the level_dict
     # that we don't encounter a breakage
     cll.and_(
-            cll.columns_reversed_level('help', 'me'),
-            cll.columns_reversed_level('help', 'me')
+        cll.columns_reversed_level("help", "me"),
+        cll.columns_reversed_level("help", "me"),
     ).__dict__
 
 
 @pytest.mark.parametrize(
-    ('clause', 'c_fun'),
+    ("clause", "c_fun"),
     [
         pytest.param("OR", cll.or_, id="Test or_"),
-        pytest.param("AND", cll.and_, id="Test and_")
-    ]
+        pytest.param("AND", cll.and_, id="Test and_"),
+    ],
 )
 def test_composition_internals(clause, c_fun):
 
     # Test what happens when only one value is fed
     # It should just report the regular outputs of our comparison level func
-    level = cll.c_fun(cll.exact_match_level('tom')).__dict__
+    level = cll.c_fun(cll.exact_match_level("tom")).__dict__
     assert level["_level_dict"]["sql_condition"] == '("tom_l" = "tom_r")'
     assert level["_level_dict"]["label_for_charts"] == "(Exact match on tom)"
 
@@ -70,9 +70,7 @@ def test_composition_internals(clause, c_fun):
 
     # cll.not_(or_(...)) composition
     level = cll.not_(
-        c_fun(
-            cll.exact_match_level("first_name"), cll.exact_match_level("surname")
-        ),
+        c_fun(cll.exact_match_level("first_name"), cll.exact_match_level("surname")),
         m_probability=0.5,
     ).__dict__
 
@@ -120,9 +118,7 @@ def test_composition_outputs():
 
     # For testing the cll version
     dbl_null = cll.or_(cll.null_level("forename"), cll.null_level("surname"))
-    both = cll.and_(
-        cll.exact_match_level("forename"), cll.exact_match_level("surname")
-    )
+    both = cll.and_(cll.exact_match_level("forename"), cll.exact_match_level("surname"))
     either = cll.or_(
         cll.exact_match_level("forename"), cll.exact_match_level("surname")
     )
