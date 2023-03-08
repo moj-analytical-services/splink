@@ -61,13 +61,13 @@ nav:
   - Topic Guide:
       - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/backends.md"
       - Retrieving and querying Splink results: "topic_guides/querying_splink_results.md"
-      - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
       - Link type - linkings vs deduping: "topic_guides/link_type.md"
       - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
-      - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
-      - Optimising Spark performance: "topic_guides/optimising_spark.md"
       - Comparators: "topic_guides/comparators.md"
       - Phonetic transformations for blocking: "topic_guides/phonetic.md"
+      - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
+      - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
+      - Optimising Spark performance: "topic_guides/optimising_spark.md"
       - Salting blocking rules: "topic_guides/salting.md"
   - API Reference:
       - Linker API:
@@ -83,7 +83,7 @@ nav:
           - Comparison Level: "comparison_level.md"
       - Comparisons Library API:
           - Comparison Library: "comparison_library.md"
-          - Comparison Templates Library: "comparison_template_library.md"
+          - Comparison Template Library: "comparison_template_library.md"
           - Comparison Level Library: "comparison_level_library.md"
   - Settings Editor: "settingseditor/editor.md"
   - Settings dictionary reference: "settings_dict_guide.md"
