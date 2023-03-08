@@ -43,7 +43,7 @@ class DateComparisonBase(Comparison):
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
             separate_1st_january (bool, optional): If True, include a separate
-                comparison level for 1st January.
+                exact match comparison level when date is 1st January.
             levenshtein_thresholds (Union[int, list], optional): The thresholds to use
                 for levenshtein similarity level(s).
                 Defaults to [2]
@@ -65,13 +65,11 @@ class DateComparisonBase(Comparison):
             Comparison: A comparison that can be inclued in the Splink settings
                 dictionary.
         """
-        # add check for date format to start
 
         comparison_levels = []
         comparison_levels.append(self._null_level(col_name))
 
         # Validate user inputs
-
         datediff_error_logger(
             thresholds=datediff_thresholds[0], metrics=datediff_thresholds[1]
         )
@@ -103,7 +101,7 @@ class DateComparisonBase(Comparison):
                 m_probability_or_probabilities_lev = [None] * len(
                     levenshtein_thresholds
                 )
-            ensure_is_iterable(m_probability_or_probabilities_lev)
+            m_probability_or_probabilities_lev = ensure_is_iterable(m_probability_or_probabilities_lev)
 
             for thres, m_prob in zip(
                 levenshtein_thresholds, m_probability_or_probabilities_lev
@@ -122,7 +120,7 @@ class DateComparisonBase(Comparison):
                 m_probability_or_probabilities_datediff = [None] * len(
                     datediff_thresholds
                 )
-            ensure_is_iterable(m_probability_or_probabilities_datediff)
+            m_probability_or_probabilities_datediff = ensure_is_iterable(m_probability_or_probabilities_datediff)
 
             for thres, metric, m_prob in zip(
                 datediff_thresholds[0],
