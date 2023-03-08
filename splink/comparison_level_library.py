@@ -535,6 +535,8 @@ class DateDiffLevelBase(ComparisonLevel):
         date_threshold: int,
         date_metric: str = "day",
         m_probability=None,
+        cast_strings_to_date = False,
+        date_format = None,
     ) -> ComparisonLevel:
         """Represents a comparison level based around the difference between dates
         within a column
@@ -551,6 +553,13 @@ class DateDiffLevelBase(ComparisonLevel):
                 Defaults to `day`.
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
+            cast_strings_to_date (bool, optional): Set to true and adjust
+                date_format param when input dates are strings to enable
+                date-casting. Defaults to False.
+            date_format (str, optional): Format of input dates if date-strings
+                are given. Must be consistent across record pairs. If None
+                (the default), downstream functions for each backend assign
+                date_format to ISO 8601 format (yyyy-mm-dd).
 
 
         Examples:
@@ -568,6 +577,18 @@ class DateDiffLevelBase(ComparisonLevel):
             >>>                     date_metric="year"
             >>>                     )
 
+            >>> # DuckDB Date Difference comparison with date-casting and unspecified 
+            >>> # (default = %Y-%m-%d) date_format
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.datediff_level("dob", date_threshold=3, date_metric='month',\
+                            cast_strings_to_date=True)
+
+            >>> # DuckDB Date Difference comparison with date-casting and specified 
+            >>> # date_format
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.datediff_level("dob", date_threshold=3, date_metric='month',\
+                            cast_strings_to_date=True, date_format='%d/%m/%Y')
+
 
         Returns:
             ComparisonLevel: A comparison level that evaluates whether two dates fall
@@ -578,7 +599,7 @@ class DateDiffLevelBase(ComparisonLevel):
         date_l, date_r = date.names_l_r()
 
         datediff_sql = self._datediff_function(
-            date_l, date_r, date_threshold, date_metric
+            date_l, date_r, date_threshold, date_metric, cast_strings_to_date, date_format
         )
         label = f"Within {date_threshold} {date_metric}"
         if date_threshold > 1:
