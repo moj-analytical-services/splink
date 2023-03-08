@@ -5,6 +5,10 @@ tags:
   - Levenstein
   - Jaro-Winkler
   - Jaccard
+  - Date Difference
+  - Distance In KM
+  - Array Intersect
+  - Percentage Difference
 ---
 # Documentation for `comparison_level_library` 
 
@@ -14,9 +18,21 @@ However, not every comparison level is available for every [Splink-compatible SQ
 
 The pre-made Splink comparison levels available for each SQL dialect are as given in this table:
 
-{%
-  include-markdown "./includes/generated_files/comparison_level_library_dialect_table.md"
-%}
+||spark|duckdb|athena|sqlite|
+|-|-|-|-|-|
+|`array_intersect_level`|✓|✓|✓||
+|`columns_reversed_level`|✓|✓|✓|✓|
+|`datediff_level`|✓|✓|||
+|`distance_function_level`|✓|✓|✓|✓|
+|`distance_in_km_level`|✓|✓|✓||
+|`else_level`|✓|✓|✓|✓|
+|`exact_match_level`|✓|✓|✓|✓|
+|`jaccard_level`|✓|✓|||
+|`jaro_winkler_level`|✓|✓|||
+|`levenshtein_level`|✓|✓|✓||
+|`null_level`|✓|✓|✓|✓|
+|`percentage_difference_level`|✓|✓|✓|✓|
+
 
 The detailed API for each of these are outlined below.
 
@@ -30,7 +46,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -42,7 +58,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
       
 ---
 
@@ -54,7 +70,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -66,7 +82,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -78,7 +94,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false   
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -90,7 +106,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -102,7 +118,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -114,7 +130,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -126,7 +142,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1    
+      heading_level: 2    
 
 ---
 
@@ -138,7 +154,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1   
+      heading_level: 2   
 
 ---
 
@@ -150,7 +166,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -162,4 +178,4 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
