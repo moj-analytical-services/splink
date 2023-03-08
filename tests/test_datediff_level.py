@@ -126,9 +126,9 @@ def test_datediff_levels(spark, cl, cll, Linker):
     }
 
     # Check gamma sizes are as expected
-    for k, v in size_gamma_lookup.items():
+    for gamma, gamma_lookup in size_gamma_lookup.items():
         for linker_pred in linker_outputs.values():
-            assert sum(linker_pred["gamma_dob"] == k) == v
+            assert sum(linker_pred["gamma_dob"] == gamma) == gamma_lookup
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_value: tuple of ID pairs}
