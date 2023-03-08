@@ -5,7 +5,7 @@ tags:
   - Levenstein
   - Jaro-Winkler
   - Jaccard
-  - Datediff
+  - Date Difference
   - Array Intersect
 ---
 # Documentation for `comparison_library` 
