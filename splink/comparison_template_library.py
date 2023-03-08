@@ -28,12 +28,12 @@ class DateComparisonBase(Comparison):
         """A wrapper to generate a comparison for a date column the data in
         `col_name` with preselected defaults.
 
-        The default arguments will give a comparison with comparison levels:  
-        - Exact match (1st of January only)  
-        - Exact match (all other dates)  
-        - Levenshtein distance <= 2  
-        - Date difference <= 1 month  
-        - Date difference <= 1 year  
+        The default arguments will give a comparison with comparison levels:
+        - Exact match (1st of January only)
+        - Exact match (all other dates)
+        - Levenshtein distance <= 2
+        - Date difference <= 1 month
+        - Date difference <= 1 year
         - Anything else
 
         Args:
