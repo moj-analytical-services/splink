@@ -101,7 +101,9 @@ class DateComparisonBase(Comparison):
                 m_probability_or_probabilities_lev = [None] * len(
                     levenshtein_thresholds
                 )
-            m_probability_or_probabilities_lev = ensure_is_iterable(m_probability_or_probabilities_lev)
+            m_probability_or_probabilities_lev = ensure_is_iterable(
+                m_probability_or_probabilities_lev
+            )
 
             for thres, m_prob in zip(
                 levenshtein_thresholds, m_probability_or_probabilities_lev
@@ -120,7 +122,9 @@ class DateComparisonBase(Comparison):
                 m_probability_or_probabilities_datediff = [None] * len(
                     datediff_thresholds
                 )
-            m_probability_or_probabilities_datediff = ensure_is_iterable(m_probability_or_probabilities_datediff)
+            m_probability_or_probabilities_datediff = ensure_is_iterable(
+                m_probability_or_probabilities_datediff
+            )
 
             for thres, metric, m_prob in zip(
                 datediff_thresholds[0],
