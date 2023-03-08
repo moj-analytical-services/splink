@@ -135,7 +135,9 @@ def test_datediff_levels(spark, ctl, Linker):
 def test_date_comparison_error_logger(ctl):
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
-        ctl.date_comparison("date", datediff_thresholds=[[1, 2], ["month"]])
+        ctl.date_comparison(
+            "date", datediff_thresholds=[1, 2], datediff_metrics=["month"]
+        )
     """ # Check metric and threshold are the correct way around
     with pytest.raises(ValueError):
         ctld.date_comparison("date",
@@ -143,10 +145,10 @@ def test_date_comparison_error_logger(ctl):
         ) """
     # Invalid metric
     with pytest.raises(ValueError):
-        ctl.date_comparison("date", datediff_thresholds=[[1], ["dy"]])
+        ctl.date_comparison("date", datediff_thresholds=[1], datediff_metrics=["dy"])
     # Threshold len == 0
     with pytest.raises(ValueError):
-        ctl.date_comparison("date", datediff_thresholds=[[], ["day"]])
+        ctl.date_comparison("date", datediff_thresholds=[], datediff_metrics=["day"])
     # Metric len == 0
     with pytest.raises(ValueError):
-        ctl.date_comparison("date", datediff_thresholds=[[1], []])
+        ctl.date_comparison("date", datediff_thresholds=[1], datediff_metrics=[])

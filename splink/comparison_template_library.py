@@ -17,7 +17,8 @@ class DateComparisonBase(Comparison):
         term_frequency_adjustments=False,
         separate_1st_january=True,
         levenshtein_thresholds=[2],
-        datediff_thresholds=[[1, 1], ["month", "year"]],
+        datediff_thresholds: int | list = [1, 1],
+        datediff_metrics: str | list = ["month", "year"],
         m_probability_exact_match=None,
         m_probability_1st_january=None,
         m_probability_or_probabilities_lev: float | list = None,
@@ -47,9 +48,12 @@ class DateComparisonBase(Comparison):
             levenshtein_thresholds (Union[int, list], optional): The thresholds to use
                 for levenshtein similarity level(s).
                 Defaults to [2]
-            datediff_thresholds (Union[int, str, list], optional): The thresholds to use
+            datediff_thresholds (Union[int, list], optional): The thresholds to use
                 for datediff similarity level(s).
-                Defaults to [["month", "year"], [1, 1]].
+                Defaults to [1, 1].
+            datediff_metrics (Union[str, list], optional): The metrics to apply
+                thresholds to for datediff similarity level(s).
+                Defaults to ["month", "year"].
             m_probability_exact_match (_type_, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
@@ -70,9 +74,7 @@ class DateComparisonBase(Comparison):
         comparison_levels.append(self._null_level(col_name))
 
         # Validate user inputs
-        datediff_error_logger(
-            thresholds=datediff_thresholds[0], metrics=datediff_thresholds[1]
-        )
+        datediff_error_logger(thresholds=datediff_thresholds, metrics=datediff_metrics)
 
         if separate_1st_january:
             level_dict = {
@@ -115,8 +117,9 @@ class DateComparisonBase(Comparison):
                 )
                 comparison_levels.append(level_dict)
 
-        if len(datediff_thresholds[0]) > 0:
+        if len(datediff_thresholds) > 0:
             datediff_thresholds = ensure_is_iterable(datediff_thresholds)
+            datediff_metrics = ensure_is_iterable(datediff_metrics)
 
             if m_probability_or_probabilities_datediff is None:
                 m_probability_or_probabilities_datediff = [None] * len(
@@ -127,14 +130,14 @@ class DateComparisonBase(Comparison):
             )
 
             for thres, metric, m_prob in zip(
-                datediff_thresholds[0],
-                datediff_thresholds[1],
+                datediff_thresholds,
+                datediff_metrics,
                 m_probability_or_probabilities_datediff,
             ):
                 level_dict = self._datediff_level(
                     col_name,
-                    date_metric=metric,
                     date_threshold=thres,
+                    date_metric=metric,
                     m_probability=m_prob,
                 )
                 comparison_levels.append(level_dict)
@@ -154,14 +157,14 @@ class DateComparisonBase(Comparison):
                     f"Dates within Levenshtein threshold{plural} {lev_desc} vs. "
                 )
 
-        if len(datediff_thresholds[0]) > 0:
+        if len(datediff_thresholds) > 0:
             datediff_desc = ", ".join(
                 [
                     f"{m.title()}(s): {v}"
-                    for v, m in zip(datediff_thresholds[0], datediff_thresholds[1])
+                    for v, m in zip(datediff_thresholds, datediff_metrics)
                 ]
             )
-            plural = "" if len(datediff_thresholds[0]) == 1 else "s"
+            plural = "" if len(datediff_thresholds) == 1 else "s"
             comparison_desc += (
                 f"Dates within the following threshold{plural} {datediff_desc} vs. "
             )
