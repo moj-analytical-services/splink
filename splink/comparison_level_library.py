@@ -407,6 +407,8 @@ class DateDiffLevelBase(ComparisonLevel):
         date_threshold: int,
         date_metric: str = "day",
         m_probability=None,
+        cast_strings_to_date = False,
+        date_format = None,
     ):
         """Use the ...
 
@@ -432,7 +434,7 @@ class DateDiffLevelBase(ComparisonLevel):
         date_l, date_r = date.names_l_r()
 
         datediff_sql = self._datediff_function(
-            date_l, date_r, date_threshold, date_metric
+            date_l, date_r, date_threshold, date_metric, cast_strings_to_date, date_format
         )
         label = f"Within {date_threshold} {date_metric}"
         if date_threshold > 1:

@@ -11,10 +11,18 @@ def size_array_intersect_sql(col_name_l, col_name_r):
     )
 
 
-def datediff_sql(col_name_l, col_name_r, date_threshold, date_metric):
-    return f"""
-        abs(date_diff('{date_metric}', {col_name_l}, {col_name_r})) <= {date_threshold}
-    """
+def datediff_sql(col_name_l, col_name_r, date_threshold, date_metric,
+                  cast_str=False, date_format='%x'):
+
+    if cast_str:
+        return f"""
+            abs(date_diff('{date_metric}',strptime({col_name_l},
+              '{date_format}'),strptime({col_name_r}, '{date_format}'))) <= {date_threshold}
+        """
+    else:
+         return f"""
+            abs(date_diff('{date_metric}', {col_name_l}, {col_name_r})) <= {date_threshold}
+        """
 
 
 class DuckDBBase(DialectBase):
