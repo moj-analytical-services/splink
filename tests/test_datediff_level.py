@@ -153,7 +153,6 @@ def test_datediff_levels(spark, cl, cll, Linker):
                 )
 
 
-
 @pytest.mark.parametrize(
     ("cl"),
     [
