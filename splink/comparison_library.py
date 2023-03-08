@@ -426,6 +426,8 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         m_probability_exact_match=None,
         m_probability_or_probabilities_sizes: float | list = None,
         m_probability_else=None,
+        cast_strings_to_date = False,
+        date_format = None,
     ):
         """A comparison of the data in the date column `col_name` with various
         date thresholds and metrics to assess similarity levels.
@@ -496,6 +498,8 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                 date_threshold=date_thres,
                 date_metric=date_metr,
                 m_probability=m_prob,
+                cast_strings_to_date=cast_strings_to_date, 
+                date_format=date_format,
             )
             comparison_levels.append(level)
 

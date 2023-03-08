@@ -482,3 +482,14 @@ class SparkLinker(Linker):
 
     def register_tf_table(self, df, col_name, overwrite=False):
         self.register_table(df, colname_to_tf_tablename(col_name), overwrite)
+
+    def _check_ansi_enabled_if_converting_dates(self):
+        comparisons_as_list = self._settings_obj._settings_dict["comparisons"]
+        # see if any of the comparisons contain 'to_timestamp', the spark SQL used to convert date to str if date-to-str cast is used
+        if any(['to_timestamp' in str(comparisons_as_list[x].values()) 
+            for x in range(0, len(comparisons_as_list))]):
+                # now check if ansi is enabled: 
+                bool_ansi = self.spark.sparkContext.getConf().get("spark.sql.ansi.enabled")
+                if bool_ansi == False:
+                    print("You are using datediff without ansi")
+
