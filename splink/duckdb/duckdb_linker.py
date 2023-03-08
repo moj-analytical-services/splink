@@ -141,6 +141,8 @@ class DuckDBLinker(Linker):
 
             if type(table).__name__ in ["DataFrame", "Table"]:
                 con.register(alias, table)
+                if isinstance(table, pd.DataFrame):
+                    self._check_cast_error(alias)
                 table = alias
 
             homogenised_tables.append(duckdb_load_from_file(table))
@@ -241,6 +243,22 @@ class DuckDBLinker(Linker):
         except error:
             return False
         return True
+
+    def _check_cast_error(self, alias):
+        from duckdb import InvalidInputException
+
+        error = InvalidInputException
+
+        try:
+            # fetch df is required as otherwise lazily evaluated and it breaks
+            # other queries.
+            self._con.execute(f"select * from {alias} limit 1").fetch_df()
+        except error as e:
+            raise InvalidInputException(
+                "DuckDB cannot infer datatypes of one or more "
+                "columns. Try converting dataframes "
+                "to pyarrow tables before adding to your linker."
+            ) from e
 
     def _delete_table_from_database(self, name):
         drop_sql = f"""
