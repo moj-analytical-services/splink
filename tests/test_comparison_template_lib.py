@@ -7,12 +7,15 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 
 
-def test_duckdb_date_comparison_run():
-    ctld.date_comparison("date")
-
-
-def test_spark_date_comparison_run():
-    ctls.date_comparison("date")
+@pytest.mark.parametrize(
+    ("ctl"),
+    [
+        pytest.param(ctld, id="DuckDB Date Comparison Simple Run Test"),
+        pytest.param(ctls, id="Spark Date Comparison Simple Run Test"),
+    ],
+)
+def test_date_comparison_run(ctl):
+    ctl.date_comparison("date")
 
 
 @pytest.mark.parametrize(
