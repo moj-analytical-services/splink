@@ -138,11 +138,11 @@ def test_date_comparison_error_logger(ctl):
         ctl.date_comparison(
             "date", datediff_thresholds=[1, 2], datediff_metrics=["month"]
         )
-    """ # Check metric and threshold are the correct way around
+    # Check metric and threshold are the correct way around
     with pytest.raises(ValueError):
-        ctld.date_comparison("date",
-                             datediff_thresholds=[['month'], [1]]
-        ) """
+        ctld.date_comparison(
+            "date", datediff_thresholds=["month"], datediff_metrics=[1]
+        )
     # Invalid metric
     with pytest.raises(ValueError):
         ctl.date_comparison("date", datediff_thresholds=[1], datediff_metrics=["dy"])

@@ -23,8 +23,17 @@ def datediff_error_logger(thresholds, metrics):
             "arguments are of the same length before continuing."
         )
 
-    if any(size <= 0 for size in thresholds):
-        error_logger.append("All entries of `date_thresholds` must be postive")
+    if any(isinstance(metric, int) for metric in metrics) or any(
+        isinstance(threshold, str) for threshold in thresholds
+    ):
+        error_logger.append(
+            "One, or both, of thresholds or metrics are the incorrect data type. "
+            "Please ensure you have entered them in the correct order."
+        )
+
+    if all(isinstance(size, int) for size in thresholds):
+        if any(size <= 0 for size in thresholds):
+            error_logger.append("All entries of `date_thresholds` must be postive")
 
     if any(metric not in ["day", "month", "year"] for metric in metrics):
         error_logger.append(
