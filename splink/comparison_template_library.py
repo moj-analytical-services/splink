@@ -32,7 +32,7 @@ class DateComparisonBase(Comparison):
         - Exact match (1st of January only)\n
         - Exact match (all other dates)\n
         - Levenshtein distance <= 2\n
-        - Date difference <= 1 month\n 
+        - Date difference <= 1 month\n
         - Date difference <= 1 year \n
         - Anything else
 
