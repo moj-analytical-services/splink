@@ -15,7 +15,15 @@ def test_spark_date_comparison_run():
     ctls.date_comparison("date")
 
 
-def test_datediff_levels(spark):
+@pytest.mark.parametrize(
+    ("ctl", "Linker"),
+    [
+        pytest.param(ctld, DuckDBLinker, id="DuckDB Date Comparison Integration Tests"),
+        pytest.param(ctls, SparkLinker, id="Spark Date Comparison Integration Tests"),
+    ],
+)
+def test_datediff_levels(spark, ctl, Linker):
+
     df = pd.DataFrame(
         [
             {
@@ -67,77 +75,64 @@ def test_datediff_levels(spark):
     )
 
     # Generate our various settings objs
-    duck_settings = {
+    settings = {
         "link_type": "dedupe_only",
-        "comparisons": [ctld.date_comparison("dob")],
-    }
-
-    spark_settings = {
-        "link_type": "dedupe_only",
-        "comparisons": [ctls.date_comparison("dob")],
+        "comparisons": [ctl.date_comparison("dob")],
     }
 
     # We need to put our column in datetime format for this to work
     df["dob"] = pd.to_datetime(df["dob"])
 
-    # DuckDBFrame
-    dlinker = DuckDBLinker(df, duck_settings)
-    duck_df_e = dlinker.predict().as_pandas_dataframe()
-
-    # SparkFrame
-    sparkdf = spark.createDataFrame(df)
-    sparkdf.persist()
-
-    splinker = SparkLinker(
-        sparkdf,
-        spark_settings,
-    )
-    sp_df_e = splinker.predict().as_pandas_dataframe()
+    if Linker == SparkLinker:
+        df = spark.createDataFrame(df)
+        df.persist()
+    linker = Linker(df, settings)
+    linker_output = linker.predict().as_pandas_dataframe()
 
     # # Dict key: {size: gamma_level value}
     size_gamma_lookup = {0: 23, 1: 5, 2: 3, 3: 3, 4: 1, 5: 1}
 
-    linker_outputs = {
-        "dlinker": duck_df_e,
-        "slinker": sp_df_e,
-    }
-
     # Check gamma sizes are as expected
-    for k, v in size_gamma_lookup.items():
-        for linker_pred in linker_outputs.values():
-            print(f"k={k} and v={v}")
+    for gamma, gamma_lookup in size_gamma_lookup.items():
+        print(f"gamma={gamma} and gamma_lookup={gamma_lookup}")
 
-            assert sum(linker_pred["gamma_dob"] == k) == v
+        assert sum(linker_output["gamma_dob"] == gamma) == gamma_lookup
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_value: tuple of ID pairs}
     size_gamma_lookup = {
-        # 5: {"id_pairs": [[1, 8]]},
-        4: {"id_pairs": [(5, 6)]},
-        3: {"id_pairs": [(2, 9)]},
-        2: {"id_pairs": [(7, 8)]},
-        1: {"id_pairs": [(3, 5), (1, 9)]},
-        0: {"id_pairs": [(1, 3), (2, 3), (1, 5), (2, 5), (4, 7)]},
+        5: [[1, 8]],
+        4: [(5, 6)],
+        3: [(2, 9)],
+        2: [(7, 8)],
+        1: [(3, 5), (1, 9)],
+        0: [(1, 3), (2, 3), (1, 5), (2, 5), (4, 7)],
     }
 
-    for k, v in size_gamma_lookup.items():
-        for ids in v["id_pairs"]:
-            for linker_name, linker_pred in linker_outputs.items():
-                print(f"Checking IDs: {ids} for {linker_name}")
+    for gamma, id_pairs in size_gamma_lookup.items():
+        for left, right in id_pairs:
+            print(f"Checking IDs: {left}, {right}")
 
-                assert (
-                    linker_pred.loc[
-                        (linker_pred.unique_id_l == ids[0])
-                        & (linker_pred.unique_id_r == ids[1])
-                    ]["gamma_dob"].values[0]
-                    == k
-                )
+            assert (
+                linker_output.loc[
+                    (linker_output.unique_id_l == left)
+                    & (linker_output.unique_id_r == right)
+                ]["gamma_dob"].values[0]
+                == gamma
+            )
 
 
-def test_date_comparison_error_logger():
+@pytest.mark.parametrize(
+    ("ctl"),
+    [
+        pytest.param(ctld, id="DuckDB Datediff Error Checks"),
+        pytest.param(ctls, id="Spark Datediff Error Checks"),
+    ],
+)
+def test_date_comparison_error_logger(ctl):
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
-        ctld.date_comparison("date", datediff_thresholds=[[1, 2], ["month"]])
+        ctl.date_comparison("date", datediff_thresholds=[[1, 2], ["month"]])
     """ # Check metric and threshold are the correct way around
     with pytest.raises(ValueError):
         ctld.date_comparison("date",
@@ -145,10 +140,10 @@ def test_date_comparison_error_logger():
         ) """
     # Invalid metric
     with pytest.raises(ValueError):
-        ctld.date_comparison("date", datediff_thresholds=[[1], ["dy"]])
+        ctl.date_comparison("date", datediff_thresholds=[[1], ["dy"]])
     # Threshold len == 0
     with pytest.raises(ValueError):
-        ctld.date_comparison("date", datediff_thresholds=[[], ["day"]])
+        ctl.date_comparison("date", datediff_thresholds=[[], ["day"]])
     # Metric len == 0
     with pytest.raises(ValueError):
-        ctld.date_comparison("date", datediff_thresholds=[[1], []])
+        ctl.date_comparison("date", datediff_thresholds=[[1], []])
