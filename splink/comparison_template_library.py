@@ -22,8 +22,8 @@ class DateComparisonBase(Comparison):
         separate_1st_january=True,
         levenshtein_thresholds=[2],
         jaro_winkler_thresholds=[],
-        datediff_thresholds: int | list = [1, 1],
-        datediff_metrics: str | list = ["month", "year"],
+        datediff_thresholds: int | list = [1, 10],
+        datediff_metrics: str | list = ["year", "year"],
         m_probability_exact_match=None,
         m_probability_1st_january=None,
         m_probability_or_probabilities_lev: float | list = None,
@@ -39,8 +39,8 @@ class DateComparisonBase(Comparison):
         - Exact match (1st of January only)\n
         - Exact match (all other dates)\n
         - Levenshtein distance <= 2\n
-        - Date difference <= 1 month\n
-        - Date difference <= 1 year \n
+        - Date difference <= 1 year\n
+        - Date difference <= 10 years \n
         - Anything else
 
         Args:
