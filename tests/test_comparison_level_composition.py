@@ -27,9 +27,7 @@ def test_composition_internals(clause, c_fun):
 
     # Test what happens when only one value is fed
     # It should just report the regular outputs of our comparison level func
-    level = c_fun(
-        cll.exact_match_level("tom", include_colname_in_charts_label=True)
-    )
+    level = c_fun(cll.exact_match_level("tom", include_colname_in_charts_label=True))
     assert level.sql_condition == '("tom_l" = "tom_r")'
     assert level._label_for_charts == "(Exact match tom)"
 
@@ -57,8 +55,7 @@ def test_composition_internals(clause, c_fun):
         m_probability=0.5,
     )
     assert (
-        level.sql_condition
-        == f'("first_name_l" = "first_name_r") {clause} '
+        level.sql_condition == f'("first_name_l" = "first_name_r") {clause} '
         '("first_name_l" IS NULL OR "first_name_r" IS NULL)'
     )
     # Default label
