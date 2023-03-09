@@ -152,16 +152,19 @@ clusters.as_pandas_dataframe(limit=5)
 
 ## Citation
 
-If you use Splink in your research, we'd be grateful for a citation in the following format (modify the version and date accordingly).
+If you use Splink in your research, we'd be grateful for a citation as follows:
 
-```
-@misc{ministry_of_justice_2023_splink,
-  author       = {Ministry of Justice},
-  title        = {Splink: v3.5.4},
-  month        = jan,
-  year         = 2023,
-  version      = {3.5.4},
-  url          = {http://github.com/moj-analytical-services/splink}
+```BibTeX
+@article{Linacre_Lindsay_Manassis_Slade_Hepworth_2022,
+	title        = {Splink: Free software for probabilistic record linkage at scale.},
+	author       = {Linacre, Robin and Lindsay, Sam and Manassis, Theodore and Slade, Zoe and Hepworth, Tom},
+	year         = 2022,
+	month        = {Aug.},
+	journal      = {International Journal of Population Data Science},
+	volume       = 7,
+	number       = 3,
+	doi          = {10.23889/ijpds.v7i3.1794},
+	url          = {https://ijpds.org/article/view/1794},
 }
 ```
 
