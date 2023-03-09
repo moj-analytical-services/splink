@@ -2,6 +2,7 @@ from re import sub
 
 import sqlglot
 import sqlglot.expressions as exp
+from sqlglot.optimizer.optimizer import normalize
 
 
 def sqlglot_transform_sql(sql, func):
@@ -56,7 +57,5 @@ def standardise_colnames_in_sql(sql, read=None):
     syntax_tree = sqlglot.parse_one(sql, read=read)
     transformed_tree = syntax_tree.transform(_remove_table_prefix)
     transformed_tree = transformed_tree.transform(_standardise_column_names)
-    from sqlglot.optimizer.optimizer import normalize
-
     transformed_tree = normalize(transformed_tree)
     return transformed_tree.sql()

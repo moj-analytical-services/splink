@@ -8,7 +8,7 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 
 def test_misc_checks():
     level = cll.not_(cll.null_level("first_name"))
-    assert level.is_null_level == False
+    assert level.is_null_level is False
 
     # Integration test for a simple dictionary cl
     dob_jan_first = {"sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'"}
@@ -46,7 +46,7 @@ def test_composition_internals(clause, c_fun):
     # Default label
     assert level._label_for_charts == "This is a test"
     # As both inputs are null, we're expecting this to return True
-    assert level.is_null_level == True
+    assert level.is_null_level is True
 
     # Exact match and null level composition
     level = c_fun(
@@ -64,7 +64,7 @@ def test_composition_internals(clause, c_fun):
         == f"(Exact match first_name) {clause} (first_name IS NULL)"
     )
     # should default to False
-    assert level.is_null_level == False
+    assert level.is_null_level is False
     assert level._m_probability == 0.5
 
     # cll.not_(or_(...)) composition
