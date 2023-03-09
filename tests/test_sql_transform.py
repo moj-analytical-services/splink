@@ -128,26 +128,22 @@ def test_standardise_colnames():
     # This is only currently being used to parse NULL level comparisons,
     # so the tests are all based around that.
 
-    s = cll.null_level("help").__dict__["_level_dict"]["sql_condition"]
+    comp_l = cll.null_level("help").sql_condition
     basic_out = "help IS NULL"
-    assert standardise_colnames_in_sql(s) == basic_out
+    assert standardise_colnames_in_sql(comp_l) == basic_out
 
-    s = cll.or_(cll.null_level("help"), cll.null_level("help2")).__dict__[
-        "_level_dict"
-    ]["sql_condition"]
+    comp_l = cll.or_(cll.null_level("help"), cll.null_level("help2")).sql_condition
     expected_out = "help IS NULL OR help2 IS NULL"
-    assert standardise_colnames_in_sql(s) == expected_out
+    assert standardise_colnames_in_sql(comp_l) == expected_out
 
-    s = cll.and_(
+    comp_l = cll.and_(
         cll.or_(cll.null_level("help"), cll.null_level("help2")),
         cll.or_(cll.null_level("help3"), cll.null_level("help4")),
-    ).__dict__["_level_dict"]["sql_condition"]
+    ).sql_condition
     expected_out = (
         "(help IS NULL OR help2 IS NULL) " "AND (help3 IS NULL OR help4 IS NULL)"
     )
-    assert standardise_colnames_in_sql(s) == expected_out
+    assert standardise_colnames_in_sql(comp_l) == expected_out
 
-    s = cll.or_(cll.null_level("help"), cll.null_level("help")).__dict__["_level_dict"][
-        "sql_condition"
-    ]
-    assert standardise_colnames_in_sql(s) == basic_out
+    comp_l = cll.or_(cll.null_level("help"), cll.null_level("help")).sql_condition
+    assert standardise_colnames_in_sql(comp_l) == basic_out
