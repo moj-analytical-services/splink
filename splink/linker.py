@@ -767,7 +767,7 @@ class Linker:
                     cl.m_probability = cl._trained_m_median
 
     def delete_tables_created_by_splink_from_db(self):
-        for splink_df in list(self._intermediate_table_cache.items()):
+        for splink_df in list(self._intermediate_table_cache.values()):
             if splink_df.created_by_splink:
                 splink_df.drop_table_from_database()
 
@@ -2624,10 +2624,10 @@ class Linker:
 
     def _remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):
 
-        keys_to_delete = []
+        keys_to_delete = set()
         for key, df in self._intermediate_table_cache.items():
             if df.physical_name == splink_dataframe.physical_name:
-                keys_to_delete.append(key)
+                keys_to_delete.add(key)
 
         for k in keys_to_delete:
             del self._intermediate_table_cache[k]
