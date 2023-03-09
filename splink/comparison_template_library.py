@@ -4,9 +4,13 @@
 
 from __future__ import annotations
 
+import logging
+
 from .comparison import Comparison  # change to self
 from .comparison_library_utils import datediff_error_logger
 from .misc import ensure_is_iterable
+
+logger = logging.getLogger(__name__)
 
 
 class DateComparisonBase(Comparison):
@@ -17,11 +21,13 @@ class DateComparisonBase(Comparison):
         term_frequency_adjustments=False,
         separate_1st_january=True,
         levenshtein_thresholds=[2],
+        jaro_winkler_thresholds=[],
         datediff_thresholds: int | list = [1, 1],
         datediff_metrics: str | list = ["month", "year"],
         m_probability_exact_match=None,
         m_probability_1st_january=None,
         m_probability_or_probabilities_lev: float | list = None,
+        m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_datediff: float | list = None,
         m_probability_else=None,
         include_colname_in_charts_label=False,
@@ -47,6 +53,13 @@ class DateComparisonBase(Comparison):
                 exact match comparison level when date is 1st January.
             levenshtein_thresholds (Union[int, list], optional): The thresholds to use
                 for levenshtein similarity level(s).
+                We recommend use of either levenshtein or jaro_winkler for fuzzy
+                matching, but not both.
+                Defaults to [2]
+            jaro_winkler_thresholds (Union[int, list], optional): The thresholds to use
+                for jaro_winkler similarity level(s).
+                We recommend use of either levenshtein or jaro_winkler for fuzzy
+                matching, but not both.
                 Defaults to [2]
             datediff_thresholds (Union[int, list], optional): The thresholds to use
                 for datediff similarity level(s).
@@ -117,6 +130,33 @@ class DateComparisonBase(Comparison):
                 )
                 comparison_levels.append(level_dict)
 
+        if len(jaro_winkler_thresholds) > 0:
+            jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
+
+            if m_probability_or_probabilities_jw is None:
+                m_probability_or_probabilities_jw = [None] * len(
+                    jaro_winkler_thresholds
+                )
+            m_probability_or_probabilities_jw = ensure_is_iterable(
+                m_probability_or_probabilities_jw
+            )
+
+            for thres, m_prob in zip(
+                jaro_winkler_thresholds, m_probability_or_probabilities_jw
+            ):
+                level_dict = self._jaro_winkler_level(
+                    col_name,
+                    distance_threshold=thres,
+                    m_probability=m_prob,
+                )
+                comparison_levels.append(level_dict)
+
+        if len(levenshtein_thresholds) > 0 and len(jaro_winkler_thresholds) > 0:
+            logger.warning(
+                "You have included a comparison levels for both Levenshtein and"
+                "Jaro-Winkler similarity. We recommend choosing one or the other."
+            )
+
         if len(datediff_thresholds) > 0:
             datediff_thresholds = ensure_is_iterable(datediff_thresholds)
             datediff_metrics = ensure_is_iterable(datediff_metrics)
@@ -150,11 +190,11 @@ class DateComparisonBase(Comparison):
             if include_exact_match_level:
                 comparison_desc += "Exact match vs. "
 
-            if len(levenshtein_thresholds) > 0:
-                lev_desc = ", ".join([str(d) for d in levenshtein_thresholds])
-                plural = "" if len(levenshtein_thresholds) == 1 else "s"
+            if len(jaro_winkler_thresholds) > 0:
+                lev_desc = ", ".join([str(d) for d in jaro_winkler_thresholds])
+                plural = "" if len(jaro_winkler_thresholds) == 1 else "s"
                 comparison_desc += (
-                    f"Dates within Levenshtein threshold{plural} {lev_desc} vs. "
+                    f"Dates within jaro_winkler threshold{plural} {lev_desc} vs. "
                 )
 
         if len(datediff_thresholds) > 0:
