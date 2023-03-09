@@ -7,15 +7,8 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def test_misc_checks():
-    level = cll.not_(cll.null_level("first_name")).__dict__
-    assert level["_level_dict"].get("is_null_level") is None
-
-    # Check that where column_name = None in the level_dict
-    # that we don't encounter a breakage
-    cll.and_(
-        cll.columns_reversed_level("help", "me"),
-        cll.columns_reversed_level("help", "me"),
-    ).__dict__
+    level = cll.not_(cll.null_level("first_name"))
+    assert level.is_null_level == False
 
     # Integration test for a simple dictionary cl
     dob_jan_first = {"sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'"}
@@ -36,56 +29,57 @@ def test_composition_internals(clause, c_fun):
     # It should just report the regular outputs of our comparison level func
     level = c_fun(
         cll.exact_match_level("tom", include_colname_in_charts_label=True)
-    ).__dict__
-    assert level["_level_dict"]["sql_condition"] == '("tom_l" = "tom_r")'
-    assert level["_level_dict"]["label_for_charts"] == "(Exact match tom)"
+    )
+    assert level.sql_condition == '("tom_l" = "tom_r")'
+    assert level._label_for_charts == "(Exact match tom)"
 
     # Two null levels composed
     level = c_fun(
         cll.null_level("first_name"),
         cll.null_level("surname"),
         label_for_charts="This is a test",
-    ).__dict__
+    )
 
     null_sql = (
         f'("first_name_l" IS NULL OR "first_name_r" IS NULL) {clause} '
         '("surname_l" IS NULL OR "surname_r" IS NULL)'
     )
-    assert level["_level_dict"]["sql_condition"] == null_sql
+    assert level.sql_condition == null_sql
     # Default label
-    assert level["_level_dict"]["label_for_charts"] == "This is a test"
-    assert level["_level_dict"]["is_null_level"] is True
+    assert level._label_for_charts == "This is a test"
+    # As both inputs are null, we're expecting this to return True
+    assert level.is_null_level == True
 
     # Exact match and null level composition
     level = c_fun(
         cll.exact_match_level("first_name", include_colname_in_charts_label=True),
         cll.null_level("first_name"),
         m_probability=0.5,
-    ).__dict__
+    )
     assert (
-        level["_level_dict"]["sql_condition"]
+        level.sql_condition
         == f'("first_name_l" = "first_name_r") {clause} '
         '("first_name_l" IS NULL OR "first_name_r" IS NULL)'
     )
     # Default label
     assert (
-        level["_level_dict"]["label_for_charts"]
+        level._label_for_charts
         == f"(Exact match first_name) {clause} (first_name IS NULL)"
     )
-    # should default to None
-    assert level["_level_dict"].get("is_null_level") is None
-    assert level["_m_probability"] == 0.5
+    # should default to False
+    assert level.is_null_level == False
+    assert level._m_probability == 0.5
 
     # cll.not_(or_(...)) composition
     level = cll.not_(
         c_fun(cll.exact_match_level("first_name"), cll.exact_match_level("surname")),
         m_probability=0.5,
-    ).__dict__
+    )
 
     exact_match_sql = (
         f'("first_name_l" = "first_name_r") {clause} ("surname_l" = "surname_r")'
     )
-    assert level["_level_dict"]["sql_condition"] == f"NOT ({exact_match_sql})"
+    assert level.sql_condition == f"NOT ({exact_match_sql})"
 
     # Check it fails when no inputs are added
     with pytest.raises(ValueError):

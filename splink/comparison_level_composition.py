@@ -180,7 +180,7 @@ def not_(
     result["sql_condition"] = f"NOT ({cld['sql_condition']})"
 
     if cld.get("is_null_level", False):  # invert if is_null_level
-        result["is_null_level"] = None
+        result["is_null_level"] = False
 
     result["label_for_charts"] = (
         label_for_charts

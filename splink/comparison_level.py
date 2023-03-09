@@ -177,6 +177,14 @@ class ComparisonLevel:
         return val
 
     @property
+    def is_null_level(self) -> bool:
+        return self._is_null_level
+
+    @property
+    def sql_condition(self) -> bool:
+        return self._sql_condition
+
+    @property
     def _tf_adjustment_input_column(self):
 
         val = self._level_dict_val_else_default("tf_adjustment_column")
