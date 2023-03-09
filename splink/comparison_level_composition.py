@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from splink.comparison_level import ComparisonLevel
+from .comparison_level import ComparisonLevel
+from .sql_transform import standardise_colnames_in_sql
 
 
 def and_(
@@ -182,7 +183,9 @@ def not_(
         result["is_null_level"] = None
 
     result["label_for_charts"] = (
-        label_for_charts if label_for_charts else f"NOT ({_label_for_charts(cld)})"
+        label_for_charts
+        if label_for_charts
+        else f"NOT ({_label_for_charts(cld, sql_dialect)})"
     )
 
     if m_probability:
@@ -214,7 +217,7 @@ def _cl_merge(
     if label_for_charts:
         result["label_for_charts"] = label_for_charts
     else:
-        labels = ("(" + _label_for_charts(d) + ")" for d in dicts)
+        labels = ("(" + _label_for_charts(d, sql_dialect) + ")" for d in dicts)
         result["label_for_charts"] = f" {clause} ".join(labels)
 
     if m_probability:
@@ -223,19 +226,12 @@ def _cl_merge(
     return ComparisonLevel(result, sql_dialect=sql_dialect)
 
 
-def _label_for_charts(comparison_dict: dict) -> str:
+def _label_for_charts(comparison_dict: dict, dialect) -> str:
     backup = comparison_dict["sql_condition"]
     label = comparison_dict.get("label_for_charts", backup)
 
-    colname = comparison_dict.get("column_name")
-    if colname is None:
-        return label
-    # if null level, prefix with the column name
     if comparison_dict.get("is_null_level", False):
-        label = f"{colname} is {label.upper()}"
-    # if exact match, suffix w/ colname
-    elif label.lower() == "exact match":
-        label = f"{label} on {colname}"
+        label = standardise_colnames_in_sql(backup, read=dialect)
 
     return label
 
@@ -243,20 +239,21 @@ def _label_for_charts(comparison_dict: dict) -> str:
 def _parse_comparison_levels(
     *clls: ComparisonLevel | dict,
 ) -> tuple[list[dict], str | None]:
-    cl_dicts = [_to_comparison_level_dict(cll) for cll in clls]
-    sql_dialect = _unify_sql_dialects(cl_dicts)
+    clls = [_to_comparison_level(cll) for cll in clls]
+    cl_dicts = [cll.as_dict() for cll in clls]
+    sql_dialect = _unify_sql_dialects(clls)
     return cl_dicts, sql_dialect
 
 
-def _to_comparison_level_dict(cl: ComparisonLevel | dict) -> dict:
+def _to_comparison_level(cl: ComparisonLevel | dict) -> dict:
     if isinstance(cl, ComparisonLevel):
-        return cl.as_dict()
-    else:
         return cl
+    else:
+        return ComparisonLevel(cl)
 
 
 def _unify_sql_dialects(cls: Iterable[dict]) -> str | None:
-    sql_dialects = set(cl.get("sql_dialect", None) for cl in cls)
+    sql_dialects = set(cl._sql_dialect for cl in cls)
     sql_dialects.discard(None)
     if len(sql_dialects) > 1:
         raise ValueError("Cannot combine comparison levels with different SQL dialects")

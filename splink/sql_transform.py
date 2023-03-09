@@ -1,3 +1,5 @@
+from re import sub
+
 import sqlglot
 import sqlglot.expressions as exp
 
@@ -34,8 +36,27 @@ def _remove_table_prefix(node):
     return node
 
 
+def _standardise_column_names(node):
+    if isinstance(node, exp.Identifier):
+        node.args["quoted"] = False
+        node = sub("_[l|r]{1}$", "", node.sql())
+        return sqlglot.parse_one(node)
+
+    return node
+
+
 def move_l_r_table_prefix_to_column_suffix(blocking_rule):
     expression_tree = sqlglot.parse_one(blocking_rule, read=None)
     transformed_tree = expression_tree.transform(_add_l_or_r_to_identifier)
     transformed_tree = transformed_tree.transform(_remove_table_prefix)
+    return transformed_tree.sql()
+
+
+def standardise_colnames_in_sql(sql, read=None):
+    syntax_tree = sqlglot.parse_one(sql, read=read)
+    transformed_tree = syntax_tree.transform(_remove_table_prefix)
+    transformed_tree = transformed_tree.transform(_standardise_column_names)
+    from sqlglot.optimizer.optimizer import normalize
+
+    transformed_tree = normalize(transformed_tree)
     return transformed_tree.sql()

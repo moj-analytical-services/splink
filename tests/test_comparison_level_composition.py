@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 import splink.duckdb.duckdb_comparison_level_library as cll
+import splink.duckdb.duckdb_comparison_level_library as scll
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
@@ -16,21 +17,28 @@ def test_misc_checks():
         cll.columns_reversed_level("help", "me"),
     ).__dict__
 
+    # Integration test for a simple dictionary cl
+    dob_jan_first = {"sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'"}
+    cll.not_(dob_jan_first)
+
 
 @pytest.mark.parametrize(
     ("clause", "c_fun"),
     [
         pytest.param("OR", cll.or_, id="Test or_"),
         pytest.param("AND", cll.and_, id="Test and_"),
+        pytest.param("OR", scll.or_, id="Test spark or_"),
     ],
 )
 def test_composition_internals(clause, c_fun):
 
     # Test what happens when only one value is fed
     # It should just report the regular outputs of our comparison level func
-    level = cll.c_fun(cll.exact_match_level("tom")).__dict__
+    level = c_fun(
+        cll.exact_match_level("tom", include_colname_in_charts_label=True)
+    ).__dict__
     assert level["_level_dict"]["sql_condition"] == '("tom_l" = "tom_r")'
-    assert level["_level_dict"]["label_for_charts"] == "(Exact match on tom)"
+    assert level["_level_dict"]["label_for_charts"] == "(Exact match tom)"
 
     # Two null levels composed
     level = c_fun(
@@ -50,7 +58,7 @@ def test_composition_internals(clause, c_fun):
 
     # Exact match and null level composition
     level = c_fun(
-        cll.exact_match_level("first_name"),
+        cll.exact_match_level("first_name", include_colname_in_charts_label=True),
         cll.null_level("first_name"),
         m_probability=0.5,
     ).__dict__
@@ -62,7 +70,7 @@ def test_composition_internals(clause, c_fun):
     # Default label
     assert (
         level["_level_dict"]["label_for_charts"]
-        == f"(Exact match on first_name) {clause} (first_name is NULL)"
+        == f"(Exact match first_name) {clause} (first_name IS NULL)"
     )
     # should default to None
     assert level["_level_dict"].get("is_null_level") is None
@@ -153,9 +161,9 @@ def test_composition_outputs():
     }
 
     for gamma, id_pairs in size_gamma_lookup.items():
-        for l, r in id_pairs:
+        for left, right in id_pairs:
             assert (
-                out.loc[(out.unique_id_l == l) & (out.unique_id_r == r)][
+                out.loc[(out.unique_id_l == left) & (out.unique_id_r == right)][
                     "gamma_full_name"
                 ].values[0]
                 == gamma

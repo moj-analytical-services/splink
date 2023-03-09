@@ -1,11 +1,13 @@
 import sqlglot
 
+import splink.duckdb.duckdb_comparison_level_library as cll
 from splink.athena.athena_transforms import cast_concat_as_varchar
 from splink.input_column import InputColumn
 from splink.spark.custom_spark_dialect import Dialect  # noqa 401
 from splink.sql_transform import (
     move_l_r_table_prefix_to_column_suffix,
     sqlglot_transform_sql,
+    standardise_colnames_in_sql,
 )
 
 
@@ -120,3 +122,32 @@ def test_add_pref_and_suffix():
     out_cols = ['"unique_id"', '"SUR name"', '"group"']
     cols_class = [InputColumn(c) for c in cols]
     assert [c.name() for c in cols_class] == out_cols
+
+
+def test_standardise_colnames():
+    # This is only currently being used to parse NULL level comparisons,
+    # so the tests are all based around that.
+
+    s = cll.null_level("help").__dict__["_level_dict"]["sql_condition"]
+    basic_out = "help IS NULL"
+    assert standardise_colnames_in_sql(s) == basic_out
+
+    s = cll.or_(cll.null_level("help"), cll.null_level("help2")).__dict__[
+        "_level_dict"
+    ]["sql_condition"]
+    expected_out = "help IS NULL OR help2 IS NULL"
+    assert standardise_colnames_in_sql(s) == expected_out
+
+    s = cll.and_(
+        cll.or_(cll.null_level("help"), cll.null_level("help2")),
+        cll.or_(cll.null_level("help3"), cll.null_level("help4")),
+    ).__dict__["_level_dict"]["sql_condition"]
+    expected_out = (
+        "(help IS NULL OR help2 IS NULL) " "AND (help3 IS NULL OR help4 IS NULL)"
+    )
+    assert standardise_colnames_in_sql(s) == expected_out
+
+    s = cll.or_(cll.null_level("help"), cll.null_level("help")).__dict__["_level_dict"][
+        "sql_condition"
+    ]
+    assert standardise_colnames_in_sql(s) == basic_out

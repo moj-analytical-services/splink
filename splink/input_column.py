@@ -240,3 +240,18 @@ def _get_sqlglot_dialect_quotes(dialect: sqlglot.Dialect):
         start = dialect.identifier_start
         end = dialect.identifier_end
     return start, end
+
+
+def parse_sql_columns(sql):
+    # given input SQL, extract all raw column names
+    from re import sub
+
+    columns = set()
+    syntax_tree = sqlglot.parse_one(sql, read="duckdb")
+    for col in syntax_tree.find_all(exp.Column):
+        col.args["table"] = None
+        col = remove_quotes_from_identifiers(col)
+        col = sub("_[l|r]{1}$", "", col.sql())
+        columns.add(col)
+
+    return columns

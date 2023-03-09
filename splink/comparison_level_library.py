@@ -22,7 +22,6 @@ class NullLevelBase(ComparisonLevel):
             "sql_condition": f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL",
             "label_for_charts": "Null",
             "is_null_level": True,
-            "column_name": col_name,
         }
         super().__init__(
             level_dict,
@@ -45,7 +44,6 @@ class ExactMatchLevelBase(ComparisonLevel):
         level_dict = {
             "sql_condition": f"{col.name_l()} = {col.name_r()}",
             "label_for_charts": f"Exact match{label_suffix}",
-            "column_name": col_name,
         }
         if m_probability:
             level_dict["m_probability"] = m_probability
@@ -123,7 +121,6 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         level_dict = {
             "sql_condition": sql_cond,
             "label_for_charts": chart_label,
-            "column_name": col_name,
         }
         if m_probability:
             level_dict["m_probability"] = m_probability
@@ -352,7 +349,6 @@ class PercentageDifferenceLevelBase(ComparisonLevel):
         level_dict = {
             "sql_condition": s,
             "label_for_charts": f"< {percentage_distance_threshold:,.2%} diff",
-            "column_name": col_name,
         }
         if m_probability:
             level_dict["m_probability"] = m_probability
@@ -405,7 +401,6 @@ class ArrayIntersectLevelBase(ComparisonLevel):
         level_dict = {
             "sql_condition": sql,
             "label_for_charts": label,
-            "column_name": col_name,
         }
         if m_probability:
             level_dict["m_probability"] = m_probability
@@ -460,7 +455,6 @@ class DateDiffLevelBase(ComparisonLevel):
         level_dict = {
             "sql_condition": datediff_sql,
             "label_for_charts": label,
-            "column_name": date_col,
         }
 
         if m_probability:

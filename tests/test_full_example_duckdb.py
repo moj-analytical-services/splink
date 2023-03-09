@@ -2,6 +2,7 @@ import os
 
 import pandas as pd
 import pyarrow.parquet as pq
+import pytest
 from basic_settings import get_settings_dict
 from linker_utils import _test_table_registration, register_roc_data
 
@@ -14,7 +15,7 @@ from splink.duckdb.duckdb_comparison_library import (
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
-# @pytest.mark.parametrize(['first_name_and_surname_cc'], [(cll)])
+@pytest.mark.parametrize("first_name_and_surname_cc", [[cll]], indirect=True)
 def test_full_example_duckdb(tmp_path, first_name_and_surname_cc):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df = df.rename(columns={"surname": "SUR name"})

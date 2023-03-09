@@ -638,7 +638,6 @@ class ComparisonLevel:
         if self._is_null_level:
             output["is_null_level"] = True
 
-        output["column_name"] = self._level_dict.get("column_name", None)
         return output
 
     def _as_completed_dict(self):
