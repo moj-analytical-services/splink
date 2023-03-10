@@ -6,6 +6,7 @@ from ..comparison_library import (
     JaccardAtThresholdsComparisonBase,
     JaroWinklerAtThresholdsComparisonBase,
     LevenshteinAtThresholdsComparisonBase,
+    DistanceInKMAtThresholdsComparisonBase
 )
 from .duckdb_base import (
     DuckDBBase,
@@ -19,6 +20,7 @@ from .duckdb_comparison_level_library import (
     jaccard_level,
     jaro_winkler_level,
     levenshtein_level,
+    distance_in_km_level,
     null_level,
 )
 
@@ -43,6 +45,10 @@ class DuckDBComparisonProperties(DuckDBBase):
     @property
     def _array_intersect_level(self):
         return array_intersect_level
+    
+    @property
+    def _distance_in_km_level(self):
+        return distance_in_km_level
 
 
 class exact_match(DuckDBComparisonProperties, ExactMatchBase):
@@ -89,5 +95,10 @@ class array_intersect_at_sizes(
 
 class datediff_at_thresholds(
     DuckDBComparisonProperties, DateDiffAtThresholdsComparisonBase
+):
+    pass
+
+class distance_in_km_at_thresholds(
+    DuckDBComparisonProperties, DistanceInKMAtThresholdsComparisonBase
 ):
     pass
