@@ -629,6 +629,7 @@ class ComparisonLevel:
 
         if self._is_null_level:
             output["is_null_level"] = True
+
         return output
 
     def _as_completed_dict(self):
