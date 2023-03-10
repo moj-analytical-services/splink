@@ -81,7 +81,7 @@ class Comparison:
         counter = num_levels - 1
 
         for level in self.comparison_levels:
-            if level._is_null_level:
+            if level.is_null_level:
                 level._comparison_vector_value = -1
                 level._max_level = False
             else:
@@ -102,11 +102,11 @@ class Comparison:
 
     @property
     def _num_levels(self):
-        return len([cl for cl in self.comparison_levels if not cl._is_null_level])
+        return len([cl for cl in self.comparison_levels if not cl.is_null_level])
 
     @property
     def _comparison_levels_excluding_null(self):
-        return [cl for cl in self.comparison_levels if not cl._is_null_level]
+        return [cl for cl in self.comparison_levels if not cl.is_null_level]
 
     @property
     def _gamma_prefix(self):
@@ -124,7 +124,7 @@ class Comparison:
 
     @property
     def _has_null_level(self):
-        return any([cl._is_null_level for cl in self.comparison_levels])
+        return any([cl.is_null_level for cl in self.comparison_levels])
 
     @property
     def _bf_tf_adj_column_name(self):

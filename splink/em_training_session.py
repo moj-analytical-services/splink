@@ -355,7 +355,7 @@ class EMTrainingSession:
             this_cc = comparison[1]
             z_cls = zip(prev_cc.comparison_levels, this_cc.comparison_levels)
             for z_cl in z_cls:
-                if z_cl[0]._is_null_level:
+                if z_cl[0].is_null_level:
                     continue
                 prev_cl = z_cl[0]
                 this_cl = z_cl[1]
