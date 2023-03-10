@@ -434,8 +434,8 @@ class Comparison:
         comp_levels = [
             cl_template.format(
                 cvv=cl._comparison_vector_value,
-                label=cl._label_for_charts,
-                sql=cl._sql_condition,
+                label=cl.label_for_charts,
+                sql=cl.sql_condition,
             )
             for cl in self.comparison_levels
         ]
