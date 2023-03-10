@@ -106,7 +106,7 @@
                   ]
                 },
                 "label_for_charts": {
-                  "title": "A label for this comparson level, which will appear on charts as a reminder of what the level represts",
+                  "title": "A label for this comparson level, which will appear on charts as a reminder of what the level represents",
                   "type": "string",
                   "examples": ["exact", "postcode exact"]
                 },
