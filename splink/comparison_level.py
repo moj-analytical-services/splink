@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 
 
 def _is_exact_match(sql_syntax_tree):
-
     signature = sqlglot_tree_signature(sql_syntax_tree)
     if signature != "eq column column identifier identifier":
         return False
@@ -138,7 +137,6 @@ class ComparisonLevel:
         comparison: Comparison = None,
         sql_dialect: str = None,
     ):
-
         # Protected, because we don't want to modify the original dict
         self._level_dict = level_dict
 
@@ -170,6 +168,14 @@ class ComparisonLevel:
 
         self._validate()
 
+    @property
+    def is_null_level(self) -> bool:
+        return self._is_null_level
+
+    @property
+    def sql_condition(self) -> str:
+        return self._sql_condition
+
     def _level_dict_val_else_default(self, key):
         val = self._level_dict.get(key)
         if not val:
@@ -178,7 +184,6 @@ class ComparisonLevel:
 
     @property
     def _tf_adjustment_input_column(self):
-
         val = self._level_dict_val_else_default("tf_adjustment_column")
         if val:
             return InputColumn(val, sql_dialect=self._sql_dialect)
@@ -199,7 +204,7 @@ class ComparisonLevel:
 
     @property
     def m_probability(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return None
         if self._m_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
@@ -210,7 +215,7 @@ class ComparisonLevel:
 
     @m_probability.setter
     def m_probability(self, value):
-        if self._is_null_level:
+        if self.is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
         if value == LEVEL_NOT_OBSERVED_TEXT:
             cc_n = self.comparison._output_column_name
@@ -225,7 +230,7 @@ class ComparisonLevel:
 
     @property
     def u_probability(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return None
         if self._u_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
@@ -236,7 +241,7 @@ class ComparisonLevel:
 
     @u_probability.setter
     def u_probability(self, value):
-        if self._is_null_level:
+        if self.is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
         if value == LEVEL_NOT_OBSERVED_TEXT:
             cc_n = self.comparison._output_column_name
@@ -267,20 +272,18 @@ class ComparisonLevel:
             )
 
     def _add_trained_u_probability(self, val, desc="no description given"):
-
         self._trained_u_probabilities.append(
             {"probability": val, "description": desc, "m_or_u": "u"}
         )
 
     def _add_trained_m_probability(self, val, desc="no description given"):
-
         self._trained_m_probabilities.append(
             {"probability": val, "description": desc, "m_or_u": "m"}
         )
 
     @property
     def _has_estimated_u_values(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return True
         vals = [r["probability"] for r in self._trained_u_probabilities]
         vals = [v for v in vals if isinstance(v, (int, float))]
@@ -288,7 +291,7 @@ class ComparisonLevel:
 
     @property
     def _has_estimated_m_values(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return True
         vals = [r["probability"] for r in self._trained_m_probabilities]
         vals = [v for v in vals if isinstance(v, (int, float))]
@@ -316,7 +319,7 @@ class ComparisonLevel:
 
     @property
     def _m_is_trained(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return True
         if self._m_probability == "level not observed in data":
             return False
@@ -326,7 +329,7 @@ class ComparisonLevel:
 
     @property
     def _u_is_trained(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return True
         if self._u_probability == "level not observed in data":
             return False
@@ -340,7 +343,7 @@ class ComparisonLevel:
 
     @property
     def _bayes_factor(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return 1.0
         if self.m_probability is None or self.u_probability is None:
             return None
@@ -351,7 +354,7 @@ class ComparisonLevel:
 
     @property
     def _log2_bayes_factor(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return 0.0
         else:
             return math.log2(self._bayes_factor)
@@ -380,7 +383,6 @@ class ComparisonLevel:
 
     @property
     def _label_for_charts_no_duplicates(self):
-
         if self._has_comparison:
             labels = []
             for cl in self.comparison.comparison_levels:
@@ -396,7 +398,7 @@ class ComparisonLevel:
 
     @property
     def _is_else_level(self):
-        if self._sql_condition.strip().upper() == "ELSE":
+        if self.sql_condition.strip().upper() == "ELSE":
             return True
 
     @property
@@ -405,7 +407,7 @@ class ComparisonLevel:
         return col is not None
 
     def _validate_sql(self):
-        sql = self._sql_condition
+        sql = self.sql_condition
         if self._is_else_level:
             return True
         dialect = self._sql_dialect
@@ -427,7 +429,7 @@ class ComparisonLevel:
         if self._is_else_level:
             return []
 
-        cols = get_columns_used_from_sql(self._sql_condition, dialect=self._sql_dialect)
+        cols = get_columns_used_from_sql(self.sql_condition, dialect=self._sql_dialect)
         # Parsed order seems to be roughly in reverse order of apearance
         cols = cols[::-1]
 
@@ -436,7 +438,6 @@ class ComparisonLevel:
 
         input_cols = []
         for c in cols:
-
             # We could have tf adjustments for surname on a dmeta_surname column
             # If so, we want to set the tf adjustments against the surname col,
             # not the dmeta_surname one
@@ -469,9 +470,9 @@ class ComparisonLevel:
                 "context of a list of ComparisonLevels within a Comparison."
             )
         if self._is_else_level:
-            return f"{self._sql_condition} {self._comparison_vector_value}"
+            return f"{self.sql_condition} {self._comparison_vector_value}"
         else:
-            return f"WHEN {self._sql_condition} THEN {self._comparison_vector_value}"
+            return f"WHEN {self.sql_condition} THEN {self._comparison_vector_value}"
 
     @property
     def _is_exact_match(self):
@@ -479,7 +480,7 @@ class ComparisonLevel:
             return False
 
         sql_syntax_tree = sqlglot.parse_one(
-            self._sql_condition.lower(), read=self._sql_dialect
+            self.sql_condition.lower(), read=self._sql_dialect
         )
         sql_cnf = normalize(sql_syntax_tree)
 
@@ -491,9 +492,8 @@ class ComparisonLevel:
 
     @property
     def _exact_match_colnames(self):
-
         sql_syntax_tree = sqlglot.parse_one(
-            self._sql_condition.lower(), read=self._sql_dialect
+            self.sql_condition.lower(), read=self._sql_dialect
         )
         sql_cnf = normalize(sql_syntax_tree)
 
@@ -619,7 +619,7 @@ class ComparisonLevel:
         "The minimal representation of this level to use as an input to Splink"
         output = {}
 
-        output["sql_condition"] = self._sql_condition
+        output["sql_condition"] = self.sql_condition
 
         if self._level_dict.get("label_for_charts"):
             output["label_for_charts"] = self._label_for_charts
@@ -635,7 +635,7 @@ class ComparisonLevel:
             if self._tf_adjustment_weight != 0:
                 output["tf_adjustment_weight"] = self._tf_adjustment_weight
 
-        if self._is_null_level:
+        if self.is_null_level:
             output["is_null_level"] = True
 
         return output
@@ -649,7 +649,7 @@ class ComparisonLevel:
     def _as_detailed_record(self):
         "A detailed representation of this level to describe it in charting outputs"
         output = {}
-        output["sql_condition"] = self._sql_condition
+        output["sql_condition"] = self.sql_condition
         output["label_for_charts"] = self._label_for_charts_no_duplicates
 
         output["m_probability"] = self.m_probability
@@ -665,7 +665,7 @@ class ComparisonLevel:
             output["tf_adjustment_column"] = None
         output["tf_adjustment_weight"] = self._tf_adjustment_weight
 
-        output["is_null_level"] = self._is_null_level
+        output["is_null_level"] = self.is_null_level
         output["bayes_factor"] = self._bayes_factor
         output["log2_bayes_factor"] = self._log2_bayes_factor
         output["comparison_vector_value"] = self._comparison_vector_value
@@ -676,7 +676,6 @@ class ComparisonLevel:
 
     @property
     def _parameter_estimates_as_records(self):
-
         output_records = []
 
         cl_record = self._as_detailed_record
@@ -703,12 +702,10 @@ class ComparisonLevel:
         self._validate_sql()
 
     def _abbreviated_sql(self, cutoff=75):
-        sql = self._sql_condition
-        sql = (sql[:75] + "...") if len(sql) > 75 else sql
-        return sql
+        sql = self.sql_condition
+        return (sql[:75] + "...") if len(sql) > 75 else sql
 
     def __repr__(self):
-
         return f"<{self._human_readable_succinct}>"
 
     @property
@@ -718,14 +715,13 @@ class ComparisonLevel:
 
     @property
     def human_readable_description(self):
-
         input_cols = join_list_with_commas_final_and(
             [c.name() for c in self._input_columns_used_by_sql_condition]
         )
         desc = (
             f"Comparison level: {self._label_for_charts} of {input_cols}\n"
             "Assesses similarity between pairwise comparisons of the input columns "
-            f"using the following rule\n{self._sql_condition}"
+            f"using the following rule\n{self.sql_condition}"
         )
 
         return desc
