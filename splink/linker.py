@@ -193,8 +193,6 @@ class Linker:
         self._self_link_mode = False
         self._analyse_blocking_mode = False
 
-        self._output_schema = ""
-
         self.debug_mode = False
 
     @property
@@ -329,12 +327,6 @@ class Linker:
             self._settings_obj_ = Settings(settings_dict)
 
             self._validate_dialect()
-
-    def _prepend_schema_to_table_name(self, table_name):
-        if self._output_schema:
-            return f"{self._output_schema}.{table_name}"
-        else:
-            return table_name
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
@@ -1621,7 +1613,6 @@ class Linker:
     def _get_labels_tablename_from_input(
         self, labels_splinkdataframe_or_table_name: str | SplinkDataFrame
     ):
-
         if isinstance(labels_splinkdataframe_or_table_name, SplinkDataFrame):
             labels_tablename = labels_splinkdataframe_or_table_name.physical_name
         elif isinstance(labels_splinkdataframe_or_table_name, str):
