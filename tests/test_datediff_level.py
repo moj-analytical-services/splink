@@ -91,12 +91,12 @@ def test_datediff_levels(spark, cl, cll, Linker):
         ],
     }
 
-    settings = {
+    settings_cll = {
         "link_type": "dedupe_only",
         "comparisons": [exact_match_fn, dob_diff],
     }
 
-    settings_cll = {
+    settings_cl = {
         "link_type": "dedupe_only",
         "comparisons": [
             exact_match_fn,
@@ -112,22 +112,23 @@ def test_datediff_levels(spark, cl, cll, Linker):
     if Linker == SparkLinker:
         df = spark.createDataFrame(df)
         df.persist()
-    linker = Linker(df, settings)
-    df_e = linker.predict().as_pandas_dataframe()
-    linker = Linker(df, settings_cll)
+    linker = Linker(df, settings_cl)
     cl_df_e = linker.predict().as_pandas_dataframe()
+    linker = Linker(df, settings_cll)
+    cll_df_e = linker.predict().as_pandas_dataframe()
+
+    linker_outputs = {
+        "cl": cl_df_e,
+        "cll": cll_df_e,
+    }
 
     # # Dict key: {size: gamma_level value}
     size_gamma_lookup = {1: 11, 2: 6, 3: 3, 4: 1}
 
-    linker_outputs = {
-        "cll": df_e,
-        "cl": cl_df_e,
-    }
-
     # Check gamma sizes are as expected
     for gamma, gamma_lookup in size_gamma_lookup.items():
         for linker_pred in linker_outputs.values():
+            print(type(linker_pred["gamma_dob"]))
             assert sum(linker_pred["gamma_dob"] == gamma) == gamma_lookup
 
     # Check individual IDs are assigned to the correct gamma values

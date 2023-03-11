@@ -597,12 +597,13 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
         m_probabilities = ensure_is_iterable(m_probability_or_probabilities_sizes)
         """
         comparison_levels = []
-        """ comparison_levels.append(self._null_level(col_name))
-        if include_exact_match_level:
-            level = self._exact_match_level(
-                col_name,
-            )
-            comparison_levels.append(level) """
+
+        null_level = {
+            "sql_condition": f"({lat_col}_l IS NULL OR {lat_col}_r IS NULL) OR ({long_col}_l IS NULL OR {long_col}_r IS NULL)",
+            "label_for_charts": "Null",
+            "is_null_level": True,
+        }
+        comparison_levels.append(null_level)
 
         for km_thres, m_prob in zip(km_thresholds, m_probabilities):
             level = self._distance_in_km_level(
@@ -621,9 +622,7 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
         if include_exact_match_level:
             comparison_desc += "Exact match vs. "
 
-        thres_desc = ", ".join(
-            [f"Km threshold(s): {thres}" for thres in thresholds]
-        )
+        thres_desc = ", ".join([f"Km threshold(s): {thres}" for thres in thresholds])
         plural = "" if len(thresholds) == 1 else "s"
         comparison_desc += (
             f"Km distance within the following threshold{plural} {thres_desc} vs. "
