@@ -3,25 +3,22 @@ import os
 from pyspark.sql.functions import array
 from pyspark.sql.types import StringType, StructField, StructType
 
+import splink.spark.spark_comparison_level_library as cll
 import splink.spark.spark_comparison_library as cl
-from splink.spark.spark_comparison_level_library import (
-    array_intersect_level,
-    else_level,
-)
 from splink.spark.spark_linker import SparkLinker
 
-from .basic_settings import get_settings_dict
+from .basic_settings import get_settings_dict, name_comparison
 from .linker_utils import _test_table_registration, register_roc_data
 
 
 def test_full_example_spark(df_spark, tmp_path):
-
     # Convert a column to an array to enable testing intersection
     df_spark = df_spark.withColumn("email", array("email"))
     settings_dict = get_settings_dict()
 
     # Only needed because the value can be overwritten by other tests
     settings_dict["comparisons"][1] = cl.exact_match("surname")
+    settings_dict["comparisons"].append(name_comparison(cll, "surname"))
 
     settings = {
         "probability_two_random_records_match": 0.01,
@@ -35,8 +32,8 @@ def test_full_example_spark(df_spark, tmp_path):
             cl.exact_match("dob"),
             {
                 "comparison_levels": [
-                    array_intersect_level("email"),
-                    else_level(),
+                    cll.array_intersect_level("email"),
+                    cll.else_level(),
                 ]
             },
             cl.exact_match("city"),
