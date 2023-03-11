@@ -3,12 +3,12 @@ import pytest
 
 import splink.duckdb.duckdb_comparison_level_library as clld
 import splink.duckdb.duckdb_comparison_library as cld
+import splink.spark.spark_comparison_level_library as clls
+import splink.spark.spark_comparison_library as cls
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 
-
 # from splink.athena.athena_linker import AthenaLinker
-
 
 @pytest.mark.parametrize(
     ("cl"),
@@ -32,11 +32,13 @@ def test_simple_run(cl):
         pytest.param(
             cld, clld, DuckDBLinker, id="DuckDB Distance in KM Integration Tests"
         ),
-        #        pytest.param(cls, clls, SparkLinker, id="Spark Distance in KM Integration Tests"),
+        pytest.param(
+            cls, clls, SparkLinker, id="Spark Distance in KM Integration Tests"
+        ),
         #        pytest.param(cls, clls, AthenaLinker, id="Athena Distance in KM Integration Tests"),
     ],
 )
-def test_km_distance_levels(cl, cll, Linker):
+def test_km_distance_levels(spark, cl, cll, Linker):
     df = pd.DataFrame(
         [
             {
@@ -112,18 +114,17 @@ def test_km_distance_levels(cl, cll, Linker):
         ],
     }
 
-
     if Linker == SparkLinker:
         df = spark.createDataFrame(df)
         df.persist()
     linker = Linker(df, settings_cl)
     cl_df_e = linker.predict().as_pandas_dataframe()
     linker = Linker(df, settings_cl)
-    linker.predict().as_pandas_dataframe()
+    cll_df_e = linker.predict().as_pandas_dataframe()
 
     linker_outputs = {
         "cl": cl_df_e,
-        # "cll": cll_df_e,
+        "cll": cll_df_e,
     }
 
     # # Dict key: {size: gamma_level value}

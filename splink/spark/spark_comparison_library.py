@@ -2,6 +2,7 @@ from ..comparison_library import (
     ArrayIntersectAtSizesComparisonBase,
     DateDiffAtThresholdsComparisonBase,
     DistanceFunctionAtThresholdsComparisonBase,
+    DistanceInKMAtThresholdsComparisonBase,
     ExactMatchBase,
     JaccardAtThresholdsComparisonBase,
     JaroWinklerAtThresholdsComparisonBase,
@@ -14,6 +15,7 @@ from .spark_comparison_level_library import (
     array_intersect_level,
     datediff_level,
     distance_function_level,
+    distance_in_km_level,
     else_level,
     exact_match_level,
     jaccard_level,
@@ -43,6 +45,10 @@ class SparkComparisonProperties(SparkBase):
     @property
     def _datediff_level(self):
         return datediff_level
+
+    @property
+    def _distance_in_km_level(self):
+        return distance_in_km_level
 
 
 class exact_match(SparkComparisonProperties, ExactMatchBase):
@@ -89,5 +95,10 @@ class array_intersect_at_sizes(
 
 class datediff_at_thresholds(
     SparkComparisonProperties, DateDiffAtThresholdsComparisonBase
+):
+    pass
+
+class distance_in_km_at_thresholds(
+    SparkComparisonProperties, DistanceInKMAtThresholdsComparisonBase
 ):
     pass
