@@ -50,5 +50,5 @@ def unlinkables_data(linker: Linker):
     data = linker._execute_sql_pipeline(use_cache=False)
 
     unlinkables_dict = data.as_record_dict()
-    data.drop_table_from_database()
+    data.drop_table_from_database_and_remove_from_cache()
     return unlinkables_dict

@@ -64,7 +64,7 @@ def estimate_u_values(linker: Linker, target_rows):
         dataframe = training_linker._execute_sql_pipeline([nodes_with_tf])
 
         result = dataframe.as_record_dict()
-        dataframe.drop_table_from_database()
+        dataframe.drop_table_from_database_and_remove_from_cache()
         count_rows = result[0]["count"]
         sample_size = _num_target_rows_to_rows_to_sample(target_rows)
         proportion = sample_size / count_rows
@@ -78,7 +78,7 @@ def estimate_u_values(linker: Linker, target_rows):
         training_linker._enqueue_sql(sql, "__splink__df_concat_count")
         dataframe = training_linker._execute_sql_pipeline([nodes_with_tf])
         result = dataframe.as_record_dict()
-        dataframe.drop_table_from_database()
+        dataframe.drop_table_from_database_and_remove_from_cache()
         frame_counts = [res["count"] for res in result]
         # total valid links is sum of pairwise product of individual row counts
         count_rows = (
@@ -134,8 +134,8 @@ def estimate_u_values(linker: Linker, target_rows):
 
     param_records = df_params.as_pandas_dataframe()
     param_records = compute_proportions_for_new_parameters(param_records)
-    df_params.drop_table_from_database()
-    df_sample.drop_table_from_database()
+    df_params.drop_table_from_database_and_remove_from_cache()
+    df_sample.drop_table_from_database_and_remove_from_cache()
 
     m_u_records = [
         r

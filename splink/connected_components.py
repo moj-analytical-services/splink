@@ -502,7 +502,7 @@ def solve_connected_components(
 
         representatives = linker._execute_sql_pipeline([neighbours])
         # Update table reference
-        prev_representatives_table.drop_table_from_database()
+        prev_representatives_table.drop_table_from_database_and_remove_from_cache()
         prev_representatives_table = representatives
 
         # Check if our exit condition has been met...
@@ -515,7 +515,7 @@ def solve_connected_components(
         )
 
         root_rows = root_rows_df.as_record_dict()
-        root_rows_df.drop_table_from_database()
+        root_rows_df.drop_table_from_database_and_remove_from_cache()
         root_rows = root_rows[0]["count"]
         logger.info(f"Completed iteration {iteration}, root rows count {root_rows}")
         end_time = time.time()

@@ -83,7 +83,7 @@ def test_u_train_link_only():
     )
 
     result = self_table_count.as_record_dict()
-    self_table_count.drop_table_from_database()
+    self_table_count.drop_table_from_database_and_remove_from_cache()
     assert result[0]["count"] == 0
 
     denom = 6 * 7  # only l <-> r candidate links
@@ -132,7 +132,7 @@ def test_u_train_link_only_sample():
 
     result = self_table_count.as_record_dict()
 
-    self_table_count.drop_table_from_database()
+    self_table_count.drop_table_from_database_and_remove_from_cache()
     target_rows_proportion = result[0]["count"] / target_rows
     # equality only holds probabilistically
     # chance of failure is approximately 1e-06
@@ -193,7 +193,7 @@ def test_u_train_multilink():
     )
 
     result = self_table_count.as_record_dict()
-    self_table_count.drop_table_from_database()
+    self_table_count.drop_table_from_database_and_remove_from_cache()
     assert result[0]["count"] == 0
 
     denom = expected_total_links
@@ -225,7 +225,7 @@ def test_u_train_multilink():
     )
 
     result = self_table_count.as_record_dict()
-    self_table_count.drop_table_from_database()
+    self_table_count.drop_table_from_database_and_remove_from_cache()
     assert result[0]["count"] == (2 * 1 / 2 + 3 * 2 / 2 + 4 * 3 / 2 + 7 * 6 / 2)
 
     denom = expected_total_links_with_dedupes

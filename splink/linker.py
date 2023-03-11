@@ -525,7 +525,7 @@ class Linker:
         elif output_type == "pandas":
             out = splink_dataframe.as_pandas_dataframe()
             # If pandas, drop the table to cleanup the db
-            splink_dataframe.drop_table_from_database()
+            splink_dataframe.drop_table_from_database_and_remove_from_cache()
             return out
         else:
             raise ValueError(
