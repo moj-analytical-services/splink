@@ -57,17 +57,16 @@ class SplinkDataFrame:
             f"physical name {self.physical_name}"
         )
 
-    def _drop_table_from_database_backend_specific(self, force_non_splink_table=False):
+    def _drop_table_from_database(self, force_non_splink_table=False):
         raise NotImplementedError(
-            "_drop_table_from_database_backend_specific from database not "
-            "implemented for this linker"
+            "_drop_table_from_database from database not " "implemented for this linker"
         )
 
-    def drop_table_from_database(self, force_non_splink_table=False):
+    def drop_table_from_database_and_remove_from_cache(
+        self, force_non_splink_table=False
+    ):
         self.linker._remove_splinkdataframe_from_cache(self)
-        self._drop_table_from_database_backend_specific(
-            force_non_splink_table=force_non_splink_table
-        )
+        self._drop_table_from_database(force_non_splink_table=force_non_splink_table)
 
     def as_record_dict(self, limit=None):
         raise NotImplementedError("as_record_dict not implemented for this linker")
