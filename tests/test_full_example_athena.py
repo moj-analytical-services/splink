@@ -8,6 +8,9 @@ from linker_utils import _test_table_registration
 
 from splink.athena.athena_comparison_library import levenshtein_at_thresholds
 
+from .basic_settings import get_settings_dict
+from .linker_utils import _test_table_registration
+
 skip = False
 try:
     import awswrangler as wr
@@ -76,7 +79,7 @@ def test_full_example_athena(tmp_path):
 
     # creates a session at least on the platform...
     my_session = boto3.Session(region_name="eu-west-1")
-    
+
     # Upload our raw data
     upload_data(db_name_read)
 
@@ -91,9 +94,9 @@ def test_full_example_athena(tmp_path):
 
     linker.profile_columns(
         [
-            "first_name", 
-            "surname", 
-            "first_name || surname", 
+            "first_name",
+            "surname",
+            "first_name || surname",
             "concat(city, first_name)",
             ["surname", "city"],
         ]
@@ -127,7 +130,7 @@ def test_full_example_athena(tmp_path):
     linker.unlinkables_chart(source_dataset="Testing")
 
     _test_table_registration(linker, skip_dtypes=True)
-    
+
     # Clean up our database and s3 bucket and remove test files
     linker.drop_all_tables_created_by_splink(delete_s3_folders=True)
     linker.drop_splink_tables_from_database(database_name=db_name_read)
@@ -138,10 +141,10 @@ def test_athena_garbage_collection():
     # creates a session at least on the platform...
     my_session = boto3.Session(region_name="eu-west-1")
     upload_data(db_name_read)
-    
+
     out_fp = "athena_test_garbage_collection"
 
-    # Test that our 
+    # Test that our
     linker = AthenaLinker(
         settings_dict=settings_dict,
         input_table_or_tables=f"{db_name_read}.{table_name}",
@@ -150,21 +153,21 @@ def test_athena_garbage_collection():
         output_database=db_name_write,
         output_filepath=out_fp,
     )
-    
+
     path = f"s3://{output_bucket}/{out_fp}/{linker._cache_uid}"
 
     linker.profile_columns(
         [
-            "first_name", 
-            "surname", 
-            "first_name || surname", 
+            "first_name",
+            "surname",
+            "first_name || surname",
             "concat(city, first_name)",
             ["surname", "city"],
         ]
     )
-    
+
     predict = linker.predict()
-    
+
     linker.drop_all_tables_created_by_splink(tables_to_exclude=predict)
 
     # Check everything gets cleaned up excl. predict
@@ -182,15 +185,15 @@ def test_athena_garbage_collection():
         ignore_empty=True,
     )
     assert len(files) > 0  # snappy, so n >= 1 parquet files created
-    
+
     folder_exists = wr.s3.list_directories(
         path,
     )
     assert len(folder_exists) == 1  # check that only the predict table is saved
-    
+
     # Now drop *everything*
     linker.drop_all_tables_created_by_splink()
-    
+
     # Does predict exist?
     tables = wr.catalog.get_tables(
         database=db_name_write,
@@ -248,6 +251,6 @@ def test_athena_link_only():
 
     df_predict = linker.predict()
     df_predict.as_pandas_dataframe()
-    
+
     # Clean up
     linker.drop_all_tables_created_by_splink(delete_s3_folders=True)
