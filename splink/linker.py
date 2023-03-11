@@ -6,7 +6,7 @@ import logging
 import os
 import warnings
 from collections import UserDict
-from copy import Error, copy, deepcopy
+from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
 
@@ -433,7 +433,7 @@ class Linker:
                     materialise_as_hash,
                     use_cache,
                 )
-            except Error as e:
+            except Exception as e:
                 raise e
             finally:
                 self._pipeline.reset()
