@@ -1,4 +1,5 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
