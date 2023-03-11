@@ -7,9 +7,14 @@ import pyarrow.parquet as pq
 import pytest
 
 import splink.duckdb.duckdb_comparison_level_library as cll
-import splink.duckdb.duckdb_comparison_library as cl
+from splink.duckdb.duckdb_comparison_library import (
+    exact_match,
+    jaccard_at_thresholds,
+    jaro_winkler_at_thresholds,
+)
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
+from .basic_settings import get_settings_dict, name_comparison
 from .basic_settings import get_settings_dict, name_comparison
 from .linker_utils import _test_table_registration, register_roc_data
 
@@ -20,8 +25,8 @@ def test_full_example_duckdb(tmp_path):
     settings_dict = get_settings_dict()
 
     # Overwrite the surname comparison to include duck-db specific syntax
-    settings_dict["comparisons"][0] = cl.jaro_winkler_at_thresholds("first_name")
-    settings_dict["comparisons"][1] = cl.jaccard_at_thresholds("SUR name")
+    settings_dict["comparisons"][0] = jaro_winkler_at_thresholds("first_name")
+    settings_dict["comparisons"][1] = jaccard_at_thresholds("SUR name")
     settings_dict["comparisons"].append(name_comparison(cll, "SUR name"))
     settings_dict["blocking_rules_to_generate_predictions"] = [
         'l."SUR name" = r."SUR name"',
