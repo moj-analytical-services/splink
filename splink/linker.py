@@ -1,89 +1,84 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
+import os
+import warnings
 from collections import UserDict
 from copy import Error, copy, deepcopy
+from pathlib import Path
 from statistics import median
-import hashlib
-import os
-import json
 
-from splink.input_column import InputColumn
+from splink.input_column import InputColumn, remove_quotes_from_identifiers
 
-from .charts import (
-    match_weights_histogram,
-    missingness_chart,
-    completeness_chart,
-    precision_recall_chart,
-    roc_chart,
-    parameter_estimate_comparisons,
-    waterfall_chart,
-    unlinkables_chart,
-    cumulative_blocking_rule_comparisons_generated,
-)
-
-from .blocking import block_using_rules_sql, BlockingRule
-from .comparison_vector_values import compute_comparison_vector_values_sql
-from .em_training_session import EMTrainingSession
-from .misc import bayes_factor_to_prob, prob_to_bayes_factor, ensure_is_list, ascii_uid
-from .predict import predict_from_comparison_vectors_sqls
-from .settings import Settings
-from .term_frequencies import (
-    compute_all_term_frequencies_sqls,
-    term_frequencies_for_single_column_sql,
-    colname_to_tf_tablename,
-    _join_tf_to_input_df_sql,
-    compute_term_frequencies_from_concat_with_tf,
-)
-from .profile_data import profile_columns
-from .missingness import missingness_data, completeness_data
-from .unlinkables import unlinkables_data
-
-from .m_training import estimate_m_values_from_label_column
-from .estimate_u import estimate_u_values
-from .pipeline import SQLPipeline
-
-from .vertically_concatenate import vertically_concatenate_sql
-from .m_from_labels import estimate_m_from_pairwise_labels
 from .accuracy import (
-    truth_space_table_from_labels_table,
-    prediction_errors_from_labels_table,
     prediction_errors_from_label_column,
+    prediction_errors_from_labels_table,
     truth_space_table_from_labels_column,
-)
-
-from .match_weights_histogram import histogram_data
-from .comparison_vector_distribution import comparison_vector_distribution_sql
-from .splink_comparison_viewer import (
-    comparison_viewer_table_sqls,
-    render_splink_comparison_viewer_html,
+    truth_space_table_from_labels_table,
 )
 from .analyse_blocking import (
-    number_of_comparisons_generated_by_blocking_rule_sql,
     cumulative_comparisons_generated_by_blocking_rules,
+    number_of_comparisons_generated_by_blocking_rule_sql,
 )
-
-from .splink_dataframe import SplinkDataFrame
-
+from .blocking import BlockingRule, block_using_rules_sql
+from .charts import (
+    completeness_chart,
+    cumulative_blocking_rule_comparisons_generated,
+    match_weights_histogram,
+    missingness_chart,
+    parameter_estimate_comparisons,
+    precision_recall_chart,
+    roc_chart,
+    unlinkables_chart,
+    waterfall_chart,
+)
+from .cluster_studio import render_splink_cluster_studio_html
+from .comparison import Comparison
+from .comparison_level import ComparisonLevel
+from .comparison_vector_distribution import comparison_vector_distribution_sql
+from .comparison_vector_values import compute_comparison_vector_values_sql
 from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,
 )
-
-from .unique_id_concat import (
-    _composite_unique_id_from_edges_sql,
-)
-
-from .cluster_studio import render_splink_cluster_studio_html
-
-from .comparison_level import ComparisonLevel
-from .comparison import Comparison
-
+from .em_training_session import EMTrainingSession
+from .estimate_u import estimate_u_values
+from .m_from_labels import estimate_m_from_pairwise_labels
+from .m_training import estimate_m_values_from_label_column
 from .match_key_analysis import (
     count_num_comparisons_from_blocking_rules_for_prediction_sql,
 )
+from .match_weights_histogram import histogram_data
+from .misc import ascii_uid, bayes_factor_to_prob, ensure_is_list, prob_to_bayes_factor
+from .missingness import completeness_data, missingness_data
+from .pipeline import SQLPipeline
+from .predict import predict_from_comparison_vectors_sqls
+from .profile_data import profile_columns
+from .settings import Settings
+from .splink_comparison_viewer import (
+    comparison_viewer_table_sqls,
+    render_splink_comparison_viewer_html,
+)
+from .splink_dataframe import SplinkDataFrame
+from .term_frequencies import (
+    _join_tf_to_input_df_sql,
+    colname_to_tf_tablename,
+    compute_all_term_frequencies_sqls,
+    compute_term_frequencies_from_concat_with_tf,
+    term_frequencies_for_single_column_sql,
+    term_frequencies_from_concat_with_tf,
+)
+from .unique_id_concat import (
+    _composite_unique_id_from_edges_sql,
+)
+from .unlinkables import unlinkables_data
+from .vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
+
+warnings.simplefilter("always", DeprecationWarning)
 
 
 class CacheDictWithLogging(UserDict):
@@ -156,7 +151,7 @@ class Linker:
                 dataframes (Pandas and Spark respectively) rather than strings.
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
-                `linker.initialise_settings()` Defaults to None.
+                `linker.load_settings()` Defaults to None.
             set_up_basic_logging (bool, optional): If true, sets ups up basic logging
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
             input_table_aliases (Union[str, list], optional): Labels assigned to
@@ -174,30 +169,16 @@ class Linker:
 
         self._pipeline = SQLPipeline()
 
-        settings_dict = deepcopy(settings_dict)
-        self._settings_dict = settings_dict
-
-        # if settings_dict is passed, set sql_dialect on it if missing, and make sure
-        # incompatible dialect not passed
-        if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
-            settings_dict["sql_dialect"] = self._sql_dialect
-
-        if settings_dict is None:
-            self._cache_uid_no_settings = ascii_uid(8)
-        else:
-            uid = settings_dict.get("linker_uid", ascii_uid(8))
-            settings_dict["linker_uid"] = uid
-
-        if settings_dict is None:
-            self._settings_obj_ = None
-        else:
-            self._settings_obj_ = Settings(settings_dict)
-
-            self._validate_dialect()
-
         self._input_tables_dict = self._get_input_tables_dict(
             input_table_or_tables, input_table_aliases
         )
+
+        if not isinstance(settings_dict, (dict, type(None))):
+            self._setup_settings_objs(None)  # feed it a blank settings dictionary
+            self.load_settings(settings_dict)
+        else:
+            settings_dict = deepcopy(settings_dict)
+            self._setup_settings_objs(settings_dict)
 
         self._validate_input_dfs()
         self._em_training_sessions = []
@@ -234,8 +215,8 @@ class Linker:
             raise ValueError(
                 "You did not provide a settings dictionary when you "
                 "created the linker.  To continue, you need to provide a settings "
-                "dictionary using the `initialise_settings()` method on your linker "
-                "object. i.e. linker.initialise_settings(settings_dict)"
+                "dictionary using the `load_settings()` method on your linker "
+                "object. i.e. linker.load_settings(settings_dict)"
             )
         return self._settings_obj_
 
@@ -324,6 +305,28 @@ class Linker:
         raise NotImplementedError(
             f"infinity sql expression not available for {type(self)}"
         )
+
+    def _setup_settings_objs(self, settings_dict):
+        # Setup the linker class's required settings
+        self._settings_dict = settings_dict
+
+        # if settings_dict is passed, set sql_dialect on it if missing, and make sure
+        # incompatible dialect not passed
+        if settings_dict is not None and settings_dict.get("sql_dialect", None) is None:
+            settings_dict["sql_dialect"] = self._sql_dialect
+
+        if settings_dict is None:
+            self._cache_uid_no_settings = ascii_uid(8)
+        else:
+            uid = settings_dict.get("linker_uid", ascii_uid(8))
+            settings_dict["linker_uid"] = uid
+
+        if settings_dict is None:
+            self._settings_obj_ = None
+        else:
+            self._settings_obj_ = Settings(settings_dict)
+
+            self._validate_dialect()
 
     def _prepend_schema_to_table_name(self, table_name):
         if self._output_schema:
@@ -795,24 +798,93 @@ class Linker:
                 "Please re-run your linkage with it set to True."
             )
 
-    def initialise_settings(self, settings_dict: dict):
+    def load_settings(self, settings_dict: dict | str | Path):
         """Initialise settings for the linker.  To be used if settings were
-        not passed to the linker on creation.
+        not passed to the linker on creation. This can either be in the form
+        of a settings dictionary or a filepath to a json file containing a
+        valid settings dictionary.
 
         Examples:
             >>> linker = DuckDBLinker(df, connection=":memory:")
             >>> linker.profile_columns(["first_name", "surname"])
-            >>> linker.initialise_settings(settings_dict)
+            >>> linker.load_settings(settings_dict)
 
+            >>> linker.load_settings("my_settings.json")
+
+        Args:
+            settings_dict (dict | str | Path): A Splink settings dictionary or
+                the path to your settings json file.
+        """
+
+        if not isinstance(settings_dict, dict):
+            p = Path(settings_dict)
+            if not p.is_file():  # check if it's a valid file/filepath
+                raise ValueError(
+                    "The filepath you have provided is either not a valid file "
+                    "or doesn't exist along the path provided."
+                )
+            settings_dict = json.loads(p.read_text())
+
+        # If a uid already exists in your settings object, prioritise this
+        settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
+        settings_dict["sql_dialect"] = settings_dict.get(
+            "sql_dialect", self._sql_dialect
+        )
+        self._settings_dict = settings_dict
+        self._settings_obj_ = Settings(settings_dict)
+        self._validate_input_dfs()
+        self._validate_dialect()
+
+    def initialise_settings(self, settings_dict: dict):
+        """*This method is now deprecated. Please use `load_settings`
+        when loading existing settings or a pre-trained model.*
+
+        Initialise settings for the linker.  To be used if settings were
+        not passed to the linker on creation.
+        Examples:
+            >>> linker = DuckDBLinker(df, connection=":memory:")
+            >>> linker.profile_columns(["first_name", "surname"])
+            >>> linker.initialise_settings(settings_dict)
         Args:
             settings_dict (dict): A Splink settings dictionary
         """
         # If a uid already exists in your settings object, prioritise this
         settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
+        settings_dict["sql_dialect"] = settings_dict.get(
+            "sql_dialect", self._sql_dialect
+        )
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
         self._validate_dialect()
+
+        warnings.warn(
+            "`initialise_settings` is deprecated. We advise you use "
+            "`linker.load_settings()` when loading in your settings or a previously "
+            "trained model.",
+            DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
+        )
+
+    def load_settings_from_json(self, in_path: str | Path):
+        """*This method is now deprecated. Please use `load_settings`
+        when loading existing settings or a pre-trained model.*
+
+        Load settings from a `.json` file.
+        This `.json` file would usually be the output of
+        `linker.save_settings_to_json()`
+        Examples:
+            >>> linker.load_settings_from_json("my_settings.json")
+        Args:
+            in_path (str): Path to settings json file
+        """
+        self.load_settings(in_path)
+
+        warnings.warn(
+            "`load_settings_from_json` is deprecated. We advise you use "
+            "`linker.load_settings()` when loading in your settings or a previously "
+            "trained model.",
+            DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
+        )
 
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
         """Compute a term frequency table for a given column and persist to the database
@@ -824,7 +896,7 @@ class Linker:
         Examples:
             >>> # Example 1: Real time linkage
             >>> linker = DuckDBLinker(df, connection=":memory:")
-            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.load_settings("saved_settings.json")
             >>> linker.compute_tf_table("surname")
             >>> linker.compare_two_records(record_left, record_right)
 
@@ -847,9 +919,24 @@ class Linker:
         input_col = InputColumn(column_name, settings_obj=self._settings_obj)
         tf_tablename = colname_to_tf_tablename(input_col)
         cache = self._intermediate_table_cache
+        concat_tf_tables = [
+            remove_quotes_from_identifiers(tf_col.input_name_as_tree).sql()
+            for tf_col in self._settings_obj._term_frequency_columns
+        ]
 
         if tf_tablename in cache:
             tf_df = cache[tf_tablename]
+        elif "__splink__df_concat_with_tf" in cache and column_name in concat_tf_tables:
+            self._pipeline.reset()
+            # If our df_concat_with_tf table already exists, use backwards inference to
+            # find a given tf table
+            colname = InputColumn(column_name)
+            sql = term_frequencies_from_concat_with_tf(colname)
+            self._enqueue_sql(sql, colname_to_tf_tablename(colname))
+            tf_df = self._execute_sql_pipeline(
+                [cache["__splink__df_concat_with_tf"]], materialise_as_hash=True
+            )
+            self._intermediate_table_cache[tf_tablename] = tf_df
         else:
             # Clear the pipeline if we are materialising
             self._pipeline.reset()
@@ -1143,7 +1230,7 @@ class Linker:
 
         Examples:
             >>> linker = DuckDBLinker(df, connection=":memory:")
-            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.load_settings("saved_settings.json")
             >>> df = linker.predict(threshold_match_probability=0.95)
             >>> df.as_pandas_dataframe(limit=5)
 
@@ -1154,8 +1241,9 @@ class Linker:
 
         """
 
-        # If the user only calls predict, it runs as a single pipeline with no
-        # materialisation of anything.
+        # If materialise_after_computing_term_frequencies=False and the user only
+        # calls predict, it runs as a single pipeline with no materialisation
+        # of anything.
 
         # _initialise_df_concat_with_tf returns None if the table doesn't exist
         # and only SQL is queued in this step.
@@ -1217,7 +1305,7 @@ class Linker:
 
         Examples:
             >>> linker = DuckDBLinker(df)
-            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.load_settings("saved_settings.json")
             >>> # Pre-compute tf tables for any tables with
             >>> # term frequency adjustments
             >>> linker.compute_tf_table("first_name")
@@ -1251,8 +1339,8 @@ class Linker:
 
         cache = self._intermediate_table_cache
         input_dfs = []
-        # If our df_concat_with_tf table already exists, use backwards induction to
-        # find  all underlying term frequency tables.
+        # If our df_concat_with_tf table already exists, use backwards inference to
+        # find all underlying term frequency tables.
         if "__splink__df_concat_with_tf" in cache:
             concat_with_tf = cache["__splink__df_concat_with_tf"]
             tf_tables = compute_term_frequencies_from_concat_with_tf(self)
@@ -1330,7 +1418,7 @@ class Linker:
 
         Examples:
             >>> linker = DuckDBLinker(df)
-            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.load_settings("saved_settings.json")
             >>> linker.compare_two_records(record_left, record_right)
 
         Returns:
@@ -2003,7 +2091,7 @@ class Linker:
             >>> # and run this against the test data.
             >>> df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
             >>> linker = DuckDBLinker(df)
-            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.load_settings("saved_settings.json")
             >>> linker.unlinkables_chart()
             >>>
             >>> # For more complex code pipelines, you can run an entire pipeline
@@ -2295,7 +2383,7 @@ class Linker:
 
         Examples:
             >>> linker = DuckDBLinker(df, connection=":memory:")
-            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.load_settings("saved_settings.json")
             >>> df_predict = linker.predict(threshold_match_probability=0.95)
             >>> count_pairwise = linker.count_num_comparisons_from_blocking_rules_for_prediction(df_predict)
             >>> count_pairwise.as_pandas_dataframe(limit=5)
@@ -2430,7 +2518,7 @@ class Linker:
     ) -> dict:
         """Save the configuration and parameters of the linkage model to a `.json` file.
 
-        The model can later be loaded back in using `linker.load_settings_from_json()`.
+        The model can later be loaded back in using `linker.load_settings()`.
         The settings dict is also returned in case you want to save it a different way.
 
         Examples:
@@ -2454,22 +2542,6 @@ class Linker:
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(model_dict, f, indent=4)
         return model_dict
-
-    def load_settings_from_json(self, in_path: str):
-        """Load settings from a `.json` file.
-
-        This `.json` file would usually be the output of
-        `linker.save_settings_to_json()`
-
-        Examples:
-            >>> linker.load_settings_from_json("my_settings.json")
-
-        Args:
-            in_path (str): Path to settings json file
-        """
-        with open(in_path) as f:
-            model_dict = json.load(f)
-        self.initialise_settings(model_dict)
 
     def estimate_probability_two_random_records_match(
         self, deterministic_matching_rules, recall

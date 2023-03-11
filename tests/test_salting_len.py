@@ -1,8 +1,7 @@
 import pytest
 
-from tests.basic_settings import get_settings_dict
-
 from splink.spark.spark_linker import SparkLinker
+from tests.basic_settings import get_settings_dict
 
 
 def check_same_ids(df1, df2, unique_id_col="unique_id"):

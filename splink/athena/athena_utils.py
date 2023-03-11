@@ -1,6 +1,7 @@
-import os
-import boto3
 import datetime
+import os
+
+import boto3
 
 
 def create_session_id():

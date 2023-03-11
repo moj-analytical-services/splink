@@ -1,4 +1,5 @@
 from copy import deepcopy
+
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 
 first_name_cc = {

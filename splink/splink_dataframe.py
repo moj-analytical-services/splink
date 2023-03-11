@@ -1,11 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
 import logging
-
-
-# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
-if TYPE_CHECKING:
-    from .linker import Linker
 
 logger = logging.getLogger(__name__)
 

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from .comparison import Comparison
-from .misc import ensure_is_iterable
 from .comparison_library_utils import datediff_error_logger
+from .misc import ensure_is_iterable
 
 
 class ExactMatchBase(Comparison):

@@ -1,26 +1,25 @@
 from __future__ import annotations
 
 import logging
-import sqlglot
-import re
-import os
 import math
+import os
+import re
+from itertools import compress
 
 import pandas as pd
-
-
+import sqlglot
+from pyspark.sql.dataframe import DataFrame as spark_df
 from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql.utils import AnalysisException
 
+from ..databricks.enable_splink import enable_splink
+from ..input_column import InputColumn
 from ..linker import Linker
+from ..logging_messages import execute_sql_logging_message_info, log_sql
+from ..misc import ensure_is_list, major_minor_version_greater_equal_than
 from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
-from ..logging_messages import execute_sql_logging_message_info, log_sql
-from ..misc import ensure_is_list
-from ..input_column import InputColumn
 from .custom_spark_dialect import Dialect
-from ..databricks.enable_splink import enable_splink
-from ..misc import major_minor_version_greater_equal_than
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +96,7 @@ class SparkLinker(Linker):
                 registered in the Spark catalog
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
-                `linker.initialise_settings()` Defaults to None.
+                `linker.load_settings()` Defaults to None.
             break_lineage_method (str, optional): Method to use to cache intermediate
                 results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files",
                 "delta_lake_table". Defaults to "parquet".
@@ -149,7 +148,7 @@ class SparkLinker(Linker):
                 alias = f"__splink__input_table_{i}"
 
             if type(table).__name__ == "DataFrame":
-                table.createOrReplaceTempView(alias)
+                self.register_table(table, alias)
                 table = alias
 
             homogenised_tables.append(table)
@@ -173,16 +172,19 @@ class SparkLinker(Linker):
     def _get_spark_from_input_tables_if_not_provided(self, spark, input_tables):
         self.spark = spark
         if spark is None:
-            for t in input_tables:
-                if type(t).__name__ == "DataFrame":
+            # Ensure at least one of the input dataframes is a spark df
+            spark_inputs = [isinstance(d, spark_df) for d in input_tables]
+            if any(spark_inputs):
+                for t in list(compress(input_tables, spark_inputs)):
                     # t.sparkSession can be used only from spark 3.3.0 onwards
                     self.spark = t.sql_ctx.sparkSession
                     break
+
         if self.spark is None:
             raise ValueError(
-                "If input_table_or_tables are strings rather than "
+                "If input_table_or_tables are strings or pandas dataframes rather than "
                 "Spark dataframes, you must pass in the spark session using the spark="
-                " argument when you initialise the linker"
+                " argument when you initialise the linker."
             )
 
     def _set_catalog_and_database_if_not_provided(self, catalog, database):
@@ -282,11 +284,6 @@ class SparkLinker(Linker):
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
-
-    def initialise_settings(self, settings_dict: dict):
-        if "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "spark"
-        super().initialise_settings(settings_dict)
 
     def _repartition_if_needed(self, spark_df, templated_name):
         # Repartitioning has two effects:

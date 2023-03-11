@@ -1,11 +1,11 @@
+import itertools
+import json
 import random
 import string
-from math import log2, inf
+from math import inf, log2
 from typing import Iterable
+
 import numpy as np
-import json
-from string import ascii_lowercase
-import itertools
 import pkg_resources
 
 
@@ -86,7 +86,7 @@ def all_letter_combos(n):
 
     combos = []
     for size in itertools.count(1):
-        for s in itertools.product(ascii_lowercase, repeat=size):
+        for s in itertools.product(string.ascii_lowercase, repeat=size):
             combos.append("".join(s))
             if len(combos) >= n:
                 return combos
@@ -146,11 +146,11 @@ def calculate_reduction_ratio(N, cartesian):
 def _check_dependency_installed(module):
     try:
         pkg_resources.get_distribution(module)
-    except pkg_resources.DistributionNotFound:
+    except pkg_resources.DistributionNotFound as e:
         raise ValueError(
             f"{module} is not installed.",
             "Please install and import it before continuing.",
-        )
+        ) from e
 
 
 def major_minor_version_greater_equal_than(this_version, base_comparison_version):

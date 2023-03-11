@@ -1,10 +1,10 @@
-import os
 import json
+import os
 
-import pandas as pd
-from pandas import json_normalize
 import altair as alt
 import lzstring
+import pandas as pd
+from pandas import json_normalize
 
 
 def append_output_to_timeseries(base_path="benchmarking"):

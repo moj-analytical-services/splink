@@ -1,16 +1,16 @@
 import os
 
-from splink.spark.spark_linker import SparkLinker
+from basic_settings import get_settings_dict
+from linker_utils import _test_table_registration, register_roc_data
+from pyspark.sql.functions import array
+from pyspark.sql.types import StringType, StructField, StructType
+
 import splink.spark.spark_comparison_library as cl
 from splink.spark.spark_comparison_level_library import (
     array_intersect_level,
     else_level,
 )
-
-from pyspark.sql.functions import array
-from pyspark.sql.types import StructType, StructField, StringType
-from basic_settings import get_settings_dict
-from linker_utils import _test_table_registration, register_roc_data
+from splink.spark.spark_linker import SparkLinker
 
 
 def test_full_example_spark(df_spark, tmp_path):
@@ -119,4 +119,14 @@ def test_full_example_spark(df_spark, tmp_path):
 
     linker.find_matches_to_new_records(
         [record], blocking_rules=[], match_weight_threshold=-10000
+    )
+
+    # Test differing inputs are accepted
+    settings["link_type"] = "link_only"
+
+    linker = SparkLinker(
+        [df_spark, df_spark.toPandas()],
+        settings,
+        break_lineage_method="checkpoint",
+        num_partitions_on_repartition=2,
     )

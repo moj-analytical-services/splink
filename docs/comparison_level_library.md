@@ -8,6 +8,19 @@ tags:
 ---
 # Documentation for `comparison_level_library` 
 
+The `comparison_level_library` contains pre-made comparison levels available for use to
+construct custom comparisons [as described in this topic guide](../topic_guides/customising_comparisons.html#method-2-comparisonlevels).
+However, not every comparison level is available for every [Splink-compatible SQL backend](../topic_guides/backends.html).
+
+The pre-made Splink comparison levels available for each SQL dialect are as given in this table:
+
+{%
+  include-markdown "./includes/generated_files/comparison_level_library_dialect_table.md"
+%}
+
+The detailed API for each of these are outlined below.
+
+## Library comparison level APIs
 
 ::: splink.comparison_level_library.NullLevelBase
     handler: python
@@ -45,7 +58,6 @@ tags:
 
 ---
 
-
 ::: splink.comparison_level_library.DistanceFunctionLevelBase
     handler: python
     selection:
@@ -55,7 +67,6 @@ tags:
       show_root_heading: true
       show_source: false
       heading_level: 1
-      
 
 ---
 
@@ -71,7 +82,6 @@ tags:
 
 ---
 
-
 ::: splink.comparison_level_library.JaroWinklerLevelBase
     handler: python
     selection:
@@ -81,8 +91,8 @@ tags:
       show_root_heading: true
       show_source: false
       heading_level: 1
- 
 
+---
 
 ::: splink.comparison_level_library.JaccardLevelBase
     handler: python
@@ -94,7 +104,7 @@ tags:
       show_source: false
       heading_level: 1
 
-
+---
 
 ::: splink.comparison_level_library.ColumnsReversedLevelBase
     handler: python
@@ -106,7 +116,7 @@ tags:
       show_source: false
       heading_level: 1
 
-
+---
 
 ::: splink.comparison_level_library.DistanceInKMLevelBase
     handler: python
@@ -118,6 +128,7 @@ tags:
       show_source: false
       heading_level: 1    
 
+---
 
 ::: splink.comparison_level_library.PercentageDifferenceLevelBase
     handler: python
@@ -128,7 +139,9 @@ tags:
       show_root_heading: true
       show_source: false
       heading_level: 1   
-      
+
+---
+
 ::: splink.comparison_level_library.ArrayIntersectLevelBase
     handler: python
     selection:
@@ -137,4 +150,16 @@ tags:
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1   
+      heading_level: 1
+
+---
+
+::: splink.comparison_level_library.DateDiffLevelBase
+    handler: python
+    selection:
+      members:
+        -  __init__
+    rendering:
+      show_root_heading: true
+      show_source: false
+      heading_level: 1

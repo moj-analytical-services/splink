@@ -1,12 +1,11 @@
 import os
-from unittest.mock import patch, create_autospec
+from unittest.mock import create_autospec, patch
 
 import pandas as pd
 import pytest
 
 from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
 from splink.linker import SplinkDataFrame
-
 from tests.basic_settings import get_settings_dict
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -37,7 +36,7 @@ def test_cache_id(tmp_path):
     linker.save_settings_to_json(path, overwrite=True)
 
     linker_2 = DuckDBLinker(df, connection=":memory:")
-    linker_2.load_settings_from_json(path)
+    linker_2.load_settings(path)
 
     assert linker_2._settings_obj._cache_uid == prior
 
@@ -47,7 +46,7 @@ def test_cache_id(tmp_path):
     )
     prior = linker._cache_uid
 
-    linker.initialise_settings(get_settings_dict())
+    linker.load_settings(get_settings_dict())
     assert prior == linker._cache_uid
 
     # Test uid from settings
@@ -85,6 +84,10 @@ def test_materialising_works():
     linker._initialise_df_concat_with_tf(materialise=False)
     linker.compute_tf_table("first_name")
 
+    linker = DuckDBLinker(df, settings)
+    linker._initialise_df_concat_with_tf(materialise=True)
+    linker.compute_tf_table("first_name")
+
 
 def test_cache_only_splink_dataframes():
     settings = get_settings_dict()
@@ -98,7 +101,7 @@ def test_cache_only_splink_dataframes():
     except TypeError:
         # error is raised, but need to check it hasn't made it to the cache
         pass
-    for name, table in linker._intermediate_table_cache.items():
+    for _, table in linker._intermediate_table_cache.items():
         assert isinstance(table, SplinkDataFrame)
 
 

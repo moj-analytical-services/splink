@@ -1,20 +1,19 @@
 from ..comparison_library import (
-    ExactMatchBase,
-    DistanceFunctionAtThresholdsComparisonBase,
-    LevenshteinAtThresholdsComparisonBase,
     ArrayIntersectAtSizesComparisonBase,
+    DistanceFunctionAtThresholdsComparisonBase,
+    ExactMatchBase,
+    LevenshteinAtThresholdsComparisonBase,
 )
-
 from .athena_base import (
     AthenaBase,
 )
 from .athena_comparison_level_library import (
-    exact_match_level,
-    null_level,
-    else_level,
-    distance_function_level,
-    levenshtein_level,
     array_intersect_level,
+    distance_function_level,
+    else_level,
+    exact_match_level,
+    levenshtein_level,
+    null_level,
 )
 
 

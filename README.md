@@ -1,5 +1,3 @@
-[![VoteSplink](https://user-images.githubusercontent.com/7570107/214026201-80f647dd-54a3-45e8-bb58-e388c220e94e.png)](https://www.smartsurvey.co.uk/s/80C7VA/)
-
 ![image](https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png)
 [![pypi](https://img.shields.io/github/v/release/moj-analytical-services/splink?include_prereleases)](https://pypi.org/project/splink/#history)
 [![Downloads](https://pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
@@ -148,20 +146,25 @@ clusters.as_pandas_dataframe(limit=5)
 
 🥇 MoJ DASD Awards 2020: Innovation and Impact - Winner
 
-🥈 Analysis in Government Awards 2023: Innovative Methods [Runner up](https://twitter.com/gov_analysis/status/1616073633692274689?s=20&t=6TQyNLJRjnhsfJy28Zd6UQ)
+🥇 Analysis in Government Awards 2022: People's Choice Award - [Winner](https://analysisfunction.civilservice.gov.uk/news/announcing-the-winner-of-the-first-analysis-in-government-peoples-choice-award/)
+
+🥈 Analysis in Government Awards 2022: Innovative Methods [Runner up](https://twitter.com/gov_analysis/status/1616073633692274689?s=20&t=6TQyNLJRjnhsfJy28Zd6UQ)
 
 ## Citation
 
-If you use Splink in your research, we'd be grateful for a citation in the following format (modify the version and date accordingly).
+If you use Splink in your research, we'd be grateful for a citation as follows:
 
-```
-@misc{ministry_of_justice_2023_splink,
-  author       = {Ministry of Justice},
-  title        = {Splink: v3.5.4},
-  month        = jan,
-  year         = 2023,
-  version      = {3.5.4},
-  url          = {http://github.com/moj-analytical-services/splink}
+```BibTeX
+@article{Linacre_Lindsay_Manassis_Slade_Hepworth_2022,
+	title        = {Splink: Free software for probabilistic record linkage at scale.},
+	author       = {Linacre, Robin and Lindsay, Sam and Manassis, Theodore and Slade, Zoe and Hepworth, Tom},
+	year         = 2022,
+	month        = {Aug.},
+	journal      = {International Journal of Population Data Science},
+	volume       = 7,
+	number       = 3,
+	doi          = {10.23889/ijpds.v7i3.1794},
+	url          = {https://ijpds.org/article/view/1794},
 }
 ```
 

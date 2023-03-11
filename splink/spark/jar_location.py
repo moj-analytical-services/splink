@@ -1,7 +1,8 @@
 def similarity_jar_location():
-    import splink
     import pyspark as spark
     from packaging import version
+
+    import splink
 
     if version.parse(spark.__version__) >= version.parse("3.0"):
         path = (
