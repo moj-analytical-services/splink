@@ -1,7 +1,13 @@
 from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING
 
 logger = logging.getLogger(__name__)
+
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
 
 class SplinkDataFrame:
@@ -12,7 +18,7 @@ class SplinkDataFrame:
     Uses methods like `as_pandas_dataframe()` and `as_record_dict()` to retrieve data
     """
 
-    def __init__(self, templated_name, physical_name, linker: Linker):
+    def __init__(self, templated_name: str, physical_name: str, linker: Linker):
         self.templated_name = templated_name
         self.physical_name = physical_name
         self.linker = linker
