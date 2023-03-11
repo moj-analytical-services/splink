@@ -5,8 +5,6 @@ import pyarrow as pa
 import pyarrow.csv as pa_csv
 import pyarrow.parquet as pq
 import pytest
-from basic_settings import get_settings_dict
-from linker_utils import _test_table_registration, register_roc_data
 
 from splink.duckdb.duckdb_comparison_library import (
     exact_match,
@@ -14,6 +12,9 @@ from splink.duckdb.duckdb_comparison_library import (
     jaro_winkler_at_thresholds,
 )
 from splink.duckdb.duckdb_linker import DuckDBLinker
+
+from .basic_settings import get_settings_dict
+from .linker_utils import _test_table_registration, register_roc_data
 
 
 def test_full_example_duckdb(tmp_path):

@@ -1,7 +1,5 @@
 import os
 
-from basic_settings import get_settings_dict
-from linker_utils import _test_table_registration, register_roc_data
 from pyspark.sql.functions import array
 from pyspark.sql.types import StringType, StructField, StructType
 
@@ -11,6 +9,9 @@ from splink.spark.spark_comparison_level_library import (
     else_level,
 )
 from splink.spark.spark_linker import SparkLinker
+
+from .basic_settings import get_settings_dict
+from .linker_utils import _test_table_registration, register_roc_data
 
 
 def test_full_example_spark(df_spark, tmp_path):

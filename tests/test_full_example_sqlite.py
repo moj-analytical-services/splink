@@ -2,14 +2,14 @@ import os
 import sqlite3
 
 import pandas as pd
-from basic_settings import get_settings_dict
-from linker_utils import _test_table_registration, register_roc_data
 
 from splink.sqlite.sqlite_linker import SQLiteLinker
 
+from .basic_settings import get_settings_dict
+from .linker_utils import _test_table_registration, register_roc_data
+
 
 def test_full_example_sqlite(tmp_path):
-
     from rapidfuzz.distance.Levenshtein import distance
 
     con = sqlite3.connect(":memory:")
@@ -65,7 +65,6 @@ def test_full_example_sqlite(tmp_path):
 
 
 def test_small_link_example_sqlite():
-
     from rapidfuzz.distance.Levenshtein import distance
 
     con = sqlite3.connect(":memory:")
