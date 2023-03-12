@@ -98,6 +98,7 @@ class datediff_at_thresholds(
 ):
     pass
 
+
 class distance_in_km_at_thresholds(
     SparkComparisonProperties, DistanceInKMAtThresholdsComparisonBase
 ):
