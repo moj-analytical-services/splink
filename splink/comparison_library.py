@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from .comparison import Comparison
-from .comparison_library_utils import datediff_error_logger
+from .comparison_library_utils import (
+    comparison_at_thresholds_error_logger,
+    datediff_error_logger,
+)
 from .misc import ensure_is_iterable
 
 
@@ -107,6 +110,9 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         if m_probability_or_probabilities_lev is None:
             m_probability_or_probabilities_lev = [None] * len(distance_thresholds)
         m_probabilities = ensure_is_iterable(m_probability_or_probabilities_lev)
+
+        # Validate user inputs
+        comparison_at_thresholds_error_logger("distance_function", distance_thresholds)
 
         comparison_levels = []
         comparison_levels.append(self._null_level(col_name))
@@ -474,6 +480,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         metrics = ensure_is_iterable(date_metrics)
 
         # Validate user inputs
+        comparison_at_thresholds_error_logger("datediff", date_thresholds)
         datediff_error_logger(thresholds, metrics)
 
         if m_probability_or_probabilities_sizes is None:
@@ -533,8 +540,6 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
         lat_col: str,
         long_col: str,
         km_thresholds: int | list = [1],
-        not_null: bool = False,
-        date_metrics: str | list = ["year"],
         include_exact_match_level=True,
         m_probability_exact_match=None,
         m_probability_or_probabilities_lev: float | list = None,
@@ -588,14 +593,7 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
         if m_probability_or_probabilities_lev is None:
             m_probability_or_probabilities_sizes = [None] * len(thresholds)
         m_probabilities = ensure_is_iterable(m_probability_or_probabilities_sizes)
-        """
-        # Validate user inputs
-        # datediff_error_logger(thresholds, metrics)
 
-        if m_probability_or_probabilities_sizes is None:
-            m_probability_or_probabilities_sizes = [None] * len(thresholds)
-        m_probabilities = ensure_is_iterable(m_probability_or_probabilities_sizes)
-        """
         comparison_levels = []
 
         null_level = {
