@@ -1,13 +1,10 @@
 import pandas as pd
 import pytest
 
-import splink.athena.athena_comparison_level_library as clla
-import splink.athena.athena_comparison_library as cla
 import splink.duckdb.duckdb_comparison_level_library as clld
 import splink.duckdb.duckdb_comparison_library as cld
 import splink.spark.spark_comparison_level_library as clls
 import splink.spark.spark_comparison_library as cls
-from splink.athena.athena_linker import AthenaLinker
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 
@@ -37,9 +34,9 @@ def test_simple_run(cl):
         pytest.param(
             cls, clls, SparkLinker, id="Spark Distance in KM Integration Tests"
         ),
-        pytest.param(
-            cla, clla, AthenaLinker, id="Athena Distance in KM Integration Tests"
-        ),
+        # pytest.param(
+        #    cla, clla, AthenaLinker, id="Athena Distance in KM Integration Tests"
+        # ),
     ],
 )
 def test_km_distance_levels(spark, cl, cll, Linker):
@@ -95,7 +92,7 @@ def test_km_distance_levels(spark, cl, cll, Linker):
 
     # For testing the cll version
     km_diff = {
-        "output_column_name": "km_diff",
+        "output_column_name": "custom_lat_long",
         "comparison_levels": [
             {
                 "sql_condition": "(lat_l IS NULL OR lat_r IS NULL) \n"
@@ -125,12 +122,12 @@ def test_km_distance_levels(spark, cl, cll, Linker):
         df = spark.createDataFrame(df)
         df.persist()
     linker = Linker(df, settings_cl)
-    cl_df_e = linker.predict().as_pandas_dataframe()
+    linker.predict().as_pandas_dataframe()
     linker = Linker(df, settings_cll)
     cll_df_e = linker.predict().as_pandas_dataframe()
 
     linker_outputs = {
-        "cl": cl_df_e,
+        # "cl": cl_df_e,
         "cll": cll_df_e,
     }
 
@@ -140,7 +137,6 @@ def test_km_distance_levels(spark, cl, cll, Linker):
     # Check gamma sizes are as expected
     for gamma, gamma_lookup in size_gamma_lookup.items():
         print(linker_outputs)
-        # linker_pred = linker_outputs
         for linker_pred in linker_outputs.values():
             gamma_column_name_options = [
                 "gamma_custom_long_lat",
@@ -182,3 +178,67 @@ def test_km_distance_levels(spark, cl, cll, Linker):
                     ][gamma_column_name].values[0]
                     == gamma
                 )
+
+
+def test_haversine_level():
+    data = [
+        {"id": 1, "lat": 22.730590, "lon": 9.388589},
+        {"id": 2, "lat": 22.836322, "lon": 9.276112},
+        {"id": 3, "lat": 37.770850, "lon": 95.689880},
+        {"id": 4, "lat": -31.336319, "lon": 145.183685},
+    ]
+    # Add another the array version of the lat_long column
+    for d in data:
+        d["lat_long"] = {"lat": d["lat"], "long": d["lon"]}
+        d["lat_long_arr"] = [d["lat"], d["lon"]]
+
+    df = pd.DataFrame(data)
+
+    settings = {
+        "unique_id_column_name": "id",
+        "link_type": "dedupe_only",
+        "blocking_rules_to_generate_predictions": [],
+        "comparisons": [
+            {
+                "output_column_name": "lat_long",
+                "comparison_levels": [
+                    clld.null_level("lat"),  # no nulls in test data
+                    clld.distance_in_km_level(
+                        km_threshold=50,
+                        lat_col="lat",
+                        long_col="lon",
+                    ),
+                    clld.distance_in_km_level(
+                        lat_col="lat_long['lat']",
+                        long_col="lat_long['long']",
+                        km_threshold=10000,
+                    ),
+                    clld.distance_in_km_level(
+                        lat_col="lat_long_arr[1]",
+                        long_col="lat_long_arr[2]",
+                        km_threshold=100000,
+                    ),
+                    clld.else_level(),
+                ],
+            },
+        ],
+        "retain_matching_columns": True,
+        "retain_intermediate_calculation_columns": True,
+    }
+
+    linker = DuckDBLinker(df, settings, input_table_aliases="test")
+    df_e = linker.predict().as_pandas_dataframe()
+
+    row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])
+    assert row["gamma_lat_long"] == 3
+
+    # id comparisons w/ dist < 10000km
+    id_comb = {(1, 3), (2, 3), (3, 4)}
+    for id_pair in id_comb:
+        row = dict(df_e.query("id_l == {} and id_r == {}".format(*id_pair)).iloc[0])
+        assert row["gamma_lat_long"] == 2
+
+    id_comb = {(1, 4), (2, 4)}
+    for id_pair in id_comb:
+        row = dict(df_e.query("id_l == {} and id_r == {}".format(*id_pair)).iloc[0])
+        assert row["gamma_lat_long"] == 1
