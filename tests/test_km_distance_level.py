@@ -34,9 +34,6 @@ def test_simple_run(cl):
         pytest.param(
             cls, clls, SparkLinker, id="Spark Distance in KM Integration Tests"
         ),
-        # pytest.param(
-        #    cla, clla, AthenaLinker, id="Athena Distance in KM Integration Tests"
-        # ),
     ],
 )
 def test_km_distance_levels(spark, cl, cll, Linker):
@@ -122,12 +119,12 @@ def test_km_distance_levels(spark, cl, cll, Linker):
         df = spark.createDataFrame(df)
         df.persist()
     linker = Linker(df, settings_cl)
-    linker.predict().as_pandas_dataframe()
+    cl_df_e = linker.predict().as_pandas_dataframe()
     linker = Linker(df, settings_cll)
     cll_df_e = linker.predict().as_pandas_dataframe()
 
     linker_outputs = {
-        # "cl": cl_df_e,
+        "cl": cl_df_e,
         "cll": cll_df_e,
     }
 
@@ -136,7 +133,6 @@ def test_km_distance_levels(spark, cl, cll, Linker):
 
     # Check gamma sizes are as expected
     for gamma, gamma_lookup in size_gamma_lookup.items():
-        print(linker_outputs)
         for linker_pred in linker_outputs.values():
             gamma_column_name_options = [
                 "gamma_custom_long_lat",
