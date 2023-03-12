@@ -6,6 +6,8 @@ from .comparison_library_utils import (
     datediff_error_logger,
 )
 from .misc import ensure_is_iterable
+from .input_column import InputColumn
+
 
 
 class ExactMatchBase(Comparison):
@@ -545,39 +547,29 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_else=None,
     ):
-        """A comparison of the data in the date column `col_name` with various
-        date thresholds and metrics to assess similarity levels.
+        """A comparison of the coordinates defined in 'lat_col' and
+        'long col' giving the haversine distance between them in km.
 
         An example of the output with default arguments and settings
-        `date_thresholds = [1]` and `date_metrics = ['day']` would be
-        - The two input dates are within 1 day of one another
-        - Anything else (i.e. all other dates lie outside this range)
-
-        `date_thresholds` and `date_metrics` should be used in conjunction
-        with one another.
-        For example, `date_thresholds = [10, 12, 15]` with
-        `date_metrics = ['day', 'month', 'year']` would result in the following checks:
-        - The two dates are within 10 days of one another
-        - The two dates are within 12 months of one another
-        - And the two dates are within 15 years of one another
+        `km_thresholds = [1]` would be
+        - The two coordinates within 1 km of one another
+        - Anything else (i.e.  the distance between all coordinate lie outside
+        this range)
 
         Args:
             col_name (str): The name of the date column to compare.
-            date_thresholds (Union[int, list], optional): The size(s) of given date
-                thresholds, to assess whether two dates fall within a given time
-                interval.
-                These values can be any integer value and should be used in tandem with
-                `date_metrics`.
-            date_metrics (Union[str, list], optional): The unit of time you wish your
-                `date_thresholds` to be measured against.
-                Metrics should be one of `day`, `month` or `year`.
+            lat_col (str): The name of the column containing the lattitude of the
+                coordinates.
+            long_col (str): The name of the column containing the longitude of the
+                coordinates.
+            km_thresholds (Union[int, list], optional): The size(s) of given date
+                thresholds, to assess whether two coordinates fall within a given
+                distance.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
-            term_frequency_adjustments (bool, optional): If True, apply term frequency
-                adjustments to the exact match level. Defaults to False.
             m_probability_exact_match (_type_, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
-            m_probability_or_probabilities_sizes (Union[float, list], optional):
+            m_probability_or_probabilities_lev (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the sizes specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
@@ -603,6 +595,28 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
             "is_null_level": True,
         }
         comparison_levels.append(null_level)
+
+        if include_exact_match_level:
+
+            lat = InputColumn(lat_col, sql_dialect=self._sql_dialect)
+            long = InputColumn(long_col, sql_dialect=self._sql_dialect)
+            label_suffix = f" {lat_col}, {long_col}"
+            level = {
+                "sql_condition": f"({lat.name_l()} = {lat.name_r()}) \n"
+                f"AND ({long.name_l()} = {long.name_r()}",
+                "label_for_charts": f"Exact match{label_suffix}",
+            }
+
+            """ level = {
+                "sql_condition": f"({lat_col}_l = {lat_col}_r) \n"
+                f"AND ({long_col}_l = {long_col}_r",
+                "label_for_charts": "Exact match lat long",
+            } """
+
+            if m_probability_exact_match:
+                level["m_probability"] = m_probability_exact_match
+
+            comparison_levels.append(level)
 
         for km_thres, m_prob in zip(km_thresholds, m_probabilities):
             level = self._distance_in_km_level(
