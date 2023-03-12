@@ -9,7 +9,6 @@ from .misc import ensure_is_iterable
 from .input_column import InputColumn
 
 
-
 class ExactMatchBase(Comparison):
     def __init__(
         self,
