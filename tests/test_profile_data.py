@@ -27,7 +27,7 @@ def generate_raw_profile_dataset(columns_to_profile, linker):
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
 
-    return linker._execute_sql_pipeline(materialise_as_hash=True).as_pandas_dataframe()
+    return linker._execute_sql_pipeline().as_pandas_dataframe()
 
 
 def test_profile_using_duckdb():

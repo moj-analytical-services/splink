@@ -82,12 +82,14 @@ warnings.simplefilter("always", DeprecationWarning)
 
 
 class CacheDictWithLogging(UserDict):
+    def __init__(self):
+        super().__init__()
+        self.executed_queries = []
+        self.queries_retrieved_from_cache = []
+
     def __getitem__(self, key) -> SplinkDataFrame:
         splink_dataframe = super().__getitem__(key)
-        phy_name = splink_dataframe.physical_name
-        logger.debug(
-            f"Using cache for template name {key}" f" with physical name {phy_name}"
-        )
+
         # Return a copy so that user can modify physical or templated name
         # without modifying the version in the cache
         return copy(splink_dataframe)
@@ -99,11 +101,51 @@ class CacheDictWithLogging(UserDict):
         super().__setitem__(key, value)
 
         logger.log(
-            1, f"Setting cache for template name {key}" f" with physical name {value}"
+            1, f"Setting cache for {key}" f" with physical name {value.physical_name}"
         )
 
     def invalidate_cache(self):
         self.data = dict()
+
+    def get_with_logging(self, key):
+        df = self[key]
+        phy_name = df.physical_name
+        logger.debug(
+            f"Using cache for template name {key}" f" with physical name {phy_name}"
+        )
+        self.queries_retrieved_from_cache.append(df)
+
+        return df
+
+    def reset_executed_queries_tracker(self):
+        self.executed_queries = []
+
+    def is_in_executed_queries(
+        self, name_to_find, search_physical=True, search_templated=True
+    ):
+        names = []
+        for df in self.executed_queries:
+            if search_physical:
+                names.append(df.physical_name)
+            if search_templated:
+                names.append(df.templated_name)
+
+        return name_to_find in names
+
+    def reset_queries_retrieved_from_cache_tracker(self):
+        self.queries_retrieved_from_cache = []
+
+    def is_in_queries_retrieved_from_cache(
+        self, name_to_find, search_physical=True, search_templated=True
+    ):
+        names = []
+        for df in self.queries_retrieved_from_cache:
+            if search_physical:
+                names.append(df.physical_name)
+            if search_templated:
+                names.append(df.templated_name)
+
+        return name_to_find in names
 
 
 class Linker:
@@ -183,7 +225,7 @@ class Linker:
         self._validate_input_dfs()
         self._em_training_sessions = []
 
-        self._intermediate_table_cache: dict = CacheDictWithLogging()
+        self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
 
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
@@ -338,9 +380,9 @@ class Linker:
         cache = self._intermediate_table_cache
         concat_df = None
         if "__splink__df_concat" in cache:
-            concat_df = cache["__splink__df_concat"]
+            concat_df = cache.get_with_logging("__splink__df_concat")
         elif "__splink__df_concat_with_tf" in cache:
-            concat_df = cache["__splink__df_concat_with_tf"]
+            concat_df = cache.get_with_logging("__splink__df_concat_with_tf")
             concat_df.templated_name = "__splink__df_concat"
         else:
             if materialise:
@@ -360,7 +402,7 @@ class Linker:
         cache = self._intermediate_table_cache
         nodes_with_tf = None
         if "__splink__df_concat_with_tf" in cache:
-            nodes_with_tf = cache["__splink__df_concat_with_tf"]
+            nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
 
         else:
             if materialise:
@@ -406,7 +448,6 @@ class Linker:
     def _execute_sql_pipeline(
         self,
         input_dataframes: list[SplinkDataFrame] = [],
-        materialise_as_hash=True,
         use_cache=True,
     ) -> SplinkDataFrame:
         """Execute the SQL queued in the current pipeline as a single statement
@@ -416,8 +457,6 @@ class Linker:
         Args:
             input_dataframes (List[SplinkDataFrame], optional): A 'starting point' of
                 SplinkDataFrames if needed. Defaults to [].
-            materialise_as_hash (bool, optional): If true, the output tablename will end
-                in a unique identifer. Defaults to True.
             use_cache (bool, optional): If true, look at whether the SQL pipeline has
                 been executed before, and if so, use the existing result. Defaults to
                 True.
@@ -436,7 +475,6 @@ class Linker:
                 dataframe = self._sql_to_splink_dataframe_checking_cache(
                     sql_gen,
                     output_tablename_templated,
-                    materialise_as_hash,
                     use_cache,
                 )
             except Error as e:
@@ -457,7 +495,6 @@ class Linker:
                 dataframe = self._sql_to_splink_dataframe_checking_cache(
                     sql,
                     output_tablename,
-                    materialise_as_hash=False,
                     use_cache=False,
                 )
             self._pipeline.reset()
@@ -516,7 +553,6 @@ class Linker:
         splink_dataframe = self._sql_to_splink_dataframe_checking_cache(
             sql,
             output_tablename_templated,
-            materialise_as_hash=False,
             use_cache=False,
         )
 
@@ -537,7 +573,6 @@ class Linker:
         self,
         sql,
         output_tablename_templated,
-        materialise_as_hash=True,
         use_cache=True,
     ) -> SplinkDataFrame:
         """Execute sql, or if identical sql has been run before, return cached results.
@@ -556,13 +591,25 @@ class Linker:
         table_name_hash = f"{output_tablename_templated}_{hash}"
 
         if use_cache:
+            # Certain tables are put in the cache using their templated_name
+            # An example is __splink__df_concat_with_tf
+            # These tables are put in the cache when they are first calculated
+            # e.g. with _initialise_df_concat_with_tf()
+            # But they can also be put in the cache manually using
+            # e.g. register_table_input_nodes_concat_with_tf()
+
+            # Look for these 'named' tables in the cache prior
+            # to looking for the hashed version
 
             if output_tablename_templated in self._intermediate_table_cache:
-                return self._intermediate_table_cache[table_name_hash]
+                return self._intermediate_table_cache.get_with_logging(
+                    output_tablename_templated
+                )
 
             if table_name_hash in self._intermediate_table_cache:
-                return self._intermediate_table_cache[table_name_hash]
+                return self._intermediate_table_cache.get_with_logging(table_name_hash)
 
+            # If not in cache, fall back on checking the database
             if self._table_exists_in_database(table_name_hash):
                 logger.debug(
                     f"Found cache for {output_tablename_templated} "
@@ -574,25 +621,14 @@ class Linker:
 
         if self.debug_mode:
             print(sql)
-
-        if materialise_as_hash:
-            splink_dataframe = self._execute_sql_against_backend(
-                sql, output_tablename_templated, table_name_hash
-            )
-
-        else:
             splink_dataframe = self._execute_sql_against_backend(
                 sql,
                 output_tablename_templated,
                 output_tablename_templated,
             )
-        splink_dataframe.created_by_splink = True
 
-        physical_name = splink_dataframe.physical_name
+            self._intermediate_table_cache.executed_queries.append(splink_dataframe)
 
-        self._intermediate_table_cache[physical_name] = splink_dataframe
-
-        if self.debug_mode:
             df_pd = splink_dataframe.as_pandas_dataframe()
             try:
                 from IPython.display import display
@@ -600,6 +636,19 @@ class Linker:
                 display(df_pd)
             except ModuleNotFoundError:
                 print(df_pd)
+
+        else:
+            splink_dataframe = self._execute_sql_against_backend(
+                sql, output_tablename_templated, table_name_hash
+            )
+            self._intermediate_table_cache.executed_queries.append(splink_dataframe)
+
+        splink_dataframe.created_by_splink = True
+        splink_dataframe.sql_used_to_create = sql
+
+        physical_name = splink_dataframe.physical_name
+
+        self._intermediate_table_cache[physical_name] = splink_dataframe
 
         return splink_dataframe
 
@@ -772,7 +821,7 @@ class Linker:
     def delete_tables_created_by_splink_from_db(self):
         for splink_df in list(self._intermediate_table_cache.values()):
             if splink_df.created_by_splink:
-                splink_df.drop_table_from_database()
+                splink_df.drop_table_from_database_and_remove_from_cache()
 
     def _raise_error_if_necessary_waterfall_columns_not_computed(self):
         ricc = self._settings_obj._retain_intermediate_calculation_columns
@@ -933,9 +982,7 @@ class Linker:
             colname = InputColumn(column_name)
             sql = term_frequencies_from_concat_with_tf(colname)
             self._enqueue_sql(sql, colname_to_tf_tablename(colname))
-            tf_df = self._execute_sql_pipeline(
-                [cache["__splink__df_concat_with_tf"]], materialise_as_hash=True
-            )
+            tf_df = self._execute_sql_pipeline([cache["__splink__df_concat_with_tf"]])
             self._intermediate_table_cache[tf_tablename] = tf_df
         else:
             # Clear the pipeline if we are materialising
@@ -946,7 +993,7 @@ class Linker:
                 input_dfs.append(df_concat)
             sql = term_frequencies_for_single_column_sql(input_col)
             self._enqueue_sql(sql, tf_tablename)
-            tf_df = self._execute_sql_pipeline(input_dfs, materialise_as_hash=True)
+            tf_df = self._execute_sql_pipeline(input_dfs)
             self._intermediate_table_cache[tf_tablename] = tf_df
 
         return tf_df
@@ -2666,6 +2713,8 @@ class Linker:
         splink_dataframe = self.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
+        splink_dataframe.templated_name = "__splink__df_concat_with_tf"
+
         self._intermediate_table_cache["__splink__df_concat_with_tf"] = splink_dataframe
         return splink_dataframe
 
@@ -2675,6 +2724,7 @@ class Linker:
             input_data, table_name_physical, overwrite=overwrite
         )
         self._intermediate_table_cache["__splink__df_predict"] = splink_dataframe
+        splink_dataframe.templated_name = "__splink__df_predict"
         return splink_dataframe
 
     def register_term_frequency_lookup(self, input_data, col_name, overwrite=False):
@@ -2685,6 +2735,7 @@ class Linker:
             input_data, table_name_physical, overwrite=overwrite
         )
         self._intermediate_table_cache[table_name_templated] = splink_dataframe
+        splink_dataframe.templated_name = table_name_templated
         return splink_dataframe
 
     def register_labels_table(self, input_data, overwrite=False):
@@ -2692,6 +2743,7 @@ class Linker:
         splink_dataframe = self.register_table(
             input_data, table_name_physical, overwrite=overwrite
         )
+        splink_dataframe.templated_name = "__splink__df_labels"
         return splink_dataframe
 
     def _remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):

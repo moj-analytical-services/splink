@@ -22,6 +22,7 @@ class SplinkDataFrame:
         self.physical_name = physical_name
         self.linker = linker
         self.created_by_splink = False
+        self.sql_used_to_create = None
 
     @property
     def columns(self):
