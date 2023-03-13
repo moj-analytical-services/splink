@@ -12,8 +12,8 @@ from splink.spark.spark_linker import SparkLinker
 @pytest.mark.parametrize(
     ("cl"),
     [
-        pytest.param(cld, id="DuckDB Datediff Integration Tests"),
-        pytest.param(cls, id="Spark Datediff Integration Tests"),
+        pytest.param(cld, id="DuckDB Distance in KM simple run tests"),
+        pytest.param(cls, id="Spark Distance in KM simple run tests"),
     ],
 )
 def test_simple_run(cl):
@@ -82,7 +82,7 @@ def test_km_distance_levels(spark, cl, cll, Linker):
         "link_type": "dedupe_only",
         "comparisons": [
             cl.distance_in_km_at_thresholds(
-                lat_col="lat", long_col="long", km_thresholds=[0, 1, 10, 300]
+                lat_col="lat", long_col="long", km_thresholds=[1, 10, 300]
             )
         ],
     }
@@ -97,7 +97,10 @@ def test_km_distance_levels(spark, cl, cll, Linker):
                 "label_for_charts": "Null",
                 "is_null_level": True,
             },
-            cll.distance_in_km_level(lat_col="lat", long_col="long", km_threshold=0),
+            {
+                "sql_condition": "(lat_l = lat_r) AND (long_l = long_r)",
+                "label_for_charts": "Exact match lat long",
+            },
             cll.distance_in_km_level(lat_col="lat", long_col="long", km_threshold=1),
             cll.distance_in_km_level(
                 lat_col="lat",

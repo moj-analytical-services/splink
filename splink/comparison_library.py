@@ -6,7 +6,6 @@ from .comparison_library_utils import (
     datediff_error_logger,
 )
 from .misc import ensure_is_iterable
-from .input_column import InputColumn
 
 
 class ExactMatchBase(Comparison):
@@ -597,20 +596,12 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
 
         if include_exact_match_level:
 
-            lat = InputColumn(lat_col, sql_dialect=self._sql_dialect)
-            long = InputColumn(long_col, sql_dialect=self._sql_dialect)
             label_suffix = f" {lat_col}, {long_col}"
             level = {
-                "sql_condition": f"({lat.name_l()} = {lat.name_r()}) \n"
-                f"AND ({long.name_l()} = {long.name_r()}",
+                "sql_condition": f"({lat_col}_l = {lat_col}_r) \n"
+                f"AND ({long_col}_l = {long_col}_r)",
                 "label_for_charts": f"Exact match{label_suffix}",
             }
-
-            """ level = {
-                "sql_condition": f"({lat_col}_l = {lat_col}_r) \n"
-                f"AND ({long_col}_l = {long_col}_r",
-                "label_for_charts": "Exact match lat long",
-            } """
 
             if m_probability_exact_match:
                 level["m_probability"] = m_probability_exact_match
