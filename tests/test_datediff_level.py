@@ -139,7 +139,7 @@ def test_datediff_levels(spark, cl, cll, Linker):
         2: [(1, 3), (2, 3), (1, 5), (2, 5), (3, 6), (5, 6)],
     }
 
-    for gamma, id_pairs in size_gamma_lookup.items():
+    for gamma, id_pairs in gamma_lookup.items():
         for left, right in id_pairs:
             for linker_name, linker_pred in linker_outputs.items():
 
