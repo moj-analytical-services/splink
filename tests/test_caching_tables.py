@@ -95,6 +95,11 @@ def test_cache_used_when_registering_nodes_table():
     )
 
 
+# This test is more tricky because tf tables are not explicitly retrieved from
+# the cache if they exist because they are an intermediate part of a larger
+# SQL query rather than being a table output in their own right
+# Instead, if the cache is used, they SQL is simplified so that a CTE is
+# no longer required to derive the table
 def test_cache_used_when_registering_tf_tables():
     data = [
         {"unique_id": 1, "first_name": "Amanda", "surname": "Smith"},
