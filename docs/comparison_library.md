@@ -2,9 +2,12 @@
 tags:
   - API
   - comparisons
-  - Levenstein
+  - Levenshtein
   - Jaro-Winkler
   - Jaccard
+  - Distance In KM
+  - Date Difference
+  - Array Intersect
 ---
 # Documentation for `comparison_library` 
 
@@ -29,7 +32,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -41,7 +44,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -53,7 +56,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -65,7 +68,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false   
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -77,7 +80,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -89,7 +92,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -101,7 +104,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -113,4 +116,4 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
