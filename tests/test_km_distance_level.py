@@ -23,7 +23,40 @@ def test_simple_run(cl):
             lat_col="lat", long_col="long", km_thresholds=[1, 5, 10]
         ).as_dict()
     )
+    print(
+        cl.distance_in_km_at_thresholds(
+            lat_col="latlong[0]", long_col="latlong[1]", km_thresholds=[1, 5, 10]
+        ).as_dict()
+    )
+    print(
+        cl.distance_in_km_at_thresholds(
+            lat_col="ll['lat']", long_col="ll['long']", km_thresholds=[1, 5, 10]
+        ).as_dict()
+    )
 
+@pytest.mark.parametrize(
+    ("cll"),
+    [
+        pytest.param(clld, id="DuckDB Distance in KM cll simple run tests"),
+        pytest.param(clls, id="Spark Distance in KM cll simple run tests"),
+    ],
+)
+def test_simple_run_cll(cll):
+    print(
+        cll.distance_in_km_level(
+            lat_col="lat", long_col="long", km_threshold=1
+        ).as_dict()
+    )
+    print(
+        cll.distance_in_km_level(
+            lat_col="latlong[0]", long_col="latlong[1]", km_threshold=0.1
+        ).as_dict()
+    )
+    print(
+        cll.distance_in_km_level(
+            lat_col="ll['lat']", long_col="ll['long']", km_threshold=10
+        ).as_dict()
+    )
 
 @pytest.mark.parametrize(
     ("cl", "cll", "Linker"),
