@@ -34,6 +34,7 @@ def test_simple_run(cl):
         ).as_dict()
     )
 
+
 @pytest.mark.parametrize(
     ("cll"),
     [
@@ -57,6 +58,7 @@ def test_simple_run_cll(cll):
             lat_col="ll['lat']", long_col="ll['long']", km_threshold=10
         ).as_dict()
     )
+
 
 @pytest.mark.parametrize(
     ("cl", "cll", "Linker"),
