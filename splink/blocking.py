@@ -28,7 +28,6 @@ class BlockingRule:
 
     @property
     def and_not_preceding_rules_sql(self):
-
         if not self.preceding_rules:
             return ""
 
@@ -51,7 +50,6 @@ class BlockingRule:
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):
-
     id_expr_l = _composite_unique_id_from_nodes_sql(unique_id_cols, "l")
     id_expr_r = _composite_unique_id_from_nodes_sql(unique_id_cols, "r")
 
@@ -150,7 +148,6 @@ def block_using_rules_sql(linker: Linker):
 
     sqls = []
     for br in blocking_rules:
-
         # Apply our salted rules to resolve skew issues. If no salt was
         # selected to be added, then apply the initial blocking rule.
         if apply_salt:

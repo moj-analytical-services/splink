@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 
 def _cc_create_nodes_table(linker: "Linker", generated_graph=False):
-
     """SQL to create our connected components nodes table.
 
     From our edges table, create a nodes table.
@@ -52,7 +51,6 @@ def _cc_create_nodes_table(linker: "Linker", generated_graph=False):
             from __splink__df_connected_components_df
         """
     else:
-
         sql = f"""
         select {uid_concat} as node_id
         from __splink__df_concat_with_tf
@@ -62,7 +60,6 @@ def _cc_create_nodes_table(linker: "Linker", generated_graph=False):
 
 
 def _cc_generate_neighbours_representation():
-
     """SQL to generate all the 'neighbours' of each input node.
 
     The 'neighbour' of a node is any other node that is connected to the original node
@@ -101,7 +98,6 @@ def _cc_generate_neighbours_representation():
 
 
 def _cc_generate_initial_representatives_table():
-
     """SQL to generate our initial "representatives" table.
 
     The 'representative' column will eventually become the cluster ID.
@@ -132,7 +128,6 @@ def _cc_generate_initial_representatives_table():
 
 
 def _cc_update_neighbours_first_iter():
-
     """SQL to update our neighbours table - first iteration only.
 
     Takes our initial neighbours table, join on the representatives table
@@ -164,7 +159,6 @@ def _cc_update_neighbours_first_iter():
 
 
 def _cc_update_representatives_first_iter():
-
     """SQL to update our representatives table - first iteration only.
 
     From here, standardised code can be used inside a while loop,
@@ -196,7 +190,6 @@ def _cc_update_representatives_first_iter():
 def _cc_generate_representatives_loop_cond(
     prev_representatives,
 ):
-
     """SQL for Connected components main loop.
 
     Takes our core neighbours table (this is constant), and
@@ -260,7 +253,6 @@ def _cc_generate_representatives_loop_cond(
 def _cc_update_representatives_loop_cond(
     prev_representatives,
 ):
-
     """SQL to update our representatives table - while loop condition.
 
     Reorganises our representatives output generated in
@@ -286,7 +278,6 @@ def _cc_update_representatives_loop_cond(
 
 
 def _cc_assess_exit_condition(representatives_name):
-
     """SQL exit condition for our Connected Components algorithm.
 
     Where 'rep_match' (summarised in 'cc_update_representatives_first_iter')
@@ -306,7 +297,6 @@ def _cc_assess_exit_condition(representatives_name):
 def _cc_create_unique_id_cols(
     linker: "Linker", concat_with_tf: str, df_predict: str, match_probability_threshold
 ):
-
     """Create SQL to pull unique ID columns for connected components.
 
     Takes the output of linker.predict() and either creates unique IDs for
@@ -362,13 +352,11 @@ def _exit_query(
     uid_cols=None,
     pairwise_filter=False,
 ):
-
     representatives = representatives.physical_name if representatives else None
     df_predict = df_predict.physical_name if df_predict else None
     concat_with_tf = concat_with_tf.physical_name if concat_with_tf else None
 
     if pairwise_mode:
-
         uid_concat_l = _composite_unique_id_from_edges_sql(uid_cols, "l", "n")
         uid_concat_r = _composite_unique_id_from_edges_sql(uid_cols, "r", "n")
 
@@ -392,7 +380,6 @@ def _exit_query(
         """
 
     else:
-
         uid_concat = _composite_unique_id_from_nodes_sql(uid_cols, "n")
 
         return f"""

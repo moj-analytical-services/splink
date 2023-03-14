@@ -8,7 +8,6 @@ from tests.basic_settings import get_settings_dict
 
 
 def test_analyse_blocking():
-
     df_1 = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},

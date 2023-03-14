@@ -1,5 +1,4 @@
 def missingness_sqls(columns, input_tablename):
-
     sqls = []
     col_template = """
                 select
@@ -41,7 +40,6 @@ def missingness_sqls(columns, input_tablename):
 
 
 def missingness_data(linker, input_tablename):
-
     if input_tablename is None:
         splink_dataframe = linker._initialise_df_concat(materialise=True)
     else:

@@ -51,7 +51,6 @@ def datediff_error_logger(thresholds, metrics):
         )
 
     if len(error_logger) > 0:
-
         error_logger.insert(
             0,
             "The following error(s) were identified while validating "

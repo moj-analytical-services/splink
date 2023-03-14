@@ -26,7 +26,6 @@ def colname_to_tf_tablename(input_column: InputColumn):
 def term_frequencies_for_single_column_sql(
     input_column: InputColumn, table_name="__splink__df_concat"
 ):
-
     col_name = input_column.name()
 
     sql = f"""
@@ -43,7 +42,6 @@ def term_frequencies_for_single_column_sql(
 
 
 def _join_tf_to_input_df_sql(linker: Linker):
-
     settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
 
@@ -85,7 +83,6 @@ def _join_tf_to_input_df_sql(linker: Linker):
 
 
 def term_frequencies_from_concat_with_tf(input_column):
-
     sql = f"""
         select
         distinct {input_column.name()},
@@ -97,7 +94,6 @@ def term_frequencies_from_concat_with_tf(input_column):
 
 
 def compute_all_term_frequencies_sqls(linker: Linker) -> list[dict]:
-
     settings_obj = linker._settings_obj
     tf_cols = settings_obj._term_frequency_columns
 
@@ -129,7 +125,6 @@ def compute_all_term_frequencies_sqls(linker: Linker) -> list[dict]:
 
 
 def compute_term_frequencies_from_concat_with_tf(linker: "Linker"):
-
     """If __splink__df_concat_with_tf already exists in your database,
     reverse engineer the underlying tf tables.
 

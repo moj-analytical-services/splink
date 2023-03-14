@@ -7,7 +7,6 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def test_prob_rr_match_dedupe():
-
     df = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
@@ -52,7 +51,6 @@ def test_prob_rr_match_dedupe():
 
 
 def test_prob_rr_match_link_only():
-
     df_1 = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
@@ -92,7 +90,6 @@ def test_prob_rr_match_link_only():
 
 
 def test_prob_rr_match_link_and_dedupe():
-
     df_1 = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},

@@ -5,7 +5,6 @@ from tests.cc_testing_utils import check_df_equality
 
 
 def _test_table_registration(linker, additional_tables_to_register=[]):
-
     # Standard pandas df...
     a = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
