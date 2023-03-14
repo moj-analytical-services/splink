@@ -2,12 +2,13 @@
 tags:
   - API
   - comparisons
-  - Levenstein
+  - Levenshtein
   - Jaro-Winkler
   - Jaccard
   - Date Difference
   - Distance In KM
   - Array Intersect
+  - Columns Reversed
   - Percentage Difference
 ---
 # Documentation for `comparison_level_library` 

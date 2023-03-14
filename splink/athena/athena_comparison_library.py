@@ -1,6 +1,7 @@
 from ..comparison_library import (
     ArrayIntersectAtSizesComparisonBase,
     DistanceFunctionAtThresholdsComparisonBase,
+    DistanceInKMAtThresholdsComparisonBase,
     ExactMatchBase,
     LevenshteinAtThresholdsComparisonBase,
 )
@@ -10,6 +11,7 @@ from .athena_base import (
 from .athena_comparison_level_library import (
     array_intersect_level,
     distance_function_level,
+    distance_in_km_level,
     else_level,
     exact_match_level,
     levenshtein_level,
@@ -34,6 +36,10 @@ class AthenaComparisonProperties(AthenaBase):
     def _array_intersect_level(self):
         return array_intersect_level
 
+    @property
+    def _distance_in_km_level(self):
+        return distance_in_km_level
+
 
 class exact_match(AthenaComparisonProperties, ExactMatchBase):
     pass
@@ -57,5 +63,11 @@ class levenshtein_at_thresholds(
 
 class array_intersect_at_sizes(
     AthenaComparisonProperties, ArrayIntersectAtSizesComparisonBase
+):
+    pass
+
+
+class distance_in_km_at_thresholds(
+    AthenaComparisonProperties, DistanceInKMAtThresholdsComparisonBase
 ):
     pass
