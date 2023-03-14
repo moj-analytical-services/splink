@@ -9,6 +9,8 @@ If you simply wish for ruff to print the errors it finds to the console, remove 
 
 ```sh
 source scripts/lint.sh -f  # with the fix flag
+```
+```sh
 source scripts/lint.sh  # without
 ```
 
