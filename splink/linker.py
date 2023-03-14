@@ -974,7 +974,7 @@ class Linker:
         ]
 
         if tf_tablename in cache:
-            tf_df = cache[tf_tablename]
+            tf_df = cache.get_with_logging(tf_tablename)
         elif "__splink__df_concat_with_tf" in cache and column_name in concat_tf_tables:
             self._pipeline.reset()
             # If our df_concat_with_tf table already exists, use backwards inference to

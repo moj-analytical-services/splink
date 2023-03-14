@@ -96,8 +96,8 @@ def test_cache_used_when_registering_nodes_table():
 
 
 # This test is more tricky because tf tables are not explicitly retrieved from
-# the cache if they exist because they are an intermediate part of a larger
-# SQL query rather than being a table output in their own right
+# the cache. When they exist they are an intermediate part of a larger
+# SQL query rather than being tables which are outputted in their own right
 # Instead, if the cache is used, they SQL is simplified so that a CTE is
 # no longer required to derive the table
 def test_cache_used_when_registering_tf_tables():
@@ -191,3 +191,42 @@ def test_cache_used_when_registering_tf_tables():
 
     assert "__splink__df_tf_first_name" not in cte_table_aliases_used
     assert "__splink__df_tf_surname" not in cte_table_aliases_used
+
+
+def test_cache_invalidation():
+    data = [
+        {"unique_id": 1, "name": "Amanda"},
+        {"unique_id": 2, "name": "Robin"},
+        {"unique_id": 3, "name": "Robyn"},
+    ]
+    df = pd.DataFrame(data)
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "blocking_rules_to_generate_predictions": ["l.name = r.name"],
+    }
+
+    linker = DuckDBLinker(df, settings)
+    cache = linker._intermediate_table_cache
+
+    linker.compute_tf_table("name")
+    len_before = len(cache.executed_queries)
+    linker.compute_tf_table("name")
+    len_after = len(cache.executed_queries)
+
+    # If cache not invalidated, cache used
+    assert len_before == len_after
+    assert cache.is_in_queries_retrieved_from_cache("__splink__df_tf_name")
+
+    linker = DuckDBLinker(df, settings)
+    cache = linker._intermediate_table_cache
+
+    linker.compute_tf_table("name")
+    len_before = len(cache.executed_queries)
+    linker.invalidate_cache()
+    linker.compute_tf_table("name")
+    len_after = len(cache.executed_queries)
+    # If cache is invalidated, recomputed
+    assert len_before + 1 == len_after
+    assert not cache.is_in_queries_retrieved_from_cache("__splink__df_tf_name")
