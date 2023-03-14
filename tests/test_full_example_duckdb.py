@@ -114,7 +114,6 @@ def test_full_example_duckdb(tmp_path):
     DuckDBLinker(df, settings_dict=path)
 
 
-
 @pytest.mark.parametrize(
     ("df"),
     [
