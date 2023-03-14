@@ -14,7 +14,6 @@ from splink.spark.spark_linker import SparkLinker
 
 
 def test_full_example_spark(df_spark, tmp_path):
-
     # Convert a column to an array to enable testing intersection
     df_spark = df_spark.withColumn("email", array("email"))
     settings_dict = get_settings_dict()
@@ -63,7 +62,7 @@ def test_full_example_spark(df_spark, tmp_path):
     linker.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
-    linker.estimate_u_using_random_sampling(target_rows=1e5)
+    linker.estimate_u_using_random_sampling(max_pairs=1e5)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
