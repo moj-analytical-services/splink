@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from .comparison import Comparison
-from .comparison_library_utils import datediff_error_logger
+from .comparison_library_utils import (
+    comparison_at_thresholds_error_logger,
+    datediff_error_logger,
+)
 from .misc import ensure_is_iterable
 
 
@@ -108,6 +111,9 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             m_probability_or_probabilities_lev = [None] * len(distance_thresholds)
         m_probabilities = ensure_is_iterable(m_probability_or_probabilities_lev)
 
+        # Validate user inputs
+        comparison_at_thresholds_error_logger("distance_function", distance_thresholds)
+
         comparison_levels = []
         comparison_levels.append(self._null_level(col_name))
         if include_exact_match_level:
@@ -194,7 +200,7 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
-                for the thresholds specified. Defaults to None.
+                for the thresholds specified for given function. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
@@ -253,7 +259,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
-                for the thresholds specified. Defaults to None.
+                for the thresholds specified for given function. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
@@ -312,7 +318,7 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
-                for the thresholds specified. Defaults to None.
+                for the thresholds specified for given function. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
@@ -474,6 +480,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         metrics = ensure_is_iterable(date_metrics)
 
         # Validate user inputs
+        comparison_at_thresholds_error_logger("datediff", date_thresholds)
         datediff_error_logger(thresholds, metrics)
 
         if m_probability_or_probabilities_sizes is None:
@@ -525,3 +532,108 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
     @property
     def _datediff_level(self):
         raise NotImplementedError("Datediff level not defined on base class")
+
+
+class DistanceInKMAtThresholdsComparisonBase(Comparison):
+    def __init__(
+        self,
+        lat_col: str,
+        long_col: str,
+        km_thresholds: int | list = [0.1, 1],
+        include_exact_match_level=False,
+        m_probability_exact_match=None,
+        m_probability_or_probabilities_lev: float | list = None,
+        m_probability_else=None,
+    ):
+        """A comparison of the coordinates defined in 'lat_col' and
+        'long col' giving the haversine distance between them in km.
+
+        An example of the output with default arguments and settings
+        `km_thresholds = [1]` would be
+        - The two coordinates within 1 km of one another
+        - Anything else (i.e.  the distance between all coordinate lie outside
+        this range)
+
+        Args:
+            col_name (str): The name of the date column to compare.
+            lat_col (str): The name of the column containing the lattitude of the
+                coordinates.
+            long_col (str): The name of the column containing the longitude of the
+                coordinates.
+            km_thresholds (Union[int, list], optional): The size(s) of given date
+                thresholds, to assess whether two coordinates fall within a given
+                distance.
+            include_exact_match_level (bool, optional): If True, include an exact match
+                level. Defaults to True.
+            m_probability_exact_match (_type_, optional): If provided, overrides the
+                default m probability for the exact match level. Defaults to None.
+            m_probability_or_probabilities_lev (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the sizes specified. Defaults to None.
+            m_probability_else (_type_, optional): If provided, overrides the
+                default m probability for the 'anything else' level. Defaults to None.
+
+        Returns:
+            Comparison: A comparison that can be inclued in the Splink settings
+                dictionary.
+        """
+
+        thresholds = ensure_is_iterable(km_thresholds)
+
+        if m_probability_or_probabilities_lev is None:
+            m_probability_or_probabilities_sizes = [None] * len(thresholds)
+        m_probabilities = ensure_is_iterable(m_probability_or_probabilities_sizes)
+
+        comparison_levels = []
+
+        null_level = {
+            "sql_condition": f"({lat_col}_l IS NULL OR {lat_col}_r IS NULL) \n"
+            f"OR ({long_col}_l IS NULL OR {long_col}_r IS NULL)",
+            "label_for_charts": "Null",
+            "is_null_level": True,
+        }
+        comparison_levels.append(null_level)
+
+        if include_exact_match_level:
+
+            label_suffix = f" {lat_col}, {long_col}"
+            level = {
+                "sql_condition": f"({lat_col}_l = {lat_col}_r) \n"
+                f"AND ({long_col}_l = {long_col}_r)",
+                "label_for_charts": f"Exact match{label_suffix}",
+            }
+
+            if m_probability_exact_match:
+                level["m_probability"] = m_probability_exact_match
+
+            comparison_levels.append(level)
+
+        for km_thres, m_prob in zip(km_thresholds, m_probabilities):
+            level = self._distance_in_km_level(
+                lat_col,
+                long_col,
+                km_threshold=km_thres,
+                m_probability=m_prob,
+            )
+            comparison_levels.append(level)
+
+        comparison_levels.append(
+            self._else_level(m_probability=m_probability_else),
+        )
+
+        comparison_desc = ""
+        if include_exact_match_level:
+            comparison_desc += "Exact match vs. "
+
+        thres_desc = ", ".join([f"Km threshold(s): {thres}" for thres in thresholds])
+        plural = "" if len(thresholds) == 1 else "s"
+        comparison_desc += (
+            f"Km distance within the following threshold{plural} {thres_desc} vs. "
+        )
+        comparison_desc += "anything else"
+
+        comparison_dict = {
+            "comparison_description": comparison_desc,
+            "comparison_levels": comparison_levels,
+        }
+        super().__init__(comparison_dict)
