@@ -23,16 +23,16 @@ def test_simple_run(cl):
             lat_col="lat", long_col="long", km_thresholds=[1, 5, 10]
         ).as_dict()
     )
-    print(
-        cl.distance_in_km_at_thresholds(
-            lat_col="latlong[0]", long_col="latlong[1]", km_thresholds=[1, 5, 10]
-        ).as_dict()
-    )
-    print(
-        cl.distance_in_km_at_thresholds(
-            lat_col="ll['lat']", long_col="ll['long']", km_thresholds=[1, 5, 10]
-        ).as_dict()
-    )
+    # print(
+    #    cl.distance_in_km_at_thresholds(
+    #        lat_col="latlong[0]", long_col="latlong[1]", km_thresholds=[1, 5, 10]
+    #    ).as_dict()
+    # )
+    # print(
+    #    cl.distance_in_km_at_thresholds(
+    #        lat_col="ll['lat']", long_col="ll['long']", km_thresholds=[1, 5, 10]
+    #    ).as_dict()
+    # )
 
 
 @pytest.mark.parametrize(
@@ -48,16 +48,16 @@ def test_simple_run_cll(cll):
             lat_col="lat", long_col="long", km_threshold=1
         ).as_dict()
     )
-    print(
-        cll.distance_in_km_level(
-            lat_col="latlong[0]", long_col="latlong[1]", km_threshold=0.1
-        ).as_dict()
-    )
-    print(
-        cll.distance_in_km_level(
-            lat_col="ll['lat']", long_col="ll['long']", km_threshold=10
-        ).as_dict()
-    )
+    # print(
+    #    cll.distance_in_km_level(
+    #        lat_col="latlong[0]", long_col="latlong[1]", km_threshold=0.1
+    #    ).as_dict()
+    # )
+    # print(
+    #    cll.distance_in_km_level(
+    #        lat_col="ll['lat']", long_col="ll['long']", km_threshold=10
+    #    ).as_dict()
+    # )
 
 
 @pytest.mark.parametrize(
@@ -117,7 +117,7 @@ def test_km_distance_levels(spark, cl, cll, Linker):
         "link_type": "dedupe_only",
         "comparisons": [
             cl.distance_in_km_at_thresholds(
-                lat_col="lat", long_col="long", km_thresholds=[1, 10, 300]
+                lat_col="lat", long_col="long", km_thresholds=[0.1, 1, 10, 300]
             )
         ],
     }
@@ -132,10 +132,7 @@ def test_km_distance_levels(spark, cl, cll, Linker):
                 "label_for_charts": "Null",
                 "is_null_level": True,
             },
-            {
-                "sql_condition": "(lat_l = lat_r) AND (long_l = long_r)",
-                "label_for_charts": "Exact match lat long",
-            },
+            cll.distance_in_km_level(lat_col="lat", long_col="long", km_threshold=0.1),
             cll.distance_in_km_level(lat_col="lat", long_col="long", km_threshold=1),
             cll.distance_in_km_level(
                 lat_col="lat",
