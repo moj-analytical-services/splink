@@ -31,7 +31,7 @@ $m$ is the number of common characters (which are considered matching only if th
 
 and $t$ is the number of transpositions (which is calculated as the number of matching characters that are not in the right order divided by two).
 
-
+Jaro similarity is not currently supported in splink. If you think this would be useful, please let us know, or contribute it yourself, on [github.](https://github.com/moj-analytical-services/splink/issues/1107)
 
 
 ## Jaro Winkler similarity
@@ -50,6 +50,7 @@ $p$ is the scaling factorfor how much the score is adjusted upwards for having c
 $l$ is the length of the common prefix, 
 and $1 - Jaro$ is the penalty for non-matching characters at the beginning of the strings.
 
+See the comparison library and comparison level library docs for the Jaro Winkler functions in splink.
 
 ## Levenstein edit distance 
 
@@ -66,6 +67,8 @@ $$Levenstein(s_1, s_2) = \min \lbrace \begin{array}{l}
 
 where $s_1$ and $s_2$ are the two strings being compared. This metric measures the minimum number of edit operations (insertions, deletions, and substitutions) required to transform one string into the other, and can be used to compare strings that may not be identical but are still similar.
 
+See the comparison library and comparison level library docs for the Levenshtein functions in splink.
+
 ## Jaccard similarity 
 
 
@@ -78,3 +81,5 @@ $$J(A,B)=\frac{|A \cap B|}{|A \cup B|}$$
 In order for the algorith to work it is necessary to first divide each string into "shingles." Shingles refer to fixed-size subsets of a given set of data. 
 
 For example, if we have a field containing a long string of words such as an address or a company name, the algorithm divides it into shingles of a fixed size (e.g. one word per shingle or perhaps a trigram). This creates a set of shingles from the original data, which allows us to efficiently calculate the Jaccard similarity between it and other sets of data by comparing the shingles they share
+
+See the comparison library and comparison level library docs for the Jaccard functions in splink.
