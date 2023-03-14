@@ -17,7 +17,6 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def test_full_example_duckdb(tmp_path):
-
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df = df.rename(columns={"surname": "SUR name"})
     settings_dict = get_settings_dict()
@@ -166,7 +165,6 @@ def test_duckdb_load_from_file(df):
 
 
 def test_duckdb_arrow_array():
-
     # Checking array fixes problem identified here:
     # https://github.com/moj-analytical-services/splink/issues/680
 
