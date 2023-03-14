@@ -25,9 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class DuckDBLinkerDataFrame(SplinkDataFrame):
-    def __init__(self, templated_name, physical_name, duckdb_linker):
-        super().__init__(templated_name, physical_name)
-        self.duckdb_linker = duckdb_linker
+    linker: DuckDBLinker
 
     @property
     def columns(self) -> list[InputColumn]:
@@ -43,7 +41,7 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
 
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
-        self.duckdb_linker._delete_table_from_database(self.physical_name)
+        self.linker._delete_table_from_database(self.physical_name)
 
     def as_record_dict(self, limit=None):
 
@@ -51,14 +49,14 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
 
-        return self.duckdb_linker._con.query(sql).to_df().to_dict(orient="records")
+        return self.linker._con.query(sql).to_df().to_dict(orient="records")
 
     def as_pandas_dataframe(self, limit=None):
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
 
-        return self.duckdb_linker._con.query(sql).to_df()
+        return self.linker._con.query(sql).to_df()
 
 
 class DuckDBLinker(Linker):
@@ -86,7 +84,7 @@ class DuckDBLinker(Linker):
                 database) for link_only or link_and_dedupe
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
-                `linker.initialise_settings()` Defaults to None.
+                `linker.load_settings()` Defaults to None.
             connection (DuckDBPyConnection or str, optional):  Connection to duckdb.
                 If a a string, will instantiate a new connection.  Defaults to :memory:.
                 If the special :temporary: string is provided, an on-disk duckdb
@@ -144,6 +142,8 @@ class DuckDBLinker(Linker):
 
             if type(table).__name__ in ["DataFrame", "Table"]:
                 con.register(alias, table)
+                if isinstance(table, pd.DataFrame):
+                    self._check_cast_error(alias)
                 table = alias
 
             homogenised_tables.append(duckdb_load_from_file(table))
@@ -218,11 +218,6 @@ class DuckDBLinker(Linker):
         self._con.register(table_name, input)
         return self._table_to_splink_dataframe(table_name, table_name)
 
-    def initialise_settings(self, settings_dict: dict):
-        if "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "duckdb"
-        super().initialise_settings(settings_dict)
-
     def _random_sample_sql(self, proportion, sample_size):
         if proportion == 1.0:
             return ""
@@ -251,6 +246,22 @@ class DuckDBLinker(Linker):
         except error:
             return False
         return True
+
+    def _check_cast_error(self, alias):
+        from duckdb import InvalidInputException
+
+        error = InvalidInputException
+
+        try:
+            # fetch df is required as otherwise lazily evaluated and it breaks
+            # other queries.
+            self._con.execute(f"select * from {alias} limit 1").fetch_df()
+        except error as e:
+            raise InvalidInputException(
+                "DuckDB cannot infer datatypes of one or more "
+                "columns. Try converting dataframes "
+                "to pyarrow tables before adding to your linker."
+            ) from e
 
     def _delete_table_from_database(self, name):
         drop_sql = f"""

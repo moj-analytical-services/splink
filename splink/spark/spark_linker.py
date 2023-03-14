@@ -27,14 +27,12 @@ Dialect["customspark"]
 
 
 class SparkDataframe(SplinkDataFrame):
-    def __init__(self, templated_name, physical_name, spark_linker):
-        super().__init__(templated_name, physical_name)
-        self.spark_linker = spark_linker
+    linker: SparkLinker
 
     @property
     def columns(self) -> list[InputColumn]:
         sql = f"select * from {self.physical_name} limit 1"
-        spark_df = self.spark_linker.spark.sql(sql)
+        spark_df = self.linker.spark.sql(sql)
 
         col_strings = list(spark_df.columns)
         return [InputColumn(c, sql_dialect="spark") for c in col_strings]
@@ -48,7 +46,7 @@ class SparkDataframe(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
 
-        return self.spark_linker.spark.sql(sql).toPandas().to_dict(orient="records")
+        return self.linker.spark.sql(sql).toPandas().to_dict(orient="records")
 
     def drop_table_from_database(self, force_non_splink_table=False):
 
@@ -63,10 +61,10 @@ class SparkDataframe(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
 
-        return self.spark_linker.spark.sql(sql).toPandas()
+        return self.linker.spark.sql(sql).toPandas()
 
     def as_spark_dataframe(self):
-        return self.spark_linker.spark.table(self.physical_name)
+        return self.linker.spark.table(self.physical_name)
 
 
 class SparkLinker(Linker):
@@ -93,7 +91,7 @@ class SparkLinker(Linker):
                 registered in the Spark catalog
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
-                `linker.initialise_settings()` Defaults to None.
+                `linker.load_settings()` Defaults to None.
             break_lineage_method (str, optional): Method to use to cache intermediate
                 results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files",
                 "delta_lake_table". Defaults to "parquet".
@@ -281,11 +279,6 @@ class SparkLinker(Linker):
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
-
-    def initialise_settings(self, settings_dict: dict):
-        if "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "spark"
-        super().initialise_settings(settings_dict)
 
     def _repartition_if_needed(self, spark_df, templated_name):
         # Repartitioning has two effects:
