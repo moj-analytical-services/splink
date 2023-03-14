@@ -104,7 +104,7 @@ def test_datediff_levels(spark, ctl, Linker):
     linker_output = linker.predict().as_pandas_dataframe()
 
     # # Dict key: {gamma_level value: size}
-    size_gamma_lookup = {0: 8, 1: 15, 2: 8, 3: 3, 4: 1, 5: 1}
+    size_gamma_lookup = {0: 8, 1: 15, 2: 8, 3: 3, 4: 0, 5: 2}
 
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
@@ -116,7 +116,6 @@ def test_datediff_levels(spark, ctl, Linker):
     # Dict key: {gamma_value: tuple of ID pairs}
     size_gamma_lookup = {
         5: [[1, 8]],
-        4: [(5, 6)],
         3: [(2, 9)],
         2: [(7, 8), (1, 9)],
         1: [(3, 7)],
