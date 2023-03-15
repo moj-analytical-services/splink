@@ -28,7 +28,7 @@ def test_clear_error_when_empty_block():
 
     linker = DuckDBLinker(df, settings)
     linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(target_rows=1e6)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
     linker.estimate_parameters_using_expectation_maximisation("l.name = r.name")
     # No record pairs for which surname matches, so we should get a nice handled error
     with pytest.raises(EMTrainingException):

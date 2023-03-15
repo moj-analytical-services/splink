@@ -25,7 +25,7 @@ def test_u_train():
 
     linker = DuckDBLinker(df, settings)
     linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(target_rows=1e6)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     denom = (6 * 5) / 2  # n(n-1) / 2
@@ -69,7 +69,7 @@ def test_u_train_link_only():
 
     linker = DuckDBLinker([df_l, df_r], settings)
     linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(target_rows=1e6)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
@@ -107,7 +107,7 @@ def test_u_train_link_only_sample():
         .rename(columns={"index": "unique_id"})
     )
 
-    target_rows = 1800000
+    max_pairs = 1800000
 
     settings = {
         "link_type": "link_only",
@@ -117,7 +117,7 @@ def test_u_train_link_only_sample():
 
     linker = DuckDBLinker([df_l, df_r], settings)
     linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(target_rows=target_rows)
+    linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
     linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
@@ -130,10 +130,10 @@ def test_u_train_link_only_sample():
     result = self_table_count.as_record_dict()
 
     self_table_count.drop_table_from_database()
-    target_rows_proportion = result[0]["count"] / target_rows
+    max_pairs_proportion = result[0]["count"] / max_pairs
     # equality only holds probabilistically
     # chance of failure is approximately 1e-06
-    assert approx(target_rows_proportion, 0.15) == 1.0
+    assert approx(max_pairs_proportion, 0.15) == 1.0
 
 
 def test_u_train_multilink():
@@ -176,7 +176,7 @@ def test_u_train_multilink():
 
     linker = DuckDBLinker(dfs, settings)
     linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(target_rows=1e6)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """
@@ -208,7 +208,7 @@ def test_u_train_multilink():
     settings["link_type"] = "link_and_dedupe"
     linker = DuckDBLinker(dfs, settings)
     linker.debug_mode = True
-    linker.estimate_u_using_random_sampling(target_rows=1e6)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
 
     check_blocking_sql = """

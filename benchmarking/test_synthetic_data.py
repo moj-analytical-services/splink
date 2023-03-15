@@ -168,10 +168,10 @@ settings_dict = {
 }
 
 
-def duckdb_performance(df, target_rows):
+def duckdb_performance(df, max_pairs):
     linker = DuckDBLinker(df, settings_dict)
 
-    linker.estimate_u_using_random_sampling(target_rows=target_rows)
+    linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
 
     linker.estimate_parameters_using_expectation_maximisation(
         "l.full_name = r.full_name"
@@ -191,7 +191,7 @@ def test_3_rounds_100k_duckdb(benchmark):
 
     benchmark.pedantic(
         duckdb_performance,
-        kwargs={"df": df, "target_rows": 2e6},
+        kwargs={"df": df, "max_pairs": 2e6},
         rounds=3,
         iterations=1,
         warmup_rounds=0,
@@ -204,7 +204,7 @@ def test_3_rounds_300k_duckdb(benchmark):
 
     benchmark.pedantic(
         duckdb_performance,
-        kwargs={"df": df, "target_rows": 2e6},
+        kwargs={"df": df, "max_pairs": 2e6},
         rounds=3,
         iterations=1,
         warmup_rounds=0,
@@ -216,20 +216,20 @@ def test_3_rounds_1m_duckdb(benchmark):
 
     benchmark.pedantic(
         duckdb_performance,
-        kwargs={"df": df, "target_rows": 10e6},
+        kwargs={"df": df, "max_pairs": 10e6},
         rounds=3,
         iterations=1,
         warmup_rounds=0,
     )
 
 
-def spark_performance(df, target_rows=1e6):
+def spark_performance(df, max_pairs=1e6):
     linker = SparkLinker(
         df,
         settings_dict,
     )
 
-    linker.estimate_u_using_random_sampling(target_rows=target_rows)
+    linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
 
     linker.estimate_parameters_using_expectation_maximisation(
         "l.full_name = r.full_name"
@@ -264,7 +264,7 @@ def test_3_rounds_100k_spark(benchmark):
         df = spark.read.parquet("./benchmarking/synthetic_data_all.parquet")
         df = df.limit(100_000)
 
-        return (df,), {"target_rows": 2e6}
+        return (df,), {"max_pairs": 2e6}
 
     benchmark.pedantic(
         spark_performance,
@@ -295,7 +295,7 @@ def test_3_rounds_300k_spark(benchmark):
         df = spark.read.parquet("./benchmarking/synthetic_data_all.parquet")
         df = df.limit(300_000)
 
-        return (df,), {"target_rows": 2e6}
+        return (df,), {"max_pairs": 2e6}
 
     benchmark.pedantic(
         spark_performance,
@@ -326,7 +326,7 @@ def test_3_rounds_1m_spark(benchmark):
 
         df = spark.read.parquet("./benchmarking/synthetic_data_all.parquet")
 
-        return (df,), {"target_rows": 10e6}
+        return (df,), {"max_pairs": 10e6}
 
     benchmark.pedantic(
         spark_performance,

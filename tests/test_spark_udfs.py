@@ -61,7 +61,7 @@ def test_udf_registration(spark):
         df_spark,
         settings,
     )
-    linker.estimate_u_using_random_sampling(target_rows=1e6)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
     blocking_rule = "l.first_name = r.first_name"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
     blocking_rule = "l.surname = r.surname"
