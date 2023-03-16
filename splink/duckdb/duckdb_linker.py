@@ -171,11 +171,7 @@ class DuckDBLinker(Linker):
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
 
-        logger.debug(
-            execute_sql_logging_message_info(
-                templated_name, self._prepend_schema_to_table_name(physical_name)
-            )
-        )
+        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))
 
         sql = f"""
@@ -183,7 +179,7 @@ class DuckDBLinker(Linker):
         AS
         ({sql})
         """
-        self._con.execute(sql).fetch_df()
+        self._con.execute(sql)
 
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 

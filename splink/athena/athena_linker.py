@@ -305,11 +305,7 @@ class AthenaLinker(Linker):
         sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
         sql = sql.replace("FLOAT", "double").replace("float", "double")
 
-        logger.debug(
-            execute_sql_logging_message_info(
-                templated_name, self._prepend_schema_to_table_name(physical_name)
-            )
-        )
+        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))
 
         # create our table on athena and extract the metadata information

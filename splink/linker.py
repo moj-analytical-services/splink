@@ -6,7 +6,7 @@ import logging
 import os
 import warnings
 from collections import UserDict
-from copy import Error, copy, deepcopy
+from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
 
@@ -193,8 +193,6 @@ class Linker:
         self._self_link_mode = False
         self._analyse_blocking_mode = False
 
-        self._output_schema = ""
-
         self.debug_mode = False
 
     @property
@@ -330,12 +328,6 @@ class Linker:
 
             self._validate_dialect()
 
-    def _prepend_schema_to_table_name(self, table_name):
-        if self._output_schema:
-            return f"{self._output_schema}.{table_name}"
-        else:
-            return table_name
-
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
         concat_df = None
@@ -441,7 +433,7 @@ class Linker:
                     materialise_as_hash,
                     use_cache,
                 )
-            except Error as e:
+            except Exception as e:
                 raise e
             finally:
                 self._pipeline.reset()
