@@ -50,6 +50,18 @@ class DuckDBComparisonProperties(DuckDBBase):
     def _distance_in_km_level(self):
         return distance_in_km_level
 
+    @property
+    def _levenshtein_level(self):
+        return levenshtein_level
+
+    @property
+    def _jaro_winkler_level(self):
+        return jaro_winkler_level
+
+    @property
+    def _jaccard_level(self):
+        return jaccard_level
+
 
 class exact_match(DuckDBComparisonProperties, ExactMatchBase):
     pass
