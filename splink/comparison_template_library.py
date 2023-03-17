@@ -157,7 +157,6 @@ class DateComparisonBase(Comparison):
                 "Jaro-Winkler similarity. We recommend choosing one or the other."
             )
 
-
         if len(datediff_thresholds) > 0:
             datediff_thresholds = ensure_is_iterable(datediff_thresholds)
             datediff_metrics = ensure_is_iterable(datediff_metrics)
@@ -232,7 +231,7 @@ class NameComparisonBase(Comparison):
         self,
         col_name,
         include_exact_match_level=True,
-        phonetic_col_name = None,
+        phonetic_col_name=None,
         term_frequency_adjustments_name=False,
         term_frequency_adjustments_phonetic_name=False,
         levenshtein_thresholds=[],
@@ -305,7 +304,7 @@ class NameComparisonBase(Comparison):
                 col_name,
                 term_frequency_adjustments=term_frequency_adjustments_name,
                 m_probability=m_probability_exact_match_name,
-                include_colname_in_charts_label=True
+                include_colname_in_charts_label=True,
             )
             comparison_levels.append(level_dict)
 
@@ -314,10 +313,9 @@ class NameComparisonBase(Comparison):
                     phonetic_col_name,
                     term_frequency_adjustments=term_frequency_adjustments_phonetic_name,
                     m_probability=m_probability_exact_match_phonetic_name,
-                    include_colname_in_charts_label=True
+                    include_colname_in_charts_label=True,
                 )
                 comparison_levels.append(level_dict)
-
 
         if len(levenshtein_thresholds) > 0:
             levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
@@ -365,9 +363,7 @@ class NameComparisonBase(Comparison):
             jaccard_thresholds = ensure_is_iterable(jaccard_thresholds)
 
             if m_probability_or_probabilities_jac is None:
-                m_probability_or_probabilities_jac = [None] * len(
-                    jaccard_thresholds
-                )
+                m_probability_or_probabilities_jac = [None] * len(jaccard_thresholds)
             m_probability_or_probabilities_jac = ensure_is_iterable(
                 m_probability_or_probabilities_jac
             )
@@ -389,8 +385,8 @@ class NameComparisonBase(Comparison):
             )
 
         comparison_levels.append(
-                self._else_level(m_probability=m_probability_else),
-            )
+            self._else_level(m_probability=m_probability_else),
+        )
 
         # Construct Description
         comparison_desc = ""
@@ -417,9 +413,7 @@ class NameComparisonBase(Comparison):
         if len(jaccard_thresholds) > 0:
             lev_desc = ", ".join([str(d) for d in jaccard_thresholds])
             plural = "" if len(jaccard_thresholds) == 1 else "s"
-            comparison_desc += (
-                f"Names within jaccard threshold{plural} {lev_desc} vs. "
-            )
+            comparison_desc += f"Names within jaccard threshold{plural} {lev_desc} vs. "
 
         comparison_desc += "anything else"
 
@@ -436,7 +430,7 @@ class FullNameComparisonBase(Comparison):
         col_name,
         include_exact_match_level=True,
         include_forename_surname_inversion=True,
-        include_dmetaphone = False,
+        include_dmetaphone=False,
         term_frequency_adjustments_forename=False,
         term_frequency_adjustments_surname=False,
         term_frequency_adjustments_fullname=False,
