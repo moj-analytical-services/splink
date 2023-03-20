@@ -12,9 +12,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install Black
         run: pip install black==22.6.0
+      - name: Run Black autoformatter
+        run: python3 -m black .
       - name: If needed, commit black changes to the pull request
         run: |
-          python3 -m black .
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
