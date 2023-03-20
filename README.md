@@ -27,7 +27,7 @@ Splink deduplicates and/or links records from datasets that lack a unique identi
 
 It assumes that prior to using Splink your datasets have been standardised so they all have the same column names, and consistent formatting (e.g. lowercased, punctuation cleaned up).
 
-For example, a few of your records may look like this:
+For example, consider the following records that contain duplicates, but no unique person identifier:
 
 ![tables showing what splink does](./docs/img/main_readme_what_does_splink_do.drawio.png)
 
