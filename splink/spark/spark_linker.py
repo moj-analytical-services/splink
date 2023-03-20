@@ -15,7 +15,6 @@ from pyspark.sql.utils import AnalysisException
 from ..databricks.enable_splink import enable_splink
 from ..input_column import InputColumn
 from ..linker import Linker
-from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import ensure_is_list, major_minor_version_greater_equal_than
 from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
@@ -380,13 +379,9 @@ class SparkLinker(Linker):
                 )
         return spark_df
 
-    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
+    def _execute_sql(self, sql, templated_name, physical_name):
         sql = sqlglot.transpile(sql, read="spark", write="customspark", pretty=True)[0]
-
-        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.log(5, log_sql(sql))
-        spark_df = self.spark.sql(sql)
-
+        spark_df = self._log_and_do_execute_sql(sql, templated_name, physical_name)
         spark_df = self._break_lineage_and_repartition(
             spark_df, templated_name, physical_name
         )
@@ -397,6 +392,9 @@ class SparkLinker(Linker):
 
         output_df = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_df
+
+    def _do_execute_sql(self, final_sql, templated_name, physical_name):
+        return self.spark.sql(final_sql)
 
     @property
     def _infinity_expression(self):
