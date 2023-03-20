@@ -18,6 +18,6 @@ jobs:
         run: |
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
-          git diff-index --quiet HEAD || (git commit -am 'lint with black' --allow-empty && git push -f)
+          git diff-index --quiet HEAD || (git commit -am 'lint with black' && git push -f)
       - name: Run black --check .
         run: python3 -m black --check .
