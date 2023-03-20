@@ -29,7 +29,7 @@ It assumes that prior to using Splink your datasets have been standardised so th
 
 For example, consider the following records that contain duplicates, but no unique person identifier:
 
-![tables showing what splink does](./docs/img/main_readme_what_does_splink_do.drawio.png)
+![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/improve_readme_what_does_splink_do/docs/img/main_readme_what_does_splink_do.drawio.png)
 
 ## What data does Splink work best with?
 
