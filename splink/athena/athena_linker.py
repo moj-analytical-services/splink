@@ -21,34 +21,6 @@ from ..sql_transform import sqlglot_transform_sql
 logger = logging.getLogger(__name__)
 
 
-def _verify_athena_inputs(database, bucket, boto3_session):
-    def generic_warning_text():
-        return (
-            f"\nThe supplied {database_bucket_txt} that you have requested to write to "
-            f"{do_does_grammar[0]} not currently exist. \n \nCreate "
-            "{do_does_grammar[1]} either directly from within AWS, or by using "
-            "'awswrangler.athena.create_athena_bucket' for buckets or "
-            "'awswrangler.catalog.create_database' for databases using the "
-            "awswrangler API."
-        )
-
-    errors = []
-
-    if (
-        database
-        not in wr.catalog.databases(limit=None, boto3_session=boto3_session).values
-    ):
-        errors.append(f"database, '{database}'")
-
-    if bucket not in wr.s3.list_buckets(boto3_session=boto3_session):
-        errors.append(f"bucket, '{bucket}'")
-
-    if errors:
-        database_bucket_txt = " and ".join(errors)
-        do_does_grammar = ["does", "it"] if len(errors) == 1 else ["do", "them"]
-        raise Exception(generic_warning_text())
-
-
 class AthenaDataFrame(SplinkDataFrame):
     linker: AthenaLinker
 
