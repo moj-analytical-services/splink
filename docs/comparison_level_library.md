@@ -14,12 +14,26 @@ tags:
 # Documentation for `comparison_level_library` 
 
 The `comparison_level_library` contains pre-made comparison levels available for use to
-construct custom comparisons [as described in this topic guide](../topic_guides/customising_comparisons.html#method-3-comparisonlevels).
-However, not every comparison level is available for every [Splink-compatible SQL backend](../topic_guides/backends.html).
+construct custom comparisons [as described in this topic guide](./topic_guides/customising_comparisons.html#method-3-comparisonlevels).
+However, not every comparison level is available for every [Splink-compatible SQL backend](./topic_guides/backends.html).
 
 The pre-made Splink comparison levels available for each SQL dialect are as given in this table:
 
-{% include-markdown "./includes/generated_files/comparison_level_library_dialect_table.md" %}
+||spark|duckdb|athena|sqlite|
+|-|-|-|-|-|
+|`array_intersect_level`|✓|✓|✓||
+|`columns_reversed_level`|✓|✓|✓|✓|
+|`datediff_level`|✓|✓|||
+|`distance_function_level`|✓|✓|✓|✓|
+|`distance_in_km_level`|✓|✓|✓||
+|`else_level`|✓|✓|✓|✓|
+|`exact_match_level`|✓|✓|✓|✓|
+|`jaccard_level`|✓|✓|||
+|`jaro_winkler_level`|✓|✓|||
+|`levenshtein_level`|✓|✓|✓||
+|`null_level`|✓|✓|✓|✓|
+|`percentage_difference_level`|✓|✓|✓|✓|
+
 
 
 The detailed API for each of these are outlined below.

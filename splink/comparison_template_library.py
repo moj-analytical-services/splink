@@ -251,6 +251,7 @@ class NameComparisonBase(Comparison):
 
         The default arguments will give a comparison with comparison levels:\n
         - Exact match \n
+        - Jaro Winkler similarity >= 0.95\n
         - Jaro Winkler similarity >= 0.88\n
         - Anything else
 
@@ -260,7 +261,9 @@ class NameComparisonBase(Comparison):
                 level for col_name. Defaults to True.
             phonetic_col_name (str): The name of the column with phonetic reduction
                 (such as dmetaphone) of col_name. Including parameter will create
-                an exact match level for  phonetic_col_name. Defaults to None
+                an exact match level for  phonetic_col_name. The phonetic column must 
+                be present in the dataset to use this parameter.
+                Defaults to None
             term_frequency_adjustments_name (bool, optional): If True, apply term
                 frequency adjustments to the exact match level for "col_name".
                 Defaults to False.
