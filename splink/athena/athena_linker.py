@@ -74,7 +74,7 @@ class AthenaDataFrame(SplinkDataFrame):
         self.linker.delete_table_from_s3(self.physical_name)
 
     def _check_drop_folder_created_by_splink(self, force_non_splink_table=False):
-        filepath = self.athena_linker.boto_utils.s3_output
+        filepath = self.linker.boto_utils.s3_output
         filename = self.physical_name
         # Validate that the folder is a splink generated folder...
         files = wr.s3.list_objects(
