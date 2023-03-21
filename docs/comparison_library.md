@@ -16,15 +16,8 @@ However, not every comparison is available for every [Splink-compatible SQL back
 
 The pre-made Splink comparisons available for each SQL dialect are as given in this table:
 
-||spark|duckdb|athena|sqlite|
-|-|-|-|-|-|
-|`array_intersect_at_sizes`|✓|✓|✓||
-|`datediff_at_thresholds`|✓|✓|||
-|`distance_function_at_thresholds`|✓|✓|✓|✓|
-|`exact_match`|✓|✓|✓|✓|
-|`jaccard_at_thresholds`|✓|✓|||
-|`jaro_winkler_at_thresholds`|✓|✓|||
-|`levenshtein_at_thresholds`|✓|✓|✓||
+{% include-markdown "./includes/generated_files/comparison_library_dialect_table.md" %}
+
 
 
 
