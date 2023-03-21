@@ -261,7 +261,7 @@ class NameComparisonBase(Comparison):
                 level for col_name. Defaults to True.
             phonetic_col_name (str): The name of the column with phonetic reduction
                 (such as dmetaphone) of col_name. Including parameter will create
-                an exact match level for  phonetic_col_name. The phonetic column must 
+                an exact match level for  phonetic_col_name. The phonetic column must
                 be present in the dataset to use this parameter.
                 Defaults to None
             term_frequency_adjustments_name (bool, optional): If True, apply term
