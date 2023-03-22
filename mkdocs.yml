@@ -64,7 +64,7 @@ nav:
       - Link type - linking vs deduping: "topic_guides/link_type.md"
       - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
       - Comparators: "topic_guides/comparators.md"
-      - Phonetic transformations for blocking: "topic_guides/phonetic.md"
+      - Phonetic transformations: "topic_guides/phonetic.md"
       - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
       - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
       - Optimising Spark performance: "topic_guides/optimising_spark.md"
