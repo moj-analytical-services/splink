@@ -39,4 +39,6 @@ jobs:
         run: poetry install --no-interaction --no-root --only linting
 
       - name: Lint Python files with ruff
-        run: ruff --show-source .
+        run: |
+          source .venv/bin/activate
+          ruff --show-source .

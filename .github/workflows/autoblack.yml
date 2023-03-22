@@ -35,6 +35,7 @@ jobs:
 
       - name: If needed, commit black changes to the pull request
         run: |
+          source .venv/bin/activate
           python3 -m black .
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
