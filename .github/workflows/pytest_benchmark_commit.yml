@@ -38,6 +38,7 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
+          installation-arguments: --with benchmarking
 
       #----------------------------------------------
       #       load cached venv if cache exists
