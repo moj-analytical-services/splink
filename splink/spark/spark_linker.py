@@ -136,7 +136,7 @@ class SparkLinker(Linker):
 
             # Prefer spark.sql.shuffle.partitions if set
             try:
-                parallelism_value = self.spark.conf.get("spark.default.parallelism")
+                parallelism_value = self.spark.conf.get("spark.sql.shuffle.partitions")
                 parallelism_value = int(parallelism_value)
             except Exception:
                 pass
