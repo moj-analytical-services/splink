@@ -176,7 +176,7 @@ def test_date_comparison_error_logger(ctl):
     ],
 )
 def test_name_comparison_run(ctl):
-    ctl.name_comparison("date")
+    ctl.name_comparison("first_name")
 
 
 @pytest.mark.parametrize(
@@ -247,6 +247,11 @@ def test_name_comparison_levels(spark, ctl, Linker):
 
     # # Dict key: {gamma_level value: size}
     size_gamma_lookup = {0: 8, 1: 4, 2: 0, 3: 2, 4: 1}
+    # 4: exact_match
+    # 3: dmetaphone exact match
+    # 2: jaro_winkler > 0.95
+    # 1: jaro_winkler > 0.8
+    # 0: else
 
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():

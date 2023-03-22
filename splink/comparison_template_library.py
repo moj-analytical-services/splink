@@ -92,24 +92,24 @@ class DateComparisonBase(Comparison):
         datediff_error_logger(thresholds=datediff_thresholds, metrics=datediff_metrics)
 
         if separate_1st_january:
-            level_dict = {
+            comparison_level = {
                 "sql_condition": f"""{col_name}_l = {col_name}_r AND
                                     substr({col_name}_l, 6, 5) = '01-01'""",
                 "label_for_charts": "Matching and 1st Jan",
             }
             if m_probability_1st_january:
-                level_dict["m_probability"] = m_probability_1st_january
+                comparison_level["m_probability"] = m_probability_1st_january
             if term_frequency_adjustments:
-                level_dict["tf_adjustment_column"] = col_name
-            comparison_levels.append(level_dict)
+                comparison_level["tf_adjustment_column"] = col_name
+            comparison_levels.append(comparison_level)
 
         if include_exact_match_level:
-            level_dict = self._exact_match_level(
+            comparison_level = self._exact_match_level(
                 col_name,
                 term_frequency_adjustments=term_frequency_adjustments,
                 m_probability=m_probability_exact_match,
             )
-            comparison_levels.append(level_dict)
+            comparison_levels.append(comparison_level)
 
         if len(levenshtein_thresholds) > 0:
             levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
@@ -125,12 +125,12 @@ class DateComparisonBase(Comparison):
             for thres, m_prob in zip(
                 levenshtein_thresholds, m_probability_or_probabilities_lev
             ):
-                level_dict = self._levenshtein_level(
+                comparison_level = self._levenshtein_level(
                     col_name,
                     distance_threshold=thres,
                     m_probability=m_prob,
                 )
-                comparison_levels.append(level_dict)
+                comparison_levels.append(comparison_level)
 
         if len(jaro_winkler_thresholds) > 0:
             jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
@@ -146,12 +146,12 @@ class DateComparisonBase(Comparison):
             for thres, m_prob in zip(
                 jaro_winkler_thresholds, m_probability_or_probabilities_jw
             ):
-                level_dict = self._jaro_winkler_level(
+                comparison_level = self._jaro_winkler_level(
                     col_name,
                     distance_threshold=thres,
                     m_probability=m_prob,
                 )
-                comparison_levels.append(level_dict)
+                comparison_levels.append(comparison_level)
 
         if len(levenshtein_thresholds) > 0 and len(jaro_winkler_thresholds) > 0:
             logger.warning(
@@ -176,13 +176,13 @@ class DateComparisonBase(Comparison):
                 datediff_metrics,
                 m_probability_or_probabilities_datediff,
             ):
-                level_dict = self._datediff_level(
+                comparison_level = self._datediff_level(
                     col_name,
                     date_threshold=thres,
                     date_metric=metric,
                     m_probability=m_prob,
                 )
-                comparison_levels.append(level_dict)
+                comparison_levels.append(comparison_level)
 
             comparison_levels.append(
                 self._else_level(m_probability=m_probability_else),
@@ -296,7 +296,7 @@ class NameComparisonBase(Comparison):
                 default m probability for the 'anything else' level. Defaults to None.
 
         Returns:
-            Comparison: A comparison that can be inclued in the Splink settings
+            Comparison: A comparison that can be included in the Splink settings
                 dictionary.
         """
         # Construct Comparison
@@ -304,22 +304,22 @@ class NameComparisonBase(Comparison):
         comparison_levels.append(self._null_level(col_name))
 
         if include_exact_match_level:
-            level_dict = self._exact_match_level(
+            comparison_level = self._exact_match_level(
                 col_name,
                 term_frequency_adjustments=term_frequency_adjustments_name,
                 m_probability=m_probability_exact_match_name,
                 include_colname_in_charts_label=True,
             )
-            comparison_levels.append(level_dict)
+            comparison_levels.append(comparison_level)
 
             if phonetic_col_name is not None:
-                level_dict = self._exact_match_level(
+                comparison_level = self._exact_match_level(
                     phonetic_col_name,
                     term_frequency_adjustments=term_frequency_adjustments_phonetic_name,
                     m_probability=m_probability_exact_match_phonetic_name,
                     include_colname_in_charts_label=True,
                 )
-                comparison_levels.append(level_dict)
+                comparison_levels.append(comparison_level)
 
         if len(levenshtein_thresholds) > 0:
             levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
@@ -335,12 +335,12 @@ class NameComparisonBase(Comparison):
             for thres, m_prob in zip(
                 levenshtein_thresholds, m_probability_or_probabilities_lev
             ):
-                level_dict = self._levenshtein_level(
+                comparison_level = self._levenshtein_level(
                     col_name,
                     distance_threshold=thres,
                     m_probability=m_prob,
                 )
-                comparison_levels.append(level_dict)
+                comparison_levels.append(comparison_level)
 
         if len(jaro_winkler_thresholds) > 0:
             jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
@@ -356,12 +356,12 @@ class NameComparisonBase(Comparison):
             for thres, m_prob in zip(
                 jaro_winkler_thresholds, m_probability_or_probabilities_jw
             ):
-                level_dict = self._jaro_winkler_level(
+                comparison_level = self._jaro_winkler_level(
                     col_name,
                     distance_threshold=thres,
                     m_probability=m_prob,
                 )
-                comparison_levels.append(level_dict)
+                comparison_levels.append(comparison_level)
 
         if len(jaccard_thresholds) > 0:
             jaccard_thresholds = ensure_is_iterable(jaccard_thresholds)
@@ -375,12 +375,12 @@ class NameComparisonBase(Comparison):
             for thres, m_prob in zip(
                 jaccard_thresholds, m_probability_or_probabilities_jac
             ):
-                level_dict = self._jaccard_level(
+                comparison_level = self._jaccard_level(
                     col_name,
                     distance_threshold=thres,
                     m_probability=m_prob,
                 )
-                comparison_levels.append(level_dict)
+                comparison_levels.append(comparison_level)
 
         comparison_levels.append(
             self._else_level(m_probability=m_probability_else),
