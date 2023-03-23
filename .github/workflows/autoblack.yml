@@ -5,7 +5,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
         with:
@@ -33,15 +33,17 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root --only linting
 
-      - name: If needed, commit black changes to the pull request
+      - name: Run Black autoformatter
         run: |
           source .venv/bin/activate
           python3 -m black .
+      - name: If needed, commit black changes to the pull request
+        run: |
           git config user.name "$(git log -n 1 --pretty=format:%an)"
           git config user.email "$(git log -n 1 --pretty=format:%ae)"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/$GITHUB_REPOSITORY
-          git checkout $GITHUB_HEAD_REF
-          git diff-index --quiet HEAD || (git commit -am 'lint with black' --allow-empty && git push -f)
+          # short-circuit if we have no changes, otherwise attempt to commit and push
+          # should only fail on forks, in which case contributors will need to manually run black, commit, and push
+          git diff-index --quiet HEAD || (echo "Attempting to commit changes" && git commit -am 'lint with black' && git push -f)
       - name: Run black --check .
         run: |
           source .venv/bin/activate
