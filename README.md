@@ -27,34 +27,17 @@ Splink deduplicates and/or links records from datasets that lack a unique identi
 
 It assumes that prior to using Splink your datasets have been standardised so they all have the same column names, and consistent formatting (e.g. lowercased, punctuation cleaned up).
 
-For example, a few of your records may look like this:
+For example, consider the following records that contain duplicates, but no unique person identifier:
 
-| row_id | first_name | surname | dob        | city       |
-| ------ | ---------- | ------- | ---------- | ---------- |
-| 1      | lucas      | smith   | 1984-01-02 | London     |
-| 2      | lucas      | smyth   | 1984-07-02 | Manchester |
-| 3      | lucas      | smyth   | 1984-07-02 |            |
-| 4      | david      | jones   |            | Leeds      |
-| 5      | david      | jones   | 1990-03-21 | Leeds      |
+![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/improve_readme_what_does_splink_do/docs/img/main_readme_what_does_splink_do_1.drawio.png)
 
-Splink produces pairwise predictions of the links:
+Splink predicts which rows link together (also known as edges):
 
-| row_id_l | row_id_r | match_probability |
-| -------- | -------- | ----------------- |
-| 1        | 2        | 0.9               |
-| 1        | 3        | 0.85              |
-| 2        | 3        | 0.92              |
-| 4        | 5        | 0.7               |
+![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/improve_readme_what_does_splink_do/docs/img/main_readme_what_does_splink_do_2.drawio.png)
 
-And clusters the predictions to produce an estimated unique id:
+and clusters these links to produce an estimated person ID:
 
-| cluster_id | row_id |
-| ---------- | ------ |
-| a          | 1      |
-| a          | 2      |
-| a          | 3      |
-| b          | 4      |
-| b          | 5      |
+![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/improve_readme_what_does_splink_do/docs/img/main_readme_what_does_splink_do_3.drawio.png)
 
 ## What data does Splink work best with?
 
