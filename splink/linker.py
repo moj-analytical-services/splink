@@ -870,7 +870,8 @@ class Linker:
             "`initialise_settings` is deprecated. We advise you use "
             "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
-            DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
+            DeprecationWarning,
+            stacklevel=2,
         )
 
     def load_settings_from_json(self, in_path: str | Path):
@@ -891,7 +892,8 @@ class Linker:
             "`load_settings_from_json` is deprecated. We advise you use "
             "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
-            DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
+            DeprecationWarning,
+            stacklevel=2,
         )
 
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
@@ -1037,7 +1039,9 @@ class Linker:
         elif target_rows is not None:
             # user is using deprecated argument
             warnings.warn(
-                "target_rows is deprecated; use max_pairs", DeprecationWarning, 2
+                "target_rows is deprecated; use max_pairs",
+                DeprecationWarning,
+                stacklevel=2,
             )
             max_pairs = target_rows
         else:

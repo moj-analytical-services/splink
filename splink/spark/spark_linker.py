@@ -76,7 +76,7 @@ class SparkLinker(Linker):
         catalog=None,
         database=None,
         repartition_after_blocking=False,
-        num_partitions_on_repartition=100,
+        num_partitions_on_repartition=None,
     ):
         """Initialise the linker object, which manages the data linkage process and
                 holds the data linkage model.
@@ -117,7 +117,6 @@ class SparkLinker(Linker):
         self.break_lineage_method = break_lineage_method
 
         self.repartition_after_blocking = repartition_after_blocking
-        self.num_partitions_on_repartition = num_partitions_on_repartition
 
         input_tables = ensure_is_list(input_table_or_tables)
 
@@ -126,6 +125,25 @@ class SparkLinker(Linker):
         )
 
         self._get_spark_from_input_tables_if_not_provided(spark, input_tables)
+
+        if num_partitions_on_repartition is None:
+            parallelism_value = 200
+            try:
+                parallelism_value = self.spark.conf.get("spark.default.parallelism")
+                parallelism_value = int(parallelism_value)
+            except Exception:
+                pass
+
+            # Prefer spark.sql.shuffle.partitions if set
+            try:
+                parallelism_value = self.spark.conf.get("spark.sql.shuffle.partitions")
+                parallelism_value = int(parallelism_value)
+            except Exception:
+                pass
+
+            self.num_partitions_on_repartition = math.ceil(parallelism_value / 2)
+        else:
+            self.num_partitions_on_repartition = num_partitions_on_repartition
 
         self._set_catalog_and_database_if_not_provided(catalog, database)
 
@@ -292,9 +310,13 @@ class SparkLinker(Linker):
             r"__splink__df_representatives",
             r"__splink__df_concat_with_tf_sample",
             r"__splink__df_concat_with_tf",
+            r"__splink__df_predict",
         ]
 
         num_partitions = self.num_partitions_on_repartition
+
+        if re.fullmatch(r"__splink__df_predict", templated_name):
+            num_partitions = math.ceil(self.num_partitions_on_repartition)
 
         if re.fullmatch(r"__splink__df_representatives", templated_name):
             num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
@@ -331,7 +353,7 @@ class SparkLinker(Linker):
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
-            r"__splink__df_representatives",
+            r"__splink__df_representatives.+",
             r"__splink__df_neighbours",
             r"__splink__df_connected_components_df",
         ]

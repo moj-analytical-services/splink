@@ -78,7 +78,7 @@
           "color": {
               "condition": {"test": "datum['completeness'] < 0.5", "value": "white"},
               "value": "black"
-          },
+          }
         },
         "transform": [
           {
