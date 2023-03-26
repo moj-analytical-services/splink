@@ -29,10 +29,18 @@ def process_directory(directory):
                 truncate_and_save(file_path, "csv")
             elif file_ext == ".parquet":
                 truncate_and_save(file_path, "parquet")
+
     for root, _, files in os.walk(directory):
         for file in files:
-            print("files that now exist are")
-            print(file)
+            file_path = os.path.join(root, file)
+            file_ext = os.path.splitext(file)[-1].lower()
+            if file_ext == ".csv":
+                df = pd.read_csv(file_path)
+                print(f"length of {file_path} is {len(df)}")
+            elif file_ext == ".parquet":
+                truncate_and_save(file_path, "parquet")
+                df = pd.read_parquet(file_path)
+                print(f"length of {file_path} is {len(df)}")
 
 
 if __name__ == "__main__":
