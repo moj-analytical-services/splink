@@ -3,14 +3,14 @@
 [![Downloads](https://pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
 [![Documentation](https://img.shields.io/badge/API-documentation-blue)](https://moj-analytical-services.github.io/splink/)
 
-# Fast, accurate and scalable probabilistic data linkage using your choice of SQL backend.
+# Fast, accurate and scalable probabilistic data linkage
 
 Splink is a Python package for probabilistic record linkage (entity resolution) that allows you to deduplicate and link records from datasets without unique identifiers.
 
 ## Key Features
 
 - **Speed:** Capable of linking a million records on a laptop in approximately one minute.
-- **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic
+- **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.
 - **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.
 - **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.
 - **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.
@@ -116,6 +116,10 @@ clusters.as_pandas_dataframe(limit=5)
 
 - [A introductory presentation on Splink](https://www.youtube.com/watch?v=msz3T741KQI)
 - [An introduction to the Splink Comparison Viewer dashboard](https://www.youtube.com/watch?v=DNvCMqjipis)
+
+## Support
+
+Please post on the [discussion forums](https://github.com/moj-analytical-services/splink/discussions) if you have any questions. If you think you have found a bug, pleaase raise an [issue](https://github.com/moj-analytical-services/splink/issues).
 
 ## Awards
 
