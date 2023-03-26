@@ -475,12 +475,7 @@ def solve_connected_components(
             prev_representatives_table.physical_name
         )
 
-        # To allow debug mode to work with our recursive loop, add
-        # the iteration number as a suffix
-        if linker.debug_mode:
-            repr_name = "__splink__df_representatives"
-        else:
-            repr_name = f"__splink__df_representatives_{iteration}"
+        repr_name = f"__splink__df_representatives_{iteration}"
 
         representatives = linker._enqueue_sql(
             sql,
@@ -497,9 +492,7 @@ def solve_connected_components(
 
         linker._enqueue_sql(sql, "__splink__df_root_rows")
 
-        root_rows_df = linker._execute_sql_pipeline(
-            materialise_as_hash=False, use_cache=False
-        )
+        root_rows_df = linker._execute_sql_pipeline(use_cache=False)
 
         root_rows = root_rows_df.as_record_dict()
         root_rows_df.drop_table_from_database_and_remove_from_cache()
