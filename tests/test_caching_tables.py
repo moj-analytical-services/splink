@@ -100,7 +100,7 @@ def test_cache_used_when_registering_nodes_table():
     )
 
 
-# This test is more tricky because tf tables are not explicitly retrieved from
+# This test is more tricky because term freq tables are not explicitly retrieved from
 # the cache. When they exist they are an intermediate part of a larger
 # SQL query rather than being tables which are outputted in their own right
 # Instead, if the cache is used, they SQL is simplified so that a CTE is
