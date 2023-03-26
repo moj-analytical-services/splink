@@ -9,11 +9,11 @@ def truncate_and_save(file_path, file_format):
     if file_format == "csv":
         truncated_file_path = os.path.splitext(file_path)[0] + "_truncated.csv"
         with open(truncated_file_path, "w") as truncated_file:
-            subprocess.run(["head", "-n", "101", file_path], stdout=truncated_file)
+            subprocess.run(["head", "-n", "1001", file_path], stdout=truncated_file)
         os.rename(truncated_file_path, file_path)
     elif file_format == "parquet":
         df = pd.read_parquet(file_path)
-        df = df.head(100)
+        df = df.head(1000)
         df.to_parquet(file_path, index=False)
 
 

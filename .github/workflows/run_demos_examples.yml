@@ -43,5 +43,3 @@ jobs:
             find . -type f -name 'example_*ipynb' -exec grep -H 'target_rows' {} \;
             python -m pytest --nbmake --nbmake-kernel=python3 example_*ipynb
 
-
-
