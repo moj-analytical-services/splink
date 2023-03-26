@@ -40,6 +40,8 @@ jobs:
                 echo "Modified: $file"
               fi
             done
+            find . -type f -name 'example_*ipynb' -exec grep -H 'target_rows' {} \;
+
 
 
 
