@@ -89,7 +89,6 @@ class SQLiteLinker(Linker):
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
     ):
-
         self._sql_dialect_ = "sqlite"
 
         self.con = connection
@@ -108,7 +107,6 @@ class SQLiteLinker(Linker):
         return SQLiteDataFrame(templated_name, physical_name, self)
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
-
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
@@ -127,7 +125,6 @@ class SQLiteLinker(Linker):
         return output_obj
 
     def register_table(self, input, table_name, overwrite=False):
-
         # If the user has provided a table name, return it as a SplinkDataframe
         if isinstance(input, str):
             return self._table_to_splink_dataframe(table_name, input)

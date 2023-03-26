@@ -6,14 +6,12 @@ from .misc import ensure_is_list
 
 
 def _group_name(cols_or_expr):
-
     cols_or_expr = re.sub(r"[^0-9a-zA-Z_]", " ", cols_or_expr)
     cols_or_expr = re.sub(r"\s+", "_", cols_or_expr)
     return cols_or_expr
 
 
 def expressions_to_sql(expressions):
-
     e = []
     for expr in expressions:
         if isinstance(expr, list):
@@ -35,7 +33,6 @@ _inner_chart_spec_freq = load_chart_definition(chart_path)
 
 
 def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, col_name):
-
     inner_spec = deepcopy(_inner_chart_spec_freq)
 
     total_rows_inc_nulls = percentile_data[0]["total_rows_inc_nulls"]
@@ -121,7 +118,6 @@ def _get_df_percentiles():
 
 
 def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
-
     sql = """
     select * from
     (select *
@@ -142,7 +138,6 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
 
 
 def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
-
     cols_or_exprs = ensure_is_list(cols_or_exprs)
     column_expressions = expressions_to_sql(cols_or_exprs)
     sqls = []
@@ -153,7 +148,6 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
         # add a quick clause to filter out any instances whereby either column contains
         # a null value.
         if isinstance(raw_expr, list):
-
             null_exprs = [f"{c} is null" for c in raw_expr]
             null_exprs = " OR ".join(null_exprs)
 
@@ -186,7 +180,6 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
 
 
 def _add_100_percentile_to_df_percentiles(percentile_rows):
-
     r = percentile_rows[0]
     if r["percentile_ex_nulls"] != 1.0:
         first_row = deepcopy(r)
@@ -198,7 +191,6 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 
 
 def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
-
     df_concat = linker._initialise_df_concat()
 
     input_dataframes = []

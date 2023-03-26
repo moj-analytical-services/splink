@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splink"
-version = "3.7.0.dev01"
+version = "3.7.2"
 description = "Fast probabilistic data linkage at scale"
 authors = ["Robin Linacre <robinlinacre@hotmail.com>", "Sam Lindsay", "Theodore Manassis", "Tom Hepworth", "Andy Bond"]
 license = "MIT"
@@ -17,17 +17,28 @@ sqlglot = ">=5.1.0"
 altair = ">=4.2.0"
 Jinja2 = ">=3.0.3"
 
-[tool.poetry.dev-dependencies]
-pytest = "^7.0"
-pytest-benchmark = "^4"
+[tool.poetry.group.dev]
+[tool.poetry.group.dev.dependencies]
 tabulate = "0.8.9"
-lzstring = "1.0.4"
-black = "^22.1.0"
-ruff = "^0.0.236"
+pyspark = "^3.2.1"
+
+[tool.poetry.group.linting]
+[tool.poetry.group.linting.dependencies]
+black = "22.6.0"
+ruff = "0.0.257"
+
+[tool.poetry.group.testing]
+[tool.poetry.group.testing.dependencies]
+pytest = "^7.0"
 pyarrow = "^7.0.0"
 networkx = "2.5.1"
-pyspark = "^3.2.1"
 rapidfuzz = "^2.0.3"
+
+[tool.poetry.group.benchmarking]
+optional = true
+[tool.poetry.group.benchmarking.dependencies]
+pytest-benchmark = "^4"
+lzstring = "1.0.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.8"]

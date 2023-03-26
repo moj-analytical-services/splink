@@ -6,7 +6,7 @@ import logging
 import os
 import warnings
 from collections import UserDict
-from copy import Error, copy, deepcopy
+from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
 
@@ -233,8 +233,6 @@ class Linker:
         self._self_link_mode = False
         self._analyse_blocking_mode = False
 
-        self._output_schema = ""
-
         self.debug_mode = False
 
     @property
@@ -370,12 +368,6 @@ class Linker:
 
             self._validate_dialect()
 
-    def _prepend_schema_to_table_name(self, table_name):
-        if self._output_schema:
-            return f"{self._output_schema}.{table_name}"
-        else:
-            return table_name
-
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
         concat_df = None
@@ -477,7 +469,7 @@ class Linker:
                     output_tablename_templated,
                     use_cache,
                 )
-            except Error as e:
+            except Exception as e:
                 raise e
             finally:
                 self._pipeline.reset()
@@ -911,7 +903,8 @@ class Linker:
             "`initialise_settings` is deprecated. We advise you use "
             "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
-            DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
+            DeprecationWarning,
+            stacklevel=2,
         )
 
     def load_settings_from_json(self, in_path: str | Path):
@@ -932,7 +925,8 @@ class Linker:
             "`load_settings_from_json` is deprecated. We advise you use "
             "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
-            DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
+            DeprecationWarning,
+            stacklevel=2,
         )
 
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
@@ -1036,7 +1030,9 @@ class Linker:
         self._enqueue_sql(sql, "__splink__df_blocked")
         return self._execute_sql_pipeline([concat_with_tf])
 
-    def estimate_u_using_random_sampling(self, target_rows: int):
+    def estimate_u_using_random_sampling(
+        self, max_pairs: int = None, *, target_rows=None
+    ):
         """Estimate the u parameters of the linkage model using random sampling.
 
         The u parameters represent the proportion of record comparisons that fall
@@ -1049,8 +1045,8 @@ class Linker:
         matches). For large datasets, this is typically true.
 
         Args:
-            target_rows (int): The target number of pairwise record comparisons from
-            which to derive the u values.  Larger will give more accurate estimates
+            max_pairs (int): The maximum number of pairwise record comparisons to
+            sample. Larger will give more accurate estimates
             but lead to longer runtimes.  In our experience at least 1e9 (one billion)
             gives best results but can take a long time to compute. 1e7 (ten million)
             is often adequate whilst testing different model specifications, before
@@ -1063,8 +1059,26 @@ class Linker:
             None: Updates the estimated u parameters within the linker object
             and returns nothing.
         """
+        # TODO: Remove this compatibility code in a future release once we drop
+        # support for "target_rows". Deprecation warning added in 3.7.0
+        if max_pairs is not None and target_rows is not None:
+            # user supplied both
+            raise TypeError("Just use max_pairs")
+        elif max_pairs is not None:
+            # user is doing it correctly
+            pass
+        elif target_rows is not None:
+            # user is using deprecated argument
+            warnings.warn(
+                "target_rows is deprecated; use max_pairs",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            max_pairs = target_rows
+        else:
+            raise TypeError("Missing argument max_pairs")
 
-        estimate_u_values(self, target_rows)
+        estimate_u_values(self, max_pairs)
         self._populate_m_u_from_trained_values()
 
         self._settings_obj._columns_without_estimated_parameters_message()
@@ -1652,7 +1666,6 @@ class Linker:
     def _get_labels_tablename_from_input(
         self, labels_splinkdataframe_or_table_name: str | SplinkDataFrame
     ):
-
         if isinstance(labels_splinkdataframe_or_table_name, SplinkDataFrame):
             labels_tablename = labels_splinkdataframe_or_table_name.physical_name
         elif isinstance(labels_splinkdataframe_or_table_name, str):

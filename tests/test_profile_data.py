@@ -16,7 +16,6 @@ from splink.sqlite.sqlite_linker import SQLiteLinker
 
 
 def generate_raw_profile_dataset(columns_to_profile, linker):
-
     linker._initialise_df_concat()
 
     column_expressions_raw = ensure_is_list(columns_to_profile)

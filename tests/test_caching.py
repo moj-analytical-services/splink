@@ -23,7 +23,6 @@ def make_mock_execute(linker):
 
 
 def test_cache_id(tmp_path):
-
     # Test saving and loading from settings
     linker = DuckDBLinker(
         df,
@@ -163,7 +162,6 @@ def test_invalidate_cache(debug_mode):
     with patch.object(
         linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
     ) as mock_execute_sql_pipeline:
-
         linker._initialise_df_concat_with_tf(materialise=True)
         mock_execute_sql_pipeline.assert_called()
         mock_execute_sql_pipeline.reset_mock()
@@ -207,7 +205,6 @@ def test_cache_invalidates_with_new_linker(debug_mode):
     with patch.object(
         linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
     ) as mock_execute_sql_pipeline:
-
         linker._initialise_df_concat_with_tf(materialise=True)
         mock_execute_sql_pipeline.assert_called()
         mock_execute_sql_pipeline.reset_mock()

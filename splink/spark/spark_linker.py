@@ -41,7 +41,6 @@ class SparkDataframe(SplinkDataFrame):
         pass
 
     def as_record_dict(self, limit=None):
-
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
@@ -56,7 +55,6 @@ class SparkDataframe(SplinkDataFrame):
         pass
 
     def as_pandas_dataframe(self, limit=None):
-
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
@@ -79,7 +77,7 @@ class SparkLinker(Linker):
         catalog=None,
         database=None,
         repartition_after_blocking=False,
-        num_partitions_on_repartition=100,
+        num_partitions_on_repartition=None,
     ):
         """Initialise the linker object, which manages the data linkage process and
                 holds the data linkage model.
@@ -120,7 +118,6 @@ class SparkLinker(Linker):
         self.break_lineage_method = break_lineage_method
 
         self.repartition_after_blocking = repartition_after_blocking
-        self.num_partitions_on_repartition = num_partitions_on_repartition
 
         input_tables = ensure_is_list(input_table_or_tables)
 
@@ -130,6 +127,25 @@ class SparkLinker(Linker):
 
         self._get_spark_from_input_tables_if_not_provided(spark, input_tables)
 
+        if num_partitions_on_repartition is None:
+            parallelism_value = 200
+            try:
+                parallelism_value = self.spark.conf.get("spark.default.parallelism")
+                parallelism_value = int(parallelism_value)
+            except Exception:
+                pass
+
+            # Prefer spark.sql.shuffle.partitions if set
+            try:
+                parallelism_value = self.spark.conf.get("spark.sql.shuffle.partitions")
+                parallelism_value = int(parallelism_value)
+            except Exception:
+                pass
+
+            self.num_partitions_on_repartition = math.ceil(parallelism_value / 2)
+        else:
+            self.num_partitions_on_repartition = num_partitions_on_repartition
+
         self._set_catalog_and_database_if_not_provided(catalog, database)
 
         self._drop_splink_cached_tables()
@@ -138,7 +154,6 @@ class SparkLinker(Linker):
         homogenised_aliases = []
 
         for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
-
             if type(alias).__name__ == "DataFrame":
                 alias = f"__splink__input_table_{i}"
 
@@ -296,9 +311,13 @@ class SparkLinker(Linker):
             r"__splink__df_representatives",
             r"__splink__df_concat_with_tf_sample",
             r"__splink__df_concat_with_tf",
+            r"__splink__df_predict",
         ]
 
         num_partitions = self.num_partitions_on_repartition
+
+        if re.fullmatch(r"__splink__df_predict", templated_name):
+            num_partitions = math.ceil(self.num_partitions_on_repartition)
 
         if re.fullmatch(r"__splink__df_representatives", templated_name):
             num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
@@ -328,7 +347,6 @@ class SparkLinker(Linker):
             spark_df.limit(1).checkpoint()
 
     def _break_lineage_and_repartition(self, spark_df, templated_name, physical_name):
-
         spark_df = self._repartition_if_needed(spark_df, templated_name)
 
         regex_to_persist = [
@@ -336,7 +354,7 @@ class SparkLinker(Linker):
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
-            r"__splink__df_representatives",
+            r"__splink__df_representatives.+",
             r"__splink__df_neighbours",
             r"__splink__df_connected_components_df",
         ]
@@ -375,7 +393,6 @@ class SparkLinker(Linker):
         return spark_df
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
-
         sql = sqlglot.transpile(sql, read="spark", write="customspark", pretty=True)[0]
 
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
