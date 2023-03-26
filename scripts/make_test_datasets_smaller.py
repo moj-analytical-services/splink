@@ -1,13 +1,15 @@
 import os
+import subprocess
 
 import pandas as pd
 
 
 def truncate_and_save(file_path, file_format):
     if file_format == "csv":
-        df = pd.read_csv(file_path)
-        df = df.head(1000)
-        df.to_csv(file_path, index=False)
+        truncated_file_path = os.path.splitext(file_path)[0] + "_truncated.csv"
+        with open(truncated_file_path, "w") as truncated_file:
+            subprocess.run(["head", "-n", "1001", file_path], stdout=truncated_file)
+        os.rename(truncated_file_path, file_path)
     elif file_format == "parquet":
         df = pd.read_parquet(file_path)
         df = df.head(1000)
@@ -17,6 +19,7 @@ def truncate_and_save(file_path, file_format):
 def process_directory(directory):
     for root, _, files in os.walk(directory):
         for file in files:
+            print(f"truncating file {file}")
             file_path = os.path.join(root, file)
             file_ext = os.path.splitext(file)[-1].lower()
 
