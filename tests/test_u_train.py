@@ -129,7 +129,7 @@ def test_u_train_link_only_sample():
 
     result = self_table_count.as_record_dict()
 
-    self_table_count.drop_table_from_database()
+    self_table_count.drop_table_from_database_and_remove_from_cache()
     max_pairs_proportion = result[0]["count"] / max_pairs
     # equality only holds probabilistically
     # chance of failure is approximately 1e-06
