@@ -247,7 +247,7 @@ def test_table_deletions():
         ]
     )
 
-    con.execute("CREATE TABLE my_table AS SELECT * FROM df")
+    con.register("my_table", df)
 
     settings = {
         "link_type": "dedupe_only",
