@@ -17,6 +17,7 @@ def truncate_and_save(file_path, file_format):
 
 
 def process_directory(directory):
+    print("Starting truncating files")
     for root, _, files in os.walk(directory):
         for file in files:
             print(f"truncating file {file}")

@@ -35,7 +35,7 @@ jobs:
             grep -v "splink==" requirements.txt > temp && mv temp requirements.txt
             pip install -r requirements.txt
             python ../scripts/make_test_datasets_smaller.py
-            find . -type f -name 'example_*ipynb' -exec sed -i -E "s/target_rows\s*=\s*[0-9]+(\.[0-9]+[eE][+-]?[0-9]+)?/target_rows = 10000/g" {} \;
+            find . -type f -name 'example_*ipynb' -exec sed -i '' -E "s/target_rows\s*=\s*[0-9.eE+-]+/target_rows = 10000/g" {} \;
             python -m pytest --nbmake --nbmake-kernel=python3 example_*ipynb
 
 
