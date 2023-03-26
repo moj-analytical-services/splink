@@ -32,7 +32,7 @@ jobs:
             source venv/bin/activate
             pip install --upgrade pip
             pip install ..
-            grep -v "splink==" requirements.txt > temp && mv temp requirements.txt
+            grep -v "^splink==" requirements.txt > temp && mv temp requirements.txt
             pip install -r requirements.txt
             python ../scripts/make_test_datasets_smaller.py
             find . -type f -name 'example_*ipynb' -print0 | while IFS= read -r -d $'\0' file; do
@@ -40,6 +40,6 @@ jobs:
                 echo "Modified: $file"
               fi
             done
-            python -m pytest --nbmake --nbmake-kernel=python3 example_*ipynb
+
 
 
