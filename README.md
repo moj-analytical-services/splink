@@ -5,7 +5,7 @@
 
 # Fast, accurate and scalable probabilistic data linkage using your choice of SQL backend.
 
-Splink is a Python package for probabilistic record linkage (entity resolution) that allows you to deduplicate and link records from datasets without unique identifiers. It offers flexibility by supporting various SQL backends, making it suitable for projects of any size.
+Splink is a Python package for probabilistic record linkage (entity resolution) that allows you to deduplicate and link records from datasets without unique identifiers.
 
 ## Key Features
 
