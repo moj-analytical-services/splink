@@ -256,7 +256,9 @@ class ColumnsReversedLevelBase(ComparisonLevel):
             level_dict["m_probability"] = m_probability
 
         if tf_adjustment_column:
-            tf_adjustment_col = InputColumn(tf_adjustment_column, sql_dialect=self._sql_dialect)
+            tf_adjustment_col = InputColumn(
+                tf_adjustment_column, sql_dialect=self._sql_dialect
+            )
             level_dict["tf_adjustment_column"] = tf_adjustment_col
 
         super().__init__(level_dict, sql_dialect=self._sql_dialect)

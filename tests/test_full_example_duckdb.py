@@ -143,7 +143,6 @@ def test_full_example_duckdb(tmp_path):
     ],
 )
 def test_duckdb_load_from_file(df):
-
     settings = get_settings_dict()
 
     linker = DuckDBLinker(
