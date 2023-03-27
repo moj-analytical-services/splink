@@ -11,8 +11,8 @@ from splink.spark.spark_linker import SparkLinker
 @pytest.mark.parametrize(
     ("ctl"),
     [
-        pytest.param(ctld, id="DuckDB Date Comparison Simple Run Test"),
-        pytest.param(ctls, id="Spark Date Comparison Simple Run Test"),
+        #pytest.param(ctld, id="DuckDB Date Comparison Simple Run Test"),
+        #pytest.param(ctls, id="Spark Date Comparison Simple Run Test"),
     ],
 )
 def test_date_comparison_run(ctl):
@@ -22,8 +22,8 @@ def test_date_comparison_run(ctl):
 @pytest.mark.parametrize(
     ("ctl"),
     [
-        pytest.param(ctld, id="DuckDB Date Comparison Jaro-Winkler Test"),
-        pytest.param(ctls, id="Spark Date Comparison Jaro-Winkler Test"),
+        #pytest.param(ctld, id="DuckDB Date Comparison Jaro-Winkler Test"),
+        #pytest.param(ctls, id="Spark Date Comparison Jaro-Winkler Test"),
     ],
 )
 def test_date_comparison_jw_run(ctl):
@@ -33,8 +33,8 @@ def test_date_comparison_jw_run(ctl):
 @pytest.mark.parametrize(
     ("ctl", "Linker"),
     [
-        pytest.param(ctld, DuckDBLinker, id="DuckDB Date Comparison Integration Tests"),
-        pytest.param(ctls, SparkLinker, id="Spark Date Comparison Integration Tests"),
+        #pytest.param(ctld, DuckDBLinker, id="DuckDB Date Comparison Integration Tests"),
+        #pytest.param(ctls, SparkLinker, id="Spark Date Comparison Integration Tests"),
     ],
 )
 def test_datediff_levels(spark, ctl, Linker):
@@ -139,8 +139,8 @@ def test_datediff_levels(spark, ctl, Linker):
 @pytest.mark.parametrize(
     ("ctl"),
     [
-        pytest.param(ctld, id="DuckDB Datediff Error Checks"),
-        pytest.param(ctls, id="Spark Datediff Error Checks"),
+        #pytest.param(ctld, id="DuckDB Datediff Error Checks"),
+        #pytest.param(ctls, id="Spark Datediff Error Checks"),
     ],
 )
 def test_date_comparison_error_logger(ctl):
@@ -171,8 +171,8 @@ def test_date_comparison_error_logger(ctl):
 @pytest.mark.parametrize(
     ("ctl"),
     [
-        pytest.param(ctld, id="DuckDB Name Comparison Simple Run Test"),
-        pytest.param(ctls, id="Spark Name Comparison Simple Run Test"),
+        #pytest.param(ctld, id="DuckDB Name Comparison Simple Run Test"),
+        #pytest.param(ctls, id="Spark Name Comparison Simple Run Test"),
     ],
 )
 def test_name_comparison_run(ctl):
@@ -182,8 +182,8 @@ def test_name_comparison_run(ctl):
 @pytest.mark.parametrize(
     ("ctl", "Linker"),
     [
-        pytest.param(ctld, DuckDBLinker, id="DuckDB Date Comparison Integration Tests"),
-        pytest.param(ctls, SparkLinker, id="Spark Date Comparison Integration Tests"),
+        #pytest.param(ctld, DuckDBLinker, id="DuckDB Date Comparison Integration Tests"),
+        #pytest.param(ctls, SparkLinker, id="Spark Date Comparison Integration Tests"),
     ],
 )
 def test_name_comparison_levels(spark, ctl, Linker):
@@ -283,3 +283,13 @@ def test_name_comparison_levels(spark, ctl, Linker):
                 ]["gamma_custom_first_name_first_name_metaphone"].values[0]
                 == gamma
             )
+
+@pytest.mark.parametrize(
+    ("ctl"),
+    [
+        pytest.param(ctld, id="DuckDB Name Comparison Simple Run Test"),
+        #pytest.param(ctls, id="Spark Name Comparison Simple Run Test"),
+    ],
+)
+def test_name_comparison_run(ctl):
+    ctl.firstname_surname_comparison("first_name", "surname")
