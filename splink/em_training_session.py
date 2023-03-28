@@ -41,7 +41,6 @@ class EMTrainingSession:
         comparisons_to_deactivate: list[Comparison] = None,
         comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
     ):
-
         logger.info("\n----- Starting EM training session -----\n")
 
         self._original_settings_obj = linker._settings_obj
@@ -167,7 +166,6 @@ class EMTrainingSession:
         return self._training_linker._execute_sql_pipeline(input_dataframes)
 
     def _train(self):
-
         cvv = self._comparison_vectors()
 
         # check that the blocking rule actually generates _some_ record pairs,
@@ -201,7 +199,6 @@ class EMTrainingSession:
                 cc._output_column_name
             )
             for cl in cc._comparison_levels_excluding_null:
-
                 orig_cl = orig_cc._get_comparison_level_by_comparison_vector_value(
                     cl._comparison_vector_value
                 )
@@ -239,12 +236,10 @@ class EMTrainingSession:
         self._original_linker._em_training_sessions.append(self)
 
     def _add_iteration(self):
-
         self._settings_obj_history.append(deepcopy(self._settings_obj))
 
     @property
     def _blocking_adjusted_probability_two_random_records_match(self):
-
         orig_prop_m = self._original_settings_obj._probability_two_random_records_match
 
         adj_bayes_factor = prob_to_bayes_factor(orig_prop_m)
@@ -281,7 +276,6 @@ class EMTrainingSession:
         output_records = []
 
         for iteration, settings_obj in enumerate(self._settings_obj_history):
-
             records = settings_obj._parameters_as_detailed_records
 
             for r in records:
@@ -345,7 +339,6 @@ class EMTrainingSession:
         return message
 
     def _max_change_in_parameters_comparison_levels(self):
-
         previous_iteration = self._settings_obj_history[-2]
         this_iteration = self._settings_obj_history[-1]
         max_change = -0.1

@@ -6,17 +6,17 @@ tags:
 # Creating new comparisons and comparison levels for libraries
 
 The Fellegi-Sunter model that Splink implements depends on having several comparisons, which are each composed of two or more comparison levels.
-Splink provides several _ready-made_ [comparisons](../../comparison_library.html) and [comparison levels](../../comparison_level_library.html) to use out-of-the-box, but you may find in your particular application that you have to [create your own custom versions](../../topic_guides/customising_comparisons.html#method-3-providing-the-spec-as-a-dictionary) if there is not a suitable comparison/level for the [SQL dialect you are working with](../../topic_guides/backends.html) (or for any available dialects).
+Splink provides several _ready-made_ [comparisons](../../comparison_library.html) and [comparison levels](../../comparison_level_library.html) to use out-of-the-box, but you may find in your particular application that you have to [create your own custom versions](../../topic_guides/customising_comparisons.html#method-4-providing-the-spec-as-a-dictionary) if there is not a suitable comparison/level for the [SQL dialect you are working with](../../topic_guides/backends.html) (or for any available dialects).
 
-Having created a custom comparison you may decide that is sufficiently general-use that you want to contribute to Splink and add it to the library for other users to benefit from. This guide will take you through the process of doing so. Looking at existing examples should also prove to be useful for further guidance, and to perhaps serve as a starting template.
+Having created a custom comparison you may decide that your use case is common enough that you want to contribute it to Splink for other users to benefit from. This guide will take you through the process of doing so. Looking at existing examples should also prove to be useful for further guidance, and to perhaps serve as a starting template.
 
-After having successfully added your new levels/comparisons, be sure to add some tests to help ensure that the code runs without error and behaves as expected.
+After creating your new levels/comparisons, be sure to add some tests to help ensure that the code runs without error and behaves as expected.
 
 This guide is for adding new comparisons and comparison levels from scratch. If you instead want to create specialised versions of existing levels, be sure to also have a look at the [guide for extending existing library entries](./extending_library_comparisons_and_levels.html).
 
 ## Creating new comparison levels
 
-For this example, let's consider a comparison level that compares if the length of two arrays are within `n` of one another (without reference to the contents of these arrays) for some non-negative integer `n`. An example of this might be if we were linking people with partial address information in two tables --- in one table we have an array of postcodes, and the other table we have an array of road-names. We don't expect them to match, but we are probably interested if the number is the same, or close - each corresponding to the number of addresses per person.
+For this example, let's consider a comparison level that compares if the length of two arrays are within `n` of one another (without reference to the contents of these arrays) for some non-negative integer `n`. An example of this might be if we were linking people with partial address information in two tables --- in one table we have an array of postcodes, and the other table we have an array of road-names. We don't expect them to match, but we are probably interested if the count of the number of objects within each array are similar - each corresponding to the number of addresses per person.
 
 To create a new comparison level, you must create a new subclass of `ComparisonLevel` which will serve as the base comparison level for any SQL dialects that will allow this level, in the file [`splink/comparison_level_library.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/comparison_level_library.py).
 It will contain the full logic for creating the comparison level - any dialect dependencies will be implemented as properties on the specific dialect-dependent object.

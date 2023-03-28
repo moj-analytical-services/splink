@@ -11,7 +11,6 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def test_scored_labels_table():
-
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df = df.head(5)
     labels = [
@@ -86,7 +85,6 @@ def test_scored_labels_table():
 
 
 def test_truth_space_table():
-
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings = {
@@ -220,7 +218,6 @@ def test_roc_chart_link_and_dedupe():
 
 
 def test_prediction_errors_from_labels_table():
-
     data = [
         {"unique_id": 1, "first_name": "robin", "cluster": 1},
         {"unique_id": 2, "first_name": "robin", "cluster": 1},
@@ -322,7 +319,6 @@ def test_prediction_errors_from_labels_table():
 
 
 def test_prediction_errors_from_labels_column():
-
     data = [
         {"unique_id": 1, "first_name": "robin", "cluster": 1},
         {"unique_id": 2, "first_name": "robin", "cluster": 1},
@@ -411,7 +407,6 @@ def test_prediction_errors_from_labels_column():
 
 
 def test_truth_space_table_from_labels_column_dedupe_only():
-
     data = [
         {"unique_id": 1, "first_name": "john", "cluster": 1},
         {"unique_id": 2, "first_name": "john", "cluster": 1},
@@ -475,7 +470,6 @@ def test_truth_space_table_from_labels_column_dedupe_only():
 
 
 def test_truth_space_table_from_labels_column_link_only():
-
     data_left = [
         {"unique_id": 1, "first_name": "john", "ground_truth": 1},
         {"unique_id": 2, "first_name": "mary", "ground_truth": 2},

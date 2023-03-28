@@ -27,14 +27,12 @@ Dialect["customspark"]
 
 
 class SparkDataframe(SplinkDataFrame):
-    def __init__(self, templated_name, physical_name, spark_linker):
-        super().__init__(templated_name, physical_name)
-        self.spark_linker = spark_linker
+    linker: SparkLinker
 
     @property
     def columns(self) -> list[InputColumn]:
         sql = f"select * from {self.physical_name} limit 1"
-        spark_df = self.spark_linker.spark.sql(sql)
+        spark_df = self.linker.spark.sql(sql)
 
         col_strings = list(spark_df.columns)
         return [InputColumn(c, sql_dialect="spark") for c in col_strings]
@@ -43,30 +41,27 @@ class SparkDataframe(SplinkDataFrame):
         pass
 
     def as_record_dict(self, limit=None):
-
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
 
-        return self.spark_linker.spark.sql(sql).toPandas().to_dict(orient="records")
+        return self.linker.spark.sql(sql).toPandas().to_dict(orient="records")
 
     def drop_table_from_database(self, force_non_splink_table=False):
-
         # Spark, in general, does not persist its results to disk
         # There is a whitelist of dataframes to either perist() or checkpoint()
         # But there's no real need to clean these up, so we'll just do nothing
         pass
 
     def as_pandas_dataframe(self, limit=None):
-
         sql = f"select * from {self.physical_name}"
         if limit:
             sql += f" limit {limit}"
 
-        return self.spark_linker.spark.sql(sql).toPandas()
+        return self.linker.spark.sql(sql).toPandas()
 
     def as_spark_dataframe(self):
-        return self.spark_linker.spark.table(self.physical_name)
+        return self.linker.spark.table(self.physical_name)
 
 
 class SparkLinker(Linker):
@@ -81,7 +76,7 @@ class SparkLinker(Linker):
         catalog=None,
         database=None,
         repartition_after_blocking=False,
-        num_partitions_on_repartition=100,
+        num_partitions_on_repartition=None,
     ):
         """Initialise the linker object, which manages the data linkage process and
                 holds the data linkage model.
@@ -93,7 +88,7 @@ class SparkLinker(Linker):
                 registered in the Spark catalog
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
-                `linker.initialise_settings()` Defaults to None.
+                `linker.load_settings()` Defaults to None.
             break_lineage_method (str, optional): Method to use to cache intermediate
                 results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files",
                 "delta_lake_table". Defaults to "parquet".
@@ -122,7 +117,6 @@ class SparkLinker(Linker):
         self.break_lineage_method = break_lineage_method
 
         self.repartition_after_blocking = repartition_after_blocking
-        self.num_partitions_on_repartition = num_partitions_on_repartition
 
         input_tables = ensure_is_list(input_table_or_tables)
 
@@ -132,6 +126,25 @@ class SparkLinker(Linker):
 
         self._get_spark_from_input_tables_if_not_provided(spark, input_tables)
 
+        if num_partitions_on_repartition is None:
+            parallelism_value = 200
+            try:
+                parallelism_value = self.spark.conf.get("spark.default.parallelism")
+                parallelism_value = int(parallelism_value)
+            except Exception:
+                pass
+
+            # Prefer spark.sql.shuffle.partitions if set
+            try:
+                parallelism_value = self.spark.conf.get("spark.sql.shuffle.partitions")
+                parallelism_value = int(parallelism_value)
+            except Exception:
+                pass
+
+            self.num_partitions_on_repartition = math.ceil(parallelism_value / 2)
+        else:
+            self.num_partitions_on_repartition = num_partitions_on_repartition
+
         self._set_catalog_and_database_if_not_provided(catalog, database)
 
         self._drop_splink_cached_tables()
@@ -140,7 +153,6 @@ class SparkLinker(Linker):
         homogenised_aliases = []
 
         for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
-
             if type(alias).__name__ == "DataFrame":
                 alias = f"__splink__input_table_{i}"
 
@@ -282,11 +294,6 @@ class SparkLinker(Linker):
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SparkDataframe(templated_name, physical_name, self)
 
-    def initialise_settings(self, settings_dict: dict):
-        if "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "spark"
-        super().initialise_settings(settings_dict)
-
     def _repartition_if_needed(self, spark_df, templated_name):
         # Repartitioning has two effects:
         # 1. When we persist out results to disk, it results in a predictable
@@ -303,9 +310,13 @@ class SparkLinker(Linker):
             r"__splink__df_representatives",
             r"__splink__df_concat_with_tf_sample",
             r"__splink__df_concat_with_tf",
+            r"__splink__df_predict",
         ]
 
         num_partitions = self.num_partitions_on_repartition
+
+        if re.fullmatch(r"__splink__df_predict", templated_name):
+            num_partitions = math.ceil(self.num_partitions_on_repartition)
 
         if re.fullmatch(r"__splink__df_representatives", templated_name):
             num_partitions = math.ceil(self.num_partitions_on_repartition / 6)
@@ -335,7 +346,6 @@ class SparkLinker(Linker):
             spark_df.limit(1).checkpoint()
 
     def _break_lineage_and_repartition(self, spark_df, templated_name, physical_name):
-
         spark_df = self._repartition_if_needed(spark_df, templated_name)
 
         regex_to_persist = [
@@ -343,7 +353,7 @@ class SparkLinker(Linker):
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
-            r"__splink__df_representatives",
+            r"__splink__df_representatives.+",
             r"__splink__df_neighbours",
             r"__splink__df_connected_components_df",
         ]
@@ -382,7 +392,6 @@ class SparkLinker(Linker):
         return spark_df
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
-
         sql = sqlglot.transpile(sql, read="spark", write="customspark", pretty=True)[0]
 
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))

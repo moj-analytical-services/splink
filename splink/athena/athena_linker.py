@@ -50,9 +50,7 @@ def _verify_athena_inputs(database, bucket, boto3_session):
 
 
 class AthenaDataFrame(SplinkDataFrame):
-    def __init__(self, templated_name, physical_name, athena_linker):
-        super().__init__(templated_name, physical_name)
-        self.athena_linker = athena_linker
+    linker: AthenaLinker
 
     @property
     def columns(self):
@@ -60,7 +58,7 @@ class AthenaDataFrame(SplinkDataFrame):
         d = wr.catalog.get_table_types(
             database=t[0],
             table=t[1],
-            boto3_session=self.athena_linker.boto3_session,
+            boto3_session=self.linker.boto3_session,
         )
 
         cols = list(d.keys())
@@ -70,20 +68,18 @@ class AthenaDataFrame(SplinkDataFrame):
         pass
 
     def drop_table_from_database(self, force_non_splink_table=False):
-
         self._check_drop_folder_created_by_splink(force_non_splink_table)
         self._check_drop_table_created_by_splink(force_non_splink_table)
-        self.athena_linker.drop_table_from_database_if_exists(self.physical_name)
-        self.athena_linker.delete_table_from_s3(self.physical_name)
+        self.linker.drop_table_from_database_if_exists(self.physical_name)
+        self.linker.delete_table_from_s3(self.physical_name)
 
     def _check_drop_folder_created_by_splink(self, force_non_splink_table=False):
-
-        filepath = self.athena_linker.boto_utils.s3_output
+        filepath = self.linker.boto_utils.s3_output
         filename = self.physical_name
         # Validate that the folder is a splink generated folder...
         files = wr.s3.list_objects(
             path=os.path.join(filepath, filename),
-            boto3_session=self.athena_linker.boto3_session,
+            boto3_session=self.linker.boto3_session,
             ignore_empty=True,
         )
 
@@ -91,7 +87,7 @@ class AthenaDataFrame(SplinkDataFrame):
             if not force_non_splink_table:
                 raise ValueError(
                     f"You've asked to drop data housed under the filepath "
-                    f"{self.athena_linker.boto_utils.s3_output} from your "
+                    f"{self.linker.boto_utils.s3_output} from your "
                     "s3 output bucket, which is not a folder created by "
                     "Splink. If you really want to delete this data, you "
                     "can do so by setting force_non_splink_table=True."
@@ -100,7 +96,7 @@ class AthenaDataFrame(SplinkDataFrame):
         # validate that the ctas_query_info is for the given table
         # we're interacting with
         if (
-            self.athena_linker.ctas_query_info[self.physical_name]["ctas_table"]
+            self.linker.ctas_query_info[self.physical_name]["ctas_table"]
             != self.physical_name
         ):
             raise ValueError(
@@ -121,12 +117,12 @@ class AthenaDataFrame(SplinkDataFrame):
 
         out_df = wr.athena.read_sql_query(
             sql=sql,
-            database=self.athena_linker.output_schema,
-            s3_output=self.athena_linker.boto_utils.s3_output,
+            database=self.linker.output_schema,
+            s3_output=self.linker.boto_utils.s3_output,
             keep_files=False,
             ctas_approach=True,
             use_threads=True,
-            boto3_session=self.athena_linker.boto3_session,
+            boto3_session=self.linker.boto3_session,
         )
         return out_df
 
@@ -137,9 +133,7 @@ class AthenaDataFrame(SplinkDataFrame):
 
     def get_schema_info(self, input_table):
         t = input_table.split(".")
-        return (
-            t if len(t) > 1 else [self.athena_linker.output_schema, self.physical_name]
-        )
+        return t if len(t) > 1 else [self.linker.output_schema, self.physical_name]
 
 
 class AthenaLinker(Linker):
@@ -155,7 +149,6 @@ class AthenaLinker(Linker):
         output_filepath: str = "",
         garbage_collection_level: int = 1,
     ):
-
         """An athena backend for our main linker class. This funnels our generated SQL
         through athena using awswrangler.
         See linker.py for more information on the main linker class.
@@ -260,7 +253,6 @@ class AthenaLinker(Linker):
         homogenised_aliases = []
 
         for table, alias in zip(input_tables, input_aliases):
-
             if type(table).__name__ == "DataFrame":
                 if type(alias).__name__ == "DataFrame":
                     df_id = uuid.uuid4().hex[:7]
@@ -293,11 +285,6 @@ class AthenaLinker(Linker):
             new_filepath,
         )
 
-    def initialise_settings(self, settings_dict: dict):
-        if "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "presto"
-        super().initialise_settings(settings_dict)
-
     def register_data_on_s3(self, table, alias):
         wr.s3.to_parquet(
             df=table,
@@ -312,18 +299,13 @@ class AthenaLinker(Linker):
         )
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
-
         # Deletes the table in the db, but not the object on s3.
         # This needs to be removed manually (full s3 path provided)
         self.drop_table_from_database_if_exists(physical_name)
         sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
         sql = sql.replace("FLOAT", "double").replace("float", "double")
 
-        logger.debug(
-            execute_sql_logging_message_info(
-                templated_name, self._prepend_schema_to_table_name(physical_name)
-            )
-        )
+        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(sql))
 
         # create our table on athena and extract the metadata information
@@ -338,7 +320,6 @@ class AthenaLinker(Linker):
         return output_obj
 
     def register_table(self, input, table_name, overwrite=False):
-
         # If the user has provided a table name, return it as a SplinkDataframe
         if isinstance(input, str):
             return self._table_to_splink_dataframe(table_name, input)

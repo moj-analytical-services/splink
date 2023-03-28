@@ -21,16 +21,14 @@ def dict_factory(cursor, row):
 
 
 class SQLiteDataFrame(SplinkDataFrame):
-    def __init__(self, templated_name, physical_name, sqlite_linker):
-        super().__init__(templated_name, physical_name)
-        self.sqlite_linker = sqlite_linker
+    linker: SQLiteLinker
 
     @property
     def columns(self) -> list[InputColumn]:
         sql = f"""
         PRAGMA table_info({self.physical_name});
         """
-        pragma_result = self.sqlite_linker.con.execute(sql).fetchall()
+        pragma_result = self.linker.con.execute(sql).fetchall()
         cols = [r["name"] for r in pragma_result]
 
         return [InputColumn(c, sql_dialect="sqlite") for c in cols]
@@ -51,7 +49,7 @@ class SQLiteDataFrame(SplinkDataFrame):
         AND name='{self.physical_name}';
         """
 
-        res = self.sqlite_linker.con.execute(sql).fetchall()
+        res = self.linker.con.execute(sql).fetchall()
         if len(res) == 0:
             raise ValueError(
                 f"{self.physical_name} does not exist in the sqlite db provided.\n"
@@ -61,12 +59,11 @@ class SQLiteDataFrame(SplinkDataFrame):
             )
 
     def drop_table_from_database(self, force_non_splink_table=False):
-
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
         drop_sql = f"""
         DROP TABLE IF EXISTS {self.physical_name}"""
-        cur = self.sqlite_linker.con.cursor()
+        cur = self.linker.con.cursor()
         cur.execute(drop_sql)
 
     def as_record_dict(self, limit=None):
@@ -77,7 +74,7 @@ class SQLiteDataFrame(SplinkDataFrame):
         if limit:
             sql += f" limit {limit}"
         sql += ";"
-        cur = self.sqlite_linker.con.cursor()
+        cur = self.linker.con.cursor()
         return cur.execute(sql).fetchall()
 
 
@@ -90,7 +87,6 @@ class SQLiteLinker(Linker):
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
     ):
-
         self._sql_dialect_ = "sqlite"
 
         self.con = connection
@@ -108,13 +104,7 @@ class SQLiteLinker(Linker):
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SQLiteDataFrame(templated_name, physical_name, self)
 
-    def initialise_settings(self, settings_dict: dict):
-        if "sql_dialect" not in settings_dict:
-            settings_dict["sql_dialect"] = "sqlite"
-        super().initialise_settings(settings_dict)
-
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
-
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
@@ -133,7 +123,6 @@ class SQLiteLinker(Linker):
         return output_obj
 
     def register_table(self, input, table_name, overwrite=False):
-
         # If the user has provided a table name, return it as a SplinkDataframe
         if isinstance(input, str):
             return self._table_to_splink_dataframe(table_name, input)

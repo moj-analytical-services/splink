@@ -1,7 +1,10 @@
 import os
 
 import pandas as pd
+import pyarrow as pa
+import pyarrow.csv as pa_csv
 import pyarrow.parquet as pq
+import pytest
 import pytest
 from basic_settings import get_settings_dict
 from linker_utils import _test_table_registration, register_roc_data
@@ -31,10 +34,10 @@ def test_full_example_duckdb(tmp_path, first_name_and_surname_cc):
 
     linker = DuckDBLinker(
         df,
-        settings_dict,
         connection=os.path.join(tmp_path, "duckdb.db"),
         output_schema="splink_in_duckdb",
     )
+    linker.load_settings(settings_dict)
 
     linker.count_num_comparisons_from_blocking_rule(
         'l.first_name = r.first_name and l."SUR name" = r."SUR name"'
@@ -52,7 +55,7 @@ def test_full_example_duckdb(tmp_path, first_name_and_surname_cc):
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
-    linker.estimate_u_using_random_sampling(target_rows=1e6)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
     linker.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
@@ -110,35 +113,45 @@ def test_full_example_duckdb(tmp_path, first_name_and_surname_cc):
     linker.save_settings_to_json(path)
 
     linker_2 = DuckDBLinker(df, connection=":memory:")
+    linker_2.load_settings(path)
     linker_2.load_settings_from_json(path)
     DuckDBLinker(df, settings_dict=path)
 
 
-def test_small_link_example_duckdb():
-
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    settings_dict = get_settings_dict()
-
-    settings_dict["link_type"] = "link_only"
-
-    linker = DuckDBLinker(
-        [df, df],
-        settings_dict,
-        connection=":memory:",
-        output_schema="splink_in_duckdb",
-    )
-
-    linker.predict()
-
-
-def test_duckdb_load_from_file():
+@pytest.mark.parametrize(
+    ("df"),
+    [
+        pytest.param(
+            pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv"),
+            id="DuckDB link from pandas df",
+        ),
+        pytest.param(
+            "./tests/datasets/fake_1000_from_splink_demos.csv",
+            id="DuckDB load from file",
+        ),
+        pytest.param(
+            pa.Table.from_pandas(
+                pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+            ),
+            id="DuckDB link - convert pandas to pyarrow df",
+        ),
+        pytest.param(
+            pa_csv.read_csv(
+                "./tests/datasets/fake_1000_from_splink_demos.csv",
+                convert_options=pa_csv.ConvertOptions(
+                    strings_can_be_null=True, null_values=["", "", "NULL"]
+                ),
+            ),
+            id="DuckDB link - read directly from filepath with pyarrow",
+        ),
+    ],
+)
+def test_duckdb_load_from_file(df):
 
     settings = get_settings_dict()
 
-    f = "./tests/datasets/fake_1000_from_splink_demos.csv"
-
     linker = DuckDBLinker(
-        f,
+        df,
         settings,
     )
 
@@ -147,7 +160,7 @@ def test_duckdb_load_from_file():
     settings["link_type"] = "link_only"
 
     linker = DuckDBLinker(
-        [f, f],
+        [df, df],
         settings,
         input_table_aliases=["testing1", "testing2"],
     )
@@ -156,7 +169,6 @@ def test_duckdb_load_from_file():
 
 
 def test_duckdb_arrow_array():
-
     # Checking array fixes problem identified here:
     # https://github.com/moj-analytical-services/splink/issues/680
 
@@ -182,3 +194,18 @@ def test_duckdb_arrow_array():
     )
     df = linker.deterministic_link().as_pandas_dataframe()
     assert len(df) == 2
+
+
+def test_cast_error():
+    from duckdb import InvalidInputException
+
+    forenames = [None, "jack", None] * 1000
+    data = {"id": range(0, len(forenames)), "forename": forenames}
+    df = pd.DataFrame(data)
+
+    with pytest.raises(InvalidInputException):
+        DuckDBLinker(df)
+
+    # convert to pyarrow table
+    df = pa.Table.from_pandas(df)
+    DuckDBLinker(df)

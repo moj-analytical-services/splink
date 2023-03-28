@@ -27,7 +27,6 @@ theme:
         icon: material/toggle-switch-off-outline
         name: Switch to light mode
 plugins:
-  - include-markdown
   - search
   - semiliterate
   - mknotebooks
@@ -62,13 +61,13 @@ nav:
   - Topic Guide:
       - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/backends.md"
       - Retrieving and querying Splink results: "topic_guides/querying_splink_results.md"
-      - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
-      - Link type - linkings vs deduping: "topic_guides/link_type.md"
+      - Link type - linking vs deduping: "topic_guides/link_type.md"
       - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
+      - Comparators: "topic_guides/comparators.md"
+      - Phonetic transformations: "topic_guides/phonetic.md"
+      - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
       - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
       - Optimising Spark performance: "topic_guides/optimising_spark.md"
-      - Comparators: "topic_guides/comparators.md"
-      - Phonetic transformations for blocking: "topic_guides/phonetic.md"
       - Salting blocking rules: "topic_guides/salting.md"
   - API Reference:
       - Linker API:
@@ -84,6 +83,7 @@ nav:
           - Comparison Level: "comparison_level.md"
       - Comparisons Library API:
           - Comparison Library: "comparison_library.md"
+          - Comparison Template Library: "comparison_template_library.md"
           - Comparison Level Library: "comparison_level_library.md"
           - Comparison Composition: "comparison_level_composition.md"
   - Settings Editor: "settingseditor/editor.md"
@@ -100,7 +100,7 @@ nav:
   - Examples:
       - Examples index: "examples_index.md"
       - DuckDB:
-        - Deduplicate 50k rows historial persons: "demos/example_deduplicate_50k_synthetic.ipynb"
+        - Deduplicate 50k rows historical persons: "demos/example_deduplicate_50k_synthetic.ipynb"
         - Linking financial transactions: "demos/example_transactions.ipynb"
         - Linking two tables of persons: "demos/example_link_only.ipynb"
         - Real time record linkage: "demos/example_real_time_record_linkage.ipynb"
@@ -112,6 +112,11 @@ nav:
       - PySpark:
         - Deduplication using Pyspark: "demos/example_simple_pyspark.ipynb"
   - Developers' guides:
+      - Making Changes to Splink:
+        - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
+        - Linting: "dev_guides/changing_splink/lint.md"
+        - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
+        - Running Tests: "dev_guides/changing_splink/running_tests_locally.md"
       - Caching and pipelining: "dev_guides/caching.md"
       - Understanding and debugging Splink: "dev_guides/debug_modes.md"
       - Spark caching: "dev_guides/spark_pipelining_and_caching.md"
@@ -119,7 +124,6 @@ nav:
       - Comparisons and comparison levels:
         - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
         - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
-      - Building docs: "dev_guides/build_docs_locally.md"
 
 extra_css:
 - css/custom.css

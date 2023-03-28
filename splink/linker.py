@@ -4,8 +4,10 @@ import hashlib
 import json
 import logging
 import os
+import warnings
 from collections import UserDict
-from copy import Error, copy, deepcopy
+from copy import copy, deepcopy
+from pathlib import Path
 from statistics import median
 
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
@@ -75,6 +77,8 @@ from .unlinkables import unlinkables_data
 from .vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
+
+warnings.simplefilter("always", DeprecationWarning)
 
 
 class CacheDictWithLogging(UserDict):
@@ -148,7 +152,7 @@ class Linker:
                 dataframes (Pandas and Spark respectively) rather than strings.
             settings_dict (dict, optional): A Splink settings dictionary. If not
                 provided when the object is created, can later be added using
-                `linker.initialise_settings()` Defaults to None.
+                `linker.load_settings()` Defaults to None.
             set_up_basic_logging (bool, optional): If true, sets ups up basic logging
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
             input_table_aliases (Union[str, list], optional): Labels assigned to
@@ -170,12 +174,9 @@ class Linker:
             input_table_or_tables, input_table_aliases
         )
 
-        if isinstance(settings_dict, str):
-            if settings_dict.endswith(".json"):
-                self._setup_settings_objs(None)  # feed it a blank settings dictionary
-                self.load_settings_from_json(settings_dict)
-            else:
-                raise ValueError("Invalid settings dictionary provided.")
+        if not isinstance(settings_dict, (dict, type(None))):
+            self._setup_settings_objs(None)  # feed it a blank settings dictionary
+            self.load_settings(settings_dict)
         else:
             settings_dict = deepcopy(settings_dict)
             self._setup_settings_objs(settings_dict)
@@ -191,8 +192,6 @@ class Linker:
         self._compare_two_records_mode = False
         self._self_link_mode = False
         self._analyse_blocking_mode = False
-
-        self._output_schema = ""
 
         self.debug_mode = False
 
@@ -216,8 +215,8 @@ class Linker:
             raise ValueError(
                 "You did not provide a settings dictionary when you "
                 "created the linker.  To continue, you need to provide a settings "
-                "dictionary using the `initialise_settings()` method on your linker "
-                "object. i.e. linker.initialise_settings(settings_dict)"
+                "dictionary using the `load_settings()` method on your linker "
+                "object. i.e. linker.load_settings(settings_dict)"
             )
         return self._settings_obj_
 
@@ -329,12 +328,6 @@ class Linker:
 
             self._validate_dialect()
 
-    def _prepend_schema_to_table_name(self, table_name):
-        if self._output_schema:
-            return f"{self._output_schema}.{table_name}"
-        else:
-            return table_name
-
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
         concat_df = None
@@ -440,7 +433,7 @@ class Linker:
                     materialise_as_hash,
                     use_cache,
                 )
-            except Error as e:
+            except Exception as e:
                 raise e
             finally:
                 self._pipeline.reset()
@@ -813,24 +806,95 @@ class Linker:
                 "Please re-run your linkage with it set to True."
             )
 
-    def initialise_settings(self, settings_dict: dict):
+    def load_settings(self, settings_dict: dict | str | Path):
         """Initialise settings for the linker.  To be used if settings were
-        not passed to the linker on creation.
+        not passed to the linker on creation. This can either be in the form
+        of a settings dictionary or a filepath to a json file containing a
+        valid settings dictionary.
 
         Examples:
             >>> linker = DuckDBLinker(df, connection=":memory:")
             >>> linker.profile_columns(["first_name", "surname"])
-            >>> linker.initialise_settings(settings_dict)
+            >>> linker.load_settings(settings_dict)
 
+            >>> linker.load_settings("my_settings.json")
+
+        Args:
+            settings_dict (dict | str | Path): A Splink settings dictionary or
+                the path to your settings json file.
+        """
+
+        if not isinstance(settings_dict, dict):
+            p = Path(settings_dict)
+            if not p.is_file():  # check if it's a valid file/filepath
+                raise ValueError(
+                    "The filepath you have provided is either not a valid file "
+                    "or doesn't exist along the path provided."
+                )
+            settings_dict = json.loads(p.read_text())
+
+        # If a uid already exists in your settings object, prioritise this
+        settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
+        settings_dict["sql_dialect"] = settings_dict.get(
+            "sql_dialect", self._sql_dialect
+        )
+        self._settings_dict = settings_dict
+        self._settings_obj_ = Settings(settings_dict)
+        self._validate_input_dfs()
+        self._validate_dialect()
+
+    def initialise_settings(self, settings_dict: dict):
+        """*This method is now deprecated. Please use `load_settings`
+        when loading existing settings or a pre-trained model.*
+
+        Initialise settings for the linker.  To be used if settings were
+        not passed to the linker on creation.
+        Examples:
+            >>> linker = DuckDBLinker(df, connection=":memory:")
+            >>> linker.profile_columns(["first_name", "surname"])
+            >>> linker.initialise_settings(settings_dict)
         Args:
             settings_dict (dict): A Splink settings dictionary
         """
         # If a uid already exists in your settings object, prioritise this
         settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
+        settings_dict["sql_dialect"] = settings_dict.get(
+            "sql_dialect", self._sql_dialect
+        )
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
         self._validate_dialect()
+
+        warnings.warn(
+            "`initialise_settings` is deprecated. We advise you use "
+            "`linker.load_settings()` when loading in your settings or a previously "
+            "trained model.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    def load_settings_from_json(self, in_path: str | Path):
+        """*This method is now deprecated. Please use `load_settings`
+        when loading existing settings or a pre-trained model.*
+
+        Load settings from a `.json` file.
+        This `.json` file would usually be the output of
+        `linker.save_settings_to_json()`
+        Examples:
+            >>> linker.load_settings_from_json("my_settings.json")
+        Args:
+            in_path (str): Path to settings json file
+        """
+        self.load_settings(in_path)
+
+        warnings.warn(
+            "`load_settings_from_json` is deprecated. We advise you use "
+            "`linker.load_settings()` when loading in your settings or a previously "
+            "trained model.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
         """Compute a term frequency table for a given column and persist to the database
@@ -842,7 +906,7 @@ class Linker:
         Examples:
             >>> # Example 1: Real time linkage
             >>> linker = DuckDBLinker(df, connection=":memory:")
-            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.load_settings("saved_settings.json")
             >>> linker.compute_tf_table("surname")
             >>> linker.compare_two_records(record_left, record_right)
 
@@ -935,7 +999,9 @@ class Linker:
         self._enqueue_sql(sql, "__splink__df_blocked")
         return self._execute_sql_pipeline([concat_with_tf])
 
-    def estimate_u_using_random_sampling(self, target_rows: int):
+    def estimate_u_using_random_sampling(
+        self, max_pairs: int = None, *, target_rows=None
+    ):
         """Estimate the u parameters of the linkage model using random sampling.
 
         The u parameters represent the proportion of record comparisons that fall
@@ -948,8 +1014,8 @@ class Linker:
         matches). For large datasets, this is typically true.
 
         Args:
-            target_rows (int): The target number of pairwise record comparisons from
-            which to derive the u values.  Larger will give more accurate estimates
+            max_pairs (int): The maximum number of pairwise record comparisons to
+            sample. Larger will give more accurate estimates
             but lead to longer runtimes.  In our experience at least 1e9 (one billion)
             gives best results but can take a long time to compute. 1e7 (ten million)
             is often adequate whilst testing different model specifications, before
@@ -962,8 +1028,26 @@ class Linker:
             None: Updates the estimated u parameters within the linker object
             and returns nothing.
         """
+        # TODO: Remove this compatibility code in a future release once we drop
+        # support for "target_rows". Deprecation warning added in 3.7.0
+        if max_pairs is not None and target_rows is not None:
+            # user supplied both
+            raise TypeError("Just use max_pairs")
+        elif max_pairs is not None:
+            # user is doing it correctly
+            pass
+        elif target_rows is not None:
+            # user is using deprecated argument
+            warnings.warn(
+                "target_rows is deprecated; use max_pairs",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            max_pairs = target_rows
+        else:
+            raise TypeError("Missing argument max_pairs")
 
-        estimate_u_values(self, target_rows)
+        estimate_u_values(self, max_pairs)
         self._populate_m_u_from_trained_values()
 
         self._settings_obj._columns_without_estimated_parameters_message()
@@ -1176,7 +1260,7 @@ class Linker:
 
         Examples:
             >>> linker = DuckDBLinker(df, connection=":memory:")
-            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.load_settings("saved_settings.json")
             >>> df = linker.predict(threshold_match_probability=0.95)
             >>> df.as_pandas_dataframe(limit=5)
 
@@ -1251,7 +1335,7 @@ class Linker:
 
         Examples:
             >>> linker = DuckDBLinker(df)
-            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.load_settings("saved_settings.json")
             >>> # Pre-compute tf tables for any tables with
             >>> # term frequency adjustments
             >>> linker.compute_tf_table("first_name")
@@ -1364,7 +1448,7 @@ class Linker:
 
         Examples:
             >>> linker = DuckDBLinker(df)
-            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.load_settings("saved_settings.json")
             >>> linker.compare_two_records(record_left, record_right)
 
         Returns:
@@ -1551,7 +1635,6 @@ class Linker:
     def _get_labels_tablename_from_input(
         self, labels_splinkdataframe_or_table_name: str | SplinkDataFrame
     ):
-
         if isinstance(labels_splinkdataframe_or_table_name, SplinkDataFrame):
             labels_tablename = labels_splinkdataframe_or_table_name.physical_name
         elif isinstance(labels_splinkdataframe_or_table_name, str):
@@ -2037,7 +2120,7 @@ class Linker:
             >>> # and run this against the test data.
             >>> df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
             >>> linker = DuckDBLinker(df)
-            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.load_settings("saved_settings.json")
             >>> linker.unlinkables_chart()
             >>>
             >>> # For more complex code pipelines, you can run an entire pipeline
@@ -2329,7 +2412,7 @@ class Linker:
 
         Examples:
             >>> linker = DuckDBLinker(df, connection=":memory:")
-            >>> linker.load_settings_from_json("saved_settings.json")
+            >>> linker.load_settings("saved_settings.json")
             >>> df_predict = linker.predict(threshold_match_probability=0.95)
             >>> count_pairwise = linker.count_num_comparisons_from_blocking_rules_for_prediction(df_predict)
             >>> count_pairwise.as_pandas_dataframe(limit=5)
@@ -2464,7 +2547,7 @@ class Linker:
     ) -> dict:
         """Save the configuration and parameters of the linkage model to a `.json` file.
 
-        The model can later be loaded back in using `linker.load_settings_from_json()`.
+        The model can later be loaded back in using `linker.load_settings()`.
         The settings dict is also returned in case you want to save it a different way.
 
         Examples:
@@ -2488,22 +2571,6 @@ class Linker:
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(model_dict, f, indent=4)
         return model_dict
-
-    def load_settings_from_json(self, in_path: str):
-        """Load settings from a `.json` file.
-
-        This `.json` file would usually be the output of
-        `linker.save_settings_to_json()`
-
-        Examples:
-            >>> linker.load_settings_from_json("my_settings.json")
-
-        Args:
-            in_path (str): Path to settings json file
-        """
-        with open(in_path) as f:
-            model_dict = json.load(f)
-        self.initialise_settings(model_dict)
 
     def estimate_probability_two_random_records_match(
         self, deterministic_matching_rules, recall

@@ -159,11 +159,10 @@ settings_dict = {
 }
 
 
-def duckdb_performance(df, target_rows=1e6):
-
+def duckdb_performance(df, max_pairs=1e6):
     linker = DuckDBLinker(df, settings_dict)
 
-    linker.estimate_u_using_random_sampling(target_rows=target_rows)
+    linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
@@ -179,7 +178,7 @@ def test_2_rounds_1k_duckdb(benchmark):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     benchmark.pedantic(
         duckdb_performance,
-        kwargs={"df": df, "target_rows": 1e6},
+        kwargs={"df": df, "max_pairs": 1e6},
         rounds=2,
         iterations=1,
         warmup_rounds=0,
@@ -190,18 +189,17 @@ def test_10_rounds_20k_duckdb(benchmark):
     df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
     benchmark.pedantic(
         duckdb_performance,
-        kwargs={"df": df, "target_rows": 3e6},
+        kwargs={"df": df, "max_pairs": 3e6},
         rounds=10,
         iterations=1,
         warmup_rounds=0,
     )
 
 
-def duckdb_on_disk_performance(df, target_rows=1e6):
-
+def duckdb_on_disk_performance(df, max_pairs=1e6):
     linker = DuckDBLinker(df, settings_dict, connection=":temporary:")
 
-    linker.estimate_u_using_random_sampling(target_rows=target_rows)
+    linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
@@ -217,7 +215,7 @@ def test_2_rounds_1k_duckdb_on_disk_performance(benchmark):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     benchmark.pedantic(
         duckdb_on_disk_performance,
-        kwargs={"df": df, "target_rows": 1e6},
+        kwargs={"df": df, "max_pairs": 1e6},
         rounds=2,
         iterations=1,
         warmup_rounds=0,
@@ -228,18 +226,17 @@ def test_10_rounds_20k_duckdb_on_disk_performance(benchmark):
     df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
     benchmark.pedantic(
         duckdb_on_disk_performance,
-        kwargs={"df": df, "target_rows": 3e6},
+        kwargs={"df": df, "max_pairs": 3e6},
         rounds=10,
         iterations=1,
         warmup_rounds=0,
     )
 
 
-def spark_performance(df, target_rows=1e6):
-
+def spark_performance(df, max_pairs=1e6):
     linker = SparkLinker(df, settings_dict)
 
-    linker.estimate_u_using_random_sampling(target_rows=target_rows)
+    linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
@@ -272,7 +269,7 @@ def test_3_rounds_20k_spark(benchmark):
         df = spark.read.csv(
             "./benchmarking/fake_20000_from_splink_demos.csv", header=True
         )
-        return (df,), {"target_rows": 1e6}
+        return (df,), {"max_pairs": 1e6}
 
     benchmark.pedantic(
         spark_performance,
@@ -283,14 +280,13 @@ def test_3_rounds_20k_spark(benchmark):
     )
 
 
-def sqlite_performance(con, target_rows=1e6):
-
+def sqlite_performance(con, max_pairs=1e6):
     print("**** running sqlite benchmark ***")
     linker = SQLiteLinker(
         "input_df_tablename", settings_dict, connection=con, input_table_aliases="mydf"
     )
 
-    linker.estimate_u_using_random_sampling(target_rows=target_rows)
+    linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
@@ -309,7 +305,7 @@ def test_2_rounds_1k_sqlite(benchmark):
         con.create_function("levenshtein", 2, distance)
         df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
         df.to_sql("input_df_tablename", con)
-        return (con,), {"target_rows": 1e6}
+        return (con,), {"max_pairs": 1e6}
 
     benchmark.pedantic(
         sqlite_performance,
@@ -328,7 +324,7 @@ def test_10_rounds_20k_sqlite(benchmark):
         con.create_function("levenshtein", 2, distance)
         df = pd.read_csv("./benchmarking/fake_20000_from_splink_demos.csv")
         df.to_sql("input_df_tablename", con)
-        return (con,), {"target_rows": 3e6}
+        return (con,), {"max_pairs": 3e6}
 
     benchmark.pedantic(
         sqlite_performance,

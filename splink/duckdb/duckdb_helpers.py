@@ -7,7 +7,6 @@ import duckdb
 
 
 def validate_duckdb_connection(connection, logger):
-
     """Check if the duckdb connection requested by the user is valid.
 
     Raises:

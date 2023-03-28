@@ -18,7 +18,6 @@ def generate_random_graph(graph_size, seed=None):
 
 
 def register_cc_df(G):
-
     from tests.basic_settings import get_settings_dict
 
     settings_dict = get_settings_dict()
@@ -49,8 +48,7 @@ def register_cc_df(G):
 
 
 def run_cc_implementation(predict_df):
-
-    linker = predict_df.duckdb_linker
+    linker = predict_df.linker
     concat_with_tf = linker._initialise_df_concat_with_tf()
 
     # finally, run our connected components algorithm
@@ -67,9 +65,8 @@ def run_cc_implementation(predict_df):
 
 
 def benchmark_cc_implementation(linker_df):
-
     # add a schema so we don't need to re-register our df
-    linker_df.duckdb_linker._con.execute(
+    linker_df.linker._con.execute(
         """
         create schema if not exists con_comp;
         set schema 'con_comp';
@@ -77,7 +74,7 @@ def benchmark_cc_implementation(linker_df):
     )
 
     df = run_cc_implementation(linker_df)
-    linker_df.duckdb_linker._con.execute("drop schema con_comp cascade")
+    linker_df.linker._con.execute("drop schema con_comp cascade")
 
     return df
 

@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 
 
 def _is_exact_match(sql_syntax_tree):
-
     signature = sqlglot_tree_signature(sql_syntax_tree)
     if signature != "eq column column identifier identifier":
         return False
@@ -138,7 +137,6 @@ class ComparisonLevel:
         comparison: Comparison = None,
         sql_dialect: str = None,
     ):
-
         # Protected, because we don't want to modify the original dict
         self._level_dict = level_dict
 
@@ -186,7 +184,6 @@ class ComparisonLevel:
 
     @property
     def _tf_adjustment_input_column(self):
-
         val = self._level_dict_val_else_default("tf_adjustment_column")
         if val:
             return InputColumn(val, sql_dialect=self._sql_dialect)
@@ -275,13 +272,11 @@ class ComparisonLevel:
             )
 
     def _add_trained_u_probability(self, val, desc="no description given"):
-
         self._trained_u_probabilities.append(
             {"probability": val, "description": desc, "m_or_u": "u"}
         )
 
     def _add_trained_m_probability(self, val, desc="no description given"):
-
         self._trained_m_probabilities.append(
             {"probability": val, "description": desc, "m_or_u": "m"}
         )
@@ -388,7 +383,6 @@ class ComparisonLevel:
 
     @property
     def _label_for_charts_no_duplicates(self):
-
         if self._has_comparison:
             labels = []
             for cl in self.comparison.comparison_levels:
@@ -444,7 +438,6 @@ class ComparisonLevel:
 
         input_cols = []
         for c in cols:
-
             # We could have tf adjustments for surname on a dmeta_surname column
             # If so, we want to set the tf adjustments against the surname col,
             # not the dmeta_surname one
@@ -499,7 +492,6 @@ class ComparisonLevel:
 
     @property
     def _exact_match_colnames(self):
-
         sql_syntax_tree = sqlglot.parse_one(
             self._sql_condition.lower(), read=self._sql_dialect
         )
@@ -684,7 +676,6 @@ class ComparisonLevel:
 
     @property
     def _parameter_estimates_as_records(self):
-
         output_records = []
 
         cl_record = self._as_detailed_record
@@ -716,7 +707,6 @@ class ComparisonLevel:
         return sql
 
     def __repr__(self):
-
         return f"<{self._human_readable_succinct}>"
 
     @property
@@ -726,7 +716,6 @@ class ComparisonLevel:
 
     @property
     def human_readable_description(self):
-
         input_cols = join_list_with_commas_final_and(
             [c.name() for c in self._input_columns_used_by_sql_condition]
         )

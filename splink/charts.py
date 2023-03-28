@@ -6,7 +6,6 @@ from .waterfall_chart import records_to_waterfall_data
 
 altair_installed = True
 try:
-
     from altair.vegalite.v4.display import VegaLite
 
     # Slightly re-write logic to avoid validation
@@ -18,7 +17,6 @@ try:
             pass
 
     def vegalite_no_validate(spec):
-
         return VegaliteNoValidate(spec)
 
 except ImportError:
@@ -33,7 +31,6 @@ def load_chart_definition(filename):
 
 
 def _load_external_libs():
-
     to_load = {
         "vega-embed": "files/external_js/vega-embed@6.20.2",
         "vega-lite": "files/external_js/vega-lite@5.2.0",
@@ -49,7 +46,6 @@ def _load_external_libs():
 
 
 def vegalite_or_json(chart_dict, as_dict=False):
-
     if altair_installed:
         if not as_dict:
             try:
@@ -295,7 +291,6 @@ def unlinkables_chart(
     source_dataset=None,
     as_dict=False,
 ):
-
     if x_col not in ["match_weight", "match_probability"]:
         raise ValueError(
             f"{x_col} must be 'match_weight' (default) or 'match_probability'."
