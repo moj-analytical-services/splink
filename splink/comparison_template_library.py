@@ -428,14 +428,20 @@ class FirstnameSurnameComparisonBase(Comparison):
         first_name_col_name,
         surname_col_name,
         include_exact_match_level=True,
-        phonetic_col_name=None,
-        term_frequency_adjustments_name=False,
-        term_frequency_adjustments_phonetic_name=False,
+        term_frequency_adjustment_col_full_name=False,
+        phonetic_col_first_name=None,
+        phonetic_col_surname=None,
+        term_frequency_adjustments_phonetic_first_name=False,
+        term_frequency_adjustments_phonetic_surname=False,
         levenshtein_thresholds=[],
         jaro_winkler_thresholds=[0.95, 0.88],
         jaccard_thresholds=[],
-        m_probability_exact_match_name=None,
-        m_probability_exact_match_phonetic_name=None,
+        m_probability_exact_match_full_name=None,
+        m_probability_exact_match_first_name=None,
+        m_probability_exact_match_surname=None,
+        m_probability_exact_match_phonetic_full_name=None,
+        m_probability_exact_match_phonetic_first_name=None,
+        m_probability_exact_match_phonetic_surname=None,
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_jac: float | list = None,
@@ -502,6 +508,8 @@ class FirstnameSurnameComparisonBase(Comparison):
         first_name_col_l, first_name_col_r = first_name_col.names_l_r()
         surname_col = InputColumn(surname_col_name, sql_dialect=self._sql_dialect)
         surname_col_l, surname_col_r = surname_col.names_l_r()
+        full_name_col = InputColumn(term_frequency_adjustment_col_full_name, sql_dialect=self._sql_dialect)
+        full_name_col_l, ful_name_col_r = full_name_col.names_l_r()
 
         comparison_level =  {
             "sql_condition": f"({first_name_col}_l IS NULL OR {first_name_col}_r IS NULL) and ({surname_col}_l IS NULL OR {surname_col}_r IS NULL)",
@@ -513,18 +521,13 @@ class FirstnameSurnameComparisonBase(Comparison):
 
         if include_exact_match_level:
             comparison_level =  {
-                "sql_condition": "first_name_and_surname_l = first_name_and_surname_r",
-                "tf_adjustment_column": "first_name_and_surname",
+                "sql_condition": f"{first_name_col_l} = {first_name_col_r} AND {surname_col_l} = {surname_col_r}",
+                "tf_adjustment_column": full_name_col,
                 "tf_adjustment_weight": 1.0,
+                "m_probability": m_probability_exact_match_full_name,
                 "label_for_charts": "Full name exact",
-            },
+            }
 
-            comparison_level = self._exact_match_level(
-                col_name,
-                term_frequency_adjustments=term_frequency_adjustments_name,
-                m_probability=m_probability_exact_match_name,
-                include_colname_in_charts_label=True,
-            )
             comparison_levels.append(comparison_level)
 
             if phonetic_col_name is not None:
