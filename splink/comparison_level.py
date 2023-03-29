@@ -168,6 +168,14 @@ class ComparisonLevel:
 
         self._validate()
 
+    @property
+    def is_null_level(self) -> bool:
+        return self._is_null_level
+
+    @property
+    def sql_condition(self) -> str:
+        return self._sql_condition
+
     def _level_dict_val_else_default(self, key):
         val = self._level_dict.get(key)
         if not val:
@@ -196,7 +204,7 @@ class ComparisonLevel:
 
     @property
     def m_probability(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return None
         if self._m_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
@@ -207,11 +215,11 @@ class ComparisonLevel:
 
     @m_probability.setter
     def m_probability(self, value):
-        if self._is_null_level:
+        if self.is_null_level:
             raise AttributeError("Cannot set m_probability when is_null_level is true")
         if value == LEVEL_NOT_OBSERVED_TEXT:
             cc_n = self.comparison._output_column_name
-            cl_n = self._label_for_charts
+            cl_n = self.label_for_charts
             logger.warning(
                 "\nWARNING:\n"
                 f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
@@ -222,7 +230,7 @@ class ComparisonLevel:
 
     @property
     def u_probability(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return None
         if self._u_probability == LEVEL_NOT_OBSERVED_TEXT:
             return 1e-6
@@ -233,11 +241,11 @@ class ComparisonLevel:
 
     @u_probability.setter
     def u_probability(self, value):
-        if self._is_null_level:
+        if self.is_null_level:
             raise AttributeError("Cannot set u_probability when is_null_level is true")
         if value == LEVEL_NOT_OBSERVED_TEXT:
             cc_n = self.comparison._output_column_name
-            cl_n = self._label_for_charts
+            cl_n = self.label_for_charts
             logger.warning(
                 "\nWARNING:\n"
                 f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
@@ -251,7 +259,7 @@ class ComparisonLevel:
             return (
                 "Amongst matching record comparisons, "
                 f"{self.m_probability:.2%} of records are in the "
-                f"{self._label_for_charts.lower()} comparison level"
+                f"{self.label_for_charts.lower()} comparison level"
             )
 
     @property
@@ -260,7 +268,7 @@ class ComparisonLevel:
             return (
                 "Amongst non-matching record comparisons, "
                 f"{self.u_probability:.2%} of records are in the "
-                f"{self._label_for_charts.lower()} comparison level"
+                f"{self.label_for_charts.lower()} comparison level"
             )
 
     def _add_trained_u_probability(self, val, desc="no description given"):
@@ -275,7 +283,7 @@ class ComparisonLevel:
 
     @property
     def _has_estimated_u_values(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return True
         vals = [r["probability"] for r in self._trained_u_probabilities]
         vals = [v for v in vals if isinstance(v, (int, float))]
@@ -283,7 +291,7 @@ class ComparisonLevel:
 
     @property
     def _has_estimated_m_values(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return True
         vals = [r["probability"] for r in self._trained_m_probabilities]
         vals = [v for v in vals if isinstance(v, (int, float))]
@@ -311,7 +319,7 @@ class ComparisonLevel:
 
     @property
     def _m_is_trained(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return True
         if self._m_probability == "level not observed in data":
             return False
@@ -321,7 +329,7 @@ class ComparisonLevel:
 
     @property
     def _u_is_trained(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return True
         if self._u_probability == "level not observed in data":
             return False
@@ -335,7 +343,7 @@ class ComparisonLevel:
 
     @property
     def _bayes_factor(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return 1.0
         if self.m_probability is None or self.u_probability is None:
             return None
@@ -346,7 +354,7 @@ class ComparisonLevel:
 
     @property
     def _log2_bayes_factor(self):
-        if self._is_null_level:
+        if self.is_null_level:
             return 0.0
         else:
             return math.log2(self._bayes_factor)
@@ -354,7 +362,7 @@ class ComparisonLevel:
     @property
     def _bayes_factor_description(self):
         text = (
-            f"If comparison level is `{self._label_for_charts.lower()}` "
+            f"If comparison level is `{self.label_for_charts.lower()}` "
             "then comparison is"
         )
         if self._bayes_factor == math.inf:
@@ -368,7 +376,7 @@ class ComparisonLevel:
             return f"{text}  {mult:,.2f} times less likely to be a match"
 
     @property
-    def _label_for_charts(self):
+    def label_for_charts(self):
         return self._level_dict.get(
             "label_for_charts", str(self._comparison_vector_value)
         )
@@ -378,10 +386,10 @@ class ComparisonLevel:
         if self._has_comparison:
             labels = []
             for cl in self.comparison.comparison_levels:
-                labels.append(cl._label_for_charts)
+                labels.append(cl.label_for_charts)
 
         if len(labels) == len(set(labels)):
-            return self._label_for_charts
+            return self.label_for_charts
 
         # Make label unique
         cvv = str(self._comparison_vector_value)
@@ -390,7 +398,7 @@ class ComparisonLevel:
 
     @property
     def _is_else_level(self):
-        if self._sql_condition.strip().upper() == "ELSE":
+        if self.sql_condition.strip().upper() == "ELSE":
             return True
 
     @property
@@ -399,7 +407,7 @@ class ComparisonLevel:
         return col is not None
 
     def _validate_sql(self):
-        sql = self._sql_condition
+        sql = self.sql_condition
         if self._is_else_level:
             return True
         dialect = self._sql_dialect
@@ -421,7 +429,7 @@ class ComparisonLevel:
         if self._is_else_level:
             return []
 
-        cols = get_columns_used_from_sql(self._sql_condition, dialect=self._sql_dialect)
+        cols = get_columns_used_from_sql(self.sql_condition, dialect=self._sql_dialect)
         # Parsed order seems to be roughly in reverse order of apearance
         cols = cols[::-1]
 
@@ -462,9 +470,9 @@ class ComparisonLevel:
                 "context of a list of ComparisonLevels within a Comparison."
             )
         if self._is_else_level:
-            return f"{self._sql_condition} {self._comparison_vector_value}"
+            return f"{self.sql_condition} {self._comparison_vector_value}"
         else:
-            return f"WHEN {self._sql_condition} THEN {self._comparison_vector_value}"
+            return f"WHEN {self.sql_condition} THEN {self._comparison_vector_value}"
 
     @property
     def _is_exact_match(self):
@@ -472,7 +480,7 @@ class ComparisonLevel:
             return False
 
         sql_syntax_tree = sqlglot.parse_one(
-            self._sql_condition.lower(), read=self._sql_dialect
+            self.sql_condition.lower(), read=self._sql_dialect
         )
         sql_cnf = normalize(sql_syntax_tree)
 
@@ -485,7 +493,7 @@ class ComparisonLevel:
     @property
     def _exact_match_colnames(self):
         sql_syntax_tree = sqlglot.parse_one(
-            self._sql_condition.lower(), read=self._sql_dialect
+            self.sql_condition.lower(), read=self._sql_dialect
         )
         sql_cnf = normalize(sql_syntax_tree)
 
@@ -611,10 +619,10 @@ class ComparisonLevel:
         "The minimal representation of this level to use as an input to Splink"
         output = {}
 
-        output["sql_condition"] = self._sql_condition
+        output["sql_condition"] = self.sql_condition
 
         if self._level_dict.get("label_for_charts"):
-            output["label_for_charts"] = self._label_for_charts
+            output["label_for_charts"] = self.label_for_charts
 
         if self._m_probability and self._m_is_trained:
             output["m_probability"] = self.m_probability
@@ -627,8 +635,9 @@ class ComparisonLevel:
             if self._tf_adjustment_weight != 0:
                 output["tf_adjustment_weight"] = self._tf_adjustment_weight
 
-        if self._is_null_level:
+        if self.is_null_level:
             output["is_null_level"] = True
+
         return output
 
     def _as_completed_dict(self):
@@ -640,7 +649,7 @@ class ComparisonLevel:
     def _as_detailed_record(self):
         "A detailed representation of this level to describe it in charting outputs"
         output = {}
-        output["sql_condition"] = self._sql_condition
+        output["sql_condition"] = self.sql_condition
         output["label_for_charts"] = self._label_for_charts_no_duplicates
 
         output["m_probability"] = self.m_probability
@@ -656,7 +665,7 @@ class ComparisonLevel:
             output["tf_adjustment_column"] = None
         output["tf_adjustment_weight"] = self._tf_adjustment_weight
 
-        output["is_null_level"] = self._is_null_level
+        output["is_null_level"] = self.is_null_level
         output["bayes_factor"] = self._bayes_factor
         output["log2_bayes_factor"] = self._log2_bayes_factor
         output["comparison_vector_value"] = self._comparison_vector_value
@@ -693,9 +702,8 @@ class ComparisonLevel:
         self._validate_sql()
 
     def _abbreviated_sql(self, cutoff=75):
-        sql = self._sql_condition
-        sql = (sql[:75] + "...") if len(sql) > 75 else sql
-        return sql
+        sql = self.sql_condition
+        return (sql[:75] + "...") if len(sql) > 75 else sql
 
     def __repr__(self):
         return f"<{self._human_readable_succinct}>"
@@ -703,7 +711,7 @@ class ComparisonLevel:
     @property
     def _human_readable_succinct(self):
         sql = self._abbreviated_sql(75)
-        return f"Comparison level '{self._label_for_charts}' using SQL rule: {sql}"
+        return f"Comparison level '{self.label_for_charts}' using SQL rule: {sql}"
 
     @property
     def human_readable_description(self):
@@ -711,9 +719,9 @@ class ComparisonLevel:
             [c.name() for c in self._input_columns_used_by_sql_condition]
         )
         desc = (
-            f"Comparison level: {self._label_for_charts} of {input_cols}\n"
+            f"Comparison level: {self.label_for_charts} of {input_cols}\n"
             "Assesses similarity between pairwise comparisons of the input columns "
-            f"using the following rule\n{self._sql_condition}"
+            f"using the following rule\n{self.sql_condition}"
         )
 
         return desc

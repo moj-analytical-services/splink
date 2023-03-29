@@ -1,6 +1,5 @@
 import pandas as pd
 import pytest
-from basic_settings import get_settings_dict
 
 from splink.accuracy import (
     predictions_from_sample_of_pairwise_labels_sql,
@@ -8,6 +7,8 @@ from splink.accuracy import (
 )
 from splink.duckdb.duckdb_comparison_library import exact_match
 from splink.duckdb.duckdb_linker import DuckDBLinker
+
+from .basic_settings import get_settings_dict
 
 
 def test_scored_labels_table():
