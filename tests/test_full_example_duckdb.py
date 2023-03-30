@@ -227,7 +227,6 @@ def test_small_example_duckdb(tmp_path):
                     cll.exact_match_level(
                         "first_name", term_frequency_adjustments=True
                     ),
-                    cll.exact_match_level("surname", term_frequency_adjustments=True),
                     cll.else_level(),
                 ],
             },
