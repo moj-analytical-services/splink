@@ -40,6 +40,6 @@ jobs:
                 echo "Modified: $file"
               fi
             done
-            find . -type f -name 'example_*ipynb' -exec grep -H 'target_rows' {} \;
+            find . -type f -name 'example_*ipynb' -exec grep -H 'max_pairs' {} \;
             python -m pytest --nbmake --nbmake-kernel=python3 example_*ipynb
 
