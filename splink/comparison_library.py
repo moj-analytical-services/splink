@@ -82,11 +82,11 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
 
         An example of the output with default arguments and setting
         `distance_function_name` to `jaccard` and
-        `distance_threshold_or_thresholds = [0.9,0.7]` would be  
+        `distance_threshold_or_thresholds = [0.9,0.7]` would be
 
-        - Exact match  
-        - Jaccard distance <= 0.9  
-        - Jaccard distance <= 0.7  
+        - Exact match
+        - Jaccard distance <= 0.9
+        - Jaccard distance <= 0.7
         - Anything else
 
         Args:
@@ -517,18 +517,18 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            >>> # DuckDB Date Difference comparison at thresholds 10 days, 12 months 
+            >>> # DuckDB Date Difference comparison at thresholds 10 days, 12 months
             >>> # and 15 years
             >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.datediff_at_thresholds("date", 
+            >>> cl.datediff_at_thresholds("date",
             >>>                             date_thresholds = [10, 12, 15],
             >>>                             date_metrics = ['day', 'month', 'year']
             >>>                             )
 
-            >>> # Spark Date Difference comparison at thresholds 10 days, 12 months 
+            >>> # Spark Date Difference comparison at thresholds 10 days, 12 months
             >>> # and 15 years
             >>> import splink.spark.spark_comparison_library as cl
-            >>> cl.datediff_at_thresholds("date", 
+            >>> cl.datediff_at_thresholds("date",
             >>>                             date_thresholds = [10, 12, 15],
             >>>                             date_metrics = ['day', 'month', 'year']
             >>>                             )
@@ -639,14 +639,14 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
             >>> # DuckDB KM Distance comparison at thresholds 0.1, 1, 10 kilometres
             >>> import splink.duckdb.duckdb_comparison_library as cl
             >>> cl.datediff_at_thresholds("lat_col",
-            >>>                            "long_col", 
+            >>>                            "long_col",
             >>>                            km_thresholds = [0.1, 1, 10]
             >>>                            )
 
             >>> # Spark KM Distance comparison at thresholds 0.1, 1, 10 kilometres
             >>> import splink.spark.spark_comparison_library as cl
             >>> cl.datediff_at_thresholds("lat_col",
-            >>>                            "long_col", 
+            >>>                            "long_col",
             >>>                            km_thresholds = [0.1, 1, 10]
             >>>                            )
 
