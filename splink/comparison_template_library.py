@@ -82,11 +82,11 @@ class DateComparisonBase(Comparison):
 
 
         Examples:
-            >>> # DuckDB Basic Date Comparison 
+            >>> # DuckDB Basic Date Comparison
             >>> import splink.duckdb.duckdb_comparison_template_library as ctl
             >>> clt.date_comparison("date_of_birth")
 
-            >>> # DuckDB Bespoke Date Comparison 
+            >>> # DuckDB Bespoke Date Comparison
             >>> import splink.duckdb.duckdb_comparison_template_library as ctl
             >>> clt.date_comparison(
             >>>                     "date_of_birth",
@@ -94,12 +94,12 @@ class DateComparisonBase(Comparison):
             >>>                     jaro_winkler_thresholds=[0.88],
             >>>                     datediff_thresholds=[1, 1],
             >>>                     datediff_metrics=["month", "year"])
-           
-            >>> # Spark Basic Date Comparison 
+
+            >>> # Spark Basic Date Comparison
             >>> import splink.spark.spark_comparison_template_library as ctl
             >>> clt.date_comparison("date_of_birth")
 
-            >>> # Spark Bespoke Date Comparison 
+            >>> # Spark Bespoke Date Comparison
             >>> import splink.spark.spark_comparison_template_library as ctl
             >>> clt.date_comparison(
             >>>                     "date_of_birth",
@@ -324,11 +324,11 @@ class NameComparisonBase(Comparison):
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            >>> # DuckDB Basic Name Comparison 
+            >>> # DuckDB Basic Name Comparison
             >>> import splink.duckdb.duckdb_comparison_template_library as ctl
             >>> clt.name_comparison("name")
 
-            >>> # DuckDB Bespoke Name Comparison 
+            >>> # DuckDB Bespoke Name Comparison
             >>> import splink.duckdb.duckdb_comparison_template_library as ctl
             >>> clt.name_comparison("name",
             >>>                     phonetic_col_name = "name_dm",
@@ -337,12 +337,12 @@ class NameComparisonBase(Comparison):
             >>>                     jaro_winkler_thresholds=[],
             >>>                     jaccard_thresholds=[1]
             >>>                     )
-           
-            >>> # Spark Basic Name Comparison 
+
+            >>> # Spark Basic Name Comparison
             >>> import splink.spark.spark_comparison_template_library as ctl
             >>> clt.name_comparison("name")
 
-            >>> # Spark Bespoke Date Comparison 
+            >>> # Spark Bespoke Date Comparison
             >>> import splink.spark.spark_comparison_template_library as ctl
             >>> clt.name_comparison("name",
             >>>                     phonetic_col_name = "name_dm",

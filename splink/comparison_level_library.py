@@ -75,7 +75,7 @@ class ElseLevelBase(ComparisonLevel):
         self,
         m_probability=None,
     ):
-        """Represents a comparison level for all cases which have not been 
+        """Represents a comparison level for all cases which have not been
         considered by preceding comparison levels,
 
         Examples:
@@ -180,7 +180,7 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
 
             >>> # Spark Levenshtein comparison level at thresholds 1
             >>> import splink.spark.spark_comparison_level_library as cll
-            >>> cll.levenshtein_level("name", 1)        
+            >>> cll.levenshtein_level("name", 1)
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the
@@ -218,7 +218,7 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
 
             >>> # Spark Jaro-winkler comparison level at threshold 0.9
             >>> import splink.spark.spark_comparison_level_library as cll
-            >>> cll.jaro_winkler_level("name", 0.9) 
+            >>> cll.jaro_winkler_level("name", 0.9)
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the
@@ -263,7 +263,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
 
             >>> # Spark Jaccard comparison level at threshold 0.9
             >>> import splink.spark.spark_comparison_level_library as cll
-            >>> cll.jaccard_level("name", 0.9) 
+            >>> cll.jaccard_level("name", 0.9)
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the jaccard similarity
@@ -285,7 +285,7 @@ class ColumnsReversedLevelBase(ComparisonLevel):
         m_probability=None,
         tf_adjustment_column=None,
     ):
-        """Represents a comparison level where the columns are reversed.  For example, 
+        """Represents a comparison level where the columns are reversed.  For example,
         if surname is in the forename field and vice versa
 
         Args:
@@ -411,23 +411,23 @@ class PercentageDifferenceLevelBase(ComparisonLevel):
         """Represents a comparison level based around the percentage difference between
         two numbers.
 
-        Note: the percentage is calculated by dividing the absolute difference between 
+        Note: the percentage is calculated by dividing the absolute difference between
         the values by the largest value
 
         Args:
             col_name (str): Input column name
-            percentage_distance_threshold (float): Percentage difference threshold for 
+            percentage_distance_threshold (float): Percentage difference threshold for
                 the comparison level
             m_probability (float, optional): Starting value for m probability. Defaults
                 to None.
 
         Examples:
-            >>> # DuckDB Percentage Difference comparison level with min percentage 
+            >>> # DuckDB Percentage Difference comparison level with min percentage
             >>> # difference of 50%
             >>> import splink.duckdb.duckdb_comparison_level_library as cll
             >>> cll.percentage_difference_level("value", 0.5)
 
-            >>> # Spark Percentage Difference comparison level with min percentage 
+            >>> # Spark Percentage Difference comparison level with min percentage
             >>> # difference of 50%
             >>> import splink.spark.spark_comparison_level_library as cll
             >>> cll.percentage_difference_level("value", 0.5)
@@ -435,7 +435,7 @@ class PercentageDifferenceLevelBase(ComparisonLevel):
         Returns:
             ComparisonLevel: A comparison level that evaluates the percentage difference
                 between two values
-        
+
         """
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
 
@@ -529,7 +529,7 @@ class DateDiffLevelBase(ComparisonLevel):
         date_metric: str = "day",
         m_probability=None,
     ):
-        """Represents a comparison level based around the difference between dates 
+        """Represents a comparison level based around the difference between dates
         within a column
 
         Arguments:
@@ -549,14 +549,14 @@ class DateDiffLevelBase(ComparisonLevel):
         Examples:
             >>> # DuckDB Date Difference comparison level at threshold 1 year
             >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.datediff_level("date", 
+            >>> cll.datediff_level("date",
             >>>                     date_threshold=1,
             >>>                     date_metric="year"
             >>>                     )
 
             >>> # Spark Date Difference comparison level at threshold 1 year
             >>> import splink.spark.spark_comparison_level_library as cll
-            >>> cll.datediff_level("date", 
+            >>> cll.datediff_level("date",
             >>>                     date_threshold=1,
             >>>                     date_metric="year"
             >>>                     )
