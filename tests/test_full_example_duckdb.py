@@ -7,11 +7,7 @@ import pyarrow.parquet as pq
 import pytest
 
 import splink.duckdb.duckdb_comparison_level_library as cll
-from splink.duckdb.duckdb_comparison_library import (
-    exact_match,
-    jaccard_at_thresholds,
-    jaro_winkler_at_thresholds,
-)
+import splink.duckdb.duckdb_comparison_library as cl
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict, name_comparison
@@ -24,8 +20,8 @@ def test_full_example_duckdb(tmp_path):
     settings_dict = get_settings_dict()
 
     # Overwrite the surname comparison to include duck-db specific syntax
-    settings_dict["comparisons"][0] = jaro_winkler_at_thresholds("first_name")
-    settings_dict["comparisons"][1] = jaccard_at_thresholds("SUR name")
+    settings_dict["comparisons"][0] = cl.jaro_winkler_at_thresholds("first_name")
+    settings_dict["comparisons"][1] = cl.jaccard_at_thresholds("SUR name")
     settings_dict["comparisons"].append(name_comparison(cll, "SUR name"))
     settings_dict["blocking_rules_to_generate_predictions"] = [
         'l."SUR name" = r."SUR name"',
@@ -186,7 +182,7 @@ def test_duckdb_arrow_array():
         {
             "link_type": "dedupe_only",
             "unique_id_column_name": "uid",
-            "comparisons": [exact_match("b")],
+            "comparisons": [cl.exact_match("b")],
             "blocking_rules_to_generate_predictions": ["l.a[1] = r.a[1]"],
         },
     )
@@ -207,3 +203,65 @@ def test_cast_error():
     # convert to pyarrow table
     df = pa.Table.from_pandas(df)
     DuckDBLinker(df)
+
+
+def test_small_example_duckdb(tmp_path):
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df["full_name"] = df["first_name"] + df["surname"]
+
+    settings_dict = {
+        "link_type": "dedupe_only",
+        "blocking_rules_to_generate_predictions": [
+            "l.surname = r.surname",
+            "l.city = r.city",
+        ],
+        "comparisons": [
+            {
+                "output_column_name": "name",
+                "comparison_levels": [
+                    cll.null_level("full_name"),
+                    cll.exact_match_level("full_name", term_frequency_adjustments=True),
+                    cll.columns_reversed_level(
+                        "first_name", "surname", tf_adjustment_column="full_name"
+                    ),
+                    cll.exact_match_level(
+                        "first_name", term_frequency_adjustments=True
+                    ),
+                    cll.exact_match_level("surname", term_frequency_adjustments=True),
+                    cll.else_level(),
+                ],
+            },
+            cl.exact_match("dob", term_frequency_adjustments=True),
+            cl.levenshtein_at_thresholds("email", term_frequency_adjustments=True),
+            cl.jaro_winkler_at_thresholds("city", term_frequency_adjustments=True),
+        ],
+        "retain_matching_columns": True,
+        "retain_intermediate_calculation_columns": True,
+    }
+
+    linker = DuckDBLinker(
+        df,
+        connection=os.path.join(tmp_path, "duckdb.db"),
+        output_schema="splink_in_duckdb",
+    )
+    linker.load_settings(settings_dict)
+
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.estimate_probability_two_random_records_match(
+        ["l.email = r.email"], recall=0.3
+    )
+    blocking_rule = "l.full_name = r.full_name"
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+
+    blocking_rule = "l.dob = r.dob"
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+
+    df_predict = linker.predict()
+    linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
+
+    path = os.path.join(tmp_path, "model.json")
+    linker.save_settings_to_json(path)
+
+    linker_2 = DuckDBLinker(df, connection=":memory:")
+    linker_2.load_settings(path)
+    DuckDBLinker(df, settings_dict=path)
