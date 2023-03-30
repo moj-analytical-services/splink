@@ -32,6 +32,15 @@ class ExactMatchBase(Comparison):
             include_colname_in_charts_label: If true, append col name to label for
                 charts.  Defaults to False.
 
+        Examples:
+            >>> # Simple DuckDB exact_match comparison
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.exact_match("first_name")
+
+            >>> # Simple Spark exact_match comparison
+            >>> import splink.spark.spark_comparison_library as cl
+            >>> cl.exact_match("first_name")
+
         Returns:
             Comparison: A comparison that can be inclued in the Splink settings
                 dictionary
@@ -73,10 +82,11 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
 
         An example of the output with default arguments and setting
         `distance_function_name` to `jaccard` and
-        `distance_threshold_or_thresholds = [0.9,0.7]` would be
-        - Exact match
-        - Jaccard distance <= 0.9
-        - Jaccard distance <= 0.7
+        `distance_threshold_or_thresholds = [0.9,0.7]` would be  
+
+        - Exact match  
+        - Jaccard distance <= 0.9  
+        - Jaccard distance <= 0.7  
         - Anything else
 
         Args:
@@ -203,6 +213,14 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                 for the thresholds specified for given function. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
+        Examples:
+            >>> # DuckDB Levenshtein comparison at thresholds 1 and 2
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.levenshtein_at_thresholds("first_name", [1,2])
+
+            >>> # Spark Levenshtein comparison at thresholds 1 and 2
+            >>> import splink.spark.spark_comparison_library as cl
+            >>> cl.levenshtein_at_thresholds("first_name", [1,2])
 
         Returns:
             Comparison:
@@ -240,7 +258,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
         assess middle similarity levels.
 
         An example of the output with default arguments and setting
-        `distance_threshold_or_thresholds = [1,2]` would be
+        `distance_threshold_or_thresholds = [0.9,0.7]` would be
         - Exact match
         - Jaccard distance <= 0.9
         - Jaccard distance <= 0.7
@@ -262,6 +280,15 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
                 for the thresholds specified for given function. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
+
+        Examples:
+            >>> # DuckDB Jaccard comparison at thresholds 0.9 and 0.7
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.jaccard_at_thresholds("first_name", [0.9, 0.7])
+
+            >>> # Spark Jaccard comparison at thresholds 0.9 and 0.7
+            >>> import splink.spark.spark_comparison_library as cl
+            >>> cl.jaccard_at_thresholds("first_name", [0.9, 0.7])
 
         Returns:
             Comparison:
@@ -299,7 +326,7 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         assess middle similarity levels.
 
         An example of the output with default arguments and setting
-        `distance_threshold_or_thresholds = [1,2]` would be
+        `distance_threshold_or_thresholds = [0.9, 0.7]` would be
         - Exact match
         - jaro_winkler distance <= 0.9
         - jaro_winkler distance <= 0.7
@@ -321,6 +348,15 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                 for the thresholds specified for given function. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
+
+        Examples:
+            >>> # DuckDB Jaro-winkler comparison at thresholds 0.9 and 0.7
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
+
+            >>> # Spark Jaro-winkler comparison at thresholds 0.9 and 0.7
+            >>> import splink.spark.saprk_comparison_library as cl
+            >>> cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
 
         Returns:
             Comparison:
@@ -370,6 +406,15 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
                 for the sizes specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
+
+        Examples:
+            >>> # DuckDB Array intersect comparison at sizes 3 and 1
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.array_intersect_at_sizes("first_name", [3, 1])
+
+            >>> # Spark Array intersect comparison at sizes 3 and 1
+            >>> import splink.spark.spark_comparison_library as cl
+            >>> cl.array_intersect_at_sizes("first_name", [3, 1])
 
         Returns:
             Comparison:
@@ -470,6 +515,23 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                 for the sizes specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
+
+        Examples:
+            >>> # DuckDB Date Difference comparison at thresholds 10 days, 12 months 
+            >>> # and 15 years
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.datediff_at_thresholds("date", 
+            >>>                             date_thresholds = [10, 12, 15],
+            >>>                             date_metrics = ['day', 'month', 'year']
+            >>>                             )
+
+            >>> # Spark Date Difference comparison at thresholds 10 days, 12 months 
+            >>> # and 15 years
+            >>> import splink.spark.spark_comparison_library as cl
+            >>> cl.datediff_at_thresholds("date", 
+            >>>                             date_thresholds = [10, 12, 15],
+            >>>                             date_metrics = ['day', 'month', 'year']
+            >>>                             )
 
         Returns:
             Comparison: A comparison that can be inclued in the Splink settings
@@ -572,6 +634,21 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
                 for the sizes specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
+
+        Examples:
+            >>> # DuckDB KM Distance comparison at thresholds 0.1, 1, 10 kilometres
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.datediff_at_thresholds("lat_col",
+            >>>                            "long_col", 
+            >>>                            km_thresholds = [0.1, 1, 10]
+            >>>                            )
+
+            >>> # Spark KM Distance comparison at thresholds 0.1, 1, 10 kilometres
+            >>> import splink.spark.spark_comparison_library as cl
+            >>> cl.datediff_at_thresholds("lat_col",
+            >>>                            "long_col", 
+            >>>                            km_thresholds = [0.1, 1, 10]
+            >>>                            )
 
         Returns:
             Comparison: A comparison that can be inclued in the Splink settings
