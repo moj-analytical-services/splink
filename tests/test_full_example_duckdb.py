@@ -8,7 +8,6 @@ import pytest
 
 import splink.duckdb.duckdb_comparison_level_library as cll
 import splink.duckdb.duckdb_comparison_library as cl
-
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict, name_comparison
