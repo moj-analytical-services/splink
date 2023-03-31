@@ -40,7 +40,7 @@ def test_full_example_sqlite(tmp_path):
         ["l.email = r.email"], recall=0.3
     )
 
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6, seed=1)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
