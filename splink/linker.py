@@ -1087,7 +1087,8 @@ class Linker:
             is often adequate whilst testing different model specifications, before
             the final model is estimated.
             seed (int): Seed for random sampling. Assign to get reproducible u
-            probabilities
+            probabilities. Note, seed for random sampling is only supported for 
+            DuckDB and Spark, for Athena and SQLite set to None.
 
         Examples:
             >>> linker.estimate_u_using_random_sampling(1e8)
