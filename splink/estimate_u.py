@@ -90,11 +90,7 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     if sample_size > count_rows:
         sample_size = count_rows
 
-    sql = f"""
-    select *
-    from __splink__df_concat_with_tf
-    {training_linker._random_sample_sql(proportion, sample_size, seed)}
-    """
+    sql = training_linker._u_random_sample_sql(proportion, sample_size, seed)
     training_linker._enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
     df_sample = training_linker._execute_sql_pipeline([nodes_with_tf])
 
