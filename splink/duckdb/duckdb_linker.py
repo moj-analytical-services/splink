@@ -215,6 +215,14 @@ class DuckDBLinker(Linker):
         else:
             return f"USING SAMPLE {percent}% (bernoulli)"
 
+    def _u_random_sample_sql(self, proportion, sample_size, seed=None):
+        sql = f"""
+        select *
+        from __splink__df_concat_with_tf
+        {self._random_sample_sql(proportion, sample_size, seed)}
+        """
+        return sql
+
     @property
     def _infinity_expression(self):
         return "cast('infinity' as double)"

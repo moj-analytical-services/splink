@@ -117,7 +117,7 @@ def df_edges_as_records(
 
 
 def _get_random_cluster_ids(
-    linker: "Linker", connected_components: SplinkDataFrame, sample_size: int
+    linker: "Linker", connected_components: SplinkDataFrame, sample_size: int, seed=None
 ):
     sql = f"""
     select count(distinct cluster_id) as count
@@ -137,7 +137,7 @@ def _get_random_cluster_ids(
     from {connected_components.physical_name}
     )
     select cluster_id from distinct_clusters
-    {linker._random_sample_sql(proportion, sample_size)}
+    {linker._random_sample_sql(proportion, sample_size, seed)}
     """
 
     df_sample = linker._sql_to_splink_dataframe_checking_cache(
@@ -188,6 +188,7 @@ def render_splink_cluster_studio_html(
     out_path: str,
     sampling_method="random",
     sample_size=10,
+    sample_seed=None,
     cluster_ids: list = None,
     cluster_names: list = None,
     overwrite: bool = False,
@@ -202,7 +203,7 @@ def render_splink_cluster_studio_html(
     if cluster_ids is None:
         if sampling_method == "random":
             cluster_ids = _get_random_cluster_ids(
-                linker, df_clustered_nodes, sample_size
+                linker, df_clustered_nodes, sample_size, sample_seed
             )
         if sampling_method == "by_cluster_size":
             cluster_ids = _get_cluster_id_of_each_size(linker, df_clustered_nodes, 1)

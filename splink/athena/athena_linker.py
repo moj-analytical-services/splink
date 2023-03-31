@@ -336,11 +336,24 @@ class AthenaLinker(Linker):
 
         return self._table_to_splink_dataframe(table_name, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
             return ""
+        if seed:
+            raise NotImplementedError(
+                "Athena does not support seeds in random ",
+                "samples. Please remove the `seed` parameter.",
+            )
         percent = proportion * 100
         return f" TABLESAMPLE BERNOULLI ({percent})"
+
+    def _u_random_sample_sql(self, proportion, sample_size, seed=None):
+        sql = f"""
+        select *
+        from __splink__df_concat_with_tf
+        {self._random_sample_sql(proportion, sample_size, seed)}
+        """
+        return sql
 
     @property
     def _infinity_expression(self):
