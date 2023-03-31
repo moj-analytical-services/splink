@@ -1066,7 +1066,7 @@ class Linker:
         return self._execute_sql_pipeline([concat_with_tf])
 
     def estimate_u_using_random_sampling(
-        self, max_pairs: int = None, seed = None, *, target_rows=None
+        self, max_pairs: int = None, seed=None, *, target_rows=None
     ):
         """Estimate the u parameters of the linkage model using random sampling.
 
