@@ -450,11 +450,31 @@ class SparkLinker(Linker):
         input.createOrReplaceTempView(table_name)
         return self._table_to_splink_dataframe(table_name, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
         return f" TABLESAMPLE ({percent} PERCENT) "
+
+    def _u_random_sample_sql(self, proportion, sample_size, seed=None):
+        """from pyspark.sql.functions import udf, struct, col, map_values
+        from pyspark.sql.types import MapType, StringType
+        from pyspark.sql.functions import udf
+
+        # Define the PySpark function to sample a map of columns
+        def sample_columns(cols, with_replacement=True, fraction=0.5, seed=None):
+            return {k: list(set(v).sample(with_replacement, fraction, seed)) for k, v in cols.items()}
+
+        # Register the PySpark function as a Spark SQL UDF
+        sample_udf = udf(sample_columns, MapType(StringType(), ArrayType(StringType())))
+        """
+        
+        sql = f"""
+        select *
+        from __splink__df_concat_with_tf
+        {self._random_sample_sql(proportion, sample_size, seed)}
+        """
+        return sql
 
     def _table_exists_in_database(self, table_name):
         query_result = self.spark.sql(
