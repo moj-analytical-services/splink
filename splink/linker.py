@@ -1000,7 +1000,7 @@ class Linker:
         return self._execute_sql_pipeline([concat_with_tf])
 
     def estimate_u_using_random_sampling(
-        self, max_pairs: int = None, *, target_rows=None
+        self, max_pairs: int = None, seed = None, *, target_rows=None
     ):
         """Estimate the u parameters of the linkage model using random sampling.
 
@@ -1047,7 +1047,7 @@ class Linker:
         else:
             raise TypeError("Missing argument max_pairs")
 
-        estimate_u_values(self, max_pairs)
+        estimate_u_values(self, max_pairs, seed)
         self._populate_m_u_from_trained_values()
 
         self._settings_obj._columns_without_estimated_parameters_message()

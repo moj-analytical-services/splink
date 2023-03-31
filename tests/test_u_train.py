@@ -4,6 +4,7 @@ from pytest import approx
 
 from splink.duckdb.duckdb_comparison_library import levenshtein_at_thresholds
 from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.estimate_u import _rows_needed_for_n_pairs
 
 
 def test_u_train():
@@ -235,3 +236,27 @@ def test_u_train_multilink():
     assert cl_lev.u_probability == 1 / denom
     cl_no = cc_name._get_comparison_level_by_comparison_vector_value(0)
     assert cl_no.u_probability == (denom - 10) / denom
+
+
+def test_seed_u_outputs():
+    
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [levenshtein_at_thresholds("first_name", 2)],
+        "blocking_rules_to_generate_predictions": [],
+    }
+    
+    linker_1 = DuckDBLinker(df, settings)
+    linker_2 = DuckDBLinker(df, settings)
+    linker_3 = DuckDBLinker(df, settings)
+
+    linker_1.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
+    linker_2.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
+    linker_3.estimate_u_using_random_sampling(max_pairs=1e3, seed=2)
+
+    print(linker_1._settings_obj._parameter_estimates_as_records)
+
+    assert linker_1._settings_obj._parameter_estimates_as_records == linker_2._settings_obj._parameter_estimates_as_records
+    assert linker_1._settings_obj._parameter_estimates_as_records != linker_3._settings_obj._parameter_estimates_as_records
