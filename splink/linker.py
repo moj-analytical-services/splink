@@ -2348,7 +2348,7 @@ class Linker:
 
         """
         records = missingness_data(self, input_dataset)
-        return missingness_chart(records)
+        return missingness_chart(records, input_dataset)
 
     def completeness_chart(self, input_dataset: str = None, cols: list[str] = None):
         """Generate a summary chart of the completeness (proportion of non-nulls) of
@@ -2376,7 +2376,7 @@ class Linker:
 
         """
         records = completeness_data(self, input_dataset, cols)
-        return completeness_chart(records)
+        return completeness_chart(records, input_dataset)
 
     def count_num_comparisons_from_blocking_rule(
         self,
