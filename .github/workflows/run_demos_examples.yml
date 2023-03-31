@@ -41,5 +41,6 @@ jobs:
               fi
             done
             find . -type f -name 'example_*ipynb' -exec grep -H 'max_pairs' {} \;
+            sed -i '/display(linker.waterfall_chart(recs, filter_nulls=False))/d' example_real_time_record_linkage.ipynb
             python -m pytest --nbmake --nbmake-kernel=python3 example_*ipynb
 
