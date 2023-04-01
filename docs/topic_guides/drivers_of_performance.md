@@ -1,3 +1,8 @@
+---
+tags:
+  - Performance
+---
+
 ## Run times, performance, and linking large data
 
 This topic guide covers the fundamental drivers of the run time of Splink jobs. It also describes the tools that are built into Splink that help you to understand how long a job is likely to take.
