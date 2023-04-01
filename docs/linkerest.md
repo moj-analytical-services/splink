@@ -1,6 +1,7 @@
 ---
 tags:
   - API
+  - Model Training
 ---
 
 # Documentation for `Linker` object methods related to parameter estimation
