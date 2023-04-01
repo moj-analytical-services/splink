@@ -2,6 +2,9 @@
 tags:
   - Blocking
   - Performance
+  - Model Training
+  - M Probability
+  - Expectation Maximisation
 ---
 
 # Difference between `blocking_rules_to_generate_predictions` vs blocking rules for estimation
