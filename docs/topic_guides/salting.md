@@ -2,6 +2,7 @@
 tags:
   - Performance
   - Salting
+  - Spark
 ---
 
 # Salting blocking rules
