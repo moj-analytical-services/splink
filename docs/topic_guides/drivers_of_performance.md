@@ -1,6 +1,7 @@
 ---
 tags:
   - Performance
+  - Blocking
 ---
 
 ## Run times, performance, and linking large data
