@@ -1,3 +1,11 @@
+---
+tags:
+  - Performance
+  - Spark
+  - Salting
+  - Parallelism
+---
+
 ## Optimising Spark jobs
 
 This topic guide describes how to configue Spark to optimise performance - especially large linkage jobs which are slow or are not completing using default settings.
