@@ -1,3 +1,9 @@
+---
+tags:
+  - Performance
+  - Salting
+---
+
 # Salting blocking rules
 
 For very large linkages using Apache Spark, Splink supports salting blocking rules.
