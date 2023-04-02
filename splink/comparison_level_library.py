@@ -6,7 +6,7 @@ from .input_column import InputColumn
 
 
 class NullLevelBase(ComparisonLevel):
-    def __init__(self, col_name):
+    def __init__(self, col_name) -> ComparisonLevel:
         """Represents comparisons level where one or both sides of the comparison
         contains null values so the similarity cannot be evaluated.
         Assumed to have a partial match weight of zero (null effect
@@ -24,7 +24,7 @@ class NullLevelBase(ComparisonLevel):
             >>> cll.null_level("name")
 
         Returns:
-            ComparisonLevel: Comparison level
+            ComparisonLevel: Comparison level for null entries
         """
 
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
@@ -43,8 +43,15 @@ class ExactMatchLevelBase(ComparisonLevel):
         m_probability=None,
         term_frequency_adjustments=False,
         include_colname_in_charts_label=False,
-    ):
+    ) -> ComparisonLevel:
         """Represents a comparison level where there is an exact match,
+
+        Args:
+            col_name (str): Input column name
+            m_probability (float, optional): Starting value for m probability
+                Defaults to None.
+            term_frequency_adjustments (bool, optional): If True, apply term frequency
+                adjustments to the exact match level. Defaults to False.
 
         Examples:
             >>> # DuckDB Exact match level
@@ -74,7 +81,7 @@ class ElseLevelBase(ComparisonLevel):
     def __init__(
         self,
         m_probability=None,
-    ):
+    ) -> ComparisonLevel:
         """Represents a comparison level for all cases which have not been
         considered by preceding comparison levels,
 
@@ -110,7 +117,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         distance_threshold: int | float,
         higher_is_more_similar: bool = True,
         m_probability=None,
-    ):
+    ) -> ComparisonLevel:
         """Represents a comparison level using a user-provided distance function,
         where the similarity
 
@@ -163,7 +170,7 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
         col_name: str,
         distance_threshold: int,
         m_probability=None,
-    ):
+    ) -> ComparisonLevel:
         """Represents a comparison level using a levenshtein distance function,
 
         Args:
@@ -201,7 +208,7 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
         col_name: str,
         distance_threshold: float,
         m_probability=None,
-    ):
+    ) -> ComparisonLevel:
         """Represents a comparison level using the jaro winkler distance function
 
         Args:
@@ -246,7 +253,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
         col_name: str,
         distance_threshold: int | float,
         m_probability=None,
-    ):
+    ) -> ComparisonLevel:
         """Represents a comparison level using a jaccard distance function
 
         Args:
@@ -284,7 +291,7 @@ class ColumnsReversedLevelBase(ComparisonLevel):
         col_name_2: str,
         m_probability=None,
         tf_adjustment_column=None,
-    ):
+    ) -> ComparisonLevel:
         """Represents a comparison level where the columns are reversed.  For example,
         if surname is in the forename field and vice versa
 
@@ -339,7 +346,7 @@ class DistanceInKMLevelBase(ComparisonLevel):
         km_threshold: int | float,
         not_null: bool = False,
         m_probability=None,
-    ):
+    ) -> ComparisonLevel:
         """Use the haversine formula to transform comparisons of lat,lngs
         into distances measured in kilometers
 
@@ -407,7 +414,7 @@ class PercentageDifferenceLevelBase(ComparisonLevel):
         col_name: str,
         percentage_distance_threshold: float,
         m_probability=None,
-    ):
+    ) -> ComparisonLevel:
         """Represents a comparison level based around the percentage difference between
         two numbers.
 
@@ -465,7 +472,7 @@ class ArrayIntersectLevelBase(ComparisonLevel):
         term_frequency_adjustments=False,
         min_intersection=1,
         include_colname_in_charts_label=False,
-    ):
+    ) -> ComparisonLevel:
         """Represents a comparison level based around the size of an intersection of
         arrays
 
@@ -473,8 +480,8 @@ class ArrayIntersectLevelBase(ComparisonLevel):
             col_name (str): Input column name
             m_probability (float, optional): Starting value for m probability. Defaults
                 to None.
-            tf_adjustment_column (str, optional): Column to use for term frequency
-                adjustments if an exact match is observed. Defaults to None.
+            term_frequency_adjustments (bool, optional): If True, apply term frequency
+                adjustments to the exact match level. Defaults to False.
             min_intersection (int, optional): The minimum cardinality of the
                 intersection of arrays for this comparison level. Defaults to 1
             include_colname_in_charts_label (bool, optional): Should the charts label
@@ -528,7 +535,7 @@ class DateDiffLevelBase(ComparisonLevel):
         date_threshold: int,
         date_metric: str = "day",
         m_probability=None,
-    ):
+    ) -> ComparisonLevel:
         """Represents a comparison level based around the difference between dates
         within a column
 
