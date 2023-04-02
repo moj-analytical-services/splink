@@ -30,7 +30,7 @@ class DateComparisonBase(Comparison):
         m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_datediff: float | list = None,
         m_probability_else=None,
-    ):
+    ) -> Comparison:
         """A wrapper to generate a comparison for a date column the data in
         `col_name` with preselected defaults.
 
@@ -273,7 +273,7 @@ class NameComparisonBase(Comparison):
         m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_jac: float | list = None,
         m_probability_else=None,
-    ):
+    ) -> Comparison:
         """A wrapper to generate a comparison for a name column the data in
         `col_name` with preselected defaults.
 

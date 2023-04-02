@@ -16,7 +16,7 @@ class ExactMatchBase(Comparison):
         m_probability_exact_match=None,
         m_probability_else=None,
         include_colname_in_charts_label=False,
-    ):
+    ) -> Comparison:
         """A comparison of the data in `col_name` with two levels:
         - Exact match
         - Anything else
@@ -42,8 +42,8 @@ class ExactMatchBase(Comparison):
             >>> cl.exact_match("first_name")
 
         Returns:
-            Comparison: A comparison that can be inclued in the Splink settings
-                dictionary
+            Comparison: A comparison for exact match that can be included in the Splink
+                settings dictionary
         """
 
         comparison_dict = {
@@ -74,7 +74,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         m_probability_exact_match=None,
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_else=None,
-    ):
+    ) -> Comparison:
         """A comparison of the data in `col_name` with a user-provided distance
         function used to assess middle similarity levels.
 
@@ -131,7 +131,8 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
 
 
         Returns:
-            Comparison:
+            Comparison: A comparison for a chosen distance function similarity that
+                can be included in the Splink settings dictionary.
         """
 
         distance_thresholds = ensure_is_iterable(distance_threshold_or_thresholds)
@@ -205,7 +206,7 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         m_probability_exact_match=None,
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_else=None,
-    ):
+    ) -> Comparison:
         """A comparison of the data in `col_name` with the levenshtein distance used to
         assess middle similarity levels.
 
@@ -242,7 +243,8 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             >>> cl.levenshtein_at_thresholds("first_name", [1,2])
 
         Returns:
-            Comparison:
+            Comparison: A comparison for Levenshtein similarity that can be included
+                in the Splink settings dictionary.
         """
 
         super().__init__(
@@ -272,7 +274,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
         m_probability_exact_match=None,
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_else=None,
-    ):
+    ) -> Comparison:
         """A comparison of the data in `col_name` with the jaccard distance used to
         assess middle similarity levels.
 
@@ -310,7 +312,8 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
             >>> cl.jaccard_at_thresholds("first_name", [0.9, 0.7])
 
         Returns:
-            Comparison:
+            Comparison: A comparison for Jaccard similarity that can be included
+                in the Splink settings dictionary.
         """
 
         super().__init__(
@@ -340,7 +343,7 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         m_probability_exact_match=None,
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_else=None,
-    ):
+    ) -> Comparison:
         """A comparison of the data in `col_name` with the jaro_winkler distance used to
         assess middle similarity levels.
 
@@ -378,7 +381,8 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             >>> cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
 
         Returns:
-            Comparison:
+            Comparison: A comparison for Jaro Winkler similarity that can be included
+                in the Splink settings dictionary.
         """
 
         super().__init__(
@@ -405,7 +409,7 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
         size_or_sizes: int | list = [1],
         m_probability_or_probabilities_sizes: float | list = None,
         m_probability_else=None,
-    ):
+    ) -> Comparison:
         """A comparison of the data in array column `col_name` with various
         intersection sizes to assess similarity levels.
 
@@ -436,7 +440,8 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
             >>> cl.array_intersect_at_sizes("first_name", [3, 1])
 
         Returns:
-            Comparison:
+            Comparison: A comparison for the intersection of arrays that can be included
+                in the Splink settings dictionary.
         """
 
         sizes = ensure_is_iterable(size_or_sizes)
@@ -496,7 +501,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         m_probability_exact_match=None,
         m_probability_or_probabilities_sizes: float | list = None,
         m_probability_else=None,
-    ):
+    ) -> Comparison:
         """A comparison of the data in the date column `col_name` with various
         date thresholds and metrics to assess similarity levels.
 
@@ -553,8 +558,8 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
             >>>                             )
 
         Returns:
-            Comparison: A comparison that can be inclued in the Splink settings
-                dictionary.
+            Comparison: A comparison for Datediff that can be included in the Splink
+                settings dictionary.
         """
 
         thresholds = ensure_is_iterable(date_thresholds)
@@ -625,7 +630,7 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
         m_probability_exact_match=None,
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_else=None,
-    ):
+    ) -> Comparison:
         """A comparison of the coordinates defined in 'lat_col' and
         'long col' giving the haversine distance between them in km.
 
@@ -670,8 +675,8 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
             >>>                            )
 
         Returns:
-            Comparison: A comparison that can be inclued in the Splink settings
-                dictionary.
+            Comparison: A comparison for Distance in KM that can be included in the Splink
+                settings dictionary.
         """
 
         thresholds = ensure_is_iterable(km_thresholds)
