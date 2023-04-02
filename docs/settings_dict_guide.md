@@ -1,3 +1,13 @@
+---
+tags:
+  - settings
+  - Dedupe
+  - Link
+  - Link and Dedupe
+  - Expectation Maximisation
+  - Comparisons
+  - Blocking Rules
+---
 
 ## Guide to Splink settings
 
