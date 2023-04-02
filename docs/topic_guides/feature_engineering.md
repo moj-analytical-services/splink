@@ -86,10 +86,25 @@ There are a number of ways you can generate phonetic transformation columns with
 DuckDB does not currently support phonetic transformations, such as Dmetaphone. 
 
 As a workaround, there are a number of python packages which support phonetic transformations that can be applied to a pandas dataframe, which can then be loaded into the DuckDBLinker. For example:
+```
+import pandas as pd
+import phonetics
+df = pd.read_parquet("/Users/rosskennedy/splink_demos/data/fake_1000.parquet")
 
+# Define a function to apply the dmetaphone phonetic algorithm to each name in the column
+def dmetaphone_name(name):
+    if name is None:
+        pass
+    else:
+        return phonetics.dmetaphone(name)[0]
 
+# Apply the function to the "first_name" and surname columns using the apply method
+df['first_name_dm'] = df['first_name'].apply(dmetaphone_name)
+df['surname_dm'] = df['surname'].apply(dmetaphone_name)
 
-##### Pandas
+df.head(10)
+
+```
 
 #### Spark
 
