@@ -89,6 +89,9 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         - Jaccard distance <= 0.7
         - Anything else
 
+        Note: distance_function_at_thresholds() is primarily used in the
+        backend to create the out-of-the-box cl.XXX_at_thresholds() functions
+
         Args:
             col_name (str): The name of the column to compare
             distance_function_name (str): The name of the distance function.
@@ -110,6 +113,22 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                 for the thresholds specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
+
+        Examples:
+            >>> # DuckDB Jaccard Comparison at thresholds 0.9 and 0.7
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.distance_function_at_thresholds("name",
+            >>>                    distance_function_name = 'jaccard',
+            >>>                    distance_threshold_or_thresholds = [0.9, 0.7]
+            >>>                    )
+
+            >>> # Spark Jaccard Comparison at thresholds 0.9 and 0.7
+            >>> import splink.spark.spark_comparison_library as cl
+            >>> cl.distance_function_at_thresholds("name",
+            >>>                    distance_function_name = 'jaccard',
+            >>>                    distance_threshold_or_thresholds = [0.9, 0.7]
+            >>>                    )
+
 
         Returns:
             Comparison:
