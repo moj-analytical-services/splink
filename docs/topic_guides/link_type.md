@@ -1,3 +1,10 @@
+---
+tags:
+  - Dedupe
+  - Link
+  - Link and Dedupe
+---
+
 # Link type: Linking, Deduping or Both
 
 Splink allows data to be linked, deduplicated or both.
