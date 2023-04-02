@@ -675,8 +675,8 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
             >>>                            )
 
         Returns:
-            Comparison: A comparison for Distance in KM that can be included in the Splink
-                settings dictionary.
+            Comparison: A comparison for Distance in KM that can be included in the 
+                Splink settings dictionary.
         """
 
         thresholds = ensure_is_iterable(km_thresholds)
