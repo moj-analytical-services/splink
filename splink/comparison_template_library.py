@@ -7,7 +7,11 @@ from __future__ import annotations
 import logging
 
 from .comparison import Comparison  # change to self
-from .comparison_library_utils import datediff_error_logger
+from .comparison_library_utils import (
+    datediff_error_logger,
+    #distance_threshold_comparison_levels,
+    #distance_threshold_description,
+)
 from .misc import ensure_is_iterable
 
 logger = logging.getLogger(__name__)
@@ -16,20 +20,21 @@ logger = logging.getLogger(__name__)
 class DateComparisonBase(Comparison):
     def __init__(
         self,
-        col_name,
-        include_exact_match_level=True,
-        term_frequency_adjustments=False,
-        separate_1st_january=False,
-        levenshtein_thresholds=[1, 2],
-        jaro_winkler_thresholds=[],
+        col_name: str,
+        include_exact_match_level: bool = True,
+        term_frequency_adjustments: bool = False,
+        separate_1st_january: bool = False,
+        levenshtein_thresholds: int | list = [1, 2],
+        jaro_thresholds: int | list = [],
+        jaro_winkler_thresholds: int | list = [],
         datediff_thresholds: int | list = [1, 10],
         datediff_metrics: str | list = ["year", "year"],
-        m_probability_exact_match=None,
-        m_probability_1st_january=None,
+        m_probability_exact_match: float = None,
+        m_probability_1st_january: float = None,
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_datediff: float | list = None,
-        m_probability_else=None,
+        m_probability_else: float = None,
     ):
         """A wrapper to generate a comparison for a date column the data in
         `col_name` with preselected defaults.
@@ -52,13 +57,18 @@ class DateComparisonBase(Comparison):
                 exact match comparison level when date is 1st January.
             levenshtein_thresholds (Union[int, list], optional): The thresholds to use
                 for levenshtein similarity level(s).
-                We recommend use of either levenshtein or jaro_winkler for fuzzy
-                matching, but not both.
+                We recommend using one of either levenshtein, jaro or jaro_winkler for
+                fuzzy matching, but not multiple.
                 Defaults to [2]
+            jaro_thresholds (Union[int, list], optional): The thresholds to use
+                for jaro similarity level(s).
+                We recommend using one of either levenshtein, jaro or jaro_winkler for
+                fuzzy matching, but not multiple.
+                Defaults to []
             jaro_winkler_thresholds (Union[int, list], optional): The thresholds to use
                 for jaro_winkler similarity level(s).
-                We recommend use of either levenshtein or jaro_winkler for fuzzy
-                matching, but not both.
+                We recommend using one of either levenshtein, jaro or jaro_winkler for
+                fuzzy matching, but not multiple.
                 Defaults to []
             datediff_thresholds (Union[int, list], optional): The thresholds to use
                 for datediff similarity level(s).
@@ -111,6 +121,8 @@ class DateComparisonBase(Comparison):
             )
             comparison_levels.append(comparison_level)
 
+
+
         if len(levenshtein_thresholds) > 0:
             levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
 
@@ -126,6 +138,34 @@ class DateComparisonBase(Comparison):
                 levenshtein_thresholds, m_probability_or_probabilities_lev
             ):
                 comparison_level = self._levenshtein_level(
+                    col_name,
+                    distance_threshold=thres,
+                    m_probability=m_prob,
+                )
+                comparison_levels.append(comparison_level)
+
+        if len(levenshtein_thresholds) > 0:
+            distance_threshold_comparison_levels(
+                self,
+                col_name,
+                "levenshtein",
+                [5,6],
+                m_probability_or_probabilities_lev,
+            )
+
+        if len(jaro_thresholds) > 0:
+            jaro_thresholds = ensure_is_iterable(jaro_thresholds)
+
+            if m_probability_or_probabilities_jw is None:
+                m_probability_or_probabilities_jw = [None] * len(jaro_thresholds)
+            m_probability_or_probabilities_jw = ensure_is_iterable(
+                m_probability_or_probabilities_jw
+            )
+
+            for thres, m_prob in zip(
+                jaro_thresholds, m_probability_or_probabilities_jw
+            ):
+                comparison_level = self._jaro_level(
                     col_name,
                     distance_threshold=thres,
                     m_probability=m_prob,
@@ -153,10 +193,16 @@ class DateComparisonBase(Comparison):
                 )
                 comparison_levels.append(comparison_level)
 
-        if len(levenshtein_thresholds) > 0 and len(jaro_winkler_thresholds) > 0:
+        count_string_match_functions_used = (
+            (len(levenshtein_thresholds) > 0)
+            + (len(jaro_winkler_thresholds) > 0)
+            + (len(jaro_winkler_thresholds) > 0)
+        )
+        if count_string_match_functions_used > 1:
             logger.warning(
-                "You have included a comparison level for both Levenshtein and "
-                "Jaro-Winkler similarity. We recommend choosing one or the other."
+                "You have included a comparison level for more than one of "
+                "Levenshtein, Jaro and Jaro-Winkler similarity. We recommend "
+                "choosing one of the three."
             )
 
         if len(datediff_thresholds) > 0:
@@ -194,18 +240,18 @@ class DateComparisonBase(Comparison):
             comparison_desc += "Exact match vs. "
 
         if len(levenshtein_thresholds) > 0:
-            lev_desc = ", ".join([str(d) for d in levenshtein_thresholds])
-            plural = "" if len(levenshtein_thresholds) == 1 else "s"
-            comparison_desc += (
-                f"Dates within levenshtein threshold{plural} {lev_desc} vs. "
-            )
+            desc = distance_threshold_description("levenshtein", levenshtein_thresholds)
+            comparison_desc += desc
+
+        if len(jaro_thresholds) > 0:
+            desc = distance_threshold_description("jaro", jaro_thresholds)
+            comparison_desc += desc
 
         if len(jaro_winkler_thresholds) > 0:
-            lev_desc = ", ".join([str(d) for d in jaro_winkler_thresholds])
-            plural = "" if len(jaro_winkler_thresholds) == 1 else "s"
-            comparison_desc += (
-                f"Dates within jaro_winkler threshold{plural} {lev_desc} vs. "
+            desc = distance_threshold_description(
+                "jaro_winkler", jaro_winkler_thresholds
             )
+            comparison_desc += desc
 
         if len(datediff_thresholds) > 0:
             datediff_desc = ", ".join(
@@ -227,24 +273,28 @@ class DateComparisonBase(Comparison):
         }
         super().__init__(comparison_dict)
 
+    @property
+    def _is_distance_subclass(self):
+        return False
 
 class NameComparisonBase(Comparison):
     def __init__(
         self,
-        col_name,
-        include_exact_match_level=True,
-        phonetic_col_name=None,
-        term_frequency_adjustments_name=False,
-        term_frequency_adjustments_phonetic_name=False,
-        levenshtein_thresholds=[],
-        jaro_winkler_thresholds=[0.95, 0.88],
-        jaccard_thresholds=[],
-        m_probability_exact_match_name=None,
-        m_probability_exact_match_phonetic_name=None,
+        col_name: str,
+        include_exact_match_level: bool = True,
+        phonetic_col_name: str = None,
+        term_frequency_adjustments_name: bool = False,
+        term_frequency_adjustments_phonetic_name: bool = False,
+        levenshtein_thresholds: int | list = [],
+        jaro_threshold: float | list = [],
+        jaro_winkler_thresholds: float | list = [0.95, 0.88],
+        jaccard_thresholds: float | list = [],
+        m_probability_exact_match_name: bool = None,
+        m_probability_exact_match_phonetic_name: bool = None,
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_jac: float | list = None,
-        m_probability_else=None,
+        m_probability_else: float = None,
     ):
         """A wrapper to generate a comparison for a name column the data in
         `col_name` with preselected defaults.
@@ -273,6 +323,11 @@ class NameComparisonBase(Comparison):
                 Defaults to False.
             levenshtein_thresholds (Union[int, list], optional): The thresholds to use
                 for levenshtein similarity level(s).
+                Defaults to []
+            jaro_thresholds (Union[int, list], optional): The thresholds to use
+                for jaro similarity level(s).
+                We recommend using one of either levenshtein, jaro or jaro_winkler for
+                fuzzy matching, but not multiple.
                 Defaults to []
             jaro_winkler_thresholds (Union[int, list], optional): The thresholds to use
                 for jaro_winkler similarity level(s).
@@ -342,6 +397,25 @@ class NameComparisonBase(Comparison):
                 )
                 comparison_levels.append(comparison_level)
 
+        if len(jaro_thresholds) > 0:
+            jaro_thresholds = ensure_is_iterable(jaro_thresholds)
+
+            if m_probability_or_probabilities_jw is None:
+                m_probability_or_probabilities_jw = [None] * len(jaro_thresholds)
+            m_probability_or_probabilities_jw = ensure_is_iterable(
+                m_probability_or_probabilities_jw
+            )
+
+            for thres, m_prob in zip(
+                jaro_thresholds, m_probability_or_probabilities_jw
+            ):
+                comparison_level = self._jaro_level(
+                    col_name,
+                    distance_threshold=thres,
+                    m_probability=m_prob,
+                )
+                comparison_levels.append(comparison_level)
+
         if len(jaro_winkler_thresholds) > 0:
             jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
 
@@ -395,11 +469,34 @@ class NameComparisonBase(Comparison):
             comparison_desc += "Names with phonetic exact match vs. "
 
         if len(levenshtein_thresholds) > 0:
+            desc = distance_threshold_description("levenshtein", levenshtein_thresholds)
+            comparison_desc += desc
+
+        if len(jaro_thresholds) > 0:
+            desc = distance_threshold_description("jaro", jaro_thresholds)
+            comparison_desc += desc
+
+        if len(jaro_winkler_thresholds) > 0:
+            desc = distance_threshold_description(
+                "jaro_winkler", jaro_winkler_thresholds
+            )
+            comparison_desc += desc
+
+        if len(jaccard_thresholds) > 0:
+            desc = distance_threshold_description("jaccard", jaccard_thresholds)
+            comparison_desc += desc
+
+        if len(levenshtein_thresholds) > 0:
             lev_desc = ", ".join([str(d) for d in levenshtein_thresholds])
             plural = "" if len(levenshtein_thresholds) == 1 else "s"
             comparison_desc += (
                 f"Dates within levenshtein threshold{plural} {lev_desc} vs. "
             )
+
+        if len(jaro_thresholds) > 0:
+            lev_desc = ", ".join([str(d) for d in jaro_thresholds])
+            plural = "" if len(jaro_thresholds) == 1 else "s"
+            comparison_desc += f"Dates within jaro threshold{plural} {lev_desc} vs. "
 
         if len(jaro_winkler_thresholds) > 0:
             lev_desc = ", ".join([str(d) for d in jaro_winkler_thresholds])

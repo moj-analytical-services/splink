@@ -4,6 +4,8 @@ from .comparison import Comparison
 from .comparison_library_utils import (
     comparison_at_thresholds_error_logger,
     datediff_error_logger,
+    #distance_threshold_comparison_levels,
+    distance_threshold_description,
 )
 from .misc import ensure_is_iterable
 
@@ -58,13 +60,13 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         self,
         col_name: str,
         distance_function_name: str,
-        distance_threshold_or_thresholds: int | list,
+        distance_threshold_or_thresholds: float | list,
         higher_is_more_similar: bool = True,
-        include_exact_match_level=True,
-        term_frequency_adjustments=False,
-        m_probability_exact_match=None,
-        m_probability_or_probabilities_lev: float | list = None,
-        m_probability_else=None,
+        include_exact_match_level: bool = True,
+        term_frequency_adjustments: bool = False,
+        m_probability_exact_match: float = None,
+        m_probability_or_probabilities_thres: float | list = None,
+        m_probability_else: float = None,
     ):
         """A comparison of the data in `col_name` with a user-provided distance
         function used to assess middle similarity levels.
@@ -95,7 +97,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                 adjustments to the exact match level. Defaults to False.
             m_probability_exact_match (_type_, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
-            m_probability_or_probabilities_lev (Union[float, list], optional):
+            m_probability_or_probabilities_thres (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
@@ -104,15 +106,16 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         Returns:
             Comparison:
         """
+        # Validate user inputs
+        comparison_at_thresholds_error_logger(
+            distance_function_name, distance_threshold_or_thresholds
+        )
 
         distance_thresholds = ensure_is_iterable(distance_threshold_or_thresholds)
 
-        if m_probability_or_probabilities_lev is None:
-            m_probability_or_probabilities_lev = [None] * len(distance_thresholds)
-        m_probabilities = ensure_is_iterable(m_probability_or_probabilities_lev)
-
-        # Validate user inputs
-        comparison_at_thresholds_error_logger("distance_function", distance_thresholds)
+        if m_probability_or_probabilities_thres is None:
+            m_probability_or_probabilities_thres = [None] * len(distance_thresholds)
+        m_probabilities = ensure_is_iterable(m_probability_or_probabilities_thres)
 
         comparison_levels = []
         comparison_levels.append(self._null_level(col_name))
@@ -123,6 +126,15 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                 m_probability=m_probability_exact_match,
             )
             comparison_levels.append(level)
+
+        #threshold_comparison_levels = distance_threshold_comparison_levels(
+        #    self,
+        #    col_name,
+        #    distance_function_name,
+        #    distance_threshold_or_thresholds,
+        #    m_probability_or_probabilities_thres,
+        #)
+        #comparison_levels.append(threshold_comparison_levels)
 
         for thres, m_prob in zip(distance_thresholds, m_probabilities):
             # these function arguments hold for all cases.
@@ -144,15 +156,16 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             self._else_level(m_probability=m_probability_else),
         )
 
+        # Construct comparison description
         comparison_desc = ""
         if include_exact_match_level:
             comparison_desc += "Exact match vs. "
 
-        thres_desc = ", ".join([str(d) for d in distance_thresholds])
-        plural = "" if len(distance_thresholds) == 1 else "s"
-        comparison_desc += (
-            f"{distance_function_name} at threshold{plural} {thres_desc} vs. "
+        threshold_desc = distance_threshold_description(
+            distance_function_name, distance_threshold_or_thresholds
         )
+        comparison_desc += threshold_desc
+
         comparison_desc += "anything else"
 
         comparison_dict = {
