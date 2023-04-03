@@ -1,6 +1,3 @@
-from .misc import ensure_is_iterable
-
-
 def comparison_at_thresholds_error_logger(comparison, thresholds):
 
     error_logger = []
@@ -64,7 +61,8 @@ def datediff_error_logger(thresholds, metrics):
 
     return
 
-""" 
+
+"""
 def distance_threshold_comparison_levels(
     self,
     col_name: str,
@@ -101,6 +99,7 @@ def distance_threshold_comparison_levels(
 
     return threshold_comparison_levels
  """
+
 
 def distance_threshold_description(
     distance_function_name: str, distance_threshold_or_thresholds: list

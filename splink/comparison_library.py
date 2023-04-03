@@ -4,7 +4,7 @@ from .comparison import Comparison
 from .comparison_library_utils import (
     comparison_at_thresholds_error_logger,
     datediff_error_logger,
-    #distance_threshold_comparison_levels,
+    # distance_threshold_comparison_levels,
     distance_threshold_description,
 )
 from .misc import ensure_is_iterable
@@ -127,14 +127,14 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             )
             comparison_levels.append(level)
 
-        #threshold_comparison_levels = distance_threshold_comparison_levels(
+        # threshold_comparison_levels = distance_threshold_comparison_levels(
         #    self,
         #    col_name,
         #    distance_function_name,
         #    distance_threshold_or_thresholds,
         #    m_probability_or_probabilities_thres,
-        #)
-        #comparison_levels.append(threshold_comparison_levels)
+        # )
+        # comparison_levels.append(threshold_comparison_levels)
 
         for thres, m_prob in zip(distance_thresholds, m_probabilities):
             # these function arguments hold for all cases.

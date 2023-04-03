@@ -9,8 +9,8 @@ import logging
 from .comparison import Comparison  # change to self
 from .comparison_library_utils import (
     datediff_error_logger,
-    #distance_threshold_comparison_levels,
-    #distance_threshold_description,
+    # distance_threshold_comparison_levels,
+    distance_threshold_description,
 )
 from .misc import ensure_is_iterable
 
@@ -121,8 +121,6 @@ class DateComparisonBase(Comparison):
             )
             comparison_levels.append(comparison_level)
 
-
-
         if len(levenshtein_thresholds) > 0:
             levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
 
@@ -144,14 +142,14 @@ class DateComparisonBase(Comparison):
                 )
                 comparison_levels.append(comparison_level)
 
-        if len(levenshtein_thresholds) > 0:
-            distance_threshold_comparison_levels(
-                self,
-                col_name,
-                "levenshtein",
-                [5,6],
-                m_probability_or_probabilities_lev,
-            )
+        # if len(levenshtein_thresholds) > 0:
+        #    distance_threshold_comparison_levels(
+        #        self,
+        #        col_name,
+        #        "levenshtein",
+        #        [5, 6],
+        #        m_probability_or_probabilities_lev,
+        #    )
 
         if len(jaro_thresholds) > 0:
             jaro_thresholds = ensure_is_iterable(jaro_thresholds)
@@ -276,6 +274,7 @@ class DateComparisonBase(Comparison):
     @property
     def _is_distance_subclass(self):
         return False
+
 
 class NameComparisonBase(Comparison):
     def __init__(
