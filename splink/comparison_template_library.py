@@ -511,11 +511,15 @@ class FirstnameSurnameComparisonBase(Comparison):
         full_name_col = InputColumn(term_frequency_adjustment_col_full_name, sql_dialect=self._sql_dialect)
         full_name_col_l, ful_name_col_r = full_name_col.names_l_r()
 
-        comparison_level =  {
-            "sql_condition": f"({first_name_col}_l IS NULL OR {first_name_col}_r IS NULL) and ({surname_col}_l IS NULL OR {surname_col}_r IS NULL)",
-            "label_for_charts": "Null",
-            "is_null_level": True,
-        }
+        comparison_level =  cll.or_(cll.null_level("first_name"), 
+                                    cll_null_level("surname"),
+                                    label_for_charts="Null")
+        
+        #{
+        #    "sql_condition": f"({first_name_col}_l IS NULL OR {first_name_col}_r IS NULL) and ({surname_col}_l IS NULL OR {surname_col}_r IS NULL)",
+        #    "label_for_charts": "Null",
+        #    "is_null_level": True,
+        #}
 
         comparison_levels.append(comparison_level)
 
