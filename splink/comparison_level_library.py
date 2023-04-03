@@ -152,6 +152,7 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
             m_probability=m_probability,
         )
 
+
 class JaroLevelBase(DistanceFunctionLevelBase):
     def __init__(
         self,
@@ -180,6 +181,7 @@ class JaroLevelBase(DistanceFunctionLevelBase):
             True,
             m_probability=m_probability,
         )
+
 
 class JaroWinklerLevelBase(DistanceFunctionLevelBase):
     def __init__(

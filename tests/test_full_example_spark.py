@@ -27,16 +27,16 @@ def test_full_example_spark(df_spark, tmp_path):
             {"blocking_rule": "l.surname = r.surname", "salting_partitions": 3},
         ],
         "comparisons": [
-            cl.levenshtein_at_thresholds("first_name", 2),
-            cl.exact_match("surname"),
-            cl.exact_match("dob"),
+            cl.jaro_winkler_at_thresholds("first_name", 0.9),
+            cl.jaro_at_thresholds("surname", 0.9),
+            cl.levenshtein_at_thresholds("dob", 2),
             {
                 "comparison_levels": [
                     cll.array_intersect_level("email"),
                     cll.else_level(),
                 ]
             },
-            cl.exact_match("city"),
+            cl.jaccard_at_thresholds("city", 0.9),
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,

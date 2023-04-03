@@ -85,9 +85,7 @@ class levenshtein_at_thresholds(
         return levenshtein_level
 
 
-class jaro_at_thresholds(
-    DuckDBComparisonProperties, JaroAtThresholdsComparisonBase
-):
+class jaro_at_thresholds(DuckDBComparisonProperties, JaroAtThresholdsComparisonBase):
     @property
     def _distance_level(self):
         return jaro_level

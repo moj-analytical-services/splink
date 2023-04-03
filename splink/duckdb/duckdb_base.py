@@ -30,7 +30,7 @@ class DuckDBBase(DialectBase):
     def _datediff_function(self):
         return datediff_sql
 
-    @property 
+    @property
     def _jaro_name(self):
         return "jaro_similarity"
 
