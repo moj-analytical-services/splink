@@ -7,6 +7,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-20.04
+    # only run this workflow on the upstream
+    if: github.repository == 'moj-analytical-services/splink'
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
