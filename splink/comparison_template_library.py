@@ -286,7 +286,7 @@ class NameComparisonBase(Comparison):
         term_frequency_adjustments_name: bool = False,
         term_frequency_adjustments_phonetic_name: bool = False,
         levenshtein_thresholds: int | list = [],
-        jaro_threshold: float | list = [],
+        jaro_thresholds: float | list = [],
         jaro_winkler_thresholds: float | list = [0.95, 0.88],
         jaccard_thresholds: float | list = [],
         m_probability_exact_match_name: bool = None,
