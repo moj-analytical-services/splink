@@ -8,6 +8,7 @@ from ..comparison_level_library import (
     ElseLevelBase,
     ExactMatchLevelBase,
     JaccardLevelBase,
+    JaroLevelBase,
     JaroWinklerLevelBase,
     LevenshteinLevelBase,
     NullLevelBase,
@@ -39,6 +40,10 @@ class distance_function_level(DuckDBBase, DistanceFunctionLevelBase):
 
 
 class levenshtein_level(DuckDBBase, LevenshteinLevelBase):
+    pass
+
+
+class jaro_level(DuckDBBase, JaroLevelBase):
     pass
 
 

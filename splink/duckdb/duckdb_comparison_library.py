@@ -5,6 +5,7 @@ from ..comparison_library import (
     DistanceInKMAtThresholdsComparisonBase,
     ExactMatchBase,
     JaccardAtThresholdsComparisonBase,
+    JaroAtThresholdsComparisonBase,
     JaroWinklerAtThresholdsComparisonBase,
     LevenshteinAtThresholdsComparisonBase,
 )
@@ -19,6 +20,7 @@ from .duckdb_comparison_level_library import (
     else_level,
     exact_match_level,
     jaccard_level,
+    jaro_level,
     jaro_winkler_level,
     levenshtein_level,
     null_level,
@@ -81,6 +83,14 @@ class levenshtein_at_thresholds(
     @property
     def _distance_level(self):
         return levenshtein_level
+
+
+class jaro_at_thresholds(
+    DuckDBComparisonProperties, JaroAtThresholdsComparisonBase
+):
+    @property
+    def _distance_level(self):
+        return jaro_level
 
 
 class jaro_winkler_at_thresholds(
