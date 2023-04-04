@@ -126,8 +126,14 @@ class DuckDBLinker(Linker):
             input_table_or_tables, input_table_aliases
         )
 
-        # These are currently given as strings so we don't have to import pyarrow
-        accepted_df_dtypes = ["DataFrame", "Table"]
+        accepted_df_dtypes = [pd.DataFrame]
+        try:
+            # If pyarrow is installed, add to the accepted list
+            import pyarrow as pa
+
+            accepted_df_dtypes.append(pa.lib.Table)
+        except ImportError:
+            pass
 
         super().__init__(
             input_tables,
