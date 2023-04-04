@@ -48,6 +48,15 @@ def ensure_is_list(a):
     return a if isinstance(a, list) else [a]
 
 
+def ensure_is_tuple(a):
+    if isinstance(a, tuple):
+        return a
+    elif isinstance(a, list):
+        return tuple(a)
+    else:
+        return (a,)
+
+
 def join_list_with_commas_final_and(lst):
     if len(lst) == 1:
         return lst[0]

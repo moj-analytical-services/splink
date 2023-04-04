@@ -8,6 +8,7 @@ import pandas as pd
 from ..input_column import InputColumn
 from ..linker import Linker
 from ..logging_messages import execute_sql_logging_message_info, log_sql
+from ..misc import ensure_is_list
 from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
@@ -94,11 +95,19 @@ class SQLiteLinker(Linker):
         self.con.create_function("log2", 1, log2)
         self.con.create_function("pow", 2, pow)
 
+        input_tables = ensure_is_list(input_table_or_tables)
+        input_aliases = self._ensure_aliases_populated_and_is_list(
+            input_table_or_tables, input_table_aliases
+        )
+        # These are currently given as strings so we don't have to import pyarrow
+        accepted_df_dtypes = ["DataFrame"]
+
         super().__init__(
-            input_table_or_tables,
+            input_tables,
             settings_dict,
+            accepted_df_dtypes,
             set_up_basic_logging,
-            input_table_aliases=input_table_aliases,
+            input_table_aliases=input_aliases,
         )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
