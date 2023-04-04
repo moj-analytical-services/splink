@@ -233,6 +233,8 @@ class AthenaLinker(Linker):
             input_table_aliases=input_aliases,
         )
 
+        self.boto_utils = boto_utils(self)
+
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return AthenaDataFrame(templated_name, physical_name, self)
 
