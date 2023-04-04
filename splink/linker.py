@@ -55,6 +55,7 @@ from .misc import (
     ascii_uid,
     bayes_factor_to_prob,
     ensure_is_list,
+    ensure_is_tuple,
     prob_to_bayes_factor,
 )
 from .missingness import completeness_data, missingness_data
@@ -322,12 +323,13 @@ class Linker:
         # 'homogenised' means all entries are strings representing tables
         homogenised_tables = []
         homogenised_aliases = []
+        accepted_df_dtypes = ensure_is_tuple(accepted_df_dtypes)
 
         for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
-            if type(alias).__name__ in accepted_df_dtypes:
+            if isinstance(alias, accepted_df_dtypes):
                 alias = f"__splink__input_table_{i}"
 
-            if type(table).__name__ in accepted_df_dtypes:
+            if isinstance(table, accepted_df_dtypes):
                 self.register_table(table, alias)
                 table = alias
 

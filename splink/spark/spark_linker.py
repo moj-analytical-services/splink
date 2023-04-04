@@ -124,8 +124,7 @@ class SparkLinker(Linker):
             input_table_or_tables, input_table_aliases
         )
 
-        # These are currently given as strings so we don't have to import pyarrow
-        accepted_df_dtypes = ["DataFrame"]
+        accepted_df_dtypes = (pd.DataFrame, spark_df)
 
         self._get_spark_from_input_tables_if_not_provided(spark, input_tables)
 

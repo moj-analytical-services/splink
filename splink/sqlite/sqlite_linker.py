@@ -99,8 +99,7 @@ class SQLiteLinker(Linker):
         input_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases
         )
-        # These are currently given as strings so we don't have to import pyarrow
-        accepted_df_dtypes = ["DataFrame"]
+        accepted_df_dtypes = pd.DataFrame
 
         super().__init__(
             input_tables,
