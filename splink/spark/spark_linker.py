@@ -124,6 +124,8 @@ class SparkLinker(Linker):
             input_table_or_tables, input_table_aliases
         )
 
+        accepted_df_dtypes = (pd.DataFrame, spark_df)
+
         self._get_spark_from_input_tables_if_not_provided(spark, input_tables)
 
         if num_partitions_on_repartition is None:
@@ -149,25 +151,12 @@ class SparkLinker(Linker):
 
         self._drop_splink_cached_tables()
 
-        homogenised_tables = []
-        homogenised_aliases = []
-
-        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
-            if type(alias).__name__ == "DataFrame":
-                alias = f"__splink__input_table_{i}"
-
-            if type(table).__name__ == "DataFrame":
-                self.register_table(table, alias)
-                table = alias
-
-            homogenised_tables.append(table)
-            homogenised_aliases.append(alias)
-
         super().__init__(
-            homogenised_tables,
+            input_tables,
             settings_dict,
+            accepted_df_dtypes,
             set_up_basic_logging,
-            input_table_aliases=homogenised_aliases,
+            input_table_aliases=input_aliases,
         )
 
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
