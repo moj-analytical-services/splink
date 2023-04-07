@@ -13,6 +13,7 @@ from .spark_base import (
 )
 from .spark_comparison_level_library import (
     array_intersect_level,
+    columns_reversed_level,
     datediff_level,
     distance_function_level,
     distance_in_km_level,
@@ -37,6 +38,10 @@ class SparkComparisonProperties(SparkBase):
     @property
     def _else_level(self):
         return else_level
+
+    @property
+    def _columns_reversed_level(self):
+        return columns_reversed_level
 
     @property
     def _array_intersect_level(self):

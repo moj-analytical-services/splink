@@ -7,7 +7,9 @@ from __future__ import annotations
 import logging
 
 from .comparison import Comparison  # change to self
+from .comparison_level_composition import or_
 from .comparison_library_utils import datediff_error_logger
+from .input_column import InputColumn
 from .misc import ensure_is_iterable
 
 logger = logging.getLogger(__name__)
@@ -422,25 +424,30 @@ class NameComparisonBase(Comparison):
         super().__init__(comparison_dict)
 
 
-class FirstnameSurnameComparisonBase(Comparison):
+class ForenameSurnameComparisonBase(Comparison):
     def __init__(
         self,
-        first_name_col_name,
+        forename_col_name,
         surname_col_name,
         include_exact_match_level=True,
-        term_frequency_adjustment_col_full_name=False,
-        phonetic_col_first_name=None,
-        phonetic_col_surname=None,
-        term_frequency_adjustments_phonetic_first_name=False,
-        term_frequency_adjustments_phonetic_surname=False,
+        include_columns_reversed=True,
+        term_frequency_adjustment_col_forename_and_surname=None,
+        phonetic_forename_col_name=None,
+        phonetic_surname_col_name=None,
+        term_frequency_adjustments_col_phonetic_forename_and_surname=None,
+        term_frequency_adjustments_forename=True,
+        term_frequency_adjustments_surname=True,
+        term_frequency_adjustments_phonetic_forename=True,
+        term_frequency_adjustments_phonetic_surname=True,
         levenshtein_thresholds=[],
-        jaro_winkler_thresholds=[0.95, 0.88],
+        jaro_winkler_thresholds=[],
         jaccard_thresholds=[],
-        m_probability_exact_match_full_name=None,
-        m_probability_exact_match_first_name=None,
+        m_probability_exact_match_forename_surname=None,
+        m_probability_exact_match_phonetic_forename_surname=None,
+        m_probability_columns_reversed_forename_surname=None,
+        m_probability_exact_match_forename=None,
         m_probability_exact_match_surname=None,
-        m_probability_exact_match_phonetic_full_name=None,
-        m_probability_exact_match_phonetic_first_name=None,
+        m_probability_exact_match_phonetic_forename=None,
         m_probability_exact_match_phonetic_surname=None,
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_or_probabilities_jw: float | list = None,
@@ -500,48 +507,75 @@ class FirstnameSurnameComparisonBase(Comparison):
             Comparison: A comparison that can be included in the Splink settings
                 dictionary.
         """
-        # Construct Comparison
-        comparison_levels = []
-        comparison_levels.append(self._null_level(col_name))
-        
-        first_name_col = InputColumn(first_name_col_name, sql_dialect=self._sql_dialect)
-        first_name_col_l, first_name_col_r = first_name_col.names_l_r()
+        # Create InputColumns for instances when not using cll functions
+        forename_col = InputColumn(forename_col_name, sql_dialect=self._sql_dialect)
+        forename_col_l, forename_col_r = forename_col.names_l_r()
         surname_col = InputColumn(surname_col_name, sql_dialect=self._sql_dialect)
         surname_col_l, surname_col_r = surname_col.names_l_r()
-        full_name_col = InputColumn(term_frequency_adjustment_col_full_name, sql_dialect=self._sql_dialect)
-        full_name_col_l, ful_name_col_r = full_name_col.names_l_r()
+        # if term_frequency_adjustment_col_forename_and_surname:
+        #    forename_surname_col = InputColumn(term_frequency_adjustment_col_forename_and_surname, sql_dialect=self._sql_dialect)
+        #    forename_surname_col_l, ful_name_col_r = forename_surname_col.names_l_r()
+        # else:
+        #    forename_surname_col = None
 
-        comparison_level =  cll.or_(cll.null_level("first_name"), 
-                                    cll_null_level("surname"),
-                                    label_for_charts="Null")
-        
-        #{
-        #    "sql_condition": f"({first_name_col}_l IS NULL OR {first_name_col}_r IS NULL) and ({surname_col}_l IS NULL OR {surname_col}_r IS NULL)",
-        #    "label_for_charts": "Null",
-        #    "is_null_level": True,
-        #}
+        if phonetic_forename_col_name:
+            phonetic_forename_col = InputColumn(
+                phonetic_forename_col_name, sql_dialect=self._sql_dialect
+            )
+            (
+                phonetic_forename_col_l,
+                phonetic_forename_col_r,
+            ) = phonetic_forename_col.names_l_r()
+        if phonetic_surname_col_name:
+            phonetic_surname_col = InputColumn(
+                phonetic_surname_col_name, sql_dialect=self._sql_dialect
+            )
+            (
+                phonetic_surname_col_l,
+                phonetic_surname_col_r,
+            ) = phonetic_surname_col.names_l_r()
+
+        # Construct Comparison
+        comparison_levels = []
+
+        comparison_level = or_(
+            self._null_level("forename"),
+            self._null_level("surname"),
+            label_for_charts="Null",
+        )
 
         comparison_levels.append(comparison_level)
 
         if include_exact_match_level:
-            comparison_level =  {
-                "sql_condition": f"{first_name_col_l} = {first_name_col_r} AND {surname_col_l} = {surname_col_r}",
-                "tf_adjustment_column": full_name_col,
+            comparison_level = {
+                "sql_condition": f"{forename_col_l} = {forename_col_r} AND {surname_col_l} = {surname_col_r}",
+                "tf_adjustment_column": term_frequency_adjustment_col_forename_and_surname,
                 "tf_adjustment_weight": 1.0,
-                "m_probability": m_probability_exact_match_full_name,
-                "label_for_charts": "Full name exact",
+                "m_probability": m_probability_exact_match_forename_surname,
+                "label_for_charts": "Full name exact match",
             }
-
             comparison_levels.append(comparison_level)
 
-            if phonetic_col_name is not None:
-                comparison_level = self._exact_match_level(
-                    phonetic_col_name,
-                    term_frequency_adjustments=term_frequency_adjustments_phonetic_name,
-                    m_probability=m_probability_exact_match_phonetic_name,
-                    include_colname_in_charts_label=True,
+        if phonetic_forename_col_name and phonetic_surname_col_name is not None:
+            comparison_level = {
+                "sql_condition": f"{phonetic_forename_col_l} = {phonetic_forename_col_r} AND {phonetic_surname_col_l} = {phonetic_surname_col_r}",
+                "tf_adjustment_column": term_frequency_adjustments_col_phonetic_forename_and_surname,
+                "tf_adjustment_weight": 1.0,
+                "m_probability": m_probability_exact_match_phonetic_forename_surname,
+                "label_for_charts": "Full name exact match",
+            }
+            comparison_levels.append(comparison_level)
+
+        if include_columns_reversed:
+            comparison_level = {
+                self._columns_reversed_level(
+                    forename_col_name,
+                    surname_col_name,
+                    tf_adjustment_column=term_frequency_adjustment_col_forename_and_surname,
+                    m_probability=m_probability_columns_reversed_forename_surname,
                 )
-                comparison_levels.append(comparison_level)
+            }
+            comparison_levels.append(comparison_level)
 
         if len(levenshtein_thresholds) > 0:
             levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
@@ -613,8 +647,11 @@ class FirstnameSurnameComparisonBase(Comparison):
         if include_exact_match_level:
             comparison_desc += "Exact match vs. "
 
-        if phonetic_col_name is not None:
-            comparison_desc += "Names with phonetic exact match vs. "
+        if phonetic_forename_col_name and phonetic_surname_col_name is not None:
+            comparison_desc += "Phonetic match forename and surname vs. "
+
+        if include_columns_reversed is not None:
+            comparison_desc += "Forename and surname columns reversed vs. "
 
         if len(levenshtein_thresholds) > 0:
             lev_desc = ", ".join([str(d) for d in levenshtein_thresholds])
@@ -641,4 +678,5 @@ class FirstnameSurnameComparisonBase(Comparison):
             "comparison_description": comparison_desc,
             "comparison_levels": comparison_levels,
         }
+        print(comparison_levels)
         super().__init__(comparison_dict)

@@ -1,4 +1,8 @@
-from ..comparison_template_library import DateComparisonBase, NameComparisonBase, FirstnameSurnameComparisonBase
+from ..comparison_template_library import (
+    DateComparisonBase,
+    ForenameSurnameComparisonBase,
+    NameComparisonBase,
+)
 from .duckdb_comparison_library import DuckDBComparisonProperties
 
 
@@ -9,5 +13,8 @@ class date_comparison(DuckDBComparisonProperties, DateComparisonBase):
 class name_comparison(DuckDBComparisonProperties, NameComparisonBase):
     pass
 
-class firstname_surname_comparison(DuckDBComparisonProperties, FirstnameSurnameComparisonBase):
+
+class forename_surname_comparison(
+    DuckDBComparisonProperties, ForenameSurnameComparisonBase
+):
     pass

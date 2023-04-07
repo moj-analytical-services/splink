@@ -37,3 +37,15 @@ The detailed API for each of these are outlined below.
       heading_level: 2
 
 ---
+
+::: splink.comparison_template_library.ForenameSurnameComparisonBase
+    handler: python
+    selection:
+      members:
+        -  __init__
+    rendering:
+      show_root_heading: true
+      show_source: false
+      heading_level: 2
+
+---
