@@ -8,11 +8,13 @@ from splink.spark.spark_linker import SparkLinker
 
 
 ## date_comparison
+
+
 @pytest.mark.parametrize(
     ("ctl"),
     [
-        #pytest.param(ctld, id="DuckDB Date Comparison Simple Run Test"),
-        #pytest.param(ctls, id="Spark Date Comparison Simple Run Test"),
+        pytest.param(ctld, id="DuckDB Date Comparison Simple Run Test"),
+        pytest.param(ctls, id="Spark Date Comparison Simple Run Test"),
     ],
 )
 def test_date_comparison_run(ctl):
@@ -22,8 +24,8 @@ def test_date_comparison_run(ctl):
 @pytest.mark.parametrize(
     ("ctl"),
     [
-        #pytest.param(ctld, id="DuckDB Date Comparison Jaro-Winkler Test"),
-        #pytest.param(ctls, id="Spark Date Comparison Jaro-Winkler Test"),
+        pytest.param(ctld, id="DuckDB Date Comparison Jaro-Winkler Test"),
+        pytest.param(ctls, id="Spark Date Comparison Jaro-Winkler Test"),
     ],
 )
 def test_date_comparison_jw_run(ctl):
@@ -33,12 +35,11 @@ def test_date_comparison_jw_run(ctl):
 @pytest.mark.parametrize(
     ("ctl", "Linker"),
     [
-        #pytest.param(ctld, DuckDBLinker, id="DuckDB Date Comparison Integration Tests"),
-        #pytest.param(ctls, SparkLinker, id="Spark Date Comparison Integration Tests"),
+        pytest.param(ctld, DuckDBLinker, id="DuckDB Date Comparison Integration Tests"),
+        pytest.param(ctls, SparkLinker, id="Spark Date Comparison Integration Tests"),
     ],
 )
 def test_datediff_levels(spark, ctl, Linker):
-
     df = pd.DataFrame(
         [
             {
@@ -110,7 +111,6 @@ def test_datediff_levels(spark, ctl, Linker):
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
         print(f"gamma={gamma} and gamma_lookup={expected_size}")
-
         assert sum(linker_output["gamma_dob"] == gamma) == expected_size
 
     # Check individual IDs are assigned to the correct gamma values
@@ -139,8 +139,8 @@ def test_datediff_levels(spark, ctl, Linker):
 @pytest.mark.parametrize(
     ("ctl"),
     [
-        #pytest.param(ctld, id="DuckDB Datediff Error Checks"),
-        #pytest.param(ctls, id="Spark Datediff Error Checks"),
+        pytest.param(ctld, id="DuckDB Datediff Error Checks"),
+        pytest.param(ctls, id="Spark Datediff Error Checks"),
     ],
 )
 def test_date_comparison_error_logger(ctl):
@@ -171,8 +171,8 @@ def test_date_comparison_error_logger(ctl):
 @pytest.mark.parametrize(
     ("ctl"),
     [
-        #pytest.param(ctld, id="DuckDB Name Comparison Simple Run Test"),
-        #pytest.param(ctls, id="Spark Name Comparison Simple Run Test"),
+        pytest.param(ctld, id="DuckDB Name Comparison Simple Run Test"),
+        pytest.param(ctls, id="Spark Name Comparison Simple Run Test"),
     ],
 )
 def test_name_comparison_run(ctl):
@@ -182,12 +182,11 @@ def test_name_comparison_run(ctl):
 @pytest.mark.parametrize(
     ("ctl", "Linker"),
     [
-        #pytest.param(ctld, DuckDBLinker, id="DuckDB Date Comparison Integration Tests"),
-        #pytest.param(ctls, SparkLinker, id="Spark Date Comparison Integration Tests"),
+        pytest.param(ctld, DuckDBLinker, id="DuckDB Name Comparison Integration Tests"),
+        pytest.param(ctls, SparkLinker, id="Spark Name Comparison Integration Tests"),
     ],
 )
 def test_name_comparison_levels(spark, ctl, Linker):
-
     df = pd.DataFrame(
         [
             {
@@ -284,12 +283,130 @@ def test_name_comparison_levels(spark, ctl, Linker):
                 == gamma
             )
 
+
 @pytest.mark.parametrize(
     ("ctl"),
     [
-        pytest.param(ctld, id="DuckDB Name Comparison Simple Run Test"),
-        #pytest.param(ctls, id="Spark Name Comparison Simple Run Test"),
+        pytest.param(ctld, id="DuckDB Forename Surname Comparison Simple Run Test"),
+        pytest.param(ctls, id="Spark Forename Surname Comparison Simple Run Test"),
     ],
 )
-def test_name_comparison_run(ctl):
+def test_forename_surname_comparison_run(ctl):
     ctl.forename_surname_comparison("first_name", "surname")
+
+
+## forename_surname_comparison
+
+
+@pytest.mark.parametrize(
+    ("ctl", "Linker"),
+    [
+        pytest.param(
+            ctld,
+            DuckDBLinker,
+            id="DuckDB Forename Surname Comparison Integration Tests",
+        ),
+        pytest.param(
+            ctls, SparkLinker, id="Spark Forename Surname Comparison Integration Tests"
+        ),
+    ],
+)
+def test_forename_surname_comparison_levels(spark, ctl, Linker):
+    df = pd.DataFrame(
+        [
+            {
+                "unique_id": 1,
+                "forename": "Robert",
+                "surname": "Smith",
+            },
+            {
+                "unique_id": 2,
+                "forename": "Robert",
+                "surname": "Smith",
+            },
+            {
+                "unique_id": 3,
+                "forename": "Smith",
+                "surname": "Robert",
+            },
+            {
+                "unique_id": 4,
+                "forename": "Bobert",
+                "surname": "Franks",
+            },
+            {
+                "unique_id": 5,
+                "forename": "Bobby",
+                "surname": "Smith",
+            },
+            {
+                "unique_id": 6,
+                "forename": "Robert",
+                "surname": "Jones",
+            },
+            {
+                "unique_id": 7,
+                "forename": "James",
+                "surname": "Smyth",
+            },
+        ]
+    )
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [ctl.forename_surname_comparison("forename", "surname")],
+    }
+
+    if Linker == SparkLinker:
+        df = spark.createDataFrame(df)
+        df.persist()
+    linker = Linker(df, settings)
+    linker_output = linker.predict().as_pandas_dataframe()
+
+    print(linker_output)
+    print(
+        linker_output.groupby("gamma_custom_forename_surname")[
+            "gamma_custom_forename_surname"
+        ].count()
+    )
+
+    # # Dict key: {gamma_level value: size}
+    size_gamma_lookup = {0: 8, 1: 3, 2: 3, 3: 2, 4: 2, 5: 2, 6: 1}
+    # 6: exact_match
+    # 5: reversed_cols
+    # 4: surname match
+    # 3: forename match
+    # 2: surname jaro_winkler > 0.88
+    # 1: forename jaro_winkler > 0.88
+    # 0: else
+
+    # Check gamma sizes are as expected
+    for gamma, expected_size in size_gamma_lookup.items():
+        print(f"gamma={gamma} and gamma_lookup={expected_size}")
+
+        assert (
+            sum(linker_output["gamma_custom_forename_surname"] == gamma)
+            == expected_size
+        )
+
+    # Check individual IDs are assigned to the correct gamma values
+    # Dict key: {gamma_value: tuple of ID pairs}
+    size_gamma_lookup = {
+        4: [[1, 6]],
+        3: [(2, 3), (4, 5)],
+        2: [],
+        1: [(1, 2), (4, 6)],
+        0: [(2, 4), (5, 6)],
+    }
+
+    for gamma, id_pairs in size_gamma_lookup.items():
+        for left, right in id_pairs:
+            print(f"Checking IDs: {left}, {right}")
+
+            assert (
+                linker_output.loc[
+                    (linker_output.unique_id_l == left)
+                    & (linker_output.unique_id_r == right)
+                ]["gamma_custom_first_name_first_name_metaphone"].values[0]
+                == gamma
+            )

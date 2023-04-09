@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 
 from .comparison import Comparison  # change to self
-from .comparison_level_composition import or_, and_
+from .comparison_level_composition import and_, or_
 from .comparison_library_utils import (
     datediff_error_logger,
     distance_threshold_comparison_levels,
@@ -15,8 +15,6 @@ from .comparison_library_utils import (
 )
 from .input_column import InputColumn
 from .misc import ensure_is_iterable
-
-import splink.duckdb.duckdb_comparison_level_library as cll
 
 logger = logging.getLogger(__name__)
 
@@ -155,23 +153,24 @@ class DateComparisonBase(Comparison):
             comparison_levels.append(comparison_level)
 
         if len(levenshtein_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(self,
-                            col_name,
-                            distance_function_name = "levenshtein",
-                            distance_threshold_or_thresholds = levenshtein_thresholds,
-                            m_probability_or_probabilities_thres = m_probability_or_probabilities_lev
-                            )
-            comparison_levels.append(threshold_levels)
-
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                distance_function_name="levenshtein",
+                distance_threshold_or_thresholds=levenshtein_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_lev,
+            )
+            comparison_levels = comparison_levels + threshold_levels
 
         if len(jaro_winkler_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(self,
-                            col_name,
-                            distance_function_name = "jaro_winkler",
-                            distance_threshold_or_thresholds = jaro_winkler_thresholds,
-                            m_probability_or_probabilities_thres = m_probability_or_probabilities_jw
-                            )
-            comparison_levels.append(threshold_levels)
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                distance_function_name="jaro-winkler",
+                distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jw,
+            )
+            comparison_levels = comparison_levels + threshold_levels
 
         if len(levenshtein_thresholds) > 0 and len(jaro_winkler_thresholds) > 0:
             logger.warning(
@@ -204,9 +203,9 @@ class DateComparisonBase(Comparison):
                 )
                 comparison_levels.append(comparison_level)
 
-            comparison_levels.append(
-                self._else_level(m_probability=m_probability_else),
-            )
+        comparison_levels.append(
+            self._else_level(m_probability=m_probability_else),
+        )
 
         # Construct Description
         comparison_desc = ""
@@ -367,65 +366,34 @@ class NameComparisonBase(Comparison):
                 comparison_levels.append(comparison_level)
 
         if len(levenshtein_thresholds) > 0:
-            levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
-
-            if m_probability_or_probabilities_lev is None:
-                m_probability_or_probabilities_lev = [None] * len(
-                    levenshtein_thresholds
-                )
-            m_probability_or_probabilities_lev = ensure_is_iterable(
-                m_probability_or_probabilities_lev
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                distance_function_name="levenshtein",
+                distance_threshold_or_thresholds=levenshtein_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_lev,
             )
-
-            for thres, m_prob in zip(
-                levenshtein_thresholds, m_probability_or_probabilities_lev
-            ):
-                comparison_level = self._levenshtein_level(
-                    col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_levels
 
         if len(jaro_winkler_thresholds) > 0:
-            jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
-
-            if m_probability_or_probabilities_jw is None:
-                m_probability_or_probabilities_jw = [None] * len(
-                    jaro_winkler_thresholds
-                )
-            m_probability_or_probabilities_jw = ensure_is_iterable(
-                m_probability_or_probabilities_jw
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                distance_function_name="jaro-winkler",
+                distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jw,
             )
-
-            for thres, m_prob in zip(
-                jaro_winkler_thresholds, m_probability_or_probabilities_jw
-            ):
-                comparison_level = self._jaro_winkler_level(
-                    col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_levels
 
         if len(jaccard_thresholds) > 0:
-            jaccard_thresholds = ensure_is_iterable(jaccard_thresholds)
-
-            if m_probability_or_probabilities_jac is None:
-                m_probability_or_probabilities_jac = [None] * len(jaccard_thresholds)
-            m_probability_or_probabilities_jac = ensure_is_iterable(
-                m_probability_or_probabilities_jac
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                distance_function_name="jaccard",
+                distance_threshold_or_thresholds=jaccard_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jac,
             )
-
-            for thres, m_prob in zip(
-                jaccard_thresholds, m_probability_or_probabilities_jac
-            ):
-                comparison_level = self._jaccard_level(
-                    col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_levels
 
         comparison_levels.append(
             self._else_level(m_probability=m_probability_else),
@@ -478,10 +446,10 @@ class ForenameSurnameComparisonBase(Comparison):
         term_frequency_adjustments_surname=True,
         term_frequency_adjustments_phonetic_forename=True,
         term_frequency_adjustments_phonetic_surname=True,
-        levenshtein_thresholds_surname=[2],
+        levenshtein_thresholds_surname=[],
         jaro_winkler_thresholds_surname=[0.88],
         jaccard_thresholds_surname=[],
-        levenshtein_thresholds_forename=[2],
+        levenshtein_thresholds_forename=[],
         jaro_winkler_thresholds_forename=[0.88],
         jaccard_thresholds_forename=[],
         m_probability_exact_match_forename_surname: float = None,
@@ -551,6 +519,16 @@ class ForenameSurnameComparisonBase(Comparison):
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
+        Examples:
+            >>> # DuckDB Basic Forename Surname Comparison
+            >>> import splink.duckdb.duckdb_comparison_template_library as ctl
+            >>> clt.forename_surname_comparison("first_name", "surname)
+
+            >>> # Spark Basic Forename Surname Comparison
+            >>> import splink.spark.spark_comparison_template_library as ctl
+            >>> clt.forename_surname_comparison("first_name", "surname)
+
+
         Returns:
             Comparison: A comparison that can be included in the Splink settings
                 dictionary.
@@ -562,7 +540,10 @@ class ForenameSurnameComparisonBase(Comparison):
         surname_col = InputColumn(surname_col_name, sql_dialect=self._sql_dialect)
         surname_col_l, surname_col_r = surname_col.names_l_r()
         # if term_frequency_adjustment_col_forename_and_surname:
-        #    forename_surname_col = InputColumn(term_frequency_adjustment_col_forename_and_surname, sql_dialect=self._sql_dialect)
+        #    forename_surname_col = InputColumn(
+        #               term_frequency_adjustment_col_forename_and_surname,
+        #               sql_dialect=self._sql_dialect
+        #               )
         #    forename_surname_col_l, ful_name_col_r = forename_surname_col.names_l_r()
         # else:
         #    forename_surname_col = None
@@ -599,13 +580,13 @@ class ForenameSurnameComparisonBase(Comparison):
 
         if include_exact_match_level:
             comparison_level = {
-                "sql_condition": f"{forename_col_l} = {forename_col_r} AND {surname_col_l} = {surname_col_r}",
+                "sql_condition": f"{forename_col_l} = {forename_col_r} "
+                f"AND {surname_col_l} = {surname_col_r}",
                 "tf_adjustment_column": term_frequency_adjustment_col_forename_and_surname,
                 "tf_adjustment_weight": 1.0,
                 "m_probability": m_probability_exact_match_forename_surname,
                 "label_for_charts": "Full name exact match",
             }
-            print(comparison_level)
 
             comparison_levels.append(comparison_level)
 
@@ -613,7 +594,8 @@ class ForenameSurnameComparisonBase(Comparison):
 
         if phonetic_forename_col_name and phonetic_surname_col_name is not None:
             comparison_level = {
-                "sql_condition": f"{phonetic_forename_col_l} = {phonetic_forename_col_r} AND {phonetic_surname_col_l} = {phonetic_surname_col_r}",
+                "sql_condition": f"{phonetic_forename_col_l}={phonetic_forename_col_r}"
+                f" AND {phonetic_surname_col_l} = {phonetic_surname_col_r}",
                 "tf_adjustment_column": term_frequency_adjustments_col_phonetic_forename_and_surname,
                 "tf_adjustment_weight": 1.0,
                 "m_probability": m_probability_exact_match_phonetic_forename_surname,
@@ -640,7 +622,6 @@ class ForenameSurnameComparisonBase(Comparison):
             m_probability=m_probability_exact_match_forename,
             include_colname_in_charts_label=True,
         )
-        print(comparison_level)
 
         comparison_levels.append(comparison_level)
 
@@ -655,146 +636,67 @@ class ForenameSurnameComparisonBase(Comparison):
         comparison_levels.append(comparison_level)
 
         ### Surname Fuzzy match
-
         if len(levenshtein_thresholds_surname) > 0:
-            levenshtein_thresholds_surname = ensure_is_iterable(
-                levenshtein_thresholds_surname
-            )
-
-            if m_probability_or_probabilities_surname_lev is None:
-                m_probability_or_probabilities_surname_lev = [None] * len(
-                    levenshtein_thresholds_surname
-                )
-            m_probability_or_probabilities_surname_lev = ensure_is_iterable(
-                m_probability_or_probabilities_surname_lev
-            )
-
-        for thres, m_prob in zip(
-            levenshtein_thresholds_surname, m_probability_or_probabilities_surname_lev
-        ):
-            comparison_level = self._levenshtein_level(
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
                 surname_col_name,
-                distance_threshold=thres,
-                m_probability=m_prob,
+                distance_function_name="levenshtein",
+                distance_threshold_or_thresholds=levenshtein_thresholds_surname,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_surname_lev,
             )
-            comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_levels
 
         if len(jaro_winkler_thresholds_surname) > 0:
-            jaro_winkler_thresholds_surname = ensure_is_iterable(
-                jaro_winkler_thresholds_surname
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                surname_col_name,
+                distance_function_name="jaro-winkler",
+                distance_threshold_or_thresholds=jaro_winkler_thresholds_surname,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_surname_jw,
             )
-
-            if m_probability_or_probabilities_surname_jw is None:
-                m_probability_or_probabilities_surname_jw = [None] * len(
-                    jaro_winkler_thresholds_surname
-                )
-            m_probability_or_probabilities_surname_jw = ensure_is_iterable(
-                m_probability_or_probabilities_surname_jw
-            )
-
-            for thres, m_prob in zip(
-                jaro_winkler_thresholds_surname,
-                m_probability_or_probabilities_surname_jw,
-            ):
-                comparison_level = self._jaro_winkler_level(
-                    surname_col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_levels
 
         if len(jaccard_thresholds_surname) > 0:
-            jaccard_thresholds_surname = ensure_is_iterable(jaccard_thresholds_surname)
-
-            if m_probability_or_probabilities_surname_jac is None:
-                m_probability_or_probabilities_surname_jac = [None] * len(
-                    jaccard_thresholds_surname
-                )
-            m_probability_or_probabilities_surname_jac = ensure_is_iterable(
-                m_probability_or_probabilities_surname_jac
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                surname_col_name,
+                distance_function_name="jaccard",
+                distance_threshold_or_thresholds=jaccard_thresholds_surname,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_surname_jac,
             )
-
-            for thres, m_prob in zip(
-                jaccard_thresholds_surname, m_probability_or_probabilities_surname_jac
-            ):
-                comparison_level = self._jaccard_level(
-                    surname_col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_levels
 
         ### Forename Fuzzy match
 
         if len(levenshtein_thresholds_forename) > 0:
-            levenshtein_thresholds_forename = ensure_is_iterable(
-                levenshtein_thresholds_forename
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                forename_col_name,
+                distance_function_name="levenshtein",
+                distance_threshold_or_thresholds=levenshtein_thresholds_forename,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_forename_lev,
             )
-
-            if m_probability_or_probabilities_forename_lev is None:
-                m_probability_or_probabilities_forename_lev = [None] * len(
-                    levenshtein_thresholds_forename
-                )
-            m_probability_or_probabilities_forename_lev = ensure_is_iterable(
-                m_probability_or_probabilities_forename_lev
-            )
-
-        for thres, m_prob in zip(
-            levenshtein_thresholds_forename, m_probability_or_probabilities_forename_lev
-        ):
-            comparison_level = self._levenshtein_level(
-                surname_col_name,
-                distance_threshold=thres,
-                m_probability=m_prob,
-            )
-            comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_levels
 
         if len(jaro_winkler_thresholds_forename) > 0:
-            jaro_winkler_thresholds_forename = ensure_is_iterable(
-                jaro_winkler_thresholds_forename
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                forename_col_name,
+                distance_function_name="jaro-winkler",
+                distance_threshold_or_thresholds=jaro_winkler_thresholds_forename,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_forename_jw,
             )
-
-            if m_probability_or_probabilities_forename_jw is None:
-                m_probability_or_probabilities_forename_jw = [None] * len(
-                    jaro_winkler_thresholds_surname
-                )
-            m_probability_or_probabilities_forename_jw = ensure_is_iterable(
-                m_probability_or_probabilities_forename_jw
-            )
-
-            for thres, m_prob in zip(
-                jaro_winkler_thresholds_forename,
-                m_probability_or_probabilities_forename_jw,
-            ):
-                comparison_level = self._jaro_winkler_level(
-                    surname_col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_levels
 
         if len(jaccard_thresholds_forename) > 0:
-            jaccard_thresholds_forename = ensure_is_iterable(
-                jaccard_thresholds_forename
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                forename_col_name,
+                distance_function_name="jaccard",
+                distance_threshold_or_thresholds=jaccard_thresholds_forename,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_forename_jac,
             )
-
-            if m_probability_or_probabilities_forename_jac is None:
-                m_probability_or_probabilities_forename_jac = [None] * len(
-                    jaccard_thresholds_surname
-                )
-            m_probability_or_probabilities_forename_jac = ensure_is_iterable(
-                m_probability_or_probabilities_forename_jac
-            )
-
-            for thres, m_prob in zip(
-                jaccard_thresholds_forename, m_probability_or_probabilities_forename_jac
-            ):
-                comparison_level = self._jaccard_level(
-                    surname_col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_levels
 
         comparison_levels.append(
             self._else_level(m_probability=m_probability_else),

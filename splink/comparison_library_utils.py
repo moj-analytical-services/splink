@@ -1,5 +1,6 @@
 from .misc import ensure_is_iterable
 
+
 def comparison_at_thresholds_error_logger(comparison, thresholds):
     error_logger = []
 
@@ -79,13 +80,21 @@ def distance_threshold_comparison_levels(
     )
 
     for thres, m_prob in zip(thresholds, m_probability_or_probabilities_thres):
+        if distance_function_name == "levenshtein":
+            distance_function_name = self._levenshtein_name
+            higher_is_more_similar = False
+        if distance_function_name == "jaro-winkler":
+            distance_function_name = self._jaro_winkler_name
+        if distance_function_name == "jaccard":
+            distance_function_name = self._jaccard_name
+
         # these function arguments hold for all cases.
         kwargs = dict(
             col_name=col_name,
             distance_threshold=thres,
             m_probability=m_prob,
-            distance_function_name = distance_function_name,
-            higher_is_more_similar = higher_is_more_similar
+            distance_function_name=distance_function_name,
+            higher_is_more_similar=higher_is_more_similar,
         )
 
         level = self._distance_level(**kwargs)
@@ -101,6 +110,9 @@ def distance_threshold_description(
 ):
     desc = ", ".join([str(d) for d in distance_threshold_or_thresholds])
     plural = "" if len(distance_threshold_or_thresholds) == 1 else "s"
-    comparison_desc = f"{column_description.title()} within {distance_function_name} threshold{plural} {desc} vs. "
-    
+    comparison_desc = (
+        f"{column_description.title()} within {distance_function_name} "
+        f"threshold{plural} {desc} vs. "
+    )
+
     return comparison_desc
