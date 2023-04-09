@@ -57,3 +57,15 @@ def datediff_error_logger(thresholds, metrics):
         raise ValueError("\n\n".join(error_logger))
 
     return
+
+def distance_threshold_description(
+    column_description: str,
+    distance_function_name: str, 
+    distance_threshold_or_thresholds: list
+):
+    desc = ", ".join([str(d) for d in distance_threshold_or_thresholds])
+    plural = "" if len(distance_threshold_or_thresholds) == 1 else "s"
+    comparison_desc = (
+        f"{column_description.title()} within {distance_function_name} threshold{plural} {desc} vs. "
+    )
+    return comparison_desc

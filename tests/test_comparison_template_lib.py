@@ -292,4 +292,4 @@ def test_name_comparison_levels(spark, ctl, Linker):
     ],
 )
 def test_name_comparison_run(ctl):
-    ctl.firstname_surname_comparison("first_name", "surname")
+    ctl.forename_surname_comparison("first_name", "surname")
