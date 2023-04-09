@@ -454,7 +454,10 @@ class SparkLinker(Linker):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
-        return f" TABLESAMPLE ({percent} PERCENT) "
+        if seed:
+            return f" TABLESAMPLE ({percent} PERCENT) REPEATABLE({seed})"
+        else:
+            return f" TABLESAMPLE ({percent} PERCENT) "
 
     def _u_random_sample_sql(self, proportion, sample_size, seed=None):
         """from pyspark.sql.functions import udf, struct, col, map_values
