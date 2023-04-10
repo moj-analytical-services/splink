@@ -455,7 +455,7 @@ class SparkLinker(Linker):
             return ""
         percent = proportion * 100
         if seed:
-            return f" ORDER BY rand({seed}) LIMIT {round(sample_size)})"
+            return f" ORDER BY rand({seed}) LIMIT {round(sample_size)}"
         else:
             return f" TABLESAMPLE ({percent} PERCENT) "
 
