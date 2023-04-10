@@ -23,19 +23,19 @@ class DateComparisonBase(Comparison):
     def __init__(
         self,
         col_name,
-        include_exact_match_level=True,
-        term_frequency_adjustments=False,
-        separate_1st_january=False,
-        levenshtein_thresholds=[1, 2],
-        jaro_winkler_thresholds=[],
+        include_exact_match_level: bool = True,
+        term_frequency_adjustments: bool = False,
+        separate_1st_january: bool = False,
+        levenshtein_thresholds: int | list =[1, 2],
+        jaro_winkler_thresholds: float | list =[],
         datediff_thresholds: int | list = [1, 10],
         datediff_metrics: str | list = ["year", "year"],
-        m_probability_exact_match=None,
-        m_probability_1st_january=None,
+        m_probability_exact_match: float = None,
+        m_probability_1st_january: float = None,
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_datediff: float | list = None,
-        m_probability_else=None,
+        m_probability_else: float = None,
     ) -> Comparison:
         """A wrapper to generate a comparison for a date column the data in
         `col_name` with preselected defaults.
@@ -247,19 +247,19 @@ class NameComparisonBase(Comparison):
     def __init__(
         self,
         col_name,
-        include_exact_match_level=True,
-        phonetic_col_name=None,
-        term_frequency_adjustments_name=False,
-        term_frequency_adjustments_phonetic_name=False,
-        levenshtein_thresholds=[],
-        jaro_winkler_thresholds=[0.95, 0.88],
-        jaccard_thresholds=[],
-        m_probability_exact_match_name=None,
-        m_probability_exact_match_phonetic_name=None,
+        include_exact_match_level: bool = True,
+        phonetic_col_name: str = None,
+        term_frequency_adjustments_name: str = False,
+        term_frequency_adjustments_phonetic_name: str = False,
+        levenshtein_thresholds: int | list = [],
+        jaro_winkler_thresholds: float | list = [0.95, 0.88],
+        jaccard_thresholds: float | list = [],
+        m_probability_exact_match_name: float = None,
+        m_probability_exact_match_phonetic_name: float = None,
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_jac: float | list = None,
-        m_probability_else=None,
+        m_probability_else: float = None,
     ) -> Comparison:
         """A wrapper to generate a comparison for a name column the data in
         `col_name` with preselected defaults.
@@ -436,37 +436,37 @@ class ForenameSurnameComparisonBase(Comparison):
         self,
         forename_col_name,
         surname_col_name,
-        include_exact_match_level=True,
-        include_columns_reversed=True,
-        term_frequency_adjustment_col_forename_and_surname=None,
-        phonetic_forename_col_name=None,
-        phonetic_surname_col_name=None,
-        term_frequency_adjustments_col_phonetic_forename_and_surname=None,
-        term_frequency_adjustments_forename=True,
-        term_frequency_adjustments_surname=True,
-        term_frequency_adjustments_phonetic_forename=True,
-        term_frequency_adjustments_phonetic_surname=True,
-        levenshtein_thresholds_surname=[],
-        jaro_winkler_thresholds_surname=[0.88],
-        jaccard_thresholds_surname=[],
-        levenshtein_thresholds_forename=[],
-        jaro_winkler_thresholds_forename=[0.88],
-        jaccard_thresholds_forename=[],
+        include_exact_match_level: bool = True,
+        include_columns_reversed: bool = True,
+        term_frequency_adjustment_col_forename_and_surname: str = None,
+        phonetic_forename_col_name: str = None,
+        phonetic_surname_col_name: str = None,
+        term_frequency_adjustments_col_phonetic_forename_and_surname: str = None,
+        term_frequency_adjustments_forename: bool = True,
+        term_frequency_adjustments_surname: bool = True,
+        term_frequency_adjustments_phonetic_forename: bool = True,
+        term_frequency_adjustments_phonetic_surname: bool = True,
+        levenshtein_thresholds_surname: int | list = [],
+        jaro_winkler_thresholds_surname: float | list = [0.88],
+        jaccard_thresholds_surname: float | list = [],
+        levenshtein_thresholds_forename: int | list = [],
+        jaro_winkler_thresholds_forename: float | list = [0.88],
+        jaccard_thresholds_forename: float | list = [],
         m_probability_exact_match_forename_surname: float = None,
         m_probability_exact_match_phonetic_forename_surname: float = None,
         m_probability_columns_reversed_forename_surname: float = None,
-        m_probability_exact_match_forename: float = None,
         m_probability_exact_match_surname: float = None,
-        m_probability_exact_match_phonetic_forename: float = None,
+        m_probability_exact_match_forename: float = None,
         m_probability_exact_match_phonetic_surname: float = None,
+        m_probability_exact_match_phonetic_forename: float = None,
         m_probability_or_probabilities_surname_lev: float | list = None,
         m_probability_or_probabilities_surname_jw: float | list = None,
         m_probability_or_probabilities_surname_jac: float | list = None,
         m_probability_or_probabilities_forename_lev: float | list = None,
         m_probability_or_probabilities_forename_jw: float | list = None,
         m_probability_or_probabilities_forename_jac: float | list = None,
-        m_probability_else=None,
-    ):
+        m_probability_else: float = None,
+    ) -> Comparison:
         """A wrapper to generate a comparison for a name column the data in
         `col_name` with preselected defaults.
 
@@ -480,40 +480,112 @@ class ForenameSurnameComparisonBase(Comparison):
         - Anything else
 
         Args:
-            col_name (str): The name of the column to compare
+            forename_col_name (str): The name of the forename column to compare
+            surname_col_name (str): The name of the surname column to compare
             include_exact_match_level (bool, optional): If True, include an exact match
                 level for col_name. Defaults to True.
-            phonetic_col_name (str): The name of the column with phonetic reduction
-                (such as dmetaphone) of col_name. Including parameter will create
-                an exact match level for  phonetic_col_name. The phonetic column must
-                be present in the dataset to use this parameter.
+            include_columns_reversed (bool, optional): If True, include a comparison 
+                level for forename and surname being swapped. Defaults to True
+            term_frequency_adjustment_col_forename_and_surname (str, optional): The name 
+                of a combined forename surname column. This column is used to provides 
+                term frequency adjustments for forename surname exact match and columns
+                reversed levels. 
                 Defaults to None
-            term_frequency_adjustments_name (bool, optional): If True, apply term
-                frequency adjustments to the exact match level for "col_name".
+            phonetic_forename_col_name (str, optional): The name of the column with 
+                phonetic reduction (such as dmetaphone) of forename_col_name. Including 
+                parameter will create an exact match level for  phonetic_forename_col_name. 
+                The phonetic column must be present in the dataset to use this parameter.
+                Defaults to None
+            phonetic_surname_col_name (str, optional): The name of the column with phonetic 
+                reduction (such as dmetaphone) of surname_col_name. Including parameter 
+                will create an exact match level for  phonetic_surname_col_name. The 
+                phonetic column must be present in the dataset to use this parameter.
+                Defaults to None
+            term_frequency_adjustments_col_phonetic_forename_and_surname (str, optional): 
+                The name a combined forename surname column. This column is used to 
+                provides term frequency adjustments for forename surname phonetic match 
+                level.
+                Defaults to None
+            term_frequency_adjustments_forename (bool, optional): If True, apply term
+                frequency adjustments to the exact match level for forename_col_name.
                 Defaults to False.
-            term_frequency_adjustments_phonetic_name (bool, optional): If True, apply
-                term frequency adjustments to the exact match level for
-                "phonetic_col_name".
+            term_frequency_adjustments_surname (bool, optional): If True, apply term
+                frequency adjustments to the exact match level for surname_col_name.
                 Defaults to False.
-            levenshtein_thresholds (Union[int, list], optional): The thresholds to use
-                for levenshtein similarity level(s).
+            term_frequency_adjustments_forename (bool, optional): If True, apply term
+                frequency adjustments to the exact match level for 
+                phonetic_forename_col_name.
+                Defaults to False.
+            term_frequency_adjustments_surname (bool, optional): If True, apply term
+                frequency adjustments to the exact match level for 
+                phonetic_surname_col_name.
+                Defaults to False.
+            levenshtein_thresholds_surname (Union[int, list], optional): The thresholds 
+                to use for levenshtein similarity level(s) for surname_col_name.
                 Defaults to []
-            jaro_winkler_thresholds (Union[int, list], optional): The thresholds to use
-                for jaro_winkler similarity level(s).
+            jaro_winkler_thresholds_surname (Union[int, list], optional): The thresholds 
+                to use for jaro_winkler similarity level(s) for surname_col_name.
                 Defaults to [0.88]
-            jaccard_thresholds (Union[int, list], optional): The thresholds to use
-                for jaccard similarity level(s).
+            jaccard_thresholds_surname (Union[int, list], optional): The thresholds to 
+                use for jaccard similarity level(s) for surname_col_name.
                 Defaults to []
-            m_probability_exact_match_name (_type_, optional): If provided, overrides
-                the default m probability for the exact match level for col_name.
+            levenshtein_thresholds_forename (Union[int, list], optional): The thresholds 
+                to use for levenshtein similarity level(s) for forename_col_name.
+                Defaults to []
+            jaro_winkler_thresholds_forename (Union[int, list], optional): The thresholds 
+                to use for jaro_winkler similarity level(s) for forename_col_name.
+                Defaults to [0.88]
+            jaccard_thresholds_forename (Union[int, list], optional): The thresholds to 
+                use for jaccard similarity level(s) for forename_col_name.
+                Defaults to []
+            m_probability_exact_match_forename_surname (_type_, optional): If provided, 
+                overrides the default m probability for the exact match level for 
+                forename and surname.
                 Defaults to None.
-            m_probability_exact_match_phonetic_name (_type_, optional): If provided,
-                overrides the default m probability for the exact match level for
-                phonetic_col_name. Defaults to None.
-            m_probability_or_probabilities_lev (Union[float, list], optional):
+            m_probability_exact_match_phonetic_forename_surname (_type_, optional): If 
+                provided, overrides the default m probability for the phonetic match 
+                level for forename and surname.
+                Defaults to None.
+            m_probability_columns_reversed_forename_surname (_type_, optional): If 
+                provided, overrides the default m probability for the columns reversed 
+                level for forename and surname.
+                Defaults to None.
+            m_probability_columns_reversed_forename_surname (_type_, optional): If 
+                provided, overrides the default m probability for the columns reversed 
+                level for forename and surname.
+                Defaults to None.
+            m_probability_exact_match_surname (_type_, optional): If provided, 
+                overrides the default m probability for the surname exact match 
+                level for forename and surname.
+                Defaults to None.
+            m_probability_exact_match_forename (_type_, optional): If provided, 
+                overrides the default m probability for the forename exact match 
+                level for forename and forename.
+                Defaults to None.
+            m_probability_phonetic_match_surname (_type_, optional): If provided, 
+                overrides the default m probability for the surname phonetic match 
+                level for forename and surname.
+                Defaults to None.
+            m_probability_phonetic_match_forename (_type_, optional): If provided, 
+                overrides the default m probability for the forename phonetic match 
+                level for forename and forename.
+                Defaults to None.
+            m_probability_or_probabilities_surname_lev (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
-            m_probability_or_probabilities_datediff (Union[float, list], optional):
+            m_probability_or_probabilities_surname_jw (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_surname_jac (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_forename_lev (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_forename_jw (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_forename_jac (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
@@ -522,11 +594,11 @@ class ForenameSurnameComparisonBase(Comparison):
         Examples:
             >>> # DuckDB Basic Forename Surname Comparison
             >>> import splink.duckdb.duckdb_comparison_template_library as ctl
-            >>> clt.forename_surname_comparison("first_name", "surname)
+            >>> ctl.forename_surname_comparison("first_name", "surname)
 
             >>> # Spark Basic Forename Surname Comparison
             >>> import splink.spark.spark_comparison_template_library as ctl
-            >>> clt.forename_surname_comparison("first_name", "surname)
+            >>> ctl.forename_surname_comparison("first_name", "surname)
 
 
         Returns:
@@ -622,7 +694,6 @@ class ForenameSurnameComparisonBase(Comparison):
             m_probability=m_probability_exact_match_forename,
             include_colname_in_charts_label=True,
         )
-
         comparison_levels.append(comparison_level)
 
         ### Forename Exact match
@@ -712,6 +783,10 @@ class ForenameSurnameComparisonBase(Comparison):
 
         if include_columns_reversed:
             comparison_desc += "Forename and surname columns reversed vs. "
+
+        comparison_desc += "Surname exact match vs. "
+
+        comparison_desc += "Forename exact match vs. "
 
         if len(levenshtein_thresholds_surname) > 0:
             comparison_desc += distance_threshold_description(
