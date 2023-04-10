@@ -1,6 +1,10 @@
 ---
 tags:
   - API
+  - Model Training
+  - M Probability
+  - U Probability
+  - Prior (Lambda)
 ---
 
 # Documentation for `Linker` object methods related to parameter estimation

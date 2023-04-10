@@ -1,3 +1,12 @@
+---
+tags:
+  - Blocking
+  - Performance
+  - Model Training
+  - M Probability
+  - Expectation Maximisation
+---
+
 # Difference between `blocking_rules_to_generate_predictions` vs blocking rules for estimation
 
 What is the difference between the list of `blocking_rules_to_generate_predictions` specifed in the Splink settings dictionary, and the blocking rule that must be provided as an argument to `estimate_parameters_using_expectation_maximisation`?
