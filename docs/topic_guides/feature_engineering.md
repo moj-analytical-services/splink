@@ -3,12 +3,16 @@ tags:
   - API
   - Feature Engineering
   - Comparisons
-  - Blocking
+  - Postcode
+  - Phonetic Transformations
   - Soundex
+  - Metaphone
   - Double Metaphone
 ---
 
 # Feature Engineering for Data Linkage
+
+GENERAL INTRO
 
 ## Full Name
 
@@ -112,19 +116,13 @@ postcode_comparison = {
 
 ## Phonetic transformations
 
-Phonetic transformation algorithms can be used to identify words that sound similar, even if they are spelled differently. These are particularly useful for names. 
+Phonetic transformation algorithms can be used to identify words that sound similar, even if they are spelled differently. These are particularly useful for names and can be used as an additional comparison level within name comparisons.
 
-For blocking rules, it allows for possible candidate pairs of entities with phonetically similar transforms to be considered for linking. This can result in a "fuzzier" [blocking process](/blocking_rules.md#the-purpose-of-blocking_rules_to_generate_predictions), which may be beneficial in certain instances.
-
-Similarly, phonetically similar transforms offer another way to do fuzzy-matching within a [comparison](/customising_comparisons.ipynb).
-
-Below are some examples of well known phonetic transformation algorithmns.
-
-There are a number of ways you can generate phonetic transformation columns within a dataset. Below are a few examples of how this can be achieved.
+For a more detailed explanation on phonetic transformation algorithms, see the [topic guide](phonetic.md).
 
 ### Example
 
-There are a number of python packages which support phonetic transformations that can be applied to a pandas dataframe, which can then be loaded into the DuckDBLinker. For example, using the [phonetics](https://pypi.org/project/phonetics/) python library:
+There are a number of python packages which support phonetic transformations that can be applied to a pandas dataframe, which can then be loaded into the DuckDBLinker. For example, creating a [Double Metaphone](phonetic.md#double-metaphone) column with the [phonetics](https://pypi.org/project/phonetics/) python library:
 
 ```
 import pandas as pd
@@ -137,24 +135,26 @@ def dmetaphone_name(name):
     if name is None:
         pass
     else:
-        return phonetics.dmetaphone(name)[0]
+        return phonetics.dmetaphone(name)
 
 # Apply the function to the "first_name" and surname columns using the apply method
 df['first_name_dm'] = df['first_name'].apply(dmetaphone_name)
 df['surname_dm'] = df['surname'].apply(dmetaphone_name)
 
-df.head(7)
+df.head()
 ```
 
-|unique_id|first_name|surname|dob|city|email|group|first_name_dm|surname_dm|
-|---------|----------|-------|---|----|-----|-----|-------------|----------|
-|0	|Julia	|None	|2015-10-29	|London	|hannah88@powers.com	|0	|JL	|None|
-|1	|Julia	|Taylor	|2015-07-31	|London	|hannah88@powers.com	|0	|JL	|TLR|
-|2	|Julia	|Taylor	|2016-01-27	|London	|hannah88@powers.com	|0	|JL	|TLR|
-|3	|Julia	|Taylor	|2015-10-29	|None	|hannah88opowersc@m	|0	|JL	|TLR|
-|4	|oNah	|Watson	|2008-03-23	|Bolton	|matthew78@ballard-mcdonald.net	|1	|AN	|ATSN|
+|    |   unique_id | first_name   | surname   | dob        | city   | email                          |   group | first_name_dm   | surname_dm       |
+|---:|------------:|:-------------|:----------|:-----------|:-------|:-------------------------------|--------:|:----------------|:-----------------|
+|  0 |           0 | Julia        |           | 2015-10-29 | London | hannah88@powers.com            |       0 | ('JL', 'AL')    |                  |
+|  1 |           1 | Julia        | Taylor    | 2015-07-31 | London | hannah88@powers.com            |       0 | ('JL', 'AL')    | ('TLR', '')      |
+|  2 |           2 | Julia        | Taylor    | 2016-01-27 | London | hannah88@powers.com            |       0 | ('JL', 'AL')    | ('TLR', '')      |
+|  3 |           3 | Julia        | Taylor    | 2015-10-29 |        | hannah88opowersc@m             |       0 | ('JL', 'AL')    | ('TLR', '')      |
+|  4 |           4 | oNah         | Watson    | 2008-03-23 | Bolton | matthew78@ballard-mcdonald.net |       1 | ('AN', '')      | ('ATSN', 'FTSN') |
 
-Now that the dmetaphone columns have been added, they can be used within comparisons. For example, using the [name_comparison](../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons)
+Note: [Soundex](phonetic.md#soundex) and [Metaphone](phonetic.md#metaphone) are also supported in [phoneitcs](https://pypi.org/project/phonetics/) 
+
+Now that the dmetaphone columns have been added, they can be used within comparisons. For example, using the [name_comparison](../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons).
 
 ```
 import splink.duckdb.duckdb_comparison_template_library as ctl
@@ -177,113 +177,4 @@ print(first_name_comparison.human_readable_description)
 >    - 'Jaro_winkler_similarity >= 0.88' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.88
 >    - 'All other comparisons' with SQL rule: ELSE
 
-
-## Appendix
-
-### Phonetic Transformation Algorithm In Detail
-#### Soundex
-
-Soundex is a phonetic algorithm that assigns a code to words based on their sound. The Soundex algorithm works by converting a word into a four-character code, where the first character is the first letter of the word, and the next three characters are numerical codes representing the word's remaining consonants. Vowels and some consonants, such as H, W, and Y, are ignored.
-
-The Soundex algorithm works by following these steps:
-
-1. Retain the first letter of the word and remove all other vowels and the letters "H", "W", and "Y".
-
-2. Replace each remaining consonant (excluding the first letter) with a numerical code as follows:
-    1. B, F, P, and V are replaced with "1"
-    2. C, G, J, K, Q, S, X, and Z are replaced with "2"
-    3. D and T are replaced with "3"
-    4. L is replaced with "4"
-    5. M and N are replaced with "5"
-    6. R is replaced with "6"
-
-3. Combine the first letter and the numerical codes to form a four-character code. If there are fewer than four characters, pad the code with zeros.
-
-For example, the Soundex code for the name "Smith" is S530, and the code for "Smyth" is also S530. This allows for similar-sounding names to be indexed and searched together.
-
-
-
-#### Metaphone
-Metaphone is an improved version of the Soundex algorithm that was developed to handle a wider range of words and languages. The Metaphone algorithm assigns a code to a word based on its phonetic pronunciation, but it takes into account the sound of the entire word, rather than just its first letter and consonants.
-The Metaphone algorithm works by applying a set of rules to the word's pronunciation, such as converting the "TH" sound to a "T" sound, or removing silent letters. The resulting code is a variable-length string of letters that represents the word's pronunciation.
-
-The Metaphone algorithm works by following these steps:
-
-1. Convert the word to uppercase and remove all non-alphabetic characters.
-
-2. Apply a set of pronunciation rules to the word, such as:
-    1. Convert the letters "C" and "K" to "K"
-    2. Convert the letters "PH" to "F"
-    3. Convert the letters "W" and "H" to nothing if they are not at the beginning of the word
-
-3. Apply a set of replacement rules to the resulting word, such as:
-    1. Replace the letter "G" with "J" if it is followed by an "E", "I", or "Y"
-    2. Replace the letter "C" with "S" if it is followed by an "E", "I", or "Y"
-    3. Replace the letter "X" with "KS"
-
-4. If the resulting word ends with "S", remove it.
-
-5. If the resulting word ends with "ED", "ING", or "ES", remove it.
-
-6. If the resulting word starts with "KN", "GN", "PN", "AE", "WR", or "WH", remove the first letter.
-
-7. If the resulting word starts with a vowel, retain the first letter.
-
-8. Retain the first four characters of the resulting word, or pad it with zeros if it has fewer than four characters.
-
-For example, the Metaphone code for the name "Smith" is SM0, and the code for "Smyth" is also SM0. This allows for more accurate indexing and searching of similar-sounding words.
-
-#### Double Metaphone
-Double Metaphone is an extension of the Metaphone algorithm that generates two codes for each word, one for the primary pronunciation and one for an alternate pronunciation. The Double Metaphone algorithm is designed to handle a wide range of languages and dialects, and it is more accurate than the original Metaphone algorithm.
-
-The Double Metaphone algorithm works by applying a set of rules to the word's pronunciation, similar to the Metaphone algorithm, but it generates two codes for each word. The primary code is the most likely pronunciation of the word, while the alternate code represents a less common pronunciation.
-
-The Double Metaphone algorithm works by following these steps:
-
-1. Convert the word to uppercase and remove all non-alphabetic characters.
-
-2. Apply a set of pronunciation rules to the word, such as:
-    1. Convert the letters "C" and "K" to "K"
-    2. Convert the letters "PH" to "F"
-    3. Convert the letters "W" and "H" to nothing if they are not at the beginning of the word
-
-3. Apply a set of replacement rules to the resulting word, such as:
-    1. Replace the letter "G" with "J" if it is followed by an "E", "I", or "Y"
-    2. Replace the letter "C" with "S" if it is followed by an "E", "I", or "Y"
-    3. Replace the letter "X" with "KS"
-
-4. If the resulting word ends with "S", remove it.
-
-5. If the resulting word ends with "ED", "ING", or "ES", remove it.
-
-6. If the resulting word starts with "KN", "GN", "PN", "AE", "WR", or "WH", remove the first letter.
-
-7. If the resulting word starts with "X", "Z", "GN", or "KN", retain the first two characters.
-
-8. Apply a second set of rules to the resulting word to generate an alternative code.
-
-9. Return the primary and alternative codes as a tuple.
-
-The second set of rules for the alternative code is similar to the first set, but it takes into account different contexts in the word. The alternative code is generated by following these steps:
-
-1. Apply a set of prefix rules, such as:
-    1. Convert the letter "G" at the beginning of the word to "K" if it is followed by "N", "NED", or "NER"
-    2. Convert the letter "A" at the beginning of the word to "E" if it is followed by "SCH"
-
-2. Apply a set of suffix rules, such as:
-    1. Convert the letters "E" and "I" at the end of the word to "Y"
-    2. Convert the letters "S" and "Z" at the end of the word to "X"
-    3. Remove the letter "D" at the end of the word if it is preceded by "N"
-
-3. Apply a set of replacement rules, such as:
-    1. Replace the letter "C" with "X" if it is followed by "IA" or "H"
-    2. Replace the letter "T" with "X" if it is followed by "IA" or "CH"
-
-4. Retain the first four characters of the resulting word, or pad it with zeros if it has fewer than four characters.
-
-5. If the resulting word starts with "X", "Z", "GN", or "KN", retain the first two characters.
-
-6. Return the alternative code.
-
-For example, the Double Metaphone code for the name "Smith" is SM0 and XMT, while the code for "Smyth" is also SM0 and XMT. This allows for even more accurate indexing and searching of similar-sounding words.
 
