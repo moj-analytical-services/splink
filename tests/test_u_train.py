@@ -238,7 +238,6 @@ def test_u_train_multilink():
 
 
 def test_seed_u_outputs():
-
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings = {

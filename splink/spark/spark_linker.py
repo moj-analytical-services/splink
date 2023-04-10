@@ -479,12 +479,13 @@ class SparkLinker(Linker):
 
         # Define the PySpark function to sample a map of columns
         def sample_columns(cols, with_replacement=True, fraction=0.5, seed=None):
-            return {k: list(set(v).sample(with_replacement, fraction, seed)) for k, v in cols.items()}
+            return {k: list(set(v).sample(with_replacement, fraction, seed)) for
+                    k, v in cols.items()}
 
         # Register the PySpark function as a Spark SQL UDF
         sample_udf = udf(sample_columns, MapType(StringType(), ArrayType(StringType())))
         """
-        
+
         sql = f"""
         select *
         from __splink__df_concat_with_tf
