@@ -79,7 +79,7 @@ def test_jaro(spark):
     linker = SparkLinker(
         df_spark_jaro,
         settings,
-        input_table_aliases="test_df",
+        input_table_aliases="test_jaro_df",
     )
 
     sql = """
@@ -158,7 +158,7 @@ def test_jaro_winkler(spark):
     linker = SparkLinker(
         df_spark_jaro_winkler,
         settings,
-        input_table_aliases="test_df",
+        input_table_aliases="test_jw_df",
     )
 
     sql = """
