@@ -26,8 +26,8 @@ class DateComparisonBase(Comparison):
         include_exact_match_level: bool = True,
         term_frequency_adjustments: bool = False,
         separate_1st_january: bool = False,
-        levenshtein_thresholds: int | list =[1, 2],
-        jaro_winkler_thresholds: float | list =[],
+        levenshtein_thresholds: int | list = [1, 2],
+        jaro_winkler_thresholds: float | list = [],
         datediff_thresholds: int | list = [1, 10],
         datediff_metrics: str | list = ["year", "year"],
         m_probability_exact_match: float = None,
@@ -484,26 +484,26 @@ class ForenameSurnameComparisonBase(Comparison):
             surname_col_name (str): The name of the surname column to compare
             include_exact_match_level (bool, optional): If True, include an exact match
                 level for col_name. Defaults to True.
-            include_columns_reversed (bool, optional): If True, include a comparison 
+            include_columns_reversed (bool, optional): If True, include a comparison
                 level for forename and surname being swapped. Defaults to True
-            term_frequency_adjustment_col_forename_and_surname (str, optional): The name 
-                of a combined forename surname column. This column is used to provides 
+            term_frequency_adjustment_col_forename_and_surname (str, optional): The name
+                of a combined forename surname column. This column is used to provides
                 term frequency adjustments for forename surname exact match and columns
-                reversed levels. 
+                reversed levels.
                 Defaults to None
-            phonetic_forename_col_name (str, optional): The name of the column with 
-                phonetic reduction (such as dmetaphone) of forename_col_name. Including 
-                parameter will create an exact match level for  phonetic_forename_col_name. 
+            phonetic_forename_col_name (str, optional): The name of the column with
+                phonetic reduction (such as dmetaphone) of forename_col_name. Including
+                parameter will create an exact match level for  phonetic_forename_col_name.
                 The phonetic column must be present in the dataset to use this parameter.
                 Defaults to None
-            phonetic_surname_col_name (str, optional): The name of the column with phonetic 
-                reduction (such as dmetaphone) of surname_col_name. Including parameter 
-                will create an exact match level for  phonetic_surname_col_name. The 
+            phonetic_surname_col_name (str, optional): The name of the column with phonetic
+                reduction (such as dmetaphone) of surname_col_name. Including parameter
+                will create an exact match level for  phonetic_surname_col_name. The
                 phonetic column must be present in the dataset to use this parameter.
                 Defaults to None
-            term_frequency_adjustments_col_phonetic_forename_and_surname (str, optional): 
-                The name a combined forename surname column. This column is used to 
-                provides term frequency adjustments for forename surname phonetic match 
+            term_frequency_adjustments_col_phonetic_forename_and_surname (str, optional):
+                The name a combined forename surname column. This column is used to
+                provides term frequency adjustments for forename surname phonetic match
                 level.
                 Defaults to None
             term_frequency_adjustments_forename (bool, optional): If True, apply term
@@ -513,61 +513,61 @@ class ForenameSurnameComparisonBase(Comparison):
                 frequency adjustments to the exact match level for surname_col_name.
                 Defaults to False.
             term_frequency_adjustments_forename (bool, optional): If True, apply term
-                frequency adjustments to the exact match level for 
+                frequency adjustments to the exact match level for
                 phonetic_forename_col_name.
                 Defaults to False.
             term_frequency_adjustments_surname (bool, optional): If True, apply term
-                frequency adjustments to the exact match level for 
+                frequency adjustments to the exact match level for
                 phonetic_surname_col_name.
                 Defaults to False.
-            levenshtein_thresholds_surname (Union[int, list], optional): The thresholds 
+            levenshtein_thresholds_surname (Union[int, list], optional): The thresholds
                 to use for levenshtein similarity level(s) for surname_col_name.
                 Defaults to []
-            jaro_winkler_thresholds_surname (Union[int, list], optional): The thresholds 
+            jaro_winkler_thresholds_surname (Union[int, list], optional): The thresholds
                 to use for jaro_winkler similarity level(s) for surname_col_name.
                 Defaults to [0.88]
-            jaccard_thresholds_surname (Union[int, list], optional): The thresholds to 
+            jaccard_thresholds_surname (Union[int, list], optional): The thresholds to
                 use for jaccard similarity level(s) for surname_col_name.
                 Defaults to []
-            levenshtein_thresholds_forename (Union[int, list], optional): The thresholds 
+            levenshtein_thresholds_forename (Union[int, list], optional): The thresholds
                 to use for levenshtein similarity level(s) for forename_col_name.
                 Defaults to []
-            jaro_winkler_thresholds_forename (Union[int, list], optional): The thresholds 
+            jaro_winkler_thresholds_forename (Union[int, list], optional): The thresholds
                 to use for jaro_winkler similarity level(s) for forename_col_name.
                 Defaults to [0.88]
-            jaccard_thresholds_forename (Union[int, list], optional): The thresholds to 
+            jaccard_thresholds_forename (Union[int, list], optional): The thresholds to
                 use for jaccard similarity level(s) for forename_col_name.
                 Defaults to []
-            m_probability_exact_match_forename_surname (_type_, optional): If provided, 
-                overrides the default m probability for the exact match level for 
+            m_probability_exact_match_forename_surname (_type_, optional): If provided,
+                overrides the default m probability for the exact match level for
                 forename and surname.
                 Defaults to None.
-            m_probability_exact_match_phonetic_forename_surname (_type_, optional): If 
-                provided, overrides the default m probability for the phonetic match 
+            m_probability_exact_match_phonetic_forename_surname (_type_, optional): If
+                provided, overrides the default m probability for the phonetic match
                 level for forename and surname.
                 Defaults to None.
-            m_probability_columns_reversed_forename_surname (_type_, optional): If 
-                provided, overrides the default m probability for the columns reversed 
+            m_probability_columns_reversed_forename_surname (_type_, optional): If
+                provided, overrides the default m probability for the columns reversed
                 level for forename and surname.
                 Defaults to None.
-            m_probability_columns_reversed_forename_surname (_type_, optional): If 
-                provided, overrides the default m probability for the columns reversed 
+            m_probability_columns_reversed_forename_surname (_type_, optional): If
+                provided, overrides the default m probability for the columns reversed
                 level for forename and surname.
                 Defaults to None.
-            m_probability_exact_match_surname (_type_, optional): If provided, 
-                overrides the default m probability for the surname exact match 
+            m_probability_exact_match_surname (_type_, optional): If provided,
+                overrides the default m probability for the surname exact match
                 level for forename and surname.
                 Defaults to None.
-            m_probability_exact_match_forename (_type_, optional): If provided, 
-                overrides the default m probability for the forename exact match 
+            m_probability_exact_match_forename (_type_, optional): If provided,
+                overrides the default m probability for the forename exact match
                 level for forename and forename.
                 Defaults to None.
-            m_probability_phonetic_match_surname (_type_, optional): If provided, 
-                overrides the default m probability for the surname phonetic match 
+            m_probability_phonetic_match_surname (_type_, optional): If provided,
+                overrides the default m probability for the surname phonetic match
                 level for forename and surname.
                 Defaults to None.
-            m_probability_phonetic_match_forename (_type_, optional): If provided, 
-                overrides the default m probability for the forename phonetic match 
+            m_probability_phonetic_match_forename (_type_, optional): If provided,
+                overrides the default m probability for the forename phonetic match
                 level for forename and forename.
                 Defaults to None.
             m_probability_or_probabilities_surname_lev (Union[float, list], optional):
