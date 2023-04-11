@@ -70,14 +70,93 @@ def test_udf_registration(spark):
     linker.predict()
 
 
-def test_udf_functionality(spark):
+def test_jaro(spark):
     data = ["dave", "david", "", "dave"]
     df = pd.DataFrame(data, columns=["test_names"])
     df["id"] = df.index
-    df_spark = spark.createDataFrame(df)
+    df_spark_jaro = spark.createDataFrame(df)
 
     linker = SparkLinker(
-        df_spark,
+        df_spark_jaro,
+        settings,
+        input_table_aliases="test_df",
+    )
+
+    sql = """
+        select
+
+        /* Output test names for easier review */
+        l.test_names as test_names_l, r.test_names as test_names_r,
+
+        /* Calculate jaro results for our test cases */
+        jaro(l.test_names, r.test_names) as jaro_test
+        from test_df as l
+
+        inner join
+        test_df as r
+
+        where l.id < r.id
+    """
+
+    udf_out = linker.query_sql(sql)
+    # Set accuracy level
+    decimals = 4
+
+    # Test jaro-winkler outputs are correct
+    jaro_w_out = tuple(udf_out.jaro_test.round(decimals=decimals))
+    jaro_expected = (0.7830, 0.0, 1.0, 0.0, 0.7830, 0.0)
+
+    assert jaro_w_out == jaro_expected
+
+    # ensure that newest jar is calculating similarity . jw of strings below is 0.9440
+    assert spark.sql("""SELECT jaro("MARHTA", "MARTHA")  """).first()[0] > 0.9
+
+    # ensure that when one or both of the strings compared is NULL jw sim is 0
+
+    assert spark.sql("""SELECT jaro(NULL, "John")  """).first()[0] == 0.0
+    assert spark.sql("""SELECT jaro("Tom", NULL )  """).first()[0] == 0.0
+    assert spark.sql("""SELECT jaro(NULL, NULL )  """).first()[0] == 0.0
+
+    # ensure totally dissimilar strings have jw sim of 0
+    assert spark.sql("""SELECT jaro("Local", "Pub")  """).first()[0] == 0.0
+
+    # ensure totally similar strings have jw sim of 1
+    assert spark.sql("""SELECT jaro("Pub", "Pub")  """).first()[0] == 1.0
+
+    # testcases taken from jaro winkler article on jw sim
+    assert (
+        round(
+            spark.sql("""SELECT jaro("hello", "hallo")  """).first()[0],
+            decimals,
+        )
+        == 0.8670
+    )
+
+    assert (
+        round(
+            spark.sql("""SELECT jaro("hippo", "elephant")  """).first()[0],
+            decimals,
+        )
+        == 0.4420
+    )
+    assert (
+        round(
+            spark.sql("""SELECT jaro("elephant", "hippo")  """).first()[0],
+            decimals,
+        )
+        == 0.4420
+    )
+    assert spark.sql("""SELECT jaro("aaapppp", "")  """).first()[0] == 0.0
+
+
+def test_jaro_winkler(spark):
+    data = ["dave", "david", "", "dave"]
+    df = pd.DataFrame(data, columns=["test_names"])
+    df["id"] = df.index
+    df_spark_jaro_winkler = spark.createDataFrame(df)
+
+    linker = SparkLinker(
+        df_spark_jaro_winkler,
         settings,
         input_table_aliases="test_df",
     )

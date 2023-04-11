@@ -111,12 +111,6 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             distance_function_name, distance_threshold_or_thresholds
         )
 
-        distance_thresholds = ensure_is_iterable(distance_threshold_or_thresholds)
-
-        if m_probability_or_probabilities_thres is None:
-            m_probability_or_probabilities_thres = [None] * len(distance_thresholds)
-        m_probabilities = ensure_is_iterable(m_probability_or_probabilities_thres)
-
         comparison_levels = []
         comparison_levels.append(self._null_level(col_name))
         if include_exact_match_level:
@@ -133,7 +127,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             distance_function_name,
             distance_threshold_or_thresholds,
             m_probability_or_probabilities_thres,
-         )
+        )
         comparison_levels = comparison_levels + threshold_comparison_levels
 
         comparison_levels.append(
