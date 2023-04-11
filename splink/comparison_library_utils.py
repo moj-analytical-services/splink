@@ -83,6 +83,19 @@ def distance_threshold_comparison_levels(
     )
 
     for thres, m_prob in zip(thresholds, m_probability_or_probabilities_thres):
+        if distance_function_name == "levenshtein":
+            distance_function_name = self._levenshtein_name
+            higher_is_more_similar = False
+        if distance_function_name == "jaro":
+            distance_function_name = self._jaro_name
+            higher_is_more_similar = True
+        if distance_function_name == "jaro-winkler":
+            distance_function_name = self._jaro_winkler_name
+            higher_is_more_similar = True
+        if distance_function_name == "jaccard":
+            distance_function_name = self._jaccard_name
+            higher_is_more_similar = True
+
         # these function arguments hold for all cases.
         kwargs = dict(col_name=col_name, distance_threshold=thres, m_probability=m_prob)
         # separate out the two that are only used

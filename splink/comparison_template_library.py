@@ -9,7 +9,7 @@ import logging
 from .comparison import Comparison  # change to self
 from .comparison_library_utils import (
     datediff_error_logger,
-    # distance_threshold_comparison_levels,
+    distance_threshold_comparison_levels,
     distance_threshold_description,
 )
 from .misc import ensure_is_iterable
@@ -32,6 +32,7 @@ class DateComparisonBase(Comparison):
         m_probability_exact_match: float = None,
         m_probability_1st_january: float = None,
         m_probability_or_probabilities_lev: float | list = None,
+        m_probability_or_probabilities_jar: float | list = None,
         m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_datediff: float | list = None,
         m_probability_else: float = None,
@@ -81,6 +82,9 @@ class DateComparisonBase(Comparison):
             m_probability_or_probabilities_lev (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the levenshtein thresholds specified. Defaults to None.
+            m_probability_or_probabilities_jar (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the jaro thresholds specified. Defaults to None.
             m_probability_or_probabilities_jw (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the jaro winkler thresholds specified. Defaults to None.
@@ -148,80 +152,41 @@ class DateComparisonBase(Comparison):
                 m_probability=m_probability_exact_match,
             )
             comparison_levels.append(comparison_level)
+    
 
         if len(levenshtein_thresholds) > 0:
-            levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
-
-            if m_probability_or_probabilities_lev is None:
-                m_probability_or_probabilities_lev = [None] * len(
-                    levenshtein_thresholds
-                )
-            m_probability_or_probabilities_lev = ensure_is_iterable(
-                m_probability_or_probabilities_lev
+            threshold_comparison_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                "levenshtein",
+                levenshtein_thresholds,
+                m_probability_or_probabilities_lev,
             )
-
-            for thres, m_prob in zip(
-                levenshtein_thresholds, m_probability_or_probabilities_lev
-            ):
-                comparison_level = self._levenshtein_level(
-                    col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
-
-        # if len(levenshtein_thresholds) > 0:
-        #    distance_threshold_comparison_levels(
-        #        self,
-        #        col_name,
-        #        "levenshtein",
-        #        [5, 6],
-        #        m_probability_or_probabilities_lev,
-        #    )
+            comparison_levels = comparison_levels + threshold_comparison_levels
 
         if len(jaro_thresholds) > 0:
-            jaro_thresholds = ensure_is_iterable(jaro_thresholds)
-
-            if m_probability_or_probabilities_jw is None:
-                m_probability_or_probabilities_jw = [None] * len(jaro_thresholds)
-            m_probability_or_probabilities_jw = ensure_is_iterable(
-                m_probability_or_probabilities_jw
+            threshold_comparison_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                "jaro",
+                jaro_thresholds,
+                m_probability_or_probabilities_jar,
             )
-
-            for thres, m_prob in zip(
-                jaro_thresholds, m_probability_or_probabilities_jw
-            ):
-                comparison_level = self._jaro_level(
-                    col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_comparison_levels
 
         if len(jaro_winkler_thresholds) > 0:
-            jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
-
-            if m_probability_or_probabilities_jw is None:
-                m_probability_or_probabilities_jw = [None] * len(
-                    jaro_winkler_thresholds
-                )
-            m_probability_or_probabilities_jw = ensure_is_iterable(
-                m_probability_or_probabilities_jw
+            threshold_comparison_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                "jaro-winkler",
+                jaro_winkler_thresholds,
+                m_probability_or_probabilities_jar,
             )
-
-            for thres, m_prob in zip(
-                jaro_winkler_thresholds, m_probability_or_probabilities_jw
-            ):
-                comparison_level = self._jaro_winkler_level(
-                    col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_comparison_levels
 
         count_string_match_functions_used = (
             (len(levenshtein_thresholds) > 0)
-            + (len(jaro_winkler_thresholds) > 0)
+            + (len(jaro_thresholds) > 0)
             + (len(jaro_winkler_thresholds) > 0)
         )
         if count_string_match_functions_used > 1:
@@ -266,16 +231,16 @@ class DateComparisonBase(Comparison):
             comparison_desc += "Exact match vs. "
 
         if len(levenshtein_thresholds) > 0:
-            desc = distance_threshold_description("levenshtein", levenshtein_thresholds)
+            desc = distance_threshold_description(col_name, "levenshtein", levenshtein_thresholds)
             comparison_desc += desc
-
+        
         if len(jaro_thresholds) > 0:
-            desc = distance_threshold_description("jaro", jaro_thresholds)
+            desc = distance_threshold_description(col_name, "jaro", jaro_thresholds)
             comparison_desc += desc
-
+        
         if len(jaro_winkler_thresholds) > 0:
             desc = distance_threshold_description(
-                "jaro_winkler", jaro_winkler_thresholds
+                col_name, "jaro_winkler", jaro_winkler_thresholds
             )
             comparison_desc += desc
 
@@ -319,6 +284,7 @@ class NameComparisonBase(Comparison):
         m_probability_exact_match_name: bool = None,
         m_probability_exact_match_phonetic_name: bool = None,
         m_probability_or_probabilities_lev: float | list = None,
+        m_probability_or_probabilities_jar: float | list = None,
         m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_jac: float | list = None,
         m_probability_else: float = None,
@@ -433,84 +399,44 @@ class NameComparisonBase(Comparison):
                 comparison_levels.append(comparison_level)
 
         if len(levenshtein_thresholds) > 0:
-            levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
-
-            if m_probability_or_probabilities_lev is None:
-                m_probability_or_probabilities_lev = [None] * len(
-                    levenshtein_thresholds
-                )
-            m_probability_or_probabilities_lev = ensure_is_iterable(
-                m_probability_or_probabilities_lev
+            threshold_comparison_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                "levenshtein",
+                levenshtein_thresholds,
+                m_probability_or_probabilities_lev,
             )
-
-            for thres, m_prob in zip(
-                levenshtein_thresholds, m_probability_or_probabilities_lev
-            ):
-                comparison_level = self._levenshtein_level(
-                    col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
-
+            comparison_levels = comparison_levels + threshold_comparison_levels
+        
         if len(jaro_thresholds) > 0:
-            jaro_thresholds = ensure_is_iterable(jaro_thresholds)
-
-            if m_probability_or_probabilities_jw is None:
-                m_probability_or_probabilities_jw = [None] * len(jaro_thresholds)
-            m_probability_or_probabilities_jw = ensure_is_iterable(
-                m_probability_or_probabilities_jw
+            threshold_comparison_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                "jaro",
+                jaro_thresholds,
+                m_probability_or_probabilities_jar,
             )
-
-            for thres, m_prob in zip(
-                jaro_thresholds, m_probability_or_probabilities_jw
-            ):
-                comparison_level = self._jaro_level(
-                    col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_comparison_levels
 
         if len(jaro_winkler_thresholds) > 0:
-            jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
-
-            if m_probability_or_probabilities_jw is None:
-                m_probability_or_probabilities_jw = [None] * len(
-                    jaro_winkler_thresholds
-                )
-            m_probability_or_probabilities_jw = ensure_is_iterable(
-                m_probability_or_probabilities_jw
+            threshold_comparison_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                "jaro-winkler",
+                jaro_winkler_thresholds,
+                m_probability_or_probabilities_jar,
             )
-
-            for thres, m_prob in zip(
-                jaro_winkler_thresholds, m_probability_or_probabilities_jw
-            ):
-                comparison_level = self._jaro_winkler_level(
-                    col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_comparison_levels
 
         if len(jaccard_thresholds) > 0:
-            jaccard_thresholds = ensure_is_iterable(jaccard_thresholds)
-
-            if m_probability_or_probabilities_jac is None:
-                m_probability_or_probabilities_jac = [None] * len(jaccard_thresholds)
-            m_probability_or_probabilities_jac = ensure_is_iterable(
-                m_probability_or_probabilities_jac
+            threshold_comparison_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                "jaccard",
+                jaccard_thresholds,
+                m_probability_or_probabilities_jar,
             )
-
-            for thres, m_prob in zip(
-                jaccard_thresholds, m_probability_or_probabilities_jac
-            ):
-                comparison_level = self._jaccard_level(
-                    col_name,
-                    distance_threshold=thres,
-                    m_probability=m_prob,
-                )
-                comparison_levels.append(comparison_level)
+            comparison_levels = comparison_levels + threshold_comparison_levels
 
         comparison_levels.append(
             self._else_level(m_probability=m_probability_else),
@@ -525,46 +451,22 @@ class NameComparisonBase(Comparison):
             comparison_desc += "Names with phonetic exact match vs. "
 
         if len(levenshtein_thresholds) > 0:
-            desc = distance_threshold_description("levenshtein", levenshtein_thresholds)
+            desc = distance_threshold_description(col_name, "levenshtein", levenshtein_thresholds)
             comparison_desc += desc
 
         if len(jaro_thresholds) > 0:
-            desc = distance_threshold_description("jaro", jaro_thresholds)
+            desc = distance_threshold_description(col_name, "jaro", jaro_thresholds)
             comparison_desc += desc
 
         if len(jaro_winkler_thresholds) > 0:
             desc = distance_threshold_description(
-                "jaro_winkler", jaro_winkler_thresholds
+                col_name, "jaro_winkler", jaro_winkler_thresholds
             )
             comparison_desc += desc
 
         if len(jaccard_thresholds) > 0:
-            desc = distance_threshold_description("jaccard", jaccard_thresholds)
+            desc = distance_threshold_description(col_name, "jaccard", jaccard_thresholds)
             comparison_desc += desc
-
-        if len(levenshtein_thresholds) > 0:
-            lev_desc = ", ".join([str(d) for d in levenshtein_thresholds])
-            plural = "" if len(levenshtein_thresholds) == 1 else "s"
-            comparison_desc += (
-                f"Dates within levenshtein threshold{plural} {lev_desc} vs. "
-            )
-
-        if len(jaro_thresholds) > 0:
-            lev_desc = ", ".join([str(d) for d in jaro_thresholds])
-            plural = "" if len(jaro_thresholds) == 1 else "s"
-            comparison_desc += f"Dates within jaro threshold{plural} {lev_desc} vs. "
-
-        if len(jaro_winkler_thresholds) > 0:
-            lev_desc = ", ".join([str(d) for d in jaro_winkler_thresholds])
-            plural = "" if len(jaro_winkler_thresholds) == 1 else "s"
-            comparison_desc += (
-                f"Names within jaro_winkler threshold{plural} {lev_desc} vs. "
-            )
-
-        if len(jaccard_thresholds) > 0:
-            lev_desc = ", ".join([str(d) for d in jaccard_thresholds])
-            plural = "" if len(jaccard_thresholds) == 1 else "s"
-            comparison_desc += f"Names within jaccard threshold{plural} {lev_desc} vs. "
 
         comparison_desc += "anything else"
 
@@ -573,3 +475,7 @@ class NameComparisonBase(Comparison):
             "comparison_levels": comparison_levels,
         }
         super().__init__(comparison_dict)
+    
+    @property
+    def _is_distance_subclass(self):
+        return False

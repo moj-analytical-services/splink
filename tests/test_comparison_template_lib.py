@@ -18,6 +18,15 @@ from splink.spark.spark_linker import SparkLinker
 def test_date_comparison_run(ctl):
     ctl.date_comparison("date")
 
+@pytest.mark.parametrize(
+    ("ctl"),
+    [
+        pytest.param(ctld, id="DuckDB Date Comparison Jaro Test"),
+        pytest.param(ctls, id="Spark Date Comparison Jaro Test"),
+    ],
+)
+def test_date_comparison_jaro_run(ctl):
+    ctl.date_comparison("date", levenshtein_thresholds=[], jaro_thresholds=[0.9])
 
 @pytest.mark.parametrize(
     ("ctl"),
@@ -27,7 +36,7 @@ def test_date_comparison_run(ctl):
     ],
 )
 def test_date_comparison_jw_run(ctl):
-    ctl.date_comparison("date", levenshtein_thresholds=[], jaro_winkler_thresholds=[1])
+    ctl.date_comparison("date", levenshtein_thresholds=[], jaro_winkler_thresholds=[0.9])
 
 
 @pytest.mark.parametrize(
@@ -182,8 +191,8 @@ def test_name_comparison_run(ctl):
 @pytest.mark.parametrize(
     ("ctl", "Linker"),
     [
-        pytest.param(ctld, DuckDBLinker, id="DuckDB Date Comparison Integration Tests"),
-        pytest.param(ctls, SparkLinker, id="Spark Date Comparison Integration Tests"),
+        pytest.param(ctld, DuckDBLinker, id="DuckDB Name Comparison Integration Tests"),
+        pytest.param(ctls, SparkLinker, id="Spark Name Comparison Integration Tests"),
     ],
 )
 def test_name_comparison_levels(spark, ctl, Linker):
