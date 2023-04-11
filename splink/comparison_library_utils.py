@@ -1,3 +1,5 @@
+from .misc import ensure_is_iterable
+
 def comparison_at_thresholds_error_logger(comparison, thresholds):
 
     error_logger = []
@@ -62,7 +64,6 @@ def datediff_error_logger(thresholds, metrics):
     return
 
 
-"""
 def distance_threshold_comparison_levels(
     self,
     col_name: str,
@@ -85,28 +86,30 @@ def distance_threshold_comparison_levels(
         kwargs = dict(
             col_name=col_name,
             distance_threshold=thres,
-            m_probability=m_prob,
+            m_probability=m_prob
         )
         # separate out the two that are only used
-        # when we have a user-supplied function, rather than a predefined subclass
-        # feels a bit hacky, but will do at least for time being
+            # when we have a user-supplied function, rather than a predefined subclass
+            # feels a bit hacky, but will do at least for time being
         if not self._is_distance_subclass:
             kwargs["distance_function_name"] = distance_function_name
             kwargs["higher_is_more_similar"] = higher_is_more_similar
 
         level = self._distance_level(**kwargs)
-        threshold_comparison_levels.append("")#level)
+        threshold_comparison_levels.append(level)
 
     return threshold_comparison_levels
- """
-
 
 def distance_threshold_description(
-    distance_function_name: str, distance_threshold_or_thresholds: list
+    column_description: str,
+    distance_function_name: str,
+    distance_threshold_or_thresholds: list,
 ):
     desc = ", ".join([str(d) for d in distance_threshold_or_thresholds])
     plural = "" if len(distance_threshold_or_thresholds) == 1 else "s"
     comparison_desc = (
-        f"Dates within {distance_function_name} threshold{plural} {desc} vs. "
+        f"{column_description.title()} within {distance_function_name} "
+        f"threshold{plural} {desc} vs. "
     )
+
     return comparison_desc

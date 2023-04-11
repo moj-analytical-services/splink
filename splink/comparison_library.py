@@ -4,7 +4,7 @@ from .comparison import Comparison
 from .comparison_library_utils import (
     comparison_at_thresholds_error_logger,
     datediff_error_logger,
-    # distance_threshold_comparison_levels,
+    distance_threshold_comparison_levels,
     distance_threshold_description,
 )
 from .misc import ensure_is_iterable
@@ -127,30 +127,14 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             )
             comparison_levels.append(level)
 
-        # threshold_comparison_levels = distance_threshold_comparison_levels(
-        #    self,
-        #    col_name,
-        #    distance_function_name,
-        #    distance_threshold_or_thresholds,
-        #    m_probability_or_probabilities_thres,
-        # )
-        # comparison_levels.append(threshold_comparison_levels)
-
-        for thres, m_prob in zip(distance_thresholds, m_probabilities):
-            # these function arguments hold for all cases.
-            kwargs = dict(
-                col_name=col_name,
-                distance_threshold=thres,
-                m_probability=m_prob,
-            )
-            # separate out the two that are only used
-            # when we have a user-supplied function, rather than a predefined subclass
-            # feels a bit hacky, but will do at least for time being
-            if not self._is_distance_subclass:
-                kwargs["distance_function_name"] = distance_function_name
-                kwargs["higher_is_more_similar"] = higher_is_more_similar
-            level = self._distance_level(**kwargs)
-            comparison_levels.append(level)
+        threshold_comparison_levels = distance_threshold_comparison_levels(
+            self,
+            col_name,
+            distance_function_name,
+            distance_threshold_or_thresholds,
+            m_probability_or_probabilities_thres,
+         )
+        comparison_levels = comparison_levels + threshold_comparison_levels
 
         comparison_levels.append(
             self._else_level(m_probability=m_probability_else),
@@ -162,7 +146,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             comparison_desc += "Exact match vs. "
 
         threshold_desc = distance_threshold_description(
-            distance_function_name, distance_threshold_or_thresholds
+            col_name, distance_function_name, distance_threshold_or_thresholds
         )
         comparison_desc += threshold_desc
 
