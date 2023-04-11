@@ -1045,6 +1045,10 @@ class Linker:
         pairwise comparisons are non-matches (or at least, they are very unlikely to be
         matches). For large datasets, this is typically true.
 
+        The results of estimate_u_using_random_sampling, and therefore an entire splink 
+        model, can be made reproducible by setting the seed parameter. Setting the seed 
+        will have performance implications as additional processing is required.
+
         Args:
             max_pairs (int): The maximum number of pairwise record comparisons to
             sample. Larger will give more accurate estimates
