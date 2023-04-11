@@ -2,6 +2,7 @@
 tags:
   - API
   - Expectation Maximisation
+  - Model Training
 ---
 # Documentation for `EMTrainingSession` object
 
