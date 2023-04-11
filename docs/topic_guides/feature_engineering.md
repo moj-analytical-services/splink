@@ -12,11 +12,9 @@ tags:
 
 # Feature Engineering for Data Linkage
 
-GENERAL INTRO
+During record linkage, the features in a given dataset are used to provide evidence as to whether two records are a match. Like any predictive model, the quality of a Splink model is dictated by the features provided. 
 
-## Full Name
-
-### Example
+Below are some examples of features that be created from common columns, and how to create more detailed comparisons with them in a Splink model.
 
 ## Postcodes
 
