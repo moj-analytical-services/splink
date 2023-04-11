@@ -137,6 +137,9 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                 can be included in the Splink settings dictionary.
         """
         # Validate user inputs
+
+        distance_threshold_or_thresholds = ensure_is_iterable(distance_threshold_or_thresholds)
+
         comparison_at_thresholds_error_logger(
             distance_function_name, distance_threshold_or_thresholds
         )

@@ -154,6 +154,7 @@ class DateComparisonBase(Comparison):
             comparison_levels.append(comparison_level)
 
         if len(levenshtein_thresholds) > 0:
+            levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -164,6 +165,7 @@ class DateComparisonBase(Comparison):
             comparison_levels = comparison_levels + threshold_comparison_levels
 
         if len(jaro_thresholds) > 0:
+            jaro_thresholds = ensure_is_iterable(jaro_thresholds)            
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -174,6 +176,7 @@ class DateComparisonBase(Comparison):
             comparison_levels = comparison_levels + threshold_comparison_levels
 
         if len(jaro_winkler_thresholds) > 0:
+            jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -377,6 +380,8 @@ class NameComparisonBase(Comparison):
             Comparison: A comparison that can be included in the Splink settings
                 dictionary.
         """
+
+
         # Construct Comparison
         comparison_levels = []
         comparison_levels.append(self._null_level(col_name))
@@ -400,6 +405,7 @@ class NameComparisonBase(Comparison):
                 comparison_levels.append(comparison_level)
 
         if len(levenshtein_thresholds) > 0:
+            levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -410,6 +416,7 @@ class NameComparisonBase(Comparison):
             comparison_levels = comparison_levels + threshold_comparison_levels
 
         if len(jaro_thresholds) > 0:
+            jaro_thresholds = ensure_is_iterable(jaro_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -420,6 +427,7 @@ class NameComparisonBase(Comparison):
             comparison_levels = comparison_levels + threshold_comparison_levels
 
         if len(jaro_winkler_thresholds) > 0:
+            jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -430,6 +438,7 @@ class NameComparisonBase(Comparison):
             comparison_levels = comparison_levels + threshold_comparison_levels
 
         if len(jaccard_thresholds) > 0:
+            jaccard_thresholds =  ensure_is_iterable(jaccard_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
