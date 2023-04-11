@@ -69,7 +69,7 @@ def distance_threshold_comparison_levels(
     self,
     col_name: str,
     distance_function_name: str,
-    distance_threshold_or_thresholds: list,
+    distance_threshold_or_thresholds,
     higher_is_more_similar: bool = True,
     m_probability_or_probabilities_thres: list = None,
 ):

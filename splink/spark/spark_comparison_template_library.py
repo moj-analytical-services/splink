@@ -2,8 +2,8 @@ from ..comparison_template_library import (
     DateComparisonBase,
     NameComparisonBase,
 )
-from .spark_comparison_library import SparkComparisonProperties
 from .spark_comparison_level_library import distance_function_level
+from .spark_comparison_library import SparkComparisonProperties
 
 
 class date_comparison(SparkComparisonProperties, DateComparisonBase):
