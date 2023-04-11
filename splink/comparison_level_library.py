@@ -218,6 +218,15 @@ class JaroLevelBase(DistanceFunctionLevelBase):
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
+        Examples:
+            >>> # DuckDB Jaro comparison level at threshold 0.9
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.jaro_level("name", 0.9)
+
+            >>> # Spark Jaro comparison level at thresholds 0.9
+            >>> import splink.spark.spark_comparison_level_library as cll
+            >>> cll.jaro_level("name", 0.9)
+
         Returns:
             ComparisonLevel: A comparison level that evaluates the
                 jaro similarity

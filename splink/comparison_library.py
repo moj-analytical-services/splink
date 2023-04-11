@@ -367,6 +367,15 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
+        Examples:
+            >>> # DuckDB Jaro comparison at thresholds 0.9 and 0.7
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.jaro_at_thresholds("first_name", [0.9, 0.7])
+
+            >>> # Spark Jaccard comparison at thresholds 0.9 and 0.7
+            >>> import splink.spark.spark_comparison_library as cl
+            >>> cl.jaro_at_thresholds("first_name", [0.9, 0.7])
+
         Returns:
             Comparison:
         """
@@ -751,7 +760,6 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
         comparison_levels.append(null_level)
 
         if include_exact_match_level:
-
             label_suffix = f" {lat_col}, {long_col}"
             level = {
                 "sql_condition": f"({lat_col}_l = {lat_col}_r) \n"

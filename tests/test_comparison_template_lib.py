@@ -51,7 +51,6 @@ def test_date_comparison_jw_run(ctl):
     ],
 )
 def test_datediff_levels(spark, ctl, Linker):
-
     df = pd.DataFrame(
         [
             {
@@ -200,7 +199,6 @@ def test_name_comparison_run(ctl):
     ],
 )
 def test_name_comparison_levels(spark, ctl, Linker):
-
     df = pd.DataFrame(
         [
             {

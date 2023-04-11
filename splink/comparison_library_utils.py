@@ -2,7 +2,6 @@ from .misc import ensure_is_iterable
 
 
 def comparison_at_thresholds_error_logger(comparison, thresholds):
-
     error_logger = []
 
     if len(thresholds) == 0:
@@ -15,7 +14,6 @@ def comparison_at_thresholds_error_logger(comparison, thresholds):
         error_logger.append("All entries of `thresholds` must be postive")
 
     if len(error_logger) > 0:
-
         error_logger.insert(
             0,
             f"The following error(s) were identified while validating "
@@ -28,7 +26,6 @@ def comparison_at_thresholds_error_logger(comparison, thresholds):
 
 
 def datediff_error_logger(thresholds, metrics):
-
     # Extracted from the DateDiffAtThresholdsComparisonBase class as that was overly
     # verbose and failing the lint.
 

@@ -89,11 +89,11 @@ def test_jaro(spark):
         l.test_names as test_names_l, r.test_names as test_names_r,
 
         /* Calculate jaro results for our test cases */
-        jaro(l.test_names, r.test_names) as jaro_test
-        from test_df as l
+        jaro_sim(l.test_names, r.test_names) as jaro_test
+        from test_jaro_df as l
 
         inner join
-        test_df as r
+        test_jaro_df as r
 
         where l.id < r.id
     """
@@ -104,49 +104,49 @@ def test_jaro(spark):
 
     # Test jaro-winkler outputs are correct
     jaro_w_out = tuple(udf_out.jaro_test.round(decimals=decimals))
-    jaro_expected = (0.7830, 0.0, 1.0, 0.0, 0.7830, 0.0)
+    jaro_expected = (0.7833, 0.0, 1.0, 0.0, 0.7833, 0.0)
 
     assert jaro_w_out == jaro_expected
 
     # ensure that newest jar is calculating similarity . jw of strings below is 0.9440
-    assert spark.sql("""SELECT jaro("MARHTA", "MARTHA")  """).first()[0] > 0.9
+    assert spark.sql("""SELECT jaro_sim("MARHTA", "MARTHA")  """).first()[0] > 0.9
 
     # ensure that when one or both of the strings compared is NULL jw sim is 0
 
-    assert spark.sql("""SELECT jaro(NULL, "John")  """).first()[0] == 0.0
-    assert spark.sql("""SELECT jaro("Tom", NULL )  """).first()[0] == 0.0
-    assert spark.sql("""SELECT jaro(NULL, NULL )  """).first()[0] == 0.0
+    assert spark.sql("""SELECT jaro_sim(NULL, "John")  """).first()[0] == 0.0
+    assert spark.sql("""SELECT jaro_sim("Tom", NULL )  """).first()[0] == 0.0
+    assert spark.sql("""SELECT jaro_sim(NULL, NULL )  """).first()[0] == 0.0
 
     # ensure totally dissimilar strings have jw sim of 0
-    assert spark.sql("""SELECT jaro("Local", "Pub")  """).first()[0] == 0.0
+    assert spark.sql("""SELECT jaro_sim("Local", "Pub")  """).first()[0] == 0.0
 
     # ensure totally similar strings have jw sim of 1
-    assert spark.sql("""SELECT jaro("Pub", "Pub")  """).first()[0] == 1.0
+    assert spark.sql("""SELECT jaro_sim("Pub", "Pub")  """).first()[0] == 1.0
 
-    # testcases taken from jaro winkler article on jw sim
+    # testcases taken from jaro article on jw sim
     assert (
         round(
-            spark.sql("""SELECT jaro("hello", "hallo")  """).first()[0],
+            spark.sql("""SELECT jaro_sim("hello", "hallo")  """).first()[0],
             decimals,
         )
-        == 0.8670
+        == 0.8667
     )
 
     assert (
         round(
-            spark.sql("""SELECT jaro("hippo", "elephant")  """).first()[0],
+            spark.sql("""SELECT jaro_sim("hippo", "elephant")  """).first()[0],
             decimals,
         )
-        == 0.4420
+        == 0.4417
     )
     assert (
         round(
-            spark.sql("""SELECT jaro("elephant", "hippo")  """).first()[0],
+            spark.sql("""SELECT jaro_sim("elephant", "hippo")  """).first()[0],
             decimals,
         )
-        == 0.4420
+        == 0.4417
     )
-    assert spark.sql("""SELECT jaro("aaapppp", "")  """).first()[0] == 0.0
+    assert spark.sql("""SELECT jaro_sim("aaapppp", "")  """).first()[0] == 0.0
 
 
 def test_jaro_winkler(spark):
@@ -169,21 +169,21 @@ def test_jaro_winkler(spark):
 
         /* Calculate jaro-winkler results for our test cases */
         jaro_winkler(l.test_names, r.test_names) as jaro_winkler_test
-        from test_df as l
+        from test_jw_df as l
 
         inner join
-        test_df as r
+        test_jw_df as r
 
         where l.id < r.id
     """
 
     udf_out = linker.query_sql(sql)
     # Set accuracy level
-    decimals = 6
+    decimals = 4
 
     # Test jaro-winkler outputs are correct
     jaro_w_out = tuple(udf_out.jaro_winkler_test.round(decimals=decimals))
-    jaro_expected = (0.848333, 0.0, 1.0, 0.0, 0.848333, 0.0)
+    jaro_expected = (0.8483, 0.0, 1.0, 0.0, 0.8483, 0.0)
 
     assert jaro_w_out == jaro_expected
 
@@ -206,9 +206,17 @@ def test_jaro_winkler(spark):
     assert spark.sql("""SELECT jaro_winkler("hello", "hallo")  """).first()[0] == 0.88
 
     assert (
-        spark.sql("""SELECT jaro_winkler("hippo", "elephant")  """).first()[0] < 0.45
-    )  # its 0.44166666666666665
+        round(
+            spark.sql("""SELECT jaro_winkler("hippo", "elephant")  """).first()[0],
+            decimals,
+        )
+        == 0.4417
+    )
     assert (
-        spark.sql("""SELECT jaro_winkler("elephant", "hippo")  """).first()[0] < 0.45
-    )  # its 0.44166666666666665
+        round(
+            spark.sql("""SELECT jaro_winkler("elephant", "hippo")  """).first()[0],
+            decimals,
+        )
+        == 0.4417
+    )
     assert spark.sql("""SELECT jaro_winkler("aaapppp", "")  """).first()[0] == 0.0
