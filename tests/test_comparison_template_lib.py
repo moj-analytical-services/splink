@@ -18,6 +18,7 @@ from splink.spark.spark_linker import SparkLinker
 def test_date_comparison_run(ctl):
     ctl.date_comparison("date")
 
+
 @pytest.mark.parametrize(
     ("ctl"),
     [
@@ -28,6 +29,7 @@ def test_date_comparison_run(ctl):
 def test_date_comparison_jaro_run(ctl):
     ctl.date_comparison("date", levenshtein_thresholds=[], jaro_thresholds=[0.9])
 
+
 @pytest.mark.parametrize(
     ("ctl"),
     [
@@ -36,7 +38,9 @@ def test_date_comparison_jaro_run(ctl):
     ],
 )
 def test_date_comparison_jw_run(ctl):
-    ctl.date_comparison("date", levenshtein_thresholds=[], jaro_winkler_thresholds=[0.9])
+    ctl.date_comparison(
+        "date", levenshtein_thresholds=[], jaro_winkler_thresholds=[0.9]
+    )
 
 
 @pytest.mark.parametrize(

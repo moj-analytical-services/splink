@@ -152,7 +152,6 @@ class DateComparisonBase(Comparison):
                 m_probability=m_probability_exact_match,
             )
             comparison_levels.append(comparison_level)
-    
 
         if len(levenshtein_thresholds) > 0:
             threshold_comparison_levels = distance_threshold_comparison_levels(
@@ -231,13 +230,15 @@ class DateComparisonBase(Comparison):
             comparison_desc += "Exact match vs. "
 
         if len(levenshtein_thresholds) > 0:
-            desc = distance_threshold_description(col_name, "levenshtein", levenshtein_thresholds)
+            desc = distance_threshold_description(
+                col_name, "levenshtein", levenshtein_thresholds
+            )
             comparison_desc += desc
-        
+
         if len(jaro_thresholds) > 0:
             desc = distance_threshold_description(col_name, "jaro", jaro_thresholds)
             comparison_desc += desc
-        
+
         if len(jaro_winkler_thresholds) > 0:
             desc = distance_threshold_description(
                 col_name, "jaro_winkler", jaro_winkler_thresholds
@@ -407,7 +408,7 @@ class NameComparisonBase(Comparison):
                 m_probability_or_probabilities_lev,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
-        
+
         if len(jaro_thresholds) > 0:
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
@@ -451,7 +452,9 @@ class NameComparisonBase(Comparison):
             comparison_desc += "Names with phonetic exact match vs. "
 
         if len(levenshtein_thresholds) > 0:
-            desc = distance_threshold_description(col_name, "levenshtein", levenshtein_thresholds)
+            desc = distance_threshold_description(
+                col_name, "levenshtein", levenshtein_thresholds
+            )
             comparison_desc += desc
 
         if len(jaro_thresholds) > 0:
@@ -465,7 +468,9 @@ class NameComparisonBase(Comparison):
             comparison_desc += desc
 
         if len(jaccard_thresholds) > 0:
-            desc = distance_threshold_description(col_name, "jaccard", jaccard_thresholds)
+            desc = distance_threshold_description(
+                col_name, "jaccard", jaccard_thresholds
+            )
             comparison_desc += desc
 
         comparison_desc += "anything else"
@@ -475,7 +480,7 @@ class NameComparisonBase(Comparison):
             "comparison_levels": comparison_levels,
         }
         super().__init__(comparison_dict)
-    
+
     @property
     def _is_distance_subclass(self):
         return False
