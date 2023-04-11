@@ -165,7 +165,7 @@ class DateComparisonBase(Comparison):
             comparison_levels = comparison_levels + threshold_comparison_levels
 
         if len(jaro_thresholds) > 0:
-            jaro_thresholds = ensure_is_iterable(jaro_thresholds)            
+            jaro_thresholds = ensure_is_iterable(jaro_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -381,7 +381,6 @@ class NameComparisonBase(Comparison):
                 dictionary.
         """
 
-
         # Construct Comparison
         comparison_levels = []
         comparison_levels.append(self._null_level(col_name))
@@ -438,7 +437,7 @@ class NameComparisonBase(Comparison):
             comparison_levels = comparison_levels + threshold_comparison_levels
 
         if len(jaccard_thresholds) > 0:
-            jaccard_thresholds =  ensure_is_iterable(jaccard_thresholds)
+            jaccard_thresholds = ensure_is_iterable(jaccard_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
