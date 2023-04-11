@@ -74,7 +74,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
-        m_probability_or_probabilities_lev: float | list = None,
+        m_probability_or_probabilities_thres: float | list = None,
         m_probability_else=None,
     ) -> Comparison:
         """A comparison of the data in `col_name` with a user-provided distance
