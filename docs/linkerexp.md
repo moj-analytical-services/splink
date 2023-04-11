@@ -1,6 +1,10 @@
 ---
 tags:
   - API
+  - Exploratory Data Analysis
+  - Profiling
+  - Blocking Rules
+  - Missingness
 ---
 # Documentation for `Linker` object methods related to exploratory analysis
 

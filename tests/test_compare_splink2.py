@@ -1,11 +1,12 @@
 import pandas as pd
 import pytest
-from basic_settings import get_settings_dict
 
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
 from splink.spark.spark_linker import SparkLinker
 from splink.sqlite.sqlite_linker import SQLiteLinker
+
+from .basic_settings import get_settings_dict
 
 
 def test_splink_2_predict():

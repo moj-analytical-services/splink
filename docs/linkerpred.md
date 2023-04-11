@@ -1,6 +1,7 @@
 ---
 tags:
   - API
+  - Prediction
 ---
 # Documentation for `Linker` object methods related to link prediction
 

@@ -1,68 +1,48 @@
-![image](https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png)
+<p align="center">
+<img src="https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png" alt="Splink Logo" height="150px">
+</p>
+
 [![pypi](https://img.shields.io/github/v/release/moj-analytical-services/splink?include_prereleases)](https://pypi.org/project/splink/#history)
 [![Downloads](https://pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
 [![Documentation](https://img.shields.io/badge/API-documentation-blue)](https://moj-analytical-services.github.io/splink/)
 
-# Fast, accurate and scalable probabilistic data linkage using your choice of SQL backend.
+# Fast, accurate and scalable probabilistic data linkage
 
-`splink` is a Python package for probabilistic record linkage (entity resolution).
+Splink is a Python package for probabilistic record linkage (entity resolution) that allows you to deduplicate and link records from datasets without unique identifiers.
 
-Its key features are:
+## Key Features
 
-- It is extremely fast. It is capable of linking a million records on a laptop in around a minute.
+- **Speed:** Capable of linking a million records on a laptop in approximately one minute.
+- **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.
+- **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.
+- **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.
+- **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.
 
-- It is highly accurate, with support for term frequency adjustments, and sophisticated fuzzy matching logic.
-
-- Linking jobs can be executed in Python (using the `DuckDB` package), or using big-data backends like `AWS Athena` and `Spark` to link 100+ million records.
-
-- Training data is not required because models can be trained using an unsupervised approach.
-
-- It produces a wide variety of interactive outputs, helping users to understand their model and diagnose linkage problems.
-
-The core linkage algorithm is an implementation of Fellegi-Sunter's model of record linkage, with various customisations to improve accuracy.
+Splink's core linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customizations to improve accuracy.
 
 ## What does Splink do?
 
-Splink deduplicates and/or links records from datasets that lack a unique identifier.
+Consider the following records that lack a unique person identifier:
 
-It assumes that prior to using Splink your datasets have been standardised so they all have the same column names, and consistent formatting (e.g. lowercased, punctuation cleaned up).
+![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/main_readme_what_does_splink_do_1.drawio.png)
 
-For example, a few of your records may look like this:
+Splink predicts which rows link together:
 
-| row_id | first_name | surname | dob        | city       |
-| ------ | ---------- | ------- | ---------- | ---------- |
-| 1      | lucas      | smith   | 1984-01-02 | London     |
-| 2      | lucas      | smyth   | 1984-07-02 | Manchester |
-| 3      | lucas      | smyth   | 1984-07-02 |            |
-| 4      | david      | jones   |            | Leeds      |
-| 5      | david      | jones   | 1990-03-21 | Leeds      |
+![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/main_readme_what_does_splink_do_2.drawio.png)
 
-Splink produces pairwise predictions of the links:
+and clusters these links to produce an estimated person ID:
 
-| row_id_l | row_id_r | match_probability |
-| -------- | -------- | ----------------- |
-| 1        | 2        | 0.9               |
-| 1        | 3        | 0.85              |
-| 2        | 3        | 0.92              |
-| 4        | 5        | 0.7               |
-
-And clusters the predictions to produce an estimated unique id:
-
-| cluster_id | row_id |
-| ---------- | ------ |
-| a          | 1      |
-| a          | 2      |
-| a          | 3      |
-| b          | 4      |
-| b          | 5      |
+![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/main_readme_what_does_splink_do_3.drawio.png)
 
 ## What data does Splink work best with?
 
-Splink works best when the input data has multiple columns, and the data in the columns is not highly correlated. For example, if the entity type is persons, you may have their full name, date of birth and city. If the entity type is companies, you may have their name, turnover, sector and telephone number.
+Before using Splink, input data should be standardized, with consistent column names and formatting (e.g., lowercased, punctuation cleaned up, etc.).
 
-Splink will work less well if _all_ of your input columns are highly correlated - for instance, city, county and postal code. You would need to have additional, less correlated columns such as full name or date or birth, for the linkage to work effectively.
+Splink performs best with input data containing **multiple** columns that are **not highly correlated**. For instance, if the entity type is persons, you may have columns for full name, date of birth, and city. If the entity type is companies, you could have columns for name, turnover, sector, and telephone number.
 
-Splink is also not designed for linking a single column containing a 'bag of words'. For example, a table with a single 'company name' column, and no other details.
+High correlation occurs when the value of a column is highly constrained (predictable) from the value of another column. For example, a 'city' field is almost perfectly correlated with 'postcode'. Gender is highly correlated with 'first name'. Correlation is particularly problematic if **all** of your input columns are highly correlated.
+
+Splink is not designed for linking a single column containing a 'bag of words'. For example, a table with a single 'company name' column, and no other details.
 
 ## Documentation
 
@@ -139,6 +119,10 @@ clusters.as_pandas_dataframe(limit=5)
 
 - [A introductory presentation on Splink](https://www.youtube.com/watch?v=msz3T741KQI)
 - [An introduction to the Splink Comparison Viewer dashboard](https://www.youtube.com/watch?v=DNvCMqjipis)
+
+## Support
+
+Please post on the [discussion forums](https://github.com/moj-analytical-services/splink/discussions) if you have any questions. If you think you have found a bug, pleaase raise an [issue](https://github.com/moj-analytical-services/splink/issues).
 
 ## Awards
 

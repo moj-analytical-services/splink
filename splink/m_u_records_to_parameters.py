@@ -33,7 +33,7 @@ def not_trained_message(comparison_level: ComparisonLevel):
     cl = comparison_level
     return (
         f"not trained for {c._output_column_name} - "
-        f"{cl._label_for_charts} (comparison vector value: "
+        f"{cl.label_for_charts} (comparison vector value: "
         f"{cl._comparison_vector_value}). This usually means the "
         "comparison level was never observed in the training data."
     )

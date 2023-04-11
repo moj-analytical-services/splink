@@ -2,10 +2,11 @@ import os
 
 import pandas as pd
 import pytest
-from basic_settings import get_settings_dict
-from linker_utils import _test_table_registration
 
 from splink.athena.athena_comparison_library import levenshtein_at_thresholds
+
+from .basic_settings import get_settings_dict
+from .linker_utils import _test_table_registration
 
 skip = False
 try:

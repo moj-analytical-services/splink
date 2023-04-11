@@ -90,6 +90,7 @@ nav:
           - Comparison Library: "comparison_library.md"
           - Comparison Template Library: "comparison_template_library.md"
           - Comparison Level Library: "comparison_level_library.md"
+          - Comparison Composition: "comparison_level_composition.md"
   - Settings Editor: "settingseditor/editor.md"
   - Settings dictionary reference: "settings_dict_guide.md"
   - Tutorials:

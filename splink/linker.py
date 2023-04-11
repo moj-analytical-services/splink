@@ -51,7 +51,13 @@ from .match_key_analysis import (
     count_num_comparisons_from_blocking_rules_for_prediction_sql,
 )
 from .match_weights_histogram import histogram_data
-from .misc import ascii_uid, bayes_factor_to_prob, ensure_is_list, prob_to_bayes_factor
+from .misc import (
+    ascii_uid,
+    bayes_factor_to_prob,
+    ensure_is_list,
+    ensure_is_tuple,
+    prob_to_bayes_factor,
+)
 from .missingness import completeness_data, missingness_data
 from .pipeline import SQLPipeline
 from .predict import predict_from_comparison_vectors_sqls
@@ -122,6 +128,7 @@ class Linker:
         self,
         input_table_or_tables: str | list,
         settings_dict: dict,
+        accepted_df_dtypes,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
     ):
@@ -170,8 +177,14 @@ class Linker:
 
         self._pipeline = SQLPipeline()
 
+        homogenised_tables, homogenised_aliases = self._register_input_tables(
+            input_table_or_tables,
+            input_table_aliases,
+            accepted_df_dtypes,
+        )
+
         self._input_tables_dict = self._get_input_tables_dict(
-            input_table_or_tables, input_table_aliases
+            homogenised_tables, homogenised_aliases
         )
 
         if not isinstance(settings_dict, (dict, type(None))):
@@ -305,6 +318,25 @@ class Linker:
         raise NotImplementedError(
             f"infinity sql expression not available for {type(self)}"
         )
+
+    def _register_input_tables(self, input_tables, input_aliases, accepted_df_dtypes):
+        # 'homogenised' means all entries are strings representing tables
+        homogenised_tables = []
+        homogenised_aliases = []
+        accepted_df_dtypes = ensure_is_tuple(accepted_df_dtypes)
+
+        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
+            if isinstance(alias, accepted_df_dtypes):
+                alias = f"__splink__input_table_{i}"
+
+            if isinstance(table, accepted_df_dtypes):
+                self.register_table(table, alias)
+                table = alias
+
+            homogenised_tables.append(table)
+            homogenised_aliases.append(alias)
+
+        return homogenised_tables, homogenised_aliases
 
     def _setup_settings_objs(self, settings_dict):
         # Setup the linker class's required settings
@@ -870,7 +902,8 @@ class Linker:
             "`initialise_settings` is deprecated. We advise you use "
             "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
-            DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
+            DeprecationWarning,
+            stacklevel=2,
         )
 
     def load_settings_from_json(self, in_path: str | Path):
@@ -891,7 +924,8 @@ class Linker:
             "`load_settings_from_json` is deprecated. We advise you use "
             "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
-            DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
+            DeprecationWarning,
+            stacklevel=2,
         )
 
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
@@ -1037,7 +1071,9 @@ class Linker:
         elif target_rows is not None:
             # user is using deprecated argument
             warnings.warn(
-                "target_rows is deprecated; use max_pairs", DeprecationWarning, 2
+                "target_rows is deprecated; use max_pairs",
+                DeprecationWarning,
+                stacklevel=2,
             )
             max_pairs = target_rows
         else:

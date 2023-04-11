@@ -1,3 +1,12 @@
+---
+tags:
+  - Spark
+  - DuckDB
+  - Athena
+  - SQLite
+  - Backends
+---
+
 # Splink's SQL backends: Spark, DuckDB, etc
 
 Splink is a Python library. It implements all data linking computations by generating SQL, and submitting the SQL statements to a backend of the user's chosing for execution.
