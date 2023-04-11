@@ -11,7 +11,6 @@ from ..input_column import InputColumn
 from ..linker import Linker
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import (
-    all_letter_combos,
     ensure_is_list,
 )
 from ..splink_dataframe import SplinkDataFrame
@@ -118,40 +117,39 @@ class DuckDBLinker(Linker):
         # If user has provided pandas dataframes, need to register
         # them with the database, using user-provided aliases
         # if provided or a created alias if not
-
         input_tables = ensure_is_list(input_table_or_tables)
+        input_tables = [
+            duckdb_load_from_file(t) if isinstance(t, str) else t for t in input_tables
+        ]
 
         input_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases
         )
 
-        # 'homogenised' means all entries are strings representing tables
-        homogenised_tables = []
-        homogenised_aliases = []
+        accepted_df_dtypes = [pd.DataFrame]
+        try:
+            # If pyarrow is installed, add to the accepted list
+            import pyarrow as pa
 
-        default_aliases = all_letter_combos(len(input_tables))
-
-        for table, alias, default_alias in zip(
-            input_tables, input_aliases, default_aliases
-        ):
-            if type(alias).__name__ in ["DataFrame", "Table"]:
-                alias = f"_{default_alias}"
-
-            if type(table).__name__ in ["DataFrame", "Table"]:
-                con.register(alias, table)
-                if isinstance(table, pd.DataFrame):
-                    self._check_cast_error(alias)
-                table = alias
-
-            homogenised_tables.append(duckdb_load_from_file(table))
-            homogenised_aliases.append(alias)
+            accepted_df_dtypes.append(pa.lib.Table)
+        except ImportError:
+            pass
 
         super().__init__(
-            homogenised_tables,
+            input_tables,
             settings_dict,
+            accepted_df_dtypes,
             set_up_basic_logging,
-            input_table_aliases=homogenised_aliases,
+            input_table_aliases=input_aliases,
         )
+
+        # Quickly check for casting error in duckdb/pandas
+        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
+            if isinstance(table, pd.DataFrame):
+                if isinstance(alias, pd.DataFrame):
+                    alias = f"__splink__input_table_{i}"
+
+                self._check_cast_error(alias)
 
         if output_schema:
             self._con.execute(
