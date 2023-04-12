@@ -85,7 +85,7 @@ postcodes.head(5)
 
 Now combine the lat-long coordinates from the `GB_full.txt` lookup.
 
-```
+```python
 df_with_coordinates = df.merge(postcodes[["postal_code", "latitude", "longitude"]], 
                                     left_on="postcode_fake", 
                                     right_on="postal_code",
