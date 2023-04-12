@@ -45,7 +45,7 @@ However, string comparators alone don't necessarily give the best sense of wheth
 
 There are a number of open source repositories of geospatial data that can be used for linkage, one example is [geonames](http://download.geonames.org/export/zip/). 
 
-Below is an example of adding lattitude and longitude columns from geonames to create a more nuanced comparison.
+Below is an example of adding latitude and longitude columns from geonames to create a more nuanced comparison.
 
 Read in a dataset with postcodes:
 
@@ -115,9 +115,9 @@ postcode_comparison = {
         cll.null_level("postcode"),
         cll.exact_match_level("postcode", term_frequency_adjustments=True),
         cll.levenshtein_level("postcode", 1),
-        cll.distance_in_km_level("lattitude", "longitude", 1),
-        cll.distance_in_km_level("lattitude", "longitude", 10),
-        cll.distance_in_km_level("lattitude", "longitude", 50),
+        cll.distance_in_km_level("latitude", "longitude", 1),
+        cll.distance_in_km_level("latitude", "longitude", 10),
+        cll.distance_in_km_level("latitude", "longitude", 50),
         cll.else_level()
     ],
 }
