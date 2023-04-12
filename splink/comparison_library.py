@@ -208,9 +208,10 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
 
         An example of the output with default arguments and setting
         `distance_threshold_or_thresholds = [1,2]` would be
+
         - Exact match
-        - levenshtein distance <= 1
-        - levenshtein distance <= 2
+        - Levenshtein distance <= 1
+        - Levenshtein distance <= 2
         - Anything else
 
         Args:
@@ -277,9 +278,10 @@ class DamerauLevenshteinAtThresholdsComparisonBase(
         used to assess middle similarity levels.
 
         An example of the output with default arguments and setting
-        `distance_threshold_or_thresholds = [1,2]` would be
+        `distance_threshold_or_thresholds = [1]` would be
+
         - Exact match
-        - damerau-levenshtein distance <= 1
+        - Damerau-Levenshtein distance <= 1
         - Anything else
 
         Args:
@@ -345,6 +347,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
 
         An example of the output with default arguments and setting
         `distance_threshold_or_thresholds = [0.9,0.7]` would be
+
         - Exact match
         - Jaccard distance <= 0.9
         - Jaccard distance <= 0.7
@@ -414,9 +417,10 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
 
         An example of the output with default arguments and setting
         `distance_threshold_or_thresholds = [0.9, 0.7]` would be
+
         - Exact match
-        - jaro distance <= 0.9
-        - jaro distance <= 0.7
+        - Jaro distance <= 0.9
+        - Jaro distance <= 0.7
         - Anything else
 
         Args:
@@ -482,9 +486,10 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
 
         An example of the output with default arguments and setting
         `distance_threshold_or_thresholds = [0.9, 0.7]` would be
+
         - Exact match
-        - jaro_winkler distance <= 0.9
-        - jaro_winkler distance <= 0.7
+        - Jaro-Winkler distance <= 0.9
+        - Jaro-Winkler distance <= 0.7
         - Anything else
 
         Args:
@@ -548,6 +553,7 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
 
         An example of the output with default arguments and setting
         `size_or_sizes = [3, 1]` would be
+
         - Intersection has at least 3 elements
         - Intersection has at least 1 element (i.e. 1 or 2)
         - Anything else (i.e. empty intersection)
@@ -647,6 +653,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         with one another.
         For example, `date_thresholds = [10, 12, 15]` with
         `date_metrics = ['day', 'month', 'year']` would result in the following checks:
+
         - The two dates are within 10 days of one another
         - The two dates are within 12 months of one another
         - And the two dates are within 15 years of one another
@@ -769,6 +776,7 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
 
         An example of the output with default arguments and settings
         `km_thresholds = [1]` would be
+
         - The two coordinates within 1 km of one another
         - Anything else (i.e.  the distance between all coordinate lie outside
         this range)

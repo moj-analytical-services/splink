@@ -209,7 +209,8 @@ class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
         distance_threshold: int,
         m_probability=None,
     ) -> ComparisonLevel:
-        """Represents a comparison level using a levenshtein distance function,
+        """Represents a comparison level using a damerau-levenshtein distance 
+        function,
 
         Args:
             col_name (str): Input column name
