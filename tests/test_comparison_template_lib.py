@@ -33,6 +33,17 @@ def test_date_comparison_jaro_run(ctl):
 @pytest.mark.parametrize(
     ("ctl"),
     [
+        pytest.param(ctld, id="DuckDB Date Comparison Damerau-Levenshtein Test"),
+        pytest.param(ctls, id="Spark Date Comparison Damerau-Levenshtein Test"),
+    ],
+)
+def test_date_comparison_dl_run(ctl):
+    ctl.date_comparison("date", levenshtein_thresholds=[], damerau_levenshtein_thresholds=[1])
+
+
+@pytest.mark.parametrize(
+    ("ctl"),
+    [
         pytest.param(ctld, id="DuckDB Date Comparison Jaro-Winkler Test"),
         pytest.param(ctls, id="Spark Date Comparison Jaro-Winkler Test"),
     ],

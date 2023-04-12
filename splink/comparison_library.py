@@ -260,6 +260,73 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         return True
 
 
+class DamerauLevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase):
+    def __init__(
+        self,
+        col_name: str,
+        distance_threshold_or_thresholds: int | list = 1,
+        include_exact_match_level=True,
+        term_frequency_adjustments=False,
+        m_probability_exact_match=None,
+        m_probability_or_probabilities_lev: float | list = None,
+        m_probability_else=None,
+    ) -> Comparison:
+        """A comparison of the data in `col_name` with the damerau-levenshtein distance used to
+        assess middle similarity levels.
+
+        An example of the output with default arguments and setting
+        `distance_threshold_or_thresholds = [1,2]` would be
+        - Exact match
+        - damerau-levenshtein distance <= 1
+        - Anything else
+
+        Args:
+            col_name (str): The name of the column to compare
+            distance_threshold_or_thresholds (Union[int, list], optional): The
+                threshold(s) to use for the middle similarity level(s).
+                Defaults to [1, 2].
+            include_exact_match_level (bool, optional): If True, include an exact match
+                level. Defaults to True.
+            term_frequency_adjustments (bool, optional): If True, apply term frequency
+                adjustments to the exact match level. Defaults to False.
+            m_probability_exact_match (_type_, optional): If provided, overrides the
+                default m probability for the exact match level. Defaults to None.
+            m_probability_or_probabilities_lev (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified for given function. Defaults to None.
+            m_probability_else (_type_, optional): If provided, overrides the
+                default m probability for the 'anything else' level. Defaults to None.
+        Examples:
+            >>> # DuckDB Damerau Levenshtein comparison at thresholds 1 and 2
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
+
+            >>> # Spark Levenshtein comparison at thresholds 1 and 2
+            >>> import splink.spark.spark_comparison_library as cl
+            >>> cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
+
+        Returns:
+            Comparison: A comparison for Damerau-Levenshtein similarity that can be 
+            included in the Splink settings dictionary.
+        """
+
+        super().__init__(
+            col_name,
+            self._levenshtein_name,
+            distance_threshold_or_thresholds,
+            False,
+            include_exact_match_level,
+            term_frequency_adjustments,
+            m_probability_exact_match,
+            m_probability_or_probabilities_lev,
+            m_probability_else,
+        )
+
+    @property
+    def _is_distance_subclass(self):
+        return True
+
+
 class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase):
     def __init__(
         self,

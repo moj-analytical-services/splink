@@ -2,6 +2,7 @@
 tags:
   - API
   - comparisons
+  - Damerau-Levenshtein
   - Levenshtein
   - Jaro-Winkler
   - Jaccard
@@ -76,6 +77,18 @@ The detailed API for each of these are outlined below.
 ---
 
 ::: splink.comparison_level_library.LevenshteinLevelBase
+    handler: python
+    selection:
+      members:
+        -  __init__
+    rendering:
+      show_root_heading: true
+      show_source: false   
+      heading_level: 2
+
+---
+
+::: splink.comparison_level_library.DamearauLevenshteinLevelBase
     handler: python
     selection:
       members:

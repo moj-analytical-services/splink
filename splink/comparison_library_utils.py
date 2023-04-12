@@ -83,6 +83,9 @@ def distance_threshold_comparison_levels(
         if distance_function_name == "levenshtein":
             distance_function_name = self._levenshtein_name
             higher_is_more_similar = False
+        if distance_function_name == "damerau-levenshtein":
+            distance_function_name = self._damerau_levenshtein_name
+            higher_is_more_similar = False
         if distance_function_name == "jaro":
             distance_function_name = self._jaro_name
             higher_is_more_similar = True

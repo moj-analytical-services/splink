@@ -202,6 +202,44 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
         )
 
 
+class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
+    def __init__(
+        self,
+        col_name: str,
+        distance_threshold: int,
+        m_probability=None,
+    ) -> ComparisonLevel:
+        """Represents a comparison level using a levenshtein distance function,
+
+        Args:
+            col_name (str): Input column name
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+            m_probability (float, optional): Starting value for m probability.
+                Defaults to None.
+
+        Examples:
+            >>> # DuckDB Damerau-Levenshtein comparison level at threshold 1
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.damerau_levenshtein_level("name", 1)
+
+            >>> # Spark Damerau-Levenshtein comparison level at thresholds 1
+            >>> import splink.spark.spark_comparison_level_library as cll
+            >>> cll.damerau_levenshtein_level("name", 1)
+
+        Returns:
+            ComparisonLevel: A comparison level that evaluates the
+                Damerau-Levenshtein similarity
+        """
+        super().__init__(
+            col_name,
+            self._damerau_levenshtein_name,
+            distance_threshold,
+            False,
+            m_probability=m_probability,
+        )
+
+
 class JaroLevelBase(DistanceFunctionLevelBase):
     def __init__(
         self,
