@@ -105,7 +105,7 @@ df_with_coordinates.head()
 
 Now that coordinates have been added, a more detailed postcode comparison can be created to be included in a splink settings dictionary:
 
-```
+```python
 import splink.duckdb.duckdb_comparison_level_library as cll
 
 postcode_comparison = {
