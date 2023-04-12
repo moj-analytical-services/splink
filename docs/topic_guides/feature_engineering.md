@@ -166,7 +166,7 @@ Note: [Soundex](phonetic.md#soundex) and [Metaphone](phonetic.md#metaphone) are 
 
 Now that the dmetaphone columns have been added, they can be used within comparisons. For example, using the [name_comparison](../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons).
 
-```
+```python
 import splink.duckdb.duckdb_comparison_template_library as ctl
 
 first_name_comparison = ctl.name_comparison(
