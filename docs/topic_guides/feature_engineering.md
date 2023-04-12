@@ -22,7 +22,7 @@ Many datasets contain postcode data and there are a number of ways to compare th
 
 For example, levenshtein distances are useful to spot any typos/character swaps:
 
-```
+```python
 import splink.duckdb.duckdb_comparison_library as cl
 
 postcode_comparison = cl.levenshtein_at_thresholds("postcode", [2])
