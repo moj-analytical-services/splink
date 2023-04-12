@@ -26,7 +26,18 @@ For example, levenshtein distances are useful to spot any typos/character swaps:
 import splink.duckdb.duckdb_comparison_library as cl
 
 postcode_comparison = cl.levenshtein_at_thresholds("postcode", [2])
+print(postcode_comparison.human_readable_description)
 ```
+
+>
+> Comparison 'Exact match vs. levenshtein at threshold 2 vs. anything else' of "postcode".
+>
+> Similarity is assessed using the following ComparisonLevels:
+>
+>    - 'Null' with SQL rule: "postcode_l" IS NULL OR "postcode_r" IS NULL
+>    - 'Exact match' with SQL rule: "postcode_l" = "postcode_r"
+>    - Levenshtein <= 2' with SQL rule: levenshtein("postcode_l", "postcode_r") <= 2
+>    - 'All other comparisons' with SQL rule: ELSE
 
 However, string comparators alone don't necessarily give the best sense of whether two postcodes are similar. Another way of considering similarity of postcodes is the physical distance between them. Splink has a functions to calculate the distance between two sets of coordinates ([cll.distance_in_KM_level()](../comparison_level_library.md#splink.comparison_level_library.DistanceFunctionLevelBase) and [cl.distance_in_KM_at_thresholds()](../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsComparisonBase)) which can be utilised, alongside string comparisons, to give better results.
 
@@ -59,37 +70,38 @@ Then read in a list of GB postcodes downloaded from [geonames](http://download.g
 ```
 import pandas as pd
 
-names = ['dataset', 'postcode', 'area', 'country', 'country_code', 'region', 'unknown', 'region2', 'region3', 'latitude', 'longitude','feature code']
+names = ['country_code', 'postal_code', 'place_name', 'admin_name1', 'admin_code1', 'admin_name2', 'admin_code2', 'admin_name3', 'admin_code3', 'latitude', 'longitude','accuracy']
 postcodes = pd.read_csv("GB_full.txt", sep="\t", header = None, names=names)
 postcodes.head(5)
 ```
 
-|    | dataset   | postcode   | area       | country   | country_code   | region        |   unknown | region2                 | region3   |   latitude |   longitude |   feature code |
-|---:|:----------|:-----------|:-----------|:----------|:---------------|:--------------|----------:|:------------------------|:----------|-----------:|------------:|---------------:|
-|  0 | GB        | AL3 8QE    | Slip End   | England   | ENG            | Bedfordshire  |       nan | Central Bedfordshire    | E06000056 |    51.8479 |     -0.4474 |              6 |
-|  1 | GB        | AL5 3NG    | Harpenden  | England   | ENG            | Bedfordshire  |       nan | Central Bedfordshire    | E06000056 |    51.8321 |     -0.383  |              6 |
-|  2 | GB        | AL5 3NS    | Hyde       | England   | ENG            | Bedfordshire  |       nan | Central Bedfordshire    | E06000056 |    51.8333 |     -0.3763 |              6 |
-|  3 | GB        | AL5 3QF    | Hyde       | England   | ENG            | Bedfordshire  |       nan | Central Bedfordshire    | E06000056 |    51.8342 |     -0.3851 |              6 |
-|  4 | GB        | B10 0AB    | Birmingham | England   | ENG            | West Midlands |       nan | Birmingham District (B) | E08000025 |    52.4706 |     -1.875  |              6 |
+|    | country_code   | postal_code   | place_name   | admin_name1   | admin_code1   | admin_name2   |   admin_code2 | admin_name3             | admin_code3   |   latitude |   longitude |   accuracy |
+|---:|:---------------|:--------------|:-------------|:--------------|:--------------|:--------------|--------------:|:------------------------|:--------------|-----------:|------------:|-----------:|
+|  0 | GB             | AL3 8QE       | Slip End     | England       | ENG           | Bedfordshire  |           nan | Central Bedfordshire    | E06000056     |    51.8479 |     -0.4474 |          6 |
+|  1 | GB             | AL5 3NG       | Harpenden    | England       | ENG           | Bedfordshire  |           nan | Central Bedfordshire    | E06000056     |    51.8321 |     -0.383  |          6 |
+|  2 | GB             | AL5 3NS       | Hyde         | England       | ENG           | Bedfordshire  |           nan | Central Bedfordshire    | E06000056     |    51.8333 |     -0.3763 |          6 |
+|  3 | GB             | AL5 3QF       | Hyde         | England       | ENG           | Bedfordshire  |           nan | Central Bedfordshire    | E06000056     |    51.8342 |     -0.3851 |          6 |
+|  4 | GB             | B10 0AB       | Birmingham   | England       | ENG           | West Midlands |           nan | Birmingham District (B) | E08000025     |    52.4706 |     -1.875  |          6 |
 
 Now combine the lat-long coordinates from the `GB_full.txt` lookup.
 
 ```
-df_with_coordinates = df.merge(postcodes[["postcode", "latitude", "longitude"]], 
+df_with_coordinates = df.merge(postcodes[["postal_code", "latitude", "longitude"]], 
                                     left_on="postcode_fake", 
-                                    right_on="postcode",
+                                    right_on="postal_code",
                                     how="left")
+df_with_coordinates = df_with_coordinates.rename({'postcode_fake':'postcode'}, axis=1)
 
 df_with_coordinates.head()
 ```
 
-|    | unique_id   | cluster   | full_name                                        | first_and_surname   | first_name   | surname   | dob        | birth_place   | postcode_fake   | gender   | occupation   | postcode   |   latitude |   longitude |
-|---:|:------------|:----------|:-------------------------------------------------|:--------------------|:-------------|:----------|:-----------|:--------------|:----------------|:---------|:-------------|:-----------|-----------:|------------:|
-|  0 | Q2296770-1  | Q2296770  | thomas clifford, 1st baron clifford of chudleigh | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8DF        | male     | politician   | TQ13 8DF   |    50.6927 |     -3.8139 |
-|  1 | Q2296770-2  | Q2296770  | thomas of chudleigh                              | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8DF        | male     | politician   | TQ13 8DF   |    50.6927 |     -3.8139 |
-|  2 | Q2296770-3  | Q2296770  | tom 1st baron clifford of chudleigh              | tom chudleigh       | tom          | chudleigh | 1630-08-01 | devon         | TQ13 8DF        | male     | politician   | TQ13 8DF   |    50.6927 |     -3.8139 |
-|  3 | Q2296770-4  | Q2296770  | thomas 1st chudleigh                             | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8HU        |          | politician   | TQ13 8HU   |    50.6876 |     -3.8958 |
-|  4 | Q2296770-5  | Q2296770  | thomas clifford, 1st baron chudleigh             | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8DF        |          | politician   | TQ13 8DF   |    50.6927 |     -3.8139 |
+|    | unique_id   | cluster   | full_name                                        | first_and_surname   | first_name   | surname   | dob        | birth_place   | postcode   | gender   | occupation   | postal_code   |   latitude |   longitude |
+|---:|:------------|:----------|:-------------------------------------------------|:--------------------|:-------------|:----------|:-----------|:--------------|:-----------|:---------|:-------------|:--------------|-----------:|------------:|
+|  0 | Q2296770-1  | Q2296770  | thomas clifford, 1st baron clifford of chudleigh | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8DF   | male     | politician   | TQ13 8DF      |    50.6927 |     -3.8139 |
+|  1 | Q2296770-2  | Q2296770  | thomas of chudleigh                              | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8DF   | male     | politician   | TQ13 8DF      |    50.6927 |     -3.8139 |
+|  2 | Q2296770-3  | Q2296770  | tom 1st baron clifford of chudleigh              | tom chudleigh       | tom          | chudleigh | 1630-08-01 | devon         | TQ13 8DF   | male     | politician   | TQ13 8DF      |    50.6927 |     -3.8139 |
+|  3 | Q2296770-4  | Q2296770  | thomas 1st chudleigh                             | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8HU   |          | politician   | TQ13 8HU      |    50.6876 |     -3.8958 |
+|  4 | Q2296770-5  | Q2296770  | thomas clifford, 1st baron chudleigh             | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8DF   |          | politician   | TQ13 8DF      |    50.6927 |     -3.8139 |
 
 Now that coordinates have been added, a more detailed postcode comparison can be created to be included in a splink settings dictionary:
 
