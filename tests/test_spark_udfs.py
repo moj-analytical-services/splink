@@ -109,16 +109,24 @@ def test_damerau_levenshtein(spark):
     assert dl_w_out == dl_expected
 
     # ensure that newest jar is calculating similarity . dl of strings below is 0.9440
-    assert spark.sql("""SELECT levdamerau_distance("MARHTA", "MARTHA")  """).first()[0] > 0.9
+    assert (
+        spark.sql("""SELECT levdamerau_distance("MARHTA", "MARTHA")  """).first()[0]
+        > 0.9
+    )
 
     # ensure that when one or both of the strings compared is NULL jw sim is 0
 
-    #assert spark.sql("""SELECT levdamerau_distance(NULL, "John")  """).first()[0] == 0.0
-    #assert spark.sql("""SELECT levdamerau_distance("Tom", NULL )  """).first()[0] == 0.0
-    #assert spark.sql("""SELECT levdamerau_distance(NULL, NULL )  """).first()[0] == 0.0
+    # assert spark.sql(
+    #       """SELECT levdamerau_distance(NULL, "John")  """).first()[0] == 0.0
+    # assert spark.sql(
+    #       """SELECT levdamerau_distance("Tom", NULL )  """).first()[0] == 0.0
+    # assert spark.sql(
+    #       """SELECT levdamerau_distance(NULL, NULL )  """).first()[0] == 0.0
 
     # ensure totally dissimilar strings have dl sim of 0
-    assert spark.sql("""SELECT levdamerau_distance("Local", "Pub")  """).first()[0] == 5.0
+    assert (
+        spark.sql("""SELECT levdamerau_distance("Local", "Pub")  """).first()[0] == 5.0
+    )
 
     # ensure totally similar strings have dl sim of 0
     assert spark.sql("""SELECT levdamerau_distance("Pub", "Pub")  """).first()[0] == 0.0
@@ -134,20 +142,25 @@ def test_damerau_levenshtein(spark):
 
     assert (
         round(
-            spark.sql("""SELECT levdamerau_distance("hippo", "elephant")  """).first()[0],
+            spark.sql("""SELECT levdamerau_distance("hippo", "elephant")  """).first()[
+                0
+            ],
             decimals,
         )
         == 7.0
     )
     assert (
         round(
-            spark.sql("""SELECT levdamerau_distance("elephant", "hippo")  """).first()[0],
+            spark.sql("""SELECT levdamerau_distance("elephant", "hippo")  """).first()[
+                0
+            ],
             decimals,
         )
         == 7.0
     )
-    assert spark.sql("""SELECT levdamerau_distance("aaapppp", "")  """).first()[0] == 7.0
-
+    assert (
+        spark.sql("""SELECT levdamerau_distance("aaapppp", "")  """).first()[0] == 7.0
+    )
 
 
 def test_jaro(spark):

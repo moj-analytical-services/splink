@@ -90,6 +90,7 @@ class levenshtein_at_thresholds(
     def _distance_level(self):
         return levenshtein_level
 
+
 class damerau_levenshtein_at_thresholds(
     SparkComparisonProperties, DamerauLevenshteinAtThresholdsComparisonBase
 ):

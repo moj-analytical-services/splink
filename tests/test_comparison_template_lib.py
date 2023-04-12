@@ -38,7 +38,9 @@ def test_date_comparison_jaro_run(ctl):
     ],
 )
 def test_date_comparison_dl_run(ctl):
-    ctl.date_comparison("date", levenshtein_thresholds=[], damerau_levenshtein_thresholds=[1])
+    ctl.date_comparison(
+        "date", levenshtein_thresholds=[], damerau_levenshtein_thresholds=[1]
+    )
 
 
 @pytest.mark.parametrize(

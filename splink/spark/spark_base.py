@@ -41,4 +41,4 @@ class SparkBase(DialectBase):
 
     @property
     def _damerau_levenshtein_name(self):
-        return "levdamerau_distance"    
+        return "levdamerau_distance"

@@ -260,7 +260,9 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         return True
 
 
-class DamerauLevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase):
+class DamerauLevenshteinAtThresholdsComparisonBase(
+    DistanceFunctionAtThresholdsComparisonBase
+):
     def __init__(
         self,
         col_name: str,
@@ -271,8 +273,8 @@ class DamerauLevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsC
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_else=None,
     ) -> Comparison:
-        """A comparison of the data in `col_name` with the damerau-levenshtein distance used to
-        assess middle similarity levels.
+        """A comparison of the data in `col_name` with the damerau-levenshtein distance
+        used to assess middle similarity levels.
 
         An example of the output with default arguments and setting
         `distance_threshold_or_thresholds = [1,2]` would be
@@ -306,7 +308,7 @@ class DamerauLevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsC
             >>> cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
 
         Returns:
-            Comparison: A comparison for Damerau-Levenshtein similarity that can be 
+            Comparison: A comparison for Damerau-Levenshtein similarity that can be
             included in the Splink settings dictionary.
         """
 

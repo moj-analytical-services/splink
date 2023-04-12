@@ -230,7 +230,9 @@ def test_small_example_duckdb(tmp_path):
                     cll.else_level(),
                 ],
             },
-            cl.damerau_levenshtein_at_thresholds("dob", 2, term_frequency_adjustments=True),
+            cl.damerau_levenshtein_at_thresholds(
+                "dob", 2, term_frequency_adjustments=True
+            ),
             cl.jaro_at_thresholds("email", term_frequency_adjustments=True),
             cl.jaro_winkler_at_thresholds("city", term_frequency_adjustments=True),
         ],

@@ -175,7 +175,9 @@ class DateComparisonBase(Comparison):
             comparison_levels = comparison_levels + threshold_comparison_levels
 
         if len(damerau_levenshtein_thresholds) > 0:
-            damerau_levenshtein_thresholds = ensure_is_iterable(damerau_levenshtein_thresholds)
+            damerau_levenshtein_thresholds = ensure_is_iterable(
+                damerau_levenshtein_thresholds
+            )
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -263,7 +265,7 @@ class DateComparisonBase(Comparison):
             desc = distance_threshold_description(
                 col_name, "damerau-levenshtein", damerau_levenshtein_thresholds
             )
-            comparison_desc += desc            
+            comparison_desc += desc
 
         if len(jaro_thresholds) > 0:
             desc = distance_threshold_description(col_name, "jaro", jaro_thresholds)
@@ -373,7 +375,7 @@ class NameComparisonBase(Comparison):
                 for the thresholds specified. Defaults to None.
             m_probability_or_probabilities_dl (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
-                for the thresholds specified. Defaults to None.                
+                for the thresholds specified. Defaults to None.
             m_probability_or_probabilities_datediff (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
@@ -456,7 +458,7 @@ class NameComparisonBase(Comparison):
                 damerau_levenshtein_thresholds,
                 m_probability_or_probabilities_dl,
             )
-            comparison_levels = comparison_levels + threshold_comparison_levels            
+            comparison_levels = comparison_levels + threshold_comparison_levels
 
         if len(jaro_thresholds) > 0:
             jaro_thresholds = ensure_is_iterable(jaro_thresholds)
