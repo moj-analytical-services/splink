@@ -12,7 +12,7 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 
 ## Key Features
 
-
+<br>
 
 ⚡  **Speed:** Capable of linking a million records on a laptop in approximately one minute.
 
