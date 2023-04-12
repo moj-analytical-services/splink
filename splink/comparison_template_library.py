@@ -153,8 +153,8 @@ class DateComparisonBase(Comparison):
             )
             comparison_levels.append(comparison_level)
 
+        levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
         if len(levenshtein_thresholds) > 0:
-            levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -164,8 +164,8 @@ class DateComparisonBase(Comparison):
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
+        jaro_thresholds = ensure_is_iterable(jaro_thresholds)
         if len(jaro_thresholds) > 0:
-            jaro_thresholds = ensure_is_iterable(jaro_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -175,8 +175,8 @@ class DateComparisonBase(Comparison):
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
+        jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
         if len(jaro_winkler_thresholds) > 0:
-            jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -198,10 +198,9 @@ class DateComparisonBase(Comparison):
                 "choosing one of the three."
             )
 
+        datediff_thresholds = ensure_is_iterable(datediff_thresholds)
+        datediff_metrics = ensure_is_iterable(datediff_metrics)
         if len(datediff_thresholds) > 0:
-            datediff_thresholds = ensure_is_iterable(datediff_thresholds)
-            datediff_metrics = ensure_is_iterable(datediff_metrics)
-
             if m_probability_or_probabilities_datediff is None:
                 m_probability_or_probabilities_datediff = [None] * len(
                     datediff_thresholds
@@ -403,8 +402,8 @@ class NameComparisonBase(Comparison):
                 )
                 comparison_levels.append(comparison_level)
 
+        levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
         if len(levenshtein_thresholds) > 0:
-            levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -414,8 +413,8 @@ class NameComparisonBase(Comparison):
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
+        jaro_thresholds = ensure_is_iterable(jaro_thresholds)
         if len(jaro_thresholds) > 0:
-            jaro_thresholds = ensure_is_iterable(jaro_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -425,8 +424,8 @@ class NameComparisonBase(Comparison):
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
+        jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
         if len(jaro_winkler_thresholds) > 0:
-            jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
@@ -436,8 +435,8 @@ class NameComparisonBase(Comparison):
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
+        jaccard_thresholds = ensure_is_iterable(jaccard_thresholds)
         if len(jaccard_thresholds) > 0:
-            jaccard_thresholds = ensure_is_iterable(jaccard_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
