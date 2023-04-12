@@ -170,7 +170,7 @@ class DateComparisonBase(Comparison):
                 col_name,
                 "levenshtein",
                 levenshtein_thresholds,
-                m_probability_or_probabilities_dl,
+                m_probability_or_probabilities_lev,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -183,7 +183,7 @@ class DateComparisonBase(Comparison):
                 col_name,
                 "damerau-levenshtein",
                 damerau_levenshtein_thresholds,
-                m_probability_or_probabilities_lev,
+                m_probability_or_probabilities_dl,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
