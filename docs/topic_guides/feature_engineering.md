@@ -49,7 +49,7 @@ Below is an example of adding lattitude and longitude columns from geonames to c
 
 Read in a dataset with postcodes:
 
-```
+```python
 import pandas as pd
 
 df = pd.read_parquet("/PATH/TO/DEMO/DATA/historical_figures_with_errors_50k.parquet")
