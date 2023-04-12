@@ -1032,7 +1032,7 @@ class Linker:
         return self._execute_sql_pipeline([concat_with_tf])
 
     def estimate_u_using_random_sampling(
-        self, max_pairs: int = None, *, target_rows=None
+        self, max_pairs: int = None, seed: int = None, *, target_rows=None
     ):
         """Estimate the u parameters of the linkage model using random sampling.
 
@@ -1045,6 +1045,10 @@ class Linker:
         pairwise comparisons are non-matches (or at least, they are very unlikely to be
         matches). For large datasets, this is typically true.
 
+        The results of estimate_u_using_random_sampling, and therefore an entire splink
+        model, can be made reproducible by setting the seed parameter. Setting the seed
+        will have performance implications as additional processing is required.
+
         Args:
             max_pairs (int): The maximum number of pairwise record comparisons to
             sample. Larger will give more accurate estimates
@@ -1052,6 +1056,9 @@ class Linker:
             gives best results but can take a long time to compute. 1e7 (ten million)
             is often adequate whilst testing different model specifications, before
             the final model is estimated.
+            seed (int): Seed for random sampling. Assign to get reproducible u
+            probabilities. Note, seed for random sampling is only supported for
+            DuckDB and Spark, for Athena and SQLite set to None.
 
         Examples:
             >>> linker.estimate_u_using_random_sampling(1e8)
@@ -1079,7 +1086,7 @@ class Linker:
         else:
             raise TypeError("Missing argument max_pairs")
 
-        estimate_u_values(self, max_pairs)
+        estimate_u_values(self, max_pairs, seed)
         self._populate_m_u_from_trained_values()
 
         self._settings_obj._columns_without_estimated_parameters_message()

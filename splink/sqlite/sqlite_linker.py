@@ -155,12 +155,16 @@ class SQLiteLinker(Linker):
         input.to_sql(table_name, self.con, index=False)
         return self._table_to_splink_dataframe(table_name, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
             return ""
+        if seed:
+            raise NotImplementedError(
+                "SQLite does not support seeds in random ",
+                "samples. Please remove the `seed` parameter.",
+            )
 
         sample_size = int(sample_size)
-
         return (
             "where unique_id IN (SELECT unique_id FROM __splink__df_concat_with_tf"
             f" ORDER BY RANDOM() LIMIT {sample_size})"

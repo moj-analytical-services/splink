@@ -17,7 +17,6 @@ from splink.spark.spark_linker import SparkLinker
     ],
 )
 def test_datediff_levels(spark, cl, cll, Linker):
-
     # Capture differing comparison levels to allow unique settings generation
     df = pd.DataFrame(
         [
@@ -142,7 +141,6 @@ def test_datediff_levels(spark, cl, cll, Linker):
     for gamma, id_pairs in gamma_lookup.items():
         for left, right in id_pairs:
             for linker_name, linker_pred in linker_outputs.items():
-
                 print(f"Checking IDs: {left}, {right} for {linker_name}")
 
                 assert (
@@ -162,7 +160,6 @@ def test_datediff_levels(spark, cl, cll, Linker):
     ],
 )
 def test_datediff_error_logger(cl):
-
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
         cl.datediff_at_thresholds("dob", [1], ["day", "month", "year", "year"])

@@ -344,9 +344,14 @@ class AthenaLinker(Linker):
         self.register_data_on_s3(input, table_name)
         return self._table_to_splink_dataframe(table_name, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
             return ""
+        if seed:
+            raise NotImplementedError(
+                "Athena does not support seeds in random ",
+                "samples. Please remove the `seed` parameter.",
+            )
         percent = proportion * 100
         return f" TABLESAMPLE BERNOULLI ({percent})"
 

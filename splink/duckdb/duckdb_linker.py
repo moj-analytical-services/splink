@@ -207,11 +207,14 @@ class DuckDBLinker(Linker):
         self._con.register(table_name, input)
         return self._table_to_splink_dataframe(table_name, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
-        return f"USING SAMPLE {percent}% (bernoulli)"
+        if seed:
+            return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
+        else:
+            return f"USING SAMPLE {percent}% (bernoulli)"
 
     @property
     def _infinity_expression(self):

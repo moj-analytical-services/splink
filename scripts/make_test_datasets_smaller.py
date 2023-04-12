@@ -21,7 +21,6 @@ def process_directory(directory):
     print("Starting truncating files")
     for root, _, files in os.walk(directory):
         for file in files:
-
             file_path = os.path.join(root, file)
             file_ext = os.path.splitext(file)[-1].lower()
 

@@ -452,11 +452,14 @@ class SparkLinker(Linker):
         input.createOrReplaceTempView(table_name)
         return self._table_to_splink_dataframe(table_name, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
-        return f" TABLESAMPLE ({percent} PERCENT) "
+        if seed:
+            return f" ORDER BY rand({seed}) LIMIT {round(sample_size)}"
+        else:
+            return f" TABLESAMPLE ({percent} PERCENT) "
 
     def _table_exists_in_database(self, table_name):
         query_result = self.spark.sql(

@@ -50,7 +50,7 @@ def test_full_example_duckdb(tmp_path):
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6, seed=1)
     linker.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )

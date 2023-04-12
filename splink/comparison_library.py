@@ -696,7 +696,6 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
         comparison_levels.append(null_level)
 
         if include_exact_match_level:
-
             label_suffix = f" {lat_col}, {long_col}"
             level = {
                 "sql_condition": f"({lat_col}_l = {lat_col}_r) \n"
