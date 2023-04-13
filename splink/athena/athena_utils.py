@@ -39,6 +39,7 @@ def _garbage_collection(
     boto3_session,
     delete_s3_folders=True,
     tables_to_exclude=[],
+    name_prefix="__splink",
 ):
     tables_to_exclude = ensure_is_list(tables_to_exclude)
     tables_to_exclude = [
@@ -50,7 +51,7 @@ def _garbage_collection(
     # tables containing the specific prefix: "__splink"
     tables = wr.catalog.get_tables(
         database=database_name,
-        name_prefix="__splink",
+        name_prefix=name_prefix,
         boto3_session=boto3_session,
     )
     delete_metadata_loc = []

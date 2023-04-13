@@ -141,30 +141,34 @@ def test_athena_garbage_collection():
 
     out_fp = "athena_test_garbage_collection"
 
-    # Test that our
-    linker = AthenaLinker(
-        settings_dict=settings_dict,
-        input_table_or_tables=f"{db_name_read}.{table_name}",
-        boto3_session=my_session,
-        output_bucket=output_bucket,
-        output_database=db_name_write,
-        output_filepath=out_fp,
-    )
+    def run_athena_predictions():
+        # Test that our gc works as expected w/ tables_to_exclude
+        linker = AthenaLinker(
+            settings_dict=settings_dict,
+            input_table_or_tables=f"{db_name_read}.{table_name}",
+            boto3_session=my_session,
+            output_bucket=output_bucket,
+            output_database=db_name_write,
+            output_filepath=out_fp,
+        )
 
-    path = f"s3://{output_bucket}/{out_fp}/{linker._cache_uid}"
+        path = f"s3://{output_bucket}/{out_fp}/{linker._cache_uid}"
 
-    linker.profile_columns(
-        [
-            "first_name",
-            "surname",
-            "first_name || surname",
-            "concat(city, first_name)",
-            ["surname", "city"],
-        ]
-    )
+        linker.profile_columns(
+            [
+                "first_name",
+                "surname",
+                "first_name || surname",
+                "concat(city, first_name)",
+                ["surname", "city"],
+            ]
+        )
 
-    predict = linker.predict()
+        predict = linker.predict()
 
+        return linker, path, predict
+
+    linker, path, predict = run_athena_predictions()
     linker.drop_all_tables_created_by_splink(tables_to_exclude=predict)
 
     # Check everything gets cleaned up excl. predict
@@ -206,6 +210,29 @@ def test_athena_garbage_collection():
         ignore_empty=True,
     )
     assert len(files) == 0
+
+    # Check drop_tables_in_current_splink_run
+    linker, path, predict = run_athena_predictions()
+
+    linker.drop_tables_in_current_splink_run(
+        tables_to_exclude=predict.physical_name
+    )
+    assert len(linker._names_of_tables_created_by_splink) == 1
+    tables = wr.catalog.get_tables(
+        database=db_name_write,
+        name_prefix="__splink",
+        boto3_session=my_session,
+    )
+    assert sum(1 for _ in tables) == 1
+
+    linker.drop_tables_in_current_splink_run()
+    assert len(linker._names_of_tables_created_by_splink) == 0
+    tables = wr.catalog.get_tables(
+        database=db_name_write,
+        name_prefix="__splink",
+        boto3_session=my_session,
+    )
+    assert sum(1 for _ in tables) == 0
 
 
 def test_pandas_as_input():
