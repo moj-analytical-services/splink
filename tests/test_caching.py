@@ -13,11 +13,11 @@ dummy_frame = pd.DataFrame(["id"])
 
 
 def make_mock_execute(linker):
-    # creates a mock version of linker._execute_sql,
+    # creates a mock version of linker._execute_sql_against_backend,
     # so we can count calls
     dummy_splink_df = DuckDBLinkerDataFrame("template", "dummy_frame", linker)
     mock_execute = create_autospec(
-        linker._execute_sql, return_value=dummy_splink_df
+        linker._execute_sql_against_backend, return_value=dummy_splink_df
     )
     return mock_execute
 
@@ -112,7 +112,7 @@ def test_cache_access_initialise_df_concat(debug_mode):
     linker = DuckDBLinker(df, settings)
     linker.debug_mode = debug_mode
     with patch.object(
-        linker, "_execute_sql", new=make_mock_execute(linker)
+        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
     ) as mock_execute_sql_pipeline:
         # shouldn't touch DB if we don't materialise
         linker._initialise_df_concat_with_tf(materialise=False)
@@ -141,7 +141,7 @@ def test_cache_access_compute_tf_table(debug_mode):
     linker = DuckDBLinker(df, settings)
     linker.debug_mode = debug_mode
     with patch.object(
-        linker, "_execute_sql", new=make_mock_execute(linker)
+        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
     ) as mock_execute_sql_pipeline:
         linker.compute_tf_table("first_name")
         mock_execute_sql_pipeline.assert_called()
@@ -160,7 +160,7 @@ def test_invalidate_cache(debug_mode):
     linker.debug_mode = debug_mode
 
     with patch.object(
-        linker, "_execute_sql", new=make_mock_execute(linker)
+        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
     ) as mock_execute_sql_pipeline:
         linker._initialise_df_concat_with_tf(materialise=True)
         mock_execute_sql_pipeline.assert_called()
@@ -203,7 +203,7 @@ def test_cache_invalidates_with_new_linker(debug_mode):
     linker = DuckDBLinker(df, settings)
     linker.debug_mode = debug_mode
     with patch.object(
-        linker, "_execute_sql", new=make_mock_execute(linker)
+        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
     ) as mock_execute_sql_pipeline:
         linker._initialise_df_concat_with_tf(materialise=True)
         mock_execute_sql_pipeline.assert_called()
@@ -216,7 +216,7 @@ def test_cache_invalidates_with_new_linker(debug_mode):
     new_linker = DuckDBLinker(df, settings)
     new_linker.debug_mode = debug_mode
     with patch.object(
-        new_linker, "_execute_sql", new=make_mock_execute(new_linker)
+        new_linker, "_execute_sql_against_backend", new=make_mock_execute(new_linker)
     ) as mock_execute_sql_pipeline:
         # new linker should recalculate df_concat_with_tf
         new_linker._initialise_df_concat_with_tf(materialise=True)
@@ -228,7 +228,7 @@ def test_cache_invalidates_with_new_linker(debug_mode):
         mock_execute_sql_pipeline.assert_not_called()
 
     with patch.object(
-        linker, "_execute_sql", new=make_mock_execute(linker)
+        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
     ) as mock_execute_sql_pipeline:
         # original linker should still have result cached
         linker._initialise_df_concat_with_tf(materialise=True)
@@ -243,7 +243,7 @@ def test_cache_register_compute_concat_with_tf_table(debug_mode):
     linker.debug_mode = debug_mode
 
     with patch.object(
-        linker, "_execute_sql", new=make_mock_execute(linker)
+        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
     ) as mock_execute_sql_pipeline:
         # can actually register frame, as that part not cached
         # don't need function so use any frame
@@ -261,7 +261,7 @@ def test_cache_register_compute_tf_table(debug_mode):
     linker.debug_mode = debug_mode
 
     with patch.object(
-        linker, "_execute_sql", new=make_mock_execute(linker)
+        linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
     ) as mock_execute_sql_pipeline:
         # can actually register frame, as that part not cached
         # don't need function so use any frame
