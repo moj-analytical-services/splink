@@ -1,5 +1,3 @@
-import datetime
-import os
 import awswrangler as wr
 
 from splink.misc import ensure_is_list
@@ -15,6 +13,7 @@ def athena_warning_text(database_bucket_txt, do_does_grammar):
         "'awswrangler.catalog.create_database' for databases using the "
         "awswrangler API."
     )
+
 
 def _verify_athena_inputs(database, bucket, boto3_session):
 
@@ -42,10 +41,11 @@ def _garbage_collection(
     tables_to_exclude=[],
 ):
     tables_to_exclude = ensure_is_list(tables_to_exclude)
-    tables_to_exclude = [df.physical_name if isinstance(df, SplinkDataFrame) 
-                    else df 
-                    for df in tables_to_exclude]
-    
+    tables_to_exclude = [
+        df.physical_name if isinstance(df, SplinkDataFrame) else df
+        for df in tables_to_exclude
+    ]
+
     # This will only delete tables created within the splink process. These are
     # tables containing the specific prefix: "__splink"
     tables = wr.catalog.get_tables(

@@ -183,7 +183,7 @@ class Linker:
         else:
             settings_dict = deepcopy(settings_dict)
             self._setup_settings_objs(settings_dict)
-            
+
         homogenised_tables, homogenised_aliases = self._register_input_tables(
             input_table_or_tables,
             input_table_aliases,

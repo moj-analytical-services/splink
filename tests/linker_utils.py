@@ -4,7 +4,9 @@ import pytest
 from tests.cc_testing_utils import check_df_equality
 
 
-def _test_table_registration(linker, additional_tables_to_register=[], skip_dtypes=False):
+def _test_table_registration(
+    linker, additional_tables_to_register=[], skip_dtypes=False
+):
     # Standard pandas df...
     a = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
@@ -49,7 +51,7 @@ def _test_table_registration(linker, additional_tables_to_register=[], skip_dtyp
         "select * from __splink_df_record_df", output_type="splinkdf"
     ).as_record_dict()
     assert check_df_equality(
-        pd.DataFrame.from_records(r_dict), 
+        pd.DataFrame.from_records(r_dict),
         pd.DataFrame.from_records(b),
         skip_dtypes,
     )

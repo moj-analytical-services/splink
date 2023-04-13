@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import os
-import uuid
 
 import awswrangler as wr
 import boto3
@@ -11,8 +10,8 @@ import pandas as pd
 
 from ..athena.athena_transforms import cast_concat_as_varchar
 from ..athena.athena_utils import (
-    _verify_athena_inputs,
     _garbage_collection,
+    _verify_athena_inputs,
 )
 from ..input_column import InputColumn
 from ..linker import Linker
@@ -108,7 +107,7 @@ class AthenaDataFrame(SplinkDataFrame):
         out_df = self.as_pandas_dataframe(limit)
         out_df = out_df.fillna(np.nan).replace([np.nan], [None])
         return out_df.to_dict(orient="records")
-    
+
 
 class AthenaLinker(Linker):
     def __init__(
@@ -191,20 +190,20 @@ class AthenaLinker(Linker):
 
         if not type(boto3_session) == boto3.session.Session:
             raise ValueError("Please enter a valid boto3 session object.")
-        
+
         self._sql_dialect_ = "presto"
-        
+
         _verify_athena_inputs(output_database, output_bucket, boto3_session)
         self.boto3_session = boto3_session
         self.output_schema = output_database
         self.output_bucket = output_bucket
-        
+
         # If the default folder is blank, name it `splink_warehouse`
         if output_filepath:
             self.output_filepath = output_filepath
         else:
             self.output_filepath = "splink_warehouse"
-        
+
         # This query info dictionary is used to circumvent the need to run
         # `wr.catalog.get_table_location` every time we want to delete
         # the backing data from s3.
@@ -219,7 +218,7 @@ class AthenaLinker(Linker):
             input_table_or_tables, input_table_aliases
         )
         accepted_df_dtypes = pd.DataFrame
-        
+
         # Run a quick check against our inputs to check if they
         # exist in the database
         for table in input_tables:
@@ -234,17 +233,17 @@ class AthenaLinker(Linker):
             set_up_basic_logging,
             input_table_aliases=input_aliases,
         )
-        
+
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return AthenaDataFrame(templated_name, physical_name, self)
 
     def change_output_filepath(self, new_filepath):
         self.output_filepath = new_filepath
-        
+
     def get_schema_info(self, input_table):
         t = input_table.split(".")
         return t if len(t) > 1 else [self.output_schema, input_table]
-    
+
     @property
     def s3_output(self):
         out_path = os.path.join(
@@ -257,7 +256,7 @@ class AthenaLinker(Linker):
             out_path += "/"
 
         return out_path
-    
+
     def check_table_exists(self, db, tb):
         # A quick function to check if a table exists
         # and spit out a warning if it is not found.
@@ -267,15 +266,15 @@ class AthenaLinker(Linker):
         )
         if not table_exists:
             raise wr.exceptions.InvalidTable(
-                    f"Table '{tb}' was not found within your selected "
-                    f"database '{db}'. Please verify your input table "
-                    "exists."
-                )
+                f"Table '{tb}' was not found within your selected "
+                f"database '{db}'. Please verify your input table "
+                "exists."
+            )
 
     def register_data_on_s3(self, table, alias):
         out_loc = f"{self.s3_output}{alias}"
-        
-        info = wr.s3.to_parquet(
+
+        wr.s3.to_parquet(
             df=table,
             path=out_loc,
             dataset=True,
@@ -288,11 +287,11 @@ class AthenaLinker(Linker):
         )
         # Construct the ctas metadata that we require
         ctas_metadata = {
-            'ctas_database': self.output_schema,
-            'ctas_table': alias,
+            "ctas_database": self.output_schema,
+            "ctas_table": alias,
         }
         self.ctas_query_info.update({alias: ctas_metadata})
-        
+
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
         self._delete_table_from_database(physical_name)
         sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
@@ -332,8 +331,8 @@ class AthenaLinker(Linker):
             input = pd.DataFrame.from_records(input)
 
         # Errors if an invalid data type is passed
-        path = self.register_data_on_s3(input, table_name)
-        
+        self.register_data_on_s3(input, table_name)
+
         return self._table_to_splink_dataframe(table_name, table_name)
 
     def _random_sample_sql(self, proportion, sample_size):
@@ -380,14 +379,14 @@ class AthenaLinker(Linker):
             use_threads=True,
             boto3_session=self.boto3_session,
         )
-        
+
         metadata = self.ctas_query_info[physical_name]
-        if 'output_location' in metadata:
+        if "output_location" in metadata:
             metadata_urls = [
                 # metadata output location
                 f"{metadata['output_location']}.metadata",
                 # manifest location
-                metadata['manifest_location'],
+                metadata["manifest_location"],
             ]
             # delete our metadata
             wr.s3.delete_objects(
@@ -397,9 +396,9 @@ class AthenaLinker(Linker):
             )
 
         self.ctas_query_info.pop(physical_name)
-        
+
     def _delete_table_from_database(self, name):
-        
+
         if name in self.ctas_query_info:
             # Use ctas metadata to delete backing data
             self._delete_table_from_s3(name)
@@ -420,16 +419,16 @@ class AthenaLinker(Linker):
                 )
 
         self._drop_table_from_database_if_exists(name)
-        
+
     def _extract_ctas_metadata(self, ctas_metadata):
-        query_meta = ctas_metadata.pop('ctas_query_metadata')
+        query_meta = ctas_metadata.pop("ctas_query_metadata")
         out_locs = {
-                "output_location": query_meta.output_location,
-                "manifest_location": query_meta.manifest_location,
-            }
+            "output_location": query_meta.output_location,
+            "manifest_location": query_meta.manifest_location,
+        }
         ctas_metadata.update(out_locs)
         return ctas_metadata
-        
+
     def drop_all_tables_created_by_splink(
         self,
         delete_s3_folders=True,
@@ -447,8 +446,9 @@ class AthenaLinker(Linker):
                 backing data contained on s3. If False, the tables created
                 by splink will be removed from your database, but the parquet
                 outputs will remain on s3. Defaults to True.
-            tables_to_exclude (list, optional): A list of input tables you wish to add to an ignore
-                list. These will not be removed during garbage collection.
+            tables_to_exclude (list, optional): A list of input tables you wish to
+                add to an ignore list. These will not be removed during garbage
+                collection.
         """
         _garbage_collection(
             self.output_schema,
@@ -460,7 +460,7 @@ class AthenaLinker(Linker):
     def drop_splink_tables_from_database(
         self,
         database_name: str,
-        delete_s3_folders: bool= True,
+        delete_s3_folders: bool = True,
         tables_to_exclude: list = [],
     ):
         """Run a cleanup process for the tables created by splink
@@ -476,8 +476,9 @@ class AthenaLinker(Linker):
                 backing data contained on s3. If False, the tables created
                 by splink will be removed from your database, but the parquet
                 outputs will remain on s3. Defaults to True.
-            tables_to_exclude (list, optional): A list of input tables you wish to add to an ignore
-                list. These will not be removed during garbage collection.
+            tables_to_exclude (list, optional): A list of input tables you wish to
+                add to an ignore list. These will not be removed during garbage
+                collection.
         """
         _garbage_collection(
             database_name,

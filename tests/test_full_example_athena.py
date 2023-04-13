@@ -2,7 +2,6 @@ import os
 
 import pandas as pd
 import pytest
-from pyarrow import csv
 
 from splink.athena.athena_comparison_library import levenshtein_at_thresholds
 from splink.athena.athena_utils import athena_warning_text
@@ -13,11 +12,12 @@ from .linker_utils import _test_table_registration
 # Skip if no valid boto3 connection exists
 try:
     import boto3
+
     # Check if a valid s3 connection is available
-    sts_client = boto3.client('sts')
+    sts_client = boto3.client("sts")
     response = sts_client.get_caller_identity()
     import awswrangler as wr
-    from dataengineeringutils3.s3 import delete_s3_folder_contents
+
     from splink.athena.athena_linker import AthenaLinker
 except ImportError:
     # Skip if no AWS Connection exists
@@ -52,6 +52,7 @@ db_name_read = "splink_awswrangler_test"
 db_name_write = "data_linking_temp"
 output_bucket = "alpha-data-linking"
 table_name = "__splink__fake_1000_from_splink_demos"
+
 
 def upload_data(db_name):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -263,11 +264,11 @@ def test_athena_errors():
             output_database=db_name_write,
             output_filepath="test_failure",
         )
-        
+
     # Check that if the database doesn't exist it fails
     rand_database = "random_database"
     db_txt = f"database '{rand_database}'"
-    
+
     with pytest.raises(Exception) as excinfo:
         AthenaLinker(
             input_table_or_tables="testing_for_failure",
@@ -278,11 +279,11 @@ def test_athena_errors():
             output_filepath="test_failure",
         )
     assert str(excinfo.value) == athena_warning_text(db_txt, ["does", "it"])
-    
+
     # check we get a failure w/ an invalid s3 bucket
     rand_bucket = "random_bucket"
     bucket_txt = f"bucket '{rand_bucket}'"
-    
+
     with pytest.raises(Exception) as excinfo:
         AthenaLinker(
             input_table_or_tables="testing_for_failure",
@@ -293,7 +294,7 @@ def test_athena_errors():
             output_filepath="test_failure",
         )
     assert str(excinfo.value) == athena_warning_text(bucket_txt, ["does", "it"])
-    
+
     # and finally, check our error message w/ both an invalid db and bucket
     txt = " and ".join([db_txt, bucket_txt])
     with pytest.raises(Exception) as excinfo:

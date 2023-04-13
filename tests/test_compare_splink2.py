@@ -8,7 +8,6 @@ from splink.sqlite.sqlite_linker import SQLiteLinker
 
 from .basic_settings import get_settings_dict
 
-from .basic_settings import get_settings_dict
 
 def test_splink_2_predict():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
