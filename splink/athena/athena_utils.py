@@ -93,6 +93,8 @@ def _verify_athena_inputs(database, bucket, boto3_session):
             "awswrangler API."
         )
 
+def _verify_athena_inputs(database, bucket, boto3_session):
+
     errors = []
 
     if (
@@ -107,7 +109,7 @@ def _verify_athena_inputs(database, bucket, boto3_session):
     if errors:
         database_bucket_txt = " and ".join(errors)
         do_does_grammar = ["does", "it"] if len(errors) == 1 else ["do", "them"]
-        raise Exception(generic_warning_text())
+        raise Exception(athena_warning_text(database_bucket_txt, do_does_grammar))
 
 
 def _garbage_collection(
