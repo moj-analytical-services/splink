@@ -117,18 +117,20 @@ class SQLiteLinker(Linker):
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
 
-        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.log(5, log_sql(sql))
-
         sql = f"""
         create table {physical_name}
         as
         {sql}
         """
-        self.con.execute(sql)
+        self._log_and_run_sql_execution(sql, templated_name, physical_name)
 
         output_obj = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_obj
+
+    def _run_sql_execution(
+        self, final_sql: str, templated_name: str, physical_name: str
+    ) -> SplinkDataFrame:
+        return self.con.execute(final_sql)
 
     def register_table(self, input, table_name, overwrite=False):
         # If the user has provided a table name, return it as a SplinkDataframe

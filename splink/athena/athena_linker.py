@@ -13,7 +13,6 @@ from ..athena.athena_transforms import cast_concat_as_varchar
 from ..athena.athena_utils import boto_utils
 from ..input_column import InputColumn
 from ..linker import Linker
-from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import ensure_is_list
 from ..splink_dataframe import SplinkDataFrame
 from ..sql_transform import sqlglot_transform_sql
@@ -305,11 +304,10 @@ class AthenaLinker(Linker):
         sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
         sql = sql.replace("FLOAT", "double").replace("float", "double")
 
-        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.log(5, log_sql(sql))
-
         # create our table on athena and extract the metadata information
-        query_metadata = self.create_table(sql, physical_name=physical_name)
+        query_metadata = self._log_and_run_sql_execution(
+            sql, templated_name, physical_name
+        )
         # append our metadata locations
         self.ctas_query_info = {
             **self.ctas_query_info,
@@ -318,6 +316,9 @@ class AthenaLinker(Linker):
 
         output_obj = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_obj
+
+    def _run_sql_execution(self, sql, templated_name, physical_name):
+        return self.create_table(sql, physical_name=physical_name)
 
     def register_table(self, input, table_name, overwrite=False):
         # If the user has provided a table name, return it as a SplinkDataframe

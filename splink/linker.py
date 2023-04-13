@@ -45,6 +45,8 @@ from .connected_components import (
 )
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
+from .exceptions import SplinkException
+from .logging_messages import execute_sql_logging_message_info, log_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .m_training import estimate_m_values_from_label_column
 from .match_key_analysis import (
@@ -489,10 +491,42 @@ class Linker:
             self._pipeline.reset()
             return dataframe
 
-    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
-        raise NotImplementedError(
-            f"_execute_sql_against_backend not implemented for {type(self)}"
-        )
+    def _execute_sql_against_backend(
+        self, sql: str, templated_name: str, physical_name: str
+    ) -> SplinkDataFrame:
+        """Execute a single sql SELECT statement, returning a SplinkDataFrame.
+
+        Subclasses should implement this, using _log_and_run_sql_execution() within
+        their implementation, maybe doing some SQL translation or other prep/cleanup
+        work before/after.
+        """
+        raise NotImplementedError(f"_execute_sql_against_backend not implemented for {type(self)}")
+
+    def _run_sql_execution(
+        self, final_sql: str, templated_name: str, physical_name: str
+    ) -> SplinkDataFrame:
+        """**Actually** execute the sql against the backend database.
+
+        This is intended to be implemented by a subclass, but not actually called
+        directly. Instead, call _log_and_run_sql_execution, and that will call this method.
+
+        This could return something, or not. It's up to the Linker subclass to decide.
+        """
+        raise NotImplementedError(f"_run_sql_execution not implemented for {type(self)}")
+
+    def _log_and_run_sql_execution(
+        self, final_sql: str, templated_name: str, physical_name: str
+    ) -> SplinkDataFrame:
+        """Log the sql, then call _run_sql_execution(), wrapping any errors"""
+        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
+        logger.log(5, log_sql(final_sql))
+        try:
+            return self._run_sql_execution(final_sql, templated_name, physical_name)
+        except Exception as e:
+            raise SplinkException(
+                f"Error executing the following sql for table "
+                f"`{templated_name}`({physical_name}):\n{final_sql}"
+            ) from e
 
     def register_table(self, input, table_name, overwrite=False):
         """
