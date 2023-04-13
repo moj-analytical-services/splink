@@ -112,7 +112,7 @@ class SQLiteLinker(Linker):
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return SQLiteDataFrame(templated_name, physical_name, self)
 
-    def _execute_sql(self, sql, templated_name, physical_name):
+    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
@@ -122,12 +122,12 @@ class SQLiteLinker(Linker):
         as
         {sql}
         """
-        self._log_and_do_execute_sql(sql, templated_name, physical_name)
+        self._log_and_run_sql_execution(sql, templated_name, physical_name)
 
         output_obj = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_obj
 
-    def _do_execute_sql(
+    def _run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
         return self.con.execute(final_sql)

@@ -491,37 +491,37 @@ class Linker:
             self._pipeline.reset()
             return dataframe
 
-    def _execute_sql(
+    def _execute_sql_against_backend(
         self, sql: str, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
         """Execute a single sql SELECT statement, returning a SplinkDataFrame.
 
-        Subclasses should implement this, using _log_and_do_execute_sql() within
+        Subclasses should implement this, using _log_and_run_sql_execution() within
         their implementation, maybe doing some SQL translation or other prep/cleanup
         work before/after.
         """
-        raise NotImplementedError(f"_execute_sql not implemented for {type(self)}")
+        raise NotImplementedError(f"_execute_sql_against_backend not implemented for {type(self)}")
 
-    def _do_execute_sql(
+    def _run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
         """**Actually** execute the sql against the backend database.
 
         This is intended to be implemented by a subclass, but not actually called
-        directly. Instead, call _log_and_do_execute_sql, and that will call this method.
+        directly. Instead, call _log_and_run_sql_execution, and that will call this method.
 
         This could return something, or not. It's up to the Linker subclass to decide.
         """
-        raise NotImplementedError(f"_do_execute_sql not implemented for {type(self)}")
+        raise NotImplementedError(f"_run_sql_execution not implemented for {type(self)}")
 
-    def _log_and_do_execute_sql(
+    def _log_and_run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
-        """Log the sql, then call _do_execute_sql(), wrapping any errors"""
+        """Log the sql, then call _run_sql_execution(), wrapping any errors"""
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(final_sql))
         try:
-            return self._do_execute_sql(final_sql, templated_name, physical_name)
+            return self._run_sql_execution(final_sql, templated_name, physical_name)
         except Exception as e:
             raise SplinkException(
                 f"Error executing the following sql for table "
@@ -635,11 +635,11 @@ class Linker:
             print(sql)
 
         if materialise_as_hash:
-            splink_dataframe = self._execute_sql(
+            splink_dataframe = self._execute_sql_against_backend(
                 sql, output_tablename_templated, table_name_hash
             )
         else:
-            splink_dataframe = self._execute_sql(
+            splink_dataframe = self._execute_sql_against_backend(
                 sql,
                 output_tablename_templated,
                 output_tablename_templated,

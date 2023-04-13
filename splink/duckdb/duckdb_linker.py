@@ -163,7 +163,7 @@ class DuckDBLinker(Linker):
     ) -> DuckDBLinkerDataFrame:
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
-    def _execute_sql(self, sql, templated_name, physical_name):
+    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
         # In the case of a table already existing in the database,
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
@@ -173,11 +173,11 @@ class DuckDBLinker(Linker):
         AS
         ({sql})
         """
-        self._log_and_do_execute_sql(sql, templated_name, physical_name)
+        self._log_and_run_sql_execution(sql, templated_name, physical_name)
 
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
 
-    def _do_execute_sql(self, final_sql, templated_name, physical_name):
+    def _run_sql_execution(self, final_sql, templated_name, physical_name):
         self._con.execute(final_sql)
 
     def register_table(self, input, table_name, overwrite=False):

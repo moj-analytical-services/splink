@@ -297,7 +297,7 @@ class AthenaLinker(Linker):
             use_threads=True,
         )
 
-    def _execute_sql(self, sql, templated_name, physical_name):
+    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
         # Deletes the table in the db, but not the object on s3.
         # This needs to be removed manually (full s3 path provided)
         self.drop_table_from_database_if_exists(physical_name)
@@ -305,7 +305,7 @@ class AthenaLinker(Linker):
         sql = sql.replace("FLOAT", "double").replace("float", "double")
 
         # create our table on athena and extract the metadata information
-        query_metadata = self._log_and_do_execute_sql(
+        query_metadata = self._log_and_run_sql_execution(
             sql, templated_name, physical_name
         )
         # append our metadata locations
@@ -317,7 +317,7 @@ class AthenaLinker(Linker):
         output_obj = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_obj
 
-    def _do_execute_sql(self, sql, templated_name, physical_name):
+    def _run_sql_execution(self, sql, templated_name, physical_name):
         return self.create_table(sql, physical_name=physical_name)
 
     def register_table(self, input, table_name, overwrite=False):

@@ -379,9 +379,9 @@ class SparkLinker(Linker):
                 )
         return spark_df
 
-    def _execute_sql(self, sql, templated_name, physical_name):
+    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
         sql = sqlglot.transpile(sql, read="spark", write="customspark", pretty=True)[0]
-        spark_df = self._log_and_do_execute_sql(sql, templated_name, physical_name)
+        spark_df = self._log_and_run_sql_execution(sql, templated_name, physical_name)
         spark_df = self._break_lineage_and_repartition(
             spark_df, templated_name, physical_name
         )
@@ -393,7 +393,7 @@ class SparkLinker(Linker):
         output_df = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_df
 
-    def _do_execute_sql(self, final_sql, templated_name, physical_name):
+    def _run_sql_execution(self, final_sql, templated_name, physical_name):
         return self.spark.sql(final_sql)
 
     @property
