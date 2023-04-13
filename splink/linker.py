@@ -500,7 +500,9 @@ class Linker:
         their implementation, maybe doing some SQL translation or other prep/cleanup
         work before/after.
         """
-        raise NotImplementedError(f"_execute_sql_against_backend not implemented for {type(self)}")
+        raise NotImplementedError(
+            f"_execute_sql_against_backend not implemented for {type(self)}"
+        )
 
     def _run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str
@@ -508,11 +510,14 @@ class Linker:
         """**Actually** execute the sql against the backend database.
 
         This is intended to be implemented by a subclass, but not actually called
-        directly. Instead, call _log_and_run_sql_execution, and that will call this method.
+        directly. Instead, call _log_and_run_sql_execution, and that will call
+        this method.
 
         This could return something, or not. It's up to the Linker subclass to decide.
         """
-        raise NotImplementedError(f"_run_sql_execution not implemented for {type(self)}")
+        raise NotImplementedError(
+            f"_run_sql_execution not implemented for {type(self)}"
+        )
 
     def _log_and_run_sql_execution(
         self, final_sql: str, templated_name: str, physical_name: str

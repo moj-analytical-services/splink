@@ -7,7 +7,6 @@ import pandas as pd
 
 from ..input_column import InputColumn
 from ..linker import Linker
-from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import ensure_is_list
 from ..splink_dataframe import SplinkDataFrame
 
