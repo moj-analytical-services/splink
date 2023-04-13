@@ -10,7 +10,13 @@ tags:
 
 # Phonetic transformation algorithms
 
-Soundex and Double Metaphone are phonetic matching algorithms that can be used to identify words that sound similar, even if they are spelled differently. These algorithms are often used in a preprocessing step for data linking and can assist in the blocking process. By incorporating them into blocking rules, it allows for possible candidate pairs of entities with phonetically similar transforms to be considered for linking. This can result in a "fuzzier" blocking process, which may be beneficial for certain projects.
+Phonetic transformation algorithms can be used to identify words that sound similar, even if they are spelled differently. These algorithms are often used in a preprocessing step for data linking and can assist in the blocking and comparison process. 
+
+By incorporating them into blocking rules, it allows for possible candidate pairs of entities with phonetically similar transforms to be considered for linking. This can result in a "fuzzier" blocking process, which may be beneficial for certain projects.
+
+Similarly, phonetically similar transforms offer another way to do fuzzy-matching within a comparison.
+
+Below are some examples of well known phonetic transformation algorithmns.
 
 ## Soundex
 

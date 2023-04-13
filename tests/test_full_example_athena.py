@@ -2,10 +2,11 @@ import os
 
 import pandas as pd
 import pytest
-from basic_settings import get_settings_dict
-from linker_utils import _test_table_registration
 
 from splink.athena.athena_comparison_library import levenshtein_at_thresholds
+
+from .basic_settings import get_settings_dict
+from .linker_utils import _test_table_registration
 
 skip = False
 try:
@@ -133,7 +134,7 @@ def test_full_example_athena(tmp_path):
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6, seed=1)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)

@@ -1,16 +1,14 @@
 import os
 
-from basic_settings import get_settings_dict
-from linker_utils import _test_table_registration, register_roc_data
 from pyspark.sql.functions import array
 from pyspark.sql.types import StringType, StructField, StructType
 
+import splink.spark.spark_comparison_level_library as cll
 import splink.spark.spark_comparison_library as cl
-from splink.spark.spark_comparison_level_library import (
-    array_intersect_level,
-    else_level,
-)
 from splink.spark.spark_linker import SparkLinker
+
+from .basic_settings import get_settings_dict, name_comparison
+from .linker_utils import _test_table_registration, register_roc_data
 
 
 def test_full_example_spark(df_spark, tmp_path):
@@ -20,6 +18,7 @@ def test_full_example_spark(df_spark, tmp_path):
 
     # Only needed because the value can be overwritten by other tests
     settings_dict["comparisons"][1] = cl.exact_match("surname")
+    settings_dict["comparisons"].append(name_comparison(cll, "surname"))
 
     settings = {
         "probability_two_random_records_match": 0.01,
@@ -33,8 +32,8 @@ def test_full_example_spark(df_spark, tmp_path):
             cl.exact_match("dob"),
             {
                 "comparison_levels": [
-                    array_intersect_level("email"),
-                    else_level(),
+                    cll.array_intersect_level("email"),
+                    cll.else_level(),
                 ]
             },
             cl.exact_match("city"),
@@ -62,7 +61,7 @@ def test_full_example_spark(df_spark, tmp_path):
     linker.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
-    linker.estimate_u_using_random_sampling(max_pairs=1e5)
+    linker.estimate_u_using_random_sampling(max_pairs=1e5, seed=1)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)

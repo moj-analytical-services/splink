@@ -53,7 +53,13 @@ from .match_key_analysis import (
     count_num_comparisons_from_blocking_rules_for_prediction_sql,
 )
 from .match_weights_histogram import histogram_data
-from .misc import ascii_uid, bayes_factor_to_prob, ensure_is_list, prob_to_bayes_factor
+from .misc import (
+    ascii_uid,
+    bayes_factor_to_prob,
+    ensure_is_list,
+    ensure_is_tuple,
+    prob_to_bayes_factor,
+)
 from .missingness import completeness_data, missingness_data
 from .pipeline import SQLPipeline
 from .predict import predict_from_comparison_vectors_sqls
@@ -124,6 +130,7 @@ class Linker:
         self,
         input_table_or_tables: str | list,
         settings_dict: dict,
+        accepted_df_dtypes,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
     ):
@@ -172,8 +179,14 @@ class Linker:
 
         self._pipeline = SQLPipeline()
 
+        homogenised_tables, homogenised_aliases = self._register_input_tables(
+            input_table_or_tables,
+            input_table_aliases,
+            accepted_df_dtypes,
+        )
+
         self._input_tables_dict = self._get_input_tables_dict(
-            input_table_or_tables, input_table_aliases
+            homogenised_tables, homogenised_aliases
         )
 
         if not isinstance(settings_dict, (dict, type(None))):
@@ -307,6 +320,25 @@ class Linker:
         raise NotImplementedError(
             f"infinity sql expression not available for {type(self)}"
         )
+
+    def _register_input_tables(self, input_tables, input_aliases, accepted_df_dtypes):
+        # 'homogenised' means all entries are strings representing tables
+        homogenised_tables = []
+        homogenised_aliases = []
+        accepted_df_dtypes = ensure_is_tuple(accepted_df_dtypes)
+
+        for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
+            if isinstance(alias, accepted_df_dtypes):
+                alias = f"__splink__input_table_{i}"
+
+            if isinstance(table, accepted_df_dtypes):
+                self.register_table(table, alias)
+                table = alias
+
+            homogenised_tables.append(table)
+            homogenised_aliases.append(alias)
+
+        return homogenised_tables, homogenised_aliases
 
     def _setup_settings_objs(self, settings_dict):
         # Setup the linker class's required settings
@@ -904,7 +936,8 @@ class Linker:
             "`initialise_settings` is deprecated. We advise you use "
             "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
-            DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
+            DeprecationWarning,
+            stacklevel=2,
         )
 
     def load_settings_from_json(self, in_path: str | Path):
@@ -925,7 +958,8 @@ class Linker:
             "`load_settings_from_json` is deprecated. We advise you use "
             "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
-            DeprecationWarning,  # warnings.simplefilter('always', DeprecationWarning)
+            DeprecationWarning,
+            stacklevel=2,
         )
 
     def compute_tf_table(self, column_name: str) -> SplinkDataFrame:
@@ -1032,7 +1066,7 @@ class Linker:
         return self._execute_sql_pipeline([concat_with_tf])
 
     def estimate_u_using_random_sampling(
-        self, max_pairs: int = None, *, target_rows=None
+        self, max_pairs: int = None, seed: int = None, *, target_rows=None
     ):
         """Estimate the u parameters of the linkage model using random sampling.
 
@@ -1045,6 +1079,10 @@ class Linker:
         pairwise comparisons are non-matches (or at least, they are very unlikely to be
         matches). For large datasets, this is typically true.
 
+        The results of estimate_u_using_random_sampling, and therefore an entire splink
+        model, can be made reproducible by setting the seed parameter. Setting the seed
+        will have performance implications as additional processing is required.
+
         Args:
             max_pairs (int): The maximum number of pairwise record comparisons to
             sample. Larger will give more accurate estimates
@@ -1052,6 +1090,9 @@ class Linker:
             gives best results but can take a long time to compute. 1e7 (ten million)
             is often adequate whilst testing different model specifications, before
             the final model is estimated.
+            seed (int): Seed for random sampling. Assign to get reproducible u
+            probabilities. Note, seed for random sampling is only supported for
+            DuckDB and Spark, for Athena and SQLite set to None.
 
         Examples:
             >>> linker.estimate_u_using_random_sampling(1e8)
@@ -1071,13 +1112,15 @@ class Linker:
         elif target_rows is not None:
             # user is using deprecated argument
             warnings.warn(
-                "target_rows is deprecated; use max_pairs", DeprecationWarning, 2
+                "target_rows is deprecated; use max_pairs",
+                DeprecationWarning,
+                stacklevel=2,
             )
             max_pairs = target_rows
         else:
             raise TypeError("Missing argument max_pairs")
 
-        estimate_u_values(self, max_pairs)
+        estimate_u_values(self, max_pairs, seed)
         self._populate_m_u_from_trained_values()
 
         self._settings_obj._columns_without_estimated_parameters_message()

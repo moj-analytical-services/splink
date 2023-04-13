@@ -7,6 +7,8 @@ import pandas as pd
 
 from ..input_column import InputColumn
 from ..linker import Linker
+from ..logging_messages import execute_sql_logging_message_info, log_sql
+from ..misc import ensure_is_list
 from ..splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
@@ -93,11 +95,18 @@ class SQLiteLinker(Linker):
         self.con.create_function("log2", 1, log2)
         self.con.create_function("pow", 2, pow)
 
+        input_tables = ensure_is_list(input_table_or_tables)
+        input_aliases = self._ensure_aliases_populated_and_is_list(
+            input_table_or_tables, input_table_aliases
+        )
+        accepted_df_dtypes = pd.DataFrame
+
         super().__init__(
-            input_table_or_tables,
+            input_tables,
             settings_dict,
+            accepted_df_dtypes,
             set_up_basic_logging,
-            input_table_aliases=input_table_aliases,
+            input_table_aliases=input_aliases,
         )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
@@ -148,12 +157,16 @@ class SQLiteLinker(Linker):
         input.to_sql(table_name, self.con, index=False)
         return self._table_to_splink_dataframe(table_name, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
             return ""
+        if seed:
+            raise NotImplementedError(
+                "SQLite does not support seeds in random ",
+                "samples. Please remove the `seed` parameter.",
+            )
 
         sample_size = int(sample_size)
-
         return (
             "where unique_id IN (SELECT unique_id FROM __splink__df_concat_with_tf"
             f" ORDER BY RANDOM() LIMIT {sample_size})"

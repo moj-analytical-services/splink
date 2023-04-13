@@ -209,7 +209,7 @@ class EMTrainingSession:
                         orig_cl._add_trained_m_probability(not_observed, training_desc)
                         logger.info(
                             f"m probability not trained for {cc._output_column_name} - "
-                            f"{cl._label_for_charts} (comparison vector value: "
+                            f"{cl.label_for_charts} (comparison vector value: "
                             f"{cl._comparison_vector_value}). This usually means the "
                             "comparison level was never observed in the training data."
                         )
@@ -224,7 +224,7 @@ class EMTrainingSession:
                         orig_cl._add_trained_u_probability(not_observed, training_desc)
                         logger.info(
                             f"u probability not trained for {cc._output_column_name} - "
-                            f"{cl._label_for_charts} (comparison vector value: "
+                            f"{cl.label_for_charts} (comparison vector value: "
                             f"{cl._comparison_vector_value}). This usually means the "
                             "comparison level was never observed in the training data."
                         )
@@ -258,7 +258,7 @@ class EMTrainingSession:
             logger.log(
                 15,
                 f"Increasing prob two random records match using "
-                f"{cl.comparison._output_column_name} - {cl._label_for_charts}"
+                f"{cl.comparison._output_column_name} - {cl.label_for_charts}"
                 f" using bayes factor {cl._bayes_factor:,.3f}",
             )
 
@@ -328,7 +328,7 @@ class EMTrainingSession:
             m_u = max_change_dict["max_change_type"]
             cc_name = cl.comparison._output_column_name
 
-            cl_label = cl._label_for_charts
+            cl_label = cl.label_for_charts
             level_text = f"{cc_name}, level `{cl_label}`"
 
             message = (
@@ -355,7 +355,7 @@ class EMTrainingSession:
             this_cc = comparison[1]
             z_cls = zip(prev_cc.comparison_levels, this_cc.comparison_levels)
             for z_cl in z_cls:
-                if z_cl[0]._is_null_level:
+                if z_cl[0].is_null_level:
                     continue
                 prev_cl = z_cl[0]
                 this_cl = z_cl[1]
