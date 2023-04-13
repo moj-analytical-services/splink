@@ -1,56 +1,22 @@
 import datetime
 import os
-
-import boto3
 import awswrangler as wr
 
 from splink.misc import ensure_is_list
 from splink.splink_dataframe import SplinkDataFrame
 
 
-class boto_utils:
-    def __init__(
-        self,
-        linker,
-    ):
-        if not type(linker.boto3_session) == boto3.session.Session:
-            raise ValueError("Please enter a valid boto3 session object.")
-            
-        self.bucket = linker.output_bucket.replace("s3://", "")
-
-        # If the default folder is blank, name it splink_warehouse
-        # add a unique session id
-        if linker.output_filepath:
-            self.s3_output_name_prefix = linker.output_filepath
-        else:
-            self.s3_output_name_prefix = "splink_warehouse"
-                
-        self.session_id = linker._cache_uid
-        self.s3_output = self.get_table_dir()
-
-    def get_table_dir(self):
-        out_path = os.path.join(
-            "s3://",
-            self.bucket,
-            self.s3_output_name_prefix,
-            self.session_id,
-        )
-        if out_path[-1] != "/":
-            out_path += "/"
-
-        return out_path
-
+def athena_warning_text(database_bucket_txt, do_does_grammar):
+    return (
+        f"\nThe supplied {database_bucket_txt} that you have requested to write to "
+        f"{do_does_grammar[0]} not currently exist. \n \nCreate "
+        f"{do_does_grammar[1]} either directly from within AWS, or by using "
+        "'awswrangler.athena.create_athena_bucket' for buckets or "
+        "'awswrangler.catalog.create_database' for databases using the "
+        "awswrangler API."
+    )
 
 def _verify_athena_inputs(database, bucket, boto3_session):
-    def generic_warning_text():
-        return (
-            f"\nThe supplied {database_bucket_txt} that you have requested to write to "
-            f"{do_does_grammar[0]} not currently exist. \n \nCreate "
-            f"{do_does_grammar[1]} either directly from within AWS, or by using "
-            "'awswrangler.athena.create_athena_bucket' for buckets or "
-            "'awswrangler.catalog.create_database' for databases using the "
-            "awswrangler API."
-        )
 
     errors = []
 
@@ -66,7 +32,7 @@ def _verify_athena_inputs(database, bucket, boto3_session):
     if errors:
         database_bucket_txt = " and ".join(errors)
         do_does_grammar = ["does", "it"] if len(errors) == 1 else ["do", "them"]
-        raise Exception(generic_warning_text())
+        raise Exception(athena_warning_text(database_bucket_txt, do_does_grammar))
 
 
 def _garbage_collection(

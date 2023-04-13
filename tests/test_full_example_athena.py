@@ -2,28 +2,26 @@ import os
 
 import pandas as pd
 import pytest
-from basic_settings import get_settings_dict
 from pyarrow import csv
-from linker_utils import _test_table_registration
 
 from splink.athena.athena_comparison_library import levenshtein_at_thresholds
+from splink.athena.athena_utils import athena_warning_text
 
 from .basic_settings import get_settings_dict
 from .linker_utils import _test_table_registration
 
-skip = False
+# Skip if no valid boto3 connection exists
 try:
-    import awswrangler as wr
-except ImportError:
-    skip = True
-    pass  # Prevent failures if awswrangler is not installed
-
-if not skip:
     import boto3
+    # Check if a valid s3 connection is available
+    sts_client = boto3.client('sts')
+    response = sts_client.get_caller_identity()
+    import awswrangler as wr
     from dataengineeringutils3.s3 import delete_s3_folder_contents
-
     from splink.athena.athena_linker import AthenaLinker
-
+except ImportError:
+    # Skip if no AWS Connection exists
+    pytestmark = pytest.mark.skip(reason="AWS Connection Required")
 
 settings_dict = get_settings_dict()
 
@@ -73,7 +71,6 @@ def upload_data(db_name):
     )
 
 
-@pytest.mark.skip(reason="AWS Connection Required")
 def test_full_example_athena(tmp_path):
     # This test assumes the databases in use have already been created
 
@@ -136,7 +133,6 @@ def test_full_example_athena(tmp_path):
     linker.drop_splink_tables_from_database(database_name=db_name_read)
 
 
-@pytest.mark.skip(reason="AWS Connection Required")
 def test_athena_garbage_collection():
     # creates a session at least on the platform...
     my_session = boto3.Session(region_name="eu-west-1")
@@ -211,8 +207,8 @@ def test_athena_garbage_collection():
     assert len(files) == 0
 
 
-@pytest.mark.skip(reason="AWS Connection Required")
-def test_pandas_as_input(df):
+def test_pandas_as_input():
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     my_session = boto3.Session(region_name="eu-west-1")
 
     linker = AthenaLinker(
@@ -226,13 +222,10 @@ def test_pandas_as_input(df):
     )
 
     linker.predict()
-    linker.drop_splink_tables_from_database()
+    linker.drop_splink_tables_from_database(database_name=db_name_read)
 
 
-@pytest.mark.skip(reason="AWS Connection Required")
 def test_athena_link_only():
-    import pandas as pd
-
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     # creates a session at least on the platform...
@@ -254,3 +247,62 @@ def test_athena_link_only():
 
     # Clean up
     linker.drop_all_tables_created_by_splink(delete_s3_folders=True)
+
+
+def test_athena_errors():
+    # creates a session at least on the platform...
+    my_session = boto3.Session(region_name="eu-west-1")
+
+    # Check that if the input df doesn't exist we get a fail
+    with pytest.raises(Exception):
+        AthenaLinker(
+            input_table_or_tables="testing_for_failure",
+            settings_dict=settings_dict,
+            boto3_session=my_session,
+            output_bucket=output_bucket,
+            output_database=db_name_write,
+            output_filepath="test_failure",
+        )
+        
+    # Check that if the database doesn't exist it fails
+    rand_database = "random_database"
+    db_txt = f"database '{rand_database}'"
+    
+    with pytest.raises(Exception) as excinfo:
+        AthenaLinker(
+            input_table_or_tables="testing_for_failure",
+            settings_dict=settings_dict,
+            boto3_session=my_session,
+            output_bucket=output_bucket,
+            output_database=rand_database,
+            output_filepath="test_failure",
+        )
+    assert str(excinfo.value) == athena_warning_text(db_txt, ["does", "it"])
+    
+    # check we get a failure w/ an invalid s3 bucket
+    rand_bucket = "random_bucket"
+    bucket_txt = f"bucket '{rand_bucket}'"
+    
+    with pytest.raises(Exception) as excinfo:
+        AthenaLinker(
+            input_table_or_tables="testing_for_failure",
+            settings_dict=settings_dict,
+            boto3_session=my_session,
+            output_bucket=rand_bucket,
+            output_database=db_name_write,
+            output_filepath="test_failure",
+        )
+    assert str(excinfo.value) == athena_warning_text(bucket_txt, ["does", "it"])
+    
+    # and finally, check our error message w/ both an invalid db and bucket
+    txt = " and ".join([db_txt, bucket_txt])
+    with pytest.raises(Exception) as excinfo:
+        AthenaLinker(
+            input_table_or_tables="testing_for_failure",
+            settings_dict=settings_dict,
+            boto3_session=my_session,
+            output_bucket=rand_bucket,
+            output_database=rand_database,
+            output_filepath="test_failure",
+        )
+    assert str(excinfo.value) == athena_warning_text(txt, ["do", "them"])

@@ -11,7 +11,6 @@ import pandas as pd
 
 from ..athena.athena_transforms import cast_concat_as_varchar
 from ..athena.athena_utils import (
-    boto_utils,
     _verify_athena_inputs,
     _garbage_collection,
 )
@@ -53,7 +52,7 @@ class AthenaDataFrame(SplinkDataFrame):
         self.linker._delete_table_from_s3(self.physical_name)
 
     def _check_drop_folder_created_by_splink(self, force_non_splink_table=False):
-        filepath = self.linker.boto_utils.s3_output
+        filepath = self.linker.s3_output
         filename = self.physical_name
         # Validate that the folder is a splink generated folder...
         files = wr.s3.list_objects(
@@ -66,7 +65,7 @@ class AthenaDataFrame(SplinkDataFrame):
             if not force_non_splink_table:
                 raise ValueError(
                     f"You've asked to drop data housed under the filepath "
-                    f"{self.linker.boto_utils.s3_output} from your "
+                    f"{self.linker.s3_output} from your "
                     "s3 output bucket, which is not a folder created by "
                     "Splink. If you really want to delete this data, you "
                     "can do so by setting force_non_splink_table=True."
@@ -97,7 +96,7 @@ class AthenaDataFrame(SplinkDataFrame):
         out_df = wr.athena.read_sql_query(
             sql=sql,
             database=self.linker.output_schema,
-            s3_output=self.linker.boto_utils.s3_output,
+            s3_output=self.linker.s3_output,
             keep_files=False,
             ctas_approach=True,
             use_threads=True,
@@ -190,14 +189,22 @@ class AthenaLinker(Linker):
             >>> )
         """
 
+        if not type(boto3_session) == boto3.session.Session:
+            raise ValueError("Please enter a valid boto3 session object.")
+        
         self._sql_dialect_ = "presto"
         
         _verify_athena_inputs(output_database, output_bucket, boto3_session)
         self.boto3_session = boto3_session
         self.output_schema = output_database
         self.output_bucket = output_bucket
-        self.output_filepath = output_filepath
-
+        
+        # If the default folder is blank, name it `splink_warehouse`
+        if output_filepath:
+            self.output_filepath = output_filepath
+        else:
+            self.output_filepath = "splink_warehouse"
+        
         # This query info dictionary is used to circumvent the need to run
         # `wr.catalog.get_table_location` every time we want to delete
         # the backing data from s3.
@@ -206,66 +213,67 @@ class AthenaLinker(Linker):
         # If user has provided pandas dataframes, need to register
         # them with the database, using user-provided aliases
         # if provided or a created alias if not
-
         input_tables = ensure_is_list(input_table_or_tables)
 
         input_aliases = self._ensure_aliases_populated_and_is_list(
             input_table_or_tables, input_table_aliases
         )
-
-        # 'homogenised' means all entries are strings representing tables
-        homogenised_tables = []
-        homogenised_aliases = []
-
-        for table, alias in zip(input_tables, input_aliases):
-            if type(table).__name__ == "DataFrame":
-                if type(alias).__name__ == "DataFrame":
-                    df_id = uuid.uuid4().hex[:7]
-                    alias = f"__splink__input_table_{df_id}"
-
-                self.register_data_on_s3(table, alias)
-                
-            else:
-                db, tb = self.get_schema_info(input_table_or_tables)
-                table_exists = wr.catalog.does_table_exist(
-                    database=db,
-                    table=tb,
-                )
-                if not table_exists:
-                    raise wr.exceptions.InvalidTable(
-                            f"Table '{tb}' was not found within your selected "
-                            f"database '{db}'. Please verify your input table "
-                            "exists."
-                        )
-
-            homogenised_tables.append(alias)
-            homogenised_aliases.append(alias)
+        accepted_df_dtypes = pd.DataFrame
+        
+        # Run a quick check against our inputs to check if they
+        # exist in the database
+        for table in input_tables:
+            if not isinstance(table, accepted_df_dtypes):
+                db, tb = self.get_schema_info(table)
+                self.check_table_exists(db, tb)
 
         super().__init__(
-            homogenised_tables,
+            input_tables,
             settings_dict,
+            accepted_df_dtypes,
             set_up_basic_logging,
-            input_table_aliases=homogenised_aliases,
+            input_table_aliases=input_aliases,
         )
         
-        self.boto_utils = boto_utils(self)
-
     def _table_to_splink_dataframe(self, templated_name, physical_name):
         return AthenaDataFrame(templated_name, physical_name, self)
 
     def change_output_filepath(self, new_filepath):
-        self.boto_utils = boto_utils(
-            self.boto3_session,
-            self.boto_utils.bucket,
-            new_filepath,
-        )
+        self.output_filepath = new_filepath
         
     def get_schema_info(self, input_table):
         t = input_table.split(".")
         return t if len(t) > 1 else [self.output_schema, input_table]
+    
+    @property
+    def s3_output(self):
+        out_path = os.path.join(
+            "s3://",
+            self.output_bucket,
+            self.output_filepath,
+            self._cache_uid,  # added in the super() step
+        )
+        if out_path[-1] != "/":
+            out_path += "/"
+
+        return out_path
+    
+    def check_table_exists(self, db, tb):
+        # A quick function to check if a table exists
+        # and spit out a warning if it is not found.
+        table_exists = wr.catalog.does_table_exist(
+            database=db,
+            table=tb,
+        )
+        if not table_exists:
+            raise wr.exceptions.InvalidTable(
+                    f"Table '{tb}' was not found within your selected "
+                    f"database '{db}'. Please verify your input table "
+                    "exists."
+                )
 
     def register_data_on_s3(self, table, alias):
-        out_loc = f"{self.boto_utils.s3_output}{alias}"
+        out_loc = f"{self.s3_output}{alias}"
         
         info = wr.s3.to_parquet(
             df=table,
@@ -354,7 +362,7 @@ class AthenaLinker(Linker):
             storage_format="parquet",
             write_compression="snappy",
             boto3_session=self.boto3_session,
-            s3_output=self.boto_utils.s3_output,
+            s3_output=self.s3_output,
             wait=True,
         )
         return ctas_metadata
@@ -365,7 +373,7 @@ class AthenaLinker(Linker):
         )
 
     def _delete_table_from_s3(self, physical_name):
-        path = f"{self.boto_utils.s3_output}{physical_name}/"
+        path = f"{self.s3_output}{physical_name}/"
         # delete our folder
         wr.s3.delete_objects(
             path=path,
@@ -398,7 +406,7 @@ class AthenaLinker(Linker):
         else:
             # If the location we want to write to already exists,
             # clean this before continuing.
-            loc = f"{self.boto_utils.s3_output}{name}"
+            loc = f"{self.s3_output}{name}"
             folder_exists = wr.s3.list_directories(
                 loc,
                 boto3_session=self.boto3_session,

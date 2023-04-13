@@ -177,6 +177,13 @@ class Linker:
 
         self._pipeline = SQLPipeline()
 
+        if not isinstance(settings_dict, (dict, type(None))):
+            self._setup_settings_objs(None)  # feed it a blank settings dictionary
+            self.load_settings(settings_dict)
+        else:
+            settings_dict = deepcopy(settings_dict)
+            self._setup_settings_objs(settings_dict)
+            
         homogenised_tables, homogenised_aliases = self._register_input_tables(
             input_table_or_tables,
             input_table_aliases,
@@ -186,13 +193,6 @@ class Linker:
         self._input_tables_dict = self._get_input_tables_dict(
             homogenised_tables, homogenised_aliases
         )
-
-        if not isinstance(settings_dict, (dict, type(None))):
-            self._setup_settings_objs(None)  # feed it a blank settings dictionary
-            self.load_settings(settings_dict)
-        else:
-            settings_dict = deepcopy(settings_dict)
-            self._setup_settings_objs(settings_dict)
 
         self._validate_input_dfs()
         self._em_training_sessions = []
