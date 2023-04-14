@@ -214,9 +214,7 @@ def test_athena_garbage_collection():
     # Check drop_tables_in_current_splink_run
     linker, path, predict = run_athena_predictions()
 
-    linker.drop_tables_in_current_splink_run(
-        tables_to_exclude=predict.physical_name
-    )
+    linker.drop_tables_in_current_splink_run(tables_to_exclude=predict.physical_name)
     assert len(linker._names_of_tables_created_by_splink) == 1
     tables = wr.catalog.get_tables(
         database=db_name_write,
