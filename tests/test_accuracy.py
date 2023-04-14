@@ -10,6 +10,7 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict
 
+
 def test_scored_labels_table():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df = df.head(5)
