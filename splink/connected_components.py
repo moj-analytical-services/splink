@@ -310,7 +310,8 @@ def _cc_create_unique_id_cols(
         match_probability_threshold (int):
             The minimum match probability threshold for a link to be
             considered a match. This reduces the number of unique IDs created
-            and connected in our algorithm.
+            and connected in our algorithm. Set to None for deterministic
+            linkages.
 
     Returns:
         SplinkDataFrame: A dataframe containing two sets of unique IDs,
@@ -323,13 +324,18 @@ def _cc_create_unique_id_cols(
     uid_concat_edges_r = _composite_unique_id_from_edges_sql(uid_cols, "r")
     uid_concat_edges = _composite_unique_id_from_edges_sql(uid_cols, None)
 
+    if match_probability_threshold:
+        match_probability_condition = f"where match_probability >= {match_probability_threshold}"
+    else:
+        match_probability_condition = ""
+
     # Generate new unique IDs for our linked dataframes.
     sql = f"""
         select
         {uid_concat_edges_l} as unique_id_l,
         {uid_concat_edges_r} as unique_id_r
         from {df_predict}
-        where match_probability >= {match_probability_threshold}
+        {match_probability_condition}
 
         UNION
 
