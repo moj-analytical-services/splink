@@ -725,7 +725,7 @@ class Linker:
         )
 
     def _validate_input_dfs(self):
-        if not hasattr(self, '_input_tables_dict'):
+        if not hasattr(self, "_input_tables_dict"):
             # This is only triggered where a user loads a settings dict from a
             # given file path.
             return
