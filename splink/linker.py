@@ -180,6 +180,7 @@ class Linker:
         self._pipeline = SQLPipeline()
 
         if not isinstance(settings_dict, (dict, type(None))):
+            # Run if you've entered a filepath
             self._setup_settings_objs(None)  # feed it a blank settings dictionary
             self.load_settings(settings_dict)
         else:
@@ -724,6 +725,11 @@ class Linker:
         )
 
     def _validate_input_dfs(self):
+        if not hasattr(self, '_input_tables_dict'):
+            # This is only triggered where a user loads a settings dict from a
+            # given file path.
+            return
+
         for df in self._input_tables_dict.values():
             df.validate()
 

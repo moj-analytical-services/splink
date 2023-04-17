@@ -4,7 +4,6 @@ import pandas as pd
 import pytest
 
 from splink.athena.athena_comparison_library import levenshtein_at_thresholds
-from splink.athena.athena_utils import athena_warning_text
 
 from .basic_settings import get_settings_dict
 from .linker_utils import _test_table_registration
@@ -19,6 +18,7 @@ try:
     import awswrangler as wr
 
     from splink.athena.athena_linker import AthenaLinker
+    from splink.athena.athena_utils import athena_warning_text
 except ImportError:
     # Skip if no AWS Connection exists
     pytestmark = pytest.mark.skip(reason="AWS Connection Required")
