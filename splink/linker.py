@@ -189,6 +189,9 @@ class Linker:
             homogenised_tables, homogenised_aliases
         )
 
+        self._names_of_tables_created_by_splink: set = set()
+        self._intermediate_table_cache: dict = CacheDictWithLogging()
+
         if not isinstance(settings_dict, (dict, type(None))):
             self._setup_settings_objs(None)  # feed it a blank settings dictionary
             self.load_settings(settings_dict)
@@ -198,9 +201,6 @@ class Linker:
 
         self._validate_input_dfs()
         self._em_training_sessions = []
-
-        self._names_of_tables_created_by_splink: set = set()
-        self._intermediate_table_cache: dict = CacheDictWithLogging()
 
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
@@ -277,6 +277,26 @@ class Linker:
         if self._two_dataset_link_only:
             return "__splink_df_concat_with_tf_right"
         return "__splink__df_concat_with_tf"
+
+    @property
+    def _source_dataset_column_name(self):
+        if self._settings_obj_ is None:
+            return None
+
+        # Used throughout the scripts to feed our SQL
+        if self._settings_obj._source_dataset_column_name_is_required:
+            df_obj = next(iter(self._input_tables_dict.values()))
+            columns = df_obj.columns_escaped
+
+            input_column = self._settings_obj._source_dataset_input_column
+            src_ds_col = InputColumn(input_column, self).name()
+            return (
+                "__splink_source_dataset"
+                if src_ds_col in columns
+                else input_column
+            )
+        else:
+            return None
 
     @property
     def _two_dataset_link_only(self):
@@ -904,8 +924,22 @@ class Linker:
                 )
             settings_dict = json.loads(p.read_text())
 
+        # Store the cache ID so it can be reloaded after cache invalidation
+        cache_id = self._cache_uid
+        # So we don't run into any issues with generated tables having
+        # invalid columns as settings have been tweaked, invalidate
+        # the cache and allow these tables to be recomputed.
+
+        # This is less efficient, but triggers infrequently and ensures we don't
+        # run into issues where the defaults used conflict with the actual values
+        # supplied in settings.
+
+        # This is particularly relevant with `source_dataset`, which appears within
+        # concat_with_tf.
+        self.invalidate_cache()
+
         # If a uid already exists in your settings object, prioritise this
-        settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
+        settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_id)
         settings_dict["sql_dialect"] = settings_dict.get(
             "sql_dialect", self._sql_dialect
         )

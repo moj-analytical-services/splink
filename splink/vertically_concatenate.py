@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from .input_column import InputColumn
+
 logger = logging.getLogger(__name__)
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -51,8 +53,10 @@ def vertically_concatenate_sql(linker: Linker) -> str:
     if source_dataset_col_req:
         sqls_to_union = []
         for df_obj in linker._input_tables_dict.values():
+            source_ds_col = linker._source_dataset_column_name
             sql = f"""
-            select '{df_obj.templated_name}' as source_dataset, {select_columns_sql}
+            select '{df_obj.templated_name}' as {source_ds_col},
+            {select_columns_sql}
             {salt_sql}
             from {df_obj.physical_name}
             """
