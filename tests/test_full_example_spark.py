@@ -138,7 +138,6 @@ def test_link_only(df_spark):
     df_spark_a = df_spark.withColumn("source_dataset", f.lit("my_left_ds"))
     df_spark_b = df_spark.withColumn("source_dataset", f.lit("my_right_ds"))
 
-
     linker = SparkLinker(
         [df_spark_a, df_spark_b],
         settings,

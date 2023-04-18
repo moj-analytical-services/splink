@@ -290,11 +290,7 @@ class Linker:
 
             input_column = self._settings_obj._source_dataset_input_column
             src_ds_col = InputColumn(input_column, self).name()
-            return (
-                "__splink_source_dataset"
-                if src_ds_col in columns
-                else input_column
-            )
+            return "__splink_source_dataset" if src_ds_col in columns else input_column
         else:
             return None
 
