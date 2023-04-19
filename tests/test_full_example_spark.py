@@ -8,7 +8,11 @@ import splink.spark.spark_comparison_library as cl
 from splink.spark.spark_linker import SparkLinker
 
 from .basic_settings import get_settings_dict, name_comparison
-from .linker_utils import _test_table_registration, register_roc_data
+from .linker_utils import (
+    _test_table_registration,
+    _test_write_functionality,
+    register_roc_data,
+)
 
 
 def test_full_example_spark(df_spark, tmp_path):
@@ -128,3 +132,6 @@ def test_full_example_spark(df_spark, tmp_path):
         break_lineage_method="checkpoint",
         num_partitions_on_repartition=2,
     )
+
+    # Test that writing to files works as expected
+    _test_write_functionality(linker)
