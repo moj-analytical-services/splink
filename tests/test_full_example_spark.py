@@ -90,6 +90,8 @@ def test_full_example_spark(df_spark, tmp_path):
     )
 
     linker.unlinkables_chart(source_dataset="Testing")
+    # Test that writing to files works as expected
+    _test_write_functionality(linker)
 
     # Check spark tables are being registered correctly
     data = [
@@ -132,6 +134,3 @@ def test_full_example_spark(df_spark, tmp_path):
         break_lineage_method="checkpoint",
         num_partitions_on_repartition=2,
     )
-
-    # Test that writing to files works as expected
-    _test_write_functionality(linker)
