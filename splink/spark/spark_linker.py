@@ -62,6 +62,24 @@ class SparkDataframe(SplinkDataFrame):
     def as_spark_dataframe(self):
         return self.linker.spark.table(self.physical_name)
 
+    def to_parquet(self, filepath, overwrite=False):
+        if not overwrite:
+            self.check_file_exists(filepath)
+
+        spark_df = self.as_spark_dataframe()
+        spark_df.write.mode("overwrite").format("parquet").save(filepath)
+
+    def to_csv(self, filepath, overwrite=False):
+        if not overwrite:
+            self.check_file_exists(filepath)
+
+        # We can also use:
+        # spark_df.write.format("csv").option(
+        #     "header", "true").save(filepath)
+        # but this partitions the data and means pandas can't load it in
+
+        self.as_pandas_dataframe().to_csv(filepath, index=False)
+
 
 class SparkLinker(Linker):
     def __init__(
