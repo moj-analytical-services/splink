@@ -561,7 +561,6 @@ class DateDiffLevelBase(ComparisonLevel):
                 (the default), downstream functions for each backend assign
                 date_format to ISO 8601 format (yyyy-mm-dd).
 
-
         Examples:
             >>> # DuckDB Date Difference comparison level at threshold 1 year
             >>> import splink.duckdb.duckdb_comparison_level_library as cll
@@ -588,7 +587,6 @@ class DateDiffLevelBase(ComparisonLevel):
             >>> import splink.duckdb.duckdb_comparison_level_library as cll
             >>> cll.datediff_level("dob", date_threshold=3, date_metric='month',\
                             cast_strings_to_date=True, date_format='%d/%m/%Y')
-
 
         Returns:
             ComparisonLevel: A comparison level that evaluates whether two dates fall
