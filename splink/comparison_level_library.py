@@ -424,6 +424,26 @@ class DateDiffLevelBase(ComparisonLevel):
                 Defaults to `day`.
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
+            cast_strings_to_date (bool, optional): Set to true and adjust
+                date_format param when input dates are strings to enable
+                date-casting. Defaults to False.
+            date_format (str, optional): Format of input dates if date-strings
+                are given. Must be consistent across record pairs. If None
+                (the default), downstream functions for each backend assign
+                date_format to ISO 8601 format (yyyy-mm-dd).
+        
+        Examples:
+            >>> # DuckDB dateDiff comparison with date-casting and unspecified 
+            >>> # (default = %Y-%m-%d) date_format
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.datediff_level("dob", date_threshold=3, date_metric='month',\
+                            cast_strings_to_date=True)
+
+            >>> # DuckDB dateDiff comparison with date-casting and specified 
+            >>> # date_format
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.datediff_level("dob", date_threshold=3, date_metric='month',\
+                            cast_strings_to_date=True, date_format='%d/%m/%Y')
 
         Returns:
             ComparisonLevel: A comparison level that evaluates whether two dates fall

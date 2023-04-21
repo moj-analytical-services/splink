@@ -15,7 +15,7 @@ def datediff_sql(col_name_l, col_name_r, date_threshold, date_metric,
                   cast_str=False, date_format=None):
     
     if date_format is None:
-        date_format = '%x'
+        date_format = '%Y-%m-%d'
 
     if cast_str:
         return f"""

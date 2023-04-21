@@ -274,44 +274,49 @@ def test_datediff_with_str_casting(spark, cl, cll, Linker, caplog):
     )
 
     if Linker == SparkLinker:
-        expected_bad_dates_error = py4j.protocol.Py4JJavaError
-        valid_date_formats = ['d/M/y', 'd-M-y', 'M/d/y', 'y/M/d', 'y-M-d']
+            expected_bad_dates_error = py4j.protocol.Py4JJavaError
+            valid_date_formats = ['d/M/y', 'd-M-y', 'M/d/y', 'y/M/d', 'y-M-d']
     elif Linker == DuckDBLinker:
         expected_bad_dates_error = duckdb.InvalidInputException
         valid_date_formats = ['%d/%m/%Y', '%d-%m-%Y', '%m/%d/%Y', '%Y/%m/%d', '%Y-%m-%d']
 
     # first test some dates which should work 
     simple_dob_linker(spark, df, dobs=['03/04/1994', '19/02/1993'], 
-                      date_format_param=valid_date_formats[0], Linker=Linker)
+                    date_format_param=valid_date_formats[0], Linker=Linker)
     simple_dob_linker(spark, df, dobs=['03-04-1994', '19-02-1993'],
-                       date_format_param=valid_date_formats[1], Linker=Linker)
+                    date_format_param=valid_date_formats[1], Linker=Linker)
     simple_dob_linker(spark, df, dobs=['04/05/1994', '10/02/1993'],
-                       date_format_param=valid_date_formats[2], Linker=Linker)
+                    date_format_param=valid_date_formats[2], Linker=Linker)
     simple_dob_linker(spark, df, dobs=['1994/05/04', '1993/05/02'],
-                       date_format_param=valid_date_formats[3], Linker=Linker)
+                    date_format_param=valid_date_formats[3], Linker=Linker)
     simple_dob_linker(spark, df, dobs=['1994-05-04', '1993-05-02'],
-                       date_format_param=valid_date_formats[4], Linker=Linker)
+                    date_format_param=valid_date_formats[4], Linker=Linker)
     # test the default date formats
     simple_dob_linker(spark, df, dobs=['1994-05-04', '1993-05-02'],
-                       date_format_param=None, Linker=Linker)
+                    date_format_param=None, Linker=Linker)
+    
+    # now test some bad dates with DuckDB which you expect to throw error.
+    # don't run these tests with Spark as does not throw error in response to badly formatted
+    # dates
+    if Linker == DuckDBLinker:
 
-    # Then test some bad dates
-    # bad date type 1:
-    with pytest.raises(expected_bad_dates_error):
-        simple_dob_linker(spark, df, dobs=['1994/05/04', '1993/14/02'], 
-                          date_format_param=valid_date_formats[3], Linker=Linker)
-    
-    # bad date type 2:
-    with pytest.raises(expected_bad_dates_error):
-        simple_dob_linker(spark, df, dobs=['03-14-1994', '19-22-1993'], 
-                          date_format_param=valid_date_formats[1], Linker=Linker)
-    
-    # mis-match between date formats:
-    with pytest.raises(expected_bad_dates_error):
-        simple_dob_linker(spark, df, dobs=['03-14-1994', '19/22/1993'], 
-                          date_format_param=valid_date_formats[1], Linker=Linker)
+        # Then test some bad dates
+        # bad date type 1:
+        with pytest.raises(expected_bad_dates_error):
+            simple_dob_linker(spark, df, dobs=['1994/05/04', '1993/14/02'], 
+                            date_format_param=valid_date_formats[3], Linker=Linker)
         
-    # mis-match between input dates and expected date format
-    with pytest.raises(expected_bad_dates_error):
-        simple_dob_linker(spark, df, dobs=['20-04-1993', '19-02-1993'], 
-                          date_format_param=valid_date_formats[3], Linker=Linker)
+        # bad date type 2:
+        with pytest.raises(expected_bad_dates_error):
+            simple_dob_linker(spark, df, dobs=['03-14-1994', '19-22-1993'], 
+                            date_format_param=valid_date_formats[1], Linker=Linker)
+        
+        # mis-match between date formats:
+        with pytest.raises(expected_bad_dates_error):
+            simple_dob_linker(spark, df, dobs=['03-14-1994', '19/22/1993'], 
+                            date_format_param=valid_date_formats[1], Linker=Linker)
+            
+        # mis-match between input dates and expected date format
+        with pytest.raises(expected_bad_dates_error):
+            simple_dob_linker(spark, df, dobs=['20-04-1993', '19-02-1993'], 
+                            date_format_param=valid_date_formats[3], Linker=Linker)

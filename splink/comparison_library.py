@@ -472,7 +472,30 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                 for the sizes specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
+            cast_strings_to_date (bool, optional): Set to True to 
+                enable date-casting when input dates are strings. Also adjust
+                date_format if date-strings are not in (yyyy-mm-dd) format.
+                Defaults to False.
+            date_format(str, optional): Format of input dates if date-strings
+                are given. Must be consistent across record pairs. If None
+                (the default), downstream functions for each backend assign
+                date_format to ISO 8601 format (yyyy-mm-dd).
 
+            >>> # DuckDB datediff comparison with date-casting and unspecified 
+            >>> # (default = %Y-%m-%d) date_format
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.datediff_at_thresholds("dob", date_thresholds=[1,5],\
+                  date_metrics = ["day", "year"], cast_strings_to_date=True)
+
+                  
+            >>> # DuckDB datediff comparison with date-casting and specified 
+            >>> # (non-default) date_format
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.datediff_at_thresholds("dob", date_thresholds=[1,5],\
+                  date_metrics = ["day", "year"], cast_strings_to_date=True,\
+                    date_format='%d/%m/%Y')
+
+                    
         Returns:
             Comparison: A comparison that can be inclued in the Splink settings
                 dictionary.
