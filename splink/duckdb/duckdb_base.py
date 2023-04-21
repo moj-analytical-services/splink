@@ -11,11 +11,17 @@ def size_array_intersect_sql(col_name_l, col_name_r):
     )
 
 
-def datediff_sql(col_name_l, col_name_r, date_threshold, date_metric,
-                  cast_str=False, date_format=None):
-    
+def datediff_sql(
+    col_name_l,
+    col_name_r,
+    date_threshold,
+    date_metric,
+    cast_str=False,
+    date_format=None,
+):
+
     if date_format is None:
-        date_format = '%Y-%m-%d'
+        date_format = "%Y-%m-%d"
 
     if cast_str:
         return f"""
@@ -23,7 +29,7 @@ def datediff_sql(col_name_l, col_name_r, date_threshold, date_metric,
               '{date_format}'),strptime({col_name_r}, '{date_format}'))) <= {date_threshold}
         """
     else:
-         return f"""
+        return f"""
             abs(date_diff('{date_metric}', {col_name_l}, {col_name_r})) <= {date_threshold}
         """
 

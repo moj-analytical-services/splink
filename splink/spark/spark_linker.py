@@ -167,8 +167,6 @@ class SparkLinker(Linker):
 
         self._register_udfs_from_jar()
 
-
-
     def _get_spark_from_input_tables_if_not_provided(self, spark, input_tables):
         self.spark = spark
         if spark is None:
@@ -487,29 +485,34 @@ class SparkLinker(Linker):
     def register_tf_table(self, df, col_name, overwrite=False):
         self.register_table(df, colname_to_tf_tablename(col_name), overwrite)
 
-
     def _check_ansi_enabled_if_converting_dates(self):
-        # because have this code in the init- need to first check if the settings dict exits 
+        # because have this code in the init- need to first check if the settings dict exits
         try:
             comparisons_as_list = self._settings_obj._settings_dict["comparisons"]
             settings_obj = True
-        except: 
+        except:
             settings_obj = False
 
-        if settings_obj is True:    
+        if settings_obj is True:
             # see if any of the comparisons contain 'to_timestamp', the spark SQL used to convert date to str if date-to-str cast is used
-            if any(['to_timestamp' in str(comparisons_as_list[x].values()) 
-                for x in range(0, len(comparisons_as_list))]):
-                    # now check if ansi is enabled: 
-                    bool_ansi = self.spark.sparkContext.getConf().get("spark.sql.ansi.enabled")
-                    if bool_ansi == 'False' or bool_ansi is None:
-                        logger.warning("--WARN-- \n You are using datediff comparison with str-casting"
-                          " and ANSI is not enabled. Bad dates e.g. 1999-13-54 will not trigger an"
-                          " exception and might mess up comparisons. Ensure date strings are cleaned"
-                          " to remove bad dates \n")
+            if any(
+                [
+                    "to_timestamp" in str(comparisons_as_list[x].values())
+                    for x in range(0, len(comparisons_as_list))
+                ]
+            ):
+                # now check if ansi is enabled:
+                bool_ansi = self.spark.sparkContext.getConf().get(
+                    "spark.sql.ansi.enabled"
+                )
+                if bool_ansi == "False" or bool_ansi is None:
+                    logger.warning(
+                        "--WARN-- \n You are using datediff comparison with str-casting"
+                        " and ANSI is not enabled. Bad dates e.g. 1999-13-54 will not trigger an"
+                        " exception and might mess up comparisons. Ensure date strings are cleaned"
+                        " to remove bad dates \n"
+                    )
 
-
-    
     # def load_settings(self, settings_dict):
     #     # call parent method Linker.load_settings
     #     super().load_settings(settings_dict)
