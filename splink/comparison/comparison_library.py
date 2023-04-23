@@ -110,7 +110,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                 adjustments to the exact match level. Defaults to False.
             m_probability_exact_match (_type_, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
-            m_probability_or_probabilities_thres (Union[float, list], optional): 
+            m_probability_or_probabilities_thres (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
@@ -801,4 +801,3 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
             "comparison_levels": comparison_levels,
         }
         super().__init__(comparison_dict)
-        

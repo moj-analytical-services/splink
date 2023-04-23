@@ -1,4 +1,7 @@
-from ..comparison.comparison_template_library import DateComparisonBase, NameComparisonBase
+from ..comparison.comparison_template_library import (
+    DateComparisonBase,
+    NameComparisonBase,
+)
 from .duckdb_comparison_level_library import distance_function_level
 from .duckdb_comparison_library import DuckDBComparisonProperties
 
