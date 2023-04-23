@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .comparison_level import ComparisonLevel
-from .misc import dedupe_preserving_order, join_list_with_commas_final_and
+from ..misc import dedupe_preserving_order, join_list_with_commas_final_and
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:

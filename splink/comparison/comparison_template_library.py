@@ -12,7 +12,7 @@ from .comparison_library_utils import (
     distance_threshold_comparison_levels,
     distance_threshold_description,
 )
-from .misc import ensure_is_iterable
+from ..misc import ensure_is_iterable
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,4 @@
-from .misc import ensure_is_iterable
+from ..misc import ensure_is_iterable
 
 
 def comparison_at_thresholds_error_logger(comparison, thresholds):
