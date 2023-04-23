@@ -80,16 +80,16 @@ class DateComparisonBase(Comparison):
             m_probability_exact_match (_type_, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
-                _description_. If provided, overrides the default m probabilities
+                If provided, overrides the default m probabilities
                 for the levenshtein thresholds specified. Defaults to None.
             m_probability_or_probabilities_jar (Union[float, list], optional):
-                _description_. If provided, overrides the default m probabilities
+                If provided, overrides the default m probabilities
                 for the jaro thresholds specified. Defaults to None.
             m_probability_or_probabilities_jw (Union[float, list], optional):
-                _description_. If provided, overrides the default m probabilities
+                If provided, overrides the default m probabilities
                 for the jaro winkler thresholds specified. Defaults to None.
             m_probability_or_probabilities_datediff (Union[float, list], optional):
-                _description_. If provided, overrides the default m probabilities
+                If provided, overrides the default m probabilities
                 for the datediff thresholds specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
@@ -182,7 +182,7 @@ class DateComparisonBase(Comparison):
                 col_name,
                 "jaro-winkler",
                 jaro_winkler_thresholds,
-                m_probability_or_probabilities_jar,
+                m_probability_or_probabilities_jw,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -338,11 +338,17 @@ class NameComparisonBase(Comparison):
                 overrides the default m probability for the exact match level for
                 phonetic_col_name. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
-                _description_. If provided, overrides the default m probabilities
+                If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
-            m_probability_or_probabilities_datediff (Union[float, list], optional):
-                _description_. If provided, overrides the default m probabilities
-                for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_jar (Union[float, list], optional):
+                If provided, overrides the default m probabilities
+                for the jaro thresholds specified. Defaults to None.
+            m_probability_or_probabilities_jw (Union[float, list], optional):
+                If provided, overrides the default m probabilities
+                for the jaro winkler thresholds specified. Defaults to None.
+            m_probability_or_probabilities_jac (Union[float, list], optional):
+                If provided, overrides the default m probabilities
+                for the jaccard thresholds specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
@@ -431,7 +437,7 @@ class NameComparisonBase(Comparison):
                 col_name,
                 "jaro-winkler",
                 jaro_winkler_thresholds,
-                m_probability_or_probabilities_jar,
+                m_probability_or_probabilities_jw,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 

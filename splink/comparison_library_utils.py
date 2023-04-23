@@ -83,13 +83,13 @@ def distance_threshold_comparison_levels(
         if distance_function_name == "levenshtein":
             distance_function_name = self._levenshtein_name
             higher_is_more_similar = False
-        if distance_function_name == "jaro":
+        elif distance_function_name == "jaro":
             distance_function_name = self._jaro_name
             higher_is_more_similar = True
-        if distance_function_name == "jaro-winkler":
+        elif distance_function_name == "jaro-winkler":
             distance_function_name = self._jaro_winkler_name
             higher_is_more_similar = True
-        if distance_function_name == "jaccard":
+        elif distance_function_name == "jaccard":
             distance_function_name = self._jaccard_name
             higher_is_more_similar = True
 
