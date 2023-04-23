@@ -38,6 +38,8 @@ print(first_name_comparison.human_readable_description)
 >    - 'Jaro_winkler_similarity >= 0.88' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.88
 >    - 'All other comparisons' with SQL rule: ELSE
 
+<hr>
+
 ## Algorithms
 
 Below are some examples of well known phonetic transformation algorithmns.
@@ -64,7 +66,18 @@ The Soundex algorithm works by following these steps:
 
 For example, the Soundex code for the name "Smith" is S530, and the code for "Smyth" is also S530. This allows for similar-sounding names to be indexed and searched together.
 
+#### Sample Code
 
+You can test out the Soundex transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
+
+```
+import phonetics
+print(phonetics.soundex("Smith"), phonetics.soundex("Smyth"))
+```
+> S5030 S5030
+
+
+<hr>
 
 ### Metaphone
 Metaphone is an improved version of the Soundex algorithm that was developed to handle a wider range of words and languages. The Metaphone algorithm assigns a code to a word based on its phonetic pronunciation, but it takes into account the sound of the entire word, rather than just its first letter and consonants.
@@ -97,6 +110,19 @@ The Metaphone algorithm works by following these steps:
 8. Retain the first four characters of the resulting word, or pad it with zeros if it has fewer than four characters.
 
 For example, the Metaphone code for the name "Smith" is SM0, and the code for "Smyth" is also SM0. This allows for more accurate indexing and searching of similar-sounding words.
+
+#### Sample Code
+
+You can test out the Metaphone transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
+
+```
+import phonetics
+print(phonetics.metaphone("Smith"), phonetics.metaphone("Smyth"))
+```
+> SM0 SM0
+
+
+<hr>
 
 ### Double Metaphone
 Double Metaphone is an extension of the Metaphone algorithm that generates two codes for each word, one for the primary pronunciation and one for an alternate pronunciation. The Double Metaphone algorithm is designed to handle a wide range of languages and dialects, and it is more accurate than the original Metaphone algorithm.
@@ -153,3 +179,13 @@ The second set of rules for the alternative code is similar to the first set, bu
 6. Return the alternative code.
 
 For example, the Double Metaphone code for the name "Smith" is SM0 and XMT, while the code for "Smyth" is also SM0 and XMT. This allows for even more accurate indexing and searching of similar-sounding words.
+
+#### Sample Code
+
+You can test out the Metaphone transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
+
+```
+import phonetics
+print(phonetics.dmetaphone("Smith"), phonetics.dmetaphone("Smyth"))
+```
+> ('SM0', 'XMT') ('SM0', 'XMT')

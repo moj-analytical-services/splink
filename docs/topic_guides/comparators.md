@@ -25,7 +25,7 @@ Data Linking Model
 │    ├─-- etc.
 ```
 
-For more detail on how comparisons are constructed, see the dedicated [topic guide](customising_comparisons.ipynbcustomising_comparisons.ipynb) as well as fuller descriptions of [Comparisons](../comparison.md) and [Comparison Levels](../comparison_level.md). 
+For more detail on how comparisons are constructed, see the dedicated [topic guide](customising_comparisons.ipynbcustomising_comparisons.ipynb) as well as fuller descriptions of [`Comparisons`](../comparison.md) and [`Comparison Levels`](../comparison_level.md). 
 
 Within `Comparisons` it is useful for different `Comparison Levels` to allow for different styles (and levels) fuzzy match. Each of these `Comparison Levels` indicates a different class of match between two records and therefore a different type (and amount) of evidence for or against the two records being a match. Once these `Comparison Levels` have been defined, the Splink model is trained to estimate the Match Weight to assign to each `Comparison Level`.
 
