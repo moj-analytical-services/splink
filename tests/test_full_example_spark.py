@@ -1,6 +1,6 @@
 import os
 
-from pyspark.sql.functions import array
+import pyspark.sql.functions as f
 from pyspark.sql.types import StringType, StructField, StructType
 
 import splink.spark.spark_comparison_level_library as cll
@@ -13,7 +13,7 @@ from .linker_utils import _test_table_registration, register_roc_data
 
 def test_full_example_spark(df_spark, tmp_path):
     # Convert a column to an array to enable testing intersection
-    df_spark = df_spark.withColumn("email", array("email"))
+    df_spark = df_spark.withColumn("email", f.array("email"))
     settings_dict = get_settings_dict()
 
     # Only needed because the value can be overwritten by other tests
@@ -61,7 +61,7 @@ def test_full_example_spark(df_spark, tmp_path):
     linker.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
-    linker.estimate_u_using_random_sampling(max_pairs=1e5)
+    linker.estimate_u_using_random_sampling(max_pairs=1e5, seed=1)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
@@ -128,3 +128,24 @@ def test_full_example_spark(df_spark, tmp_path):
         break_lineage_method="checkpoint",
         num_partitions_on_repartition=2,
     )
+
+
+def test_link_only(df_spark):
+    settings = get_settings_dict()
+    settings["link_type"] = "link_only"
+    settings["source_dataset_column_name"] = "source_dataset"
+
+    df_spark_a = df_spark.withColumn("source_dataset", f.lit("my_left_ds"))
+    df_spark_b = df_spark.withColumn("source_dataset", f.lit("my_right_ds"))
+
+    linker = SparkLinker(
+        [df_spark_a, df_spark_b],
+        settings,
+        break_lineage_method="checkpoint",
+        num_partitions_on_repartition=2,
+    )
+    df_predict = linker.predict().as_pandas_dataframe()
+
+    assert len(df_predict) == 7257
+    assert set(df_predict.source_dataset_l.values) == {"my_left_ds"}
+    assert set(df_predict.source_dataset_r.values) == {"my_right_ds"}

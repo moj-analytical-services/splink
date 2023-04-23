@@ -1,9 +1,11 @@
 import numpy as np
 import pandas as pd
-from pytest import approx
+import pytest
 
-from splink.duckdb.duckdb_comparison_library import levenshtein_at_thresholds
+import splink.duckdb.duckdb_comparison_library as cld
+import splink.spark.spark_comparison_library as clsp
 from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.spark.spark_linker import SparkLinker
 
 
 def test_u_train():
@@ -19,7 +21,7 @@ def test_u_train():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [cld.levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
 
@@ -63,7 +65,7 @@ def test_u_train_link_only():
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [cld.levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
@@ -111,7 +113,7 @@ def test_u_train_link_only_sample():
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [cld.levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
@@ -133,7 +135,7 @@ def test_u_train_link_only_sample():
     max_pairs_proportion = result[0]["count"] / max_pairs
     # equality only holds probabilistically
     # chance of failure is approximately 1e-06
-    assert approx(max_pairs_proportion, 0.15) == 1.0
+    assert pytest.approx(max_pairs_proportion, 0.15) == 1.0
 
 
 def test_u_train_multilink():
@@ -170,7 +172,7 @@ def test_u_train_multilink():
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [cld.levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
@@ -235,3 +237,39 @@ def test_u_train_multilink():
     assert cl_lev.u_probability == 1 / denom
     cl_no = cc_name._get_comparison_level_by_comparison_vector_value(0)
     assert cl_no.u_probability == (denom - 10) / denom
+
+
+@pytest.mark.parametrize(
+    ("Linker", "cll"),
+    [
+        pytest.param(DuckDBLinker, cld, id="Test DuckDB random seeds"),
+        pytest.param(SparkLinker, clsp, id="Test Spark random seeds"),
+    ],
+)
+def test_seed_u_outputs(df_spark, Linker, cll):
+    if Linker == SparkLinker:
+        df = df_spark
+    else:
+        df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [cll.levenshtein_at_thresholds("first_name", 2)],
+    }
+
+    linker_1 = Linker(df, settings)
+    linker_2 = Linker(df, settings)
+    linker_3 = Linker(df, settings)
+
+    linker_1.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
+    linker_2.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
+    linker_3.estimate_u_using_random_sampling(max_pairs=1e3, seed=2)
+
+    assert (
+        linker_1._settings_obj._parameter_estimates_as_records
+        == linker_2._settings_obj._parameter_estimates_as_records
+    )
+    assert (
+        linker_1._settings_obj._parameter_estimates_as_records
+        != linker_3._settings_obj._parameter_estimates_as_records
+    )

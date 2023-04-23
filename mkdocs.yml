@@ -60,15 +60,20 @@ nav:
   - Home: "README.md"
   - Topic Guide:
       - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/backends.md"
-      - Retrieving and querying Splink results: "topic_guides/querying_splink_results.md"
       - Link type - linking vs deduping: "topic_guides/link_type.md"
-      - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
-      - Comparators: "topic_guides/comparators.md"
-      - Phonetic transformations: "topic_guides/phonetic.md"
-      - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
-      - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
-      - Optimising Spark performance: "topic_guides/optimising_spark.md"
-      - Salting blocking rules: "topic_guides/salting.md"
+      - Retrieving and querying Splink results: "topic_guides/querying_splink_results.md"
+      - Feature Engineering: "topic_guides/feature_engineering.md"
+      - Comparing Records:
+        - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
+        - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
+        - String comparators: "topic_guides/comparators.md"
+        - Phonetic transformations: "topic_guides/phonetic.md"
+      - Performance:
+        - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
+        - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
+        - Optimising Spark performance: "topic_guides/optimising_spark.md"
+        - Salting blocking rules: "topic_guides/salting.md"
+
   - API Reference:
       - Linker API:
           - Full API: "linker.md"
@@ -124,6 +129,7 @@ nav:
       - Comparisons and comparison levels:
         - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
         - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
+      - User-Defined Functions: "dev_guides/udfs.md"
 
 extra_css:
 - css/custom.css

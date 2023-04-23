@@ -50,7 +50,7 @@ def test_full_example_duckdb(tmp_path):
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
 
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6, seed=1)
     linker.estimate_probability_two_random_records_match(
         ["l.email = r.email"], recall=0.3
     )
@@ -111,6 +111,56 @@ def test_full_example_duckdb(tmp_path):
     linker_2.load_settings(path)
     linker_2.load_settings_from_json(path)
     DuckDBLinker(df, settings_dict=path)
+
+
+# Create some dummy dataframes for the link only test
+df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+df_l = df.copy()
+df_r = df.copy()
+df_l["source_dataset"] = "my_left_ds"
+df_r["source_dataset"] = "my_right_ds"
+df_final = df_l.append(df_r)
+# Tests link only jobs under different inputs:
+# * A single dataframe with a `source_dataset` column
+# * Two input dataframes with no specified `source_dataset` column
+# * Two input dataframes with a specified `source_dataset` column
+@pytest.mark.parametrize(
+    ("input", "source_l", "source_r"),
+    [
+        pytest.param(
+            [df, df],  # no source_dataset col
+            {"__splink__input_table_0"},
+            {"__splink__input_table_1"},
+            id="No source dataset column",
+        ),
+        pytest.param(
+            df_final,  # source_dataset col
+            {"my_left_ds"},
+            {"my_right_ds"},
+            id="Source dataset column in a single df",
+        ),
+        pytest.param(
+            [df_l, df_r],  # source_dataset col
+            {"my_left_ds"},
+            {"my_right_ds"},
+            id="Source dataset column in two dfs",
+        ),
+    ],
+)
+def test_link_only(input, source_l, source_r):
+    settings = get_settings_dict()
+    settings["link_type"] = "link_only"
+    settings["source_dataset_column_name"] = "source_dataset"
+
+    linker = DuckDBLinker(
+        input,
+        settings,
+    )
+    df_predict = linker.predict().as_pandas_dataframe()
+
+    assert len(df_predict) == 7257
+    assert set(df_predict.source_dataset_l.values) == source_l
+    assert set(df_predict.source_dataset_r.values) == source_r
 
 
 @pytest.mark.parametrize(
@@ -238,29 +288,13 @@ def test_small_example_duckdb(tmp_path):
         "retain_intermediate_calculation_columns": True,
     }
 
-    linker = DuckDBLinker(
-        df,
-        connection=os.path.join(tmp_path, "duckdb.db"),
-        output_schema="splink_in_duckdb",
-    )
-    linker.load_settings(settings_dict)
+    linker = DuckDBLinker(df, settings_dict)
 
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
-    linker.estimate_probability_two_random_records_match(
-        ["l.email = r.email"], recall=0.3
-    )
     blocking_rule = "l.full_name = r.full_name"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    df_predict = linker.predict()
-    linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
-
-    path = os.path.join(tmp_path, "model.json")
-    linker.save_settings_to_json(path)
-
-    linker_2 = DuckDBLinker(df, connection=":memory:")
-    linker_2.load_settings(path)
-    DuckDBLinker(df, settings_dict=path)
+    linker.predict()

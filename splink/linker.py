@@ -45,6 +45,8 @@ from .connected_components import (
 )
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
+from .exceptions import SplinkException
+from .logging_messages import execute_sql_logging_message_info, log_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .m_training import estimate_m_values_from_label_column
 from .match_key_analysis import (
@@ -187,6 +189,9 @@ class Linker:
             homogenised_tables, homogenised_aliases
         )
 
+        self._names_of_tables_created_by_splink: set = set()
+        self._intermediate_table_cache: dict = CacheDictWithLogging()
+
         if not isinstance(settings_dict, (dict, type(None))):
             self._setup_settings_objs(None)  # feed it a blank settings dictionary
             self.load_settings(settings_dict)
@@ -196,9 +201,6 @@ class Linker:
 
         self._validate_input_dfs()
         self._em_training_sessions = []
-
-        self._names_of_tables_created_by_splink: set = set()
-        self._intermediate_table_cache: dict = CacheDictWithLogging()
 
         self._find_new_matches_mode = False
         self._train_u_using_random_sample_mode = False
@@ -275,6 +277,22 @@ class Linker:
         if self._two_dataset_link_only:
             return "__splink_df_concat_with_tf_right"
         return "__splink__df_concat_with_tf"
+
+    @property
+    def _source_dataset_column_name(self):
+        if self._settings_obj_ is None:
+            return None
+
+        # Used throughout the scripts to feed our SQL
+        if self._settings_obj._source_dataset_column_name_is_required:
+            df_obj = next(iter(self._input_tables_dict.values()))
+            columns = df_obj.columns_escaped
+
+            input_column = self._settings_obj._source_dataset_input_column
+            src_ds_col = InputColumn(input_column, self).name()
+            return "__splink_source_dataset" if src_ds_col in columns else input_column
+        else:
+            return None
 
     @property
     def _two_dataset_link_only(self):
@@ -489,10 +507,47 @@ class Linker:
             self._pipeline.reset()
             return dataframe
 
-    def _execute_sql_against_backend(self, sql, templated_name, physical_name):
+    def _execute_sql_against_backend(
+        self, sql: str, templated_name: str, physical_name: str
+    ) -> SplinkDataFrame:
+        """Execute a single sql SELECT statement, returning a SplinkDataFrame.
+
+        Subclasses should implement this, using _log_and_run_sql_execution() within
+        their implementation, maybe doing some SQL translation or other prep/cleanup
+        work before/after.
+        """
         raise NotImplementedError(
             f"_execute_sql_against_backend not implemented for {type(self)}"
         )
+
+    def _run_sql_execution(
+        self, final_sql: str, templated_name: str, physical_name: str
+    ) -> SplinkDataFrame:
+        """**Actually** execute the sql against the backend database.
+
+        This is intended to be implemented by a subclass, but not actually called
+        directly. Instead, call _log_and_run_sql_execution, and that will call
+        this method.
+
+        This could return something, or not. It's up to the Linker subclass to decide.
+        """
+        raise NotImplementedError(
+            f"_run_sql_execution not implemented for {type(self)}"
+        )
+
+    def _log_and_run_sql_execution(
+        self, final_sql: str, templated_name: str, physical_name: str
+    ) -> SplinkDataFrame:
+        """Log the sql, then call _run_sql_execution(), wrapping any errors"""
+        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
+        logger.log(5, log_sql(final_sql))
+        try:
+            return self._run_sql_execution(final_sql, templated_name, physical_name)
+        except Exception as e:
+            raise SplinkException(
+                f"Error executing the following sql for table "
+                f"`{templated_name}`({physical_name}):\n{final_sql}"
+            ) from e
 
     def register_table(self, input, table_name, overwrite=False):
         """
@@ -865,8 +920,22 @@ class Linker:
                 )
             settings_dict = json.loads(p.read_text())
 
+        # Store the cache ID so it can be reloaded after cache invalidation
+        cache_id = self._cache_uid
+        # So we don't run into any issues with generated tables having
+        # invalid columns as settings have been tweaked, invalidate
+        # the cache and allow these tables to be recomputed.
+
+        # This is less efficient, but triggers infrequently and ensures we don't
+        # run into issues where the defaults used conflict with the actual values
+        # supplied in settings.
+
+        # This is particularly relevant with `source_dataset`, which appears within
+        # concat_with_tf.
+        self.invalidate_cache()
+
         # If a uid already exists in your settings object, prioritise this
-        settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
+        settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_id)
         settings_dict["sql_dialect"] = settings_dict.get(
             "sql_dialect", self._sql_dialect
         )
@@ -1032,7 +1101,7 @@ class Linker:
         return self._execute_sql_pipeline([concat_with_tf])
 
     def estimate_u_using_random_sampling(
-        self, max_pairs: int = None, *, target_rows=None
+        self, max_pairs: int = None, seed: int = None, *, target_rows=None
     ):
         """Estimate the u parameters of the linkage model using random sampling.
 
@@ -1045,6 +1114,10 @@ class Linker:
         pairwise comparisons are non-matches (or at least, they are very unlikely to be
         matches). For large datasets, this is typically true.
 
+        The results of estimate_u_using_random_sampling, and therefore an entire splink
+        model, can be made reproducible by setting the seed parameter. Setting the seed
+        will have performance implications as additional processing is required.
+
         Args:
             max_pairs (int): The maximum number of pairwise record comparisons to
             sample. Larger will give more accurate estimates
@@ -1052,6 +1125,9 @@ class Linker:
             gives best results but can take a long time to compute. 1e7 (ten million)
             is often adequate whilst testing different model specifications, before
             the final model is estimated.
+            seed (int): Seed for random sampling. Assign to get reproducible u
+            probabilities. Note, seed for random sampling is only supported for
+            DuckDB and Spark, for Athena and SQLite set to None.
 
         Examples:
             >>> linker.estimate_u_using_random_sampling(1e8)
@@ -1079,7 +1155,7 @@ class Linker:
         else:
             raise TypeError("Missing argument max_pairs")
 
-        estimate_u_values(self, max_pairs)
+        estimate_u_values(self, max_pairs, seed)
         self._populate_m_u_from_trained_values()
 
         self._settings_obj._columns_without_estimated_parameters_message()
