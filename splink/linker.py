@@ -35,10 +35,12 @@ from .charts import (
     waterfall_chart,
 )
 from .cluster_studio import render_splink_cluster_studio_html
-from .comparison import Comparison
-from .comparison_level import ComparisonLevel
-from .comparison_vector_distribution import comparison_vector_distribution_sql
-from .comparison_vector_values import compute_comparison_vector_values_sql
+from .comparison.comparison import Comparison
+from .comparison.comparison_level import ComparisonLevel
+from .comparison.comparison_vector_distribution import (
+    comparison_vector_distribution_sql,
+)
+from .comparison.comparison_vector_values import compute_comparison_vector_values_sql
 from .connected_components import (
     _cc_create_unique_id_cols,
     solve_connected_components,

@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from ..input_column import InputColumn
 from .comparison_level import ComparisonLevel
 from .comparison_level_sql import great_circle_distance_km_sql
-from ..input_column import InputColumn
 
 
 class NullLevelBase(ComparisonLevel):

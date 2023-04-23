@@ -10,9 +10,9 @@ from .charts import (
     match_weights_interactive_history_chart,
     probability_two_random_records_match_iteration_chart,
 )
-from .comparison import Comparison
-from .comparison_level import ComparisonLevel
-from .comparison_vector_values import compute_comparison_vector_values_sql
+from .comparison.comparison import Comparison
+from .comparison.comparison_level import ComparisonLevel
+from .comparison.comparison_vector_values import compute_comparison_vector_values_sql
 from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .exceptions import EMTrainingException
 from .expectation_maximisation import expectation_maximisation

@@ -6,13 +6,13 @@ from __future__ import annotations
 
 import logging
 
+from ..misc import ensure_is_iterable
 from .comparison import Comparison  # change to self
 from .comparison_library_utils import (
     datediff_error_logger,
     distance_threshold_comparison_levels,
     distance_threshold_description,
 )
-from ..misc import ensure_is_iterable
 
 logger = logging.getLogger(__name__)
 

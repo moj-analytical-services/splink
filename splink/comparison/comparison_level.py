@@ -24,7 +24,7 @@ from ..parse_sql import get_columns_used_from_sql
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .comparison import Comparison
+    from .comparison.comparison import Comparison
 
 logger = logging.getLogger(__name__)
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from ..misc import ensure_is_iterable
 from .comparison import Comparison
 from .comparison_library_utils import (
     comparison_at_thresholds_error_logger,
@@ -7,7 +8,6 @@ from .comparison_library_utils import (
     distance_threshold_comparison_levels,
     distance_threshold_description,
 )
-from ..misc import ensure_is_iterable
 
 
 class ExactMatchBase(Comparison):
