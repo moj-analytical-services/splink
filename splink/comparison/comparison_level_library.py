@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from ..input_column import InputColumn
 from .comparison_level import ComparisonLevel
 from .comparison_level_sql import great_circle_distance_km_sql
-from .input_column import InputColumn
 
 
 class NullLevelBase(ComparisonLevel):
@@ -198,6 +198,45 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
             self._levenshtein_name,
             distance_threshold,
             False,
+            m_probability=m_probability,
+        )
+
+
+class JaroLevelBase(DistanceFunctionLevelBase):
+    def __init__(
+        self,
+        col_name: str,
+        distance_threshold: float,
+        m_probability=None,
+    ):
+        """Represents a comparison using the jaro distance function
+
+        Args:
+            col_name (str): Input column name
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+            m_probability (float, optional): Starting value for m probability.
+                Defaults to None.
+
+        Examples:
+            >>> # DuckDB Jaro comparison level at threshold 0.9
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.jaro_level("name", 0.9)
+
+            >>> # Spark Jaro comparison level at thresholds 0.9
+            >>> import splink.spark.spark_comparison_level_library as cll
+            >>> cll.jaro_level("name", 0.9)
+
+        Returns:
+            ComparisonLevel: A comparison level that evaluates the
+                jaro similarity
+        """
+
+        super().__init__(
+            col_name,
+            self._jaro_name,
+            distance_threshold,
+            True,
             m_probability=m_probability,
         )
 

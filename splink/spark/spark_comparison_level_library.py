@@ -1,5 +1,5 @@
-from ..comparison_level_composition import and_, not_, or_  # noqa: F401
-from ..comparison_level_library import (
+from ..comparison.comparison_level_composition import and_, not_, or_  # noqa: F401
+from ..comparison.comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
     DateDiffLevelBase,
@@ -8,6 +8,7 @@ from ..comparison_level_library import (
     ElseLevelBase,
     ExactMatchLevelBase,
     JaccardLevelBase,
+    JaroLevelBase,
     JaroWinklerLevelBase,
     LevenshteinLevelBase,
     NullLevelBase,
@@ -39,6 +40,10 @@ class distance_function_level(SparkBase, DistanceFunctionLevelBase):
 
 
 class levenshtein_level(SparkBase, LevenshteinLevelBase):
+    pass
+
+
+class jaro_level(SparkBase, JaroLevelBase):
     pass
 
 

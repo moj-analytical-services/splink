@@ -4,8 +4,8 @@ import importlib
 import inspect
 from pathlib import Path
 
-from splink.comparison import Comparison
-from splink.comparison_level import ComparisonLevel
+from splink.comparison.comparison import Comparison
+from splink.comparison.comparison_level import ComparisonLevel
 from splink.dialect_base import DialectBase
 
 # could always pick this up dynamically,

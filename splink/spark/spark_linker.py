@@ -247,6 +247,7 @@ class SparkLinker(Linker):
         # will for loop through this list to register UDFs.
         # List is a tuple of structure (UDF Name, class path, spark return type)
         udfs_register = [
+            ("jaro_sim", "uk.gov.moj.dash.linkage.JaroSimilarity", DoubleType()),
             (
                 "jaro_winkler",
                 "uk.gov.moj.dash.linkage.JaroWinklerSimilarity",
