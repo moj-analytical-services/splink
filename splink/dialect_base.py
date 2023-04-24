@@ -27,6 +27,15 @@ class DialectBase:
         )
 
     @property
+    def _regex_extract_function(self):
+        raise NotImplementedError(
+            f"Regex extract function not defined for "
+            f"object of type {type(self)}.  "
+            f"Have you remembered to use dialect-specific "
+            f"comparisons/comparison levels?"
+        )
+
+    @property
     def _levenshtein_name(self):
         return "levenshtein"
 
