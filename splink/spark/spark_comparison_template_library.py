@@ -1,4 +1,4 @@
-from ..comparison.comparison_template_library import (
+from ..comparison_template_library import (
     DateComparisonBase,
     NameComparisonBase,
 )

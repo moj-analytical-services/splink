@@ -1,4 +1,4 @@
-from ..comparison.comparison_library import (
+from ..comparison_library import (
     DistanceFunctionAtThresholdsComparisonBase,
     ExactMatchBase,
 )
