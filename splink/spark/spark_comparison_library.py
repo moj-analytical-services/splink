@@ -35,7 +35,7 @@ class levenshtein_at_thresholds(
 class jaro_at_thresholds(SparkComparisonProperties, JaroAtThresholdsComparisonBase):
     @property
     def _distance_level(self):
-        return jaro_level
+        return self._jaro_level
 
 
 class jaro_winkler_at_thresholds(

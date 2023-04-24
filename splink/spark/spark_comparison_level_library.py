@@ -53,6 +53,10 @@ class SparkComparisonProperties(SparkBase):
         return levenshtein_level
 
     @property
+    def _jaro_level(self):
+        return jaro_level
+
+    @property
     def _jaro_winkler_level(self):
         return jaro_winkler_level
 
