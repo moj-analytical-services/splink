@@ -501,8 +501,8 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         m_probability_exact_match=None,
         m_probability_or_probabilities_sizes: float | list = None,
         m_probability_else=None,
-        cast_strings_to_date = False,
-        date_format = None,
+        cast_strings_to_date=False,
+        date_format=None,
     ) -> Comparison:
         """A comparison of the data in the date column `col_name` with various
         date thresholds and metrics to assess similarity levels.
@@ -541,7 +541,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                 for the sizes specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
-            cast_strings_to_date (bool, optional): Set to True to 
+            cast_strings_to_date (bool, optional): Set to True to
                 enable date-casting when input dates are strings. Also adjust
                 date_format if date-strings are not in (yyyy-mm-dd) format.
                 Defaults to False.
@@ -567,13 +567,13 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
             >>>                             date_metrics = ['day', 'month', 'year']
             >>>                             )
 
-            >>> # DuckDB datediff comparison with date-casting and unspecified 
+            >>> # DuckDB datediff comparison with date-casting and unspecified
             >>> # (default = %Y-%m-%d) date_format
             >>> import splink.duckdb.duckdb_comparison_library as cl
             >>> cl.datediff_at_thresholds("dob", date_thresholds=[1,5],\
                   date_metrics = ["day", "year"], cast_strings_to_date=True)
-                  
-            >>> # DuckDB datediff comparison with date-casting and specified 
+
+            >>> # DuckDB datediff comparison with date-casting and specified
             >>> # (non-default) date_format
             >>> import splink.duckdb.duckdb_comparison_library as cl
             >>> cl.datediff_at_thresholds("dob", date_thresholds=[1,5],\
@@ -612,7 +612,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                 date_threshold=date_thres,
                 date_metric=date_metr,
                 m_probability=m_prob,
-                cast_strings_to_date=cast_strings_to_date, 
+                cast_strings_to_date=cast_strings_to_date,
                 date_format=date_format,
             )
             comparison_levels.append(level)

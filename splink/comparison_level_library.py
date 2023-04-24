@@ -535,8 +535,8 @@ class DateDiffLevelBase(ComparisonLevel):
         date_threshold: int,
         date_metric: str = "day",
         m_probability=None,
-        cast_strings_to_date = False,
-        date_format = None,
+        cast_strings_to_date=False,
+        date_format=None,
     ) -> ComparisonLevel:
         """Represents a comparison level based around the difference between dates
         within a column
@@ -576,13 +576,13 @@ class DateDiffLevelBase(ComparisonLevel):
             >>>                     date_metric="year"
             >>>                     )
 
-            >>> # DuckDB Date Difference comparison with date-casting and unspecified 
+            >>> # DuckDB Date Difference comparison with date-casting and unspecified
             >>> # (default = %Y-%m-%d) date_format
             >>> import splink.duckdb.duckdb_comparison_level_library as cll
             >>> cll.datediff_level("dob", date_threshold=3, date_metric='month',\
                             cast_strings_to_date=True)
 
-            >>> # DuckDB Date Difference comparison with date-casting and specified 
+            >>> # DuckDB Date Difference comparison with date-casting and specified
             >>> # date_format
             >>> import splink.duckdb.duckdb_comparison_level_library as cll
             >>> cll.datediff_level("dob", date_threshold=3, date_metric='month',\
@@ -597,7 +597,12 @@ class DateDiffLevelBase(ComparisonLevel):
         date_l, date_r = date.names_l_r()
 
         datediff_sql = self._datediff_function(
-            date_l, date_r, date_threshold, date_metric, cast_strings_to_date, date_format
+            date_l,
+            date_r,
+            date_threshold,
+            date_metric,
+            cast_strings_to_date,
+            date_format,
         )
         label = f"Within {date_threshold} {date_metric}"
         if date_threshold > 1:
