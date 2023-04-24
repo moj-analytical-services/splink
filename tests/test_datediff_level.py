@@ -263,7 +263,6 @@ def test_datediff_with_str_casting(spark, cl, cll, Linker, caplog):
         df_e2 = linker.predict().as_pandas_dataframe()
         return df_e1, df_e2
 
-
     df = pd.DataFrame(
         [
             {
