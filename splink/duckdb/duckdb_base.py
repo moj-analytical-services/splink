@@ -35,6 +35,12 @@ def datediff_sql(
         """
 
 
+def regex_extract_sql(col_name_l, col_name_r, regex):
+    return f"""
+        regexp_extract({col_name_l}, '{regex}', 0) == regexp_extract({col_name_r}, '{regex}', 0)
+    """
+
+
 class DuckDBBase(DialectBase):
     @property
     def _sql_dialect(self):
@@ -47,6 +53,10 @@ class DuckDBBase(DialectBase):
     @property
     def _datediff_function(self):
         return datediff_sql
+
+    @property
+    def _regex_extract_function(self):
+        return regex_extract_sql
 
     @property
     def _jaro_name(self):
