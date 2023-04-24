@@ -87,6 +87,18 @@ The detailed API for each of these are outlined below.
 
 ---
 
+::: splink.comparison_level_library.JaroLevelBase
+    handler: python
+    selection:
+      members:
+        -  __init__
+    rendering:
+      show_root_heading: true
+      show_source: false
+      heading_level: 2
+
+---
+
 ::: splink.comparison_level_library.JaroWinklerLevelBase
     handler: python
     selection:

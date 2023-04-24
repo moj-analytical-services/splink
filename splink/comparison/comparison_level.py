@@ -11,20 +11,20 @@ import sqlglot
 from sqlglot.expressions import Identifier
 from sqlglot.optimizer.normalize import normalize
 
-from .constants import LEVEL_NOT_OBSERVED_TEXT
-from .default_from_jsonschema import default_value_from_schema
-from .input_column import InputColumn, sqlglot_tree_signature
-from .misc import (
+from ..constants import LEVEL_NOT_OBSERVED_TEXT
+from ..default_from_jsonschema import default_value_from_schema
+from ..input_column import InputColumn, sqlglot_tree_signature
+from ..misc import (
     dedupe_preserving_order,
     interpolate,
     join_list_with_commas_final_and,
     match_weight_to_bayes_factor,
 )
-from .parse_sql import get_columns_used_from_sql
+from ..parse_sql import get_columns_used_from_sql
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .comparison import Comparison
+    from .comparison.comparison import Comparison
 
 logger = logging.getLogger(__name__)
 

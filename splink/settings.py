@@ -5,8 +5,8 @@ from copy import deepcopy
 
 from .blocking import BlockingRule
 from .charts import m_u_parameters_chart, match_weights_chart
-from .comparison import Comparison
-from .comparison_level import ComparisonLevel
+from .comparison.comparison import Comparison
+from .comparison.comparison_level import ComparisonLevel
 from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
 from .misc import dedupe_preserving_order, prob_to_bayes_factor, prob_to_match_weight

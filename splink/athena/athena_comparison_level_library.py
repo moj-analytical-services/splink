@@ -1,5 +1,5 @@
-from ..comparison_level_composition import and_, not_, or_  # noqa: F401
-from ..comparison_level_library import (
+from ..comparison.comparison_level_composition import and_, not_, or_  # noqa: F401
+from ..comparison.comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
     DistanceFunctionLevelBase,
@@ -13,6 +13,36 @@ from ..comparison_level_library import (
 from .athena_base import (
     AthenaBase,
 )
+
+
+class AthenaComparisonProperties(AthenaBase):
+    @property
+    def _exact_match_level(self):
+        return exact_match_level
+
+    @property
+    def _null_level(self):
+        return null_level
+
+    @property
+    def _else_level(self):
+        return else_level
+
+    @property
+    def _array_intersect_level(self):
+        return array_intersect_level
+
+    @property
+    def _distance_in_km_level(self):
+        return distance_in_km_level
+
+    @property
+    def _distance_function_level(self):
+        return distance_function_level
+
+    @property
+    def _levenshtein_level(self):
+        return levenshtein_level
 
 
 class null_level(AthenaBase, NullLevelBase):

@@ -48,5 +48,9 @@ class DuckDBBase(DialectBase):
         return datediff_sql
 
     @property
+    def _jaro_name(self):
+        return "jaro_similarity"
+
+    @property
     def _jaro_winkler_name(self):
         return "jaro_winkler_similarity"

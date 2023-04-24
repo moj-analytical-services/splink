@@ -1,7 +1,7 @@
 import math
 from copy import deepcopy
 
-from .comparison import Comparison
+from .comparison.comparison import Comparison
 from .misc import prob_to_bayes_factor
 
 
