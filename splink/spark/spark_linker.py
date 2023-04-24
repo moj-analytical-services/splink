@@ -511,7 +511,7 @@ class SparkLinker(Linker):
                     logger.warning(
                         """--WARN-- \n You are using datediff comparison
                         with str-casting and ANSI is not enabled. Bad dates
-                        e.g. 1999-13-54 will not trigger an exception and
-                        might mess up comparisons. Ensure date strings are
-                        cleaned to remove bad dates \n"""
+                        e.g. 1999-13-54 will not trigger an exception but will
+                        classed as comparison level = "ELSE". Ensure date strings
+                        are cleaned to remove bad dates \n"""
                     )
