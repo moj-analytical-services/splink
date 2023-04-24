@@ -11,6 +11,9 @@ from splink import exceptions
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 
+import duckdb
+import py4j
+
 
 @pytest.mark.parametrize(
     ("cl", "cll", "Linker"),
@@ -259,6 +262,7 @@ def test_datediff_with_str_casting(spark, cl, cll, Linker, caplog):
         linker = Linker(df, settings_cl)
         df_e2 = linker.predict().as_pandas_dataframe()
         return df_e1, df_e2
+
 
     df = pd.DataFrame(
         [
