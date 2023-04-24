@@ -286,11 +286,14 @@ def phonetic_transform(string):
 
     return transforms
 
+
 def phonetic_match(string1, string2):
-    """
-    
-    """
+    """ """
     phonetic1 = phonetic_transform(string1)
     phonetic2 = phonetic_transform(string2)
 
-    #match = 
+    comparison_list = [
+        transform1 == transform2 for transform1, transform2 in zip(phonetic1, phonetic2)
+    ]
+
+    return comparison_list
