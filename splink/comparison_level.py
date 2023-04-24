@@ -11,7 +11,7 @@ import sqlglot
 from sqlglot.expressions import Identifier
 from sqlglot.optimizer.normalize import normalize
 
-from ..parse_sql import get_columns_used_from_sql
+from .parse_sql import get_columns_used_from_sql
 from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn, sqlglot_tree_signature
