@@ -40,6 +40,7 @@ class ExactMatchLevelBase(ComparisonLevel):
     def __init__(
         self,
         col_name,
+        regex_extract=None,
         m_probability=None,
         term_frequency_adjustments=False,
         include_colname_in_charts_label=False,
@@ -48,6 +49,7 @@ class ExactMatchLevelBase(ComparisonLevel):
 
         Args:
             col_name (str): Input column name
+            regex_extract (str): Regular expression pattern to evaluate a match on
             m_probability (float, optional): Starting value for m probability
                 Defaults to None.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -65,8 +67,14 @@ class ExactMatchLevelBase(ComparisonLevel):
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
 
         label_suffix = f" {col_name}" if include_colname_in_charts_label else ""
+        if regex_extract:
+            sql_cond = self._regex_extract_function(
+                col.name_l(), col.name_r(), regex_extract
+            )
+        else:
+            sql_cond = f"{col.name_l()} = {col.name_r()}"
         level_dict = {
-            "sql_condition": f"{col.name_l()} = {col.name_r()}",
+            "sql_condition": sql_cond,
             "label_for_charts": f"Exact match{label_suffix}",
         }
         if m_probability:
