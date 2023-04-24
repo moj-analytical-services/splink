@@ -385,7 +385,7 @@ class ComparisonLevel:
     def _label_for_charts_no_duplicates(self):
         if self._has_comparison:
             labels = []
-            for cl in self.comparison_levels:
+            for cl in self.comparison.comparison_levels:
                 labels.append(cl.label_for_charts)
 
         if len(labels) == len(set(labels)):
@@ -514,7 +514,7 @@ class ComparisonLevel:
 
     @property
     def _u_probability_corresponding_to_exact_match(self):
-        levels = self.comparison_levels
+        levels = self.comparison.comparison_levels
 
         # Find a level with a single exact match colname
         # which is equal to the tf adjustment input colname
