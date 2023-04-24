@@ -9,60 +9,7 @@ from ..comparison.comparison_library import (
     JaroWinklerAtThresholdsComparisonBase,
     LevenshteinAtThresholdsComparisonBase,
 )
-from .duckdb_base import (
-    DuckDBBase,
-)
-from .duckdb_comparison_level_library import (
-    array_intersect_level,
-    datediff_level,
-    distance_function_level,
-    distance_in_km_level,
-    else_level,
-    exact_match_level,
-    jaccard_level,
-    jaro_level,
-    jaro_winkler_level,
-    levenshtein_level,
-    null_level,
-)
-
-
-class DuckDBComparisonProperties(DuckDBBase):
-    @property
-    def _exact_match_level(self):
-        return exact_match_level
-
-    @property
-    def _null_level(self):
-        return null_level
-
-    @property
-    def _else_level(self):
-        return else_level
-
-    @property
-    def _datediff_level(self):
-        return datediff_level
-
-    @property
-    def _array_intersect_level(self):
-        return array_intersect_level
-
-    @property
-    def _distance_in_km_level(self):
-        return distance_in_km_level
-
-    @property
-    def _levenshtein_level(self):
-        return levenshtein_level
-
-    @property
-    def _jaro_winkler_level(self):
-        return jaro_winkler_level
-
-    @property
-    def _jaccard_level(self):
-        return jaccard_level
+from .duckdb_comparison_level_library import DuckDBComparisonProperties
 
 
 class exact_match(DuckDBComparisonProperties, ExactMatchBase):
@@ -74,7 +21,7 @@ class distance_function_at_thresholds(
 ):
     @property
     def _distance_level(self):
-        return distance_function_level
+        return self._distance_function_level
 
 
 class levenshtein_at_thresholds(
@@ -82,13 +29,13 @@ class levenshtein_at_thresholds(
 ):
     @property
     def _distance_level(self):
-        return levenshtein_level
+        return self._levenshtein_level
 
 
 class jaro_at_thresholds(DuckDBComparisonProperties, JaroAtThresholdsComparisonBase):
     @property
     def _distance_level(self):
-        return jaro_level
+        return self._jaro_level
 
 
 class jaro_winkler_at_thresholds(
@@ -96,7 +43,7 @@ class jaro_winkler_at_thresholds(
 ):
     @property
     def _distance_level(self):
-        return jaro_winkler_level
+        return self._jaro_winkler_level
 
 
 class jaccard_at_thresholds(
@@ -104,7 +51,7 @@ class jaccard_at_thresholds(
 ):
     @property
     def _distance_level(self):
-        return jaccard_level
+        return self._jaccard_level
 
 
 class array_intersect_at_sizes(
