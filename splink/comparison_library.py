@@ -570,15 +570,21 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
             >>> # DuckDB datediff comparison with date-casting and unspecified
             >>> # (default = %Y-%m-%d) date_format
             >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.datediff_at_thresholds("dob", date_thresholds=[1,5],\
-                  date_metrics = ["day", "year"], cast_strings_to_date=True)
+            >>> cl.datediff_at_thresholds("dob",
+                                            date_thresholds=[1,5],
+                                            date_metrics = ["day", "year"],
+                                            cast_strings_to_date=True
+                                            )
 
             >>> # DuckDB datediff comparison with date-casting and specified
             >>> # (non-default) date_format
             >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.datediff_at_thresholds("dob", date_thresholds=[1,5],\
-                  date_metrics = ["day", "year"], cast_strings_to_date=True,\
-                    date_format='%d/%m/%Y')
+            >>> cl.datediff_at_thresholds("dob",
+                                            date_thresholds=[1,5],
+                                            date_metrics = ["day", "year"],
+                                            cast_strings_to_date=True,
+                                            date_format='%d/%m/%Y'
+                                            )
 
         Returns:
             Comparison: A comparison for Datediff that can be included in the Splink

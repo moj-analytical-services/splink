@@ -579,14 +579,21 @@ class DateDiffLevelBase(ComparisonLevel):
             >>> # DuckDB Date Difference comparison with date-casting and unspecified
             >>> # (default = %Y-%m-%d) date_format
             >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.datediff_level("dob", date_threshold=3, date_metric='month',\
-                            cast_strings_to_date=True)
+            >>> cll.datediff_level("dob",
+                                    date_threshold=3,
+                                    date_metric='month',
+                                    cast_strings_to_date=True
+                                    )
 
             >>> # DuckDB Date Difference comparison with date-casting and specified
             >>> # date_format
             >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.datediff_level("dob", date_threshold=3, date_metric='month',\
-                            cast_strings_to_date=True, date_format='%d/%m/%Y')
+            >>> cll.datediff_level("dob",
+                                    date_threshold=3,
+                                    date_metric='month',
+                                    cast_strings_to_date=True,
+                                    date_format='%d/%m/%Y'
+                                    )
 
         Returns:
             ComparisonLevel: A comparison level that evaluates whether two dates fall
