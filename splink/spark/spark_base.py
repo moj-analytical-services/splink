@@ -22,6 +22,12 @@ def datediff_sql(col_name_l, col_name_r, date_threshold, date_metric):
     """
 
 
+def regex_extract_sql(col_name_l, col_name_r, regex):
+    return f"""
+        regexp_extract({col_name_l}, '{regex}', 0) == regexp_extract({col_name_r}, '{regex}', 0)
+    """
+
+
 class SparkBase(DialectBase):
     @property
     def _sql_dialect(self):
@@ -34,6 +40,10 @@ class SparkBase(DialectBase):
     @property
     def _size_array_intersect_function(self):
         return size_array_intersect_sql
+
+    @property
+    def _regex_extract_function(self):
+        return regex_extract_sql
 
     @property
     def _jaro_name(self):
