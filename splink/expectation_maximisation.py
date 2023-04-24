@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import duckdb
 
-from .comparison.comparison_level import ComparisonLevel
+from .comparison_level import ComparisonLevel
 from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
 from .predict import predict_from_comparison_vectors_sqls

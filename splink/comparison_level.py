@@ -11,20 +11,20 @@ import sqlglot
 from sqlglot.expressions import Identifier
 from sqlglot.optimizer.normalize import normalize
 
-from ..constants import LEVEL_NOT_OBSERVED_TEXT
-from ..default_from_jsonschema import default_value_from_schema
-from ..input_column import InputColumn, sqlglot_tree_signature
-from ..misc import (
+from ..parse_sql import get_columns_used_from_sql
+from .constants import LEVEL_NOT_OBSERVED_TEXT
+from .default_from_jsonschema import default_value_from_schema
+from .input_column import InputColumn, sqlglot_tree_signature
+from .misc import (
     dedupe_preserving_order,
     interpolate,
     join_list_with_commas_final_and,
     match_weight_to_bayes_factor,
 )
-from ..parse_sql import get_columns_used_from_sql
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
-    from .comparison.comparison import Comparison
+    from .comparison import Comparison
 
 logger = logging.getLogger(__name__)
 
@@ -385,7 +385,7 @@ class ComparisonLevel:
     def _label_for_charts_no_duplicates(self):
         if self._has_comparison:
             labels = []
-            for cl in self.comparison.comparison_levels:
+            for cl in self.comparison_levels:
                 labels.append(cl.label_for_charts)
 
         if len(labels) == len(set(labels)):
@@ -514,7 +514,7 @@ class ComparisonLevel:
 
     @property
     def _u_probability_corresponding_to_exact_match(self):
-        levels = self.comparison.comparison_levels
+        levels = self.comparison_levels
 
         # Find a level with a single exact match colname
         # which is equal to the tf adjustment input colname
