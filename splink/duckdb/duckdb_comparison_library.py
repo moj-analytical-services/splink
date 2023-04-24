@@ -1,10 +1,11 @@
-from ..comparison_library import (
+from ..comparison.comparison_library import (
     ArrayIntersectAtSizesComparisonBase,
     DateDiffAtThresholdsComparisonBase,
     DistanceFunctionAtThresholdsComparisonBase,
     DistanceInKMAtThresholdsComparisonBase,
     ExactMatchBase,
     JaccardAtThresholdsComparisonBase,
+    JaroAtThresholdsComparisonBase,
     JaroWinklerAtThresholdsComparisonBase,
     LevenshteinAtThresholdsComparisonBase,
 )
@@ -29,6 +30,12 @@ class levenshtein_at_thresholds(
     @property
     def _distance_level(self):
         return self._levenshtein_level
+
+
+class jaro_at_thresholds(DuckDBComparisonProperties, JaroAtThresholdsComparisonBase):
+    @property
+    def _distance_level(self):
+        return jaro_level
 
 
 class jaro_winkler_at_thresholds(

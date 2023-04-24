@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from ..misc import ensure_is_iterable
 from .comparison import Comparison
 from .comparison_library_utils import (
     comparison_at_thresholds_error_logger,
     datediff_error_logger,
+    distance_threshold_comparison_levels,
+    distance_threshold_description,
 )
-from .misc import ensure_is_iterable
 
 
 class ExactMatchBase(Comparison):
@@ -67,12 +69,12 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         self,
         col_name: str,
         distance_function_name: str,
-        distance_threshold_or_thresholds: int | list,
+        distance_threshold_or_thresholds: float | list,
         higher_is_more_similar: bool = True,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
-        m_probability_or_probabilities_lev: float | list = None,
+        m_probability_or_probabilities_thres: float | list = None,
         m_probability_else=None,
     ) -> Comparison:
         """A comparison of the data in `col_name` with a user-provided distance
@@ -108,8 +110,8 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                 adjustments to the exact match level. Defaults to False.
             m_probability_exact_match (_type_, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
-            m_probability_or_probabilities_lev (Union[float, list], optional):
-                _description_. If provided, overrides the default m probabilities
+            m_probability_or_probabilities_thres (Union[float, list], optional):
+                If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
@@ -134,15 +136,15 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             Comparison: A comparison for a chosen distance function similarity that
                 can be included in the Splink settings dictionary.
         """
-
-        distance_thresholds = ensure_is_iterable(distance_threshold_or_thresholds)
-
-        if m_probability_or_probabilities_lev is None:
-            m_probability_or_probabilities_lev = [None] * len(distance_thresholds)
-        m_probabilities = ensure_is_iterable(m_probability_or_probabilities_lev)
-
         # Validate user inputs
-        comparison_at_thresholds_error_logger("distance_function", distance_thresholds)
+
+        distance_threshold_or_thresholds = ensure_is_iterable(
+            distance_threshold_or_thresholds
+        )
+
+        comparison_at_thresholds_error_logger(
+            distance_function_name, distance_threshold_or_thresholds
+        )
 
         comparison_levels = []
         comparison_levels.append(self._null_level(col_name))
@@ -154,35 +156,29 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             )
             comparison_levels.append(level)
 
-        for thres, m_prob in zip(distance_thresholds, m_probabilities):
-            # these function arguments hold for all cases.
-            kwargs = dict(
-                col_name=col_name,
-                distance_threshold=thres,
-                m_probability=m_prob,
-            )
-            # separate out the two that are only used
-            # when we have a user-supplied function, rather than a predefined subclass
-            # feels a bit hacky, but will do at least for time being
-            if not self._is_distance_subclass:
-                kwargs["distance_function_name"] = distance_function_name
-                kwargs["higher_is_more_similar"] = higher_is_more_similar
-            level = self._distance_level(**kwargs)
-            comparison_levels.append(level)
+        threshold_comparison_levels = distance_threshold_comparison_levels(
+            self,
+            col_name,
+            distance_function_name,
+            distance_threshold_or_thresholds,
+            m_probability_or_probabilities_thres,
+        )
+        comparison_levels = comparison_levels + threshold_comparison_levels
 
         comparison_levels.append(
             self._else_level(m_probability=m_probability_else),
         )
 
+        # Construct comparison description
         comparison_desc = ""
         if include_exact_match_level:
             comparison_desc += "Exact match vs. "
 
-        thres_desc = ", ".join([str(d) for d in distance_thresholds])
-        plural = "" if len(distance_thresholds) == 1 else "s"
-        comparison_desc += (
-            f"{distance_function_name} at threshold{plural} {thres_desc} vs. "
+        threshold_desc = distance_threshold_description(
+            col_name, distance_function_name, distance_threshold_or_thresholds
         )
+        comparison_desc += threshold_desc
+
         comparison_desc += "anything else"
 
         comparison_dict = {
@@ -229,7 +225,7 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             m_probability_exact_match (_type_, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
-                _description_. If provided, overrides the default m probabilities
+                If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
@@ -272,7 +268,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
-        m_probability_or_probabilities_lev: float | list = None,
+        m_probability_or_probabilities_jac: float | list = None,
         m_probability_else=None,
     ) -> Comparison:
         """A comparison of the data in `col_name` with the jaccard distance used to
@@ -296,8 +292,8 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
                 adjustments to the exact match level. Defaults to False.
             m_probability_exact_match (_type_, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
-            m_probability_or_probabilities_lev (Union[float, list], optional):
-                _description_. If provided, overrides the default m probabilities
+            m_probability_or_probabilities_jac (Union[float, list], optional):
+                If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
@@ -324,7 +320,75 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
             include_exact_match_level,
             term_frequency_adjustments,
             m_probability_exact_match,
-            m_probability_or_probabilities_lev,
+            m_probability_or_probabilities_jac,
+            m_probability_else,
+        )
+
+    @property
+    def _is_distance_subclass(self):
+        return True
+
+
+class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase):
+    def __init__(
+        self,
+        col_name: str,
+        distance_threshold_or_thresholds: int | list = [0.9, 0.7],
+        include_exact_match_level=True,
+        term_frequency_adjustments=False,
+        m_probability_exact_match=None,
+        m_probability_or_probabilities_jar: float | list = None,
+        m_probability_else=None,
+    ) -> Comparison:
+        """A comparison of the data in `col_name` with the jaro distance used to
+        assess middle similarity levels.
+
+        An example of the output with default arguments and setting
+        `distance_threshold_or_thresholds = [0.9, 0.7]` would be
+        - Exact match
+        - jaro distance <= 0.9
+        - jaro distance <= 0.7
+        - Anything else
+
+        Args:
+            col_name (str): The name of the column to compare
+            distance_threshold_or_thresholds (Union[int, list], optional): The
+                threshold(s) to use for the middle similarity level(s).
+                Defaults to [0.9, 0.7].
+            include_exact_match_level (bool, optional): If True, include an exact match
+                level. Defaults to True.
+            term_frequency_adjustments (bool, optional): If True, apply term frequency
+                adjustments to the exact match level. Defaults to False.
+            m_probability_exact_match (_type_, optional): If provided, overrides the
+                default m probability for the exact match level. Defaults to None.
+            m_probability_or_probabilities_jar (Union[float, list], optional):
+                If provided, overrides the default m probabilities
+                for the thresholds specified for given function. Defaults to None.
+            m_probability_else (_type_, optional): If provided, overrides the
+                default m probability for the 'anything else' level. Defaults to None.
+
+        Examples:
+            >>> # DuckDB Jaro comparison at thresholds 0.9 and 0.7
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.jaro_at_thresholds("first_name", [0.9, 0.7])
+
+            >>> # Spark Jaccard comparison at thresholds 0.9 and 0.7
+            >>> import splink.spark.spark_comparison_library as cl
+            >>> cl.jaro_at_thresholds("first_name", [0.9, 0.7])
+
+        Returns:
+            Comparison:
+        """
+
+        super().__init__(
+            col_name,
+            self._jaro_name,
+            distance_threshold_or_thresholds,
+            True,
+            include_exact_match_level,
+            term_frequency_adjustments,
+            m_probability_exact_match,
+            m_probability_or_probabilities_jar,
             m_probability_else,
         )
 
@@ -341,7 +405,7 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
-        m_probability_or_probabilities_lev: float | list = None,
+        m_probability_or_probabilities_jw: float | list = None,
         m_probability_else=None,
     ) -> Comparison:
         """A comparison of the data in `col_name` with the jaro_winkler distance used to
@@ -365,8 +429,8 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                 adjustments to the exact match level. Defaults to False.
             m_probability_exact_match (_type_, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
-            m_probability_or_probabilities_lev (Union[float, list], optional):
-                _description_. If provided, overrides the default m probabilities
+            m_probability_or_probabilities_jw (Union[float, list], optional):
+                If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
@@ -393,7 +457,7 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             include_exact_match_level,
             term_frequency_adjustments,
             m_probability_exact_match,
-            m_probability_or_probabilities_lev,
+            m_probability_or_probabilities_jw,
             m_probability_else,
         )
 
@@ -425,7 +489,7 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
                 to use for the non-'else' similarity level(s). Should be in
                 descending order. Defaults to [1].
             m_probability_or_probabilities_sizes (Union[float, list], optional):
-                _description_. If provided, overrides the default m probabilities
+                If provided, overrides the default m probabilities
                 for the sizes specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
@@ -499,7 +563,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
-        m_probability_or_probabilities_sizes: float | list = None,
+        m_probability_or_probabilities_dat: float | list = None,
         m_probability_else=None,
     ) -> Comparison:
         """A comparison of the data in the date column `col_name` with various
@@ -534,8 +598,8 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                 adjustments to the exact match level. Defaults to False.
             m_probability_exact_match (_type_, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
-            m_probability_or_probabilities_sizes (Union[float, list], optional):
-                _description_. If provided, overrides the default m probabilities
+            m_probability_or_probabilities_dat (Union[float, list], optional):
+                If provided, overrides the default m probabilities
                 for the sizes specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
@@ -569,9 +633,9 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         comparison_at_thresholds_error_logger("datediff", date_thresholds)
         datediff_error_logger(thresholds, metrics)
 
-        if m_probability_or_probabilities_sizes is None:
-            m_probability_or_probabilities_sizes = [None] * len(thresholds)
-        m_probabilities = ensure_is_iterable(m_probability_or_probabilities_sizes)
+        if m_probability_or_probabilities_dat is None:
+            m_probability_or_probabilities_dat = [None] * len(thresholds)
+        m_probabilities = ensure_is_iterable(m_probability_or_probabilities_dat)
 
         comparison_levels = []
         comparison_levels.append(self._null_level(col_name))
@@ -628,7 +692,7 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
         km_thresholds: int | list = [0.1, 1],
         include_exact_match_level=False,
         m_probability_exact_match=None,
-        m_probability_or_probabilities_lev: float | list = None,
+        m_probability_or_probabilities_km: float | list = None,
         m_probability_else=None,
     ) -> Comparison:
         """A comparison of the coordinates defined in 'lat_col' and
@@ -653,8 +717,8 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
                 level. Defaults to True.
             m_probability_exact_match (_type_, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
-            m_probability_or_probabilities_lev (Union[float, list], optional):
-                _description_. If provided, overrides the default m probabilities
+            m_probability_or_probabilities_km (Union[float, list], optional):
+                If provided, overrides the default m probabilities
                 for the sizes specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
@@ -681,9 +745,9 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
 
         thresholds = ensure_is_iterable(km_thresholds)
 
-        if m_probability_or_probabilities_lev is None:
-            m_probability_or_probabilities_sizes = [None] * len(thresholds)
-        m_probabilities = ensure_is_iterable(m_probability_or_probabilities_sizes)
+        if m_probability_or_probabilities_km is None:
+            m_probability_or_probabilities_km = [None] * len(thresholds)
+        m_probabilities = ensure_is_iterable(m_probability_or_probabilities_km)
 
         comparison_levels = []
 

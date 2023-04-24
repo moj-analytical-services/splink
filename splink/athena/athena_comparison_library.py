@@ -1,4 +1,4 @@
-from ..comparison_library import (
+from ..comparison.comparison_library import (
     ArrayIntersectAtSizesComparisonBase,
     DistanceFunctionAtThresholdsComparisonBase,
     DistanceInKMAtThresholdsComparisonBase,

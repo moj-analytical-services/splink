@@ -1,5 +1,5 @@
-from ..comparison_level_composition import and_, not_, or_  # noqa: F401
-from ..comparison_level_library import (
+from ..comparison.comparison_level_composition import and_, not_, or_  # noqa: F401
+from ..comparison.comparison_level_library import (
     ColumnsReversedLevelBase,
     DistanceFunctionLevelBase,
     ElseLevelBase,
