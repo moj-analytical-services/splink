@@ -24,10 +24,6 @@ def comparator_score(str1, str2):
     dlev_dist = jellyfish.damerau_levenshtein_distance(str1, str2)
     scores["damerau_levenshtein_distance"] = round(dlev_dist, 3)
 
-    # Hamming distance
-    # ham_dist = jellyfish.hamming_distance(str1, str2)
-    # scores["hamming_distance"] = round(ham_dist, 3)
-
     # Jaro distance
     jaro_sim = jellyfish.jaro_distance(str1, str2)
     scores["jaro_similarity"] = round(jaro_sim, 3)
@@ -71,8 +67,7 @@ def threshold_match(comparator, score, distance_threshold, similarity_threshold)
 
 
 def comparator_score_df(
-    df, col1, col2, distance_threshold=None, similarity_threshold=None
-):
+    df, col1, col2):
     scores = []
 
     for _index, row in df.iterrows():
@@ -297,3 +292,32 @@ def phonetic_match(string1, string2):
     ]
 
     return comparison_list
+
+
+def phonetic_match_df(
+    df, col1, col2
+):
+    matches = []
+
+    for _index, row in df.iterrows():
+        str1 = row[col1]
+        str2 = row[col2]
+        print(str1, str2)
+        row_matches = phonetic_transform(str1)
+        print(row_matches)
+        row_matches["string1"] = str1
+        row_matches["string2"] = str2
+        matches.append(row_matches)
+
+    matches_df = pd.DataFrame(
+        scores,
+        columns=[
+            "string1",
+            "string2",
+            "soundex_match",
+            "metaphone_match",
+            "dmetaphone_match"
+        ],
+    )
+
+    return matches_df
