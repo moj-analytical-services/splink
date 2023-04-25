@@ -201,7 +201,7 @@ class Linker:
 
         self._validate_input_dfs()
         self._em_training_sessions = []
-        
+
         self._names_of_tables_created_by_splink: set = set()
         self._intermediate_table_cache: dict = CacheDictWithLogging()
 
