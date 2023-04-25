@@ -352,7 +352,7 @@ def phonetic_match_heatmap(df, col1, col2):
             y="strings_to_compare:O",
             color=alt.Color("match:O", scale=alt.Scale(range=["red", "green"])),
         )
-        .properties(title=f"Heatmap of Phonetic Matches")
+        .properties(title="Heatmap of Phonetic Matches")
     )
 
     text_phonetic_match = heatmap_phonetic_match.mark_text(baseline="middle").encode(
