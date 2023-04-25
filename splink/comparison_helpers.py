@@ -66,8 +66,7 @@ def threshold_match(comparator, score, distance_threshold, similarity_threshold)
         return similarity_match(score, similarity_threshold)
 
 
-def comparator_score_df(
-    df, col1, col2):
+def comparator_score_df(df, col1, col2):
     scores = []
 
     for _index, row in df.iterrows():
@@ -313,9 +312,7 @@ def phonetic_match(string1, string2):
     return comparison_list
 
 
-def phonetic_match_df(
-    df, col1, col2
-):
+def phonetic_match_df(df, col1, col2):
     matches = []
 
     for _index, row in df.iterrows():
@@ -335,7 +332,7 @@ def phonetic_match_df(
             "string2",
             "soundex_match",
             "metaphone_match",
-            "dmetaphone_match"
+            "dmetaphone_match",
         ],
     )
 
