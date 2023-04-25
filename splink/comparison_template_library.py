@@ -36,6 +36,8 @@ class DateComparisonBase(Comparison):
         m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_datediff: float | list = None,
         m_probability_else: float = None,
+        cast_strings_to_date: bool = False,
+        date_format: str = None,
     ) -> Comparison:
         """A wrapper to generate a comparison for a date column the data in
         `col_name` with preselected defaults.
@@ -93,6 +95,14 @@ class DateComparisonBase(Comparison):
                 for the datediff thresholds specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
+            cast_strings_to_date (bool, optional): Set to True to
+                enable date-casting when input dates are strings. Also adjust
+                date_format if date-strings are not in (yyyy-mm-dd) format.
+                Defaults to False.
+            date_format(str, optional): Format of input dates if date-strings
+                are given. Must be consistent across record pairs. If None
+                (the default), downstream functions for each backend assign
+                date_format to ISO 8601 format (yyyy-mm-dd).
 
 
         Examples:
@@ -219,6 +229,8 @@ class DateComparisonBase(Comparison):
                     date_threshold=thres,
                     date_metric=metric,
                     m_probability=m_prob,
+                    cast_strings_to_date=cast_strings_to_date,
+                    date_format=date_format,
                 )
                 comparison_levels.append(comparison_level)
 

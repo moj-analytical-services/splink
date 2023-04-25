@@ -120,6 +120,8 @@ df_r = df.copy()
 df_l["source_dataset"] = "my_left_ds"
 df_r["source_dataset"] = "my_right_ds"
 df_final = df_l.append(df_r)
+
+
 # Tests link only jobs under different inputs:
 # * A single dataframe with a `source_dataset` column
 # * Two input dataframes with no specified `source_dataset` column
