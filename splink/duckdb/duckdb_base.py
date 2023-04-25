@@ -35,9 +35,9 @@ def datediff_sql(
         """
 
 
-def regex_extract_sql(col_name_l, col_name_r, regex):
+def regex_extract_sql(col_name, regex):
     return f"""
-        regexp_extract({col_name_l}, '{regex}') == regexp_extract({col_name_r}, '{regex}')
+        regexp_extract({col_name}, '{regex}')
     """
 
 
