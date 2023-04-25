@@ -19,7 +19,7 @@ def datediff_sql(col_name_l, col_name_r, date_threshold, date_metric):
 
 def regex_extract_sql(col_name_l, col_name_r, regex):
     return f"""
-        regexp_extract({col_name_l}, '{regex}', 0) == regexp_extract({col_name_r}, '{regex}', 0)
+        regexp_extract({col_name_l}, '{regex}') == regexp_extract({col_name_r}, '{regex}')
     """
 
 
