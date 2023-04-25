@@ -49,7 +49,7 @@ class ExactMatchLevelBase(ComparisonLevel):
 
         Args:
             col_name (str): Input column name
-            regex_extract (str): Regular expression pattern to evaluate a match on
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             m_probability (float, optional): Starting value for m probability
                 Defaults to None.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -68,11 +68,12 @@ class ExactMatchLevelBase(ComparisonLevel):
 
         label_suffix = f" {col_name}" if include_colname_in_charts_label else ""
         if regex_extract:
-            sql_cond = self._regex_extract_function(
-                col.name_l(), col.name_r(), regex_extract
-            )
+            col_name_l = self._regex_extract_function(col.name_l(), regex_extract)
+            col_name_r = self._regex_extract_function(col.name_r(), regex_extract)
         else:
-            sql_cond = f"{col.name_l()} = {col.name_r()}"
+            col_name_l, col_name_r = col.name_l(), col.name_r()
+
+        sql_cond = f"{col_name_l} = {col_name_r}"
         level_dict = {
             "sql_condition": sql_cond,
             "label_for_charts": f"Exact match{label_suffix}",
@@ -123,6 +124,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         col_name: str,
         distance_function_name: str,
         distance_threshold: int | float,
+        regex_extract=None,
         higher_is_more_similar: bool = True,
         m_probability=None,
     ) -> ComparisonLevel:
@@ -134,6 +136,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
             distance_function_name (str): The name of the distance function
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
+            regex_extract (str): Regular expression pattern to evaluate a match on
             higher_is_more_similar (bool): If True, a higher value of the
                 distance function indicates a higher similarity (e.g. jaro_winkler).
                 If false, a higher value indicates a lower similarity
@@ -151,8 +154,14 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         else:
             operator = "<="
 
+        if regex_extract:
+            col_name_l = self._regex_extract_function(col.name_l(), regex_extract)
+            col_name_r = self._regex_extract_function(col.name_r(), regex_extract)
+        else:
+            col_name_l, col_name_r = col.name_l(), col.name_r()
+
         sql_cond = (
-            f"{distance_function_name}({col.name_l()}, {col.name_r()}) "
+            f"{distance_function_name}({col_name_l}, {col_name_r}) "
             f"{operator} {distance_threshold}"
         )
         chart_label = (
@@ -177,6 +186,7 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
         self,
         col_name: str,
         distance_threshold: int,
+        regex_extract=None,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a levenshtein distance function,
@@ -185,6 +195,7 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
+            regex_extract (str): Regular expression pattern to evaluate a match on
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -205,6 +216,7 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
             col_name,
             self._levenshtein_name,
             distance_threshold,
+            regex_extract,
             False,
             m_probability=m_probability,
         )
@@ -215,6 +227,7 @@ class JaroLevelBase(DistanceFunctionLevelBase):
         self,
         col_name: str,
         distance_threshold: float,
+        regex_extract=None,
         m_probability=None,
     ):
         """Represents a comparison using the jaro distance function
@@ -223,6 +236,7 @@ class JaroLevelBase(DistanceFunctionLevelBase):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -244,6 +258,7 @@ class JaroLevelBase(DistanceFunctionLevelBase):
             col_name,
             self._jaro_name,
             distance_threshold,
+            regex_extract,
             True,
             m_probability=m_probability,
         )
@@ -254,6 +269,7 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
         self,
         col_name: str,
         distance_threshold: float,
+        regex_extract=None,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using the jaro winkler distance function
@@ -262,6 +278,7 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -283,6 +300,7 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
             col_name,
             self._jaro_winkler_name,
             distance_threshold,
+            regex_extract,
             True,
             m_probability=m_probability,
         )
@@ -299,6 +317,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
         self,
         col_name: str,
         distance_threshold: int | float,
+        regex_extract=None,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a jaccard distance function
@@ -307,6 +326,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -326,6 +346,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
             col_name,
             self._jaccard_name,
             distance_threshold,
+            regex_extract,
             True,
             m_probability=m_probability,
         )
@@ -336,6 +357,7 @@ class ColumnsReversedLevelBase(ComparisonLevel):
         self,
         col_name_1: str,
         col_name_2: str,
+        regex_extract=None,
         m_probability=None,
         tf_adjustment_column=None,
     ) -> ComparisonLevel:
@@ -345,6 +367,7 @@ class ColumnsReversedLevelBase(ComparisonLevel):
         Args:
             col_name_1 (str): First column, e.g. forename
             col_name_2 (str): Second column, e.g. surname
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
             tf_adjustment_column (str, optional): Column to use for term frequency
@@ -368,10 +391,16 @@ class ColumnsReversedLevelBase(ComparisonLevel):
         col_1 = InputColumn(col_name_1, sql_dialect=self._sql_dialect)
         col_2 = InputColumn(col_name_2, sql_dialect=self._sql_dialect)
 
-        s = (
-            f"{col_1.name_l()} = {col_2.name_r()} and "
-            f"{col_1.name_r()} = {col_2.name_l()}"
-        )
+        if regex_extract:
+            col_1_l = self._regex_extract_function(col_1.name_l(), regex_extract)
+            col_1_r = self._regex_extract_function(col_1.name_r(), regex_extract)
+            col_2_l = self._regex_extract_function(col_2.name_l(), regex_extract)
+            col_2_r = self._regex_extract_function(col_2.name_r(), regex_extract)
+        else:
+            col_1_l, col_1_r = col_1.name_l(), col_1.name_r()
+            col_2_l, col_2_r = col_2.name_l(), col_2.name_r()
+
+        s = f"{col_1_l} = {col_2_r} and " f"{col_1_r} = {col_2_l}"
         level_dict = {
             "sql_condition": s,
             "label_for_charts": "Exact match on reversed cols",
