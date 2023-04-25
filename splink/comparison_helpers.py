@@ -281,20 +281,32 @@ def phonetic_transform(string):
     return transforms
 
 
-def phonetic_transform_df(
-    df, col1, col2
-):
+def phonetic_transform_df(df, col1, col2):
     df[f"soundex_{col1}"] = df.apply(lambda row: phonetics.soundex(row[col1]), axis=1)
     df[f"soundex_{col2}"] = df.apply(lambda row: phonetics.soundex(row[col2]), axis=1)
-    df[f"metaphone_{col1}"] = df.apply(lambda row: phonetics.metaphone(row[col1]), axis=1)
-    df[f"metaphone_{col2}"] = df.apply(lambda row: phonetics.metaphone(row[col2]), axis=1)
-    df[f"dmetaphone_{col1}"] = df.apply(lambda row: phonetics.dmetaphone(row[col1]), axis=1)
-    df[f"dmetaphone_{col2}"] = df.apply(lambda row: phonetics.dmetaphone(row[col2]), axis=1)
+    df[f"metaphone_{col1}"] = df.apply(
+        lambda row: phonetics.metaphone(row[col1]), axis=1
+    )
+    df[f"metaphone_{col2}"] = df.apply(
+        lambda row: phonetics.metaphone(row[col2]), axis=1
+    )
+    df[f"dmetaphone_{col1}"] = df.apply(
+        lambda row: phonetics.dmetaphone(row[col1]), axis=1
+    )
+    df[f"dmetaphone_{col2}"] = df.apply(
+        lambda row: phonetics.dmetaphone(row[col2]), axis=1
+    )
 
-    df['soundex'] = df.apply(lambda x: [x[f'soundex_{col1}'], x[f'soundex_{col2}']], axis=1)
-    df['metaphone'] = df.apply(lambda x: [x[f'metaphone_{col1}'], x[f'metaphone_{col2}']], axis=1)
-    df['dmetaphone'] = df.apply(lambda x: [x[f'dmetaphone_{col1}'], x[f'dmetaphone_{col2}']], axis=1)
-    
+    df["soundex"] = df.apply(
+        lambda x: [x[f"soundex_{col1}"], x[f"soundex_{col2}"]], axis=1
+    )
+    df["metaphone"] = df.apply(
+        lambda x: [x[f"metaphone_{col1}"], x[f"metaphone_{col2}"]], axis=1
+    )
+    df["dmetaphone"] = df.apply(
+        lambda x: [x[f"dmetaphone_{col1}"], x[f"dmetaphone_{col2}"]], axis=1
+    )
+
     phonetic_df = df[[col1, col2, "soundex", "metaphone", "dmetaphone"]]
 
     return phonetic_df
@@ -312,71 +324,44 @@ def phonetic_match(string1, string2):
     return comparison_list
 
 
-def phonetic_match_df(df, col1, col2):
-    matches = []
-
-    for _index, row in df.iterrows():
-        str1 = row[col1]
-        str2 = row[col2]
-        print(str1, str2)
-        row_matches = phonetic_transform(str1)
-        print(row_matches)
-        row_matches["string1"] = str1
-        row_matches["string2"] = str2
-        matches.append(row_matches)
-
-    matches_df = pd.DataFrame(
-        scores,
-        columns=[
-            "string1",
-            "string2",
-            "soundex_match",
-            "metaphone_match",
-            "dmetaphone_match",
-        ],
-    )
-
-    return matches_df
-
-
 def phonetic_match_heatmap(df, col1, col2):
 
     df = phonetic_transform_df(df, "string1", "string2")
 
     df["strings_to_compare"] = df["string1"] + ", " + df["string2"]
 
-
-    df_long = pd.melt(df, 
-                    id_vars=["strings_to_compare"], 
-                    value_vars=[
-                                "metaphone", "dmetaphone", "soundex",
-                                ],
-                    var_name = "phonetic",
-                    value_name= "transform"
-                    )
+    df_long = pd.melt(
+        df,
+        id_vars=["strings_to_compare"],
+        value_vars=[
+            "metaphone",
+            "dmetaphone",
+            "soundex",
+        ],
+        var_name="phonetic",
+        value_name="transform",
+    )
     df_long["match"] = df_long["transform"].apply(lambda x: x[0] == x[1])
 
     # create match heatmap
-    heatmap_phonetic_match = alt.Chart(df_long,
-        width=500,
-        height=600
-        ).mark_rect().encode(
-        x='phonetic:O',
-        y='strings_to_compare:O',
-        color=alt.Color('match:O', scale=alt.Scale(range=['red', 'green']))
-    ).properties(
-        title=f"Heatmap of Phonetic Matches"
+    heatmap_phonetic_match = (
+        alt.Chart(df_long, width=500, height=600)
+        .mark_rect()
+        .encode(
+            x="phonetic:O",
+            y="strings_to_compare:O",
+            color=alt.Color("match:O", scale=alt.Scale(range=["red", "green"])),
+        )
+        .properties(title="Heatmap of Phonetic Matches")
     )
 
-    text_phonetic_match = heatmap_phonetic_match.mark_text(baseline='middle').encode(
-        text='transform:O',
+    text_phonetic_match = heatmap_phonetic_match.mark_text(baseline="middle").encode(
+        text="transform:O",
         color=alt.condition(
-            alt.datum.quantity > 3,
-            alt.value('white'),
-            alt.value('black')
-        )
+            alt.datum.quantity > 3, alt.value("white"), alt.value("black")
+        ),
     )
 
     phonetic_matches = heatmap_phonetic_match + text_phonetic_match
-    
+
     return phonetic_matches
