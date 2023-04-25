@@ -89,22 +89,30 @@ def networkx_solve(G):
     return pd.DataFrame(rows)
 
 
-def check_df_equality(df1, df2, columns=None):
+def check_df_equality(df1, df2, skip_dtypes=False):
     """
     Test if two dataframes are equal
-    :param df1: First dataframe
-    :param df2: Second dataframe
-    :return: True if equal, False if not
+
+    Args:
+    df1 (pd.DataFrame): First dataframe for comparisons
+    df2 (pd.DataFrame): Second dataframe for comparisons
+    skip_dtypes (bool, optional): Whether to check the datatypes in both
+        dataframes. This should be skipped if one of your dataframes
+        consistently returns pandas dtypes, instead of numpy dtypes,
+        as is the case in the athena example.
+
+    Returns:
+        True if equal, False if not
     """
     if df1.shape != df2.shape:
         return False
     if df1.columns.tolist() != df2.columns.tolist():
         return False
-    if df1.dtypes.tolist() != df2.dtypes.tolist():
-        return False
+    if not skip_dtypes:
+        if df1.dtypes.tolist() != df2.dtypes.tolist():
+            return False
 
-    if columns is None:
-        columns = df1.columns
+    columns = df1.columns
     for col in columns:
         if df1[col].tolist() != df2[col].tolist():
             return False

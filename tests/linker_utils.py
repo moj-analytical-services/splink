@@ -4,19 +4,21 @@ import pytest
 from tests.cc_testing_utils import check_df_equality
 
 
-def _test_table_registration(linker, additional_tables_to_register=[]):
+def _test_table_registration(
+    linker, additional_tables_to_register=[], skip_dtypes=False
+):
     # Standard pandas df...
     a = pd.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
 
     linker.register_table(a, "__splink_df_pd")
     pd_df = linker.query_sql("select * from __splink_df_pd", output_type="splinkdf")
-    assert check_df_equality(pd_df.as_pandas_dataframe(), a)
+    assert check_df_equality(pd_df.as_pandas_dataframe(), a, skip_dtypes)
 
     # Standard dictionary
     test_dict = {"a": [666, 777, 888], "b": [4, 5, 6]}
     t_dict = linker.register_table(test_dict, "__splink_df_test_dict")
     test_dict_df = pd.DataFrame(test_dict)
-    assert check_df_equality(t_dict.as_pandas_dataframe(), test_dict_df)
+    assert check_df_equality(t_dict.as_pandas_dataframe(), test_dict_df, skip_dtypes)
 
     # Duplicate table name (check for error)
     with pytest.raises(ValueError):
@@ -24,7 +26,7 @@ def _test_table_registration(linker, additional_tables_to_register=[]):
     # Test overwriting works
     linker.register_table(test_dict_df, "__splink_df_pd", overwrite=True)
     out = linker.query_sql("select * from __splink_df_pd", output_type="pandas")
-    assert check_df_equality(out, test_dict_df)
+    assert check_df_equality(out, test_dict_df, skip_dtypes)
 
     # Record level dictionary
     b = [
@@ -37,19 +39,21 @@ def _test_table_registration(linker, additional_tables_to_register=[]):
     record_df = linker.query_sql(
         "select * from __splink_df_record_df", output_type="pandas"
     )
-    assert check_df_equality(record_df, pd.DataFrame.from_records(b))
+    assert check_df_equality(record_df, pd.DataFrame.from_records(b), skip_dtypes)
 
     with pytest.raises(ValueError):
         linker.query_sql("select * from __splink_df_test_dict", output_type="testing")
     df = linker.query_sql(
         "select * from __splink_df_test_dict", output_type="splinkdf"
     ).as_pandas_dataframe()
-    assert check_df_equality(df, test_dict_df)
+    assert check_df_equality(df, test_dict_df, skip_dtypes)
     r_dict = linker.query_sql(
         "select * from __splink_df_record_df", output_type="splinkdf"
     ).as_record_dict()
     assert check_df_equality(
-        pd.DataFrame.from_records(r_dict), pd.DataFrame.from_records(b)
+        pd.DataFrame.from_records(r_dict),
+        pd.DataFrame.from_records(b),
+        skip_dtypes,
     )
 
     # Test registration on additional data types for specific linkers
