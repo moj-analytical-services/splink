@@ -26,6 +26,7 @@ def pytest_collection_modifyitems(items, config):
 
     for item in items:
         if not any(marker.name in our_marks for marker in item.iter_markers()):
+            item.add_marker("core")
             for mark in our_marks:
                 item.add_marker(mark)
 

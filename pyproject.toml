@@ -65,9 +65,13 @@ ignore = [
 
 [tool.pytest.ini_options]
 addopts = ["-m default"]
-# see tests/decorators.py for group details
 markers = [
+# only tests where backend is irrelevant:
+    "core",
+# see tests/decorator.py::dialect_groups for group details:
+    "default",
     "all",
+# backend-specific sets
     "duckdb",
     "duckdb_only",
     "spark",
