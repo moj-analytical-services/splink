@@ -21,7 +21,6 @@ def mark_tests_without(*sql_dialects_missing):
 
 
 def mark_tests_with(*sql_dialects, pass_dialect=False):
-
     def mark_decorator(test_fn):
         params = []
         all_marks = []

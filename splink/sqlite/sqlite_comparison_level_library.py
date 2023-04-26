@@ -4,9 +4,9 @@ from ..comparison_level_library import (
     DistanceFunctionLevelBase,
     ElseLevelBase,
     ExactMatchLevelBase,
+    LevenshteinLevelBase,
     NullLevelBase,
     PercentageDifferenceLevelBase,
-    LevenshteinLevelBase,
 )
 from .sqlite_base import (
     SqliteBase,
