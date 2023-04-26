@@ -4,8 +4,28 @@ import pytest
 
 from splink.spark.jar_location import similarity_jar_location
 from tests.helpers import DuckDBTestHelper, SparkTestHelper, SQLiteTestHelper
+# TODO: maybe that should import from here?
+from tests.decorator import dialect_groups
 
 logger = logging.getLogger(__name__)
+
+# DESIRED BEHAVIOUR:
+# two sets of tests - those with backend flags (D) and those without (A)
+# all tests run (A). Additionally:
+# pytest --- runs also 'default' backends - probably duckdb (+ spark?), where applicable
+# # pytest -m duckdb ---runs (A) and only duckdb tests & sim for all backends
+# pytest -m all --- runs (A) and all backend tests against all backends
+
+def pytest_collection_modifyitems(items, config):
+    # any tests without backend-group markers will always run
+    marks = {gp for groups in dialect_groups.values() for gp in groups}
+    # any mark we've added, but excluding e.g. parametrize
+    our_marks = {*marks, *dialect_groups.keys()}
+
+    for item in items:
+        if not any(marker.name in our_marks for marker in item.iter_markers()):
+            for mark in our_marks:
+                item.add_marker(mark)
 
 
 @pytest.fixture(scope="module")
