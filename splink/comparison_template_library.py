@@ -84,11 +84,11 @@ class DateComparisonBase(Comparison):
         Examples:
             >>> # DuckDB Basic Date Comparison
             >>> import splink.duckdb.duckdb_comparison_template_library as ctl
-            >>> clt.date_comparison("date_of_birth")
+            >>> ctl.date_comparison("date_of_birth")
 
             >>> # DuckDB Bespoke Date Comparison
             >>> import splink.duckdb.duckdb_comparison_template_library as ctl
-            >>> clt.date_comparison(
+            >>> ctl.date_comparison(
             >>>                     "date_of_birth",
             >>>                     levenshtein_thresholds=[],
             >>>                     jaro_winkler_thresholds=[0.88],
@@ -97,11 +97,11 @@ class DateComparisonBase(Comparison):
 
             >>> # Spark Basic Date Comparison
             >>> import splink.spark.spark_comparison_template_library as ctl
-            >>> clt.date_comparison("date_of_birth")
+            >>> ctl.date_comparison("date_of_birth")
 
             >>> # Spark Bespoke Date Comparison
             >>> import splink.spark.spark_comparison_template_library as ctl
-            >>> clt.date_comparison(
+            >>> ctl.date_comparison(
             >>>                     "date_of_birth",
             >>>                     levenshtein_thresholds=[],
             >>>                     jaro_winkler_thresholds=[0.88],
@@ -326,11 +326,11 @@ class NameComparisonBase(Comparison):
         Examples:
             >>> # DuckDB Basic Name Comparison
             >>> import splink.duckdb.duckdb_comparison_template_library as ctl
-            >>> clt.name_comparison("name")
+            >>> ctl.name_comparison("name")
 
             >>> # DuckDB Bespoke Name Comparison
             >>> import splink.duckdb.duckdb_comparison_template_library as ctl
-            >>> clt.name_comparison("name",
+            >>> ctl.name_comparison("name",
             >>>                     phonetic_col_name = "name_dm",
             >>>                     term_frequency_adjustments_name = True,
             >>>                     levenshtein_thresholds=[2],
@@ -340,11 +340,11 @@ class NameComparisonBase(Comparison):
 
             >>> # Spark Basic Name Comparison
             >>> import splink.spark.spark_comparison_template_library as ctl
-            >>> clt.name_comparison("name")
+            >>> ctl.name_comparison("name")
 
             >>> # Spark Bespoke Date Comparison
             >>> import splink.spark.spark_comparison_template_library as ctl
-            >>> clt.name_comparison("name",
+            >>> ctl.name_comparison("name",
             >>>                     phonetic_col_name = "name_dm",
             >>>                     term_frequency_adjustments_name = True,
             >>>                     levenshtein_thresholds=[2],

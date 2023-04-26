@@ -66,7 +66,10 @@ def threshold_match(comparator, score, distance_threshold, similarity_threshold)
         return similarity_match(score, similarity_threshold)
 
 
-def comparator_score_df(df, col1, col2):
+def comparator_score_df(list, col1, col2):
+    
+    df = pd.DataFrame(list)
+    
     scores = []
 
     for _index, row in df.iterrows():
@@ -93,10 +96,10 @@ def comparator_score_df(df, col1, col2):
     return scores_df
 
 
-def comparator_score_heatmap(
-    df, col1, col2, similarity_threshold=None, distance_threshold=None
+def comparator_score_chart(
+    list, col1, col2, similarity_threshold=None, distance_threshold=None
 ):
-    df = comparator_score_df(df, col1, col2)
+    df = comparator_score_df(list, col1, col2)
 
     df["strings_to_compare"] = df["string1"] + ", " + df["string2"]
 
@@ -196,7 +199,7 @@ def comparator_score_heatmap(
     return scores_chart
 
 
-def comparator_score_threshold_heatmap(
+def comparator_score_threshold_chart(
     df, col1, col2, similarity_threshold=None, distance_threshold=None
 ):
     df = comparator_score_df(df, col1, col2)
@@ -281,7 +284,10 @@ def phonetic_transform(string):
     return transforms
 
 
-def phonetic_transform_df(df, col1, col2):
+def phonetic_transform_df(list, col1, col2):
+
+    df = pd.DataFrame(list)
+
     df[f"soundex_{col1}"] = df.apply(lambda row: phonetics.soundex(row[col1]), axis=1)
     df[f"soundex_{col2}"] = df.apply(lambda row: phonetics.soundex(row[col2]), axis=1)
     df[f"metaphone_{col1}"] = df.apply(
@@ -324,7 +330,7 @@ def phonetic_match(string1, string2):
     return comparison_list
 
 
-def phonetic_match_heatmap(df, col1, col2):
+def phonetic_match_chart(df, col1, col2):
 
     df = phonetic_transform_df(df, "string1", "string2")
 
