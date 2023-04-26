@@ -2,13 +2,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import splink.duckdb.duckdb_comparison_library as cld
-import splink.spark.spark_comparison_library as clsp
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
+from tests.decorator import mark_tests_without
 
 
-def test_u_train():
+@mark_tests_without()
+def test_u_train(test_helpers, dialect):
+    helper = test_helpers[dialect]
     data = [
         {"unique_id": 1, "name": "Amanda"},
         {"unique_id": 2, "name": "Robin"},
@@ -21,11 +20,12 @@ def test_u_train():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [cld.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
+    df_linker = helper.convert_frame(df)
 
-    linker = DuckDBLinker(df, settings)
+    linker = helper.linker(df_linker, settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
@@ -42,7 +42,9 @@ def test_u_train():
     assert br.blocking_rule == "l.name = r.name"
 
 
-def test_u_train_link_only():
+@mark_tests_without()
+def test_u_train_link_only(test_helpers, dialect):
+    helper = test_helpers[dialect]
     data_l = [
         {"unique_id": 1, "name": "Amanda"},
         {"unique_id": 2, "name": "Robin"},
@@ -65,11 +67,14 @@ def test_u_train_link_only():
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [cld.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
-    linker = DuckDBLinker([df_l, df_r], settings)
+    df_l = helper.convert_frame(df_l)
+    df_r = helper.convert_frame(df_r)
+
+    linker = helper.linker([df_l, df_r], settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
@@ -97,7 +102,9 @@ def test_u_train_link_only():
     assert cl_no.u_probability == (denom - 3) / denom
 
 
-def test_u_train_link_only_sample():
+@mark_tests_without()
+def test_u_train_link_only_sample(test_helpers, dialect):
+    helper = test_helpers[dialect]
     df_l = (
         pd.DataFrame(np.random.randint(0, 3000, size=(3000, 1)), columns=["name"])
         .reset_index()
@@ -113,11 +120,14 @@ def test_u_train_link_only_sample():
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [cld.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
-    linker = DuckDBLinker([df_l, df_r], settings)
+    df_l = helper.convert_frame(df_l)
+    df_r = helper.convert_frame(df_r)
+
+    linker = helper.linker([df_l, df_r], settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
     linker._settings_obj.comparisons[0]
@@ -135,10 +145,12 @@ def test_u_train_link_only_sample():
     max_pairs_proportion = result[0]["count"] / max_pairs
     # equality only holds probabilistically
     # chance of failure is approximately 1e-06
-    assert pytest.approx(max_pairs_proportion, 0.15) == 1.0
+    assert pytest.approx(max_pairs_proportion, rel=0.15) == 1.0
 
 
-def test_u_train_multilink():
+@mark_tests_without()
+def test_u_train_multilink(test_helpers, dialect):
+    helper = test_helpers[dialect]
     datas = [
         [
             {"unique_id": 1, "name": "John"},
@@ -165,18 +177,18 @@ def test_u_train_multilink():
             {"unique_id": 7, "name": "Adil"},
         ],
     ]
-    dfs = list(map(pd.DataFrame, datas))
+    dfs = list(map(lambda x: helper.convert_frame(pd.DataFrame(x)), datas))
 
     expected_total_links = 2 * 3 + 2 * 4 + 2 * 7 + 3 * 4 + 3 * 7 + 4 * 7
     expected_total_links_with_dedupes = (2 + 3 + 4 + 7) * (2 + 3 + 4 + 7 - 1) / 2
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [cld.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
-    linker = DuckDBLinker(dfs, settings)
+    linker = helper.linker(dfs, settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
@@ -208,7 +220,7 @@ def test_u_train_multilink():
 
     # also check the numbers on a link + dedupe with same inputs
     settings["link_type"] = "link_and_dedupe"
-    linker = DuckDBLinker(dfs, settings)
+    linker = helper.linker(dfs, settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
@@ -239,27 +251,20 @@ def test_u_train_multilink():
     assert cl_no.u_probability == (denom - 10) / denom
 
 
-@pytest.mark.parametrize(
-    ("Linker", "cll"),
-    [
-        pytest.param(DuckDBLinker, cld, id="Test DuckDB random seeds"),
-        pytest.param(SparkLinker, clsp, id="Test Spark random seeds"),
-    ],
-)
-def test_seed_u_outputs(df_spark, Linker, cll):
-    if Linker == SparkLinker:
-        df = df_spark
-    else:
-        df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+# No SQLite - doesn't support random seed
+@mark_tests_without("sqlite")
+def test_seed_u_outputs(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [cll.levenshtein_at_thresholds("first_name", 2)],
+        "comparisons": [helper.cl.levenshtein_at_thresholds("first_name", 2)],
     }
 
-    linker_1 = Linker(df, settings)
-    linker_2 = Linker(df, settings)
-    linker_3 = Linker(df, settings)
+    linker_1 = helper.linker(df, settings, **helper.extra_linker_args())
+    linker_2 = helper.linker(df, settings, **helper.extra_linker_args())
+    linker_3 = helper.linker(df, settings, **helper.extra_linker_args())
 
     linker_1.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
     linker_2.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
