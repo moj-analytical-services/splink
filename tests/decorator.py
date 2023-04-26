@@ -33,7 +33,8 @@ def mark_tests_with(*sql_dialects, pass_dialect=False):
             ]
             # plus the basic dialect mark
             dialect_mark = getattr(pytest.mark, sql_d)
-            marks.append(dialect_mark)
+            dialect_only_mark = getattr(pytest.mark, f"{sql_d}_only")
+            marks += [dialect_mark, dialect_only_mark]
             params.append(pytest.param(sql_d, marks=marks))
             # will end up with duplicates, but think that's okay. for now at least.
             all_marks += marks
