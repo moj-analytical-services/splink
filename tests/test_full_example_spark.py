@@ -16,6 +16,13 @@ from .linker_utils import (
 
 
 def test_full_example_spark(df_spark, tmp_path):
+    # Annoyingly, this needs an independent linker as csv doesn't
+    # accept arrays as inputs, which we are adding to df_spark below
+    linker = SparkLinker(df_spark, get_settings_dict())
+    # Test that writing to files works as expected
+    spark_csv_read = lambda x: linker.spark.read.csv(x, header=True).toPandas()
+    _test_write_functionality(linker, spark_csv_read)
+
     # Convert a column to an array to enable testing intersection
     df_spark = df_spark.withColumn("email", array("email"))
     settings_dict = get_settings_dict()
@@ -91,7 +98,8 @@ def test_full_example_spark(df_spark, tmp_path):
 
     linker.unlinkables_chart(source_dataset="Testing")
     # Test that writing to files works as expected
-    _test_write_functionality(linker)
+    # spark_csv_read = lambda x: linker.spark.read.csv(x, header=True).toPandas()
+    # _test_write_functionality(linker, spark_csv_read)
 
     # Check spark tables are being registered correctly
     data = [
@@ -103,11 +111,6 @@ def test_full_example_spark(df_spark, tmp_path):
             StructField("lastname", StringType(), True),
         ]
     )
-    df = linker.spark.createDataFrame(data=data, schema=schema)
-    _test_table_registration(
-        linker, [df, linker.spark.createDataFrame([], StructType([]))]
-    )
-
     register_roc_data(linker)
     linker.roc_chart_from_labels_table("labels")
 

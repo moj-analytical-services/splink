@@ -117,7 +117,7 @@ def test_full_example_duckdb(tmp_path):
     DuckDBLinker(df, settings_dict=path)
 
     # Test that writing to files works as expected
-    _test_write_functionality(linker_2)
+    _test_write_functionality(linker_2, pd.read_csv)
 
 
 @pytest.mark.parametrize(

@@ -67,7 +67,9 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
             )
 
         # create the directories recursively if they don't exist
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        path = os.path.dirname(filepath)
+        if path:
+            os.makedirs(path, exist_ok=True)
 
         sql = f"COPY {self.physical_name} TO '{filepath}' (FORMAT PARQUET);"
         self.linker._con.query(sql)
@@ -84,7 +86,9 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
             )
 
         # create the directories recursively if they don't exist
-        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        path = os.path.dirname(filepath)
+        if path:
+            os.makedirs(path, exist_ok=True)
 
         sql = f"COPY {self.physical_name} TO '{filepath}' (HEADER, DELIMITER ',');"
         self.linker._con.query(sql)

@@ -73,12 +73,9 @@ class SparkDataframe(SplinkDataFrame):
         if not overwrite:
             self.check_file_exists(filepath)
 
-        # We can also use:
-        # spark_df.write.format("csv").option(
-        #     "header", "true").save(filepath)
-        # but this partitions the data and means pandas can't load it in
-
-        self.as_pandas_dataframe().to_csv(filepath, index=False)
+        spark_df = self.as_spark_dataframe()
+        spark_df.write.format("csv").option(
+            "header", "true").save(filepath)
 
 
 class SparkLinker(Linker):
