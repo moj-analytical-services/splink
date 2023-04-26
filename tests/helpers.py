@@ -20,7 +20,7 @@ class TestHelper(ABC):
     def linker(self):
         pass
 
-    def extra_linker_args(self, num_frames=1):
+    def extra_linker_args(self):
         return {}
 
     @abstractmethod
@@ -66,7 +66,7 @@ class SparkTestHelper(TestHelper):
     def linker(self):
         return SparkLinker
 
-    def extra_linker_args(self, num_frames=1):
+    def extra_linker_args(self):
         return {"spark": self.spark}
 
     def convert_frame(self, df):
@@ -104,21 +104,21 @@ class SQLiteTestHelper(TestHelper):
     def linker(self):
         return SQLiteLinker
 
-    def extra_linker_args(self, num_frames=1):
-        return {
-            "connection": self.con,
-            "input_table_aliases": self._get_input_name(num_frames)
-        }
+    def extra_linker_args(self):
+        return {"connection": self.con}
 
-    def _get_input_name(self, num_frames):
-        names = []
-        for _i in range(num_frames):
-            names.append(f"input_alias_{self._frame_counter}")
-            self._frame_counter += 1
-        return names
+    def _get_input_name(self):
+        name = f"input_alias_{self._frame_counter}"
+        self._frame_counter += 1
+        return name
 
     def convert_frame(self, df):
-        return df
+        name = self._get_input_name()
+        df.to_sql(name, self.con, if_exists="replace")
+        return name
+
+    def load_frame_from_csv(self, path):
+        return self.convert_frame(super().load_frame_from_csv(path))
 
     @property
     def cll(self):
@@ -127,4 +127,3 @@ class SQLiteTestHelper(TestHelper):
     @property
     def cl(self):
         return cl_sqlite
-
