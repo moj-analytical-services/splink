@@ -26,6 +26,7 @@ def mark_tests_with(sql_dialects, pass_dialect=False):
     # TODO: do this properly
     if not isinstance(sql_dialects, list):
         sql_dialects = [sql_dialects]
+
     def mark_decorator(test_fn):
         params = []
         all_marks = []
@@ -43,12 +44,10 @@ def mark_tests_with(sql_dialects, pass_dialect=False):
             all_marks += marks
 
         if pass_dialect:
-            test_fn = pytest.mark.parametrize(
-                "dialect",
-                params
-            )(test_fn)
+            test_fn = pytest.mark.parametrize("dialect", params)(test_fn)
         else:
             for mark in all_marks:
                 test_fn = mark(test_fn)
         return test_fn
+
     return mark_decorator

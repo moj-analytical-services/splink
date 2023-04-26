@@ -11,8 +11,8 @@ import splink.duckdb.duckdb_comparison_library as cl
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict, name_comparison
-from .linker_utils import _test_table_registration, register_roc_data
 from .decorator import mark_tests_with
+from .linker_utils import _test_table_registration, register_roc_data
 
 
 @mark_tests_with("duckdb")
