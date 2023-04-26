@@ -40,7 +40,7 @@ class ExactMatchLevelBase(ComparisonLevel):
     def __init__(
         self,
         col_name,
-        regex_extract=None,
+        regex_extract: str = None,
         m_probability=None,
         term_frequency_adjustments=False,
         include_colname_in_charts_label=False,
@@ -124,7 +124,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         col_name: str,
         distance_function_name: str,
         distance_threshold: int | float,
-        regex_extract=None,
+        regex_extract: str = None,
         higher_is_more_similar: bool = True,
         m_probability=None,
     ) -> ComparisonLevel:
@@ -136,7 +136,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
             distance_function_name (str): The name of the distance function
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
-            regex_extract (str): Regular expression pattern to evaluate a match on
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             higher_is_more_similar (bool): If True, a higher value of the
                 distance function indicates a higher similarity (e.g. jaro_winkler).
                 If false, a higher value indicates a lower similarity
@@ -186,7 +186,7 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
         self,
         col_name: str,
         distance_threshold: int,
-        regex_extract=None,
+        regex_extract: str = None,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a levenshtein distance function,
@@ -194,8 +194,8 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
         Args:
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
-                similarity
-            regex_extract (str): Regular expression pattern to evaluate a match on
+                similarity.
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -227,7 +227,7 @@ class JaroLevelBase(DistanceFunctionLevelBase):
         self,
         col_name: str,
         distance_threshold: float,
-        regex_extract=None,
+        regex_extract: str = None,
         m_probability=None,
     ):
         """Represents a comparison using the jaro distance function
@@ -269,7 +269,7 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
         self,
         col_name: str,
         distance_threshold: float,
-        regex_extract=None,
+        regex_extract: str = None,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using the jaro winkler distance function
@@ -317,7 +317,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
         self,
         col_name: str,
         distance_threshold: int | float,
-        regex_extract=None,
+        regex_extract: str = None,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a jaccard distance function
@@ -357,7 +357,7 @@ class ColumnsReversedLevelBase(ComparisonLevel):
         self,
         col_name_1: str,
         col_name_2: str,
-        regex_extract=None,
+        regex_extract: str = None,
         m_probability=None,
         tf_adjustment_column=None,
     ) -> ComparisonLevel:
