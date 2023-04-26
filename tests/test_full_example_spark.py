@@ -21,6 +21,7 @@ def test_full_example_spark(df_spark, tmp_path):
     # Test that writing to files works as expected
     def spark_csv_read(x):
         return linker.spark.read.csv(x, header=True).toPandas()
+
     _test_write_functionality(linker, spark_csv_read)
 
     # Convert a column to an array to enable testing intersection
