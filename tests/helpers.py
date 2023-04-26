@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 
+import splink.duckdb.duckdb_comparison_level_library as cll_duckdb
+import splink.duckdb.duckdb_comparison_library as cl_duckdb
+from splink.duckdb.duckdb_linker import DuckDBLinker
 
 class TestHelper(ABC):
     @property
@@ -28,4 +31,21 @@ class TestHelper(ABC):
     @abstractmethod
     def cl(self):
         pass
+
+
+class DuckDBTestHelper(TestHelper):
+    @property
+    def linker(self):
+        return DuckDBLinker
+
+    def convert_frame(self, df):
+        return df
+
+    @property
+    def cll(self):
+        return cll_duckdb
+
+    @property
+    def cl(self):
+        return cl_duckdb
 
