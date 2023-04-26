@@ -1,10 +1,10 @@
 import pytest
 
 from .basic_settings import get_settings_dict
-from .decorator import mark_tests_without
+from .decorator import mark_with_dialects_excluding
 
 
-@mark_tests_without()
+@mark_with_dialects_excluding()
 def test_train_vs_predict(test_helpers, dialect):
     """
     If you train parameters blocking on a column (say first_name)

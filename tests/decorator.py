@@ -15,12 +15,12 @@ def invert(sql_dialects_missing):
     )
 
 
-def mark_tests_without(*sql_dialects_missing):
+def mark_with_dialects_excluding(*sql_dialects_missing):
     sql_dialects = invert(sql_dialects_missing)
-    return mark_tests_with(*sql_dialects, pass_dialect=True)
+    return mark_with_dialects_including(*sql_dialects, pass_dialect=True)
 
 
-def mark_tests_with(*sql_dialects, pass_dialect=False):
+def mark_with_dialects_including(*sql_dialects, pass_dialect=False):
     def mark_decorator(test_fn):
         params = []
         all_marks = []

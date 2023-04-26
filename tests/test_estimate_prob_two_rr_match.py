@@ -3,10 +3,10 @@ import logging
 import pandas as pd
 import pytest
 
-from tests.decorator import mark_tests_without
+from tests.decorator import mark_with_dialects_excluding
 
 
-@mark_tests_without()
+@mark_with_dialects_excluding()
 def test_prob_rr_match_dedupe(test_helpers, dialect):
     helper = test_helpers[dialect]
     df = pd.DataFrame(
@@ -53,7 +53,7 @@ def test_prob_rr_match_dedupe(test_helpers, dialect):
     assert pytest.approx(prob) == 4 / 15 * (1 / 0.9)
 
 
-@mark_tests_without()
+@mark_with_dialects_excluding()
 def test_prob_rr_match_link_only(test_helpers, dialect):
     helper = test_helpers[dialect]
     df_1 = pd.DataFrame(
@@ -96,7 +96,7 @@ def test_prob_rr_match_link_only(test_helpers, dialect):
     assert pytest.approx(prob) == 2 / 8
 
 
-@mark_tests_without()
+@mark_with_dialects_excluding()
 def test_prob_rr_match_link_and_dedupe(test_helpers, dialect):
     helper = test_helpers[dialect]
     df_1 = pd.DataFrame(
@@ -136,7 +136,7 @@ def test_prob_rr_match_link_and_dedupe(test_helpers, dialect):
     assert pytest.approx(prob) == 3 / 15
 
 
-@mark_tests_without()
+@mark_with_dialects_excluding()
 def test_prob_rr_match_link_only_multitable(test_helpers, dialect):
     helper = test_helpers[dialect]
     df_1 = pd.DataFrame(
@@ -214,7 +214,7 @@ def test_prob_rr_match_link_only_multitable(test_helpers, dialect):
     assert prob == 1
 
 
-@mark_tests_without()
+@mark_with_dialects_excluding()
 def test_prob_rr_match_link_and_dedupe_multitable(test_helpers, dialect):
     helper = test_helpers[dialect]
     df_1 = pd.DataFrame(
@@ -292,7 +292,7 @@ def test_prob_rr_match_link_and_dedupe_multitable(test_helpers, dialect):
     assert prob == 1
 
 
-@mark_tests_without()
+@mark_with_dialects_excluding()
 def test_prob_rr_valid_range(test_helpers, dialect, caplog):
     helper = test_helpers[dialect]
 

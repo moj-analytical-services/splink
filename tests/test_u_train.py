@@ -2,10 +2,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from tests.decorator import mark_tests_without
+from tests.decorator import mark_with_dialects_excluding
 
 
-@mark_tests_without()
+@mark_with_dialects_excluding()
 def test_u_train(test_helpers, dialect):
     helper = test_helpers[dialect]
     data = [
@@ -42,7 +42,7 @@ def test_u_train(test_helpers, dialect):
     assert br.blocking_rule == "l.name = r.name"
 
 
-@mark_tests_without()
+@mark_with_dialects_excluding()
 def test_u_train_link_only(test_helpers, dialect):
     helper = test_helpers[dialect]
     data_l = [
@@ -102,7 +102,7 @@ def test_u_train_link_only(test_helpers, dialect):
     assert cl_no.u_probability == (denom - 3) / denom
 
 
-@mark_tests_without()
+@mark_with_dialects_excluding()
 def test_u_train_link_only_sample(test_helpers, dialect):
     helper = test_helpers[dialect]
     df_l = (
@@ -148,7 +148,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
     assert pytest.approx(max_pairs_proportion, rel=0.15) == 1.0
 
 
-@mark_tests_without()
+@mark_with_dialects_excluding()
 def test_u_train_multilink(test_helpers, dialect):
     helper = test_helpers[dialect]
     datas = [
@@ -252,7 +252,7 @@ def test_u_train_multilink(test_helpers, dialect):
 
 
 # No SQLite - doesn't support random seed
-@mark_tests_without("sqlite")
+@mark_with_dialects_excluding("sqlite")
 def test_seed_u_outputs(test_helpers, dialect):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")

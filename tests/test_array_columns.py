@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from tests.decorator import mark_tests_without
+from tests.decorator import mark_with_dialects_excluding
 
 
 def postcode(num):
@@ -9,7 +9,7 @@ def postcode(num):
 
 
 # No SQLite - no array comparisons in library
-@mark_tests_without("sqlite")
+@mark_with_dialects_excluding("sqlite")
 def test_array_comparisons(test_helpers, dialect):
     helper = test_helpers[dialect]
     df = pd.DataFrame(
