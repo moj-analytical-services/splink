@@ -60,8 +60,8 @@ from .misc import (
     bayes_factor_to_prob,
     ensure_is_list,
     ensure_is_tuple,
-    prob_to_bayes_factor,
     find_unique_source_dataset,
+    prob_to_bayes_factor,
 )
 from .missingness import completeness_data, missingness_data
 from .pipeline import SQLPipeline
@@ -364,9 +364,9 @@ class Linker:
             )
             if len(src_ds_distinct.as_record_dict()) == 1:
                 raise SplinkException(
-                    "if `link_type` is `link_only`, it should have at least two input dataframes, "
-                    "or one dataframe with a `source_dataset` column outlining which dataset "
-                    "each record belongs to."
+                    "if `link_type` is `link_only`, it should have at least two "
+                    "input dataframes, or one dataframe with a `source_dataset` "
+                    "column outlining which dataset each record belongs to."
                 )
 
     def _register_input_tables(self, input_tables, input_aliases, accepted_df_dtypes):
