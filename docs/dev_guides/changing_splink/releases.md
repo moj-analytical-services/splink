@@ -9,7 +9,7 @@ Below are the steps for releasing a new version of Splink:
 
 Including:
 
-- Choosing a new release tag (which matches your updates to [**project.toml**](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml) and [**__init__.py**](https://github.com/moj-analytical-services/splink/blob/master/splink/__init__.py). Ensure that your release tag follows [semantic versioning](https://semver.org/).
+- Choosing a new release tag (which matches your updates to [**project.toml**](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml) and [**__init__.py**](https://github.com/moj-analytical-services/splink/blob/master/splink/__init__.py). Ensure that your release tag follows [semantic versioning](https://docs.npmjs.com/about-semantic-versioning).
 
 ![](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/releases-tag.png))
 
