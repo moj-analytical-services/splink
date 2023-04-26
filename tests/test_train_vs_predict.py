@@ -1,4 +1,3 @@
-import pandas as pd
 import pytest
 
 from .basic_settings import get_settings_dict
