@@ -9,7 +9,6 @@ from splink.spark.spark_linker import SparkLinker
 
 from .basic_settings import get_settings_dict, name_comparison
 from .linker_utils import (
-    _test_table_registration,
     _test_write_functionality,
     register_roc_data,
 )
@@ -20,7 +19,8 @@ def test_full_example_spark(df_spark, tmp_path):
     # accept arrays as inputs, which we are adding to df_spark below
     linker = SparkLinker(df_spark, get_settings_dict())
     # Test that writing to files works as expected
-    spark_csv_read = lambda x: linker.spark.read.csv(x, header=True).toPandas()
+    def spark_csv_read(x):
+        return linker.spark.read.csv(x, header=True).toPandas()
     _test_write_functionality(linker, spark_csv_read)
 
     # Convert a column to an array to enable testing intersection
@@ -102,10 +102,7 @@ def test_full_example_spark(df_spark, tmp_path):
     # _test_write_functionality(linker, spark_csv_read)
 
     # Check spark tables are being registered correctly
-    data = [
-        ("Thomas", "FakeName"),
-    ]
-    schema = StructType(
+    StructType(
         [
             StructField("firstname", StringType(), True),
             StructField("lastname", StringType(), True),
