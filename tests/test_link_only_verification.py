@@ -15,6 +15,7 @@ df_final = df_l.append(df_r)
 settings = get_settings_dict()
 settings["link_type"] = "link_only"
 
+
 def test_link_only_verification():
     # As `_initialise_df_concat_with_tf()` cannot be run without
     # a setting object, we don't need to test that.
