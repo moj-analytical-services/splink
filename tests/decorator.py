@@ -3,6 +3,8 @@ import pytest
 
 dialect_groups = {
     "duckdb": ["default"],
+    "spark": ["default"],
+    "sqlite": [],
 }
 for sql_d, groups in dialect_groups.items():
     groups.append("all")
