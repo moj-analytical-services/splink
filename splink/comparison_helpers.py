@@ -67,9 +67,9 @@ def threshold_match(comparator, score, distance_threshold, similarity_threshold)
 
 
 def comparator_score_df(list, col1, col2):
-    
+
     df = pd.DataFrame(list)
-    
+
     scores = []
 
     for _index, row in df.iterrows():
