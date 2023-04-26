@@ -10,22 +10,17 @@ for groups in dialect_groups.values():
 
 
 def invert(sql_dialects_missing):
-    return [
+    return (
         sql_d for sql_d in dialect_groups.keys() if sql_d not in sql_dialects_missing
-    ]
+    )
 
 
-def mark_tests_without(sql_dialects_missing=None):
-    if sql_dialects_missing is None:
-        sql_dialects_missing = []
+def mark_tests_without(*sql_dialects_missing):
     sql_dialects = invert(sql_dialects_missing)
-    return mark_tests_with(sql_dialects, pass_dialect=True)
+    return mark_tests_with(*sql_dialects, pass_dialect=True)
 
 
-def mark_tests_with(sql_dialects, pass_dialect=False):
-    # TODO: do this properly
-    if not isinstance(sql_dialects, list):
-        sql_dialects = [sql_dialects]
+def mark_tests_with(*sql_dialects, pass_dialect=False):
 
     def mark_decorator(test_fn):
         params = []
