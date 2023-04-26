@@ -1,15 +1,17 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.duckdb_comparison_library as cl
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from tests.decorator import mark_tests_without
 
 
 def postcode(num):
     return f"XX{num} {num}YZ"
 
 
-def test_array_comparisons():
+# No SQLite - no array comparisons in library
+@mark_tests_without("sqlite")
+def test_array_comparisons(test_helpers, dialect):
+    helper = test_helpers[dialect]
     df = pd.DataFrame(
         [
             {
@@ -49,15 +51,16 @@ def test_array_comparisons():
             },
         ]
     )
+    df = helper.convert_frame(df)
 
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.array_intersect_at_sizes("postcode", [4, 3, 2, 1]),
-            cl.exact_match("first_name"),
+            helper.cl.array_intersect_at_sizes("postcode", [4, 3, 2, 1]),
+            helper.cl.exact_match("first_name"),
         ],
     }
-    linker = DuckDBLinker(df, settings)
+    linker = helper.linker(df, settings, **helper.extra_linker_args())
     df_e = linker.predict().as_pandas_dataframe()
 
     # ID pairs with various sizes of intersections
@@ -92,11 +95,11 @@ def test_array_comparisons():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.array_intersect_at_sizes("postcode", [3, 1]),
-            cl.exact_match("first_name"),
+            helper.cl.array_intersect_at_sizes("postcode", [3, 1]),
+            helper.cl.exact_match("first_name"),
         ],
     }
-    linker = DuckDBLinker(df, settings)
+    linker = helper.linker(df, settings, **helper.extra_linker_args())
     df_e = linker.predict().as_pandas_dataframe()
 
     # now levels encompass multiple size intersections
@@ -130,7 +133,7 @@ def test_array_comparisons():
         settings = {
             "link_type": "dedupe_only",
             "comparisons": [
-                cl.array_intersect_at_sizes("postcode", [-1, 2]),
-                cl.exact_match("first_name"),
+                helper.cl.array_intersect_at_sizes("postcode", [-1, 2]),
+                helper.cl.exact_match("first_name"),
             ],
         }
