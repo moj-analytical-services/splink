@@ -3,7 +3,7 @@ import logging
 import pytest
 
 from splink.spark.jar_location import similarity_jar_location
-from tests.helpers import DuckDBTestHelper
+from tests.helpers import DuckDBTestHelper, SparkTestHelper, SQLiteTestHelper
 
 logger = logging.getLogger(__name__)
 
@@ -42,4 +42,14 @@ def df_spark(spark):
 @pytest.fixture
 def duckdb_helper():
     return DuckDBTestHelper()
+
+
+@pytest.fixture
+def spark_helper(spark):
+    return SparkTestHelper(spark)
+
+
+@pytest.fixture
+def sqlite_helper():
+    return SQLiteTestHelper()
 
