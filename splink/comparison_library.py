@@ -14,6 +14,7 @@ class ExactMatchBase(Comparison):
     def __init__(
         self,
         col_name,
+        regex_extract: str = None,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
         m_probability_else=None,
@@ -25,6 +26,7 @@ class ExactMatchBase(Comparison):
 
         Args:
             col_name (str): The name of the column to compare
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             term_frequency_adjustments (bool, optional): If True, term frequency
                 adjustments will be made on the exact match level. Defaults to False.
             m_probability_exact_match (_type_, optional): If provided, overrides the
@@ -54,6 +56,7 @@ class ExactMatchBase(Comparison):
                 self._null_level(col_name),
                 self._exact_match_level(
                     col_name,
+                    regex_extract=regex_extract,
                     term_frequency_adjustments=term_frequency_adjustments,
                     m_probability=m_probability_exact_match,
                     include_colname_in_charts_label=include_colname_in_charts_label,
@@ -70,6 +73,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         col_name: str,
         distance_function_name: str,
         distance_threshold_or_thresholds: float | list,
+        regex_extract: str = None,
         higher_is_more_similar: bool = True,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
@@ -100,6 +104,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             distance_threshold_or_thresholds (Union[int, list], optional): The
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [1, 2].
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             higher_is_more_similar (bool): If True, a higher value of the distance
                 function indicates a higher similarity (e.g. jaro_winkler).
                 If false, a higher value indicates a lower similarity
@@ -161,6 +166,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             col_name,
             distance_function_name,
             distance_threshold_or_thresholds,
+            regex_extract,
             m_probability_or_probabilities_thres,
         )
         comparison_levels = comparison_levels + threshold_comparison_levels
@@ -197,6 +203,7 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         self,
         col_name: str,
         distance_threshold_or_thresholds: int | list = [1, 2],
+        regex_extract: str = None,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
@@ -218,6 +225,7 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             distance_threshold_or_thresholds (Union[int, list], optional): The
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [1, 2].
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -247,6 +255,7 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             col_name,
             self._levenshtein_name,
             distance_threshold_or_thresholds,
+            regex_extract,
             False,
             include_exact_match_level,
             term_frequency_adjustments,
@@ -265,6 +274,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
         self,
         col_name: str,
         distance_threshold_or_thresholds: int | list = [0.9, 0.7],
+        regex_extract: str = None,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
@@ -286,6 +296,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
             distance_threshold_or_thresholds (Union[int, list], optional): The
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [0.9, 0.7].
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -316,6 +327,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
             col_name,
             self._jaccard_name,
             distance_threshold_or_thresholds,
+            regex_extract,
             True,
             include_exact_match_level,
             term_frequency_adjustments,
@@ -334,6 +346,7 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
         self,
         col_name: str,
         distance_threshold_or_thresholds: int | list = [0.9, 0.7],
+        regex_extract: str = None,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
@@ -355,6 +368,7 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
             distance_threshold_or_thresholds (Union[int, list], optional): The
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [0.9, 0.7].
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -384,6 +398,7 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
             col_name,
             self._jaro_name,
             distance_threshold_or_thresholds,
+            regex_extract,
             True,
             include_exact_match_level,
             term_frequency_adjustments,
@@ -402,6 +417,7 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         self,
         col_name: str,
         distance_threshold_or_thresholds: int | list = [0.9, 0.7],
+        regex_extract: str = None,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
@@ -423,6 +439,7 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             distance_threshold_or_thresholds (Union[int, list], optional): The
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [0.9, 0.7].
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -453,6 +470,7 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             col_name,
             self._jaro_winkler_name,
             distance_threshold_or_thresholds,
+            regex_extract,
             True,
             include_exact_match_level,
             term_frequency_adjustments,
