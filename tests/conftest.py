@@ -53,3 +53,13 @@ def spark_helper(spark):
 def sqlite_helper():
     return SQLiteTestHelper()
 
+
+# workaround as you can't pass fixtures as param arguments in base pytest
+# see e.g. https://stackoverflow.com/a/42400786/11811947
+@pytest.fixture
+def test_helpers(duckdb_helper, spark_helper, sqlite_helper):
+    return {
+        "duckdb": duckdb_helper,
+        "spark": spark_helper,
+        "sqlite": sqlite_helper,
+    }
