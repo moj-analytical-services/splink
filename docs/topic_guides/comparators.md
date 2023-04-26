@@ -133,7 +133,7 @@ The minimum number of operations to convert "CAKE" into "ACKE" are:
 
 Therefore, 
 
-$$DamerauLevenstein(CAKE, ACKE) = 2$$
+$$DamerauLevenstein(CAKE, ACKE) = 1$$
 
 ### Sample code
 
