@@ -3,6 +3,7 @@ import logging
 import pytest
 
 from splink.spark.jar_location import similarity_jar_location
+from tests.helpers import DuckDBTestHelper
 
 logger = logging.getLogger(__name__)
 
@@ -35,3 +36,10 @@ def df_spark(spark):
     df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=True)
     df.persist()
     yield df
+
+
+# does this even need to be a fixture?? :thinking_face: 
+@pytest.fixture
+def duckdb_helper():
+    return DuckDBTestHelper()
+
