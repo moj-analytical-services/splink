@@ -45,6 +45,12 @@ class ExactMatchBase(Comparison):
             >>> import splink.spark.spark_comparison_library as cl
             >>> cl.exact_match("first_name")
 
+            >>> # DuckDB exact_match comparison with regex_extract
+            >>> # Exact match comparison based on a substring of col_name as
+                 determined by a regular expression
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.exact_match("first_name", regex_extract="^[A-Z]{1,4}")
+
         Returns:
             Comparison: A comparison for exact match that can be included in the Splink
                 settings dictionary
@@ -136,6 +142,15 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             >>>                    distance_threshold_or_thresholds = [0.9, 0.7]
             >>>                    )
 
+            >>> # DuckDB Jaccard Comparison at thresholds 0.9 and 0.7 with regex_extract
+            >>> # Jaccard comparison based on a substring of col_name as
+                 determined by a regular expression
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.distance_function_at_thresholds("name",
+            >>>                    distance_function_name = 'jaccard',
+            >>>                    distance_threshold_or_thresholds = [0.9, 0.7],
+            >>>                    regex_extract="^[A-Z]{1,4}"
+            >>>                    )
 
         Returns:
             Comparison: A comparison for a chosen distance function similarity that
@@ -246,6 +261,12 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             >>> import splink.spark.spark_comparison_library as cl
             >>> cl.levenshtein_at_thresholds("first_name", [1,2])
 
+            >>> # DuckDB Levenshtein comparison at thresholds 1 and 2 with regex_extract
+            >>> # Levenshtein comparison based on a substring of col_name as
+                 determined by a regular expression
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.levenshtein_at_thresholds("first_name", [1,2], regex_extract="^[A-Z]{1,4}")
+
         Returns:
             Comparison: A comparison for Levenshtein similarity that can be included
                 in the Splink settings dictionary.
@@ -317,6 +338,12 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
             >>> # Spark Jaccard comparison at thresholds 0.9 and 0.7
             >>> import splink.spark.spark_comparison_library as cl
             >>> cl.jaccard_at_thresholds("first_name", [0.9, 0.7])
+
+            >>> # DuckDB Jaccard comparison at thresholds 0.9 and 0.7 with regex_extract
+            >>> # Jaccard comparison based on a substring of col_name as
+                 determined by a regular expression
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.jaccard_at_thresholds("first_name", [0.9, 0.7], regex_extract="^[A-Z]{1,4}")
 
         Returns:
             Comparison: A comparison for Jaccard similarity that can be included
@@ -390,6 +417,12 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
             >>> import splink.spark.spark_comparison_library as cl
             >>> cl.jaro_at_thresholds("first_name", [0.9, 0.7])
 
+            >>> # DuckDB Jaro comparison at thresholds 0.9 and 0.7 with regex_extract
+            >>> # Jaro comparison based on a substring of col_name as
+                 determined by a regular expression
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.jaro_at_thresholds("first_name", [0.9, 0.7], regex_extract="^[A-Z]{1,4}")
+
         Returns:
             Comparison:
         """
@@ -460,6 +493,12 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             >>> # Spark Jaro-winkler comparison at thresholds 0.9 and 0.7
             >>> import splink.spark.saprk_comparison_library as cl
             >>> cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
+
+            >>> # DuckDB Jaro-winkler comparison at thresholds 0.9 and 0.7 with regex_extract
+            >>> # Jaro-winkler comparison based on a substring of col_name as
+                 determined by a regular expression
+            >>> import splink.duckdb.duckdb_comparison_library as cl
+            >>> cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7], regex_extract="^[A-Z]{1,4}")
 
         Returns:
             Comparison: A comparison for Jaro Winkler similarity that can be included
