@@ -161,6 +161,11 @@ class Settings:
             return None
 
     @property
+    def _source_dataset_col(self):
+        input_column = self._source_dataset_input_column
+        return (input_column, InputColumn(input_column, self).name())
+
+    @property
     def _unique_id_input_columns(self) -> list[InputColumn]:
         cols = []
 
