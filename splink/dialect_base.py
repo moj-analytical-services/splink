@@ -29,10 +29,7 @@ class DialectBase:
     @property
     def _regex_extract_function(self):
         raise NotImplementedError(
-            f"Regex extract function not defined for "
-            f"object of type {type(self)}.  "
-            f"Have you remembered to use dialect-specific "
-            f"comparisons/comparison levels?"
+            "Regex extract option not defined for " "the SQL backend being used.  "
         )
 
     @property
