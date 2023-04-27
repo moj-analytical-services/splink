@@ -48,6 +48,7 @@ from .connected_components import (
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkException
+from .labelling_tool import render_labelling_tool_html
 from .logging_messages import execute_sql_logging_message_info, log_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .m_training import estimate_m_values_from_label_column
@@ -55,7 +56,6 @@ from .match_key_analysis import (
     count_num_comparisons_from_blocking_rules_for_prediction_sql,
 )
 from .match_weights_histogram import histogram_data
-from .labelling_tool import render_labelling_tool_html
 from .misc import (
     ascii_uid,
     bayes_factor_to_prob,
