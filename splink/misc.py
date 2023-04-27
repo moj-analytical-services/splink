@@ -95,7 +95,6 @@ def calculate_cartesian(df_rows, link_type):
     """
     n = df_rows
 
-    # if link_type == "link_only":
     if link_type == "link_only":
         if len(n) <= 1:
             raise ValueError(
