@@ -48,7 +48,10 @@ from .connected_components import (
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkException
-from .labelling_tool import render_labelling_tool_html
+from .labelling_tool import (
+    render_labelling_tool_html,
+    generate_labelling_tool_comparisons,
+)
 from .logging_messages import execute_sql_logging_message_info, log_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .m_training import estimate_m_values_from_label_column
@@ -1514,7 +1517,6 @@ class Linker:
 
         self._settings_obj._blocking_rules_to_generate_predictions = blocking_rules
 
-        self._settings_obj._link_type = "link_only_find_matches_to_new_records"
         self._find_new_matches_mode = True
 
         sql = _join_tf_to_input_df_sql(self)
@@ -2840,6 +2842,20 @@ class Linker:
         )
         return splink_dataframe
 
-    def labelling_tool(self, comparisons_recs: SplinkDataFrame):
-        settings: dict = self._settings_obj.as_dict()
-        render_labelling_tool_html(settings, comparisons_recs)
+    def labelling_tool_for_specific_record(
+        self,
+        unique_id,
+        source_dataset=None,
+        out_path="labelling_tool.html",
+        overwrite=False,
+        match_weight_threshold=-4,
+    ):
+
+        df_comparisons = generate_labelling_tool_comparisons(
+            self,
+            unique_id,
+            source_dataset,
+            match_weight_threshold=match_weight_threshold,
+        )
+
+        render_labelling_tool_html(self, df_comparisons, out_path, overwrite)

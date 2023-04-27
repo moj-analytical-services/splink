@@ -1,6 +1,7 @@
 import json
 import os
 import pkgutil
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
@@ -9,20 +10,56 @@ from jinja2 import Template
 from .misc import EverythingEncoder
 from .splink_dataframe import SplinkDataFrame
 
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
+
+
+def generate_labelling_tool_comparisons(
+    linker: "Linker", unique_id, source_dataset, match_weight_threshold=-4
+):
+
+    # ensure the tf table exists
+    concat_with_tf = linker._initialise_df_concat_with_tf()
+
+    settings = linker._settings_obj
+
+    source_dataset_condition = ""
+
+    if source_dataset is not None:
+        sds_col = settings._source_dataset_input_column
+        source_dataset_condition = f"""
+          and {sds_col} = '{source_dataset}'
+        """
+
+    sql = f"""
+    select *
+    from __splink__df_concat_with_tf
+    where {settings._unique_id_column_name} = '{unique_id}'
+    {source_dataset_condition}
+    """
+
+    linker._enqueue_sql(sql, "__splink__df_labelling_tool_record")
+    splink_df = linker._execute_sql_pipeline([concat_with_tf])
+
+    matches = linker.find_matches_to_new_records(
+        splink_df.physical_name, match_weight_threshold=match_weight_threshold
+    )
+
+    return matches
+
 
 def render_labelling_tool_html(
-    settings: dict,
+    linker: "Linker",
     df_comparisons: SplinkDataFrame,
     out_path="labelling_tool.html",
     overwrite: bool = True,
 ):
-
+    settings: dict = linker._settings_obj.as_dict()
     comparisons_recs = df_comparisons.as_pandas_dataframe()
 
-    # deal with col a
     comparisons_recs = comparisons_recs.replace(r"^\s*$", "", regex=True)
 
-    # deal with col b and c
     comparisons_recs = comparisons_recs.fillna(np.nan).replace(
         [np.nan, pd.NA], ["", ""]
     )
