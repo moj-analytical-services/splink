@@ -12,6 +12,24 @@ from .sqlite_base import (
 )
 
 
+class SqliteComparisonProperties(SqliteBase):
+    @property
+    def _exact_match_level(self):
+        return exact_match_level
+
+    @property
+    def _null_level(self):
+        return null_level
+
+    @property
+    def _else_level(self):
+        return else_level
+
+    @property
+    def _distance_function_level(self):
+        return distance_function_level
+
+
 class null_level(SqliteBase, NullLevelBase):
     pass
 
