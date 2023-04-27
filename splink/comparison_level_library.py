@@ -63,6 +63,12 @@ class ExactMatchLevelBase(ComparisonLevel):
             >>> # Spark Exact match level
             >>> import splink.spark.spark_comparison_level_library as cll
             >>> cll.exact_match_level("name")
+
+            >>> # DuckDB Exact match level with regex_extract
+            >>> # Perform an exact match on a substring of col_name as
+                 determined by a regular expression
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.exact_match_level("name", regex_extract="^[A-Z]{1,4}")
         """
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
 
@@ -204,9 +210,15 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
             >>> import splink.duckdb.duckdb_comparison_level_library as cll
             >>> cll.levenshtein_level("name", 1)
 
-            >>> # Spark Levenshtein comparison level at thresholds 1
+            >>> # Spark Levenshtein comparison level at threshold 1
             >>> import splink.spark.spark_comparison_level_library as cll
             >>> cll.levenshtein_level("name", 1)
+
+            >>> # DuckDB Levenshtein comparison level at threshold 1 with regex_extract
+            >>> # Perform a levenshtein comparison on a substring of col_name as
+                 determined by a regular expression
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the
@@ -245,9 +257,15 @@ class JaroLevelBase(DistanceFunctionLevelBase):
             >>> import splink.duckdb.duckdb_comparison_level_library as cll
             >>> cll.jaro_level("name", 0.9)
 
-            >>> # Spark Jaro comparison level at thresholds 0.9
+            >>> # Spark Jaro comparison level at threshold 0.9
             >>> import splink.spark.spark_comparison_level_library as cll
             >>> cll.jaro_level("name", 0.9)
+
+            >>> # DuckDB Jaro comparison level at threshold 0.9 with regex_extract
+            >>> # Perform a jaro comparison on a substring of col_name as
+                 determined by a regular expression
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.jaro_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the
@@ -290,6 +308,12 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
             >>> # Spark Jaro-winkler comparison level at threshold 0.9
             >>> import splink.spark.spark_comparison_level_library as cll
             >>> cll.jaro_winkler_level("name", 0.9)
+
+            >>> # DuckDB Jaro-winkler comparison level at threshold 0.9 with regex_extract
+            >>> # Perform a jaro-winkler comparison on a substring of col_name as
+                 determined by a regular expression
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.jaro_winkler_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the
@@ -339,6 +363,12 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
             >>> import splink.spark.spark_comparison_level_library as cll
             >>> cll.jaccard_level("name", 0.9)
 
+            >>> # DuckDB Jaccard comparison level at threshold 0.9 with regex_extract
+            >>> # Perform a jaccard comparison on a substring of col_name as
+                 determined by a regular expression
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.jaccard_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
+
         Returns:
             ComparisonLevel: A comparison level that evaluates the jaccard similarity
         """
@@ -381,6 +411,12 @@ class ColumnsReversedLevelBase(ComparisonLevel):
             >>> # Spark Columns Reversed comparison level
             >>> import splink.spark.spark_comparison_level_library as cll
             >>> cll.columns_reversed_level("first_name", "surname")
+
+            >>> # DuckDB Columns Reversed comparison level with regex_extract
+            >>> # Perform an exact match on reversed columns on a substring
+                 of col_name_1 and col_name_2 as determined by a regular expression
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.columns_reversed_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
 
 
         Returns:
