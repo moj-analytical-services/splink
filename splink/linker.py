@@ -1066,7 +1066,7 @@ class Linker:
                 SplinkDataFrame allow you to access the underlying data.
         """
         concat_with_tf = self._initialise_df_concat_with_tf()
-        sql = block_using_rules_sql(self)
+        sql = block_using_rules_sql(self, deterministic_link=True)
         self._enqueue_sql(sql, "__splink__df_blocked")
         return self._execute_sql_pipeline([concat_with_tf])
 
@@ -1669,7 +1669,8 @@ class Linker:
             threshold_match_probability (float): Filter the pairwise match predictions
                 to include only pairwise comparisons with a match_probability above this
                 threshold. This dataframe is then fed into the clustering
-                algorithm.
+                algorithm. 
+                For deterministic linkage, set to 1.
             pairwise_formatting (bool): Whether to output the pairwise match predictions
                 from linker.predict() with cluster IDs.
                 If this is set to false, the output will be a list of all IDs, clustered
