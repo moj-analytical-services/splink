@@ -83,7 +83,7 @@ $$Levenstein(CAKE, ACKE) = 2$$
 
 You can test out the Damerau-Levenshtein distance between two strings through the [jellyfish](https://jamesturk.github.io/jellyfish/) package.
 
-```
+```python
 import jellyfish
 levenshtein_distance("CAKE", "ACKE)
 ```
@@ -139,7 +139,7 @@ $$DamerauLevenstein(CAKE, ACKE) = 1$$
 
 You can test out the Damerau-Levenshtein distance between two strings through the [jellyfish](https://jamesturk.github.io/jellyfish/) package.
 
-```
+```python
 import jellyfish
 damerau_levenshtein_distance("CAKE", "ACKE)
 ```
@@ -198,7 +198,7 @@ Noting that transpositions of strings gives the same Jaro similarity regardless 
 
 You can test out the Jaro similarity between two strings through the [jellyfish](https://jamesturk.github.io/jellyfish/) package.
 
-```
+```python
 import jellyfish
 jellyfish.jaro_similarity("MARTHA", "AMRTHA)
 ```
@@ -252,7 +252,7 @@ Note that the Jaro-Winkler similarity should be used with caution, as it may not
 
 You can test out the Jaro similarity between two strings through the [jellyfish](https://jamesturk.github.io/jellyfish/) package.
 
-```
+```python
 import jellyfish
 jellyfish.jaro_winkler_similarity("MARTHA", "MARHTA)
 ```
@@ -317,7 +317,7 @@ $$Jaccard(MARTHA, MARHTA)=\frac{5}{5}=1$$
 
 You can test out the Jaccard similarity between two strings with the function below:
 
-``` python
+```python
 def jaccard_similarity(str1, str2):
         set1 = set(str1)
         set2 = set(str2)

@@ -18,7 +18,7 @@ Once generated, phonetic matches can be used within [comparisons & comparison le
 
 E.g. For a comparison including a [Double Metaphone](#double-metaphone) phonetic match using the [name_comparison](../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons):
 
-```
+```python
 import splink.duckdb.duckdb_comparison_template_library as ctl
 
 first_name_comparison = ctl.name_comparison(
@@ -70,7 +70,7 @@ For example, the Soundex code for the name "Smith" is S530, and the code for "Sm
 
 You can test out the Soundex transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
 
-```
+```python
 import phonetics
 print(phonetics.soundex("Smith"), phonetics.soundex("Smyth"))
 ```
@@ -115,7 +115,7 @@ For example, the Metaphone code for the name "Smith" is SM0, and the code for "S
 
 You can test out the Metaphone transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
 
-```
+```python
 import phonetics
 print(phonetics.metaphone("Smith"), phonetics.metaphone("Smyth"))
 ```
@@ -184,7 +184,7 @@ For example, the Double Metaphone code for the name "Smith" is SM0 and XMT, whil
 
 You can test out the Metaphone transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
 
-```
+```python
 import phonetics
 print(phonetics.dmetaphone("Smith"), phonetics.dmetaphone("Smyth"))
 ```
