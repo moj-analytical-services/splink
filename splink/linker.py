@@ -55,6 +55,7 @@ from .match_key_analysis import (
     count_num_comparisons_from_blocking_rules_for_prediction_sql,
 )
 from .match_weights_histogram import histogram_data
+from .labelling_tool import render_labelling_tool_html
 from .misc import (
     ascii_uid,
     bayes_factor_to_prob,
@@ -2838,3 +2839,7 @@ class Linker:
             input_data, table_name_physical, overwrite=overwrite
         )
         return splink_dataframe
+
+    def labelling_tool(self, comparisons_recs: SplinkDataFrame):
+        settings: dict = self._settings_obj.as_dict()
+        render_labelling_tool_html(settings, comparisons_recs)
