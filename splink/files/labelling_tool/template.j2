@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+
+    <title>Splink Clerical Labelling Tool</title>
+    <meta name="description" content="desc" />
+
+    <style>{{custom_css}}</style>
+
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+
+
+</head>
+
+<body>
+
+    <div id="observablehq-styles"></div>
+    <div id="outer_container">
+        <h1>Splink Clerical Labelling Tool</h1>
+        <div id="observablehq-blurb"></div>
+        <div id="observablehq-table-interface"></div>
+        <div id="observablehq-dl"></div>
+    </div>
+
+
+
+
+{% if pairwise_comparison_data %}
+    <script>
+        pairwise_comparison_data_from_splink = {{ pairwise_comparison_data }};
+    </script>
+{% endif %}
+
+{% if splink_settings_data %}
+    <script>
+        splink_settings_from_splink = {{ splink_settings_data }};
+    </script>
+{% endif %}
+
+<script>
+        {{slt}}
+    </script>
+
+<script type="module">
+
+    new slt.Runtime().module(slt.define, name => {
+
+        if (name === "viewof table_interface") return new slt.Inspector(document.querySelector("#observablehq-table-interface"));
+
+        if (name === "dl") return new slt.Inspector(document.querySelector("#observablehq-dl"));
+        if (name === "blurb") return new slt.Inspector(document.querySelector("#observablehq-blurb"));
+
+    })
+</script>
+
+
+</body>
+
+</html>
+
