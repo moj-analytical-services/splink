@@ -1,3 +1,9 @@
+---
+tags:
+  - Term Frequency
+  - Comparisons
+---
+
 # Term-Frequency Adjustments
 
 ## Problem Statement
