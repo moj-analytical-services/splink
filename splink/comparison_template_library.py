@@ -79,7 +79,15 @@ class DateComparisonBase(Comparison):
             datediff_metrics (Union[str, list], optional): The metrics to apply
                 thresholds to for datediff similarity level(s).
                 Defaults to ["month", "year"].
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            cast_strings_to_date (bool, optional): Set to True to
+                enable date-casting when input dates are strings. Also adjust
+                date_format if date-strings are not in (yyyy-mm-dd) format.
+                Defaults to False.
+            date_format (str, optional): Format of input dates if date-strings
+                are given. Must be consistent across record pairs. If None
+                (the default), downstream functions for each backend assign
+                date_format to ISO 8601 format (yyyy-mm-dd).
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
                 If provided, overrides the default m probabilities
@@ -93,16 +101,8 @@ class DateComparisonBase(Comparison):
             m_probability_or_probabilities_datediff (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the datediff thresholds specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
-            cast_strings_to_date (bool, optional): Set to True to
-                enable date-casting when input dates are strings. Also adjust
-                date_format if date-strings are not in (yyyy-mm-dd) format.
-                Defaults to False.
-            date_format(str, optional): Format of input dates if date-strings
-                are given. Must be consistent across record pairs. If None
-                (the default), downstream functions for each backend assign
-                date_format to ISO 8601 format (yyyy-mm-dd).
 
 
         Examples:
@@ -343,10 +343,10 @@ class NameComparisonBase(Comparison):
             jaccard_thresholds (Union[int, list], optional): The thresholds to use
                 for jaccard similarity level(s).
                 Defaults to []
-            m_probability_exact_match_name (_type_, optional): If provided, overrides
+            m_probability_exact_match_name (float, optional): If provided, overrides
                 the default m probability for the exact match level for col_name.
                 Defaults to None.
-            m_probability_exact_match_phonetic_name (_type_, optional): If provided,
+            m_probability_exact_match_phonetic_name (float, optional): If provided,
                 overrides the default m probability for the exact match level for
                 phonetic_col_name. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
@@ -361,7 +361,7 @@ class NameComparisonBase(Comparison):
             m_probability_or_probabilities_jac (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the jaccard thresholds specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:

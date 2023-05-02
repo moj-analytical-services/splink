@@ -27,9 +27,9 @@ class ExactMatchBase(Comparison):
             col_name (str): The name of the column to compare
             term_frequency_adjustments (bool, optional): If True, term frequency
                 adjustments will be made on the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
             include_colname_in_charts_label: If true, append col name to label for
                 charts.  Defaults to False.
@@ -108,12 +108,12 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_thres (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
@@ -222,12 +222,12 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
         Examples:
             >>> # DuckDB Levenshtein comparison at thresholds 1 and 2
@@ -290,12 +290,12 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_jac (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
@@ -359,12 +359,12 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_jar (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
@@ -427,12 +427,12 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_jw (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
@@ -491,7 +491,7 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
             m_probability_or_probabilities_sizes (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the sizes specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
@@ -598,21 +598,22 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
-                default m probability for the exact match level. Defaults to None.
-            m_probability_or_probabilities_dat (Union[float, list], optional):
-                If provided, overrides the default m probabilities
-                for the sizes specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
-                default m probability for the 'anything else' level. Defaults to None.
             cast_strings_to_date (bool, optional): Set to True to
                 enable date-casting when input dates are strings. Also adjust
                 date_format if date-strings are not in (yyyy-mm-dd) format.
                 Defaults to False.
-            date_format(str, optional): Format of input dates if date-strings
+            date_format (str, optional): Format of input dates if date-strings
                 are given. Must be consistent across record pairs. If None
                 (the default), downstream functions for each backend assign
                 date_format to ISO 8601 format (yyyy-mm-dd).
+            m_probability_exact_match (float, optional): If provided, overrides the
+                default m probability for the exact match level. Defaults to None.
+            m_probability_or_probabilities_dat (Union[float, list], optional):
+                If provided, overrides the default m probabilities
+                for the sizes specified. Defaults to None.
+            m_probability_else (float, optional): If provided, overrides the
+                default m probability for the 'anything else' level. Defaults to None.
+
 
         Examples:
             >>> # DuckDB Date Difference comparison at thresholds 10 days, 12 months
@@ -635,20 +636,20 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
             >>> # (default = %Y-%m-%d) date_format
             >>> import splink.duckdb.duckdb_comparison_library as cl
             >>> cl.datediff_at_thresholds("dob",
-                                            date_thresholds=[1,5],
-                                            date_metrics = ["day", "year"],
-                                            cast_strings_to_date=True
-                                            )
+            >>>                             date_thresholds=[1,5],
+            >>>                             date_metrics = ["day", "year"],
+            >>>                             cast_strings_to_date=True
+            >>>                             )
 
             >>> # DuckDB datediff comparison with date-casting and specified
             >>> # (non-default) date_format
             >>> import splink.duckdb.duckdb_comparison_library as cl
             >>> cl.datediff_at_thresholds("dob",
-                                            date_thresholds=[1,5],
-                                            date_metrics = ["day", "year"],
-                                            cast_strings_to_date=True,
-                                            date_format='%d/%m/%Y'
-                                            )
+            >>>                             date_thresholds=[1,5],
+            >>>                             date_metrics = ["day", "year"],
+            >>>                             cast_strings_to_date=True,
+            >>>                             date_format='%d/%m/%Y'
+            >>>                             )
 
         Returns:
             Comparison: A comparison for Datediff that can be included in the Splink
@@ -746,28 +747,28 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
                 distance.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_km (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the sizes specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
             >>> # DuckDB KM Distance comparison at thresholds 0.1, 1, 10 kilometres
             >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.datediff_at_thresholds("lat_col",
-            >>>                            "long_col",
-            >>>                            km_thresholds = [0.1, 1, 10]
-            >>>                            )
+            >>> cl.distance_in_km_at_thresholds("lat_col",
+            >>>                                "long_col",
+            >>>                                km_thresholds = [0.1, 1, 10]
+            >>>                                )
 
             >>> # Spark KM Distance comparison at thresholds 0.1, 1, 10 kilometres
             >>> import splink.spark.spark_comparison_library as cl
-            >>> cl.datediff_at_thresholds("lat_col",
-            >>>                            "long_col",
-            >>>                            km_thresholds = [0.1, 1, 10]
-            >>>                            )
+            >>> cl.distance_in_km_at_thresholds("lat_col",
+            >>>                                 "long_col",
+            >>>                                 km_thresholds = [0.1, 1, 10]
+            >>>                                 )
 
         Returns:
             Comparison: A comparison for Distance in KM that can be included in the
