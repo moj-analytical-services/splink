@@ -10,7 +10,7 @@ tags:
 
 A common shortcoming of the Fellegi-Sunter model is that it doesn’t account for skew in the distributions of linking variables. One of the starkest examples is a binary variable such as gender in the prison population, where male offenders outnumber female offenders by 10:1. 
 
-![](../img/tf-gender-distribution.png)
+![](../img/tf-gender-distribution.png){width="800"}
 
 #### How does this affect our m and u probabilities? 
 
@@ -26,7 +26,7 @@ In this example, one solution might be to create an extra comparison level for m
 
 However, this complexity forces us to estimate two m probabilities when one would do, and it becomes impractical if we extend to higher-cardinality variables like surname, requiring thousands of additional comparison levels.
 
-![](../img/tf-surname-distribution.png)
+![](../img/tf-surname-distribution.png){width="800"}
 
 This problem used to be addressed with an ex-post (after the fact) solution - once the linking is done, we have a look at the average match probability for each value in a column to determine which values tend to be stronger indicators of a match. If the average match probability for records pairs that share a surname is 0.2 but the average for the specific surname Smith is 0.1 then we know that the match weight for name should be adjusted downwards for Smiths. 
 
@@ -56,7 +56,7 @@ Just as we can add independent match weights for **name**, **DOB** and other com
 
 - We can easily disentangle and visualise the aggregate significance of a particular column, separately from the deviations within it (see charts below)
 
-![](../img/tf-example.png)
+![](../img/tf-example.png){width="300"}
 
 ## Visualising TF Adjustments
 
@@ -67,7 +67,7 @@ For an individual comparison of two records, we can see the impact of TF adjustm
 We can also see these match weights and TF adjustments summarised using a chart like the below to highlight common and uncommon names. We do this already using the Splink linker's profile_columns method, but once we know the u probabilities for our comparison columns, we can show these outliers in terms of their impact on match weight:
 
 ![In this sample of names from test data, we see that a match on **first name** has a match weight of +5.3. 
-For an uncommon name like Tamby, this is increased to +11.1 (very strong evidence for a match), whereas a common name like John has a reduced match weight of +3.3 (positive but weaker evidence).](../img/tf-match-weight.png)
+For an uncommon name like Tamby, this is increased to +11.1 (very strong evidence for a match), whereas a common name like John has a reduced match weight of +3.3 (positive but weaker evidence).](../img/tf-match-weight.png){width="800"}
 
 Creating a function to generate this chart of term-frequency-adjusted match weights is currently on our backlog. If you thing this would be useful please comment on the [github issue](https://github.com/moj-analytical-services/splink/issues/430) or feel free to put in a PR. We love getting contributions from our users!
 
