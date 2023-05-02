@@ -9,7 +9,7 @@ def size_array_intersect_sql(col_name_l, col_name_r):
 
 def regex_extract_sql(col_name, regex):
     return f"""
-        regexp_extract({col_name}, '{regex}'))
+        regexp_extract({col_name}, '{regex}')
     """
 
 
