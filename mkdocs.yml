@@ -68,6 +68,7 @@ nav:
         - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
         - String comparators: "topic_guides/comparators.md"
         - Phonetic transformations: "topic_guides/phonetic.md"
+        - Term-Frequency adjustments: "topic_guides/term-frequency.md"
       - Performance:
         - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
         - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
