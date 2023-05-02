@@ -1669,7 +1669,7 @@ class Linker:
             threshold_match_probability (float): Filter the pairwise match predictions
                 to include only pairwise comparisons with a match_probability above this
                 threshold. This dataframe is then fed into the clustering
-                algorithm. 
+                algorithm.
                 For deterministic linkage, set to 1.
             pairwise_formatting (bool): Whether to output the pairwise match predictions
                 from linker.predict() with cluster IDs.

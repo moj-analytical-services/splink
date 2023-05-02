@@ -146,12 +146,12 @@ def block_using_rules_sql(linker: Linker, deterministic_link=False):
     if not blocking_rules:
         blocking_rules = [BlockingRule("1=1")]
 
-    # For Blocking rules for deterministic rules, add a match probability 
+    # For Blocking rules for deterministic rules, add a match probability
     # column with all probabilities set to 1.
     if deterministic_link:
         probability = ", 1.00 as match_probability"
     else:
-        probability= ""
+        probability = ""
 
     sqls = []
     for br in blocking_rules:

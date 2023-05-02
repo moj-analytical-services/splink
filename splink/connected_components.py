@@ -325,7 +325,9 @@ def _cc_create_unique_id_cols(
     uid_concat_edges = _composite_unique_id_from_edges_sql(uid_cols, None)
 
     if match_probability_threshold:
-        match_probability_condition = f"where match_probability >= {match_probability_threshold}"
+        match_probability_condition = (
+            f"where match_probability >= {match_probability_threshold}"
+        )
     else:
         match_probability_condition = ""
 
