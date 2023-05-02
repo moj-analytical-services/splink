@@ -58,6 +58,7 @@ markdown_extensions:
       permalink: True
 nav:
   - Home: "README.md"
+  - Blog: "blog/blog.md"
   - Topic Guide:
       - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/backends.md"
       - Link type - linking vs deduping: "topic_guides/link_type.md"
@@ -91,8 +92,6 @@ nav:
           - Comparison Template Library: "comparison_template_library.md"
           - Comparison Level Library: "comparison_level_library.md"
           - Comparison Composition: "comparison_level_composition.md"
-  - Settings Editor: "settingseditor/editor.md"
-  - Settings dictionary reference: "settings_dict_guide.md"
   - Tutorials:
       - 0. Tutorial introduction: "demos/00_Tutorial_Introduction.ipynb"
       - 1. Data prep prerequisites: "demos/01_Prerequisites.ipynb"
@@ -116,6 +115,8 @@ nav:
         - Febrl4 link-only: "demos/example_febrl4.ipynb"
       - PySpark:
         - Deduplication using Pyspark: "demos/example_simple_pyspark.ipynb"
+  - Settings Editor: "settingseditor/editor.md"
+  - Settings dictionary reference: "settings_dict_guide.md" 
   - Developers' guides:
       - Making Changes to Splink:
         - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
