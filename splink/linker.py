@@ -181,6 +181,17 @@ class Linker:
 
         self._pipeline = SQLPipeline()
 
+        self._names_of_tables_created_by_splink: set = set()
+        self._intermediate_table_cache: dict = CacheDictWithLogging()
+
+        if not isinstance(settings_dict, (dict, type(None))):
+            # Run if you've entered a filepath
+            self._setup_settings_objs(None)  # feed it a blank settings dictionary
+            self.load_settings(settings_dict)
+        else:
+            settings_dict = deepcopy(settings_dict)
+            self._setup_settings_objs(settings_dict)
+
         homogenised_tables, homogenised_aliases = self._register_input_tables(
             input_table_or_tables,
             input_table_aliases,
@@ -190,16 +201,6 @@ class Linker:
         self._input_tables_dict = self._get_input_tables_dict(
             homogenised_tables, homogenised_aliases
         )
-
-        self._names_of_tables_created_by_splink: set = set()
-        self._intermediate_table_cache: dict = CacheDictWithLogging()
-
-        if not isinstance(settings_dict, (dict, type(None))):
-            self._setup_settings_objs(None)  # feed it a blank settings dictionary
-            self.load_settings(settings_dict)
-        else:
-            settings_dict = deepcopy(settings_dict)
-            self._setup_settings_objs(settings_dict)
 
         self._validate_input_dfs()
         self._em_training_sessions = []
@@ -742,6 +743,11 @@ class Linker:
         )
 
     def _validate_input_dfs(self):
+        if not hasattr(self, "_input_tables_dict"):
+            # This is only triggered where a user loads a settings dict from a
+            # given file path.
+            return
+
         for df in self._input_tables_dict.values():
             df.validate()
 
@@ -2350,7 +2356,7 @@ class Linker:
 
         """
         records = missingness_data(self, input_dataset)
-        return missingness_chart(records, input_dataset)
+        return missingness_chart(records)
 
     def completeness_chart(self, input_dataset: str = None, cols: list[str] = None):
         """Generate a summary chart of the completeness (proportion of non-nulls) of
@@ -2378,7 +2384,7 @@ class Linker:
 
         """
         records = completeness_data(self, input_dataset, cols)
-        return completeness_chart(records, input_dataset)
+        return completeness_chart(records)
 
     def count_num_comparisons_from_blocking_rule(
         self,
