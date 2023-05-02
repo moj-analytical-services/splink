@@ -54,6 +54,7 @@ plugins:
       enable_creation_date: true
       type: timeago
       fallback_to_build_date: true
+  - blog
 markdown_extensions:
   - abbr
   - attr_list
@@ -157,7 +158,6 @@ nav:
       - Settings:
         - Settings Dictionary Reference: "settings_dict_guide.md"
         - Interactive Settings Editor: "settingseditor/editor.md"
-
   - Contributing:
       - Introduction: "dev_guides/dev_guides_index.md"
       - Making Changes to Splink:
@@ -176,7 +176,8 @@ nav:
           - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
           - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
         - User-Defined Functions: "dev_guides/udfs.md"
-
+  - Blog: 
+    - blog/index.md
 extra_css:
 - css/custom.css
 extra_javascript:
