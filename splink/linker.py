@@ -380,9 +380,7 @@ class Linker:
         for alias in input_aliases:
             # Check if alias is a string (indicating a table name) and that it is not
             # a file path.
-            if not isinstance(alias, str) or re.match(
-                pattern=r".*", string=alias
-            ):
+            if not isinstance(alias, str) or re.match(pattern=r".*", string=alias):
                 continue
             exists = self._table_exists_in_database(alias)
             if exists:
@@ -646,14 +644,14 @@ class Linker:
             input: The data you wish to register. This can be either a dictionary,
                 pandas dataframe, pyarrow table or a spark dataframe.
             table_name (str): The name you wish to assign to the table.
-            overwrite (bool): Overwrite the table in the underlying database if it
-                exists
 
         Returns:
             None
         """
 
-        raise NotImplementedError(f"register_table not implemented for {type(self)}")
+        raise NotImplementedError(
+            f"_table_registration not implemented for {type(self)}"
+        )
 
     def query_sql(self, sql, output_type="pandas"):
         """
