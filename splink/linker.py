@@ -4,6 +4,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import warnings
 from collections import UserDict
 from copy import copy, deepcopy
@@ -375,12 +376,30 @@ class Linker:
         homogenised_aliases = []
         accepted_df_dtypes = ensure_is_tuple(accepted_df_dtypes)
 
+        existing_tables = []
+        for alias in input_aliases:
+            # Check if alias is a string (indicating a table name) and that it is not
+            # a file path.
+            if not isinstance(alias, str) or re.match(
+                pattern=r".*", string=alias
+            ):
+                continue
+            exists = self._table_exists_in_database(alias)
+            if exists:
+                existing_tables.append(f"'{alias}'")
+        if existing_tables:
+            input_tables = ", ".join(existing_tables)
+            raise ValueError(
+                f"Table(s): {input_tables} already exists in database. "
+                "Please remove or rename it/them before retrying"
+            )
+
         for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
             if isinstance(alias, accepted_df_dtypes):
                 alias = f"__splink__input_table_{i}"
 
             if isinstance(table, accepted_df_dtypes):
-                self.register_table(table, alias)
+                self._table_registration(table, alias)
                 table = alias
 
             homogenised_tables.append(table)
@@ -608,6 +627,30 @@ class Linker:
         Returns:
             SplinkDataFrame: An abstraction representing the table created by the sql
                 pipeline
+        """
+
+        raise NotImplementedError(f"register_table not implemented for {type(self)}")
+
+    def _table_registration(self, input, table_name):
+        """
+        Register a table to your backend database, to be used in one of the
+        splink methods, or simply to allow querying.
+
+        Tables can be of type: dictionary, record level dictionary,
+        pandas dataframe, pyarrow table and in the spark case, a spark df.
+
+        This function is contains no overwrite functionality, so it can be used
+        where we don't want to allow for overwriting.
+
+        Args:
+            input: The data you wish to register. This can be either a dictionary,
+                pandas dataframe, pyarrow table or a spark dataframe.
+            table_name (str): The name you wish to assign to the table.
+            overwrite (bool): Overwrite the table in the underlying database if it
+                exists
+
+        Returns:
+            None
         """
 
         raise NotImplementedError(f"register_table not implemented for {type(self)}")

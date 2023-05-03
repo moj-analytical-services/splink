@@ -440,6 +440,10 @@ class SparkLinker(Linker):
                     "Please use the 'overwrite' argument if you wish to overwrite"
                 )
 
+        self._table_registration(input, table_name)
+        return self._table_to_splink_dataframe(table_name, table_name)
+
+    def _table_registration(self, input, table_name):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
             input = self.spark.createDataFrame(input)
@@ -450,7 +454,6 @@ class SparkLinker(Linker):
             input = self.spark.createDataFrame(input)
 
         input.createOrReplaceTempView(table_name)
-        return self._table_to_splink_dataframe(table_name, table_name)
 
     def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
