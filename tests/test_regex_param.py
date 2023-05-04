@@ -1,10 +1,10 @@
 import pandas as pd
 import pytest
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
+
 import splink.duckdb.duckdb_comparison_level_library as clld
 import splink.spark.spark_comparison_level_library as clls
-
+from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.spark.spark_linker import SparkLinker
 
 df = pd.DataFrame(
     [
@@ -76,7 +76,9 @@ def name_levels(cll):
             cll.jaro_winkler_level(
                 "first_name", distance_threshold=1, regex_extract="^[A-Z]{1,4}"
             ),
-            # cll.jaccard_level("first_name", distance_threshold=1.0, regex_extract="[A-Z]"),
+            # cll.jaccard_level(
+            #     "first_name", distance_threshold=1.0, regex_extract="[A-Z]"
+            # ),
             cll.columns_reversed_level(
                 "first_name", "last_name", regex_extract="[A-Z]{1,3}"
             ),
@@ -162,7 +164,7 @@ def test_regex(spark, Linker, df, level_set, record_pairs_gamma):
 
 
 def test_invalid_regex():
-    clld.exact_match_level("postcode", regex_extract="^[A-Z]\d")
+    clld.exact_match_level("postcode", regex_extract="^[A-Z]\\d")
     clls.exact_match_level("postcode", regex_extract="^[A-Z]{1}")
     with pytest.raises(SyntaxError):
-        clls.exact_match_level("postcode", regex_extract="^[A-Z]\d")
+        clls.exact_match_level("postcode", regex_extract="^[A-Z]\\d")
