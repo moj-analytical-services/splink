@@ -46,3 +46,7 @@ class AthenaBase(DialectBase):
     @property
     def _size_array_intersect_function(self):
         return size_array_intersect_sql
+
+    @property
+    def _datediff_function(self):
+        return datediff_sql
