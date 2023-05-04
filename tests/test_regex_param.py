@@ -1,8 +1,3 @@
-# To test: levels, comparisons, different regex syntax
-# Start with duckDB and then test for spark, Athena? if the SQL changes, SQLite?
-# if spark linker then should give value error if syntax is wrong
-
-### LEVEL TEST
 import pandas as pd
 import pytest
 from splink.duckdb.duckdb_linker import DuckDBLinker
@@ -91,7 +86,6 @@ def name_levels(cll):
 
 
 record_pairs_gamma_postcode = {
-    # 4: [(1, 2)],
     3: [(1, 2), (1, 3), (2, 3)],
     2: [(1, 4), (2, 4), (3, 4)],
     1: [(1, 5), (2, 5), (3, 5), (4, 5)],
@@ -167,11 +161,8 @@ def test_regex(spark, Linker, df, level_set, record_pairs_gamma):
             )
 
 
-# TEST REGEX SYNTAX
-# Check spark linker errors if bad regex syntax
-# Test they don't break for other random regex syntax, blank string, null
-# Just for exact match level
-# test \ and single {}
-
-
-### TEST COMPARISONS - as above
+def test_invalid_regex():
+    clld.exact_match_level("postcode", regex_extract="^[A-Z]\d")
+    clls.exact_match_level("postcode", regex_extract="^[A-Z]{1}")
+    with pytest.raises(SyntaxError):
+        clls.exact_match_level("postcode", regex_extract="^[A-Z]\d")
