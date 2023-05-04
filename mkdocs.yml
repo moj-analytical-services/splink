@@ -5,6 +5,7 @@ theme:
   name: "material"
   features:
     - content.code.annotate
+    - content.code.copy
     - content.tabs.link
     - content.tooltips
     - header.autohide
@@ -54,6 +55,8 @@ markdown_extensions:
   - pymdownx.snippets:
       auto_append:
         - includes/abbreviations.md
+  - pymdownx.tabbed:
+      alternate_style: true 
   - toc:
       permalink: True
 nav:

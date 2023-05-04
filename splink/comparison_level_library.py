@@ -601,38 +601,68 @@ class DateDiffLevelBase(ComparisonLevel):
                 date_format to ISO 8601 format (yyyy-mm-dd).
 
         Examples:
-            >>> # DuckDB Date Difference comparison level at threshold 1 year
-            >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.datediff_level("date",
-            >>>                     date_threshold=1,
-            >>>                     date_metric="year"
-            >>>                     )
+            Date Difference comparison level at threshold 1 year
+            === "DuckDB"
+                ``` python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.datediff_level("date",
+                                    date_threshold=1,
+                                    date_metric="year"
+                                    )
+                ```
+            === "Spark"
+                ``` python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.datediff_level("date",
+                                    date_threshold=1,
+                                    date_metric="year"
+                                    )
+                ```
 
-            >>> # Spark Date Difference comparison level at threshold 1 year
-            >>> import splink.spark.spark_comparison_level_library as cll
-            >>> cll.datediff_level("date",
-            >>>                     date_threshold=1,
-            >>>                     date_metric="year"
-            >>>                     )
+            Date Difference comparison with date-casting and unspecified
+            date_format (default = %Y-%m-%d)
 
-            >>> # DuckDB Date Difference comparison with date-casting and unspecified
-            >>> # (default = %Y-%m-%d) date_format
-            >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.datediff_level("dob",
+            === "DuckDB"
+                ``` python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.datediff_level("dob",
                                     date_threshold=3,
                                     date_metric='month',
                                     cast_strings_to_date=True
                                     )
+                ```
+            === "Spark"
+                ``` python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.datediff_level("dob",
+                                    date_threshold=3,
+                                    date_metric='month',
+                                    cast_strings_to_date=True
+                                    )
+                ```
 
-            >>> # DuckDB Date Difference comparison with date-casting and specified
-            >>> # date_format
-            >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.datediff_level("dob",
+            Date Difference comparison with date-casting and specified date_format
+
+            === "DuckDB"
+                ``` python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.datediff_level("dob",
                                     date_threshold=3,
                                     date_metric='month',
                                     cast_strings_to_date=True,
                                     date_format='%d/%m/%Y'
                                     )
+                ```
+            === "Spark"
+                ``` python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.datediff_level("dob",
+                                    date_threshold=3,
+                                    date_metric='month',
+                                    cast_strings_to_date=True,
+                                    date_format='%d/%m/%Y'
+                                    )
+                ```
 
         Returns:
             ComparisonLevel: A comparison level that evaluates whether two dates fall
