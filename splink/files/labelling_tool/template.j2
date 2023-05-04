@@ -20,12 +20,14 @@
 
     <div id="observablehq-styles"></div>
     <div id="outer_container">
-        <div id="observablehq-fonts"></div>
+
         <div id="observablehq-styles"></div>
         <h1>Splink Clerical Labelling Tool</h1>
         <div id="observablehq-blurb"></div>
+        <div id="observablehq-checkboxes"></div>
         <div id="observablehq-table-interface"></div>
         <div id="observablehq-dl"></div>
+
     </div>
 
 
@@ -50,11 +52,10 @@
 <script type="module">
 
     new slt.Runtime().module(slt.define, name => {
-        if (name === "fonts") return new slt.Inspector(document.querySelector("#observablehq-fonts"));
+
         if (name === "styles") return new slt.Inspector(document.querySelector("#observablehq-styles"));
-
+        if (name === "viewof checkboxes") return new slt.Inspector(document.querySelector("#observablehq-checkboxes"));
         if (name === "viewof table_interface") return new slt.Inspector(document.querySelector("#observablehq-table-interface"));
-
         if (name === "dl") return new slt.Inspector(document.querySelector("#observablehq-dl"));
         if (name === "blurb") return new slt.Inspector(document.querySelector("#observablehq-blurb"));
 
