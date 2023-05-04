@@ -21,7 +21,7 @@ def datediff_sql(
     if cast_str:
         return f"""
             abs(date_diff('{date_metric}',
-                DATE {col_name_l}, '{date_format}'),
+                DATE({col_name_l}, '{date_format}'),
                 DATE({col_name_r}, '{date_format}'))
                 ) <= {date_threshold}
         """
