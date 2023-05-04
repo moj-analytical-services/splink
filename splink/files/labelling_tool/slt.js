@@ -8375,37 +8375,30 @@
   <summary>Click here for instructions for using this tool</summary>
   <p>Use this tool to label which records represent a match to the <mark>original record, which is highlighted in yellow</mark> at the top of the table.</p>
   <p>Subsequent rows are potential matches to the original row.</p>
-  <p>Use the slider on the left hand side to choose a clerical match probability i.e. the probability with which you think the potential match is the same entity as the original record.</p>
+  <p>Use the slider on the left hand side to choose a clerical match probability, which is the probability with which you think the potential match is the same entity as the original record.</p>
   <p>You may also enter notes to explain why you made a particular decision.</p>
   <p>When you're finished labelling, click the download button below the table to export your labels.</p>
 </details>
 `
   )}
 
-  function _draw_header(slt,original_row,d3){return(
+  function _draw_header(slt,original_row,d3,colspan_spec,styling_lookup){return(
   function (table_element, data_with_inputs_clone, cols) {
     // Draw the two table header rows
     let orig_row_clone = slt.cloneDeep(original_row);
     let first_keys = { clerical_match_score: null, notes_input: null };
     orig_row_clone = { ...first_keys, ...orig_row_clone };
 
-    let colspan_spec = [
-      { span: 2, text: "User input", color: "#A9CCE3" },
-      { span: 2, text: "Splink predictions", color: "#E8DAEF" },
-      { span: 100, text: "Source data", color: "#f3f3f3" }
-    ];
+    const table_first_header = table_element.append("tr");
 
-    const table_top_header = table_element.append("tr");
-
-    d3.select(table_top_header.node())
+    d3.select(table_first_header.node())
       .selectAll("th")
       .data(colspan_spec)
       .enter()
       .append("th")
       .attr("colspan", (col) => col.span)
       .text((col) => col.text)
-      .style("font-size", "1.4em")
-      .style("background-color", (col) => col.color);
+      .attr("class", (d) => `${d.css_class} table_header table_first_header`);
 
     const table_second_header = table_element.append("tr");
 
@@ -8416,166 +8409,49 @@
       match_weight: "Match Weight"
     };
 
-    const colour_lookup = {};
-    let cumulativeCount = 0;
-
-    colspan_spec.forEach((spec) => {
-      for (let i = 0; i < spec.span; i++) {
-        colour_lookup[cumulativeCount] = spec.color;
-        cumulativeCount++;
-      }
-    });
-
     d3.select(table_second_header.node())
       .selectAll("th")
       .data(cols)
       .enter()
       .append("th")
+      .attr(
+        "class",
+        (d, i) =>
+          `${styling_lookup[i].css_class} table_header table_second_header `
+      )
       .text((col) => {
         if (col in column_header_translations) {
           return column_header_translations[col];
         } else {
           return col;
         }
-      })
-      .style("font-size", "1.2em")
-      .style("background-color", (col, i) => {
-        return colour_lookup[i];
       });
   }
   )}
 
-  function _table_interface(slt,data_with_inputs,unique_id_column_name,original_row,draw_header,table_cells_d3_data_mapper,HTMLElement,form_oninput_update_value,redraw_cells,columns_to_highlight_similarity,tooltip,insert_del_differences,leven,jaro_winkler_distance,match_prob_number_format,Event)
-  {
-    let data_with_inputs_clone = slt.cloneDeep(data_with_inputs);
-    const wrapper = slt.d3.create("div").style("overflow-y", "auto");
+  function _render_tooltip_contents(original_row,leven,jaro_winkler_distance,match_prob_number_format,insert_del_differences){return(
+  function (tooltip, cell_data, i) {
+    tooltip
+      .html(() => {
+        let col_name = cell_data["_key"];
 
-    // el is the html node that will be returned and displayed by the interface
-    const el = wrapper.node();
+        // Original row is the first (yellow highlighted) row in the table
+        let original_value = original_row[col_name];
+        let comparison_value = cell_data["_orig_data"][col_name];
 
-    // el.value is the (reactive viewof) value that's exposed by the interfac
-    // i.e. it contains the output data of the interface
-    el.value = {};
-    data_with_inputs_clone.forEach((d) => {
-      let uid = d[unique_id_column_name];
-      d = slt.cloneDeep(d);
-      d["clerical_match_score_value"] = d["clerical_match_score"].value;
-      d["notes_input_value"] = d["notes_input"].value;
-      el.value[uid] = d;
-    });
+        let lev = leven(original_value, comparison_value, false);
+        let jw = jaro_winkler_distance(original_value, comparison_value);
+        jw = match_prob_number_format(jw);
 
-    const table = wrapper.append("table").attr("id", "main-interface-table");
+        let diff_view;
+        console.log("HII");
+        if (lev > 0) {
+          diff_view = insert_del_differences(comparison_value, original_value);
+        } else {
+          diff_view = "";
+        }
 
-    let cols = Object.keys(data_with_inputs_clone[0]);
-    cols = cols.filter((d) => d != "_row_num");
-
-    let orig_row_clone = slt.cloneDeep(original_row);
-    let first_keys = { clerical_match_score: null, notes_input: null };
-    orig_row_clone = { ...first_keys, ...orig_row_clone };
-
-    orig_row_clone["clerical_match_score"] = " ";
-    delete orig_row_clone["match_weight"];
-    delete orig_row_clone["notes"];
-    orig_row_clone["match_probability"] = "Original record 👉 ";
-    delete orig_row_clone["match_weight"];
-
-    let orig_row_data = [orig_row_clone];
-
-    draw_header(table, data_with_inputs_clone, cols);
-
-    const table_original_row = table
-      .selectAll("tr.original_row")
-      .data(orig_row_data)
-      .join("tr")
-      .attr("class", "original_row");
-
-    table_original_row
-      .selectAll("td")
-      .data((d) => Object.values(d))
-      .join("td")
-      .text((d) => d)
-      .style("overflow", "hidden")
-      .style("font-size", "1.2em")
-
-      .style("background-color", "yellow")
-      .attr("colspan", (d, i) => (i === 2 ? 2 : 1));
-
-    let pm_data = [["", "", "Potential matches 	👇"]];
-    const potential_matches_label_row = table
-      .selectAll("tr.potential_matches_label_row")
-      .data(pm_data)
-      .join("tr")
-
-      .attr("class", "potential_matches_label_row")
-      .style("font-size", "1.2em");
-
-    potential_matches_label_row
-      .selectAll("td")
-      .data((d) => d)
-      .join("td")
-      .text((d) => d)
-
-      .attr("colspan", (d, i) => (i === 2 ? 2 : 1));
-
-    const table_rows = table
-      .selectAll("tr.interface_table_rows")
-      .data(data_with_inputs_clone)
-      .join("tr")
-      .attr("class", "interface_table_rows");
-
-    const table_cells = table_rows
-      .selectAll("td")
-      .data(table_cells_d3_data_mapper)
-      .join("td")
-      .style("overflow", "hidden");
-    // .style("text-overflow", "ellipsis");
-
-    // Draw the table cells by appending into the td cells we just created
-    table_cells.append((original_cell_data) => {
-      let td_contents = original_cell_data["_td_contents"];
-      original_cell_data["_key"];
-
-      // If it's a html element, then bind an oninput event
-      // that updates the value
-
-      // Then calls a redraw function that is responsible for the visual appearance
-
-      if (td_contents instanceof HTMLElement) {
-        td_contents.oninput = (event) => {
-          form_oninput_update_value(original_cell_data, el);
-          redraw_cells(data_with_inputs_clone, table, el);
-        };
-
-        return td_contents;
-      } else {
-        return slt.d3.create("p").text(td_contents).node();
-      }
-    });
-
-    table_cells
-      .filter((d, i) => {
-        return columns_to_highlight_similarity.includes(d["_key"]);
-      })
-      .on("mouseover", function (event, d, i) {
-        let col_name = d["_key"];
-        original_row[col_name];
-        d["_orig_data"][col_name];
-
-        tooltip
-          .html((d2) => {
-            let col_name = d["_key"];
-            let original_value = original_row[col_name];
-            let comparison_value = d["_orig_data"][col_name];
-
-            let diff_view = insert_del_differences(
-              comparison_value,
-              original_value
-            );
-
-            let lev = leven(original_value, comparison_value, false);
-            let jw = jaro_winkler_distance(original_value, comparison_value);
-            jw = match_prob_number_format(jw);
-            return `  
+        return `  
               <table>
                 <tr>
                   <td>Original: </td>
@@ -8597,13 +8473,125 @@
                   <td>Jaro winkler:</td>
                   <td style="font-family:monospace">${jw} </td>
                 </tr>
-              
-
-
               </table>`;
-          })
+      })
+      .style("visibility", "visible");
+  }
+  )}
 
-          .style("visibility", "visible");
+  function _draw_original_row(slt,original_row,styling_lookup){return(
+  function (table) {
+    // Draw the top yellow highlighted row
+    let first_cols = { clerical_match_score: null, notes_input: null };
+    let orig_row_clone = slt.cloneDeep(original_row);
+    orig_row_clone = { ...first_cols, ...orig_row_clone };
+
+    orig_row_clone["clerical_match_score"] = "";
+
+    orig_row_clone["match_probability"] = "Original record 👉 ";
+    orig_row_clone["match_weight"] = null;
+
+    let orig_row_data = [orig_row_clone];
+
+    const table_original_row = table
+      .selectAll("tr.original_record")
+      .data(orig_row_data)
+      .join("tr")
+      .attr("class", "original_record_row");
+
+    table_original_row
+      .selectAll("td")
+      .data((d) => Object.values(d))
+      .join("td")
+      .text((d) => d)
+      .attr("class", (d, i) => {
+        let this_class = `${styling_lookup[i].css_class} original_record_cell`;
+        if (i == 2) {
+          this_class += " orig_record_text_with_arrow_cell";
+        }
+        return this_class;
+      });
+  }
+  )}
+
+  function _draw_potential_matches_spacer_row(){return(
+  function (table) {
+    let pm_data = [["", "", "Potential matches 	👇"]];
+    const potential_matches_spacer_row = table
+      .selectAll("tr.potential_matches_spacer_row")
+      .data(pm_data)
+      .join("tr")
+      .attr("class", "potential_matches_spacer_row");
+
+    potential_matches_spacer_row
+      .selectAll("td")
+      .data((d) => d)
+      .join("td")
+      .text((d) => d)
+      .attr("class", (d, i) => {
+        if (i == 2) {
+          return "potential_matches_text_with_arrow_cell";
+        } else {
+          return "";
+        }
+      });
+  }
+  )}
+
+  function _draw_potential_matches_rows(table_cells_d3_data_mapper,columns_to_highlight_similarity,styling_lookup,HTMLElement,form_oninput_update_value,redraw_potential_match_cells,slt,render_tooltip_contents,tooltip){return(
+  function (table, data_with_inputs_clone, el) {
+    const table_rows = table
+      .selectAll("tr.potential_match_table_row")
+      .data(data_with_inputs_clone)
+      .join("tr")
+      .attr("class", "potential_match_table_row");
+
+    const table_cells = table_rows
+      .selectAll("td")
+      .data(table_cells_d3_data_mapper)
+      .join("td")
+      .style("overflow", "hidden")
+      .attr("class", (d, i) => {
+        let this_class = `col_${d._key}`;
+        let is_comparison_data_col = columns_to_highlight_similarity.includes(
+          d["_key"]
+        );
+
+        if (is_comparison_data_col) {
+          this_class += " potential_match_comparison_data_cell";
+        }
+
+        this_class += ` ${styling_lookup[i].css_class}`;
+        return this_class;
+      });
+
+    // Draw the table cells by appending into the td cells we just created
+    table_cells.append((original_cell_data) => {
+      let td_contents = original_cell_data["_td_contents"];
+      original_cell_data["_key"];
+
+      // If it's a html element, then bind an oninput event
+      // that updates the value
+
+      // Then calls a redraw function that is responsible for the visual appearance
+      if (td_contents instanceof HTMLElement) {
+        td_contents.oninput = (event) => {
+          form_oninput_update_value(original_cell_data, el);
+          redraw_potential_match_cells(data_with_inputs_clone, table, el);
+        };
+
+        return td_contents;
+      } else {
+        return slt.d3.create("p").text(td_contents).node();
+      }
+    });
+
+    table_cells
+      .filter((d, i) => {
+        return columns_to_highlight_similarity.includes(d["_key"]);
+      })
+      .on("mouseover", function (event, d, i) {
+        render_tooltip_contents(tooltip, d, i);
       })
       .on("mousemove", function (event) {
         tooltip
@@ -8613,13 +8601,258 @@
       .on("mouseout", function (event) {
         tooltip.html(``).style("visibility", "hidden");
       });
+  }
+  )}
+
+  function _fonts(html){return(
+  html`
+
+
+`
+  )}
+
+  function _colspan_spec(){return(
+  [
+    {
+      span: 2,
+      text: "User input",
+      css_class: "user_input_column"
+    },
+    {
+      span: 2,
+      text: "Splink predictions",
+      css_class: "splink_predictions_column"
+    },
+    {
+      span: 100,
+      text: "Source data",
+      css_class: "source_data_column"
+    }
+  ]
+  )}
+
+  function _styling_lookup(colspan_spec)
+  {
+    let lookup = {};
+
+    let cumulativeCount = 0;
+
+    colspan_spec.forEach((spec) => {
+      for (let i = 0; i < spec.span; i++) {
+        lookup[cumulativeCount] = {
+          css_class: spec.css_class
+        };
+        cumulativeCount++;
+      }
+    });
+    return lookup;
+  }
+
+
+  function _styles(html){return(
+  html`
+
+<style>
+  
+table#main-interface-table {
+  all: initial;
+  table-layout: fixed;
+  display: table;
+  border-style: none;
+  font-family: "Source Sans Pro", sans-serif;
+  font-weight:400;
+  border-collapse: collapse;
+  overflow: scroll;
+  color: #444;
+}
+
+#main-interface-table td:first-child {
+  max-width: 140px;
+}
+#main-interface-table td:last-child {
+  max-width: 200px;
+}
+
+#main-interface-table tr {
+  border-style: none;
+  border-color: #ddd;
+  border-width: 1px;
+  overflow: hidden;
+}
+
+#main-interface-table td,
+#main-interface-table th {
+  padding: 5px;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+#main-interface-table td {
+  border-style: none;
+  border-top-style: solid;
+  border-top-color: #ddd;
+  border-bottom-style: solid;
+  border-bottom-color: #ddd;
+  border-width: 1px;
+}
+
+#main-interface-table th {
+  text-align: left;
+}
+
+
+
+.d3-tooltip {
+  font-family: "Source Sans Pro", sans-serif;
+  font-size: 1em;
+  padding-left: 4px;
+  padding-right: 4px;
+  position: absolute;
+  visibility: hidden;
+  border-radius: 4px;
+  color: #000;
+  background: rgba(255, 255, 255, 1);
+  line-height: 1.3;
+}
+.d3-tooltip p {
+  padding: 1px;
+  margin: 1px;
+}
+
+
+.table_header {
+font-weight:600;
+}
+.table_first_header {
+  color: black;
+font-size: 1.2em;
+
+}
+
+.table_second_header {
+  color: black;
+  
+}
+
+.table_header.user_input_column {
+  background-color: #a9cce3;
+}
+
+.table_header.splink_predictions_column{
+  background-color: #e8daef;
+}
+
+.table_header.source_data_column {
+  background-color: #f3f3f3;
+}
+
+.original_record_cell {
+  background-color: yellow;
+  overflow: hidden;
+}
+
+.orig_record_text_with_arrow_cell, .potential_matches_text_with_arrow_cell {
+  white-space: nowrap;
+  overflow: visible;
+}
+
+
+
+
+
+
+
+/* User instructions box */
+details {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-bottom: 16px;
+}
+
+details summary {
+  background-color: #f5f5f5;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  margin: 0;
+  outline: none;
+  padding: 8px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+details[open] summary {
+  background-color: #e0e0e0;
+}
+
+details p {
+  margin: 8px;
+}
+
+/* Download button */
+#observablehq-dl {
+  padding: 20px;
+  border-radius: 8px;
+
+  background-color: #ffffff;
+
+  font-size: 16px;
+  line-height: 1.5;
+  color: #333333;
+}
+
+
+</style>`
+  )}
+
+  function _checkboxes(slt){return(
+  slt.checkbox(["Enable cell shading", "Enable diff view"], {
+    value: ["Enable cell shading"]
+  })
+  )}
+
+  function _table_interface(slt,data_with_inputs,unique_id_column_name,draw_header,draw_original_row,draw_potential_matches_spacer_row,draw_potential_matches_rows,Event)
+  {
+    let data_with_inputs_clone = slt.cloneDeep(data_with_inputs);
+    const wrapper = slt.d3.create("div").style("overflow-y", "auto");
+
+    // interface is the html node that will be returned and displayed by the interface
+    const interface_node = wrapper.node();
+
+    // interface.value is the (reactive viewof) value that's exposed by the interface
+    // i.e. it contains the output data of the interface
+    interface_node.value = {};
+
+    // Set the value of el.value to a dict like
+    // {'uid_1': row_data, 'uid_2': row_data}
+    data_with_inputs_clone.forEach((d) => {
+      let uid = d[unique_id_column_name];
+      d = slt.cloneDeep(d);
+
+      d["clerical_match_score_value"] = d["clerical_match_score"].value;
+      d["notes_input_value"] = d["notes_input"].value;
+      interface_node.value[uid] = d;
+    });
+
+    const table = wrapper.append("table").attr("id", "main-interface-table");
+
+    let cols = Object.keys(data_with_inputs_clone[0]);
+    cols = cols.filter((d) => d != "_row_num");
+
+    draw_header(table, data_with_inputs_clone, cols);
+
+    draw_original_row(table);
+
+    draw_potential_matches_spacer_row(table);
+
+    draw_potential_matches_rows(table, data_with_inputs_clone, interface_node);
 
     // Trigger an update to reflect the current data
     data_with_inputs_clone[0]["clerical_match_score"].dispatchEvent(
       new Event("input", { bubbles: true })
     );
 
-    return el;
+    return interface_node;
   }
 
 
@@ -8639,13 +8872,15 @@
     .style("z-index", "10")
   )}
 
-  function _13(md){return(
+  function _22(md){return(
   md`### Styling`
   )}
 
-  function _potential_match_cell_style(original_row,white_green_colour_scale,columns_to_highlight_similarity,leven,white_blue_colour_scale,transitive_highlight_width,padding_with_highlight){return(
+  function _shade_potential_match_cells(original_row,white_green_colour_scale,columns_to_highlight_similarity,leven,white_blue_colour_scale,transitive_highlight_width,padding_with_highlight){return(
   function (d3_data, sel, el) {
-    
+    // The cell additional cell styling
+    // that gives a visual representation of the similarity
+
     let col_name = d3_data["_key"];
     let cell_value = d3_data["_td_contents"];
     let original_value = original_row[col_name];
@@ -8665,6 +8900,7 @@
       }
     });
 
+    
     if (d3_data["_key"] == "clerical_match_score") {
       sel.style("background-color", (d) => {
         return white_green_colour_scale(d["_td_contents"].value);
@@ -8708,10 +8944,6 @@
             });
           }
 
-          console.log("---");
-          console.log(cell_value);
-          console.log(transitive_leven_perc);
-
           if (transitive_leven_perc > 0.5) {
             sel.style("border-width", transitive_highlight_width);
             sel.style("padding", padding_with_highlight);
@@ -8731,7 +8963,7 @@
   }
   )}
 
-  function _redraw_cells(table_cells_d3_data_mapper,slt,potential_match_cell_style){return(
+  function _redraw_potential_match_cells(table_cells_d3_data_mapper,checkboxes,columns_to_highlight_similarity,original_row,insert_del_differences,slt,shade_potential_match_cells){return(
   function (data_with_inputs_clone, table, el) {
     // Controls the visual appearance of the potential matches
     // Does two things:
@@ -8739,7 +8971,7 @@
     // (2). Highlight transitive matches, dependent on the value of the range inputs
 
     let sel = table
-      .selectAll("tr.interface_table_rows")
+      .selectAll("tr.potential_match_table_row")
       .data(data_with_inputs_clone);
 
     const table_rows = sel.join("tr");
@@ -8747,6 +8979,28 @@
     const table_cells = table_rows
       .selectAll("td")
       .data(table_cells_d3_data_mapper);
+
+    if (checkboxes.includes("Enable diff view")) {
+      table_cells
+        .filter((d) => {
+          return columns_to_highlight_similarity.includes(d["_key"]);
+        })
+        .join()
+        .html((cell_data) => {
+          let col_name = cell_data["_key"];
+
+          // Original row is the first (yellow highlighted) row in the table
+          let original_value = original_row[col_name];
+          let comparison_value = cell_data["_orig_data"][col_name];
+
+          let diff_view = insert_del_differences(
+            comparison_value,
+            original_value
+          );
+
+          return diff_view;
+        });
+    }
 
     // table_cells.style("background-color", (d) => {
     //   //
@@ -8757,7 +9011,9 @@
       // Purpose is to call
       // Ensures we can retrieve this to select
       const sel = slt.d3.select(this);
-      potential_match_cell_style(d, sel, el);
+      if (checkboxes.includes("Enable cell shading")) {
+        shade_potential_match_cells(d, sel, el);
+      }
     }
 
     table_cells.each(potential_match_style_each_fn);
@@ -8812,7 +9068,7 @@
   }
   )}
 
-  function _18(md){return(
+  function _27(md){return(
   md`## Dataflow`
   )}
 
@@ -8918,7 +9174,7 @@
   }
 
 
-  function _26(md){return(
+  function _35(md){return(
   md`## Default data`
   )}
 
@@ -9121,7 +9377,7 @@
   }
 
 
-  function _29(md){return(
+  function _38(md){return(
   md`## Derived constants `
   )}
 
@@ -9179,7 +9435,7 @@
   }
 
 
-  function _36(md){return(
+  function _45(md){return(
   md`## Pure functions`
   )}
 
@@ -9300,7 +9556,6 @@
       return parseFloat(b.match_weight) - parseFloat(a.match_weight);
     });
 
-    debugger;
     return sorted_data;
   }
   )}
@@ -9453,15 +9708,12 @@
 
       return `<span style="background: ${bgc}; color: ${textc}">${p.value}</span>`;
     }
-    if (diffs.length == 1) {
-      return "";
-    }
 
     return `${diffs.map((part) => get_span(part)).join("")}`;
   }
   )}
 
-  function _46(md){return(
+  function _55(md){return(
   md`### Formatting`
   )}
 
@@ -9492,7 +9744,7 @@
     .range(["white", "rgb(143, 200, 255)", "dodgerblue"])
   )}
 
-  function _51(md){return(
+  function _60(md){return(
   md`## Constants`
   )}
 
@@ -9512,7 +9764,7 @@
   }
 
 
-  function _55(md){return(
+  function _64(md){return(
   md`## Embedding things
 `
   )}
@@ -9521,29 +9773,11 @@
   "http://127.0.0.1:8080/dist/slt.js"
   )}
 
-  function _57(md){return(
+  function _66(md){return(
   md`## TODO:
 
-- hover-over that displays the original value and the cell value, with one or more difference metrics.  Put this into functinos.
+
 - The nested join \`.data()\` call for the table cells (\`td\`) is where we should compute the direct and transitive matches and provide data to the cells accordingly.  e.g. data could be a dict like \`{value:, direct_matchiness: 0.8, indirect_matchiness: 0.7}\`
-`
-  )}
-
-  function _58(md){return(
-  md`
-v 1635 before tooltip
-
-[Refactor redraw vs dealing with events](https://observablehq.com/d/0420fc5db15e44ab@580)
-
-
-a [Working version](https://api.observablehq.com/d/0420fc5db15e44ab@130.tgz?v=3): sets the colour of the cell based on the slider
-
-
-[Working version](https://api.observablehq.com/d/0420fc5db15e44ab@243.tgz?v=3): interface produces correct value
-
-
-[Working version](https://api.observablehq.com/d/0420fc5db15e44ab@496.tgz?v=3) with better update pattern
-
 `
   )}
 
@@ -9558,17 +9792,27 @@ a [Working version](https://api.observablehq.com/d/0420fc5db15e44ab@130.tgz?v=3)
     main.variable(observer("in_csv")).define("in_csv", _in_csv);
     main.variable(observer("in_settings")).define("in_settings", _in_settings);
     main.variable(observer("blurb")).define("blurb", ["html"], _blurb);
-    main.variable(observer("draw_header")).define("draw_header", ["slt","original_row","d3"], _draw_header);
-    main.variable(observer("viewof table_interface")).define("viewof table_interface", ["slt","data_with_inputs","unique_id_column_name","original_row","draw_header","table_cells_d3_data_mapper","HTMLElement","form_oninput_update_value","redraw_cells","columns_to_highlight_similarity","tooltip","insert_del_differences","leven","jaro_winkler_distance","match_prob_number_format","Event"], _table_interface);
+    main.variable(observer("draw_header")).define("draw_header", ["slt","original_row","d3","colspan_spec","styling_lookup"], _draw_header);
+    main.variable(observer("render_tooltip_contents")).define("render_tooltip_contents", ["original_row","leven","jaro_winkler_distance","match_prob_number_format","insert_del_differences"], _render_tooltip_contents);
+    main.variable(observer("draw_original_row")).define("draw_original_row", ["slt","original_row","styling_lookup"], _draw_original_row);
+    main.variable(observer("draw_potential_matches_spacer_row")).define("draw_potential_matches_spacer_row", _draw_potential_matches_spacer_row);
+    main.variable(observer("draw_potential_matches_rows")).define("draw_potential_matches_rows", ["table_cells_d3_data_mapper","columns_to_highlight_similarity","styling_lookup","HTMLElement","form_oninput_update_value","redraw_potential_match_cells","slt","render_tooltip_contents","tooltip"], _draw_potential_matches_rows);
+    main.variable(observer("fonts")).define("fonts", ["html"], _fonts);
+    main.variable(observer("colspan_spec")).define("colspan_spec", _colspan_spec);
+    main.variable(observer("styling_lookup")).define("styling_lookup", ["colspan_spec"], _styling_lookup);
+    main.variable(observer("styles")).define("styles", ["html"], _styles);
+    main.variable(observer("viewof checkboxes")).define("viewof checkboxes", ["slt"], _checkboxes);
+    main.variable(observer("checkboxes")).define("checkboxes", ["Generators", "viewof checkboxes"], (G, _) => G.input(_));
+    main.variable(observer("viewof table_interface")).define("viewof table_interface", ["slt","data_with_inputs","unique_id_column_name","draw_header","draw_original_row","draw_potential_matches_spacer_row","draw_potential_matches_rows","Event"], _table_interface);
     main.variable(observer("table_interface")).define("table_interface", ["Generators", "viewof table_interface"], (G, _) => G.input(_));
     main.variable(observer("dl")).define("dl", ["DOM","slt","output_data"], _dl);
     main.variable(observer("tooltip")).define("tooltip", ["slt"], _tooltip);
-    main.variable(observer()).define(["md"], _13);
-    main.variable(observer("potential_match_cell_style")).define("potential_match_cell_style", ["original_row","white_green_colour_scale","columns_to_highlight_similarity","leven","white_blue_colour_scale","transitive_highlight_width","padding_with_highlight"], _potential_match_cell_style);
-    main.variable(observer("redraw_cells")).define("redraw_cells", ["table_cells_d3_data_mapper","slt","potential_match_cell_style"], _redraw_cells);
+    main.variable(observer()).define(["md"], _22);
+    main.variable(observer("shade_potential_match_cells")).define("shade_potential_match_cells", ["original_row","white_green_colour_scale","columns_to_highlight_similarity","leven","white_blue_colour_scale","transitive_highlight_width","padding_with_highlight"], _shade_potential_match_cells);
+    main.variable(observer("redraw_potential_match_cells")).define("redraw_potential_match_cells", ["table_cells_d3_data_mapper","checkboxes","columns_to_highlight_similarity","original_row","insert_del_differences","slt","shade_potential_match_cells"], _redraw_potential_match_cells);
     main.variable(observer("table_cells_d3_data_mapper")).define("table_cells_d3_data_mapper", _table_cells_d3_data_mapper);
     main.variable(observer("form_oninput_update_value")).define("form_oninput_update_value", ["Event"], _form_oninput_update_value);
-    main.variable(observer()).define(["md"], _18);
+    main.variable(observer()).define(["md"], _27);
     main.variable(observer("splink_settings")).define("splink_settings", ["globalThis","default_pairwise_comparison_data"], _splink_settings);
     main.variable(observer("pairwise_comparison_data")).define("pairwise_comparison_data", ["globalThis","default_pairwise_comparison_data"], _pairwise_comparison_data);
     main.variable(observer("pairwise_comparison_data_formatted")).define("pairwise_comparison_data_formatted", ["pairwise_comparison_data","match_prob_number_format"], _pairwise_comparison_data_formatted);
@@ -9576,17 +9820,17 @@ a [Working version](https://api.observablehq.com/d/0420fc5db15e44ab@130.tgz?v=3)
     main.variable(observer("potential_matches_data")).define("potential_matches_data", ["get_potential_matches","pairwise_comparison_data_formatted","comparison_records_suffix","unique_id_column_name"], _potential_matches_data);
     main.variable(observer("data_with_inputs")).define("data_with_inputs", ["potential_matches_data","slt"], _data_with_inputs);
     main.variable(observer("output_data")).define("output_data", ["table_interface","original_row"], _output_data);
-    main.variable(observer()).define(["md"], _26);
+    main.variable(observer()).define(["md"], _35);
     main.variable(observer("default_pairwise_comparison_data_old")).define("default_pairwise_comparison_data_old", ["slt"], _default_pairwise_comparison_data_old);
     main.variable(observer("default_splink_settings_data_old")).define("default_splink_settings_data_old", _default_splink_settings_data_old);
-    main.variable(observer()).define(["md"], _29);
+    main.variable(observer()).define(["md"], _38);
     main.variable(observer("comparison_records_suffix")).define("comparison_records_suffix", ["get_suffix_of_comparison_records_l_or_r","pairwise_comparison_data","unique_id_column_name"], _comparison_records_suffix);
     main.variable(observer("original_record_suffix")).define("original_record_suffix", ["get_suffix_of_original_record_l_or_r","pairwise_comparison_data","unique_id_column_name"], _original_record_suffix);
     main.variable(observer("unique_id_column_name")).define("unique_id_column_name", ["splink_settings"], _unique_id_column_name);
     main.variable(observer("source_dataset_column_name")).define("source_dataset_column_name", ["splink_settings"], _source_dataset_column_name);
     main.variable(observer("columns_to_highlight_similarity")).define("columns_to_highlight_similarity", ["unique_id_column_name","source_dataset_column_name","additional_columns_to_retain","pairwise_comparison_data"], _columns_to_highlight_similarity);
     main.variable(observer("additional_columns_to_retain")).define("additional_columns_to_retain", ["splink_settings"], _additional_columns_to_retain);
-    main.variable(observer()).define(["md"], _36);
+    main.variable(observer()).define(["md"], _45);
     main.variable(observer("get_output_columns")).define("get_output_columns", _get_output_columns);
     main.variable(observer("get_suffix_of_original_record_l_or_r")).define("get_suffix_of_original_record_l_or_r", _get_suffix_of_original_record_l_or_r);
     main.variable(observer("get_suffix_of_comparison_records_l_or_r")).define("get_suffix_of_comparison_records_l_or_r", ["get_suffix_of_original_record_l_or_r"], _get_suffix_of_comparison_records_l_or_r);
@@ -9596,19 +9840,18 @@ a [Working version](https://api.observablehq.com/d/0420fc5db15e44ab@130.tgz?v=3)
     main.variable(observer("leven")).define("leven", _leven);
     main.variable(observer("jaro_winkler_distance")).define("jaro_winkler_distance", ["slt"], _jaro_winkler_distance);
     main.variable(observer("insert_del_differences")).define("insert_del_differences", ["slt"], _insert_del_differences);
-    main.variable(observer()).define(["md"], _46);
+    main.variable(observer()).define(["md"], _55);
     main.variable(observer("match_prob_number_format")).define("match_prob_number_format", _match_prob_number_format);
     main.variable(observer("red_orange_green_colour_scale")).define("red_orange_green_colour_scale", ["slt"], _red_orange_green_colour_scale);
     main.variable(observer("white_green_colour_scale")).define("white_green_colour_scale", ["slt"], _white_green_colour_scale);
     main.variable(observer("white_blue_colour_scale")).define("white_blue_colour_scale", ["slt"], _white_blue_colour_scale);
-    main.variable(observer()).define(["md"], _51);
+    main.variable(observer()).define(["md"], _60);
     main.variable(observer("table_cell_padding")).define("table_cell_padding", _table_cell_padding);
     main.variable(observer("transitive_highlight_width")).define("transitive_highlight_width", _transitive_highlight_width);
     main.variable(observer("padding_with_highlight")).define("padding_with_highlight", ["table_cell_padding","transitive_highlight_width"], _padding_with_highlight);
-    main.variable(observer()).define(["md"], _55);
+    main.variable(observer()).define(["md"], _64);
     main.variable(observer("localUrl")).define("localUrl", _localUrl);
-    main.variable(observer()).define(["md"], _57);
-    main.variable(observer()).define(["md"], _58);
+    main.variable(observer()).define(["md"], _66);
     return main;
   }
 

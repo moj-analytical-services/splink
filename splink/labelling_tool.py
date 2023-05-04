@@ -73,12 +73,8 @@ def render_labelling_tool_html(
     slt_text = pkgutil.get_data(__name__, "files/labelling_tool/slt.js")
     slt_text = slt_text.decode("utf-8")
 
-    custom_css = pkgutil.get_data(__name__, "files/labelling_tool/custom_css.css")
-    custom_css = custom_css.decode("utf-8")
-
     template_data = {
         "slt": slt_text,
-        "custom_css": custom_css,
         "pairwise_comparison_data": json.dumps(comparisons_recs, cls=EverythingEncoder),
         "splink_settings_data": json.dumps(settings, cls=EverythingEncoder),
     }
