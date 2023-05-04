@@ -2,6 +2,7 @@ from ..comparison_level_composition import and_, not_, or_  # noqa: F401
 from ..comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
+    DateDiffLevelBase,
     DistanceFunctionLevelBase,
     DistanceInKMLevelBase,
     ElseLevelBase,
@@ -33,6 +34,10 @@ class AthenaComparisonProperties(AthenaBase):
         return array_intersect_level
 
     @property
+    def _datediff_level(self):
+        return datediff_level
+
+    @property
     def _distance_in_km_level(self):
         return distance_in_km_level
 
@@ -58,6 +63,10 @@ class else_level(AthenaBase, ElseLevelBase):
 
 
 class columns_reversed_level(AthenaBase, ColumnsReversedLevelBase):
+    pass
+
+
+class datediff_level(AthenaBase, DateDiffLevelBase):
     pass
 
 

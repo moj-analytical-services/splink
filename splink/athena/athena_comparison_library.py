@@ -1,5 +1,6 @@
 from ..comparison_library import (
     ArrayIntersectAtSizesComparisonBase,
+    DateDiffAtThresholdsComparisonBase,
     DistanceFunctionAtThresholdsComparisonBase,
     DistanceInKMAtThresholdsComparisonBase,
     ExactMatchBase,
@@ -36,5 +37,11 @@ class array_intersect_at_sizes(
 
 class distance_in_km_at_thresholds(
     AthenaComparisonProperties, DistanceInKMAtThresholdsComparisonBase
+):
+    pass
+
+
+class datediff_at_thresholds(
+    AthenaComparisonProperties, DateDiffAtThresholdsComparisonBase
 ):
     pass
