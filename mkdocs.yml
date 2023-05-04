@@ -59,6 +59,7 @@ markdown_extensions:
       alternate_style: true 
   - toc:
       permalink: True
+      toc_depth: 4
 nav:
   - Home: "README.md"
   - Topic Guide:

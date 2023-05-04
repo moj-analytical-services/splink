@@ -3,6 +3,7 @@ tags:
   - API
   - comparisons
   - Date Comparison
+toc_depth: 2
 ---
 
 # Documentation for `comparison_template_library` 
