@@ -506,7 +506,7 @@ class NameComparisonBase(Comparison):
                 col_name, "jaccard", jaccard_thresholds
             )
             comparison_desc += desc
-        
+
         comparison_desc += "anything else"
 
         comparison_dict = {
@@ -518,7 +518,7 @@ class NameComparisonBase(Comparison):
     @property
     def _is_distance_subclass(self):
         return False
-        
+
 
 class ForenameSurnameComparisonBase(Comparison):
     def __init__(
