@@ -162,3 +162,12 @@ def major_minor_version_greater_equal_than(this_version, base_comparison_version
 
 def ascii_uid(len):
     return "".join(random.choices(string.ascii_letters + string.digits, k=len))
+
+
+def find_unique_source_dataset(src_ds):
+    sql = f"""
+        select distinct {src_ds} as src
+        from __splink__df_concat_with_tf
+    """
+
+    return sql

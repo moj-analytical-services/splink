@@ -9,7 +9,6 @@ from duckdb import DuckDBPyConnection
 
 from ..input_column import InputColumn
 from ..linker import Linker
-from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import (
     ensure_is_list,
 )
@@ -169,17 +168,17 @@ class DuckDBLinker(Linker):
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
 
-        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.log(5, log_sql(sql))
-
         sql = f"""
         CREATE TABLE {physical_name}
         AS
         ({sql})
         """
-        self._con.execute(sql)
+        self._log_and_run_sql_execution(sql, templated_name, physical_name)
 
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
+
+    def _run_sql_execution(self, final_sql, templated_name, physical_name):
+        self._con.execute(final_sql)
 
     def register_table(self, input, table_name, overwrite=False):
         # If the user has provided a table name, return it as a SplinkDataframe
@@ -207,11 +206,14 @@ class DuckDBLinker(Linker):
         self._con.register(table_name, input)
         return self._table_to_splink_dataframe(table_name, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
-        return f"USING SAMPLE {percent}% (bernoulli)"
+        if seed:
+            return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
+        else:
+            return f"USING SAMPLE {percent}% (bernoulli)"
 
     @property
     def _infinity_expression(self):

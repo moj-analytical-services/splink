@@ -31,6 +31,10 @@ class DialectBase:
         return "levenshtein"
 
     @property
+    def _jaro_name(self):
+        return "jaro"
+
+    @property
     def _jaro_winkler_name(self):
         return "jaro_winkler"
 
