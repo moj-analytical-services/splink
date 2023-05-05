@@ -128,21 +128,36 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                 for the thresholds specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
-
-        Examples:
-            >>> # DuckDB Jaccard Comparison at thresholds 0.9 and 0.7
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.distance_function_at_thresholds("name",
-            >>>                    distance_function_name = 'jaccard',
-            >>>                    distance_threshold_or_thresholds = [0.9, 0.7]
-            >>>                    )
-
-            >>> # Spark Jaccard Comparison at thresholds 0.9 and 0.7
-            >>> import splink.spark.spark_comparison_library as cl
-            >>> cl.distance_function_at_thresholds("name",
-            >>>                    distance_function_name = 'jaccard',
-            >>>                    distance_threshold_or_thresholds = [0.9, 0.7]
-            >>>                    )
+            
+        Examples:    
+            === "DuckDB"
+                Apply the `jaccard` function in a comparison with levels 0.9 and 0.7
+                ``` python
+                import splink.duckdb.duckdb_comparison_library as cl
+                cl.distance_function_at_thresholds("name",
+                                   distance_function_name = 'jaccard',
+                                   distance_threshold_or_thresholds = [0.9, 0.7]
+                                   )
+                ```
+            === "Spark"
+                Apply the `jaccard` function in a comparison with levels 0.9 and 0.7
+                ``` python
+                import splink.spark.spark_comparison_library as cl
+                cl.distance_function_at_thresholds("name",
+                                   distance_function_name = 'jaccard',
+                                   distance_threshold_or_thresholds = [0.9, 0.7]
+                                   )
+                ```
+            === "Athena"
+                Apply the `levenshtein_distance` function in a comparison with levels 1 and 2
+                ``` python
+                import splink.athena.athena_comparison_library as cl
+                cl.distance_function_at_thresholds("name",
+                                   distance_function_name = 'levenshtein_distance',
+                                   distance_threshold_or_thresholds = [1, 2],
+                                   higher_is_more_similar = False
+                                   )
+                ```
 
 
         Returns:
@@ -655,8 +670,8 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                 date_format to ISO 8601 format (yyyy-mm-dd).
 
         Examples:
-            Date Difference comparison at thresholds 10 days, 12 months and 15 years
             === "DuckDB"
+                Date Difference comparison at thresholds 10 days, 12 months and 15 years
                 ``` python
                 import splink.duckdb.duckdb_comparison_library as cl
                 cl.datediff_at_thresholds("date",
@@ -664,17 +679,8 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                                             date_metrics = ['day', 'month', 'year']
                                             )
                 ```
-            === "Spark"
-                ``` python
-                import splink.spark.spark_comparison_library as cl
-                cl.datediff_at_thresholds("date",
-                                            date_thresholds = [10, 12, 15],
-                                            date_metrics = ['day', 'month', 'year']
-                                            )
-                ```
 
-            Datediff comparison with date-casting and unspecified date_format (default = %Y-%m-%d)
-            === "DuckDB"
+                Datediff comparison with date-casting and unspecified date_format (default = %Y-%m-%d)
                 ``` python
                 import splink.duckdb.duckdb_comparison_library as cl
                 cl.datediff_at_thresholds("date",
@@ -683,18 +689,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                                             cast_strings_to_date=True
                                             )
                 ```
-            === "Spark"
-                ``` python
-                import splink.spark.spark_comparison_library as cl
-                cl.datediff_at_thresholds("date",
-                                            date_thresholds=[1,5],
-                                            date_metrics = ["day", "year"],
-                                            cast_strings_to_date=True
-                                            )
-                ```            
-
-            Datediff comparison with date-casting and specified (non-default) date_format
-            === "DuckDB"
+                Datediff comparison with date-casting and specified (non-default) date_format
                 ``` python
                 import splink.duckdb.duckdb_comparison_library as cl
                 cl.datediff_at_thresholds("date",
@@ -705,6 +700,26 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                                             )
                 ```
             === "Spark"
+                Date Difference comparison at thresholds 10 days, 12 months and 15 years
+                ``` python
+                import splink.spark.spark_comparison_library as cl
+                cl.datediff_at_thresholds("date",
+                                            date_thresholds = [10, 12, 15],
+                                            date_metrics = ['day', 'month', 'year']
+                                            )
+                ```
+
+                Datediff comparison with date-casting and unspecified date_format (default = %Y-%m-%d)
+                ``` python
+                    import splink.spark.spark_comparison_library as cl
+                    cl.datediff_at_thresholds("date",
+                                                date_thresholds=[1,5],
+                                                date_metrics = ["day", "year"],
+                                                cast_strings_to_date=True
+                                                )
+                ``` 
+
+                Datediff comparison with date-casting and specified (non-default) date_format
                 ``` python
                 import splink.spark.spark_comparison_library as cl
                 cl.datediff_at_thresholds("date",

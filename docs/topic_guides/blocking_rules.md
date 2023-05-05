@@ -13,6 +13,97 @@ What is the difference between the list of `blocking_rules_to_generate_predictio
 
 These two kinds of blocking rules can be seen in the following code snippet:
 
+=== "DuckDB"
+    ```python
+    import splink.duckdb.duckdb_comparison_library as cl
+
+    settings = {
+        "link_type": "dedupe_only",
+        "blocking_rules_to_generate_predictions": [
+            "l.first_name = r.first_name and substr(l.surname,1,1) = substr(r.surname,1,1)",
+            "l.dob = r.dob",
+        ],
+        "comparisons": [
+            cl.levenshtein_at_thresholds("first_name", 2),
+            cl.exact_match("surname"),
+            cl.exact_match("dob"),
+            cl.exact_match("city", term_frequency_adjustments=True),
+            cl.exact_match("email"),
+        ],
+    }
+
+
+    linker = DuckDBLinker(df, settings)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+
+    blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+
+    blocking_rule_for_training = "l.dob = r.dob and l.city = r.city"
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+
+    ```
+=== "Spark"
+    ```python
+    import splink.spark.spark_comparison_library as cl
+
+    settings = {
+        "link_type": "dedupe_only",
+        "blocking_rules_to_generate_predictions": [
+            "l.first_name = r.first_name and substr(l.surname,1,1) = substr(r.surname,1,1)",
+            "l.dob = r.dob",
+        ],
+        "comparisons": [
+            cl.levenshtein_at_thresholds("first_name", 2),
+            cl.exact_match("surname"),
+            cl.exact_match("dob"),
+            cl.exact_match("city", term_frequency_adjustments=True),
+            cl.exact_match("email"),
+        ],
+    }
+
+
+    linker = SparkLinker(df, settings)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+
+    blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+
+    blocking_rule_for_training = "l.dob = r.dob and l.city = r.city"
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+
+    ```
+=== "Athena"
+    ```python
+    import splink.athena.athena_comparison_library as cl
+
+    settings = {
+        "link_type": "dedupe_only",
+        "blocking_rules_to_generate_predictions": [
+            "l.first_name = r.first_name and substr(l.surname,1,1) = substr(r.surname,1,1)",
+            "l.dob = r.dob",
+        ],
+        "comparisons": [
+            cl.levenshtein_at_thresholds("first_name", 2),
+            cl.exact_match("surname"),
+            cl.exact_match("dob"),
+            cl.exact_match("city", term_frequency_adjustments=True),
+            cl.exact_match("email"),
+        ],
+    }
+
+
+    linker = AthenaLinker(df, settings)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+
+    blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+
+    blocking_rule_for_training = "l.dob = r.dob and l.city = r.city"
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+
+    ```
+
 ```python
 settings = {
     "link_type": "dedupe_only",

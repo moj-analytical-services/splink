@@ -67,45 +67,46 @@ class ExactMatchLevelBase(ComparisonLevel):
                 adjustments to the exact match level. Defaults to False.
 
         Examples:
-            Exact match level
             === "DuckDB"
+                Simple Exact match level
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
                 cll.exact_match_level("name")
                 ```
+                Exact match level with term-frequency adjustments
+                ``` python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.exact_match_level("name", term_frequency_adjustments=True)
+                ```   
             === "Spark"
+                Simple Exact match level
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
                 cll.exact_match_level("name")
                 ```
+                Exact match level with term-frequency adjustments
+                ``` python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.exact_match_level("name", term_frequency_adjustments=True)
+                ```
             === "Athena"
+                Simple Exact match level
                 ``` python
                 import splink.athena.athena_comparison_level_library as cll
                 cll.exact_match_level("name")
                 ```
+                Exact match level with term-frequency adjustments
+                ``` python
+                import splink.athena.athena_comparison_level_library as cll
+                cll.exact_match_level("name", term_frequency_adjustments=True)
+                ```
             === "SQLite"
+                Simple Exact match level
                 ``` python
                 import splink.sqlite.sqlite_comparison_level_library as cll
                 cll.exact_match_level("name")
                 ```
-
-            Exact match level with term-frequency adjustments
-            === "DuckDB"
-                ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
-                cll.exact_match_level("name", term_frequency_adjustments=True)
-                ```
-            === "Spark"
-                ``` python
-                import splink.spark.spark_comparison_level_library as cll
-                cll.exact_match_level("name", term_frequency_adjustments=True)
-                ```
-            === "Athena"
-                ``` python
-                import splink.athena.athena_comparison_level_library as cll
-                cll.exact_match_level("name", term_frequency_adjustments=True)
-                ```
-            === "SQLite"
+                Exact match level with term-frequency adjustments
                 ``` python
                 import splink.sqlite.sqlite_comparison_level_library as cll
                 cll.exact_match_level("name", term_frequency_adjustments=True)
@@ -194,6 +195,36 @@ class DistanceFunctionLevelBase(ComparisonLevel):
                 (e.g. levenshtein).
             m_probability (float, optional): Starting value for m probability
                 Defaults to None.
+
+        Examples:
+
+            === "DuckDB"
+                Apply the `levenshtein` function to a comparison level
+                ``` python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.distance_function_level("name",
+                                            "levenshtein",
+                                            2,
+                                            False)
+                ```
+            === "Spark"
+                Apply the `levenshtein` function to a comparison level
+                ``` python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.distance_function_level("name",
+                                            "levenshtein",
+                                            2,
+                                            False)
+                ```
+            === "Athena"
+                Apply the `levenshtein_distance` function to a comparison level
+                ``` python
+                import splink.athena.athena_comparison_level_library as cll
+                cll.distance_function_level("name",
+                                            "levenshtein_distance",
+                                            2,
+                                            False)
+                ```
 
         Returns:
             ComparisonLevel: A comparison level for a given distance function
@@ -480,6 +511,20 @@ class DistanceInKMLevelBase(ComparisonLevel):
         """Use the haversine formula to transform comparisons of lat,lngs
         into distances measured in kilometers
 
+        Arguments:
+            lat_col (str): The name of a latitude column or the respective array
+                or struct column column containing the information
+                For example: long_lat['lat'] or long_lat[0]
+            long_col (str): The name of a longitudinal column or the respective array
+                or struct column column containing the information, plus an index.
+                For example: long_lat['long'] or long_lat[1]
+            km_threshold (int): The total distance in kilometers to evaluate your
+                comparisons against
+            not_null (bool): If true, remove any . This is only necessary if you are not
+                capturing nulls elsewhere in your comparison level.
+            m_probability (float, optional): Starting value for m probability.
+                Defaults to None.
+
         Examples:
             === "DuckDB"
                 ``` python
@@ -502,20 +547,6 @@ class DistanceInKMLevelBase(ComparisonLevel):
                                         "long_col",
                                         km_threshold=5)
                 ```
-
-        Arguments:
-            lat_col (str): The name of a latitude column or the respective array
-                or struct column column containing the information
-                For example: long_lat['lat'] or long_lat[0]
-            long_col (str): The name of a longitudinal column or the respective array
-                or struct column column containing the information, plus an index.
-                For example: long_lat['long'] or long_lat[1]
-            km_threshold (int): The total distance in kilometers to evaluate your
-                comparisons against
-            not_null (bool): If true, remove any . This is only necessary if you are not
-                capturing nulls elsewhere in your comparison level.
-            m_probability (float, optional): Starting value for m probability.
-                Defaults to None.
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the distance between
@@ -721,8 +752,8 @@ class DateDiffLevelBase(ComparisonLevel):
                 date_format to ISO 8601 format (yyyy-mm-dd).
 
         Examples:
-            Date Difference comparison level at threshold 1 year
             === "DuckDB"
+                Date Difference comparison level at threshold 1 year
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
                 cll.datediff_level("date",
@@ -730,19 +761,8 @@ class DateDiffLevelBase(ComparisonLevel):
                                     date_metric="year"
                                     )
                 ```
-            === "Spark"
-                ``` python
-                import splink.spark.spark_comparison_level_library as cll
-                cll.datediff_level("date",
-                                    date_threshold=1,
-                                    date_metric="year"
-                                    )
-                ```
-
-            Date Difference comparison with date-casting and unspecified
-            date_format (default = %Y-%m-%d)
-
-            === "DuckDB"
+                Date Difference comparison with date-casting and unspecified
+                date_format (default = %Y-%m-%d)
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
                 cll.datediff_level("dob",
@@ -751,19 +771,7 @@ class DateDiffLevelBase(ComparisonLevel):
                                     cast_strings_to_date=True
                                     )
                 ```
-            === "Spark"
-                ``` python
-                import splink.spark.spark_comparison_level_library as cll
-                cll.datediff_level("dob",
-                                    date_threshold=3,
-                                    date_metric='month',
-                                    cast_strings_to_date=True
-                                    )
-                ```
-
-            Date Difference comparison with date-casting and specified date_format
-
-            === "DuckDB"
+                Date Difference comparison with date-casting and specified date_format
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
                 cll.datediff_level("dob",
@@ -774,6 +782,25 @@ class DateDiffLevelBase(ComparisonLevel):
                                     )
                 ```
             === "Spark"
+                Date Difference comparison level at threshold 1 year
+                ``` python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.datediff_level("date",
+                                    date_threshold=1,
+                                    date_metric="year"
+                                    )
+                ```
+                Date Difference comparison with date-casting and unspecified
+                date_format (default = %Y-%m-%d)
+                ``` python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.datediff_level("dob",
+                                    date_threshold=3,
+                                    date_metric='month',
+                                    cast_strings_to_date=True
+                                    )
+                ```
+                Date Difference comparison with date-casting and specified date_format
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
                 cll.datediff_level("dob",
@@ -783,7 +810,6 @@ class DateDiffLevelBase(ComparisonLevel):
                                     date_format='%d/%m/%Y'
                                     )
                 ```
-
         Returns:
             ComparisonLevel: A comparison level that evaluates whether two dates fall
                 within a given interval.

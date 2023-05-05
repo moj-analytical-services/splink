@@ -105,19 +105,13 @@ class DateComparisonBase(Comparison):
                 date_format to ISO 8601 format (yyyy-mm-dd).
 
         Examples:
-            Basic Date Comparison
             === "DuckDB"
+                Basic Date Comparison
                 ``` python
                 import splink.duckdb.duckdb_comparison_template_library as ctl
                 ctl.date_comparison("date_of_birth")
                 ```
-            === "Spark"
-                ``` python
-                import splink.spark.spark_comparison_template_library as ctl
-                ctl.date_comparison("date_of_birth")
-                ```
-            Bespoke Date Comparison
-            === "DuckDB"
+                Bespoke Date Comparison
                 ``` python
                 import splink.duckdb.duckdb_comparison_template_library as ctl
                 ctl.date_comparison("date_of_birth",
@@ -127,6 +121,12 @@ class DateComparisonBase(Comparison):
                                     datediff_metrics=["month", "year"])
                 ```
             === "Spark"
+                Basic Date Comparison
+                ``` python
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.date_comparison("date_of_birth")
+                ```
+                Bespoke Date Comparison
                 ``` python
                 import splink.spark.spark_comparison_template_library as ctl
                 ctl.date_comparison("date_of_birth",
@@ -369,19 +369,13 @@ class NameComparisonBase(Comparison):
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            Basic Name Comparison
             === "DuckDB"
+                Basic Name Comparison
                 ``` python
                 import splink.duckdb.duckdb_comparison_template_library as ctl
                 ctl.name_comparison("name")
                 ```
-            === "Spark"
-                ``` python
-                import splink.spark.spark_comparison_template_library as ctl
-                ctl.name_comparison("name")
-                ```
-            Bespoke Name Comparison
-            === "DuckDB"
+                Bespoke Name Comparison
                 ``` python
                 import splink.duckdb.duckdb_comparison_template_library as ctl
                 ctl.name_comparison("name",
@@ -393,9 +387,15 @@ class NameComparisonBase(Comparison):
                                     )
                 ```
             === "Spark"
+                Basic Name Comparison
                 ``` python
                 import splink.spark.spark_comparison_template_library as ctl
-                cttl.name_comparison("name",
+                ctl.name_comparison("name")
+                ```
+                Bespoke Name Comparison
+                ``` python
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.name_comparison("name",
                                     phonetic_col_name = "name_dm",
                                     term_frequency_adjustments_name = True,
                                     levenshtein_thresholds=[2],

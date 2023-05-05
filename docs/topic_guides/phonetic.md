@@ -18,14 +18,24 @@ Once generated, phonetic matches can be used within [comparisons & comparison le
 
 E.g. For a comparison including a [Double Metaphone](#double-metaphone) phonetic match using the [name_comparison](../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons):
 
-```
-import splink.duckdb.duckdb_comparison_template_library as ctl
+=== "DuckDB"
+    ```python
+    import splink.duckdb.duckdb_comparison_template_library as ctl
 
-first_name_comparison = ctl.name_comparison(
+    first_name_comparison = ctl.name_comparison(
                             "first_name",
                             phonetic_col_name = "first_name_dm")
-print(first_name_comparison.human_readable_description)
-```
+    print(first_name_comparison.human_readable_description)
+    ```
+=== "Spark"
+    ```python
+    import splink.spark.spark_comparison_template_library as ctl
+
+    first_name_comparison = ctl.name_comparison(
+                            "first_name",
+                            phonetic_col_name = "first_name_dm")
+    print(first_name_comparison.human_readable_description)
+    ```
 
 > Comparison 'Exact match vs. Names with phonetic exact match vs. Names within jaro_winkler thresholds 0.95, 0.88 vs. anything else' of "first_name" and "first_name_dm".
 >
