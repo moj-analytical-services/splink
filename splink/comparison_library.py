@@ -128,8 +128,8 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                 for the thresholds specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
-            
-        Examples:    
+
+        Examples:
             === "DuckDB"
                 Apply the `jaccard` function in a comparison with levels 0.9 and 0.7
                 ``` python
@@ -335,7 +335,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
                 for the thresholds specified for given function. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
-        
+
         Examples:
             === "DuckDB"
                 ``` python
@@ -717,7 +717,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                                                 date_metrics = ["day", "year"],
                                                 cast_strings_to_date=True
                                                 )
-                ``` 
+                ```
 
                 Datediff comparison with date-casting and specified (non-default) date_format
                 ``` python
@@ -728,7 +728,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                                             cast_strings_to_date=True,
                                             date_format='%d/%m/%Y'
                                             )
-                ``` 
+                ```
 
         Returns:
             Comparison: A comparison for Datediff that can be included in the Splink

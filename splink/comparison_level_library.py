@@ -77,7 +77,7 @@ class ExactMatchLevelBase(ComparisonLevel):
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
                 cll.exact_match_level("name", term_frequency_adjustments=True)
-                ```   
+                ```
             === "Spark"
                 Simple Exact match level
                 ``` python
@@ -450,27 +450,27 @@ class ColumnsReversedLevelBase(ComparisonLevel):
                 Defaults to None.
             tf_adjustment_column (str, optional): Column to use for term frequency
                 adjustments if an exact match is observed. Defaults to None.
-        
+
         Examples:
             === "DuckDB"
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
-                cll.columns_reversed_level("first_name", "surname")               
+                cll.columns_reversed_level("first_name", "surname")
                 ```
             === "Spark"
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
-                cll.columns_reversed_level("first_name", "surname")                
+                cll.columns_reversed_level("first_name", "surname")
                 ```
             === "Athena"
                 ``` python
                 import splink.athena.athena_comparison_level_library as cll
-                cll.columns_reversed_level("first_name", "surname")                
+                cll.columns_reversed_level("first_name", "surname")
                 ```
             === "SQLite"
                 ``` python
                 import splink.sqlite.sqlite_comparison_level_library as cll
-                cll.columns_reversed_level("first_name", "surname")                
+                cll.columns_reversed_level("first_name", "surname")
                 ```
 
 
@@ -603,22 +603,22 @@ class PercentageDifferenceLevelBase(ComparisonLevel):
             === "DuckDB"
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
-                cll.percentage_difference_level("value", 0.5)                
+                cll.percentage_difference_level("value", 0.5)
                 ```
             === "Spark"
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
-                cll.percentage_difference_level("value", 0.5)                
+                cll.percentage_difference_level("value", 0.5)
                 ```
             === "Athena"
                 ``` python
                 import splink.athena.athena_comparison_level_library as cll
-                cll.percentage_difference_level("value", 0.5)                
+                cll.percentage_difference_level("value", 0.5)
                 ```
             === "SQLite"
                 ``` python
                 import splink.sqlite.sqlite_comparison_level_library as cll
-                cll.percentage_difference_level("value", 0.5)                
+                cll.percentage_difference_level("value", 0.5)
                 ```
 
         Returns:
@@ -668,17 +668,17 @@ class ArrayIntersectLevelBase(ComparisonLevel):
                 intersection of arrays for this comparison level. Defaults to 1
             include_colname_in_charts_label (bool, optional): Should the charts label
                 contain the column name? Defaults to False
-        
+
         Examples:
             === "DuckDB"
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
-                cll.array_intersect_level("name")      
+                cll.array_intersect_level("name")
                 ```
             === "Spark"
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
-                cll.array_intersect_level("name")                
+                cll.array_intersect_level("name")
                 ```
             === "Athena"
                 ``` python

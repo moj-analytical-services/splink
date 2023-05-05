@@ -267,7 +267,7 @@ def not_(
             which will appear on charts as a reminder of what the level represents.
         m_probability (float, optional): Starting value for m probability.
             Defaults to None.
-    
+
     Examples:
         === "DuckDB"
             *Not* an exact match on first name
