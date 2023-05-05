@@ -9,7 +9,6 @@ from ..comparison_library import (
     JaroWinklerAtThresholdsComparisonBase,
     LevenshteinAtThresholdsComparisonBase,
 )
-
 from .duckdb_comparison_level_library import DuckDBComparisonProperties
 
 

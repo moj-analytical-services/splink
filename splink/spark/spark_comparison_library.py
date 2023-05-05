@@ -9,7 +9,6 @@ from ..comparison_library import (
     JaroWinklerAtThresholdsComparisonBase,
     LevenshteinAtThresholdsComparisonBase,
 )
-
 from .spark_comparison_level_library import SparkComparisonProperties
 
 

@@ -299,8 +299,7 @@ class NameComparisonBase(Comparison):
         col_name: str,
         include_exact_match_level: bool = True,
         phonetic_col_name: str = None,
-        term_frequency_adjustments_name: bool = False,
-        term_frequency_adjustments_phonetic_name: bool = False,
+        term_frequency_adjustments: bool = False,
         levenshtein_thresholds: int | list = [],
         jaro_thresholds: float | list = [],
         jaro_winkler_thresholds: float | list = [0.95, 0.88],
@@ -331,12 +330,10 @@ class NameComparisonBase(Comparison):
                 an exact match level for  phonetic_col_name. The phonetic column must
                 be present in the dataset to use this parameter.
                 Defaults to None
-            term_frequency_adjustments_name (bool, optional): If True, apply term
+            term_frequency_adjustments (bool, optional): If True, apply term
                 frequency adjustments to the exact match level for "col_name".
-                Defaults to False.
-            term_frequency_adjustments_phonetic_name (bool, optional): If True, apply
-                term frequency adjustments to the exact match level for
-                "phonetic_col_name".
+                Also applies term frequency adjustments to phonetic_col_name
+                exact match level, if it exists.
                 Defaults to False.
             levenshtein_thresholds (Union[int, list], optional): The thresholds to use
                 for levenshtein similarity level(s).
@@ -414,7 +411,7 @@ class NameComparisonBase(Comparison):
         if include_exact_match_level:
             comparison_level = self._exact_match_level(
                 col_name,
-                term_frequency_adjustments=term_frequency_adjustments_name,
+                term_frequency_adjustments=term_frequency_adjustments,
                 m_probability=m_probability_exact_match_name,
                 include_colname_in_charts_label=True,
             )
@@ -423,7 +420,7 @@ class NameComparisonBase(Comparison):
             if phonetic_col_name is not None:
                 comparison_level = self._exact_match_level(
                     phonetic_col_name,
-                    term_frequency_adjustments=term_frequency_adjustments_phonetic_name,
+                    term_frequency_adjustments=term_frequency_adjustments,
                     m_probability=m_probability_exact_match_phonetic_name,
                     include_colname_in_charts_label=True,
                 )
@@ -506,7 +503,7 @@ class NameComparisonBase(Comparison):
                 col_name, "jaccard", jaccard_thresholds
             )
             comparison_desc += desc
-        
+
         comparison_desc += "anything else"
 
         comparison_dict = {
@@ -518,7 +515,7 @@ class NameComparisonBase(Comparison):
     @property
     def _is_distance_subclass(self):
         return False
-        
+
 
 class ForenameSurnameComparisonBase(Comparison):
     def __init__(
@@ -527,14 +524,10 @@ class ForenameSurnameComparisonBase(Comparison):
         surname_col_name,
         include_exact_match_level: bool = True,
         include_columns_reversed: bool = True,
-        term_frequency_adjustment_col_forename_and_surname: str = None,
+        term_frequency_adjustments: bool = False,
+        tf_adjustment_col_forename_and_surname: str = None,
         phonetic_forename_col_name: str = None,
         phonetic_surname_col_name: str = None,
-        term_frequency_adjustments_col_phonetic_forename_and_surname: str = None,
-        term_frequency_adjustments_forename: bool = True,
-        term_frequency_adjustments_surname: bool = True,
-        term_frequency_adjustments_phonetic_forename: bool = True,
-        term_frequency_adjustments_phonetic_surname: bool = True,
         levenshtein_thresholds_surname: int | list = [],
         jaro_winkler_thresholds_surname: float | list = [0.88],
         jaccard_thresholds_surname: float | list = [],
@@ -575,40 +568,33 @@ class ForenameSurnameComparisonBase(Comparison):
                 level for col_name. Defaults to True.
             include_columns_reversed (bool, optional): If True, include a comparison
                 level for forename and surname being swapped. Defaults to True
-            term_frequency_adjustment_col_forename_and_surname (str, optional): The name
-                of a combined forename surname column. This column is used to provides
+            term_frequency_adjustments (bool, optional): If True, apply term
+                frequency adjustments to the exact match level for forename_col_name
+                and surname_col_name.
+                Applies term frequency adjustments to full name exact match level
+                and columns reversed exact match level if
+                tf_adjustment_col_forename_and_surname is provided.
+                Applies term frequency adjustments to phonetic_forename_col_name
+                and phonetic_surname_col_name exact match levels, if they are provided.
+                Defaults to False.
+            tf_adjustment_col_forename_and_surname (str, optional): The name
+                of a combined forename surname column. This column is used to provide
                 term frequency adjustments for forename surname exact match and columns
                 reversed levels.
                 Defaults to None
             phonetic_forename_col_name (str, optional): The name of the column with
                 phonetic reduction (such as dmetaphone) of forename_col_name. Including
-                parameter will create an exact match level for  phonetic_forename_col_name.
-                The phonetic column must be present in the dataset to use this parameter.
-                Defaults to None
-            phonetic_surname_col_name (str, optional): The name of the column with phonetic
-                reduction (such as dmetaphone) of surname_col_name. Including parameter
-                will create an exact match level for  phonetic_surname_col_name. The
-                phonetic column must be present in the dataset to use this parameter.
-                Defaults to None
-            term_frequency_adjustments_col_phonetic_forename_and_surname (str, optional):
-                The name a combined forename surname column. This column is used to
-                provides term frequency adjustments for forename surname phonetic match
-                level.
-                Defaults to None
-            term_frequency_adjustments_forename (bool, optional): If True, apply term
-                frequency adjustments to the exact match level for forename_col_name.
-                Defaults to False.
-            term_frequency_adjustments_surname (bool, optional): If True, apply term
-                frequency adjustments to the exact match level for surname_col_name.
-                Defaults to False.
-            term_frequency_adjustments_forename (bool, optional): If True, apply term
-                frequency adjustments to the exact match level for
+                parameter will create an exact match level for
                 phonetic_forename_col_name.
-                Defaults to False.
-            term_frequency_adjustments_surname (bool, optional): If True, apply term
-                frequency adjustments to the exact match level for
-                phonetic_surname_col_name.
-                Defaults to False.
+                The phonetic column must be present in the dataset to use this
+                parameter.
+                Defaults to None
+            phonetic_surname_col_name (str, optional): The name of the column with
+                phonetic reduction (such as dmetaphone) of surname_col_name. Including
+                this parameter will create an exact match level for
+                phonetic_surname_col_name. The phonetic column must be present in
+                the dataset to use this parameter.
+                Defaults to None
             levenshtein_thresholds_surname (Union[int, list], optional): The thresholds
                 to use for levenshtein similarity level(s) for surname_col_name.
                 Defaults to []
@@ -621,8 +607,9 @@ class ForenameSurnameComparisonBase(Comparison):
             levenshtein_thresholds_forename (Union[int, list], optional): The thresholds
                 to use for levenshtein similarity level(s) for forename_col_name.
                 Defaults to []
-            jaro_winkler_thresholds_forename (Union[int, list], optional): The thresholds
-                to use for jaro_winkler similarity level(s) for forename_col_name.
+            jaro_winkler_thresholds_forename (Union[int, list], optional): The
+                thresholds to use for jaro_winkler similarity level(s) for
+                forename_col_name.
                 Defaults to [0.88]
             jaccard_thresholds_forename (Union[int, list], optional): The thresholds to
                 use for jaccard similarity level(s) for forename_col_name.
@@ -743,7 +730,7 @@ class ForenameSurnameComparisonBase(Comparison):
             comparison_level = {
                 "sql_condition": f"{forename_col_l} = {forename_col_r} "
                 f"AND {surname_col_l} = {surname_col_r}",
-                "tf_adjustment_column": term_frequency_adjustment_col_forename_and_surname,
+                "tf_adjustment_column": tf_adjustment_col_forename_and_surname,
                 "tf_adjustment_weight": 1.0,
                 "m_probability": m_probability_exact_match_forename_surname,
                 "label_for_charts": "Full name exact match",
@@ -757,7 +744,7 @@ class ForenameSurnameComparisonBase(Comparison):
             comparison_level = {
                 "sql_condition": f"{phonetic_forename_col_l}={phonetic_forename_col_r}"
                 f" AND {phonetic_surname_col_l} = {phonetic_surname_col_r}",
-                "tf_adjustment_column": term_frequency_adjustments_col_phonetic_forename_and_surname,
+                "tf_adjustment_column": tf_adjustment_col_forename_and_surname,
                 "tf_adjustment_weight": 1.0,
                 "m_probability": m_probability_exact_match_phonetic_forename_surname,
                 "label_for_charts": "Full name phonetic match",
@@ -770,7 +757,7 @@ class ForenameSurnameComparisonBase(Comparison):
             comparison_level = self._columns_reversed_level(
                 forename_col_name,
                 surname_col_name,
-                tf_adjustment_column=term_frequency_adjustment_col_forename_and_surname,
+                tf_adjustment_column=tf_adjustment_col_forename_and_surname,
                 m_probability=m_probability_columns_reversed_forename_surname,
             )
             comparison_levels.append(comparison_level)
@@ -779,7 +766,7 @@ class ForenameSurnameComparisonBase(Comparison):
 
         comparison_level = self._exact_match_level(
             surname_col_name,
-            term_frequency_adjustments=term_frequency_adjustments_surname,
+            term_frequency_adjustments=term_frequency_adjustments,
             m_probability=m_probability_exact_match_forename,
             include_colname_in_charts_label=True,
         )
@@ -789,7 +776,7 @@ class ForenameSurnameComparisonBase(Comparison):
 
         comparison_level = self._exact_match_level(
             forename_col_name,
-            term_frequency_adjustments=term_frequency_adjustments_forename,
+            term_frequency_adjustments=term_frequency_adjustments,
             m_probability=m_probability_exact_match_forename,
             include_colname_in_charts_label=True,
         )
