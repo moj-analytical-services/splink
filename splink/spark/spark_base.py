@@ -47,10 +47,10 @@ def datediff_sql(
 def regex_extract_sql(col_name, regex):
     if "\\" in regex:
         raise SyntaxError(
-            "Regular expressions containing “\” (the python escape character)"
+            "Regular expressions containing “\\” (the python escape character) "
             "are not compatible with Splink’s Spark linker. "
             "Please consider using alternative syntax, "
-            "for example replacing “\d” with “[0-9]”."
+            "for example replacing “\\d” with “[0-9]”."
         )
     else:
         return f"""

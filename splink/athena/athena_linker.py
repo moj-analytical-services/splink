@@ -484,28 +484,70 @@ class AthenaLinker(Linker):
             delete_s3_folders,
             tables_to_exclude,
         )
-        delete_metadata_loc = []
-        for t in tables:
-            # Don't overwrite input tables if they have been
-            # given the __splink prefix.
-            if t["Name"] not in input_tables:
-                wr.catalog.delete_table_if_exists(
-                    database=t["DatabaseName"],
-                    table=t["Name"],
-                    boto3_session=self.boto3_session,
-                )
-                if garbage_collection_level == 2:
-                    path = t["StorageDescriptor"]["Location"]
-                    wr.s3.delete_objects(
-                        path=path,
-                        use_threads=True,
-                        boto3_session=self.boto3_session,
-                    )
-                    metadata_loc = f"{path.split('/__splink')[0]}/tables/"
-                    if metadata_loc not in delete_metadata_loc:
-                        wr.s3.delete_objects(
-                            path=metadata_loc,
-                            use_threads=True,
-                            boto3_session=self.boto3_session,
-                        )
-                        delete_metadata_loc.append(metadata_loc)
+
+    def drop_splink_tables_from_database(
+        self,
+        database_name: str,
+        delete_s3_folders: bool = True,
+        tables_to_exclude: list = [],
+    ):
+        """Run a cleanup process for the tables created by splink
+        in a specified database.
+        Only those tables currently contained within your database
+        will be permanently deleted. Anything existing on s3 that
+        isn't connected to your database will not be removed.
+        Attributes:
+            database_name (str): The name of the database to delete splink tables from.
+            delete_s3_folders (bool, optional): Whether to delete the
+                backing data contained on s3. If False, the tables created
+                by splink will be removed from your database, but the parquet
+                outputs will remain on s3. Defaults to True.
+            tables_to_exclude (list, optional): A list of input tables you wish to
+                add to an ignore list. These will not be removed during garbage
+                collection.
+        """
+        _garbage_collection(
+            database_name,
+            self.boto3_session,
+            delete_s3_folders,
+            tables_to_exclude,
+        )
+
+    def drop_tables_in_current_splink_run(
+        self,
+        delete_s3_folders: bool = True,
+        tables_to_exclude: list = [],
+    ):
+        """Run a cleanup process for the tables created
+        by the current splink linker.
+        This leaves tables from previous runs untouched.
+        Only those tables currently contained within your database
+        will be permanently deleted. Anything existing on s3 that
+        isn't connected to your database will not be removed.
+        Attributes:
+            delete_s3_folders (bool, optional): Whether to delete the
+                backing data contained on s3. If False, the tables created
+                by splink will be removed from your database, but the parquet
+                outputs will remain on s3. Defaults to True.
+            tables_to_exclude (list, optional): A list of input tables you wish to
+                add to an ignore list. These will not be removed during garbage
+                collection.
+        """
+        tables_to_exclude = ensure_is_list(tables_to_exclude)
+        tables_to_exclude = [
+            df.physical_name if isinstance(df, SplinkDataFrame) else df
+            for df in tables_to_exclude
+        ]
+        # Exclude tables that the user doesn't want to delete
+        tables = self._names_of_tables_created_by_splink.copy()
+        tables = [t for t in tables if t not in tables_to_exclude]
+
+        for table in tables:
+            _garbage_collection(
+                self.output_schema,
+                self.boto3_session,
+                delete_s3_folders,
+                name_prefix=table,
+            )
+            # pop from our tables created by splink list
+            self._names_of_tables_created_by_splink.remove(table)
