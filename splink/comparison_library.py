@@ -128,8 +128,8 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                 for the thresholds specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
-            
-        Examples:    
+
+        Examples:
             === "DuckDB"
                 Apply the `jaccard` function in a comparison with levels 0.9 and 0.7
                 ``` python
@@ -149,7 +149,8 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                                    )
                 ```
             === "Athena"
-                Apply the `levenshtein_distance` function in a comparison with levels 1 and 2
+                Apply the `levenshtein_distance` function in a comparison with
+                levels 1 and 2
                 ``` python
                 import splink.athena.athena_comparison_library as cl
                 cl.distance_function_at_thresholds("name",
@@ -335,7 +336,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
                 for the thresholds specified for given function. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
-        
+
         Examples:
             === "DuckDB"
                 ``` python
@@ -680,7 +681,8 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                                             )
                 ```
 
-                Datediff comparison with date-casting and unspecified date_format (default = %Y-%m-%d)
+                Datediff comparison with date-casting and unspecified date_format
+                (default = %Y-%m-%d)
                 ``` python
                 import splink.duckdb.duckdb_comparison_library as cl
                 cl.datediff_at_thresholds("date",
@@ -689,7 +691,8 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                                             cast_strings_to_date=True
                                             )
                 ```
-                Datediff comparison with date-casting and specified (non-default) date_format
+                Datediff comparison with date-casting and specified (non-default)
+                date_format
                 ``` python
                 import splink.duckdb.duckdb_comparison_library as cl
                 cl.datediff_at_thresholds("date",
@@ -709,7 +712,8 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                                             )
                 ```
 
-                Datediff comparison with date-casting and unspecified date_format (default = %Y-%m-%d)
+                Datediff comparison with date-casting and unspecified date_format
+                (default = %Y-%m-%d)
                 ``` python
                     import splink.spark.spark_comparison_library as cl
                     cl.datediff_at_thresholds("date",
@@ -717,9 +721,10 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                                                 date_metrics = ["day", "year"],
                                                 cast_strings_to_date=True
                                                 )
-                ``` 
+                ```
 
-                Datediff comparison with date-casting and specified (non-default) date_format
+                Datediff comparison with date-casting and specified (non-default)
+                date_format
                 ``` python
                 import splink.spark.spark_comparison_library as cl
                 cl.datediff_at_thresholds("date",
@@ -728,7 +733,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                                             cast_strings_to_date=True,
                                             date_format='%d/%m/%Y'
                                             )
-                ``` 
+                ```
 
         Returns:
             Comparison: A comparison for Datediff that can be included in the Splink

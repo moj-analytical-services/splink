@@ -151,7 +151,7 @@ def or_(
         is_null_level (bool, optional): If true, m and u values will not be
             estimated and instead the match weight will be zero for this column.
             Defaults to None.
-    
+
     Examples:
         === "DuckDB"
             Simple null level composition with an `OR` clause
@@ -267,7 +267,7 @@ def not_(
             which will appear on charts as a reminder of what the level represents.
         m_probability (float, optional): Starting value for m probability.
             Defaults to None.
-    
+
     Examples:
         === "DuckDB"
             *Not* an exact match on first name
