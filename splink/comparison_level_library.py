@@ -6,13 +6,15 @@ from .input_column import InputColumn
 
 
 class NullLevelBase(ComparisonLevel):
-    def __init__(self, col_name) -> ComparisonLevel:
+    def __init__(self, col_name, valid_string_regex: str = None) -> ComparisonLevel:
         """Represents comparisons level where one or both sides of the comparison
         contains null values so the similarity cannot be evaluated.
         Assumed to have a partial match weight of zero (null effect
         on overall match weight)
         Args:
             col_name (str): Input column name
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
 
         Examples:
             >>> # DuckDB Null level
@@ -23,13 +25,25 @@ class NullLevelBase(ComparisonLevel):
             >>> import splink.duckdb.duckdb_comparison_level_library as cll
             >>> cll.null_level("name")
 
+            >>> # DuckDB Null level with valid string regex
+            >>> import splink.duckdb.duckdb_comparison_level_library as cll
+            >>> cll.null_level("name", valid_string_regex="^[A-Z]{1,7}$")
+
         Returns:
             ComparisonLevel: Comparison level for null entries
         """
 
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
+        if valid_string_regex:
+            col_name_l = self._regex_extract_function(col.name_l(), valid_string_regex)
+            col_name_r = self._regex_extract_function(col.name_r(), valid_string_regex)
+            sql = f"{col_name_l}=='' OR {col_name_r} ==''"
+        else:
+            col_name_l, col_name_r = col.name_l(), col.name_r()
+            sql = f"{col_name_l} IS NULL OR {col_name_r} IS NULL"
+
         level_dict = {
-            "sql_condition": f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL",
+            "sql_condition": sql,
             "label_for_charts": "Null",
             "is_null_level": True,
         }
