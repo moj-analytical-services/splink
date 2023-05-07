@@ -120,6 +120,8 @@ df_r = df.copy()
 df_l["source_dataset"] = "my_left_ds"
 df_r["source_dataset"] = "my_right_ds"
 df_final = df_l.append(df_r)
+
+
 # Tests link only jobs under different inputs:
 # * A single dataframe with a `source_dataset` column
 # * Two input dataframes with no specified `source_dataset` column
@@ -269,7 +271,7 @@ def test_small_example_duckdb(tmp_path):
             {
                 "output_column_name": "name",
                 "comparison_levels": [
-                    cll.null_level("full_name"),
+                    cll.null_level("full_name", valid_string_regex=".*"),
                     cll.exact_match_level("full_name", term_frequency_adjustments=True),
                     cll.columns_reversed_level(
                         "first_name", "surname", tf_adjustment_column="full_name"
@@ -281,7 +283,9 @@ def test_small_example_duckdb(tmp_path):
                 ],
             },
             cl.levenshtein_at_thresholds("dob", 2, term_frequency_adjustments=True),
-            cl.jaro_at_thresholds("email", term_frequency_adjustments=True),
+            cl.jaro_at_thresholds(
+                "email", term_frequency_adjustments=True, regex_extract="^[^@]+"
+            ),
             cl.jaro_winkler_at_thresholds("city", term_frequency_adjustments=True),
         ],
         "retain_matching_columns": True,
