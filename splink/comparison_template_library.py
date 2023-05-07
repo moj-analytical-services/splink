@@ -21,6 +21,7 @@ class DateComparisonBase(Comparison):
     def __init__(
         self,
         col_name: str,
+        valid_string_regex: str = None,
         include_exact_match_level: bool = True,
         term_frequency_adjustments: bool = False,
         separate_1st_january: bool = False,
@@ -51,7 +52,9 @@ class DateComparisonBase(Comparison):
         - Anything else
 
         Args:
-            col_name (str): The name of the column to compare
+            col_name (str): The name of the column to compare.
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -138,7 +141,7 @@ class DateComparisonBase(Comparison):
         """
         # Construct Comparison
         comparison_levels = []
-        comparison_levels.append(self._null_level(col_name))
+        comparison_levels.append(self._null_level(col_name, valid_string_regex))
 
         # Validate user inputs
         datediff_error_logger(thresholds=datediff_thresholds, metrics=datediff_metrics)
@@ -288,6 +291,7 @@ class NameComparisonBase(Comparison):
     def __init__(
         self,
         col_name: str,
+        valid_string_regex: str = None,
         include_exact_match_level: bool = True,
         phonetic_col_name: str = None,
         term_frequency_adjustments_name: bool = False,
@@ -314,7 +318,9 @@ class NameComparisonBase(Comparison):
         - Anything else
 
         Args:
-            col_name (str): The name of the column to compare
+            col_name (str): The name of the column to compare.
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level for col_name. Defaults to True.
             phonetic_col_name (str): The name of the column with phonetic reduction
@@ -400,7 +406,7 @@ class NameComparisonBase(Comparison):
 
         # Construct Comparison
         comparison_levels = []
-        comparison_levels.append(self._null_level(col_name))
+        comparison_levels.append(self._null_level(col_name, valid_string_regex))
 
         if include_exact_match_level:
             comparison_level = self._exact_match_level(
