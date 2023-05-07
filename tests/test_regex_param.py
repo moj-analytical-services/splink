@@ -68,7 +68,6 @@ def postcode_levels(cll):
     }
 
 
-# update jaccard
 def name_levels(cll):
     return {
         "output_column_name": "name",
@@ -76,9 +75,6 @@ def name_levels(cll):
             cll.jaro_winkler_level(
                 "first_name", distance_threshold=1, regex_extract="^[A-Z]{1,4}"
             ),
-            # cll.jaccard_level(
-            #     "first_name", distance_threshold=1.0, regex_extract="[A-Z]"
-            # ),
             cll.columns_reversed_level(
                 "first_name", "last_name", regex_extract="[A-Z]{1,3}"
             ),
@@ -94,8 +90,6 @@ record_pairs_gamma_postcode = {
 }
 
 record_pairs_gamma_name = {
-    # 4: [(1, 2)],
-    # 3: [(1, 3), (2, 3)],
     2: [(1, 2), (4, 6)],
     1: [(5, 6)],
 }
@@ -135,7 +129,6 @@ record_pairs_gamma_name = {
     ],
 )
 def test_regex(spark, Linker, df, level_set, record_pairs_gamma):
-
     # Generate settings
     settings = {
         "link_type": "dedupe_only",
