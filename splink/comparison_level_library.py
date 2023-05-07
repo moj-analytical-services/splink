@@ -323,7 +323,8 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
             >>> import splink.spark.spark_comparison_level_library as cll
             >>> cll.jaro_winkler_level("name", 0.9)
 
-            >>> # DuckDB Jaro-winkler comparison level at threshold 0.9 with regex_extract
+            >>> # DuckDB Jaro-winkler comparison level at threshold 0.9
+                 with regex_extract
             >>> # Perform a jaro-winkler comparison on a substring of col_name as
                  determined by a regular expression
             >>> import splink.duckdb.duckdb_comparison_level_library as cll

@@ -278,7 +278,7 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             >>> # Levenshtein comparison based on a substring of col_name as
                  determined by a regular expression
             >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.levenshtein_at_thresholds("first_name", [1,2], regex_extract="^[A-Z]{1,4}")
+            >>> cl.levenshtein_at_thresholds("first_name", [1,2], regex_extract="^A|B")
 
         Returns:
             Comparison: A comparison for Levenshtein similarity that can be included
@@ -360,7 +360,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
             >>> # Jaccard comparison based on a substring of col_name as
                  determined by a regular expression
             >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.jaccard_at_thresholds("first_name", [0.9, 0.7], regex_extract="^[A-Z]{1,4}")
+            >>> cl.jaccard_at_thresholds("first_name", [0.9, 0.7], regex_extract="^A|B")
 
         Returns:
             Comparison: A comparison for Jaccard similarity that can be included
@@ -442,7 +442,7 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
             >>> # Jaro comparison based on a substring of col_name as
                  determined by a regular expression
             >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.jaro_at_thresholds("first_name", [0.9, 0.7], regex_extract="^[A-Z]{1,4}")
+            >>> cl.jaro_at_thresholds("first_name", [0.9, 0.7], regex_extract="^[A-Z]")
 
         Returns:
             Comparison:
@@ -519,11 +519,16 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             >>> import splink.spark.saprk_comparison_library as cl
             >>> cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
 
-            >>> # DuckDB Jaro-winkler comparison at thresholds 0.9 and 0.7 with regex_extract
+            >>> # DuckDB Jaro-winkler comparison at thresholds 0.9 and 0.7
+                 with regex_extract
             >>> # Jaro-winkler comparison based on a substring of col_name as
                  determined by a regular expression
             >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7], regex_extract="^[A-Z]{1,4}")
+            >>> cl.jaro_winkler_at_thresholds(
+                    "first_name",
+                    [0.9, 0.7],
+                    regex_extract="^[A-Z]{1,4}"
+                )
 
         Returns:
             Comparison: A comparison for Jaro Winkler similarity that can be included
@@ -643,6 +648,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         col_name: str,
         date_thresholds: int | list = [1],
         date_metrics: str | list = ["year"],
+        valid_string_regex: str = None,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
@@ -675,6 +681,8 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
             date_metrics (Union[str, list], optional): The unit of time you wish your
                 `date_thresholds` to be measured against.
                 Metrics should be one of `day`, `month` or `year`.
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -721,7 +729,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         m_probabilities = ensure_is_iterable(m_probability_or_probabilities_dat)
 
         comparison_levels = []
-        comparison_levels.append(self._null_level(col_name))
+        comparison_levels.append(self._null_level(col_name, valid_string_regex))
         if include_exact_match_level:
             level = self._exact_match_level(
                 col_name,
