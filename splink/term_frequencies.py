@@ -153,3 +153,54 @@ def compute_term_frequencies_from_concat_with_tf(linker: "Linker"):
             tf_table.append(cache[tf_table_name])
 
     return tf_table
+
+
+def tf_adjustment_chart(linker: Linker, col, n_most_freq, n_least_freq, vals_to_include):
+
+    # Data for chart
+    df_predict = [
+        t for t in linker._names_of_tables_created_by_splink if "df_predict" in t][0]
+
+    df = linker.query_sql(f"""
+        WITH tmp AS (
+        select distinct
+        gamma_{col} AS gamma,
+        CASE WHEN tf_{col}_l >= tf_{col}_r THEN {col}_l ELSE {col}_r END AS {col},
+        log(bf_tf_adj_{col})/log(2) AS log2_bf_tf,
+        log(bf_{col})/log(2) AS log2_bf
+        from {df_predict}
+    )
+    SELECT *,
+        row_number() over (partition by gamma order by log2_bf_tf desc) AS least_freq_rank,
+        row_number() over (partition by gamma order by log2_bf_tf) AS most_freq_rank
+    FROM tmp
+    """)
+
+    # Filter values
+    selected = False if not vals_to_include else df[col].isin(vals_to_include)
+    least_freq = True if not n_least_freq else df["least_freq_rank"] <= n_least_freq
+    most_freq = True if not n_most_freq else df["most_freq_rank"] <= n_most_freq
+    mask = selected | least_freq | most_freq
+    df = df[mask]
+
+    # Select relevant comparison column and levels
+    c = linker._settings_obj._get_comparison_by_output_column_name(col)
+    cl = [l for l in c._as_detailed_records if l["has_tf_adjustments"]
+          and l["tf_adjustment_column"] == col]
+    tf_levels = [str(l["comparison_vector_value"]) for l in cl]
+    labels = [l["label_for_charts"] for l in cl]
+
+    df = df[df["gamma"].astype('str').isin(tf_levels)].sort_values("least_freq_rank")
+    
+    chart_path = "tf_adjustment_chart.json"
+    chart = load_chart_definition(chart_path)
+
+    # Complete chart schema
+    chart["data"] = df
+    chart["params"][0]["value"] = max(tf_levels)
+    chart["params"][0]["bind"]["options"] = tf_levels
+    chart["params"][0]["bind"]["labels"] = labels
+
+
+    return vegalite_or_json(chart, as_dict=as_dict)
+    
