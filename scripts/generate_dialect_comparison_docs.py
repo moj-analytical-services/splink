@@ -10,11 +10,7 @@ from splink.dialect_base import DialectBase
 
 # could always pick this up dynamically,
 # but this way we get to fix the order, and feels like not unreasonable upkeep
-dialects = ("duckdb", 
-            "spark", 
-            "athena",
-            "sqlite"
-            )
+dialects = ("duckdb", "spark", "athena", "sqlite")
 
 dialect_levels = {}
 dialect_comparisons = {}
@@ -50,7 +46,9 @@ for dialect in dialects:
 
 all_sorted_levels = sorted({y for x in dialect_levels.values() for y in x})
 all_sorted_comparisons = sorted({y for x in dialect_comparisons.values() for y in x})
-all_sorted_comparison_templates = sorted({y for x in dialect_comparison_templates.values() for y in x})
+all_sorted_comparison_templates = sorted(
+    {y for x in dialect_comparison_templates.values() for y in x}
+)
 
 level_dialects = {
     lev: [dialect for dialect in dialects if lev in dialect_levels[dialect]]
@@ -61,7 +59,11 @@ comparison_dialects = {
     for comp in all_sorted_comparisons
 }
 comparison_template_dialects = {
-    comp_temp: [dialect for dialect in dialects if comp_temp in dialect_comparison_templates[dialect]]
+    comp_temp: [
+        dialect
+        for dialect in dialects
+        if comp_temp in dialect_comparison_templates[dialect]
+    ]
     for comp_temp in all_sorted_comparison_templates
 }
 
