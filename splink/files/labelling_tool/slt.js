@@ -332,7 +332,7 @@
  * ---
  *
  * Name: 0420fc5db15e44ab
- * Version: 2238.0.0
+ * Version: 2943.0.0
  * License: null
  * Private: false
  * Homepage: https://observablehq.com/d/0420fc5db15e44ab
@@ -5832,6 +5832,21 @@
 
   const checkbox = createCheckbox(true, "checkbox");
 
+  function toggle({label, value, values, disabled} = {}) {
+    const input = html$1`<input class=__ns__-input type=checkbox name=input disabled=${disabled}>`;
+    const form = html$1`<form class="__ns__ __ns__-toggle">${maybeLabel(label, input)}${input}`;
+    Object.defineProperty(form, "value", {
+      get() {
+        return values === undefined ? input.checked : values[input.checked ? 0 : 1];
+      },
+      set(v) {
+        input.checked = values === undefined ? !!v : v === values[0];
+      }
+    });
+    if (value !== undefined) form.value = value;
+    return form;
+  }
+
   // The input is undefined if there are no options, or an individual input
   // element if there is only one; we want these two cases to behave the same as
   // when there are two or more options, i.e., a RadioNodeList.
@@ -8007,207 +8022,348 @@
   function _default_pairwise_comparison_data(){return(
   [
     {
-      match_weight: -0.37497671866384624,
-      match_probability: 0.43538483542094575,
-      unique_id_l: 4,
-      unique_id_r: 6,
-      first_name_l: "Watson",
-      first_name_r: "watson",
-      gamma_first_name: 0,
-      bf_first_name: 0.025313802295168154,
-      surname_l: "Nooah",
-      surname_r: "Noah ",
-      gamma_surname: 0,
-      bf_surname: 0.05037493843764211,
-      dob_l: "2008-03-23",
-      dob_r: "2008-03-23",
-      gamma_dob: 1,
-      bf_dob: 256.5,
-      city_l: "Bolton",
-      city_r: "",
-      gamma_city: -1,
-      tf_city_l: 0.015712682379349047,
-      tf_city_r: "",
-      bf_city: 1.0,
-      bf_tf_adj_city: 1.0,
-      email_l: "matthew78@ballard-mcdonald.net",
-      email_r: "matthew78@ballard-mcdonald.net",
-      gamma_email: 1,
-      bf_email: 233.39775421085463
+      match_weight: 24.72661262857488,
+      match_probability: 0.9999999639796531,
+      source_dataset_l: "_a",
+      source_dataset_r: "_a",
+      unique_id_l: 79,
+      unique_id_r: 79,
+      first_name_l: "Carr",
+      first_name_r: "Carr",
+      gamma_first_name: 3,
+      tf_first_name_l: 0.0033333333333333335,
+      tf_first_name_r: 0.0033333333333333335,
+      bf_first_name: 185.00697674418603,
+      bf_tf_adj_first_name: 1.540482445665154,
+      surname_l: "Ethan ",
+      surname_r: "Ethan ",
+      gamma_surname: 3,
+      tf_surname_l: 0.005417118093174431,
+      tf_surname_r: 0.005417118093174431,
+      bf_surname: 130.37728776185224,
+      bf_tf_adj_surname: 1.3450962434525533,
+      dob_l: "2013-01-21",
+      dob_r: "2013-01-21",
+      gamma_dob: 3,
+      tf_dob_l: 0.006,
+      tf_dob_r: 0.006,
+      bf_dob: 284.4990909090909,
+      bf_tf_adj_dob: 0.5565337057049764,
+      email_l: "stacyball@medina.biz",
+      email_r: "stacyball@medina.biz",
+      gamma_email: 2,
+      tf_email_l: 0.009009009009009009,
+      tf_email_r: 0.009009009009009009,
+      bf_email: 257.99222737819025,
+      bf_tf_adj_email: 0.4087332439105659,
+      city_l: "London",
+      city_r: "London",
+      gamma_city: 1,
+      tf_city_l: 0.2884399551066218,
+      tf_city_r: 0.2884399551066218,
+      bf_city: 10.263374411018484,
+      bf_tf_adj_city: 0.32090613034647414
     },
     {
-      match_weight: -0.37497671866384624,
-      match_probability: 0.43538483542094575,
-      unique_id_l: 5,
-      unique_id_r: 6,
-      first_name_l: "Noah ",
-      first_name_r: "Watson",
-      gamma_first_name: 0,
-      bf_first_name: 0.025313802295168154,
-      surname_l: "Watson",
-      surname_r: "Noah ",
-      gamma_surname: 0,
-      bf_surname: 0.05037493843764211,
-      dob_l: "2008-03-23",
-      dob_r: "2008-03-23",
-      gamma_dob: 1,
-      bf_dob: 256.5,
-      city_l: "Bolton",
-      city_r: "",
-      gamma_city: -1,
-      tf_city_l: 0.015712682379349047,
-      tf_city_r: "",
-      bf_city: 1.0,
-      bf_tf_adj_city: 1.0,
-      email_l: "matthew78@ballard-mcdonald.net",
-      email_r: "matthew78@ballard-mcdonald.net",
-      gamma_email: 1,
-      bf_email: 233.39775421085463
-    },
-    {
-      match_weight: 11.330949750235506,
-      match_probability: 0.9996119607202627,
-      unique_id_l: 8,
-      unique_id_r: 6,
-      first_name_l: "Watson",
-      first_name_r: "Watson",
-      gamma_first_name: 2,
-      bf_first_name: 170.5825565912117,
-      surname_l: "Noah ",
-      surname_r: "Noah ",
-      gamma_surname: 1,
-      bf_surname: 127.63746447742344,
-      dob_l: "2008-06-15",
-      dob_r: "2008-03-23",
+      match_weight: 11.543499994820714,
+      match_probability: 0.9996651002856178,
+      source_dataset_l: "_b",
+      source_dataset_r: "_a",
+      unique_id_l: 80,
+      unique_id_r: 79,
+      first_name_l: "Carr",
+      first_name_r: "Carr",
+      gamma_first_name: 3,
+      tf_first_name_l: 0.0033333333333333335,
+      tf_first_name_r: 0.0033333333333333335,
+      bf_first_name: 185.00697674418603,
+      bf_tf_adj_first_name: 1.540482445665154,
+      surname_l: "Ethan ",
+      surname_r: "Ethan ",
+      gamma_surname: 3,
+      tf_surname_l: 0.005417118093174431,
+      tf_surname_r: 0.005417118093174431,
+      bf_surname: 130.37728776185224,
+      bf_tf_adj_surname: 1.3450962434525533,
+      dob_l: "2012-11-15",
+      dob_r: "2013-01-21",
       gamma_dob: 0,
-      bf_dob: 0.050185873605948,
-      city_l: "Bolton",
-      city_r: "",
-      gamma_city: -1,
-      tf_city_l: 0.015712682379349047,
-      tf_city_r: "",
-      bf_city: 1.0,
-      bf_tf_adj_city: 1.0,
-      email_l: "matthew78@ballard-mcdonald.net",
-      email_r: "matthew78@ballard-mcdonald.net",
-      gamma_email: 1,
-      bf_email: 233.39775421085463
+      tf_dob_l: 0.001,
+      tf_dob_r: 0.006,
+      bf_dob: 0.01702393748966431,
+      bf_tf_adj_dob: 1.0,
+      email_l: "stacyball@medina.biz",
+      email_r: "stacyball@medina.biz",
+      gamma_email: 2,
+      tf_email_l: 0.009009009009009009,
+      tf_email_r: 0.009009009009009009,
+      bf_email: 257.99222737819025,
+      bf_tf_adj_email: 0.4087332439105659,
+      city_l: "London",
+      city_r: "London",
+      gamma_city: 1,
+      tf_city_l: 0.2884399551066218,
+      tf_city_r: 0.2884399551066218,
+      bf_city: 10.263374411018484,
+      bf_tf_adj_city: 0.32090613034647414
     },
     {
-      match_weight: 11.467648854217567,
-      match_probability: 0.9996470278874315,
-      unique_id_l: 10,
-      unique_id_r: 6,
-      first_name_l: "Watson",
-      first_name_r: "Watson",
-      gamma_first_name: 2,
-      bf_first_name: 170.5825565912117,
-      surname_l: "Noah ",
-      surname_r: "Noah ",
-      gamma_surname: 1,
-      bf_surname: 127.63746447742344,
-      dob_l: "2008-03-23",
-      dob_r: "2008-03-23",
-      gamma_dob: 1,
-      bf_dob: 256.5,
-      city_l: "Bolton",
-      city_r: "",
-      gamma_city: -1,
-      tf_city_l: 0.015712682379349047,
-      tf_city_r: "",
-      bf_city: 1.0,
-      bf_tf_adj_city: 1.0,
-      email_l: "matthbw78eallard-mcdonald.net",
-      email_r: "matthew78@ballard-mcdonald.net",
-      gamma_email: 0,
-      bf_email: 0.050204346994709714
-    },
-    {
-      match_weight: -0.8517410217826423,
-      match_probability: 0.35654723630577134,
-      unique_id_l: 11,
-      unique_id_r: 6,
-      first_name_l: "Watson",
-      first_name_r: "Watson",
-      gamma_first_name: 2,
-      bf_first_name: 170.5825565912117,
-      surname_l: "Noah ",
-      surname_r: "Noah ",
-      gamma_surname: 1,
-      bf_surname: 127.63746447742344,
-      dob_l: "2008-01-21",
-      dob_r: "2008-03-23",
-      gamma_dob: 0,
-      bf_dob: 0.050185873605948,
-      city_l: "Bolno",
-      city_r: "",
-      gamma_city: -1,
-      tf_city_l: 0.001122334455667789,
-      tf_city_r: "",
-      bf_city: 1.0,
-      bf_tf_adj_city: 1.0,
-      email_l: "matthea78@bwllar-mcdonald.net",
-      email_r: "matthew78@ballard-mcdonald.net",
-      gamma_email: 0,
-      bf_email: 0.050204346994709714
-    },
-    {
-      match_weight: -3.9304735684905077,
-      match_probability: 0.061549021133449476,
-      unique_id_l: 12,
-      unique_id_r: 6,
-      first_name_l: "Noah ",
-      first_name_r: "Watson",
+      match_weight: -2.599230043972054,
+      match_probability: 0.14165045458783695,
+      source_dataset_l: "_b",
+      source_dataset_r: "_a",
+      unique_id_l: 82,
+      unique_id_r: 79,
+      first_name_l: "Eh na",
+      first_name_r: "Carr",
       gamma_first_name: 0,
-      bf_first_name: 0.025313802295168154,
+      tf_first_name_l: 0.0011111111111111111,
+      tf_first_name_r: 0.0033333333333333335,
+      bf_first_name: 0.017349943911181373,
+      bf_tf_adj_first_name: 1.0,
+      surname_l: "Carr",
+      surname_r: "Ethan ",
+      gamma_surname: 0,
+      tf_surname_l: 0.0065005417118093175,
+      tf_surname_r: 0.005417118093174431,
+      bf_surname: 0.01712394347596409,
+      bf_tf_adj_surname: 1.0,
+      dob_l: "2013-01-21",
+      dob_r: "2013-01-21",
+      gamma_dob: 3,
+      tf_dob_l: 0.006,
+      tf_dob_r: 0.006,
+      bf_dob: 284.4990909090909,
+      bf_tf_adj_dob: 0.5565337057049764,
+      email_l: "stacyball@medina.biz",
+      email_r: "stacyball@medina.biz",
+      gamma_email: 2,
+      tf_email_l: 0.009009009009009009,
+      tf_email_r: 0.009009009009009009,
+      bf_email: 257.99222737819025,
+      bf_tf_adj_email: 0.4087332439105659,
+      city_l: "London",
+      city_r: "London",
+      gamma_city: 1,
+      tf_city_l: 0.2884399551066218,
+      tf_city_r: 0.2884399551066218,
+      bf_city: 10.263374411018484,
+      bf_tf_adj_city: 0.32090613034647414
+    },
+    {
+      match_weight: 11.543499994820714,
+      match_probability: 0.9996651002856178,
+      source_dataset_l: "_a",
+      source_dataset_r: "_a",
+      unique_id_l: 84,
+      unique_id_r: 79,
+      first_name_l: "Carr",
+      first_name_r: "Carr",
+      gamma_first_name: 3,
+      tf_first_name_l: 0.0033333333333333335,
+      tf_first_name_r: 0.0033333333333333335,
+      bf_first_name: 185.00697674418603,
+      bf_tf_adj_first_name: 1.540482445665154,
+      surname_l: "Ethan ",
+      surname_r: "Ethan ",
+      gamma_surname: 3,
+      tf_surname_l: 0.005417118093174431,
+      tf_surname_r: 0.005417118093174431,
+      bf_surname: 130.37728776185224,
+      bf_tf_adj_surname: 1.3450962434525533,
+      dob_l: "2012-10-21",
+      dob_r: "2013-01-21",
+      gamma_dob: 0,
+      tf_dob_l: 0.001,
+      tf_dob_r: 0.006,
+      bf_dob: 0.01702393748966431,
+      bf_tf_adj_dob: 1.0,
+      email_l: "stacyball@medina.biz",
+      email_r: "stacyball@medina.biz",
+      gamma_email: 2,
+      tf_email_l: 0.009009009009009009,
+      tf_email_r: 0.009009009009009009,
+      bf_email: 257.99222737819025,
+      bf_tf_adj_email: 0.4087332439105659,
+      city_l: "London",
+      city_r: "London",
+      gamma_city: 1,
+      tf_city_l: 0.2884399551066218,
+      tf_city_r: 0.2884399551066218,
+      bf_city: 10.263374411018484,
+      bf_tf_adj_city: 0.32090613034647414
+    },
+    {
+      match_weight: -2.599230043972054,
+      match_probability: 0.14165045458783695,
+      source_dataset_l: "_b",
+      source_dataset_r: "_a",
+      unique_id_l: 81,
+      unique_id_r: 79,
+      first_name_l: "Etnah",
+      first_name_r: "Carr",
+      gamma_first_name: 0,
+      tf_first_name_l: 0.0011111111111111111,
+      tf_first_name_r: 0.0033333333333333335,
+      bf_first_name: 0.017349943911181373,
+      bf_tf_adj_first_name: 1.0,
+      surname_l: "Carr",
+      surname_r: "Ethan ",
+      gamma_surname: 0,
+      tf_surname_l: 0.0065005417118093175,
+      tf_surname_r: 0.005417118093174431,
+      bf_surname: 0.01712394347596409,
+      bf_tf_adj_surname: 1.0,
+      dob_l: "2013-01-21",
+      dob_r: "2013-01-21",
+      gamma_dob: 3,
+      tf_dob_l: 0.006,
+      tf_dob_r: 0.006,
+      bf_dob: 284.4990909090909,
+      bf_tf_adj_dob: 0.5565337057049764,
+      email_l: "stacyball@medina.biz",
+      email_r: "stacyball@medina.biz",
+      gamma_email: 2,
+      tf_email_l: 0.009009009009009009,
+      tf_email_r: 0.009009009009009009,
+      bf_email: 257.99222737819025,
+      bf_tf_adj_email: 0.4087332439105659,
+      city_l: "London",
+      city_r: "London",
+      gamma_city: 1,
+      tf_city_l: 0.2884399551066218,
+      tf_city_r: 0.2884399551066218,
+      bf_city: 10.263374411018484,
+      bf_tf_adj_city: 0.32090613034647414
+    },
+    {
+      match_weight: -8.500685372099381,
+      match_probability: 0.0027532228214566905,
+      source_dataset_l: "_b",
+      source_dataset_r: "_a",
+      unique_id_l: 86,
+      unique_id_r: 79,
+      first_name_l: "Ethan ",
+      first_name_r: "Carr",
+      gamma_first_name: 0,
+      tf_first_name_l: 0.008888888888888889,
+      tf_first_name_r: 0.0033333333333333335,
+      bf_first_name: 0.017349943911181373,
+      bf_tf_adj_first_name: 1.0,
+      surname_l: "Crr",
+      surname_r: "Ethan ",
+      gamma_surname: 0,
+      tf_surname_l: 0.0010834236186348862,
+      tf_surname_r: 0.005417118093174431,
+      bf_surname: 0.01712394347596409,
+      bf_tf_adj_surname: 1.0,
+      dob_l: "2013-01-21",
+      dob_r: "2013-01-21",
+      gamma_dob: 3,
+      tf_dob_l: 0.006,
+      tf_dob_r: 0.006,
+      bf_dob: 284.4990909090909,
+      bf_tf_adj_dob: 0.5565337057049764,
+      email_l: "stacyball@medina.biz",
+      email_r: "stacyball@medina.biz",
+      gamma_email: 2,
+      tf_email_l: 0.009009009009009009,
+      tf_email_r: 0.009009009009009009,
+      bf_email: 257.99222737819025,
+      bf_tf_adj_email: 0.4087332439105659,
+      city_l: "Londo",
+      city_r: "London",
+      gamma_city: 0,
+      tf_city_l: 0.004489337822671156,
+      tf_city_r: 0.2884399551066218,
+      bf_city: 0.05510019225081342,
+      bf_tf_adj_city: 1.0
+    },
+    {
+      match_weight: -2.6328441608207083,
+      match_probability: 0.1388411501653245,
+      source_dataset_l: "_b",
+      source_dataset_r: "_a",
+      unique_id_l: 85,
+      unique_id_r: 79,
+      first_name_l: "Ethan ",
+      first_name_r: "Carr",
+      gamma_first_name: 0,
+      tf_first_name_l: 0.008888888888888889,
+      tf_first_name_r: 0.0033333333333333335,
+      bf_first_name: 0.017349943911181373,
+      bf_tf_adj_first_name: 1.0,
       surname_l: "",
-      surname_r: "Noah ",
+      surname_r: "Ethan ",
       gamma_surname: -1,
+      tf_surname_l: "",
+      tf_surname_r: 0.005417118093174431,
       bf_surname: 1.0,
-      dob_l: "2008-03-23",
-      dob_r: "2008-03-23",
-      gamma_dob: 1,
-      bf_dob: 256.5,
-      city_l: "Blotn",
-      city_r: "",
-      gamma_city: -1,
-      tf_city_l: 0.001122334455667789,
-      tf_city_r: "",
-      bf_city: 1.0,
-      bf_tf_adj_city: 1.0,
-      email_l: "",
-      email_r: "matthew78@ballard-mcdonald.net",
-      gamma_email: -1,
-      bf_email: 1.0
+      bf_tf_adj_surname: 1.0,
+      dob_l: "2013-01-21",
+      dob_r: "2013-01-21",
+      gamma_dob: 3,
+      tf_dob_l: 0.006,
+      tf_dob_r: 0.006,
+      bf_dob: 284.4990909090909,
+      bf_tf_adj_dob: 0.5565337057049764,
+      email_l: "stacyball@medina.biz",
+      email_r: "stacyball@medina.biz",
+      gamma_email: 2,
+      tf_email_l: 0.009009009009009009,
+      tf_email_r: 0.009009009009009009,
+      bf_email: 257.99222737819025,
+      bf_tf_adj_email: 0.4087332439105659,
+      city_l: "oodLn",
+      city_r: "London",
+      gamma_city: 0,
+      tf_city_l: 0.002244668911335578,
+      tf_city_r: 0.2884399551066218,
+      bf_city: 0.05510019225081342,
+      bf_tf_adj_city: 1.0
     },
     {
-      match_weight: 23.650339626235713,
-      match_probability: 0.9999999240481543,
-      unique_id_l: 6,
-      unique_id_r: 6,
-      first_name_l: "Watson",
-      first_name_r: "Watson",
-      gamma_first_name: 2,
-      bf_first_name: 170.5825565912117,
-      surname_l: "Noah ",
-      surname_r: "Noah ",
-      gamma_surname: 1,
-      bf_surname: 127.63746447742344,
-      dob_l: "2008-03-23",
-      dob_r: "2008-03-23",
-      gamma_dob: 1,
-      bf_dob: 256.5,
-      city_l: "",
-      city_r: "",
-      gamma_city: -1,
-      tf_city_l: "",
-      tf_city_r: "",
-      bf_city: 1.0,
-      bf_tf_adj_city: 1.0,
-      email_l: "matthew78@ballard-mcdonald.net",
-      email_r: "matthew78@ballard-mcdonald.net",
-      gamma_email: 1,
-      bf_email: 233.39775421085463
+      match_weight: -9.319645328878384,
+      match_probability: 0.0015625289718773487,
+      source_dataset_l: "_b",
+      source_dataset_r: "_a",
+      unique_id_l: 83,
+      unique_id_r: 79,
+      first_name_l: "Ethan ",
+      first_name_r: "Carr",
+      gamma_first_name: 0,
+      tf_first_name_l: 0.008888888888888889,
+      tf_first_name_r: 0.0033333333333333335,
+      bf_first_name: 0.017349943911181373,
+      bf_tf_adj_first_name: 1.0,
+      surname_l: "Cra",
+      surname_r: "Ethan ",
+      gamma_surname: 0,
+      tf_surname_l: 0.0010834236186348862,
+      tf_surname_r: 0.005417118093174431,
+      bf_surname: 0.01712394347596409,
+      bf_tf_adj_surname: 1.0,
+      dob_l: "2013-01-21",
+      dob_r: "2013-01-21",
+      gamma_dob: 3,
+      tf_dob_l: 0.006,
+      tf_dob_r: 0.006,
+      bf_dob: 284.4990909090909,
+      bf_tf_adj_dob: 0.5565337057049764,
+      email_l: "",
+      email_r: "stacyball@medina.biz",
+      gamma_email: -1,
+      tf_email_l: "",
+      tf_email_r: 0.009009009009009009,
+      bf_email: 1.0,
+      bf_tf_adj_email: 1.0,
+      city_l: "London",
+      city_r: "London",
+      gamma_city: 1,
+      tf_city_l: 0.2884399551066218,
+      tf_city_r: 0.2884399551066218,
+      bf_city: 10.263374411018484,
+      bf_tf_adj_city: 0.32090613034647414
     }
   ]
   )}
@@ -8216,7 +8372,7 @@
   {
     return {
       probability_two_random_records_match: 0.01,
-      link_type: "dedupe_only",
+      link_type: "link_only",
       blocking_rules_to_generate_predictions: [
         "l.first_name = r.first_name",
         "l.surname = r.surname"
@@ -8233,21 +8389,30 @@
             {
               sql_condition: '"first_name_l" = "first_name_r"',
               label_for_charts: "Exact match",
-              u_probability: 0.0055691509084167595
+              u_probability: 0.0051349414855505135,
+              tf_adjustment_column: "first_name",
+              tf_adjustment_weight: 1.0
             },
             {
-              sql_condition: 'levenshtein("first_name_l", "first_name_r") <= 2',
-              label_for_charts: "Levenshtein <= 2",
-              u_probability: 0.006827339018662712
+              sql_condition:
+                'jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.9',
+              label_for_charts: "Jaro_winkler_similarity >= 0.9",
+              u_probability: 0.002763656214814562
+            },
+            {
+              sql_condition:
+                'jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.7',
+              label_for_charts: "Jaro_winkler_similarity >= 0.7",
+              u_probability: 0.03148350336074243
             },
             {
               sql_condition: "ELSE",
               label_for_charts: "All other comparisons",
-              u_probability: 0.9876035100729206
+              u_probability: 0.9606178989388925
             }
           ],
           comparison_description:
-            "Exact match vs. First_Name within levenshtein threshold 2 vs. anything else"
+            "Exact match vs. First_Name within jaro_winkler_similarity thresholds 0.9, 0.7 vs. anything else"
         },
         {
           output_column_name: "surname",
@@ -8260,15 +8425,30 @@
             {
               sql_condition: '"surname_l" = "surname_r"',
               label_for_charts: "Exact match",
-              u_probability: 0.0074429557488431336
+              u_probability: 0.007286545197467785,
+              tf_adjustment_column: "surname",
+              tf_adjustment_weight: 1.0
+            },
+            {
+              sql_condition:
+                'jaro_winkler_similarity("surname_l", "surname_r") >= 0.9',
+              label_for_charts: "Jaro_winkler_similarity >= 0.9",
+              u_probability: 0.002643079790481699
+            },
+            {
+              sql_condition:
+                'jaro_winkler_similarity("surname_l", "surname_r") >= 0.7',
+              label_for_charts: "Jaro_winkler_similarity >= 0.7",
+              u_probability: 0.016774317940807866
             },
             {
               sql_condition: "ELSE",
               label_for_charts: "All other comparisons",
-              u_probability: 0.9925570442511569
+              u_probability: 0.9732960570712427
             }
           ],
-          comparison_description: "Exact match vs. anything else"
+          comparison_description:
+            "Exact match vs. Surname within jaro_winkler_similarity thresholds 0.9, 0.7 vs. anything else"
         },
         {
           output_column_name: "dob",
@@ -8281,38 +8461,28 @@
             {
               sql_condition: '"dob_l" = "dob_r"',
               label_for_charts: "Exact match",
-              u_probability: 0.003703703703703704
-            },
-            {
-              sql_condition: "ELSE",
-              label_for_charts: "All other comparisons",
-              u_probability: 0.9962962962962963
-            }
-          ],
-          comparison_description: "Exact match vs. anything else"
-        },
-        {
-          output_column_name: "city",
-          comparison_levels: [
-            {
-              sql_condition: '"city_l" IS NULL OR "city_r" IS NULL',
-              label_for_charts: "Null",
-              is_null_level: true
-            },
-            {
-              sql_condition: '"city_l" = "city_r"',
-              label_for_charts: "Exact match",
-              u_probability: 0.09307809682341518,
-              tf_adjustment_column: "city",
+              u_probability: 0.0033392022342298585,
+              tf_adjustment_column: "dob",
               tf_adjustment_weight: 1.0
             },
             {
+              sql_condition: 'levenshtein("dob_l", "dob_r") <= 1',
+              label_for_charts: "Levenshtein <= 1",
+              u_probability: 0.001403139524686486
+            },
+            {
+              sql_condition: 'levenshtein("dob_l", "dob_r") <= 2',
+              label_for_charts: "Levenshtein <= 2",
+              u_probability: 0.016244038343485857
+            },
+            {
               sql_condition: "ELSE",
               label_for_charts: "All other comparisons",
-              u_probability: 0.9069219031765848
+              u_probability: 0.9790136198975978
             }
           ],
-          comparison_description: "Exact match vs. anything else"
+          comparison_description:
+            "Exact match vs. Dob within levenshtein thresholds 1, 2 vs. anything else"
         },
         {
           output_column_name: "email",
@@ -8325,12 +8495,43 @@
             {
               sql_condition: '"email_l" = "email_r"',
               label_for_charts: "Exact match",
-              u_probability: 0.004070304803112018
+              u_probability: 0.0036822814766717645,
+              tf_adjustment_column: "email",
+              tf_adjustment_weight: 1.0
+            },
+            {
+              sql_condition: 'levenshtein("email_l", "email_r") <= 2',
+              label_for_charts: "Levenshtein <= 2",
+              u_probability: 0.00035028663699197756
             },
             {
               sql_condition: "ELSE",
               label_for_charts: "All other comparisons",
-              u_probability: 0.995929695196888
+              u_probability: 0.9959674318863363
+            }
+          ],
+          comparison_description:
+            "Exact match vs. Email within levenshtein threshold 2 vs. anything else"
+        },
+        {
+          output_column_name: "city",
+          comparison_levels: [
+            {
+              sql_condition: '"city_l" IS NULL OR "city_r" IS NULL',
+              label_for_charts: "Null",
+              is_null_level: true
+            },
+            {
+              sql_condition: '"city_l" = "city_r"',
+              label_for_charts: "Exact match",
+              u_probability: 0.09256214983057671,
+              tf_adjustment_column: "city",
+              tf_adjustment_weight: 1.0
+            },
+            {
+              sql_condition: "ELSE",
+              label_for_charts: "All other comparisons",
+              u_probability: 0.9074378501694232
             }
           ],
           comparison_description: "Exact match vs. anything else"
@@ -8341,7 +8542,7 @@
       max_iterations: 10,
       em_convergence: 0.01,
       sql_dialect: "duckdb",
-      linker_uid: "aGxkVY3O"
+      linker_uid: "qBuHfYYN"
     };
   }
 
@@ -8361,10 +8562,6 @@
   }
 
 
-  function _in_csv(){return(
-  null
-  )}
-
   function _in_settings(){return(
   null
   )}
@@ -8382,7 +8579,7 @@
 `
   )}
 
-  function _draw_header(slt,original_row,d3,colspan_spec,styling_lookup){return(
+  function _draw_header(slt,original_row,d3,colspan_spec,splink_scores_filter,styling_lookup){return(
   function (table_element, data_with_inputs_clone, cols) {
     // Draw the two table header rows
     let orig_row_clone = slt.cloneDeep(original_row);
@@ -8413,7 +8610,9 @@
       .selectAll("th")
       .data(cols)
       .enter()
+      .filter((d) => splink_scores_filter({ _key: d }))
       .append("th")
+
       .attr(
         "class",
         (d, i) =>
@@ -8444,7 +8643,7 @@
         jw = match_prob_number_format(jw);
 
         let diff_view;
-        console.log("HII");
+
         if (lev > 0) {
           diff_view = insert_del_differences(comparison_value, original_value);
         } else {
@@ -8479,17 +8678,23 @@
   }
   )}
 
-  function _draw_original_row(slt,original_row,styling_lookup){return(
+  function _draw_original_row(slt,original_row,match_prob_number_format,splink_scores_filter,styling_lookup){return(
   function (table) {
     // Draw the top yellow highlighted row
     let first_cols = { clerical_match_score: null, notes_input: null };
     let orig_row_clone = slt.cloneDeep(original_row);
     orig_row_clone = { ...first_cols, ...orig_row_clone };
 
-    orig_row_clone["clerical_match_score"] = "";
+    orig_row_clone["match_probability"] = match_prob_number_format(
+      orig_row_clone["match_probability"]
+    );
+    orig_row_clone["match_weight"] = match_prob_number_format(
+      orig_row_clone["match_weight"]
+    );
 
-    orig_row_clone["match_probability"] = "Original record 👉 ";
-    orig_row_clone["match_weight"] = null;
+    orig_row_clone["clerical_match_score"] = "Original record";
+    orig_row_clone["notes_input"] =
+      "(Scores in this row are for an exact match on all columns)";
 
     let orig_row_data = [orig_row_clone];
 
@@ -8501,11 +8706,15 @@
 
     table_original_row
       .selectAll("td")
-      .data((d) => Object.values(d))
+      .data((d) =>
+        Object.entries(d).filter((entry) =>
+          splink_scores_filter({ _key: entry[0] })
+        )
+      )
       .join("td")
-      .text((d) => d)
+      .text((d) => d[1])
       .attr("class", (d, i) => {
-        let this_class = `${styling_lookup[i].css_class} original_record_cell`;
+        let this_class = `${styling_lookup[i].css_class} original_record_cell col_${d[0]}`;
         if (i == 2) {
           this_class += " orig_record_text_with_arrow_cell";
         }
@@ -8516,7 +8725,7 @@
 
   function _draw_potential_matches_spacer_row(){return(
   function (table) {
-    let pm_data = [["", "", "Potential matches 	👇"]];
+    let pm_data = [["👇 Potential matches", "", ""]];
     const potential_matches_spacer_row = table
       .selectAll("tr.potential_matches_spacer_row")
       .data(pm_data)
@@ -8529,7 +8738,7 @@
       .join("td")
       .text((d) => d)
       .attr("class", (d, i) => {
-        if (i == 2) {
+        if (i == 0) {
           return "potential_matches_text_with_arrow_cell";
         } else {
           return "";
@@ -8611,25 +8820,36 @@
 `
   )}
 
-  function _colspan_spec(){return(
-  [
-    {
-      span: 2,
-      text: "User input",
-      css_class: "user_input_column"
-    },
-    {
-      span: 2,
-      text: "Splink predictions",
-      css_class: "splink_predictions_column"
-    },
-    {
+  function _colspan_spec(show_splink_predictions_in_interface)
+  {
+    let spec = [
+      {
+        span: 2,
+        text: "User input",
+        css_class: "user_input_column"
+      }
+    ];
+
+    let splink_predictions = show_splink_predictions_in_interface.includes(
+      "Show splink predictions"
+    );
+
+    if (splink_predictions) {
+      spec.push({
+        span: 2,
+        text: "Splink predictions",
+        css_class: "splink_predictions_column"
+      });
+    }
+
+    spec.push({
       span: 100,
       text: "Source data",
       css_class: "source_data_column"
-    }
-  ]
-  )}
+    });
+    return spec;
+  }
+
 
   function _styling_lookup(colspan_spec)
   {
@@ -8649,10 +8869,45 @@
   }
 
 
-  function _styles(html){return(
-  html`
+  function _styles(html)
+  {
+    // return html`
+    // <style>
+    // #main-interface-table{
+    //   border: 1px solid black !important;
+
+    // }
+    // #main-interface-table tr td{
+    //   border: 1px solid black !important;
+    // min-width:40px;
+
+    // }
+    // </style>`;
+
+    return html`
 
 <style>
+
+body {
+  font-family: 'Open Sans Pro', sans-serif;
+  margin: 0;
+  padding: 40px;
+  background-color: white;
+  justify-content: center;
+
+
+}
+
+h1 {
+  font-family: 'Open Sans Pro', sans-serif;
+  font-weight: 600;
+  font-size: 2.0em;
+  text-transform: none;
+  color: #333;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+}
+
   
 table#main-interface-table {
   all: initial;
@@ -8664,6 +8919,7 @@ table#main-interface-table {
   border-collapse: collapse;
   overflow: scroll;
   color: #444;
+  margin-bottom: 20px;
 }
 
 #main-interface-table td:first-child {
@@ -8720,9 +8976,13 @@ table#main-interface-table {
 }
 
 
-.table_header {
-font-weight:600;
+#main-interface-table .table_header {
+  font-weight:600;
+  border-bottom: 2px solid  white;
+  
+  
 }
+
 .table_first_header {
   color: black;
 font-size: 1.2em;
@@ -8751,13 +9011,18 @@ font-size: 1.2em;
   overflow: hidden;
 }
 
-.orig_record_text_with_arrow_cell, .potential_matches_text_with_arrow_cell {
+#main-interface-table td.potential_matches_text_with_arrow_cell {
   white-space: nowrap;
   overflow: visible;
 }
 
 
+/* Orignal record */
 
+.original_record_cell.col_notes_input {
+color: #757500;
+font-size: 0.8em;
+}
 
 
 
@@ -8767,6 +9032,7 @@ details {
   border: 1px solid #ccc;
   border-radius: 4px;
   margin-bottom: 16px;
+  line-height: 1.5;
 }
 
 details summary {
@@ -8791,7 +9057,8 @@ details p {
 
 /* Download button */
 #observablehq-dl {
-  padding: 20px;
+  padding-top: 20px;
+  padding-bottom: 20px;
   border-radius: 8px;
 
   background-color: #ffffff;
@@ -8802,8 +9069,58 @@ details p {
 }
 
 
-</style>`
+</style>`;
+  }
+
+
+  function _show_splink_predictions_in_interface(slt){return(
+  slt.checkbox(
+    ["Show splink predictions"],
+    {
+      value: ["Show splink predictions"]
+    }
+  )
   )}
+
+  function _existing_labels_csv(html,slt,Event)
+  {
+    const el = html``;
+
+    const button = html`  <label>
+    Import existing labels for editing:
+    <input type="file">
+  </label>`;
+    el.appendChild(button);
+    el.value = null;
+
+    function readFileAsText(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsText(file);
+      });
+    }
+
+    // Add an event listener for the "change" event on the button
+    button.addEventListener("change", async (event) => {
+      // Get the selected file
+      const file = event.target.files.item(0);
+
+      try {
+        // Read the file contents as ArrayBuffer
+        const fileData = await readFileAsText(file);
+
+        el.value = slt.d3.csvParse(fileData);
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+      } catch (error) {
+        console.error("Error reading file:", error);
+      }
+    });
+
+    return el;
+  }
+
 
   function _checkboxes(slt){return(
   slt.checkbox(["Enable cell shading", "Enable diff view"], {
@@ -8856,13 +9173,25 @@ details p {
   }
 
 
-  function _dl(DOM,slt,output_data){return(
+  function _dl(DOM,slt,output_data,output_filename){return(
   DOM.download(
     new Blob([slt.d3.csvFormat(output_data)], { type: "text/csv" }),
-    "labels.csv",
-    "⬇️ Download labels in csv format"
+    output_filename,
+    "⬇️ Download labels in .csv format"
   )
   )}
+
+  function _copy_to_clipboard_button(html,slt,output_data)
+  {
+    const button = html`<button>📋 Copy labels to clipboard in .csv format</button>`;
+    button.onclick = () => {
+      const csvData = slt.d3.csvFormat(output_data);
+      window.navigator.clipboard.writeText(csvData);
+    };
+
+    return button;
+  }
+
 
   function _tooltip(slt){return(
   slt.d3
@@ -8872,7 +9201,7 @@ details p {
     .style("z-index", "10")
   )}
 
-  function _22(md){return(
+  function _24(md){return(
   md`### Styling`
   )}
 
@@ -9020,13 +9349,14 @@ details p {
   }
   )}
 
-  function _table_cells_d3_data_mapper(){return(
+  function _table_cells_d3_data_mapper(splink_scores_filter){return(
   function (row_data) {
     // Transform the row into an array of values
     // one for each cell.
     // The values are themselves dictionaries, so that the
     // cell can be aware of not only its value, but also e.g. the row id
     let cell_data = Object.entries(row_data);
+
     let uid_col = "unique_id";
 
     cell_data = cell_data.map((entry) => {
@@ -9042,6 +9372,8 @@ details p {
     });
 
     cell_data = cell_data.filter((d) => d["_key"] != "_row_num");
+
+    cell_data = cell_data.filter((entry) => splink_scores_filter(entry));
 
     return cell_data;
   }
@@ -9068,15 +9400,15 @@ details p {
   }
   )}
 
-  function _27(md){return(
+  function _29(md){return(
   md`## Dataflow`
   )}
 
-  function _splink_settings(globalThis,default_pairwise_comparison_data)
+  function _splink_settings(globalThis,default_splink_settings)
   {
     let ss;
     if (typeof globalThis.splink_settings_from_splink == "undefined") {
-      ss = default_pairwise_comparison_data;
+      ss = default_splink_settings;
     } else {
       ss = globalThis.splink_settings_from_splink;
     }
@@ -9092,11 +9424,13 @@ details p {
     } else {
       pcd = globalThis.pairwise_comparison_data_from_splink;
     }
+
+
     return pcd;
   }
 
 
-  function _pairwise_comparison_data_formatted(pairwise_comparison_data,match_prob_number_format)
+  function _pairwise_comparison_data_formatted(pairwise_comparison_data,match_prob_number_format,is_self_match,splink_settings,has_same_source_dataset)
   {
     let formatted_data = pairwise_comparison_data.map((d) => {
       return Object.assign({}, d);
@@ -9110,7 +9444,12 @@ details p {
       d["match_probability"] = match_prob_number_format(d["match_probability"]);
     });
 
-    
+    formatted_data = formatted_data.filter((d) => !is_self_match(d));
+
+    if (splink_settings.link_type == "link_only") {
+      formatted_data = formatted_data.filter((d) => !has_same_source_dataset(d));
+    }
+
     return formatted_data;
   }
 
@@ -9135,18 +9474,35 @@ details p {
   }
 
 
-  function _data_with_inputs(potential_matches_data,slt)
+  function _data_with_inputs(potential_matches_data,existing_labels_csv,has_existing_label,slt)
   {
-    let new_data = potential_matches_data.map((d, i) => {
+    let new_data = potential_matches_data.map((pairwise_comparison, i) => {
+      let match_score = 0.0;
+      let notes_value = "";
+
+      if (existing_labels_csv != null) {
+        // Check if thre is a row in existing_labels_csv
+        // which matches d[source_dataest_]
+
+        existing_labels_csv.forEach((existing_label) => {
+          if (has_existing_label(existing_label, pairwise_comparison)) {
+            debugger;
+            match_score = existing_label["clerical_match_score"];
+            notes_value = existing_label["notes"];
+          }
+        });
+      }
+
+      // Look up if exists in existing labels
       var clone = Object.assign(
         {
           clerical_match_score: slt.range([0, 1], {
-            value: 0,
+            value: match_score,
             step: 0.01
           }),
-          notes_input: slt.textarea({ value: "" })
+          notes_input: slt.textarea({ value: notes_value })
         },
-        d
+        pairwise_comparison
       );
       clone["_row_num"] = i;
 
@@ -9157,228 +9513,52 @@ details p {
   }
 
 
-  function _output_data(table_interface,original_row)
+  function _output_data(table_interface,has_source_dataset_column,source_dataset_column_name,original_row,unique_id_column_name)
   {
     const outputs = Object.keys(table_interface).map((key) => {
       const data = table_interface[key];
-      return {
-        unique_id_l: original_row.unique_id,
-        unique_id_r: data.unique_id,
-        match_probability: data.match_probability,
-        match_weight: data.match_weight,
-        clerical_match_score: data.clerical_match_score_value,
-        notes_input_value: data.notes_input_value
-      };
+
+      if (has_source_dataset_column) {
+        return {
+          [`${source_dataset_column_name}_l`]:
+            original_row[source_dataset_column_name],
+          [`${unique_id_column_name}_l`]: original_row[unique_id_column_name],
+          [`${source_dataset_column_name}_r`]: data[source_dataset_column_name],
+          [`${unique_id_column_name}_r`]: data[unique_id_column_name],
+          match_probability: data.match_probability,
+          match_weight: data.match_weight,
+          clerical_match_score: data.clerical_match_score_value,
+          notes_input_value: data.notes_input_value
+        };
+      } else {
+        return {
+          [`${unique_id_column_name}_l`]: original_row[unique_id_column_name],
+          [`${unique_id_column_name}_r`]: data[unique_id_column_name],
+          match_probability: data.match_probability,
+          match_weight: data.match_weight,
+          clerical_match_score: data.clerical_match_score_value,
+          notes_input_value: data.notes_input_value
+        };
+      }
     });
     return outputs;
   }
 
 
-  function _35(md){return(
-  md`## Default data`
-  )}
-
-  function _default_pairwise_comparison_data_old(slt)
+  function _output_filename(source_dataset_column_name,original_row,unique_id_column_name)
   {
-    // const data_url =
-    //   "https://gist.githubusercontent.com/RobinL/37865ded0b5d8224f73f84cf1ea36da0/raw/28f232cbe6c2b32bdbf024cef4acb66b044fb4de/00_records_for_observable.csv";
+    const sourceDatasetColumnExists = source_dataset_column_name in original_row;
 
-    const data = `match_weight,match_probability,unique_id_l,unique_id_r,first_name_l,first_name_r,gamma_first_name,bf_first_name,surname_l,surname_r,gamma_surname,bf_surname,dob_l,dob_r,gamma_dob,bf_dob,city_l,city_r,gamma_city,tf_city_l,tf_city_r,bf_city,bf_tf_adj_city,email_l,email_r,gamma_email,bf_email
-11.258293846460244,0.9995919263130351,2,0,Rob,Robert,0,0.2374219308977827,Allen,Alan,1,22.60384847607212,1971-06-24,1971-06-24,3,224.62100960803812,London,,-1,0.21279212792127922,,1.0,1.0,roberta25@smith.net,robert255@smith.net,1,206.63645011925308
-13.86852451537379,0.9999331457394093,3,0,Robert,Robert,2,85.5492422084233,Alen,Alan,2,79.15014455822713,1971-06-24,1971-06-24,3,224.62100960803812,Lonon,,-1,0.007380073800738007,,1.0,1.0,,robert255@smith.net,-1,1.0
-18.488304982136434,0.9999972806541177,1,0,Robert,Robert,2,85.5492422084233,Allen,Alan,1,22.60384847607212,1971-05-24,1971-06-24,2,93.5847881395956,,,-1,,,1.0,1.0,roberta25@smith.net,robert255@smith.net,1,206.63645011925308
-98.488304982136434,0.999999999972806541177,7,0,Robert,Robert,2,85.5492422084233,Allen,Alan,1,22.60384847607212,1971-05-24,1971-06-24,2,93.5847881395956,,,-1,,,1.0,1.0,roberta25@smith.net,robert255@smith.net,1,206.63645011925308`;
-    return slt.d3.csvParse(data);
-  }
-
-
-  function _default_splink_settings_data_old()
-  {
-    // return slt.d3.json(
-    //   "https://gist.githubusercontent.com/RobinL/37865ded0b5d8224f73f84cf1ea36da0/raw/93f65a1801a3ae4b2bbe298ac01a473d10a2d3e1/01_splink_settings.json"
-    // );
-
-    const data = `{
-    "probability_two_random_records_match": 0.009738088021208104,
-    "link_type": "dedupe_only",
-    "comparisons": [
-        {
-            "output_column_name": "first_name",
-            "comparison_levels": [
-                {
-                    "sql_condition": "first_name_l IS NULL OR first_name_r IS NULL",
-                    "label_for_charts": "Null",
-                    "is_null_level": true
-                },
-                {
-                    "sql_condition": "first_name_l = first_name_r",
-                    "label_for_charts": "Exact match",
-                    "m_probability": 0.49563564273680927,
-                    "u_probability": 0.0057935713975033705
-                },
-                {
-                    "sql_condition": "levenshtein(first_name_l, first_name_r) <= 2",
-                    "label_for_charts": "levenshtein <= 2",
-                    "m_probability": 0.27072063394450885,
-                    "u_probability": 0.010119901990634016
-                },
-                {
-                    "sql_condition": "ELSE",
-                    "label_for_charts": "All other comparisons",
-                    "m_probability": 0.23364372331868066,
-                    "u_probability": 0.9840865266118626
-                }
-            ],
-            "comparison_description": "Exact match vs. levenshtein at threshold 2 vs. anything else"
-        },
-        {
-            "output_column_name": "surname",
-            "comparison_levels": [
-                {
-                    "sql_condition": "surname_l IS NULL OR surname_r IS NULL",
-                    "label_for_charts": "Null",
-                    "is_null_level": true
-                },
-                {
-                    "sql_condition": "surname_l = surname_r",
-                    "label_for_charts": "Exact match",
-                    "m_probability": 0.4409309402659144,
-                    "u_probability": 0.004889975550122249
-                },
-                {
-                    "sql_condition": "levenshtein(surname_l, surname_r) <= 1",
-                    "label_for_charts": "levenshtein <= 1",
-                    "m_probability": 0.187141318174158,
-                    "u_probability": 0.002364383782476692
-                },
-                {
-                    "sql_condition": "levenshtein(surname_l, surname_r) <= 2",
-                    "label_for_charts": "levenshtein <= 2",
-                    "m_probability": 0.11323146703102362,
-                    "u_probability": 0.005009388872469557
-                },
-                {
-                    "sql_condition": "ELSE",
-                    "label_for_charts": "All other comparisons",
-                    "m_probability": 0.2586962745289042,
-                    "u_probability": 0.9877362517949315
-                }
-            ],
-            "comparison_description": "Exact match vs. levenshtein at thresholds 1, 2 vs. anything else"
-        },
-        {
-            "output_column_name": "dob",
-            "comparison_levels": [
-                {
-                    "sql_condition": "dob_l IS NULL OR dob_r IS NULL",
-                    "label_for_charts": "Null",
-                    "is_null_level": true
-                },
-                {
-                    "sql_condition": "dob_l = dob_r",
-                    "label_for_charts": "Exact match",
-                    "m_probability": 0.39258086363927386,
-                    "u_probability": 0.0017477477477477479
-                },
-                {
-                    "sql_condition": "levenshtein(dob_l, dob_r) <= 1",
-                    "label_for_charts": "levenshtein <= 1",
-                    "m_probability": 0.14988554656992287,
-                    "u_probability": 0.0016016016016016017
-                },
-                {
-                    "sql_condition": "levenshtein(dob_l, dob_r) <= 2",
-                    "label_for_charts": "levenshtein <= 2",
-                    "m_probability": 0.2067443495092833,
-                    "u_probability": 0.015517517517517518
-                },
-                {
-                    "sql_condition": "ELSE",
-                    "label_for_charts": "All other comparisons",
-                    "m_probability": 0.25078924028151967,
-                    "u_probability": 0.9811331331331331
-                }
-            ],
-            "comparison_description": "Exact match vs. levenshtein at thresholds 1, 2 vs. anything else"
-        },
-        {
-            "output_column_name": "city",
-            "comparison_levels": [
-                {
-                    "sql_condition": "city_l IS NULL OR city_r IS NULL",
-                    "label_for_charts": "Null",
-                    "is_null_level": true
-                },
-                {
-                    "sql_condition": "city_l = city_r",
-                    "label_for_charts": "Exact match",
-                    "m_probability": 0.5656846255360627,
-                    "u_probability": 0.0551475711801453,
-                    "tf_adjustment_column": "city",
-                    "tf_adjustment_weight": 1.0
-                },
-                {
-                    "sql_condition": "ELSE",
-                    "label_for_charts": "All other comparisons",
-                    "m_probability": 0.43431537446393775,
-                    "u_probability": 0.9448524288198547
-                }
-            ],
-            "comparison_description": "Exact match vs. anything else"
-        },
-        {
-            "output_column_name": "email",
-            "comparison_levels": [
-                {
-                    "sql_condition": "email_l IS NULL OR email_r IS NULL",
-                    "label_for_charts": "Null",
-                    "is_null_level": true
-                },
-                {
-                    "sql_condition": "email_l = email_r",
-                    "label_for_charts": "Exact match",
-                    "m_probability": 0.5603584650366957,
-                    "u_probability": 0.0021938713143283602
-                },
-                {
-                    "sql_condition": "levenshtein(email_l, email_r) <= 1",
-                    "label_for_charts": "levenshtein <= 1",
-                    "m_probability": 0.17269329250389986,
-                    "u_probability": 0.0007334349848487773
-                },
-                {
-                    "sql_condition": "levenshtein(email_l, email_r) <= 2",
-                    "label_for_charts": "levenshtein <= 2",
-                    "m_probability": 0.12828947158266213,
-                    "u_probability": 0.000620846281034272
-                },
-                {
-                    "sql_condition": "ELSE",
-                    "label_for_charts": "All other comparisons",
-                    "m_probability": 0.13865877087674205,
-                    "u_probability": 0.9964518474197885
-                }
-            ],
-            "comparison_description": "Exact match vs. levenshtein at thresholds 1, 2 vs. anything else"
-        }
-    ],
-    "blocking_rules_to_generate_predictions": [
-        "l.first_name = r.first_name",
-        "l.surname = r.surname"
-    ],
-    "retain_matching_columns": true,
-    "retain_intermediate_calculation_columns": true,
-    "additional_columns_to_retain": [
-        "cluster"
-    ],
-    "sql_dialect": "duckdb"
-}`;
-    return JSON.parse(data);
+    if (sourceDatasetColumnExists) {
+      return `labels_${original_row[source_dataset_column_name]}_${original_row[unique_id_column_name]}.csv`;
+    } else {
+      return `labels_${original_row[unique_id_column_name]}.csv`;
+    }
   }
 
 
   function _38(md){return(
-  md`## Derived constants `
+  md`## Constants`
   )}
 
   function _comparison_records_suffix(get_suffix_of_comparison_records_l_or_r,pairwise_comparison_data,unique_id_column_name){return(
@@ -9435,8 +9615,57 @@ details p {
   }
 
 
-  function _45(md){return(
+  function _has_source_dataset_column(pairwise_comparison_data,source_dataset_column_name)
+  {
+    let example_row = pairwise_comparison_data[0];
+
+    return `${source_dataset_column_name}_l` in example_row;
+  }
+
+
+  function _46(md){return(
   md`## Pure functions`
+  )}
+
+  function _is_self_match(has_source_dataset_column,source_dataset_column_name,unique_id_column_name){return(
+  function (record) {
+    // Since splink uses `linker.find_matches_to_new_records` under the hood, and this method
+    // assumes it's a new, not an existing record, we need to filter out the 'self match'
+
+    if (has_source_dataset_column) {
+      // Filter out records with both source_dataset_column_name and unique_id_column_name equal to those in the example_row
+      return (
+        record[`${source_dataset_column_name}_l`] ==
+          record[`${source_dataset_column_name}_r`] &&
+        record[`${unique_id_column_name}_l`] ==
+          record[`${unique_id_column_name}_r`]
+      );
+    } else {
+      // Filter out records with unique_id_column_name equal to that in the example_row
+      return (
+        record[`${unique_id_column_name}_l`] ==
+        record[`${unique_id_column_name}_r`]
+      );
+    }
+  }
+  )}
+
+  function _has_same_source_dataset(pairwise_comparison_data,source_dataset_column_name){return(
+  function (record) {
+    let example_row = pairwise_comparison_data[0];
+
+    const sourceDatasetColumnExists =
+      `${source_dataset_column_name}_l` in example_row;
+
+    if (sourceDatasetColumnExists) {
+      return (
+        record[`${source_dataset_column_name}_l`] ==
+        record[`${source_dataset_column_name}_r`]
+      );
+    } else {
+      return true;
+    }
+  }
   )}
 
   function _get_output_columns(){return(
@@ -9453,6 +9682,62 @@ details p {
     output_columns.unshift("match_probability");
     output_columns.unshift("match_weight");
     return output_columns;
+  }
+  )}
+
+  function _has_existing_label(has_source_dataset_column,original_row,source_dataset_column_name,unique_id_column_name){return(
+  function (label_pairwise_comparison, comparison_record) {
+    let original_row_id;
+    let comparison_record_id;
+    let pw_comparison_id_l;
+    let pw_comparison_id_r;
+
+    if (has_source_dataset_column) {
+      original_row_id =
+        original_row[source_dataset_column_name] +
+        "_" +
+        original_row[unique_id_column_name];
+      comparison_record_id =
+        comparison_record[source_dataset_column_name] +
+        "_" +
+        comparison_record[unique_id_column_name];
+      pw_comparison_id_l =
+        label_pairwise_comparison[`${source_dataset_column_name}_l`] +
+        "_" +
+        label_pairwise_comparison[`${unique_id_column_name}_l`];
+      pw_comparison_id_r =
+        label_pairwise_comparison[`${source_dataset_column_name}_r`] +
+        "_" +
+        label_pairwise_comparison[`${unique_id_column_name}_r`];
+    } else {
+      original_row_id = original_row[unique_id_column_name];
+      comparison_record_id = comparison_record[unique_id_column_name];
+      pw_comparison_id_l =
+        label_pairwise_comparison[`${unique_id_column_name}_l`];
+      pw_comparison_id_r =
+        label_pairwise_comparison[`${unique_id_column_name}_r`];
+    }
+
+    return (
+      (original_row_id == pw_comparison_id_l &&
+        comparison_record_id == pw_comparison_id_r) ||
+      (original_row_id == pw_comparison_id_r &&
+        comparison_record_id == pw_comparison_id_l)
+    );
+  }
+  )}
+
+  function _splink_scores_filter(show_splink_predictions_in_interface){return(
+  function (data) {
+    let show_splink_scores = show_splink_predictions_in_interface.includes(
+      "Show splink predictions"
+    );
+
+    if (show_splink_scores) {
+      return true;
+    } else {
+      return !["match_probability", "match_weight"].includes(data._key);
+    }
   }
   )}
 
@@ -9527,9 +9812,10 @@ details p {
   }
   )}
 
-  function _get_original_record(transform_pairwise_comparison_to_label_format){return(
+  function _get_original_record(is_self_match,transform_pairwise_comparison_to_label_format){return(
   function (find_matches_data, suffix, unique_id_colname) {
-    let first_record = find_matches_data[0];
+    
+    let first_record = find_matches_data.filter((d) => is_self_match(d))[0];
     return transform_pairwise_comparison_to_label_format(
       first_record,
       suffix,
@@ -9713,7 +9999,7 @@ details p {
   }
   )}
 
-  function _55(md){return(
+  function _60(md){return(
   md`### Formatting`
   )}
 
@@ -9744,7 +10030,7 @@ details p {
     .range(["white", "rgb(143, 200, 255)", "dodgerblue"])
   )}
 
-  function _60(md){return(
+  function _65(md){return(
   md`## Constants`
   )}
 
@@ -9764,7 +10050,7 @@ details p {
   }
 
 
-  function _64(md){return(
+  function _69(md){return(
   md`## Embedding things
 `
   )}
@@ -9773,7 +10059,7 @@ details p {
   "http://127.0.0.1:8080/dist/slt.js"
   )}
 
-  function _66(md){return(
+  function _71(md){return(
   md`## TODO:
 
 
@@ -9789,40 +10075,42 @@ details p {
     main.variable(observer("viewof refresh")).define("viewof refresh", ["Inputs"], _refresh);
     main.variable(observer("refresh")).define("refresh", ["Generators", "viewof refresh"], (G, _) => G.input(_));
     main.variable(observer("slt")).define("slt", ["globalThis","require","localUrl","refresh"], _slt);
-    main.variable(observer("in_csv")).define("in_csv", _in_csv);
     main.variable(observer("in_settings")).define("in_settings", _in_settings);
     main.variable(observer("blurb")).define("blurb", ["html"], _blurb);
-    main.variable(observer("draw_header")).define("draw_header", ["slt","original_row","d3","colspan_spec","styling_lookup"], _draw_header);
+    main.variable(observer("draw_header")).define("draw_header", ["slt","original_row","d3","colspan_spec","splink_scores_filter","styling_lookup"], _draw_header);
     main.variable(observer("render_tooltip_contents")).define("render_tooltip_contents", ["original_row","leven","jaro_winkler_distance","match_prob_number_format","insert_del_differences"], _render_tooltip_contents);
-    main.variable(observer("draw_original_row")).define("draw_original_row", ["slt","original_row","styling_lookup"], _draw_original_row);
+    main.variable(observer("draw_original_row")).define("draw_original_row", ["slt","original_row","match_prob_number_format","splink_scores_filter","styling_lookup"], _draw_original_row);
     main.variable(observer("draw_potential_matches_spacer_row")).define("draw_potential_matches_spacer_row", _draw_potential_matches_spacer_row);
     main.variable(observer("draw_potential_matches_rows")).define("draw_potential_matches_rows", ["table_cells_d3_data_mapper","columns_to_highlight_similarity","styling_lookup","HTMLElement","form_oninput_update_value","redraw_potential_match_cells","slt","render_tooltip_contents","tooltip"], _draw_potential_matches_rows);
     main.variable(observer("fonts")).define("fonts", ["html"], _fonts);
-    main.variable(observer("colspan_spec")).define("colspan_spec", _colspan_spec);
+    main.variable(observer("colspan_spec")).define("colspan_spec", ["show_splink_predictions_in_interface"], _colspan_spec);
     main.variable(observer("styling_lookup")).define("styling_lookup", ["colspan_spec"], _styling_lookup);
     main.variable(observer("styles")).define("styles", ["html"], _styles);
+    main.variable(observer("viewof show_splink_predictions_in_interface")).define("viewof show_splink_predictions_in_interface", ["slt"], _show_splink_predictions_in_interface);
+    main.variable(observer("show_splink_predictions_in_interface")).define("show_splink_predictions_in_interface", ["Generators", "viewof show_splink_predictions_in_interface"], (G, _) => G.input(_));
+    main.variable(observer("viewof existing_labels_csv")).define("viewof existing_labels_csv", ["html","slt","Event"], _existing_labels_csv);
+    main.variable(observer("existing_labels_csv")).define("existing_labels_csv", ["Generators", "viewof existing_labels_csv"], (G, _) => G.input(_));
     main.variable(observer("viewof checkboxes")).define("viewof checkboxes", ["slt"], _checkboxes);
     main.variable(observer("checkboxes")).define("checkboxes", ["Generators", "viewof checkboxes"], (G, _) => G.input(_));
     main.variable(observer("viewof table_interface")).define("viewof table_interface", ["slt","data_with_inputs","unique_id_column_name","draw_header","draw_original_row","draw_potential_matches_spacer_row","draw_potential_matches_rows","Event"], _table_interface);
     main.variable(observer("table_interface")).define("table_interface", ["Generators", "viewof table_interface"], (G, _) => G.input(_));
-    main.variable(observer("dl")).define("dl", ["DOM","slt","output_data"], _dl);
+    main.variable(observer("dl")).define("dl", ["DOM","slt","output_data","output_filename"], _dl);
+    main.variable(observer("copy_to_clipboard_button")).define("copy_to_clipboard_button", ["html","slt","output_data"], _copy_to_clipboard_button);
     main.variable(observer("tooltip")).define("tooltip", ["slt"], _tooltip);
-    main.variable(observer()).define(["md"], _22);
+    main.variable(observer()).define(["md"], _24);
     main.variable(observer("shade_potential_match_cells")).define("shade_potential_match_cells", ["original_row","white_green_colour_scale","columns_to_highlight_similarity","leven","white_blue_colour_scale","transitive_highlight_width","padding_with_highlight"], _shade_potential_match_cells);
     main.variable(observer("redraw_potential_match_cells")).define("redraw_potential_match_cells", ["table_cells_d3_data_mapper","checkboxes","columns_to_highlight_similarity","original_row","insert_del_differences","slt","shade_potential_match_cells"], _redraw_potential_match_cells);
-    main.variable(observer("table_cells_d3_data_mapper")).define("table_cells_d3_data_mapper", _table_cells_d3_data_mapper);
+    main.variable(observer("table_cells_d3_data_mapper")).define("table_cells_d3_data_mapper", ["splink_scores_filter"], _table_cells_d3_data_mapper);
     main.variable(observer("form_oninput_update_value")).define("form_oninput_update_value", ["Event"], _form_oninput_update_value);
-    main.variable(observer()).define(["md"], _27);
-    main.variable(observer("splink_settings")).define("splink_settings", ["globalThis","default_pairwise_comparison_data"], _splink_settings);
+    main.variable(observer()).define(["md"], _29);
+    main.variable(observer("splink_settings")).define("splink_settings", ["globalThis","default_splink_settings"], _splink_settings);
     main.variable(observer("pairwise_comparison_data")).define("pairwise_comparison_data", ["globalThis","default_pairwise_comparison_data"], _pairwise_comparison_data);
-    main.variable(observer("pairwise_comparison_data_formatted")).define("pairwise_comparison_data_formatted", ["pairwise_comparison_data","match_prob_number_format"], _pairwise_comparison_data_formatted);
+    main.variable(observer("pairwise_comparison_data_formatted")).define("pairwise_comparison_data_formatted", ["pairwise_comparison_data","match_prob_number_format","is_self_match","splink_settings","has_same_source_dataset"], _pairwise_comparison_data_formatted);
     main.variable(observer("original_row")).define("original_row", ["get_original_record","pairwise_comparison_data","original_record_suffix","unique_id_column_name"], _original_row);
     main.variable(observer("potential_matches_data")).define("potential_matches_data", ["get_potential_matches","pairwise_comparison_data_formatted","comparison_records_suffix","unique_id_column_name"], _potential_matches_data);
-    main.variable(observer("data_with_inputs")).define("data_with_inputs", ["potential_matches_data","slt"], _data_with_inputs);
-    main.variable(observer("output_data")).define("output_data", ["table_interface","original_row"], _output_data);
-    main.variable(observer()).define(["md"], _35);
-    main.variable(observer("default_pairwise_comparison_data_old")).define("default_pairwise_comparison_data_old", ["slt"], _default_pairwise_comparison_data_old);
-    main.variable(observer("default_splink_settings_data_old")).define("default_splink_settings_data_old", _default_splink_settings_data_old);
+    main.variable(observer("data_with_inputs")).define("data_with_inputs", ["potential_matches_data","existing_labels_csv","has_existing_label","slt"], _data_with_inputs);
+    main.variable(observer("output_data")).define("output_data", ["table_interface","has_source_dataset_column","source_dataset_column_name","original_row","unique_id_column_name"], _output_data);
+    main.variable(observer("output_filename")).define("output_filename", ["source_dataset_column_name","original_row","unique_id_column_name"], _output_filename);
     main.variable(observer()).define(["md"], _38);
     main.variable(observer("comparison_records_suffix")).define("comparison_records_suffix", ["get_suffix_of_comparison_records_l_or_r","pairwise_comparison_data","unique_id_column_name"], _comparison_records_suffix);
     main.variable(observer("original_record_suffix")).define("original_record_suffix", ["get_suffix_of_original_record_l_or_r","pairwise_comparison_data","unique_id_column_name"], _original_record_suffix);
@@ -9830,28 +10118,33 @@ details p {
     main.variable(observer("source_dataset_column_name")).define("source_dataset_column_name", ["splink_settings"], _source_dataset_column_name);
     main.variable(observer("columns_to_highlight_similarity")).define("columns_to_highlight_similarity", ["unique_id_column_name","source_dataset_column_name","additional_columns_to_retain","pairwise_comparison_data"], _columns_to_highlight_similarity);
     main.variable(observer("additional_columns_to_retain")).define("additional_columns_to_retain", ["splink_settings"], _additional_columns_to_retain);
-    main.variable(observer()).define(["md"], _45);
+    main.variable(observer("has_source_dataset_column")).define("has_source_dataset_column", ["pairwise_comparison_data","source_dataset_column_name"], _has_source_dataset_column);
+    main.variable(observer()).define(["md"], _46);
+    main.variable(observer("is_self_match")).define("is_self_match", ["has_source_dataset_column","source_dataset_column_name","unique_id_column_name"], _is_self_match);
+    main.variable(observer("has_same_source_dataset")).define("has_same_source_dataset", ["pairwise_comparison_data","source_dataset_column_name"], _has_same_source_dataset);
     main.variable(observer("get_output_columns")).define("get_output_columns", _get_output_columns);
+    main.variable(observer("has_existing_label")).define("has_existing_label", ["has_source_dataset_column","original_row","source_dataset_column_name","unique_id_column_name"], _has_existing_label);
+    main.variable(observer("splink_scores_filter")).define("splink_scores_filter", ["show_splink_predictions_in_interface"], _splink_scores_filter);
     main.variable(observer("get_suffix_of_original_record_l_or_r")).define("get_suffix_of_original_record_l_or_r", _get_suffix_of_original_record_l_or_r);
     main.variable(observer("get_suffix_of_comparison_records_l_or_r")).define("get_suffix_of_comparison_records_l_or_r", ["get_suffix_of_original_record_l_or_r"], _get_suffix_of_comparison_records_l_or_r);
     main.variable(observer("transform_pairwise_comparison_to_label_format")).define("transform_pairwise_comparison_to_label_format", _transform_pairwise_comparison_to_label_format);
-    main.variable(observer("get_original_record")).define("get_original_record", ["transform_pairwise_comparison_to_label_format"], _get_original_record);
+    main.variable(observer("get_original_record")).define("get_original_record", ["is_self_match","transform_pairwise_comparison_to_label_format"], _get_original_record);
     main.variable(observer("get_potential_matches")).define("get_potential_matches", ["transform_pairwise_comparison_to_label_format"], _get_potential_matches);
     main.variable(observer("leven")).define("leven", _leven);
     main.variable(observer("jaro_winkler_distance")).define("jaro_winkler_distance", ["slt"], _jaro_winkler_distance);
     main.variable(observer("insert_del_differences")).define("insert_del_differences", ["slt"], _insert_del_differences);
-    main.variable(observer()).define(["md"], _55);
+    main.variable(observer()).define(["md"], _60);
     main.variable(observer("match_prob_number_format")).define("match_prob_number_format", _match_prob_number_format);
     main.variable(observer("red_orange_green_colour_scale")).define("red_orange_green_colour_scale", ["slt"], _red_orange_green_colour_scale);
     main.variable(observer("white_green_colour_scale")).define("white_green_colour_scale", ["slt"], _white_green_colour_scale);
     main.variable(observer("white_blue_colour_scale")).define("white_blue_colour_scale", ["slt"], _white_blue_colour_scale);
-    main.variable(observer()).define(["md"], _60);
+    main.variable(observer()).define(["md"], _65);
     main.variable(observer("table_cell_padding")).define("table_cell_padding", _table_cell_padding);
     main.variable(observer("transitive_highlight_width")).define("transitive_highlight_width", _transitive_highlight_width);
     main.variable(observer("padding_with_highlight")).define("padding_with_highlight", ["table_cell_padding","transitive_highlight_width"], _padding_with_highlight);
-    main.variable(observer()).define(["md"], _64);
+    main.variable(observer()).define(["md"], _69);
     main.variable(observer("localUrl")).define("localUrl", _localUrl);
-    main.variable(observer()).define(["md"], _66);
+    main.variable(observer()).define(["md"], _71);
     return main;
   }
 
@@ -30966,6 +31259,7 @@ details p {
   exports.jw_distance = jaroWinkler;
   exports.range = range$3;
   exports.textarea = textarea;
+  exports.toggle = toggle;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 

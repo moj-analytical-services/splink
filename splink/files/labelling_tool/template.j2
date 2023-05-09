@@ -25,8 +25,14 @@
         <h1>Splink Clerical Labelling Tool</h1>
         <div id="observablehq-blurb"></div>
         <div id="observablehq-checkboxes"></div>
+        <div id="observablehq-show_splink_predictions_in_interface"></div>
+        <div id="observablehq-existing_labels_csv"></div>
         <div id="observablehq-table-interface"></div>
         <div id="observablehq-dl"></div>
+        <div id="observablehq-copy_to_clipboard_button"></div>
+
+
+
 
     </div>
 
@@ -55,9 +61,14 @@
 
         if (name === "styles") return new slt.Inspector(document.querySelector("#observablehq-styles"));
         if (name === "viewof checkboxes") return new slt.Inspector(document.querySelector("#observablehq-checkboxes"));
+        if (name === "viewof show_splink_predictions_in_interface") return new slt.Inspector(document.querySelector("#observablehq-show_splink_predictions_in_interface"));
         if (name === "viewof table_interface") return new slt.Inspector(document.querySelector("#observablehq-table-interface"));
+        if (name === "viewof existing_labels_csv") return new slt.Inspector(document.querySelector("#observablehq-existing_labels_csv"));
         if (name === "dl") return new slt.Inspector(document.querySelector("#observablehq-dl"));
+        if (name === "copy_to_clipboard_button") return new slt.Inspector(document.querySelector("#observablehq-copy_to_clipboard_button"));
         if (name === "blurb") return new slt.Inspector(document.querySelector("#observablehq-blurb"));
+
+
 
     })
 </script>
