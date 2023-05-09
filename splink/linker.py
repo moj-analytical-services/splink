@@ -80,7 +80,7 @@ from .term_frequencies import (
     compute_term_frequencies_from_concat_with_tf,
     term_frequencies_for_single_column_sql,
     term_frequencies_from_concat_with_tf,
-    tf_adjustment_chart
+    tf_adjustment_chart,
 )
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -2604,12 +2604,13 @@ class Linker:
         return self._settings_obj.match_weights_chart()
 
     def tf_adjustment_chart(
-            self, 
-            column_name: str, 
-            n_most_freq: int = 10,
-            n_least_freq: int = 10,
-            vals_to_include: list = None,
-            as_dict: bool = False):
+        self,
+        column_name: str,
+        n_most_freq: int = 10,
+        n_least_freq: int = 10,
+        vals_to_include: list = None,
+        as_dict: bool = False,
+    ):
         """Display a chart showing the impact of term frequency adjustments on a specific comparison level.
         Each value
 
@@ -2619,7 +2620,7 @@ class Linker:
                 Default to 10.
             n_least_freq (int, optional): Number of least frequent values to show. If this or `n_most_freq` set to None, all values will be shown.
                 Default to 10.
-            vals_to_include (list, optional): Specific values for which to show term frequency adjustments. 
+            vals_to_include (list, optional): Specific values for which to show term frequency adjustments.
                 Defaults to None.
 
         Returns:
@@ -2627,7 +2628,7 @@ class Linker:
                 The vegalite spec is available as a dictionary using the `spec`
                 attribute.
         """
-        
+
         # Columns with TF adjustments
         cols = [c.input_name for c in self._settings_obj._term_frequency_columns]
         if column_name not in cols:
@@ -2635,7 +2636,9 @@ class Linker:
                 f"{column_name} is not a valid comparison column, or does not have term frequency adjustment activated"
             )
 
-        return tf_adjustment_chart(self, column_name, n_most_freq, n_least_freq, vals_to_include, as_dict)
+        return tf_adjustment_chart(
+            self, column_name, n_most_freq, n_least_freq, vals_to_include, as_dict
+        )
 
     def m_u_parameters_chart(self):
         """Display a chart of the m and u parameters of the linkage model

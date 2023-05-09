@@ -157,13 +157,17 @@ def compute_term_frequencies_from_concat_with_tf(linker: "Linker"):
     return tf_table
 
 
-def tf_adjustment_chart(linker: Linker, col, n_most_freq, n_least_freq, vals_to_include, as_dict):
+def tf_adjustment_chart(
+    linker: Linker, col, n_most_freq, n_least_freq, vals_to_include, as_dict
+):
 
     # Data for chart
     df_predict = [
-        t for t in linker._names_of_tables_created_by_splink if "df_predict" in t][0]
+        t for t in linker._names_of_tables_created_by_splink if "df_predict" in t
+    ][0]
 
-    df = linker.query_sql(f"""
+    df = linker.query_sql(
+        f"""
         WITH tmp AS (
         select distinct
         gamma_{col} AS gamma,
@@ -176,7 +180,8 @@ def tf_adjustment_chart(linker: Linker, col, n_most_freq, n_least_freq, vals_to_
         row_number() over (partition by gamma order by log2_bf_tf desc) AS least_freq_rank,
         row_number() over (partition by gamma order by log2_bf_tf) AS most_freq_rank
     FROM tmp
-    """)
+    """
+    )
 
     # Filter values
     selected = False if not vals_to_include else df["value"].isin(vals_to_include)
@@ -187,13 +192,16 @@ def tf_adjustment_chart(linker: Linker, col, n_most_freq, n_least_freq, vals_to_
 
     # Select relevant comparison column and levels
     c = linker._settings_obj._get_comparison_by_output_column_name(col)
-    cl = [l for l in c._as_detailed_records if l["has_tf_adjustments"]
-          and l["tf_adjustment_column"] == col]
+    cl = [
+        l
+        for l in c._as_detailed_records
+        if l["has_tf_adjustments"] and l["tf_adjustment_column"] == col
+    ]
     tf_levels = [str(l["comparison_vector_value"]) for l in cl]
     labels = [l["label_for_charts"] for l in cl]
 
-    df = df[df["gamma"].astype('str').isin(tf_levels)].sort_values("least_freq_rank")
-    
+    df = df[df["gamma"].astype("str").isin(tf_levels)].sort_values("least_freq_rank")
+
     chart_path = "tf_adjustment_chart.json"
     chart = load_chart_definition(chart_path)
 
@@ -206,6 +214,4 @@ def tf_adjustment_chart(linker: Linker, col, n_most_freq, n_least_freq, vals_to_
     chart["params"][0]["bind"]["options"] = tf_levels
     chart["params"][0]["bind"]["labels"] = labels
 
-
     return vegalite_or_json(chart, as_dict=as_dict)
-    
