@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 
 from .input_column import InputColumn, remove_quotes_from_identifiers
 
+from .charts import load_chart_definition, vegalite_or_json
+
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from .linker import Linker
@@ -155,7 +157,7 @@ def compute_term_frequencies_from_concat_with_tf(linker: "Linker"):
     return tf_table
 
 
-def tf_adjustment_chart(linker: Linker, col, n_most_freq, n_least_freq, vals_to_include):
+def tf_adjustment_chart(linker: Linker, col, n_most_freq, n_least_freq, vals_to_include, as_dict):
 
     # Data for chart
     df_predict = [
@@ -165,7 +167,7 @@ def tf_adjustment_chart(linker: Linker, col, n_most_freq, n_least_freq, vals_to_
         WITH tmp AS (
         select distinct
         gamma_{col} AS gamma,
-        CASE WHEN tf_{col}_l >= tf_{col}_r THEN {col}_l ELSE {col}_r END AS {col},
+        CASE WHEN tf_{col}_l >= tf_{col}_r THEN {col}_l ELSE {col}_r END AS value,
         log(bf_tf_adj_{col})/log(2) AS log2_bf_tf,
         log(bf_{col})/log(2) AS log2_bf
         from {df_predict}
@@ -177,7 +179,7 @@ def tf_adjustment_chart(linker: Linker, col, n_most_freq, n_least_freq, vals_to_
     """)
 
     # Filter values
-    selected = False if not vals_to_include else df[col].isin(vals_to_include)
+    selected = False if not vals_to_include else df["value"].isin(vals_to_include)
     least_freq = True if not n_least_freq else df["least_freq_rank"] <= n_least_freq
     most_freq = True if not n_most_freq else df["most_freq_rank"] <= n_most_freq
     mask = selected | least_freq | most_freq
@@ -196,7 +198,10 @@ def tf_adjustment_chart(linker: Linker, col, n_most_freq, n_least_freq, vals_to_
     chart = load_chart_definition(chart_path)
 
     # Complete chart schema
-    chart["data"] = df
+    chart["data"]["values"] = df.to_dict("records")
+    chart["layer"][0]["encoding"]["tooltip"][0]["title"] = col
+    chart["layer"][0]["encoding"]["x"]["title"] = col
+    chart["layer"][-1]["encoding"]["x"]["title"] = col
     chart["params"][0]["value"] = max(tf_levels)
     chart["params"][0]["bind"]["options"] = tf_levels
     chart["params"][0]["bind"]["labels"] = labels

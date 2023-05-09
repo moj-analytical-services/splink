@@ -17,33 +17,32 @@
     },
     "layer": [
         {
-            "mark": {"type": "point", "filled": True, "size": 100},
+            "mark": {"type": "point", "filled": true, "size": 100},
             "encoding": {
                 "color": {
                     "type": "quantitative",
                     "field": "log2_bf_tf",
                     "title": "TF adjustment weight",
-                    "scale": {"domain": [-2.5, 2.5], "scheme": "redyellowgreen"},
+                    "scale": {"domain": [-2.5, 2.5], "scheme": "redyellowgreen"}
                 },
                 "tooltip": [
-                    {"type": "nominal", "field": f"{col}"},
-                    {"type": "nominal", "field": f"gamma"},
+                    {"type": "nominal", "field": "value"},
+                    {"type": "nominal", "field": "gamma"},
                     {"type": "quantitative", "field": "log2_bf"},
                     {"type": "quantitative", "field": "log2_bf_tf"},
                     {"type": "quantitative", "field": "log2_bf_final"}
                 ],
                 "x": {
                     "type": "ordinal",
-                    "field": f"{col}",
-                    "title": f"{col}",
+                    "field": "value",
                     "axis": {"labelAngle": -60, "labelFontSize": 16, "titleFontSize": 20},
                     "sort": {"field": "log2_bf_final", "order": "ascending"}
                 },
                 "y": {
                     "type": "quantitative",
                     "field": "log2_bf_final",
-                    "title": "TF-adjusted match weight",
-                    "axis": {"titleFontSize": 18, "labelFontSize": 16},
+                    "title": "Match weight",
+                    "axis": {"titleFontSize": 18, "labelFontSize": 16}
                 }
             },
             "transform": [
@@ -64,7 +63,7 @@
             "encoding": {
                 "x": {
                     "type": "ordinal",
-                    "field": f"{col}",
+                    "field": "value",
                     "sort": {"field": "log2_bf_final", "order": "ascending"}
                 },
                 "y": {
@@ -80,8 +79,8 @@
                     "field": "log2_bf_tf",
                     "title": "TF adjustment weight",
                     "scale": {"domain": [-2.5, 2.5], "scheme": "redyellowgreen"},
-                    "legend": None
-                },
+                    "legend": null
+                }
             },
             "transform": [
                 {
@@ -92,4 +91,5 @@
             ]
         }
     ],
+    "data": {"values":[]}
 }
