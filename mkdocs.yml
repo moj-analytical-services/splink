@@ -121,7 +121,7 @@ nav:
         - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
         - Linting: "dev_guides/changing_splink/lint.md"
         - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
-        - Running Tests: "dev_guides/changing_splink/running_tests_locally.md"
+        - Running Tests: "dev_guides/changing_splink/testing.md"
       - Caching and pipelining: "dev_guides/caching.md"
       - Understanding and debugging Splink: "dev_guides/debug_modes.md"
       - Spark caching: "dev_guides/spark_pipelining_and_caching.md"
