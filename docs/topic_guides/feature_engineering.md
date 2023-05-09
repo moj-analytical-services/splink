@@ -21,14 +21,27 @@ Below are some examples of features that be created from common columns, and how
 Many datasets contain postcode data and there are a number of ways to compare the postcode strings.
 
 For example, levenshtein distances are useful to spot any typos/character swaps:
+=== "DuckDB"
+    ```python
+    import splink.duckdb.duckdb_comparison_library as cl
 
-```python
-import splink.duckdb.duckdb_comparison_library as cl
+    postcode_comparison = cl.levenshtein_at_thresholds("postcode", [2])
+    print(postcode_comparison.human_readable_description)
+    ```
+=== "Spark"
+    ```python
+    import splink.spark.spark_comparison_library as cl
 
-postcode_comparison = cl.levenshtein_at_thresholds("postcode", [2])
-print(postcode_comparison.human_readable_description)
-```
+    postcode_comparison = cl.levenshtein_at_thresholds("postcode", [2])
+    print(postcode_comparison.human_readable_description)
+    ```
+=== "Athena"
+    ```python
+    import splink.athena.athena_comparison_library as cl
 
+    postcode_comparison = cl.levenshtein_at_thresholds("postcode", [2])
+    print(postcode_comparison.human_readable_description)
+    ```    
 >
 > Comparison 'Exact match vs. levenshtein at threshold 2 vs. anything else' of "postcode".
 >
@@ -105,23 +118,60 @@ df_with_coordinates.head()
 
 Now that coordinates have been added, a more detailed postcode comparison can be created to be included in a splink settings dictionary:
 
-```python
-import splink.duckdb.duckdb_comparison_level_library as cll
+=== "DuckDB"
+    ```python
+    import splink.duckdb.duckdb_comparison_level_library as cll
 
-postcode_comparison = {
-    'output_column_name': 'postcode',
-    'comparison_description': 'Postcode',
-    'comparison_levels': [
-        cll.null_level("postcode"),
-        cll.exact_match_level("postcode", term_frequency_adjustments=True),
-        cll.levenshtein_level("postcode", 1),
-        cll.distance_in_km_level("latitude", "longitude", 1),
-        cll.distance_in_km_level("latitude", "longitude", 10),
-        cll.distance_in_km_level("latitude", "longitude", 50),
-        cll.else_level()
-    ],
-}
-```
+    postcode_comparison = {
+        'output_column_name': 'postcode',
+        'comparison_description': 'Postcode',
+        'comparison_levels': [
+            cll.null_level("postcode"),
+            cll.exact_match_level("postcode", term_frequency_adjustments=True),
+            cll.levenshtein_level("postcode", 1),
+            cll.distance_in_km_level("latitude", "longitude", 1),
+            cll.distance_in_km_level("latitude", "longitude", 10),
+            cll.distance_in_km_level("latitude", "longitude", 50),
+            cll.else_level()
+        ],
+    }
+    ```
+=== "Spark"
+    ```python
+    import splink.spark.spark_comparison_level_library as cll
+
+    postcode_comparison = {
+        'output_column_name': 'postcode',
+        'comparison_description': 'Postcode',
+        'comparison_levels': [
+            cll.null_level("postcode"),
+            cll.exact_match_level("postcode", term_frequency_adjustments=True),
+            cll.levenshtein_level("postcode", 1),
+            cll.distance_in_km_level("latitude", "longitude", 1),
+            cll.distance_in_km_level("latitude", "longitude", 10),
+            cll.distance_in_km_level("latitude", "longitude", 50),
+            cll.else_level()
+        ],
+    }
+    ```
+=== "Athena"
+    ```python
+    import splink.athena.athena_comparison_level_library as cll
+
+    postcode_comparison = {
+        'output_column_name': 'postcode',
+        'comparison_description': 'Postcode',
+        'comparison_levels': [
+            cll.null_level("postcode"),
+            cll.exact_match_level("postcode", term_frequency_adjustments=True),
+            cll.levenshtein_level("postcode", 1),
+            cll.distance_in_km_level("latitude", "longitude", 1),
+            cll.distance_in_km_level("latitude", "longitude", 10),
+            cll.distance_in_km_level("latitude", "longitude", 50),
+            cll.else_level()
+        ],
+    }
+    ``` 
 
 
 ## Phonetic transformations
@@ -166,14 +216,24 @@ Note: [Soundex](phonetic.md#soundex) and [Metaphone](phonetic.md#metaphone) are 
 
 Now that the dmetaphone columns have been added, they can be used within comparisons. For example, using the [name_comparison](../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons).
 
-```python
-import splink.duckdb.duckdb_comparison_template_library as ctl
+=== "DuckDB"
+    ```python
+    import splink.duckdb.duckdb_comparison_template_library as ctl
 
-first_name_comparison = ctl.name_comparison(
+    first_name_comparison = ctl.name_comparison(
                             "first_name",
                             phonetic_col_name = "first_name_dm")
-print(first_name_comparison.human_readable_description)
-```
+    print(first_name_comparison.human_readable_description)
+    ```
+=== "Spark"
+    ```python
+    import splink.spark.spark_comparison_template_library as ctl
+
+    first_name_comparison = ctl.name_comparison(
+                            "first_name",
+                            phonetic_col_name = "first_name_dm")
+    print(first_name_comparison.human_readable_description)
+    ```
 
 
 > Comparison 'Exact match vs. Names with phonetic exact match vs. Names within jaro_winkler thresholds 0.95, 0.88 vs. anything else' of "first_name" and "first_name_dm".

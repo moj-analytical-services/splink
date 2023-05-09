@@ -396,41 +396,8 @@ class AthenaLinker(Linker):
 
         self.ctas_query_info.pop(physical_name)
 
-    def _delete_table_from_database(self, name):
-        if name in self.ctas_query_info:
-            # Use ctas metadata to delete backing data
-            self._delete_table_from_s3(name)
-        else:
-            # If the location we want to write to already exists,
-            # clean this before continuing.
-            loc = f"{self.s3_output}{name}"
-            folder_exists = wr.s3.list_directories(
-                loc,
-                boto3_session=self.boto3_session,
-            )
-            if folder_exists:
-                # This will only delete objects we are required to delete
-                wr.s3.delete_objects(
-                    path=loc,
-                    use_threads=True,
-                    boto3_session=self.boto3_session,
-                )
-
-        self._drop_table_from_database_if_exists(name)
-
-    def _extract_ctas_metadata(self, ctas_metadata):
-        query_meta = ctas_metadata.pop("ctas_query_metadata")
-        out_locs = {
-            "output_location": query_meta.output_location,
-            "manifest_location": query_meta.manifest_location,
-        }
-        ctas_metadata.update(out_locs)
-        return ctas_metadata
-
-    def drop_all_tables_created_by_splink(
-        self,
-        delete_s3_folders=True,
-        tables_to_exclude=[],
+    def _drop_all_tables_created_by_splink(
+        self, garbage_collection_level=1, input_tables=[]
     ):
         """Run a cleanup process for the tables created by splink and
         currently contained in your output database.
