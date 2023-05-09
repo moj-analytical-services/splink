@@ -67,7 +67,8 @@ class NullLevelBase(ComparisonLevel):
         if valid_string_regex:
             col_name_l = self._regex_extract_function(col.name_l(), valid_string_regex)
             col_name_r = self._regex_extract_function(col.name_r(), valid_string_regex)
-            sql = f"{col_name_l}=='' OR {col_name_r} ==''"
+            sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL OR
+                      {col_name_l}=='' OR {col_name_r} ==''"""
         else:
             col_name_l, col_name_r = col.name_l(), col.name_r()
             sql = f"{col_name_l} IS NULL OR {col_name_r} IS NULL"

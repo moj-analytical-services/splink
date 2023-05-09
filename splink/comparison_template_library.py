@@ -197,9 +197,9 @@ class DateComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "levenshtein",
-                levenshtein_thresholds,
-                m_probability_or_probabilities_lev,
+                distance_function_name="levenshtein",
+                distance_threshold_or_thresholds=levenshtein_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_lev,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -208,9 +208,9 @@ class DateComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "jaro",
-                jaro_thresholds,
-                m_probability_or_probabilities_jar,
+                distance_function_name="jaro",
+                distance_threshold_or_thresholds=jaro_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jar,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -219,9 +219,9 @@ class DateComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "jaro-winkler",
-                jaro_winkler_thresholds,
-                m_probability_or_probabilities_jw,
+                distance_function_name="jaro-winkler",
+                distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jw,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -317,7 +317,7 @@ class NameComparisonBase(Comparison):
     def __init__(
         self,
         col_name: str,
-        valid_string_regex: str = None,
+        regex_extract: str = None,
         include_exact_match_level: bool = True,
         phonetic_col_name: str = None,
         term_frequency_adjustments_name: bool = False,
@@ -345,8 +345,7 @@ class NameComparisonBase(Comparison):
 
         Args:
             col_name (str): The name of the column to compare.
-            valid_string_regex (str): regular expression pattern that if not
-                matched will result in column being treated as a null.
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level for col_name. Defaults to True.
             phonetic_col_name (str): The name of the column with phonetic reduction
@@ -439,7 +438,7 @@ class NameComparisonBase(Comparison):
 
         # Construct Comparison
         comparison_levels = []
-        comparison_levels.append(self._null_level(col_name, valid_string_regex))
+        comparison_levels.append(self._null_level(col_name))
 
         if include_exact_match_level:
             comparison_level = self._exact_match_level(
@@ -447,6 +446,7 @@ class NameComparisonBase(Comparison):
                 term_frequency_adjustments=term_frequency_adjustments_name,
                 m_probability=m_probability_exact_match_name,
                 include_colname_in_charts_label=True,
+                regex_extract=regex_extract,
             )
             comparison_levels.append(comparison_level)
 
@@ -456,6 +456,7 @@ class NameComparisonBase(Comparison):
                     term_frequency_adjustments=term_frequency_adjustments_phonetic_name,
                     m_probability=m_probability_exact_match_phonetic_name,
                     include_colname_in_charts_label=True,
+                    regex_extract=regex_extract,
                 )
                 comparison_levels.append(comparison_level)
 
@@ -464,9 +465,10 @@ class NameComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "levenshtein",
-                levenshtein_thresholds,
-                m_probability_or_probabilities_lev,
+                distance_function_name="levenshtein",
+                distance_threshold_or_thresholds=levenshtein_thresholds,
+                regex_extract=regex_extract,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_lev,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -475,9 +477,10 @@ class NameComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "jaro",
-                jaro_thresholds,
-                m_probability_or_probabilities_jar,
+                distance_function_name="jaro",
+                distance_threshold_or_thresholds=jaro_thresholds,
+                regex_extract=regex_extract,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jar,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -486,9 +489,10 @@ class NameComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "jaro-winkler",
-                jaro_winkler_thresholds,
-                m_probability_or_probabilities_jw,
+                distance_function_name="jaro-winkler",
+                distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                regex_extract=regex_extract,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jw,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -497,9 +501,10 @@ class NameComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "jaccard",
-                jaccard_thresholds,
-                m_probability_or_probabilities_jar,
+                distance_function_name="jaccard",
+                distance_threshold_or_thresholds=jaccard_thresholds,
+                regex_extract=regex_extract,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jar,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
