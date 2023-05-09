@@ -76,10 +76,8 @@ For more detailed tutorials, please see [here](https://moj-analytical-services.g
 
 ```py
 from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.duckdb.duckdb_comparison_library import (
-    exact_match,
-    levenshtein_at_thresholds,
-)
+import splink.duckdb.duckdb_comparison_library as cl
+import splink.duckdb.duckdb_comparison_template_library as ctl
 
 import pandas as pd
 
@@ -92,11 +90,11 @@ settings = {
         "l.surname = r.surname",
     ],
     "comparisons": [
-        levenshtein_at_thresholds("first_name", 2),
-        exact_match("surname"),
-        exact_match("dob"),
-        exact_match("city", term_frequency_adjustments=True),
-        exact_match("email"),
+        ctl.name_comparison("first_name"),
+        ctl.name_comparison("surname"),
+        ctl.date_comparison("dob", cast_strings_to_date=True),
+        cl.exact_match("city", term_frequency_adjustments=True),
+        cl.levnshtein_at_thresholds("email", 2),
     ],
 }
 
