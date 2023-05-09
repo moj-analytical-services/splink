@@ -21,7 +21,9 @@ class DateComparisonBase(Comparison):
     def __init__(
         self,
         col_name: str,
-        valid_string_regex: str = None,
+        cast_strings_to_date: bool = False,
+        date_format: str = None,
+        invalid_dates_as_null: bool = False,
         include_exact_match_level: bool = True,
         term_frequency_adjustments: bool = False,
         separate_1st_january: bool = False,
@@ -37,8 +39,6 @@ class DateComparisonBase(Comparison):
         m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_datediff: float | list = None,
         m_probability_else: float = None,
-        cast_strings_to_date: bool = False,
-        date_format: str = None,
     ) -> Comparison:
         """A wrapper to generate a comparison for a date column the data in
         `col_name` with preselected defaults.
@@ -53,8 +53,18 @@ class DateComparisonBase(Comparison):
 
         Args:
             col_name (str): The name of the column to compare.
-            valid_string_regex (str): regular expression pattern that if not
-                matched will result in column being treated as a null.
+            cast_strings_to_date (bool, optional): Set to True to
+                enable date-casting when input dates are strings. Also adjust
+                date_format if date-strings are not in (yyyy-mm-dd) format.
+                Defaults to False.
+            date_format (str, optional): Format of input dates if date-strings
+                are given. Must be consistent across record pairs. If None
+                (the default), downstream functions for each backend assign
+                date_format to ISO 8601 format (yyyy-mm-dd).
+                Set to "yyyy-MM-dd" for Spark and ""%Y-%m-%d" for yyyy-mm-dd
+                when invalid_dates_as_null=True
+            invalid_dates_as_null (bool, optional): assign any dates that do not adhere
+                to date_format to the null level. Defaults to False.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -98,14 +108,6 @@ class DateComparisonBase(Comparison):
                 for the datediff thresholds specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
-            cast_strings_to_date (bool, optional): Set to True to
-                enable date-casting when input dates are strings. Also adjust
-                date_format if date-strings are not in (yyyy-mm-dd) format.
-                Defaults to False.
-            date_format(str, optional): Format of input dates if date-strings
-                are given. Must be consistent across record pairs. If None
-                (the default), downstream functions for each backend assign
-                date_format to ISO 8601 format (yyyy-mm-dd).
 
         Examples:
             === "DuckDB"
@@ -123,6 +125,15 @@ class DateComparisonBase(Comparison):
                                     datediff_thresholds=[1, 1],
                                     datediff_metrics=["month", "year"])
                 ```
+                Date Comparison casting columns date and assigning values that do not
+                match the date_format to the null level
+                ``` python
+                import splink.duckdb.duckdb_comparison_template_library as ctl
+                ctl.date_comparison("date_of_birth",
+                                    cast_strings_to_date=True,
+                                    date_format='%d/%m/%Y',
+                                    invalid_dates_as_null=True)
+                ```
             === "Spark"
                 Basic Date Comparison
                 ``` python
@@ -138,14 +149,25 @@ class DateComparisonBase(Comparison):
                                     datediff_thresholds=[1, 1],
                                     datediff_metrics=["month", "year"])
                 ```
-
+                Date Comparison casting columns date and assigning values that do not
+                match the date_format to the null level
+                ``` python
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.date_comparison("date_of_birth",
+                                    cast_strings_to_date=True,
+                                    date_format='dd/mm/yyyy',
+                                    invalid_dates_as_null=True)
+                ```
         Returns:
             Comparison: A comparison that can be inclued in the Splink settings
                 dictionary.
         """
         # Construct Comparison
         comparison_levels = []
-        comparison_levels.append(self._null_level(col_name, valid_string_regex))
+        if invalid_dates_as_null:
+            comparison_levels.append(self._null_level(col_name, date_format))
+        else:
+            comparison_levels.append(self._null_level(col_name))
 
         # Validate user inputs
         datediff_error_logger(thresholds=datediff_thresholds, metrics=datediff_metrics)

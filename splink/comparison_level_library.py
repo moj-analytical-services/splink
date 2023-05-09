@@ -18,30 +18,47 @@ class NullLevelBase(ComparisonLevel):
 
         Examples:
             === "DuckDB"
+                Simple null comparison level
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
                 cll.null_level("name")
                 ```
+                Null comparison level including strings that do not match
+                a given regex pattern
+                ``` python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.null_level("name", valid_string_regex="^[A-Z]{1,7}$")
+                ```
             === "Spark"
+                Simple null level
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
                 cll.null_level("name")
                 ```
+                Null comparison level including strings that do not match
+                a given regex pattern
+                ``` python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.null_level("name", valid_string_regex="^[A-Z]{1,7}$")
+                ```
             === "Athena"
+                Simple null level
                 ``` python
                 import splink.athena.athena_comparison_level_library as cll
                 cll.null_level("name")
                 ```
+                Null comparison level including strings that do not match
+                a given regex pattern
+                ``` python
+                import splink.athena.athena_comparison_level_library as cll
+                cll.null_level("name", valid_string_regex="^[A-Z]{1,7}$")
+                ```
             === "SQLite"
+                Simple null level
                 ``` python
                 import splink.sqlite.sqlite_comparison_level_library as cll
                 cll.null_level("name")
                 ```
-
-            >>> # DuckDB Null level with valid string regex
-            >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.null_level("name", valid_string_regex="^[A-Z]{1,7}$")
-
         Returns:
             ComparisonLevel: Comparison level for null entries
         """
@@ -94,6 +111,12 @@ class ExactMatchLevelBase(ComparisonLevel):
                 import splink.duckdb.duckdb_comparison_level_library as cll
                 cll.exact_match_level("name", term_frequency_adjustments=True)
                 ```
+                Exact match level on a substring of col_name as
+                 determined by a regular expression
+                ``` python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.exact_match_level("name", regex_extract="^[A-Z]{1,4}")
+                ```
             === "Spark"
                 Simple Exact match level
                 ``` python
@@ -104,6 +127,12 @@ class ExactMatchLevelBase(ComparisonLevel):
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
                 cll.exact_match_level("name", term_frequency_adjustments=True)
+                ```
+                Exact match level on a substring of col_name as
+                 determined by a regular expression
+                ``` python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.exact_match_level("name", regex_extract="^[A-Z]{1,4}")
                 ```
             === "Athena"
                 Simple Exact match level
@@ -116,6 +145,12 @@ class ExactMatchLevelBase(ComparisonLevel):
                 import splink.athena.athena_comparison_level_library as cll
                 cll.exact_match_level("name", term_frequency_adjustments=True)
                 ```
+                Exact match level on a substring of col_name as
+                 determined by a regular expression
+                ``` python
+                import splink.athena.athena_comparison_level_library as cll
+                cll.exact_match_level("name", regex_extract="^[A-Z]{1,4}")
+                ```
             === "SQLite"
                 Simple Exact match level
                 ``` python
@@ -127,11 +162,6 @@ class ExactMatchLevelBase(ComparisonLevel):
                 import splink.sqlite.sqlite_comparison_level_library as cll
                 cll.exact_match_level("name", term_frequency_adjustments=True)
                 ```
-            >>> # DuckDB Exact match level with regex_extract
-            >>> # Perform an exact match on a substring of col_name as
-                 determined by a regular expression
-            >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.exact_match_level("name", regex_extract="^[A-Z]{1,4}")
         """
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
 
@@ -313,26 +343,50 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
 
         Examples:
             === "DuckDB"
+                Comparison level with levenshtein distance score less than (or equal
+                 to) 1
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
                 cll.levenshtein_level("name", 1)
                 ```
+
+                Comparison level with levenshtein distance score less than (or equal
+                 to) 1 on a subtring of name column as determined by a regular
+                expression.
+                ```python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
+                ```
             === "Spark"
+                Comparison level with levenshtein distance score less than (or equal
+                 to) 1
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
                 cll.levenshtein_level("name", 1)
                 ```
+
+                Comparison level with levenshtein distance score less than (or equal
+                 to) 1 on a subtring of name column as determined by a regular
+                expression.
+                ```python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
+                ```
             === "Athena"
+                Comparison level with levenshtein distance score less than (or equal
+                 to) 1
                 ``` python
                 import splink.athena.athena_comparison_level_library as cll
                 cll.levenshtein_level("name", 1)
                 ```
 
-            >>> # DuckDB Levenshtein comparison level at threshold 1 with regex_extract
-            >>> # Perform a levenshtein comparison on a substring of col_name as
-                 determined by a regular expression
-            >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
+                Comparison level with levenshtein distance score less than (or equal
+                 to) 1 on a subtring of name column as determined by a regular
+                expression.
+                ```python
+                import splink.athena.athena_comparison_level_library as cll
+                cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
+                ```
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the
@@ -368,21 +422,31 @@ class JaroLevelBase(DistanceFunctionLevelBase):
 
         Examples:
             === "DuckDB"
+                Comparison level with jaro score greater than 0.9
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
                 cll.jaro_level("name", 0.9)
                 ```
+                Comparison level with a jaro score greater than 0.9 on a substring
+                of name column as determined by a regular expression.
+
+                ```python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.jaro_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
+                ```
             === "Spark"
+                Comparison level with jaro score greater than 0.9
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
                 cll.jaro_level("name", 0.9)
                 ```
+                Comparison level with a jaro score greater than 0.9 on a substring
+                of name column as determined by a regular expression.
 
-            >>> # DuckDB Jaro comparison level at threshold 0.9 with regex_extract
-            >>> # Perform a jaro comparison on a substring of col_name as
-                 determined by a regular expression
-            >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.jaro_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
+                ```python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.jaro_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
+                ```
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the
@@ -419,22 +483,29 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
 
         Examples:
             === "DuckDB"
+                Comparison level with jaro-winkler score greater than 0.9
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
                 cll.jaro_winkler_level("name", 0.9)
                 ```
+                Comparison level with jaro-winkler score greater than 0.9 on a
+                substring of name column as determined by a regular expression.
+                ``` python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.jaro_winkler_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
+                ```
             === "Spark"
+                Comparison level with jaro score greater than 0.9
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
                 cll.jaro_winkler_level("name", 0.9)
                 ```
-
-            >>> # DuckDB Jaro-winkler comparison level at threshold 0.9
-                 with regex_extract
-            >>> # Perform a jaro-winkler comparison on a substring of col_name as
-                 determined by a regular expression
-            >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.jaro_winkler_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
+                Comparison level with jaro-winkler score greater than 0.9 on a
+                substring of name column as determined by a regular expression.
+                ``` python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.jaro_winkler_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
+                ```
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the
@@ -476,21 +547,29 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
                 Defaults to None.
         Examples:
             === "DuckDB"
+                Comparison level with jaccard score greater than 0.9
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
                 cll.jaccard_level("name", 0.9)
                 ```
+                Comparison level with jaccard score greater than 0.9 on a
+                substring of name column as determined by a regular expression.
+                ``` python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.jaccard_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
+                ```
             === "Spark"
+                Comparison level with jaccard score greater than 0.9
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
                 cll.jaccard_level("name", 0.9)
                 ```
-
-            >>> # DuckDB Jaccard comparison level at threshold 0.9 with regex_extract
-            >>> # Perform a jaccard comparison on a substring of col_name as
-                 determined by a regular expression
-            >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.jaccard_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
+                Comparison level with jaccard score greater than 0.9 on a
+                substring of name column as determined by a regular expression.
+                ``` python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.jaccard_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
+                ```
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the jaccard similarity
@@ -528,31 +607,51 @@ class ColumnsReversedLevelBase(ComparisonLevel):
 
         Examples:
             === "DuckDB"
+                Comparison level on first_name and surname columns reversed
+
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
+                ```
+                Comparison level on first_name and surname column reversed
+                on a substring of each column as determined by a regular expression.
+                ``` python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.columns_reversed_level("first_name",
+                                           "surname",
+                                           regex_extract="^[A-Z]{1,4}")
                 ```
             === "Spark"
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
                 ```
+                Comparison level on first_name and surname column reversed
+                on a substring of each column as determined by a regular expression.
+                ``` python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.columns_reversed_level("first_name",
+                                           "surname",
+                                           regex_extract="^[A-Z]{1,4}")
+                ```
             === "Athena"
                 ``` python
                 import splink.athena.athena_comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
+                ```
+                Comparison level on first_name and surname column reversed
+                on a substring of each column as determined by a regular expression.
+                ``` python
+                import splink.athena.athena_comparison_level_library as cll
+                cll.columns_reversed_level("first_name",
+                                           "surname",
+                                           regex_extract="^[A-Z]{1,4}")
                 ```
             === "SQLite"
                 ``` python
                 import splink.sqlite.sqlite_comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
                 ```
-
-            >>> # DuckDB Columns Reversed comparison level with regex_extract
-            >>> # Perform an exact match on reversed columns on a substring
-                 of col_name_1 and col_name_2 as determined by a regular expression
-            >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.columns_reversed_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
 
 
         Returns:
