@@ -155,12 +155,24 @@ From this point onwards we will be working with the instantiated `linker`, and s
 If you intend to write a test for a specific backend, first consider whether it is definitely specific to that backend - if not then a [backend-agnostic test](#backend-agnostic-testing) would be preferable, as then your test will be run against _many_ backends.
 If you really do need to test features peculiar to one backend, then you can write it simply as you would an ordinary `pytest` test. The only difference is that you should decorate it with `@mark_with_dialects_including` (from [tests/decorator.py](TODO)) - for example:
 
-
-```py
-@mark_with_dialects_including("spark")
-def test_some_specific_spark_feature():
-    ...
-```
+=== "DuckDB"
+    ```py
+    @mark_with_dialects_including("duckdb")
+    def test_some_specific_duckdb_feature():
+        ...
+    ```
+=== "Spark"
+    ```py
+    @mark_with_dialects_including("spark")
+    def test_some_specific_spark_feature():
+        ...
+    ```
+=== "SQLite"
+    ```py
+    @mark_with_dialects_including("sqlite")
+    def test_some_specific_sqlite_feature():
+        ...
+    ```
 
 This ensures that the test gets marked appropriately for running when the `Spark` tests should be run, and excludes it from the set of `core` tests.
 
