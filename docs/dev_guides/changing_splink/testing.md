@@ -184,12 +184,65 @@ Note that unlike the exclusive `mark_with_dialects_excluding`, this decorator wi
 
 To run tests locally, simply run:
 ```sh
-python3 -m pytest tests/ -s --disable-pytest-warnings
+python3 -m pytest tests/
+```
+or simply
+```sh
+pytest tests/
 ```
 
-To run a single test, append the filename to the `tests/` folder call:
+To run a single test file, append the filename to the `tests/` folder call, for example:
 ```sh
-python3 -m pytest tests/my_test_file.py -s --disable-pytest-warnings
+pytest tests/test_u_train.py
+```
+or for a single test, additionally append the test name after a pair of colons, as:
+```sh
+pytest tests/test_u_train.py::test_u_train_multilink
+```
+There may be many warnings output for instance by dependencies which may clutter your output, in which case you can use `--disable-pytest-warnings` or `-W ignore` so that these will not be displayed. Some additional command-line options that may be useful:
+* `-s` to disable output capture, so that test output is displayed in the terminal in all cases
+* `-v` for verbose mode, where each test instance will be displayed on a separate line with status
+* `-q` for quiet mode, where output is extremely minimal
+* `-x` to fail on first error/failure rather than continuing to run all selected tests
+* `-m some_mark` run only those tests marked with `some_mark` - see [below](#selecting-sets-of-tests) for useful options here
+
+For instance useage might be:
+```sh
+# ignore warnings, display output
+pytest -W ignore -s tests/
+```
+
+or
+```sh
+# ignore warnings, verbose output, fail on first error/failure
+pytest -W ignore -v -x tests/
+```
+
+You can find a host of other available options using pytest's in-built help:
+```sh
+pytest -h
+```
+
+#### Selecting sets of tests
+
+You may wish to run tests relating to to specific backends, tests which are backend-independent, or any combinations of these. Splink allows for various combinations by making use of `pytest`'s [`mark` feature](TODO).
+
+If when you invoke pytest you pass no marks explicitly, there will be an implicit mark of `default`, as per the [pyproject.toml pytest.ini configuration](TODO).
+
+The available options are:
+
+* `pytest tests/ -m core` - run only the 'core' tests, meaning those without dialect-dependence. In practice this means any test that hasn't been decorated using `mark_with_dialects_excluding` or `mark_with_dialects_including`.
+* `pytest tests/ -m duckdb` - run all `duckdb` tests, and all `core` tests
+    * & similarly for other dialects
+* `pytest tests/ -m duckdb_only` - run all `duckdb` tests only, and _not_ the `core` tests
+    * & similarly for other dialects
+* `pytest tests/ -m default` or equivalently `pytest tests/` - run all tests in the `default` group. The `default` group consists of the `core` tests, and those dialects in the `default` group - currently `spark` and `duckdb`.
+    * Other groups of dialects can be added and will similarly run with `pytest tests/ -m new_dialect_group`. Dialects within the current scope of testing and the groups they belong to are defined in the `dialect_groups` dictionary in [tests/decorator.py](TODO)
+* `pytest tests/ -m all` run all tests for all available dialects
+
+These all work alongside all the other pytest options, so for instance to run the tests for training `probability_two_random_records_match` for only `duckdb`, ignoring warnings, with quiet output, and exiting on the first failure/error:
+```sh
+pytest -W ignore -q -x -m duckdb tests/test_estimate_prob_two_rr_match.py
 ```
 
 ### Running tests with docker 🐳
