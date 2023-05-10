@@ -41,35 +41,45 @@ class ExactMatchBase(Comparison):
 
         Examples:
             === "DuckDB"
+                Create comparison with exact match level
                 ``` python
                 import splink.duckdb.duckdb_comparison_library as cl
                 cl.exact_match("first_name")
                 ```
+                Create comparison with exact match level based on a 
+                substring of first_name as determined by a regular expression
+                ``` python
+                import splink.duckdb.duckdb_comparison_library as cl
+                cl.exact_match("first_name", regex_extract="^[A-Z]{1,4}")
+                ```
             === "Spark"
+                Create comparison with exact match level
                 ``` python
                 import splink.spark.spark_comparison_library as cl
                 cl.exact_match("first_name")
                 ```
+                Create comparison with exact match level based on a 
+                substring of first_name as determined by a regular expression
+                ``` python
+                import splink.spark.spark_comparison_library as cl
+                cl.exact_match("first_name", regex_extract="^[A-Z]{1,4}")
             === "Athena"
+                Create comparison with exact match level
                 ``` python
                 import splink.athena.athena_comparison_library as cl
                 cl.exact_match("first_name")
                 ```
+                Create comparison with exact match level based on a 
+                substring of first_name as determined by a regular expression
+                ``` python
+                import splink.athena.athena_comparison_library as cl
+                cl.exact_match("first_name", regex_extract="^[A-Z]{1,4}")
             === "SQLite"
+                Create comparison with exact match level
                 ``` python
                 import splink.sqlite.sqlite_comparison_library as cl
                 cl.exact_match("first_name")
                 ```
-
-            >>> # DuckDB exact_match comparison with regex_extract
-            >>> # Exact match comparison based on a substring of col_name as
-                 determined by a regular expression
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.exact_match("first_name", regex_extract="^[A-Z]{1,4}")
-
-            >>> # DuckDB Null level with valid string regex
-            >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.null_level("name", valid_string_regex="^[A-Z]{1,7}$")
 
         Returns:
             Comparison: A comparison for exact match that can be included in the Splink
@@ -828,7 +838,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                 are given. Must be consistent across record pairs. If None
                 (the default), downstream functions for each backend assign
                 date_format to ISO 8601 format (yyyy-mm-dd).
-                Set to "yyyy-MM-dd" for Spark and ""%Y-%m-%d" for yyyy-mm-dd
+                Set to "yyyy-MM-dd" for Spark and "%Y-%m-%d" for DuckDB
                 when invalid_dates_as_null=True
             invalid_dates_as_null (bool, optional): assign any dates that do not adhere
                 to date_format to the null level. Defaults to False.
