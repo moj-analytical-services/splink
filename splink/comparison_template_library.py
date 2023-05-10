@@ -12,6 +12,7 @@ from .comparison_library_utils import (
     distance_threshold_comparison_levels,
     distance_threshold_description,
 )
+from .input_column import InputColumn
 from .misc import ensure_is_iterable
 
 logger = logging.getLogger(__name__)
@@ -553,3 +554,194 @@ class NameComparisonBase(Comparison):
     @property
     def _is_distance_subclass(self):
         return False
+
+
+class PostcodeComparisonBase(Comparison):
+    def __init__(
+        self,
+        col_name: str,
+        valid_string_regex: str = None,
+        include_full_match_level=True,
+        include_sector_match_level=True,
+        include_district_match_level=True,
+        include_area_match_level=True,
+        include_distance_in_km_level=False,
+        lat_col: str = None,
+        long_col: str = None,
+        km_threshold: int | float = None,
+        term_frequency_adjustments_full=False,
+        m_probability_full_match=None,
+        m_probability_sector_match=None,
+        m_probability_district_match=None,
+        m_probability_area_match=None,
+        m_probability_distance_in_km=None,
+        m_probability_else=None,
+    ) -> Comparison:
+        """A wrapper to generate a comparison for a poscode column 'col_name'
+            with preselected defaults.
+
+        The default arguments will give a comparison with levels:\n
+        - Exact match on full postcode\n
+        - Exact match on sector\n
+        - Exact match on district\n
+        - Exact match on area\n
+        - All other comparisons
+
+        Args:
+            col_name (str): The name of the column to compare.
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
+            include_full_match_level (bool, optional): If True, include an exact
+                match on full postcode level. Defaults to True.
+            include_sector_match_level (bool, optional): If True, include an exact
+                match on sector level. Defaults to True.
+            include_district_match_level (bool, optional): If True, include an exact
+                match on district level. Defaults to True.
+            include_area_match_level (bool, optional): If True, include an exact
+                match on area level. Defaults to True.
+            include_distance_in_km_level (bool, optional): If True, include a
+                comparison of distance between postcodes as measured in kilometers.
+                Defaults to False.
+            lat_col (str): The name of a latitude column or the respective array
+                or struct column column containing the information, plus an index.
+                For example: long_lat['lat'] or long_lat[0].
+            long_col (str): The name of a longitudinal column or the respective array
+                or struct column column containing the information, plus an index.
+                For example: long_lat['long'] or long_lat[1].
+            km_threshold (int): The total distance in kilometers to evaluate the
+                distance_in_km_level comparison against.
+            term_frequency_adjustments_full (bool, optional): If True, apply
+                term frequency adjustments to the full postcode exact match level.
+                Defaults to False.
+            m_probability_full_match (_type_, optional): Starting value for
+                full postcode match m probability. Defaults to None.
+            m_probability_sector_match (_type_, optional): Starting value for
+                sector match m probability. Defaults to None.
+            m_probability_district_match (_type_, optional): Starting value for
+                district match m probability. Defaults to None.
+            m_probability_area_match (_type_, optional): Starting value for
+                area match m probability. Defaults to None.
+            m_probability_distance_in_km (_type_, optional): Starting value for
+                'distance in km' level m probability. Defaults to None.
+            m_probability_else (_type_, optional): Starting value for
+                else level m probability. Defaults to None.
+
+        Examples:
+            === "DuckDB"
+                Basic Postcode Comparison
+                ``` python
+                import splink.duckdb.duckdb_comparison_template_library as ctl
+                ctl.postcode_comparison("postcode")
+                ```
+                Bespoke Postcode Comparison
+                ``` python
+                import splink.duckdb.duckdb_comparison_template_library as ctl
+                ctl.postcode_comparison("postcode",
+                                    valid_regex_string = "^[A-Z]{1,2}[0-9]",
+                                    include_distance_in_km_level=True,
+                                    lat_col="lat",
+                                    long_col="long",
+                                    km_threshold=5
+                                    )
+                ```
+            === "Spark"
+                Basic Postcode Comparison
+                ``` python
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.postcode_comparison("postcode")
+                ```
+                Bespoke Postcode Comparison
+                ``` python
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.postcode_comparison("postcode",
+                                    valid_regex_string = "^[A-Z]{1,2}[0-9]",
+                                    include_distance_in_km_level=True,
+                                    lat_col="lat",
+                                    long_col="long",
+                                    km_threshold=5
+                                    )
+                ```
+
+        Returns:
+            Comparison: A comparison that can be inclued in the Splink settings
+                dictionary.
+        """
+
+        postcode_col = InputColumn(col_name, sql_dialect=self._sql_dialect)
+        postcode_col_l, postcode_col_r = postcode_col.names_l_r()
+
+        comparison_levels = []
+        comparison_levels.append(self._null_level(col_name, valid_string_regex))
+
+        if include_full_match_level:
+            comparison_level = self._exact_match_level(
+                col_name,
+                regex_extract=None,
+                term_frequency_adjustments=term_frequency_adjustments_full,
+                m_probability=m_probability_full_match,
+                include_colname_in_charts_label=True,
+            )
+            comparison_levels.append(comparison_level)
+
+        if include_sector_match_level:
+            comparison_level = self._exact_match_level(
+                col_name,
+                regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]",
+                m_probability=m_probability_sector_match,
+            )
+            comparison_levels.append(comparison_level)
+
+        if include_district_match_level:
+            comparison_level = self._exact_match_level(
+                col_name,
+                regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]?",
+                m_probability=m_probability_district_match,
+            )
+            comparison_levels.append(comparison_level)
+
+        if include_area_match_level:
+            comparison_level = self._exact_match_level(
+                col_name,
+                regex_extract="^[A-Z]{1,2}",
+                m_probability=m_probability_area_match,
+            )
+            comparison_levels.append(comparison_level)
+
+        if include_distance_in_km_level:
+            comparison_level = self._distance_in_km_level(
+                lat_col,
+                long_col,
+                km_threshold,
+                m_probability=m_probability_distance_in_km,
+            )
+            comparison_levels.append(comparison_level)
+
+        comparison_levels.append(
+            self._else_level(m_probability=m_probability_else),
+        )
+
+        # Construct Description
+        comparison_desc = ""
+        if include_full_match_level:
+            comparison_desc += "Exact match on full postcode vs. "
+
+        if include_sector_match_level:
+            comparison_desc += "exact match on sector vs. "
+
+        if include_district_match_level:
+            comparison_desc += "exact match on district vs. "
+
+        if include_area_match_level:
+            comparison_desc += "exact match on area vs. "
+
+        if include_distance_in_km_level:
+            comparison_desc += f"distance less than {km_threshold}km vs. "
+
+        comparison_desc += "all other comparisons"
+
+        comparison_dict = {
+            "output_column_name": col_name,
+            "comparison_description": comparison_desc,
+            "comparison_levels": comparison_levels,
+        }
+        super().__init__(comparison_dict)
