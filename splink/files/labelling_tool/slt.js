@@ -332,7 +332,7 @@
  * ---
  *
  * Name: 0420fc5db15e44ab
- * Version: 2943.0.0
+ * Version: 3047.0.0
  * License: null
  * Private: false
  * Homepage: https://observablehq.com/d/0420fc5db15e44ab
@@ -8880,8 +8880,8 @@
     // #main-interface-table tr td{
     //   border: 1px solid black !important;
     // min-width:40px;
-
     // }
+
     // </style>`;
 
     return html`
@@ -9068,28 +9068,34 @@ details p {
   color: #333333;
 }
 
+.labelling-tool-checkbox {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
 
 </style>`;
   }
 
 
-  function _show_splink_predictions_in_interface(slt){return(
-  slt.checkbox(
-    ["Show splink predictions"],
-    {
+  function _show_splink_predictions_in_interface(slt)
+  {
+    let cb = slt.checkbox(["Show splink predictions"], {
       value: ["Show splink predictions"]
-    }
-  )
-  )}
+    });
+    cb.classList.add("labelling-tool-checkbox");
+    return cb;
+  }
+
 
   function _existing_labels_csv(html,slt,Event)
   {
     const el = html``;
 
-    const button = html`  <label>
+    const button = html`  <form><label>
     Import existing labels for editing:
     <input type="file">
-  </label>`;
+  </label></form>`;
     el.appendChild(button);
     el.value = null;
 
@@ -9118,15 +9124,22 @@ details p {
       }
     });
 
+    button.classList.add("labelling-tool-checkbox");
+
     return el;
   }
 
 
-  function _checkboxes(slt){return(
-  slt.checkbox(["Enable cell shading", "Enable diff view"], {
-    value: ["Enable cell shading"]
-  })
-  )}
+  function _checkboxes(slt)
+  {
+    let cb = slt.checkbox(["Enable cell shading", "Enable diff view"], {
+      value: ["Enable cell shading"]
+    });
+
+    cb.classList.add("labelling-tool-checkbox");
+    return cb;
+  }
+
 
   function _table_interface(slt,data_with_inputs,unique_id_column_name,draw_header,draw_original_row,draw_potential_matches_spacer_row,draw_potential_matches_rows,Event)
   {
@@ -9173,13 +9186,18 @@ details p {
   }
 
 
-  function _dl(DOM,slt,output_data,output_filename){return(
-  DOM.download(
-    new Blob([slt.d3.csvFormat(output_data)], { type: "text/csv" }),
-    output_filename,
-    "⬇️ Download labels in .csv format"
-  )
-  )}
+  function _dl(DOM,slt,output_data,output_filename)
+  {
+    let button = DOM.download(
+      new Blob([slt.d3.csvFormat(output_data)], { type: "text/csv" }),
+      output_filename,
+      "⬇️ Download labels in .csv format"
+    );
+
+    button.classList.add("labelling-tool-checkbox");
+    return button;
+  }
+
 
   function _copy_to_clipboard_button(html,slt,output_data)
   {
@@ -9188,6 +9206,8 @@ details p {
       const csvData = slt.d3.csvFormat(output_data);
       window.navigator.clipboard.writeText(csvData);
     };
+
+    button.classList.add("labelling-tool-checkbox");
 
     return button;
   }
@@ -9488,7 +9508,7 @@ details p {
           if (has_existing_label(existing_label, pairwise_comparison)) {
             debugger;
             match_score = existing_label["clerical_match_score"];
-            notes_value = existing_label["notes"];
+            notes_value = existing_label["clerical_notes"];
           }
         });
       }
@@ -9528,7 +9548,7 @@ details p {
           match_probability: data.match_probability,
           match_weight: data.match_weight,
           clerical_match_score: data.clerical_match_score_value,
-          notes_input_value: data.notes_input_value
+          clerical_notes: data.notes_input_value
         };
       } else {
         return {
@@ -9537,7 +9557,7 @@ details p {
           match_probability: data.match_probability,
           match_weight: data.match_weight,
           clerical_match_score: data.clerical_match_score_value,
-          notes_input_value: data.notes_input_value
+          clerical_notes: data.notes_input_value
         };
       }
     });
@@ -9545,11 +9565,9 @@ details p {
   }
 
 
-  function _output_filename(source_dataset_column_name,original_row,unique_id_column_name)
+  function _output_filename(has_source_dataset_column,original_row,source_dataset_column_name,unique_id_column_name)
   {
-    const sourceDatasetColumnExists = source_dataset_column_name in original_row;
-
-    if (sourceDatasetColumnExists) {
+    if (has_source_dataset_column) {
       return `labels_${original_row[source_dataset_column_name]}_${original_row[unique_id_column_name]}.csv`;
     } else {
       return `labels_${original_row[unique_id_column_name]}.csv`;
@@ -9650,14 +9668,9 @@ details p {
   }
   )}
 
-  function _has_same_source_dataset(pairwise_comparison_data,source_dataset_column_name){return(
+  function _has_same_source_dataset(has_source_dataset_column,source_dataset_column_name){return(
   function (record) {
-    let example_row = pairwise_comparison_data[0];
-
-    const sourceDatasetColumnExists =
-      `${source_dataset_column_name}_l` in example_row;
-
-    if (sourceDatasetColumnExists) {
+    if (has_source_dataset_column) {
       return (
         record[`${source_dataset_column_name}_l`] ==
         record[`${source_dataset_column_name}_r`]
@@ -10110,7 +10123,7 @@ details p {
     main.variable(observer("potential_matches_data")).define("potential_matches_data", ["get_potential_matches","pairwise_comparison_data_formatted","comparison_records_suffix","unique_id_column_name"], _potential_matches_data);
     main.variable(observer("data_with_inputs")).define("data_with_inputs", ["potential_matches_data","existing_labels_csv","has_existing_label","slt"], _data_with_inputs);
     main.variable(observer("output_data")).define("output_data", ["table_interface","has_source_dataset_column","source_dataset_column_name","original_row","unique_id_column_name"], _output_data);
-    main.variable(observer("output_filename")).define("output_filename", ["source_dataset_column_name","original_row","unique_id_column_name"], _output_filename);
+    main.variable(observer("output_filename")).define("output_filename", ["has_source_dataset_column","original_row","source_dataset_column_name","unique_id_column_name"], _output_filename);
     main.variable(observer()).define(["md"], _38);
     main.variable(observer("comparison_records_suffix")).define("comparison_records_suffix", ["get_suffix_of_comparison_records_l_or_r","pairwise_comparison_data","unique_id_column_name"], _comparison_records_suffix);
     main.variable(observer("original_record_suffix")).define("original_record_suffix", ["get_suffix_of_original_record_l_or_r","pairwise_comparison_data","unique_id_column_name"], _original_record_suffix);
@@ -10121,7 +10134,7 @@ details p {
     main.variable(observer("has_source_dataset_column")).define("has_source_dataset_column", ["pairwise_comparison_data","source_dataset_column_name"], _has_source_dataset_column);
     main.variable(observer()).define(["md"], _46);
     main.variable(observer("is_self_match")).define("is_self_match", ["has_source_dataset_column","source_dataset_column_name","unique_id_column_name"], _is_self_match);
-    main.variable(observer("has_same_source_dataset")).define("has_same_source_dataset", ["pairwise_comparison_data","source_dataset_column_name"], _has_same_source_dataset);
+    main.variable(observer("has_same_source_dataset")).define("has_same_source_dataset", ["has_source_dataset_column","source_dataset_column_name"], _has_same_source_dataset);
     main.variable(observer("get_output_columns")).define("get_output_columns", _get_output_columns);
     main.variable(observer("has_existing_label")).define("has_existing_label", ["has_source_dataset_column","original_row","source_dataset_column_name","unique_id_column_name"], _has_existing_label);
     main.variable(observer("splink_scores_filter")).define("splink_scores_filter", ["show_splink_predictions_in_interface"], _splink_scores_filter);
