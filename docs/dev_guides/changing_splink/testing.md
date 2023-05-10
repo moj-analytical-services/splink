@@ -10,7 +10,7 @@ Tests in Splink make use of the [pytest](https://docs.pytest.org) framework. You
 
 Splink tests can be broadly categorised into three sets:
 
-* 'Core' tests - these are tests which test some specific bit of functionality which does not depend on any specific SQL dialect. They are usually unit tests - examples are testing [`InputColumn`](TODO) and testing the [latitude-longitude distance calculation](TODO).
+* 'Core' tests - these are tests which test some specific bit of functionality which does not depend on any specific SQL dialect. They are usually unit tests - examples are testing [`InputColumn`](https://github.com/moj-analytical-services/splink/blob/master/tests/test_input_column.py) and testing the [latitude-longitude distance calculation](https://github.com/moj-analytical-services/splink/blob/master/tests/test_lat_long_distance.py).
 * Tests for specific backends - these are tests which run against a specific SQL backend, and test some feature peculiar to this backend. There are not many of these, as Splink is designed to run very similarly independent of the backend used.
 * Backend-agnostic tests - these are tests which run against some SQL backend, but which are written in such a way that they can run against many backends by making use of the [backend-agnostic testing framework](#backend-agnostic-testing). The majority of tests are of this type.
 
@@ -18,7 +18,7 @@ Splink tests can be broadly categorised into three sets:
 
 ### Core tests
 
-Core tests do not need to be handled any differently than ordinary `pytest` tests. Any test is marked as `core` by default, and will only be excluded from being a core test if it is decorated using either `@mark_with_dialects_excluding` or `@mark_with_dialects_including` from the [test decorator file](TODO).
+Core tests do not need to be handled any differently than ordinary `pytest` tests. Any test is marked as `core` by default, and will only be excluded from being a core test if it is decorated using either `@mark_with_dialects_excluding` or `@mark_with_dialects_including` from the [test decorator file](https://github.com/moj-analytical-services/splink/blob/master/tests/decorator.py).
 
 ### Backend-agnostic testing
 
@@ -98,7 +98,7 @@ We could similarly provide an _explicit_ parameterisation to the test, in which 
 
 The fixture `test_helpers` is simply a dictionary of the specific-dialect test helpers - here we pick the appropriate one for our test.
 
-Each helper has the same set of methods and properties, which encapsulate _all_ of the dialect-dependencies. You can find the full set of properties and methods by examining the source for the [base class](TODO).
+Each helper has the same set of methods and properties, which encapsulate _all_ of the dialect-dependencies. You can find the full set of properties and methods by examining the source for the [base class `TestHelper`](https://github.com/moj-analytical-services/splink/blob/master/tests/helpers.py).
 
 ```py linenums="7"
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -115,7 +115,7 @@ Here we are now actually using a method of the test helper - in this case we are
         {
             "output_column_name": "email",
 ```
-We reference the dialect-specific [comparsion library](TODO) as `helper.cl`,
+We reference the dialect-specific [comparison library](../../comparison_library.html) as `helper.cl`,
 
 ```py linenums="16" hl_lines="5 6 7 12"
     {
@@ -133,7 +133,7 @@ We reference the dialect-specific [comparsion library](TODO) as `helper.cl`,
         ]
     }
 ```
-and the dialect-specific [comparison level library](TODO) as `helper.cll`.
+and the dialect-specific [comparison level library](../../comparison_level_library.html) as `helper.cll`.
 
 ```py linenums="23" hl_lines="2"
     {
@@ -153,7 +153,7 @@ From this point onwards we will be working with the instantiated `linker`, and s
 ### Tests for specific backends
 
 If you intend to write a test for a specific backend, first consider whether it is definitely specific to that backend - if not then a [backend-agnostic test](#backend-agnostic-testing) would be preferable, as then your test will be run against _many_ backends.
-If you really do need to test features peculiar to one backend, then you can write it simply as you would an ordinary `pytest` test. The only difference is that you should decorate it with `@mark_with_dialects_including` (from [tests/decorator.py](TODO)) - for example:
+If you really do need to test features peculiar to one backend, then you can write it simply as you would an ordinary `pytest` test. The only difference is that you should decorate it with `@mark_with_dialects_including` (from [tests/decorator.py](https://github.com/moj-analytical-services/splink/blob/master/tests/decorator.py)) - for example:
 
 === "DuckDB"
     ```py
@@ -225,9 +225,9 @@ pytest -h
 
 #### Selecting sets of tests
 
-You may wish to run tests relating to to specific backends, tests which are backend-independent, or any combinations of these. Splink allows for various combinations by making use of `pytest`'s [`mark` feature](TODO).
+You may wish to run tests relating to to specific backends, tests which are backend-independent, or any combinations of these. Splink allows for various combinations by making use of `pytest`'s [`mark` feature](https://docs.pytest.org/en/latest/example/markers.html).
 
-If when you invoke pytest you pass no marks explicitly, there will be an implicit mark of `default`, as per the [pyproject.toml pytest.ini configuration](TODO).
+If when you invoke pytest you pass no marks explicitly, there will be an implicit mark of `default`, as per the [pyproject.toml pytest.ini configuration](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml).
 
 The available options are:
 
@@ -237,7 +237,7 @@ The available options are:
 * `pytest tests/ -m duckdb_only` - run all `duckdb` tests only, and _not_ the `core` tests
     * & similarly for other dialects
 * `pytest tests/ -m default` or equivalently `pytest tests/` - run all tests in the `default` group. The `default` group consists of the `core` tests, and those dialects in the `default` group - currently `spark` and `duckdb`.
-    * Other groups of dialects can be added and will similarly run with `pytest tests/ -m new_dialect_group`. Dialects within the current scope of testing and the groups they belong to are defined in the `dialect_groups` dictionary in [tests/decorator.py](TODO)
+    * Other groups of dialects can be added and will similarly run with `pytest tests/ -m new_dialect_group`. Dialects within the current scope of testing and the groups they belong to are defined in the `dialect_groups` dictionary in [tests/decorator.py](https://github.com/moj-analytical-services/splink/blob/master/tests/decorator.py)
 * `pytest tests/ -m all` run all tests for all available dialects
 
 These all work alongside all the other pytest options, so for instance to run the tests for training `probability_two_random_records_match` for only `duckdb`, ignoring warnings, with quiet output, and exiting on the first failure/error:
