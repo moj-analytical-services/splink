@@ -59,7 +59,7 @@ def test_feature_that_doesnt_work_with_sqlite(test_helpers, dialect, some_other_
         ]
     }
 
-    linker = helper.linker(df, settings_dict, **helper.extra_linker_args())
+    linker = helper.Linker(df, settings_dict, **helper.extra_linker_args())
 
     # and then some actual testing logic
 ```
@@ -145,7 +145,7 @@ and the dialect-specific [comparison level library](../../comparison_level_libra
 We can include raw SQL statements, but we must ensure they are valid for all dialects we are considering. This test uses `split_part` which is not available in `sqlite`, hence its exclusion. We suppose that this particular comparison level is crucial for the test to make sense - otherwise we should try and re-write in a way that doesn't needlessly exclude some SQL dialects.
 
 ```py linenums="33"
-    linker = helper.linker(df, settings_dict, **helper.extra_linker_args())
+    linker = helper.Linker(df, settings_dict, **helper.extra_linker_args())
 ```
 Finally we instantiate the linker, passing any default set of extra arguments provided by the helper, which some dialects require.
 
@@ -206,9 +206,10 @@ There may be many warnings emitted, for instance by library dependencies, clutte
 * `-v` for verbose mode, where each test instance will be displayed on a separate line with status
 * `-q` for quiet mode, where output is extremely minimal
 * `-x` to fail on first error/failure rather than continuing to run all selected tests
+    * 
 * `-m some_mark` run only those tests marked with `some_mark` - see [below](#selecting-sets-of-tests) for useful options here
 
-For instance useage might be:
+For instance usage might be:
 ```sh
 # ignore warnings, display output
 pytest -W ignore -s tests/

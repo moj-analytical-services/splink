@@ -60,7 +60,7 @@ def test_array_comparisons(test_helpers, dialect):
             helper.cl.exact_match("first_name"),
         ],
     }
-    linker = helper.linker(df, settings, **helper.extra_linker_args())
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
     df_e = linker.predict().as_pandas_dataframe()
 
     # ID pairs with various sizes of intersections
@@ -99,7 +99,7 @@ def test_array_comparisons(test_helpers, dialect):
             helper.cl.exact_match("first_name"),
         ],
     }
-    linker = helper.linker(df, settings, **helper.extra_linker_args())
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
     df_e = linker.predict().as_pandas_dataframe()
 
     # now levels encompass multiple size intersections

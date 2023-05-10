@@ -25,7 +25,7 @@ def test_u_train(test_helpers, dialect):
     }
     df_linker = helper.convert_frame(df)
 
-    linker = helper.linker(df_linker, settings, **helper.extra_linker_args())
+    linker = helper.Linker(df_linker, settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
@@ -74,7 +74,7 @@ def test_u_train_link_only(test_helpers, dialect):
     df_l = helper.convert_frame(df_l)
     df_r = helper.convert_frame(df_r)
 
-    linker = helper.linker([df_l, df_r], settings, **helper.extra_linker_args())
+    linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
@@ -127,7 +127,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
     df_l = helper.convert_frame(df_l)
     df_r = helper.convert_frame(df_r)
 
-    linker = helper.linker([df_l, df_r], settings, **helper.extra_linker_args())
+    linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
     linker._settings_obj.comparisons[0]
@@ -188,7 +188,7 @@ def test_u_train_multilink(test_helpers, dialect):
         "blocking_rules_to_generate_predictions": [],
     }
 
-    linker = helper.linker(dfs, settings, **helper.extra_linker_args())
+    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
@@ -220,7 +220,7 @@ def test_u_train_multilink(test_helpers, dialect):
 
     # also check the numbers on a link + dedupe with same inputs
     settings["link_type"] = "link_and_dedupe"
-    linker = helper.linker(dfs, settings, **helper.extra_linker_args())
+    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
@@ -262,9 +262,9 @@ def test_seed_u_outputs(test_helpers, dialect):
         "comparisons": [helper.cl.levenshtein_at_thresholds("first_name", 2)],
     }
 
-    linker_1 = helper.linker(df, settings, **helper.extra_linker_args())
-    linker_2 = helper.linker(df, settings, **helper.extra_linker_args())
-    linker_3 = helper.linker(df, settings, **helper.extra_linker_args())
+    linker_1 = helper.Linker(df, settings, **helper.extra_linker_args())
+    linker_2 = helper.Linker(df, settings, **helper.extra_linker_args())
+    linker_3 = helper.Linker(df, settings, **helper.extra_linker_args())
 
     linker_1.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
     linker_2.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)

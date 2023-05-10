@@ -17,7 +17,7 @@ from splink.sqlite.sqlite_linker import SQLiteLinker
 class TestHelper(ABC):
     @property
     @abstractmethod
-    def linker(self):
+    def Linker(self):
         pass
 
     def extra_linker_args(self):
@@ -43,7 +43,7 @@ class TestHelper(ABC):
 
 class DuckDBTestHelper(TestHelper):
     @property
-    def linker(self):
+    def Linker(self):
         return DuckDBLinker
 
     def convert_frame(self, df):
@@ -63,7 +63,7 @@ class SparkTestHelper(TestHelper):
         self.spark = spark
 
     @property
-    def linker(self):
+    def Linker(self):
         return SparkLinker
 
     def extra_linker_args(self):
@@ -101,7 +101,7 @@ class SQLiteTestHelper(TestHelper):
         self._frame_counter = 0
 
     @property
-    def linker(self):
+    def Linker(self):
         return SQLiteLinker
 
     def extra_linker_args(self):
