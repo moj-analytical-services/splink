@@ -27,43 +27,44 @@ Note however, that not all comparison functions are available in all backends.
 There are tables detailing the available functions for each backend on
 the [comparison library API page](../comparison_library.html) and the [comparison level library API page](../comparison_level_library.html).
 
-#### DuckDB
+=== "DuckDB"
 
-```python
-from splink.duckdb.duckdb_linker import DuckDBLinker
-import splink.duckdb.duckdb_comparison_library as cl
-import splink.duckdb.duckdb_comparison_level_library as cll
+    ```python
+    from splink.duckdb.duckdb_linker import DuckDBLinker
+    import splink.duckdb.duckdb_comparison_library as cl
+    import splink.duckdb.duckdb_comparison_level_library as cll
 
-linker = DuckDBLinker(your_args)
-```
+    linker = DuckDBLinker(your_args)
+    ```
 
-#### Spark
+=== "Spark"
 
-```python
-from splink.spark.spark_linker import SparkLinker
-import splink.spark.spark_comparison_library as cl
-import splink.spark.spark_comparison_level_library as cll
+    ```python
+    from splink.spark.spark_linker import SparkLinker
+    import splink.spark.spark_comparison_library as cl
+    import splink.spark.spark_comparison_level_library as cll
 
-linker = SparkLinker(your_args)
-```
+    linker = SparkLinker(your_args)
+    ```
 
-#### AWS Athena
+=== "AWS Athena"
 
-```python
-from splink.athena.athena_linker import AthenaLinker
-import splink.athena.athena_comparison_library as cl
-import splink.athena.athena_comparison_level_library as cll
+    ```python
+    from splink.athena.athena_linker import AthenaLinker
+    import splink.athena.athena_comparison_library as cl
+    import splink.athena.athena_comparison_level_library as cll
 
-linker = AthenaLinker(your_args)
-```
+    linker = AthenaLinker(your_args)
+    ```
 
-#### SQlite
+=== "SQLite"
 
-```python
-from splink.sqlite.sqlite_linker import SQLiteLinker
-import splink.sqlite.sqlite_comparison_library as cl
-import splink.sqlite.sqlite_comparison_level_library as cll
+    ```python
+    from splink.sqlite.sqlite_linker import SQLiteLinker
+    import splink.sqlite.sqlite_comparison_library as cl
+    import splink.sqlite.sqlite_comparison_level_library as cll
 
-linker = SQLiteLinker(your_args)
+    linker = SQLiteLinker(your_args)
 
-```
+    ```
+

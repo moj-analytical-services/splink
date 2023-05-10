@@ -5,6 +5,7 @@ theme:
   name: "material"
   features:
     - content.code.annotate
+    - content.code.copy
     - content.tabs.link
     - content.tooltips
     - header.autohide
@@ -54,8 +55,11 @@ markdown_extensions:
   - pymdownx.snippets:
       auto_append:
         - includes/abbreviations.md
+  - pymdownx.tabbed:
+      alternate_style: true 
   - toc:
       permalink: True
+      toc_depth: 4
 nav:
   - Home: "README.md"
   - Topic Guide:
@@ -122,6 +126,7 @@ nav:
         - Linting: "dev_guides/changing_splink/lint.md"
         - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
         - Testing: "dev_guides/changing_splink/testing.md"
+        - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
       - Caching and pipelining: "dev_guides/caching.md"
       - Understanding and debugging Splink: "dev_guides/debug_modes.md"
       - Spark caching: "dev_guides/spark_pipelining_and_caching.md"
