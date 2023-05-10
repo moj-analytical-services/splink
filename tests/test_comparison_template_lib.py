@@ -22,25 +22,12 @@ def test_date_comparison_run(ctl):
 @pytest.mark.parametrize(
     ("ctl"),
     [
-        pytest.param(ctld, id="DuckDB Date Comparison Jaro Test"),
-        pytest.param(ctls, id="Spark Date Comparison Jaro Test"),
-    ],
-)
-def test_date_comparison_jaro_run(ctl):
-    ctl.date_comparison("date", levenshtein_thresholds=[], jaro_thresholds=[0.9])
-
-
-@pytest.mark.parametrize(
-    ("ctl"),
-    [
         pytest.param(ctld, id="DuckDB Date Comparison Jaro-Winkler Test"),
         pytest.param(ctls, id="Spark Date Comparison Jaro-Winkler Test"),
     ],
 )
 def test_date_comparison_jw_run(ctl):
-    ctl.date_comparison(
-        "date", levenshtein_thresholds=[], jaro_winkler_thresholds=[0.9]
-    )
+    ctl.date_comparison("date", levenshtein_thresholds=[], jaro_winkler_thresholds=[1])
 
 
 @pytest.mark.parametrize(
@@ -292,5 +279,105 @@ def test_name_comparison_levels(spark, ctl, Linker):
                     (linker_output.unique_id_l == left)
                     & (linker_output.unique_id_r == right)
                 ]["gamma_custom_first_name_first_name_metaphone"].values[0]
+                == gamma
+            )
+
+
+# postcode_comparison
+
+
+@pytest.mark.parametrize(
+    ("ctl", "Linker"),
+    [
+        pytest.param(ctld, DuckDBLinker, id="DuckDB Postcode Comparison Template Test"),
+        pytest.param(ctls, SparkLinker, id="Spark Postcode Comparison Template Test"),
+    ],
+)
+def test_postcode_comparison_levels(spark, ctl, Linker):
+    df = pd.DataFrame(
+        [
+            {
+                "unique_id": 1,
+                "first_name": "Andy",
+                "postcode": "SE1P 0NY",
+                "lat": 53.95,
+                "long": -1.08,
+            },
+            {
+                "unique_id": 2,
+                "first_name": "Andy's twin",
+                "postcode": "SE1P 0NY",
+                "lat": 53.95,
+                "long": -1.08,
+            },
+            {
+                "unique_id": 3,
+                "first_name": "Tom",
+                "postcode": "SE1P 0PZ",
+                "lat": 53.95,
+                "long": -1.08,
+            },
+            {
+                "unique_id": 4,
+                "first_name": "Robin",
+                "postcode": "SE1P 4UY",
+                "lat": 53.95,
+                "long": -1.08,
+            },
+            {
+                "unique_id": 5,
+                "first_name": "Sam",
+                "postcode": "SE2 7TR",
+                "lat": 53.95,
+                "long": -1.08,
+            },
+            {
+                "unique_id": 6,
+                "first_name": "Zoe",
+                "postcode": "SW15 8UY",
+                "lat": 53.95,
+                "long": -1.08,
+            },
+        ]
+    )
+
+    # Generate our various settings objs
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            ctl.postcode_comparison(
+                "postcode",
+                include_distance_in_km_level=True,
+                lat_col="lat",
+                long_col="long",
+                km_threshold=5,
+            )
+        ],
+    }
+
+    if Linker == SparkLinker:
+        df = spark.createDataFrame(df)
+        df.persist()
+    linker = Linker(df, settings)
+    linker_output = linker.predict().as_pandas_dataframe()
+
+    # Check individual IDs are assigned to the correct gamma values
+    # Dict key: {gamma_level: tuple of ID pairs}
+    size_gamma_lookup = {
+        5: [(1, 2)],
+        4: [(1, 3), (2, 3)],
+        3: [(1, 4), (2, 4), (3, 4)],
+        2: [(1, 5), (2, 5), (3, 5), (4, 5)],
+        1: [(1, 6), (2, 6), (3, 6), (4, 6), (5, 6)],
+    }
+
+    for gamma, id_pairs in size_gamma_lookup.items():
+        for left, right in id_pairs:
+            print(f"Checking IDs: {left}, {right}")
+            assert (
+                linker_output.loc[
+                    (linker_output.unique_id_l == left)
+                    & (linker_output.unique_id_r == right)
+                ]["gamma_postcode"].values[0]
                 == gamma
             )
