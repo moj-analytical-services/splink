@@ -550,3 +550,13 @@ class AthenaLinker(Linker):
             )
             # pop from our tables created by splink list
             self._names_of_tables_created_by_splink.remove(table)
+
+        for table in tables:
+            _garbage_collection(
+                self.output_schema,
+                self.boto3_session,
+                delete_s3_folders,
+                name_prefix=table,
+            )
+            # pop from our tables created by splink list
+            self._names_of_tables_created_by_splink.remove(table)
