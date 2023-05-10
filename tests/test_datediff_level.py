@@ -183,18 +183,25 @@ def test_datediff_error_logger(cl):
 @pytest.mark.parametrize(
     ("cl", "cll", "Linker", "date_format"),
     [
-        pytest.param(cld, clld, DuckDBLinker, "%Y-%m-%d", id="DuckDB Datediff Integration Tests"),
-        pytest.param(cls, clls, SparkLinker, "yyyy-mm-dd", id="Spark Datediff Integration Tests"),
+        pytest.param(
+            cld, clld, DuckDBLinker, "%Y-%m-%d", id="DuckDB Datediff Integration Tests"
+        ),
+        pytest.param(
+            cls, clls, SparkLinker, "yyyy-mm-dd", id="Spark Datediff Integration Tests"
+        ),
     ],
 )
 def test_datediff_with_str_casting(spark, cl, cll, Linker, date_format, caplog):
     caplog.set_level(logging.INFO)
 
-    def simple_dob_linker(spark, df, dobs=[], 
-                          date_format_param=None, 
-                          invalid_dates_as_null=False,
-                          Linker=Linker
-                          ):
+    def simple_dob_linker(
+        spark,
+        df,
+        dobs=[],
+        date_format_param=None,
+        invalid_dates_as_null=False,
+        Linker=Linker,
+    ):
         settings_cl = {
             "link_type": "dedupe_only",
             "comparisons": [
@@ -205,15 +212,15 @@ def test_datediff_with_str_casting(spark, cl, cll, Linker, date_format, caplog):
                     ["day", "month", "year", "year"],
                     cast_strings_to_date=True,
                     date_format=date_format_param,
-                    invalid_dates_as_null=invalid_dates_as_null
+                    invalid_dates_as_null=invalid_dates_as_null,
                 ),
             ],
         }
         # For testing the cll version
         if invalid_dates_as_null:
-            null_level_regex=date_format_param
+            null_level_regex = date_format_param
         else:
-            null_level_regex=None
+            null_level_regex = None
 
         dob_diff = {
             "output_column_name": "dob",
@@ -405,24 +412,23 @@ def test_datediff_with_str_casting(spark, cl, cll, Linker, date_format, caplog):
     # Spark as does not throw error
     # in response to badly formatted dates
 
-
     if Linker == DuckDBLinker:
         # mis-match between date formats:
         simple_dob_linker(
-                spark,
-                df,
-                dobs=["03-14-1994", "19/22/1993"],
-                date_format_param=valid_date_formats[1],
-                invalid_dates_as_null=True,
-                Linker=Linker,
-            )
+            spark,
+            df,
+            dobs=["03-14-1994", "19/22/1993"],
+            date_format_param=valid_date_formats[1],
+            invalid_dates_as_null=True,
+            Linker=Linker,
+        )
 
         # mis-match between input dates and expected date format
         simple_dob_linker(
-                spark,
-                df,
-                dobs=["20-04-1993", "19-02-1993"],
-                date_format_param=valid_date_formats[3],
-                invalid_dates_as_null=True,
-                Linker=Linker,
-            )
+            spark,
+            df,
+            dobs=["20-04-1993", "19-02-1993"],
+            date_format_param=valid_date_formats[3],
+            invalid_dates_as_null=True,
+            Linker=Linker,
+        )

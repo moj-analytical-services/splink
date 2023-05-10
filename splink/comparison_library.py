@@ -46,7 +46,7 @@ class ExactMatchBase(Comparison):
                 import splink.duckdb.duckdb_comparison_library as cl
                 cl.exact_match("first_name")
                 ```
-                Create comparison with exact match level based on a 
+                Create comparison with exact match level based on a
                 substring of first_name as determined by a regular expression
                 ``` python
                 import splink.duckdb.duckdb_comparison_library as cl
@@ -58,7 +58,7 @@ class ExactMatchBase(Comparison):
                 import splink.spark.spark_comparison_library as cl
                 cl.exact_match("first_name")
                 ```
-                Create comparison with exact match level based on a 
+                Create comparison with exact match level based on a
                 substring of first_name as determined by a regular expression
                 ``` python
                 import splink.spark.spark_comparison_library as cl
@@ -69,7 +69,7 @@ class ExactMatchBase(Comparison):
                 import splink.athena.athena_comparison_library as cl
                 cl.exact_match("first_name")
                 ```
-                Create comparison with exact match level based on a 
+                Create comparison with exact match level based on a
                 substring of first_name as determined by a regular expression
                 ``` python
                 import splink.athena.athena_comparison_library as cl
