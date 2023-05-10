@@ -79,37 +79,3 @@ def _garbage_collection(
                         boto3_session=boto3_session,
                     )
                     delete_metadata_loc.append(metadata_loc)
-
-    # This will only delete tables created within the splink process. These are
-    # tables containing the specific prefix: "__splink"
-    tables = wr.catalog.get_tables(
-        database=database_name,
-        name_prefix=name_prefix,
-        boto3_session=boto3_session,
-    )
-    delete_metadata_loc = []
-    for t in tables:
-        # Don't overwrite input tables if they have been
-        # given the __splink prefix.
-        if t["Name"] not in tables_to_exclude:
-            wr.catalog.delete_table_if_exists(
-                database=t["DatabaseName"],
-                table=t["Name"],
-                boto3_session=boto3_session,
-            )
-            # Only delete the backing data if requested
-            if delete_s3_folders:
-                path = t["StorageDescriptor"]["Location"]
-                wr.s3.delete_objects(
-                    path=path,
-                    use_threads=True,
-                    boto3_session=boto3_session,
-                )
-                metadata_loc = f"{path.split('/__splink')[0]}/tables/"
-                if metadata_loc not in delete_metadata_loc:
-                    wr.s3.delete_objects(
-                        path=metadata_loc,
-                        use_threads=True,
-                        boto3_session=boto3_session,
-                    )
-                    delete_metadata_loc.append(metadata_loc)

@@ -13,13 +13,8 @@ from ..athena.athena_utils import (
     _garbage_collection,
     _verify_athena_inputs,
 )
-from ..athena.athena_utils import (
-    _garbage_collection,
-    _verify_athena_inputs,
-)
 from ..input_column import InputColumn
 from ..linker import Linker
-from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import ensure_is_list
 from ..splink_dataframe import SplinkDataFrame
@@ -34,10 +29,7 @@ class AthenaDataFrame(SplinkDataFrame):
     @property
     def columns(self):
         db, tb = self.linker.get_schema_info(self.physical_name)
-        db, tb = self.linker.get_schema_info(self.physical_name)
         d = wr.catalog.get_table_types(
-            database=db,
-            table=tb,
             database=db,
             table=tb,
             boto3_session=self.linker.boto3_session,
@@ -51,7 +43,6 @@ class AthenaDataFrame(SplinkDataFrame):
 
     def drop_table_from_database(self, force_non_splink_table=False):
         # Check folder and table set for deletion
-        # Check folder and table set for deletion
         self._check_drop_folder_created_by_splink(force_non_splink_table)
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
@@ -59,12 +50,7 @@ class AthenaDataFrame(SplinkDataFrame):
         self.linker._drop_table_from_database_if_exists(self.physical_name)
         self.linker._delete_table_from_s3(self.physical_name)
 
-        # Delete the table from s3 and your database
-        self.linker._drop_table_from_database_if_exists(self.physical_name)
-        self.linker._delete_table_from_s3(self.physical_name)
-
     def _check_drop_folder_created_by_splink(self, force_non_splink_table=False):
-        filepath = self.linker.s3_output
         filepath = self.linker.s3_output
         filename = self.physical_name
         # Validate that the folder is a splink generated folder...
@@ -78,7 +64,6 @@ class AthenaDataFrame(SplinkDataFrame):
             if not force_non_splink_table:
                 raise ValueError(
                     f"You've asked to drop data housed under the filepath "
-                    f"{self.linker.s3_output} from your "
                     f"{self.linker.s3_output} from your "
                     "s3 output bucket, which is not a folder created by "
                     "Splink. If you really want to delete this data, you "
@@ -110,7 +95,6 @@ class AthenaDataFrame(SplinkDataFrame):
         out_df = wr.athena.read_sql_query(
             sql=sql,
             database=self.linker.output_schema,
-            s3_output=self.linker.s3_output,
             s3_output=self.linker.s3_output,
             keep_files=False,
             ctas_approach=True,
@@ -206,26 +190,11 @@ class AthenaLinker(Linker):
         if not type(boto3_session) == boto3.session.Session:
             raise ValueError("Please enter a valid boto3 session object.")
 
-        if not type(boto3_session) == boto3.session.Session:
-            raise ValueError("Please enter a valid boto3 session object.")
-
         self._sql_dialect_ = "presto"
 
         _verify_athena_inputs(output_database, output_bucket, boto3_session)
-        _verify_athena_inputs(output_database, output_bucket, boto3_session)
         self.boto3_session = boto3_session
         self.output_schema = output_database
-        self.output_bucket = output_bucket
-
-        # If the default folder is blank, name it `splink_warehouse`
-        if output_filepath:
-            self.output_filepath = output_filepath
-        else:
-            self.output_filepath = "splink_warehouse"
-
-        # This query info dictionary is used to circumvent the need to run
-        # `wr.catalog.get_table_location` every time we want to delete
-        # the backing data from s3.
         self.output_bucket = output_bucket
 
         # If the default folder is blank, name it `splink_warehouse`
@@ -540,16 +509,6 @@ class AthenaLinker(Linker):
         # Exclude tables that the user doesn't want to delete
         tables = self._names_of_tables_created_by_splink.copy()
         tables = [t for t in tables if t not in tables_to_exclude]
-
-        for table in tables:
-            _garbage_collection(
-                self.output_schema,
-                self.boto3_session,
-                delete_s3_folders,
-                name_prefix=table,
-            )
-            # pop from our tables created by splink list
-            self._names_of_tables_created_by_splink.remove(table)
 
         for table in tables:
             _garbage_collection(
