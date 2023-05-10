@@ -253,7 +253,7 @@ Docker allows you to more quickly and easily install a specific version of pytho
 
 This is particularly useful if you're using py > 3.9.10 (which is currently in use in our tests github action) and need to run a secondary set of tests.
 
-A pre-built Dockerfile for running tests against python version 3.9.10 can be located within [scripts/run_tests.Dockerfile](https://github.com/moj-analytical-services/splink/scripts/scripts/run_tests.Dockerfile).
+A pre-built Dockerfile for running tests against python version 3.9.10 can be located within [scripts/run_tests.Dockerfile](https://github.com/moj-analytical-services/splink/blob/master/scripts/run_tests.Dockerfile).
 
 To run, simply use the following docker command from within a terminal and the root folder of a splink clone:
 ```sh
@@ -265,6 +265,11 @@ This will both build and run the tests library.
 Feel free to replace `run_tests:testing` with an image name and tag you're happy with.
 
 Reusing the same image and tag will overwrite your existing image.
+
+You can also overwrite the default `CMD` if you want a different set of `pytest` command-line options, for example
+```sh
+docker run run_tests:testing pytest -W ignore -m spark tests/test_u_train.py
+```
 
 ### Tests in CI
 
