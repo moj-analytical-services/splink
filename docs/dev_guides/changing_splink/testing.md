@@ -22,7 +22,7 @@ Core tests do not need to be handled any differently than ordinary `pytest` test
 
 ### Backend-agnostic testing
 
-The majority of tests should be written using the backend-agnostic testing framework. This just provides some small tools which allow tests to be written in a backend-agnostic way, and can then by run against all available SQL backends (or a subset, if some are not appropriate).
+The majority of tests should be written using the backend-agnostic testing framework. This just provides some small tools which allow tests to be written in a backend-independent way. This means the tests can then by run against _all_ available SQL backends (or a subset, if some lack _necessary_ features for the test).
 
 As an example, let's consider a test that will run on all dialects _except for `sqlite`_, and then break down the various parts to see what each is doing.
 
@@ -78,17 +78,18 @@ def test_feature_that_doesnt_work_with_sqlite(test_helpers, dialect, some_other_
 ```
 
 The decorator `@mark_with_dialects_excluding("sqlite")` will do two things:
-* marks the test it decorates with the appropriate marks, so that it will be run with tests for each dialect, excluding any that are passed as arguments; in this case all dialects _excluding_ `sqlite`.
+
+* marks the test it decorates with the appropriate custom `pytest` marks. This ensures that it will be run with tests for each dialect, excluding any that are passed as arguments; in this case it will be run for all dialects _excluding_ `sqlite`.
 * parameterises the test with a string parameter `dialect`, which will be used to configure the test for that dialect. The test will run for each value of `dialect` possible, excluding those passed to the decorator (`sqlite` in this case).
 
-You should aim to exclude as _few_ dialects as possible - consider if you really need to exclude any. Dialects should only be excluded if the test doesn't make sense for them due to features they lack. The default choice should be the decorator with no arguments `@mark_with_dialects_excluding()`. If you need to exclude multiple dialects this is also possible, e.g. `@mark_with_dialects_excluding("sqlite", "spark")`.
+You should aim to exclude as _few_ dialects as possible - consider if you really need to exclude any. Dialects should only be excluded if the test doesn't make sense for them due to features they lack. The default choice should be the decorator with no arguments `@mark_with_dialects_excluding()`, meaning the test runs with _all_ dialects. If you need to exclude multiple dialects this is also possible, e.g. `@mark_with_dialects_excluding("sqlite", "spark")`.
 
 ```py linenums="3" hl_lines="2"
 @mark_with_dialects_excluding("sqlite")
 def test_feature_that_doesnt_work_with_sqlite(test_helpers, dialect, some_other_test_fixture):
 ```
 
-As well as the parameter `dialect` (which is provided by the decorator), we must also pass the helper-factory fixture `test_helpers`. We can additionally pass further fixtures if needed - in this case `some_other_test_fixture`.
+As well as the parameter `dialect` (which is provided by the decorator), we must also pass the helper-factory fixture `test_helpers`. We can additionally pass further [fixtures](https://docs.pytest.org/en/latest/how-to/fixtures.html) if needed - in this case `some_other_test_fixture`.
 We could similarly provide an _explicit_ parameterisation to the test, in which case we would also pass these parameters - see [the pytest docs on parameterisation](https://doc.pytest.org/en/latest/example/parametrize.html#set-marks-or-test-id-for-individual-parametrized-test) for more information.
 
 
@@ -141,7 +142,7 @@ and the dialect-specific [comparison level library](../../comparison_level_libra
         "label_for_charts": "email local-part matches",
     }
 ```
-We can include raw SQL statements, but we must ensure they are valid for all dialects we are considering.
+We can include raw SQL statements, but we must ensure they are valid for all dialects we are considering. This test uses `split_part` which is not available in `sqlite`, hence its exclusion. We suppose that this particular comparison level is crucial for the test to make sense - otherwise we should try and re-write in a way that doesn't needlessly exclude some SQL dialects.
 
 ```py linenums="33"
     linker = helper.linker(df, settings_dict, **helper.extra_linker_args())
@@ -176,7 +177,7 @@ If you really do need to test features peculiar to one backend, then you can wri
 
 This ensures that the test gets marked appropriately for running when the `Spark` tests should be run, and excludes it from the set of `core` tests.
 
-Note that unlike the exclusive `mark_with_dialects_excluding`, this decorator will _not_ paramaterise the test with the `dialect` argument. This is because usage of the _inclusive_ form is largely designed for single-dialect tests. If you wish to override this behaviour and pass paramaterise the test you can use the argument `pass_dialect`, for example `@mark_with_dialects_including("spark", "sqlite", pass_dialect=True)`.
+Note that unlike the exclusive `mark_with_dialects_excluding`, this decorator will _not_ paramaterise the test with the `dialect` argument. This is because usage of the _inclusive_ form is largely designed for single-dialect tests. If you wish to override this behaviour and parameterise the test you can use the argument `pass_dialect`, for example `@mark_with_dialects_including("spark", "sqlite", pass_dialect=True)`, in which case you would need to write the test in a [backend-independent manner](#backend-agnostic-testing).
 
 ## Running tests
 
@@ -186,7 +187,7 @@ To run tests locally, simply run:
 ```sh
 python3 -m pytest tests/
 ```
-or simply
+or alternatively
 ```sh
 pytest tests/
 ```
@@ -199,7 +200,8 @@ or for a single test, additionally append the test name after a pair of colons, 
 ```sh
 pytest tests/test_u_train.py::test_u_train_multilink
 ```
-There may be many warnings output for instance by dependencies which may clutter your output, in which case you can use `--disable-pytest-warnings` or `-W ignore` so that these will not be displayed. Some additional command-line options that may be useful:
+There may be many warnings emitted, for instance by library dependencies, cluttering your output in which case you can use `--disable-pytest-warnings` or `-W ignore` so that these will not be displayed. Some additional command-line options that may be useful:
+
 * `-s` to disable output capture, so that test output is displayed in the terminal in all cases
 * `-v` for verbose mode, where each test instance will be displayed on a separate line with status
 * `-q` for quiet mode, where output is extremely minimal
