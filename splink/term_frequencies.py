@@ -5,6 +5,9 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
+from pandas import concat
+from numpy import log2
+
 from .input_column import InputColumn, remove_quotes_from_identifiers
 
 from .charts import load_chart_definition, vegalite_or_json
@@ -157,31 +160,74 @@ def compute_term_frequencies_from_concat_with_tf(linker: "Linker"):
     return tf_table
 
 
+def comparison_level_to_tf_chart_data(cl: dict):
+
+    df = cl["df_tf"]
+    df.columns = ["value", "tf"]
+    df = df[df.value.notnull()]
+
+    for k, v in cl.items():
+        if k != "df_tf":
+            df[k] = v
+
+    # TF match weight scaled by tf_adjustment_weight
+    df["log2_bf_tf"] = log2(
+        df["u_probability"]/df["tf"]) * df["tf_adjustment_weight"]
+
+    # Tidy up columns
+    df = df.drop(columns=["tf", "u_probability", "tf_adjustment_weight"])
+    df.rename(columns={
+        "comparison_vector_value": "gamma",
+        "tf_adjustment_column": "tf_col",
+        "log2_bayes_factor": "log2_bf"
+    }, inplace=True)
+
+    # Add ranks for sorting/selecting
+    least_freq_rank = df.groupby("gamma")["log2_bf_tf"].rank('min', ascending=False)
+    most_freq_rank = df.groupby("gamma")["log2_bf_tf"].rank('min')
+
+    df["least_freq_rank"] = least_freq_rank
+    df["most_freq_rank"] = most_freq_rank
+
+    cl["df_out"] = df
+
+    return cl
+
 def tf_adjustment_chart(
-    linker: Linker, col, n_most_freq, n_least_freq, vals_to_include, as_dict
-):
+        linker: Linker, 
+        col, 
+        n_most_freq, 
+        n_least_freq, 
+        vals_to_include, 
+        as_dict
+    ):
 
     # Data for chart
-    df_predict = [
-        t for t in linker._names_of_tables_created_by_splink if "df_predict" in t
-    ][0]
+    c = linker._settings_obj._get_comparison_by_output_column_name(col)
+    c = c._as_detailed_records
 
-    df = linker.query_sql(
-        f"""
-        WITH tmp AS (
-        select distinct
-        gamma_{col} AS gamma,
-        CASE WHEN tf_{col}_l >= tf_{col}_r THEN {col}_l ELSE {col}_r END AS value,
-        log(bf_tf_adj_{col})/log(2) AS log2_bf_tf,
-        log(bf_{col})/log(2) AS log2_bf
-        from {df_predict}
-    )
-    SELECT *,
-        row_number() over (partition by gamma order by log2_bf_tf desc) AS least_freq_rank,
-        row_number() over (partition by gamma order by log2_bf_tf) AS most_freq_rank
-    FROM tmp
-    """
-    )
+    keys_to_retain = [
+        "comparison_vector_value",
+        "label_for_charts",
+        "tf_adjustment_column",
+        "tf_adjustment_weight",
+        "u_probability",
+        "log2_bayes_factor"
+        ""
+    ]
+
+    # Select levels with TF adjustments
+    c = [{k: cl[k] for k in cl.keys() if k in keys_to_retain}
+         for cl in c if cl["has_tf_adjustments"]]
+
+    # Add data ("df_tf") to each level
+    c = [
+        dict(cl, **{"df_tf": linker.compute_tf_table(cl["tf_adjustment_column"]).as_pandas_dataframe()}) 
+        for cl in c
+        ]
+    
+    c = [comparison_level_to_tf_chart_data(cl) for cl in c]
+    df = concat([cl["df_out"] for cl in c])
 
     # Filter values
     selected = False if not vals_to_include else df["value"].isin(vals_to_include)

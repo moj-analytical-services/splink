@@ -27,10 +27,10 @@
                 },
                 "tooltip": [
                     {"type": "nominal", "field": "value"},
-                    {"type": "nominal", "field": "gamma"},
-                    {"type": "quantitative", "field": "log2_bf"},
-                    {"type": "quantitative", "field": "log2_bf_tf"},
-                    {"type": "quantitative", "field": "log2_bf_final"}
+                    {"type": "nominal", "field": "gamma", "title": "Comparison vector value"},
+                    {"type": "quantitative", "field": "log2_bf", "title": "Match weight", "format": "+.3"},
+                    {"type": "quantitative", "field": "log2_bf_tf", "title": "TF adjustment", "format": "+.3"},
+                    {"type": "quantitative", "field": "log2_bf_final", "title": "Adjusted match weight", "format": "+.3"}
                 ],
                 "x": {
                     "type": "ordinal",
