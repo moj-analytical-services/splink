@@ -183,11 +183,10 @@ def comparison_level_to_tf_chart_data(cl: dict):
     }, inplace=True)
 
     # Add ranks for sorting/selecting
-    least_freq_rank = df.groupby("gamma")["log2_bf_tf"].rank('min', ascending=False)
-    most_freq_rank = df.groupby("gamma")["log2_bf_tf"].rank('min')
-
-    df["least_freq_rank"] = least_freq_rank
-    df["most_freq_rank"] = most_freq_rank
+    df = df.sort_values("log2_bf_tf")
+    df["least_freq_rank"] = df.groupby("gamma")["log2_bf_tf"].cumcount()
+    df["most_freq_rank"] = df.groupby(
+        "gamma")["log2_bf_tf"].cumcount(ascending=False)
 
     cl["df_out"] = df
 
@@ -231,33 +230,31 @@ def tf_adjustment_chart(
 
     # Filter values
     selected = False if not vals_to_include else df["value"].isin(vals_to_include)
-    least_freq = True if not n_least_freq else df["least_freq_rank"] <= n_least_freq
-    most_freq = True if not n_most_freq else df["most_freq_rank"] <= n_most_freq
+    least_freq = True if not n_least_freq else df["least_freq_rank"] < n_least_freq
+    most_freq = True if not n_most_freq else df["most_freq_rank"] < n_most_freq
     mask = selected | least_freq | most_freq
     df = df[mask]
 
-    # Select relevant comparison column and levels
-    c = linker._settings_obj._get_comparison_by_output_column_name(col)
-    cl = [
-        l
-        for l in c._as_detailed_records
-        if l["has_tf_adjustments"] and l["tf_adjustment_column"] == col
-    ]
-    tf_levels = [str(l["comparison_vector_value"]) for l in cl]
-    labels = [l["label_for_charts"] for l in cl]
+    tf_levels = [str(cl["comparison_vector_value"]) for cl in c]
+    labels = [f'{cl["label_for_charts"]} (TF col: {cl["tf_adjustment_column"]})' for cl in c]
 
     df = df[df["gamma"].astype("str").isin(tf_levels)].sort_values("least_freq_rank")
 
     chart_path = "tf_adjustment_chart.json"
     chart = load_chart_definition(chart_path)
 
+
     # Complete chart schema
+    tf_levels = [str(cl["comparison_vector_value"]) for cl in c]
+    labels = [f'{cl["label_for_charts"]} (TF col: {cl["tf_adjustment_column"]})' for cl in c]
     chart["data"]["values"] = df.to_dict("records")
-    chart["layer"][0]["encoding"]["tooltip"][0]["title"] = col
-    chart["layer"][0]["encoding"]["x"]["title"] = col
-    chart["layer"][-1]["encoding"]["x"]["title"] = col
     chart["params"][0]["value"] = max(tf_levels)
     chart["params"][0]["bind"]["options"] = tf_levels
     chart["params"][0]["bind"]["labels"] = labels
+
+    # PLACEHOLDER (until we work out adding a dynamic title based on the filtered data)
+    chart["layer"][0]["encoding"]["x"]["title"] = "TF column value"
+    chart["layer"][-1]["encoding"]["x"]["title"] = "TF column value"
+    chart["layer"][0]["encoding"]["tooltip"][0]["title"] = "Value"
 
     return vegalite_or_json(chart, as_dict=as_dict)
