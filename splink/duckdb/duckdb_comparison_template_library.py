@@ -1,6 +1,7 @@
 from ..comparison_template_library import (
     DateComparisonBase,
     NameComparisonBase,
+    PostcodeComparisonBase,
 )
 from .duckdb_comparison_level_library import distance_function_level
 from .duckdb_comparison_library import DuckDBComparisonProperties
@@ -16,3 +17,7 @@ class name_comparison(DuckDBComparisonProperties, NameComparisonBase):
     @property
     def _distance_level(self):
         return distance_function_level
+
+
+class postcode_comparison(DuckDBComparisonProperties, PostcodeComparisonBase):
+    pass
