@@ -343,7 +343,7 @@ class SparkLinker(Linker):
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
-            r"__splink__df_representatives.+",
+            r"__splink__df_representatives.*",
             r"__splink__df_neighbours",
             r"__splink__df_connected_components_df",
         ]
