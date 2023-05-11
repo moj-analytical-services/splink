@@ -18,14 +18,25 @@ Once generated, phonetic matches can be used within [comparisons & comparison le
 
 E.g. For a comparison including a [Double Metaphone](#double-metaphone) phonetic match using the [name_comparison](../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons):
 
-```python
-import splink.duckdb.duckdb_comparison_template_library as ctl
 
-first_name_comparison = ctl.name_comparison(
+=== "DuckDB"
+    ```python
+    import splink.duckdb.duckdb_comparison_template_library as ctl
+
+    first_name_comparison = ctl.name_comparison(
                             "first_name",
                             phonetic_col_name = "first_name_dm")
-print(first_name_comparison.human_readable_description)
-```
+    print(first_name_comparison.human_readable_description)
+    ```
+=== "Spark"
+    ```python
+    import splink.spark.spark_comparison_template_library as ctl
+
+    first_name_comparison = ctl.name_comparison(
+                            "first_name",
+                            phonetic_col_name = "first_name_dm")
+    print(first_name_comparison.human_readable_description)
+    ```
 
 > Comparison 'Exact match vs. Names with phonetic exact match vs. Names within jaro_winkler thresholds 0.95, 0.88 vs. anything else' of "first_name" and "first_name_dm".
 >
@@ -64,17 +75,15 @@ The Soundex algorithm works by following these steps:
 
 3. Combine the first letter and the numerical codes to form a four-character code. If there are fewer than four characters, pad the code with zeros.
 
-For example, the Soundex code for the name "Smith" is S530, and the code for "Smyth" is also S530. This allows for similar-sounding names to be indexed and searched together.
+???+ example
 
-#### Sample Code
+    You can test out the Soundex transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
 
-You can test out the Soundex transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
-
-```python
-import phonetics
-print(phonetics.soundex("Smith"), phonetics.soundex("Smyth"))
-```
-> S5030 S5030
+    ```python
+    import phonetics
+    print(phonetics.soundex("Smith"), phonetics.soundex("Smyth"))
+    ```
+    > S5030 S5030
 
 
 <hr>
@@ -109,17 +118,21 @@ The Metaphone algorithm works by following these steps:
 
 8. Retain the first four characters of the resulting word, or pad it with zeros if it has fewer than four characters.
 
-For example, the Metaphone code for the name "Smith" is SM0, and the code for "Smyth" is also SM0. This allows for more accurate indexing and searching of similar-sounding words.
+???+ example 
 
-#### Sample Code
+    The Metaphone code for the name "Smith" is SM0, and the code for "Smyth" is also SM0. This allows for more accurate indexing and searching of similar-sounding words.
 
-You can test out the Metaphone transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
+<hr>
 
-```python
-import phonetics
-print(phonetics.metaphone("Smith"), phonetics.metaphone("Smyth"))
-```
-> SM0 SM0
+???+ example
+
+    You can test out the Metaphone transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
+
+    ```python
+    import phonetics
+    print(phonetics.metaphone("Smith"), phonetics.metaphone("Smyth"))
+    ```
+    > SM0 SM0
 
 
 <hr>
@@ -178,14 +191,14 @@ The second set of rules for the alternative code is similar to the first set, bu
 
 6. Return the alternative code.
 
-For example, the Double Metaphone code for the name "Smith" is SM0 and XMT, while the code for "Smyth" is also SM0 and XMT. This allows for even more accurate indexing and searching of similar-sounding words.
+???+ example
 
-#### Sample Code
+    You can test out the Metaphone transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
 
-You can test out the Metaphone transformation between two strings through the [phonetics](https://github.com/ZackDibe/phonetics) package.
+    ```python
+    import phonetics
+    print(phonetics.dmetaphone("Smith"), phonetics.dmetaphone("Smyth"))
+    ```
+    > ('SM0', 'XMT') ('SM0', 'XMT')
 
-```python
-import phonetics
-print(phonetics.dmetaphone("Smith"), phonetics.dmetaphone("Smyth"))
-```
-> ('SM0', 'XMT') ('SM0', 'XMT')
+<hr>

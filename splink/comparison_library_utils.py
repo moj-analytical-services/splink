@@ -67,6 +67,7 @@ def distance_threshold_comparison_levels(
     col_name: str,
     distance_function_name: str,
     distance_threshold_or_thresholds,
+    regex_extract: str = None,
     higher_is_more_similar: bool = True,
     m_probability_or_probabilities_thres: list = None,
 ):
@@ -94,7 +95,12 @@ def distance_threshold_comparison_levels(
             higher_is_more_similar = True
 
         # these function arguments hold for all cases.
-        kwargs = dict(col_name=col_name, distance_threshold=thres, m_probability=m_prob)
+        kwargs = dict(
+            col_name=col_name,
+            distance_threshold=thres,
+            regex_extract=regex_extract,
+            m_probability=m_prob,
+        )
         # separate out the two that are only used
         # when we have a user-supplied function, rather than a predefined subclass
         # feels a bit hacky, but will do at least for time being

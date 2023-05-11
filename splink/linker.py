@@ -4,6 +4,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import warnings
 from collections import UserDict
 from copy import copy, deepcopy
@@ -60,6 +61,7 @@ from .misc import (
     bayes_factor_to_prob,
     ensure_is_list,
     ensure_is_tuple,
+    find_unique_source_dataset,
     prob_to_bayes_factor,
 )
 from .missingness import completeness_data, missingness_data
@@ -291,8 +293,7 @@ class Linker:
             df_obj = next(iter(self._input_tables_dict.values()))
             columns = df_obj.columns_escaped
 
-            input_column = self._settings_obj._source_dataset_input_column
-            src_ds_col = InputColumn(input_column, self).name()
+            input_column, src_ds_col = self._settings_obj_._source_dataset_col
             return "__splink_source_dataset" if src_ds_col in columns else input_column
         else:
             return None
@@ -340,18 +341,63 @@ class Linker:
             f"infinity sql expression not available for {type(self)}"
         )
 
+    @property
+    def _verify_link_only_job(self):
+
+        cache = self._intermediate_table_cache
+        if "__splink__df_concat_with_tf" not in cache:
+            return
+
+        if self._settings_obj._link_type == "link_only":
+            # if input datasets > 1 then skip
+            if len(self._input_tables_dict) > 1:
+                return
+
+            # else, check if source dataset column is populated...
+            src_ds = self._source_dataset_column_name
+            if src_ds == "__splink_source_dataset":
+                _, src_ds = self._settings_obj_._source_dataset_col
+
+            sql = find_unique_source_dataset(src_ds)
+            self._enqueue_sql(sql, "source_ds_distinct")
+            src_ds_distinct = self._execute_sql_pipeline(
+                [cache["__splink__df_concat_with_tf"]]
+            )
+            if len(src_ds_distinct.as_record_dict()) == 1:
+                raise SplinkException(
+                    "if `link_type` is `link_only`, it should have at least two "
+                    "input dataframes, or one dataframe with a `source_dataset` "
+                    "column outlining which dataset each record belongs to."
+                )
+
     def _register_input_tables(self, input_tables, input_aliases, accepted_df_dtypes):
         # 'homogenised' means all entries are strings representing tables
         homogenised_tables = []
         homogenised_aliases = []
         accepted_df_dtypes = ensure_is_tuple(accepted_df_dtypes)
 
+        existing_tables = []
+        for alias in input_aliases:
+            # Check if alias is a string (indicating a table name) and that it is not
+            # a file path.
+            if not isinstance(alias, str) or re.match(pattern=r".*", string=alias):
+                continue
+            exists = self._table_exists_in_database(alias)
+            if exists:
+                existing_tables.append(f"'{alias}'")
+        if existing_tables:
+            input_tables = ", ".join(existing_tables)
+            raise ValueError(
+                f"Table(s): {input_tables} already exists in database. "
+                "Please remove or rename it/them before retrying"
+            )
+
         for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
             if isinstance(alias, accepted_df_dtypes):
                 alias = f"__splink__input_table_{i}"
 
             if isinstance(table, accepted_df_dtypes):
-                self.register_table(table, alias)
+                self._table_registration(table, alias)
                 table = alias
 
             homogenised_tables.append(table)
@@ -426,6 +472,10 @@ class Linker:
             if materialise:
                 nodes_with_tf = self._execute_sql_pipeline()
                 cache["__splink__df_concat_with_tf"] = nodes_with_tf
+
+        # verify the link job
+        if self._settings_obj_ is not None:
+            self._verify_link_only_job
 
         return nodes_with_tf
 
@@ -578,6 +628,30 @@ class Linker:
         """
 
         raise NotImplementedError(f"register_table not implemented for {type(self)}")
+
+    def _table_registration(self, input, table_name):
+        """
+        Register a table to your backend database, to be used in one of the
+        splink methods, or simply to allow querying.
+
+        Tables can be of type: dictionary, record level dictionary,
+        pandas dataframe, pyarrow table and in the spark case, a spark df.
+
+        This function is contains no overwrite functionality, so it can be used
+        where we don't want to allow for overwriting.
+
+        Args:
+            input: The data you wish to register. This can be either a dictionary,
+                pandas dataframe, pyarrow table or a spark dataframe.
+            table_name (str): The name you wish to assign to the table.
+
+        Returns:
+            None
+        """
+
+        raise NotImplementedError(
+            f"_table_registration not implemented for {type(self)}"
+        )
 
     def query_sql(self, sql, output_type="pandas"):
         """
