@@ -260,7 +260,7 @@ A pre-built Dockerfile for running tests against python version 3.9.10 can be lo
 
 To run, simply use the following docker command from within a terminal and the root folder of a splink clone:
 ```sh
-docker build -t run_tests:testing -f scripts/run_tests.Dockerfile . && docker run run_tests:testing
+docker build -t run_tests:testing -f scripts/run_tests.Dockerfile . && docker run --rm --name splink-test run_tests:testing
 ```
 
 This will both build and run the tests library.
@@ -271,7 +271,7 @@ Reusing the same image and tag will overwrite your existing image.
 
 You can also overwrite the default `CMD` if you want a different set of `pytest` command-line options, for example
 ```sh
-docker run run_tests:testing pytest -W ignore -m spark tests/test_u_train.py
+docker run --rm --name splink-test run_tests:testing pytest -W ignore -m spark tests/test_u_train.py
 ```
 
 ### Tests in CI
