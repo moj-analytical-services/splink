@@ -1,6 +1,12 @@
 {
     "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
-    "config": {"view": {"continuousWidth": 600, "continuousHeight": 400, "step": 20}},
+    "config": {
+        "view": {
+            "continuousWidth": 600,
+            "continuousHeight": 400,
+            "step": 20
+        }
+    },
     "params": [
         {
             "name": "gamma_sel",
@@ -17,54 +23,107 @@
     },
     "layer": [
         {
-            "mark": {"type": "point", "filled": true, "size": 100},
+            "mark": {
+                "type": "point",
+                "filled": false,
+                "size": 100,
+                "color": "black",
+                "strokeWidth": 1
+            },
             "encoding": {
-                "color": {
-                    "type": "quantitative",
-                    "field": "log2_bf_tf",
-                    "title": "TF adjustment weight",
-                    "scale": {"domain": [-2.5, 2.5], "scheme": "redyellowgreen"}
-                },
-                "tooltip": [
-                    {"type": "nominal", "field": "value"},
-                    {"type": "nominal", "field": "gamma", "title": "Comparison vector value"},
-                    {"type": "quantitative", "field": "log2_bf", "title": "Match weight", "format": "+.3"},
-                    {"type": "quantitative", "field": "log2_bf_tf", "title": "TF adjustment", "format": "+.3"},
-                    {"type": "quantitative", "field": "log2_bf_final", "title": "Adjusted match weight", "format": "+.3"}
-                ],
                 "x": {
                     "type": "ordinal",
                     "field": "value",
-                    "axis": {"labelAngle": -60, "labelFontSize": 16, "titleFontSize": 20},
-                    "sort": {"field": "log2_bf_final", "order": "ascending"}
+                    "axis": {
+                        "labelAngle": -60,
+                        "labelFontSize": 16,
+                        "titleFontSize": 20
+                    },
+                    "sort": {
+                        "field": "log2_bf_final",
+                        "order": "ascending"
+                    },
+                    "title": "TF column value"
                 },
                 "y": {
                     "type": "quantitative",
                     "field": "log2_bf_final",
                     "title": "Match weight",
-                    "axis": {"titleFontSize": 18, "labelFontSize": 16}
-                }
+                    "axis": {
+                        "titleFontSize": 18,
+                        "labelFontSize": 16
+                    }
+                },
+                "tooltip": [
+                    {
+                        "type": "nominal",
+                        "field": "value",
+                        "title": "Value"
+                    },
+                    {
+                        "type": "nominal",
+                        "field": "gamma",
+                        "title": "Comparison vector value"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "log2_bf",
+                        "title": "Match weight",
+                        "format": "+.3"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "log2_bf_tf",
+                        "title": "TF adjustment",
+                        "format": "+.3"
+                    },
+                    {
+                        "type": "quantitative",
+                        "field": "log2_bf_final",
+                        "title": "Adjusted match weight",
+                        "format": "+.3"
+                    }
+                ]
             },
             "transform": [
                 {
                     "calculate": "(datum.log2_bf + datum.log2_bf_tf)",
                     "as": "log2_bf_final"
                 },
-                {"filter": "datum.gamma == gamma_sel"}
+                {
+                    "filter": "datum.gamma == gamma_sel"
+                }
             ]
         },
         {
             "mark": "rule",
-            "encoding": {"y": {"type": "quantitative", "field": "log2_bf"}},
-            "transform":[{"filter": "datum.gamma == gamma_sel"}]
+            "encoding": {
+                "y": {
+                    "type": "quantitative",
+                    "field": "log2_bf"
+                }
+            },
+            "transform": [
+                {
+                    "filter": "datum.gamma == gamma_sel"
+                }
+            ]
         },
         {
-            "mark": "rule",
+            "mark": {
+                "type": "rule",
+                "strokeWidth": 2,
+                "opacity": 0.5
+            },
             "encoding": {
                 "x": {
                     "type": "ordinal",
                     "field": "value",
-                    "sort": {"field": "log2_bf_final", "order": "ascending"}
+                    "sort": {
+                        "field": "log2_bf_final",
+                        "order": "ascending"
+                    },
+                    "title": "TF column value"
                 },
                 "y": {
                     "type": "quantitative",
@@ -78,7 +137,13 @@
                     "type": "quantitative",
                     "field": "log2_bf_tf",
                     "title": "TF adjustment weight",
-                    "scale": {"domain": [-2.5, 2.5], "scheme": "redyellowgreen"},
+                    "scale": {
+                        "domain": [
+                            -2.5,
+                            2.5
+                        ],
+                        "scheme": "redyellowgreen"
+                    },
                     "legend": null
                 }
             },
@@ -87,9 +152,66 @@
                     "calculate": "(datum.log2_bf + datum.log2_bf_tf)",
                     "as": "log2_bf_final"
                 },
-                {"filter": "datum.gamma == gamma_sel"}
+                {
+                    "filter": "datum.gamma == gamma_sel"
+                }
+            ]
+        },
+        {
+            "mark": {
+                "type": "point",
+                "filled": true,
+                "size": 100
+            },
+            "encoding": {
+                "color": {
+                    "type": "quantitative",
+                    "field": "log2_bf_tf",
+                    "title": "TF adjustment weight",
+                    "scale": {
+                        "domain": [
+                            -2.5,
+                            2.5
+                        ],
+                        "scheme": "redyellowgreen"
+                    }
+                },
+                "x": {
+                    "type": "ordinal",
+                    "field": "value",
+                    "axis": {
+                        "labelAngle": -60,
+                        "labelFontSize": 16,
+                        "titleFontSize": 20
+                    },
+                    "sort": {
+                        "field": "log2_bf_final",
+                        "order": "ascending"
+                    },
+                    "title": "TF column value"
+                },
+                "y": {
+                    "type": "quantitative",
+                    "field": "log2_bf_final",
+                    "title": "Match weight",
+                    "axis": {
+                        "titleFontSize": 18,
+                        "labelFontSize": 16
+                    }
+                }
+            },
+            "transform": [
+                {
+                    "calculate": "(datum.log2_bf + datum.log2_bf_tf)",
+                    "as": "log2_bf_final"
+                },
+                {
+                    "filter": "datum.gamma == gamma_sel"
+                }
             ]
         }
     ],
-    "data": {"values":[]}
+    "data": {
+        "values": []
+    }
 }
