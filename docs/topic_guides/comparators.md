@@ -29,17 +29,18 @@ For more detail on how comparisons are constructed, see the dedicated [topic gui
 
 Within `Comparisons` it is useful for different `Comparison Levels` to allow for different styles (and levels) fuzzy match. Each of these `Comparison Levels` indicates a different class of match between two records and therefore a different type (and amount) of evidence for or against the two records being a match. Once these `Comparison Levels` have been defined, the Splink model is trained to estimate the Match Weight to assign to each `Comparison Level`.
 
-There are a number of string comparator functions available in Splink that allow fuzzy matching for strings within in `Comparisons` and `Comparison Levels`. For each of these fuzzy matching functions, below you will find explanations of how they work, worked examples and recommendations for the types of data they are useful for.
+There are a number of string comparator functions available in Splink that allow fuzzy matching for strings within `Comparisons` and `Comparison Levels`. For each of these fuzzy matching functions, below you will find explanations of how they work, worked examples and recommendations for the types of data they are useful for.
 
-For guidance on how to choose the most suitable string comparator, and associated threshold, see the dedicated [topic guide]().
+For guidance on how to choose the most suitable string comparator, and associated threshold, see the dedicated [topic guide](./choosing_comparators.ipynb).
 
 <hr>
 
 ## Levenshtein Distance
 
-**Useful for:** Data entry errors e.g. character miskeys.  
-**Splink comparison functions:** [levenshtein_level()](../comparison_level_library.md#splink.comparison_level_library.LevenshteinLevelBase) and [levenshtein_at_thresholds()](../comparison_library.md#splink.comparison_library.LevenshteinAtThresholdsComparisonBase)  
-**Returns:** An integer (lower is more similar).
+!!! info "At a glance" 
+    **Useful for:** Data entry errors e.g. character miskeys.  
+    **Splink comparison functions:** [levenshtein_level()](../comparison_level_library.md#splink.comparison_level_library.LevenshteinLevelBase) and [levenshtein_at_thresholds()](../comparison_library.md#splink.comparison_library.LevenshteinAtThresholdsComparisonBase)  
+    **Returns:** An integer (lower is more similar).
 
 ### Description
 Levenshtein distance, also known as edit distance, is a measure of the difference between two strings. It represents the minimum number of **insertions**, **deletions**, or **substitutions** of characters required to transform one string into the other.
@@ -54,34 +55,32 @@ $$Levenstein(s_1, s_2) = \min \lbrace \begin{array}{l}
 
 ### Examples
 
-**"KITTEN" vs "SITTING"**
+!!! example "**"KITTEN" vs "SITTING"**"
 
-The minimum number of operations to convert "KITTEN" into "SITTING" are:
+    The minimum number of operations to convert "KITTEN" into "SITTING" are:
 
-- Substitute "K" in "KITTEN" with "S" to get "SITTEN."
-- Substitute "E" in "SITTEN" with "I" to get "SITTIN."
-- Insert "G" after "N" in "SITTIN" to get "SITTING."
+    - Substitute "K" in "KITTEN" with "S" to get "SITTEN."
+    - Substitute "E" in "SITTEN" with "I" to get "SITTIN."
+    - Insert "G" after "N" in "SITTIN" to get "SITTING."
 
-Therefore, 
+    Therefore, 
 
-$$Levenstein(KITTEN, SITTING) = 3$$
+    $$Levenstein(KITTEN, SITTING) = 3$$
 
-<br>
+!!! example "**"CAKE" vs "ACKE"**"
 
-**"CAKE" vs "ACKE"**
+    The minimum number of operations to convert "CAKE" into "ACKE" are:
 
-The minimum number of operations to convert "CAKE" into "ACKE" are:
+    - Substitute "C" in "CAKE" with "A" to get "AAKE."
+    - substitute the second "A" in "AAKE" with "C" to get "ACKE."
 
-- Substitute "C" in "CAKE" with "A" to get "AAKE."
-- substitute the second "A" in "AAKE" with "C" to get "ACKE."
+    Therefore, 
 
-Therefore, 
-
-$$Levenstein(CAKE, ACKE) = 2$$
+    $$Levenstein(CAKE, ACKE) = 2$$
 
 ### Sample code
 
-You can test out the Damerau-Levenshtein distance between two strings through the [jellyfish](https://jamesturk.github.io/jellyfish/) package.
+You can test out the Levenshtein distance between two strings through the [jellyfish](https://jamesturk.github.io/jellyfish/) package.
 
 ```python
 import jellyfish
@@ -93,9 +92,10 @@ levenshtein_distance("CAKE", "ACKE)
 
 ## Damerau-Levenshtein Distance
 
-**Useful for:** Data entry errors e.g. character transpositions and miskeys  
-**Splink comparison functions:** [damerau_levenshtein_level()](../comparison_level_library.md#splink.comparison_level_library.DamerauLevenshteinLevelBase) and [damerau_levenshtein_at_thresholds()](../comparison_library.md#splink.comparison_library.DamerauLevenshteinAtThresholdsComparisonBase)  
-**Returns:** An integer (lower is more similar).
+!!! info "At a glance" 
+    **Useful for:** Data entry errors e.g. character transpositions and miskeys  
+    **Splink comparison functions:** [damerau_levenshtein_level()](../comparison_level_library.md#splink.comparison_level_library.DamerauLevenshteinLevelBase) and [damerau_levenshtein_at_thresholds()](../comparison_library.md#splink.comparison_library.DamerauLevenshteinAtThresholdsComparisonBase)  
+    **Returns:** An integer (lower is more similar).
 
 ### Description
 Damerau-Levenshtein distance is a variation of [Levenshtein distance](#levenshtein-distance) that also includes transposition operations, which are the interchange of adjacent characters. This distance measures the minimum number of operations required to transform one string into another by allowing **insertions**, **deletions**, **substitutions**, and **transpositions** of characters.
@@ -111,29 +111,27 @@ $$DamerauLevenstein(s_1, s_2) = \min \lbrace \begin{array}{l}
 
 ### Examples
 
-**"KITTEN" vs "SITTING"**
+!!! example "**"KITTEN" vs "SITTING"**"
 
-The minimum number of operations to convert "KITTEN" into "SITTING" are:
+    The minimum number of operations to convert "KITTEN" into "SITTING" are:
 
-- Substitute "K" in "KITTEN" with "S" to get "SITTEN".
-- Substitute "E" in "SITTEN" with "I" to get "SITTIN".
-- Insert "G" after "T" in "SITTIN" to get "SITTING".
+    - Substitute "K" in "KITTEN" with "S" to get "SITTEN".
+    - Substitute "E" in "SITTEN" with "I" to get "SITTIN".
+    - Insert "G" after "T" in "SITTIN" to get "SITTING".
 
-Therefore, 
+    Therefore, 
 
-$$DamerauLevenstein(KITTEN, SITTING) = 3$$
+    $$DamerauLevenstein(KITTEN, SITTING) = 3$$
 
-<br>
+!!! example "**"CAKE" vs "ACKE"**"
 
-**"CAKE" vs "ACKE"**
+    The minimum number of operations to convert "CAKE" into "ACKE" are:
 
-The minimum number of operations to convert "CAKE" into "ACKE" are:
+    - Transpose "C" and "A" in "CAKE" with "A" to get "ACKE."
 
-- Transpose "C" and "A" in "CAKE" with "A" to get "ACKE."
+    Therefore, 
 
-Therefore, 
-
-$$DamerauLevenstein(CAKE, ACKE) = 1$$
+    $$DamerauLevenstein(CAKE, ACKE) = 1$$
 
 ### Sample code
 
@@ -150,9 +148,10 @@ damerau_levenshtein_distance("CAKE", "ACKE)
 
 ## Jaro Similarity
 
-**Useful for:**  Strings where all characters are considered equally important, regardless of order e.g. ID numbers  
-**Splink comparison functions:**  [jaro_level()](comparison_level_library.md#splink.comparison_level_library.JaroLevelBase) and [jaro_at_thresholds()](../comparison_library.md#splink.comparison_library.JaroAtThresholdsComparisonBase)  
-**Returns:**  A score between 0 and 1 (higher is more similar).
+!!! info "At a glance" 
+    **Useful for:**  Strings where all characters are considered equally important, regardless of order e.g. ID numbers  
+    **Splink comparison functions:**  [jaro_level()](../comparison_level_library.md#splink.comparison_level_library.JaroLevelBase) and [jaro_at_thresholds()](../comparison_library.md#splink.comparison_library.JaroAtThresholdsComparisonBase)  
+    **Returns:**  A score between 0 and 1 (higher is more similar).
 
 ### Description
 Jaro similarity is a measure of similarity between two strings. It takes into account the number and order of matching characters, as well as the number of transpositions needed to make the strings identical.
@@ -174,25 +173,23 @@ and $t$ is the number of transpositions (which is calculated as the number of ma
 
 ### Examples
 
-**"MARTHA" vs "MARHTA":**
+!!! example "**"MARTHA" vs "MARHTA":**"
 
-- There are four matching characters: "M", "A", "R", and "T".
-- There is one transposition: the fifth character in "MARTHA" ("H") is not in the same position as the fifth character in "MARHTA" ("T").
-- We calculate the Jaro similarity using the formula:
+    - There are four matching characters: "M", "A", "R", and "T".
+    - There is one transposition: the fifth character in "MARTHA" ("H") is not in the same position as the fifth character in "MARHTA" ("T").
+    - We calculate the Jaro similarity using the formula:
 
-$$Jaro(MARTHA, MARHTA) = \frac{1}{3} \left[ \frac{4}{6} + \frac{(4)}{6} + \frac{4-1}{4} \right] = 0.944$$
+    $$Jaro(MARTHA, MARHTA) = \frac{1}{3} \left[ \frac{4}{6} + \frac{(4)}{6} + \frac{4-1}{4} \right] = 0.944$$
 
-<br>
+!!! example "**"MARTHA" vs "AMRTHA":**"
 
-**"MARTHA" vs "AMRTHA":**
+    - There are four matching characters: "M", "A", "R", and "T".
+    - There is one transposition: the first character in "MARTHA" ("M") is not in the same position as the first character in "AMRTHA" ("T").
+    - We calculate the Jaro similarity using the formula:
 
-- There are four matching characters: "M", "A", "R", and "T".
-- There is one transposition: the first character in "MARTHA" ("M") is not in the same position as the first character in "AMRTHA" ("T").
-- We calculate the Jaro similarity using the formula:
+    $$Jaro(MARTHA, AMRTHA) = \frac{1}{3} \left[ \frac{4}{6} + \frac{(4)}{6} + \frac{4-1}{4} \right] = 0.944$$
 
-$$Jaro(MARTHA, AMRTHA) = \frac{1}{3} \left[ \frac{4}{6} + \frac{(4)}{6} + \frac{4-1}{4} \right] = 0.944$$
-
-Noting that transpositions of strings gives the same Jaro similarity regardless of order.
+    Noting that transpositions of strings gives the same Jaro similarity regardless of order.
 
 ### Sample code
 
@@ -208,9 +205,10 @@ jellyfish.jaro_similarity("MARTHA", "AMRTHA)
 
 ## Jaro-Winkler Similarity
 
-**Useful for:** Strings where importance is weighted towards the first 4 characters e.g. Names  
-**Splink comparison functions:** [jaro_winkler_level()](../comparison_level_library.md#splink.comparison_level_library.JaroWinklerLevelBase) and [jaro_winkler_at_thresholds()](../comparison_library.md#splink.comparison_library.JaroWinklerAtThresholdsComparisonBase)  
-**Returns:**  A score between 0 and 1 (higher is more similar).
+!!! info "At a glance" 
+    **Useful for:** Strings where importance is weighted towards the first 4 characters e.g. Names  
+    **Splink comparison functions:** [jaro_winkler_level()](../comparison_level_library.md#splink.comparison_level_library.JaroWinklerLevelBase) and [jaro_winkler_at_thresholds()](../comparison_library.md#splink.comparison_library.JaroWinklerAtThresholdsComparisonBase)  
+    **Returns:**  A score between 0 and 1 (higher is more similar).
 
 
 ### Description
@@ -227,26 +225,24 @@ $p$ is a prefix scale factor, commonly set to 0.1.
 
 ### Examples
 
-**"MARTHA" vs "MARHTA"**
+!!! example  "**"MARTHA" vs "MARHTA"**"
 
-The common prefix between the two strings is "MAR", which has a length of 3.
-We calculate the Jaro-Winkler similarity using the formula:
+    The common prefix between the two strings is "MAR", which has a length of 3.
+    We calculate the Jaro-Winkler similarity using the formula:
 
-$$Jaro Winkler(MARTHA, MARHTA) = 0.944 + 0.1 \cdot 3 \cdot (1 - 0.944) = 0.9612$$
+    $$Jaro Winkler(MARTHA, MARHTA) = 0.944 + 0.1 \cdot 3 \cdot (1 - 0.944) = 0.9612$$
 
-The Jaro-Winkler similarity is slightly higher than the Jaro similarity, due to the matching prefix. 
+    The Jaro-Winkler similarity is slightly higher than the Jaro similarity, due to the matching prefix. 
 
-<br>
+!!! example  "**"MARTHA" vs "AMRTHA":**"
 
-**"MARTHA" vs "AMRTHA":**
+    There is no common prefix, so the Jaro-Winkler similarity formula gives:
 
-There is no common prefix, so the Jaro-Winkler similarity formula gives:
+    $$Jaro Winkler(MARTHA, AMRTHA) = 0.944 + 0.1 \cdot 0 \cdot (1 - 0.944) = 0.944$$
 
-$$Jaro Winkler(MARTHA, AMRTHA) = 0.944 + 0.1 \cdot 0 \cdot (1 - 0.944) = 0.944$$
+    Which is the same as the Jaro score.
 
-Which is the same as the Jaro score.
-
-Note that the Jaro-Winkler similarity should be used with caution, as it may not always provide better results than the standard Jaro similarity, especially when dealing with short strings or strings that have no common prefix.
+    Note that the Jaro-Winkler similarity should be used with caution, as it may not always provide better results than the standard Jaro similarity, especially when dealing with short strings or strings that have no common prefix.
 
 ### Sample code
 
@@ -262,9 +258,10 @@ jellyfish.jaro_winkler_similarity("MARTHA", "MARHTA)
 
 ## Jaccard Similarity
 
-**Useful for:**   
-**Splink comparison functions:** [jaccard_level()](../comparison_level_library.md#splink.comparison_level_library.JaccardLevelBase) and [jaccard_at_thresholds()](../comparison_library.md#splink.comparison_library.JaccardAtThresholdsComparisonBase)  
-**Returns:**  A score between 0 and 1 (higher is more similar).
+!!! info "At a glance" 
+    **Useful for:**   
+    **Splink comparison functions:** [jaccard_level()](../comparison_level_library.md#splink.comparison_level_library.JaccardLevelBase) and [jaccard_at_thresholds()](../comparison_library.md#splink.comparison_library.JaccardAtThresholdsComparisonBase)  
+    **Returns:**  A score between 0 and 1 (higher is more similar).
 
 
 ### Description
@@ -292,25 +289,23 @@ However, this functionality is not curently implemented within Splink
 
 ### Examples 
 
-**"DUCK" vs "LUCK"**
+!!! example  "**"DUCK" vs "LUCK"**"
 
-- There are five unique characters across the strings: "D", "U", "C", "K", "L"
-- Three are found in both strings: "U", "C", "K"
+    - There are five unique characters across the strings: "D", "U", "C", "K", "L"
+    - Three are found in both strings: "U", "C", "K"
 
-We calculate the Jaccard similarity using the formula:
+    We calculate the Jaccard similarity using the formula:
 
-$$Jaccard(DUCK, LUCK)=\frac{3}{5}=0.6$$
+    $$Jaccard(DUCK, LUCK)=\frac{3}{5}=0.6$$
 
-<br>
+!!! example "**"MARTHA" vs "MARHTA"**"
 
-**"MARTHA" vs "MARHTA"**
+    - There are five unique characters across the strings: "M", "A", "R", "T", "H"
+    - Five are found in both strings: "M", "A", "R", "T", "H"
 
-- There are five unique characters across the strings: "M", "A", "R", "T", "H"
-- Five are found in both strings: "M", "A", "R", "T", "H"
+    We calculate the Jaccard similarity using the formula:
 
-We calculate the Jaccard similarity using the formula:
-
-$$Jaccard(MARTHA, MARHTA)=\frac{5}{5}=1$$
+    $$Jaccard(MARTHA, MARHTA)=\frac{5}{5}=1$$
 
 
 ### Sample code
