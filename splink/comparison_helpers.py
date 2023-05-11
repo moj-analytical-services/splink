@@ -6,12 +6,21 @@ import pandas as pd
 import phonetics
 
 
+def jaccard_similarity(str1, str2):
+        set1 = set(str1)
+        set2 = set(str2)
+        return len(set1 & set2) / len(set1 | set2)
+
 def comparator_score(str1, str2, decimal_places=2):
     """Helper function to give the similarity between two strings for
     the string comparators in splink.
 
     Examples:
-        >>> comparator_score("Richard", "iRchard")
+        ```py
+        import splink.comparison_helpers as ch
+
+        ch.comparator_score("Richard", "iRchard")
+        ```
     """
 
     scores = {}
@@ -33,12 +42,6 @@ def comparator_score(str1, str2, decimal_places=2):
     scores["jaro_winkler_similarity"] = round(jw_sim, decimal_places)
 
     # Jaccard similarity
-
-    def jaccard_similarity(str1, str2):
-        set1 = set(str1)
-        set2 = set(str2)
-        return len(set1 & set2) / len(set1 | set2)
-
     jaccard_sim = jaccard_similarity(str1, str2)
     scores["jaccard_similarity"] = round(jaccard_sim, decimal_places)
 
@@ -67,7 +70,18 @@ def threshold_match(comparator, score, distance_threshold, similarity_threshold)
 
 
 def comparator_score_df(list, col1, col2):
+    """Helper function returning a dataframe showing the sting similarity 
+    scores and string distances for a list of strings.
 
+    Examples:
+        ```py
+        import splink.comparison_helpers as ch
+
+        data = {'string1': ['Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard'],
+                'string2': ['Richard', 'ichard', 'Richar','iRchard', 'Richadr',  'Rich', 'Rick', 'Ricky', 'Dick', 'Rico', 'Rachael', 'Stephen']}
+        ch.comparator_score_df(data, "string1", "string2")
+        ```
+    """
     df = pd.DataFrame(list)
 
     scores = []
@@ -99,6 +113,19 @@ def comparator_score_df(list, col1, col2):
 def comparator_score_chart(
     list, col1, col2, similarity_threshold=None, distance_threshold=None
 ):
+    """Helper function returning a heatmap showing the sting similarity 
+    scores and string distances for a list of strings.
+
+    Examples:
+        ```py
+        import splink.comparison_helpers as ch
+
+        data = {'string1': ['Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard'],
+                'string2': ['Richard', 'ichard', 'Richar','iRchard', 'Richadr',  'Rich', 'Rick', 'Ricky', 'Dick', 'Rico', 'Rachael', 'Stephen']}
+        ch.comparator_score_chart(data, "string1", "string2")
+        ```
+    """
+
     df = comparator_score_df(list, col1, col2)
 
     df["strings_to_compare"] = df["string1"] + ", " + df["string2"]
