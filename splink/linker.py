@@ -2608,7 +2608,7 @@ class Linker:
         column_name: str,
         n_most_freq: int = 10,
         n_least_freq: int = 10,
-        vals_to_include: list = None,
+        vals_to_include: str|list = None,
         as_dict: bool = False,
     ):
         """Display a chart showing the impact of term frequency adjustments on a specific comparison level.
@@ -2635,6 +2635,8 @@ class Linker:
             raise ValueError(
                 f"{column_name} is not a valid comparison column, or does not have term frequency adjustment activated"
             )
+
+        vals_to_include = ensure_is_list(vals_to_include)
 
         return tf_adjustment_chart(
             self, column_name, n_most_freq, n_least_freq, vals_to_include, as_dict
