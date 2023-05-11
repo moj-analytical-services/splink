@@ -6,7 +6,7 @@ import pandas as pd
 import phonetics
 
 
-def comparator_score(str1, str2):
+def comparator_score(str1, str2, decimal_places=2):
     """Helper function to give the similarity between two strings for
     the string comparators in splink.
 
@@ -18,19 +18,19 @@ def comparator_score(str1, str2):
 
     # Levenshtein distance
     lev_dist = jellyfish.levenshtein_distance(str1, str2)
-    scores["levenshtein_distance"] = round(lev_dist, 3)
+    scores["levenshtein_distance"] = round(lev_dist, decimal_places)
 
     # Damerau-Levenshtein distance
     dlev_dist = jellyfish.damerau_levenshtein_distance(str1, str2)
-    scores["damerau_levenshtein_distance"] = round(dlev_dist, 3)
+    scores["damerau_levenshtein_distance"] = round(dlev_dist, decimal_places)
 
     # Jaro distance
     jaro_sim = jellyfish.jaro_distance(str1, str2)
-    scores["jaro_similarity"] = round(jaro_sim, 3)
+    scores["jaro_similarity"] = round(jaro_sim, decimal_places)
 
     # Jaro-Winkler distance
     jw_sim = jellyfish.jaro_winkler(str1, str2)
-    scores["jaro_winkler_similarity"] = round(jw_sim, 3)
+    scores["jaro_winkler_similarity"] = round(jw_sim, decimal_places)
 
     # Jaccard similarity
 
@@ -40,7 +40,7 @@ def comparator_score(str1, str2):
         return len(set1 & set2) / len(set1 | set2)
 
     jaccard_sim = jaccard_similarity(str1, str2)
-    scores["jaccard_similarity"] = round(jaccard_sim, 3)
+    scores["jaccard_similarity"] = round(jaccard_sim, decimal_places)
 
     return scores
 
@@ -139,7 +139,7 @@ def comparator_score_chart(
     heatmap_similarity = (
         alt.Chart(
             df_long[df_long["comparator"].str.contains("similarity")],
-            width=500,
+            width=300,
             height=300,
         )
         .mark_rect()
@@ -167,7 +167,7 @@ def comparator_score_chart(
     heatmap_distance = (
         alt.Chart(
             df_long[df_long["comparator"].str.contains("distance")],
-            width=500,
+            width=200,
             height=300,
         )
         .mark_rect()
@@ -351,7 +351,7 @@ def phonetic_match_chart(df, col1, col2):
 
     # create match heatmap
     heatmap_phonetic_match = (
-        alt.Chart(df_long, width=500, height=600)
+        alt.Chart(df_long, width=300, height=600)
         .mark_rect()
         .encode(
             x="phonetic:O",
