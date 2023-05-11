@@ -2608,7 +2608,7 @@ class Linker:
         column_name: str,
         n_most_freq: int = 10,
         n_least_freq: int = 10,
-        vals_to_include: str|list = None,
+        vals_to_include: str | list = None,
         as_dict: bool = False,
     ):
         """Display a chart showing the impact of term frequency adjustments on a specific comparison level.

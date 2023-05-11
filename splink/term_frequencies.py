@@ -168,10 +168,13 @@ def comparison_level_to_tf_chart_data(cl: dict):
 
     for k, v in cl.items():
         if k != "df_tf":
-            df.loc[:,k] = v
+            df.loc[:, k] = v
 
     # TF match weight scaled by tf_adjustment_weight
-    df.loc[:,"log2_bf_tf"] = log2(df.loc[:,"u_probability"] / df.loc[:,"tf"]) * df.loc[:,"tf_adjustment_weight"]
+    df.loc[:, "log2_bf_tf"] = (
+        log2(df.loc[:, "u_probability"] / df.loc[:, "tf"])
+        * df.loc[:, "tf_adjustment_weight"]
+    )
 
     # Tidy up columns
     df = df.drop(columns=["tf", "u_probability", "tf_adjustment_weight"])
@@ -187,8 +190,7 @@ def comparison_level_to_tf_chart_data(cl: dict):
     # Add ranks for sorting/selecting
     df = df.sort_values("log2_bf_tf")
     df["most_freq_rank"] = df.groupby("gamma")["log2_bf_tf"].cumcount()
-    df["least_freq_rank"] = df.groupby(
-        "gamma")["log2_bf_tf"].cumcount(ascending=False)
+    df["least_freq_rank"] = df.groupby("gamma")["log2_bf_tf"].cumcount(ascending=False)
 
     cl["df_out"] = df
 
