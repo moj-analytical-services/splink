@@ -366,7 +366,7 @@ def phonetic_transform_df(list, col1, col2):
 
 
 def phonetic_match(string1, string2):
-    
+
     phonetic1 = phonetic_transform(string1)
     phonetic2 = phonetic_transform(string2)
 
