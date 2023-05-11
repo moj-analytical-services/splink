@@ -7,9 +7,10 @@ import phonetics
 
 
 def jaccard_similarity(str1, str2):
-        set1 = set(str1)
-        set2 = set(str2)
-        return len(set1 & set2) / len(set1 | set2)
+    set1 = set(str1)
+    set2 = set(str2)
+    return len(set1 & set2) / len(set1 | set2)
+
 
 def comparator_score(str1, str2, decimal_places=2):
     """Helper function to give the similarity between two strings for
@@ -70,7 +71,7 @@ def threshold_match(comparator, score, distance_threshold, similarity_threshold)
 
 
 def comparator_score_df(list, col1, col2):
-    """Helper function returning a dataframe showing the sting similarity 
+    """Helper function returning a dataframe showing the sting similarity
     scores and string distances for a list of strings.
 
     Examples:
@@ -113,7 +114,7 @@ def comparator_score_df(list, col1, col2):
 def comparator_score_chart(
     list, col1, col2, similarity_threshold=None, distance_threshold=None
 ):
-    """Helper function returning a heatmap showing the sting similarity 
+    """Helper function returning a heatmap showing the sting similarity
     scores and string distances for a list of strings.
 
     Examples:
