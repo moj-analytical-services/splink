@@ -78,8 +78,6 @@ def comparator_score_df(list, col1, col2):
         ```py
         import splink.comparison_helpers as ch
 
-        data = {'string1': ['Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard'],
-                'string2': ['Richard', 'ichard', 'Richar','iRchard', 'Richadr',  'Rich', 'Rick', 'Ricky', 'Dick', 'Rico', 'Rachael', 'Stephen']}
         ch.comparator_score_df(data, "string1", "string2")
         ```
     """
@@ -121,8 +119,6 @@ def comparator_score_chart(
         ```py
         import splink.comparison_helpers as ch
 
-        data = {'string1': ['Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard', 'Richard'],
-                'string2': ['Richard', 'ichard', 'Richar','iRchard', 'Richadr',  'Rich', 'Rick', 'Ricky', 'Dick', 'Rico', 'Rachael', 'Stephen']}
         ch.comparator_score_chart(data, "string1", "string2")
         ```
     """
@@ -230,6 +226,19 @@ def comparator_score_chart(
 def comparator_score_threshold_chart(
     df, col1, col2, similarity_threshold=None, distance_threshold=None
 ):
+    """Helper function returning a heatmap showing the sting similarity
+    scores and string distances for a list of strings given a threshold.
+
+    Examples:
+        ```py
+        import splink.comparison_helpers as ch
+
+        ch.comparator_score_threshold_chart(data,
+                                 "string1", "string2",
+                                 similarity_threshold=0.8,
+                                 distance_threshold=2)
+        ```
+    """
     df = comparator_score_df(df, col1, col2)
 
     df["strings_to_compare"] = df["string1"] + ", " + df["string2"]
@@ -313,6 +322,16 @@ def phonetic_transform(string):
 
 
 def phonetic_transform_df(list, col1, col2):
+    """Helper function returning a dataframe showing the phonetic transforms
+    for a list of strings.
+
+    Examples:
+        ```py
+        import splink.comparison_helpers as ch
+
+        ch.phonetic_match_chart(data, "string1", "string2")
+        ```
+    """
 
     df = pd.DataFrame(list)
 
@@ -347,7 +366,7 @@ def phonetic_transform_df(list, col1, col2):
 
 
 def phonetic_match(string1, string2):
-    """ """
+    
     phonetic1 = phonetic_transform(string1)
     phonetic2 = phonetic_transform(string2)
 
@@ -359,6 +378,19 @@ def phonetic_match(string1, string2):
 
 
 def phonetic_match_chart(df, col1, col2):
+    """Helper function returning a heatmap showing the phonetic transform and
+    matches for a list of strings given a threshold.
+
+    Examples:
+        ```py
+        import splink.comparison_helpers as ch
+
+        ch.comparator_score_threshold_chart(data,
+                                 "string1", "string2",
+                                 similarity_threshold=0.8,
+                                 distance_threshold=2)
+        ```
+    """
 
     df = phonetic_transform_df(df, "string1", "string2")
 
