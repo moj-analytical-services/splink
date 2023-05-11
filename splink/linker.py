@@ -577,8 +577,7 @@ class Linker:
         self, final_sql: str, templated_name: str, physical_name: str
     ) -> SplinkDataFrame:
         """Log the sql, then call _run_sql_execution(), wrapping any errors"""
-        logger.debug(execute_sql_logging_message_info(
-            templated_name, physical_name))
+        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
         logger.log(5, log_sql(final_sql))
         try:
             return self._run_sql_execution(final_sql, templated_name, physical_name)
@@ -613,8 +612,7 @@ class Linker:
                 pipeline
         """
 
-        raise NotImplementedError(
-            f"register_table not implemented for {type(self)}")
+        raise NotImplementedError(f"register_table not implemented for {type(self)}")
 
     def query_sql(self, sql, output_type="pandas"):
         """
@@ -678,8 +676,7 @@ class Linker:
 
         if use_cache:
             if self._table_exists_in_database(output_tablename_templated):
-                logger.debug(
-                    f"Using existing table {output_tablename_templated}")
+                logger.debug(f"Using existing table {output_tablename_templated}")
                 return self._table_to_splink_dataframe(
                     output_tablename_templated, output_tablename_templated
                 )
@@ -707,8 +704,7 @@ class Linker:
                 output_tablename_templated,
             )
 
-        self._names_of_tables_created_by_splink.add(
-            splink_dataframe.physical_name)
+        self._names_of_tables_created_by_splink.add(splink_dataframe.physical_name)
 
         if self.debug_mode:
             df_pd = splink_dataframe.as_pandas_dataframe()
@@ -751,8 +747,7 @@ class Linker:
 
         d = {}
         for table_name, table_alias in zip(input_table_or_tables, input_table_aliases):
-            d[table_alias] = self._table_to_splink_dataframe(
-                table_alias, table_name)
+            d[table_alias] = self._table_to_splink_dataframe(table_alias, table_name)
         return d
 
     def _get_input_tf_dict(self, df_dict):
@@ -1006,8 +1001,7 @@ class Linker:
             settings_dict (dict): A Splink settings dictionary
         """
         # If a uid already exists in your settings object, prioritise this
-        settings_dict["linker_uid"] = settings_dict.get(
-            "linker_uid", self._cache_uid)
+        settings_dict["linker_uid"] = settings_dict.get("linker_uid", self._cache_uid)
         settings_dict["sql_dialect"] = settings_dict.get(
             "sql_dialect", self._sql_dialect
         )
@@ -1106,8 +1100,7 @@ class Linker:
                 input_dfs.append(df_concat)
             sql = term_frequencies_for_single_column_sql(input_col)
             self._enqueue_sql(sql, tf_tablename)
-            tf_df = self._execute_sql_pipeline(
-                input_dfs, materialise_as_hash=True)
+            tf_df = self._execute_sql_pipeline(input_dfs, materialise_as_hash=True)
             self._intermediate_table_cache[tf_tablename] = tf_df
 
         return tf_df
@@ -1446,8 +1439,7 @@ class Linker:
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
 
-        repartition_after_blocking = getattr(
-            self, "repartition_after_blocking", False)
+        repartition_after_blocking = getattr(self, "repartition_after_blocking", False)
 
         # repartition after blocking only exists on the SparkLinker
         if repartition_after_blocking:
@@ -1542,16 +1534,14 @@ class Linker:
                     self._enqueue_sql(tf["sql"], tf["output_table_name"])
         else:
             # This queues up our cols_with_tf and df_concat_with_tf tables.
-            concat_with_tf = self._initialise_df_concat_with_tf(
-                materialise=False)
+            concat_with_tf = self._initialise_df_concat_with_tf(materialise=False)
 
         if concat_with_tf:
             input_dfs.append(concat_with_tf)
 
         rules = []
         for r in blocking_rules:
-            br_as_obj = BlockingRule(r) if not isinstance(
-                r, BlockingRule) else r
+            br_as_obj = BlockingRule(r) if not isinstance(r, BlockingRule) else r
             br_as_obj.preceding_rules = rules.copy()
             rules.append(br_as_obj)
         blocking_rules = rules
@@ -1639,15 +1629,13 @@ class Linker:
         sql_join_tf = sql_join_tf.replace(
             "__splink__df_concat", "__splink__compare_two_records_left"
         )
-        self._enqueue_sql(
-            sql_join_tf, "__splink__compare_two_records_left_with_tf")
+        self._enqueue_sql(sql_join_tf, "__splink__compare_two_records_left_with_tf")
 
         sql_join_tf = sql_join_tf.replace(
             "__splink__compare_two_records_left", "__splink__compare_two_records_right"
         )
 
-        self._enqueue_sql(
-            sql_join_tf, "__splink__compare_two_records_right_with_tf")
+        self._enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
@@ -1719,8 +1707,7 @@ class Linker:
         )
         for sql in sqls:
             output_table_name = sql["output_table_name"]
-            output_table_name = output_table_name.replace(
-                "predict", "self_link")
+            output_table_name = output_table_name.replace("predict", "self_link")
             self._enqueue_sql(sql["sql"], output_table_name)
 
         predictions = self._execute_sql_pipeline(
@@ -2465,8 +2452,7 @@ class Linker:
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
 
-        sql = number_of_comparisons_generated_by_blocking_rule_sql(
-            self, blocking_rule)
+        sql = number_of_comparisons_generated_by_blocking_rule_sql(self, blocking_rule)
         self._enqueue_sql(sql, "__splink__analyse_blocking_rule")
         res = self._execute_sql_pipeline().as_record_dict()[0]
         return res["count_of_pairwise_comparisons_generated"]
@@ -2648,9 +2634,7 @@ class Linker:
         tf_comparisons = [
             c._output_column_name
             for c in self._settings_obj.comparisons
-            if any(
-                [cl._has_tf_adjustments for cl in c.comparison_levels]
-            )
+            if any([cl._has_tf_adjustments for cl in c.comparison_levels])
         ]
         if output_column_name not in tf_comparisons:
             raise ValueError(
@@ -2660,7 +2644,12 @@ class Linker:
         vals_to_include = ensure_is_list(vals_to_include)
 
         return tf_adjustment_chart(
-            self, output_column_name, n_most_freq, n_least_freq, vals_to_include, as_dict
+            self,
+            output_column_name,
+            n_most_freq,
+            n_least_freq,
+            vals_to_include,
+            as_dict,
         )
 
     def m_u_parameters_chart(self):
