@@ -93,22 +93,22 @@ class DateComparisonBase(Comparison):
             datediff_metrics (Union[str, list], optional): The metrics to apply
                 thresholds to for datediff similarity level(s).
                 Defaults to ["month", "year"].
-            m_probability_exact_match (_type_, optional): If provided, overrides the
-                default m probability for the exact match level. Defaults to None.
+            m_probability_exact_match (_type_, optional): Starting m probability for
+                exact match level. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
-                If provided, overrides the default m probabilities
-                for the levenshtein thresholds specified. Defaults to None.
+                Starting m probabilities for the levenshtein thresholds specified.
+                Defaults to None.
             m_probability_or_probabilities_jar (Union[float, list], optional):
-                If provided, overrides the default m probabilities
-                for the jaro thresholds specified. Defaults to None.
+                Starting m probabilities for the jaro thresholds specified.
+                Defaults to None.
             m_probability_or_probabilities_jw (Union[float, list], optional):
-                If provided, overrides the default m probabilities
-                for the jaro winkler thresholds specified. Defaults to None.
+                Starting m probabilities for the jaro winkler thresholds specified.
+                Defaults to None.
             m_probability_or_probabilities_datediff (Union[float, list], optional):
-                If provided, overrides the default m probabilities
-                for the datediff thresholds specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
-                default m probability for the 'anything else' level. Defaults to None.
+                Starting m probabilities for the datediff thresholds specified.
+                Defaults to None.
+            m_probability_else (_type_, optional): Starting m probability for
+                the 'everything else' level. Defaults to None.
 
         Examples:
             === "DuckDB"
@@ -375,26 +375,25 @@ class NameComparisonBase(Comparison):
             jaccard_thresholds (Union[int, list], optional): The thresholds to use
                 for jaccard similarity level(s).
                 Defaults to []
-            m_probability_exact_match_name (_type_, optional): If provided, overrides
-                the default m probability for the exact match level for col_name.
+            m_probability_exact_match_name (_type_, optional): Starting m probability
+                for exact match level. Defaults to None.
+            m_probability_exact_match_phonetic_name (_type_, optional): Starting m
+                probability for exact match level for phonetic_col_name.
                 Defaults to None.
-            m_probability_exact_match_phonetic_name (_type_, optional): If provided,
-                overrides the default m probability for the exact match level for
-                phonetic_col_name. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
-                If provided, overrides the default m probabilities
-                for the thresholds specified. Defaults to None.
+                Starting m probabilities for the levenshtein thresholds specified.
+                Defaults to None.
             m_probability_or_probabilities_jar (Union[float, list], optional):
-                If provided, overrides the default m probabilities
-                for the jaro thresholds specified. Defaults to None.
+                Starting m probabilities for the jaro thresholds specified.
+                Defaults to None.
             m_probability_or_probabilities_jw (Union[float, list], optional):
-                If provided, overrides the default m probabilities
-                for the jaro winkler thresholds specified. Defaults to None.
+                Starting m probabilities for the jaro winkler thresholds specified.
+                Defaults to None.
             m_probability_or_probabilities_jac (Union[float, list], optional):
-                If provided, overrides the default m probabilities
-                for the jaccard thresholds specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
-                default m probability for the 'anything else' level. Defaults to None.
+                Starting m probabilities for the jaccard thresholds specified.
+                Defaults to None.
+            m_probability_else (_type_, optional): Starting m probability for
+                the 'everything else' level. Defaults to None.
 
         Examples:
             === "DuckDB"
@@ -613,18 +612,18 @@ class PostcodeComparisonBase(Comparison):
             term_frequency_adjustments_full (bool, optional): If True, apply
                 term frequency adjustments to the full postcode exact match level.
                 Defaults to False.
-            m_probability_full_match (_type_, optional): Starting value for
-                full postcode match m probability. Defaults to None.
-            m_probability_sector_match (_type_, optional): Starting value for
-                sector match m probability. Defaults to None.
-            m_probability_district_match (_type_, optional): Starting value for
-                district match m probability. Defaults to None.
-            m_probability_area_match (_type_, optional): Starting value for
-                area match m probability. Defaults to None.
-            m_probability_distance_in_km (_type_, optional): Starting value for
-                'distance in km' level m probability. Defaults to None.
-            m_probability_else (_type_, optional): Starting value for
-                else level m probability. Defaults to None.
+            m_probability_full_match (_type_, optional): Starting m
+                probability for full match level. Defaults to None.
+            m_probability_sector_match (_type_, optional): Starting m
+                probability for sector match level. Defaults to None.
+            m_probability_district_match (_type_, optional): Starting m
+                probability for district match level. Defaults to None.
+            m_probability_area_match (_type_, optional): Starting m
+                probability for area match level. Defaults to None.
+            m_probability_distance_in_km (_type_, optional): Starting m
+                probability for 'distance in km' level. Defaults to None.
+            m_probability_else (_type_, optional): Starting m probability for
+                the 'everything else' level. Defaults to None.
 
         Examples:
             === "DuckDB"
