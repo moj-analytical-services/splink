@@ -559,8 +559,8 @@ class PostcodeComparisonBase(Comparison):
     def __init__(
         self,
         col_name: str,
-        invalid_postcodes_as_null = False,
-        valid_postcode_regex = "^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$",
+        invalid_postcodes_as_null=False,
+        valid_postcode_regex="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$",
         include_full_match_level=True,
         include_sector_match_level=True,
         include_district_match_level=True,
