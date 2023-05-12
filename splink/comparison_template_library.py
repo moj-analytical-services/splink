@@ -642,7 +642,7 @@ class PostcodeComparisonBase(Comparison):
                 ``` python
                 import splink.duckdb.duckdb_comparison_template_library as ctl
                 ctl.postcode_comparison("postcode",
-                                    nvalid_postcodes_as_null=True,
+                                    invalid_postcodes_as_null=True,
                                     include_distance_in_km_level=True,
                                     lat_col="lat",
                                     long_col="long",
