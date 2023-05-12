@@ -561,20 +561,19 @@ class PostcodeComparisonBase(Comparison):
         col_name: str,
         invalid_postcodes_as_null = False,
         valid_postcode_regex = "^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$",
+        term_frequency_adjustments_full=False,
         include_full_match_level=True,
         include_sector_match_level=True,
         include_district_match_level=True,
         include_area_match_level=True,
-        include_distance_in_km_level=False,
         lat_col: str = None,
         long_col: str = None,
-        km_threshold: int | float = None,
-        term_frequency_adjustments_full=False,
+        km_thresholds: int | float | list = [],
         m_probability_full_match=None,
         m_probability_sector_match=None,
         m_probability_district_match=None,
         m_probability_area_match=None,
-        m_probability_distance_in_km=None,
+        m_probability_or_probabilities_km_distance=None,
         m_probability_else=None,
     ) -> Comparison:
         """A wrapper to generate a comparison for a poscode column 'col_name'
@@ -589,8 +588,17 @@ class PostcodeComparisonBase(Comparison):
 
         Args:
             col_name (str): The name of the column to compare.
-            valid_string_regex (str): regular expression pattern that if not
-                matched will result in column being treated as a null.
+            invalid_postcodes_as_null (bool): If True, postcodes that do not adhere
+                to valid_postcode_regex will be included in the null level.
+                Defaults to False
+            valid_postcode_regex (str): regular expression pattern that is used
+                to validate postcodes. If invalid_postcodes_as_null is True, 
+                postcodes that do not adhere to valid_postcode_regex will be included
+                 in the null level.
+                 Defaults to "^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$"
+            term_frequency_adjustments_full (bool, optional): If True, apply
+                term frequency adjustments to the full postcode exact match level.
+                Defaults to False.
             include_full_match_level (bool, optional): If True, include an exact
                 match on full postcode level. Defaults to True.
             include_sector_match_level (bool, optional): If True, include an exact
@@ -604,26 +612,23 @@ class PostcodeComparisonBase(Comparison):
                 Defaults to False.
             lat_col (str): The name of a latitude column or the respective array
                 or struct column column containing the information, plus an index.
-                For example: long_lat['lat'] or long_lat[0].
+                For example: lat, long_lat['lat'] or long_lat[0].
             long_col (str): The name of a longitudinal column or the respective array
                 or struct column column containing the information, plus an index.
-                For example: long_lat['long'] or long_lat[1].
-            km_threshold (int): The total distance in kilometers to evaluate the
+                For example: long, long_lat['long'] or long_lat[1].
+            km_thresholds (int, flaot, list): The total distance in kilometers to evaluate the
                 distance_in_km_level comparison against.
-            term_frequency_adjustments_full (bool, optional): If True, apply
-                term frequency adjustments to the full postcode exact match level.
-                Defaults to False.
-            m_probability_full_match (_type_, optional): Starting m
+            m_probability_full_match (float, optional): Starting m
                 probability for full match level. Defaults to None.
-            m_probability_sector_match (_type_, optional): Starting m
+            m_probability_sector_match (float, optional): Starting m
                 probability for sector match level. Defaults to None.
-            m_probability_district_match (_type_, optional): Starting m
+            m_probability_district_match (float, optional): Starting m
                 probability for district match level. Defaults to None.
-            m_probability_area_match (_type_, optional): Starting m
+            m_probability_area_match (float, optional): Starting m
                 probability for area match level. Defaults to None.
-            m_probability_distance_in_km (_type_, optional): Starting m
+            m_probability_or_probabilities_km_distance (float, optional): Starting m
                 probability for 'distance in km' level. Defaults to None.
-            m_probability_else (_type_, optional): Starting m probability for
+            m_probability_else (float, optional): Starting m probability for
                 the 'everything else' level. Defaults to None.
 
         Examples:
@@ -641,7 +646,7 @@ class PostcodeComparisonBase(Comparison):
                                     include_distance_in_km_level=True,
                                     lat_col="lat",
                                     long_col="long",
-                                    km_threshold=5
+                                    km_thresholds=[10, 100]
                                     )
                 ```
             === "Spark"
@@ -658,7 +663,7 @@ class PostcodeComparisonBase(Comparison):
                                     include_distance_in_km_level=True,
                                     lat_col="lat",
                                     long_col="long",
-                                    km_threshold=5
+                                    km_thresholds=[10, 100]
                                     )
                 ```
 
@@ -692,6 +697,7 @@ class PostcodeComparisonBase(Comparison):
                 col_name,
                 regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]",
                 m_probability=m_probability_sector_match,
+                manual_chart_label="Postcode Sector"
             )
             comparison_levels.append(comparison_level)
 
@@ -700,6 +706,7 @@ class PostcodeComparisonBase(Comparison):
                 col_name,
                 regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]?",
                 m_probability=m_probability_district_match,
+                manual_chart_label="Postcode District"
             )
             comparison_levels.append(comparison_level)
 
@@ -708,6 +715,7 @@ class PostcodeComparisonBase(Comparison):
                 col_name,
                 regex_extract="^[A-Z]{1,2}",
                 m_probability=m_probability_area_match,
+                manual_chart_label="Postcode Area"
             )
             comparison_levels.append(comparison_level)
 
@@ -719,6 +727,28 @@ class PostcodeComparisonBase(Comparison):
                 m_probability=m_probability_distance_in_km,
             )
             comparison_levels.append(comparison_level)
+
+        km_thresholds = ensure_is_iterable(km_thresholds)
+        if len(km_thresholds) > 0:
+            if m_probability_or_probabilities_km_distance is None:
+                m_probability_or_probabilities_km_distance = [None] * len(
+                    km_thresholds
+                )
+            m_probability_or_probabilities_km_distance = ensure_is_iterable(
+                m_probability_or_probabilities_km_distance
+            )
+
+            for thres, m_prob in zip(
+                km_thresholds,
+                m_probability_or_probabilities_km_distance,
+            ):
+                comparison_level = self._distance_in_km_level(
+                    lat_col,
+                    long_col,
+                    km_threshold=thres,
+                    m_probability=m_prob,
+                )
+                comparison_levels.append(comparison_level)
 
         comparison_levels.append(
             self._else_level(m_probability=m_probability_else),
@@ -738,8 +768,11 @@ class PostcodeComparisonBase(Comparison):
         if include_area_match_level:
             comparison_desc += "exact match on area vs. "
 
-        if include_distance_in_km_level:
-            comparison_desc += f"distance less than {km_threshold}km vs. "
+        if len(km_thresholds) > 0:
+            desc = distance_threshold_description(
+                col_name, "km_distance", km_thresholds
+            )
+            comparison_desc += desc
 
         comparison_desc += "all other comparisons"
 
