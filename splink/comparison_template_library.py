@@ -663,13 +663,50 @@ class ForenameSurnameComparisonBase(Comparison):
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            >>> # DuckDB Basic Forename Surname Comparison
-            >>> import splink.duckdb.duckdb_comparison_template_library as ctl
-            >>> ctl.forename_surname_comparison("first_name", "surname)
+            === DuckDB
+                Basic Forename Surname Comparison
+                ```py
+                import splink.duckdb.duckdb_comparison_template_library as ctl
+                ctl.forename_surname_comparison("first_name", "surname)
+                ```
 
-            >>> # Spark Basic Forename Surname Comparison
-            >>> import splink.spark.spark_comparison_template_library as ctl
-            >>> ctl.forename_surname_comparison("first_name", "surname)
+                Bespoke Forename Surname Comparison
+                ```py
+                import splink.duckdb.duckdb_comparison_template_library as ctl
+                ctl.forename_surname_comparison(
+                        "forename",
+                        "surname",
+                        term_frequency_adjustments=True,
+                        tf_adjustment_col_forename_and_surname="full_name",
+                        phonetic_forename_col_name="forename_dm",
+                        phonetic_surname_col_name="surname_dm",
+                        levenshtein_thresholds=[2],
+                        jaro_winkler_thresholds=[],
+                        jaccard_thresholds=[1],
+                    )
+                ```
+            === Spark
+                Basic Forename Surname Comparison
+                ```py
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.forename_surname_comparison("first_name", "surname)
+                ```
+
+                Bespoke Forename Surname Comparison
+                ```py
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.forename_surname_comparison(
+                        "forename",
+                        "surname",
+                        term_frequency_adjustments=True,
+                        tf_adjustment_col_forename_and_surname="full_name",
+                        phonetic_forename_col_name="forename_dm",
+                        phonetic_surname_col_name="surname_dm",
+                        levenshtein_thresholds=[2],
+                        jaro_winkler_thresholds=[],
+                        jaccard_thresholds=[1],
+                    )
+                ```
 
 
         Returns:
