@@ -559,7 +559,8 @@ class PostcodeComparisonBase(Comparison):
     def __init__(
         self,
         col_name: str,
-        valid_string_regex: str = None,
+        invalid_postcodes_as_null = False,
+        valid_postcode_regex = "^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$",
         include_full_match_level=True,
         include_sector_match_level=True,
         include_district_match_level=True,
@@ -636,7 +637,7 @@ class PostcodeComparisonBase(Comparison):
                 ``` python
                 import splink.duckdb.duckdb_comparison_template_library as ctl
                 ctl.postcode_comparison("postcode",
-                                    valid_regex_string = "^[A-Z]{1,2}[0-9]",
+                                    nvalid_postcodes_as_null=True,
                                     include_distance_in_km_level=True,
                                     lat_col="lat",
                                     long_col="long",
@@ -653,7 +654,7 @@ class PostcodeComparisonBase(Comparison):
                 ``` python
                 import splink.spark.spark_comparison_template_library as ctl
                 ctl.postcode_comparison("postcode",
-                                    valid_regex_string = "^[A-Z]{1,2}[0-9]",
+                                    invalid_postcodes_as_null=True,
                                     include_distance_in_km_level=True,
                                     lat_col="lat",
                                     long_col="long",
@@ -670,7 +671,11 @@ class PostcodeComparisonBase(Comparison):
         postcode_col_l, postcode_col_r = postcode_col.names_l_r()
 
         comparison_levels = []
-        comparison_levels.append(self._null_level(col_name, valid_string_regex))
+
+        if invalid_postcodes_as_null:
+            comparison_levels.append(self._null_level(col_name, valid_postcode_regex))
+        else:
+            comparison_levels.append(self._null_level(col_name))
 
         if include_full_match_level:
             comparison_level = self._exact_match_level(
