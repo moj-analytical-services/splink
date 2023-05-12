@@ -360,10 +360,9 @@ def test_postcode_comparison_levels(spark, ctl, Linker):
         "comparisons": [
             ctl.postcode_comparison(
                 "postcode",
-                include_distance_in_km_level=True,
                 lat_col="lat",
                 long_col="long",
-                km_threshold=5,
+                km_thresholds=5,
             )
         ],
     }
