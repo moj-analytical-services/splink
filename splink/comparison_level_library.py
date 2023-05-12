@@ -52,6 +52,9 @@ class ExactMatchLevelBase(ComparisonLevel):
                 Defaults to None.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
+                Defaults to False,
 
         Examples:
             >>> # DuckDB Exact match level
@@ -116,6 +119,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         distance_function_name: str,
         distance_threshold: int | float,
         higher_is_more_similar: bool = True,
+        include_colname_in_charts_label=False,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a user-provided distance function,
@@ -130,6 +134,8 @@ class DistanceFunctionLevelBase(ComparisonLevel):
                 distance function indicates a higher similarity (e.g. jaro_winkler).
                 If false, a higher value indicates a lower similarity
                 (e.g. levenshtein).
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
             m_probability (float, optional): Starting value for m probability
                 Defaults to None.
 
@@ -147,9 +153,14 @@ class DistanceFunctionLevelBase(ComparisonLevel):
             f"{distance_function_name}({col.name_l()}, {col.name_r()}) "
             f"{operator} {distance_threshold}"
         )
+
+        label_suffix = f" {col_name}" if include_colname_in_charts_label else ""
+
         chart_label = (
-            f"{distance_function_name.capitalize()} {operator} {distance_threshold}"
+            f"{distance_function_name.capitalize()}{label_suffix} {operator} "
+            f"{distance_threshold}"
         )
+
         level_dict = {
             "sql_condition": sql_cond,
             "label_for_charts": chart_label,
@@ -169,6 +180,7 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
         self,
         col_name: str,
         distance_threshold: int,
+        include_colname_in_charts_label=False,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a levenshtein distance function,
@@ -177,6 +189,8 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -198,6 +212,7 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
             self._levenshtein_name,
             distance_threshold,
             False,
+            include_colname_in_charts_label=include_colname_in_charts_label,
             m_probability=m_probability,
         )
 
@@ -207,6 +222,7 @@ class JaroLevelBase(DistanceFunctionLevelBase):
         self,
         col_name: str,
         distance_threshold: float,
+        include_colname_in_charts_label=False,
         m_probability=None,
     ):
         """Represents a comparison using the jaro distance function
@@ -215,6 +231,8 @@ class JaroLevelBase(DistanceFunctionLevelBase):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -237,6 +255,7 @@ class JaroLevelBase(DistanceFunctionLevelBase):
             self._jaro_name,
             distance_threshold,
             True,
+            include_colname_in_charts_label=include_colname_in_charts_label,
             m_probability=m_probability,
         )
 
@@ -246,6 +265,7 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
         self,
         col_name: str,
         distance_threshold: float,
+        include_colname_in_charts_label=False,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using the jaro winkler distance function
@@ -254,6 +274,8 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -276,6 +298,7 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
             self._jaro_winkler_name,
             distance_threshold,
             True,
+            include_colname_in_charts_label=include_colname_in_charts_label,
             m_probability=m_probability,
         )
 
@@ -291,6 +314,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
         self,
         col_name: str,
         distance_threshold: int | float,
+        include_colname_in_charts_label=False,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a jaccard distance function
@@ -299,6 +323,8 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -319,6 +345,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
             self._jaccard_name,
             distance_threshold,
             True,
+            include_colname_in_charts_label=include_colname_in_charts_label,
             m_probability=m_probability,
         )
 
