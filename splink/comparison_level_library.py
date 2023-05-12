@@ -102,8 +102,8 @@ class ExactMatchLevelBase(ComparisonLevel):
                 adjustments to the exact match level. Defaults to False.
             include_colname_in_charts_label (bool, optional): If True, include col_name
                 in chart labels (e.g. linker.match_weights_chart())
-            chart_label (str, optional): string to include in chart label. Setting to 
-                col_name would recreate behaviour of 
+            chart_label (str, optional): string to include in chart label. Setting to
+                col_name would recreate behaviour of
                 include_colname_in_charts_label=True
         Examples:
             === "DuckDB"

@@ -559,8 +559,8 @@ class PostcodeComparisonBase(Comparison):
     def __init__(
         self,
         col_name: str,
-        invalid_postcodes_as_null = False,
-        valid_postcode_regex = "^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$",
+        invalid_postcodes_as_null=False,
+        valid_postcode_regex="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$",
         term_frequency_adjustments_full=False,
         include_full_match_level=True,
         include_sector_match_level=True,
@@ -592,7 +592,7 @@ class PostcodeComparisonBase(Comparison):
                 to valid_postcode_regex will be included in the null level.
                 Defaults to False
             valid_postcode_regex (str): regular expression pattern that is used
-                to validate postcodes. If invalid_postcodes_as_null is True, 
+                to validate postcodes. If invalid_postcodes_as_null is True,
                 postcodes that do not adhere to valid_postcode_regex will be included
                  in the null level.
                  Defaults to "^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$"
@@ -616,8 +616,8 @@ class PostcodeComparisonBase(Comparison):
             long_col (str): The name of a longitudinal column or the respective array
                 or struct column column containing the information, plus an index.
                 For example: long, long_lat['long'] or long_lat[1].
-            km_thresholds (int, flaot, list): The total distance in kilometers to evaluate the
-                distance_in_km_level comparison against.
+            km_thresholds (int, float, list): The total distance in kilometers to
+                evaluate the distance_in_km_level comparison against.
             m_probability_full_match (float, optional): Starting m
                 probability for full match level. Defaults to None.
             m_probability_sector_match (float, optional): Starting m
@@ -697,7 +697,7 @@ class PostcodeComparisonBase(Comparison):
                 col_name,
                 regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]",
                 m_probability=m_probability_sector_match,
-                manual_chart_label="Postcode Sector"
+                manual_chart_label="Postcode Sector",
             )
             comparison_levels.append(comparison_level)
 
@@ -706,7 +706,7 @@ class PostcodeComparisonBase(Comparison):
                 col_name,
                 regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]?",
                 m_probability=m_probability_district_match,
-                manual_chart_label="Postcode District"
+                manual_chart_label="Postcode District",
             )
             comparison_levels.append(comparison_level)
 
@@ -715,25 +715,14 @@ class PostcodeComparisonBase(Comparison):
                 col_name,
                 regex_extract="^[A-Z]{1,2}",
                 m_probability=m_probability_area_match,
-                manual_chart_label="Postcode Area"
-            )
-            comparison_levels.append(comparison_level)
-
-        if include_distance_in_km_level:
-            comparison_level = self._distance_in_km_level(
-                lat_col,
-                long_col,
-                km_threshold,
-                m_probability=m_probability_distance_in_km,
+                manual_chart_label="Postcode Area",
             )
             comparison_levels.append(comparison_level)
 
         km_thresholds = ensure_is_iterable(km_thresholds)
         if len(km_thresholds) > 0:
             if m_probability_or_probabilities_km_distance is None:
-                m_probability_or_probabilities_km_distance = [None] * len(
-                    km_thresholds
-                )
+                m_probability_or_probabilities_km_distance = [None] * len(km_thresholds)
             m_probability_or_probabilities_km_distance = ensure_is_iterable(
                 m_probability_or_probabilities_km_distance
             )
