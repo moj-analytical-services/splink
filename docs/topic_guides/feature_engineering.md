@@ -16,6 +16,8 @@ During record linkage, the features in a given dataset are used to provide evide
 
 Below are some examples of features that be created from common columns, and how to create more detailed comparisons with them in a Splink model.
 
+<hr>
+
 ## Postcodes
 
 Many datasets contain postcode data and there are a number of ways to compare the postcode strings.
@@ -123,6 +125,7 @@ postcode_comparison = {
 }
 ```
 
+<hr>
 
 ## Phonetic transformations
 
@@ -187,4 +190,76 @@ print(first_name_comparison.human_readable_description)
 >    - 'Jaro_winkler_similarity >= 0.88' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.88
 >    - 'All other comparisons' with SQL rule: ELSE
 
+<hr>
 
+## Full name
+
+When comparing names, it can be helpful to [construct a single comparison for for comparing the forename and surname](./comparison_templates.ipynb#forename-and-surname-comparisons) of two records. If a splink model has a single comparison for forename and surname, one of the major benefits is being able to consider the term frequency of the full name, as well as for forename and surname individually.
+
+For example, in the UK, “Mohammed Khan” is a relatively common full name despite neither "Mohammed" or "Khan" occurring frequently as forename or surname, respectively. 
+
+For more on term frequency, see the dedicated [topic guide](term_frequency.md).
+
+### Example
+
+It is very simple to create a full name column from a `forename` and a `surname` in python.
+
+```python
+import pandas as pd
+
+df = pd.read_parquet("PATH/TO/DATA/fake_1000.parquet")
+
+# Create a new column "full_name" by combining "first_name" and "surname" columns
+df['full_name'] = df['first_name'] + ' ' + df['surname']
+
+df.head()
+```
+
+|    |   unique_id | first_name   | surname   | dob        | city   | email                          |   group | full_name     |
+|---:|------------:|:-------------|:----------|:-----------|:-------|:-------------------------------|--------:|:--------------|
+|  0 |           0 | Julia        |           | 2015-10-29 | London | hannah88@powers.com            |       0 | nan           |
+|  1 |           1 | Julia        | Taylor    | 2015-07-31 | London | hannah88@powers.com            |       0 | Julia  Taylor |
+|  2 |           2 | Julia        | Taylor    | 2016-01-27 | London | hannah88@powers.com            |       0 | Julia  Taylor |
+|  3 |           3 | Julia        | Taylor    | 2015-10-29 |        | hannah88opowersc@m             |       0 | Julia  Taylor |
+|  4 |           4 | oNah         | Watson    | 2008-03-23 | Bolton | matthew78@ballard-mcdonald.net |       1 | oNah Watson   |
+
+
+Now that the `full_name` column has been added, it can be used within comparisons. For example, using the [forenname_surname_comparison](../comparison_template_library.md#splink.comparison_template_library.ForenameSurnameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons).
+
+=== "DuckDB"
+    ```python
+    import splink.duckdb.duckdb_comparison_template_library as ctl
+
+    full_name_comparison = ctl.forename_surname_comparison(
+        "first_name",
+        "surname",
+        term_frequency_adjustments=True,
+        tf_adjustment_col_forename_and_surname="full_name",
+    )
+    print(full_name_comparison.human_readable_description)
+    ```
+=== "Spark"
+    ```python
+    import splink.spark.spark_comparison_template_library as ctl
+
+    full_name_comparison = ctl.forename_surname_comparison(
+        "first_name",
+        "surname",
+        term_frequency_adjustments=True,
+        tf_adjustment_col_forename_and_surname="full_name",
+    )
+    print(full_name_comparison.human_readable_description)
+    ```
+
+> Comparison 'Exact match vs. Forename and surname columns reversed vs. Surname exact match vs. Forename exact match vs. Surname within jaro-winkler threshold 0.88 vs. First_Name within jaro-winkler threshold 0.88 vs. anything else' of "surname" and "first_name".
+>
+> Similarity is assessed using the following ComparisonLevels:
+>
+>    - 'Null' with SQL rule: ("first_name_l" IS NULL OR "first_name_r" IS NULL) AND ("surname_l" IS NULL OR "surname_r" IS NULL)  
+>    - 'Full name exact match' with SQL rule: "first_name_l" = "first_name_r" AND "surname_l" = "surname_r"
+>    - 'Exact match on reversed cols' with SQL rule: "first_name_l" = "surname_r" and "first_name_r" = "surname_l"
+>    - 'Exact match surname' with SQL rule: "surname_l" = "surname_r"
+>    - 'Exact match first_name' with SQL rule: "first_name_l" = "first_name_r"
+>    - 'Jaro_winkler_similarity surname >= 0.88' with SQL rule: jaro_winkler_similarity("surname_l", "surname_r") >= 0.88
+>    - 'Jaro_winkler_similarity first_name >= 0.88' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.88
+>    - 'All other comparisons' with SQL rule: ELSE
