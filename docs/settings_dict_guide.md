@@ -113,6 +113,7 @@ The algorithm will run faster and use less resources if this is set to false.
 
 A list specifying how records should be compared for probabalistic matching.  Each element is a dictionary
 
+*Note*: Dictionaries must be defined with double quotes as if they're valid json. Single quoted keys and values will fail validation. 
 
 ### blocking_rules_to_generate_predictions
 
@@ -204,7 +205,23 @@ Comparison levels specify how input values should be compared.  Each level corre
 
 Each comparison level represents a branch of a SQL case expression. They are specified in order of evaluation, each with a sql_condition that represents the branch of a case expression
 
-**Examples**: `[{'sql_condition': 'first_name_l IS NULL OR first_name_r IS NULL', 'label': 'null', 'null_level': True}, {'sql_condition': 'first_name_l = first_name_r', 'label': 'exact_match', 'tf_adjustment_column': 'first_name'}, {'sql_condition': 'ELSE', 'label': 'else'}]`
+**Example**: 
+``` json
+[{
+    "sql_condition": "first_name_l IS NULL OR first_name_r IS NULL", 
+    "label_for_charts": "null", 
+    "null_level": True
+}, 
+{
+    "sql_condition": "first_name_l = first_name_r", 
+    "label_for_charts": "exact_match", 
+    "tf_adjustment_column": "first_name"
+}, 
+{
+    "sql_condition": "ELSE", 
+    "label_for_charts": "else"
+}]
+```
 
 ## Settings keys nested within each member of `comparison_levels`
 ### sql_condition
