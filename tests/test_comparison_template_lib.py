@@ -389,11 +389,9 @@ def test_forename_surname_comparison_levels(spark, ctl, Linker):
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
         print(f"gamma={gamma} and gamma_lookup={expected_size}")
-        gamma_matches = linker_output.filter(like='gamma_custom')==gamma
+        gamma_matches = linker_output.filter(like="gamma_custom") == gamma
         gamma_matches_size = gamma_matches.sum().values[0]
-        assert (
-            gamma_matches_size == expected_size
-        )
+        assert gamma_matches_size == expected_size
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_value: tuple of ID pairs}
@@ -415,6 +413,8 @@ def test_forename_surname_comparison_levels(spark, ctl, Linker):
                 linker_output.loc[
                     (linker_output.unique_id_l == left)
                     & (linker_output.unique_id_r == right)
-                ].filter(like='gamma_custom').values[0][0]
+                ]
+                .filter(like="gamma_custom")
+                .values[0][0]
                 == gamma
             )
