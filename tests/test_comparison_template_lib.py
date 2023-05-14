@@ -376,13 +376,6 @@ def test_forename_surname_comparison_levels(spark, ctl, Linker):
     linker = Linker(df, settings)
     linker_output = linker.predict().as_pandas_dataframe()
 
-    print(linker_output)
-    print(
-        linker_output.groupby("gamma_custom_forename_surname")[
-            "gamma_custom_forename_surname"
-        ].count()
-    )
-
     # # Dict key: {gamma_level value: size}
     size_gamma_lookup = {0: 8, 1: 3, 2: 3, 3: 2, 4: 2, 5: 2, 6: 1}
     # 6: exact_match
@@ -396,22 +389,24 @@ def test_forename_surname_comparison_levels(spark, ctl, Linker):
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
         print(f"gamma={gamma} and gamma_lookup={expected_size}")
-
+        gamma_matches = linker_output.filter(like='gamma_custom')==gamma
+        gamma_matches_size = gamma_matches.sum().values[0]
         assert (
-            sum(linker_output["gamma_custom_forename_surname"] == gamma)
-            == expected_size
+            gamma_matches_size == expected_size
         )
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_value: tuple of ID pairs}
     size_gamma_lookup = {
-        4: [[1, 6]],
-        3: [(2, 3), (4, 5)],
-        2: [],
-        1: [(1, 2), (4, 6)],
-        0: [(2, 4), (5, 6)],
+        6: [(1, 2)],
+        5: [(2, 3)],
+        4: [(2, 5)],
+        3: [(1, 6)],
+        2: [(5, 7)],
+        1: [(1, 4), (4, 6)],
+        0: [(3, 4), (6, 7)],
     }
-
+    print(linker_output)
     for gamma, id_pairs in size_gamma_lookup.items():
         for left, right in id_pairs:
             print(f"Checking IDs: {left}, {right}")
@@ -420,6 +415,6 @@ def test_forename_surname_comparison_levels(spark, ctl, Linker):
                 linker_output.loc[
                     (linker_output.unique_id_l == left)
                     & (linker_output.unique_id_r == right)
-                ]["gamma_custom_first_name_first_name_metaphone"].values[0]
+                ].filter(like='gamma_custom').values[0][0]
                 == gamma
             )
