@@ -18,41 +18,66 @@ Below are some examples of features that be created from common columns, and how
 
 ## Postcodes
 
-Many datasets contain postcode data and there are a number of ways to compare the postcode strings.
+A sensible approach to comparing postcodes is to consider their consituent components:
 
-For example, levenshtein distances are useful to spot any typos/character swaps:
+![UK postcode components from https://ideal-postcodes.co.uk/guides/uk-postcode-format](https://user-images.githubusercontent.com/7570107/136946496-8769b06c-e4a6-488d-95f1-526946d96aa7.png)
+See [source of image](https://ideal-postcodes.co.uk/guides/uk-postcode-format) for more details.
+
+We provide a pre-built [postcode_comparison template](link) which does this for you, producing comparison levels for a match on full postcode, sector, district and area in turn (also see [comparison_templates.ipynb]()).
+
+Code examples to use the comparison:
 === "DuckDB"
     ```python
-    import splink.duckdb.duckdb_comparison_library as cl
+    import splink.duckdb.duckdb_comparison_template_library as ctl
 
-    postcode_comparison = cl.levenshtein_at_thresholds("postcode", [2])
-    print(postcode_comparison.human_readable_description)
+    pc_comparison = ctl.postcode_comparison("postcode")
+    print(pc_comparison.human_readable_description)
     ```
 === "Spark"
     ```python
-    import splink.spark.spark_comparison_library as cl
+    import splink.spark.spark_comparison_template_library as ctl
 
-    postcode_comparison = cl.levenshtein_at_thresholds("postcode", [2])
-    print(postcode_comparison.human_readable_description)
+    pc_comparison = ctl.postcode_comparison("postcode")
+    print(pc_comparison.human_readable_description)
     ```
 === "Athena"
     ```python
-    import splink.athena.athena_comparison_library as cl
+    import splink.athena.athena_comparison_template_library as ctl
 
-    postcode_comparison = cl.levenshtein_at_thresholds("postcode", [2])
-    print(postcode_comparison.human_readable_description)
-    ```    
->
-> Comparison 'Exact match vs. levenshtein at threshold 2 vs. anything else' of "postcode".
+    pc_comparison = ctl.postcode_comparison("postcode")
+    print(pc_comparison.human_readable_description)
+    ``` 
+
+> Comparison 'Exact match on full postcode vs. exact match on sector vs. exact match on district vs. exact match on area vs. all other comparisons' of "postcode".
 >
 > Similarity is assessed using the following ComparisonLevels:
 >
 >    - 'Null' with SQL rule: "postcode_l" IS NULL OR "postcode_r" IS NULL
->    - 'Exact match' with SQL rule: "postcode_l" = "postcode_r"
->    - Levenshtein <= 2' with SQL rule: levenshtein("postcode_l", "postcode_r") <= 2
+>    - 'Exact match postcode' with SQL rule: "postcode_l" = "postcode_r"
+>    - 'Exact match Postcode Sector' with SQL rule: 
+        regexp_extract("postcode_l", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]')
+     = 
+        regexp_extract("postcode_r", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]')
+    
+>    - 'Exact match Postcode District' with SQL rule: 
+        regexp_extract("postcode_l", '^[A-Z]{1,2}[0-9][A-Z0-9]?')
+     = 
+        regexp_extract("postcode_r", '^[A-Z]{1,2}[0-9][A-Z0-9]?')
+    
+>    - 'Exact match Postcode Area' with SQL rule: 
+        regexp_extract("postcode_l", '^[A-Z]{1,2}')
+     = 
+        regexp_extract("postcode_r", '^[A-Z]{1,2}')
+    
 >    - 'All other comparisons' with SQL rule: ELSE
 
-However, string comparators alone don't necessarily give the best sense of whether two postcodes are similar. Another way of considering similarity of postcodes is the physical distance between them. Splink has a functions to calculate the distance between two sets of coordinates ([cll.distance_in_KM_level()](../comparison_level_library.md#splink.comparison_level_library.DistanceFunctionLevelBase) and [cl.distance_in_KM_at_thresholds()](../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsComparisonBase)) which can be utilised, alongside string comparisons, to give better results.
+ where under the hood, individual postcode components (substrings) area selected using the `regex_extract` argument.
+
+However, something important to consider is that locations which are geographically close to one another can be in different postcode regions e.g. N London postcodes vs SW London postcodes. So performing comparisons based on substrings alone won't necessarily give the best sense of whether two postcodes are close together.
+
+Happily, Splink includes functions [cll.distance_in_km_level()](../comparison_level_library.md#splink.comparison_level_library.DistanceFunctionLevelBase) and [cl.distance_in_km_at_thresholds()](../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsComparisonBase) to calculate the physical distance between two sets of coordinates of latitude and longitude.
+
+`cll.distance_in_km_level()` can be incuded as an optional additional level in the `postcode_comaparison` template by supplying `lat_col`, `long_col` and `km_thresholds` arguments to give better results.
 
 ### Example
 
@@ -172,108 +197,6 @@ Now that coordinates have been added, a more detailed postcode comparison can be
         ],
     }
     ``` 
-
-Another approach to comparing postcodes is to consider their consituent components:
-
-![UK postcode components from https://ideal-postcodes.co.uk/guides/uk-postcode-format](https://user-images.githubusercontent.com/7570107/136946496-8769b06c-e4a6-488d-95f1-526946d96aa7.png)
-See [image source](https://ideal-postcodes.co.uk/guides/uk-postcode-format) for more details.
-
-This has the benefit of avoiding having to use a lookup whilst still providing a reasonable way to assess similarity of locations.
-
-Postcode components (substrings) can be selected using the `regex_extract` argument.
-
-For example, to perform an exact match comparison on the 'outcode' component...
-=== "DuckDB"
-    ```python
-    import splink.duckdb.duckdb_comparison_library as cl
-
-    outcode = "^[A-Z]{1,2}[0-9][A-Z0-9]?"
-    postcode_comparison = cl.exact_match("postcode", regex_extract=outcode)
-    print(postcode_comparison.human_readable_description)
-    ```
-=== "Spark"
-    ```python
-    import splink.spark.spark_comparison_library as cl
-
-    outcode = "^[A-Z]{1,2}[0-9][A-Z0-9]?"
-    postcode_comparison = cl.exact_match("postcode", regex_extract=outcode)
-    print(postcode_comparison.human_readable_description)
-    ```
-=== "Athena"
-    ```python
-    import splink.athena.athena_comparison_library as cl
-
-    outcode = "^[A-Z]{1,2}[0-9][A-Z0-9]?"
-    postcode_comparison = cl.exact_match("postcode", regex_extract=outcode)
-    print(postcode_comparison.human_readable_description)
-    ``` 
-
-A more realistic use case might be where you want to perform comparisons across several postcode components...
-
-=== "DuckDB"
-    ```python
-    import splink.duckdb.duckdb_comparison_level_library as cll
-
-    outcode = “^[A-Z]{1,2}[0-9][A-Z0-9]?”
-    area = “^[A-Z]{1,2}”
-
-    postcode_comparison = {
-        'output_column_name': 'postcode',
-        'comparison_description': 'Postcode',
-        'comparison_levels': [
-            cll.null_level("postcode"),
-            cll.exact_match_level("postcode")
-            cll.exact_match_level("postcode", regex_extract=outcode)
-            cll.exact_match_level("postcode", regex_extract=area)
-            cll.else_level()
-        ],
-    }
-    ```
-=== "Spark"
-    ```python
-    import splink.spark.spark_comparison_level_library as cll
-
-    outcode = “^[A-Z]{1,2}[0-9][A-Z0-9]?”
-    area = “^[A-Z]{1,2}”
-
-    postcode_comparison = {
-        'output_column_name': 'postcode',
-        'comparison_description': 'Postcode',
-        'comparison_levels': [
-            cll.null_level("postcode"),
-            cll.exact_match_level("postcode")
-            cll.exact_match_level("postcode", regex_extract=outcode)
-            cll.exact_match_level("postcode", regex_extract=area)
-            cll.else_level()
-        ],
-    }
-    ```
-=== "Athena"
-    ```python
-    import splink.athena.athena_comparison_level_library as cll
-
-    outcode = “^[A-Z]{1,2}[0-9][A-Z0-9]?”
-    area = “^[A-Z]{1,2}”
-
-    postcode_comparison = {
-        'output_column_name': 'postcode',
-        'comparison_description': 'Postcode',
-        'comparison_levels': [
-            cll.null_level("postcode"),
-            cll.exact_match_level("postcode")
-            cll.exact_match_level("postcode", regex_extract=outcode)
-            cll.exact_match_level("postcode", regex_extract=area)
-            cll.else_level()
-        ],
-    }
-    ``` 
-
-Note, the `regex_extract` argument is also available to all other string comparators (levenshtein, jaro-winkler, etc).
-
-Something to take into consideration is where locations are very close to one another, but cross postcode boundaries, such that the postcodes look completely different but are only a few kilometers apart. Given this, you might want to also include `distance_in_km_level()`...
-
-Mention comparison template library...
-
 
 ## Phonetic transformations
 
