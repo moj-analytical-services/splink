@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import re
+import sqlglot
 import warnings
 from collections import UserDict
 from copy import copy, deepcopy
@@ -597,9 +598,14 @@ class Linker:
         try:
             return self._run_sql_execution(final_sql, templated_name, physical_name)
         except Exception as e:
+            final_sql = sqlglot.parse_one(
+                final_sql,
+                read=self._sql_dialect,
+            ).sql(pretty=True)
+
             raise SplinkException(
                 f"Error executing the following sql for table "
-                f"`{templated_name}`({physical_name}):\n{final_sql}"
+                f"`{templated_name}` ({physical_name}):\n{final_sql}"
             ) from e
 
     def register_table(self, input, table_name, overwrite=False):
