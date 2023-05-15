@@ -5,12 +5,13 @@ import json
 import logging
 import os
 import re
-import sqlglot
 import warnings
 from collections import UserDict
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
+
+import sqlglot
 
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
 
