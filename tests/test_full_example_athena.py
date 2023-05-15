@@ -141,32 +141,36 @@ def test_athena_garbage_collection():
 
     out_fp = "athena_test_garbage_collection"
 
-    def run_athena_predictions():
-        # Test that our gc works as expected w/ tables_to_exclude
-        linker = AthenaLinker(
-            settings_dict=settings_dict,
-            input_table_or_tables=f"{db_name_read}.{table_name}",
-            boto3_session=my_session,
-            output_bucket=output_bucket,
-            output_database=db_name_write,
-            output_filepath=out_fp,
-        )
+def run_athena_predictions():
+    # check the path so we don't do anything rash...
+    if path.endswith("athena_test_garbage_collection/"):
+        wr.s3.delete_objects(path=path)
+    else:
+        raise ValueError("Error, path is invalid.")
+    
+    # Test that our gc works as expected w/ tables_to_exclude
+    linker = AthenaLinker(
+        settings_dict=settings_dict,
+        input_table_or_tables=f"{db_name_read}.{table_name}",
+        boto3_session=my_session,
+        output_bucket=output_bucket,
+        output_database=db_name_write,
+        output_filepath=out_fp,
+    )
 
-        path = f"s3://{output_bucket}/{out_fp}/{linker._cache_uid}"
+    linker.profile_columns(
+        [
+            "first_name",
+            "surname",
+            "first_name || surname",
+            "concat(city, first_name)",
+            ["surname", "city"],
+        ]
+    )
 
-        linker.profile_columns(
-            [
-                "first_name",
-                "surname",
-                "first_name || surname",
-                "concat(city, first_name)",
-                ["surname", "city"],
-            ]
-        )
+    predict = linker.predict()
 
-        predict = linker.predict()
-
-        return linker, path, predict
+    return linker, linker.s3_output, predict
 
     linker, path, predict = run_athena_predictions()
     linker.drop_all_tables_created_by_splink(tables_to_exclude=predict)

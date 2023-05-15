@@ -146,7 +146,7 @@ class AthenaLinker(Linker):
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
             output_filepath (str, optional): Inside of your selected output bucket,
                 where to write output files to.
-                Defaults to "splink_warehouse/{unique_id}".
+                Defaults to "splink_warehouse".
         Examples:
             >>> # Creating a database in athena and writing to it
             >>> import awswrangler as wr
@@ -249,7 +249,6 @@ class AthenaLinker(Linker):
             "s3://",
             self.output_bucket,
             self.output_filepath,
-            self._cache_uid,  # added in the super() step
         )
         if out_path[-1] != "/":
             out_path += "/"
@@ -325,7 +324,9 @@ class AthenaLinker(Linker):
                 self._delete_table_from_database(table_name)
 
         if isinstance(input, dict):
+            print(input)
             input = pd.DataFrame(input)
+            print(input)
         elif isinstance(input, list):
             input = pd.DataFrame.from_records(input)
 
@@ -508,7 +509,8 @@ class AthenaLinker(Linker):
             for df in tables_to_exclude
         ]
         # Exclude tables that the user doesn't want to delete
-        tables = self._names_of_tables_created_by_splink.copy()
+        # Using the ctas query info also deletes the input tables
+        tables = set(self.ctas_query_info.keys())
         tables = [t for t in tables if t not in tables_to_exclude]
 
         for table in tables:
