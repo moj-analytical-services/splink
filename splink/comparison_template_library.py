@@ -13,7 +13,6 @@ from .comparison_library_utils import (
     distance_threshold_comparison_levels,
     distance_threshold_description,
 )
-from .input_column import InputColumn
 from .misc import ensure_is_iterable
 
 logger = logging.getLogger(__name__)
@@ -757,37 +756,6 @@ class ForenameSurnameComparisonBase(Comparison):
             Comparison: A comparison that can be included in the Splink settings
                 dictionary.
         """
-        # Create InputColumns for instances when not using cll functions
-
-        forename_col = InputColumn(forename_col_name, sql_dialect=self._sql_dialect)
-        forename_col_l, forename_col_r = forename_col.names_l_r()
-        surname_col = InputColumn(surname_col_name, sql_dialect=self._sql_dialect)
-        surname_col_l, surname_col_r = surname_col.names_l_r()
-        # if term_frequency_adjustment_col_forename_and_surname:
-        #    forename_surname_col = InputColumn(
-        #               term_frequency_adjustment_col_forename_and_surname,
-        #               sql_dialect=self._sql_dialect
-        #               )
-        #    forename_surname_col_l, ful_name_col_r = forename_surname_col.names_l_r()
-        # else:
-        #    forename_surname_col = None
-
-        if phonetic_forename_col_name:
-            phonetic_forename_col = InputColumn(
-                phonetic_forename_col_name, sql_dialect=self._sql_dialect
-            )
-            (
-                phonetic_forename_col_l,
-                phonetic_forename_col_r,
-            ) = phonetic_forename_col.names_l_r()
-        if phonetic_surname_col_name:
-            phonetic_surname_col = InputColumn(
-                phonetic_surname_col_name, sql_dialect=self._sql_dialect
-            )
-            (
-                phonetic_surname_col_l,
-                phonetic_surname_col_r,
-            ) = phonetic_surname_col.names_l_r()
 
         # Construct Comparison
         comparison_levels = []
@@ -804,8 +772,8 @@ class ForenameSurnameComparisonBase(Comparison):
 
         if include_exact_match_level:
             comparison_level = {
-                "sql_condition": f"{forename_col_l} = {forename_col_r} "
-                f"AND {surname_col_l} = {surname_col_r}",
+                "sql_condition": f"{forename_col_name}_l = {forename_col_name}_r "
+                f"AND {surname_col_name}_l = {surname_col_name}_r",
                 "tf_adjustment_column": tf_adjustment_col_forename_and_surname,
                 "tf_adjustment_weight": 1.0,
                 "m_probability": m_probability_exact_match_forename_surname,
@@ -818,8 +786,9 @@ class ForenameSurnameComparisonBase(Comparison):
 
         if phonetic_forename_col_name and phonetic_surname_col_name is not None:
             comparison_level = {
-                "sql_condition": f"{phonetic_forename_col_l}={phonetic_forename_col_r}"
-                f" AND {phonetic_surname_col_l} = {phonetic_surname_col_r}",
+                "sql_condition": f"{phonetic_forename_col_name}_l = "
+                f"{phonetic_forename_col_name}_r"
+                f" AND {phonetic_surname_col_name}_l = {phonetic_surname_col_name}_r",
                 "tf_adjustment_column": tf_adjustment_col_forename_and_surname,
                 "tf_adjustment_weight": 1.0,
                 "m_probability": m_probability_exact_match_phonetic_forename_surname,
