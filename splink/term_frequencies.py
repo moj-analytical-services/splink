@@ -30,7 +30,7 @@ def term_frequencies_for_single_column_sql(
 
     sql = f"""
     select
-    {col_name}, cast(count(*) as double) / (select
+    {col_name}, cast(count(*) as float8) / (select
         count({col_name}) as total from {table_name})
             as {input_column.tf_name()}
     from {table_name}

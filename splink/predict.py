@@ -54,7 +54,7 @@ def predict_from_comparison_vectors_sqls(
         bayes_factor = prob_to_bayes_factor(probability_two_random_records_match)
 
         bayes_factor_expr = " * ".join(mult)
-        bayes_factor_expr = f"cast({bayes_factor} as double) * {bayes_factor_expr}"
+        bayes_factor_expr = f"cast({bayes_factor} as float8) * {bayes_factor_expr}"
 
         # if any BF is Infinity then we need to adjust expression,
         # as arithmetic won't go through directly
