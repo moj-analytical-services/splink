@@ -1,3 +1,6 @@
+import os
+import shutil
+
 import pandas as pd
 import pytest
 
@@ -85,3 +88,28 @@ def register_roc_data(linker):
     )
 
     linker.register_table(df_labels, "labels")
+
+
+def _test_write_functionality(linker, read_csv_func):
+
+    root = "__splink_tests"
+    # delete the folder and its contents
+    if os.path.exists(root):
+        shutil.rmtree(root)
+
+    parquet_f = f"{root}/tmp_files/test.parquet"
+    linker.predict().to_parquet(parquet_f)
+    assert len(pd.read_parquet(parquet_f)) == 3167
+    # Duplicate table name (check for error)
+    with pytest.raises(FileExistsError):
+        linker.predict().to_parquet(parquet_f)
+
+    csv_f = f"{root}/tmp_files/test.csv"
+    linker.predict().to_csv(csv_f)
+    assert len(read_csv_func(csv_f)) == 3167
+    # Duplicate table name (check for error)
+    with pytest.raises(FileExistsError):
+        linker.predict().to_csv(csv_f)
+
+    # delete the folder and its contents
+    shutil.rmtree(root)

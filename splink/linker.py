@@ -996,7 +996,7 @@ class Linker:
         if not isinstance(settings_dict, dict):
             p = Path(settings_dict)
             if not p.is_file():  # check if it's a valid file/filepath
-                raise ValueError(
+                raise FileNotFoundError(
                     "The filepath you have provided is either not a valid file "
                     "or doesn't exist along the path provided."
                 )
