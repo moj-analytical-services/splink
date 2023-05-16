@@ -18,14 +18,14 @@ Below are some examples of features that be created from common columns, and how
 
 ## Postcodes
 
-A sensible approach to comparing postcodes is to consider their consituent components:
+A sensible approach to comparing postcodes is to consider their consituent components. For example, UK postcodes can be broken down into the following substrings:
 
-![UK postcode components from https://ideal-postcodes.co.uk/guides/uk-postcode-format](https://user-images.githubusercontent.com/7570107/136946496-8769b06c-e4a6-488d-95f1-526946d96aa7.png)
-See [source of image](https://ideal-postcodes.co.uk/guides/uk-postcode-format) for more details.
+![UK postcode components from https://ideal-postcodes.co.uk/guides/uk-postcode-format](../img/postcode_components.png)
+See [image source](https://ideal-postcodes.co.uk/guides/uk-postcode-format) for more details.
 
-We provide a pre-built [postcode_comparison template](link) which does this for you, producing comparison levels for a match on full postcode, sector, district and area in turn (also see [comparison_templates.ipynb]()).
+Splink already includes a pre-built [postcode comparison template](link) which does this for you, generating by default a comparison with levels for an exact match on full postcode, sector, district and area in turn. These individual postcode components are engineered under the hood using the `regex_extract` argument (see below and [comparison_templates.ipynb]() for more details).
 
-Code examples to use the comparison:
+Code examples to use the comparison template:
 === "DuckDB"
     ```python
     import splink.duckdb.duckdb_comparison_template_library as ctl
@@ -71,13 +71,11 @@ Code examples to use the comparison:
     
 >    - 'All other comparisons' with SQL rule: ELSE
 
- where under the hood, individual postcode components (substrings) area selected using the `regex_extract` argument.
 
-However, something important to consider is that locations which are geographically close to one another can be in different postcode regions e.g. N London postcodes vs SW London postcodes. So performing comparisons based on substrings alone won't necessarily give the best sense of whether two postcodes are close together.
+However, it is important to consider that locations which are geographically close to one another can be in different postcode regions e.g. London postcodes starting 'N' vs 'SW'. So performing comparisons based on substrings alone won't necessarily give the best sense of whether two postcodes are close together.
 
-Happily, Splink includes functions [cll.distance_in_km_level()](../comparison_level_library.md#splink.comparison_level_library.DistanceFunctionLevelBase) and [cl.distance_in_km_at_thresholds()](../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsComparisonBase) to calculate the physical distance between two sets of coordinates of latitude and longitude.
-
-`cll.distance_in_km_level()` can be incuded as an optional additional level in the `postcode_comaparison` template by supplying `lat_col`, `long_col` and `km_thresholds` arguments to give better results.
+Fortunately, Splink includes functions [cll.distance_in_km_level()](../comparison_level_library.md#splink.comparison_level_library.DistanceFunctionLevelBase) and [cl.distance_in_km_at_thresholds()](../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsComparisonBase) to calculate the physical distance between two sets of latitude and longitude coordinates. 
+You have the option to include `cll.distance_in_km_level()` as additional levels in the `postcode_comparison()` template by supplying `lat_col`, `long_col` and `km_thresholds` arguments, which could help improve results. Latitude and longitude coordinates can be derived from a postcode column as described in the example below.
 
 ### Example
 
@@ -141,7 +139,46 @@ df_with_coordinates.head()
 |  3 | Q2296770-4  | Q2296770  | thomas 1st chudleigh                             | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8HU   |          | politician   | TQ13 8HU      |    50.6876 |     -3.8958 |
 |  4 | Q2296770-5  | Q2296770  | thomas clifford, 1st baron chudleigh             | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8DF   |          | politician   | TQ13 8DF      |    50.6927 |     -3.8139 |
 
-Now that coordinates have been added, a more detailed postcode comparison can be created to be included in a splink settings dictionary:
+Now that coordinates have been added, a more detailed postcode comparison can be produced using the `postcode_comparison` template:
+
+=== "DuckDB"
+    ```python
+    import splink.duckdb.duckdb_comparison_template_library as ctl
+
+    pc_comparison = ctl.postcode_comparison(
+        "postcode",
+        lat_col="lat",
+        long_col="long",
+        km_thresholds=[1,10,50]
+    )
+    print(pc_comparison.human_readable_description)
+    ```
+=== "Spark"
+    ```python
+    import splink.spark.spark_comparison_template_library as ctl
+
+    pc_comparison = ctl.postcode_comparison(
+        "postcode",
+        lat_col="lat",
+        long_col="long",
+        km_thresholds=[1,10,50]
+    )
+    print(pc_comparison.human_readable_description)
+    ```
+=== "Athena"
+    ```python
+    import splink.athena.athena_comparison_template_library as ctl
+
+    pc_comparison = ctl.postcode_comparison(
+        "postcode",
+        lat_col="lat",
+        long_col="long",
+        km_thresholds=[1,10,50]
+    )
+    print(pc_comparison.human_readable_description)
+    ``` 
+
+or by using `cll.distance_in_km_level()` in conjunction with other comparison levels: 
 
 === "DuckDB"
     ```python
@@ -152,8 +189,7 @@ Now that coordinates have been added, a more detailed postcode comparison can be
         'comparison_description': 'Postcode',
         'comparison_levels': [
             cll.null_level("postcode"),
-            cll.exact_match_level("postcode", term_frequency_adjustments=True),
-            cll.levenshtein_level("postcode", 1),
+            cll.exact_match_level("postcode"),
             cll.distance_in_km_level("latitude", "longitude", 1),
             cll.distance_in_km_level("latitude", "longitude", 10),
             cll.distance_in_km_level("latitude", "longitude", 50),
@@ -170,8 +206,7 @@ Now that coordinates have been added, a more detailed postcode comparison can be
         'comparison_description': 'Postcode',
         'comparison_levels': [
             cll.null_level("postcode"),
-            cll.exact_match_level("postcode", term_frequency_adjustments=True),
-            cll.levenshtein_level("postcode", 1),
+            cll.exact_match_level("postcode"),
             cll.distance_in_km_level("latitude", "longitude", 1),
             cll.distance_in_km_level("latitude", "longitude", 10),
             cll.distance_in_km_level("latitude", "longitude", 50),
@@ -188,8 +223,7 @@ Now that coordinates have been added, a more detailed postcode comparison can be
         'comparison_description': 'Postcode',
         'comparison_levels': [
             cll.null_level("postcode"),
-            cll.exact_match_level("postcode", term_frequency_adjustments=True),
-            cll.levenshtein_level("postcode", 1),
+            cll.exact_match_level("postcode"),
             cll.distance_in_km_level("latitude", "longitude", 1),
             cll.distance_in_km_level("latitude", "longitude", 10),
             cll.distance_in_km_level("latitude", "longitude", 50),
