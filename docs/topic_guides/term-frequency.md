@@ -78,7 +78,7 @@ Depending on how you compose your Splink settings, TF adjustments can be applied
 
 ### Comparison (template) library functions
 
-```
+```py
 import splink.duckdb.duckdb_comparison_library as cl
 import splink.duckdb.duckdb_comparison_template_library as ctl
 
@@ -99,7 +99,7 @@ dob_comparison = ctl.date_comparison("date_of_birth",
 
 ### Comparison level library functions
 
-```
+```py
 import splink.duckdb.duckdb_comparison_level_library as cll
 
 name_comparison = {
@@ -118,7 +118,7 @@ name_comparison = {
 
 ### Providing a detailed spec as a dictionary
 
-```
+```py
 comparison_first_name = {
     "output_column_name": "first_name",
     "comparison_description": "First name jaro dmeta",
@@ -156,7 +156,7 @@ The code examples above show how we can use term frequencies for different colum
 Each comparison level can be adjusted on the basis of a specified column. In the case of exact match levels, this is trivial but it allows some partial matches to be reframed as exact matches on a different derived column. 
 One example could be **ethnicity**, often provided in codes as a letter (W/M/B/A/O - the ethnic group) and a number. Without TF adjustments, an ethnicity comparison might have 3 levels - exact match, match on ethnic group (`LEFT(ethnicity,1)`), no match. By creating a derived column `ethnic_group = LEFT(ethnicity,1)` we can apply TF adjustments to both levels.
 
-```
+```py
 ethnicity_comparison = {
     "output_column_name": "ethnicity",
     "comparison_description": "Self-defined ethnicity",
@@ -171,7 +171,7 @@ ethnicity_comparison = {
 
 A more critical example would be a **full name** comparison that uses separate **first name** and **surname** columns. Previous implementations would apply TF adjustments to each name component independently, so “John Smith” would be adjusted down for the common name “John” and then again for the common name “Smith”. However, the frequencies of names are not generally independent (e.g. “Mohammed Khan” is a relatively common full name despite neither name occurring frequently). A simple full name comparison could therefore be structured as follows:
 
-```
+```py
 name_comparison = {
     "output_column_name": "name",
     "comparison_description": "Full name",
@@ -195,7 +195,7 @@ In cases where this assumption might not hold and both values are valid and dist
 
 TF adjustments will not be applied to any comparison level without explicitly being turned on, but to allow for some middle ground when applying them to fuzzy match column, there is a `tf_adjustment_weight` setting that can down-weight the TF adjustment. A weight of zero is equivalent to turning TF adjustments off, while a weight of 0.5 means the match weights are halved, mitigating their impact:
 
-```
+```py
 {
   "sql_condition": "jaro_winkler_sim(first_name_l, first_name_r) > 0.8",
   "label_for_charts": "Exact match",
