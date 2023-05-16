@@ -598,8 +598,8 @@ class ForenameSurnameComparisonBase(Comparison):
         - Macth of forename and surname reversed\n
         - Exact match surname\n
         - Exact match forename\n
-        - Fuzzy match surname (levensthtein <=2 or jaro-winkler >= 0.88)\n
-        - Fuzzy match forename ((levensthtein <=2 or jaro-winkler>=  0.88)\n
+        - Fuzzy match surname jaro-winkler >= 0.88\n
+        - Fuzzy match forename jaro-winkler>=  0.88\n
         - Anything else
 
         Args:
