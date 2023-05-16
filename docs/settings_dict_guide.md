@@ -113,7 +113,6 @@ The algorithm will run faster and use less resources if this is set to false.
 
 A list specifying how records should be compared for probabalistic matching.  Each element is a dictionary
 
-*Note*: Dictionaries must be defined with double quotes as if they're valid json. Single quoted keys and values will fail validation. 
 
 ### blocking_rules_to_generate_predictions
 
