@@ -408,6 +408,7 @@ class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
         self,
         col_name: str,
         distance_threshold: int,
+        regex_extract: str = None,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a damerau-levenshtein distance
@@ -417,17 +418,41 @@ class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
         Examples:
-            >>> # DuckDB Damerau-Levenshtein comparison level at threshold 1
-            >>> import splink.duckdb.duckdb_comparison_level_library as cll
-            >>> cll.damerau_levenshtein_level("name", 1)
+            === "DuckDB"
+                Comparison level with damerau-levenshtein distance score less than
+                (or equal to) 1
+                ``` python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.damerau_levenshtein_level("name", 1)
+                ```
 
-            >>> # Spark Damerau-Levenshtein comparison level at thresholds 1
-            >>> import splink.spark.spark_comparison_level_library as cll
-            >>> cll.damerau_levenshtein_level("name", 1)
+                Comparison level with damerau-levenshtein distance score less than
+                (or equal to) 1 on a subtring of name column as determined by a regular
+                expression.
+                ```python
+                import splink.duckdb.duckdb_comparison_level_library as cll
+                cll.damerau_levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
+                ```
+            === "Spark"
+                Comparison level with damerau-levenshtein distance score less than
+                (or equal to) 1
+                ``` python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.damerau_levenshtein_level("name", 1)
+                ```
+
+                Comparison level with damerau-levenshtein distance score less than
+                (or equal to) 1 on a subtring of name column as determined by a regular
+                expression.
+                ```python
+                import splink.spark.spark_comparison_level_library as cll
+                cll.damerau_levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
+                ```
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the
@@ -437,6 +462,7 @@ class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
             col_name,
             self._damerau_levenshtein_name,
             distance_threshold,
+            regex_extract,
             False,
             m_probability=m_probability,
         )

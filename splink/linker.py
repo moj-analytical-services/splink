@@ -345,7 +345,6 @@ class Linker:
 
     @property
     def _verify_link_only_job(self):
-
         cache = self._intermediate_table_cache
         if "__splink__df_concat_with_tf" not in cache:
             return
@@ -599,7 +598,6 @@ class Linker:
         try:
             return self._run_sql_execution(final_sql, templated_name, physical_name)
         except Exception as e:
-
             # Parse our SQL through sqlglot to pretty print
             try:
                 final_sql = sqlglot.parse_one(

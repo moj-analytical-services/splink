@@ -18,6 +18,7 @@ def test_full_example_spark(df_spark, tmp_path):
     # Annoyingly, this needs an independent linker as csv doesn't
     # accept arrays as inputs, which we are adding to df_spark below
     linker = SparkLinker(df_spark, get_settings_dict())
+
     # Test that writing to files works as expected
     def spark_csv_read(x):
         return linker.spark.read.csv(x, header=True).toPandas()

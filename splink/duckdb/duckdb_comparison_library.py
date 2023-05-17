@@ -38,7 +38,7 @@ class damerau_levenshtein_at_thresholds(
 ):
     @property
     def _distance_level(self):
-        return damerau_levenshtein_level
+        return self._damerau_levenshtein_level
 
 
 class jaro_at_thresholds(DuckDBComparisonProperties, JaroAtThresholdsComparisonBase):

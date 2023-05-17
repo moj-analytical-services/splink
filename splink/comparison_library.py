@@ -352,7 +352,7 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                 and <=2
                 on a substring of name column as determined by a regular expression
                 ``` python
-                import splink.duckdb.duckdb_comparison_library as cl
+                import splink.spark.spark_comparison_library as cl
                 cl.levenshtein_at_thresholds("first_name", [1,2], regex_extract="^A|B")
                 ```
             === "Athena"
@@ -401,10 +401,12 @@ class DamerauLevenshteinAtThresholdsComparisonBase(
         self,
         col_name: str,
         distance_threshold_or_thresholds: int | list = 1,
+        regex_extract: str = None,
+        valid_string_regex: str = None,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
-        m_probability_or_probabilities_lev: float | list = None,
+        m_probability_or_probabilities_dl: float | list = None,
         m_probability_else=None,
     ) -> Comparison:
         """A comparison of the data in `col_name` with the damerau-levenshtein distance
@@ -422,25 +424,52 @@ class DamerauLevenshteinAtThresholdsComparisonBase(
             distance_threshold_or_thresholds (Union[int, list], optional): The
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [1, 2].
+            regex_extract (str): Regular expression pattern to evaluate a match on.
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
             m_probability_exact_match (_type_, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
-            m_probability_or_probabilities_lev (Union[float, list], optional):
+            m_probability_or_probabilities_dl (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
         Examples:
-            >>> # DuckDB Damerau Levenshtein comparison at thresholds 1 and 2
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
-
-            >>> # Spark Levenshtein comparison at thresholds 1 and 2
-            >>> import splink.spark.spark_comparison_library as cl
-            >>> cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
+            === "DuckDB"
+                Create comparison with demerau-levenshtein match levels with
+                distance <= 1
+                ``` python
+                import splink.duckdb.duckdb_comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
+                ```
+                Create comparison with demerau-levenshtein match levels with
+                distance <= 1
+                on a substring of name column as determined by a regular expression
+                ``` python
+                import splink.duckdb.duckdb_comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name",
+                                                     [1,2],
+                                                     regex_extract="^A|B")
+                ```
+            === "Spark"
+                Create comparison with demerau-levenshtein match levels with
+                distance <= 1                ``` python
+                import splink.spark.spark_comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
+                ```
+                Create comparison with demerau-evenshtein match levels with
+                distance <= 1
+                on a substring of name column as determined by a regular expression
+                ``` python
+                import splink.spark.spark_comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name",
+                                                     [1,2],
+                                                     regex_extract="^A|B")
+                ```
 
         Returns:
             Comparison: A comparison for Damerau-Levenshtein similarity that can be
@@ -451,11 +480,13 @@ class DamerauLevenshteinAtThresholdsComparisonBase(
             col_name,
             self._levenshtein_name,
             distance_threshold_or_thresholds,
+            regex_extract,
+            valid_string_regex,
             False,
             include_exact_match_level,
             term_frequency_adjustments,
             m_probability_exact_match,
-            m_probability_or_probabilities_lev,
+            m_probability_or_probabilities_dl,
             m_probability_else,
         )
 

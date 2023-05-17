@@ -54,6 +54,10 @@ class DuckDBComparisonProperties(DuckDBBase):
         return levenshtein_level
 
     @property
+    def _damerau_levenshtein_level(self):
+        return damerau_levenshtein_level
+
+    @property
     def _jaro_level(self):
         return jaro_level
 
