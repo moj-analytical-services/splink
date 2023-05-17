@@ -66,10 +66,7 @@ For an individual comparison of two records, we can see the impact of TF adjustm
 
 We can also see these match weights and TF adjustments summarised using a chart like the below to highlight common and uncommon names. We do this already using the Splink linker's profile_columns method, but once we know the u probabilities for our comparison columns, we can show these outliers in terms of their impact on match weight:
 
-![In this sample of names from test data, we see that a match on **first name** has a match weight of +5.3. 
-For an uncommon name like Tamby, this is increased to +11.1 (very strong evidence for a match), whereas a common name like John has a reduced match weight of +3.3 (positive but weaker evidence).](../img/tf-match-weight.png){width="800"}
-
-Creating a function to generate this chart of term-frequency-adjusted match weights is currently on our backlog. If you thing this would be useful please comment on the [github issue](https://github.com/moj-analytical-services/splink/issues/430) or feel free to put in a PR. We love getting contributions from our users!
+![In this example of names from FEBRL data used in the demo notebooks, we see that a match on first name has a match weight of +6. For an uncommon name like Portia this is increased, whereas a common name like Jack has a reduced match weight. This chart can be generated using `linker.tf_adjustment_chart("name")`](../img/tf-match-weight.png){width="800"}
 
 
 ## Applying TF adjustments in Splink
