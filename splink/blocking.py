@@ -119,7 +119,7 @@ def block_using_rules_sql(linker: Linker):
         and not linker._find_new_matches_mode
         and not linker._compare_two_records_mode
     ):
-        source_dataset_col = linker._settings_obj._source_dataset_column_name
+        source_dataset_col = linker._source_dataset_column_name
         # Need df_l to be the one with the lowest id to preeserve the property
         # that the left dataset is the one with the lowest concatenated id
         keys = linker._input_tables_dict.keys()

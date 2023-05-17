@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 logger = logging.getLogger(__name__)
@@ -90,3 +91,18 @@ class SplinkDataFrame:
             f"{self.templated_name}"
         )
         p.text(msg)
+
+    def to_parquet(self, filepath, overwrite=False):
+        raise NotImplementedError("`to_parquet` not implemented for this linker")
+
+    def to_csv(self, filepath, overwrite=False):
+        raise NotImplementedError("`to_csv` not implemented for this linker")
+
+    def check_file_exists(self, filepath):
+        p = Path(filepath)
+        if p.exists():
+            raise FileExistsError(
+                "The filepath you've supplied already exists. Please use "
+                "either `overwrite = True` or manually move or delete the "
+                "existing file."
+            )

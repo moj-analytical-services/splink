@@ -12,11 +12,11 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 
 ## Key Features
 
-- **Speed:** Capable of linking a million records on a laptop in approximately one minute.
-- **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.
-- **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.
-- **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.
-- **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.
+⚡ **Speed:** Capable of linking a million records on a laptop in approximately one minute.  
+🎯 **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.  
+🌐 **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.  
+🎓 **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.  
+📊 **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.
 
 Splink's core linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customizations to improve accuracy.
 
@@ -76,10 +76,8 @@ For more detailed tutorials, please see [here](https://moj-analytical-services.g
 
 ```py
 from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.duckdb.duckdb_comparison_library import (
-    exact_match,
-    levenshtein_at_thresholds,
-)
+import splink.duckdb.duckdb_comparison_library as cl
+import splink.duckdb.duckdb_comparison_template_library as ctl
 
 import pandas as pd
 
@@ -92,11 +90,11 @@ settings = {
         "l.surname = r.surname",
     ],
     "comparisons": [
-        levenshtein_at_thresholds("first_name", 2),
-        exact_match("surname"),
-        exact_match("dob"),
-        exact_match("city", term_frequency_adjustments=True),
-        exact_match("email"),
+        ctl.name_comparison("first_name"),
+        ctl.name_comparison("surname"),
+        ctl.date_comparison("dob", cast_strings_to_date=True),
+        cl.exact_match("city", term_frequency_adjustments=True),
+        cl.levenshtein_at_thresholds("email", 2),
     ],
 }
 

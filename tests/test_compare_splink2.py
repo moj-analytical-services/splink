@@ -186,16 +186,16 @@ def test_lambda():
 
     f1 = ma["unique_id_l"] == 924
     f2 = ma["unique_id_r"] == 925
-    actual_record = ma[f1 & f2]
-    actual_record
+    ma[f1 & f2]
+    # actual_record
     ma["match_probability"].mean()
     training_session = linker.estimate_parameters_using_expectation_maximisation(
         "l.dob = r.dob", fix_u_probabilities=False
     )
-    actual_prop_history = pd.DataFrame(training_session._lambda_history_records)
+    pd.DataFrame(training_session._lambda_history_records)
 
     # linker._settings_obj.match_weights_chart()
-    actual_prop_history
+    # actual_prop_history
 
     #########
 

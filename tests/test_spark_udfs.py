@@ -201,8 +201,8 @@ def test_jaro(spark):
 
     assert jaro_w_out == jaro_expected
 
-    # ensure that newest jar is calculating similarity . jaro of strings below is 0.9440
-    assert spark.sql("""SELECT jaro_sim("MARHTA", "MARTHA")  """).first()[0] > 0.9
+    # ensure that newest jar is calculating similarity . jw of strings below is 0.9440
+    assert spark.sql('SELECT jaro_sim("MARHTA", "MARTHA")').first()[0] > 0.9
 
     # ensure that when one or both of the strings compared is NULL jw sim is 0
 

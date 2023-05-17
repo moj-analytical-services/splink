@@ -11,9 +11,33 @@ def size_array_intersect_sql(col_name_l, col_name_r):
     )
 
 
-def datediff_sql(col_name_l, col_name_r, date_threshold, date_metric):
+def datediff_sql(
+    col_name_l,
+    col_name_r,
+    date_threshold,
+    date_metric,
+    cast_str=False,
+    date_format=None,
+):
+    if date_format is None:
+        date_format = "%Y-%m-%d"
+
+    if cast_str:
+        return f"""
+            abs(date_diff('{date_metric}',strptime({col_name_l},
+              '{date_format}'),strptime({col_name_r},
+              '{date_format}'))) <= {date_threshold}
+        """
+    else:
+        return f"""
+            abs(date_diff('{date_metric}', {col_name_l},
+              {col_name_r})) <= {date_threshold}
+        """
+
+
+def regex_extract_sql(col_name, regex):
     return f"""
-        abs(date_diff('{date_metric}', {col_name_l}, {col_name_r})) <= {date_threshold}
+        regexp_extract({col_name}, '{regex}')
     """
 
 
@@ -29,6 +53,10 @@ class DuckDBBase(DialectBase):
     @property
     def _datediff_function(self):
         return datediff_sql
+
+    @property
+    def _regex_extract_function(self):
+        return regex_extract_sql
 
     @property
     def _jaro_name(self):

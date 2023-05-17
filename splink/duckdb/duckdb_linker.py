@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from tempfile import TemporaryDirectory
 
 import duckdb
@@ -9,7 +10,6 @@ from duckdb import DuckDBPyConnection
 
 from ..input_column import InputColumn
 from ..linker import Linker
-from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import (
     ensure_is_list,
 )
@@ -54,6 +54,44 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
             sql += f" limit {limit}"
 
         return self.linker._con.query(sql).to_df()
+
+    def to_parquet(self, filepath, overwrite=False):
+        if not overwrite:
+            self.check_file_exists(filepath)
+
+        if not filepath.endswith(".parquet"):
+            raise SyntaxError(
+                f"The filepath you've entered to '{filepath}' is "
+                "not a parquet file. Please ensure that the filepath "
+                "ends with `.parquet` before retrying."
+            )
+
+        # create the directories recursively if they don't exist
+        path = os.path.dirname(filepath)
+        if path:
+            os.makedirs(path, exist_ok=True)
+
+        sql = f"COPY {self.physical_name} TO '{filepath}' (FORMAT PARQUET);"
+        self.linker._con.query(sql)
+
+    def to_csv(self, filepath, overwrite=False):
+        if not overwrite:
+            self.check_file_exists(filepath)
+
+        if not filepath.endswith(".csv"):
+            raise SyntaxError(
+                f"The filepath you've entered '{filepath}' is "
+                "not a csv file. Please ensure that the filepath "
+                "ends with `.csv` before retrying."
+            )
+
+        # create the directories recursively if they don't exist
+        path = os.path.dirname(filepath)
+        if path:
+            os.makedirs(path, exist_ok=True)
+
+        sql = f"COPY {self.physical_name} TO '{filepath}' (HEADER, DELIMITER ',');"
+        self.linker._con.query(sql)
 
 
 class DuckDBLinker(Linker):
@@ -169,17 +207,17 @@ class DuckDBLinker(Linker):
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
 
-        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.log(5, log_sql(sql))
-
         sql = f"""
         CREATE TABLE {physical_name}
         AS
         ({sql})
         """
-        self._con.execute(sql)
+        self._log_and_run_sql_execution(sql, templated_name, physical_name)
 
         return DuckDBLinkerDataFrame(templated_name, physical_name, self)
+
+    def _run_sql_execution(self, final_sql, templated_name, physical_name):
+        self._con.execute(final_sql)
 
     def register_table(self, input, table_name, overwrite=False):
         # If the user has provided a table name, return it as a SplinkDataframe
@@ -197,6 +235,10 @@ class DuckDBLinker(Linker):
             else:
                 self._con.unregister(table_name)
 
+        self._table_registration(input, table_name)
+        return self._table_to_splink_dataframe(table_name, table_name)
+
+    def _table_registration(self, input, table_name):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
         elif isinstance(input, list):
@@ -205,13 +247,15 @@ class DuckDBLinker(Linker):
         # Registration errors will automatically
         # occur if an invalid data type is passed as an argument
         self._con.register(table_name, input)
-        return self._table_to_splink_dataframe(table_name, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
-        return f"USING SAMPLE {percent}% (bernoulli)"
+        if seed:
+            return f"USING SAMPLE bernoulli({percent}%) REPEATABLE({seed})"
+        else:
+            return f"USING SAMPLE {percent}% (bernoulli)"
 
     @property
     def _infinity_expression(self):

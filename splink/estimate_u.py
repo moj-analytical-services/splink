@@ -31,7 +31,7 @@ def _rows_needed_for_n_pairs(n_pairs):
     return sample_rows
 
 
-def estimate_u_values(linker: Linker, max_pairs):
+def estimate_u_values(linker: Linker, max_pairs, seed=None):
     logger.info("----- Estimating u probabilities using random sampling -----")
 
     nodes_with_tf = linker._initialise_df_concat_with_tf()
@@ -93,7 +93,7 @@ def estimate_u_values(linker: Linker, max_pairs):
     sql = f"""
     select *
     from __splink__df_concat_with_tf
-    {training_linker._random_sample_sql(proportion, sample_size)}
+    {training_linker._random_sample_sql(proportion, sample_size, seed)}
     """
     training_linker._enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
     df_sample = training_linker._execute_sql_pipeline([nodes_with_tf])

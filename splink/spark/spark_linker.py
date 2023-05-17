@@ -15,7 +15,6 @@ from pyspark.sql.utils import AnalysisException
 from ..databricks.enable_splink import enable_splink
 from ..input_column import InputColumn
 from ..linker import Linker
-from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import ensure_is_list, major_minor_version_greater_equal_than
 from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
@@ -62,6 +61,20 @@ class SparkDataframe(SplinkDataFrame):
 
     def as_spark_dataframe(self):
         return self.linker.spark.table(self.physical_name)
+
+    def to_parquet(self, filepath, overwrite=False):
+        if not overwrite:
+            self.check_file_exists(filepath)
+
+        spark_df = self.as_spark_dataframe()
+        spark_df.write.mode("overwrite").format("parquet").save(filepath)
+
+    def to_csv(self, filepath, overwrite=False):
+        if not overwrite:
+            self.check_file_exists(filepath)
+
+        spark_df = self.as_spark_dataframe()
+        spark_df.write.format("csv").option("header", "true").save(filepath)
 
 
 class SparkLinker(Linker):
@@ -158,6 +171,7 @@ class SparkLinker(Linker):
             set_up_basic_logging,
             input_table_aliases=input_aliases,
         )
+        self._check_ansi_enabled_if_converting_dates()
 
         self.in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
         if self.in_databricks:
@@ -348,7 +362,7 @@ class SparkLinker(Linker):
             r"__splink__df_concat_with_tf",
             r"__splink__df_predict",
             r"__splink__df_tf_.+",
-            r"__splink__df_representatives.+",
+            r"__splink__df_representatives.*",
             r"__splink__df_neighbours",
             r"__splink__df_connected_components_df",
         ]
@@ -388,11 +402,7 @@ class SparkLinker(Linker):
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
         sql = sqlglot.transpile(sql, read="spark", write="customspark", pretty=True)[0]
-
-        logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
-        logger.log(5, log_sql(sql))
-        spark_df = self.spark.sql(sql)
-
+        spark_df = self._log_and_run_sql_execution(sql, templated_name, physical_name)
         spark_df = self._break_lineage_and_repartition(
             spark_df, templated_name, physical_name
         )
@@ -403,6 +413,9 @@ class SparkLinker(Linker):
 
         output_df = self._table_to_splink_dataframe(templated_name, physical_name)
         return output_df
+
+    def _run_sql_execution(self, final_sql, templated_name, physical_name):
+        return self.spark.sql(final_sql)
 
     @property
     def _infinity_expression(self):
@@ -446,6 +459,10 @@ class SparkLinker(Linker):
                     "Please use the 'overwrite' argument if you wish to overwrite"
                 )
 
+        self._table_registration(input, table_name)
+        return self._table_to_splink_dataframe(table_name, table_name)
+
+    def _table_registration(self, input, table_name):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
             input = self.spark.createDataFrame(input)
@@ -456,13 +473,15 @@ class SparkLinker(Linker):
             input = self.spark.createDataFrame(input)
 
         input.createOrReplaceTempView(table_name)
-        return self._table_to_splink_dataframe(table_name, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size):
+    def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
-        return f" TABLESAMPLE ({percent} PERCENT) "
+        if seed:
+            return f" ORDER BY rand({seed}) LIMIT {round(sample_size)}"
+        else:
+            return f" TABLESAMPLE ({percent} PERCENT) "
 
     def _table_exists_in_database(self, table_name):
         query_result = self.spark.sql(
@@ -488,3 +507,33 @@ class SparkLinker(Linker):
 
     def register_tf_table(self, df, col_name, overwrite=False):
         self.register_table(df, colname_to_tf_tablename(col_name), overwrite)
+
+    def _check_ansi_enabled_if_converting_dates(self):
+        # because have this code in the init- need to first check if settings dict exits
+        try:
+            comparisons_as_list = self._settings_obj._settings_dict["comparisons"]
+            settings_obj = True
+        except ValueError:
+            settings_obj = False
+
+        if settings_obj is True:
+            # see if any of the comparisons contain 'to_timestamp',
+            #  the spark SQL used to convert date to str if date-to-str cast is used
+            if any(
+                [
+                    "to_timestamp" in str(comparisons_as_list[x].values())
+                    for x in range(0, len(comparisons_as_list))
+                ]
+            ):
+                # now check if ansi is enabled:
+                bool_ansi = self.spark.sparkContext.getConf().get(
+                    "spark.sql.ansi.enabled"
+                )
+                if bool_ansi == "False" or bool_ansi is None:
+                    logger.warning(
+                        """--WARN-- \n You are using datediff comparison
+                        with str-casting and ANSI is not enabled. Bad dates
+                        e.g. 1999-13-54 will not trigger an exception but will
+                        classed as comparison level = "ELSE". Ensure date strings
+                        are cleaned to remove bad dates \n"""
+                    )
