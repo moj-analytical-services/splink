@@ -147,6 +147,10 @@ class SQLiteLinker(Linker):
             else:
                 self._delete_table_from_database(table_name)
 
+        self._table_registration(input, table_name)
+        return self._table_to_splink_dataframe(table_name, table_name)
+
+    def _table_registration(self, input, table_name):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
         elif isinstance(input, list):
@@ -154,7 +158,6 @@ class SQLiteLinker(Linker):
 
         # Will error if an invalid data type is passed
         input.to_sql(table_name, self.con, index=False)
-        return self._table_to_splink_dataframe(table_name, table_name)
 
     def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
