@@ -1065,8 +1065,14 @@ class Linker:
                 represents a table materialised in the database. Methods on the
                 SplinkDataFrame allow you to access the underlying data.
         """
+
+        # Allows clustering during a deterministic linkage.
+        # This is used in `cluster_pairwise_predictions_at_threshold`
+        # to set the cluster threshold to 1
+        self._deterministic_link_mode = True
+
         concat_with_tf = self._initialise_df_concat_with_tf()
-        sql = block_using_rules_sql(self, deterministic_link=True)
+        sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
         return self._execute_sql_pipeline([concat_with_tf])
 

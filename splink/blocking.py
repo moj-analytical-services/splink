@@ -68,7 +68,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
 
 
 # flake8: noqa: C901
-def block_using_rules_sql(linker: Linker, deterministic_link=False):
+def block_using_rules_sql(linker: Linker):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
@@ -148,7 +148,7 @@ def block_using_rules_sql(linker: Linker, deterministic_link=False):
 
     # For Blocking rules for deterministic rules, add a match probability
     # column with all probabilities set to 1.
-    if deterministic_link:
+    if self._deterministic_link_mode:
         probability = ", 1.00 as match_probability"
     else:
         probability = ""
