@@ -191,8 +191,7 @@ def comparison_level_to_tf_chart_data(cl: dict):
     # Add ranks for sorting/selecting
     df = df.sort_values("log2_bf_tf")
     df["most_freq_rank"] = df.groupby("gamma")["log2_bf_tf"].cumcount()
-    df["least_freq_rank"] = df.groupby(
-        "gamma")["log2_bf_tf"].cumcount(ascending=False)
+    df["least_freq_rank"] = df.groupby("gamma")["log2_bf_tf"].cumcount(ascending=False)
 
     cl["df_out"] = df
 
@@ -256,21 +255,23 @@ def tf_adjustment_chart(
     bin_edges = arange(min_value, max_value + bin_width, bin_width)
 
     df["bin"] = cut(df["log2_bf_final"], bins=bin_edges)
-    binned_df = df.groupby(['gamma', 'bin', 'log2_bf']).agg(
-        {"log2_bf_final": "count", "log2_bf_tf": "mean"}
-    ).reset_index().rename(columns={"log2_bf_final": "count"})
-    binned_df["bin_start"] = binned_df["bin"].apply(
-        lambda x: x.left).astype('float')
-    binned_df["bin_end"] = binned_df["bin"].apply(
-        lambda x: x.right).astype('float')
+    binned_df = (
+        df.groupby(["gamma", "bin", "log2_bf"])
+        .agg({"log2_bf_final": "count", "log2_bf_tf": "mean"})
+        .reset_index()
+        .rename(columns={"log2_bf_final": "count"})
+    )
+    binned_df["bin_start"] = binned_df["bin"].apply(lambda x: x.left).astype("float")
+    binned_df["bin_end"] = binned_df["bin"].apply(lambda x: x.right).astype("float")
     binned_df["log2_bf_final"] = (binned_df["bin_start"] + binned_df["bin_end"]) / 2
-    binned_df["log2_bf_desc"] = binned_df["bin_start"].astype('str') + '-' + binned_df["bin_end"].astype('str')
+    binned_df["log2_bf_desc"] = (
+        binned_df["bin_start"].astype("str") + "-" + binned_df["bin_end"].astype("str")
+    )
     binned_df = binned_df.drop(columns="bin")
-    binned_df = binned_df[binned_df["count"]>0] 
-    
+    binned_df = binned_df[binned_df["count"] > 0]
+
     df = df.drop(columns="bin")
     df = df[mask]
-
 
     chart_path = "tf_adjustment_chart.json"
     chart = load_chart_definition(chart_path)
@@ -281,12 +282,15 @@ def tf_adjustment_chart(
         f'{cl["label_for_charts"]} (TF col: {cl["tf_adjustment_column"]})' for cl in c
     ]
 
-    width_dict = df.groupby("gamma").count()['value'].to_dict()
-    width_expression = " ".join(
-        [f"gamma_sel == {l} ? {width_dict[l] * 20 + 150} :" for l in tf_levels[:-1]]) + f" {width_dict[tf_levels[-1]] * 20 + 150}"
+    width_dict = df.groupby("gamma").count()["value"].to_dict()
+    width_expression = (
+        " ".join(
+            [f"gamma_sel == {l} ? {width_dict[l] * 20 + 150} :" for l in tf_levels[:-1]]
+        )
+        + f" {width_dict[tf_levels[-1]] * 20 + 150}"
+    )
 
     df = df[df["gamma"].isin(tf_levels)].sort_values("least_freq_rank")
-
 
     chart["datasets"]["data"] = df.to_dict("records")
     chart["datasets"]["hist"] = binned_df.to_dict("records")

@@ -2648,9 +2648,7 @@ class Linker:
         tf_comparisons = [
             c._output_column_name
             for c in self._settings_obj.comparisons
-            if any(
-                [cl._has_tf_adjustments for cl in c.comparison_levels]
-            )
+            if any([cl._has_tf_adjustments for cl in c.comparison_levels])
         ]
         if output_column_name not in tf_comparisons:
             raise ValueError(
@@ -2660,7 +2658,12 @@ class Linker:
         vals_to_include = ensure_is_list(vals_to_include)
 
         return tf_adjustment_chart(
-            self, output_column_name, n_most_freq, n_least_freq, vals_to_include, as_dict
+            self,
+            output_column_name,
+            n_most_freq,
+            n_least_freq,
+            vals_to_include,
+            as_dict,
         )
 
     def m_u_parameters_chart(self):
