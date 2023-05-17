@@ -12,7 +12,8 @@ readme = "README.md"
 python = ">=3.7"
 jsonschema = ">=3.2,<5.0"
 pandas = ">=1.0.0"
-duckdb = ">=0.6.0"
+duckdb = {version="^0.6.1", optional=true}
+pyspark = {version="^3.2.1", optional=true}
 sqlglot = ">=5.1.0"
 altair = ">=4.2.0"
 Jinja2 = ">=3.0.3"
@@ -21,6 +22,7 @@ Jinja2 = ">=3.0.3"
 [tool.poetry.group.dev.dependencies]
 tabulate = "0.8.9"
 pyspark = "^3.2.1"
+duckdb = "^0.6.1"
 
 [tool.poetry.group.linting]
 [tool.poetry.group.linting.dependencies]
@@ -39,6 +41,11 @@ optional = true
 [tool.poetry.group.benchmarking.dependencies]
 pytest-benchmark = "^4"
 lzstring = "1.0.4"
+
+[tool.poetry.extras]
+duckdb = ["duckdb"]
+pyspark = ["pyspark"]
+spark = ["pyspark"]
 
 [build-system]
 requires = ["poetry-core>=1.0.8"]
