@@ -240,8 +240,7 @@ def tf_adjustment_chart(
     df = concat([cl["df_out"] for cl in c])
     # print(df.to_dict"records")
     # Filter values
-    selected = False if not vals_to_include else df["value"].isin(
-        vals_to_include)
+    selected = False if not vals_to_include else df["value"].isin(vals_to_include)
     least_freq = True if not n_least_freq else df["least_freq_rank"] < n_least_freq
     most_freq = True if not n_most_freq else df["most_freq_rank"] < n_most_freq
     mask = selected | least_freq | most_freq
