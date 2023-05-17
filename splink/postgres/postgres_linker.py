@@ -191,7 +191,7 @@ class PostgresLinker(Linker):
         return f"""
                 WHERE unique_id IN (
                     SELECT unique_id
-                    FROM __splink__df_concat_with_tf"
+                    FROM __splink__df_concat_with_tf
                     ORDER BY {seed}
                     LIMIT {sample_size}
                 )
