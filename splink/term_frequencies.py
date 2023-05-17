@@ -171,16 +171,18 @@ def comparison_level_to_tf_chart_data(cl: dict):
             df.loc[:,k] = v
 
     # TF match weight scaled by tf_adjustment_weight
-    df["log2_bf_tf"] = log2(
-        df["u_probability"]/df["tf"]) * df["tf_adjustment_weight"]
+    df["log2_bf_tf"] = log2(df["u_probability"] / df["tf"]) * df["tf_adjustment_weight"]
 
     # Tidy up columns
     df = df.drop(columns=["tf", "u_probability", "tf_adjustment_weight"])
-    df.rename(columns={
-        "comparison_vector_value": "gamma",
-        "tf_adjustment_column": "tf_col",
-        "log2_bayes_factor": "log2_bf"
-    }, inplace=True)
+    df.rename(
+        columns={
+            "comparison_vector_value": "gamma",
+            "tf_adjustment_column": "tf_col",
+            "log2_bayes_factor": "log2_bf",
+        },
+        inplace=True,
+    )
 
     # Add ranks for sorting/selecting
     df = df.sort_values("log2_bf_tf")
@@ -192,14 +194,10 @@ def comparison_level_to_tf_chart_data(cl: dict):
 
     return cl
 
+
 def tf_adjustment_chart(
-        linker: Linker, 
-        col, 
-        n_most_freq, 
-        n_least_freq, 
-        vals_to_include, 
-        as_dict
-    ):
+    linker: Linker, col, n_most_freq, n_least_freq, vals_to_include, as_dict
+):
 
     # Data for chart
     c = linker._settings_obj._get_comparison_by_output_column_name(col)
@@ -211,20 +209,29 @@ def tf_adjustment_chart(
         "tf_adjustment_column",
         "tf_adjustment_weight",
         "u_probability",
-        "log2_bayes_factor"
-        ""
+        "log2_bayes_factor" "",
     ]
 
     # Select levels with TF adjustments
-    c = [{k: cl[k] for k in cl.keys() if k in keys_to_retain}
-         for cl in c if cl["has_tf_adjustments"]]
+    c = [
+        {k: cl[k] for k in cl.keys() if k in keys_to_retain}
+        for cl in c
+        if cl["has_tf_adjustments"]
+    ]
 
     # Add data ("df_tf") to each level
     c = [
-        dict(cl, **{"df_tf": linker.compute_tf_table(cl["tf_adjustment_column"]).as_pandas_dataframe()}) 
+        dict(
+            cl,
+            **{
+                "df_tf": linker.compute_tf_table(
+                    cl["tf_adjustment_column"]
+                ).as_pandas_dataframe()
+            },
+        )
         for cl in c
-        ]
-    
+    ]
+
     c = [comparison_level_to_tf_chart_data(cl) for cl in c]
     df = concat([cl["df_out"] for cl in c])
 
@@ -236,17 +243,20 @@ def tf_adjustment_chart(
     df = df[mask]
 
     tf_levels = [str(cl["comparison_vector_value"]) for cl in c]
-    labels = [f'{cl["label_for_charts"]} (TF col: {cl["tf_adjustment_column"]})' for cl in c]
+    labels = [
+        f'{cl["label_for_charts"]} (TF col: {cl["tf_adjustment_column"]})' for cl in c
+    ]
 
     df = df[df["gamma"].astype("str").isin(tf_levels)].sort_values("least_freq_rank")
 
     chart_path = "tf_adjustment_chart.json"
     chart = load_chart_definition(chart_path)
 
-
     # Complete chart schema
     tf_levels = [str(cl["comparison_vector_value"]) for cl in c]
-    labels = [f'{cl["label_for_charts"]} (TF col: {cl["tf_adjustment_column"]})' for cl in c]
+    labels = [
+        f'{cl["label_for_charts"]} (TF col: {cl["tf_adjustment_column"]})' for cl in c
+    ]
     chart["data"]["values"] = df.to_dict("records")
     chart["params"][0]["value"] = max(tf_levels)
     chart["params"][0]["bind"]["options"] = tf_levels
