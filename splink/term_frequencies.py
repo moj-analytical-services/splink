@@ -5,8 +5,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from pandas import concat
-from numpy import log2
+from pandas import concat, cut
+from numpy import log2, ceil, floor, arange
 
 from .input_column import InputColumn, remove_quotes_from_identifiers
 
@@ -177,7 +177,7 @@ def comparison_level_to_tf_chart_data(cl: dict):
     )
 
     # Tidy up columns
-    df = df.drop(columns=["tf", "u_probability", "tf_adjustment_weight"])
+    # df = df.drop(columns=["tf", "u_probability", "tf_adjustment_weight"])
     df.rename(
         columns={
             "comparison_vector_value": "gamma",
@@ -186,11 +186,13 @@ def comparison_level_to_tf_chart_data(cl: dict):
         },
         inplace=True,
     )
+    df["log2_bf_final"] = df["log2_bf_tf"] + df["log2_bf"]
 
     # Add ranks for sorting/selecting
     df = df.sort_values("log2_bf_tf")
     df["most_freq_rank"] = df.groupby("gamma")["log2_bf_tf"].cumcount()
-    df["least_freq_rank"] = df.groupby("gamma")["log2_bf_tf"].cumcount(ascending=False)
+    df["least_freq_rank"] = df.groupby(
+        "gamma")["log2_bf_tf"].cumcount(ascending=False)
 
     cl["df_out"] = df
 
@@ -210,8 +212,9 @@ def tf_adjustment_chart(
         "label_for_charts",
         "tf_adjustment_column",
         "tf_adjustment_weight",
+        "tf_minimum_u_value",
         "u_probability",
-        "log2_bayes_factor" "",
+        "log2_bayes_factor",
     ]
 
     # Select levels with TF adjustments
@@ -236,37 +239,74 @@ def tf_adjustment_chart(
 
     c = [comparison_level_to_tf_chart_data(cl) for cl in c]
     df = concat([cl["df_out"] for cl in c])
-
+    # print(df.to_dict"records")
     # Filter values
-    selected = False if not vals_to_include else df["value"].isin(vals_to_include)
+    selected = False if not vals_to_include else df["value"].isin(
+        vals_to_include)
     least_freq = True if not n_least_freq else df["least_freq_rank"] < n_least_freq
     most_freq = True if not n_most_freq else df["most_freq_rank"] < n_most_freq
     mask = selected | least_freq | most_freq
+    # df = df[mask]
+
+    # Histogram data
+    bin_width = 0.5  # Specify the desired bin width
+
+    min_value = floor(df["log2_bf_final"].min())
+    max_value = ceil(df["log2_bf_final"].max())
+    bin_edges = arange(min_value, max_value + bin_width, bin_width)
+
+    df["bin"] = cut(df["log2_bf_final"], bins=bin_edges)
+    binned_df = df.groupby(['gamma', 'bin', 'log2_bf']).agg(
+        {"log2_bf_final": "count", "log2_bf_tf": "mean"}
+    ).reset_index().rename(columns={"log2_bf_final": "count"})
+    binned_df["bin_start"] = binned_df["bin"].apply(
+        lambda x: x.left).astype('float')
+    binned_df["bin_end"] = binned_df["bin"].apply(
+        lambda x: x.right).astype('float')
+    binned_df["log2_bf_final"] = (binned_df["bin_start"] + binned_df["bin_end"]) / 2
+    binned_df["log2_bf_desc"] = binned_df["bin_start"].astype('str') + '-' + binned_df["bin_end"].astype('str')
+    binned_df = binned_df.drop(columns="bin")
+    binned_df = binned_df[binned_df["count"]>0] 
+    
+    df = df.drop(columns="bin")
     df = df[mask]
 
-    tf_levels = [str(cl["comparison_vector_value"]) for cl in c]
-    labels = [
-        f'{cl["label_for_charts"]} (TF col: {cl["tf_adjustment_column"]})' for cl in c
-    ]
-
-    df = df[df["gamma"].astype("str").isin(tf_levels)].sort_values("least_freq_rank")
 
     chart_path = "tf_adjustment_chart.json"
     chart = load_chart_definition(chart_path)
 
     # Complete chart schema
-    tf_levels = [str(cl["comparison_vector_value"]) for cl in c]
+    tf_levels = [cl["comparison_vector_value"] for cl in c]
     labels = [
         f'{cl["label_for_charts"]} (TF col: {cl["tf_adjustment_column"]})' for cl in c
     ]
-    chart["data"]["values"] = df.to_dict("records")
-    chart["params"][0]["value"] = max(tf_levels)
-    chart["params"][0]["bind"]["options"] = tf_levels
-    chart["params"][0]["bind"]["labels"] = labels
+
+    width_dict = df.groupby("gamma").count()['value'].to_dict()
+    width_expression = " ".join(
+        [f"gamma_sel == {l} ? {width_dict[l] * 20 + 150} :" for l in tf_levels[:-1]]) + f" {width_dict[tf_levels[-1]] * 20 + 150}"
+
+    df = df[df["gamma"].isin(tf_levels)].sort_values("least_freq_rank")
+
+
+    chart["datasets"]["data"] = df.to_dict("records")
+    chart["datasets"]["hist"] = binned_df.to_dict("records")
+    chart["config"]["width"]["signal"] = width_expression
+    chart["config"]["params"][0]["value"] = max(tf_levels)
+    chart["config"]["params"][0]["bind"]["options"] = tf_levels
+    chart["config"]["params"][0]["bind"]["labels"] = labels
+
+    # filters = [
+    #     f"datum.most_freq_rank < {n_most_freq}",
+    #     f"datum.least_freq_rank < {n_least_freq}",
+    #     " | ".join([f"datum.value == '{v}'" for v in vals_to_include])
+    # ]
+    # filter_text = " | ".join(filters)
+    # chart["hconcat"][0]["layer"][0]["transform"][2]["filter"] = filter_text
+    # chart["hconcat"][0]["layer"][2]["transform"][2]["filter"] = filter_text
 
     # PLACEHOLDER (until we work out adding a dynamic title based on the filtered data)
-    chart["layer"][0]["encoding"]["x"]["title"] = "TF column value"
-    chart["layer"][-1]["encoding"]["x"]["title"] = "TF column value"
-    chart["layer"][0]["encoding"]["tooltip"][0]["title"] = "Value"
+    chart["hconcat"][0]["layer"][0]["encoding"]["x"]["title"] = "TF column value"
+    chart["hconcat"][0]["layer"][-1]["encoding"]["x"]["title"] = "TF column value"
+    chart["hconcat"][0]["layer"][0]["encoding"]["tooltip"][0]["title"] = "Value"
 
     return vegalite_or_json(chart, as_dict=as_dict)
