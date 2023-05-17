@@ -148,7 +148,7 @@ def block_using_rules_sql(linker: Linker):
 
     # For Blocking rules for deterministic rules, add a match probability
     # column with all probabilities set to 1.
-    if self._deterministic_link_mode:
+    if linker._deterministic_link_mode:
         probability = ", 1.00 as match_probability"
     else:
         probability = ""

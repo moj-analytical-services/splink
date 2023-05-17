@@ -207,6 +207,7 @@ class Linker:
         self._compare_two_records_mode = False
         self._self_link_mode = False
         self._analyse_blocking_mode = False
+        self._deterministic_link_mode = False
 
         self.debug_mode = False
 
@@ -1658,7 +1659,7 @@ class Linker:
     def cluster_pairwise_predictions_at_threshold(
         self,
         df_predict: SplinkDataFrame,
-        threshold_match_probability: float,
+        threshold_match_probability: float = None,
         pairwise_formatting: bool = False,
         filter_pairwise_format_for_clusters: bool = True,
     ) -> SplinkDataFrame:
@@ -1676,7 +1677,6 @@ class Linker:
                 to include only pairwise comparisons with a match_probability above this
                 threshold. This dataframe is then fed into the clustering
                 algorithm.
-                For deterministic linkage, set to 1.
             pairwise_formatting (bool): Whether to output the pairwise match predictions
                 from linker.predict() with cluster IDs.
                 If this is set to false, the output will be a list of all IDs, clustered
