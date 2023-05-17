@@ -4,6 +4,7 @@ import pytest
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 
+
 @pytest.mark.parametrize(
     ("Linker"),
     [
@@ -21,7 +22,6 @@ def test_deterministic_link_full_example(spark, Linker):
             "l.surname = r.surname and l.dob = r.dob and l.email = r.email",
             "l.first_name = r.first_name and l.surname = r.surname and l.email = r.email",
         ],
-        
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
     }
@@ -38,9 +38,9 @@ def test_deterministic_link_full_example(spark, Linker):
     clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict)
 
     linker.cluster_studio_dashboard(
-        df_predict, 
-        clusters, 
-        "test_cluster_studio.html", 
-        sampling_method='by_cluster_size', 
-        overwrite=True)
-
+        df_predict,
+        clusters,
+        "test_cluster_studio.html",
+        sampling_method="by_cluster_size",
+        overwrite=True,
+    )
