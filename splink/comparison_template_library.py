@@ -29,16 +29,12 @@ class DateComparisonBase(Comparison):
         separate_1st_january: bool = False,
         levenshtein_thresholds: int | list = [],
         damerau_levenshtein_thresholds: int | list = [1],
-        jaro_thresholds: int | list = [],
-        jaro_winkler_thresholds: int | list = [],
-        datediff_thresholds: int | list = [1, 10],
-        datediff_metrics: str | list = ["year", "year"],
+        datediff_thresholds: int | list = [1, 1, 10],
+        datediff_metrics: str | list = ["month", "year", "year"],
         m_probability_exact_match: float = None,
         m_probability_1st_january: float = None,
         m_probability_or_probabilities_lev: float | list = None,
         m_probability_or_probabilities_dl: float | list = None,
-        m_probability_or_probabilities_jar: float | list = None,
-        m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_datediff: float | list = None,
         m_probability_else: float = None,
     ) -> Comparison:
@@ -48,7 +44,7 @@ class DateComparisonBase(Comparison):
         The default arguments will give a comparison with comparison levels:\n
         - Exact match (1st of January only)\n
         - Exact match (all other dates)\n
-        - Levenshtein distance <= 2\n
+        - Damerau-Levenshtein distance <= 1\n
         - Date difference <= 1 year\n
         - Date difference <= 10 years \n
         - Anything else
@@ -75,24 +71,10 @@ class DateComparisonBase(Comparison):
                 exact match comparison level when date is 1st January.
             levenshtein_thresholds (Union[int, list], optional): The thresholds to use
                 for levenshtein similarity level(s).
-                We recommend using one of either levenshtein, damerau-levenshtein, jaro
-                or jaro_winkler for fuzzy matching, but not multiple.
-                Defaults to [2]
+                Defaults to []
             damerau_levenshtein_thresholds (Union[int, list], optional): The thresholds
                 to use for damerau-levenshtein similarity level(s).
-                We recommend using one of either levenshtein, damerau-levenshtein, jaro
-                or jaro_winkler for fuzzy matching, but not multiple.
-                Defaults to []
-            jaro_thresholds (Union[int, list], optional): The thresholds to use
-                for jaro similarity level(s).
-                We recommend using one of either levenshtein, damerau-levenshtein, jaro
-                or jaro_winkler for fuzzy matching, but not multiple.
-                Defaults to []
-            jaro_winkler_thresholds (Union[int, list], optional): The thresholds to use
-                for jaro_winkler similarity level(s).
-                We recommend using one of either levenshtein, damerau-levenshtein, jaro
-                or jaro_winkler for fuzzy matching, but not multiple.
-                Defaults to []
+                Defaults to [1]
             datediff_thresholds (Union[int, list], optional): The thresholds to use
                 for datediff similarity level(s).
                 Defaults to [1, 1].
@@ -107,12 +89,6 @@ class DateComparisonBase(Comparison):
             m_probability_or_probabilities_dl (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the damerau-levenshtein thresholds specified. Defaults to None.
-            m_probability_or_probabilities_jar (Union[float, list], optional):
-                If provided, overrides the default m probabilities
-                for the jaro thresholds specified. Defaults to None.
-            m_probability_or_probabilities_jw (Union[float, list], optional):
-                If provided, overrides the default m probabilities
-                for the jaro winkler thresholds specified. Defaults to None.
             m_probability_or_probabilities_datediff (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the datediff thresholds specified. Defaults to None.
@@ -130,8 +106,8 @@ class DateComparisonBase(Comparison):
                 ``` python
                 import splink.duckdb.duckdb_comparison_template_library as ctl
                 ctl.date_comparison("date_of_birth",
-                                    levenshtein_thresholds=[],
-                                    jaro_winkler_thresholds=[0.88],
+                                    damerau_levenshtein_thresholds=[],
+                                    levenshtein_thresholds=[2],
                                     datediff_thresholds=[1, 1],
                                     datediff_metrics=["month", "year"])
                 ```
@@ -154,8 +130,8 @@ class DateComparisonBase(Comparison):
                 ``` python
                 import splink.spark.spark_comparison_template_library as ctl
                 ctl.date_comparison("date_of_birth",
-                                    levenshtein_thresholds=[],
-                                    jaro_winkler_thresholds=[0.88],
+                                    damerau_levenshtein_thresholds=[],
+                                    levenshtein_thresholds=[2],
                                     datediff_thresholds=[1, 1],
                                     datediff_metrics=["month", "year"])
                 ```
@@ -226,39 +202,6 @@ class DateComparisonBase(Comparison):
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
-        if len(jaro_thresholds) > 0:
-            threshold_comparison_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                distance_function_name="jaro",
-                distance_threshold_or_thresholds=jaro_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_jar,
-            )
-            comparison_levels = comparison_levels + threshold_comparison_levels
-
-        jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
-        if len(jaro_winkler_thresholds) > 0:
-            threshold_comparison_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                distance_function_name="jaro-winkler",
-                distance_threshold_or_thresholds=jaro_winkler_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_jw,
-            )
-            comparison_levels = comparison_levels + threshold_comparison_levels
-
-        count_string_match_functions_used = (
-            (len(levenshtein_thresholds) > 0)
-            + (len(jaro_thresholds) > 0)
-            + (len(jaro_winkler_thresholds) > 0)
-        )
-        if count_string_match_functions_used > 1:
-            logger.warning(
-                "You have included a comparison level for more than one of "
-                "Levenshtein, Jaro and Jaro-Winkler similarity. We recommend "
-                "choosing one of the three."
-            )
-
         datediff_thresholds = ensure_is_iterable(datediff_thresholds)
         datediff_metrics = ensure_is_iterable(datediff_metrics)
         if len(datediff_thresholds) > 0:
@@ -306,16 +249,6 @@ class DateComparisonBase(Comparison):
             )
             comparison_desc += desc
 
-        if len(jaro_thresholds) > 0:
-            desc = distance_threshold_description(col_name, "jaro", jaro_thresholds)
-            comparison_desc += desc
-
-        if len(jaro_winkler_thresholds) > 0:
-            desc = distance_threshold_description(
-                col_name, "jaro_winkler", jaro_winkler_thresholds
-            )
-            comparison_desc += desc
-
         if len(datediff_thresholds) > 0:
             datediff_desc = ", ".join(
                 [
@@ -351,9 +284,9 @@ class NameComparisonBase(Comparison):
         term_frequency_adjustments_name: bool = False,
         term_frequency_adjustments_phonetic_name: bool = False,
         levenshtein_thresholds: int | list = [],
-        damerau_levenshtein_thresholds: int | list = [],
+        damerau_levenshtein_thresholds: int | list = [1],
         jaro_thresholds: float | list = [],
-        jaro_winkler_thresholds: float | list = [0.95, 0.88],
+        jaro_winkler_thresholds: float | list = [0.9, 0.8],
         jaccard_thresholds: float | list = [],
         m_probability_exact_match_name: bool = None,
         m_probability_exact_match_phonetic_name: bool = None,
@@ -369,8 +302,9 @@ class NameComparisonBase(Comparison):
 
         The default arguments will give a comparison with comparison levels:\n
         - Exact match \n
-        - Jaro Winkler similarity >= 0.95\n
-        - Jaro Winkler similarity >= 0.88\n
+        - Damerau-Levenshtein Distance <= 1
+        - Jaro Winkler similarity >= 0.9\n
+        - Jaro Winkler similarity >= 0.8\n
         - Anything else
 
         Args:
@@ -446,6 +380,7 @@ class NameComparisonBase(Comparison):
                                     phonetic_col_name = "name_dm",
                                     term_frequency_adjustments_name = True,
                                     levenshtein_thresholds=[2],
+                                    damerau_levenshtein_thresholds=[],
                                     jaro_winkler_thresholds=[],
                                     jaccard_thresholds=[1]
                                     )
@@ -463,6 +398,7 @@ class NameComparisonBase(Comparison):
                                     phonetic_col_name = "name_dm",
                                     term_frequency_adjustments_name = True,
                                     levenshtein_thresholds=[2],
+                                    damerau_levenshtein_thresholds=[],
                                     jaro_winkler_thresholds=[],
                                     jaccard_thresholds=[1]
                                     )
@@ -509,6 +445,9 @@ class NameComparisonBase(Comparison):
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
+        damerau_levenshtein_thresholds = ensure_is_iterable(
+            damerau_levenshtein_thresholds
+        )
         if len(damerau_levenshtein_thresholds) > 0:
             levenshtein_thresholds = ensure_is_iterable(damerau_levenshtein_thresholds)
             threshold_comparison_levels = distance_threshold_comparison_levels(
@@ -521,6 +460,7 @@ class NameComparisonBase(Comparison):
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
+        jaro_thresholds = ensure_is_iterable(jaro_thresholds)
         if len(jaro_thresholds) > 0:
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
