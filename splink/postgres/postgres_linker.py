@@ -27,15 +27,14 @@ class PostgresDataFrame(SplinkDataFrame):
     def __init__(self, df_name, physical_name, linker):
         super().__init__(df_name, physical_name, linker)
         self._db_schema = "splink"
-        self.physical_name = f"{self._db_schema}.{self.physical_name}"
+        self.physical_name = f"{self.physical_name}"
 
     @property
     def columns(self) -> list[InputColumn]:
         sql = f"""
         SELECT column_name
         FROM information_schema.columns
-        WHERE table_schema = '{self._db_schema}'
-        AND table_name = '{self.physical_name.replace(self._db_schema + ".", "")}';
+        WHERE table_name = '{self.physical_name}';
         """
         result = self.linker.con.cursor(cursor_factory=RealDictCursor)
         result.execute(sql)
@@ -55,8 +54,7 @@ class PostgresDataFrame(SplinkDataFrame):
         sql = f"""
         SELECT table_name
         FROM information_schema.tables
-        WHERE table_schema = '{self._db_schema}'
-        AND table_name = '{self.physical_name.replace(self._db_schema + ".", "")}';
+        WHERE table_name = '{self.physical_name}';
         """
 
         result = self.linker.con.cursor(cursor_factory=RealDictCursor)
@@ -133,7 +131,7 @@ class PostgresLinker(Linker):
         # execute sql is only reached if the user has explicitly turned off the cache
         self._delete_table_from_database(physical_name)
 
-        sql = f"CREATE TABLE {self._db_schema}.{physical_name} AS {sql}"
+        sql = f"CREATE TABLE {physical_name} AS {sql}"
         self._log_and_run_sql_execution(sql, templated_name, physical_name)
 
         output_obj = self._table_to_splink_dataframe(templated_name, physical_name)
@@ -207,8 +205,7 @@ class PostgresLinker(Linker):
         sql = f"""
         SELECT table_name
         FROM information_schema.tables
-        WHERE table_schema = '{self._db_schema}'
-        AND table_name = '{table_name}';
+        WHERE table_name = '{table_name}';
         """
 
         cur = self.con.cursor(cursor_factory=RealDictCursor)
@@ -239,6 +236,7 @@ class PostgresLinker(Linker):
     def _create_splink_schema(self):
         sql = f"""
         CREATE SCHEMA IF NOT EXISTS {self._db_schema};
+        SET search_path TO {self._db_schema},public;
         """
         cur = self.con.cursor()
         cur.execute(sql)
