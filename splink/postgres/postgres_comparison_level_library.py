@@ -7,8 +7,6 @@ from ..comparison_level_library import (
     DistanceInKMLevelBase,
     ElseLevelBase,
     ExactMatchLevelBase,
-    JaccardLevelBase,
-    JaroWinklerLevelBase,
     LevenshteinLevelBase,
     NullLevelBase,
     PercentageDifferenceLevelBase,

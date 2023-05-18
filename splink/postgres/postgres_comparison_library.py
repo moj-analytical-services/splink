@@ -4,8 +4,6 @@ from ..comparison_library import (
     DistanceFunctionAtThresholdsComparisonBase,
     DistanceInKMAtThresholdsComparisonBase,
     ExactMatchBase,
-    JaccardAtThresholdsComparisonBase,
-    JaroWinklerAtThresholdsComparisonBase,
     LevenshteinAtThresholdsComparisonBase,
 )
 from .postgres_base import PostgresBase
