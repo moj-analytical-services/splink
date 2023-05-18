@@ -41,6 +41,10 @@ class SparkComparisonProperties(SparkBase):
         return array_intersect_level
 
     @property
+    def _columns_reversed_level(self):
+        return columns_reversed_level
+
+    @property
     def _distance_in_km_level(self):
         return distance_in_km_level
 

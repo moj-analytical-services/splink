@@ -1,5 +1,6 @@
 from ..comparison_template_library import (
     DateComparisonBase,
+    ForenameSurnameComparisonBase,
     NameComparisonBase,
     PostcodeComparisonBase,
 )
@@ -14,6 +15,14 @@ class date_comparison(SparkComparisonProperties, DateComparisonBase):
 
 
 class name_comparison(SparkComparisonProperties, NameComparisonBase):
+    @property
+    def _distance_level(self):
+        return distance_function_level
+
+
+class forename_surname_comparison(
+    SparkComparisonProperties, ForenameSurnameComparisonBase
+):
     @property
     def _distance_level(self):
         return distance_function_level
