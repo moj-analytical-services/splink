@@ -100,6 +100,8 @@ class PostgresLinker(Linker):
         input_table_aliases: str | list = None,
     ):
         self._sql_dialect_ = "postgres"
+        if connection is None:
+            raise ValueError("You must supply a valid postgres connection to create a PostgresLinker")
         self.con = connection
 
         input_tables = ensure_is_list(input_table_or_tables)
