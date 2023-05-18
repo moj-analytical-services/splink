@@ -122,6 +122,7 @@ def compute_proportions_for_new_parameters(m_u_df):
     # Execute with duckdb if installed, otherwise default to pandas
     try:
         import duckdb
+
         sql = compute_proportions_for_new_parameters_sql("m_u_df")
         return duckdb.query(sql).to_df().to_dict("records")
     except (ImportError, ModuleNotFoundError) as error:
