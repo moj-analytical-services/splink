@@ -15,9 +15,6 @@ def test_full_example_postgres(tmp_path, pg_conn):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
 
-    # Avoid fuzzy matching for time being
-    settings_dict["comparisons"][0] = cl.exact_match("first_name")
-
     linker = PostgresLinker(
         df,
         connection=pg_conn,
@@ -120,7 +117,6 @@ def test_postgres_use_existing_table(tmp_path, pg_conn, pg_engine):
     df.to_sql(table_name, pg_engine)
 
     settings_dict = get_settings_dict()
-    settings_dict["comparisons"][0] = cl.exact_match("first_name")
 
     linker = PostgresLinker(
         table_name,
