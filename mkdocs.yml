@@ -56,12 +56,13 @@ markdown_extensions:
       auto_append:
         - includes/abbreviations.md
   - pymdownx.tabbed:
-      alternate_style: true 
+      alternate_style: true
   - toc:
       permalink: True
       toc_depth: 4
 nav:
   - Home: "README.md"
+  - Installation: "installations.md"
   - Topic Guide:
       - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/backends.md"
       - Link type - linking vs deduping: "topic_guides/link_type.md"
