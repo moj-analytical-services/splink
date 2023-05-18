@@ -1,5 +1,4 @@
 import os
-from uuid import uuid4
 
 import pandas as pd
 import pytest
@@ -25,9 +24,9 @@ def test_full_example_postgres(tmp_path, pg_conn):
     )
     linker.cumulative_num_comparisons_from_blocking_rules_chart(
         [
-            'l.first_name = r.first_name',
-            'l.surname = r.surname',
-            'l.city = r.city',
+            "l.first_name = r.first_name",
+            "l.surname = r.surname",
+            "l.city = r.city",
         ]
     )
 

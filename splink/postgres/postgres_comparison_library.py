@@ -49,7 +49,6 @@ class PostgresComparisonProperties(PostgresBase):
         return levenshtein_level
 
 
-
 class exact_match(PostgresComparisonProperties, ExactMatchBase):
     pass
 
@@ -68,7 +67,6 @@ class levenshtein_at_thresholds(
     @property
     def _distance_level(self):
         return levenshtein_level
-
 
 
 class array_intersect_at_sizes(
