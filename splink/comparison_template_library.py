@@ -659,6 +659,23 @@ class PostcodeComparisonBase(Comparison):
                                     km_thresholds=[10, 100]
                                     )
                 ```
+            === "Athena"
+                Basic Postcode Comparison
+                ``` python
+                import splink.athean.athena_comparison_template_library as ctl
+                ctl.postcode_comparison("postcode")
+                ```
+                Bespoke Postcode Comparison
+                ``` python
+                import splink.athena.athena_comparison_template_library as ctl
+                ctl.postcode_comparison("postcode",
+                                    invalid_postcodes_as_null=True,
+                                    include_distance_in_km_level=True,
+                                    lat_col="lat",
+                                    long_col="long",
+                                    km_thresholds=[10, 100]
+                                    )
+                ```
 
         Returns:
             Comparison: A comparison that can be inclued in the Splink settings

@@ -13,11 +13,7 @@ However, not every comparison is available for every [Splink-compatible SQL back
 
 The pre-made Splink comparison templates available for each SQL dialect are as given in this table:
 
-||duckdb|spark|athena|sqlite|
-|-|-|-|-|-|
-|`date_comparison`|✓|✓|||
-|`name_comparison`|✓|✓|||
-|`postcode_comparison`|✓|✓|✓||
+{% include-markdown "./includes/generated_files/comparison_template_library_dialect_table.md" %}
 
 
 The detailed API for each of these are outlined below.
