@@ -126,7 +126,7 @@ df_l = df.copy()
 df_r = df.copy()
 df_l["source_dataset"] = "my_left_ds"
 df_r["source_dataset"] = "my_right_ds"
-df_final = df_l.append(df_r)
+df_final = pd.concat([df_l, df_r])
 
 
 # Tests link only jobs under different inputs:
