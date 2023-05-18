@@ -23,7 +23,7 @@ A sensible approach to comparing postcodes is to consider their consituent compo
 ![UK postcode components from https://ideal-postcodes.co.uk/guides/uk-postcode-format](../img/postcode_components.png)
 See [image source](https://ideal-postcodes.co.uk/guides/uk-postcode-format) for more details.
 
-Splink already includes a pre-built [postcode comparison template](link) which does this for you, generating by default a comparison with levels for an exact match on full postcode, sector, district and area in turn. These individual postcode components are engineered under the hood using the `regex_extract` argument (see below and [comparison_templates.ipynb]() for more details).
+Splink already includes a pre-built [postcode comparison template](../comparison_template_library.md##splink.comparison_template_library.PostcodeComparisonBase) which does this for you, generating by default a comparison with levels for an exact match on full postcode, sector, district and area in turn. These individual postcode components are engineered under-the-hood using the `regex_extract` argument (see below and [comparison_templates.ipynb](comparison_templates.ipynb) for more details).
 
 Code examples to use the comparison template:
 === "DuckDB"
@@ -71,11 +71,12 @@ Code examples to use the comparison template:
     
 >    - 'All other comparisons' with SQL rule: ELSE
 
+Note that the 'Exact match Postcode District' level also captures matches on subdistricts where they exist in the data.
 
-However, it is important to consider that locations which are geographically close to one another can be in different postcode regions e.g. London postcodes starting 'N' vs 'SW'. So performing comparisons based on substrings alone won't necessarily give the best sense of whether two postcodes are close together.
+However, performing comparisons based on substrings alone doesn't always give the best sense of whether two postcodes are close together since locations which are geographically close can be in different postcode regions e.g. London postcodes starting 'N' vs 'SW'.
 
 Fortunately, Splink includes functions [cll.distance_in_km_level()](../comparison_level_library.md#splink.comparison_level_library.DistanceFunctionLevelBase) and [cl.distance_in_km_at_thresholds()](../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsComparisonBase) to calculate the physical distance between two sets of latitude and longitude coordinates. 
-You have the option to include `cll.distance_in_km_level()` as additional levels in the `postcode_comparison()` template by supplying `lat_col`, `long_col` and `km_thresholds` arguments, which could help improve results. Latitude and longitude coordinates can be derived from a postcode column as described in the example below.
+Users have the option to include `cll.distance_in_km_level()` as additional levels in the `postcode_comparison()` template by supplying `lat_col`, `long_col` and `km_thresholds` arguments. Doing so can help to improve results. Latitude and longitude coordinates can be derived from a postcode column as described in the example below.
 
 ### Example
 
@@ -149,7 +150,7 @@ Now that coordinates have been added, a more detailed postcode comparison can be
         "postcode",
         lat_col="lat",
         long_col="long",
-        km_thresholds=[1,10,50]
+        km_thresholds=[1, 10, 50]
     )
     print(pc_comparison.human_readable_description)
     ```
@@ -161,7 +162,7 @@ Now that coordinates have been added, a more detailed postcode comparison can be
         "postcode",
         lat_col="lat",
         long_col="long",
-        km_thresholds=[1,10,50]
+        km_thresholds=[1, 10, 50]
     )
     print(pc_comparison.human_readable_description)
     ```
@@ -173,7 +174,7 @@ Now that coordinates have been added, a more detailed postcode comparison can be
         "postcode",
         lat_col="lat",
         long_col="long",
-        km_thresholds=[1,10,50]
+        km_thresholds=[1, 10, 50]
     )
     print(pc_comparison.human_readable_description)
     ``` 
