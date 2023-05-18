@@ -701,7 +701,7 @@ class ForenameSurnameComparisonBase(Comparison):
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            === DuckDB
+            === "DuckDB"
                 Basic Forename Surname Comparison
                 ```py
                 import splink.duckdb.duckdb_comparison_template_library as ctl
@@ -723,7 +723,7 @@ class ForenameSurnameComparisonBase(Comparison):
                         jaccard_thresholds=[1],
                     )
                 ```
-            === Spark
+            === "Spark"
                 Basic Forename Surname Comparison
                 ```py
                 import splink.spark.spark_comparison_template_library as ctl
