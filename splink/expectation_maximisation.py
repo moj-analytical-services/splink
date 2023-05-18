@@ -120,19 +120,12 @@ def compute_proportions_for_new_parameters_pandas(m_u_df):
 
 def compute_proportions_for_new_parameters(m_u_df):
     # Execute with duckdb if installed, otherwise default to pandas
-    # try:
-    #     import duckdb
-    #     sql = compute_proportions_for_new_parameters_sql("m_u_df")
-    #     return duckdb.query(sql).to_df().to_dict("records")
-
-    import duckdb
-
-    sql = compute_proportions_for_new_parameters_sql("m_u_df")
-    return duckdb.query(sql).to_df().to_dict("records")
-
-    # except (ImportError, ModuleNotFoundError) as error:
-    # return compute_proportions_for_new_parameters_pandas(m_u_df)
-    # return compute_proportions_for_new_parameters_pandas(m_u_df)
+    try:
+        import duckdb
+        sql = compute_proportions_for_new_parameters_sql("m_u_df")
+        return duckdb.query(sql).to_df().to_dict("records")
+    except (ImportError, ModuleNotFoundError) as error:
+        return compute_proportions_for_new_parameters_pandas(m_u_df)
 
 
 def populate_m_u_from_lookup(
