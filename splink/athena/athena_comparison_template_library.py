@@ -7,5 +7,6 @@ from ..comparison_template_library import (
 )
 from .athena_comparison_library import ComparisonProperties
 
+
 class postcode_comparison(DuckDBComparisonProperties, PostcodeComparisonBase):
     pass
