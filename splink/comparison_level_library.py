@@ -89,6 +89,7 @@ class ExactMatchLevelBase(ComparisonLevel):
         m_probability=None,
         term_frequency_adjustments=False,
         include_colname_in_charts_label=False,
+        manual_chart_label=None,
     ) -> ComparisonLevel:
         """Represents a comparison level where there is an exact match,
 
@@ -99,10 +100,11 @@ class ExactMatchLevelBase(ComparisonLevel):
                 Defaults to None.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            include_colname_in_charts_label (bool, optional): If True, includes
-                col_name in charts label
-                Defaults to False,
-
+            include_colname_in_charts_label (bool, optional): If True, include col_name
+                in chart labels (e.g. linker.match_weights_chart())
+            chart_label (str, optional): string to include in chart label. Setting to
+                col_name would recreate behaviour of
+                include_colname_in_charts_label=True
         Examples:
             === "DuckDB"
                 Simple Exact match level
@@ -169,7 +171,13 @@ class ExactMatchLevelBase(ComparisonLevel):
         """
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
 
-        label_suffix = f" {col_name}" if include_colname_in_charts_label else ""
+        if include_colname_in_charts_label:
+            label_suffix = f" {col_name}"
+        elif manual_chart_label:
+            label_suffix = f" {manual_chart_label}"
+        else:
+            label_suffix = ""
+
         if regex_extract:
             col_name_l = self._regex_extract_function(col.name_l(), regex_extract)
             col_name_r = self._regex_extract_function(col.name_r(), regex_extract)

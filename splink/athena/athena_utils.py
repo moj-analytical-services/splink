@@ -16,7 +16,6 @@ def athena_warning_text(database_bucket_txt, do_does_grammar):
 
 
 def _verify_athena_inputs(database, bucket, boto3_session):
-
     errors = []
 
     if (
