@@ -8,7 +8,7 @@ import splink.postgres.postgres_comparison_library as cl
 from splink.postgres.postgres_linker import PostgresLinker
 
 from .basic_settings import get_settings_dict
-from .linker_utils import _test_table_registration, register_roc_data
+from .linker_utils import register_roc_data
 
 
 def test_full_example_postgres(tmp_path, pg_conn):
@@ -89,15 +89,15 @@ def test_full_example_postgres(tmp_path, pg_conn):
     # TODO: fix bug and restore:
     # _test_table_registration(linker)
 
-    record = {
-        "unique_id": 1,
-        "first_name": "John",
-        "surname": "Smith",
-        "dob": "1971-05-24",
-        "city": "London",
-        "email": "john@smith.net",
-        "group": 10000,
-    }
+    # record = {
+    #     "unique_id": 1,
+    #     "first_name": "John",
+    #     "surname": "Smith",
+    #     "dob": "1971-05-24",
+    #     "city": "London",
+    #     "email": "john@smith.net",
+    #     "group": 10000,
+    # }
 
     # TODO: fix bug and restore:
     # linker.find_matches_to_new_records(
@@ -134,4 +134,4 @@ def test_error_no_connection():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     # get an error as we don't pass a connection
     with pytest.raises(ValueError):
-        linker = PostgresLinker(df)
+        PostgresLinker(df)
