@@ -40,14 +40,6 @@ class levenshtein_level(PostgresBase, LevenshteinLevelBase):
     pass
 
 
-class jaro_winkler_level(PostgresBase, JaroWinklerLevelBase):
-    pass
-
-
-class jaccard_level(PostgresBase, JaccardLevelBase):
-    pass
-
-
 class array_intersect_level(PostgresBase, ArrayIntersectLevelBase):
     pass
 

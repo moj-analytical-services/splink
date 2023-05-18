@@ -16,8 +16,6 @@ from .postgres_comparison_level_library import (
     distance_in_km_level,
     else_level,
     exact_match_level,
-    jaccard_level,
-    jaro_winkler_level,
     levenshtein_level,
     null_level,
 )
@@ -52,13 +50,6 @@ class PostgresComparisonProperties(PostgresBase):
     def _levenshtein_level(self):
         return levenshtein_level
 
-    @property
-    def _jaro_winkler_level(self):
-        return jaro_winkler_level
-
-    @property
-    def _jaccard_level(self):
-        return jaccard_level
 
 
 class exact_match(PostgresComparisonProperties, ExactMatchBase):
@@ -80,21 +71,6 @@ class levenshtein_at_thresholds(
     def _distance_level(self):
         return levenshtein_level
 
-
-class jaro_winkler_at_thresholds(
-    PostgresComparisonProperties, JaroWinklerAtThresholdsComparisonBase
-):
-    @property
-    def _distance_level(self):
-        return jaro_winkler_level
-
-
-class jaccard_at_thresholds(
-    PostgresComparisonProperties, JaccardAtThresholdsComparisonBase
-):
-    @property
-    def _distance_level(self):
-        return jaccard_level
 
 
 class array_intersect_at_sizes(
