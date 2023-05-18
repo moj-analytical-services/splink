@@ -358,6 +358,9 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
+            regex_extract (str): Regular expression pattern to evaluate a match on.
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -572,6 +575,9 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
+            regex_extract (str): Regular expression pattern to evaluate a match on.
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
         Examples:
