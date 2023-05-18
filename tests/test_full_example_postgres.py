@@ -112,3 +112,26 @@ def test_full_example_postgres(tmp_path, pg_conn):
     linker_2.load_settings(path)
     linker_2.load_settings_from_json(path)
 
+
+def test_postgres_use_existing_table(tmp_path, pg_conn, pg_engine):
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    # TODO: fix this name here and handle test db at fixture level
+    table_name = f"input_tab_{str(uuid4()).replace('-', '_')}"
+    df.to_sql(table_name, pg_engine)
+
+    settings_dict = get_settings_dict()
+    settings_dict["comparisons"][0] = cl.exact_match("first_name")
+
+    linker = PostgresLinker(
+        table_name,
+        connection=pg_conn,
+        settings_dict=settings_dict,
+    )
+    linker.predict()
+
+
+def test_error_no_connection():
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    # get an error as we don't pass a connection
+    with pytest.raises(ValueError):
+        linker = PostgresLinker(df)
