@@ -116,6 +116,7 @@ class PostgresLinker(Linker):
 
         # Create log2 function in database
         self._create_log2_function()
+        self._register_extensions()
 
         # Create splink schema
         self._create_splink_schema()
@@ -240,6 +241,16 @@ class PostgresLinker(Linker):
         cur.execute(sql)
         self.con.commit()
         cur.close()
+
+    def _register_extensions(self):
+        sql = """
+        CREATE EXTENSION IF NOT EXISTS fuzzystrmatch;
+        """
+        cur = self.con.cursor()
+        cur.execute(sql)
+        self.con.commit()
+        cur.close()
+        
 
     def _create_splink_schema(self):
         sql = f"""
