@@ -4,7 +4,6 @@ from uuid import uuid4
 import pandas as pd
 import pytest
 
-import splink.postgres.postgres_comparison_library as cl
 from splink.postgres.postgres_linker import PostgresLinker
 
 from .basic_settings import get_settings_dict
@@ -112,8 +111,8 @@ def test_full_example_postgres(tmp_path, pg_conn):
 
 def test_postgres_use_existing_table(tmp_path, pg_conn, pg_engine):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-    # TODO: fix this name here and handle test db at fixture level
-    table_name = f"input_tab_{str(uuid4()).replace('-', '_')}"
+
+    table_name = "input_table_test"
     df.to_sql(table_name, pg_engine)
 
     settings_dict = get_settings_dict()
