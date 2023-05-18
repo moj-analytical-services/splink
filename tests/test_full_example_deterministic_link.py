@@ -20,7 +20,8 @@ def test_deterministic_link_full_example(spark, Linker):
         "blocking_rules_to_generate_predictions": [
             "l.first_name = r.first_name and l.surname = r.surname and l.dob = r.dob",
             "l.surname = r.surname and l.dob = r.dob and l.email = r.email",
-            "l.first_name = r.first_name and l.surname = r.surname and l.email = r.email",
+            "l.first_name = r.first_name and l.surname = r.surname "
+            "and l.email = r.email",
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
@@ -28,7 +29,7 @@ def test_deterministic_link_full_example(spark, Linker):
 
     if Linker == SparkLinker:
         # ensure the same datatype within a column to solve spark parsing issues
-        df = df.astype(str) 
+        df = df.astype(str)
 
         df = spark.createDataFrame(df)
         df.persist()
