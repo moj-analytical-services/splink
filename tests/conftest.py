@@ -1,6 +1,8 @@
 import logging
 
+from psycopg2 import connect
 import pytest
+from sqlalchemy import create_engine
 
 from splink.spark.jar_location import similarity_jar_location
 
@@ -35,3 +37,25 @@ def df_spark(spark):
     df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=True)
     df.persist()
     yield df
+
+
+@pytest.fixture(scope="session")
+def pg_engine():
+
+    engine = create_engine(f"postgresql://splinkognito:splink123!@localhost:5432/splink_db")
+    yield engine
+
+    engine.dispose()
+
+
+@pytest.fixture(scope="session")
+def pg_conn(pg_engine):
+    pg_conn = pg_engine.connect()
+    yield connect(
+        dbname="splink_db",
+        user="splinkognito",
+        password="splink123!",
+        host="localhost",
+        port="5432",
+    )
+    pg_conn.close()
