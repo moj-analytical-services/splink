@@ -145,22 +145,7 @@ class PostgresLinker(Linker):
         self.con.commit()
         cur.close()
 
-    def register_table(self, input, table_name, overwrite=True):
-        # If the user has provided a table name, return it as a SplinkDataframe
-        if isinstance(input, str):
-            return self._table_to_splink_dataframe(table_name, input)
-
-        # Check if table name is already in use
-        exists = self._table_exists_in_database(table_name)
-        if exists:
-            if not overwrite:
-                raise ValueError(
-                    f"Table '{table_name}' already exists in database. "
-                    "Please use the 'overwrite' argument if you wish to overwrite"
-                )
-            else:
-                self._delete_table_from_database(table_name)
-
+    def _table_registration(self, input, table_name):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
         elif isinstance(input, list):
@@ -179,6 +164,24 @@ class PostgresLinker(Linker):
             if_exists="replace",
             schema=self._db_schema,
         )
+
+    def register_table(self, input, table_name, overwrite=True):
+        # If the user has provided a table name, return it as a SplinkDataframe
+        if isinstance(input, str):
+            return self._table_to_splink_dataframe(table_name, input)
+
+        # Check if table name is already in use
+        exists = self._table_exists_in_database(table_name)
+        if exists:
+            if not overwrite:
+                raise ValueError(
+                    f"Table '{table_name}' already exists in database. "
+                    "Please use the 'overwrite' argument if you wish to overwrite"
+                )
+            else:
+                self._delete_table_from_database(table_name)
+
+        self._table_registration(input, table_name)
         return self._table_to_splink_dataframe(table_name, table_name)
 
     def _random_sample_sql(self, proportion, sample_size, seed=None):
