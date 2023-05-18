@@ -28,7 +28,7 @@ def test_deterministic_link_full_example(spark, Linker):
 
     if Linker == SparkLinker:
         # ensure the same datatype within a column to solve spark parsing issues
-        df = df.astype(str) 
+        df = df.astype(str)
 
         df = spark.createDataFrame(df)
         df.persist()
