@@ -193,18 +193,24 @@ class PostgresLinker(Linker):
     def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
             return ""
-        if seed is None:
-            seed = "random()"
-
+        if seed:
+            # TODO: we could maybe do seeds by handling it in calling function
+            # need to execute setseed() in surrounding session
+            raise NotImplementedError(
+                "Postgres does not support seeds in random "
+                "samples. Please remove the `seed` parameter."
+            )
+        # ideally would use TABLESAMPLE
+        # can't use currently as not supported for CTEs, which we need
         sample_size = int(sample_size)
         return f"""
-                WHERE unique_id IN (
-                    SELECT unique_id
-                    FROM __splink__df_concat_with_tf
-                    ORDER BY {seed}
-                    LIMIT {sample_size}
-                )
-            """
+            WHERE unique_id IN (
+                SELECT unique_id
+                FROM __splink__df_concat_with_tf
+                ORDER BY random()
+                LIMIT {sample_size}
+            )
+        """
 
     @property
     def _infinity_expression(self):
