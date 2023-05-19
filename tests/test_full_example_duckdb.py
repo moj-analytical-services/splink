@@ -11,7 +11,11 @@ import splink.duckdb.duckdb_comparison_library as cl
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict, name_comparison
-from .linker_utils import _test_table_registration, register_roc_data
+from .linker_utils import (
+    _test_table_registration,
+    _test_write_functionality,
+    register_roc_data,
+)
 
 
 def test_full_example_duckdb(tmp_path):
@@ -111,6 +115,9 @@ def test_full_example_duckdb(tmp_path):
     linker_2.load_settings(path)
     linker_2.load_settings_from_json(path)
     DuckDBLinker(df, settings_dict=path)
+
+    # Test that writing to files works as expected
+    _test_write_functionality(linker_2, pd.read_csv)
 
 
 # Create some dummy dataframes for the link only test
@@ -271,7 +278,7 @@ def test_small_example_duckdb(tmp_path):
             {
                 "output_column_name": "name",
                 "comparison_levels": [
-                    cll.null_level("full_name"),
+                    cll.null_level("full_name", valid_string_regex=".*"),
                     cll.exact_match_level("full_name", term_frequency_adjustments=True),
                     cll.columns_reversed_level(
                         "first_name", "surname", tf_adjustment_column="full_name"
@@ -283,7 +290,9 @@ def test_small_example_duckdb(tmp_path):
                 ],
             },
             cl.levenshtein_at_thresholds("dob", 2, term_frequency_adjustments=True),
-            cl.jaro_at_thresholds("email", term_frequency_adjustments=True),
+            cl.jaro_at_thresholds(
+                "email", term_frequency_adjustments=True, regex_extract="^[^@]+"
+            ),
             cl.jaro_winkler_at_thresholds("city", term_frequency_adjustments=True),
         ],
         "retain_matching_columns": True,

@@ -10,6 +10,7 @@ tags:
   - Array Intersect
   - Columns Reversed
   - Percentage Difference
+toc_depth: 2
 ---
 # Documentation for `comparison_level_library` 
 
@@ -22,16 +23,12 @@ The pre-made Splink comparison levels available for each SQL dialect are as give
 {% include-markdown "./includes/generated_files/comparison_level_library_dialect_table.md" %}
 
 
-
 The detailed API for each of these are outlined below.
 
 ## Library comparison level APIs
 
 ::: splink.comparison_level_library.NullLevelBase
     handler: python
-    selection:
-      members:
-        -  __init__
     rendering:
       show_root_heading: true
       show_source: false

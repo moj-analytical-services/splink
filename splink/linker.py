@@ -4,11 +4,14 @@ import hashlib
 import json
 import logging
 import os
+import re
 import warnings
 from collections import UserDict
 from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
+
+import sqlglot
 
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
 
@@ -377,12 +380,28 @@ class Linker:
         homogenised_aliases = []
         accepted_df_dtypes = ensure_is_tuple(accepted_df_dtypes)
 
+        existing_tables = []
+        for alias in input_aliases:
+            # Check if alias is a string (indicating a table name) and that it is not
+            # a file path.
+            if not isinstance(alias, str) or re.match(pattern=r".*", string=alias):
+                continue
+            exists = self._table_exists_in_database(alias)
+            if exists:
+                existing_tables.append(f"'{alias}'")
+        if existing_tables:
+            input_tables = ", ".join(existing_tables)
+            raise ValueError(
+                f"Table(s): {input_tables} already exists in database. "
+                "Please remove or rename it/them before retrying"
+            )
+
         for i, (table, alias) in enumerate(zip(input_tables, input_aliases)):
             if isinstance(alias, accepted_df_dtypes):
                 alias = f"__splink__input_table_{i}"
 
             if isinstance(table, accepted_df_dtypes):
-                self.register_table(table, alias)
+                self._table_registration(table, alias)
                 table = alias
 
             homogenised_tables.append(table)
@@ -582,9 +601,20 @@ class Linker:
         try:
             return self._run_sql_execution(final_sql, templated_name, physical_name)
         except Exception as e:
+
+            # Parse our SQL through sqlglot to pretty print
+            try:
+                final_sql = sqlglot.parse_one(
+                    final_sql,
+                    read=self._sql_dialect,
+                ).sql(pretty=True)
+                # if sqlglot produces any errors, just report the raw SQL
+            except Exception:
+                pass
+
             raise SplinkException(
                 f"Error executing the following sql for table "
-                f"`{templated_name}`({physical_name}):\n{final_sql}"
+                f"`{templated_name}` ({physical_name}):\n{final_sql}"
             ) from e
 
     def register_table(self, input, table_name, overwrite=False):
@@ -613,6 +643,30 @@ class Linker:
         """
 
         raise NotImplementedError(f"register_table not implemented for {type(self)}")
+
+    def _table_registration(self, input, table_name):
+        """
+        Register a table to your backend database, to be used in one of the
+        splink methods, or simply to allow querying.
+
+        Tables can be of type: dictionary, record level dictionary,
+        pandas dataframe, pyarrow table and in the spark case, a spark df.
+
+        This function is contains no overwrite functionality, so it can be used
+        where we don't want to allow for overwriting.
+
+        Args:
+            input: The data you wish to register. This can be either a dictionary,
+                pandas dataframe, pyarrow table or a spark dataframe.
+            table_name (str): The name you wish to assign to the table.
+
+        Returns:
+            None
+        """
+
+        raise NotImplementedError(
+            f"_table_registration not implemented for {type(self)}"
+        )
 
     def query_sql(self, sql, output_type="pandas"):
         """
@@ -957,7 +1011,7 @@ class Linker:
         if not isinstance(settings_dict, dict):
             p = Path(settings_dict)
             if not p.is_file():  # check if it's a valid file/filepath
-                raise ValueError(
+                raise FileNotFoundError(
                     "The filepath you have provided is either not a valid file "
                     "or doesn't exist along the path provided."
                 )
@@ -2616,7 +2670,7 @@ class Linker:
         Each value
 
         Args:
-            column_name (str): Name of a column for which term frequency adjustment has been applied.
+            output_column_name (str): Name of an output column for which term frequency adjustment has been applied.
             n_most_freq (int, optional): Number of most frequent values to show. If this or `n_least_freq` set to None, all values will be shown.
                 Default to 10.
             n_least_freq (int, optional): Number of least frequent values to show. If this or `n_most_freq` set to None, all values will be shown.

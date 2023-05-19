@@ -5,6 +5,7 @@ theme:
   name: "material"
   features:
     - content.code.annotate
+    - content.code.copy
     - content.tabs.link
     - content.tooltips
     - header.autohide
@@ -54,8 +55,11 @@ markdown_extensions:
   - pymdownx.snippets:
       auto_append:
         - includes/abbreviations.md
+  - pymdownx.tabbed:
+      alternate_style: true 
   - toc:
       permalink: True
+      toc_depth: 4
 nav:
   - Home: "README.md"
   - Topic Guide:
@@ -68,6 +72,7 @@ nav:
         - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
         - String comparators: "topic_guides/comparators.md"
         - Phonetic transformations: "topic_guides/phonetic.md"
+        - Term-Frequency adjustments: "topic_guides/term-frequency.md"
       - Performance:
         - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
         - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"

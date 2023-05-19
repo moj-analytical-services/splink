@@ -21,6 +21,9 @@ class DateComparisonBase(Comparison):
     def __init__(
         self,
         col_name: str,
+        cast_strings_to_date: bool = False,
+        date_format: str = None,
+        invalid_dates_as_null: bool = False,
         include_exact_match_level: bool = True,
         term_frequency_adjustments: bool = False,
         separate_1st_january: bool = False,
@@ -36,8 +39,6 @@ class DateComparisonBase(Comparison):
         m_probability_or_probabilities_jw: float | list = None,
         m_probability_or_probabilities_datediff: float | list = None,
         m_probability_else: float = None,
-        cast_strings_to_date: bool = False,
-        date_format: str = None,
     ) -> Comparison:
         """A wrapper to generate a comparison for a date column the data in
         `col_name` with preselected defaults.
@@ -51,7 +52,19 @@ class DateComparisonBase(Comparison):
         - Anything else
 
         Args:
-            col_name (str): The name of the column to compare
+            col_name (str): The name of the column to compare.
+            cast_strings_to_date (bool, optional): Set to True to
+                enable date-casting when input dates are strings. Also adjust
+                date_format if date-strings are not in (yyyy-mm-dd) format.
+                Defaults to False.
+            date_format (str, optional): Format of input dates if date-strings
+                are given. Must be consistent across record pairs. If None
+                (the default), downstream functions for each backend assign
+                date_format to ISO 8601 format (yyyy-mm-dd).
+                Set to "yyyy-MM-dd" for Spark and "%Y-%m-%d" for DuckDB
+                when invalid_dates_as_null=True
+            invalid_dates_as_null (bool, optional): assign any dates that do not adhere
+                to date_format to the null level. Defaults to False.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -95,50 +108,66 @@ class DateComparisonBase(Comparison):
                 for the datediff thresholds specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
-            cast_strings_to_date (bool, optional): Set to True to
-                enable date-casting when input dates are strings. Also adjust
-                date_format if date-strings are not in (yyyy-mm-dd) format.
-                Defaults to False.
-            date_format(str, optional): Format of input dates if date-strings
-                are given. Must be consistent across record pairs. If None
-                (the default), downstream functions for each backend assign
-                date_format to ISO 8601 format (yyyy-mm-dd).
-
 
         Examples:
-            >>> # DuckDB Basic Date Comparison
-            >>> import splink.duckdb.duckdb_comparison_template_library as ctl
-            >>> clt.date_comparison("date_of_birth")
-
-            >>> # DuckDB Bespoke Date Comparison
-            >>> import splink.duckdb.duckdb_comparison_template_library as ctl
-            >>> clt.date_comparison(
-            >>>                     "date_of_birth",
-            >>>                     levenshtein_thresholds=[],
-            >>>                     jaro_winkler_thresholds=[0.88],
-            >>>                     datediff_thresholds=[1, 1],
-            >>>                     datediff_metrics=["month", "year"])
-
-            >>> # Spark Basic Date Comparison
-            >>> import splink.spark.spark_comparison_template_library as ctl
-            >>> clt.date_comparison("date_of_birth")
-
-            >>> # Spark Bespoke Date Comparison
-            >>> import splink.spark.spark_comparison_template_library as ctl
-            >>> clt.date_comparison(
-            >>>                     "date_of_birth",
-            >>>                     levenshtein_thresholds=[],
-            >>>                     jaro_winkler_thresholds=[0.88],
-            >>>                     datediff_thresholds=[1, 1],
-            >>>                     datediff_metrics=["month", "year"])
-
+            === "DuckDB"
+                Basic Date Comparison
+                ``` python
+                import splink.duckdb.duckdb_comparison_template_library as ctl
+                ctl.date_comparison("date_of_birth")
+                ```
+                Bespoke Date Comparison
+                ``` python
+                import splink.duckdb.duckdb_comparison_template_library as ctl
+                ctl.date_comparison("date_of_birth",
+                                    levenshtein_thresholds=[],
+                                    jaro_winkler_thresholds=[0.88],
+                                    datediff_thresholds=[1, 1],
+                                    datediff_metrics=["month", "year"])
+                ```
+                Date Comparison casting columns date and assigning values that do not
+                match the date_format to the null level
+                ``` python
+                import splink.duckdb.duckdb_comparison_template_library as ctl
+                ctl.date_comparison("date_of_birth",
+                                    cast_strings_to_date=True,
+                                    date_format='%d/%m/%Y',
+                                    invalid_dates_as_null=True)
+                ```
+            === "Spark"
+                Basic Date Comparison
+                ``` python
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.date_comparison("date_of_birth")
+                ```
+                Bespoke Date Comparison
+                ``` python
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.date_comparison("date_of_birth",
+                                    levenshtein_thresholds=[],
+                                    jaro_winkler_thresholds=[0.88],
+                                    datediff_thresholds=[1, 1],
+                                    datediff_metrics=["month", "year"])
+                ```
+                Date Comparison casting columns date and assigning values that do not
+                match the date_format to the null level
+                ``` python
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.date_comparison("date_of_birth",
+                                    cast_strings_to_date=True,
+                                    date_format='dd/mm/yyyy',
+                                    invalid_dates_as_null=True)
+                ```
         Returns:
             Comparison: A comparison that can be inclued in the Splink settings
                 dictionary.
         """
         # Construct Comparison
         comparison_levels = []
-        comparison_levels.append(self._null_level(col_name))
+        if invalid_dates_as_null:
+            comparison_levels.append(self._null_level(col_name, date_format))
+        else:
+            comparison_levels.append(self._null_level(col_name))
 
         # Validate user inputs
         datediff_error_logger(thresholds=datediff_thresholds, metrics=datediff_metrics)
@@ -168,9 +197,9 @@ class DateComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "levenshtein",
-                levenshtein_thresholds,
-                m_probability_or_probabilities_lev,
+                distance_function_name="levenshtein",
+                distance_threshold_or_thresholds=levenshtein_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_lev,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -179,9 +208,9 @@ class DateComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "jaro",
-                jaro_thresholds,
-                m_probability_or_probabilities_jar,
+                distance_function_name="jaro",
+                distance_threshold_or_thresholds=jaro_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jar,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -190,9 +219,9 @@ class DateComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "jaro-winkler",
-                jaro_winkler_thresholds,
-                m_probability_or_probabilities_jw,
+                distance_function_name="jaro-winkler",
+                distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jw,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -288,6 +317,7 @@ class NameComparisonBase(Comparison):
     def __init__(
         self,
         col_name: str,
+        regex_extract: str = None,
         include_exact_match_level: bool = True,
         phonetic_col_name: str = None,
         term_frequency_adjustments_name: bool = False,
@@ -314,7 +344,8 @@ class NameComparisonBase(Comparison):
         - Anything else
 
         Args:
-            col_name (str): The name of the column to compare
+            col_name (str): The name of the column to compare.
+            regex_extract (str): Regular expression pattern to evaluate a match on.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level for col_name. Defaults to True.
             phonetic_col_name (str): The name of the column with phonetic reduction
@@ -365,33 +396,40 @@ class NameComparisonBase(Comparison):
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            >>> # DuckDB Basic Name Comparison
-            >>> import splink.duckdb.duckdb_comparison_template_library as ctl
-            >>> clt.name_comparison("name")
-
-            >>> # DuckDB Bespoke Name Comparison
-            >>> import splink.duckdb.duckdb_comparison_template_library as ctl
-            >>> clt.name_comparison("name",
-            >>>                     phonetic_col_name = "name_dm",
-            >>>                     term_frequency_adjustments_name = True,
-            >>>                     levenshtein_thresholds=[2],
-            >>>                     jaro_winkler_thresholds=[],
-            >>>                     jaccard_thresholds=[1]
-            >>>                     )
-
-            >>> # Spark Basic Name Comparison
-            >>> import splink.spark.spark_comparison_template_library as ctl
-            >>> clt.name_comparison("name")
-
-            >>> # Spark Bespoke Date Comparison
-            >>> import splink.spark.spark_comparison_template_library as ctl
-            >>> clt.name_comparison("name",
-            >>>                     phonetic_col_name = "name_dm",
-            >>>                     term_frequency_adjustments_name = True,
-            >>>                     levenshtein_thresholds=[2],
-            >>>                     jaro_winkler_thresholds=[],
-            >>>                     jaccard_thresholds=[1]
-            >>>                     )
+            === "DuckDB"
+                Basic Name Comparison
+                ``` python
+                import splink.duckdb.duckdb_comparison_template_library as ctl
+                ctl.name_comparison("name")
+                ```
+                Bespoke Name Comparison
+                ``` python
+                import splink.duckdb.duckdb_comparison_template_library as ctl
+                ctl.name_comparison("name",
+                                    phonetic_col_name = "name_dm",
+                                    term_frequency_adjustments_name = True,
+                                    levenshtein_thresholds=[2],
+                                    jaro_winkler_thresholds=[],
+                                    jaccard_thresholds=[1]
+                                    )
+                ```
+            === "Spark"
+                Basic Name Comparison
+                ``` python
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.name_comparison("name")
+                ```
+                Bespoke Name Comparison
+                ``` python
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.name_comparison("name",
+                                    phonetic_col_name = "name_dm",
+                                    term_frequency_adjustments_name = True,
+                                    levenshtein_thresholds=[2],
+                                    jaro_winkler_thresholds=[],
+                                    jaccard_thresholds=[1]
+                                    )
+                ```
 
         Returns:
             Comparison: A comparison that can be included in the Splink settings
@@ -408,6 +446,7 @@ class NameComparisonBase(Comparison):
                 term_frequency_adjustments=term_frequency_adjustments_name,
                 m_probability=m_probability_exact_match_name,
                 include_colname_in_charts_label=True,
+                regex_extract=regex_extract,
             )
             comparison_levels.append(comparison_level)
 
@@ -417,6 +456,7 @@ class NameComparisonBase(Comparison):
                     term_frequency_adjustments=term_frequency_adjustments_phonetic_name,
                     m_probability=m_probability_exact_match_phonetic_name,
                     include_colname_in_charts_label=True,
+                    regex_extract=regex_extract,
                 )
                 comparison_levels.append(comparison_level)
 
@@ -425,9 +465,10 @@ class NameComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "levenshtein",
-                levenshtein_thresholds,
-                m_probability_or_probabilities_lev,
+                distance_function_name="levenshtein",
+                distance_threshold_or_thresholds=levenshtein_thresholds,
+                regex_extract=regex_extract,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_lev,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -436,9 +477,10 @@ class NameComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "jaro",
-                jaro_thresholds,
-                m_probability_or_probabilities_jar,
+                distance_function_name="jaro",
+                distance_threshold_or_thresholds=jaro_thresholds,
+                regex_extract=regex_extract,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jar,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -447,9 +489,10 @@ class NameComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "jaro-winkler",
-                jaro_winkler_thresholds,
-                m_probability_or_probabilities_jw,
+                distance_function_name="jaro-winkler",
+                distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                regex_extract=regex_extract,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jw,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -458,9 +501,10 @@ class NameComparisonBase(Comparison):
             threshold_comparison_levels = distance_threshold_comparison_levels(
                 self,
                 col_name,
-                "jaccard",
-                jaccard_thresholds,
-                m_probability_or_probabilities_jar,
+                distance_function_name="jaccard",
+                distance_threshold_or_thresholds=jaccard_thresholds,
+                regex_extract=regex_extract,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jar,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
