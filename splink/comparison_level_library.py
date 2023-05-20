@@ -89,6 +89,7 @@ class ExactMatchLevelBase(ComparisonLevel):
         m_probability=None,
         term_frequency_adjustments=False,
         include_colname_in_charts_label=False,
+        manual_chart_label=None,
     ) -> ComparisonLevel:
         """Represents a comparison level where there is an exact match,
 
@@ -99,7 +100,11 @@ class ExactMatchLevelBase(ComparisonLevel):
                 Defaults to None.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-
+            include_colname_in_charts_label (bool, optional): If True, include col_name
+                in chart labels (e.g. linker.match_weights_chart())
+            chart_label (str, optional): string to include in chart label. Setting to
+                col_name would recreate behaviour of
+                include_colname_in_charts_label=True
         Examples:
             === "DuckDB"
                 Simple Exact match level
@@ -166,7 +171,13 @@ class ExactMatchLevelBase(ComparisonLevel):
         """
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
 
-        label_suffix = f" {col_name}" if include_colname_in_charts_label else ""
+        if include_colname_in_charts_label:
+            label_suffix = f" {col_name}"
+        elif manual_chart_label:
+            label_suffix = f" {manual_chart_label}"
+        else:
+            label_suffix = ""
+
         if regex_extract:
             col_name_l = self._regex_extract_function(col.name_l(), regex_extract)
             col_name_r = self._regex_extract_function(col.name_r(), regex_extract)
@@ -239,6 +250,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         distance_threshold: int | float,
         regex_extract: str = None,
         higher_is_more_similar: bool = True,
+        include_colname_in_charts_label=False,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a user-provided distance function,
@@ -254,6 +266,8 @@ class DistanceFunctionLevelBase(ComparisonLevel):
                 distance function indicates a higher similarity (e.g. jaro_winkler).
                 If false, a higher value indicates a lower similarity
                 (e.g. levenshtein).
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
             m_probability (float, optional): Starting value for m probability
                 Defaults to None.
 
@@ -307,9 +321,14 @@ class DistanceFunctionLevelBase(ComparisonLevel):
             f"{distance_function_name}({col_name_l}, {col_name_r}) "
             f"{operator} {distance_threshold}"
         )
+
+        label_suffix = f" {col_name}" if include_colname_in_charts_label else ""
+
         chart_label = (
-            f"{distance_function_name.capitalize()} {operator} {distance_threshold}"
+            f"{distance_function_name.capitalize()}{label_suffix} {operator} "
+            f"{distance_threshold}"
         )
+
         level_dict = {
             "sql_condition": sql_cond,
             "label_for_charts": chart_label,
@@ -330,6 +349,7 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
         col_name: str,
         distance_threshold: int,
         regex_extract: str = None,
+        include_colname_in_charts_label=False,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a levenshtein distance function,
@@ -337,8 +357,10 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
         Args:
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
-                similarity.
+                similarity
             regex_extract (str): Regular expression pattern to evaluate a match on.
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -399,6 +421,7 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
             distance_threshold,
             regex_extract,
             False,
+            include_colname_in_charts_label=include_colname_in_charts_label,
             m_probability=m_probability,
         )
 
@@ -474,6 +497,7 @@ class JaroLevelBase(DistanceFunctionLevelBase):
         col_name: str,
         distance_threshold: float,
         regex_extract: str = None,
+        include_colname_in_charts_label=False,
         m_probability=None,
     ):
         """Represents a comparison using the jaro distance function
@@ -483,6 +507,8 @@ class JaroLevelBase(DistanceFunctionLevelBase):
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
             regex_extract (str): Regular expression pattern to evaluate a match on.
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -525,6 +551,7 @@ class JaroLevelBase(DistanceFunctionLevelBase):
             distance_threshold,
             regex_extract,
             True,
+            include_colname_in_charts_label=include_colname_in_charts_label,
             m_probability=m_probability,
         )
 
@@ -535,6 +562,7 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
         col_name: str,
         distance_threshold: float,
         regex_extract: str = None,
+        include_colname_in_charts_label=False,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using the jaro winkler distance function
@@ -544,6 +572,8 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
             regex_extract (str): Regular expression pattern to evaluate a match on.
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -584,6 +614,7 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
             distance_threshold,
             regex_extract,
             True,
+            include_colname_in_charts_label=include_colname_in_charts_label,
             m_probability=m_probability,
         )
 
@@ -600,6 +631,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
         col_name: str,
         distance_threshold: int | float,
         regex_extract: str = None,
+        include_colname_in_charts_label=False,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a jaccard distance function
@@ -609,6 +641,8 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
             regex_extract (str): Regular expression pattern to evaluate a match on.
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
         Examples:
@@ -646,6 +680,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
             distance_threshold,
             regex_extract,
             True,
+            include_colname_in_charts_label=include_colname_in_charts_label,
             m_probability=m_probability,
         )
 
