@@ -292,8 +292,8 @@ def test_small_example_duckdb(tmp_path):
             cl.damerau_levenshtein_at_thresholds(
                 "dob", 2, term_frequency_adjustments=True
             ),
-            cl.jaro_at_thresholds("email", term_frequency_adjustments=True),
-            cl.jaro_winkler_at_thresholds("city", term_frequency_adjustments=True),
+            cl.jaro_at_thresholds("email", 0.9, term_frequency_adjustments=True),
+            cl.jaro_winkler_at_thresholds("city", 0.9, term_frequency_adjustments=True),
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,

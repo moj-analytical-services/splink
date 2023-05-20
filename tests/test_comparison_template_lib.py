@@ -95,11 +95,10 @@ def test_datediff_levels(spark, ctl, Linker):
     # Generate our various settings objs
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [ctl.date_comparison("dob")],
+        "comparisons": [ctl.date_comparison("dob", cast_strings_to_date=True)],
     }
 
     # We need to put our column in datetime format for this to work
-    df["dob"] = pd.to_datetime(df["dob"])
 
     if Linker == SparkLinker:
         df = spark.createDataFrame(df)
@@ -120,7 +119,7 @@ def test_datediff_levels(spark, ctl, Linker):
     size_gamma_lookup = {
         5: [[1, 8]],
         4: [(2, 9)],
-        3: [(7, 8)], 
+        3: [(7, 8)],
         2: [(1, 9)],
         1: [(3, 7)],
         0: [(1, 4)],
