@@ -432,6 +432,7 @@ class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
         col_name: str,
         distance_threshold: int,
         regex_extract: str = None,
+        include_colname_in_charts_label=False,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a damerau-levenshtein distance
@@ -442,6 +443,8 @@ class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
             regex_extract (str): Regular expression pattern to evaluate a match on.
+            include_colname_in_charts_label (bool, optional): If True, includes
+                col_name in charts label
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
@@ -487,6 +490,7 @@ class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
             distance_threshold,
             regex_extract,
             False,
+            include_colname_in_charts_label=include_colname_in_charts_label,
             m_probability=m_probability,
         )
 
