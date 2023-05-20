@@ -120,7 +120,7 @@ def test_datediff_levels(spark, ctl, Linker):
     size_gamma_lookup = {
         5: [[1, 8]],
         4: [(2, 9)],
-        3: [(7, 8)], 
+        3: [(7, 8)],
         2: [(1, 9)],
         1: [(3, 7)],
         0: [(1, 4)],
