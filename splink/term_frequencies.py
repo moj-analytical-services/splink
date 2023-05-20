@@ -3,15 +3,14 @@ from __future__ import annotations
 # For more information on where formulas came from, see
 # https://github.com/moj-analytical-services/splink/pull/107
 import logging
-from typing import TYPE_CHECKING
 import warnings
+from typing import TYPE_CHECKING
 
+from numpy import arange, ceil, floor, log2
 from pandas import concat, cut
-from numpy import log2, ceil, floor, arange
-
-from .input_column import InputColumn, remove_quotes_from_identifiers
 
 from .charts import load_chart_definition, vegalite_or_json
+from .input_column import InputColumn, remove_quotes_from_identifiers
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -246,12 +245,13 @@ def tf_adjustment_chart(
     mask = selected | least_freq | most_freq
     # df = df[mask]
 
-    vals_not_included = [val for val in vals_to_include if val not in df['value']]
+    vals_not_included = [val for val in vals_to_include if val not in df["value"]]
     if vals_not_included:
         warnings.warn(
-            f"Values {vals_not_included} from `vals_to_include` were not found in the dataset so are not included in the chart." 
-            )
-
+            f"Values {vals_not_included} from `vals_to_include` were not found in "
+            f"the dataset so are not included in the chart.",
+            stacklevel=2,
+        )
 
     # Histogram data
     bin_width = 0.5  # Specify the desired bin width

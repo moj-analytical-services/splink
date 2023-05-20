@@ -2666,16 +2666,21 @@ class Linker:
         vals_to_include: str | list = None,
         as_dict: bool = False,
     ):
-        """Display a chart showing the impact of term frequency adjustments on a specific comparison level.
+        """Display a chart showing the impact of term frequency adjustments on a
+        specific comparison level.
         Each value
 
         Args:
-            output_column_name (str): Name of an output column for which term frequency adjustment has been applied.
-            n_most_freq (int, optional): Number of most frequent values to show. If this or `n_least_freq` set to None, all values will be shown.
+            output_column_name (str): Name of an output column for which term frequency
+                 adjustment has been applied.
+            n_most_freq (int, optional): Number of most frequent values to show. If this
+                 or `n_least_freq` set to None, all values will be shown.
                 Default to 10.
-            n_least_freq (int, optional): Number of least frequent values to show. If this or `n_most_freq` set to None, all values will be shown.
+            n_least_freq (int, optional): Number of least frequent values to show. If
+                this or `n_most_freq` set to None, all values will be shown.
                 Default to 10.
-            vals_to_include (list, optional): Specific values for which to show term frequency adjustments.
+            vals_to_include (list, optional): Specific values for which to show term
+                sfrequency adjustments.
                 Defaults to None.
 
         Returns:
@@ -2692,7 +2697,8 @@ class Linker:
         ]
         if output_column_name not in tf_comparisons:
             raise ValueError(
-                f"{output_column_name} is not a valid comparison column, or does not have term frequency adjustment activated"
+                f"{output_column_name} is not a valid comparison column, or does not"
+                f" have term frequency adjustment activated"
             )
 
         vals_to_include = ensure_is_list(vals_to_include)
