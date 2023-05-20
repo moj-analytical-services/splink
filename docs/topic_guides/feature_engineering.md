@@ -504,14 +504,4 @@ Now that the `full_name` column has been added, it can be used within comparison
     >    - 'Jaro_winkler_similarity surname >= 0.88' with SQL rule: jaro_winkler_similarity("surname_l", "surname_r") >= 0.88
     >    - 'Jaro_winkler_similarity first_name >= 0.88' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.88
     >    - 'All other comparisons' with SQL rule: ELSE
-    
-> Comparison 'Exact match vs. Names with phonetic exact match vs. Names within jaro_winkler thresholds 0.95, 0.88 vs. anything else' of "first_name" and "first_name_dm".
->
-> Similarity is assessed using the following ComparisonLevels:
->
->    - 'Null' with SQL rule: "first_name_l" IS NULL OR "first_name_r" IS NULL
->    - 'Exact match first_name' with SQL rule: "first_name_l" = "first_name_r"
->    - 'Exact match first_name_dm' with SQL rule: "first_name_dm_l" = "first_name_dm_r"
->    - 'Jaro_winkler_similarity >= 0.95' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.95
->    - 'Jaro_winkler_similarity >= 0.88' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.88
->    - 'All other comparisons' with SQL rule: ELSE
+
