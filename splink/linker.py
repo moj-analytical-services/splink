@@ -11,6 +11,8 @@ from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
 
+import sqlglot
+
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
 
 from .accuracy import (
@@ -343,7 +345,6 @@ class Linker:
 
     @property
     def _verify_link_only_job(self):
-
         cache = self._intermediate_table_cache
         if "__splink__df_concat_with_tf" not in cache:
             return
@@ -597,9 +598,20 @@ class Linker:
         try:
             return self._run_sql_execution(final_sql, templated_name, physical_name)
         except Exception as e:
+
+            # Parse our SQL through sqlglot to pretty print
+            try:
+                final_sql = sqlglot.parse_one(
+                    final_sql,
+                    read=self._sql_dialect,
+                ).sql(pretty=True)
+                # if sqlglot produces any errors, just report the raw SQL
+            except Exception:
+                pass
+
             raise SplinkException(
                 f"Error executing the following sql for table "
-                f"`{templated_name}`({physical_name}):\n{final_sql}"
+                f"`{templated_name}` ({physical_name}):\n{final_sql}"
             ) from e
 
     def register_table(self, input, table_name, overwrite=False):
@@ -996,7 +1008,7 @@ class Linker:
         if not isinstance(settings_dict, dict):
             p = Path(settings_dict)
             if not p.is_file():  # check if it's a valid file/filepath
-                raise ValueError(
+                raise FileNotFoundError(
                     "The filepath you have provided is either not a valid file "
                     "or doesn't exist along the path provided."
                 )
