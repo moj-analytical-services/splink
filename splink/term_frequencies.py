@@ -4,6 +4,7 @@ from __future__ import annotations
 # https://github.com/moj-analytical-services/splink/pull/107
 import logging
 from typing import TYPE_CHECKING
+import warnings
 
 from pandas import concat, cut
 from numpy import log2, ceil, floor, arange
@@ -166,9 +167,8 @@ def comparison_level_to_tf_chart_data(cl: dict):
     df.columns = ["value", "tf"]
     df = df[df.value.notnull()]
 
-    for k, v in cl.items():
-        if k != "df_tf":
-            df.loc[:, k] = v
+    del cl["df_tf"]
+    df = df.assign(**cl)
 
     # TF match weight scaled by tf_adjustment_weight
     df.loc[:, "log2_bf_tf"] = (
@@ -245,6 +245,13 @@ def tf_adjustment_chart(
     most_freq = True if not n_most_freq else df["most_freq_rank"] < n_most_freq
     mask = selected | least_freq | most_freq
     # df = df[mask]
+
+    vals_not_included = [val for val in vals_to_include if val not in df['value']]
+    if vals_not_included:
+        warnings.warn(
+            f"Values {vals_not_included} from `vals_to_include` were not found in the dataset so are not included in the chart." 
+            )
+
 
     # Histogram data
     bin_width = 0.5  # Specify the desired bin width
