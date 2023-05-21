@@ -5,6 +5,7 @@ import duckdb
 import pandas as pd
 import phonetics
 
+
 def comparator_score(str1, str2, decimal_places=2):
     """Helper function to give the similarity between two strings for
     the string comparators in splink.
@@ -29,7 +30,6 @@ def comparator_score(str1, str2, decimal_places=2):
         ROUND(jaccard('{str1}', '{str2}'), {decimal_places}) as jaccard_similarity
     """
     return con.execute(sql).fetch_df()
-
 
 
 def distance_match(distance, threshold):
