@@ -75,7 +75,7 @@ def comparator_score_df(list, col1, col2, decimal_places=2):
 
     sql = f"""
         SELECT 
-        *, 
+        {col1}, {col2},
         levenshtein({col1}, {col2}) as levenshtein_distance,
         damerau_levenshtein({col1}, {col2}) as damerau_levenshtein_distance,
         ROUND(jaro_similarity({col1}, {col2}), {decimal_places}) as jaro_similarity,
