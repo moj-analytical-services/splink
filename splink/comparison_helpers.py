@@ -1,16 +1,9 @@
 import re
 
 import altair as alt
-import jellyfish
+import duckdb
 import pandas as pd
 import phonetics
-
-
-def jaccard_similarity(str1, str2):
-    set1 = set(str1)
-    set2 = set(str2)
-    return len(set1 & set2) / len(set1 | set2)
-
 
 def comparator_score(str1, str2, decimal_places=2):
     """Helper function to give the similarity between two strings for
@@ -23,30 +16,20 @@ def comparator_score(str1, str2, decimal_places=2):
         ch.comparator_score("Richard", "iRchard")
         ```
     """
+    con = duckdb.connect()
 
-    scores = {}
+    sql = f"""
+        select 
+        '{str1}' as string1, 
+        '{str2}' as string2,
+        levenshtein('{str1}', '{str2}') as levenshtein_distance,
+        damerau_levenshtein('{str1}', '{str2}') as damerau_levenshtein_distance,
+        ROUND(jaro_similarity('{str1}', '{str2}'), {decimal_places}) as jaro_similarity,
+        ROUND(jaro_winkler_similarity('{str1}', '{str2}'), {decimal_places}) as jaro_winkler_similarity,
+        ROUND(jaccard('{str1}', '{str2}'), {decimal_places}) as jaccard_similarity
+    """
+    return con.execute(sql).fetch_df()
 
-    # Levenshtein distance
-    lev_dist = jellyfish.levenshtein_distance(str1, str2)
-    scores["levenshtein_distance"] = round(lev_dist, decimal_places)
-
-    # Damerau-Levenshtein distance
-    dlev_dist = jellyfish.damerau_levenshtein_distance(str1, str2)
-    scores["damerau_levenshtein_distance"] = round(dlev_dist, decimal_places)
-
-    # Jaro distance
-    jaro_sim = jellyfish.jaro_distance(str1, str2)
-    scores["jaro_similarity"] = round(jaro_sim, decimal_places)
-
-    # Jaro-Winkler distance
-    jw_sim = jellyfish.jaro_winkler(str1, str2)
-    scores["jaro_winkler_similarity"] = round(jw_sim, decimal_places)
-
-    # Jaccard similarity
-    jaccard_sim = jaccard_similarity(str1, str2)
-    scores["jaccard_similarity"] = round(jaccard_sim, decimal_places)
-
-    return scores
 
 
 def distance_match(distance, threshold):
@@ -70,43 +53,38 @@ def threshold_match(comparator, score, distance_threshold, similarity_threshold)
         return similarity_match(score, similarity_threshold)
 
 
-def comparator_score_df(list, col1, col2):
-    """Helper function returning a dataframe showing the sting similarity
+def comparator_score_df(list, col1, col2, decimal_places=2):
+    """Helper function returning a dataframe showing the string similarity
     scores and string distances for a list of strings.
 
     Examples:
         ```py
         import splink.comparison_helpers as ch
 
-        ch.comparator_score_df(data, "string1", "string2")
+        list = {
+                "string1": ["Stephen", "Stephen","Stephen"],
+                "string2": ["Stephen", "Steven", "Stephan"],
+                }
+
+        ch.comparator_score_df(list, "string1", "string2")
         ```
     """
+    con = duckdb.connect()
+
     df = pd.DataFrame(list)
 
-    scores = []
+    sql = f"""
+        SELECT 
+        *, 
+        levenshtein({col1}, {col2}) as levenshtein_distance,
+        damerau_levenshtein({col1}, {col2}) as damerau_levenshtein_distance,
+        ROUND(jaro_similarity({col1}, {col2}), {decimal_places}) as jaro_similarity,
+        ROUND(jaro_winkler_similarity({col1}, {col2}), {decimal_places}) as jaro_winkler_similarity,
+        ROUND(jaccard({col1}, {col2}), {decimal_places}) as jaccard_similarity
+        FROM df
+    """
 
-    for _index, row in df.iterrows():
-        str1 = row[col1]
-        str2 = row[col2]
-        row_scores = comparator_score(str1, str2)
-        row_scores["string1"] = str1
-        row_scores["string2"] = str2
-        scores.append(row_scores)
-
-    scores_df = pd.DataFrame(
-        scores,
-        columns=[
-            "string1",
-            "string2",
-            "levenshtein_distance",
-            "damerau_levenshtein_distance",
-            "jaro_similarity",
-            "jaro_winkler_similarity",
-            "jaccard_similarity",
-        ],
-    )
-
-    return scores_df
+    return duckdb.sql(sql).df()
 
 
 def comparator_score_chart(
@@ -119,7 +97,12 @@ def comparator_score_chart(
         ```py
         import splink.comparison_helpers as ch
 
-        ch.comparator_score_chart(data, "string1", "string2")
+        list = {
+                "string1": ["Stephen", "Stephen","Stephen"],
+                "string2": ["Stephen", "Steven", "Stephan"],
+                }
+
+        ch.comparator_score_chart(list, "string1", "string2")
         ```
     """
 
@@ -224,7 +207,7 @@ def comparator_score_chart(
 
 
 def comparator_score_threshold_chart(
-    df, col1, col2, similarity_threshold=None, distance_threshold=None
+    list, col1, col2, similarity_threshold=None, distance_threshold=None
 ):
     """Helper function returning a heatmap showing the sting similarity
     scores and string distances for a list of strings given a threshold.
@@ -233,13 +216,18 @@ def comparator_score_threshold_chart(
         ```py
         import splink.comparison_helpers as ch
 
+        list = {
+                "string1": ["Stephen", "Stephen","Stephen"],
+                "string2": ["Stephen", "Steven", "Stephan"],
+                }
+
         ch.comparator_score_threshold_chart(data,
                                  "string1", "string2",
                                  similarity_threshold=0.8,
                                  distance_threshold=2)
         ```
     """
-    df = comparator_score_df(df, col1, col2)
+    df = comparator_score_df(list, col1, col2)
 
     df["strings_to_compare"] = df["string1"] + ", " + df["string2"]
 
@@ -302,7 +290,9 @@ def phonetic_transform(string):
     Soundex, Metaphone and Double Metaphone.
 
     Examples:
-        >>> phonetic_transform("Richard", "iRchard")
+        ```py
+        phonetic_transform("Richard", "iRchard")
+        ```
     """
     transforms = {}
 
@@ -329,7 +319,12 @@ def phonetic_transform_df(list, col1, col2):
         ```py
         import splink.comparison_helpers as ch
 
-        ch.phonetic_match_chart(data, "string1", "string2")
+        list = {
+                "string1": ["Stephen", "Stephen","Stephen"],
+                "string2": ["Stephen", "Steven", "Stephan"],
+                }
+
+        ch.phonetic_match_chart(list, "string1", "string2")
         ```
     """
 
@@ -365,19 +360,7 @@ def phonetic_transform_df(list, col1, col2):
     return phonetic_df
 
 
-def phonetic_match(string1, string2):
-
-    phonetic1 = phonetic_transform(string1)
-    phonetic2 = phonetic_transform(string2)
-
-    comparison_list = [
-        transform1 == transform2 for transform1, transform2 in zip(phonetic1, phonetic2)
-    ]
-
-    return comparison_list
-
-
-def phonetic_match_chart(df, col1, col2):
+def phonetic_match_chart(list, col1, col2):
     """Helper function returning a heatmap showing the phonetic transform and
     matches for a list of strings given a threshold.
 
@@ -385,14 +368,19 @@ def phonetic_match_chart(df, col1, col2):
         ```py
         import splink.comparison_helpers as ch
 
-        ch.comparator_score_threshold_chart(data,
+        list = {
+                "string1": ["Stephen", "Stephen","Stephen"],
+                "string2": ["Stephen", "Steven", "Stephan"],
+                }
+
+        ch.comparator_score_threshold_chart(list,
                                  "string1", "string2",
                                  similarity_threshold=0.8,
                                  distance_threshold=2)
         ```
     """
 
-    df = phonetic_transform_df(df, "string1", "string2")
+    df = phonetic_transform_df(list, "string1", "string2")
 
     df["strings_to_compare"] = df["string1"] + ", " + df["string2"]
 

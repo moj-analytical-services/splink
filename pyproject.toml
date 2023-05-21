@@ -16,7 +16,6 @@ duckdb = ">=0.6.0"
 sqlglot = ">=5.1.0"
 altair = ">=4.2.0"
 Jinja2 = ">=3.0.3"
-jellyfish = "^0.11.2"
 phonetics = "^1.0.5"
 
 [tool.poetry.group.dev]
