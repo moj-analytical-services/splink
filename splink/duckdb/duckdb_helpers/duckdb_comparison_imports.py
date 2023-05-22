@@ -1,8 +1,3 @@
-from .duckdb_base import (
-    DuckDBBase,
-)
-
-# Comparison Level imports
 from ...comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
@@ -18,8 +13,6 @@ from ...comparison_level_library import (
     NullLevelBase,
     PercentageDifferenceLevelBase,
 )
-
-# Comparison Library imports
 from ...comparison_library import (
     ArrayIntersectAtSizesComparisonBase,
     DateDiffAtThresholdsComparisonBase,
@@ -31,6 +24,16 @@ from ...comparison_library import (
     JaroWinklerAtThresholdsComparisonBase,
     LevenshteinAtThresholdsComparisonBase,
 )
+from ...comparison_template_library import (
+    DateComparisonBase,
+    ForenameSurnameComparisonBase,
+    NameComparisonBase,
+    PostcodeComparisonBase,
+)
+from .duckdb_base import (
+    DuckDBBase,
+)
+
 
 # Class used to feed our comparison_library classes
 class DuckDBComparisonProperties(DuckDBBase):
@@ -83,7 +86,9 @@ class DuckDBComparisonProperties(DuckDBBase):
         return jaccard_level
 
 
-# COMPARISON LEVELS
+#########################
+### COMPARISON LEVELS ###
+#########################
 class null_level(DuckDBBase, NullLevelBase):
     pass
 
@@ -136,7 +141,9 @@ class datediff_level(DuckDBBase, DateDiffLevelBase):
     pass
 
 
-# COMPARISON LIBRARY CLASSES
+##########################
+### COMPARISON LIBRARY ###
+##########################
 class exact_match(DuckDBComparisonProperties, ExactMatchBase):
     pass
 
@@ -197,14 +204,9 @@ class distance_in_km_at_thresholds(
     pass
 
 
-# COMPARISON TEMPLATE LIBRARY
-from ...comparison_template_library import (
-    DateComparisonBase,
-    ForenameSurnameComparisonBase,
-    NameComparisonBase,
-    PostcodeComparisonBase,
-)
-
+###################################
+### COMPARISON TEMPLATE LIBRARY ###
+###################################
 class date_comparison(DuckDBComparisonProperties, DateComparisonBase):
     @property
     def _distance_level(self):
