@@ -324,6 +324,10 @@ class AthenaLinker(Linker):
             else:
                 self._delete_table_from_database(table_name)
 
+        self._table_registration(input, table_name)
+        return self._table_to_splink_dataframe(table_name, table_name)
+
+    def _table_registration(self, input, table_name):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
         elif isinstance(input, list):
@@ -331,8 +335,6 @@ class AthenaLinker(Linker):
 
         # Errors if an invalid data type is passed
         self.register_data_on_s3(input, table_name)
-
-        return self._table_to_splink_dataframe(table_name, table_name)
 
     def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:
@@ -397,7 +399,6 @@ class AthenaLinker(Linker):
         self.ctas_query_info.pop(physical_name)
 
     def _delete_table_from_database(self, name):
-
         if name in self.ctas_query_info:
             # Use ctas metadata to delete backing data
             self._delete_table_from_s3(name)

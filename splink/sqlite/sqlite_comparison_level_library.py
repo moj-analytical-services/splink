@@ -34,6 +34,9 @@ class SqliteComparisonProperties(SqliteBase):
     def _levenshtein_level(self):
         return levenshtein_level
 
+    def _columns_reversed_level(self):
+        return columns_reversed_level
+
 
 class null_level(SqliteBase, NullLevelBase):
     pass
