@@ -52,28 +52,12 @@ def df_spark(spark):
     yield df
 
 
-# does this even need to be a fixture?? :thinking_face:
-@pytest.fixture
-def duckdb_helper():
-    return DuckDBTestHelper()
-
-
-@pytest.fixture
-def spark_helper(spark):
-    return SparkTestHelper(spark)
-
-
-@pytest.fixture
-def sqlite_helper():
-    return SQLiteTestHelper()
-
-
 # workaround as you can't pass fixtures as param arguments in base pytest
 # see e.g. https://stackoverflow.com/a/42400786/11811947
 @pytest.fixture
-def test_helpers(duckdb_helper, spark_helper, sqlite_helper):
+def test_helpers(spark):
     return {
-        "duckdb": duckdb_helper,
-        "spark": spark_helper,
-        "sqlite": sqlite_helper,
+        "duckdb": DuckDBTestHelper(),
+        "spark": SparkTestHelper(spark),
+        "sqlite": SQLiteTestHelper(),
     }
