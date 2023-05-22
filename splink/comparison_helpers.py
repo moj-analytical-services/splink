@@ -20,13 +20,15 @@ def comparator_score(str1, str2, decimal_places=2):
     con = duckdb.connect()
 
     sql = f"""
-        select 
-        '{str1}' as string1, 
+        select
+        '{str1}' as string1,
         '{str2}' as string2,
         levenshtein('{str1}', '{str2}') as levenshtein_distance,
         damerau_levenshtein('{str1}', '{str2}') as damerau_levenshtein_distance,
         ROUND(jaro_similarity('{str1}', '{str2}'), {decimal_places}) as jaro_similarity,
-        ROUND(jaro_winkler_similarity('{str1}', '{str2}'), {decimal_places}) as jaro_winkler_similarity,
+        ROUND(jaro_winkler_similarity(
+            '{str1}', '{str2}'), {decimal_places}
+            ) as jaro_winkler_similarity,
         ROUND(jaccard('{str1}', '{str2}'), {decimal_places}) as jaccard_similarity
     """
     return con.execute(sql).fetch_df()
@@ -69,17 +71,19 @@ def comparator_score_df(list, col1, col2, decimal_places=2):
         ch.comparator_score_df(list, "string1", "string2")
         ```
     """
-    con = duckdb.connect()
+    duckdb.connect()
 
-    df = pd.DataFrame(list)
+    pd.DataFrame(list)
 
     sql = f"""
-        SELECT 
+        SELECT
         {col1}, {col2},
         levenshtein({col1}, {col2}) as levenshtein_distance,
         damerau_levenshtein({col1}, {col2}) as damerau_levenshtein_distance,
         ROUND(jaro_similarity({col1}, {col2}), {decimal_places}) as jaro_similarity,
-        ROUND(jaro_winkler_similarity({col1}, {col2}), {decimal_places}) as jaro_winkler_similarity,
+        ROUND(jaro_winkler_similarity(
+            {col1}, {col2}), {decimal_places}
+            ) as jaro_winkler_similarity,
         ROUND(jaccard({col1}, {col2}), {decimal_places}) as jaccard_similarity
         FROM df
     """
