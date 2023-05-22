@@ -15,6 +15,7 @@ from ...comparison_level_library import (
 )
 from ...comparison_library import (
     ArrayIntersectAtSizesComparisonBase,
+    DamerauLevenshteinAtThresholdsComparisonBase,
     DateDiffAtThresholdsComparisonBase,
     DistanceFunctionAtThresholdsComparisonBase,
     DistanceInKMAtThresholdsComparisonBase,
@@ -74,6 +75,10 @@ class DuckDBComparisonProperties(DuckDBBase):
         return levenshtein_level
 
     @property
+    def _damerau_levenshtein_level(self):
+        return damerau_levenshtein_level
+
+    @property
     def _jaro_level(self):
         return jaro_level
 
@@ -110,6 +115,10 @@ class distance_function_level(DuckDBBase, DistanceFunctionLevelBase):
 
 
 class levenshtein_level(DuckDBBase, LevenshteinLevelBase):
+    pass
+
+
+class damerau_levenshtein_level(DuckDBBase, LevenshteinLevelBase):
     pass
 
 
@@ -162,6 +171,14 @@ class levenshtein_at_thresholds(
     @property
     def _distance_level(self):
         return self._levenshtein_level
+
+
+class damerau_levenshtein_at_thresholds(
+    DuckDBComparisonProperties, DamerauLevenshteinAtThresholdsComparisonBase
+):
+    @property
+    def _distance_level(self):
+        return self._damerau_levenshtein_level
 
 
 class jaro_at_thresholds(DuckDBComparisonProperties, JaroAtThresholdsComparisonBase):
