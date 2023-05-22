@@ -74,10 +74,10 @@ def test_damerau_levenshtein(spark):
     data = ["dave", "david", "", "dave"]
     df = pd.DataFrame(data, columns=["test_names"])
     df["id"] = df.index
-    df_spark_jaro = spark.createDataFrame(df)
+    df_spark_dam_lev = spark.createDataFrame(df)
 
     linker = SparkLinker(
-        df_spark_jaro,
+        df_spark_dam_lev,
         settings,
         input_table_aliases="test_dl_df",
     )
@@ -111,19 +111,10 @@ def test_damerau_levenshtein(spark):
     # ensure that newest jar is calculating similarity . dl of strings below is 0.9440
     assert (
         spark.sql("""SELECT levdamerau_distance("MARHTA", "MARTHA")  """).first()[0]
-        > 0.9
+        == 1.0
     )
 
-    # ensure that when one or both of the strings compared is NULL jw sim is 0
-
-    # assert spark.sql(
-    #       """SELECT levdamerau_distance(NULL, "John")  """).first()[0] == 0.0
-    # assert spark.sql(
-    #       """SELECT levdamerau_distance("Tom", NULL )  """).first()[0] == 0.0
-    # assert spark.sql(
-    #       """SELECT levdamerau_distance(NULL, NULL )  """).first()[0] == 0.0
-
-    # ensure totally dissimilar strings have dl sim of 0
+    # ensure totally dissimilar strings have dl sim of 5
     assert (
         spark.sql("""SELECT levdamerau_distance("Local", "Pub")  """).first()[0] == 5.0
     )

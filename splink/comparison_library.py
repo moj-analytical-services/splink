@@ -423,7 +423,7 @@ class DamerauLevenshteinAtThresholdsComparisonBase(
             col_name (str): The name of the column to compare
             distance_threshold_or_thresholds (Union[int, list], optional): The
                 threshold(s) to use for the middle similarity level(s).
-                Defaults to [1, 2].
+                Defaults to 1.
             regex_extract (str): Regular expression pattern to evaluate a match on.
             valid_string_regex (str): regular expression pattern that if not
                 matched will result in column being treated as a null.
