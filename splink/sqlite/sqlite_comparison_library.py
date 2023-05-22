@@ -1,15 +1,4 @@
-from ..comparison_library import (
-    DistanceFunctionAtThresholdsComparisonBase,
-    ExactMatchBase,
+from .sqlite_helpers.sqlite_comparison_imports import (  # noqa: F401
+    distance_function_at_thresholds,
+    exact_match,
 )
-from .sqlite_comparison_level_library import SqliteComparisonProperties
-
-
-class exact_match(SqliteComparisonProperties, ExactMatchBase):
-    pass
-
-
-class distance_function_at_thresholds(
-    SqliteComparisonProperties, DistanceFunctionAtThresholdsComparisonBase
-):
-    pass
