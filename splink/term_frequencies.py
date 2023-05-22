@@ -291,7 +291,7 @@ def tf_adjustment_chart(
     width_dict = df.groupby("gamma").count()["value"].to_dict()
     width_expression = (
         " ".join(
-            [f"gamma_sel == {l} ? {width_dict[l] * 20 + 150} :" for l in tf_levels[:-1]]
+            [f"gamma_sel == {lev} ? {width_dict[lev] * 20 + 150} :" for lev in tf_levels[:-1]]
         )
         + f" {width_dict[tf_levels[-1]] * 20 + 150}"
     )
