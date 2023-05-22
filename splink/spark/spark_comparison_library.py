@@ -1,5 +1,6 @@
 from ..comparison_library import (
     ArrayIntersectAtSizesComparisonBase,
+    DamerauLevenshteinAtThresholdsComparisonBase,
     DateDiffAtThresholdsComparisonBase,
     DistanceFunctionAtThresholdsComparisonBase,
     DistanceInKMAtThresholdsComparisonBase,
@@ -30,6 +31,14 @@ class levenshtein_at_thresholds(
     @property
     def _distance_level(self):
         return self._levenshtein_level
+
+
+class damerau_levenshtein_at_thresholds(
+    SparkComparisonProperties, DamerauLevenshteinAtThresholdsComparisonBase
+):
+    @property
+    def _distance_level(self):
+        return self._damerau_levenshtein_level
 
 
 class jaro_at_thresholds(SparkComparisonProperties, JaroAtThresholdsComparisonBase):

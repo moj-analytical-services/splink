@@ -24,24 +24,13 @@ def test_date_comparison_run(ctl):
 @pytest.mark.parametrize(
     ("ctl"),
     [
-        pytest.param(ctld, id="DuckDB Date Comparison Jaro Test"),
-        pytest.param(ctls, id="Spark Date Comparison Jaro Test"),
+        pytest.param(ctld, id="DuckDB Date Comparison Levenshtein Test"),
+        pytest.param(ctls, id="Spark Date Comparison Levenshtein Test"),
     ],
 )
-def test_date_comparison_jaro_run(ctl):
-    ctl.date_comparison("date", levenshtein_thresholds=[], jaro_thresholds=[0.9])
-
-
-@pytest.mark.parametrize(
-    ("ctl"),
-    [
-        pytest.param(ctld, id="DuckDB Date Comparison Jaro-Winkler Test"),
-        pytest.param(ctls, id="Spark Date Comparison Jaro-Winkler Test"),
-    ],
-)
-def test_date_comparison_jw_run(ctl):
+def test_date_comparison_dl_run(ctl):
     ctl.date_comparison(
-        "date", levenshtein_thresholds=[], jaro_winkler_thresholds=[0.9]
+        "date", levenshtein_thresholds=[1], damerau_levenshtein_thresholds=[]
     )
 
 
@@ -106,11 +95,10 @@ def test_datediff_levels(spark, ctl, Linker):
     # Generate our various settings objs
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [ctl.date_comparison("dob")],
+        "comparisons": [ctl.date_comparison("dob", cast_strings_to_date=True)],
     }
 
     # We need to put our column in datetime format for this to work
-    df["dob"] = pd.to_datetime(df["dob"])
 
     if Linker == SparkLinker:
         df = spark.createDataFrame(df)
@@ -119,7 +107,7 @@ def test_datediff_levels(spark, ctl, Linker):
     linker_output = linker.predict().as_pandas_dataframe()
 
     # # Dict key: {gamma_level value: size}
-    size_gamma_lookup = {0: 8, 1: 15, 2: 8, 3: 3, 4: 0, 5: 2}
+    size_gamma_lookup = {0: 8, 1: 15, 2: 5, 3: 5, 4: 1, 5: 2}
 
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
@@ -130,8 +118,9 @@ def test_datediff_levels(spark, ctl, Linker):
     # Dict key: {gamma_value: tuple of ID pairs}
     size_gamma_lookup = {
         5: [[1, 8]],
-        3: [(2, 9)],
-        2: [(7, 8), (1, 9)],
+        4: [(2, 9)],
+        3: [(7, 8)],
+        2: [(1, 9)],
         1: [(3, 7)],
         0: [(1, 4)],
     }
@@ -258,10 +247,11 @@ def test_name_comparison_levels(spark, ctl, Linker):
     linker_output = linker.predict().as_pandas_dataframe()
 
     # # Dict key: {gamma_level value: size}
-    size_gamma_lookup = {0: 8, 1: 4, 2: 0, 3: 2, 4: 1}
-    # 4: exact_match
-    # 3: dmetaphone exact match
-    # 2: jaro_winkler > 0.95
+    size_gamma_lookup = {0: 6, 1: 4, 2: 0, 3: 2, 4: 2, 5: 1}
+    # 5: exact_match
+    # 4: dmetaphone exact match
+    # 3: damerau_levenshtein <= 1
+    # 2: jaro_winkler > 0.9
     # 1: jaro_winkler > 0.8
     # 0: else
 
@@ -277,10 +267,11 @@ def test_name_comparison_levels(spark, ctl, Linker):
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_value: tuple of ID pairs}
     size_gamma_lookup = {
-        4: [[1, 6]],
-        3: [(2, 3), (4, 5)],
+        5: [[1, 6]],
+        4: [(2, 3), (4, 5)],
+        3: [(4, 6)],
         2: [],
-        1: [(1, 2), (4, 6)],
+        1: [(1, 2), (2, 6)],
         0: [(2, 4), (5, 6)],
     }
 
