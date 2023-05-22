@@ -30,6 +30,9 @@ class TestHelper(ABC):
     def load_frame_from_csv(self, path):
         return pd.read_csv(path)
 
+    def load_frame_from_parquet(self, path):
+        return pd.read_parquet(path)
+
     @property
     @abstractmethod
     def cll(self):
@@ -79,6 +82,11 @@ class SparkTestHelper(TestHelper):
         df.persist()
         return df
 
+    def load_frame_from_parquet(self, path):
+        df = self.spark.read.parquet(path)
+        df.persist()
+        return df
+
     @property
     def cll(self):
         return cll_spark
@@ -119,6 +127,9 @@ class SQLiteTestHelper(TestHelper):
 
     def load_frame_from_csv(self, path):
         return self.convert_frame(super().load_frame_from_csv(path))
+
+    def load_frame_from_parquet(self, path):
+        return self.convert_frame(super().load_frame_from_parquet(path))
 
     @property
     def cll(self):
