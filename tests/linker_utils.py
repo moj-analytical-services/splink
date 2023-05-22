@@ -91,7 +91,6 @@ def register_roc_data(linker):
 
 
 def _test_write_functionality(linker, read_csv_func):
-
     root = "__splink_tests"
     # delete the folder and its contents
     if os.path.exists(root):
