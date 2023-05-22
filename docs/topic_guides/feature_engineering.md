@@ -464,7 +464,6 @@ df.head()
     |  3 |           3 | Julia        | Taylor    | 2015-10-29 |        | hannah88opowersc@m             |       0 | Julia  Taylor |
     |  4 |           4 | oNah         | Watson    | 2008-03-23 | Bolton | matthew78@ballard-mcdonald.net |       1 | oNah Watson   |
 
-
 Now that the `full_name` column has been added, it can be used within comparisons. For example, using the [forenname_surname_comparison](../comparison_template_library.md#splink.comparison_template_library.ForenameSurnameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons).
 
 === "DuckDB"
@@ -505,3 +504,4 @@ Now that the `full_name` column has been added, it can be used within comparison
     >    - 'Jaro_winkler_similarity surname >= 0.88' with SQL rule: jaro_winkler_similarity("surname_l", "surname_r") >= 0.88
     >    - 'Jaro_winkler_similarity first_name >= 0.88' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.88
     >    - 'All other comparisons' with SQL rule: ELSE
+

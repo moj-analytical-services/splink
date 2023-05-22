@@ -78,3 +78,7 @@ class SparkBase(DialectBase):
     @property
     def _jaro_name(self):
         return "jaro_sim"
+
+    @property
+    def _damerau_levenshtein_name(self):
+        return "damerau_levenshtein"
