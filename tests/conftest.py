@@ -10,7 +10,6 @@ from tests.backend_utils.postgres_conf import (
     _engine_factory,
     _pg_credentials,
     _postgres,
-    pg_conn,
     pg_engine,
 )
 

@@ -9,13 +9,13 @@ from .basic_settings import get_settings_dict
 from .linker_utils import register_roc_data
 
 
-def test_full_example_postgres(tmp_path, pg_conn):
+def test_full_example_postgres(tmp_path, pg_engine):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
 
     linker = PostgresLinker(
         df,
-        connection=pg_conn,
+        engine=pg_engine,
     )
     linker.load_settings(settings_dict)
 
@@ -103,12 +103,12 @@ def test_full_example_postgres(tmp_path, pg_conn):
     path = os.path.join(tmp_path, "model.json")
     linker.save_settings_to_json(path)
 
-    linker_2 = PostgresLinker(df, connection=pg_conn)
+    linker_2 = PostgresLinker(df, engine=pg_engine)
     linker_2.load_settings(path)
     linker_2.load_settings_from_json(path)
 
 
-def test_postgres_use_existing_table(tmp_path, pg_conn, pg_engine):
+def test_postgres_use_existing_table(tmp_path, pg_engine, pg_engine):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     table_name = "input_table_test"
@@ -118,7 +118,7 @@ def test_postgres_use_existing_table(tmp_path, pg_conn, pg_engine):
 
     linker = PostgresLinker(
         table_name,
-        connection=pg_conn,
+        engine=pg_engine,
         settings_dict=settings_dict,
     )
     linker.predict()

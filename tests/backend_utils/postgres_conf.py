@@ -2,7 +2,6 @@ import os
 from uuid import uuid4
 
 import pytest
-from psycopg2 import connect
 from sqlalchemy import create_engine, text
 
 
@@ -42,6 +41,7 @@ def _postgres(_engine_factory):
     uuid = str(uuid4()).replace("-", "_")
     db_name = f"__splink__testing_database_{uuid}"
     user = f"pytest_{uuid}"
+    password = "testpw"
     create_db_sql = f"CREATE DATABASE {db_name}"
     # force drop as connections are persisting
     # would be good to relax by fixing connection issue, but doesn't matter in this env
@@ -55,7 +55,7 @@ def _postgres(_engine_factory):
         text(
             f"""
         CREATE USER {user} WITH
-        PASSWORD 'testpw'
+        PASSWORD '{password}'
         """
         )
     )
@@ -79,31 +79,16 @@ def _postgres(_engine_factory):
     new_conn.execute(text(f"GRANT USAGE ON LANGUAGE SQL TO {user};"))
     new_conn.execute(text(f"GRANT USAGE ON TYPE float8 TO {user};"))
     new_conn.close()
-    yield {"db": db_name, "user": user}
+    yield {"db": db_name, "user": user, "password": password}
 
     conn.execute(text(drop_db_sql))
     conn.close()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def pg_engine(_engine_factory, _postgres):
     # user engine, for registering tables outside of Splink
-    engine = _engine_factory(_postgres["db"], _postgres["user"], "testpw")
+    engine = _engine_factory(_postgres["db"], _postgres["user"], _postgres["password"])
     yield engine
 
     engine.dispose()
-
-
-@pytest.fixture(scope="function")
-def pg_conn(_postgres, _pg_credentials):
-    # connection with the minimal privileges needed as a Splink user
-    # suitable for passing to PostgresLinker
-    conn = connect(
-        dbname=_postgres["db"],
-        user=_postgres["user"],
-        password="testpw",
-        host=_pg_credentials["host"],
-        port=_pg_credentials["port"],
-    )
-    yield conn
-    conn.close()
