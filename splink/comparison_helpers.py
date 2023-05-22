@@ -1,9 +1,9 @@
-import re
-
 import altair as alt
 import duckdb
 import pandas as pd
 import phonetics
+
+from splink.comparison_helpers_utils import threshold_match
 
 
 def comparator_score(str1, str2, decimal_places=2):
@@ -32,27 +32,6 @@ def comparator_score(str1, str2, decimal_places=2):
         ROUND(jaccard('{str1}', '{str2}'), {decimal_places}) as jaccard_similarity
     """
     return con.execute(sql).fetch_df()
-
-
-def distance_match(distance, threshold):
-    if distance <= threshold:
-        return True
-    else:
-        return False
-
-
-def similarity_match(similarity, threshold):
-    if similarity >= threshold:
-        return True
-    else:
-        return False
-
-
-def threshold_match(comparator, score, distance_threshold, similarity_threshold):
-    if re.search("distance", comparator):
-        return distance_match(score, distance_threshold)
-    elif re.search("similarity", comparator):
-        return similarity_match(score, similarity_threshold)
 
 
 def comparator_score_df(list, col1, col2, decimal_places=2):
@@ -102,7 +81,7 @@ def comparator_score_chart(
         import splink.comparison_helpers as ch
 
         list = {
-                "string1": ["Stephen", "Stephen","Stephen"],
+                "string1": ["Stephen", "Stephen", "Stephen"],
                 "string2": ["Stephen", "Steven", "Stephan"],
                 }
 
