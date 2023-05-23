@@ -14,13 +14,6 @@ from ..splink_dataframe import SplinkDataFrame
 logger = logging.getLogger(__name__)
 
 
-def dict_factory(cursor, row):
-    d = {}
-    for idx, col in enumerate(cursor.description):
-        d[col[0]] = row[idx]
-    return d
-
-
 class PostgresDataFrame(SplinkDataFrame):
     linker: PostgresLinker
 
@@ -107,8 +100,8 @@ class PostgresLinker(Linker):
         accepted_df_dtypes = pd.DataFrame
         self._db_schema = "splink"
 
-        # Create log2 function in database
-        self._create_log2_function()
+        # Create custom SQL functions in database
+        self._register_custom_functions()
         self._register_extensions()
 
         # Create splink schema
@@ -217,8 +210,6 @@ class PostgresLinker(Linker):
         self._run_sql_execution(drop_sql)
 
     def _create_log2_function(self):
-        # TODO: only used in predict_from_comparison_vectors_sqls - do we _need_ it??
-        # but if permissions aren't an issue no hatm
         sql = """
         CREATE OR REPLACE FUNCTION log2(n float8)
         RETURNS float8 AS $$
@@ -226,6 +217,22 @@ class PostgresLinker(Linker):
         $$ LANGUAGE SQL IMMUTABLE;
         """
         self._run_sql_execution(sql)
+
+    def _create_datediff_function(self):
+        sql = """
+        CREATE OR REPLACE FUNCTION datediff(x date, y date)
+        RETURNS integer AS $$
+        SELECT x - y;
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
+    def _register_custom_functions(self):
+        # if people have issues with permissions we can allow these to be optional
+        # need for predict_from_comparison_vectors_sql (could adjust)
+        self._create_log2_function()
+        # need for datediff levels
+        self._create_datediff_function()
 
     def _register_extensions(self):
         sql = """
