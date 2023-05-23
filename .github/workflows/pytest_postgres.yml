@@ -78,9 +78,6 @@ jobs:
       #              run test suite
       #----------------------------------------------
       - name: Run only postgres-marked tests
-      # set hostname as given above
-        env:
-          SPLINKTEST_PG_HOST: pg_splink_ci
         run: |
           source .venv/bin/activate
           pytest -v tests/ -k postgres
