@@ -227,12 +227,23 @@ class PostgresLinker(Linker):
         """
         self._run_sql_execution(sql)
 
+    def _create_array_intersect_function(self):
+        sql = """
+        CREATE OR REPLACE FUNCTION array_intersect(x anyarray, y anyarray)
+        RETURNS anyarray AS $$
+        SELECT ARRAY( SELECT DISTINCT * FROM UNNEST(x) WHERE UNNEST = ANY(y) )
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
     def _register_custom_functions(self):
         # if people have issues with permissions we can allow these to be optional
         # need for predict_from_comparison_vectors_sql (could adjust)
         self._create_log2_function()
         # need for datediff levels
         self._create_datediff_function()
+        # need for array_intersect levels
+        self._create_array_intersect_function()
 
     def _register_extensions(self):
         sql = """

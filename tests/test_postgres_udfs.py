@@ -1,4 +1,6 @@
 import pandas as pd
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.types import INTEGER
 
 from splink.postgres.postgres_linker import PostgresLinker
 
@@ -53,5 +55,59 @@ def test_datediff(pg_engine):
         sql, "dummy_name", "test_dd_table"
     ).as_pandas_dataframe()
     
-    for log_result, expected in zip(frame["datediffs"], expected_datediff_vals):
-        assert log_result == expected
+    for dd_result, expected in zip(frame["datediffs"], expected_datediff_vals):
+        assert dd_result == expected
+
+
+def test_array_intersect(pg_engine):
+    linker = PostgresLinker(
+        [],
+        engine=pg_engine,
+    )
+    df = pd.DataFrame(
+        [
+            {
+                "arr_l": [1, 2, 3], "arr_r": [1, 5, 6], "expected": [1]
+            },
+            {
+                "arr_l": [1, 2, 3], "arr_r": [10, 1, -2], "expected": [1]
+            },
+            {
+                "arr_l": [1, 2, 3], "arr_r": [4, 5, 6], "expected": []
+            },
+            {
+                "arr_l": [1, 2, 3], "arr_r": [2, 1, 7, 10], "expected": [1, 2]
+            },
+            {
+                "arr_l": [1, 2, 3], "arr_r": [1, 1, 1], "expected": [1]
+            },
+            {
+                "arr_l": [1, 1, 1], "arr_r": [1, 2, 3], "expected": [1]
+            },
+            {
+                "arr_l": [3, 5, 7], "arr_r": [3, 5, 7], "expected": [3, 5, 7]
+            },
+            {
+                "arr_l": [1, 2, 3, 4, 5], "arr_r": [3, 5, 7], "expected": [3, 5]
+            },
+        ]
+    )
+    expected_intersect_vals = df["expected"]
+    df.to_sql(
+        "intersect_vals",
+        pg_engine,
+        dtype={
+            "arr_l": postgresql.ARRAY(INTEGER),
+            "arr_r": postgresql.ARRAY(INTEGER)
+        }
+    )
+    sql = "SELECT array_intersect(arr_l, arr_r) AS intersects FROM intersect_vals"
+    frame = linker._execute_sql_against_backend(
+        sql, "dummy_name", "test_intersect_table"
+    ).as_pandas_dataframe()
+    
+    for int_result, expected in zip(frame["intersects"], expected_intersect_vals):
+        # don't care about order
+        assert set(int_result) == set(expected)
+        # should check we don't have duplicates
+        assert len(int_result) == len(expected)
