@@ -5,10 +5,13 @@ import pandas as pd
 
 import splink.duckdb.duckdb_comparison_level_library as cll_duckdb
 import splink.duckdb.duckdb_comparison_library as cl_duckdb
+import splink.duckdb.duckdb_comparison_template_library as ctl_duckdb
 import splink.spark.spark_comparison_level_library as cll_spark
 import splink.spark.spark_comparison_library as cl_spark
+import splink.spark.spark_comparison_template_library as ctl_spark
 import splink.sqlite.sqlite_comparison_level_library as cll_sqlite
 import splink.sqlite.sqlite_comparison_library as cl_sqlite
+import splink.sqlite.sqlite_comparison_template_library as ctl_sqlite
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 from splink.sqlite.sqlite_linker import SQLiteLinker
@@ -43,6 +46,11 @@ class TestHelper(ABC):
     def cl(self):
         pass
 
+    @property
+    @abstractmethod
+    def ctl(self):
+        pass
+
 
 class DuckDBTestHelper(TestHelper):
     @property
@@ -59,6 +67,10 @@ class DuckDBTestHelper(TestHelper):
     @property
     def cl(self):
         return cl_duckdb
+
+    @property
+    def ctl(self):
+        return ctl_duckdb
 
 
 class SparkTestHelper(TestHelper):
@@ -94,6 +106,10 @@ class SparkTestHelper(TestHelper):
     @property
     def cl(self):
         return cl_spark
+
+    @property
+    def ctl(self):
+        return ctl_spark
 
 
 class SQLiteTestHelper(TestHelper):
@@ -138,3 +154,7 @@ class SQLiteTestHelper(TestHelper):
     @property
     def cl(self):
         return cl_sqlite
+
+    @property
+    def ctl(self):
+        return ctl_sqlite
