@@ -4,6 +4,7 @@ tags:
   - DuckDB
   - Athena
   - SQLite
+  - Postgres
   - Backends
 ---
 
@@ -65,6 +66,17 @@ the [comparison library API page](../comparison_library.html) and the [compariso
     import splink.sqlite.sqlite_comparison_level_library as cll
 
     linker = SQLiteLinker(your_args)
+
+    ```
+
+=== "PostgreSQL"
+
+    ```python
+    from splink.postgres.postgres_linker import PostgresLinker
+    import splink.postgres.postgres_comparison_library as cl
+    import splink.postgres.postgres_comparison_level_library as cll
+
+    linker = PostgresLinker(your_args)
 
     ```
 
