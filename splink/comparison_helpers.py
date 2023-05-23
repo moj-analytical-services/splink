@@ -1,9 +1,13 @@
-import altair as alt
 import duckdb
 import pandas as pd
 import phonetics
 
-from splink.comparison_helpers_utils import threshold_match
+from .charts import (
+    _comparator_score_chart,
+    _comparator_score_threshold_chart,
+    _phonetic_match_chart,
+)
+from .comparison_helpers_utils import threshold_match
 
 
 def comparator_score(str1, str2, decimal_places=2):
@@ -70,9 +74,7 @@ def comparator_score_df(list, col1, col2, decimal_places=2):
     return duckdb.sql(sql).df()
 
 
-def comparator_score_chart(
-    list, col1, col2, similarity_threshold=None, distance_threshold=None
-):
+def comparator_score_chart(list, col1, col2):
     """Helper function returning a heatmap showing the sting similarity
     scores and string distances for a list of strings.
 
@@ -107,86 +109,12 @@ def comparator_score_chart(
         value_name="score",
     )
 
-    similarity_title = "Heatmap of Similarity Scores"
-    distance_title = "Heatmap of Distance Scores"
-    graph_colour = "score"
+    similarity_df = df_long[df_long["comparator"].str.contains("similarity")]
+    similarity_records = similarity_df.to_json(orient="records")
+    distance_df = df_long[df_long["comparator"].str.contains("distance")]
+    distance_records = distance_df.to_json(orient="records")
 
-    if similarity_threshold and distance_threshold:
-        df_long["threshold_match"] = df_long.apply(
-            lambda row: threshold_match(
-                row["comparator"],
-                row["score"],
-                distance_threshold,
-                similarity_threshold,
-            ),
-            axis=1,
-        )
-        similarity_title = f"{similarity_title} with threshold {similarity_threshold}"
-        distance_title = f"{distance_title} with threshold {distance_threshold}"
-        graph_colour = "threshold_match"
-
-    # create similarity heatmap
-    heatmap_similarity = (
-        alt.Chart(
-            df_long[df_long["comparator"].str.contains("similarity")],
-            width=300,
-            height=300,
-        )
-        .mark_rect()
-        .encode(
-            x="comparator:O",
-            y="strings_to_compare:O",
-            color=alt.Color(
-                f"{graph_colour}:Q",
-                scale=alt.Scale(range=["red", "green"], domain=[0, 1]),
-            ),
-        )
-        .properties(title=similarity_title)
-    )
-
-    text_similarity = heatmap_similarity.mark_text(baseline="middle").encode(
-        text=alt.Text("score:Q", format=".2f"),
-        color=alt.condition(
-            alt.datum.quantity > 3, alt.value("white"), alt.value("black")
-        ),
-    )
-
-    similarity_scores = heatmap_similarity + text_similarity
-
-    # create distance heatmap
-    heatmap_distance = (
-        alt.Chart(
-            df_long[df_long["comparator"].str.contains("distance")],
-            width=200,
-            height=300,
-        )
-        .mark_rect()
-        .encode(
-            x="comparator:O",
-            y="strings_to_compare:O",
-            color=alt.Color(
-                f"{graph_colour}:Q",
-                scale=alt.Scale(range=["green", "red"], domain=[0, 5]),
-            ),
-        )
-        .properties(title=distance_title)
-    )
-
-    text_distance = heatmap_distance.mark_text(baseline="middle").encode(
-        text=alt.Text("score:Q"),
-        color=alt.condition(
-            alt.datum.quantity > 3, alt.value("white"), alt.value("black")
-        ),
-    )
-
-    distance_scores = heatmap_distance + text_distance
-
-    # show heatmap
-    scores_chart = alt.hconcat(similarity_scores, distance_scores).resolve_scale(
-        color="independent"
-    )
-
-    return scores_chart
+    return _comparator_score_chart(similarity_records, distance_records)
 
 
 def comparator_score_threshold_chart(
@@ -240,32 +168,11 @@ def comparator_score_threshold_chart(
     similarity_title = f"{similarity_title} with threshold {similarity_threshold}"
     distance_title = f"{distance_title} with threshold {distance_threshold}"
 
-    # create match heatmap
-    heatmap_match = (
-        alt.Chart(df_long, width=500, height=300)
-        .mark_rect()
-        .encode(
-            x="comparator:O",
-            y="strings_to_compare:O",
-            color=alt.Color(
-                "threshold_match:O", scale=alt.Scale(range=["red", "green"])
-            ),
-        )
-        .properties(
-            title=f"Heatmap of Matches for distance_threshold = {distance_threshold},"
-            f"similarity_threshold = {similarity_threshold}"
-        )
-    )
+    records = df_long.to_json(orient="records")
 
-    text_match = heatmap_match.mark_text(baseline="middle").encode(
-        text="score:O",
-        color=alt.condition(
-            alt.datum.quantity > 3, alt.value("white"), alt.value("black")
-        ),
+    return _comparator_score_threshold_chart(
+        records, similarity_threshold, distance_threshold
     )
-
-    matches = heatmap_match + text_match
-    return matches
 
 
 def phonetic_transform(string):
@@ -380,25 +287,6 @@ def phonetic_match_chart(list, col1, col2):
     )
     df_long["match"] = df_long["transform"].apply(lambda x: x[0] == x[1])
 
-    # create match heatmap
-    heatmap_phonetic_match = (
-        alt.Chart(df_long, width=300, height=600)
-        .mark_rect()
-        .encode(
-            x="phonetic:O",
-            y="strings_to_compare:O",
-            color=alt.Color("match:O", scale=alt.Scale(range=["red", "green"])),
-        )
-        .properties(title="Heatmap of Phonetic Matches")
-    )
+    records = df_long.to_json(orient="records")
 
-    text_phonetic_match = heatmap_phonetic_match.mark_text(baseline="middle").encode(
-        text="transform:O",
-        color=alt.condition(
-            alt.datum.quantity > 3, alt.value("white"), alt.value("black")
-        ),
-    )
-
-    phonetic_matches = heatmap_phonetic_match + text_phonetic_match
-
-    return phonetic_matches
+    return _phonetic_match_chart(records)

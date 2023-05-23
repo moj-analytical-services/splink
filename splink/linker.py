@@ -598,7 +598,6 @@ class Linker:
         try:
             return self._run_sql_execution(final_sql, templated_name, physical_name)
         except Exception as e:
-
             # Parse our SQL through sqlglot to pretty print
             try:
                 final_sql = sqlglot.parse_one(
