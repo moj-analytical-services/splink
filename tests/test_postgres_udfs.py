@@ -59,6 +59,45 @@ def test_datediff(pg_engine):
         assert dd_result == expected
 
 
+def test_months_between(pg_engine):
+    # NB only testing floor of this function, as that is what we have in datediff
+    linker = PostgresLinker(
+        [],
+        engine=pg_engine,
+    )
+    df = pd.DataFrame(
+        [
+            {
+                "date_l": "2023-05-24", "date_r": "2023-05-23", "expected": 0
+            },
+            {
+                "date_l": "2023-05-24", "date_r": "2023-04-25", "expected": 0
+            },
+            {
+                "date_l": "2023-05-24", "date_r": "2023-02-25", "expected": 2
+            },
+            {
+                "date_l": "2023-05-24", "date_r": "2022-05-23", "expected": 12
+            },
+        ]
+    )
+    fmt = "YYYY-MM-DD"
+    expected_monthdiff_vals = df["expected"]
+    linker.register_table(df, "monthdiff_vals")
+    sql = f"""
+    SELECT floor(
+        ave_months_between(
+            to_date("date_l", '{fmt}'), to_date("date_r", '{fmt}')
+        )
+    ) AS monthdiffs FROM monthdiff_vals"""
+    frame = linker._execute_sql_against_backend(
+        sql, "dummy_name", "test_md_table"
+    ).as_pandas_dataframe()
+    
+    for md_result, expected in zip(frame["monthdiffs"], expected_monthdiff_vals):
+        assert md_result == expected
+
+
 def test_array_intersect(pg_engine):
     linker = PostgresLinker(
         [],

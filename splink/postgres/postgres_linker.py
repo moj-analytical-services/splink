@@ -227,6 +227,20 @@ class PostgresLinker(Linker):
         """
         self._run_sql_execution(sql)
 
+    def _create_months_between_function(self):
+        # number of average-length (per year) months between two dates
+        # logic could be improved/made consistent with other backends
+        # but this is reasonable for now
+        # 30.4375 days
+        ave_length_month = 365.25/12
+        sql = f"""
+        CREATE OR REPLACE FUNCTION ave_months_between(x date, y date)
+        RETURNS float8 AS $$
+        SELECT datediff(x, y)/{ave_length_month};
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
     def _create_array_intersect_function(self):
         sql = """
         CREATE OR REPLACE FUNCTION array_intersect(x anyarray, y anyarray)
@@ -242,6 +256,7 @@ class PostgresLinker(Linker):
         self._create_log2_function()
         # need for datediff levels
         self._create_datediff_function()
+        self._create_months_between_function()
         # need for array_intersect levels
         self._create_array_intersect_function()
 
