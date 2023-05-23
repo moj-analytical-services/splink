@@ -300,9 +300,10 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
 
         An example of the output with default arguments and setting
         `distance_threshold_or_thresholds = [1,2]` would be
+
         - Exact match
-        - levenshtein distance <= 1
-        - levenshtein distance <= 2
+        - Levenshtein distance <= 1
+        - Levenshtein distance <= 2
         - Anything else
 
         Args:
@@ -351,7 +352,7 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                 and <=2
                 on a substring of name column as determined by a regular expression
                 ``` python
-                import splink.duckdb.duckdb_comparison_library as cl
+                import splink.spark.spark_comparison_library as cl
                 cl.levenshtein_at_thresholds("first_name", [1,2], regex_extract="^A|B")
                 ```
             === "Athena"
@@ -393,6 +394,107 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         return True
 
 
+class DamerauLevenshteinAtThresholdsComparisonBase(
+    DistanceFunctionAtThresholdsComparisonBase
+):
+    def __init__(
+        self,
+        col_name: str,
+        distance_threshold_or_thresholds: int | list = 1,
+        regex_extract: str = None,
+        valid_string_regex: str = None,
+        include_exact_match_level=True,
+        term_frequency_adjustments=False,
+        m_probability_exact_match=None,
+        m_probability_or_probabilities_dl: float | list = None,
+        m_probability_else=None,
+    ) -> Comparison:
+        """A comparison of the data in `col_name` with the damerau-levenshtein distance
+        used to assess middle similarity levels.
+
+        An example of the output with default arguments and setting
+        `distance_threshold_or_thresholds = [1]` would be
+
+        - Exact match
+        - Damerau-Levenshtein distance <= 1
+        - Anything else
+
+        Args:
+            col_name (str): The name of the column to compare
+            distance_threshold_or_thresholds (Union[int, list], optional): The
+                threshold(s) to use for the middle similarity level(s).
+                Defaults to 1.
+            regex_extract (str): Regular expression pattern to evaluate a match on.
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
+            include_exact_match_level (bool, optional): If True, include an exact match
+                level. Defaults to True.
+            term_frequency_adjustments (bool, optional): If True, apply term frequency
+                adjustments to the exact match level. Defaults to False.
+            m_probability_exact_match (_type_, optional): If provided, overrides the
+                default m probability for the exact match level. Defaults to None.
+            m_probability_or_probabilities_dl (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified for given function. Defaults to None.
+            m_probability_else (_type_, optional): If provided, overrides the
+                default m probability for the 'anything else' level. Defaults to None.
+        Examples:
+            === "DuckDB"
+                Create comparison with demerau-levenshtein match levels with
+                distance <= 1
+                ``` python
+                import splink.duckdb.duckdb_comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
+                ```
+                Create comparison with demerau-levenshtein match levels with
+                distance <= 1
+                on a substring of name column as determined by a regular expression
+                ``` python
+                import splink.duckdb.duckdb_comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name",
+                                                     [1,2],
+                                                     regex_extract="^A|B")
+                ```
+            === "Spark"
+                Create comparison with demerau-levenshtein match levels with
+                distance <= 1                ``` python
+                import splink.spark.spark_comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
+                ```
+                Create comparison with demerau-evenshtein match levels with
+                distance <= 1
+                on a substring of name column as determined by a regular expression
+                ``` python
+                import splink.spark.spark_comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name",
+                                                     [1,2],
+                                                     regex_extract="^A|B")
+                ```
+
+        Returns:
+            Comparison: A comparison for Damerau-Levenshtein similarity that can be
+            included in the Splink settings dictionary.
+        """
+
+        super().__init__(
+            col_name,
+            self._levenshtein_name,
+            distance_threshold_or_thresholds,
+            regex_extract,
+            valid_string_regex,
+            False,
+            include_exact_match_level,
+            term_frequency_adjustments,
+            m_probability_exact_match,
+            m_probability_or_probabilities_dl,
+            m_probability_else,
+        )
+
+    @property
+    def _is_distance_subclass(self):
+        return True
+
+
 class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase):
     def __init__(
         self,
@@ -411,6 +513,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
 
         An example of the output with default arguments and setting
         `distance_threshold_or_thresholds = [0.9,0.7]` would be
+
         - Exact match
         - Jaccard distance <= 0.9
         - Jaccard distance <= 0.7
@@ -508,9 +611,10 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
 
         An example of the output with default arguments and setting
         `distance_threshold_or_thresholds = [0.9, 0.7]` would be
+
         - Exact match
-        - jaro distance <= 0.9
-        - jaro distance <= 0.7
+        - Jaro distance <= 0.9
+        - Jaro distance <= 0.7
         - Anything else
 
         Args:
@@ -603,9 +707,10 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
 
         An example of the output with default arguments and setting
         `distance_threshold_or_thresholds = [0.9, 0.7]` would be
+
         - Exact match
-        - jaro_winkler distance <= 0.9
-        - jaro_winkler distance <= 0.7
+        - Jaro-Winkler distance <= 0.9
+        - Jaro-Winkler distance <= 0.7
         - Anything else
 
         Args:
@@ -706,6 +811,7 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
 
         An example of the output with default arguments and setting
         `size_or_sizes = [3, 1]` would be
+
         - Intersection has at least 3 elements
         - Intersection has at least 1 element (i.e. 1 or 2)
         - Anything else (i.e. empty intersection)
@@ -816,6 +922,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         with one another.
         For example, `date_thresholds = [10, 12, 15]` with
         `date_metrics = ['day', 'month', 'year']` would result in the following checks:
+
         - The two dates are within 10 days of one another
         - The two dates are within 12 months of one another
         - And the two dates are within 15 years of one another
@@ -1004,6 +1111,7 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
 
         An example of the output with default arguments and settings
         `km_thresholds = [1]` would be
+
         - The two coordinates within 1 km of one another
         - Anything else (i.e.  the distance between all coordinate lie outside
         this range)

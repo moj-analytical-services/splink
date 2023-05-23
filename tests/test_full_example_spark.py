@@ -42,7 +42,7 @@ def test_full_example_spark(df_spark, tmp_path):
         "comparisons": [
             cl.jaro_winkler_at_thresholds("first_name", 0.9),
             cl.jaro_at_thresholds("surname", 0.9),
-            cl.levenshtein_at_thresholds("dob", 2),
+            cl.damerau_levenshtein_at_thresholds("dob", 2),
             {
                 "comparison_levels": [
                     cll.array_intersect_level("email"),
