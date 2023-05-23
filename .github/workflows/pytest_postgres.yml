@@ -24,6 +24,9 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
+        ports:
+            # map port so we can access
+            - 5432:5432
     name: Run tests with python verion ${{ matrix.python-version }}
     steps:
       #----------------------------------------------
