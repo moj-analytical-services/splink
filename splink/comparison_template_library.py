@@ -1174,9 +1174,6 @@ class PostcodeComparisonBase(Comparison):
                 dictionary.
         """
 
-        postcode_col = InputColumn(col_name, sql_dialect=self._sql_dialect)
-        postcode_col_l, postcode_col_r = postcode_col.names_l_r()
-
         comparison_levels = []
 
         if invalid_postcodes_as_null:
