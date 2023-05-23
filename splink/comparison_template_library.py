@@ -13,7 +13,6 @@ from .comparison_library_utils import (
     distance_threshold_comparison_levels,
     distance_threshold_description,
 )
-from .input_column import InputColumn
 from .misc import ensure_is_iterable
 
 logger = logging.getLogger(__name__)

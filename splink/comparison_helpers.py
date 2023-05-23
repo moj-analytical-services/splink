@@ -9,6 +9,18 @@ from .charts import (
 )
 from .comparison_helpers_utils import threshold_match
 
+comparator_cols_sql = """
+    levenshtein({comparison1}, {comparison2}) as levenshtein_distance,
+    damerau_levenshtein({comparison1}, {comparison2}) as damerau_levenshtein_distance,
+    ROUND(jaro_similarity(
+        {comparison1}, {comparison2}), {decimal_places}
+        ) as jaro_similarity,
+    ROUND(jaro_winkler_similarity(
+        {comparison1}, {comparison2}), {decimal_places}
+        ) as jaro_winkler_similarity,
+    ROUND(jaccard({comparison1}, {comparison2}), {decimal_places}) as jaccard_similarity
+"""
+
 
 def comparator_score(str1, str2, decimal_places=2):
     """Helper function to give the similarity between two strings for
@@ -27,13 +39,11 @@ def comparator_score(str1, str2, decimal_places=2):
         select
         '{str1}' as string1,
         '{str2}' as string2,
-        levenshtein('{str1}', '{str2}') as levenshtein_distance,
-        damerau_levenshtein('{str1}', '{str2}') as damerau_levenshtein_distance,
-        ROUND(jaro_similarity('{str1}', '{str2}'), {decimal_places}) as jaro_similarity,
-        ROUND(jaro_winkler_similarity(
-            '{str1}', '{str2}'), {decimal_places}
-            ) as jaro_winkler_similarity,
-        ROUND(jaccard('{str1}', '{str2}'), {decimal_places}) as jaccard_similarity
+        {comparator_cols_sql.format(
+            comparison1 = 'string1',
+            comparison2 = 'string2',
+            decimal_places=decimal_places
+        )}
     """
     return con.execute(sql).fetch_df()
 
@@ -59,16 +69,14 @@ def comparator_score_df(list, col1, col2, decimal_places=2):
     pd.DataFrame(list)
 
     sql = f"""
-        SELECT
+        select
         {col1}, {col2},
-        levenshtein({col1}, {col2}) as levenshtein_distance,
-        damerau_levenshtein({col1}, {col2}) as damerau_levenshtein_distance,
-        ROUND(jaro_similarity({col1}, {col2}), {decimal_places}) as jaro_similarity,
-        ROUND(jaro_winkler_similarity(
-            {col1}, {col2}), {decimal_places}
-            ) as jaro_winkler_similarity,
-        ROUND(jaccard({col1}, {col2}), {decimal_places}) as jaccard_similarity
-        FROM df
+        {comparator_cols_sql.format(
+            comparison1 = col1,
+            comparison2 = col2,
+            decimal_places=decimal_places
+        )},
+        from df
     """
 
     return duckdb.sql(sql).df()
