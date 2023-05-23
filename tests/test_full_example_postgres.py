@@ -6,7 +6,7 @@ import pytest
 from splink.postgres.postgres_linker import PostgresLinker
 
 from .basic_settings import get_settings_dict
-from .linker_utils import register_roc_data
+from .linker_utils import _test_table_registration, register_roc_data
 
 
 def test_full_example_postgres(tmp_path, pg_engine):
@@ -81,8 +81,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
     # TODO: fix bug and restore:
     # linker.unlinkables_chart(source_dataset="Testing")
 
-    # TODO: fix bug and restore:
-    # _test_table_registration(linker)
+    _test_table_registration(linker)
 
     # record = {
     #     "unique_id": 1,
