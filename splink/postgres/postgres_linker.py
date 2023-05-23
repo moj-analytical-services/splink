@@ -150,7 +150,7 @@ class PostgresLinker(Linker):
             schema=self._db_schema,
         )
 
-    def register_table(self, input, table_name, overwrite=True):
+    def register_table(self, input, table_name, overwrite=False):
         # If the user has provided a table name, return it as a SplinkDataframe
         if isinstance(input, str):
             return self._table_to_splink_dataframe(table_name, input)
