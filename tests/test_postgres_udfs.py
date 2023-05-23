@@ -17,7 +17,7 @@ def test_log2(pg_engine):
     frame = linker._execute_sql_against_backend(
         sql, "dummy_name", "test_log_table"
     ).as_pandas_dataframe()
-    
+
     for log_result, expected in zip(frame["logs"], expected_log2_vals):
         assert log_result == expected
 
@@ -29,19 +29,11 @@ def test_datediff(pg_engine):
     )
     df = pd.DataFrame(
         [
-            {
-                "date_l": "2023-05-23", "date_r": "2023-05-24", "expected": -1
-            },
-            {
-                "date_l": "2023-05-24", "date_r": "2023-05-23", "expected": 1
-            },
-            {
-                "date_l": "2023-05-23", "date_r": "2022-05-23", "expected": 365
-            },
+            {"date_l": "2023-05-23", "date_r": "2023-05-24", "expected": -1},
+            {"date_l": "2023-05-24", "date_r": "2023-05-23", "expected": 1},
+            {"date_l": "2023-05-23", "date_r": "2022-05-23", "expected": 365},
             # 365*3 + 366
-            {
-                "date_l": "2023-07-22", "date_r": "2019-07-22", "expected": 1461
-            },
+            {"date_l": "2023-07-22", "date_r": "2019-07-22", "expected": 1461},
         ]
     )
     fmt = "YYYY-MM-DD"
@@ -54,7 +46,7 @@ def test_datediff(pg_engine):
     frame = linker._execute_sql_against_backend(
         sql, "dummy_name", "test_dd_table"
     ).as_pandas_dataframe()
-    
+
     for dd_result, expected in zip(frame["datediffs"], expected_datediff_vals):
         assert dd_result == expected
 
@@ -67,18 +59,10 @@ def test_months_between(pg_engine):
     )
     df = pd.DataFrame(
         [
-            {
-                "date_l": "2023-05-24", "date_r": "2023-05-23", "expected": 0
-            },
-            {
-                "date_l": "2023-05-24", "date_r": "2023-04-25", "expected": 0
-            },
-            {
-                "date_l": "2023-05-24", "date_r": "2023-02-25", "expected": 2
-            },
-            {
-                "date_l": "2023-05-24", "date_r": "2022-05-23", "expected": 12
-            },
+            {"date_l": "2023-05-24", "date_r": "2023-05-23", "expected": 0},
+            {"date_l": "2023-05-24", "date_r": "2023-04-25", "expected": 0},
+            {"date_l": "2023-05-24", "date_r": "2023-02-25", "expected": 2},
+            {"date_l": "2023-05-24", "date_r": "2022-05-23", "expected": 12},
         ]
     )
     fmt = "YYYY-MM-DD"
@@ -93,7 +77,7 @@ def test_months_between(pg_engine):
     frame = linker._execute_sql_against_backend(
         sql, "dummy_name", "test_md_table"
     ).as_pandas_dataframe()
-    
+
     for md_result, expected in zip(frame["monthdiffs"], expected_monthdiff_vals):
         assert md_result == expected
 
@@ -105,46 +89,27 @@ def test_array_intersect(pg_engine):
     )
     df = pd.DataFrame(
         [
-            {
-                "arr_l": [1, 2, 3], "arr_r": [1, 5, 6], "expected": [1]
-            },
-            {
-                "arr_l": [1, 2, 3], "arr_r": [10, 1, -2], "expected": [1]
-            },
-            {
-                "arr_l": [1, 2, 3], "arr_r": [4, 5, 6], "expected": []
-            },
-            {
-                "arr_l": [1, 2, 3], "arr_r": [2, 1, 7, 10], "expected": [1, 2]
-            },
-            {
-                "arr_l": [1, 2, 3], "arr_r": [1, 1, 1], "expected": [1]
-            },
-            {
-                "arr_l": [1, 1, 1], "arr_r": [1, 2, 3], "expected": [1]
-            },
-            {
-                "arr_l": [3, 5, 7], "arr_r": [3, 5, 7], "expected": [3, 5, 7]
-            },
-            {
-                "arr_l": [1, 2, 3, 4, 5], "arr_r": [3, 5, 7], "expected": [3, 5]
-            },
+            {"arr_l": [1, 2, 3], "arr_r": [1, 5, 6], "expected": [1]},
+            {"arr_l": [1, 2, 3], "arr_r": [10, 1, -2], "expected": [1]},
+            {"arr_l": [1, 2, 3], "arr_r": [4, 5, 6], "expected": []},
+            {"arr_l": [1, 2, 3], "arr_r": [2, 1, 7, 10], "expected": [1, 2]},
+            {"arr_l": [1, 2, 3], "arr_r": [1, 1, 1], "expected": [1]},
+            {"arr_l": [1, 1, 1], "arr_r": [1, 2, 3], "expected": [1]},
+            {"arr_l": [3, 5, 7], "arr_r": [3, 5, 7], "expected": [3, 5, 7]},
+            {"arr_l": [1, 2, 3, 4, 5], "arr_r": [3, 5, 7], "expected": [3, 5]},
         ]
     )
     expected_intersect_vals = df["expected"]
     df.to_sql(
         "intersect_vals",
         pg_engine,
-        dtype={
-            "arr_l": postgresql.ARRAY(INTEGER),
-            "arr_r": postgresql.ARRAY(INTEGER)
-        }
+        dtype={"arr_l": postgresql.ARRAY(INTEGER), "arr_r": postgresql.ARRAY(INTEGER)},
     )
     sql = "SELECT array_intersect(arr_l, arr_r) AS intersects FROM intersect_vals"
     frame = linker._execute_sql_against_backend(
         sql, "dummy_name", "test_intersect_table"
     ).as_pandas_dataframe()
-    
+
     for int_result, expected in zip(frame["intersects"], expected_intersect_vals):
         # don't care about order
         assert set(int_result) == set(expected)

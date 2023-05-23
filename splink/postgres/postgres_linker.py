@@ -87,8 +87,7 @@ class PostgresLinker(Linker):
         # TODO: allow this to happen under hood?
         if not isinstance(engine, Engine):
             raise ValueError(
-                "You must supply a sqlalchemy engine "
-                "to create a PostgresLinker."
+                "You must supply a sqlalchemy engine " "to create a PostgresLinker."
             )
 
         self._engine = engine
@@ -228,11 +227,11 @@ class PostgresLinker(Linker):
         self._run_sql_execution(sql)
 
     def _create_months_between_function(self):
-        # number of average-length (per year) months between two dates
+        # number of average-length (per year) months between two dates
         # logic could be improved/made consistent with other backends
         # but this is reasonable for now
         # 30.4375 days
-        ave_length_month = 365.25/12
+        ave_length_month = 365.25 / 12
         sql = f"""
         CREATE OR REPLACE FUNCTION ave_months_between(x date, y date)
         RETURNS float8 AS $$

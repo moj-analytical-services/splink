@@ -4,6 +4,7 @@ from ..dialect_base import DialectBase
 def size_array_intersect_sql(col_name_l, col_name_r):
     return f"cardinality(array_intersect({col_name_l}, {col_name_r}))"
 
+
 def datediff_sql(
     col_name_l,
     col_name_r,
