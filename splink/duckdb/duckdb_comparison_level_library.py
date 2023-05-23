@@ -42,6 +42,10 @@ class DuckDBComparisonProperties(DuckDBBase):
         return array_intersect_level
 
     @property
+    def _columns_reversed_level(self):
+        return columns_reversed_level
+
+    @property
     def _distance_in_km_level(self):
         return distance_in_km_level
 
@@ -52,6 +56,10 @@ class DuckDBComparisonProperties(DuckDBBase):
     @property
     def _levenshtein_level(self):
         return levenshtein_level
+
+    @property
+    def _damerau_levenshtein_level(self):
+        return damerau_levenshtein_level
 
     @property
     def _jaro_level(self):
@@ -87,6 +95,10 @@ class distance_function_level(DuckDBBase, DistanceFunctionLevelBase):
 
 
 class levenshtein_level(DuckDBBase, LevenshteinLevelBase):
+    pass
+
+
+class damerau_levenshtein_level(DuckDBBase, LevenshteinLevelBase):
     pass
 
 

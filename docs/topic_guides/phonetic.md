@@ -37,15 +37,16 @@ E.g. For a comparison including a [Double Metaphone](#double-metaphone) phonetic
     print(first_name_comparison.human_readable_description)
     ```
 
-> Comparison 'Exact match vs. Names with phonetic exact match vs. Names within jaro_winkler thresholds 0.95, 0.88 vs. anything else' of "first_name" and "first_name_dm".
+> Comparison 'Exact match vs. First_Name within levenshtein threshold 1 vs. First_Name within damerau-levenshtein threshold 1 vs. First_Name within jaro_winkler thresholds 0.9, 0.8 vs. anything else' of "first_name".
 >
 > Similarity is assessed using the following ComparisonLevels:
 >
 >    - 'Null' with SQL rule: "first_name_l" IS NULL OR "first_name_r" IS NULL
 >    - 'Exact match first_name' with SQL rule: "first_name_l" = "first_name_r"
 >    - 'Exact match first_name_dm' with SQL rule: "first_name_dm_l" = "first_name_dm_r"
->    - 'Jaro_winkler_similarity >= 0.95' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.95
->    - 'Jaro_winkler_similarity >= 0.88' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.88
+>    - 'Damerau_levenshtein <= 1' with SQL rule: damerau_levenshtein("first_name_l", "first_name_r") <= 1
+>    - 'Jaro_winkler_similarity >= 0.9' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.9
+>    - 'Jaro_winkler_similarity >= 0.8' with SQL rule: jaro_winkler_similarity("first_name_l", "first_name_r") >= 0.8
 >    - 'All other comparisons' with SQL rule: ELSE
 
 <hr>

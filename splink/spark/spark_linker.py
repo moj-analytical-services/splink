@@ -270,6 +270,11 @@ class SparkLinker(Linker):
             ),
             ("jaccard", "uk.gov.moj.dash.linkage.JaccardSimilarity", DoubleType()),
             ("cosine_distance", "uk.gov.moj.dash.linkage.CosineDistance", DoubleType()),
+            (
+                "damerau_levenshtein",
+                "uk.gov.moj.dash.linkage.LevDamerauDistance",
+                DoubleType(),
+            ),
             ("Dmetaphone", "uk.gov.moj.dash.linkage.DoubleMetaphone", StringType()),
             (
                 "DmetaphoneAlt",

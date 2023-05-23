@@ -41,6 +41,10 @@ class SparkComparisonProperties(SparkBase):
         return array_intersect_level
 
     @property
+    def _columns_reversed_level(self):
+        return columns_reversed_level
+
+    @property
     def _distance_in_km_level(self):
         return distance_in_km_level
 
@@ -51,6 +55,10 @@ class SparkComparisonProperties(SparkBase):
     @property
     def _levenshtein_level(self):
         return levenshtein_level
+
+    @property
+    def _damerau_levenshtein_level(self):
+        return damerau_levenshtein_level
 
     @property
     def _jaro_level(self):
@@ -86,6 +94,10 @@ class distance_function_level(SparkBase, DistanceFunctionLevelBase):
 
 
 class levenshtein_level(SparkBase, LevenshteinLevelBase):
+    pass
+
+
+class damerau_levenshtein_level(SparkBase, LevenshteinLevelBase):
     pass
 
 

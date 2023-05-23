@@ -11,6 +11,8 @@ from copy import copy, deepcopy
 from pathlib import Path
 from statistics import median
 
+import sqlglot
+
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
 
 from .accuracy import (
@@ -81,6 +83,7 @@ from .term_frequencies import (
     compute_term_frequencies_from_concat_with_tf,
     term_frequencies_for_single_column_sql,
     term_frequencies_from_concat_with_tf,
+    tf_adjustment_chart,
 )
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -188,7 +191,8 @@ class Linker:
 
         if not isinstance(settings_dict, (dict, type(None))):
             # Run if you've entered a filepath
-            self._setup_settings_objs(None)  # feed it a blank settings dictionary
+            # feed it a blank settings dictionary
+            self._setup_settings_objs(None)
             self.load_settings(settings_dict)
         else:
             settings_dict = deepcopy(settings_dict)
@@ -343,7 +347,6 @@ class Linker:
 
     @property
     def _verify_link_only_job(self):
-
         cache = self._intermediate_table_cache
         if "__splink__df_concat_with_tf" not in cache:
             return
@@ -597,6 +600,16 @@ class Linker:
         try:
             return self._run_sql_execution(final_sql, templated_name, physical_name)
         except Exception as e:
+            # Parse our SQL through sqlglot to pretty print
+            try:
+                final_sql = sqlglot.parse_one(
+                    final_sql,
+                    read=self._sql_dialect,
+                ).sql(pretty=True)
+                # if sqlglot produces any errors, just report the raw SQL
+            except Exception:
+                pass
+
             raise SplinkException(
                 f"Error executing the following sql for table "
                 f"`{templated_name}`({physical_name}):\n{final_sql}"
@@ -2643,6 +2656,60 @@ class Linker:
                 attribute.
         """
         return self._settings_obj.match_weights_chart()
+
+    def tf_adjustment_chart(
+        self,
+        output_column_name: str,
+        n_most_freq: int = 10,
+        n_least_freq: int = 10,
+        vals_to_include: str | list = None,
+        as_dict: bool = False,
+    ):
+        """Display a chart showing the impact of term frequency adjustments on a
+        specific comparison level.
+        Each value
+
+        Args:
+            output_column_name (str): Name of an output column for which term frequency
+                 adjustment has been applied.
+            n_most_freq (int, optional): Number of most frequent values to show. If this
+                 or `n_least_freq` set to None, all values will be shown.
+                Default to 10.
+            n_least_freq (int, optional): Number of least frequent values to show. If
+                this or `n_most_freq` set to None, all values will be shown.
+                Default to 10.
+            vals_to_include (list, optional): Specific values for which to show term
+                sfrequency adjustments.
+                Defaults to None.
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
+        """
+
+        # Comparisons with TF adjustments
+        tf_comparisons = [
+            c._output_column_name
+            for c in self._settings_obj.comparisons
+            if any([cl._has_tf_adjustments for cl in c.comparison_levels])
+        ]
+        if output_column_name not in tf_comparisons:
+            raise ValueError(
+                f"{output_column_name} is not a valid comparison column, or does not"
+                f" have term frequency adjustment activated"
+            )
+
+        vals_to_include = ensure_is_list(vals_to_include)
+
+        return tf_adjustment_chart(
+            self,
+            output_column_name,
+            n_most_freq,
+            n_least_freq,
+            vals_to_include,
+            as_dict,
+        )
 
     def m_u_parameters_chart(self):
         """Display a chart of the m and u parameters of the linkage model
