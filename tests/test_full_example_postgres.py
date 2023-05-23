@@ -108,7 +108,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
     linker_2.load_settings_from_json(path)
 
 
-def test_postgres_use_existing_table(tmp_path, pg_engine, pg_engine):
+def test_postgres_use_existing_table(tmp_path, pg_engine):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     table_name = "input_table_test"
