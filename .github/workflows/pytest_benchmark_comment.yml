@@ -4,15 +4,30 @@ on:
     branches:
       - master
 
+env:
+  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
 jobs:
   test:
     runs-on: ubuntu-20.04
     steps:
       #----------------------------------------------
+      #  -- give action higher-permissions token --
+      #----------------------------------------------
+      - name: GH_TOKEN
+        if: env.GH_TOKEN == ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "GH_TOKEN=${GITHUB_TOKEN}" >> $GITHUB_ENV
+      #----------------------------------------------
       #       check-out repo and set-up python
       #----------------------------------------------
       - name: Check out repository
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+          ref: main
+          token: ${{ env.GH_TOKEN }}
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v2
