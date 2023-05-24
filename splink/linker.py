@@ -216,6 +216,7 @@ class Linker:
         self._compare_two_records_mode = False
         self._self_link_mode = False
         self._analyse_blocking_mode = False
+        self._deterministic_link_mode = False
 
         self.debug_mode = False
 
@@ -1190,6 +1191,12 @@ class Linker:
                 represents a table materialised in the database. Methods on the
                 SplinkDataFrame allow you to access the underlying data.
         """
+
+        # Allows clustering during a deterministic linkage.
+        # This is used in `cluster_pairwise_predictions_at_threshold`
+        # to set the cluster threshold to 1
+        self._deterministic_link_mode = True
+
         concat_with_tf = self._initialise_df_concat_with_tf()
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
@@ -1777,7 +1784,7 @@ class Linker:
     def cluster_pairwise_predictions_at_threshold(
         self,
         df_predict: SplinkDataFrame,
-        threshold_match_probability: float,
+        threshold_match_probability: float = None,
         pairwise_formatting: bool = False,
         filter_pairwise_format_for_clusters: bool = True,
     ) -> SplinkDataFrame:
