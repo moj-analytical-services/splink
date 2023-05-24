@@ -2,6 +2,8 @@ site_name: Splink
 use_directory_urls: false
 repo_url: https://github.com/moj-analytical-services/splink
 theme:
+  icon: 
+    repo: fontawesome/brands/github
   name: "material"
   features:
     - content.code.annotate
@@ -12,6 +14,7 @@ theme:
     - search.highlight
     - search.share
     - search.suggest
+    - navigation.footer
   logo: "img/favicon.ico"
   favicon: "img/favicon.ico"
   palette:
