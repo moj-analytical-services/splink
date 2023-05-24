@@ -310,6 +310,26 @@ class InvalidSettingsLogger(SettingsValidator):
         self.bold_underline = self.bold+self.underline
         self.bold_red = self.bold+self.red
 
+        # These are extracted in the inherited
+        # SettingsValidator class
+        self.valid_uid = self.validate_uid
+        self.valid_cols_to_retain = self.validate_cols_to_retain
+        self.invalid_brs = self.validate_blocking_rules
+        self.invalid_cls = self.validate_comparison_levels
+
+    @property
+    def errors(self):
+        # Check if any of our evaluations yield invalid
+        # columns.
+        return [n for n in (
+            self.valid_uid,
+            self.valid_cols_to_retain,
+            self.invalid_brs,
+            self.invalid_cls,
+            )
+            if n is not None
+        ]
+
     def construct_generic_settings_log_string(self, constructor_dict):
         settings_id, InvCols = constructor_dict
         logger.warning(
@@ -365,37 +385,21 @@ class InvalidSettingsLogger(SettingsValidator):
         logger.warning("\n")
 
     def construct_output_logs(self):
-        # These are extracted in the inherited
-        # SettingsValidator class
-        valid_uid = self.validate_uid
-        valid_cols_to_retain = self.validate_cols_to_retain
-        invalid_brs = self.validate_blocking_rules
-        invalid_cls = self.validate_comparison_levels
-
-        # Check if any of our evaluations yield invalid
-        # columns.
-        if not [n for n in (
-            valid_uid,
-            valid_cols_to_retain,
-            invalid_brs,
-            invalid_cls,
-            )
-            if n is not None
-        ]:
-            # If all none, skip evaluation
+        # if no errors exist, return
+        if not self.errors:
             return
 
-        if valid_uid:
-            self.construct_generic_settings_log_string(valid_uid)
+        if self.valid_uid:
+            self.construct_generic_settings_log_string(self.valid_uid)
 
-        if valid_cols_to_retain:
-            self.construct_generic_settings_log_string(valid_cols_to_retain)
+        if self.valid_cols_to_retain:
+            self.construct_generic_settings_log_string(self.valid_cols_to_retain)
 
-        if invalid_brs:
-            self.construct_blocking_rule_log_strings(invalid_brs)
+        if self.invalid_brs:
+            self.construct_blocking_rule_log_strings(self.invalid_brs)
 
-        if invalid_cls:
-            self.construct_comparison_level_log_strings(invalid_cls)
+        if self.invalid_cls:
+            self.construct_comparison_level_log_strings(self.invalid_cls)
 
         # Only trigger if one of the outputs is valid
         logger.warning(
