@@ -5,7 +5,7 @@ on:
       - master
 
 env:
-  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+  GH_TOKEN: ${{ secrets.SPLINK_TOKEN }}
 
 jobs:
   test:
@@ -13,11 +13,6 @@ jobs:
     # only run this workflow on the upstream
     if: github.repository == 'moj-analytical-services/splink-1'
     steps:
-      - name: 🔍 GH_TOKEN
-        if: env.GH_TOKEN == ''
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: echo "GH_TOKEN=${GITHUB_TOKEN}" >> $GITHUB_ENV
       #----------------------------------------------
       #       check-out repo and set-up python
       #----------------------------------------------
@@ -25,8 +20,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           ref: ${{ github.event.pull_request.head.ref }}
-          token: ${{ env.GH_TOKEN }}
-          options: --token ${{ secrets.GITHUB_TOKEN }} --o benchmarking/time_series.json
+          token: ${{ secrets.SPLINK_TOKEN }}
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v2
@@ -80,7 +74,7 @@ jobs:
           pytest benchmarking/test_performance.py  --benchmark-json benchmarking/output.json -k 'test_2_rounds_1k_sqlite or test_2_rounds_1k_duckdb'
           python benchmarking/combine_benchmarks_timeseries.py
           git config --global user.email "actions@users.noreply.github.com"
-          git config --global user.name "ThomasHepworth"
+          git config --global user.name "robin"
           git add -A -f benchmarking/time_series.json
           git commit -m "Updated benchmarks timeseries" || exit 0
           git push --force
