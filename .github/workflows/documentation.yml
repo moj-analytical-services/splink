@@ -1,14 +1,16 @@
-name: Benchmark timeseries commit
+name: docswithmkdoc
+
 on:
   push:
     branches:
       - master
 
+  workflow_dispatch:
+
 jobs:
-  test:
+  generate-files:
     runs-on: ubuntu-20.04
-    # only run this workflow on the upstream
-    if: github.repository == 'moj-analytical-services/splink'
+    # https://docs.github.com/en/actions/creating-actions/creating-a-composite-action
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
@@ -49,31 +51,61 @@ jobs:
         uses: actions/cache@v2
         with:
           path: .venv
-          key: venv-bm-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-00
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-00
       #----------------------------------------------
       # install dependencies if cache does not exist
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root --with benchmarking
+        run: poetry install --no-interaction --no-root
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
       - name: Install library
         run: poetry install --no-interaction
-      #----------------------------------------------
-      #              run benchmarks and comment
-      #----------------------------------------------
-      - name: Run benchmark and comment
+
+      - name: Generate comparison/level library dialect tables
         run: |
           source .venv/bin/activate
-          pytest benchmarking/test_performance.py  --benchmark-json benchmarking/output.json -k 'test_2_rounds_1k_sqlite or test_2_rounds_1k_duckdb'
-          python benchmarking/combine_benchmarks_timeseries.py
-          git config --global user.email "actions@users.noreply.github.com"
-          git config --global user.name "robin"
-          git add -A -f benchmarking/time_series.json
-          git commit -m "Updated benchmarks timeseries" || exit 0
-          git push --force
+          mv scripts/generate_dialect_comparison_docs.py generate_dialect_comparison_docs.py
+          python generate_dialect_comparison_docs.py
 
+      - name: Upload generated docs files
+        uses: actions/upload-artifact@v3
+        with:
+          name: generated_files
+          path: docs/includes/generated_files
 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: generate-files
+    steps:
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
 
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: generated_files
+          path: docs/includes/generated_files
+
+      - uses: actions/checkout@v3
+        with:
+          repository: "moj-analytical-services/splink_demos"
+          ref: master
+          path: "docs/demos/"
+
+      - name: Preprocess markdown include files
+        run: python3 scripts/preprocess_markdown_includes.py
+
+      - run: tree docs/
+      - run: pip install --upgrade pip
+      - run: pip install -r scripts/docs-requirements.txt && mkdocs gh-deploy --force
+
+      - run: pip freeze
+      - run: mkdocs --version
+      - run: tree docs/
