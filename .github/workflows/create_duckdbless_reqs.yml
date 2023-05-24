@@ -1,0 +1,27 @@
+name: duckdbless_reqs
+on: [pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install poetry
+      run: pipx install poetry
+    - uses: actions/setup-python@v3
+      with:
+        python-version: "3.8"
+    - name: Run duckdbless setup
+      run: |
+         chmod +x ./scripts/duckdb-less_packages.sh
+         ./scripts/duckdb-less_packages.sh
+         cat scripts/duckdbless_requirements.txt
+      shell: bash
+    - name: Commit if changes have occurred
+      run: |
+        git config user.name "$(git log -n 1 --pretty=format:%an)"
+        git config user.email "$(git log -n 1 --pretty=format:%ae)"
+        # short-circuit if we have no changes, otherwise attempt to commit and push
+        # should only fail on forks, in which case contributors will need to manually run black, commit, and push
+        git diff-index --quiet HEAD || (echo "Attempting to commit changes" && git commit -am 'lint with black' && git push -f)

@@ -1,7 +1,7 @@
 name: Run splink_demos tutorial notebooks
 
 on:
-  pull_request:
+  push:
     branches:
       - master
 
