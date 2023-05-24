@@ -126,7 +126,12 @@ Splink utilises [github actions](https://docs.github.com/en/actions) to run test
 
 ### Core tests
 
-Core tests are treated the same way as ordinary pytest tests. Any test is marked as `core` by default, and will only be excluded from being a core test if it is decorated using either `@mark_with_dialects_excluding` or `@mark_with_dialects_including` from the [test decorator file](https://github.com/moj-analytical-services/splink/blob/master/tests/decorator.py).
+Core tests are treated the same way as ordinary pytest tests. Any test is marked as `core` by default, and will only be excluded from being a core test if it is decorated using either:
+
+* `@mark_with_dialects_excluding` for [backend-agnostic tests](#backend-agnostic-testing), or
+* `@mark_with_dialects_including` for [backend-specific tests](#tests-for-specific-backends)
+
+from the [test decorator file](https://github.com/moj-analytical-services/splink/blob/master/tests/decorator.py).
 
 ### Backend-agnostic testing
 
