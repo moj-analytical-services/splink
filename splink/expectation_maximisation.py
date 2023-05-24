@@ -89,7 +89,6 @@ def compute_proportions_for_new_parameters_sql(table_name):
 
 
 def compute_proportions_for_new_parameters_pandas(m_u_df):
-
     data = m_u_df.copy()
     m_prob = "m_probability"
     u_prob = "u_probability"
@@ -125,7 +124,7 @@ def compute_proportions_for_new_parameters(m_u_df):
 
         sql = compute_proportions_for_new_parameters_sql("m_u_df")
         return duckdb.query(sql).to_df().to_dict("records")
-    except (ImportError, ModuleNotFoundError) as error:
+    except (ImportError, ModuleNotFoundError):
         return compute_proportions_for_new_parameters_pandas(m_u_df)
 
 
