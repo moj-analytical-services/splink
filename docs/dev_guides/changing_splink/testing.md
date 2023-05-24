@@ -10,15 +10,14 @@ Tests in Splink make use of the [pytest](https://docs.pytest.org) framework. You
 
 Splink tests can be broadly categorised into three sets:
 
-* 'Core' tests - these are tests which test some specific bit of functionality which does not depend on any specific SQL dialect. They are usually unit tests - examples are testing [`InputColumn`](https://github.com/moj-analytical-services/splink/blob/master/tests/test_input_column.py) and testing the [latitude-longitude distance calculation](https://github.com/moj-analytical-services/splink/blob/master/tests/test_lat_long_distance.py).
-* Tests for specific backends - these are tests which run against a specific SQL backend, and test some feature peculiar to this backend. There are not many of these, as Splink is designed to run very similarly independent of the backend used.
-* Backend-agnostic tests - these are tests which run against some SQL backend, but which are written in such a way that they can run against many backends by making use of the [backend-agnostic testing framework](#backend-agnostic-testing). The majority of tests are of this type.
-
+* **'Core' tests** - these are tests which test some specific bit of functionality which does not depend on any specific SQL dialect. They are usually unit tests - examples are testing [`InputColumn`](https://github.com/moj-analytical-services/splink/blob/master/tests/test_input_column.py) and testing the [latitude-longitude distance calculation](https://github.com/moj-analytical-services/splink/blob/master/tests/test_lat_long_distance.py).
+* **Backend-agnostic tests** - these are tests which run against some SQL backend, but which are written in such a way that they can run against many backends by making use of the [backend-agnostic testing framework](#backend-agnostic-testing). The majority of tests are of this type.
+* **Tests for specific backends** - these are tests which run against a specific SQL backend, and test some feature particular to this backend. There are not many of these, as Splink is designed to run very similarly independent of the backend used.
 ## Writing tests
 
 ### Core tests
 
-Core tests do not need to be handled any differently than ordinary `pytest` tests. Any test is marked as `core` by default, and will only be excluded from being a core test if it is decorated using either `@mark_with_dialects_excluding` or `@mark_with_dialects_including` from the [test decorator file](https://github.com/moj-analytical-services/splink/blob/master/tests/decorator.py).
+Core tests are treated the same way as ordinary pytest tests. Any test is marked as `core` by default, and will only be excluded from being a core test if it is decorated using either `@mark_with_dialects_excluding` or `@mark_with_dialects_including` from the [test decorator file](https://github.com/moj-analytical-services/splink/blob/master/tests/decorator.py).
 
 ### Backend-agnostic testing
 
