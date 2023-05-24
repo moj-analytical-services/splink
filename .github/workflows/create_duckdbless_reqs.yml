@@ -11,4 +11,9 @@ jobs:
       run: |
          chmod +x ./scripts/duckdb-less_packages.sh
          ./scripts/duckdb-less_packages.sh
+         git config --global user.email "actions@users.noreply.github.com"
+         git config --global user.name "ThomasHepworth"
+         git add -A -f ./scripts/duckdbless_requirements.txt
+         git commit -m "Updated duckdbless requirements" || exit 0
+         git push
       shell: bash
