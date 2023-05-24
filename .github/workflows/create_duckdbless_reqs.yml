@@ -1,9 +1,13 @@
+name: duckdbless_reqs
+on: [pull_request]
+
 jobs:
-  run_tests:
-    runs-on: ubuntu-20.04
+  build:
+    runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v2
-    - name: Run script file
+    - name: Run duckdbless setup
       run: |
          chmod +x ./scripts/duckdb-less_packages.sh
          ./scripts/duckdb-less_packages.sh
