@@ -35,31 +35,33 @@ or for a single test, additionally append the test name after a pair of colons, 
 ```sh
 pytest tests/test_u_train.py::test_u_train_multilink
 ```
-There may be many warnings emitted, for instance by library dependencies, cluttering your output in which case you can use `--disable-pytest-warnings` or `-W ignore` so that these will not be displayed. Some additional command-line options that may be useful:
 
-* `-s` to disable output capture, so that test output is displayed in the terminal in all cases
-* `-v` for verbose mode, where each test instance will be displayed on a separate line with status
-* `-q` for quiet mode, where output is extremely minimal
-* `-x` to fail on first error/failure rather than continuing to run all selected tests
-    * 
-* `-m some_mark` run only those tests marked with `some_mark` - see [below](#selecting-sets-of-tests) for useful options here
+??? tip "Further useful pytest options"
+    There may be many warnings emitted, for instance by library dependencies, cluttering your output in which case you can use `--disable-pytest-warnings` or `-W ignore` so that these will not be displayed. Some additional command-line options that may be useful:
 
-For instance usage might be:
-```sh
-# ignore warnings, display output
-pytest -W ignore -s tests/
-```
+    * `-s` to disable output capture, so that test output is displayed in the terminal in all cases
+    * `-v` for verbose mode, where each test instance will be displayed on a separate line with status
+    * `-q` for quiet mode, where output is extremely minimal
+    * `-x` to fail on first error/failure rather than continuing to run all selected tests
+        * 
+    * `-m some_mark` run only those tests marked with `some_mark` - see [below](#selecting-sets-of-tests) for useful options here
 
-or
-```sh
-# ignore warnings, verbose output, fail on first error/failure
-pytest -W ignore -v -x tests/
-```
+    For instance usage might be:
+    ```sh
+    # ignore warnings, display output
+    pytest -W ignore -s tests/
+    ```
 
-You can find a host of other available options using pytest's in-built help:
-```sh
-pytest -h
-```
+    or
+    ```sh
+    # ignore warnings, verbose output, fail on first error/failure
+    pytest -W ignore -v -x tests/
+    ```
+
+    You can find a host of other available options using pytest's in-built help:
+    ```sh
+    pytest -h
+    ```
 
 #### Selecting sets of tests
 
