@@ -142,7 +142,7 @@ If you use Splink in your research, we'd be grateful for a citation as follows:
 ```BibTeX
 @article{Linacre_Lindsay_Manassis_Slade_Hepworth_2022,
 	title        = {Splink: Free software for probabilistic record linkage at scale.},
-	author       = {Linacre, Robin and Lindsay, Sam and Manassis, Theodore and Slade, Zoe and Hepworth, Tom},
+	author       = {Linacre, Robin and Lindsay, Sam and Manassis, Theodore and Slade, Zoe and Hepworth, Tom and Kennedy, Ross and Bond, Andrew},
 	year         = 2022,
 	month        = {Aug.},
 	journal      = {International Journal of Population Data Science},
