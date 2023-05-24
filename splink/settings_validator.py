@@ -11,6 +11,8 @@ from input_column import InputColumn, remove_quotes_from_identifiers
 from misc import ensure_is_list
 
 logger = logging.getLogger(__name__)
+
+
 def remove_suffix(c):
     return re.sub("_[l|r]{1}$", "", c)
 
@@ -27,6 +29,7 @@ class InvalidCols(NamedTuple):
         invalid_columns (list): A list of the invalid
             columns that have been detected.
     """
+
     invalid_type: str
     invalid_columns: list
     italics = "\033[3m"
@@ -44,7 +47,7 @@ class InvalidCols(NamedTuple):
 
     @property
     def columns_as_text(self):
-        return ', '.join(f'{self.italics}`{c}`{self.end}' for c in self.invalid_columns)
+        return ", ".join(f"{self.italics}`{c}`{self.end}" for c in self.invalid_columns)
 
     @property
     def invalid_cols(self):
@@ -82,9 +85,7 @@ class SettingsValidator:
         self.validation_dict = {}
 
         if linker._settings_obj:
-            self._sql_dialect = getattr(
-                linker._settings_obj, "_sql_dialect"
-            )
+            self._sql_dialect = getattr(linker._settings_obj, "_sql_dialect")
         else:
             self._sql_dialect = None
 
@@ -140,14 +141,11 @@ class SettingsValidator:
         col_list = ensure_is_list(col_list)
         if as_tree:
             col_list = [c.input_name_as_tree for c in col_list]
-        return set(
-            remove_quotes_from_identifiers(tree).sql()
-            for tree in col_list
-        )
+        return set(remove_quotes_from_identifiers(tree).sql() for tree in col_list)
 
     def remove_prefix_and_suffix_from_column(self, col_syntax_tree):
-            col_syntax_tree.args["table"] = None
-            return remove_suffix(col_syntax_tree.sql())
+        col_syntax_tree.args["table"] = None
+        return remove_suffix(col_syntax_tree.sql())
 
     def check_column_exists(self, column_name):
         """Check whether a column name exists within all of the input
@@ -171,7 +169,9 @@ class SettingsValidator:
             list: Returns a list of all input columns not found within
             your raw input tables.
         """
-        missing_cols = [col for col in cols_to_check if not self.check_column_exists(col)]
+        missing_cols = [
+            col for col in cols_to_check if not self.check_column_exists(col)
+        ]
         return InvalidCols("invalid_cols", missing_cols)
 
     def clean_and_return_missing_columns(self, cols):
@@ -192,7 +192,7 @@ class SettingsValidator:
 
     def validate_column_suffix(self, col: sqlglot.expressions):
         # Check if the supplied col suffix is valid.
-        return not col.sql().endswith(('_l', '_r'))
+        return not col.sql().endswith(("_l", "_r"))
 
     def validate_column_suffixes(self, cols: list[sqlglot.expressions]):
         # the key to use when producing our error logs
@@ -202,10 +202,10 @@ class SettingsValidator:
         return InvalidCols(invalid_type, invalid_cols)
 
     def validate_columns_in_sql_string(
-            self,
-            sql_string,
-            checks,
-        ):
+        self,
+        sql_string,
+        checks,
+    ):
 
         try:
             syntax_tree = sqlglot.parse_one(sql_string, read=self._sql_dialect)
@@ -214,9 +214,9 @@ class SettingsValidator:
             # SQL condition, it's better to just pass.
             return
 
-        cols = [remove_quotes_from_identifiers(
-            col) for col in syntax_tree.find_all(
-            exp.Column)
+        cols = [
+            remove_quotes_from_identifiers(col)
+            for col in syntax_tree.find_all(exp.Column)
         ]
         # deepcopy to ensure our syntax trees aren't manipulated
         invalid_tree = [check(deepcopy(cols)) for check in checks]
@@ -227,10 +227,10 @@ class SettingsValidator:
         return invalid_tree
 
     def validate_columns_in_sql_string_dict_comp(
-            self,
-            sql_conds,
-            prefix_suffix_fun,
-        ):
+        self,
+        sql_conds,
+        prefix_suffix_fun,
+    ):
         # This is simply a wrapper function that loops
         # around validate_columns_in_sql_string so we can
         # more easily reuse the code
@@ -239,17 +239,13 @@ class SettingsValidator:
         ):
             return self.validate_columns_in_sql_string(
                 sql,
-                checks = (
+                checks=(
                     self.clean_and_return_missing_columns,
                     prefix_suffix_fun,
-                )
+                ),
             )
 
-        return {
-            sql: validate(sql)
-            for sql in sql_conds
-            if validate(sql)
-        }
+        return {sql: validate(sql) for sql in sql_conds if validate(sql)}
 
     def validate_settings_column(self, settings_id, cols: set):
         missing_cols = self.return_missing_columns(cols)
@@ -259,23 +255,23 @@ class SettingsValidator:
     @property
     def validate_uid(self):
         return self.validate_settings_column(
-            settings_id = "unique_id_column_name",
-            cols = self.uid,
+            settings_id="unique_id_column_name",
+            cols=self.uid,
         )
 
     @property
     def validate_cols_to_retain(self):
         return self.validate_settings_column(
-            settings_id = "additional_columns_to_retain",
-            cols = self.cols_to_retain,
+            settings_id="additional_columns_to_retain",
+            cols=self.cols_to_retain,
         )
 
     @property
     def validate_blocking_rules(self):
         return self.validate_columns_in_sql_string_dict_comp(
-            sql_conds = self.blocking_rules,
+            sql_conds=self.blocking_rules,
             # prefix_suffix_fun = self.validate_column_suffixes,
-            prefix_suffix_fun = self.validate_table_names,
+            prefix_suffix_fun=self.validate_table_names,
         )
 
     @property
@@ -284,16 +280,16 @@ class SettingsValidator:
         for comparisons in self.comparisons:
             # pull out comparison dict
             comp_dict = comparisons._comparison_dict
-            sql_conds = [cl['sql_condition'] for cl in comp_dict['comparison_levels']]
+            sql_conds = [cl["sql_condition"] for cl in comp_dict["comparison_levels"]]
 
             cl_invalid = self.validate_columns_in_sql_string_dict_comp(
-                sql_conds =sql_conds,
-                prefix_suffix_fun = self.validate_column_suffixes,
+                sql_conds=sql_conds,
+                prefix_suffix_fun=self.validate_column_suffixes,
             )
             if cl_invalid:
-                invalid_col_tracker.update({
-                    comp_dict['output_column_name']: cl_invalid
-                })
+                invalid_col_tracker.update(
+                    {comp_dict["output_column_name"]: cl_invalid}
+                )
 
         return invalid_col_tracker
 
@@ -307,8 +303,8 @@ class InvalidSettingsLogger(SettingsValidator):
 
     def __init__(self, linker):
         self.settings_validator = super().__init__(linker)
-        self.bold_underline = self.bold+self.underline
-        self.bold_red = self.bold+self.red
+        self.bold_underline = self.bold + self.underline
+        self.bold_red = self.bold + self.red
 
         # These are extracted in the inherited
         # SettingsValidator class
@@ -321,11 +317,13 @@ class InvalidSettingsLogger(SettingsValidator):
     def errors(self):
         # Check if any of our evaluations yield invalid
         # columns.
-        return [n for n in (
-            self.valid_uid,
-            self.valid_cols_to_retain,
-            self.invalid_brs,
-            self.invalid_cls,
+        return [
+            n
+            for n in (
+                self.valid_uid,
+                self.valid_cols_to_retain,
+                self.invalid_brs,
+                self.invalid_cls,
             )
             if n is not None
         ]
@@ -342,10 +340,10 @@ class InvalidSettingsLogger(SettingsValidator):
 
         # `invalid_brs` are in the format of:
         # {
-            # "blocking_rule_1": {
-            #  - InvalidCols tuple for invalid columns
-            #  - InvalidCols tuple for invalid table names
-            # }
+        # "blocking_rule_1": {
+        #  - InvalidCols tuple for invalid columns
+        #  - InvalidCols tuple for invalid table names
+        # }
         # }
 
         logger.warning(
@@ -354,9 +352,7 @@ class InvalidSettingsLogger(SettingsValidator):
         )
 
         for br, invalid_cols in invalid_brs.items():
-            invalid_strings = '\n'.join(
-                c.construct_log_string for c in invalid_cols
-            )
+            invalid_strings = "\n".join(c.construct_log_string for c in invalid_cols)
             br = f"{self.bold_red}`{br}`{self.end}"
             logger.warning(f"{br}:{invalid_strings}")
 
@@ -372,11 +368,9 @@ class InvalidSettingsLogger(SettingsValidator):
             f"found to contain invalid column(s):{self.end}"
         )
         for cn, cls in invalid_cls.items():
-            logger.warning(
-                f"{self.bold}{cn}{self.end}"
-            )
+            logger.warning(f"{self.bold}{cn}{self.end}")
             for cl, invalid_cols in cls.items():
-                invalid_strings = '\n'.join(
+                invalid_strings = "\n".join(
                     c.construct_log_string for c in invalid_cols
                 )
                 cl = f"{self.bold_red}`{cl}`{self.end}"
