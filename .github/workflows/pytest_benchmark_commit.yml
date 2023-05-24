@@ -1,17 +1,15 @@
 name: Benchmark timeseries commit
 on:
-  push:
-    branches:
-      - master
+  pull_request_target:
+    types:
+      - closed
 
-env:
-  GH_TOKEN: ${{ secrets.SPLINK_TOKEN }}
 
 jobs:
-  test:
+  if_merged:
+    if: github.event.pull_request.merged == true && github.repository == 'moj-analytical-services/splink-1'
     runs-on: ubuntu-20.04
     # only run this workflow on the upstream
-    if: github.repository == 'moj-analytical-services/splink-1'
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
