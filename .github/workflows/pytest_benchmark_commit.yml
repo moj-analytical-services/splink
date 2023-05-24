@@ -73,7 +73,7 @@ jobs:
           git config --global user.name "robin"
           git add -A -f benchmarking/time_series.json
           git commit -m "Updated benchmarks timeseries" || exit 0
-          git push
+          git push --force
 
 
 

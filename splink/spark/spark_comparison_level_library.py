@@ -57,6 +57,10 @@ class SparkComparisonProperties(SparkBase):
         return levenshtein_level
 
     @property
+    def _damerau_levenshtein_level(self):
+        return damerau_levenshtein_level
+
+    @property
     def _jaro_level(self):
         return jaro_level
 
@@ -90,6 +94,10 @@ class distance_function_level(SparkBase, DistanceFunctionLevelBase):
 
 
 class levenshtein_level(SparkBase, LevenshteinLevelBase):
+    pass
+
+
+class damerau_levenshtein_level(SparkBase, LevenshteinLevelBase):
     pass
 
 
