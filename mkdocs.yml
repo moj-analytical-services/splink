@@ -38,6 +38,7 @@ plugins:
           rendering:
             show_source: false
       custom_templates: templates
+  - blog
 markdown_extensions:
   - abbr
   - attr_list
@@ -58,7 +59,8 @@ markdown_extensions:
       permalink: True
 nav:
   - Home: "README.md"
-  - Blog: "blog/blog.md"
+  - Blog:
+    - blog/index.md
   - Topic Guide:
       - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/backends.md"
       - Link type - linking vs deduping: "topic_guides/link_type.md"
