@@ -13,6 +13,110 @@ Splink tests can be broadly categorised into three sets:
 * **'Core' tests** - these are tests which test some specific bit of functionality which does not depend on any specific SQL dialect. They are usually unit tests - examples are testing [`InputColumn`](https://github.com/moj-analytical-services/splink/blob/master/tests/test_input_column.py) and testing the [latitude-longitude distance calculation](https://github.com/moj-analytical-services/splink/blob/master/tests/test_lat_long_distance.py).
 * **Backend-agnostic tests** - these are tests which run against some SQL backend, but which are written in such a way that they can run against many backends by making use of the [backend-agnostic testing framework](#backend-agnostic-testing). The majority of tests are of this type.
 * **Tests for specific backends** - these are tests which run against a specific SQL backend, and test some feature particular to this backend. There are not many of these, as Splink is designed to run very similarly independent of the backend used.
+
+## Running tests
+
+### Running tests locally
+
+To run tests locally, simply run:
+```sh
+python3 -m pytest tests/
+```
+or alternatively
+```sh
+pytest tests/
+```
+
+To run a single test file, append the filename to the `tests/` folder call, for example:
+```sh
+pytest tests/test_u_train.py
+```
+or for a single test, additionally append the test name after a pair of colons, as:
+```sh
+pytest tests/test_u_train.py::test_u_train_multilink
+```
+There may be many warnings emitted, for instance by library dependencies, cluttering your output in which case you can use `--disable-pytest-warnings` or `-W ignore` so that these will not be displayed. Some additional command-line options that may be useful:
+
+* `-s` to disable output capture, so that test output is displayed in the terminal in all cases
+* `-v` for verbose mode, where each test instance will be displayed on a separate line with status
+* `-q` for quiet mode, where output is extremely minimal
+* `-x` to fail on first error/failure rather than continuing to run all selected tests
+    * 
+* `-m some_mark` run only those tests marked with `some_mark` - see [below](#selecting-sets-of-tests) for useful options here
+
+For instance usage might be:
+```sh
+# ignore warnings, display output
+pytest -W ignore -s tests/
+```
+
+or
+```sh
+# ignore warnings, verbose output, fail on first error/failure
+pytest -W ignore -v -x tests/
+```
+
+You can find a host of other available options using pytest's in-built help:
+```sh
+pytest -h
+```
+
+#### Selecting sets of tests
+
+You may wish to run tests relating to to specific backends, tests which are backend-independent, or any combinations of these. Splink allows for various combinations by making use of `pytest`'s [`mark` feature](https://docs.pytest.org/en/latest/example/markers.html).
+
+If when you invoke pytest you pass no marks explicitly, there will be an implicit mark of `default`, as per the [pyproject.toml pytest.ini configuration](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml).
+
+The available options are:
+
+* `pytest tests/ -m core` - run only the 'core' tests, meaning those without dialect-dependence. In practice this means any test that hasn't been decorated using `mark_with_dialects_excluding` or `mark_with_dialects_including`.
+* `pytest tests/ -m duckdb` - run all `duckdb` tests, and all `core` tests
+    * & similarly for other dialects
+* `pytest tests/ -m duckdb_only` - run all `duckdb` tests only, and _not_ the `core` tests
+    * & similarly for other dialects
+* `pytest tests/ -m default` or equivalently `pytest tests/` - run all tests in the `default` group. The `default` group consists of the `core` tests, and those dialects in the `default` group - currently `spark` and `duckdb`.
+    * Other groups of dialects can be added and will similarly run with `pytest tests/ -m new_dialect_group`. Dialects within the current scope of testing and the groups they belong to are defined in the `dialect_groups` dictionary in [tests/decorator.py](https://github.com/moj-analytical-services/splink/blob/master/tests/decorator.py)
+* `pytest tests/ -m all` run all tests for all available dialects
+
+These all work alongside all the other pytest options, so for instance to run the tests for training `probability_two_random_records_match` for only `duckdb`, ignoring warnings, with quiet output, and exiting on the first failure/error:
+```sh
+pytest -W ignore -q -x -m duckdb tests/test_estimate_prob_two_rr_match.py
+```
+
+### Running tests with docker 🐳
+
+If you want to test Splink against a specific version of python, the easiest method is to utilise docker 🐳.
+
+Docker allows you to more quickly and easily install a specific version of python and run the existing test library against it.
+
+This is particularly useful if you're using py > 3.9.10 (which is currently in use in our tests github action) and need to run a secondary set of tests.
+
+A pre-built Dockerfile for running tests against python version 3.9.10 can be located within [scripts/run_tests.Dockerfile](https://github.com/moj-analytical-services/splink/blob/master/scripts/run_tests.Dockerfile).
+
+To run, simply use the following docker command from within a terminal and the root folder of a splink clone:
+```sh
+docker build -t run_tests:testing -f scripts/run_tests.Dockerfile . && docker run --rm --name splink-test run_tests:testing
+```
+
+This will both build and run the tests library.
+
+Feel free to replace `run_tests:testing` with an image name and tag you're happy with.
+
+Reusing the same image and tag will overwrite your existing image.
+
+You can also overwrite the default `CMD` if you want a different set of `pytest` command-line options, for example
+```sh
+docker run --rm --name splink-test run_tests:testing pytest -W ignore -m spark tests/test_u_train.py
+```
+
+### Tests in CI
+
+Splink utilises [github actions](https://docs.github.com/en/actions) to run tests for each pull request. This consists of a few independent checks:
+
+* The full test suite is run separately against several different python versions
+* The [example notebooks](./examples_index.html) are checked to ensure they run without error
+* The [tutorial notebooks](./demos/00_Tutorial_Introduction.html) are checked to ensure they run without error
+
 ## Writing tests
 
 ### Core tests
@@ -177,106 +281,3 @@ If you really do need to test features peculiar to one backend, then you can wri
 This ensures that the test gets marked appropriately for running when the `Spark` tests should be run, and excludes it from the set of `core` tests.
 
 Note that unlike the exclusive `mark_with_dialects_excluding`, this decorator will _not_ paramaterise the test with the `dialect` argument. This is because usage of the _inclusive_ form is largely designed for single-dialect tests. If you wish to override this behaviour and parameterise the test you can use the argument `pass_dialect`, for example `@mark_with_dialects_including("spark", "sqlite", pass_dialect=True)`, in which case you would need to write the test in a [backend-independent manner](#backend-agnostic-testing).
-
-## Running tests
-
-### Running tests locally
-
-To run tests locally, simply run:
-```sh
-python3 -m pytest tests/
-```
-or alternatively
-```sh
-pytest tests/
-```
-
-To run a single test file, append the filename to the `tests/` folder call, for example:
-```sh
-pytest tests/test_u_train.py
-```
-or for a single test, additionally append the test name after a pair of colons, as:
-```sh
-pytest tests/test_u_train.py::test_u_train_multilink
-```
-There may be many warnings emitted, for instance by library dependencies, cluttering your output in which case you can use `--disable-pytest-warnings` or `-W ignore` so that these will not be displayed. Some additional command-line options that may be useful:
-
-* `-s` to disable output capture, so that test output is displayed in the terminal in all cases
-* `-v` for verbose mode, where each test instance will be displayed on a separate line with status
-* `-q` for quiet mode, where output is extremely minimal
-* `-x` to fail on first error/failure rather than continuing to run all selected tests
-    * 
-* `-m some_mark` run only those tests marked with `some_mark` - see [below](#selecting-sets-of-tests) for useful options here
-
-For instance usage might be:
-```sh
-# ignore warnings, display output
-pytest -W ignore -s tests/
-```
-
-or
-```sh
-# ignore warnings, verbose output, fail on first error/failure
-pytest -W ignore -v -x tests/
-```
-
-You can find a host of other available options using pytest's in-built help:
-```sh
-pytest -h
-```
-
-#### Selecting sets of tests
-
-You may wish to run tests relating to to specific backends, tests which are backend-independent, or any combinations of these. Splink allows for various combinations by making use of `pytest`'s [`mark` feature](https://docs.pytest.org/en/latest/example/markers.html).
-
-If when you invoke pytest you pass no marks explicitly, there will be an implicit mark of `default`, as per the [pyproject.toml pytest.ini configuration](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml).
-
-The available options are:
-
-* `pytest tests/ -m core` - run only the 'core' tests, meaning those without dialect-dependence. In practice this means any test that hasn't been decorated using `mark_with_dialects_excluding` or `mark_with_dialects_including`.
-* `pytest tests/ -m duckdb` - run all `duckdb` tests, and all `core` tests
-    * & similarly for other dialects
-* `pytest tests/ -m duckdb_only` - run all `duckdb` tests only, and _not_ the `core` tests
-    * & similarly for other dialects
-* `pytest tests/ -m default` or equivalently `pytest tests/` - run all tests in the `default` group. The `default` group consists of the `core` tests, and those dialects in the `default` group - currently `spark` and `duckdb`.
-    * Other groups of dialects can be added and will similarly run with `pytest tests/ -m new_dialect_group`. Dialects within the current scope of testing and the groups they belong to are defined in the `dialect_groups` dictionary in [tests/decorator.py](https://github.com/moj-analytical-services/splink/blob/master/tests/decorator.py)
-* `pytest tests/ -m all` run all tests for all available dialects
-
-These all work alongside all the other pytest options, so for instance to run the tests for training `probability_two_random_records_match` for only `duckdb`, ignoring warnings, with quiet output, and exiting on the first failure/error:
-```sh
-pytest -W ignore -q -x -m duckdb tests/test_estimate_prob_two_rr_match.py
-```
-
-### Running tests with docker 🐳
-
-If you want to test Splink against a specific version of python, the easiest method is to utilise docker 🐳.
-
-Docker allows you to more quickly and easily install a specific version of python and run the existing test library against it.
-
-This is particularly useful if you're using py > 3.9.10 (which is currently in use in our tests github action) and need to run a secondary set of tests.
-
-A pre-built Dockerfile for running tests against python version 3.9.10 can be located within [scripts/run_tests.Dockerfile](https://github.com/moj-analytical-services/splink/blob/master/scripts/run_tests.Dockerfile).
-
-To run, simply use the following docker command from within a terminal and the root folder of a splink clone:
-```sh
-docker build -t run_tests:testing -f scripts/run_tests.Dockerfile . && docker run --rm --name splink-test run_tests:testing
-```
-
-This will both build and run the tests library.
-
-Feel free to replace `run_tests:testing` with an image name and tag you're happy with.
-
-Reusing the same image and tag will overwrite your existing image.
-
-You can also overwrite the default `CMD` if you want a different set of `pytest` command-line options, for example
-```sh
-docker run --rm --name splink-test run_tests:testing pytest -W ignore -m spark tests/test_u_train.py
-```
-
-### Tests in CI
-
-Splink utilises [github actions](https://docs.github.com/en/actions) to run tests for each pull request. This consists of a few independent checks:
-
-* The full test suite is run separately against several different python versions
-* The [example notebooks](./examples_index.html) are checked to ensure they run without error
-* The [tutorial notebooks](./demos/00_Tutorial_Introduction.html) are checked to ensure they run without error
