@@ -1,22 +1,18 @@
-name: Benchmark timeseries commit
+name: Benchmark comment
 on:
-  push:
+  pull_request:
     branches:
       - master
 
 jobs:
   test:
     runs-on: ubuntu-20.04
-    # only run this workflow on the upstream
-    if: github.repository == 'moj-analytical-services/splink'
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
       #----------------------------------------------
       - name: Check out repository
         uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
       - name: Set up python
         id: setup-python
         uses: actions/setup-python@v2
@@ -69,11 +65,8 @@ jobs:
           source .venv/bin/activate
           pytest benchmarking/test_performance.py  --benchmark-json benchmarking/output.json -k 'test_2_rounds_1k_sqlite or test_2_rounds_1k_duckdb'
           python benchmarking/combine_benchmarks_timeseries.py
-          git config --global user.email "actions@users.noreply.github.com"
-          git config --global user.name "robin"
-          git add -A -f benchmarking/time_series.json
-          git commit -m "Updated benchmarks timeseries" || exit 0
-          git push --force
-
-
-
+      - uses: NejcZdovc/comment-pr@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          file: benchmark_comment_markdown.md
