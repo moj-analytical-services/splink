@@ -137,13 +137,13 @@ from the [test decorator file](https://github.com/moj-analytical-services/splink
 
 The majority of tests should be written using the backend-agnostic testing framework. This just provides some small tools which allow tests to be written in a backend-independent way. This means the tests can then by run against _all_ available SQL backends (or a subset, if some lack _necessary_ features for the test).
 
-As an example, let's consider a test that will run on all dialects _except for `sqlite`_, and then break down the various parts to see what each is doing.
+As an example, let's consider a test that will run on all dialects, and then break down the various parts to see what each is doing.
 
 ```py linenums="1"
 from tests.decorator import mark_with_dialects_excluding
 
-@mark_with_dialects_excluding("sqlite")
-def test_feature_that_doesnt_work_with_sqlite(test_helpers, dialect, some_other_test_fixture):
+@mark_with_dialects_excluding()
+def test_feature_that_works_for_all_backends(test_helpers, dialect, some_other_test_fixture):
     helper = test_helpers[dialect]
 
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -163,8 +163,8 @@ def test_feature_that_doesnt_work_with_sqlite(test_helpers, dialect, some_other_
                     helper.cll.exact_match_level("email"),
                     helper.cll.levenshtein_level("email", 2),
                     {
-                        "sql_condition": "split_part(email_l, '@', 1) = split_part(email_r, '@', 1)",
-                        "label_for_charts": "email local-part matches",
+                        "sql_condition": "substr(email_l, 1) = substr(email_r, 1)",
+                        "label_for_charts": "email first character matches",
                     },
                     helper.cll.else_level(),
                 ]
@@ -186,20 +186,20 @@ from tests.decorator import mark_with_dialects_excluding
 Then we define the function, and pass parameters:
 
 ```py linenums="3" hl_lines="1"
-@mark_with_dialects_excluding("sqlite")
-def test_feature_that_doesnt_work_with_sqlite(test_helpers, dialect, some_other_test_fixture):
+@mark_with_dialects_excluding()
+def test_feature_that_works_for_all_backends(test_helpers, dialect, some_other_test_fixture):
 ```
 
-The decorator `@mark_with_dialects_excluding("sqlite")` will do two things:
+The decorator `@mark_with_dialects_excluding()` will do two things:
 
-* marks the test it decorates with the appropriate custom `pytest` marks. This ensures that it will be run with tests for each dialect, excluding any that are passed as arguments; in this case it will be run for all dialects _excluding_ `sqlite`.
-* parameterises the test with a string parameter `dialect`, which will be used to configure the test for that dialect. The test will run for each value of `dialect` possible, excluding those passed to the decorator (`sqlite` in this case).
+* marks the test it decorates with the appropriate custom `pytest` marks. This ensures that it will be run with tests for each dialect, excluding any that are passed as arguments; in this case it will be run for all dialects, as we have passed no arguments.
+* parameterises the test with a string parameter `dialect`, which will be used to configure the test for that dialect. The test will run for each value of `dialect` possible, excluding any passed to the decorator (none in this case).
 
-You should aim to exclude as _few_ dialects as possible - consider if you really need to exclude any. Dialects should only be excluded if the test doesn't make sense for them due to features they lack. The default choice should be the decorator with no arguments `@mark_with_dialects_excluding()`, meaning the test runs with _all_ dialects. If you need to exclude multiple dialects this is also possible, e.g. `@mark_with_dialects_excluding("sqlite", "spark")`.
+You should aim to exclude as _few_ dialects as possible - consider if you really need to exclude any. Dialects should only be excluded if the test doesn't make sense for them due to features they lack. The default choice should be the decorator with no arguments `@mark_with_dialects_excluding()`, meaning the test runs for _all_ dialects.
 
 ```py linenums="3" hl_lines="2"
-@mark_with_dialects_excluding("sqlite")
-def test_feature_that_doesnt_work_with_sqlite(test_helpers, dialect, some_other_test_fixture):
+@mark_with_dialects_excluding()
+def test_feature_that_works_for_all_backends(test_helpers, dialect, some_other_test_fixture):
 ```
 
 As well as the parameter `dialect` (which is provided by the decorator), we must also pass the helper-factory fixture `test_helpers`. We can additionally pass further [fixtures](https://docs.pytest.org/en/latest/how-to/fixtures.html) if needed - in this case `some_other_test_fixture`.
@@ -240,8 +240,8 @@ We reference the dialect-specific [comparison library](../../comparison_library.
             helper.cll.exact_match_level("email"),
             helper.cll.levenshtein_level("email", 2),
             {
-                "sql_condition": "split_part(email_l, '@', 1) = split_part(email_r, '@', 1)",
-                "label_for_charts": "email local-part matches",
+                "sql_condition": "substr(email_l, 1) = substr(email_r, 1)",
+                "label_for_charts": "email first character matches",
             }
             helper.cll.else_level(),
         ]
@@ -251,11 +251,11 @@ and the dialect-specific [comparison level library](../../comparison_level_libra
 
 ```py linenums="23" hl_lines="2"
     {
-        "sql_condition": "split_part(email_l, '@', 1) = split_part(email_r, '@', 1)",
-        "label_for_charts": "email local-part matches",
-    }
+        "sql_condition": "substr(email_l, 1) = substr(email_r, 1)",
+        "label_for_charts": "email first character matches",
+    },
 ```
-We can include raw SQL statements, but we must ensure they are valid for all dialects we are considering. This test uses `split_part` which is not available in `sqlite`, hence its exclusion. We suppose that this particular comparison level is crucial for the test to make sense - otherwise we should try and re-write in a way that doesn't needlessly exclude some SQL dialects.
+We can include raw SQL statements, but we must ensure they are valid for all dialects we are considering, so we should avoid any unusual functions that are not likely to be universal.
 
 ```py linenums="33"
     linker = helper.Linker(df, settings_dict, **helper.extra_linker_args())
@@ -263,6 +263,68 @@ We can include raw SQL statements, but we must ensure they are valid for all dia
 Finally we instantiate the linker, passing any default set of extra arguments provided by the helper, which some dialects require.
 
 From this point onwards we will be working with the instantiated `linker`, and so will not need to refer to `helper` any more - the rest of the test can be written as usual.
+
+#### Excluding some backends
+
+Now let's have a small look at a similar example - only this time we are going to exclude the `sqlite` backend, as the test relies on features not directly available for that backend. In this example that will be the SQL function `split_part` which does not exist in the `sqlite` dialect.
+
+!!! warning Reminder
+    Tests should be made available to the widest range of backends possible. Only exclude backends if features not shared by all backends are crucial to the test-logic - otherwise consider rewriting things so that all backends are covered.
+
+```py linenums="1"
+from tests.decorator import mark_with_dialects_excluding
+
+@mark_with_dialects_excluding("sqlite")
+def test_feature_that_doesnt_work_with_sqlite(test_helpers, dialect, some_other_test_fixture):
+    helper = test_helpers[dialect]
+
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    settings_dict = {
+        "link_type": "dedupe_only",
+        "blocking_rules_to_generate_predictions": ["l.city = r.city", "l.surname = r.surname", "l.dob = r.dob"],
+        "comparisons": [
+            helper.cl.exact_match("city"),
+            helper.cl.levenshtein_at_thresholds("first_name", [1, 2]),
+            helper.cl.levenshtein_at_thresholds("surname"),
+            {
+                "output_column_name": "email",
+                "comparison_description": "Email",
+                "comparison_levels": [
+                    helper.cll.null_level("email"),
+                    helper.cll.exact_match_level("email"),
+                    helper.cll.levenshtein_level("email", 2),
+                    {
+                        "sql_condition": "split_part(email_l, '@', 1) = split_part(email_r, '@', 1)",
+                        "label_for_charts": "email local-part matches",
+                    },
+                    helper.cll.else_level(),
+                ]
+            }
+        ]
+    }
+
+    linker = helper.Linker(df, settings_dict, **helper.extra_linker_args())
+
+    # and then some actual testing logic
+```
+
+The key difference is the argument we pass to the decorator:
+```py linenums="3" hl_lines="1"
+@mark_with_dialects_excluding("sqlite")
+def test_feature_that_doesnt_work_with_sqlite(test_helpers, dialect, some_other_test_fixture):
+```
+As above this marks the test it decorates with the appropriate custom `pytest` marks, but in this case it ensures that it will be run with tests for each dialect **excluding sqlite**. Again `dialect` is passed as a parameter, and the test will run in turn for each value of `dialect` **except for 'sqlite'**.
+
+```py linenums="23" hl_lines="2"
+    {
+        "sql_condition": "split_part(email_l, '@', 1) = split_part(email_r, '@', 1)",
+        "label_for_charts": "email local-part matches",
+    }
+```
+This line is why we cannot allow `sqlite` for this test - we make use of the function `split_part` which is not available in the `sqlite` dialect, hence its exclusion. We suppose that this particular comparison level is crucial for the test to make sense, otherwise we would rewrite this line to make it run universally. When you come to [run the tests](#running-tests-locally), this test will not run on the `sqlite` backend.
+
+If you need to exclude _multiple_ dialects this is also possible - just pass each as an argument. For example, to decorate a test that is not supported on `spark` _or_ `sqlite`, use the decorator `@mark_with_dialects_excluding("sqlite", "spark")`.
 
 ### Tests for specific backends
 
