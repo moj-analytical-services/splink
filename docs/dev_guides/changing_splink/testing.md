@@ -14,6 +14,9 @@ Splink tests can be broadly categorised into three sets:
 * **Backend-agnostic tests** - these are tests which run against some SQL backend, but which are written in such a way that they can run against many backends by making use of the [backend-agnostic testing framework](#backend-agnostic-testing). The majority of tests are of this type.
 * **Tests for specific backends** - these are tests which run against a specific SQL backend, and test some feature particular to this backend. There are not many of these, as Splink is designed to run very similarly independent of the backend used.
 
+!!! info
+    We currently do not have support for testing the `athena` backend, due to the complication of needing a connection to an AWS account. All other backends have testing available.
+
 ## Running tests
 
 ### Running tests locally
