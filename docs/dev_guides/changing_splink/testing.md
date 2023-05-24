@@ -6,7 +6,7 @@ tags:
 ---
 # Testing in Splink
 
-Tests in Splink make use of the [pytest](https://docs.pytest.org) framework. You can find them in [the tests folder](https://github.com/moj-analytical-services/splink/tree/master/tests).
+Tests in Splink make use of the [pytest](https://docs.pytest.org) framework. You can find the tests themselves in [the tests folder](https://github.com/moj-analytical-services/splink/tree/master/tests).
 
 Splink tests can be broadly categorised into three sets:
 
@@ -85,31 +85,31 @@ These all work alongside all the other pytest options, so for instance to run th
 pytest -W ignore -q -x -m duckdb tests/test_estimate_prob_two_rr_match.py
 ```
 
-### Running tests with docker 🐳
+??? tip "Running tests with docker 🐳"
 
-If you want to test Splink against a specific version of python, the easiest method is to utilise docker 🐳.
+    If you want to test Splink against a specific version of python, the easiest method is to utilise docker 🐳.
 
-Docker allows you to more quickly and easily install a specific version of python and run the existing test library against it.
+    Docker allows you to more quickly and easily install a specific version of python and run the existing test library against it.
 
-This is particularly useful if you're using py > 3.9.10 (which is currently in use in our tests github action) and need to run a secondary set of tests.
+    This is particularly useful if you're using py > 3.9.10 (which is currently in use in our tests github action) and need to run a secondary set of tests.
 
-A pre-built Dockerfile for running tests against python version 3.9.10 can be located within [scripts/run_tests.Dockerfile](https://github.com/moj-analytical-services/splink/blob/master/scripts/run_tests.Dockerfile).
+    A pre-built Dockerfile for running tests against python version 3.9.10 can be located within [scripts/run_tests.Dockerfile](https://github.com/moj-analytical-services/splink/blob/master/scripts/run_tests.Dockerfile).
 
-To run, simply use the following docker command from within a terminal and the root folder of a splink clone:
-```sh
-docker build -t run_tests:testing -f scripts/run_tests.Dockerfile . && docker run --rm --name splink-test run_tests:testing
-```
+    To run, simply use the following docker command from within a terminal and the root folder of a splink clone:
+    ```sh
+    docker build -t run_tests:testing -f scripts/run_tests.Dockerfile . && docker run --rm --name splink-test run_tests:testing
+    ```
 
-This will both build and run the tests library.
+    This will both build and run the tests library.
 
-Feel free to replace `run_tests:testing` with an image name and tag you're happy with.
+    Feel free to replace `run_tests:testing` with an image name and tag you're happy with.
 
-Reusing the same image and tag will overwrite your existing image.
+    Reusing the same image and tag will overwrite your existing image.
 
-You can also overwrite the default `CMD` if you want a different set of `pytest` command-line options, for example
-```sh
-docker run --rm --name splink-test run_tests:testing pytest -W ignore -m spark tests/test_u_train.py
-```
+    You can also overwrite the default `CMD` if you want a different set of `pytest` command-line options, for example
+    ```sh
+    docker run --rm --name splink-test run_tests:testing pytest -W ignore -m spark tests/test_u_train.py
+    ```
 
 ### Tests in CI
 
