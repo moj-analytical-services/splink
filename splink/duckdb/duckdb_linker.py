@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from tempfile import TemporaryDirectory
 
 import duckdb
@@ -53,6 +54,44 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
             sql += f" limit {limit}"
 
         return self.linker._con.query(sql).to_df()
+
+    def to_parquet(self, filepath, overwrite=False):
+        if not overwrite:
+            self.check_file_exists(filepath)
+
+        if not filepath.endswith(".parquet"):
+            raise SyntaxError(
+                f"The filepath you've entered to '{filepath}' is "
+                "not a parquet file. Please ensure that the filepath "
+                "ends with `.parquet` before retrying."
+            )
+
+        # create the directories recursively if they don't exist
+        path = os.path.dirname(filepath)
+        if path:
+            os.makedirs(path, exist_ok=True)
+
+        sql = f"COPY {self.physical_name} TO '{filepath}' (FORMAT PARQUET);"
+        self.linker._con.query(sql)
+
+    def to_csv(self, filepath, overwrite=False):
+        if not overwrite:
+            self.check_file_exists(filepath)
+
+        if not filepath.endswith(".csv"):
+            raise SyntaxError(
+                f"The filepath you've entered '{filepath}' is "
+                "not a csv file. Please ensure that the filepath "
+                "ends with `.csv` before retrying."
+            )
+
+        # create the directories recursively if they don't exist
+        path = os.path.dirname(filepath)
+        if path:
+            os.makedirs(path, exist_ok=True)
+
+        sql = f"COPY {self.physical_name} TO '{filepath}' (HEADER, DELIMITER ',');"
+        self.linker._con.query(sql)
 
 
 class DuckDBLinker(Linker):
@@ -196,6 +235,10 @@ class DuckDBLinker(Linker):
             else:
                 self._con.unregister(table_name)
 
+        self._table_registration(input, table_name)
+        return self._table_to_splink_dataframe(table_name, table_name)
+
+    def _table_registration(self, input, table_name):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
         elif isinstance(input, list):
@@ -204,7 +247,6 @@ class DuckDBLinker(Linker):
         # Registration errors will automatically
         # occur if an invalid data type is passed as an argument
         self._con.register(table_name, input)
-        return self._table_to_splink_dataframe(table_name, table_name)
 
     def _random_sample_sql(self, proportion, sample_size, seed=None):
         if proportion == 1.0:

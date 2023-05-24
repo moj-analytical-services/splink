@@ -1,6 +1,6 @@
 import os
 
-from pyspark.sql.functions import array
+import pyspark.sql.functions as f
 from pyspark.sql.types import StringType, StructField, StructType
 
 import splink.spark.spark_comparison_level_library as cll
@@ -8,12 +8,24 @@ import splink.spark.spark_comparison_library as cl
 from splink.spark.spark_linker import SparkLinker
 
 from .basic_settings import get_settings_dict, name_comparison
-from .linker_utils import _test_table_registration, register_roc_data
+from .linker_utils import (
+    _test_write_functionality,
+    register_roc_data,
+)
 
 
 def test_full_example_spark(df_spark, tmp_path):
+    # Annoyingly, this needs an independent linker as csv doesn't
+    # accept arrays as inputs, which we are adding to df_spark below
+    linker = SparkLinker(df_spark, get_settings_dict())
+    # Test that writing to files works as expected
+    def spark_csv_read(x):
+        return linker.spark.read.csv(x, header=True).toPandas()
+
+    _test_write_functionality(linker, spark_csv_read)
+
     # Convert a column to an array to enable testing intersection
-    df_spark = df_spark.withColumn("email", array("email"))
+    df_spark = df_spark.withColumn("email", f.array("email"))
     settings_dict = get_settings_dict()
 
     # Only needed because the value can be overwritten by other tests
@@ -27,16 +39,16 @@ def test_full_example_spark(df_spark, tmp_path):
             {"blocking_rule": "l.surname = r.surname", "salting_partitions": 3},
         ],
         "comparisons": [
-            cl.levenshtein_at_thresholds("first_name", 2),
-            cl.exact_match("surname"),
-            cl.exact_match("dob"),
+            cl.jaro_winkler_at_thresholds("first_name", 0.9),
+            cl.jaro_at_thresholds("surname", 0.9),
+            cl.levenshtein_at_thresholds("dob", 2),
             {
                 "comparison_levels": [
                     cll.array_intersect_level("email"),
                     cll.else_level(),
                 ]
             },
-            cl.exact_match("city"),
+            cl.jaccard_at_thresholds("city", [0.9]),
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
@@ -86,22 +98,17 @@ def test_full_example_spark(df_spark, tmp_path):
     )
 
     linker.unlinkables_chart(source_dataset="Testing")
+    # Test that writing to files works as expected
+    # spark_csv_read = lambda x: linker.spark.read.csv(x, header=True).toPandas()
+    # _test_write_functionality(linker, spark_csv_read)
 
     # Check spark tables are being registered correctly
-    data = [
-        ("Thomas", "FakeName"),
-    ]
-    schema = StructType(
+    StructType(
         [
             StructField("firstname", StringType(), True),
             StructField("lastname", StringType(), True),
         ]
     )
-    df = linker.spark.createDataFrame(data=data, schema=schema)
-    _test_table_registration(
-        linker, [df, linker.spark.createDataFrame([], StructType([]))]
-    )
-
     register_roc_data(linker)
     linker.roc_chart_from_labels_table("labels")
 
@@ -128,3 +135,24 @@ def test_full_example_spark(df_spark, tmp_path):
         break_lineage_method="checkpoint",
         num_partitions_on_repartition=2,
     )
+
+
+def test_link_only(df_spark):
+    settings = get_settings_dict()
+    settings["link_type"] = "link_only"
+    settings["source_dataset_column_name"] = "source_dataset"
+
+    df_spark_a = df_spark.withColumn("source_dataset", f.lit("my_left_ds"))
+    df_spark_b = df_spark.withColumn("source_dataset", f.lit("my_right_ds"))
+
+    linker = SparkLinker(
+        [df_spark_a, df_spark_b],
+        settings,
+        break_lineage_method="checkpoint",
+        num_partitions_on_repartition=2,
+    )
+    df_predict = linker.predict().as_pandas_dataframe()
+
+    assert len(df_predict) == 7257
+    assert set(df_predict.source_dataset_l.values) == {"my_left_ds"}
+    assert set(df_predict.source_dataset_r.values) == {"my_right_ds"}

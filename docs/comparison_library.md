@@ -8,6 +8,7 @@ tags:
   - Distance In KM
   - Date Difference
   - Array Intersect
+toc_depth: 2
 ---
 # Documentation for `comparison_library` 
 
@@ -69,6 +70,18 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false   
+      heading_level: 2
+
+---
+
+::: splink.comparison_library.JaroAtThresholdsComparisonBase
+    handler: python
+    selection:
+      members:
+        -  __init__
+    rendering:
+      show_root_heading: true
+      show_source: false
       heading_level: 2
 
 ---

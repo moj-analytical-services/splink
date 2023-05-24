@@ -27,8 +27,18 @@ class DialectBase:
         )
 
     @property
+    def _regex_extract_function(self):
+        raise NotImplementedError(
+            "Regex extract option not defined for " "the SQL backend being used.  "
+        )
+
+    @property
     def _levenshtein_name(self):
         return "levenshtein"
+
+    @property
+    def _jaro_name(self):
+        return "jaro"
 
     @property
     def _jaro_winkler_name(self):
