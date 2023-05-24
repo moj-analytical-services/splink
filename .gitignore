@@ -171,5 +171,6 @@ cython_debug/
 
 *.parquet
 *.csv
+*.xls[x]
 
 .DS_Store
