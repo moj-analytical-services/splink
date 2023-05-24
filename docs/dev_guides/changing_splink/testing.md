@@ -66,7 +66,7 @@ pytest tests/test_u_train.py::test_u_train_multilink
     pytest -h
     ```
 
-#### Selecting sets of tests
+#### Running tests for specific backends or backend groups
 
 You may wish to run tests relating to to specific backends, tests which are backend-independent, or any combinations of these. Splink allows for various combinations by making use of `pytest`'s [`mark` feature](https://docs.pytest.org/en/latest/example/markers.html).
 
@@ -74,12 +74,23 @@ If when you invoke pytest you pass no marks explicitly, there will be an implici
 
 The available options are:
 
+##### Run core tests
+Option for running only the backend-independent 'core' tests:
+
 * `pytest tests/ -m core` - run only the 'core' tests, meaning those without dialect-dependence. In practice this means any test that hasn't been decorated using `mark_with_dialects_excluding` or `mark_with_dialects_including`.
+
+##### Run tests on a specific backend
+Options for running tests on one backend only - this includes tests written [specifically for that backend](#tests-for-specific-backends), as well as [backend-agnostic tests](#backend-agnostic-testing) supported for that backend.
+
 * `pytest tests/ -m duckdb` - run all `duckdb` tests, and all `core` tests
     * & similarly for other dialects
 * `pytest tests/ -m duckdb_only` - run all `duckdb` tests only, and _not_ the `core` tests
     * & similarly for other dialects
-* `pytest tests/ -m default` or equivalently `pytest tests/` - run all tests in the `default` group. The `default` group consists of the `core` tests, and those dialects in the `default` group - currently `spark` and `duckdb`.
+
+##### Run tests across multiple backends
+Options for running tests on multiple backends (including all backends) - this includes tests written [specifically for those backends](#tests-for-specific-backends), as well as [backend-agnostic tests](#backend-agnostic-testing) supported for those backends.
+
+ * `pytest tests/ -m default` or equivalently `pytest tests/` - run all tests in the `default` group. The `default` group consists of the `core` tests, and those dialects in the `default` group - currently `spark` and `duckdb`.
     * Other groups of dialects can be added and will similarly run with `pytest tests/ -m new_dialect_group`. Dialects within the current scope of testing and the groups they belong to are defined in the `dialect_groups` dictionary in [tests/decorator.py](https://github.com/moj-analytical-services/splink/blob/master/tests/decorator.py)
 * `pytest tests/ -m all` run all tests for all available dialects
 
