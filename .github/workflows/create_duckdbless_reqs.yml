@@ -1,0 +1,10 @@
+jobs:
+  run_tests:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run script file
+      run: |
+         chmod +x ./scripts/duckdb-less_packages.sh
+         ./scripts/duckdb-less_packages.sh
+      shell: bash
