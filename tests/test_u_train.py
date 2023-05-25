@@ -254,8 +254,8 @@ def test_u_train_multilink(test_helpers, dialect):
     assert cl_no.u_probability == (denom - 10) / denom
 
 
-# No SQLite - doesn't support random seed
-@mark_with_dialects_excluding("sqlite")
+# No SQLite or Postgres - don't support random seed
+@mark_with_dialects_excluding("sqlite", "postgres")
 def test_seed_u_outputs(test_helpers, dialect):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
