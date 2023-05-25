@@ -1036,6 +1036,7 @@ class PostcodeComparisonBase(Comparison):
         self,
         col_name: str,
         invalid_postcodes_as_null=False,
+        set_to_uppercase=True,
         valid_postcode_regex="^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9][A-Za-z]{2}$",
         term_frequency_adjustments_full=False,
         include_full_match_level=True,
@@ -1067,6 +1068,9 @@ class PostcodeComparisonBase(Comparison):
             invalid_postcodes_as_null (bool): If True, postcodes that do not adhere
                 to valid_postcode_regex will be included in the null level.
                 Defaults to False
+            set_to_uppercase (bool): If True, all postcodes are set to uppercase
+                during the pairwise comparisons.
+                Defaults to True
             valid_postcode_regex (str): regular expression pattern that is used
                 to validate postcodes. If invalid_postcodes_as_null is True,
                 postcodes that do not adhere to valid_postcode_regex will be included
