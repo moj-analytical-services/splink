@@ -115,6 +115,9 @@ def test_u_train_link_only_sample(test_helpers, dialect):
         .reset_index()
         .rename(columns={"index": "unique_id"})
     )
+    # levenshtein should be on string types
+    df_l["name"] = df_l["name"].astype("str")
+    df_r["name"] = df_r["name"].astype("str")
 
     max_pairs = 1800000
 
