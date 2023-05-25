@@ -1,8 +1,7 @@
 ---
 name: 'Feature request'
-about: Suggest an idea for improving Splink
-title: '[FEAT] <title>'
-labels: 'enhancement'
+about: Making a change to Splink
+title: '<title>'
 assignees: ''
 ---
 
