@@ -3,13 +3,6 @@ import logging
 import pytest
 
 from splink.spark.jar_location import similarity_jar_location
-from tests.decorator import dialect_groups
-from tests.helpers import (
-    DuckDBTestHelper,
-    PostgresTestHelper,
-    SparkTestHelper,
-    SQLiteTestHelper,
-)
 
 # ruff: noqa: F401
 # imported fixtures:
@@ -18,6 +11,13 @@ from tests.backend_utils.postgres_conf import (
     _pg_credentials,
     _postgres,
     pg_engine,
+)
+from tests.decorator import dialect_groups
+from tests.helpers import (
+    DuckDBTestHelper,
+    PostgresTestHelper,
+    SparkTestHelper,
+    SQLiteTestHelper,
 )
 
 logger = logging.getLogger(__name__)
@@ -68,6 +68,7 @@ def df_spark(spark):
 
 # workaround as you can't pass fixtures as param arguments in base pytest
 # see e.g. https://stackoverflow.com/a/42400786/11811947
+# ruff: noqa: F811
 @pytest.fixture
 def test_helpers(spark, pg_engine):
     return {
