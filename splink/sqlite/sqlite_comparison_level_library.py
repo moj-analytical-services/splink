@@ -4,6 +4,7 @@ from ..comparison_level_library import (
     DistanceFunctionLevelBase,
     ElseLevelBase,
     ExactMatchLevelBase,
+    LevenshteinLevelBase,
     NullLevelBase,
     PercentageDifferenceLevelBase,
 )
@@ -30,6 +31,9 @@ class SqliteComparisonProperties(SqliteBase):
         return distance_function_level
 
     @property
+    def _levenshtein_level(self):
+        return levenshtein_level
+
     def _columns_reversed_level(self):
         return columns_reversed_level
 
@@ -43,6 +47,10 @@ class exact_match_level(SqliteBase, ExactMatchLevelBase):
 
 
 class else_level(SqliteBase, ElseLevelBase):
+    pass
+
+
+class levenshtein_level(SqliteBase, LevenshteinLevelBase):
     pass
 
 

@@ -4,7 +4,7 @@ import logging
 import time
 from typing import TYPE_CHECKING
 
-import duckdb
+import pandas as pd
 
 from .comparison_level import ComparisonLevel
 from .constants import LEVEL_NOT_OBSERVED_TEXT
@@ -56,12 +56,12 @@ def compute_new_parameters_sql(settings_obj: Settings):
     return sql
 
 
-def compute_proportions_for_new_parameters(m_u_df):
+def compute_proportions_for_new_parameters_sql(table_name):
     """Using the results from compute_new_parameters_sql, compute
     m and u
     """
 
-    sql = """
+    sql = f"""
     select
         comparison_vector_value,
         output_column_name,
@@ -69,7 +69,7 @@ def compute_proportions_for_new_parameters(m_u_df):
             as m_probability,
         u_count/sum(u_count) over (PARTITION BY output_column_name)
             as u_probability
-    from m_u_df
+    from {table_name}
     where comparison_vector_value != -1
     and output_column_name != '_probability_two_random_records_match'
 
@@ -80,12 +80,52 @@ def compute_proportions_for_new_parameters(m_u_df):
         output_column_name,
         m_count as m_probability,
         u_count as u_probability
-    from m_u_df
+    from {table_name}
     where output_column_name = '_probability_two_random_records_match'
     order by output_column_name, comparison_vector_value asc
     """
 
-    return duckdb.query(sql).to_df().to_dict("records")
+    return sql
+
+
+def compute_proportions_for_new_parameters_pandas(m_u_df):
+    data = m_u_df.copy()
+    m_prob = "m_probability"
+    u_prob = "u_probability"
+    data.rename(columns={"m_count": m_prob, "u_count": u_prob}, inplace=True)
+
+    random_records = data[
+        data.output_column_name == "_probability_two_random_records_match"
+    ]
+    data = data[data.output_column_name != "_probability_two_random_records_match"]
+
+    data = data[data.comparison_vector_value != -1]
+    index = data.index.tolist()
+
+    m_probs = data.loc[index, m_prob] / data.groupby("output_column_name")[
+        m_prob
+    ].transform("sum")
+    u_probs = data.loc[index, u_prob] / data.groupby("output_column_name")[
+        u_prob
+    ].transform("sum")
+
+    data.loc[index, m_prob] = m_probs
+    data.loc[index, u_prob] = u_probs
+
+    data = pd.concat([random_records, data])
+
+    return data.to_dict("records")
+
+
+def compute_proportions_for_new_parameters(m_u_df):
+    # Execute with duckdb if installed, otherwise default to pandas
+    try:
+        import duckdb
+
+        sql = compute_proportions_for_new_parameters_sql("m_u_df")
+        return duckdb.query(sql).to_df().to_dict("records")
+    except (ImportError, ModuleNotFoundError):
+        return compute_proportions_for_new_parameters_pandas(m_u_df)
 
 
 def populate_m_u_from_lookup(

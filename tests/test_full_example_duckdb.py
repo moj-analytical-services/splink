@@ -11,6 +11,7 @@ import splink.duckdb.duckdb_comparison_library as cl
 from splink.duckdb.duckdb_linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict, name_comparison
+from .decorator import mark_with_dialects_including
 from .linker_utils import (
     _test_table_registration,
     _test_write_functionality,
@@ -18,6 +19,7 @@ from .linker_utils import (
 )
 
 
+@mark_with_dialects_including("duckdb")
 def test_full_example_duckdb(tmp_path):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df = df.rename(columns={"surname": "SUR name"})
@@ -156,6 +158,7 @@ df_final = pd.concat([df_l, df_r])
         ),
     ],
 )
+@mark_with_dialects_including("duckdb")
 def test_link_only(input, source_l, source_r):
     settings = get_settings_dict()
     settings["link_type"] = "link_only"
@@ -200,6 +203,7 @@ def test_link_only(input, source_l, source_r):
         ),
     ],
 )
+@mark_with_dialects_including("duckdb")
 def test_duckdb_load_from_file(df):
     settings = get_settings_dict()
 
@@ -221,6 +225,7 @@ def test_duckdb_load_from_file(df):
     assert len(linker.predict().as_pandas_dataframe()) == 7257
 
 
+@mark_with_dialects_including("duckdb")
 def test_duckdb_arrow_array():
     # Checking array fixes problem identified here:
     # https://github.com/moj-analytical-services/splink/issues/680
@@ -249,6 +254,7 @@ def test_duckdb_arrow_array():
     assert len(df) == 2
 
 
+@mark_with_dialects_including("duckdb")
 def test_cast_error():
     from duckdb import InvalidInputException
 
@@ -264,6 +270,7 @@ def test_cast_error():
     DuckDBLinker(df)
 
 
+@mark_with_dialects_including("duckdb")
 def test_small_example_duckdb(tmp_path):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df["full_name"] = df["first_name"] + df["surname"]

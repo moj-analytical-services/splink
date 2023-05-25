@@ -28,6 +28,7 @@ jobs:
       - name: Install environment and check notebooks
         run: |
             cd splink_demos
+            cp ../benchmarking/conftest.py conftest.py
             python3 -m venv venv
             source venv/bin/activate
             pip install --upgrade pip
