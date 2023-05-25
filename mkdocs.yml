@@ -96,9 +96,10 @@ nav:
       - Comparing Records:
         - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
         - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
-        - Choosing comparators and thresholds: "topic_guides/choosing_comparators.ipynb"
-        - String comparators: "topic_guides/comparators.md"
-        - Phonetic transformations: "topic_guides/phonetic.md"
+        - Comparing strings:
+          - Choosing comparators and thresholds: "topic_guides/choosing_comparators.ipynb"
+          - String comparators: "topic_guides/comparators.md"
+          - Phonetic transformations: "topic_guides/phonetic.md"
         - Term-Frequency adjustments: "topic_guides/term-frequency.md"
       - Performance:
         - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
