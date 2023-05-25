@@ -4,7 +4,10 @@ from sqlalchemy.types import INTEGER
 
 from splink.postgres.postgres_linker import PostgresLinker
 
+from .decorator import mark_with_dialects_including
 
+
+@mark_with_dialects_including("postgres")
 def test_log2(pg_engine):
     linker = PostgresLinker(
         [],
@@ -22,6 +25,7 @@ def test_log2(pg_engine):
         assert log_result == expected
 
 
+@mark_with_dialects_including("postgres")
 def test_datediff(pg_engine):
     linker = PostgresLinker(
         [],
@@ -51,6 +55,7 @@ def test_datediff(pg_engine):
         assert dd_result == expected
 
 
+@mark_with_dialects_including("postgres")
 def test_months_between(pg_engine):
     # NB only testing floor of this function, as that is what we have in datediff
     linker = PostgresLinker(
@@ -82,6 +87,7 @@ def test_months_between(pg_engine):
         assert md_result == expected
 
 
+@mark_with_dialects_including("postgres")
 def test_array_intersect(pg_engine):
     linker = PostgresLinker(
         [],

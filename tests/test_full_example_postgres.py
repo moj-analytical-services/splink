@@ -6,9 +6,11 @@ import pytest
 from splink.postgres.postgres_linker import PostgresLinker
 
 from .basic_settings import get_settings_dict
+from .decorator import mark_with_dialects_including
 from .linker_utils import _test_table_registration, register_roc_data
 
 
+@mark_with_dialects_including("postgres")
 def test_full_example_postgres(tmp_path, pg_engine):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
@@ -107,6 +109,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
     linker_2.load_settings_from_json(path)
 
 
+@mark_with_dialects_including("postgres")
 def test_postgres_use_existing_table(tmp_path, pg_engine):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -123,6 +126,7 @@ def test_postgres_use_existing_table(tmp_path, pg_engine):
     linker.predict()
 
 
+@mark_with_dialects_including("postgres")
 def test_error_no_connection():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     # get an error as we don't pass a connection
