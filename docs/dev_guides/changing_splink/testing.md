@@ -12,7 +12,7 @@ Splink tests can be broadly categorised into three sets:
 
 * **'Core' tests** - these are tests which test some specific bit of functionality which does not depend on any specific SQL dialect. They are usually unit tests - examples are testing [`InputColumn`](https://github.com/moj-analytical-services/splink/blob/master/tests/test_input_column.py) and testing the [latitude-longitude distance calculation](https://github.com/moj-analytical-services/splink/blob/master/tests/test_lat_long_distance.py).
 * **Backend-agnostic tests** - these are tests which run against some SQL backend, but which are written in such a way that they can run against many backends by making use of the [backend-agnostic testing framework](#backend-agnostic-testing). The majority of tests are of this type.
-* **Tests for specific backends** - these are tests which run against a specific SQL backend, and test some feature particular to this backend. There are not many of these, as Splink is designed to run very similarly independent of the backend used.
+* **Backend-specific tests** - these are tests which run against a specific SQL backend, and test some feature particular to this backend. There are not many of these, as Splink is designed to run very similarly independent of the backend used.
 
 !!! info
     We currently do not have support for testing the `athena` backend, due to the complication of needing a connection to an AWS account. All other backends have testing available.
@@ -337,7 +337,7 @@ This line is why we cannot allow `sqlite` for this test - we make use of the fun
 
 If you need to exclude _multiple_ dialects this is also possible - just pass each as an argument. For example, to decorate a test that is not supported on `spark` _or_ `sqlite`, use the decorator `@mark_with_dialects_excluding("sqlite", "spark")`.
 
-### Tests for specific backends
+### Backend-specific tests
 
 If you intend to write a test for a specific backend, first consider whether it is definitely specific to that backend - if not then a [backend-agnostic test](#backend-agnostic-testing) would be preferable, as then your test will be run against _many_ backends.
 If you really do need to test features peculiar to one backend, then you can write it simply as you would an ordinary `pytest` test. The only difference is that you should decorate it with `@mark_with_dialects_including` (from [tests/decorator.py](https://github.com/moj-analytical-services/splink/blob/master/tests/decorator.py)) - for example:
