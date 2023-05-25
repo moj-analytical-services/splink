@@ -1170,6 +1170,9 @@ class PostcodeComparisonBase(Comparison):
 
         comparison_levels = []
 
+        if set_to_uppercase:
+            postcode_col = f"upper({col_name})"
+
         if invalid_postcodes_as_null:
             comparison_levels.append(self._null_level(col_name, valid_postcode_regex))
         else:
