@@ -4,7 +4,12 @@ import pytest
 
 from splink.spark.jar_location import similarity_jar_location
 from tests.decorator import dialect_groups
-from tests.helpers import DuckDBTestHelper, SparkTestHelper, SQLiteTestHelper
+from tests.helpers import (
+    DuckDBTestHelper,
+    PostgresTestHelper,
+    SparkTestHelper,
+    SQLiteTestHelper,
+)
 
 # ruff: noqa: F401
 # imported fixtures:
@@ -64,9 +69,10 @@ def df_spark(spark):
 # workaround as you can't pass fixtures as param arguments in base pytest
 # see e.g. https://stackoverflow.com/a/42400786/11811947
 @pytest.fixture
-def test_helpers(spark):
+def test_helpers(spark, pg_engine):
     return {
         "duckdb": DuckDBTestHelper(),
         "spark": SparkTestHelper(spark),
         "sqlite": SQLiteTestHelper(),
+        "postgres": PostgresTestHelper(pg_engine),
     }
