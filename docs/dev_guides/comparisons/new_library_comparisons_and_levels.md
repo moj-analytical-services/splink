@@ -78,7 +78,7 @@ class DialectBase():
         )
 ```
 
-Then any dialects that use a different value can override this (e.g in [`splink.spark.spark_base.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_base.py)):
+Then any dialects that use a different value can override this (e.g in [`splink.spark.spark_helpers.spark_base`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_helpers/spark_base.py)):
 
 ```python
 class SparkBase(DialectBase):
@@ -88,14 +88,14 @@ class SparkBase(DialectBase):
         return "array_size"
 ```
 
-Then any dialects where this comparison level can be used can simply inherit from this dialect-specific base, along with the comparison level base `ArrayLengthLevelBase` - here in [`splink.spark.spark_comparison_level_library.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_comparison_level_library.py):
+Then any dialects where this comparison level can be used can simply inherit from this dialect-specific base, along with the comparison level base `ArrayLengthLevelBase` - here in [`splink.spark.spark_helpers.spark_comparison_imports`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_helpers/spark_comparison_imports.py):
 
 ```python
 class array_length_level(SparkBase, ArrayLengthLevelBase):
     pass
 ```
 
-Similarly for DuckDB define the appropriate function name in the base [`splink.duckdb.duckdb_base.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/duckdb/duckdb_base.py)
+Similarly for DuckDB define the appropriate function name in the base [`splink.duckdb.duckdb_helpers.duckdb_base`](https://github.com/moj-analytical-services/splink/blob/master/splink/duckdb/duckdb_helpers/duckdb_base.py)
 
 ```python
 class DuckDBBase(DialectBase):
@@ -105,7 +105,7 @@ class DuckDBBase(DialectBase):
         return "array_length"
 ```
 
-and then simply create the level in the corresponding library [`splink.duckdb.duckdb_comparison_level_library.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/duckdb/duckdb_comparison_level_library.py):
+and then simply create the level in the corresponding library [`splink.duckdb.duckdb_helpers.duckdb_comparison_imports`](https://github.com/moj-analytical-services/splink/blob/master/splink/duckdb/duckdb_helpers/duckdb_comparison_imports.py):
 
 ```python
 class array_length_level(DuckDBBase, ArrayLengthLevelBase):
@@ -221,7 +221,7 @@ but also the new `self._array_length_level` which relates to our new comparison 
 We will need to make sure that the dialect-specific comparisons which will actually be _used_ will have this property.
 
 Each dialect has a comparison properties base, which stores information about all of the dialect-specific comparison levels used by all comparisons.
-We will need to add our new level to this, which we referred to above in `ArrayLengthAtThresholdsComparisonBase` - for this example in [`splink.spark.spark_comparison_library.py`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_comparison_library.py):
+We will need to add our new level to this, which we referred to above in `ArrayLengthAtThresholdsComparisonBase` - for this example in [`splink.spark.spark_helpers.spark_comparison_imports`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_helpers/spark_comparison_imports.py):
 ```python
 from splink.spark.spark_comparison_level_library import (
     exact_match_level,
