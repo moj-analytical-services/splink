@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError
 
 
 @pytest.fixture(scope="session")
@@ -33,11 +34,13 @@ def _engine_factory(_pg_credentials):
     return get_engine
 
 
-@pytest.fixture(scope="session")
-def _postgres(_engine_factory):
-    # this sets up/tears down the test database + our splink user within it
-
-    conn = _engine_factory().connect()
+def _setup_test_env(_engine_factory):
+    # catch case where no postgres available - if testing other backends
+    try:
+        conn = _engine_factory().connect()
+    except OperationalError as e:
+        print(repr(e))
+        return None
     uuid = str(uuid4()).replace("-", "_")
     db_name = f"__splink__testing_database_{uuid}"
     user = f"pytest_{uuid}"
@@ -79,16 +82,38 @@ def _postgres(_engine_factory):
     new_conn.execute(text(f"GRANT USAGE ON LANGUAGE SQL TO {user};"))
     new_conn.execute(text(f"GRANT USAGE ON TYPE float8 TO {user};"))
     new_conn.close()
-    yield {"db": db_name, "user": user, "password": password}
 
-    conn.execute(text(drop_db_sql))
-    conn.close()
+    def teardown():
+        conn.execute(text(drop_db_sql))
+        conn.close()
+
+    return {
+        "teardown_func": teardown,
+        "details": {"db": db_name, "user": user, "password": password},
+    }
+
+
+@pytest.fixture(scope="session")
+def _postgres(_engine_factory):
+    # this sets up/tears down the test database + our splink user within it
+    conn_info = _setup_test_env(_engine_factory)
+    if conn_info is None:
+        yield None
+    else:
+        yield conn_info["details"]
+        conn_info["teardown_func"]()
 
 
 @pytest.fixture(scope="function")
 def pg_engine(_engine_factory, _postgres):
-    # user engine, for registering tables outside of Splink
-    engine = _engine_factory(_postgres["db"], _postgres["user"], _postgres["password"])
-    yield engine
+    # catch case where no postgres available - if testing other backends
+    if _postgres is None:
+        yield None
+    else:
+        # user engine, for registering tables outside of Splink
+        engine = _engine_factory(
+            _postgres["db"], _postgres["user"], _postgres["password"]
+        )
+        yield engine
 
-    engine.dispose()
+        engine.dispose()

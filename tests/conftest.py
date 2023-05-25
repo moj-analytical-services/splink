@@ -15,6 +15,7 @@ from tests.backend_utils.postgres_conf import (
 from tests.decorator import dialect_groups
 from tests.helpers import (
     DuckDBTestHelper,
+    LazyDict,
     PostgresTestHelper,
     SparkTestHelper,
     SQLiteTestHelper,
@@ -71,9 +72,13 @@ def df_spark(spark):
 # ruff: noqa: F811
 @pytest.fixture
 def test_helpers(spark, pg_engine):
-    return {
-        "duckdb": DuckDBTestHelper(),
-        "spark": SparkTestHelper(spark),
-        "sqlite": SQLiteTestHelper(),
-        "postgres": PostgresTestHelper(pg_engine),
-    }
+    # LazyDict to lazy-load helpers
+    # That way we do not instantiate helpers we do not need
+    # e.g. running only duckdb tests we don't need PostgresTestHelper
+    # so we can run duckdb tests in environments w/o access to postgres
+    return LazyDict(
+        duckdb=(DuckDBTestHelper, []),
+        spark=(SparkTestHelper, [spark]),
+        sqlite=(SQLiteTestHelper, []),
+        postgres=(PostgresTestHelper, [pg_engine]),
+    )

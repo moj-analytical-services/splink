@@ -172,6 +172,8 @@ class SQLiteTestHelper(TestHelper):
 
 class PostgresTestHelper(TestHelper):
     def __init__(self, pg_engine):
+        if pg_engine is None:
+            raise SplinkTestException("No Postgres connection found")
         self.engine = pg_engine
         self._frame_counter = 0
 
