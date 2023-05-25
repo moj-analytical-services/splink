@@ -2,6 +2,11 @@ import sqlite3
 from abc import ABC, abstractmethod
 
 import pandas as pd
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.types import (
+    INTEGER,
+    TEXT,
+)
 
 import splink.duckdb.duckdb_comparison_level_library as cll_duckdb
 import splink.duckdb.duckdb_comparison_library as cl_duckdb
@@ -183,7 +188,19 @@ class PostgresTestHelper(TestHelper):
 
     def convert_frame(self, df):
         name = self._get_input_name()
-        df.to_sql(name, con=self.engine, if_exists="replace")
+        # workaround to handle array column conversion
+        # manually mark any list columns so type is handled correctly
+        dtypes = {}
+        for colname, values in df.iteritems():
+            # TODO: will fail if first value is null
+            if isinstance(values[0], list):
+                # TODO: will fail if first array is empty
+                initial_array_val = values[0][0]
+                if isinstance(initial_array_val, int):
+                    dtypes[colname] = postgresql.ARRAY(INTEGER)
+                elif isinstance(initial_array_val, str):
+                    dtypes[colname] = postgresql.ARRAY(TEXT)
+        df.to_sql(name, con=self.engine, if_exists="replace", dtype=dtypes)
         return name
 
     def load_frame_from_csv(self, path):
