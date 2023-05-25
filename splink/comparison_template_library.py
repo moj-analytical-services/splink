@@ -1036,7 +1036,7 @@ class PostcodeComparisonBase(Comparison):
         self,
         col_name: str,
         invalid_postcodes_as_null=False,
-        valid_postcode_regex="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$",
+        valid_postcode_regex="^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9][A-Za-z]{2}$",
         term_frequency_adjustments_full=False,
         include_full_match_level=True,
         include_sector_match_level=True,
@@ -1071,7 +1071,7 @@ class PostcodeComparisonBase(Comparison):
                 to validate postcodes. If invalid_postcodes_as_null is True,
                 postcodes that do not adhere to valid_postcode_regex will be included
                  in the null level.
-                 Defaults to "^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$"
+                 Defaults to "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9][A-Za-z]{2}$"
             term_frequency_adjustments_full (bool, optional): If True, apply
                 term frequency adjustments to the full postcode exact match level.
                 Defaults to False.
@@ -1188,7 +1188,7 @@ class PostcodeComparisonBase(Comparison):
         if include_sector_match_level:
             comparison_level = self._exact_match_level(
                 col_name,
-                regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]",
+                regex_extract="^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9]",
                 m_probability=m_probability_sector_match,
                 manual_chart_label="Postcode Sector",
             )
@@ -1197,7 +1197,7 @@ class PostcodeComparisonBase(Comparison):
         if include_district_match_level:
             comparison_level = self._exact_match_level(
                 col_name,
-                regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]?",
+                regex_extract="^[A-Za-z]{1,2}[0-9][A-Za-z0-9]?",
                 m_probability=m_probability_district_match,
                 manual_chart_label="Postcode District",
             )
@@ -1206,7 +1206,7 @@ class PostcodeComparisonBase(Comparison):
         if include_area_match_level:
             comparison_level = self._exact_match_level(
                 col_name,
-                regex_extract="^[A-Z]{1,2}",
+                regex_extract="^[A-Za-z]{1,2}",
                 m_probability=m_probability_area_match,
                 manual_chart_label="Postcode Area",
             )
