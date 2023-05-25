@@ -1,5 +1,6 @@
 import sqlite3
 from abc import ABC, abstractmethod
+from collections import UserDict
 
 import pandas as pd
 from sqlalchemy.dialects import postgresql
@@ -220,3 +221,41 @@ class PostgresTestHelper(TestHelper):
     @property
     def ctl(self):
         return ctl_postgres
+
+
+class SplinkTestException(Exception):
+    pass
+
+
+class LazyDict(UserDict):
+    """
+    LazyDict
+    Like a dict, but values passed are tuples of the form (func, args)
+    getting returns the result of the function
+    only instantiate the result when we need it.
+    Need this for handling test fixtures.
+    Disallow setting/deleting entries to catch errors -
+    should be effectively immutable
+    """
+
+    # write only in creation
+    def __init__(self, **kwargs):
+        self.data = {}
+        for key, val in kwargs.items():
+            self.data[key] = val
+
+    def __getitem__(self, key):
+        func, args = self.data[key]
+        return func(*args)
+
+    def __setitem__(self, key, value):
+        raise SplinkTestException(
+            "LazyDict does not support setting values. "
+            "Did you mean to read value instead?"
+        )
+
+    def __delitem__(self, key):
+        raise SplinkTestException(
+            "LazyDict does not support deleting items. "
+            "Did you mean to read value instead?"
+        )
