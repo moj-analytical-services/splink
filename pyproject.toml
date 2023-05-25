@@ -62,3 +62,20 @@ ignore = [
     "B905", # `zip()` without an explicit `strict=` parameter
     "B006", # Do not use mutable data structures for argument defaults"
 ]
+
+[tool.pytest.ini_options]
+addopts = ["-m default"]
+markers = [
+# only tests where backend is irrelevant:
+    "core",
+# see tests/decorator.py::dialect_groups for group details:
+    "default",
+    "all",
+# backend-specific sets
+    "duckdb",
+    "duckdb_only",
+    "spark",
+    "spark_only",
+    "sqlite",
+    "sqlite_only",
+]
