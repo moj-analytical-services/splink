@@ -3,10 +3,12 @@ import logging
 import pandas as pd
 import pytest
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from tests.decorator import mark_with_dialects_excluding
 
 
-def test_prob_rr_match_dedupe():
+@mark_with_dialects_excluding()
+def test_prob_rr_match_dedupe(test_helpers, dialect):
+    helper = test_helpers[dialect]
     df = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
@@ -17,6 +19,7 @@ def test_prob_rr_match_dedupe():
             {"unique_id": 6, "first_name": "Jane", "surname": "Taylor"},
         ]
     )
+    df = helper.convert_frame(df)
 
     settings = {
         "link_type": "dedupe_only",
@@ -30,7 +33,7 @@ def test_prob_rr_match_dedupe():
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
     # Test dedupe only
-    linker = DuckDBLinker(df, settings)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
     linker.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -50,7 +53,9 @@ def test_prob_rr_match_dedupe():
     assert pytest.approx(prob) == 4 / 15 * (1 / 0.9)
 
 
-def test_prob_rr_match_link_only():
+@mark_with_dialects_excluding()
+def test_prob_rr_match_link_only(test_helpers, dialect):
+    helper = test_helpers[dialect]
     df_1 = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
@@ -66,6 +71,8 @@ def test_prob_rr_match_link_only():
             {"unique_id": 4, "first_name": "Alice", "surname": "Williams"},
         ]
     )
+    df_1 = helper.convert_frame(df_1)
+    df_2 = helper.convert_frame(df_2)
 
     settings = {
         "link_type": "link_only",
@@ -79,7 +86,7 @@ def test_prob_rr_match_link_only():
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
     # Test dedupe only
-    linker = DuckDBLinker([df_1, df_2], settings)
+    linker = helper.Linker([df_1, df_2], settings, **helper.extra_linker_args())
     linker.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -89,7 +96,9 @@ def test_prob_rr_match_link_only():
     assert pytest.approx(prob) == 2 / 8
 
 
-def test_prob_rr_match_link_and_dedupe():
+@mark_with_dialects_excluding()
+def test_prob_rr_match_link_and_dedupe(test_helpers, dialect):
+    helper = test_helpers[dialect]
     df_1 = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
@@ -105,6 +114,8 @@ def test_prob_rr_match_link_and_dedupe():
             {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
         ]
     )
+    df_1 = helper.convert_frame(df_1)
+    df_2 = helper.convert_frame(df_2)
 
     settings = {
         "link_type": "link_and_dedupe",
@@ -115,7 +126,7 @@ def test_prob_rr_match_link_and_dedupe():
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
     # Test dedupe only
-    linker = DuckDBLinker([df_1, df_2], settings)
+    linker = helper.Linker([df_1, df_2], settings, **helper.extra_linker_args())
     linker.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -125,7 +136,9 @@ def test_prob_rr_match_link_and_dedupe():
     assert pytest.approx(prob) == 3 / 15
 
 
-def test_prob_rr_match_link_only_multitable():
+@mark_with_dialects_excluding()
+def test_prob_rr_match_link_only_multitable(test_helpers, dialect):
+    helper = test_helpers[dialect]
     df_1 = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
@@ -164,6 +177,15 @@ def test_prob_rr_match_link_only_multitable():
             {"unique_id": 7, "first_name": "Brian", "surname": "Johnson"},
         ]
     )
+    (df_1, df_2, df_3, df_4) = list(
+        map(lambda df: df.assign(city="Brighton"), (df_1, df_2, df_3, df_4))
+    )
+
+    df_1 = helper.convert_frame(df_1)
+    df_2 = helper.convert_frame(df_2)
+    df_3 = helper.convert_frame(df_3)
+    df_4 = helper.convert_frame(df_4)
+    dfs = [df_1, df_2, df_3, df_4]
 
     settings = {
         "link_type": "link_only",
@@ -173,8 +195,7 @@ def test_prob_rr_match_link_only_multitable():
 
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
-    dfs = [df_1, df_2, df_3, df_4]
-    linker = DuckDBLinker(dfs, settings)
+    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
     linker.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -185,8 +206,7 @@ def test_prob_rr_match_link_only_multitable():
     assert pytest.approx(prob) == 6 / 131
 
     # if we define all record pairs to be a match, then the probability should be 1
-    dfs = list(map(lambda df: df.assign(city="Brighton"), dfs))
-    linker = DuckDBLinker(dfs, settings)
+    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
     linker.estimate_probability_two_random_records_match(
         ["l.city = r.city"], recall=1.0
     )
@@ -194,7 +214,9 @@ def test_prob_rr_match_link_only_multitable():
     assert prob == 1
 
 
-def test_prob_rr_match_link_and_dedupe_multitable():
+@mark_with_dialects_excluding()
+def test_prob_rr_match_link_and_dedupe_multitable(test_helpers, dialect):
+    helper = test_helpers[dialect]
     df_1 = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
@@ -233,6 +255,15 @@ def test_prob_rr_match_link_and_dedupe_multitable():
             {"unique_id": 7, "first_name": "Brian", "surname": "Johnson"},
         ]
     )
+    (df_1, df_2, df_3, df_4) = list(
+        map(lambda df: df.assign(city="Brighton"), (df_1, df_2, df_3, df_4))
+    )
+
+    df_1 = helper.convert_frame(df_1)
+    df_2 = helper.convert_frame(df_2)
+    df_3 = helper.convert_frame(df_3)
+    df_4 = helper.convert_frame(df_4)
+    dfs = [df_1, df_2, df_3, df_4]
 
     settings = {
         "link_type": "link_and_dedupe",
@@ -242,8 +273,7 @@ def test_prob_rr_match_link_and_dedupe_multitable():
 
     deterministic_rules = ["l.first_name = r.first_name", "l.surname = r.surname"]
 
-    dfs = [df_1, df_2, df_3, df_4]
-    linker = DuckDBLinker(dfs, settings)
+    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
     linker.estimate_probability_two_random_records_match(
         deterministic_rules, recall=1.0
     )
@@ -254,8 +284,7 @@ def test_prob_rr_match_link_and_dedupe_multitable():
     # (3 + 4 + 5 + 7)(3 + 4 + 5 + 7 - 1)/2 = 171 comparisons
     assert pytest.approx(prob) == 10 / 171
 
-    dfs = list(map(lambda df: df.assign(city="Brighton"), dfs))
-    linker = DuckDBLinker(dfs, settings)
+    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
     linker.estimate_probability_two_random_records_match(
         ["l.city = r.city"], recall=1.0
     )
@@ -263,7 +292,10 @@ def test_prob_rr_match_link_and_dedupe_multitable():
     assert prob == 1
 
 
-def test_prob_rr_valid_range(caplog):
+@mark_with_dialects_excluding()
+def test_prob_rr_valid_range(test_helpers, dialect, caplog):
+    helper = test_helpers[dialect]
+
     def check_range(p):
         assert p <= 1
         assert p >= 0
@@ -308,6 +340,7 @@ def test_prob_rr_valid_range(caplog):
             },
         ]
     )
+    df = helper.convert_frame(df)
 
     settings = {
         "link_type": "dedupe_only",
@@ -315,7 +348,7 @@ def test_prob_rr_valid_range(caplog):
     }
 
     # Test dedupe only
-    linker = DuckDBLinker(df, settings)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
     with pytest.raises(ValueError):
         # all comparisons matches using this rule, so we must have perfect recall
         # using recall = 80% is inconsistent, so should get an error
