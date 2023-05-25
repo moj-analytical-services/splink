@@ -12,10 +12,10 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 
 ## Key Features
 
-⚡ **Speed:** Capable of linking a million records on a laptop in approximately one minute.  
-🎯 **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.  
-🌐 **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.  
-🎓 **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.  
+⚡ **Speed:** Capable of linking a million records on a laptop in approximately one minute.
+🎯 **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.
+🌐 **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.
+🎓 **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.
 📊 **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.
 
 Splink's core linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customizations to improve accuracy.
@@ -67,6 +67,9 @@ or, if you prefer, you can instead install splink using conda:
 ```sh
 conda install -c conda-forge splink
 ```
+
+Should you require a more bare-bones version of Splink **without DuckDB**, please see the following area of the docs:
+> [DuckDBless Splink Installation](https://moj-analytical-services.github.io/splink/installations.html#duckdb-less-installation)
 
 ## Quickstart
 
@@ -139,7 +142,7 @@ If you use Splink in your research, we'd be grateful for a citation as follows:
 ```BibTeX
 @article{Linacre_Lindsay_Manassis_Slade_Hepworth_2022,
 	title        = {Splink: Free software for probabilistic record linkage at scale.},
-	author       = {Linacre, Robin and Lindsay, Sam and Manassis, Theodore and Slade, Zoe and Hepworth, Tom},
+	author       = {Linacre, Robin and Lindsay, Sam and Manassis, Theodore and Slade, Zoe and Hepworth, Tom and Kennedy, Ross and Bond, Andrew},
 	year         = 2022,
 	month        = {Aug.},
 	journal      = {International Journal of Population Data Science},

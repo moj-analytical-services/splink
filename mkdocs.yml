@@ -59,12 +59,13 @@ markdown_extensions:
       auto_append:
         - includes/abbreviations.md
   - pymdownx.tabbed:
-      alternate_style: true 
+      alternate_style: true
   - toc:
       permalink: True
       toc_depth: 4
 nav:
   - Home: "README.md"
+  - Installation: "installations.md"
   - Tutorials:
       - 0. Tutorial introduction: "demos/00_Tutorial_Introduction.ipynb"
       - 1. Data prep prerequisites: "demos/01_Prerequisites.ipynb"
@@ -130,7 +131,7 @@ nav:
         - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
         - Linting: "dev_guides/changing_splink/lint.md"
         - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
-        - Running Tests: "dev_guides/changing_splink/running_tests_locally.md"
+        - Testing: "dev_guides/changing_splink/testing.md"
         - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
       - Caching and pipelining: "dev_guides/caching.md"
       - Understanding and debugging Splink: "dev_guides/debug_modes.md"

@@ -396,7 +396,7 @@ class NameComparisonBase(Comparison):
                 import splink.duckdb.duckdb_comparison_template_library as ctl
                 ctl.name_comparison("name",
                                     phonetic_col_name = "name_dm",
-                                    term_frequency_adjustments_name = True,
+                                    term_frequency_adjustments = True,
                                     levenshtein_thresholds=[2],
                                     damerau_levenshtein_thresholds=[],
                                     jaro_winkler_thresholds=[],
@@ -414,7 +414,7 @@ class NameComparisonBase(Comparison):
                 import splink.spark.spark_comparison_template_library as ctl
                 ctl.name_comparison("name",
                                     phonetic_col_name = "name_dm",
-                                    term_frequency_adjustments_name = True,
+                                    term_frequency_adjustments = True,
                                     levenshtein_thresholds=[2],
                                     damerau_levenshtein_thresholds=[],
                                     jaro_winkler_thresholds=[],

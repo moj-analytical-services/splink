@@ -295,7 +295,10 @@ def _cc_assess_exit_condition(representatives_name):
 
 
 def _cc_create_unique_id_cols(
-    linker: "Linker", concat_with_tf: str, df_predict: str, match_probability_threshold
+    linker: "Linker",
+    concat_with_tf: str,
+    df_predict: str,
+    match_probability_threshold: float,
 ):
     """Create SQL to pull unique ID columns for connected components.
 
@@ -317,6 +320,15 @@ def _cc_create_unique_id_cols(
         unique_id_l and unique_id_r.
 
     """
+    # Set probability threshold
+    if linker._deterministic_link_mode:
+        match_probability_condition = ""
+    elif match_probability_threshold is None:
+        raise TypeError("Parameter 'match_probability_threshold' is missing or None")
+    else:
+        match_probability_condition = (
+            f"where match_probability >= {match_probability_threshold}"
+        )
 
     uid_cols = linker._settings_obj._unique_id_input_columns
     uid_concat_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
@@ -329,7 +341,7 @@ def _cc_create_unique_id_cols(
         {uid_concat_edges_l} as unique_id_l,
         {uid_concat_edges_r} as unique_id_r
         from {df_predict}
-        where match_probability >= {match_probability_threshold}
+        {match_probability_condition}
 
         UNION
 
