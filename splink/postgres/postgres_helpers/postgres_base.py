@@ -1,4 +1,4 @@
-from ..dialect_base import DialectBase
+from ...dialect_base import DialectBase
 
 
 def size_array_intersect_sql(col_name_l, col_name_r):
