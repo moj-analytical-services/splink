@@ -922,6 +922,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         cast_strings_to_date=False,
         date_format: str = None,
         invalid_dates_as_null: bool = False,
+        valid_date_regex: str = "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
@@ -967,6 +968,11 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                 when invalid_dates_as_null=True
             invalid_dates_as_null (bool, optional): assign any dates that do not adhere
                 to date_format to the null level. Defaults to False.
+            valid_date_regex (str): regular expression pattern that is used
+                to validate dates. If invalid_postcodes_as_null is True,
+                dates that do not adhere to valid_date_regex will be included
+                in the null level.
+                Defaults to "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -1062,7 +1068,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
 
         comparison_levels = []
         if invalid_dates_as_null:
-            comparison_levels.append(self._null_level(col_name, date_format))
+            comparison_levels.append(self._null_level(col_name, valid_date_regex))
         else:
             comparison_levels.append(self._null_level(col_name))
 
