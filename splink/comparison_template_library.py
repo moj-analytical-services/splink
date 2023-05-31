@@ -1168,14 +1168,10 @@ class PostcodeComparisonBase(Comparison):
             Comparison: A comparison that can be inclued in the Splink settings
                 dictionary.
         """
-
-        postcode_col = InputColumn(col_name, sql_dialect=self._sql_dialect)
-        postcode_col_l, postcode_col_r = postcode_col.names_l_r()
-
         comparison_levels = []
 
         if set_to_uppercase:
-            postcode_col = f"upper({col_name})"
+            col_name = f"upper({col_name})"
 
         if invalid_postcodes_as_null:
             comparison_levels.append(self._null_level(col_name, valid_postcode_regex))
