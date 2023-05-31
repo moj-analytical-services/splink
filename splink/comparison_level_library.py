@@ -6,7 +6,12 @@ from .input_column import InputColumn
 
 
 class NullLevelBase(ComparisonLevel):
-    def __init__(self, col_name, valid_string_regex: str = None) -> ComparisonLevel:
+    def __init__(
+        self, 
+        col_name, 
+        valid_string_regex: str = None, 
+        invalid_dates_as_null: bool=True
+    ) -> ComparisonLevel:
         """Represents comparisons level where one or both sides of the comparison
         contains null values so the similarity cannot be evaluated.
         Assumed to have a partial match weight of zero (null effect
@@ -15,6 +20,8 @@ class NullLevelBase(ComparisonLevel):
             col_name (str): Input column name
             valid_string_regex (str): regular expression pattern that if not
                 matched will result in column being treated as a null.
+            invalid_dates_as_null (bool): If True, set all invalid dates to null.
+                Defaults to false.
 
         Examples:
             === "DuckDB"
@@ -72,6 +79,10 @@ class NullLevelBase(ComparisonLevel):
         else:
             col_name_l, col_name_r = col.name_l(), col.name_r()
             sql = f"{col_name_l} IS NULL OR {col_name_r} IS NULL"
+
+        if invalid_dates_as_null:
+            col_name_l = self._valid_date_function(col.name_l())
+            col_name_r = self._valid_date_function(col.name_r())
 
         level_dict = {
             "sql_condition": sql,

@@ -35,6 +35,12 @@ def datediff_sql(
         """
 
 
+def valid_date_sql(col_name):
+    return f"""
+        try_cast({col_name} AS DATE)
+    """
+
+
 def regex_extract_sql(col_name, regex):
     return f"""
         regexp_extract({col_name}, '{regex}')
@@ -53,6 +59,10 @@ class DuckDBBase(DialectBase):
     @property
     def _datediff_function(self):
         return datediff_sql
+
+    @property
+    def _valid_date_function(self):
+        return valid_date_sql
 
     @property
     def _regex_extract_function(self):
