@@ -7,14 +7,15 @@ from typing import NamedTuple
 
 import sqlglot
 import sqlglot.expressions as exp
-from input_column import InputColumn, remove_quotes_from_identifiers
-from misc import ensure_is_list
+from .input_column import InputColumn, remove_quotes_from_identifiers
+from .misc import ensure_is_list
 
 logger = logging.getLogger(__name__)
 
 
 def remove_suffix(c):
     return re.sub("_[l|r]{1}$", "", c)
+
 
 
 class InvalidCols(NamedTuple):
@@ -29,7 +30,6 @@ class InvalidCols(NamedTuple):
         invalid_columns (list): A list of the invalid
             columns that have been detected.
     """
-
     invalid_type: str
     invalid_columns: list
     italics = "\033[3m"
@@ -42,24 +42,32 @@ class InvalidCols(NamedTuple):
         return True if len(self.invalid_columns) > 0 else False
 
     @property
-    def plural(self):
-        return "s" if len(self.invalid_columns) > 1 else ""
+    def _columns(self):
+        return "columns" if len(self.invalid_columns) > 1 else "column"
 
     @property
     def columns_as_text(self):
-        return ", ".join(f"{self.italics}`{c}`{self.end}" for c in self.invalid_columns)
+        return ', '.join(f'{self.italics}`{c}`{self.end}' for c in self.invalid_columns)
 
     @property
     def invalid_cols(self):
+        _c = self._columns
+        _is_are = "are" if _c == "columns" else "is"
         return (
-            f"The following column(s) are missing from one or more "
+            f"The following {_c} {_is_are} missing from one or more "
             f"of your input dataframe(s):\n{self.columns_as_text}"
         )
 
     @property
+    def invalid_table_pref_intro_text(self):
+        _c = self._columns
+        cont = "contain" if _c == "columns" else "contains"
+        return f"The following {_c} {cont} invalid "
+
+    @property
     def invalid_table_pref(self):
         return (
-            "The following column reference(s) contain invalid "
+            f"{self.invalid_table_pref_intro_text}\n"
             "table prefixes (only `l.` and `r.` are valid):"
             f"\n{self.columns_as_text}"
         )
@@ -67,8 +75,8 @@ class InvalidCols(NamedTuple):
     @property
     def invalid_col_suffix(self):
         return (
-            "The following column reference(s) contain invalid "
-            "table suffixes (only `_l` and `_r` are valid)"
+            f"{self.invalid_table_pref_intro_text}\n"
+            "table suffixes (only `_l` and `_r` are valid):"
             f"\n{self.columns_as_text}"
         )
 
@@ -91,8 +99,8 @@ class SettingsValidator:
 
         # Extract additional_columns_to_retain field from settings obj
         self.cols_to_retain = self.clean_list_of_column_names(
-            linker._settings_obj._additional_columns_to_retain
-        )  # only check if len(n) > 0
+            linker._settings_obj._additional_cols_to_retain
+        )
         uid_as_tree = InputColumn(linker._settings_obj._unique_id_column_name)
         self.uid = self.clean_list_of_column_names(uid_as_tree)
 
@@ -270,7 +278,6 @@ class SettingsValidator:
     def validate_blocking_rules(self):
         return self.validate_columns_in_sql_string_dict_comp(
             sql_conds=self.blocking_rules,
-            # prefix_suffix_fun = self.validate_column_suffixes,
             prefix_suffix_fun=self.validate_table_names,
         )
 
@@ -352,16 +359,19 @@ class InvalidSettingsLogger(SettingsValidator):
         )
 
         for br, invalid_cols in invalid_brs.items():
-            invalid_strings = "\n".join(c.construct_log_string for c in invalid_cols)
+            invalid_strings = "\n".join(
+                c.construct_log_string for c in invalid_cols
+            )
             br = f"{self.bold_red}`{br}`{self.end}"
-            logger.warning(f"{br}:{invalid_strings}")
+            logger.warning(f"{br}:\n{invalid_strings}")
 
         logger.warning("\n")
 
     def construct_comparison_level_log_strings(self, invalid_cls):
 
-        # `invalid_cls` follow an identical format to `invalid_brs`,
-        # except that the comparison name is also included.
+        # `invalid_cls` follow an identical format to `invalid_brs`
+        # with an additional dictionary key indicating the name of
+        # the comparison.
 
         logger.warning(
             f"{self.bold}The following comparison(s) were "
@@ -374,7 +384,7 @@ class InvalidSettingsLogger(SettingsValidator):
                     c.construct_log_string for c in invalid_cols
                 )
                 cl = f"{self.bold_red}`{cl}`{self.end}"
-                logger.warning(f"{cl}:{invalid_strings}")
+                logger.warning(f"{cl}:\n{invalid_strings}")
 
         logger.warning("\n")
 
