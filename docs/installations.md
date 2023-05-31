@@ -21,7 +21,7 @@ pip install splink --no-deps
 
 Then, to install the remaining requirements, download the following `requirements.txt` from our github repository using:
 ```shell
-github_url="https://raw.githubusercontent.com/moj-analytical-services/splink/duckdbless_splink/scripts/duckdbless_requirements.txt"
+github_url="https://raw.githubusercontent.com/moj-analytical-services/splink/master/scripts/duckdbless_requirements.txt"
 output_file="splink_requirements.txt"
 
 # Download the file from GitHub using curl
