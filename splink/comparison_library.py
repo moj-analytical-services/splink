@@ -34,9 +34,9 @@ class ExactMatchBase(Comparison):
             set_to_lowercase (bool): If True, sets all entries to lowercase.
             term_frequency_adjustments (bool, optional): If True, term frequency
                 adjustments will be made on the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
             include_colname_in_charts_label: If true, append col name to label for
                 charts.  Defaults to False.
@@ -157,12 +157,12 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_thres (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
@@ -327,12 +327,12 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
@@ -544,12 +544,12 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_jac (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
                 Examples:
@@ -644,12 +644,12 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_jar (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
@@ -742,12 +742,12 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_jw (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
 
@@ -842,7 +842,7 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
             m_probability_or_probabilities_sizes (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the sizes specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
@@ -1145,12 +1145,12 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
                 distance.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_km (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the sizes specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:

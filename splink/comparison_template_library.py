@@ -82,8 +82,16 @@ class DateComparisonBase(Comparison):
             datediff_metrics (Union[str, list], optional): The metrics to apply
                 thresholds to for datediff similarity level(s).
                 Defaults to ["month", "year"].
-            m_probability_exact_match (_type_, optional): Starting m probability for
-                exact match level. Defaults to None.
+            cast_strings_to_date (bool, optional): Set to True to
+                enable date-casting when input dates are strings. Also adjust
+                date_format if date-strings are not in (yyyy-mm-dd) format.
+                Defaults to False.
+            date_format (str, optional): Format of input dates if date-strings
+                are given. Must be consistent across record pairs. If None
+                (the default), downstream functions for each backend assign
+                date_format to ISO 8601 format (yyyy-mm-dd).
+            m_probability_exact_match (float, optional): If provided, overrides the
+                default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the levenshtein thresholds specified. Defaults to None.
@@ -91,10 +99,10 @@ class DateComparisonBase(Comparison):
                 _description_. If provided, overrides the default m probabilities
                 for the damerau-levenshtein thresholds specified. Defaults to None.
             m_probability_or_probabilities_datediff (Union[float, list], optional):
-                Starting m probabilities for the datediff thresholds specified.
-                Defaults to None.
-            m_probability_else (_type_, optional): Starting m probability for
-                the 'everything else' level. Defaults to None.
+                If provided, overrides the default m probabilities
+                for the datediff thresholds specified. Defaults to None.
+            m_probability_else (float, optional): If provided, overrides the
+                default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
             === "DuckDB"
@@ -376,6 +384,7 @@ class NameComparisonBase(Comparison):
                 the 'everything else' level. Defaults to None.
 
         Examples:
+
             === "DuckDB"
                 Basic Name Comparison
                 ``` python
@@ -1167,6 +1176,7 @@ class PostcodeComparisonBase(Comparison):
             Comparison: A comparison that can be inclued in the Splink settings
                 dictionary.
         """
+
         comparison_levels = []
 
         if invalid_postcodes_as_null:
