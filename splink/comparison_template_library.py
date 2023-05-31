@@ -13,7 +13,6 @@ from .comparison_library_utils import (
     distance_threshold_comparison_levels,
     distance_threshold_description,
 )
-from .input_column import InputColumn
 from .misc import ensure_is_iterable
 
 logger = logging.getLogger(__name__)
@@ -1036,7 +1035,7 @@ class PostcodeComparisonBase(Comparison):
         self,
         col_name: str,
         invalid_postcodes_as_null=False,
-        set_to_uppercase=True,
+        set_to_lowercase=True,
         valid_postcode_regex="^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9][A-Za-z]{2}$",
         term_frequency_adjustments_full=False,
         include_full_match_level=True,
@@ -1170,9 +1169,6 @@ class PostcodeComparisonBase(Comparison):
         """
         comparison_levels = []
 
-        if set_to_uppercase:
-            col_name = f"upper({col_name})"
-
         if invalid_postcodes_as_null:
             comparison_levels.append(self._null_level(col_name, valid_postcode_regex))
         else:
@@ -1183,6 +1179,7 @@ class PostcodeComparisonBase(Comparison):
                 col_name,
                 regex_extract=None,
                 term_frequency_adjustments=term_frequency_adjustments_full,
+                set_to_lowercase=set_to_lowercase,
                 m_probability=m_probability_full_match,
                 include_colname_in_charts_label=True,
             )
@@ -1192,6 +1189,7 @@ class PostcodeComparisonBase(Comparison):
             comparison_level = self._exact_match_level(
                 col_name,
                 regex_extract="^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9]",
+                set_to_lowercase=set_to_lowercase,
                 m_probability=m_probability_sector_match,
                 manual_chart_label="Postcode Sector",
             )
@@ -1201,6 +1199,7 @@ class PostcodeComparisonBase(Comparison):
             comparison_level = self._exact_match_level(
                 col_name,
                 regex_extract="^[A-Za-z]{1,2}[0-9][A-Za-z0-9]?",
+                set_to_lowercase=set_to_lowercase,
                 m_probability=m_probability_district_match,
                 manual_chart_label="Postcode District",
             )
@@ -1210,6 +1209,7 @@ class PostcodeComparisonBase(Comparison):
             comparison_level = self._exact_match_level(
                 col_name,
                 regex_extract="^[A-Za-z]{1,2}",
+                set_to_lowercase=set_to_lowercase,
                 m_probability=m_probability_area_match,
                 manual_chart_label="Postcode Area",
             )
