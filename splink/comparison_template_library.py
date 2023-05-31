@@ -166,7 +166,9 @@ class DateComparisonBase(Comparison):
         # Construct Comparison
         comparison_levels = []
         if invalid_dates_as_null:
-            comparison_levels.append(self._null_level(col_name, invalid_dates_as_null=invalid_dates_as_null))
+            comparison_levels.append(
+                self._null_level(col_name, invalid_dates_as_null=invalid_dates_as_null)
+            )
         else:
             comparison_levels.append(self._null_level(col_name))
 

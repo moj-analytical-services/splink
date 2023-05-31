@@ -38,8 +38,6 @@ class DialectBase:
             "Regex extract option not defined for " "the SQL backend being used.  "
         )
 
-
-
     @property
     def _levenshtein_name(self):
         return "levenshtein"
