@@ -796,14 +796,20 @@ class ColumnsReversedLevelBase(ComparisonLevel):
         col_1 = InputColumn(col_name_1, sql_dialect=self._sql_dialect)
         col_2 = InputColumn(col_name_2, sql_dialect=self._sql_dialect)
 
+        col_1_l, col_1_r = col_1.name_l(), col_1.name_r()
+        col_2_l, col_2_r = col_2.name_l(), col_2.name_r()
+
+        if set_to_lowercase:
+            col_1_l = f"lower({col_1_l})"
+            col_1_r = f"lower({col_1_r})"
+            col_2_l = f"lower({col_2_l})"
+            col_2_r = f"lower({col_2_r})"
+
         if regex_extract:
-            col_1_l = self._regex_extract_function(col_1.name_l(), regex_extract)
-            col_1_r = self._regex_extract_function(col_1.name_r(), regex_extract)
-            col_2_l = self._regex_extract_function(col_2.name_l(), regex_extract)
-            col_2_r = self._regex_extract_function(col_2.name_r(), regex_extract)
-        else:
-            col_1_l, col_1_r = col_1.name_l(), col_1.name_r()
-            col_2_l, col_2_r = col_2.name_l(), col_2.name_r()
+            col_1_l = self._regex_extract_function(col_1_l, regex_extract)
+            col_1_r = self._regex_extract_function(col_1_r, regex_extract)
+            col_2_l = self._regex_extract_function(col_2_l, regex_extract)
+            col_2_r = self._regex_extract_function(col_2_r, regex_extract)
 
         s = f"{col_1_l} = {col_2_r} and " f"{col_1_r} = {col_2_l}"
         level_dict = {
