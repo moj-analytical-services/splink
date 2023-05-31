@@ -27,10 +27,18 @@ class DialectBase:
         )
 
     @property
+    def _valid_date_function(self):
+        raise NotImplementedError(
+            "Date validation option not defined for " "the SQL backend being used.  "
+        )
+
+    @property
     def _regex_extract_function(self):
         raise NotImplementedError(
             "Regex extract option not defined for " "the SQL backend being used.  "
         )
+
+
 
     @property
     def _levenshtein_name(self):
