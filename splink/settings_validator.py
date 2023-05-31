@@ -17,7 +17,6 @@ def remove_suffix(c):
     return re.sub("_[l|r]{1}$", "", c)
 
 
-
 class InvalidCols(NamedTuple):
     """
     A simple NamedTuple to aid in the construction of
@@ -30,6 +29,7 @@ class InvalidCols(NamedTuple):
         invalid_columns (list): A list of the invalid
             columns that have been detected.
     """
+
     invalid_type: str
     invalid_columns: list
     italics = "\033[3m"
@@ -47,7 +47,7 @@ class InvalidCols(NamedTuple):
 
     @property
     def columns_as_text(self):
-        return ', '.join(f'{self.italics}`{c}`{self.end}' for c in self.invalid_columns)
+        return ", ".join(f"{self.italics}`{c}`{self.end}" for c in self.invalid_columns)
 
     @property
     def invalid_cols(self):
@@ -359,9 +359,7 @@ class InvalidSettingsLogger(SettingsValidator):
         )
 
         for br, invalid_cols in invalid_brs.items():
-            invalid_strings = "\n".join(
-                c.construct_log_string for c in invalid_cols
-            )
+            invalid_strings = "\n".join(c.construct_log_string for c in invalid_cols)
             br = f"{self.bold_red}`{br}`{self.end}"
             logger.warning(f"{br}:\n{invalid_strings}")
 

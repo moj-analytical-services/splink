@@ -112,18 +112,14 @@ class Settings:
 
     @property
     def _get_raw_additional_cols_to_retain(self):
-        a_cols = self._from_settings_dict_else_default(
-            "additional_columns_to_retain"
-        )
+        a_cols = self._from_settings_dict_else_default("additional_columns_to_retain")
 
         # Add any columns used in blocking rules but not model
         if a_cols:
             return [InputColumn(c) for c in a_cols]
 
     def _get_additional_columns_to_retain(self):
-        a_cols = self._from_settings_dict_else_default(
-            "additional_columns_to_retain"
-        )
+        a_cols = self._from_settings_dict_else_default("additional_columns_to_retain")
 
         # Add any columns used in blocking rules but not model
         if self._retain_matching_columns:
