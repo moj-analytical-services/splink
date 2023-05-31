@@ -7,10 +7,10 @@ from .input_column import InputColumn
 
 class NullLevelBase(ComparisonLevel):
     def __init__(
-        self, 
-        col_name, 
-        valid_string_regex: str = None, 
-        invalid_dates_as_null: bool=True
+        self,
+        col_name,
+        valid_string_regex: str = None,
+        invalid_dates_as_null: bool = True,
     ) -> ComparisonLevel:
         """Represents comparisons level where one or both sides of the comparison
         contains null values so the similarity cannot be evaluated.
