@@ -14,7 +14,7 @@ from ..misc import (
     ensure_is_list,
 )
 from ..splink_dataframe import SplinkDataFrame
-from .duckdb_helpers import (
+from .duckdb_helpers.duckdb_helpers import (
     create_temporary_duckdb_connection,
     duckdb_load_from_file,
     validate_duckdb_connection,
