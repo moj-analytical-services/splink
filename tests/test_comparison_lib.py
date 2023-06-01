@@ -71,9 +71,7 @@ def test_set_to_lowercase_parameter():
         "unique_id_column_name": "id",
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [],
-        "comparisons": [
-            cl.exact_match("forename", set_to_lowercase=True)
-        ],
+        "comparisons": [cl.exact_match("forename", set_to_lowercase=True)],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
     }
@@ -87,4 +85,4 @@ def test_set_to_lowercase_parameter():
     assert row["gamma_forename"] == 1
 
     row = dict(df_e.query("id_l == 3 and id_r == 4").iloc[0])
-    assert row["gamma_forename"] == 1   
+    assert row["gamma_forename"] == 1
