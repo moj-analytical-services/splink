@@ -3,6 +3,7 @@ from ..comparison_template_library import (
     ForenameSurnameComparisonBase,
     NameComparisonBase,
     PostcodeComparisonBase,
+    EmailComparisonBase
 )
 from .spark_comparison_level_library import distance_function_level
 from .spark_comparison_library import SparkComparisonProperties
@@ -30,3 +31,9 @@ class forename_surname_comparison(
 
 class postcode_comparison(SparkComparisonProperties, PostcodeComparisonBase):
     pass
+
+class email_comparison(SparkComparisonProperties, EmailComparisonBase):
+    
+    @property
+    def _distance_level(self):
+        return distance_function_level

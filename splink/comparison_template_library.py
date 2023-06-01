@@ -1264,3 +1264,329 @@ class PostcodeComparisonBase(Comparison):
             "comparison_levels": comparison_levels,
         }
         super().__init__(comparison_dict)
+
+class EmailComparisonBase(Comparison):
+    def __init__(
+            self,
+            col_name: str,
+            invalid_emails_as_null: bool = False,
+            valid_email_regex: str = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}$",
+            term_frequency_adjustments_full: bool = False,
+            levenshtein_thresholds: int | list = [],
+            damerau_levenshtein_thresholds: int | list = [],
+            jaro_winkler_thresholds: float | list = [0.88],
+            include_exact_match_level: bool = True,
+            include_username_level: bool = True,
+            include_domain_match_level: bool = False,
+            m_probability_full_match: bool = None,
+            m_probability_username_level: bool = None,
+            m_probability_or_probabilities_username_lev: float | list = None,
+            m_probability_or_probabilities_username_dl: float | list = None,
+            m_probability_or_probabilities_username_jw: float | list = None,
+            m_probability_or_probabilities_email_lev: float | list = None,
+            m_probability_or_probabilities_email_dl: float | list = None,
+            m_probability_or_probabilities_email_jw: float | list = None,
+            m_probability_domain_match: float | list = None,
+            m_probability_else: float | list = None,
+
+    ) -> Comparison:
+        """ A wrapped to generate a comparison for an email colummn 'col_name' with preselected defaults.
+
+        The default arguments will give a comparison with levels:\n
+        - Exact match on email\n
+        - Exact match on username with different domain\n
+        - Fuzzy match on email user Jaro-Winkler\n
+        - Exact match on username using Jaro-Winkler \n
+        - All other comparisons
+
+        Args:
+            col_name (str): The name of the column to compare.
+            invalid_email_as_null (bool): If True, emails that do not adhere
+                to valid_email_regex will be included in the null level.
+                Defaults to False
+            valid_email_regex (str): regular expression pattern that is used
+                to validate emails. If invalid_emails_as_null is True,
+                emails that do not adhere to valid_email_regex will be included
+                 in the null level.
+                 Defaults to "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+            term_frequency_adjustments_full (bool, optional): If True, apply
+                term frequency adjustments to the full email exact match level.
+                Defaults to False.
+            levenshtein_thresholds (Union[int, list], optional): The thresholds
+                to use for levenshtein similarity level(s).
+                Defaults to []
+            damerau_levenshtein_thresholds (Union[int, list], optional): The thresholds
+                to use for damerau-levenshtein similarity level(s).
+                Defaults to []
+            jaro_winkler_thresholds (Union[int, list], optional): The thresholds
+                to use for jaro_winkler similarity level(s).
+                Defaults to [0.88]
+            include_full_match_level (bool, optional): If True, include an exact
+                match on full email level. Defaults to True.
+            include_diff_dommain_level (bool, optional): If True, include an exact
+                match on username only level. Defaults to True.
+            include_domain_level (bool, optional): If True, include an exact
+                match on domain only level. Defaults to True.
+            m_probability_full_match (float, optional): Starting m
+                probability for full match level. Defaults to None.
+            m_probability_username_match (float, optional): Starting m probability
+                for username only match level. Defaults to None.
+            m_probability_or_probabilities_username_lev (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_username_dl (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_username_jw (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_email_lev (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_email_dl (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_email_jw (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_domain_match (float, optional): Starting m probability
+                for domain only match level. Defaults to None.
+            m_probability_else (float, optional): Starting m probability for
+                the 'everything else' level. Defaults to None.
+
+        Examples:
+            === "DuckDB"
+                Basic email Comparison
+                ``` python
+                import splink.duckdb.duckdb_comparison_template_library as ctl
+                ctl.email_comparison("email")
+                ```
+                Bespoke email Comparison
+                ``` python
+                import splink.duckdb.duckdb_comparison_template_library as ctl
+                ctl.email_comparison("email",
+                                    invalid_emails_as_null=True,
+                                    include_distance_in_km_level=True,
+                                    lat_col="lat",
+                                    long_col="long",
+                                    km_thresholds=[10, 100]
+                                    )
+                ```
+            === "Spark"
+                Basic email Comparison
+                ``` python
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.email_comparison(col_name = "email")
+                ```
+                Bespoke email Comparison
+                ``` python
+                import splink.spark.spark_comparison_template_library as ctl
+                ctl.email_comparison(
+                    col_name = "email",
+                    levens
+                    levenshtein_thresholds = [2],
+                    damerau_levenshtein_thresholds = [2],
+                    invalid_emails_as_null = True,
+                    include_user_name_level = True,
+                    include_domain_match_level = True,
+                    )
+                ```
+            === "Athena"
+                Basic email Comparison
+                ``` python
+                import splink.athean.athena_comparison_template_library as ctl
+                ctl.email_comparison(col_name = "email")
+                ```
+                Bespoke email Comparison
+                ``` python
+                import splink.athena.athena_comparison_template_library as ctl
+                ctl.email_comparison(
+                    col_name = "email",
+                    levens
+                    levenshtein_thresholds = [2],
+                    damerau_levenshtein_thresholds = [2],
+                    invalid_emails_as_null = True,
+                    include_user_name_level = True,
+                    include_domain_match_level = True,
+                    )
+                ```
+
+        Returns:
+            Comparison: A comparison that can be inclued in the Splink settings
+                dictionary.
+        """
+        #Contstruct comparrison
+
+        comparison_levels = []
+        
+        # Decide whether invalid emails should be treated as null
+        if invalid_emails_as_null:
+            comparison_levels.append(self._null_level(col_name, valid_email_regex))
+        else:
+            comparison_levels.append(self._null_level(col_name))
+
+        # Exact match on full email
+
+        if include_exact_match_level:
+            comparison_level = self._exact_match_level(
+                col_name,
+                regex_extract=None,
+                term_frequency_adjustments=term_frequency_adjustments_full,
+                m_probability=m_probability_full_match,
+                include_colname_in_charts_label=True,
+            )
+            comparison_levels.append(comparison_level)
+
+        # Ensure fuzzy match thresholds are iterable
+        
+        damerau_levenshtein_thresholds = ensure_is_iterable(damerau_levenshtein_thresholds)
+        levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
+        jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
+
+        # Exact match on username with different domain
+
+        if include_username_level:
+            comparison_level = self._exact_match_level(
+                col_name,
+                regex_extract="^[^@]+",
+                m_probability=m_probability_username_level,
+                manual_chart_label="Username",
+            )
+            comparison_levels.append(comparison_level)
+
+        # Fuzzy match on full email
+
+        if len(levenshtein_thresholds) > 0:
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                distance_function_name="levenshtein",
+                distance_threshold_or_thresholds=levenshtein_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_email_lev,
+                include_colname_in_charts_label=True,
+            )
+            comparison_levels = comparison_levels + threshold_levels
+
+        if len(damerau_levenshtein_thresholds) > 0:
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                distance_function_name="damerau-levenshtein",
+                distance_threshold_or_thresholds=damerau_levenshtein_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_email_dl,
+                include_colname_in_charts_label=True,
+            )
+            comparison_levels = comparison_levels + threshold_levels
+
+        if len(jaro_winkler_thresholds) > 0:
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                distance_function_name="jaro-winkler",
+                distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_email_jw,
+                include_colname_in_charts_label=True,
+            )
+            comparison_levels = comparison_levels + threshold_levels
+
+        # Fuzzy match on username only
+        if len(levenshtein_thresholds) > 0:
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                regex_extract="^[^@]+",
+                distance_function_name="levenshtein",
+                distance_threshold_or_thresholds=levenshtein_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_username_lev,
+                include_colname_in_charts_label=True,
+            )
+            comparison_levels = comparison_levels + threshold_levels
+
+        if len(damerau_levenshtein_thresholds) > 0:
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                regex_extract="^[^@]+",
+                distance_function_name="damerau-levenshtein",
+                distance_threshold_or_thresholds=damerau_levenshtein_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_username_dl,
+                include_colname_in_charts_label=True,
+            )
+            comparison_levels = comparison_levels + threshold_levels
+
+        if len(jaro_winkler_thresholds) > 0:
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                regex_extract="^[^@]+",
+                distance_function_name="jaro-winkler",
+                distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_username_jw,
+                include_colname_in_charts_label=True,
+            )
+            comparison_levels = comparison_levels + threshold_levels
+
+
+        # Domain-only match
+
+        if include_domain_match_level:
+            comparison_level = self._exact_match_level(
+                col_name,
+                regex_extract="@([^@]+)$",
+                m_probability=m_probability_domain_match,
+                manual_chart_label="Email Domain",
+            )
+            comparison_levels.append(comparison_level)
+        
+        comparison_levels.append(
+            self._else_level(m_probability=m_probability_else),
+        )
+
+         # Construct Description
+
+        comparison_desc = ""
+        if include_exact_match_level:
+            comparison_desc += "Exact match vs. "
+
+        if include_username_level:
+            comparison_desc +="Exact username match different domain vs. "
+
+        if len(levenshtein_thresholds) > 0:
+            comparison_desc += distance_threshold_description(
+                "fuzzy email", "levenshtein", jaro_winkler_thresholds
+            ) 
+            comparison_desc += distance_threshold_description(
+                "fuzzy username", "levenshtein", jaro_winkler_thresholds
+            ) 
+
+        if len(damerau_levenshtein_thresholds) > 0:
+            comparison_desc += distance_threshold_description(
+                "fuzzy email", "damerau_levenshtein", jaro_winkler_thresholds
+            ) 
+            comparison_desc += distance_threshold_description(
+                "fuzzy username", "levenshtein", jaro_winkler_thresholds
+            ) 
+
+        if len(jaro_winkler_thresholds) > 0:
+            comparison_desc += distance_threshold_description(
+                "fuzzy email", "jaro_winkler", jaro_winkler_thresholds
+            ) 
+            comparison_desc += distance_threshold_description(
+                "fuzzy username", "jaro_winkler", jaro_winkler_thresholds
+            ) 
+
+        if include_domain_match_level:
+            comparison_desc += "Domain-only match vs."
+
+        comparison_desc += "anything else"
+
+        comparison_dict = {
+            "comparison_description": comparison_desc,
+            "comparison_levels": comparison_levels,
+        }
+        super().__init__(comparison_dict)
+
+    @property
+    def _is_distance_subclass(self):
+        return False
+

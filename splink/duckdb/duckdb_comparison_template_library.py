@@ -3,6 +3,7 @@ from ..comparison_template_library import (
     ForenameSurnameComparisonBase,
     NameComparisonBase,
     PostcodeComparisonBase,
+    EmailComparisonBase
 )
 from .duckdb_comparison_level_library import distance_function_level
 from .duckdb_comparison_library import DuckDBComparisonProperties
@@ -30,3 +31,9 @@ class forename_surname_comparison(
 
 class postcode_comparison(DuckDBComparisonProperties, PostcodeComparisonBase):
     pass
+
+class email_comparison(DuckDBComparisonProperties, EmailComparisonBase):
+    
+    @property
+    def _distance_level(self):
+        return distance_function_level
