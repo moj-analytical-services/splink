@@ -502,7 +502,7 @@ class NameComparisonBase(Comparison):
                 distance_function_name="jaccard",
                 distance_threshold_or_thresholds=jaccard_thresholds,
                 regex_extract=regex_extract,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_jar,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_jac,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
 
@@ -580,8 +580,6 @@ class ForenameSurnameComparisonBase(Comparison):
         m_probability_columns_reversed_forename_surname: float = None,
         m_probability_exact_match_surname: float = None,
         m_probability_exact_match_forename: float = None,
-        m_probability_exact_match_phonetic_surname: float = None,
-        m_probability_exact_match_phonetic_forename: float = None,
         m_probability_or_probabilities_surname_lev: float | list = None,
         m_probability_or_probabilities_surname_dl: float | list = None,
         m_probability_or_probabilities_surname_jw: float | list = None,
@@ -823,7 +821,7 @@ class ForenameSurnameComparisonBase(Comparison):
         comparison_level = self._exact_match_level(
             surname_col_name,
             term_frequency_adjustments=term_frequency_adjustments,
-            m_probability=m_probability_exact_match_forename,
+            m_probability=m_probability_exact_match_surname,
             include_colname_in_charts_label=True,
         )
         comparison_levels.append(comparison_level)
