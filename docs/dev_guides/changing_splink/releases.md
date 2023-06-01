@@ -4,12 +4,12 @@ Splink is regularly updated with releases to add new features or bug fixes to th
 
 Below are the steps for releasing a new version of Splink:
 
-1. Update [**pyproject.toml**](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml) and [**__init__.py**](https://github.com/moj-analytical-services/splink/blob/master/splink/__init__.py) with the latest version.
-2. Generate a new release in the [releases section of the repo](https://github.com/moj-analytical-services/splink/releases)
+1. On a new branch, update [**pyproject.toml**](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml) and [**__init__.py**](https://github.com/moj-analytical-services/splink/blob/master/splink/__init__.py) with the latest version.
+2. Open a pull request to merge the new branch with the master branch (the base branch).
+3. Once the pull request has been approved, merge the changes and generate a new release in the [releases section of the repo](https://github.com/moj-analytical-services/splink/releases), including:
 
-Including:
+- Choosing a new release tag (which matches your updates to [**pyproject.toml**](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml) and [**__init__.py**](https://github.com/moj-analytical-services/splink/blob/master/splink/__init__.py)). Ensure that your release tag follows [semantic versioning](https://docs.npmjs.com/about-semantic-versioning). The target branch should be set to master.
 
-- Choosing a new release tag (which matches your updates to [**pyproject.toml**](https://github.com/moj-analytical-services/splink/blob/master/pyproject.toml) and [**__init__.py**](https://github.com/moj-analytical-services/splink/blob/master/splink/__init__.py). Ensure that your release tag follows [semantic versioning](https://docs.npmjs.com/about-semantic-versioning).
 
 ![](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/releases/tag.png))
 
