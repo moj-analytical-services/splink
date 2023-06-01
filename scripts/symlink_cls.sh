@@ -14,8 +14,9 @@ do
 
         # Extract the filename without the "$backend_" prefix
         symlink_name="$folder/${file#"$folder"/${backend}_}"
-        echo $symlink_name
 
-        ln -s "../../$file" $symlink_name
+        if [ ! -e "$symlink_name" ]; then
+            ln -s "../../$file" $symlink_name
+        fi
     done
 done
