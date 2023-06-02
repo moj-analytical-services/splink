@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import re
 from copy import deepcopy
@@ -174,11 +176,20 @@ class SettingsValidator:
             col_list = [c.input_name_as_tree for c in col_list]
         return set(remove_quotes_from_identifiers(tree).sql() for tree in col_list)
 
-    def remove_prefix_and_suffix_from_column(self, col_syntax_tree):
+    def remove_prefix_and_suffix_from_column(self, col_syntax_tree: sqlglot.expressions):
+        """Remove the prefix and suffix from a given sqlglot syntax tree
+        and return it as a string of SQL.
+
+        Args:
+            col_syntax_tree (sqlglot.expressions): _description_
+
+        Returns:
+            str: A column without `l.` or `_l`
+        """
         col_syntax_tree.args["table"] = None
         return remove_suffix(col_syntax_tree.sql())
 
-    def check_column_exists(self, column_name):
+    def check_column_exists(self, column_name: str):
         """Check whether a column name exists within all of the input
         dataframes.
 
@@ -194,27 +205,58 @@ class SettingsValidator:
         """
         Args:
             cols_to_check (set): A list of columns to check for the
-            existence of.
+                existence of.
 
         Returns:
             list: Returns a list of all input columns not found within
-            your raw input tables.
+                your raw input tables.
         """
         missing_cols = [
             col for col in cols_to_check if not self.check_column_exists(col)
         ]
         return InvalidCols("invalid_cols", missing_cols)
 
-    def clean_and_return_missing_columns(self, cols):
+    def clean_and_return_missing_columns(self, cols: list[sqlglot.expressions]):
+        """Clean a list of sqlglot column names to remove the prefix (l.)
+        and suffix (_l) and then return any that are missing from the
+        input dataframe(s).
+
+        Args:
+            cols (list[sqlglot.expressions]): A list of columns given as
+                sqlglot expressions
+
+        Returns:
+            list: Returns a list of all input columns not found within
+                your raw input tables.
+        """
         cols = set(self.remove_prefix_and_suffix_from_column(c) for c in cols)
         return self.return_missing_columns(cols)
 
     def validate_table_name(self, col: sqlglot.expressions):
+        """Check if the table name supplied is valid.
+
+        Args:
+            col (sqlglot.expressions): A column string given as
+                a sqlglot expression
+
+        Returns:
+            bool: Whether the table name exists and is valid.
+        """
         table_name = col.table
         # If the table name exists, check it's valid.
         return table_name not in ["l", "r"]
 
     def validate_table_names(self, cols: list[sqlglot.expressions]):
+        """Validate a series of table names with `validate_table_name`
+
+        Args:
+            cols (list[sqlglot.expressions]): A list of columns given as
+                sqlglot expressions
+
+        Returns:
+            InvalidCols: An InvalidCols instance with the `invalid_type`
+                and a list of invalid columns
+        """
         # the key to use when producing our warning logs
         invalid_type = "invalid_table_pref"
         # list of valid columns
@@ -222,10 +264,29 @@ class SettingsValidator:
         return InvalidCols(invalid_type, invalid_cols)
 
     def validate_column_suffix(self, col: sqlglot.expressions):
+        """Check if the column suffix supplied is valid.
+
+        Args:
+            col (sqlglot.expressions): A column string given as
+                a sqlglot expression
+
+        Returns:
+            bool: Whether a valid column suffix exists
+        """
         # Check if the supplied col suffix is valid.
         return not col.sql().endswith(("_l", "_r"))
 
     def validate_column_suffixes(self, cols: list[sqlglot.expressions]):
+        """Validate a series of column suffixes with `validate_column_suffix`
+
+        Args:
+            cols (list[sqlglot.expressions]): A list of columns given as
+                sqlglot expressions
+
+        Returns:
+            InvalidCols: An InvalidCols instance with the `invalid_type`
+                and a list of invalid columns
+        """
         # the key to use when producing our warning logs
         invalid_type = "invalid_col_suffix"
         # list of valid columns
@@ -234,9 +295,23 @@ class SettingsValidator:
 
     def validate_columns_in_sql_string(
         self,
-        sql_string,
-        checks,
+        sql_string: str,
+        checks: list[function],
     ):
+        """Evaluate whether the columns supplied in a given string of SQL
+        exist in our raw data.
+
+        Args:
+            sql_string (str): A string of valid SQL
+            checks (list[function]): The functions used to check the parsed
+                sql string. These can be: `clean_and_return_missing_columns`,
+                `validate_table_names` and `validate_column_suffixes`
+
+        Returns:
+            list[InvalidCols]: A list of InvalidCols classes, denoting the
+                the `invalid_type` and a list of the invalid columns that were
+                identified.
+        """
 
         try:
             syntax_tree = sqlglot.parse_one(sql_string, read=self._sql_dialect)
@@ -253,9 +328,7 @@ class SettingsValidator:
         invalid_tree = [check(deepcopy(cols)) for check in checks]
         # Report only those checks with valid flags (i.e. there's an invalid
         # column in one of the checks)
-        invalid_tree = [tree for tree in invalid_tree if tree.is_valid]
-
-        return invalid_tree
+        return [tree for tree in invalid_tree if tree.is_valid]
 
     def validate_columns_in_sql_string_dict_comp(
         self,
@@ -279,6 +352,18 @@ class SettingsValidator:
         return {sql: validate(sql) for sql in sql_conds if validate(sql)}
 
     def validate_settings_column(self, settings_id, cols: set):
+        """Validate simple settings columns with strings as input.
+        i.e. Anything that doesn't require SQL to be parsed.
+
+        Args:
+            settings_id (str): The setting ID within your underlying
+                `settings_dict`.
+            cols (set): All columns found within your input dataframe(s).
+
+        Returns:
+            (settings_id, missing_cols): Returns your settings ID and any
+                columns identified as missing.
+        """
         missing_cols = self.return_missing_columns(cols)
         # The `is_valid` check simply tests to see if any values have
         # been flagged. If there are no invalid cols, return None.
@@ -301,6 +386,7 @@ class SettingsValidator:
 
     @property
     def validate_blocking_rules(self):
+        # See docstring for `validate_columns_in_sql_string_dict_comp`.
         return self.validate_columns_in_sql_string_dict_comp(
             sql_conds=self.blocking_rules,
             prefix_suffix_fun=self.validate_table_names,
@@ -308,6 +394,7 @@ class SettingsValidator:
 
     @property
     def validate_comparison_levels(self):
+        # See docstring for `validate_columns_in_sql_string_dict_comp`.
         invalid_col_tracker = []
         for comparisons in self.comparisons:
             # pull out comparison dict
