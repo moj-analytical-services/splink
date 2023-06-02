@@ -1263,7 +1263,7 @@ class Linker:
             === "DuckDB"
             ```py
             from splink.duckdb.duckdb_linker import DuckDBLinker
-            
+
             settings = {
                 "link_type": "dedupe_only",
                 "blocking_rules_to_generate_predictions": [
@@ -1279,7 +1279,7 @@ class Linker:
             === "Spark"
             ```py
             from splink.spark.spark_linker import SparkLinker
-            
+
             settings = {
                 "link_type": "dedupe_only",
                 "blocking_rules_to_generate_predictions": [
@@ -1295,7 +1295,7 @@ class Linker:
             === "Athena"
             ```py
             from splink.athena.athena_linker import AthenaLinker
-            
+
             settings = {
                 "link_type": "dedupe_only",
                 "blocking_rules_to_generate_predictions": [
@@ -1311,7 +1311,7 @@ class Linker:
             === "SQLite"
             ```py
             from splink.sqlite.sqlite_linker import SQLiteLinker
-            
+
             settings = {
                 "link_type": "dedupe_only",
                 "blocking_rules_to_generate_predictions": [
@@ -3029,13 +3029,15 @@ class Linker:
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(model_dict, f, indent=4)
         return model_dict
-    
+
     def save_settings_to_json():
         """
         This function is deprecated. Use save_model_to_json() instead.
         """
-        warnings.warn("This function is deprecated. Use save_model_to_json() instead.",
-         DeprecationWarning)
+        warnings.warn(
+            "This function is deprecated. Use save_model_to_json() instead.",
+            DeprecationWarning,
+        )
         return save_model_to_json(self, out_path, overwrite)
 
     def estimate_probability_two_random_records_match(
