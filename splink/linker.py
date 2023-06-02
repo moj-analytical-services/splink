@@ -3041,7 +3041,7 @@ class Linker:
             DeprecationWarning,
             stacklevel=2,
         )
-        return save_model_to_json(self, out_path, overwrite)
+        return self.save_model_to_json(out_path, overwrite)
 
     def estimate_probability_two_random_records_match(
         self, deterministic_matching_rules, recall
