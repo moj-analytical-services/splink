@@ -1317,32 +1317,32 @@ class PostcodeComparisonBase(Comparison):
         }
         super().__init__(comparison_dict)
 
+
 class EmailComparisonBase(Comparison):
     def __init__(
-            self,
-            col_name: str,
-            invalid_emails_as_null: bool = False,
-            valid_email_regex: str = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}$",
-            term_frequency_adjustments_full: bool = False,
-            levenshtein_thresholds: int | list = [],
-            damerau_levenshtein_thresholds: int | list = [],
-            jaro_winkler_thresholds: float | list = [0.88],
-            include_exact_match_level: bool = True,
-            include_username_level: bool = True,
-            include_domain_match_level: bool = False,
-            m_probability_full_match: bool = None,
-            m_probability_username_level: bool = None,
-            m_probability_or_probabilities_username_lev: float | list = None,
-            m_probability_or_probabilities_username_dl: float | list = None,
-            m_probability_or_probabilities_username_jw: float | list = None,
-            m_probability_or_probabilities_email_lev: float | list = None,
-            m_probability_or_probabilities_email_dl: float | list = None,
-            m_probability_or_probabilities_email_jw: float | list = None,
-            m_probability_domain_match: float | list = None,
-            m_probability_else: float | list = None,
-
+        self,
+        col_name: str,
+        invalid_emails_as_null: bool = False,
+        valid_email_regex: str = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}$",
+        term_frequency_adjustments_full: bool = False,
+        levenshtein_thresholds: int | list = [],
+        damerau_levenshtein_thresholds: int | list = [],
+        jaro_winkler_thresholds: float | list = [0.88],
+        include_exact_match_level: bool = True,
+        include_username_level: bool = True,
+        include_domain_match_level: bool = False,
+        m_probability_full_match: bool = None,
+        m_probability_username_level: bool = None,
+        m_probability_or_probabilities_username_lev: float | list = None,
+        m_probability_or_probabilities_username_dl: float | list = None,
+        m_probability_or_probabilities_username_jw: float | list = None,
+        m_probability_or_probabilities_email_lev: float | list = None,
+        m_probability_or_probabilities_email_dl: float | list = None,
+        m_probability_or_probabilities_email_jw: float | list = None,
+        m_probability_domain_match: float | list = None,
+        m_probability_else: float | list = None,
     ) -> Comparison:
-        """ A wrapped to generate a comparison for an email colummn 'col_name' with preselected defaults.
+        """A wrapped to generate a comparison for an email colummn 'col_name' with preselected defaults.
 
         The default arguments will give a comparison with levels:\n
         - Exact match on email\n
@@ -1467,10 +1467,10 @@ class EmailComparisonBase(Comparison):
             Comparison: A comparison that can be inclued in the Splink settings
                 dictionary.
         """
-        #Contstruct comparrison
+        # Contstruct comparrison
 
         comparison_levels = []
-        
+
         # Decide whether invalid emails should be treated as null
         if invalid_emails_as_null:
             comparison_levels.append(self._null_level(col_name, valid_email_regex))
@@ -1490,8 +1490,10 @@ class EmailComparisonBase(Comparison):
             comparison_levels.append(comparison_level)
 
         # Ensure fuzzy match thresholds are iterable
-        
-        damerau_levenshtein_thresholds = ensure_is_iterable(damerau_levenshtein_thresholds)
+
+        damerau_levenshtein_thresholds = ensure_is_iterable(
+            damerau_levenshtein_thresholds
+        )
         levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
         jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
 
@@ -1578,7 +1580,6 @@ class EmailComparisonBase(Comparison):
             )
             comparison_levels = comparison_levels + threshold_levels
 
-
         # Domain-only match
 
         if include_domain_match_level:
@@ -1589,43 +1590,43 @@ class EmailComparisonBase(Comparison):
                 manual_chart_label="Email Domain",
             )
             comparison_levels.append(comparison_level)
-        
+
         comparison_levels.append(
             self._else_level(m_probability=m_probability_else),
         )
 
-         # Construct Description
+        # Construct Description
 
         comparison_desc = ""
         if include_exact_match_level:
             comparison_desc += "Exact match vs. "
 
         if include_username_level:
-            comparison_desc +="Exact username match different domain vs. "
+            comparison_desc += "Exact username match different domain vs. "
 
         if len(levenshtein_thresholds) > 0:
             comparison_desc += distance_threshold_description(
                 "fuzzy email", "levenshtein", jaro_winkler_thresholds
-            ) 
+            )
             comparison_desc += distance_threshold_description(
                 "fuzzy username", "levenshtein", jaro_winkler_thresholds
-            ) 
+            )
 
         if len(damerau_levenshtein_thresholds) > 0:
             comparison_desc += distance_threshold_description(
                 "fuzzy email", "damerau_levenshtein", jaro_winkler_thresholds
-            ) 
+            )
             comparison_desc += distance_threshold_description(
                 "fuzzy username", "levenshtein", jaro_winkler_thresholds
-            ) 
+            )
 
         if len(jaro_winkler_thresholds) > 0:
             comparison_desc += distance_threshold_description(
                 "fuzzy email", "jaro_winkler", jaro_winkler_thresholds
-            ) 
+            )
             comparison_desc += distance_threshold_description(
                 "fuzzy username", "jaro_winkler", jaro_winkler_thresholds
-            ) 
+            )
 
         if include_domain_match_level:
             comparison_desc += "Domain-only match vs."
@@ -1641,4 +1642,3 @@ class EmailComparisonBase(Comparison):
     @property
     def _is_distance_subclass(self):
         return False
-
