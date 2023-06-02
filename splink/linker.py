@@ -136,7 +136,7 @@ class Linker:
     def __init__(
         self,
         input_table_or_tables: str | list,
-        settings_dict: dict | path,
+        settings_dict: dict | Path,
         accepted_df_dtypes,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
