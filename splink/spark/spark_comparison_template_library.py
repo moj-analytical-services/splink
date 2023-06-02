@@ -1,6 +1,1 @@
-from .spark_helpers.spark_comparison_imports import (  # noqa: F401
-    date_comparison,
-    forename_surname_comparison,
-    name_comparison,
-    postcode_comparison,
-)
+../../splink/spark/comparison_template_library.py
