@@ -7,8 +7,9 @@ from typing import NamedTuple
 
 import sqlglot
 import sqlglot.expressions as exp
+
 from .input_column import InputColumn, remove_quotes_from_identifiers
-from .misc import ensure_is_list
+from .misc import colour, ensure_is_list
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +33,6 @@ class InvalidCols(NamedTuple):
 
     invalid_type: str
     invalid_columns: list
-    italics = "\033[3m"
-    end = "\033[0m"
 
     @property
     def is_valid(self):
@@ -47,7 +46,9 @@ class InvalidCols(NamedTuple):
 
     @property
     def columns_as_text(self):
-        return ", ".join(f"{self.italics}`{c}`{self.end}" for c in self.invalid_columns)
+        return ", ".join(
+            f"{colour.ITALICS}`{c}`{colour.END}" for c in self.invalid_columns
+        )
 
     @property
     def invalid_cols(self):
@@ -92,22 +93,41 @@ class SettingsValidator:
         self.linker = linker
         self.validation_dict = {}
 
-        if linker._settings_obj:
-            self._sql_dialect = getattr(linker._settings_obj, "_sql_dialect")
+    @property
+    def _sql_dialect(self):
+        if self.linker._settings_obj:
+            return self.linker._settings_obj._sql_dialect
         else:
-            self._sql_dialect = None
+            return None
 
-        # Extract additional_columns_to_retain field from settings obj
-        self.cols_to_retain = self.clean_list_of_column_names(
-            linker._settings_obj._additional_cols_to_retain
+    @property
+    def cols_to_retain(self):
+        return self.clean_list_of_column_names(
+            self.linker._settings_obj._additional_cols_to_retain
         )
-        uid_as_tree = InputColumn(linker._settings_obj._unique_id_column_name)
-        self.uid = self.clean_list_of_column_names(uid_as_tree)
 
-        self.blocking_rules = linker._settings_dict[
-            "blocking_rules_to_generate_predictions"
-        ]
-        self.comparisons = linker._settings_obj.comparisons
+    @property
+    def uid(self):
+        uid_as_tree = InputColumn(self.linker._settings_obj._unique_id_column_name)
+        return self.clean_list_of_column_names(uid_as_tree)
+
+    @property
+    def blocking_rules(self):
+        brs = self.linker._settings_obj._blocking_rules_to_generate_predictions
+        return [br.blocking_rule for br in brs]
+
+    @property
+    def comparisons(self):
+        return self.linker._settings_obj.comparisons
+
+    def _validate_dialect(self):
+        settings_dialect = self.linker._settings_obj._sql_dialect
+        if settings_dialect != self.linker._sql_dialect:
+            raise ValueError(
+                f"Incompatible SQL dialect! `settings` dictionary uses "
+                f"dialect {settings_dialect}, but expecting "
+                f"'{self._sql_dialect}' for Linker of type {type(self)}"
+            )
 
     @cached_property
     def input_columns_by_df(self):
@@ -146,6 +166,9 @@ class SettingsValidator:
         Returns:
             set: A set of column names without quotes.
         """
+        if col_list is None:
+            return ()  # needs to be a blank iterable
+
         col_list = ensure_is_list(col_list)
         if as_tree:
             col_list = [c.input_name_as_tree for c in col_list]
@@ -192,7 +215,7 @@ class SettingsValidator:
         return table_name not in ["l", "r"]
 
     def validate_table_names(self, cols: list[sqlglot.expressions]):
-        # the key to use when producing our error logs
+        # the key to use when producing our warning logs
         invalid_type = "invalid_table_pref"
         # list of valid columns
         invalid_cols = [c.sql() for c in cols if self.validate_table_name(c)]
@@ -203,7 +226,7 @@ class SettingsValidator:
         return not col.sql().endswith(("_l", "_r"))
 
     def validate_column_suffixes(self, cols: list[sqlglot.expressions]):
-        # the key to use when producing our error logs
+        # the key to use when producing our warning logs
         invalid_type = "invalid_col_suffix"
         # list of valid columns
         invalid_cols = [c.sql() for c in cols if self.validate_column_suffix(c)]
@@ -257,6 +280,8 @@ class SettingsValidator:
 
     def validate_settings_column(self, settings_id, cols: set):
         missing_cols = self.return_missing_columns(cols)
+        # The `is_valid` check simply tests to see if any values have
+        # been flagged. If there are no invalid cols, return None.
         if missing_cols.is_valid:
             return settings_id, missing_cols
 
@@ -283,7 +308,7 @@ class SettingsValidator:
 
     @property
     def validate_comparison_levels(self):
-        invalid_col_tracker = {}
+        invalid_col_tracker = []
         for comparisons in self.comparisons:
             # pull out comparison dict
             comp_dict = comparisons._comparison_dict
@@ -294,24 +319,23 @@ class SettingsValidator:
                 prefix_suffix_fun=self.validate_column_suffixes,
             )
             if cl_invalid:
-                invalid_col_tracker.update(
-                    {comp_dict["output_column_name"]: cl_invalid}
+                output_c_name = comp_dict.get("output_column_name")
+                # This needs to be a tuple as output_c_name can be
+                # set to None.
+                output_tuple = (
+                    output_c_name,
+                    cl_invalid,
                 )
+                invalid_col_tracker.append(output_tuple)
 
         return invalid_col_tracker
 
 
 class InvalidSettingsLogger(SettingsValidator):
-
-    bold = "\033[1m"
-    end = "\033[0m"
-    underline = "\033[4m"
-    red = "\033[91m"
-
     def __init__(self, linker):
         self.settings_validator = super().__init__(linker)
-        self.bold_underline = self.bold + self.underline
-        self.bold_red = self.bold + self.red
+        self.bold_underline = colour.BOLD + colour.UNDERLINE
+        self.bold_red = colour.BOLD + colour.RED
 
         # These are extracted in the inherited
         # SettingsValidator class
@@ -321,27 +345,31 @@ class InvalidSettingsLogger(SettingsValidator):
         self.invalid_cls = self.validate_comparison_levels
 
     @property
-    def errors(self):
+    def invalid_cols_detected(self):
         # Check if any of our evaluations yield invalid
         # columns.
-        return [
-            n
-            for n in (
-                self.valid_uid,
-                self.valid_cols_to_retain,
-                self.invalid_brs,
-                self.invalid_cls,
+        return not all(
+            (
+                not self.valid_uid,
+                not self.valid_cols_to_retain,
+                not self.invalid_brs,
+                not self.invalid_cls,
             )
-            if n is not None
-        ]
+        )
 
     def construct_generic_settings_log_string(self, constructor_dict):
         settings_id, InvCols = constructor_dict
         logger.warning(
-            f"{self.bold}A problem was found within your setting "
-            f"`{settings_id}`:{self.end}\n{InvCols.construct_log_string}"
+            f"{colour.BOLD}A problem was found within your setting "
+            f"`{settings_id}`:{colour.END}\n{InvCols.construct_log_string}"
             "\n"
         )
+
+    def log_invalid_warnings_within_sql(self, invalid_sql_statements):
+        for sql, invalid_cols in invalid_sql_statements.items():
+            invalid_strings = "\n".join(c.construct_log_string for c in invalid_cols)
+            sql = f"{self.bold_red}`{sql}`{colour.END}"
+            logger.warning(f"{sql}:\n{invalid_strings}")
 
     def construct_blocking_rule_log_strings(self, invalid_brs):
 
@@ -354,41 +382,37 @@ class InvalidSettingsLogger(SettingsValidator):
         # }
 
         logger.warning(
-            f"{self.bold}The following blocking rule(s) were "
-            f"found to contain invalid column(s):{self.end}"
+            f"{colour.BOLD}The following blocking rule(s) were "
+            f"found to contain invalid column(s):{colour.END}"
         )
 
-        for br, invalid_cols in invalid_brs.items():
-            invalid_strings = "\n".join(c.construct_log_string for c in invalid_cols)
-            br = f"{self.bold_red}`{br}`{self.end}"
-            logger.warning(f"{br}:\n{invalid_strings}")
+        self.log_invalid_warnings_within_sql(invalid_brs)
 
         logger.warning("\n")
 
     def construct_comparison_level_log_strings(self, invalid_cls):
 
-        # `invalid_cls` follow an identical format to `invalid_brs`
-        # with an additional dictionary key indicating the name of
-        # the comparison.
-
+        # `invalid_cls` is made up of a tuple containing:
+        # 1) The `output_column_name` for the level, if it exists
+        # 2) A dictionary in the same format as our blocking rules
+        # {sql: [InvalidCols tuples]}
         logger.warning(
-            f"{self.bold}The following comparison(s) were "
-            f"found to contain invalid column(s):{self.end}"
+            f"{colour.BOLD}The following comparison(s) were "
+            f"found to contain invalid column(s):{colour.END}"
         )
-        for cn, cls in invalid_cls.items():
-            logger.warning(f"{self.bold}{cn}{self.end}")
-            for cl, invalid_cols in cls.items():
-                invalid_strings = "\n".join(
-                    c.construct_log_string for c in invalid_cols
-                )
-                cl = f"{self.bold_red}`{cl}`{self.end}"
-                logger.warning(f"{cl}:\n{invalid_strings}")
+        for cn, cls in invalid_cls:
+            # Annoyingly, `output_comparison_name` can be None,
+            # so this allows those entries without a name to pass
+            # through.
+            if cn is not None:
+                logger.warning(f"{colour.BOLD}{cn}{colour.END}")
+            self.log_invalid_warnings_within_sql(cls)
 
         logger.warning("\n")
 
     def construct_output_logs(self):
         # if no errors exist, return
-        if not self.errors:
+        if not self.invalid_cols_detected:
             return
 
         if self.valid_uid:
@@ -408,5 +432,5 @@ class InvalidSettingsLogger(SettingsValidator):
             f"{self.bold_underline}"
             "You may want to verify your settings dictionary has "
             "valid inputs in all fields before continuing."
-            f"{self.end}"
+            f"{colour.END}"
         )
