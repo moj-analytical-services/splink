@@ -517,59 +517,21 @@ def test_postcode_comparison_levels(spark, ctl, Linker):
         pytest.param(ctls, SparkLinker, id="Spark Email Comparison Template Test"),
     ],
 )
-
 def test_email_comparison_levels(spark, ctl, Linker):
     df = pd.DataFrame(
         [
-            {
-                "unique_id": 1,
-                "email": "chris@mail.com"
-            },
-            { 
-                "unique_id": 2,
-                "email": "chris@mail.com"
-            },
-            {
-                "unique_id": 3,
-                "email": "chris@othermail.com"
-            },
-            { 
-                "unique_id": 4,
-                "email": "chrisa@gmail.com"
-            },
-            { 
-                "unique_id": 5,
-                "email": "chrisa@mali.com"
-            },
-            { 
-                "unique_id": 6,
-                "email": "chrisa@mailtwo.com"
-            },
-            { 
-                "unique_id": 7,
-                "email": "chrisat@verydifferentmail.com"
-            },
-            { 
-                "unique_id": 8,
-                "email": "hcirs@verydifferentmail.com"
-            },
-            { 
-                "unique_id": 9,
-                "email": "christopher@verydifferentmail.com"
-            },
-            { 
-                "unique_id": 10,
-                "email": "notchrisarall@mail.com"
-            },
-            { 
-                "unique_id": 11,
-                "email": "someoneelse@domain.com"
-            },
-            { 
-                "unique_id": 12,
-                "email": "chrismail.com"
-            },
-
+            {"unique_id": 1, "email": "chris@mail.com"},
+            {"unique_id": 2, "email": "chris@mail.com"},
+            {"unique_id": 3, "email": "chris@othermail.com"},
+            {"unique_id": 4, "email": "chrisa@gmail.com"},
+            {"unique_id": 5, "email": "chrisa@mali.com"},
+            {"unique_id": 6, "email": "chrisa@mailtwo.com"},
+            {"unique_id": 7, "email": "chrisat@verydifferentmail.com"},
+            {"unique_id": 8, "email": "hcirs@verydifferentmail.com"},
+            {"unique_id": 9, "email": "christopher@verydifferentmail.com"},
+            {"unique_id": 10, "email": "notchrisarall@mail.com"},
+            {"unique_id": 11, "email": "someoneelse@domain.com"},
+            {"unique_id": 12, "email": "chrismail.com"},
         ]
     )
 
@@ -588,11 +550,11 @@ def test_email_comparison_levels(spark, ctl, Linker):
     }
 
     if Linker == SparkLinker:
-            df = spark.createDataFrame(df)
-            df.persist()
+        df = spark.createDataFrame(df)
+        df.persist()
 
     linker = Linker(df, settings)
-    #Linker = DuckDBLinker(df, settings)
+    # Linker = DuckDBLinker(df, settings)
     linker_output = linker.predict().as_pandas_dataframe()
 
     print(linker_output)
@@ -600,17 +562,17 @@ def test_email_comparison_levels(spark, ctl, Linker):
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_level: tuple of ID pairs}
     size_gamma_lookup = {
-        9: [(1,2)], #Exact match
-        8: [(1,3), (2,3)], #Exact match on username, different domain
-        7: [(1,4), (2,4)], #Fuzzy match- full email (lev)
-        6: [(1,5), (2,5)], #Fuzzy match- full email (dmlev)
-        5: [(1,6), (2,6)], #Fuzzy match- full email (jw)
-        4: [(1,7), (2,7)], #Fuzzy match- username only (lev)
-        3: [(1,8), (2,8)], #Fuzzy match- username only (dmlev)
-        2: [(1,9), (2,9)], #Fuzzy match- username only (jw)
-        1: [(1,10), (2,10)], #Domain-only match
-        0: [(1,11), (2,11)], #Everything else
-        -1: [(1,12)] #Null level- invalid email
+        9: [(1, 2)],  # Exact match
+        8: [(1, 3), (2, 3)],  # Exact match on username, different domain
+        7: [(1, 4), (2, 4)],  # Fuzzy match- full email (lev)
+        6: [(1, 5), (2, 5)],  # Fuzzy match- full email (dmlev)
+        5: [(1, 6), (2, 6)],  # Fuzzy match- full email (jw)
+        4: [(1, 7), (2, 7)],  # Fuzzy match- username only (lev)
+        3: [(1, 8), (2, 8)],  # Fuzzy match- username only (dmlev)
+        2: [(1, 9), (2, 9)],  # Fuzzy match- username only (jw)
+        1: [(1, 10), (2, 10)],  # Domain-only match
+        0: [(1, 11), (2, 11)],  # Everything else
+        -1: [(1, 12)],  # Null level- invalid email
     }
 
     for gamma, id_pairs in size_gamma_lookup.items():
