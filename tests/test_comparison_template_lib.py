@@ -462,7 +462,7 @@ def test_postcode_comparison_levels(spark, ctl, Linker):
             {
                 "unique_id": 6,
                 "first_name": "Zoe",
-                "postcode": "SW15 8UY",
+                "postcode": "sw15 8uy",
                 "lat": 53.95,
                 "long": -1.08,
             },

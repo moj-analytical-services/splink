@@ -13,7 +13,6 @@ from .comparison_library_utils import (
     distance_threshold_comparison_levels,
     distance_threshold_description,
 )
-from .input_column import InputColumn
 from .misc import ensure_is_iterable
 
 logger = logging.getLogger(__name__)
@@ -83,8 +82,16 @@ class DateComparisonBase(Comparison):
             datediff_metrics (Union[str, list], optional): The metrics to apply
                 thresholds to for datediff similarity level(s).
                 Defaults to ["month", "year"].
-            m_probability_exact_match (_type_, optional): Starting m probability for
-                exact match level. Defaults to None.
+            cast_strings_to_date (bool, optional): Set to True to
+                enable date-casting when input dates are strings. Also adjust
+                date_format if date-strings are not in (yyyy-mm-dd) format.
+                Defaults to False.
+            date_format (str, optional): Format of input dates if date-strings
+                are given. Must be consistent across record pairs. If None
+                (the default), downstream functions for each backend assign
+                date_format to ISO 8601 format (yyyy-mm-dd).
+            m_probability_exact_match (float, optional): If provided, overrides the
+                default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the levenshtein thresholds specified. Defaults to None.
@@ -92,10 +99,10 @@ class DateComparisonBase(Comparison):
                 _description_. If provided, overrides the default m probabilities
                 for the damerau-levenshtein thresholds specified. Defaults to None.
             m_probability_or_probabilities_datediff (Union[float, list], optional):
-                Starting m probabilities for the datediff thresholds specified.
-                Defaults to None.
-            m_probability_else (_type_, optional): Starting m probability for
-                the 'everything else' level. Defaults to None.
+                If provided, overrides the default m probabilities
+                for the datediff thresholds specified. Defaults to None.
+            m_probability_else (float, optional): If provided, overrides the
+                default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
             === "DuckDB"
@@ -291,6 +298,7 @@ class NameComparisonBase(Comparison):
         self,
         col_name: str,
         regex_extract: str = None,
+        set_to_lowercase: str = False,
         include_exact_match_level: bool = True,
         phonetic_col_name: str = None,
         term_frequency_adjustments: bool = False,
@@ -321,6 +329,9 @@ class NameComparisonBase(Comparison):
         Args:
             col_name (str): The name of the column to compare.
             regex_extract (str): Regular expression pattern to evaluate a match on.
+            set_to_lowercase (bool): If True, all names are set to lowercase
+                during the pairwise comparisons.
+                Defaults to False
             include_exact_match_level (bool, optional): If True, include an exact match
                 level for col_name. Defaults to True.
             phonetic_col_name (str): The name of the column with phonetic reduction
@@ -377,6 +388,7 @@ class NameComparisonBase(Comparison):
                 the 'everything else' level. Defaults to None.
 
         Examples:
+
             === "DuckDB"
                 Basic Name Comparison
                 ``` python
@@ -388,7 +400,7 @@ class NameComparisonBase(Comparison):
                 import splink.duckdb.duckdb_comparison_template_library as ctl
                 ctl.name_comparison("name",
                                     phonetic_col_name = "name_dm",
-                                    term_frequency_adjustments_name = True,
+                                    term_frequency_adjustments = True,
                                     levenshtein_thresholds=[2],
                                     damerau_levenshtein_thresholds=[],
                                     jaro_winkler_thresholds=[],
@@ -406,7 +418,7 @@ class NameComparisonBase(Comparison):
                 import splink.spark.spark_comparison_template_library as ctl
                 ctl.name_comparison("name",
                                     phonetic_col_name = "name_dm",
-                                    term_frequency_adjustments_name = True,
+                                    term_frequency_adjustments = True,
                                     levenshtein_thresholds=[2],
                                     damerau_levenshtein_thresholds=[],
                                     jaro_winkler_thresholds=[],
@@ -430,6 +442,7 @@ class NameComparisonBase(Comparison):
                 m_probability=m_probability_exact_match_name,
                 include_colname_in_charts_label=True,
                 regex_extract=regex_extract,
+                set_to_lowercase=set_to_lowercase,
             )
             comparison_levels.append(comparison_level)
 
@@ -440,6 +453,7 @@ class NameComparisonBase(Comparison):
                     m_probability=m_probability_exact_match_phonetic_name,
                     include_colname_in_charts_label=True,
                     regex_extract=regex_extract,
+                    set_to_lowercase=set_to_lowercase,
                 )
                 comparison_levels.append(comparison_level)
 
@@ -451,6 +465,7 @@ class NameComparisonBase(Comparison):
                 distance_function_name="levenshtein",
                 distance_threshold_or_thresholds=levenshtein_thresholds,
                 regex_extract=regex_extract,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_lev,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
@@ -466,6 +481,7 @@ class NameComparisonBase(Comparison):
                 distance_function_name="damerau-levenshtein",
                 distance_threshold_or_thresholds=damerau_levenshtein_thresholds,
                 regex_extract=regex_extract,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_dl,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
@@ -478,6 +494,7 @@ class NameComparisonBase(Comparison):
                 distance_function_name="jaro",
                 distance_threshold_or_thresholds=jaro_thresholds,
                 regex_extract=regex_extract,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_jar,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
@@ -490,6 +507,7 @@ class NameComparisonBase(Comparison):
                 distance_function_name="jaro-winkler",
                 distance_threshold_or_thresholds=jaro_winkler_thresholds,
                 regex_extract=regex_extract,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_jw,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
@@ -502,6 +520,7 @@ class NameComparisonBase(Comparison):
                 distance_function_name="jaccard",
                 distance_threshold_or_thresholds=jaccard_thresholds,
                 regex_extract=regex_extract,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_jac,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
@@ -564,6 +583,7 @@ class ForenameSurnameComparisonBase(Comparison):
         self,
         forename_col_name,
         surname_col_name,
+        set_to_lowercase=False,
         include_exact_match_level: bool = True,
         include_columns_reversed: bool = True,
         term_frequency_adjustments: bool = False,
@@ -605,6 +625,9 @@ class ForenameSurnameComparisonBase(Comparison):
         Args:
             forename_col_name (str): The name of the forename column to compare
             surname_col_name (str): The name of the surname column to compare
+            set_to_lowercase (bool): If True, all names are set to lowercase
+                during the pairwise comparisons.
+                Defaults to False
             include_exact_match_level (bool, optional): If True, include an exact match
                 level for col_name. Defaults to True.
             include_columns_reversed (bool, optional): If True, include a comparison
@@ -623,6 +646,9 @@ class ForenameSurnameComparisonBase(Comparison):
                 term frequency adjustments for forename surname exact match and columns
                 reversed levels.
                 Defaults to None
+            set_to_lowercase (bool): If True, all postcodes are set to lowercase
+                during the pairwise comparisons.
+                Defaults to True
             phonetic_forename_col_name (str, optional): The name of the column with
                 phonetic reduction (such as dmetaphone) of forename_col_name. Including
                 parameter will create an exact match level for
@@ -780,9 +806,20 @@ class ForenameSurnameComparisonBase(Comparison):
         ### Forename surname exact match
 
         if include_exact_match_level:
+            if set_to_lowercase:
+                forename_col_name_l = f"lower({forename_col_name}_l)"
+                forename_col_name_r = f"lower({forename_col_name}_r)"
+                surname_col_name_l = f"lower({surname_col_name}_l)"
+                surname_col_name_r = f"lower({surname_col_name}_r)"
+            else:
+                forename_col_name_l = f"{forename_col_name}_l"
+                forename_col_name_r = f"{forename_col_name}_r"
+                surname_col_name_l = f"{surname_col_name}_l"
+                surname_col_name_r = f"{surname_col_name}_r"
+
             comparison_level = {
-                "sql_condition": f"{forename_col_name}_l = {forename_col_name}_r "
-                f"AND {surname_col_name}_l = {surname_col_name}_r",
+                "sql_condition": f"{forename_col_name_l} = {forename_col_name_r} "
+                f"AND {surname_col_name_l} = {surname_col_name_r}",
                 "tf_adjustment_column": tf_adjustment_col_forename_and_surname,
                 "tf_adjustment_weight": 1.0,
                 "m_probability": m_probability_exact_match_forename_surname,
@@ -811,6 +848,7 @@ class ForenameSurnameComparisonBase(Comparison):
             comparison_level = self._columns_reversed_level(
                 forename_col_name,
                 surname_col_name,
+                set_to_lowercase=set_to_lowercase,
                 tf_adjustment_column=tf_adjustment_col_forename_and_surname,
                 m_probability=m_probability_columns_reversed_forename_surname,
             )
@@ -820,6 +858,7 @@ class ForenameSurnameComparisonBase(Comparison):
 
         comparison_level = self._exact_match_level(
             surname_col_name,
+            set_to_lowercase=set_to_lowercase,
             term_frequency_adjustments=term_frequency_adjustments,
             m_probability=m_probability_exact_match_surname,
             include_colname_in_charts_label=True,
@@ -830,6 +869,7 @@ class ForenameSurnameComparisonBase(Comparison):
 
         comparison_level = self._exact_match_level(
             forename_col_name,
+            set_to_lowercase=set_to_lowercase,
             term_frequency_adjustments=term_frequency_adjustments,
             m_probability=m_probability_exact_match_forename,
             include_colname_in_charts_label=True,
@@ -852,6 +892,7 @@ class ForenameSurnameComparisonBase(Comparison):
                 surname_col_name,
                 distance_function_name="levenshtein",
                 distance_threshold_or_thresholds=levenshtein_thresholds,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_surname_lev,
                 include_colname_in_charts_label=True,
             )
@@ -864,6 +905,7 @@ class ForenameSurnameComparisonBase(Comparison):
                 surname_col_name,
                 distance_function_name="damerau-levenshtein",
                 distance_threshold_or_thresholds=damerau_levenshtein_thresholds,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_surname_dl,
             )
             comparison_levels = comparison_levels + threshold_comparison_levels
@@ -874,6 +916,7 @@ class ForenameSurnameComparisonBase(Comparison):
                 surname_col_name,
                 distance_function_name="jaro-winkler",
                 distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_surname_jw,
                 include_colname_in_charts_label=True,
             )
@@ -885,6 +928,7 @@ class ForenameSurnameComparisonBase(Comparison):
                 surname_col_name,
                 distance_function_name="jaro-winkler",
                 distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_surname_jw,
                 include_colname_in_charts_label=True,
             )
@@ -896,6 +940,7 @@ class ForenameSurnameComparisonBase(Comparison):
                 surname_col_name,
                 distance_function_name="jaccard",
                 distance_threshold_or_thresholds=jaccard_thresholds,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_surname_jac,
                 include_colname_in_charts_label=True,
             )
@@ -909,6 +954,7 @@ class ForenameSurnameComparisonBase(Comparison):
                 forename_col_name,
                 distance_function_name="levenshtein",
                 distance_threshold_or_thresholds=levenshtein_thresholds,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_forename_lev,
                 include_colname_in_charts_label=True,
             )
@@ -920,6 +966,7 @@ class ForenameSurnameComparisonBase(Comparison):
                 forename_col_name,
                 distance_function_name="damerau-levenshtein",
                 distance_threshold_or_thresholds=damerau_levenshtein_thresholds,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_forename_dl,
                 include_colname_in_charts_label=True,
             )
@@ -931,6 +978,7 @@ class ForenameSurnameComparisonBase(Comparison):
                 forename_col_name,
                 distance_function_name="jaro-winkler",
                 distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_forename_jw,
                 include_colname_in_charts_label=True,
             )
@@ -942,6 +990,7 @@ class ForenameSurnameComparisonBase(Comparison):
                 forename_col_name,
                 distance_function_name="jaccard",
                 distance_threshold_or_thresholds=jaccard_thresholds,
+                set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_forename_jac,
                 include_colname_in_charts_label=True,
             )
@@ -1034,7 +1083,8 @@ class PostcodeComparisonBase(Comparison):
         self,
         col_name: str,
         invalid_postcodes_as_null=False,
-        valid_postcode_regex="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$",
+        set_to_lowercase=True,
+        valid_postcode_regex="^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9][A-Za-z]{2}$",
         term_frequency_adjustments_full=False,
         include_full_match_level=True,
         include_sector_match_level=True,
@@ -1065,11 +1115,14 @@ class PostcodeComparisonBase(Comparison):
             invalid_postcodes_as_null (bool): If True, postcodes that do not adhere
                 to valid_postcode_regex will be included in the null level.
                 Defaults to False
+            set_to_lowercase (bool): If True, all postcodes are set to lowercase
+                during the pairwise comparisons.
+                Defaults to True
             valid_postcode_regex (str): regular expression pattern that is used
                 to validate postcodes. If invalid_postcodes_as_null is True,
                 postcodes that do not adhere to valid_postcode_regex will be included
                  in the null level.
-                 Defaults to "^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$"
+                 Defaults to "^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9][A-Za-z]{2}$"
             term_frequency_adjustments_full (bool, optional): If True, apply
                 term frequency adjustments to the full postcode exact match level.
                 Defaults to False.
@@ -1163,9 +1216,6 @@ class PostcodeComparisonBase(Comparison):
                 dictionary.
         """
 
-        postcode_col = InputColumn(col_name, sql_dialect=self._sql_dialect)
-        postcode_col_l, postcode_col_r = postcode_col.names_l_r()
-
         comparison_levels = []
 
         if invalid_postcodes_as_null:
@@ -1178,6 +1228,7 @@ class PostcodeComparisonBase(Comparison):
                 col_name,
                 regex_extract=None,
                 term_frequency_adjustments=term_frequency_adjustments_full,
+                set_to_lowercase=set_to_lowercase,
                 m_probability=m_probability_full_match,
                 include_colname_in_charts_label=True,
             )
@@ -1186,7 +1237,8 @@ class PostcodeComparisonBase(Comparison):
         if include_sector_match_level:
             comparison_level = self._exact_match_level(
                 col_name,
-                regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]",
+                regex_extract="^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9]",
+                set_to_lowercase=set_to_lowercase,
                 m_probability=m_probability_sector_match,
                 manual_chart_label="Postcode Sector",
             )
@@ -1195,7 +1247,8 @@ class PostcodeComparisonBase(Comparison):
         if include_district_match_level:
             comparison_level = self._exact_match_level(
                 col_name,
-                regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]?",
+                regex_extract="^[A-Za-z]{1,2}[0-9][A-Za-z0-9]?",
+                set_to_lowercase=set_to_lowercase,
                 m_probability=m_probability_district_match,
                 manual_chart_label="Postcode District",
             )
@@ -1204,7 +1257,8 @@ class PostcodeComparisonBase(Comparison):
         if include_area_match_level:
             comparison_level = self._exact_match_level(
                 col_name,
-                regex_extract="^[A-Z]{1,2}",
+                regex_extract="^[A-Za-z]{1,2}",
+                set_to_lowercase=set_to_lowercase,
                 m_probability=m_probability_area_match,
                 manual_chart_label="Postcode Area",
             )

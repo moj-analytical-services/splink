@@ -1,4 +1,4 @@
-from ..dialect_base import (
+from ...dialect_base import (
     DialectBase,
 )
 

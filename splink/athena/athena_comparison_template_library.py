@@ -2,11 +2,4 @@
 # for Athena due to limited string matching capability in
 # cll.comparison_level_library
 
-from ..comparison_template_library import (
-    PostcodeComparisonBase,
-)
-from .athena_comparison_library import AthenaComparisonProperties
-
-
-class postcode_comparison(AthenaComparisonProperties, PostcodeComparisonBase):
-    pass
+from .athena_helpers.athena_comparison_imports import postcode_comparison  # noqa: F401
