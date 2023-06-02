@@ -3031,7 +3031,7 @@ class Linker:
     ) -> dict:
         """Save the configuration and parameters of the linkage model to a `.json` file.
 
-        The model can later be loaded back in using `linker.load_settings()`.
+        The model can later be loaded back in using `linker.load_model()`.
         The settings dict is also returned in case you want to save it a different way.
 
         Examples:
