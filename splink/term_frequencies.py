@@ -161,7 +161,6 @@ def compute_term_frequencies_from_concat_with_tf(linker: "Linker"):
 
 
 def comparison_level_to_tf_chart_data(cl: dict):
-
     df = cl["df_tf"]
     df.columns = ["value", "tf"]
     df = df[df.value.notnull()]
@@ -200,7 +199,6 @@ def comparison_level_to_tf_chart_data(cl: dict):
 def tf_adjustment_chart(
     linker: Linker, col, n_most_freq, n_least_freq, vals_to_include, as_dict
 ):
-
     # Data for chart
     c = linker._settings_obj._get_comparison_by_output_column_name(col)
     c = c._as_detailed_records
