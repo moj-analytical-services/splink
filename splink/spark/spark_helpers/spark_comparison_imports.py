@@ -248,6 +248,7 @@ class forename_surname_comparison(
 class postcode_comparison(SparkComparisonProperties, PostcodeComparisonBase):
     pass
 
+
 class email_comparison(SparkComparisonProperties, EmailComparisonBase):
     @property
     def _distance_level(self):
