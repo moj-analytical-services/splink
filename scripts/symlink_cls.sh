@@ -9,11 +9,12 @@ do
 
 
     # Iterate over the files starting with "$backend_comparisons" in the folder
-    # for file in "$folder/$comparisons"*; do
-    for file in "${folder}/${backend}_comparison"*; do
+    # for file in "${folder}/${backend}_comparison"*; do
+    for file in "${folder}/comparison_"*; do
 
-        # Extract the filename without the "$backend_" prefix
-        symlink_name="$folder/${file#"$folder"/${backend}_}"
+        # Generate our symlink name. This simply insert `$backend`
+        # into our existing the filepath.
+        symlink_name="${folder}/${backend}_${file#"$folder"/}"
 
         if [ ! -e "$symlink_name" ]; then
             ln -s "../../$file" $symlink_name
