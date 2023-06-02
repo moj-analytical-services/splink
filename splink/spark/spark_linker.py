@@ -81,7 +81,7 @@ class SparkLinker(Linker):
     def __init__(
         self,
         input_table_or_tables,
-        settings_dict=None,
+        settings_dict: dict | str = None,
         break_lineage_method=None,
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
@@ -99,9 +99,10 @@ class SparkLinker(Linker):
                 single table or a list of tables.  Tables can be provided either as
                 a Spark DataFrame, or as the name of the table as a string, as
                 registered in the Spark catalog
-            settings_dict (dict, optional): A Splink settings dictionary. If not
-                provided when the object is created, can later be added using
-                `linker.load_settings()` Defaults to None.
+            settings_dict (dict | Path, optional): A Splink settings dictionary, or
+                 a path to a json defining a settingss dictionary or pre-trained model.
+                  If not provided when the object is created, can later be added using
+                `linker.load_settings()` or `linker.load_model()` Defaults to None.
             break_lineage_method (str, optional): Method to use to cache intermediate
                 results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files",
                 "delta_lake_table". Defaults to "parquet".

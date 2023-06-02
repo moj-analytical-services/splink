@@ -136,7 +136,7 @@ class Linker:
     def __init__(
         self,
         input_table_or_tables: str | list,
-        settings_dict: dict,
+        settings_dict: dict | path,
         accepted_df_dtypes,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
@@ -146,37 +146,47 @@ class Linker:
 
         Examples:
             === "DuckDB"
-            Dedupe
-            ```py
-            df = pd.read_csv("data_to_dedupe.csv")
-            linker = DuckDBLinker(df, settings_dict)
-            ```
-            Link
-            ```py
-            df_1 = spark.read.parquet("table_1/")
-            df_2 = spark.read.parquet("table_2/")
-            linker = DuckDBLinker(
-                [df_1, df_2],
-                settings_dict,
-                input_table_aliases=["customers", "contact_center_callers"]
-                )
-            ```
+                Dedupe
+                ```py
+                df = pd.read_csv("data_to_dedupe.csv")
+                linker = DuckDBLinker(df, settings_dict)
+                ```
+                Link
+                ```py
+                df_1 = pd.read_parquet("table_1/")
+                df_2 = pd.read_parquet("table_2/")
+                linker = DuckDBLinker(
+                    [df_1, df_2],
+                    settings_dict,
+                    input_table_aliases=["customers", "contact_center_callers"]
+                    )
+                ```
+                Dedupe with a pre-trained model read from a json file
+                ```py
+                df = pd.read_csv("data_to_dedupe.csv")
+                linker = DuckDBLinker(df, "model.json")
+                ```
             === "Spark"
-            Dedupe
-            ```py
-            df = pd.read_csv("data_to_dedupe.csv")
-            linker = SparkLinker(df, settings_dict)
-            ```
-            Link
-            ```py
-            df_1 = spark.read.parquet("table_1/")
-            df_2 = spark.read.parquet("table_2/")
-            linker = SparkLinker(
-                [df_1, df_2],
-                settings_dict,
-                input_table_aliases=["customers", "contact_center_callers"]
-                )
-            ```
+                Dedupe
+                ```py
+                df = spark.read.csv("data_to_dedupe.csv")
+                linker = SparkLinker(df, settings_dict)
+                ```
+                Link
+                ```py
+                df_1 = spark.read.parquet("table_1/")
+                df_2 = spark.read.parquet("table_2/")
+                linker = SparkLinker(
+                    [df_1, df_2],
+                    settings_dict,
+                    input_table_aliases=["customers", "contact_center_callers"]
+                    )
+                ```
+                Dedupe with a pre-trained model read from a json file
+                ```py
+                df = spark.read.csv("data_to_dedupe.csv")
+                linker = SparkLinker(df, "model.json")
+                ```
 
         Args:
             input_table_or_tables (Union[str, list]): Input data into the linkage model.
@@ -185,9 +195,10 @@ class Linker:
                 database) for link_only or link_and_dedupe.  For some linkers, such as
                 the DuckDBLinker and the SparkLinker, it's also possible to pass in
                 dataframes (Pandas and Spark respectively) rather than strings.
-            settings_dict (dict, optional): A Splink settings dictionary. If not
-                provided when the object is created, can later be added using
-                `linker.load_settings()` Defaults to None.
+            settings_dict (dict | Path, optional): A Splink settings dictionary, or a
+                path to a json defining a settingss dictionary or pre-trained model.
+                If not provided when the object is created, can later be added using
+                `linker.load_settings()` or `linker.load_model()` Defaults to None.
             set_up_basic_logging (bool, optional): If true, sets ups up basic logging
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
             input_table_aliases (Union[str, list], optional): Labels assigned to
@@ -1043,9 +1054,6 @@ class Linker:
             linker.profile_columns(["first_name", "surname"])
             linker.load_settings(settings_dict)
             ```
-            ```py
-            linker.load_settings("my_settings.json")
-            ```
 
         Args:
             settings_dict (dict | str | Path): A Splink settings dictionary or
@@ -1085,9 +1093,27 @@ class Linker:
         self._validate_input_dfs()
         self._validate_dialect()
 
+    def load_model(self, model_path: Path):
+        """
+        Load a pre-defined model from a json file into the linker.
+        This is intended to be used with the output of
+        `save_model_to_json()`.
+
+        Examples:
+            ```py
+            linker.load_model("my_settings.json")
+            ```
+
+        Args:
+            model_path (Path): A path to your model settings json file.
+        """
+
+        return self.load_settings(model_path)
+
     def initialise_settings(self, settings_dict: dict):
         """*This method is now deprecated. Please use `load_settings`
-        when loading existing settings or a pre-trained model.*
+        when loading existing settings or `load_model` when loading
+         a pre-trained model.*
 
         Initialise settings for the linker.  To be used if settings were
         not passed to the linker on creation.
@@ -1139,7 +1165,8 @@ class Linker:
 
     def load_settings_from_json(self, in_path: str | Path):
         """*This method is now deprecated. Please use `load_settings`
-        when loading existing settings or a pre-trained model.*
+        when loading existing settings or `load_model` when loading
+         a pre-trained model.*
 
         Load settings from a `.json` file.
         This `.json` file would usually be the output of

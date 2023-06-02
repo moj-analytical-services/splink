@@ -26,6 +26,7 @@ tags:
         - estimate_u_using_random_sampling
         - find_matches_to_new_records
         - load_settings
+        - load_model
         - initialise_settings
         - load_settings_from_json
         - m_u_parameters_chart
