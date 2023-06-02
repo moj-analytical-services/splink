@@ -479,7 +479,7 @@ class Linker:
 
         # verify the link job
         if self._settings_obj_ is not None:
-            self._verify_link_only_job
+            _ = self._verify_link_only_job
 
         return nodes_with_tf
 

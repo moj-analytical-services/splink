@@ -41,7 +41,7 @@ def test_link_only_verification():
         settings,
     )
     # This should pass as concat_with_tf doesn't yet exist
-    linker._verify_link_only_job
+    _ = linker._verify_link_only_job
     with pytest.raises(SplinkException):
         # Fails as only one df w/ no source_dataset col has
         # been passed

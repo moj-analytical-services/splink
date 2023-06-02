@@ -280,7 +280,7 @@ def test_athena_errors():
     my_session = boto3.Session(region_name="eu-west-1")
 
     # Check that if the input df doesn't exist we get a fail
-    with pytest.raises(Exception):
+    with pytest.raises(Exception):  # noqa: B017
         AthenaLinker(
             input_table_or_tables="testing_for_failure",
             settings_dict=settings_dict,

@@ -6,7 +6,6 @@ import splink.spark.spark_comparison_template_library as ctls
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 
-
 ## date_comparison
 
 
