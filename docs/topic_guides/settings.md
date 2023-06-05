@@ -70,7 +70,7 @@ The `"comparisons"` define the features to be compared between records: `"first_
     ],
 ```
 
-Using functions from the [comparison template library](comparison_templates.ipynb) and [comparison library](./customising_comparisons.ipynb#method-1-using-the-comparisonlibrary) to define how these features should be compared.
+Using functions from the [comparison template library](comparison_templates.ipynb) and [comparison library](./customising_comparisons.ipynb#method-1-using-the-comparisonlibrary) to define **how** these features should be compared.
 
 ```py linenums="1"
 import splink.duckdb.duckdb_comparison_library as cl
@@ -79,7 +79,7 @@ import splink.duckdb.duckdb_comparison_template_library as ctl
 
 For more information on comparisons are defined, see the [dedicated topic guide](./customising_comparisons.ipynb).
 
-These functions act as wrapper functions which generate comparisons within the settings dictionary. See below for the full settings dictionary once the `comparison_library` and `comparison_template_library` functions have been evaluated:
+These functions generate comparisons within the settings dictionary. See below for the full settings dictionary once the `comparison_library` and `comparison_template_library` functions have been evaluated:
 
 ??? info "Settings Dictionary in full"
 
