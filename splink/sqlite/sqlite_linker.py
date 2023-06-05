@@ -82,7 +82,7 @@ class SQLiteLinker(Linker):
     def __init__(
         self,
         input_table_or_tables,
-        settings_dict=None,
+        settings_dict: dict | str = None,
         connection=":memory:",
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
