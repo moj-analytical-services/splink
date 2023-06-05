@@ -18,7 +18,7 @@ from ..linker import Linker
 from ..misc import ensure_is_list, major_minor_version_greater_equal_than
 from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
-from .custom_spark_dialect import Dialect
+from .spark_helpers.custom_spark_dialect import Dialect
 
 logger = logging.getLogger(__name__)
 
@@ -81,7 +81,7 @@ class SparkLinker(Linker):
     def __init__(
         self,
         input_table_or_tables,
-        settings_dict=None,
+        settings_dict: dict | str = None,
         break_lineage_method=None,
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
@@ -99,9 +99,10 @@ class SparkLinker(Linker):
                 single table or a list of tables.  Tables can be provided either as
                 a Spark DataFrame, or as the name of the table as a string, as
                 registered in the Spark catalog
-            settings_dict (dict, optional): A Splink settings dictionary. If not
-                provided when the object is created, can later be added using
-                `linker.load_settings()` Defaults to None.
+            settings_dict (dict | Path, optional): A Splink settings dictionary, or
+                 a path to a json defining a settingss dictionary or pre-trained model.
+                  If not provided when the object is created, can later be added using
+                `linker.load_settings()` or `linker.load_model()` Defaults to None.
             break_lineage_method (str, optional): Method to use to cache intermediate
                 results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files",
                 "delta_lake_table". Defaults to "parquet".
@@ -270,6 +271,11 @@ class SparkLinker(Linker):
             ),
             ("jaccard", "uk.gov.moj.dash.linkage.JaccardSimilarity", DoubleType()),
             ("cosine_distance", "uk.gov.moj.dash.linkage.CosineDistance", DoubleType()),
+            (
+                "damerau_levenshtein",
+                "uk.gov.moj.dash.linkage.LevDamerauDistance",
+                DoubleType(),
+            ),
             ("Dmetaphone", "uk.gov.moj.dash.linkage.DoubleMetaphone", StringType()),
             (
                 "DmetaphoneAlt",

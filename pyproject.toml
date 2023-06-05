@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splink"
-version = "3.8.1"
+version = "3.9.0"
 description = "Fast probabilistic data linkage at scale"
 authors = ["Robin Linacre <robinlinacre@hotmail.com>", "Sam Lindsay", "Theodore Manassis", "Tom Hepworth", "Andy Bond", "Ross Kennedy"]
 license = "MIT"
@@ -16,6 +16,7 @@ duckdb = ">=0.6.0"
 sqlglot = ">=5.1.0"
 altair = ">=4.2.0"
 Jinja2 = ">=3.0.3"
+phonetics = "^1.0.5"
 
 [tool.poetry.group.dev]
 [tool.poetry.group.dev.dependencies]
@@ -61,4 +62,21 @@ select = [
 ignore = [
     "B905", # `zip()` without an explicit `strict=` parameter
     "B006", # Do not use mutable data structures for argument defaults"
+]
+
+[tool.pytest.ini_options]
+addopts = ["-m default"]
+markers = [
+# only tests where backend is irrelevant:
+    "core",
+# see tests/decorator.py::dialect_groups for group details:
+    "default",
+    "all",
+# backend-specific sets
+    "duckdb",
+    "duckdb_only",
+    "spark",
+    "spark_only",
+    "sqlite",
+    "sqlite_only",
 ]

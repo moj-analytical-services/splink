@@ -146,6 +146,13 @@ def block_using_rules_sql(linker: Linker):
     if not blocking_rules:
         blocking_rules = [BlockingRule("1=1")]
 
+    # For Blocking rules for deterministic rules, add a match probability
+    # column with all probabilities set to 1.
+    if linker._deterministic_link_mode:
+        probability = ", 1.00 as match_probability"
+    else:
+        probability = ""
+
     sqls = []
     for br in blocking_rules:
         # Apply our salted rules to resolve skew issues. If no salt was
@@ -160,6 +167,7 @@ def block_using_rules_sql(linker: Linker):
             select
             {sql_select_expr}
             , '{br.match_key}' as match_key
+            {probability}
             from {linker._input_tablename_l} as l
             inner join {linker._input_tablename_r} as r
             on

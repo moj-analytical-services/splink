@@ -18,6 +18,7 @@ def test_full_example_spark(df_spark, tmp_path):
     # Annoyingly, this needs an independent linker as csv doesn't
     # accept arrays as inputs, which we are adding to df_spark below
     linker = SparkLinker(df_spark, get_settings_dict())
+
     # Test that writing to files works as expected
     def spark_csv_read(x):
         return linker.spark.read.csv(x, header=True).toPandas()
@@ -41,7 +42,7 @@ def test_full_example_spark(df_spark, tmp_path):
         "comparisons": [
             cl.jaro_winkler_at_thresholds("first_name", 0.9),
             cl.jaro_at_thresholds("surname", 0.9),
-            cl.levenshtein_at_thresholds("dob", 2),
+            cl.damerau_levenshtein_at_thresholds("dob", 2),
             {
                 "comparison_levels": [
                     cll.array_intersect_level("email"),
@@ -135,6 +136,16 @@ def test_full_example_spark(df_spark, tmp_path):
         break_lineage_method="checkpoint",
         num_partitions_on_repartition=2,
     )
+
+    # Test saving and loading
+    path = os.path.join(tmp_path, "model.json")
+    linker.save_model_to_json(path)
+
+    linker_2 = SparkLinker(df_spark)
+    linker_2.load_model(path)
+    linker_2.load_settings(path)
+    linker_2.load_settings_from_json(path)
+    SparkLinker(df_spark, settings_dict=path)
 
 
 def test_link_only(df_spark):

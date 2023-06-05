@@ -14,7 +14,7 @@ from ..misc import (
     ensure_is_list,
 )
 from ..splink_dataframe import SplinkDataFrame
-from .duckdb_helpers import (
+from .duckdb_helpers.duckdb_helpers import (
     create_temporary_duckdb_connection,
     duckdb_load_from_file,
     validate_duckdb_connection,
@@ -100,7 +100,7 @@ class DuckDBLinker(Linker):
     def __init__(
         self,
         input_table_or_tables: str | list,
-        settings_dict: dict = None,
+        settings_dict: dict | str = None,
         connection: str | DuckDBPyConnection = ":memory:",
         set_up_basic_logging: bool = True,
         output_schema: str = None,
@@ -117,9 +117,10 @@ class DuckDBLinker(Linker):
                 Either a single string (the name of a table in a database) for
                 deduplication jobs, or a list of strings  (the name of tables in a
                 database) for link_only or link_and_dedupe
-            settings_dict (dict, optional): A Splink settings dictionary. If not
-                provided when the object is created, can later be added using
-                `linker.load_settings()` Defaults to None.
+            settings_dict (dict | Path, optional): A Splink settings dictionary, or a
+                 path toa json defining a settingss dictionary or pre-trained model.
+                  If not provided when the object is created, can later be added using
+                `linker.load_settings()` or `linker.load_model()` Defaults to None.
             connection (DuckDBPyConnection or str, optional):  Connection to duckdb.
                 If a a string, will instantiate a new connection.  Defaults to :memory:.
                 If the special :temporary: string is provided, an on-disk duckdb

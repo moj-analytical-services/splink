@@ -84,6 +84,7 @@ from .term_frequencies import (
     compute_term_frequencies_from_concat_with_tf,
     term_frequencies_for_single_column_sql,
     term_frequencies_from_concat_with_tf,
+    tf_adjustment_chart,
 )
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -136,7 +137,7 @@ class Linker:
     def __init__(
         self,
         input_table_or_tables: str | list,
-        settings_dict: dict,
+        settings_dict: dict | Path,
         accepted_df_dtypes,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
@@ -146,19 +147,48 @@ class Linker:
         holds the data linkage model.
 
         Examples:
-            >>> # Example 1: DuckDB
-            >>> df = pd.read_csv("data_to_dedupe.csv")
-            >>> linker = DuckDBLinker(df, settings_dict)
-
-
-            >>> # Example 2: Spark
-            >>> df_1 = spark.read.parquet("table_1/")
-            >>> df_2 = spark.read.parquet("table_2/")
-            >>> linker = SparkLinker(
-            >>>     [df_1, df_2],
-            >>>     settings_dict,
-            >>>     input_table_aliases=["customers", "contact_center_callers"]
-            >>>     )
+            === "DuckDB"
+                Dedupe
+                ```py
+                df = pd.read_csv("data_to_dedupe.csv")
+                linker = DuckDBLinker(df, settings_dict)
+                ```
+                Link
+                ```py
+                df_1 = pd.read_parquet("table_1/")
+                df_2 = pd.read_parquet("table_2/")
+                linker = DuckDBLinker(
+                    [df_1, df_2],
+                    settings_dict,
+                    input_table_aliases=["customers", "contact_center_callers"]
+                    )
+                ```
+                Dedupe with a pre-trained model read from a json file
+                ```py
+                df = pd.read_csv("data_to_dedupe.csv")
+                linker = DuckDBLinker(df, "model.json")
+                ```
+            === "Spark"
+                Dedupe
+                ```py
+                df = spark.read.csv("data_to_dedupe.csv")
+                linker = SparkLinker(df, settings_dict)
+                ```
+                Link
+                ```py
+                df_1 = spark.read.parquet("table_1/")
+                df_2 = spark.read.parquet("table_2/")
+                linker = SparkLinker(
+                    [df_1, df_2],
+                    settings_dict,
+                    input_table_aliases=["customers", "contact_center_callers"]
+                    )
+                ```
+                Dedupe with a pre-trained model read from a json file
+                ```py
+                df = spark.read.csv("data_to_dedupe.csv")
+                linker = SparkLinker(df, "model.json")
+                ```
 
         Args:
             input_table_or_tables (Union[str, list]): Input data into the linkage model.
@@ -167,9 +197,10 @@ class Linker:
                 database) for link_only or link_and_dedupe.  For some linkers, such as
                 the DuckDBLinker and the SparkLinker, it's also possible to pass in
                 dataframes (Pandas and Spark respectively) rather than strings.
-            settings_dict (dict, optional): A Splink settings dictionary. If not
-                provided when the object is created, can later be added using
-                `linker.load_settings()` Defaults to None.
+            settings_dict (dict | Path, optional): A Splink settings dictionary, or a
+                path to a json defining a settingss dictionary or pre-trained model.
+                If not provided when the object is created, can later be added using
+                `linker.load_settings()` or `linker.load_model()` Defaults to None.
             set_up_basic_logging (bool, optional): If true, sets ups up basic logging
                 so that Splink sends messages at INFO level to stdout. Defaults to True.
             input_table_aliases (Union[str, list], optional): Labels assigned to
@@ -194,7 +225,8 @@ class Linker:
 
         if not isinstance(settings_dict, (dict, type(None))):
             # Run if you've entered a filepath
-            self._setup_settings_objs(None)  # feed it a blank settings dictionary
+            # feed it a blank settings dictionary
+            self._setup_settings_objs(None)
             self.load_settings(settings_dict)
         else:
             settings_dict = deepcopy(settings_dict)
@@ -219,6 +251,7 @@ class Linker:
         self._compare_two_records_mode = False
         self._self_link_mode = False
         self._analyse_blocking_mode = False
+        self._deterministic_link_mode = False
 
         self.debug_mode = False
 
@@ -350,7 +383,6 @@ class Linker:
 
     @property
     def _verify_link_only_job(self):
-
         cache = self._intermediate_table_cache
         if "__splink__df_concat_with_tf" not in cache:
             return
@@ -618,7 +650,6 @@ class Linker:
         try:
             return self._run_sql_execution(final_sql, templated_name, physical_name)
         except Exception as e:
-
             # Parse our SQL through sqlglot to pretty print
             try:
                 final_sql = sqlglot.parse_one(
@@ -643,9 +674,11 @@ class Linker:
         pandas dataframe, pyarrow table and in the spark case, a spark df.
 
         Examples:
-            >>> test_dict = {"a": [666,777,888],"b": [4,5,6]}
-            >>> linker.register_table(test_dict, "test_dict")
-            >>> linker.query_sql("select * from test_dict")
+            ```py
+            test_dict = {"a": [666,777,888],"b": [4,5,6]}
+            linker.register_table(test_dict, "test_dict")
+            linker.query_sql("select * from test_dict")
+            ```
 
         Args:
             input: The data you wish to register. This can be either a dictionary,
@@ -691,9 +724,30 @@ class Linker:
         the resulting output.
 
         Examples:
-            >>> linker = DuckDBLinker(df, settings)
-            >>> df_predict = linker.predict()
-            >>> linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
+            === "DuckDB"
+                ```py
+                linker = DuckDBLinker(df, settings)
+                df_predict = linker.predict()
+                linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
+                ```
+            === "Spark"
+                ```py
+                linker = SparkLinker(df, settings)
+                df_predict = linker.predict()
+                linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
+                ```
+            === "Athena"
+                ```py
+                linker = AthenaLinker(df, settings)
+                df_predict = linker.predict()
+                linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
+                ```
+            === "SQLite"
+                ```py
+                linker = SQLiteLinker(df, settings)
+                df_predict = linker.predict()
+                linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
+            ```
 
         Args:
             sql (str): The SQL to be queried.
@@ -1009,11 +1063,11 @@ class Linker:
         valid settings dictionary.
 
         Examples:
-            >>> linker = DuckDBLinker(df, connection=":memory:")
-            >>> linker.profile_columns(["first_name", "surname"])
-            >>> linker.load_settings(settings_dict)
-
-            >>> linker.load_settings("my_settings.json", validate_settings=True)
+            ```py
+            linker = DuckDBLinker(df)
+            linker.profile_columns(["first_name", "surname"])
+            linker.load_settings(settings_dict, validate_settings=True)
+            ```
 
         Args:
             settings_dict (dict | str | Path): A Splink settings dictionary or
@@ -1055,16 +1109,55 @@ class Linker:
         self._validate_input_dfs()
         self._validate_settings(validate_settings)
 
+    def load_model(self, model_path: Path):
+        """
+        Load a pre-defined model from a json file into the linker.
+        This is intended to be used with the output of
+        `save_model_to_json()`.
+
+        Examples:
+            ```py
+            linker.load_model("my_settings.json")
+            ```
+
+        Args:
+            model_path (Path): A path to your model settings json file.
+        """
+
+        return self.load_settings(model_path)
+
     def initialise_settings(self, settings_dict: dict):
         """*This method is now deprecated. Please use `load_settings`
-        when loading existing settings or a pre-trained model.*
+        when loading existing settings or `load_model` when loading
+         a pre-trained model.*
 
         Initialise settings for the linker.  To be used if settings were
         not passed to the linker on creation.
         Examples:
-            >>> linker = DuckDBLinker(df, connection=":memory:")
-            >>> linker.profile_columns(["first_name", "surname"])
-            >>> linker.initialise_settings(settings_dict)
+            === "DuckDB"
+                ```py
+                linker = DuckDBLinker(df")
+                linker.profile_columns(["first_name", "surname"])
+                linker.initialise_settings(settings_dict)
+                ```
+            === "Spark"
+                ```py
+                linker = SparkLinker(df")
+                linker.profile_columns(["first_name", "surname"])
+                linker.initialise_settings(settings_dict)
+                ```
+            === "Athena"
+                ```py
+                linker = AthenaLinker(df")
+                linker.profile_columns(["first_name", "surname"])
+                linker.initialise_settings(settings_dict)
+                ```
+            === "SQLite"
+                ```py
+                linker = SQLiteLinker(df")
+                linker.profile_columns(["first_name", "surname"])
+                linker.initialise_settings(settings_dict)
+                ```
         Args:
             settings_dict (dict): A Splink settings dictionary
         """
@@ -1088,13 +1181,16 @@ class Linker:
 
     def load_settings_from_json(self, in_path: str | Path):
         """*This method is now deprecated. Please use `load_settings`
-        when loading existing settings or a pre-trained model.*
+        when loading existing settings or `load_model` when loading
+         a pre-trained model.*
 
         Load settings from a `.json` file.
         This `.json` file would usually be the output of
-        `linker.save_settings_to_json()`
+        `linker.save_model_to_json()`
         Examples:
-            >>> linker.load_settings_from_json("my_settings.json")
+            ```py
+            linker.load_settings_from_json("my_settings.json")
+            ```
         Args:
             in_path (str): Path to settings json file
         """
@@ -1116,20 +1212,42 @@ class Linker:
         various models without having to recompute term frequency tables each time
 
         Examples:
-            >>> # Example 1: Real time linkage
-            >>> linker = DuckDBLinker(df, connection=":memory:")
-            >>> linker.load_settings("saved_settings.json")
-            >>> linker.compute_tf_table("surname")
-            >>> linker.compare_two_records(record_left, record_right)
-
-            >>> # Example 2: Pre-computed term frequency tables in Spark
-            >>> linker = SparkLinker(df)
-            >>> df_first_name_tf = linker.compute_tf_table("first_name")
-            >>> df_first_name_tf.write.parquet("folder/first_name_tf")
-            >>>
-            >>> # On subsequent data linking job, read this table rather than recompute
-            >>> df_first_name_tf = spark.read.parquet("folder/first_name_tf")
-            >>> df_first_name_tf.createOrReplaceTempView("__splink__df_tf_first_name")
+            === "DuckDB"
+                Real time linkage
+                ```py
+                linker = DuckDBLinker(df)
+                linker.load_settings("saved_settings.json")
+                linker.compute_tf_table("surname")
+                linker.compare_two_records(record_left, record_right)
+                ```
+                Pre-computed term frequency tables
+                ```py
+                linker = DuckDBLinker(df)
+                df_first_name_tf = linker.compute_tf_table("first_name")
+                df_first_name_tf.write.parquet("folder/first_name_tf")
+                >>>
+                # On subsequent data linking job, read this table rather than recompute
+                df_first_name_tf = pd.read_parquet("folder/first_name_tf")
+                df_first_name_tf.createOrReplaceTempView("__splink__df_tf_first_name")
+                ```
+            === "Spark"
+                Real time linkage
+                ```py
+                linker = SparkLinker(df)
+                linker.load_settings("saved_settings.json")
+                linker.compute_tf_table("surname")
+                linker.compare_two_records(record_left, record_right)
+                ```
+                Pre-computed term frequency tables
+                ```py
+                linker = SparkLinker(df)
+                df_first_name_tf = linker.compute_tf_table("first_name")
+                df_first_name_tf.write.parquet("folder/first_name_tf")
+                >>>
+                # On subsequent data linking job, read this table rather than recompute
+                df_first_name_tf = spark.read.parquet("folder/first_name_tf")
+                df_first_name_tf.createOrReplaceTempView("__splink__df_tf_first_name")
+                ```
 
         Args:
             column_name (str): The column name in the input table
@@ -1185,27 +1303,82 @@ class Linker:
         (false negatives).
 
         Examples:
-            >>> linker = DuckDBLinker(df)
+            === "DuckDB"
+            ```py
+            from splink.duckdb.duckdb_linker import DuckDBLinker
+
+            settings = {
+                "link_type": "dedupe_only",
+                "blocking_rules_to_generate_predictions": [
+                    "l.first_name = r.first_name",
+                    "l.surname = r.surname",
+                ],
+                "comparisons": []
+            }
             >>>
-            >>> settings = {
-            >>>     "link_type": "dedupe_only",
-            >>>     "blocking_rules_to_generate_predictions": [
-            >>>         "l.first_name = r.first_name",
-            >>>         "l.surname = r.surname",
-            >>>     ],
-            >>>     "comparisons": []
-            >>> }
+            linker = DuckDBLinker(df, settings)
+            df = linker.deterministic_link()
+            ```
+            === "Spark"
+            ```py
+            from splink.spark.spark_linker import SparkLinker
+
+            settings = {
+                "link_type": "dedupe_only",
+                "blocking_rules_to_generate_predictions": [
+                    "l.first_name = r.first_name",
+                    "l.surname = r.surname",
+                ],
+                "comparisons": []
+            }
             >>>
-            >>> from splink.duckdb.duckdb_linker import DuckDBLinker
+            linker = SparkLinker(df, settings)
+            df = linker.deterministic_link()
+            ```
+            === "Athena"
+            ```py
+            from splink.athena.athena_linker import AthenaLinker
+
+            settings = {
+                "link_type": "dedupe_only",
+                "blocking_rules_to_generate_predictions": [
+                    "l.first_name = r.first_name",
+                    "l.surname = r.surname",
+                ],
+                "comparisons": []
+            }
             >>>
-            >>> linker = DuckDBLinker(df, settings)
-            >>> df = linker.deterministic_link()
+            linker = AthenaLinker(df, settings)
+            df = linker.deterministic_link()
+            ```
+            === "SQLite"
+            ```py
+            from splink.sqlite.sqlite_linker import SQLiteLinker
+
+            settings = {
+                "link_type": "dedupe_only",
+                "blocking_rules_to_generate_predictions": [
+                    "l.first_name = r.first_name",
+                    "l.surname = r.surname",
+                ],
+                "comparisons": []
+            }
+            >>>
+            linker = SQLiteLinker(df, settings)
+            df = linker.deterministic_link()
+            ```
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
                 represents a table materialised in the database. Methods on the
                 SplinkDataFrame allow you to access the underlying data.
         """
+
+        # Allows clustering during a deterministic linkage.
+        # This is used in `cluster_pairwise_predictions_at_threshold`
+        # to set the cluster threshold to 1
+        self._deterministic_link_mode = True
+
         concat_with_tf = self._initialise_df_concat_with_tf()
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
@@ -1241,7 +1414,9 @@ class Linker:
             DuckDB and Spark, for Athena and SQLite set to None.
 
         Examples:
-            >>> linker.estimate_u_using_random_sampling(1e8)
+            ```py
+            linker.estimate_u_using_random_sampling(1e8)
+            ```
 
         Returns:
             None: Updates the estimated u parameters within the linker object
@@ -1294,7 +1469,9 @@ class Linker:
                 label in the input data.
 
         Examples:
-            >>> linker.estimate_m_from_label_column("social_security_number")
+            ```py
+            linker.estimate_m_from_label_column("social_security_number")
+            ```
 
         Returns:
             Updates the estimated m parameters within the linker object
@@ -1353,20 +1530,23 @@ class Linker:
         if you block on the dmetaphone of a column but match on the original column.
 
         Examples:
-            >>> # Default behaviour
-            >>> br_training = "l.first_name = r.first_name and l.dob = r.dob"
-            >>> linker.estimate_parameters_using_expectation_maximisation(br_training)
-
-            >>> # Specify which comparisons to deactivate
-            >>> br_training = "l.dmeta_first_name = r.dmeta_first_name"
-            >>> settings_obj = linker._settings_obj
-            >>> comp = settings_obj._get_comparison_by_output_column_name("first_name")
-            >>> dmeta_level = comp._get_comparison_level_by_comparison_vector_value(1)
-            >>> linker.estimate_parameters_using_expectation_maximisation(
-            >>>     br_training,
-            >>>     comparisons_to_deactivate=["first_name"],
-            >>>     comparison_levels_to_reverse_blocking_rule=[dmeta_level],
-            >>> )
+            Default behaviour
+            ```py
+            br_training = "l.first_name = r.first_name and l.dob = r.dob"
+            linker.estimate_parameters_using_expectation_maximisation(br_training)
+            ```
+            Specify which comparisons to deactivate
+            ```py
+            br_training = "l.dmeta_first_name = r.dmeta_first_name"
+            settings_obj = linker._settings_obj
+            comp = settings_obj._get_comparison_by_output_column_name("first_name")
+            dmeta_level = comp._get_comparison_level_by_comparison_vector_value(1)
+            linker.estimate_parameters_using_expectation_maximisation(
+                br_training,
+                comparisons_to_deactivate=["first_name"],
+                comparison_levels_to_reverse_blocking_rule=[dmeta_level],
+            )
+            ```
 
         Args:
             blocking_rule (str): The blocking rule used to generate pairwise record
@@ -1397,8 +1577,10 @@ class Linker:
                 the blocked value. Defaults to False.
 
         Examples:
-            >>> blocking_rule = "l.first_name = r.first_name and l.dob = r.dob"
-            >>> linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+            ```py
+            blocking_rule = "l.first_name = r.first_name and l.dob = r.dob"
+            linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+            ```
 
         Returns:
             EMTrainingSession:  An object containing information about the training
@@ -1478,11 +1660,12 @@ class Linker:
                 pipeline.   Defaults to True
 
         Examples:
-            >>> linker = DuckDBLinker(df, connection=":memory:")
-            >>> linker.load_settings("saved_settings.json")
-            >>> df = linker.predict(threshold_match_probability=0.95)
-            >>> df.as_pandas_dataframe(limit=5)
-
+            ```py
+            linker = DuckDBLinker(df)
+            linker.load_settings("saved_settings.json")
+            df = linker.predict(threshold_match_probability=0.95)
+            df.as_pandas_dataframe(limit=5)
+            ```
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
                 represents a table materialised in the database. Methods on the
@@ -1553,20 +1736,21 @@ class Linker:
                 above this threshold. Defaults to -4.
 
         Examples:
-            >>> linker = DuckDBLinker(df)
-            >>> linker.load_settings("saved_settings.json")
-            >>> # Pre-compute tf tables for any tables with
-            >>> # term frequency adjustments
-            >>> linker.compute_tf_table("first_name")
-            >>> record = {'unique_id': 1,
-            >>>     'first_name': "John",
-            >>>     'surname': "Smith",
-            >>>     'dob': "1971-05-24",
-            >>>     'city': "London",
-            >>>     'email': "john@smith.net"
-            >>>     }
-            >>> df = linker.find_matches_to_new_records([record], blocking_rules=[])
-
+            ```py
+            linker = DuckDBLinker(df)
+            linker.load_settings("saved_settings.json")
+            # Pre-compute tf tables for any tables with
+            # term frequency adjustments
+            linker.compute_tf_table("first_name")
+            record = {'unique_id': 1,
+                'first_name': "John",
+                'surname': "Smith",
+                'dob': "1971-05-24",
+                'city': "London",
+                'email': "john@smith.net"
+                }
+            df = linker.find_matches_to_new_records([record], blocking_rules=[])
+            ```
 
         Returns:
             SplinkDataFrame: The pairwise comparisons.
@@ -1666,9 +1850,11 @@ class Linker:
                 and data types must be the same as the columns in the settings object
 
         Examples:
-            >>> linker = DuckDBLinker(df)
-            >>> linker.load_settings("saved_settings.json")
-            >>> linker.compare_two_records(record_left, record_right)
+            ```py
+            linker = DuckDBLinker(df)
+            linker.load_settings("saved_settings.json")
+            linker.compare_two_records(record_left, record_right)
+            ```
 
         Returns:
             SplinkDataFrame: Pairwise comparison with scored prediction
@@ -1793,7 +1979,7 @@ class Linker:
     def cluster_pairwise_predictions_at_threshold(
         self,
         df_predict: SplinkDataFrame,
-        threshold_match_probability: float,
+        threshold_match_probability: float = None,
         pairwise_formatting: bool = False,
         filter_pairwise_format_for_clusters: bool = True,
     ) -> SplinkDataFrame:
@@ -1889,9 +2075,11 @@ class Linker:
             in the database or SplinkDataframe
 
         Examples:
-          >>> pairwise_labels = pd.read_csv("./data/pairwise_labels_to_estimate_m.csv")
-          >>> linker.register_table(pairwise_labels, "labels", overwrite=True)
-          >>> linker.estimate_m_from_pairwise_labels("labels")
+            ```py
+            pairwise_labels = pd.read_csv("./data/pairwise_labels_to_estimate_m.csv")
+            linker.register_table(pairwise_labels, "labels", overwrite=True)
+            linker.estimate_m_from_pairwise_labels("labels")
+            ```
         """
         labels_tablename = self._get_labels_tablename_from_input(
             labels_splinkdataframe_or_table_name
@@ -1934,16 +2122,18 @@ class Linker:
                 the number of points plotted on the ROC chart. Defaults to None.
 
         Examples:
-            >>> # DuckDBLinker
-            >>> labels = pd.read_csv("my_labels.csv")
-            >>> linker.register_table(labels, "labels")
-            >>> linker.truth_space_table_from_labels_table("labels")
-            >>>
-            >>> # SparkLinker
-            >>> labels = spark.read.csv("my_labels.csv", header=True)
-            >>> labels.createDataFrame("labels")
-            >>> linker.truth_space_table_from_labels_table("labels")
-
+            === "DuckDB"
+                ```py
+                labels = pd.read_csv("my_labels.csv")
+                linker.register_table(labels, "labels")
+                linker.truth_space_table_from_labels_table("labels")
+                ```
+            === "Spark"
+                ```py
+                labels = spark.read.csv("my_labels.csv", header=True)
+                labels.createDataFrame("labels")
+                linker.truth_space_table_from_labels_table("labels")
+                ```
         Returns:
             SplinkDataFrame:  Table of truth statistics
         """
@@ -1994,16 +2184,18 @@ class Linker:
                 the number of points plotted on the ROC chart. Defaults to None.
 
         Examples:
-            >>> # DuckDBLinker
-            >>> labels = pd.read_csv("my_labels.csv")
-            >>> linker.register_table(labels, "labels")
-            >>> linker.roc_chart_from_labels_table("labels")
-            >>>
-            >>> # SparkLinker
-            >>> labels = spark.read.csv("my_labels.csv", header=True)
-            >>> labels.createDataFrame("labels")
-            >>> linker.roc_chart_from_labels_table("labels")
-
+            === "DuckDB"
+                ```py
+                labels = pd.read_csv("my_labels.csv")
+                linker.register_table(labels, "labels")
+                linker.roc_chart_from_labels_table("labels")
+                ```
+            === "Spark"
+                ```py
+                labels = spark.read.csv("my_labels.csv", header=True)
+                labels.createDataFrame("labels")
+                linker.roc_chart_from_labels_table("labels")
+                ```
 
         Returns:
             VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
@@ -2058,16 +2250,18 @@ class Linker:
                 sometimes necessary to reduce the size of the ROC table, and therefore
                 the number of points plotted on the ROC chart. Defaults to None.
         Examples:
-            >>> # DuckDBLinker
-            >>> labels = pd.read_csv("my_labels.csv")
-            >>> linker.register_table(labels, "labels")
-            >>> linker.precision_recall_chart_from_labels_table("labels")
-            >>>
-            >>> # SparkLinker
-            >>> labels = spark.read.csv("my_labels.csv", header=True)
-            >>> labels.createDataFrame("labels")
-            >>> linker.precision_recall_chart_from_labels_table("labels")
-
+            === "DuckDB"
+                ```py
+                labels = pd.read_csv("my_labels.csv")
+                linker.register_table(labels, "labels")
+                linker.precision_recall_chart_from_labels_table("labels")
+                ```
+            === "Spark"
+                ```py
+                labels = spark.read.csv("my_labels.csv", header=True)
+                labels.createDataFrame("labels")
+                linker.precision_recall_chart_from_labels_table("labels")
+                ```
 
         Returns:
             VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
@@ -2144,7 +2338,9 @@ class Linker:
                 the number of points plotted on the ROC chart. Defaults to None.
 
         Examples:
-            >>> linker.truth_space_table_from_labels_column("cluster")
+            ```py
+            linker.truth_space_table_from_labels_column("cluster")
+            ```
 
         Returns:
             SplinkDataFrame:  Table of truth statistics
@@ -2175,8 +2371,9 @@ class Linker:
                 the number of points plotted on the ROC chart. Defaults to None.
 
         Examples:
-            >>> linker.roc_chart_from_labels_column("labels")
-
+            ```py
+            linker.roc_chart_from_labels_column("labels")
+            ```
 
         Returns:
             VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
@@ -2213,8 +2410,9 @@ class Linker:
                 sometimes necessary to reduce the size of the ROC table, and therefore
                 the number of points plotted on the ROC chart. Defaults to None.
         Examples:
-            >>> linker.precision_recall_chart_from_labels_column("ground_truth")
-
+            ```py
+            linker.precision_recall_chart_from_labels_column("ground_truth")
+            ```
 
         Returns:
             VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
@@ -2293,9 +2491,11 @@ class Linker:
         obtained from `df.as_record_dict(limit=n)` where `df` is a SplinkDataFrame.
 
         Examples:
-            >>> df = linker.predict(threshold_match_weight=2)
-            >>> records = df.as_record_dict(limit=10)
-            >>> linker.waterfall_chart(records)
+            ```py
+            df = linker.predict(threshold_match_weight=2)
+            records = df.as_record_dict(limit=10)
+            linker.waterfall_chart(records)
+            ```
 
         Args:
             records (List[dict]): Usually be obtained from `df.as_record_dict(limit=n)`
@@ -2335,15 +2535,16 @@ class Linker:
             as_dict (bool, optional): If True, return a dict version of the chart.
 
         Examples:
-            >>> # For the simplest code pipeline, load a pre-trained model
-            >>> # and run this against the test data.
-            >>> df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-            >>> linker = DuckDBLinker(df)
-            >>> linker.load_settings("saved_settings.json")
-            >>> linker.unlinkables_chart()
-            >>>
-            >>> # For more complex code pipelines, you can run an entire pipeline
-            >>> # that estimates your m and u values, before `unlinkables_chart().
+            For the simplest code pipeline, load a pre-trained model
+            and run this against the test data.
+            ```py
+            df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+            linker = DuckDBLinker(df)
+            linker.load_settings("saved_settings.json")
+            linker.unlinkables_chart()
+            ```
+            For more complex code pipelines, you can run an entire pipeline
+            that estimates your m and u values, before `unlinkables_chart().
 
         Returns:
             VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
@@ -2378,13 +2579,17 @@ class Linker:
             return_html_as_string: If True, return the html as a string
 
         Examples:
-            >>> df_predictions = linker.predict()
-            >>> linker.comparison_viewer_dashboard(df_predictions, "scv.html", True, 2)
-            >>>
-            >>> # Optionally, in Jupyter, you can display the results inline
-            >>> # Otherwise you can just load the html file in your browser
-            >>> from IPython.display import IFrame
-            >>> IFrame(src="./scv.html", width="100%", height=1200)
+            ```py
+            df_predictions = linker.predict()
+            linker.comparison_viewer_dashboard(df_predictions, "scv.html", True, 2)
+            ```
+
+            Optionally, in Jupyter, you can display the results inline
+            Otherwise you can just load the html file in your browser
+            ```py
+            from IPython.display import IFrame
+            IFrame(src="./scv.html", width="100%", height=1200)
+            ```
 
         """
         self._raise_error_if_necessary_waterfall_columns_not_computed()
@@ -2446,17 +2651,20 @@ class Linker:
             Defaults to None.
 
         Examples:
-            >>> linker.missingness_chart()
-            >>> # To view offline (if you don't have an internet connection):
-            >>>
-            >>> from splink.charts import save_offline_chart
-            >>> c = linker.missingness_chart()
-            >>> save_offline_chart(c.spec, "test_chart.html")
-            >>>
-            >>> # View resultant html file in Jupyter (or just load it in your browser)
-            >>> from IPython.display import IFrame
-            >>> IFrame(src="./test_chart.html", width=1000, height=500
-
+            ```py
+            linker.missingness_chart()
+            ```
+            To view offline (if you don't have an internet connection):
+            ```py
+            from splink.charts import save_offline_chart
+            c = linker.missingness_chart()
+            save_offline_chart(c.spec, "test_chart.html")
+            ```
+            View resultant html file in Jupyter (or just load it in your browser)
+            ```py
+            from IPython.display import IFrame
+            IFrame(src="./test_chart.html", width=1000, height=500
+            ```
         """
         records = missingness_data(self, input_dataset)
         return missingness_chart(records)
@@ -2474,17 +2682,20 @@ class Linker:
                 Default to None.
 
         Examples:
-            >>> linker.completeness_chart()
-            >>> # To view offline (if you don't have an internet connection):
-            >>>
-            >>> from splink.charts import save_offline_chart
-            >>> c = linker.completeness_chart()
-            >>> save_offline_chart(c.spec, "test_chart.html")
-            >>>
-            >>> # View resultant html file in Jupyter (or just load it in your browser)
-            >>> from IPython.display import IFrame
-            >>> IFrame(src="./test_chart.html", width=1000, height=500
-
+            ```py
+            linker.completeness_chart()
+            ```
+            To view offline (if you don't have an internet connection):
+            ```py
+            from splink.charts import save_offline_chart
+            c = linker.completeness_chart()
+            save_offline_chart(c.spec, "test_chart.html")
+            ```
+            View resultant html file in Jupyter (or just load it in your browser)
+            ```py
+            from IPython.display import IFrame
+            IFrame(src="./test_chart.html", width=1000, height=500
+            ```
         """
         records = completeness_data(self, input_dataset, cols)
         return completeness_chart(records)
@@ -2506,12 +2717,16 @@ class Linker:
                 to None.
 
         Examples:
-            >>> br = "l.first_name = r.first_name"
-            >>> linker.count_num_comparisons_from_blocking_rule(br)
-            19387
-            >>> br = "l.name = r.name and substr(l.dob,1,4) = substr(r.dob,1,4)"
-            >>> linker.count_num_comparisons_from_blocking_rule(br)
-            394
+            ```py
+            br = "l.first_name = r.first_name"
+            linker.count_num_comparisons_from_blocking_rule(br)
+            ```
+            > 19387
+            ```py
+            br = "l.name = r.name and substr(l.dob,1,4) = substr(r.dob,1,4)"
+            linker.count_num_comparisons_from_blocking_rule(br)
+            ```
+            > 394
 
         Returns:
             int: The number of comparisons generated by the blocking rule
@@ -2540,21 +2755,23 @@ class Linker:
                 for. If null, the rules set out in your settings object will be used.
 
         Examples:
-            >>> linker_settings = DuckDBLinker(df, settings)
-            >>> # Compute the cumulative number of comparisons generated by the rules
-            >>> # in your settings object.
-            >>> linker_settings.cumulative_comparisons_from_blocking_rules_records()
+            ```py
+            linker_settings = DuckDBLinker(df, settings)
+            # Compute the cumulative number of comparisons generated by the rules
+            # in your settings object.
+            linker_settings.cumulative_comparisons_from_blocking_rules_records()
             >>>
-            >>> # Generate total comparisons with custom blocking rules.
-            >>> blocking_rules = [
-            >>>    "l.surname = r.surname",
-            >>>    "l.first_name = r.first_name
-            >>>     and substr(l.dob,1,4) = substr(r.dob,1,4)"
-            >>> ]
+            # Generate total comparisons with custom blocking rules.
+            blocking_rules = [
+               "l.surname = r.surname",
+               "l.first_name = r.first_name
+                and substr(l.dob,1,4) = substr(r.dob,1,4)"
+            ]
             >>>
-            >>> linker_settings.cumulative_comparisons_from_blocking_rules_records(
-            >>>     blocking_rules
-            >>>  )
+            linker_settings.cumulative_comparisons_from_blocking_rules_records(
+                blocking_rules
+             )
+            ```
 
         Returns:
             List: A list of blocking rules and the corresponding number of
@@ -2585,21 +2802,23 @@ class Linker:
                 for. If null, the rules set out in your settings object will be used.
 
         Examples:
-            >>> linker_settings = DuckDBLinker(df, settings)
-            >>> # Compute the cumulative number of comparisons generated by the rules
-            >>> # in your settings object.
-            >>> linker_settings.cumulative_num_comparisons_from_blocking_rules_chart()
+            ```py
+            linker_settings = DuckDBLinker(df, settings)
+            # Compute the cumulative number of comparisons generated by the rules
+            # in your settings object.
+            linker_settings.cumulative_num_comparisons_from_blocking_rules_chart()
             >>>
-            >>> # Generate total comparisons with custom blocking rules.
-            >>> blocking_rules = [
-            >>>    "l.surname = r.surname",
-            >>>    "l.first_name = r.first_name
-            >>>     and substr(l.dob,1,4) = substr(r.dob,1,4)"
-            >>> ]
+            # Generate total comparisons with custom blocking rules.
+            blocking_rules = [
+               "l.surname = r.surname",
+               "l.first_name = r.first_name
+                and substr(l.dob,1,4) = substr(r.dob,1,4)"
+            ]
             >>>
-            >>> linker_settings.cumulative_num_comparisons_from_blocking_rules_chart(
-            >>>     blocking_rules
-            >>>  )
+            linker_settings.cumulative_num_comparisons_from_blocking_rules_chart(
+                blocking_rules
+             )
+            ```
 
         Returns:
             VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
@@ -2630,11 +2849,13 @@ class Linker:
             and probabilities of rows matching
 
         Examples:
-            >>> linker = DuckDBLinker(df, connection=":memory:")
-            >>> linker.load_settings("saved_settings.json")
-            >>> df_predict = linker.predict(threshold_match_probability=0.95)
-            >>> count_pairwise = linker.count_num_comparisons_from_blocking_rules_for_prediction(df_predict)
-            >>> count_pairwise.as_pandas_dataframe(limit=5)
+            ```py
+            linker = DuckDBLinker(df, connection=":memory:")
+            linker.load_settings("saved_settings.json")
+            df_predict = linker.predict(threshold_match_probability=0.95)
+            count_pairwise = linker.count_num_comparisons_from_blocking_rules_for_prediction(df_predict)
+            count_pairwise.as_pandas_dataframe(limit=5)
+            ```
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons and
@@ -2652,18 +2873,20 @@ class Linker:
         """Display a chart of the (partial) match weights of the linkage model
 
         Examples:
-            >>> linker.match_weights_chart()
-            >>>
-            >>> # To view offline (if you don't have an internet connection):
-            >>>
-            >>> from splink.charts import save_offline_chart
-            >>> c = linker.match_weights_chart()
-            >>> save_offline_chart(c.spec, "test_chart.html")
-            >>>
-            >>> # View resultant html file in Jupyter (or just load it in your browser)
-            >>> from IPython.display import IFrame
-            >>> IFrame(src="./test_chart.html", width=1000, height=500)
-
+            ```py
+            linker.match_weights_chart()
+            ```
+            To view offline (if you don't have an internet connection):
+            ```py
+            from splink.charts import save_offline_chart
+            c = linker.match_weights_chart()
+            save_offline_chart(c.spec, "test_chart.html")
+            ```
+            View resultant html file in Jupyter (or just load it in your browser)
+            ```py
+            from IPython.display import IFrame
+            IFrame(src="./test_chart.html", width=1000, height=500)
+            ```
 
         Returns:
             VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
@@ -2672,22 +2895,78 @@ class Linker:
         """
         return self._settings_obj.match_weights_chart()
 
+    def tf_adjustment_chart(
+        self,
+        output_column_name: str,
+        n_most_freq: int = 10,
+        n_least_freq: int = 10,
+        vals_to_include: str | list = None,
+        as_dict: bool = False,
+    ):
+        """Display a chart showing the impact of term frequency adjustments on a
+        specific comparison level.
+        Each value
+
+        Args:
+            output_column_name (str): Name of an output column for which term frequency
+                 adjustment has been applied.
+            n_most_freq (int, optional): Number of most frequent values to show. If this
+                 or `n_least_freq` set to None, all values will be shown.
+                Default to 10.
+            n_least_freq (int, optional): Number of least frequent values to show. If
+                this or `n_most_freq` set to None, all values will be shown.
+                Default to 10.
+            vals_to_include (list, optional): Specific values for which to show term
+                sfrequency adjustments.
+                Defaults to None.
+
+        Returns:
+            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
+                The vegalite spec is available as a dictionary using the `spec`
+                attribute.
+        """
+
+        # Comparisons with TF adjustments
+        tf_comparisons = [
+            c._output_column_name
+            for c in self._settings_obj.comparisons
+            if any([cl._has_tf_adjustments for cl in c.comparison_levels])
+        ]
+        if output_column_name not in tf_comparisons:
+            raise ValueError(
+                f"{output_column_name} is not a valid comparison column, or does not"
+                f" have term frequency adjustment activated"
+            )
+
+        vals_to_include = ensure_is_list(vals_to_include)
+
+        return tf_adjustment_chart(
+            self,
+            output_column_name,
+            n_most_freq,
+            n_least_freq,
+            vals_to_include,
+            as_dict,
+        )
+
     def m_u_parameters_chart(self):
         """Display a chart of the m and u parameters of the linkage model
 
         Examples:
-            >>> linker.m_u_parameters_chart()
-            >>>
-            >>> # To view offline (if you don't have an internet connection):
-            >>>
-            >>> from splink.charts import save_offline_chart
-            >>> c = linker.match_weights_chart()
-            >>> save_offline_chart(c.spec, "test_chart.html")
-            >>>
-            >>> # View resultant html file in Jupyter (or just load it in your browser)
-            >>> from IPython.display import IFrame
-            >>> IFrame(src="./test_chart.html", width=1000, height=500)
-
+            ```py
+            linker.m_u_parameters_chart()
+            ```
+            To view offline (if you don't have an internet connection):
+            ```py
+            from splink.charts import save_offline_chart
+            c = linker.match_weights_chart()
+            save_offline_chart(c.spec, "test_chart.html")
+            ```
+            View resultant html file in Jupyter (or just load it in your browser)
+            ```py
+            from IPython.display import IFrame
+            IFrame(src="./test_chart.html", width=1000, height=500)
+            ```
 
         Returns:
             VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
@@ -2732,17 +3011,19 @@ class Linker:
             return_html_as_string: If True, return the html as a string
 
         Examples:
-            >>> df_p = linker.predict()
-            >>> df_c = linker.cluster_pairwise_predictions_at_threshold(df_p, 0.5)
-            >>> linker.cluster_studio_dashboard(
-            >>>     df_p, df_c, [0, 4, 7], "cluster_studio.html"
-            >>> )
-            >>>
-            >>> # Optionally, in Jupyter, you can display the results inline
-            >>> # Otherwise you can just load the html file in your browser
-            >>> from IPython.display import IFrame
-            >>> IFrame(src="./cluster_studio.html", width="100%", height=1200)
-
+            ```py
+            df_p = linker.predict()
+            df_c = linker.cluster_pairwise_predictions_at_threshold(df_p, 0.5)
+            linker.cluster_studio_dashboard(
+                df_p, df_c, [0, 4, 7], "cluster_studio.html"
+            )
+            ```
+            Optionally, in Jupyter, you can display the results inline
+            Otherwise you can just load the html file in your browser
+            ```py
+            from IPython.display import IFrame
+            IFrame(src="./cluster_studio.html", width="100%", height=1200)
+            ```
         """
         self._raise_error_if_necessary_waterfall_columns_not_computed()
 
@@ -2761,17 +3042,18 @@ class Linker:
         if return_html_as_string:
             return rendered
 
-    def save_settings_to_json(
+    def save_model_to_json(
         self, out_path: str | None = None, overwrite: bool = False
     ) -> dict:
         """Save the configuration and parameters of the linkage model to a `.json` file.
 
-        The model can later be loaded back in using `linker.load_settings()`.
+        The model can later be loaded back in using `linker.load_model()`.
         The settings dict is also returned in case you want to save it a different way.
 
         Examples:
-            >>> linker.save_settings_to_json("my_settings.json", overwrite=True)
-
+            ```py
+            linker.save_model_to_json("my_settings.json", overwrite=True)
+            ```
         Args:
             out_path (str, optional): File path for json file. If None, don't save to
                 file. Defaults to None.
@@ -2790,6 +3072,19 @@ class Linker:
             with open(out_path, "w", encoding="utf-8") as f:
                 json.dump(model_dict, f, indent=4)
         return model_dict
+
+    def save_settings_to_json(
+        self, out_path: str | None = None, overwrite: bool = False
+    ) -> dict:
+        """
+        This function is deprecated. Use save_model_to_json() instead.
+        """
+        warnings.warn(
+            "This function is deprecated. Use save_model_to_json() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.save_model_to_json(out_path, overwrite)
 
     def estimate_probability_two_random_records_match(
         self, deterministic_matching_rules, recall

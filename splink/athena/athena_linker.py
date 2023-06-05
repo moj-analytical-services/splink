@@ -8,17 +8,17 @@ import boto3
 import numpy as np
 import pandas as pd
 
-from ..athena.athena_transforms import cast_concat_as_varchar
-from ..athena.athena_utils import (
-    _garbage_collection,
-    _verify_athena_inputs,
-)
 from ..input_column import InputColumn
 from ..linker import Linker
 from ..logging_messages import execute_sql_logging_message_info, log_sql
 from ..misc import ensure_is_list
 from ..splink_dataframe import SplinkDataFrame
 from ..sql_transform import sqlglot_transform_sql
+from .athena_helpers.athena_transforms import cast_concat_as_varchar
+from .athena_helpers.athena_utils import (
+    _garbage_collection,
+    _verify_athena_inputs,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ class AthenaLinker(Linker):
         boto3_session: boto3.session.Session,
         output_database: str,
         output_bucket: str,
-        settings_dict: dict = None,
+        settings_dict: dict | str = None,
         input_table_aliases: str | list = None,
         set_up_basic_logging=True,
         output_filepath: str = "",
@@ -137,7 +137,10 @@ class AthenaLinker(Linker):
             output_bucket (str): The name of the bucket and the filepath you wish to
                 store your outputs in on aws. The bucket should be created prior to
                 performing your link.
-            settings_dict (dict): A splink settings dictionary.
+            settings_dict (dict | Path, optional): A Splink settings dictionary, or
+                 a path to a json defining a settingss dictionary or pre-trained model.
+                  If not provided when the object is created, can later be added using
+                `linker.load_settings()` or `linker.load_model()` Defaults to None.
             input_table_aliases: Aliases/custom names for your input tables, if
                 a pandas df or a list of dfs are used as inputs. None by default, which
                 saves your tables under a custom name: '__splink__input_table_{n}';
@@ -148,43 +151,44 @@ class AthenaLinker(Linker):
                 where to write output files to.
                 Defaults to "splink_warehouse/{unique_id}".
         Examples:
-            >>> # Creating a database in athena and writing to it
-            >>> import awswrangler as wr
-            >>> wr.catalog.create_database("splink_awswrangler_test", exist_ok=True)
+            ```py
+            # Creating a database in athena and writing to it
+            import awswrangler as wr
+            wr.catalog.create_database("splink_awswrangler_test", exist_ok=True)
             >>>
-            >>> from splink.athena.athena_linker import AthenaLinker
-            >>> import boto3
-            >>> # Create a session - please see the boto3 documentation for more info
-            >>> my_session = boto3.Session(region_name="eu-west-1")
+            from splink.athena.athena_linker import AthenaLinker
+            import boto3
+            # Create a session - please see the boto3 documentation for more info
+            my_session = boto3.Session(region_name="eu-west-1")
             >>>
-            >>> linker = AthenaLinker(
-            >>>     settings_dict=settings_dict,
-            >>>     input_table_or_tables="synthetic_data_all",
-            >>>     boto3_session=my_session,
-            >>>     output_bucket="alpha-splink-db-testing",
-            >>>     output_database="splink_awswrangler_test",
-            >>> )
+            linker = AthenaLinker(
+                settings_dict=settings_dict,
+                input_table_or_tables="synthetic_data_all",
+                boto3_session=my_session,
+                output_bucket="alpha-splink-db-testing",
+                output_database="splink_awswrangler_test",
+            )
+            ```
+            ```py
+            # Creating a secondary database and use data on and existing db
+            import awswrangler as wr
+            wr.catalog.create_database("splink_awswrangler_test2", exist_ok=True)
             >>>
+            from splink.athena.athena_linker import AthenaLinker
+            import boto3
+            my_session = boto3.Session(region_name="eu-west-1")
             >>>
-            >>>
-            >>> # Creating a secondary database and use data on and existing db
-            >>> import awswrangler as wr
-            >>> wr.catalog.create_database("splink_awswrangler_test2", exist_ok=True)
-            >>>
-            >>> from splink.athena.athena_linker import AthenaLinker
-            >>> import boto3
-            >>> my_session = boto3.Session(region_name="eu-west-1")
-            >>>
-            >>> # To read and write from separate databases, specify your secondary
-            >>> # database as the output and enter your primary database as a schema
-            >>> # for your input table(s)
-            >>> linker = AthenaLinker(
-            >>>     settings_dict=settings_dict,
-            >>>     input_table_or_tables="splink_awswrangler_test.synthetic_data_all",
-            >>>     boto3_session=my_session,
-            >>>     output_bucket="alpha-splink-db-testing",
-            >>>     output_database="splink_awswrangler_test2",
-            >>> )
+            # To read and write from separate databases, specify your secondary
+            # database as the output and enter your primary database as a schema
+            # for your input table(s)
+            linker = AthenaLinker(
+                settings_dict=settings_dict,
+                input_table_or_tables="splink_awswrangler_test.synthetic_data_all",
+                boto3_session=my_session,
+                output_bucket="alpha-splink-db-testing",
+                output_database="splink_awswrangler_test2",
+            )
+            ```
         """
 
         if not type(boto3_session) == boto3.session.Session:
@@ -399,7 +403,6 @@ class AthenaLinker(Linker):
         self.ctas_query_info.pop(physical_name)
 
     def _delete_table_from_database(self, name):
-
         if name in self.ctas_query_info:
             # Use ctas metadata to delete backing data
             self._delete_table_from_s3(name)

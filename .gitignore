@@ -171,3 +171,8 @@ cython_debug/
 
 *.parquet
 *.csv
+
+.DS_Store
+
+# vscode local settings
+.vscode
