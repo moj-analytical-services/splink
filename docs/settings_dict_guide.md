@@ -14,13 +14,11 @@ tags:
 This document enumerates all the settings and configuration options available when
 developing your data linkage model.
 
-You can find an interative settings editor [here](https://moj-analytical-services.github.io/splink/settingseditor/editor.html).
-
-## Settings keys in the base setting dictionary
+You can find an interative settings editor [here](/docs/settingseditor/editor.md).
 
 <hr>
 
-### link_type
+## link_type
 
 The type of data linking task.  Required.
 
@@ -34,7 +32,7 @@ The type of data linking task.  Required.
 
 <hr>
 
-### probability_two_random_records_match
+## probability_two_random_records_match
 
 The probability that two records chosen at random (with no blocking) are a match.  For example, if there are a million input records and each has on average one match, then this value should be 1/1,000,000.
 
@@ -46,7 +44,7 @@ If you estimate parameters using expectation maximisation (EM), this provides an
 
 <hr>
 
-### em_convergence
+## em_convergence
 
 Convergence tolerance for the Expectation Maximisation algorithm
 
@@ -58,7 +56,7 @@ The algorithm will stop converging when the maximum of the change in model param
 
 <hr>
 
-### max_iterations
+## max_iterations
 
 The maximum number of Expectation Maximisation iterations to run (even if convergence has not been reached)
 
@@ -68,7 +66,7 @@ The maximum number of Expectation Maximisation iterations to run (even if conver
 
 <hr>
 
-### unique_id_column_name
+## unique_id_column_name
 
 Splink requires that the input dataset has a column that uniquely identifies each reecord.  `unique_id_column_name` is the name of the column in the input dataset representing this unique id
 
@@ -80,7 +78,7 @@ For linking tasks, ids must be unique within each dataset being linked, and do n
 
 <hr>
 
-### source_dataset_column_name
+## source_dataset_column_name
 
 The name of the column in the input dataset representing the source dataset
 
@@ -92,7 +90,7 @@ Where we are linking datasets, we can't guarantee that the unique id column is g
 
 <hr>
 
-### retain_matching_columns
+## retain_matching_columns
 
 If set to true, each column used by the `comparisons` sql expressions will be retained in output datasets
 
@@ -104,7 +102,7 @@ This is helpful so that the user can inspect matches, but once the comparison ve
 
 <hr>
 
-### retain_intermediate_calculation_columns
+## retain_intermediate_calculation_columns
 
 Retain intermediate calculation columns, such as the bayes factors associated with each column in `comparisons`
 
@@ -116,13 +114,13 @@ The algorithm will run faster and use less resources if this is set to false.
 
 <hr>
 
-### comparisons
+## comparisons
 
 A list specifying how records should be compared for probabalistic matching.  Each element is a dictionary
 
 ???+ note "Settings keys nested within each member of `comparisons`"
 
-    #### output_column_name
+    ### output_column_name
 
     The name used to refer to this comparison in the output dataset.  By default, Splink will set this to the name(s) of any input columns used in the comparison.  This key is most useful to give a clearer description to comparisons that use multiple input columns.  e.g. a location column that uses postcode and town may be named location
 
@@ -132,7 +130,7 @@ A list specifying how records should be compared for probabalistic matching.  Ea
 
     <hr>
 
-    #### comparison_description
+    ### comparison_description
 
     An optional label to describe this comparison, to be used in charting outputs.
 
@@ -140,7 +138,7 @@ A list specifying how records should be compared for probabalistic matching.  Ea
 
     <hr>
 
-    #### comparison_levels
+    ### comparison_levels
 
     Comparison levels specify how input values should be compared.  Each level corresponds to an assessment of similarity, such as exact match, jaro winkler match, one side of the match being null, etc
 
@@ -168,7 +166,7 @@ A list specifying how records should be compared for probabalistic matching.  Ea
 
     ??? note "Settings keys nested within each member of `comparison_levels`"
 
-        ##### sql_condition
+        #### sql_condition
 
         A branch of a SQL case expression without WHEN and THEN e.g. 'jaro_winkler_sim(surname_l, surname_r) > 0.88'
 
@@ -176,7 +174,7 @@ A list specifying how records should be compared for probabalistic matching.  Ea
 
         <hr>
 
-        ##### label_for_charts
+        #### label_for_charts
 
         A label for this comparson level, which will appear on charts as a reminder of what the level represents
 
@@ -184,7 +182,7 @@ A list specifying how records should be compared for probabalistic matching.  Ea
 
         <hr>
 
-        ##### u_probability
+        #### u_probability
 
         the u probability for this comparison level - i.e. the proportion of records that match this level amongst truly non-matching records
 
@@ -192,7 +190,7 @@ A list specifying how records should be compared for probabalistic matching.  Ea
 
         <hr>
 
-        ##### m_probability
+        #### m_probability
 
         the m probability for this comparison level - i.e. the proportion of records that match this level amongst truly matching records
 
@@ -200,7 +198,7 @@ A list specifying how records should be compared for probabalistic matching.  Ea
 
         <hr>
 
-        ##### is_null_level
+        #### is_null_level
 
         If true, m and u values will not be estimated and instead the match weight will be zero for this column.  See treatment of nulls here on page 356, quote '. Under this MAR assumption, we can simply ignore missing data.': https://imai.fas.harvard.edu/research/files/linkage.pdf
 
@@ -208,7 +206,7 @@ A list specifying how records should be compared for probabalistic matching.  Ea
 
         <hr>
 
-        ##### tf_adjustment_column
+        #### tf_adjustment_column
 
         Make term frequency adjustments for this comparison level using this input column
 
@@ -218,7 +216,7 @@ A list specifying how records should be compared for probabalistic matching.  Ea
 
         <hr>
 
-        ##### tf_adjustment_weight
+        #### tf_adjustment_weight
 
         Make term frequency adjustments using this weight. A weight of 1.0 is a full adjustment.  A weight of 0.0 is no adjustment.  A weight of 0.5 is a half adjustment
 
@@ -228,7 +226,7 @@ A list specifying how records should be compared for probabalistic matching.  Ea
 
         <hr>
 
-        ##### tf_minimum_u_value
+        #### tf_minimum_u_value
 
         Where the term frequency adjustment implies a u value below this value, use this minimum value instead
 
@@ -241,7 +239,7 @@ A list specifying how records should be compared for probabalistic matching.  Ea
         <hr>
 
 
-### blocking_rules_to_generate_predictions
+## blocking_rules_to_generate_predictions
 
 A list of one or more blocking rules to apply. A cartesian join is applied if `blocking_rules_to_generate_predictions` is empty or not supplied.
 
@@ -263,7 +261,7 @@ Note that splink deduplicates the comparisons generated by the blocking rules.
 
 <hr>
 
-### additional_columns_to_retain
+## additional_columns_to_retain
 
 A list of columns not being used in the probabalistic matching comparisons that you want to include in your results.
 
@@ -275,7 +273,7 @@ By default, splink drops columns which are not used by any comparisons.  This gi
 
 <hr>
 
-### bayes_factor_column_prefix
+## bayes_factor_column_prefix
 
 The prefix to use for the columns that will be created to store the bayes factors
 
@@ -285,7 +283,7 @@ The prefix to use for the columns that will be created to store the bayes factor
 
 <hr>
 
-### term_frequency_adjustment_column_prefix
+## term_frequency_adjustment_column_prefix
 
 The prefix to use for the columns that will be created to store the term frequency adjustments
 
@@ -295,7 +293,7 @@ The prefix to use for the columns that will be created to store the term frequen
 
 <hr>
 
-### comparison_vector_value_column_prefix
+## comparison_vector_value_column_prefix
 
 The prefix to use for the columns that will be created to store the comparison vector values
 
@@ -305,7 +303,7 @@ The prefix to use for the columns that will be created to store the comparison v
 
 <hr>
 
-### sql_dialect
+## sql_dialect
 
 The SQL dialect in which sql_conditions are written.  Must be a valid sqlglot dialect
 
