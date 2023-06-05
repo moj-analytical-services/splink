@@ -1240,7 +1240,7 @@ class PostcodeComparisonBase(Comparison):
                 regex_extract="^[A-Za-z]{1,2}[0-9][A-Za-z0-9]? [0-9]",
                 set_to_lowercase=set_to_lowercase,
                 m_probability=m_probability_sector_match,
-                manual_chart_label="Postcode Sector",
+                manual_col_name_for_charts_label="Postcode Sector",
             )
             comparison_levels.append(comparison_level)
 
@@ -1250,7 +1250,7 @@ class PostcodeComparisonBase(Comparison):
                 regex_extract="^[A-Za-z]{1,2}[0-9][A-Za-z0-9]?",
                 set_to_lowercase=set_to_lowercase,
                 m_probability=m_probability_district_match,
-                manual_chart_label="Postcode District",
+                manual_col_name_for_charts_label="Postcode District",
             )
             comparison_levels.append(comparison_level)
 
@@ -1260,7 +1260,7 @@ class PostcodeComparisonBase(Comparison):
                 regex_extract="^[A-Za-z]{1,2}",
                 set_to_lowercase=set_to_lowercase,
                 m_probability=m_probability_area_match,
-                manual_chart_label="Postcode Area",
+                manual_col_name_for_charts_label="Postcode Area",
             )
             comparison_levels.append(comparison_level)
 
@@ -1342,7 +1342,8 @@ class EmailComparisonBase(Comparison):
         m_probability_domain_match: float | list = None,
         m_probability_else: float | list = None,
     ) -> Comparison:
-        """A wrapped to generate a comparison for an email colummn 'col_name' with preselected defaults.
+        """A wrapped to generate a comparison for an email colummn
+        'col_name' with preselected defaults.
 
         The default arguments will give a comparison with levels:\n
         - Exact match on email\n
@@ -1360,7 +1361,7 @@ class EmailComparisonBase(Comparison):
                 to validate emails. If invalid_emails_as_null is True,
                 emails that do not adhere to valid_email_regex will be included
                  in the null level.
-                 Defaults to "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                 Defaults to "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
             term_frequency_adjustments_full (bool, optional): If True, apply
                 term frequency adjustments to the full email exact match level.
                 Defaults to False.
@@ -1504,7 +1505,7 @@ class EmailComparisonBase(Comparison):
                 col_name,
                 regex_extract="^[^@]+",
                 m_probability=m_probability_username_level,
-                manual_chart_label="Username",
+                manual_col_name_for_charts_label="Username",
             )
             comparison_levels.append(comparison_level)
 
@@ -1553,6 +1554,7 @@ class EmailComparisonBase(Comparison):
                 distance_threshold_or_thresholds=levenshtein_thresholds,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_username_lev,
                 include_colname_in_charts_label=True,
+                manual_col_name_for_charts_label="Username",
             )
             comparison_levels = comparison_levels + threshold_levels
 
@@ -1565,6 +1567,7 @@ class EmailComparisonBase(Comparison):
                 distance_threshold_or_thresholds=damerau_levenshtein_thresholds,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_username_dl,
                 include_colname_in_charts_label=True,
+                manual_col_name_for_charts_label="Username",
             )
             comparison_levels = comparison_levels + threshold_levels
 
@@ -1577,6 +1580,7 @@ class EmailComparisonBase(Comparison):
                 distance_threshold_or_thresholds=jaro_winkler_thresholds,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_username_jw,
                 include_colname_in_charts_label=True,
+                manual_col_name_for_charts_label="Username",
             )
             comparison_levels = comparison_levels + threshold_levels
 
@@ -1587,7 +1591,7 @@ class EmailComparisonBase(Comparison):
                 col_name,
                 regex_extract="@([^@]+)$",
                 m_probability=m_probability_domain_match,
-                manual_chart_label="Email Domain",
+                manual_col_name_for_charts_label="Email Domain",
             )
             comparison_levels.append(comparison_level)
 

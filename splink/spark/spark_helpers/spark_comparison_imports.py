@@ -27,10 +27,10 @@ from ...comparison_library import (
 )
 from ...comparison_template_library import (
     DateComparisonBase,
+    EmailComparisonBase,
     ForenameSurnameComparisonBase,
     NameComparisonBase,
     PostcodeComparisonBase,
-    EmailComparisonBase,
 )
 from .spark_base import (
     SparkBase,
@@ -247,6 +247,7 @@ class forename_surname_comparison(
 
 class postcode_comparison(SparkComparisonProperties, PostcodeComparisonBase):
     pass
+
 
 class email_comparison(SparkComparisonProperties, EmailComparisonBase):
     @property
