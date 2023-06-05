@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 import re
 from copy import deepcopy
-from functools import cached_property, reduce
+from functools import reduce
 from operator import and_
 from typing import NamedTuple
 
@@ -131,7 +131,7 @@ class SettingsValidator:
                 f"'{self._sql_dialect}' for Linker of type {type(self)}"
             )
 
-    @cached_property
+    @property
     def input_columns_by_df(self):
         """A dictionary containing all input dataframes and the columns located
         within.
@@ -148,7 +148,7 @@ class SettingsValidator:
 
         return input_columns
 
-    @cached_property
+    @property
     def input_columns(self):
         """
         Returns:
