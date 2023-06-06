@@ -82,6 +82,7 @@ class PostgresLinker(Linker):
         engine: Engine = None,
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
+        schema="splink",
     ):
         self._sql_dialect_ = "postgres"
         # TODO: allow this to happen under hood?
@@ -97,7 +98,7 @@ class PostgresLinker(Linker):
             input_table_or_tables, input_table_aliases
         )
         accepted_df_dtypes = pd.DataFrame
-        self._db_schema = "splink"
+        self._db_schema = schema
 
         # Create custom SQL functions in database
         self._register_custom_functions()
