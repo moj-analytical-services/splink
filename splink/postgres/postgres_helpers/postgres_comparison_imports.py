@@ -141,3 +141,6 @@ class distance_in_km_at_thresholds(
 ###################################
 ### COMPARISON TEMPLATE LIBRARY ###
 ###################################
+# Not yet implemented
+# Currently does not support the necessary comparison levels
+# required for existing comparison templates
