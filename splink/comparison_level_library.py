@@ -59,6 +59,12 @@ class NullLevelBase(ComparisonLevel):
                 import splink.sqlite.sqlite_comparison_level_library as cll
                 cll.null_level("name")
                 ```
+            === "PostgreSQL"
+                Simple null level
+                ``` python
+                import splink.postgres.postgres_comparison_level_library as cll
+                cll.null_level("name")
+                ```
         Returns:
             ComparisonLevel: Comparison level for null entries
         """
@@ -167,6 +173,16 @@ class ExactMatchLevelBase(ComparisonLevel):
                 ``` python
                 import splink.sqlite.sqlite_comparison_level_library as cll
                 cll.exact_match_level("name", term_frequency_adjustments=True)
+            === "PostgreSQL"
+                Simple Exact match level
+                ``` python
+                import splink.postgres.postgres_comparison_level_library as cll
+                cll.exact_match_level("name")
+                ```
+                Exact match level with term-frequency adjustments
+                ``` python
+                import splink.postgres.postgres_comparison_level_library as cll
+                cll.exact_match_level("name", term_frequency_adjustments=True)
                 ```
         """
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
@@ -224,6 +240,10 @@ class ElseLevelBase(ComparisonLevel):
             === "SQLite"
                 ``` python
                 import splink.sqlite.sqlite_comparison_level_library as cll
+                cll.else_level("name")
+            === "PostgreSQL"
+                ``` python
+                import splink.postgres.postgres_comparison_level_library as cll
                 cll.else_level("name")
                 ```
         """
@@ -297,6 +317,14 @@ class DistanceFunctionLevelBase(ComparisonLevel):
                 import splink.athena.athena_comparison_level_library as cll
                 cll.distance_function_level("name",
                                             "levenshtein_distance",
+                                            2,
+                                            False)
+            === "PostgreSQL"
+                Apply the `levenshtein` function to a comparison level
+                ``` python
+                import splink.postgres.postgres_comparison_level_library as cll
+                cll.distance_function_level("name",
+                                            "levenshtein",
                                             2,
                                             False)
                 ```
@@ -409,6 +437,13 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
                 ```python
                 import splink.athena.athena_comparison_level_library as cll
                 cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
+            === "PostgreSQL"
+                Comparison level with levenshtein distance score less than (or equal
+                 to) 1
+                ``` python
+                import splink.postgres.postgres_comparison_level_library as cll
+                cll.levenshtein_level("name", 1)
+                ```
                 ```
 
         Returns:
@@ -756,6 +791,10 @@ class ColumnsReversedLevelBase(ComparisonLevel):
                 ``` python
                 import splink.sqlite.sqlite_comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
+            === "PostgreSQL"
+                ``` python
+                import splink.postgres.postgres_comparison_level_library as cll
+                cll.columns_reversed_level("first_name", "surname")
                 ```
 
 
@@ -837,6 +876,12 @@ class DistanceInKMLevelBase(ComparisonLevel):
                 cll.distance_in_km_level("lat_col",
                                         "long_col",
                                         km_threshold=5)
+            === "PostgreSQL"
+                ``` python
+                import splink.postgres.postgres_comparison_level_library as cll
+                cll.distance_in_km_level("lat_col",
+                                        "long_col",
+                                        km_threshold=5)
                 ```
 
         Returns:
@@ -910,6 +955,10 @@ class PercentageDifferenceLevelBase(ComparisonLevel):
                 ``` python
                 import splink.sqlite.sqlite_comparison_level_library as cll
                 cll.percentage_difference_level("value", 0.5)
+            === "PostgreSQL"
+                ``` python
+                import splink.postgres.postgres_comparison_level_library as cll
+                cll.percentage_difference_level("value", 0.5)
                 ```
 
         Returns:
@@ -974,6 +1023,10 @@ class ArrayIntersectLevelBase(ComparisonLevel):
             === "Athena"
                 ``` python
                 import splink.athena.athena_comparison_level_library as cll
+                cll.array_intersect_level("name")
+            === "PostgreSQL"
+                ``` python
+                import splink.postgres.postgres_comparison_level_library as cll
                 cll.array_intersect_level("name")
                 ```
 
@@ -1099,6 +1152,34 @@ class DateDiffLevelBase(ComparisonLevel):
                                     date_metric='month',
                                     cast_strings_to_date=True,
                                     date_format='%d/%m/%Y'
+                                    )
+            === "PostgreSQL"
+                Date Difference comparison level at threshold 1 year
+                ``` python
+                import splink.postgres.postgres_comparison_level_library as cll
+                cll.datediff_level("date",
+                                    date_threshold=1,
+                                    date_metric="year"
+                                    )
+                ```
+                Date Difference comparison with date-casting and unspecified
+                date_format (default = yyyy-MM-dd)
+                ``` python
+                import splink.postgres.postgres_comparison_level_library as cll
+                cll.datediff_level("dob",
+                                    date_threshold=3,
+                                    date_metric='month',
+                                    cast_strings_to_date=True
+                                    )
+                ```
+                Date Difference comparison with date-casting and specified date_format
+                ``` python
+                import splink.postgres.postgres_comparison_level_library as cll
+                cll.datediff_level("dob",
+                                    date_threshold=3,
+                                    date_metric='month',
+                                    cast_strings_to_date=True,
+                                    date_format='dd/MM/yyyy'
                                     )
                 ```
         Returns:
