@@ -19,7 +19,7 @@ class PostgresDataFrame(SplinkDataFrame):
 
     def __init__(self, df_name, physical_name, linker):
         super().__init__(df_name, physical_name, linker)
-        self._db_schema = "splink"
+        self._db_schema = linker._db_schema
         self.physical_name = f"{self.physical_name}"
 
     @property
