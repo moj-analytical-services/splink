@@ -2,15 +2,9 @@ import logging
 
 import pandas as pd
 import pytest
-from tests.decorator import mark_with_dialects_excluding
 
-import splink.duckdb.duckdb_comparison_level_library as clld
-import splink.duckdb.duckdb_comparison_library as cld
-import splink.spark.spark_comparison_level_library as clls
-import splink.spark.spark_comparison_library as cls
 from splink import exceptions
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
+from tests.decorator import mark_with_dialects_excluding
 
 
 # No SQLite - no array comparisons in library
