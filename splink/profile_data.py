@@ -160,23 +160,31 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
             """
 
         sql = f"""
-        select * from
-        (select
-            count(*) as value_count,
+            SELECT * FROM
+            (select value,
+            COUNT (*) AS value_count,
             '{gn}' as group_name,
-            cast({col_or_expr} as varchar) as value,
-            (select count({col_or_expr}) from {table_name}) as total_non_null_rows,
-            (select count(*) from {table_name}) as total_rows_inc_nulls,
-            (select count(distinct {col_or_expr}) from {table_name})
-                as distinct_value_count
-        from {table_name}
-        where {col_or_expr} is not null
-        group by {col_or_expr}
-        order by count(*) desc)
-        """
+
+            (select count(value) FROM
+            (SELECT UNNEST ({col_or_expr}) AS value FROM {table_name})) as total_non_null_rows,
+
+            (select count(*) FROM
+            (SELECT UNNEST ({col_or_expr}) AS value FROM {table_name})) as total_rows_inc_nulls,
+
+            (select count(distinct value) FROM
+            (SELECT UNNEST ({col_or_expr}) AS value FROM {table_name})) as distinct_value_count
+
+            FROM
+            (select cast(unnest({col_or_expr}) as varchar) as value,
+        
+            from {table_name})
+            GROUP BY value
+            order by count(*) desc)
+
+            """
         sqls.append(sql)
 
-    return " union all ".join(sqls)
+    return " union all ".join(sqls)        
 
 
 def _add_100_percentile_to_df_percentiles(percentile_rows):
