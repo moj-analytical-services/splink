@@ -85,7 +85,6 @@ class PostgresLinker(Linker):
         schema="splink",
     ):
         self._sql_dialect_ = "postgres"
-        # TODO: allow this to happen under hood?
         if not isinstance(engine, Engine):
             raise ValueError(
                 "You must supply a sqlalchemy engine " "to create a PostgresLinker."
