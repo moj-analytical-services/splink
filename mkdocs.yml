@@ -63,6 +63,9 @@ markdown_extensions:
   - toc:
       permalink: True
       toc_depth: 4
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
 nav:
   - Home: "README.md"
   - Installation: "installations.md"
@@ -90,10 +93,14 @@ nav:
       - PySpark:
         - Deduplication using Pyspark: "demos/example_simple_pyspark.ipynb"
   - Topic Guide:
+      - Record Linkage Theory:
+        - Why do we need record linkage?: "topic_guides/record_linkage.md"
+        - Probabilistic vs Deterministic linkage: "topic_guides/probabilistic_vs_deterministic.md"
       - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/backends.md"
       - Link type - linking vs deduping: "topic_guides/link_type.md"
       - Retrieving and querying Splink results: "topic_guides/querying_splink_results.md"
-      - Feature Engineering: "topic_guides/feature_engineering.md"
+      - Data Preparation:
+        - Feature Engineering: "topic_guides/feature_engineering.md"
       - Comparing Records:
         - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
         - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
