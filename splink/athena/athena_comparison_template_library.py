@@ -1,1 +1,1 @@
-../../splink/athena/comparison_template_library.py
+comparison_template_library.py

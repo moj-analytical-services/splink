@@ -1,1 +1,1 @@
-../../splink/spark/comparison_level_library.py
+comparison_level_library.py

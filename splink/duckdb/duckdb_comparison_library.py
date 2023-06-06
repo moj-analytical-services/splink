@@ -1,1 +1,1 @@
-../../splink/duckdb/comparison_library.py
+comparison_library.py

@@ -1,1 +1,1 @@
-../../splink/spark/comparison_template_library.py
+comparison_template_library.py

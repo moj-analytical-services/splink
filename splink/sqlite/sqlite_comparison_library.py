@@ -1,1 +1,1 @@
-../../splink/sqlite/comparison_library.py
+comparison_library.py
