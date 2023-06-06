@@ -13,6 +13,9 @@ def datediff_sql(
     cast_str=False,
     date_format=None,
 ):
+    if date_metric not in ("day", "month", "year"):
+        raise ValueError("`date_metric` must be one of ('day', 'month', 'year')")
+
     if date_format is None:
         date_format = "yyyy-MM-dd"
 
@@ -42,8 +45,6 @@ def datediff_sql(
             date_f += " / 12))"
         else:
             date_f += "))"
-    else:
-        raise ValueError("`date_metric` must be one of ('day', 'month', 'year')")
     return f"""
         {date_f} <= {date_threshold}
     """
