@@ -138,14 +138,16 @@ nav:
         - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
         - Testing: "dev_guides/changing_splink/testing.md"
         - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
-      - Caching and pipelining: "dev_guides/caching.md"
-      - Understanding and debugging Splink: "dev_guides/debug_modes.md"
-      - Spark caching: "dev_guides/spark_pipelining_and_caching.md"
-      - Transpilation using sqlglot: "dev_guides/transpilation.md"
-      - Comparisons and comparison levels:
-        - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
-        - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
-      - User-Defined Functions: "dev_guides/udfs.md"
+      - How Splink works:
+        - Understanding and debugging Splink: "dev_guides/debug_modes.md"
+        - Transpilation using sqlglot: "dev_guides/transpilation.md"
+        - Performance & caching:
+          - Caching and pipelining: "dev_guides/caching.md"
+          - Spark caching: "dev_guides/spark_pipelining_and_caching.md"
+        - Comparisons and comparison levels:
+          - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
+          - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
+        - User-Defined Functions: "dev_guides/udfs.md"
 
 extra_css:
 - css/custom.css
