@@ -298,7 +298,7 @@ class SettingsValidator:
     def validate_columns_in_sql_string(
         self,
         sql_string: str,
-        checks: list[function],
+        checks: list,
     ):
         """Evaluate whether the columns supplied in a given string of SQL
         exist in our raw data.
@@ -461,7 +461,6 @@ class InvalidSettingsLogger(SettingsValidator):
             logger.warning(f"{sql}:\n{invalid_strings}")
 
     def construct_blocking_rule_log_strings(self, invalid_brs):
-
         # `invalid_brs` are in the format of:
         # {
         # "blocking_rule_1": {
@@ -480,7 +479,6 @@ class InvalidSettingsLogger(SettingsValidator):
         logger.warning("\n")
 
     def construct_comparison_level_log_strings(self, invalid_cls):
-
         # `invalid_cls` is made up of a tuple containing:
         # 1) The `output_column_name` for the level, if it exists
         # 2) A dictionary in the same format as our blocking rules

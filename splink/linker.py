@@ -207,8 +207,8 @@ class Linker:
                 input tables in Splink outputs.  If the names of the tables in the
                 input database are long or unspecific, this argument can be used
                 to attach more easily readable/interpretable names. Defaults to None.
-            validate_settings (bool, optional): When True, check your settings dictionary
-                for any potential errors that may cause splink to fail.
+            validate_settings (bool, optional): When True, check your settings
+                dictionary for any potential errors that may cause splink to fail.
         """
 
         if set_up_basic_logging:
@@ -1072,8 +1072,8 @@ class Linker:
         Args:
             settings_dict (dict | str | Path): A Splink settings dictionary or
                 the path to your settings json file.
-            validate_settings (bool, optional): When True, check your settings dictionary
-                for any potential errors that may cause splink to fail.
+            validate_settings (bool, optional): When True, check your settings
+                dictionary for any potential errors that may cause splink to fail.
         """
 
         if not isinstance(settings_dict, dict):
