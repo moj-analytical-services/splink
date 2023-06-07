@@ -3,7 +3,7 @@ import warnings
 from .comparison_template_library import *  # noqa: F403
 
 warnings.warn(
-    "Importing directly from `splink.athena.comparison_template_library` "
+    "Importing directly from `splink.athena.athena_comparison_template_library` "
     "is deprecated and will be removed in Splink v4. "
     "Please import from `splink.athena.comparison_template_library` going forward.",
     DeprecationWarning,

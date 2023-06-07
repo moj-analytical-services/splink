@@ -3,7 +3,7 @@ import warnings
 from .comparison_level_library import *  # noqa: F403
 
 warnings.warn(
-    "Importing directly from `splink.sqlite.comparison_level_library` "
+    "Importing directly from `splink.sqlite.sqlite_comparison_level_library` "
     "is deprecated and will be removed in Splink v4. "
     "Please import from `splink.sqlite.comparison_level_library` going forward.",
     DeprecationWarning,
