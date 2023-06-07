@@ -1,3 +1,13 @@
+---
+tags:
+  - settings
+  - Dedupe
+  - Link
+  - Link and Dedupe
+  - Comparisons
+  - Blocking Rules
+---
+
 # Defining a Splink Model
 
 ## What makes a Splink Model?
@@ -13,7 +23,7 @@ When building any linkage model in Splink, there are 3 key things which need to 
 
 All aspects of a Splink model are defined via the settings dictionary. The settings object is a json-like object which underpins a model.
 
-For example, consider a simple model (as defined in the [README](.../README.md)). The model is defined by the following settings dictionary
+For example, consider a simple model (as defined in the [README](https://github.com/moj-analytical-services/splink#quickstart)). The model is defined by the following settings dictionary
 
 ```py linenums="1"
 import splink.duckdb.duckdb_comparison_library as cl
@@ -77,9 +87,9 @@ import splink.duckdb.duckdb_comparison_library as cl
 import splink.duckdb.duckdb_comparison_template_library as ctl
 ``` 
 
-For more information on comparisons are defined, see the [dedicated topic guide](./customising_comparisons.ipynb).
+For more information on how comparisons are defined, see the [dedicated topic guide](./customising_comparisons.ipynb).
 
-These functions generate comparisons within the settings dictionary. See below for the full settings dictionary once the `comparison_library` and `comparison_template_library` functions have been evaluated:
+These functions generate comparisons within the settings dictionary. See below for the full settings dictionary once the `comparison_library` and `comparison_template_library` functions have been evaluated and constructed:
 
 ??? info "Settings Dictionary in full"
 
@@ -240,7 +250,7 @@ These functions generate comparisons within the settings dictionary. See below f
 
     ```
 
-To train a Splink model using this settings dictionary, use the following code:
+With our finalised settings object, we can train a splink model using the following code:
 
 ??? example "Example model using the settings dictionary"
 
@@ -289,7 +299,7 @@ To train a Splink model using this settings dictionary, use the following code:
 
 The section above refers to the three key aspects of the Splink settings dictionary. In reality, these are a small proportion of the possible parameters that can be defined within the settings. However, these additional parameters are used much less frequently, either because they are not required or they have a sensible default.
 
-For a list of all possible parameters that can be used within the settings dictionary, see the [Settings Dictionary Reference](/docs/settings_dict_guide.md) and the [Interactive Settings Editor](/docs/settingseditor/editor.md).
+For a list of all possible parameters that can be used within the settings dictionary, see the [Settings Dictionary Reference](../settings_dict_guide.md) and the [Interactive Settings Editor](../settingseditor/editor.md).
 
 ## Saving a trained model 
 
@@ -500,7 +510,7 @@ which, using the example settings and model training from above, gives the follo
     }
     ```
 
-Which is simply the settings dictionary with additional entries for `"m_probability"` and `"u_probability"` in each of the `"comparison_levels"`, which have estimated during model training.
+This is simply the settings dictionary with additional entries for `"m_probability"` and `"u_probability"` in each of the `"comparison_levels"`, which have estimated during model training.
 
 For example in the first name exact match level:
 
