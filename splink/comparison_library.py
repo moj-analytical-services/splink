@@ -470,7 +470,7 @@ class DamerauLevenshteinAtThresholdsComparisonBase(
                 ```
             === "Spark"
                 Create comparison with damerau-levenshtein match levels with
-                distance <= 1                
+                distance <= 1
                 ``` python
                 import splink.spark.spark_comparison_library as cl
                 cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
@@ -757,14 +757,14 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
 
         Examples:
             === "DuckDB"
-                Create comparison with jaro_winkler match levels with similarity 
+                Create comparison with jaro_winkler match levels with similarity
                 score >= 0.9 and >=0.7
                 ``` python
                 import splink.duckdb.duckdb_comparison_library as cl
                 cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
                 ```
-                Create comparison with jaro_winkler match levels with similarity 
-                score =>0.9 and >=0.7 on a substring of name column as determined by 
+                Create comparison with jaro_winkler match levels with similarity
+                score =>0.9 and >=0.7 on a substring of name column as determined by
                 a regular expression
                 ``` python
                 import splink.duckdb.duckdb_comparison_library as cl
@@ -774,14 +774,14 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                                               )
                 ```
             === "Spark"
-                Create comparison with jaro_winkler match levels with similarity 
+                Create comparison with jaro_winkler match levels with similarity
                 score >=0.9 and >=0.7
                 ``` python
                 import splink.spark.spark_comparison_library as cl
                 cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
                 ```
-                Create comparison with jaro_winkler match levels with similarity 
-                score >=0.9 and >=0.7 on a substring of name column as determined 
+                Create comparison with jaro_winkler match levels with similarity
+                score >=0.9 and >=0.7 on a substring of name column as determined
                 by a regular expression
                 ``` python
                 import splink.spark.spark_comparison_library as cl
