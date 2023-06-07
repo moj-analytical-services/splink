@@ -10,10 +10,11 @@ deprecation_warning() {
   local full_import_path="$3"
 
   echo "import warnings" >> "$pseudo_sym"
+  echo "from ..exceptions import SplinkDeprecated" >> "$pseudo_sym"
   echo "warnings.warn('Importing directly from \`$cleaned_original_path\` '" >> "$pseudo_sym"
   echo "'is deprecated and will be removed in Splink v4. '" >> "$pseudo_sym"
   echo "'Please import from \`$full_import_path\` going forward.'," >> "$pseudo_sym"
-  echo "DeprecationWarning, stacklevel=2)" >> "$pseudo_sym"
+  echo "SplinkDeprecated, stacklevel=2)" >> "$pseudo_sym"
 
   # Auto-format our script
   black $pseudo_sym
