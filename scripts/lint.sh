@@ -15,7 +15,8 @@ while getopts ":f" opt; do
   case $opt in
     f)
       echo "--fix was run for your scripts" >&2
-      ruff --fix . --quiet
+      ruff --fix splink/ --quiet &&\
+      ruff --fix tests/ --quiet &&
       ;;
     \?)
       echo "Invalid option: -$OPTARG. Only -f (fix) is accepted." >&2
@@ -23,4 +24,6 @@ while getopts ":f" opt; do
   esac
 done
 
-ruff --show-source .
+ruff --show-source splink/ &&\
+  ruff --show-source tests/ &&\
+  ruff --show-source benchmarking/

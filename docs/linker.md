@@ -26,6 +26,7 @@ tags:
         - estimate_u_using_random_sampling
         - find_matches_to_new_records
         - load_settings
+        - load_model
         - initialise_settings
         - load_settings_from_json
         - m_u_parameters_chart
@@ -43,6 +44,7 @@ tags:
         - register_table
         - roc_chart_from_labels_column
         - roc_chart_from_labels_table
+        - save_model_to_json
         - save_settings_to_json
         - train_m_from_pairwise_labels
         - truth_space_table_from_labels_column

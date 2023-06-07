@@ -68,6 +68,7 @@ def distance_threshold_comparison_levels(
     distance_function_name: str,
     distance_threshold_or_thresholds,
     regex_extract: str = None,
+    set_to_lowercase: bool = False,
     higher_is_more_similar: bool = True,
     include_colname_in_charts_label=False,
     m_probability_or_probabilities_thres: list = None,
@@ -104,6 +105,7 @@ def distance_threshold_comparison_levels(
             distance_threshold=thres,
             include_colname_in_charts_label=include_colname_in_charts_label,
             regex_extract=regex_extract,
+            set_to_lowercase=set_to_lowercase,
             m_probability=m_prob,
         )
         # separate out the two that are only used

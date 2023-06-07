@@ -137,6 +137,16 @@ def test_full_example_spark(df_spark, tmp_path):
         num_partitions_on_repartition=2,
     )
 
+    # Test saving and loading
+    path = os.path.join(tmp_path, "model.json")
+    linker.save_model_to_json(path)
+
+    linker_2 = SparkLinker(df_spark)
+    linker_2.load_model(path)
+    linker_2.load_settings(path)
+    linker_2.load_settings_from_json(path)
+    SparkLinker(df_spark, settings_dict=path)
+
 
 def test_link_only(df_spark):
     settings = get_settings_dict()
