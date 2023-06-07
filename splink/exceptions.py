@@ -12,4 +12,5 @@ class EMTrainingException(SplinkException):
 class SplinkDeprecated(DeprecationWarning):
     pass
 
+
 warnings.simplefilter("always", SplinkDeprecated)
