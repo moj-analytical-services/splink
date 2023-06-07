@@ -74,7 +74,6 @@ do
         # A standardised file name that removes the backend. i.e.
         # duckdb_comparison_library.py -> comparison_library.py
         standardised_file="$folder/$f_name"
-        echo $standardised_file
 
         # Generate our symlink name. This simply inserts `$backend`
         # into our existing the filepath.
