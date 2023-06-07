@@ -179,7 +179,7 @@ The SQL dialect in which sql_conditions are written.  Must be a valid sqlglot di
 
 **Default value**: `None`
 
-**Examples**: `['spark', 'duckdb', 'presto', 'sqlite']`
+**Examples**: `['spark', 'duckdb', 'trino', 'sqlite']`
 
 ## Settings keys nested within each member of `comparisons`
 ### output_column_name
