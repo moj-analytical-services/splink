@@ -65,6 +65,7 @@ class ExactMatchBase(Comparison):
                 ``` python
                 import splink.spark.spark_comparison_library as cl
                 cl.exact_match("first_name", regex_extract="^[A-Z]{1,4}")
+                ```
             === "Athena"
                 Create comparison with exact match level
                 ``` python
@@ -76,6 +77,7 @@ class ExactMatchBase(Comparison):
                 ``` python
                 import splink.athena.athena_comparison_library as cl
                 cl.exact_match("first_name", regex_extract="^[A-Z]{1,4}")
+                ```
             === "SQLite"
                 Create comparison with exact match level
                 ``` python
@@ -451,13 +453,13 @@ class DamerauLevenshteinAtThresholdsComparisonBase(
                 default m probability for the 'anything else' level. Defaults to None.
         Examples:
             === "DuckDB"
-                Create comparison with demerau-levenshtein match levels with
+                Create comparison with damerau-levenshtein match levels with
                 distance <= 1
                 ``` python
                 import splink.duckdb.duckdb_comparison_library as cl
                 cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
                 ```
-                Create comparison with demerau-levenshtein match levels with
+                Create comparison with damerau-levenshtein match levels with
                 distance <= 1
                 on a substring of name column as determined by a regular expression
                 ``` python
@@ -467,12 +469,13 @@ class DamerauLevenshteinAtThresholdsComparisonBase(
                                                      regex_extract="^A|B")
                 ```
             === "Spark"
-                Create comparison with demerau-levenshtein match levels with
-                distance <= 1                ``` python
+                Create comparison with damerau-levenshtein match levels with
+                distance <= 1
+                ``` python
                 import splink.spark.spark_comparison_library as cl
                 cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
                 ```
-                Create comparison with demerau-evenshtein match levels with
+                Create comparison with damerau-evenshtein match levels with
                 distance <= 1
                 on a substring of name column as determined by a regular expression
                 ``` python
@@ -680,6 +683,7 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
                 ``` python
                 import splink.spark.spark_comparison_library as cl
                 cl.jaro_at_thresholds("first_name", [0.9, 0.7], regex_extract="^[A-Z]")
+                ```
 
         Returns:
             Comparison:
@@ -753,17 +757,15 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
 
         Examples:
             === "DuckDB"
-                Create comparison with jaro_winkler match levels with similarity score
-                >=0.9
-                and >=0.7
+                Create comparison with jaro_winkler match levels with similarity
+                score >= 0.9 and >=0.7
                 ``` python
                 import splink.duckdb.duckdb_comparison_library as cl
                 cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
                 ```
-                Create comparison with jaro_winkler match levels with similarity score
-                >=0.9
-                and >=0.7 on a substring of name column as determined by a regular
-                expression
+                Create comparison with jaro_winkler match levels with similarity
+                score =>0.9 and >=0.7 on a substring of name column as determined by
+                a regular expression
                 ``` python
                 import splink.duckdb.duckdb_comparison_library as cl
                 cl.jaro_winkler_at_thresholds("first_name",
@@ -772,17 +774,15 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                                               )
                 ```
             === "Spark"
-                Create comparison with jaro_winkler match levels with similarity score
-                >=0.9
-                and >=0.7
+                Create comparison with jaro_winkler match levels with similarity
+                score >=0.9 and >=0.7
                 ``` python
                 import splink.spark.spark_comparison_library as cl
                 cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
                 ```
-                Create comparison with jaro_winkler match levels with similarity score
-                >=0.9
-                and >=0.7 on a substring of name column as determined by a regular
-                expression
+                Create comparison with jaro_winkler match levels with similarity
+                score >=0.9 and >=0.7 on a substring of name column as determined
+                by a regular expression
                 ``` python
                 import splink.spark.spark_comparison_library as cl
                 cl.jaro_winkler_at_thresholds("first_name",
