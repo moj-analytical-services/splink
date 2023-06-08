@@ -141,7 +141,7 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     return sql
 
 
-def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs,array_cols, table_name):
+def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name):
     cols_or_exprs = ensure_is_list(cols_or_exprs)
     column_expressions = expressions_to_sql(cols_or_exprs)
     sqls = []
@@ -152,7 +152,6 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs,array_cols, table_name):
         # add a quick clause to filter out any instances whereby either column contains
         # a null value.
         if isinstance(raw_expr, list):
-
             null_exprs = [f"{c} is null" for c in raw_expr]
             null_exprs = " OR ".join(null_exprs)
 
@@ -162,7 +161,8 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs,array_cols, table_name):
                 else
                 {col_or_expr}
                 end
-                """
+            """
+            
         if raw_expr in array_cols:
 
             sql = f"""
@@ -188,6 +188,8 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs,array_cols, table_name):
                 order by count(*) desc)
 
                 """
+
+            sqls.append(sql)
             
         else:
             sql = f"""
@@ -208,7 +210,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs,array_cols, table_name):
 
             sqls.append(sql)
 
-    return " union all ".join(sqls)        
+    return " union all ".join(sqls)           
 
 
 def _add_100_percentile_to_df_percentiles(percentile_rows):
@@ -239,7 +241,7 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
     column_expressions = expressions_to_sql(column_expressions_raw)
 
     sql = _col_or_expr_frequencies_raw_data_sql(
-        column_expressions_raw, array_cols, "__splink__df_concat"
+        column_expressions_raw, array_cols, df_concat.physical_name
     )
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
