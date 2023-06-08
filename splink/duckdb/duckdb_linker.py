@@ -36,6 +36,16 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
         col_strings = list(d.keys())
         return [InputColumn(c, sql_dialect="duckdb") for c in col_strings]
 
+    @property
+    def get_table_schema(self):
+        sql= f"DESCRIBE {self.physical_name}"
+        return self.duckdb_linker._con.query(sql).to_df()
+
+
+    def get_array_cols(self):
+        schema = self.get_table_schema
+        return [col for col, type in zip(schema.column_name, schema.column_type) if type.endswith("[]")]
+
     def validate(self):
         pass
 

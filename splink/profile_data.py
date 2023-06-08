@@ -141,7 +141,7 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     return sql
 
 
-def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
+def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs,array_cols, table_name):
     cols_or_exprs = ensure_is_list(cols_or_exprs)
     column_expressions = expressions_to_sql(cols_or_exprs)
     sqls = []
@@ -152,6 +152,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
         # add a quick clause to filter out any instances whereby either column contains
         # a null value.
         if isinstance(raw_expr, list):
+
             null_exprs = [f"{c} is null" for c in raw_expr]
             null_exprs = " OR ".join(null_exprs)
 
@@ -161,32 +162,51 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
                 else
                 {col_or_expr}
                 end
-            """
+                """
+        if raw_expr in array_cols:
 
-        sql = f"""
-            SELECT * FROM
-            (select value,
-            COUNT (*) AS value_count,
-            '{gn}' as group_name,
+            sql = f"""
+                SELECT * FROM
+                (select value,
+                COUNT (*) AS value_count,
+                '{gn}' as group_name,
 
-            (select count(value) FROM
-            (SELECT UNNEST ({col_or_expr}) AS value FROM {table_name})) as total_non_null_rows,
+                (select count(value) FROM
+                (SELECT UNNEST ({col_or_expr}) AS value FROM {table_name})) as total_non_null_rows,
 
-            (select count(*) FROM
-            (SELECT UNNEST ({col_or_expr}) AS value FROM {table_name})) as total_rows_inc_nulls,
+                (select count(*) FROM
+                (SELECT UNNEST ({col_or_expr}) AS value FROM {table_name})) as total_rows_inc_nulls,
 
-            (select count(distinct value) FROM
-            (SELECT UNNEST ({col_or_expr}) AS value FROM {table_name})) as distinct_value_count
+                (select count(distinct value) FROM
+                (SELECT UNNEST ({col_or_expr}) AS value FROM {table_name})) as distinct_value_count
 
-            FROM
-            (select cast(unnest({col_or_expr}) as varchar) as value,
-        
-            from {table_name})
-            GROUP BY value
+                FROM
+                (select cast(unnest({col_or_expr}) as varchar) as value,
+            
+                from {table_name})
+                GROUP BY value
+                order by count(*) desc)
+
+                """
+            
+        else:
+            sql = f"""
+            select * from
+            (select
+                cast({col_or_expr} as varchar) as value,
+                count(*) as value_count,
+                '{gn}' as group_name,
+                (select count({col_or_expr}) from {table_name}) as total_non_null_rows,
+                (select count(*) from {table_name}) as total_rows_inc_nulls,
+                (select count(distinct {col_or_expr}) from {table_name})
+                    as distinct_value_count
+            from {table_name}
+            where {col_or_expr} is not null
+            group by {col_or_expr}
             order by count(*) desc)
-
             """
-        sqls.append(sql)
+
+            sqls.append(sql)
 
     return " union all ".join(sqls)        
 
@@ -205,17 +225,21 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 
 def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
 
-    df_concat = linker._initialise_df_concat()
+    df_concat = linker._initialise_df_concat_with_tf()
 
     input_dataframes = []
     if df_concat:
         input_dataframes.append(df_concat)
 
+    print(df_concat)
+
+    array_cols = df_concat.get_array_cols()
+
     column_expressions_raw = ensure_is_list(column_expressions)
     column_expressions = expressions_to_sql(column_expressions_raw)
 
     sql = _col_or_expr_frequencies_raw_data_sql(
-        column_expressions_raw, "__splink__df_concat"
+        column_expressions_raw, array_cols, "__splink__df_concat"
     )
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
