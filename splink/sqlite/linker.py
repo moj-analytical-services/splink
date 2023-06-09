@@ -9,6 +9,8 @@ from ..input_column import InputColumn
 from ..linker import Linker
 from ..misc import ensure_is_list
 from ..splink_dataframe import SplinkDataFrame
+from ..unique_id_concat import _composite_unique_id_from_nodes_sql
+
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +174,7 @@ class SQLiteLinker(Linker):
 
         # unique_id col, with source_dataset column if needed to disambiguate
         unique_id_cols = self._settings_obj._unique_id_input_columns
-        unique_id_expr = " || '_' || ".join([col.name() for col in unique_id_cols])
+        unique_id_expr = _composite_unique_id_from_nodes_sql(unique_id_cols)
         return (
             f"WHERE {unique_id_expr} IN ("
             f"    SELECT {unique_id_expr} FROM __splink__df_concat_with_tf"
