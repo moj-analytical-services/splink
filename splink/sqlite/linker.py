@@ -169,9 +169,15 @@ class SQLiteLinker(Linker):
             )
 
         sample_size = int(sample_size)
+
+        # unique_id col, with source_dataset column if needed to disambiguate
+        unique_id_cols = self._settings_obj._unique_id_input_columns
+        unique_id_expr = " || '_' || ".join([col.name() for col in unique_id_cols])
         return (
-            "where unique_id IN (SELECT unique_id FROM __splink__df_concat_with_tf"
-            f" ORDER BY RANDOM() LIMIT {sample_size})"
+            f"WHERE {unique_id_expr} IN ("
+            f"    SELECT {unique_id_expr} FROM __splink__df_concat_with_tf"
+            f"    ORDER BY RANDOM() LIMIT {sample_size}"
+            f")"
         )
 
     @property
