@@ -116,7 +116,8 @@ def test_u_train_link_only_sample(test_helpers, dialect):
         .rename(columns={"index": "unique_id"})
     )
 
-    max_pairs = 1800000
+    # max_pairs is a good deal less than total possible pairs = 9_000_000
+    max_pairs = 1_800_000
 
     settings = {
         "link_type": "link_only",
@@ -130,8 +131,9 @@ def test_u_train_link_only_sample(test_helpers, dialect):
     linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
-    linker._settings_obj.comparisons[0]
+    # linker._settings_obj.comparisons[0]
 
+    # count how many pairs we _actually_ generated in random sampling
     check_blocking_sql = """
     SELECT COUNT(*) AS count FROM __splink__df_blocked
     """
@@ -140,12 +142,15 @@ def test_u_train_link_only_sample(test_helpers, dialect):
     )
 
     result = self_table_count.as_record_dict()
-
     self_table_count.drop_table_from_database()
-    max_pairs_proportion = result[0]["count"] / max_pairs
-    # equality only holds probabilistically
-    # chance of failure is approximately 1e-06
-    assert pytest.approx(max_pairs_proportion, rel=0.15) == 1.0
+    pairs_actually_sampled = result[0]["count"]
+
+    proportion_of_max_pairs_sampled = pairs_actually_sampled / max_pairs
+    # proportion_of_max_pairs_sampled should be 1 - i.e. we sample max_pairs rows
+    # as we have many more pairs available than max_pairs
+    # equality only holds probabilistically for some backends, due to sampling strategy
+    # chance of failure is approximately 1e-06 with this choice of relative error
+    assert pytest.approx(proportion_of_max_pairs_sampled, rel=0.15) == 1.0
 
 
 @mark_with_dialects_excluding()
