@@ -77,12 +77,17 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         dataframe.drop_table_from_database()
         frame_counts = [res["count"] for res in result]
         # total valid links is sum of pairwise product of individual row counts
+        # i.e. if frame_counts are [a, b, c, d, ...],
+        # total_links = a*b + a*c + a*d + ... + b*c + b*d + ... + c*d + ...
         total_links = (
             sum(frame_counts) ** 2 - sum([count**2 for count in frame_counts])
         ) / 2
         total_nodes = sum(frame_counts)
 
+        # if we scale each frame by a proportion total_links scales with the square
+        # i.e. (our target) max_pairs == proportion^2 * total_links
         proportion = (max_pairs / total_links) ** 0.5
+        # sample size is for df_concat_with_tf, i.e. proportion of the total nodes
         sample_size = proportion * total_nodes
 
     if proportion >= 1.0:
