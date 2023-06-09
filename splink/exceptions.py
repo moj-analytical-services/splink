@@ -1,5 +1,6 @@
 import warnings
 
+
 # base class for any type of custom exception
 class SplinkException(Exception):
     pass
