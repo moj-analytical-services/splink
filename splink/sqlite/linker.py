@@ -160,7 +160,9 @@ class SQLiteLinker(Linker):
         # Will error if an invalid data type is passed
         input.to_sql(table_name, self.con, index=False)
 
-    def _random_sample_sql(self, proportion, sample_size, seed=None):
+    def _random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
         if proportion == 1.0:
             return ""
         if seed:
@@ -171,12 +173,15 @@ class SQLiteLinker(Linker):
 
         sample_size = int(sample_size)
 
-        # unique_id col, with source_dataset column if needed to disambiguate
-        unique_id_cols = self._settings_obj._unique_id_input_columns
-        unique_id_expr = _composite_unique_id_from_nodes_sql(unique_id_cols)
+        if unique_id is None:
+            # unique_id col, with source_dataset column if needed to disambiguate
+            unique_id_cols = self._settings_obj._unique_id_input_columns
+            unique_id = _composite_unique_id_from_nodes_sql(unique_id_cols)
+        if table is None:
+            table = "__splink__df_concat_with_tf"
         return (
-            f"WHERE {unique_id_expr} IN ("
-            f"    SELECT {unique_id_expr} FROM __splink__df_concat_with_tf"
+            f"WHERE {unique_id} IN ("
+            f"    SELECT {unique_id} FROM {table}"
             f"    ORDER BY RANDOM() LIMIT {sample_size}"
             f")"
         )

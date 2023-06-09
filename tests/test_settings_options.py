@@ -1,10 +1,12 @@
+from pathlib import Path
+
 import pandas as pd
 
 from .decorator import mark_with_dialects_excluding
 
 
 @mark_with_dialects_excluding()
-def test_model_heavily_customised_settings(test_helpers, dialect):
+def test_model_heavily_customised_settings(test_helpers, dialect, tmp_path):
     helper = test_helpers[dialect]
 
     df_l = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -31,6 +33,8 @@ def test_model_heavily_customised_settings(test_helpers, dialect):
             helper.cl.exact_match("email"),
             helper.cl.exact_match("dob"),
         ],
+        "retain_intermediate_calculation_columns": True,
+        "retain_matching_columns": True,
         "unique_id_column_name": uid,
         # not currently fully functional:
         # "source_dataset_column_name": source_ds_col,
@@ -45,4 +49,8 @@ def test_model_heavily_customised_settings(test_helpers, dialect):
     linker.estimate_u_using_random_sampling(2e4)
     linker.estimate_parameters_using_expectation_maximisation("l.dob = r.dob")
     df_predict = linker.predict(0.1)
-    linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
+    df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
+    linker.comparison_viewer_dashboard(df_predict, Path(tmp_path) / "csv.html")
+    linker.cluster_studio_dashboard(
+        df_predict, df_clusters, Path(tmp_path) / "csd.html"
+    )
