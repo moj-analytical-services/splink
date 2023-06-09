@@ -18,6 +18,7 @@ from ...comparison_library import (
 )
 from ...comparison_template_library import (
     PostcodeComparisonBase,
+    EmailComparisonBase,
 )
 from .athena_base import (
     AthenaBase,
@@ -138,3 +139,8 @@ class distance_in_km_at_thresholds(
 ###################################
 class postcode_comparison(AthenaComparisonProperties, PostcodeComparisonBase):
     pass
+
+class email_comparison(AthenaComparisonProperties, EmailComparisonBase):
+    @property
+    def _distance_level(self):
+        return distance_function_level

@@ -1505,6 +1505,7 @@ class EmailComparisonBase(Comparison):
                 col_name,
                 regex_extract="^[^@]+",
                 m_probability=m_probability_username_level,
+                include_colname_in_charts_label=True,
                 manual_col_name_for_charts_label="Username",
             )
             comparison_levels.append(comparison_level)
