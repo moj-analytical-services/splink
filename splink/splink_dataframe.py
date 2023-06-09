@@ -35,9 +35,6 @@ class SplinkDataFrame:
     def validate():
         pass
 
-    def _random_sample_sql(percent):
-        raise NotImplementedError("Random sample sql not implemented for this linker")
-
     @property
     def physical_and_template_names_equal(self):
         return self.templated_name == self.physical_name
