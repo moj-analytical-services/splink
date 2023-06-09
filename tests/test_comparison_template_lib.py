@@ -6,6 +6,7 @@ import splink.spark.spark_comparison_template_library as ctls
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 
+#from .conftest import test_gamma_assert
 
 ## date_comparison
 
@@ -517,7 +518,10 @@ def test_postcode_comparison_levels(spark, ctl, Linker):
         pytest.param(ctls, SparkLinker, id="Spark Email Comparison Template Test"),
     ],
 )
-def test_email_comparison_levels(spark, ctl, Linker):
+def test_email_comparison_levels(spark, ctl, Linker, test_gamma_assert):
+    
+    col_name="email"
+
     df = pd.DataFrame(
         [
             {"unique_id": 1, "email": "chris@mail.com"},
@@ -540,7 +544,7 @@ def test_email_comparison_levels(spark, ctl, Linker):
         "link_type": "dedupe_only",
         "comparisons": [
             ctl.email_comparison(
-                col_name="email",
+                col_name=col_name,
                 levenshtein_thresholds=[2],
                 damerau_levenshtein_thresholds=[2],
                 invalid_emails_as_null=True,
@@ -554,10 +558,7 @@ def test_email_comparison_levels(spark, ctl, Linker):
         df.persist()
 
     linker = Linker(df, settings)
-    # Linker = DuckDBLinker(df, settings)
     linker_output = linker.predict().as_pandas_dataframe()
-
-    print(linker_output)
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_level: tuple of ID pairs}
@@ -570,18 +571,9 @@ def test_email_comparison_levels(spark, ctl, Linker):
         4: [(1, 7), (2, 7)],  # Fuzzy match- username only (lev)
         3: [(1, 8), (2, 8)],  # Fuzzy match- username only (dmlev)
         2: [(1, 9), (2, 9)],  # Fuzzy match- username only (jw)
-        1: [(1, 10), (2, 10)],  # Domain-only match
+        1: [(1, 10), (2, 10)],  # Domain-only match#
         0: [(1, 11), (2, 11)],  # Everything else
         -1: [(1, 12)],  # Null level- invalid email
     }
+    test_gamma_assert(linker_output, size_gamma_lookup, col_name)
 
-    for gamma, id_pairs in size_gamma_lookup.items():
-        for left, right in id_pairs:
-            print(f"Checking IDs: {left}, {right}")
-            assert (
-                linker_output.loc[
-                    (linker_output.unique_id_l == left)
-                    & (linker_output.unique_id_r == right)
-                ]["gamma_email"].values[0]
-                == gamma
-            )
