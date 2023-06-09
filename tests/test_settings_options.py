@@ -22,7 +22,7 @@ def test_model_heavily_customised_settings(test_helpers, dialect):
         "link_type": "link_and_dedupe",
         "blocking_rules_to_generate_predictions": [
             "l.city = r.city AND l.dob = r.dob",
-            "l.first_name = r.first_name and l.surname = r.surname"
+            "l.first_name = r.first_name and l.surname = r.surname",
         ],
         "comparisons": [
             helper.cl.exact_match("first_name"),
