@@ -61,9 +61,9 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
 
         result = dataframe.as_record_dict()
         dataframe.drop_table_from_database()
-        count_rows = result[0]["count"]
+        total_nodes = result[0]["count"]
         sample_size = _rows_needed_for_n_pairs(max_pairs)
-        proportion = sample_size / count_rows
+        proportion = sample_size / total_nodes
 
     if settings_obj._link_type == "link_only":
         sql = """
@@ -77,18 +77,19 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         dataframe.drop_table_from_database()
         frame_counts = [res["count"] for res in result]
         # total valid links is sum of pairwise product of individual row counts
-        count_rows = (
+        total_links = (
             sum(frame_counts) ** 2 - sum([count**2 for count in frame_counts])
         ) / 2
+        total_nodes = sum(frame_counts)
 
-        sample_size = (max_pairs * count_rows) ** 0.5
-        proportion = sample_size / count_rows
+        proportion = (max_pairs / total_links) ** 0.5
+        sample_size = proportion * total_nodes
 
     if proportion >= 1.0:
         proportion = 1.0
 
-    if sample_size > count_rows:
-        sample_size = count_rows
+    if sample_size > total_nodes:
+        sample_size = total_nodes
 
     sql = f"""
     select *
