@@ -25,7 +25,7 @@ def expressions_to_sql(expressions):
 _outer_chart_spec_freq = {
     "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
     "vconcat": [],
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
 }
 
 chart_path = "profile_data.json"
