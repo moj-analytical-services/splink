@@ -6,13 +6,13 @@
         }
     },
     "hconcat": [
-        {"height": 300,
-        "width": 300,
+        {
+            "height": 300,
+            "width": 300,
             "layer": [
                 {
                     "mark": {
                         "type": "rect"
-
                     },
                     "encoding": {
                         "color": {
@@ -74,8 +74,9 @@
                 "name": "data-similarity"
             }
         },
-        {"height": 300,
-        "width": 200,
+        {
+            "height": 300,
+            "width": 200,
             "layer": [
                 {
                     "mark": {
@@ -105,7 +106,6 @@
                             "type": "ordinal"
                         }
                     },
-
                     "title": "Heatmap of Distance Scores"
                 },
                 {
