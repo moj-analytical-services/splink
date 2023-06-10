@@ -2,8 +2,7 @@
   "config": {
     "view": {
       "continuousWidth": 400,
-      "continuousHeight": 300,
-      "width": 400
+      "continuousHeight": 300
     },
     "axis": {
       "labelFontSize": 11
@@ -74,5 +73,5 @@
     "values": "",
     "name": "data-0e7bce5a1d2f132e282789d6ef7780fe"
   },
-  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json"
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json"
 }
