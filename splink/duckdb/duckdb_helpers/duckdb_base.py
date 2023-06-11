@@ -35,9 +35,12 @@ def datediff_sql(
         """
 
 
-def valid_date_sql(col_name):
+def valid_date_sql(col_name, date_format=None):
+    if date_format is None:
+        date_format = "%Y-%m-%d"
+
     return f"""
-        try_cast({col_name} AS DATE)
+        strptime('{col_name}', '{date_format}')
     """
 
 

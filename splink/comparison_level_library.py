@@ -71,18 +71,20 @@ class NullLevelBase(ComparisonLevel):
         """
 
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
-        if valid_string_regex:
-            col_name_l = self._regex_extract_function(col.name_l(), valid_string_regex)
-            col_name_r = self._regex_extract_function(col.name_r(), valid_string_regex)
-            sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL OR
-                      {col_name_l}=='' OR {col_name_r} ==''"""
-        else:
-            col_name_l, col_name_r = col.name_l(), col.name_r()
-            sql = f"{col_name_l} IS NULL OR {col_name_r} IS NULL"
+        col_name_l, col_name_r = col.name_l(), col.name_r()
 
         if invalid_dates_as_null:
-            col_name_l = self._valid_date_function(col.name_l())
-            col_name_r = self._valid_date_function(col.name_r())
+            col_name_l = self._valid_date_function(col_name_l, valid_string_regex)
+            col_name_r = self._valid_date_function(col_name_r, valid_string_regex)
+        elif valid_string_regex:
+            col_name_l = self._regex_extract_function(col_name_l, valid_string_regex)
+            col_name_r = self._regex_extract_function(col_name_r, valid_string_regex)
+            sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL OR
+                      {col_name_l}=='' OR {col_name_r} ==''"""
+
+        sql = f"{col_name_l} IS NULL OR {col_name_r} IS NULL"
+
+        
 
         level_dict = {
             "sql_condition": sql,
