@@ -2,12 +2,72 @@ import duckdb
 import pandas as pd
 import phonetics
 
+from splink.duckdb.duckdb_linker import DuckDBLinker
+
+from .blocking import block_using_rules_sql
 from .charts import (
     _comparator_score_chart,
     _comparator_score_threshold_chart,
     _phonetic_match_chart,
 )
 from .comparison_helpers_utils import threshold_match
+from .comparison_vector_values import compute_comparison_vector_values_sql
+
+
+def get_comparison_levels(values_to_compare: list, comparison):
+    """
+    Helper function returning the comparison levels that all combinations of
+    values in the values_to_compare list.
+    """
+    comparison_dict = comparison.as_dict()
+    comparison_col = comparison_dict["output_column_name"]
+
+    settings = {
+        "link_type": "dedupe_only",
+        "blocking_rules_to_generate_predictions": [],
+        "comparisons": [
+            comparison,
+        ],
+    }
+
+    values_df = pd.DataFrame(values_to_compare, columns=[comparison_col])
+    values_df["unique_id"] = values_df.reset_index().index
+
+    linker = DuckDBLinker(values_df, settings)
+
+    input_dataframes = [linker._initialise_df_concat_with_tf()]
+
+    sql = block_using_rules_sql(linker)
+    linker._enqueue_sql(sql, "__splink__df_blocked")
+    sql = compute_comparison_vector_values_sql(linker._settings_obj)
+    linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
+    df = linker._execute_sql_pipeline(input_dataframes).as_pandas_dataframe()
+    df[comparison_col] = df.apply(
+        lambda row: [row[f"{comparison_col}_l"], row[f"{comparison_col}_r"]], axis=1
+    )
+
+    labels = pd.DataFrame(comparison_dict["comparison_levels"])
+    labels["gamma"] = labels.index[::-1]
+    labels.loc[labels["is_null_level"] is True, "gamma"] = -1
+
+    comp_df = pd.merge(
+        df,
+        labels[["label_for_charts", "gamma"]],
+        left_on=f"gamma_{comparison_col}",
+        right_on="gamma",
+        how="right",
+    )
+    comp_df = comp_df[["label_for_charts", "gamma", f"{comparison_col}"]].rename(
+        columns={"label_for_charts": "comparison_level"}
+    )
+    comp_df.fillna("", inplace=True)
+    comp_df = comp_df.groupby(["comparison_level", "gamma"]).agg(
+        {comparison_col: lambda x: list(x)}
+    )
+    comp_df = comp_df.sort_values(by="gamma", ascending=False)
+
+    return comp_df
+
 
 comparator_cols_sql = """
     levenshtein({comparison1}, {comparison2}) as levenshtein_distance,
