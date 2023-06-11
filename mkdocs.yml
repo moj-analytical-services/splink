@@ -97,8 +97,10 @@ nav:
         - Retrieving and querying Splink results: "topic_guides/querying_splink_results.md"
       - Feature Engineering: "topic_guides/feature_engineering.md"
       - Comparing Records:
-        - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
-        - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
+        - Understanding Comparisons:
+          - Defining and customising comparisons: "topic_guides/customising_comparisons.md"
+          - Understanding Comparison Levels: "topic_guides/comparison_levels.md"
+          - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
         - Comparing strings:
           - Choosing comparators and thresholds: "topic_guides/choosing_comparators.ipynb"
           - String comparators: "topic_guides/comparators.md"
