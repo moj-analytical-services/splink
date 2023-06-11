@@ -164,6 +164,7 @@ $M_{forename}$, $M_{surname}$, $M_{dob}$, $M_{city}$ and $M_{email}$ respectivel
 4️⃣ is the **total** match weight for two observed records, combining 2️⃣ and 3️⃣
 
 $M_{obs} = M_{prior} + M_{forename} + M_{surname} + M_{dob} + M_{city} + M_{email}$
+$M_{obs} = -6.67 + 4.74 + 6.49 - 1.97 - 1.12 + 8.00 = 9.48$
 
 5️⃣ is an axis representing the match weight (as Match Weight = log2(Bayes Factor))
 
@@ -173,40 +174,22 @@ $M_{obs} = M_{prior} + M_{forename} + M_{surname} + M_{dob} + M_{city} + M_{emai
 
 ## Match Probability
 
+Match probability is a more intuitive measure of similarity that match weight, and is, generally, used when choosing a similarity threshold for record matching.
 
+### Deriving Match Probability from Match Weight
 
-### Deriving Match Probability from **m** and **u**
-
-Probability of two records being a match can be derived from **m** and **u**:
+Probability of two records being a match can be derived from the total match weight:
 
 $$
-P(match|obs) = λ\frac{K}{1+K}
+P(match|obs) = \frac{2^{M_{obs}}}{1+2^{M_{obs}}}
 $$
-
-where  
-$λ$ is the probability that two random records match  
-$K=m/u$ is the Bayes Factor
 
 
 ???+ example "Example"
     Consider the example in the [Interpreting Match Weights](#interpreting-match-weights) section. 
-    The match weights for the features add up to give:
+    The total match weight, $M_{obs} = 9.48$. Therefore,
 
-    $$ M_{features} = 4.74 + 6.49 - 1.97 - 1.12 + 8.00 = 16.14 $$ 
-
-    $M = log_2(K)$ therefore,
-
-    $$ K = 2^M = 2^{16.14} \approx  70,000 $$
-
-    and $M_{prior} = log_2(\frac{λ}{1-λ}) = -6.67$
-
-    $$ λ = \frac{1}{1+2^{M_{prior}}} = \frac{1}{1+2^{-6.67}} \approx 0.0033 $$
-
-
-    
-
-
-
+    $$ P(match|obs) = \frac{2^{9.48}}{1+2^{9.48}} \approx 0.999 $$
 
 <hr>
 
