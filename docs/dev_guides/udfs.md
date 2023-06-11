@@ -30,6 +30,8 @@ Python UDFs can be registered to a DuckDB connection from version 0.8.0 onwards.
 
 The documentation is [here](https://duckdb.org/docs/api/python/reference/#duckdb.DuckDBPyConnection.create_function), an examples are [here](https://github.com/duckdb/duckdb/pull/7171).  Note that these functions should be registered against the duckdb connection provided to the linker using `connection.create_function`.
 
+Note that performance will generally be substantially slower than using native DuckDB functions.  Consider using vectorised UDFs were possible - see [here](https://github.com/duckdb/duckdb/pull/7171).
+
 ## Athena
 
 Athena supports [UDFs written in Java](https://docs.aws.amazon.com/athena/latest/ug/querying-udf.html), however these have not yet been implemented in Splink.
