@@ -160,11 +160,12 @@ class DateComparisonBase(Comparison):
         # Construct Comparison
         comparison_levels = []
         comparison_levels.append(
-                self._null_level(col_name, 
-                                 invalid_dates_as_null=invalid_dates_as_null,
-                                 valid_string_regex=date_format
-                                 )
+            self._null_level(
+                col_name,
+                invalid_dates_as_null=invalid_dates_as_null,
+                valid_string_regex=date_format,
             )
+        )
 
         # Validate user inputs
         datediff_error_logger(thresholds=datediff_thresholds, metrics=datediff_metrics)

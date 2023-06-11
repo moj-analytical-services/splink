@@ -84,8 +84,6 @@ class NullLevelBase(ComparisonLevel):
 
         sql = f"{col_name_l} IS NULL OR {col_name_r} IS NULL"
 
-        
-
         level_dict = {
             "sql_condition": sql,
             "label_for_charts": "Null",

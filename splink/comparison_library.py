@@ -1062,11 +1062,12 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
 
         comparison_levels = []
         comparison_levels.append(
-                self._null_level(col_name, 
-                                 invalid_dates_as_null=invalid_dates_as_null,
-                                 valid_string_regex=date_format
-                                 )
+            self._null_level(
+                col_name,
+                invalid_dates_as_null=invalid_dates_as_null,
+                valid_string_regex=date_format,
             )
+        )
 
         if include_exact_match_level:
             level = self._exact_match_level(
