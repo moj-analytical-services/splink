@@ -100,7 +100,7 @@ nav:
         - Understanding Comparisons:
           - Defining and customising comparisons: "topic_guides/customising_comparisons.md"
           - Understanding Comparison Levels: "topic_guides/comparison_levels.md"
-          - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
+        - Out-of-the-box Comparisons: "topic_guides/comparison_templates.ipynb"
         - Comparing strings:
           - Choosing comparators and thresholds: "topic_guides/choosing_comparators.ipynb"
           - String comparators: "topic_guides/comparators.md"
