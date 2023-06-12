@@ -146,8 +146,12 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name)
 
         # If the supplied column string is a list of columns to be concatenated,
         # add a quick clause to filter out any instances whereby either column contains
-        # a null value.
+        # a null value. Also raise error of usr tries to supply array columns
+        
         if isinstance(raw_expr, list):
+            if any([expr in array_cols for expr in raw_expr ]):
+                raise ValueError('Arrays cannot be concatenated during profiling') 
+
             null_exprs = [f"{c} is null" for c in raw_expr]
             null_exprs = " OR ".join(null_exprs)
 
@@ -158,7 +162,8 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name)
                 {col_or_expr}
                 end
             """
-            
+
+#       if cast_arrays_as_str == True:
         if raw_expr in array_cols:
 
             sql = f"""
@@ -227,8 +232,6 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
     input_dataframes = []
     if df_concat:
         input_dataframes.append(df_concat)
-
-    print(df_concat)
 
     array_cols = df_concat.get_array_cols()
 
