@@ -1,6 +1,12 @@
-from .spark_helpers.spark_comparison_imports import (  # noqa: F401
-    date_comparison,
-    forename_surname_comparison,
-    name_comparison,
-    postcode_comparison,
+import warnings
+
+from ..exceptions import SplinkDeprecated
+from .comparison_template_library import *  # noqa: F403
+
+warnings.warn(
+    "Importing directly from `splink.spark.spark_comparison_template_library` "
+    "is deprecated and will be removed in Splink v4. "
+    "Please import from `splink.spark.comparison_template_library` going forward.",
+    SplinkDeprecated,
+    stacklevel=2,
 )

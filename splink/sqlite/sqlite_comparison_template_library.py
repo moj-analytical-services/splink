@@ -1,13 +1,12 @@
-# The Comparison Template Library is not currently implemented
-# for SQLite due to limited string matching capability in
-# cll.comparison_level_library
+import warnings
 
-import logging
+from ..exceptions import SplinkDeprecated
+from .comparison_template_library import *  # noqa: F403
 
-logger = logging.getLogger(__name__)
-
-logger.warn(
-    "The Comparison Template Library is not currently implemented "
-    "for SQLite due to limited string matching capability in "
-    "`cll.comparison_level_library`"
+warnings.warn(
+    "Importing directly from `splink.sqlite.sqlite_comparison_template_library` "
+    "is deprecated and will be removed in Splink v4. "
+    "Please import from `splink.sqlite.comparison_template_library` going forward.",
+    SplinkDeprecated,
+    stacklevel=2,
 )
