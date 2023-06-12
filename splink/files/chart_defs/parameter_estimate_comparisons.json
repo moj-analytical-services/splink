@@ -11,9 +11,7 @@
     "view": { "continuousWidth": 400, "continuousHeight": 300 },
     "title": {"anchor": "middle", "fontSize":18, "subtitleFontSize":14}
   },
-
   "mark": { "type": "point", "filled": false, "opacity": 0.7, "size": 100 },
-
   "encoding": {
     "color": { "type": "nominal", "field": "estimate_description" },
     "row": {
