@@ -86,3 +86,12 @@ def test_small_link_example_sqlite():
     )
 
     linker.predict()
+
+def test_default_conn_sqlite(tmp_path):
+
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    settings_dict = get_settings_dict()
+    linker = SQLiteLinker(df, settings_dict)
+
+    linker.predict()

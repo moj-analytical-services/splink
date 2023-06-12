@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from math import log2, pow
+import sqlite3
 
 import pandas as pd
 
@@ -90,6 +91,8 @@ class SQLiteLinker(Linker):
     ):
         self._sql_dialect_ = "sqlite"
 
+        if isinstance(connection, str):
+            connection = sqlite3.connect(connection)
         self.con = connection
         self.con.row_factory = dict_factory
         self.con.create_function("log2", 1, log2)
