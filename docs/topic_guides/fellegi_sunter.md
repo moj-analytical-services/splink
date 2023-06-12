@@ -100,12 +100,12 @@ Where m and u deviate from these ideals can usually be intuitively explained:
 
 !!! bug ""
     ### **u** probability
-    A measure of **coincidence/cardinality**.
+    A measure of **coincidence/cardinality**[^1].
 
     How many different people might share a given identifier?
 
-    * DOB (high cardinality[^1]) – for a flat age distribution spanning ~30 years, there are ~10,000 DOBs (0.01% chance of a match)
-    * Sex (low cardinality[^1]) – only 2 potential values (~50% chance of a match)
+    * DOB (high cardinality) – for a flat age distribution spanning ~30 years, there are ~10,000 DOBs (0.01% chance of a match)
+    * Sex (low cardinality) – only 2 potential values (~50% chance of a match)
 
 [^1]: 
     Cardinality is the the number of items in a set. In record linkage, cardinality refers to the number of possible values a feature could have.
@@ -121,9 +121,10 @@ One of the key measures of evidence of a match between records is the match weig
 
 The match weight is a measure of the relative size of **m** and **u**:
 
-$$
-M = log_2\left(\frac{λ}{1-λ}\right) + log_2(K) = log_2\left(\frac{λ}{1-λ}\right) + log_2\left(\frac{m}{u}\right)
-$$
+\begin{align}
+    M &= log_2\left(\frac{λ}{1-λ}\right) + log_2(K) \\[10pt]
+    &= log_2\left(\frac{λ}{1-λ}\right) + log_2\left(\frac{m}{u}\right)
+\end{align}
 
 where  
 $λ$ is the probability that two random records match  
@@ -141,6 +142,15 @@ where
 
 $M_{prior} = log_2\left(\frac{λ}{1-λ}\right)$  
 $M_{features} = M_{forename} + M_{surname} + M_{dob} + M_{city} + M_{email}$
+
+So, considering these properties, the total Match Weight for two observed records can be rewritten as:
+
+\begin{align}
+    M_{obs} &= log_2\left(\frac{λ}{1-λ}\right) + \sum_{i}^{features}log_2(\frac{m_{i}}{u_{i}}) \\[10pt]
+    &= log_2\left(\frac{λ}{1-λ}\right) + \log_2(\prod_{i}^{features}\frac{m_{i}}{u_{i}})
+\end{align}
+
+
 
 ### Interpreting Match Weights
 
@@ -164,11 +174,12 @@ $M_{forename}$, $M_{surname}$, $M_{dob}$, $M_{city}$ and $M_{email}$ respectivel
 4️⃣ is the **total** match weight for two observed records, combining 2️⃣ and 3️⃣
 
 $M_{obs} = M_{prior} + M_{forename} + M_{surname} + M_{dob} + M_{city} + M_{email}$
+
 $M_{obs} = -6.67 + 4.74 + 6.49 - 1.97 - 1.12 + 8.00 = 9.48$
 
 5️⃣ is an axis representing the match weight (as Match Weight = log2(Bayes Factor))
 
-6️⃣ is an axis representing the equivalent match probability (noting the non-linear scale)
+6️⃣ is an axis representing the equivalent match probability (noting the non-linear scale). For more on the relationship between Match Weight and Probability, see the [sections below](#understanding-the-relationship-between-match-probability-and-match-weight)
 
 <hr>
 
@@ -184,12 +195,43 @@ $$
 P(match|obs) = \frac{2^{M_{obs}}}{1+2^{M_{obs}}}
 $$
 
-
 ???+ example "Example"
     Consider the example in the [Interpreting Match Weights](#interpreting-match-weights) section. 
     The total match weight, $M_{obs} = 9.48$. Therefore,
 
     $$ P(match|obs) = \frac{2^{9.48}}{1+2^{9.48}} \approx 0.999 $$
+
+#### Understanding the relationship between Match Probability and Match Weight
+
+It can be helpful to build up some inuition for how Match Weights translate into Match Probabilities. 
+
+Plotting Match Probability versus Match Weight gives the following chart:
+
+![](../img/fellegi_sunter/prob_v_weight.png)
+
+Some observations from this chart:
+
+* Match Weight = 0 &nbsp;&nbsp;&nbsp; :arrow_right: &nbsp;&nbsp;&nbsp; Match Probability = 0.5 
+* Match Weight = 2 &nbsp;&nbsp;&nbsp; :arrow_right: &nbsp;&nbsp;&nbsp; Match Probability $\approx$ 0.8
+* Match Weight = 3 &nbsp;&nbsp;&nbsp; :arrow_right: &nbsp;&nbsp;&nbsp; Match Probability $\approx$ 0.9
+* Match Weight = 4 &nbsp;&nbsp;&nbsp; :arrow_right: &nbsp;&nbsp;&nbsp; Match Probability $\approx$ 0.95
+* Match Weight = 7 &nbsp;&nbsp;&nbsp; :arrow_right: &nbsp;&nbsp;&nbsp; Match Probability $\approx$ 0.99
+
+So, the impact of any additional Match Weight on Match Probability gets smaller as the total Match Weight increases. This makes intuitive sense as, when comparing two records, after you already have a lot of evidence/features indicating a match, adding more evidence/features will not have much of an impact on the probability of a match.
+
+Similarly, if you already have a lot of negative evidence/features indicating a match, adding more evidence/features will not have much of an impact on the probability of a match.
+
+### Deriving Match Probability from **m** and **u**
+
+Given the definitions for Probability and Match Weights above, we can rewrite Probability in terms of **m** and **u**.
+
+\begin{align}
+P(match|obs) &= \frac{2^{log_2\left(\frac{λ}{1-λ}\right) + \log_2(\prod_{i}^{features}\frac{m_{i}}{u_{i}})}}{1+2^{log_2\left(\frac{λ}{1-λ}\right) + \log_2(\prod_{i}^{features}\frac{m_{i}}{u_{i}})}} \\[10pt]
+&= \frac{\left(\frac{λ}{1-λ}\right)\prod_{i}^{features}\frac{m_{i}}{u_{i}}}{1+\left(\frac{λ}{1-λ}\right)\prod_{i}^{features}\frac{m_{i}}{u_{i}}} \\[10pt]
+&= 1 - \frac{1}{1+\left(\frac{λ}{1-λ}\right)\prod_{i}^{features}\frac{m_{i}}{u_{i}}}
+\end{align}
+
+
 
 <hr>
 
@@ -205,3 +247,6 @@ $$
     * [Understanding match weights](https://www.robinlinacre.com/understanding_match_weights/)
     * [Dependencies between match weights](https://www.robinlinacre.com/match_weight_dependencies/)
     * [m and u probability generator](https://www.robinlinacre.com/m_u_generator/)
+
+    Also, see the [academic paper](https://imai.fas.harvard.edu/research/files/linkage.pdf) used as the basis for a similar implementation of Fellegi Sunter in the R [fastlink package](https://github.com/kosukeimai/fastLink).
+
