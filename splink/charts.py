@@ -38,7 +38,6 @@ def vegalite_or_json(chart_dict, as_dict=False):
     if altair_installed:
         if not as_dict:
             try:
-                # Display chart then return its spec
                 return alt.Chart.from_dict(chart_dict)
 
             except ModuleNotFoundError:
