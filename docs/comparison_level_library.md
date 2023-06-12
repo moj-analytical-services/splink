@@ -21,22 +21,7 @@ However, not every comparison level is available for every [Splink-compatible SQ
 
 The pre-made Splink comparison levels available for each SQL dialect are as given in this table:
 
-||duckdb|spark|athena|sqlite|
-|-|-|-|-|-|
-|`array_intersect_level`|✓|✓|✓||
-|`columns_reversed_level`|✓|✓|✓|✓|
-|`damerau_levenshtein_level`|✓|✓|||
-|`datediff_level`|✓|✓|||
-|`distance_function_level`|✓|✓|✓|✓|
-|`distance_in_km_level`|✓|✓|✓||
-|`else_level`|✓|✓|✓|✓|
-|`exact_match_level`|✓|✓|✓|✓|
-|`jaccard_level`|✓|✓|||
-|`jaro_level`|✓|✓|||
-|`jaro_winkler_level`|✓|✓|||
-|`levenshtein_level`|✓|✓|✓|✓|
-|`null_level`|✓|✓|✓|✓|
-|`percentage_difference_level`|✓|✓|✓|✓|
+{% include-markdown "./includes/generated_files/comparison_level_library_dialect_table.md" %}
 
 
 
