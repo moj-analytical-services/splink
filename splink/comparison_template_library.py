@@ -1198,7 +1198,7 @@ class PostcodeComparisonBase(Comparison):
             === "Athena"
                 Basic Postcode Comparison
                 ``` python
-                import splink.athean.athena_comparison_template_library as ctl
+                import splink.athena.comparison_template_library as ctl
                 ctl.postcode_comparison("postcode")
                 ```
                 Bespoke Postcode Comparison
