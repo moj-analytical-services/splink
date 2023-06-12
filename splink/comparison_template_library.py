@@ -603,10 +603,12 @@ class ForenameSurnameComparisonBase(Comparison):
         m_probability_or_probabilities_surname_lev: float | list = None,
         m_probability_or_probabilities_surname_dl: float | list = None,
         m_probability_or_probabilities_surname_jw: float | list = None,
+        m_probability_or_probabilities_surname_jar: float | list = None,
         m_probability_or_probabilities_surname_jac: float | list = None,
         m_probability_or_probabilities_forename_lev: float | list = None,
         m_probability_or_probabilities_forename_dl: float | list = None,
         m_probability_or_probabilities_forename_jw: float | list = None,
+        m_probability_or_probabilities_forename_jar: float | list = None,
         m_probability_or_probabilities_forename_jac: float | list = None,
         m_probability_else: float = None,
     ) -> Comparison:
@@ -722,6 +724,9 @@ class ForenameSurnameComparisonBase(Comparison):
             m_probability_or_probabilities_surname_jw (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_surname_jar (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
             m_probability_or_probabilities_surname_jac (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
@@ -732,6 +737,9 @@ class ForenameSurnameComparisonBase(Comparison):
                 _description_. If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
             m_probability_or_probabilities_forename_jw (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_forename_jar (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
             m_probability_or_probabilities_forename_jac (Union[float, list], optional):
@@ -914,10 +922,10 @@ class ForenameSurnameComparisonBase(Comparison):
             threshold_levels = distance_threshold_comparison_levels(
                 self,
                 surname_col_name,
-                distance_function_name="jaro-winkler",
-                distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                distance_function_name="jaro-",
+                distance_threshold_or_thresholds=jaro_thresholds,
                 set_to_lowercase=set_to_lowercase,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_surname_jw,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_surname_jar,
                 include_colname_in_charts_label=True,
             )
             comparison_levels = comparison_levels + threshold_levels
@@ -980,6 +988,18 @@ class ForenameSurnameComparisonBase(Comparison):
                 distance_threshold_or_thresholds=jaro_winkler_thresholds,
                 set_to_lowercase=set_to_lowercase,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_forename_jw,
+                include_colname_in_charts_label=True,
+            )
+            comparison_levels = comparison_levels + threshold_levels
+
+        if len(jaro_thresholds) > 0:
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                forename_col_name,
+                distance_function_name="jaro",
+                distance_threshold_or_thresholds=jaro_thresholds,
+                set_to_lowercase=set_to_lowercase,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_forename_jar,
                 include_colname_in_charts_label=True,
             )
             comparison_levels = comparison_levels + threshold_levels
@@ -1325,20 +1345,23 @@ class EmailComparisonBase(Comparison):
         invalid_emails_as_null: bool = False,
         valid_email_regex: str = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}$",
         term_frequency_adjustments_full: bool = False,
+        include_exact_match_level: bool = True,
+        include_username_match_level: bool = True,
+        include_domain_match_level: bool = False,
         levenshtein_thresholds: int | list = [],
         damerau_levenshtein_thresholds: int | list = [],
         jaro_winkler_thresholds: float | list = [0.88],
-        include_exact_match_level: bool = True,
-        include_username_level: bool = True,
-        include_domain_match_level: bool = False,
+        jaro_thresholds: float | list = [],
         m_probability_full_match: bool = None,
-        m_probability_username_level: bool = None,
+        m_probability_username_match: bool = None,
         m_probability_or_probabilities_username_lev: float | list = None,
         m_probability_or_probabilities_username_dl: float | list = None,
         m_probability_or_probabilities_username_jw: float | list = None,
+        m_probability_or_probabilities_username_jar: float | list = None,
         m_probability_or_probabilities_email_lev: float | list = None,
         m_probability_or_probabilities_email_dl: float | list = None,
         m_probability_or_probabilities_email_jw: float | list = None,
+        m_probability_or_probabilities_email_jar: float | list = None,
         m_probability_domain_match: float | list = None,
         m_probability_else: float | list = None,
     ) -> Comparison:
@@ -1365,6 +1388,12 @@ class EmailComparisonBase(Comparison):
             term_frequency_adjustments_full (bool, optional): If True, apply
                 term frequency adjustments to the full email exact match level.
                 Defaults to False.
+            include_exact_match_level (bool, optional): If True, include an exact
+                match on full email level. Defaults to True.
+            include_username_match_level (bool, optional): If True, include an exact
+                match on username only level. Defaults to True.
+            include_domain_match_level (bool, optional): If True, include an exact
+                match on domain only level. Defaults to True.
             levenshtein_thresholds (Union[int, list], optional): The thresholds
                 to use for levenshtein similarity level(s).
                 Defaults to []
@@ -1374,12 +1403,9 @@ class EmailComparisonBase(Comparison):
             jaro_winkler_thresholds (Union[int, list], optional): The thresholds
                 to use for jaro_winkler similarity level(s).
                 Defaults to [0.88]
-            include_full_match_level (bool, optional): If True, include an exact
-                match on full email level. Defaults to True.
-            include_diff_dommain_level (bool, optional): If True, include an exact
-                match on username only level. Defaults to True.
-            include_domain_level (bool, optional): If True, include an exact
-                match on domain only level. Defaults to True.
+            jaro_thresholds (Union[int, list], optional): The thresholds
+                to use for jaro similarity level(s).
+                Defaults to []
             m_probability_full_match (float, optional): Starting m
                 probability for full match level. Defaults to None.
             m_probability_username_match (float, optional): Starting m probability
@@ -1393,6 +1419,9 @@ class EmailComparisonBase(Comparison):
             m_probability_or_probabilities_username_jw (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_username_jar (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
             m_probability_or_probabilities_email_lev (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
@@ -1400,6 +1429,9 @@ class EmailComparisonBase(Comparison):
                 _description_. If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
             m_probability_or_probabilities_email_jw (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified. Defaults to None.
+            m_probability_or_probabilities_email_jar (Union[float, list], optional):
                 _description_. If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
             m_probability_domain_match (float, optional): Starting m probability
@@ -1418,11 +1450,10 @@ class EmailComparisonBase(Comparison):
                 ``` python
                 import splink.duckdb.duckdb_comparison_template_library as ctl
                 ctl.email_comparison("email",
-                                    col_name = "email",
                                     levenshtein_thresholds = [2],
                                     damerau_levenshtein_thresholds = [2],
                                     invalid_emails_as_null = True,
-                                    include_user_name_level = True,
+                                    include_username_match_level = True,
                                     include_domain_match_level = True,
                                     )
                 ```
@@ -1435,14 +1466,13 @@ class EmailComparisonBase(Comparison):
                 Bespoke email Comparison
                 ``` python
                 import splink.spark.spark_comparison_template_library as ctl
-                ctl.email_comparison(
-                    col_name = "email",
-                    levenshtein_thresholds = [2],
-                    damerau_levenshtein_thresholds = [2],
-                    invalid_emails_as_null = True,
-                    include_user_name_level = True,
-                    include_domain_match_level = True,
-                    )
+                ctl.email_comparison("email",
+                                    levenshtein_thresholds = [2],
+                                    damerau_levenshtein_thresholds = [2],
+                                    invalid_emails_as_null = True,
+                                    include_username_match_level = True,
+                                    include_domain_match_level = True,
+                                    )
 
                 ```
 
@@ -1472,6 +1502,18 @@ class EmailComparisonBase(Comparison):
             )
             comparison_levels.append(comparison_level)
 
+        # Exact match on username with different domain
+
+        if include_username_match_level:
+            comparison_level = self._exact_match_level(
+                col_name,
+                regex_extract="^[^@]+",
+                m_probability=m_probability_username_match,
+                include_colname_in_charts_label=True,
+                manual_col_name_for_charts_label="Username",
+            )
+            comparison_levels.append(comparison_level)
+
         # Ensure fuzzy match thresholds are iterable
 
         damerau_levenshtein_thresholds = ensure_is_iterable(
@@ -1479,18 +1521,7 @@ class EmailComparisonBase(Comparison):
         )
         levenshtein_thresholds = ensure_is_iterable(levenshtein_thresholds)
         jaro_winkler_thresholds = ensure_is_iterable(jaro_winkler_thresholds)
-
-        # Exact match on username with different domain
-
-        if include_username_level:
-            comparison_level = self._exact_match_level(
-                col_name,
-                regex_extract="^[^@]+",
-                m_probability=m_probability_username_level,
-                include_colname_in_charts_label=True,
-                manual_col_name_for_charts_label="Username",
-            )
-            comparison_levels.append(comparison_level)
+        jaro_thresholds = ensure_is_iterable(jaro_thresholds)
 
         # Fuzzy match on full email
 
@@ -1523,6 +1554,17 @@ class EmailComparisonBase(Comparison):
                 distance_function_name="jaro-winkler",
                 distance_threshold_or_thresholds=jaro_winkler_thresholds,
                 m_probability_or_probabilities_thres=m_probability_or_probabilities_email_jw,
+                include_colname_in_charts_label=True,
+            )
+            comparison_levels = comparison_levels + threshold_levels
+
+        if len(jaro_thresholds) > 0:
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                distance_function_name="jaro",
+                distance_threshold_or_thresholds=jaro_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_email_jar,
                 include_colname_in_charts_label=True,
             )
             comparison_levels = comparison_levels + threshold_levels
@@ -1567,6 +1609,17 @@ class EmailComparisonBase(Comparison):
             )
             comparison_levels = comparison_levels + threshold_levels
 
+        if len(jaro_thresholds) > 0:
+            threshold_levels = distance_threshold_comparison_levels(
+                self,
+                col_name,
+                distance_function_name="jaro",
+                distance_threshold_or_thresholds=jaro_thresholds,
+                m_probability_or_probabilities_thres=m_probability_or_probabilities_email_jar,
+                include_colname_in_charts_label=True,
+            )
+            comparison_levels = comparison_levels + threshold_levels
+
         # Domain-only match
 
         if include_domain_match_level:
@@ -1588,7 +1641,7 @@ class EmailComparisonBase(Comparison):
         if include_exact_match_level:
             comparison_desc += "Exact match vs. "
 
-        if include_username_level:
+        if include_username_match_level:
             comparison_desc += "Exact username match different domain vs. "
 
         if len(levenshtein_thresholds) > 0:
