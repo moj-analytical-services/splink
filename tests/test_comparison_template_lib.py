@@ -43,7 +43,7 @@ def test_date_comparison_dl_run(ctl):
 )
 def test_datediff_levels(spark, ctl, Linker, test_gamma_assert):
 
-    col_name="dob"
+    col_name = "dob"
 
     df = pd.DataFrame(
         [
@@ -415,9 +415,9 @@ def test_forename_surname_comparison_levels(spark, ctl, Linker):
     ],
 )
 def test_postcode_comparison_levels(spark, ctl, Linker, test_gamma_assert):
-    
-    col_name="postcode"
-    
+
+    col_name = "postcode"
+
     df = pd.DataFrame(
         [
             {
