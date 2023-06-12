@@ -1443,24 +1443,7 @@ class EmailComparisonBase(Comparison):
                     include_user_name_level = True,
                     include_domain_match_level = True,
                     )
-                ```
-            === "Athena"
-                Basic email Comparison
-                ``` python
-                import splink.athean.athena_comparison_template_library as ctl
-                ctl.email_comparison(col_name = "email")
-                ```
-                Bespoke email Comparison
-                ``` python
-                import splink.athena.athena_comparison_template_library as ctl
-                ctl.email_comparison(
-                    col_name = "email",
-                    levenshtein_thresholds = [2],
-                    damerau_levenshtein_thresholds = [2],
-                    invalid_emails_as_null = True,
-                    include_user_name_level = True,
-                    include_domain_match_level = True,
-                    )
+
                 ```
 
         Returns:
