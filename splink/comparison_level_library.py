@@ -645,7 +645,7 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
                 cll.jaro_winkler_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
                 ```
             === "Spark"
-                Comparison level with jaro score greater than 0.9
+                Comparison level with jaro-winkler score greater than 0.9
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
                 cll.jaro_winkler_level("name", 0.9)
@@ -773,7 +773,6 @@ class ColumnsReversedLevelBase(ComparisonLevel):
         Examples:
             === "DuckDB"
                 Comparison level on first_name and surname columns reversed
-
                 ``` python
                 import splink.duckdb.duckdb_comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
@@ -787,6 +786,7 @@ class ColumnsReversedLevelBase(ComparisonLevel):
                                            regex_extract="^[A-Z]{1,4}")
                 ```
             === "Spark"
+                Comparison level on first_name and surname columns reversed
                 ``` python
                 import splink.spark.spark_comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
@@ -800,6 +800,7 @@ class ColumnsReversedLevelBase(ComparisonLevel):
                                            regex_extract="^[A-Z]{1,4}")
                 ```
             === "Athena"
+                Comparison level on first_name and surname columns reversed
                 ``` python
                 import splink.athena.athena_comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
@@ -813,6 +814,7 @@ class ColumnsReversedLevelBase(ComparisonLevel):
                                            regex_extract="^[A-Z]{1,4}")
                 ```
             === "SQLite"
+                Comparison level on first_name and surname columns reversed
                 ``` python
                 import splink.sqlite.sqlite_comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
