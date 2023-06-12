@@ -108,12 +108,12 @@ class DateComparisonBase(Comparison):
             === "DuckDB"
                 Basic Date Comparison
                 ``` python
-                import splink.duckdb.duckdb_comparison_template_library as ctl
+                import splink.duckdb.comparison_template_library as ctl
                 ctl.date_comparison("date_of_birth")
                 ```
                 Bespoke Date Comparison
                 ``` python
-                import splink.duckdb.duckdb_comparison_template_library as ctl
+                import splink.duckdb.comparison_template_library as ctl
                 ctl.date_comparison("date_of_birth",
                                     damerau_levenshtein_thresholds=[],
                                     levenshtein_thresholds=[2],
@@ -123,7 +123,7 @@ class DateComparisonBase(Comparison):
                 Date Comparison casting columns date and assigning values that do not
                 match the date_format to the null level
                 ``` python
-                import splink.duckdb.duckdb_comparison_template_library as ctl
+                import splink.duckdb.comparison_template_library as ctl
                 ctl.date_comparison("date_of_birth",
                                     cast_strings_to_date=True,
                                     date_format='%d/%m/%Y',
@@ -132,12 +132,12 @@ class DateComparisonBase(Comparison):
             === "Spark"
                 Basic Date Comparison
                 ``` python
-                import splink.spark.spark_comparison_template_library as ctl
+                import splink.spark.comparison_template_library as ctl
                 ctl.date_comparison("date_of_birth")
                 ```
                 Bespoke Date Comparison
                 ``` python
-                import splink.spark.spark_comparison_template_library as ctl
+                import splink.spark.comparison_template_library as ctl
                 ctl.date_comparison("date_of_birth",
                                     damerau_levenshtein_thresholds=[],
                                     levenshtein_thresholds=[2],
@@ -147,7 +147,7 @@ class DateComparisonBase(Comparison):
                 Date Comparison casting columns date and assigning values that do not
                 match the date_format to the null level
                 ``` python
-                import splink.spark.spark_comparison_template_library as ctl
+                import splink.spark.comparison_template_library as ctl
                 ctl.date_comparison("date_of_birth",
                                     cast_strings_to_date=True,
                                     date_format='dd/mm/yyyy',
@@ -392,12 +392,12 @@ class NameComparisonBase(Comparison):
             === "DuckDB"
                 Basic Name Comparison
                 ``` python
-                import splink.duckdb.duckdb_comparison_template_library as ctl
+                import splink.duckdb.comparison_template_library as ctl
                 ctl.name_comparison("name")
                 ```
                 Bespoke Name Comparison
                 ``` python
-                import splink.duckdb.duckdb_comparison_template_library as ctl
+                import splink.duckdb.comparison_template_library as ctl
                 ctl.name_comparison("name",
                                     phonetic_col_name = "name_dm",
                                     term_frequency_adjustments = True,
@@ -410,12 +410,12 @@ class NameComparisonBase(Comparison):
             === "Spark"
                 Basic Name Comparison
                 ``` python
-                import splink.spark.spark_comparison_template_library as ctl
+                import splink.spark.comparison_template_library as ctl
                 ctl.name_comparison("name")
                 ```
                 Bespoke Name Comparison
                 ``` python
-                import splink.spark.spark_comparison_template_library as ctl
+                import splink.spark.comparison_template_library as ctl
                 ctl.name_comparison("name",
                                     phonetic_col_name = "name_dm",
                                     term_frequency_adjustments = True,
@@ -752,13 +752,13 @@ class ForenameSurnameComparisonBase(Comparison):
             === "DuckDB"
                 Basic Forename Surname Comparison
                 ```py
-                import splink.duckdb.duckdb_comparison_template_library as ctl
+                import splink.duckdb.comparison_template_library as ctl
                 ctl.forename_surname_comparison("first_name", "surname)
                 ```
 
                 Bespoke Forename Surname Comparison
                 ```py
-                import splink.duckdb.duckdb_comparison_template_library as ctl
+                import splink.duckdb.comparison_template_library as ctl
                 ctl.forename_surname_comparison(
                         "forename",
                         "surname",
@@ -774,13 +774,13 @@ class ForenameSurnameComparisonBase(Comparison):
             === "Spark"
                 Basic Forename Surname Comparison
                 ```py
-                import splink.spark.spark_comparison_template_library as ctl
+                import splink.spark.comparison_template_library as ctl
                 ctl.forename_surname_comparison("first_name", "surname)
                 ```
 
                 Bespoke Forename Surname Comparison
                 ```py
-                import splink.spark.spark_comparison_template_library as ctl
+                import splink.spark.comparison_template_library as ctl
                 ctl.forename_surname_comparison(
                         "forename",
                         "surname",
@@ -1182,12 +1182,12 @@ class PostcodeComparisonBase(Comparison):
             === "DuckDB"
                 Basic Postcode Comparison
                 ``` python
-                import splink.duckdb.duckdb_comparison_template_library as ctl
+                import splink.duckdb.comparison_template_library as ctl
                 ctl.postcode_comparison("postcode")
                 ```
                 Bespoke Postcode Comparison
                 ``` python
-                import splink.duckdb.duckdb_comparison_template_library as ctl
+                import splink.duckdb.comparison_template_library as ctl
                 ctl.postcode_comparison("postcode",
                                     invalid_postcodes_as_null=True,
                                     include_distance_in_km_level=True,
@@ -1199,12 +1199,12 @@ class PostcodeComparisonBase(Comparison):
             === "Spark"
                 Basic Postcode Comparison
                 ``` python
-                import splink.spark.spark_comparison_template_library as ctl
+                import splink.spark.comparison_template_library as ctl
                 ctl.postcode_comparison("postcode")
                 ```
                 Bespoke Postcode Comparison
                 ``` python
-                import splink.spark.spark_comparison_template_library as ctl
+                import splink.spark.comparison_template_library as ctl
                 ctl.postcode_comparison("postcode",
                                     invalid_postcodes_as_null=True,
                                     include_distance_in_km_level=True,
@@ -1216,12 +1216,12 @@ class PostcodeComparisonBase(Comparison):
             === "Athena"
                 Basic Postcode Comparison
                 ``` python
-                import splink.athean.athena_comparison_template_library as ctl
+                import splink.athena.comparison_template_library as ctl
                 ctl.postcode_comparison("postcode")
                 ```
                 Bespoke Postcode Comparison
                 ``` python
-                import splink.athena.athena_comparison_template_library as ctl
+                import splink.athena.comparison_template_library as ctl
                 ctl.postcode_comparison("postcode",
                                     invalid_postcodes_as_null=True,
                                     include_distance_in_km_level=True,

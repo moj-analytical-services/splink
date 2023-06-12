@@ -15,7 +15,7 @@ These two kinds of blocking rules can be seen in the following code snippet:
 
 === "DuckDB"
     ```python
-    import splink.duckdb.duckdb_comparison_library as cl
+    import splink.duckdb.comparison_library as cl
 
     settings = {
         "link_type": "dedupe_only",
@@ -45,7 +45,7 @@ These two kinds of blocking rules can be seen in the following code snippet:
     ```
 === "Spark"
     ```python
-    import splink.spark.spark_comparison_library as cl
+    import splink.spark.comparison_library as cl
 
     settings = {
         "link_type": "dedupe_only",
@@ -75,7 +75,7 @@ These two kinds of blocking rules can be seen in the following code snippet:
     ```
 === "Athena"
     ```python
-    import splink.athena.athena_comparison_library as cl
+    import splink.athena.comparison_library as cl
 
     settings = {
         "link_type": "dedupe_only",

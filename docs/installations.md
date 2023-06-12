@@ -31,7 +31,7 @@ curl -o "$output_file" "$github_url"
 Or, if you're either unable to download it directly from github or you'd rather create the file manually, simply:
 
 1. Create a file called `splink_requirements.txt`
-2. Copy and paste the contents from our [duckdbless requirements file](https://github.com/moj-analytical-services/splink/blob/duckdbless_splink/scripts/duckdbless_requirements.txt) into your file.
+2. Copy and paste the contents from our [duckdbless requirements file](https://github.com/moj-analytical-services/splink/blob/master/scripts/duckdbless_requirements.txt) into your file.
 
 Finally, run the following command within your virtual environment to install the remaining splink dependencies:
 ```shell
