@@ -41,7 +41,10 @@ def test_date_comparison_dl_run(ctl):
         pytest.param(ctls, SparkLinker, id="Spark Date Comparison Integration Tests"),
     ],
 )
-def test_datediff_levels(spark, ctl, Linker):
+def test_datediff_levels(spark, ctl, Linker, test_gamma_assert):
+
+    col_name="dob"
+
     df = pd.DataFrame(
         [
             {
@@ -125,17 +128,7 @@ def test_datediff_levels(spark, ctl, Linker):
         0: [(1, 4)],
     }
 
-    for gamma, id_pairs in size_gamma_lookup.items():
-        for left, right in id_pairs:
-            print(f"Checking IDs: {left}, {right}")
-
-            assert (
-                linker_output.loc[
-                    (linker_output.unique_id_l == left)
-                    & (linker_output.unique_id_r == right)
-                ]["gamma_dob"].values[0]
-                == gamma
-            )
+    test_gamma_assert(linker_output, size_gamma_lookup, col_name)
 
 
 @pytest.mark.parametrize(
@@ -421,7 +414,10 @@ def test_forename_surname_comparison_levels(spark, ctl, Linker):
         pytest.param(ctls, SparkLinker, id="Spark Postcode Comparison Template Test"),
     ],
 )
-def test_postcode_comparison_levels(spark, ctl, Linker):
+def test_postcode_comparison_levels(spark, ctl, Linker, test_gamma_assert):
+    
+    col_name="postcode"
+    
     df = pd.DataFrame(
         [
             {
@@ -474,7 +470,7 @@ def test_postcode_comparison_levels(spark, ctl, Linker):
         "link_type": "dedupe_only",
         "comparisons": [
             ctl.postcode_comparison(
-                "postcode",
+                col_name=col_name,
                 lat_col="lat",
                 long_col="long",
                 km_thresholds=5,
@@ -498,16 +494,7 @@ def test_postcode_comparison_levels(spark, ctl, Linker):
         1: [(1, 6), (2, 6), (3, 6), (4, 6), (5, 6)],
     }
 
-    for gamma, id_pairs in size_gamma_lookup.items():
-        for left, right in id_pairs:
-            print(f"Checking IDs: {left}, {right}")
-            assert (
-                linker_output.loc[
-                    (linker_output.unique_id_l == left)
-                    & (linker_output.unique_id_r == right)
-                ]["gamma_postcode"].values[0]
-                == gamma
-            )
+    test_gamma_assert(linker_output, size_gamma_lookup, col_name)
 
 
 @pytest.mark.parametrize(
@@ -576,4 +563,5 @@ def test_email_comparison_levels(spark, ctl, Linker, test_gamma_assert):
         0: [(1, 11), (2, 11)],  # Everything else
         -1: [(1, 12)],  # Null level- invalid email
     }
+
     test_gamma_assert(linker_output, size_gamma_lookup, col_name)
