@@ -14,10 +14,47 @@ from .comparison_helpers_utils import threshold_match
 from .comparison_vector_values import compute_comparison_vector_values_sql
 
 
-def get_comparison_levels(values_to_compare: list, comparison):
+def get_comparison_levels(values_to_compare: array, comparison):
     """
     Helper function returning the comparison levels that all combinations of
-    values in the values_to_compare list.
+    values in the values_to_compare list. 
+    
+    Notes:
+
+    * This function is intended for development purposes so uses the 
+    DuckDBLinker in the background. Any comparison levels should translate across
+    to any Splink backend (assuming all of the comparison levels are available).
+    * This function currently only works with comparisons based on a single 
+    column. For example, `cl.distance_in_km_at_thresholds` is not currently supported
+    at it requires a `"lat_col"` and `"long_col"`.
+
+    Args:
+        values_to_compare (list): A list of values to compare in the
+            comparison.
+        comparison (Comparison): A DuckDB Comparison object defining the comparison
+            levels to assign the pairs of values in values_to_compare.
+
+    Examples:
+        ```py
+        import splink.comparison_helpers as ch
+        import splink.duckdb.comparison_template_library as ctl
+
+        values = ["Robert", "Rob", "Robbie", "Robin"]
+        comparison = ctl.name_comparison("name")
+
+        ch.get_comparison_levels(values, comparison)
+        ```
+
+        ```py
+        import splink.comparison_helpers as ch
+        import splink.duckdb.comparison_template_library as ctl
+
+        values = ["2022-01-01", "2022-02-01"]
+        comparison = ctl.date_comparison("dob", cast_strings_to_date=True)
+
+        ch.get_comparison_levels(values, comparison)
+        ```
+
     """
     comparison_dict = comparison.as_dict()
     comparison_col = comparison_dict["output_column_name"]
@@ -83,8 +120,15 @@ comparator_cols_sql = """
 
 
 def comparator_score(str1, str2, decimal_places=2):
-    """Helper function to give the similarity between two strings for
+    """
+    Helper function to give the similarity between two strings for
     the string comparators in splink.
+
+    Args:
+        str1 (str): String to compare to str2.
+        str2 (str): String to compare to str1.
+        decimal_places (int, optional): Number of decimal places to return with comparator
+             scores.
 
     Examples:
         ```py
@@ -108,20 +152,28 @@ def comparator_score(str1, str2, decimal_places=2):
     return con.execute(sql).fetch_df()
 
 
-def comparator_score_df(list, col1, col2, decimal_places=2):
-    """Helper function returning a dataframe showing the string similarity
-    scores and string distances for a list of strings.
+def comparator_score_df(dict, col1, col2, decimal_places=2):
+    """
+    Helper function returning a dataframe showing the string similarity
+    scores and string distances for a dictionary of strings.
+
+    Args:
+        dict (dictionary): Dictionary of string pairs to compare
+        col1 (str):  The name of the first key in dictionary
+        col2 (str):  The name of the second key in dictionary
+        decimal_places (int, optional): Number of decimal places to return with comparator
+             scores.
 
     Examples:
         ```py
         import splink.comparison_helpers as ch
 
-        list = {
+        data = {
                 "string1": ["Stephen", "Stephen","Stephen"],
                 "string2": ["Stephen", "Steven", "Stephan"],
                 }
 
-        ch.comparator_score_df(list, "string1", "string2")
+        ch.comparator_score_df(data, "string1", "string2")
         ```
     """
     duckdb.connect()
@@ -142,20 +194,26 @@ def comparator_score_df(list, col1, col2, decimal_places=2):
     return duckdb.sql(sql).df()
 
 
-def comparator_score_chart(list, col1, col2):
-    """Helper function returning a heatmap showing the sting similarity
-    scores and string distances for a list of strings.
+def comparator_score_chart(dict, col1, col2):
+    """
+    Helper function returning a heatmap showing the sting similarity
+    scores and string distances for a dictionary of strings.
+
+    Args:
+        dict (dictionary): Dictionary of string pairs to compare
+        col1 (str):  The name of the first key in dictionary
+        col2 (str):  The name of the second key in dictionary
 
     Examples:
         ```py
         import splink.comparison_helpers as ch
 
-        list = {
+        data = {
                 "string1": ["Stephen", "Stephen", "Stephen"],
                 "string2": ["Stephen", "Steven", "Stephan"],
                 }
 
-        ch.comparator_score_chart(list, "string1", "string2")
+        ch.comparator_score_chart(data, "string1", "string2")
         ```
     """
 
@@ -186,16 +244,25 @@ def comparator_score_chart(list, col1, col2):
 
 
 def comparator_score_threshold_chart(
-    list, col1, col2, similarity_threshold=None, distance_threshold=None
+    dict, col1, col2, similarity_threshold=None, distance_threshold=None
 ):
-    """Helper function returning a heatmap showing the sting similarity
+    """
+    Helper function returning a heatmap showing the sting similarity
     scores and string distances for a list of strings given a threshold.
+
+    Args:
+        dict (dictionary): Dictionary of string pairs to compare
+        col1 (str):  The name of the first key in dictionary
+        col2 (str):  The name of the second key in dictionary
+        similarity_threshold (float): Threshold to set for similarity functions
+        distance_threshold (int): Threshold to set for distance functions
+
 
     Examples:
         ```py
         import splink.comparison_helpers as ch
 
-        list = {
+        data = {
                 "string1": ["Stephen", "Stephen","Stephen"],
                 "string2": ["Stephen", "Steven", "Stephan"],
                 }
@@ -244,12 +311,16 @@ def comparator_score_threshold_chart(
 
 
 def phonetic_transform(string):
-    """Helper function to give the phonetic transformation of two strings with
+    """
+    Helper function to give the phonetic transformation of two strings with
     Soundex, Metaphone and Double Metaphone.
+
+    Args:
+        string (string): String to pass through phonetic transformation algorithms
 
     Examples:
         ```py
-        phonetic_transform("Richard", "iRchard")
+        phonetic_transform("Richard")
         ```
     """
     transforms = {}
@@ -269,20 +340,26 @@ def phonetic_transform(string):
     return transforms
 
 
-def phonetic_transform_df(list, col1, col2):
-    """Helper function returning a dataframe showing the phonetic transforms
-    for a list of strings.
+def phonetic_transform_df(dict, col1, col2):
+    """
+    Helper function returning a dataframe showing the phonetic transforms
+    for a dictionary of strings.
+
+    Args:
+        dict (dictionary): Dictionary of string pairs to compare
+        col1 (str):  The name of the first key in dictionary
+        col2 (str):  The name of the second key in dictionary
 
     Examples:
         ```py
         import splink.comparison_helpers as ch
 
-        list = {
+        data = {
                 "string1": ["Stephen", "Stephen","Stephen"],
                 "string2": ["Stephen", "Steven", "Stephan"],
                 }
 
-        ch.phonetic_match_chart(list, "string1", "string2")
+        ch.phonetic_match_chart(data, "string1", "string2")
         ```
     """
 
@@ -318,20 +395,26 @@ def phonetic_transform_df(list, col1, col2):
     return phonetic_df
 
 
-def phonetic_match_chart(list, col1, col2):
-    """Helper function returning a heatmap showing the phonetic transform and
-    matches for a list of strings given a threshold.
+def phonetic_match_chart(dict, col1, col2):
+    """
+    Helper function returning a heatmap showing the phonetic transform and
+    matches for a dictionary of strings given a threshold.
+
+    Args:
+        dict (dictionary): Dictionary of string pairs to compare
+        col1 (str):  The name of the first key in dictionary
+        col2 (str):  The name of the second key in dictionary
 
     Examples:
         ```py
         import splink.comparison_helpers as ch
 
-        list = {
+        data = {
                 "string1": ["Stephen", "Stephen","Stephen"],
                 "string2": ["Stephen", "Steven", "Stephan"],
                 }
 
-        ch.comparator_score_threshold_chart(list,
+        ch.comparator_score_threshold_chart(data,
                                  "string1", "string2",
                                  similarity_threshold=0.8,
                                  distance_threshold=2)
