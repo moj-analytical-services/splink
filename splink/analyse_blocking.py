@@ -6,6 +6,8 @@ from typing import TYPE_CHECKING
 from .blocking import _sql_gen_where_condition, block_using_rules_sql
 from .misc import calculate_cartesian, calculate_reduction_ratio
 
+import pandas as pd
+
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from .linker import Linker
@@ -38,6 +40,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
     linker: Linker,
     blocking_rules,
     output_chart=True,
+    return_dataframe=False
 ):
     # Deepcopy our original linker so we can safely adjust our settings.
     # This is particularly important to ensure we don't overwrite our
@@ -138,4 +141,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
 
     linker._analyse_blocking_mode = False
 
-    return br_comparisons
+    if return_dataframe: 
+        return pd.DataFrame(br_comparisons)
+    else :
+        return br_comparisons
