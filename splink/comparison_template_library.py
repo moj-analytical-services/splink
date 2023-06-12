@@ -1349,7 +1349,7 @@ class EmailComparisonBase(Comparison):
         - Exact match on email\n
         - Exact match on username with different domain\n
         - Fuzzy match on email user Jaro-Winkler\n
-        - Exact match on username using Jaro-Winkler \n
+        - Fuzzy match on username using Jaro-Winkler \n
         - All other comparisons
 
         Args:
@@ -1418,11 +1418,12 @@ class EmailComparisonBase(Comparison):
                 ``` python
                 import splink.duckdb.duckdb_comparison_template_library as ctl
                 ctl.email_comparison("email",
-                                    invalid_emails_as_null=True,
-                                    include_distance_in_km_level=True,
-                                    lat_col="lat",
-                                    long_col="long",
-                                    km_thresholds=[10, 100]
+                                    col_name = "email",
+                                    levenshtein_thresholds = [2],
+                                    damerau_levenshtein_thresholds = [2],
+                                    invalid_emails_as_null = True,
+                                    include_user_name_level = True,
+                                    include_domain_match_level = True,
                                     )
                 ```
             === "Spark"
@@ -1436,7 +1437,6 @@ class EmailComparisonBase(Comparison):
                 import splink.spark.spark_comparison_template_library as ctl
                 ctl.email_comparison(
                     col_name = "email",
-                    levens
                     levenshtein_thresholds = [2],
                     damerau_levenshtein_thresholds = [2],
                     invalid_emails_as_null = True,
@@ -1455,7 +1455,6 @@ class EmailComparisonBase(Comparison):
                 import splink.athena.athena_comparison_template_library as ctl
                 ctl.email_comparison(
                     col_name = "email",
-                    levens
                     levenshtein_thresholds = [2],
                     damerau_levenshtein_thresholds = [2],
                     invalid_emails_as_null = True,

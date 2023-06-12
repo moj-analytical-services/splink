@@ -13,7 +13,14 @@ However, not every comparison is available for every [Splink-compatible SQL back
 
 The pre-made Splink comparison templates available for each SQL dialect are as given in this table:
 
-{% include-markdown "./includes/generated_files/comparison_template_library_dialect_table.md" %}
+||duckdb|spark|athena|sqlite|
+|-|-|-|-|-|
+|`date_comparison`|✓|✓|||
+|`email_comparison`|✓|✓|||
+|`forename_surname_comparison`|✓|✓|||
+|`name_comparison`|✓|✓|||
+|`postcode_comparison`|✓|✓|✓||
+
 
 
 The detailed API for each of these are outlined below.
@@ -57,6 +64,18 @@ The detailed API for each of these are outlined below.
 ---
 
 ::: splink.comparison_template_library.PostcodeComparisonBase
+    handler: python
+    selection:
+      members:
+        -  __init__
+    rendering:
+      show_root_heading: true
+      show_source: false
+      heading_level: 2
+
+---
+
+::: splink.comparison_template_library.EmailComparisonBase
     handler: python
     selection:
       members:
