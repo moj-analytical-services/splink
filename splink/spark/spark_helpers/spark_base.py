@@ -35,9 +35,12 @@ def datediff_sql(
     """
 
 
-def valid_date_sql(col_name):
+def valid_date_sql(col_name, date_format=None):
+    if date_format is None:
+        date_format = "yyyy-MM-dd"
+
     return f"""
-        to_date({col_name})
+        to_date({col_name}, '{date_format}')
     """
 
 
