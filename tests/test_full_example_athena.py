@@ -17,8 +17,8 @@ try:
     response = sts_client.get_caller_identity()
     import awswrangler as wr
 
-    from splink.athena.linker import AthenaLinker
     from splink.athena.athena_utils import athena_warning_text
+    from splink.athena.linker import AthenaLinker
 except ImportError:
     # Skip if no AWS Connection exists
     pytestmark = pytest.mark.skip(reason="AWS Connection Required")
