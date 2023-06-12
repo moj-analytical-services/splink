@@ -1,5 +1,5 @@
 {
-  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
   "title": "Precision-recall curve",
   "data": { "values": [] },
   "mark": { "type": "line", "clip": true, "point": true },
@@ -33,5 +33,17 @@
       "type": "nominal",
       "field": "curve_label"
     }
-  }
+  },
+  "params": [
+    {
+      "name": "mouse_zoom",
+      "select": {
+        "type": "interval",
+        "encodings": [
+          "x", "y"
+        ]
+      },
+      "bind": "scales"
+    }
+  ]
 }
