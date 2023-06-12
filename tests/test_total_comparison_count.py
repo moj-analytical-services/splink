@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from splink.analyse_blocking import number_of_comparisons_generated_by_blocking_rule_sql
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.linker import DuckDBLinker
 from splink.misc import calculate_cartesian
 from splink.vertically_concatenate import vertically_concatenate_sql
 

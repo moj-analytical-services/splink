@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.linker import DuckDBLinker
 from splink.exceptions import SplinkException
 from tests.basic_settings import get_settings_dict
 

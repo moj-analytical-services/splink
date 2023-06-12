@@ -5,9 +5,9 @@ import sys
 import pandas as pd
 from rapidfuzz.distance.Levenshtein import distance
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
-from splink.sqlite.sqlite_linker import SQLiteLinker
+from splink.duckdb.linker import DuckDBLinker
+from splink.spark.linker import SparkLinker
+from splink.sqlite.linker import SQLiteLinker
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
