@@ -75,7 +75,8 @@ def test_gamma_assert():
                     linker_output.loc[
                         (linker_output.unique_id_l == left)
                         & (linker_output.unique_id_r == right)
-                    ]["gamma_"+col_name].values[0]
+                    ]["gamma_" + col_name].values[0]
                     == gamma
                 )
-    return(_test_gamma_assert)
+
+    return _test_gamma_assert
