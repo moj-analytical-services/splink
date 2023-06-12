@@ -138,4 +138,3 @@ class distance_in_km_at_thresholds(
 ###################################
 class postcode_comparison(AthenaComparisonProperties, PostcodeComparisonBase):
     pass
-

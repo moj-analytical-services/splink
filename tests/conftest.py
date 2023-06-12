@@ -62,6 +62,7 @@ def test_helpers(spark):
         "sqlite": SQLiteTestHelper(),
     }
 
+
 # Function to easily see if the gamma column added to the linker matches
 # With the sets of tuples provided
 @pytest.fixture(scope="module")
@@ -79,4 +80,3 @@ def test_gamma_assert(linker_output, size_gamma_lookup, col_name):
                 )
 
     return _test_gamma_assert
-

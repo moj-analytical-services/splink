@@ -6,7 +6,7 @@ import splink.spark.spark_comparison_template_library as ctls
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 
-#from .conftest import test_gamma_assert
+# from .conftest import test_gamma_assert
 
 ## date_comparison
 
@@ -519,8 +519,8 @@ def test_postcode_comparison_levels(spark, ctl, Linker):
     ],
 )
 def test_email_comparison_levels(spark, ctl, Linker, test_gamma_assert):
-    
-    col_name="email"
+
+    col_name = "email"
 
     df = pd.DataFrame(
         [
@@ -576,4 +576,3 @@ def test_email_comparison_levels(spark, ctl, Linker, test_gamma_assert):
         -1: [(1, 12)],  # Null level- invalid email
     }
     test_gamma_assert(linker_output, size_gamma_lookup, col_name)
-

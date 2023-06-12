@@ -1,4 +1,3 @@
-
 import warnings
 
 from ..exceptions import SplinkDeprecated
