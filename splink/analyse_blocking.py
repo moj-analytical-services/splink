@@ -37,10 +37,7 @@ def number_of_comparisons_generated_by_blocking_rule_sql(
 
 
 def cumulative_comparisons_generated_by_blocking_rules(
-    linker: Linker,
-    blocking_rules,
-    output_chart=True,
-    return_dataframe=False
+    linker: Linker, blocking_rules, output_chart=True, return_dataframe=False
 ):
     # Deepcopy our original linker so we can safely adjust our settings.
     # This is particularly important to ensure we don't overwrite our
@@ -141,7 +138,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
 
     linker._analyse_blocking_mode = False
 
-    if return_dataframe: 
+    if return_dataframe:
         return pd.DataFrame(br_comparisons)
-    else :
+    else:
         return br_comparisons
