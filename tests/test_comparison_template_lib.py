@@ -1,12 +1,11 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.duckdb_comparison_template_library as ctld
-import splink.spark.spark_comparison_template_library as ctls
+import splink.duckdb.comparison_template_library as ctld
+import splink.spark.comparison_template_library as ctls
 from splink.duckdb.duckdb_linker import DuckDBLinker
 from splink.spark.spark_linker import SparkLinker
 
-# from .conftest import test_gamma_assert
 
 ## date_comparison
 
@@ -559,6 +558,8 @@ def test_email_comparison_levels(spark, ctl, Linker, test_gamma_assert):
 
     linker = Linker(df, settings)
     linker_output = linker.predict().as_pandas_dataframe()
+
+    print(linker_output)
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_level: tuple of ID pairs}
