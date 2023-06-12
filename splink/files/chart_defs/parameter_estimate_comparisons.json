@@ -1,5 +1,5 @@
 {
-  "$schema": "https://vega.github.io/schema/vega-lite/v5.2.0.json",
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
   "title": {
     "text": "Comparison of parameter estimates across training sessions",
     "subtitle": "Use mousewheel to zoom"
@@ -90,11 +90,16 @@
       "y": "independent"
     }
   },
-  "selection": {
-    "selection_zoom": {
-      "type": "interval",
-      "bind": "scales",
-      "encodings": ["x", "column"]
+  "params": [
+    {
+      "name": "mouse_zoom",
+      "select": {
+        "type": "interval",
+        "encodings": [
+          "x"
+        ]
+      },
+      "bind": "scales"
     }
-  }
+  ]
 }
