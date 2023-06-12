@@ -3,8 +3,8 @@ import os
 import pandas as pd
 import pytest
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
+from splink.duckdb.linker import DuckDBLinker
+from splink.spark.linker import SparkLinker
 
 
 @pytest.mark.parametrize(

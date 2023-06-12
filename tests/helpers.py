@@ -3,18 +3,18 @@ from abc import ABC, abstractmethod
 
 import pandas as pd
 
-import splink.duckdb.duckdb_comparison_level_library as cll_duckdb
-import splink.duckdb.duckdb_comparison_library as cl_duckdb
-import splink.duckdb.duckdb_comparison_template_library as ctl_duckdb
-import splink.spark.spark_comparison_level_library as cll_spark
-import splink.spark.spark_comparison_library as cl_spark
-import splink.spark.spark_comparison_template_library as ctl_spark
-import splink.sqlite.sqlite_comparison_level_library as cll_sqlite
-import splink.sqlite.sqlite_comparison_library as cl_sqlite
-import splink.sqlite.sqlite_comparison_template_library as ctl_sqlite
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
-from splink.sqlite.sqlite_linker import SQLiteLinker
+import splink.duckdb.comparison_level_library as cll_duckdb
+import splink.duckdb.comparison_library as cl_duckdb
+import splink.duckdb.comparison_template_library as ctl_duckdb
+import splink.spark.comparison_level_library as cll_spark
+import splink.spark.comparison_library as cl_spark
+import splink.spark.comparison_template_library as ctl_spark
+import splink.sqlite.comparison_level_library as cll_sqlite
+import splink.sqlite.comparison_library as cl_sqlite
+import splink.sqlite.comparison_template_library as ctl_sqlite
+from splink.duckdb.linker import DuckDBLinker
+from splink.spark.linker import SparkLinker
+from splink.sqlite.linker import SQLiteLinker
 
 
 class TestHelper(ABC):

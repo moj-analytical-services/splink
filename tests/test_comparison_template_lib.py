@@ -1,10 +1,10 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.duckdb_comparison_template_library as ctld
-import splink.spark.spark_comparison_template_library as ctls
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
+import splink.duckdb.comparison_template_library as ctld
+import splink.spark.comparison_template_library as ctls
+from splink.duckdb.linker import DuckDBLinker
+from splink.spark.linker import SparkLinker
 
 
 ## date_comparison
