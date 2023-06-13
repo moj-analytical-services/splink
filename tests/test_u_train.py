@@ -131,7 +131,6 @@ def test_u_train_link_only_sample(test_helpers, dialect):
     linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
-    # linker._settings_obj.comparisons[0]
 
     # count how many pairs we _actually_ generated in random sampling
     check_blocking_sql = """
