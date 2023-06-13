@@ -246,10 +246,10 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
             df["dob"] = dobs
 
         df = helper.convert_frame(df)
-        linker = helper.Linker(df, settings)
+        linker = helper.Linker(df, settings, **helper.extra_linker_args())
         df_e1 = linker.predict().as_pandas_dataframe()
 
-        linker = helper.Linker(df, settings_cl)
+        linker = helper.Linker(df, settings_cl, **helper.extra_linker_args())
         df_e2 = linker.predict().as_pandas_dataframe()
         return df_e1, df_e2
 
@@ -268,7 +268,7 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
         ]
     )
 
-    if dialect == "spark":
+    if dialect in ("spark", "postgres"):
         expected_bad_dates_error = exceptions.SplinkException
         valid_date_formats = ["d/M/y", "d-M-y", "M/d/y", "y/M/d", "y-M-d"]
     elif dialect == "duckdb":
