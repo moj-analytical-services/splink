@@ -68,6 +68,7 @@ def test_months_between(pg_engine):
             {"date_l": "2023-05-24", "date_r": "2023-04-25", "expected": 0},
             {"date_l": "2023-05-24", "date_r": "2023-02-25", "expected": 2},
             {"date_l": "2023-05-24", "date_r": "2022-05-23", "expected": 12},
+            {"date_l": "1995-09-30", "date_r": "1996-03-25", "expected": -6},
         ]
     )
     fmt = "YYYY-MM-DD"

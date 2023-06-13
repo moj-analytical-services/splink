@@ -217,6 +217,8 @@ class PostgresLinker(Linker):
         """
         self._run_sql_execution(sql)
 
+
+
     def _create_datediff_function(self):
         sql = """
         CREATE OR REPLACE FUNCTION datediff(x date, y date)
@@ -225,6 +227,15 @@ class PostgresLinker(Linker):
         $$ LANGUAGE SQL IMMUTABLE;
         """
         self._run_sql_execution(sql)
+
+        sql_cast = """
+        CREATE OR REPLACE FUNCTION datediff(x {dateish_type}, y {dateish_type})
+        RETURNS integer AS $$
+        SELECT datediff(DATE(x), DATE(y));
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        for dateish_type in ("timestamp", "timestamp with time zone"):
+            self._run_sql_execution(sql_cast.format(dateish_type=dateish_type))
 
     def _create_months_between_function(self):
         # number of average-length (per year) months between two dates
@@ -239,6 +250,15 @@ class PostgresLinker(Linker):
         $$ LANGUAGE SQL IMMUTABLE;
         """
         self._run_sql_execution(sql)
+
+        sql_cast = """
+        CREATE OR REPLACE FUNCTION ave_months_between(x {dateish_type}, y {dateish_type})
+        RETURNS integer AS $$
+        SELECT ave_months_between(DATE(x), DATE(y));
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        for dateish_type in ("timestamp", "timestamp with time zone"):
+            self._run_sql_execution(sql_cast.format(dateish_type=dateish_type))
 
     def _create_array_intersect_function(self):
         sql = """
