@@ -12,7 +12,6 @@ from ..misc import ensure_is_list
 from ..splink_dataframe import SplinkDataFrame
 from ..unique_id_concat import _composite_unique_id_from_nodes_sql
 
-
 logger = logging.getLogger(__name__)
 
 
