@@ -250,7 +250,9 @@ class PostgresLinker(Linker):
         self._run_sql_execution(sql)
 
         sql_cast = """
-        CREATE OR REPLACE FUNCTION ave_months_between(x {dateish_type}, y {dateish_type})
+        CREATE OR REPLACE FUNCTION ave_months_between(
+            x {dateish_type}, y {dateish_type}
+        )
         RETURNS integer AS $$
         SELECT ave_months_between(DATE(x), DATE(y));
         $$ LANGUAGE SQL IMMUTABLE;
