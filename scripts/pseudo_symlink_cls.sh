@@ -2,7 +2,7 @@
 
 # To do:
 # grep + replace all imports in every script
-linkers=(spark duckdb athena sqlite)
+linkers=(spark duckdb athena sqlite postgres)
 
 deprecation_warning() {
   local pseudo_sym="$1"

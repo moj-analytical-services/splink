@@ -1,8 +1,12 @@
-from .postgres_helpers.postgres_comparison_imports import (  # noqa: F401
-    array_intersect_at_sizes,
-    datediff_at_thresholds,
-    distance_function_at_thresholds,
-    distance_in_km_at_thresholds,
-    exact_match,
-    levenshtein_at_thresholds,
+import warnings
+
+from ..exceptions import SplinkDeprecated
+from .comparison_library import *  # noqa: F403
+
+warnings.warn(
+    "Importing directly from `splink.postgres.postgres_comparison_library` "
+    "is deprecated and will be removed in Splink v4. "
+    "Please import from `splink.postgres.comparison_library` going forward.",
+    SplinkDeprecated,
+    stacklevel=2,
 )
