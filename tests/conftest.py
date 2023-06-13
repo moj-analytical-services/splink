@@ -3,8 +3,23 @@ import logging
 import pytest
 
 from splink.spark.jar_location import similarity_jar_location
+
+# ruff: noqa: F401
+# imported fixtures:
+from tests.backend_utils.postgres_conf import (
+    _engine_factory,
+    _pg_credentials,
+    _postgres,
+    pg_engine,
+)
 from tests.decorator import dialect_groups
-from tests.helpers import DuckDBTestHelper, SparkTestHelper, SQLiteTestHelper
+from tests.helpers import (
+    DuckDBTestHelper,
+    LazyDict,
+    PostgresTestHelper,
+    SparkTestHelper,
+    SQLiteTestHelper,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,13 +69,19 @@ def df_spark(spark):
 
 # workaround as you can't pass fixtures as param arguments in base pytest
 # see e.g. https://stackoverflow.com/a/42400786/11811947
+# ruff: noqa: F811
 @pytest.fixture
-def test_helpers(spark):
-    return {
-        "duckdb": DuckDBTestHelper(),
-        "spark": SparkTestHelper(spark),
-        "sqlite": SQLiteTestHelper(),
-    }
+def test_helpers(spark, pg_engine):
+    # LazyDict to lazy-load helpers
+    # That way we do not instantiate helpers we do not need
+    # e.g. running only duckdb tests we don't need PostgresTestHelper
+    # so we can run duckdb tests in environments w/o access to postgres
+    return LazyDict(
+        duckdb=(DuckDBTestHelper, []),
+        spark=(SparkTestHelper, [spark]),
+        sqlite=(SQLiteTestHelper, []),
+        postgres=(PostgresTestHelper, [pg_engine]),
+    )
 
 
 # Function to easily see if the gamma column added to the linker matches

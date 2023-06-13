@@ -206,7 +206,7 @@ class Linker:
                 input database are long or unspecific, this argument can be used
                 to attach more easily readable/interpretable names. Defaults to None.
         """
-
+        self._db_schema = "splink"
         if set_up_basic_logging:
             logging.basicConfig(
                 format="%(message)s",
@@ -643,7 +643,8 @@ class Linker:
 
             raise SplinkException(
                 f"Error executing the following sql for table "
-                f"`{templated_name}` ({physical_name}):\n{final_sql}"
+                f"`{templated_name}`({physical_name}):\n{final_sql}"
+                f"\n\nError was: {e}"
             ) from e
 
     def register_table(self, input, table_name, overwrite=False):

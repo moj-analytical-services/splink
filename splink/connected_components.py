@@ -215,8 +215,8 @@ def _cc_generate_representatives_loop_cond(
     sql = f"""
     select
 
-    node_id,
-    min(representative) as representative
+    source.node_id,
+    min(source.representative) as representative
 
     from
     (
@@ -243,8 +243,8 @@ def _cc_generate_representatives_loop_cond(
 
         from {prev_representatives}
 
-    )
-    group by node_id
+    ) AS source
+    group by source.node_id
         """
 
     return sql
