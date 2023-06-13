@@ -42,7 +42,7 @@
     },
     "params": [
       {
-        "name": "moues_zoom",
+        "name": "mouse_zoom",
         "select": {
           "type": "interval",
           "encodings": [
