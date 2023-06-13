@@ -2,7 +2,7 @@ import duckdb
 import pandas as pd
 import phonetics
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.linker import DuckDBLinker
 
 from .blocking import block_using_rules_sql
 from .charts import (
@@ -14,7 +14,7 @@ from .comparison_helpers_utils import threshold_match
 from .comparison_vector_values import compute_comparison_vector_values_sql
 
 
-def get_comparison_levels(values_to_compare: array, comparison):
+def get_comparison_levels(values_to_compare: list, comparison):
     """
     Helper function returning the comparison levels that all combinations of
     values in the values_to_compare list. 
@@ -56,7 +56,12 @@ def get_comparison_levels(values_to_compare: array, comparison):
         ```
 
     """
-    comparison_dict = comparison.as_dict()
+
+    if type(comparison) != dict:
+        comparison_dict = comparison.as_dict()
+    else:
+        comparison_dict = comparison
+
     comparison_col = comparison_dict["output_column_name"]
 
     settings = {
