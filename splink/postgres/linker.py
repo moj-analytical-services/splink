@@ -217,8 +217,6 @@ class PostgresLinker(Linker):
         """
         self._run_sql_execution(sql)
 
-
-
     def _create_datediff_function(self):
         sql = """
         CREATE OR REPLACE FUNCTION datediff(x date, y date)
