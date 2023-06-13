@@ -45,7 +45,7 @@ do
     | awk '{print $2}' \
     | paste -sd ", " -)
 
-    cleaned_original_path="splink.${backend}.${backend}_linker"
+    cleaned_original_path=splink."$backend"."$backend"_linker
     full_import_path="splink.$backend.linker"
 
     # Create file and add new import path
