@@ -88,6 +88,7 @@ class SQLiteLinker(Linker):
         connection=":memory:",
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
+        register_udfs=True,
     ):
         self._sql_dialect_ = "sqlite"
 
@@ -97,6 +98,8 @@ class SQLiteLinker(Linker):
         self.con.row_factory = dict_factory
         self.con.create_function("log2", 1, log2)
         self.con.create_function("pow", 2, pow)
+        if register_udfs:
+            self._register_udfs()
 
         input_tables = ensure_is_list(input_table_or_tables)
         input_aliases = self._ensure_aliases_populated_and_is_list(
@@ -206,3 +209,11 @@ class SQLiteLinker(Linker):
         drop_sql = f"""
         DROP TABLE IF EXISTS {name}"""
         self.con.execute(drop_sql)
+
+    def _register_udfs(self):
+        from rapidfuzz.distance.Levenshtein import distance as levenshtein
+
+        def levenshtein_wrap(str_l, str_r):
+            return levenshtein(str(str_l), str(str_r))
+
+        self.con.create_function("levenshtein", 2, levenshtein_wrap)
