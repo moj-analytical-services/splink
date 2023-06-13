@@ -26,7 +26,11 @@ which provides the basis for functions such as [jaccard_at_thresholds()](../comp
 
 ## DuckDB
 
-DuckDB supports [UDFs written in C++](https://duckdb.org/docs/api/cpp.html#udf-api), however these have not yet been implemented in Splink.
+Python UDFs can be registered to a DuckDB connection from version 0.8.0 onwards.
+
+The documentation is [here](https://duckdb.org/docs/api/python/reference/#duckdb.DuckDBPyConnection.create_function), an examples are [here](https://github.com/duckdb/duckdb/pull/7171).  Note that these functions should be registered against the duckdb connection provided to the linker using `connection.create_function`.
+
+Note that performance will generally be substantially slower than using native DuckDB functions.  Consider using vectorised UDFs were possible - see [here](https://github.com/duckdb/duckdb/pull/7171).
 
 ## Athena
 
@@ -34,4 +38,13 @@ Athena supports [UDFs written in Java](https://docs.aws.amazon.com/athena/latest
 
 ## SQLite
 
-SQLite supports [UDFs written in C and C++](https://www.sqlite.org/c3ref/create_function.html), however these have not yet been implemented in Splink.
+Python UDFs can be registered to a sqlite connection using the [`create_function` function](https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection.create_function).  An example is as follows:
+
+```
+from rapidfuzz.distance.Levenshtein import distance
+conn = sqlite3.connect(":memory:")
+conn.create_function("levenshtein", 2, distance)
+```
+
+The function `levenshtein` is now available to use as a Python function
+

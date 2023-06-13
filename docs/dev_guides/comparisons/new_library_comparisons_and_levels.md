@@ -223,7 +223,7 @@ We will need to make sure that the dialect-specific comparisons which will actua
 Each dialect has a comparison properties base, which stores information about all of the dialect-specific comparison levels used by all comparisons.
 We will need to add our new level to this, which we referred to above in `ArrayLengthAtThresholdsComparisonBase` - for this example in [`splink.spark.spark_helpers.spark_comparison_imports`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_helpers/spark_comparison_imports.py):
 ```python
-from splink.spark.spark_comparison_level_library import (
+from splink.spark.comparison_level_library import (
     exact_match_level,
     ...
     array_length_level,

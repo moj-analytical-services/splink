@@ -21,7 +21,7 @@ The `dedupe_only` link type expects the user to provide a single input table, an
 
 === "DuckDB"
     ``` python
-    from splink.duckdb.duckdb_linker import DuckDBLinker
+    from splink.duckdb.linker import DuckDBLinker
 
     settings = {
         "link_type": "dedupe_only",
@@ -31,7 +31,7 @@ The `dedupe_only` link type expects the user to provide a single input table, an
     ```
 === "Spark"
     ``` python
-    from splink.spark.spark_linker import SparkLinker
+    from splink.spark.linker import SparkLinker
 
     settings = {
         "link_type": "dedupe_only",
@@ -41,7 +41,7 @@ The `dedupe_only` link type expects the user to provide a single input table, an
     ```
 === "Athena"
     ``` python
-    from splink.athena.athena_linker import AthenaLinker
+    from splink.athena.linker import AthenaLinker
 
     settings = {
         "link_type": "dedupe_only",
@@ -51,7 +51,7 @@ The `dedupe_only` link type expects the user to provide a single input table, an
     ```
 === "SQLite"
     ``` python
-    from splink.sqlite.sqlite_linker import SQLiteLinker
+    from splink.sqlite.linker import SQLiteLinker
 
     settings = {
         "link_type": "dedupe_only",
@@ -66,7 +66,7 @@ The `link_only` link type expects the user to provide a list of input tables, an
 
 === "DuckDB"
     ``` python
-    from splink.duckdb.duckdb_linker import DuckDBLinker
+    from splink.duckdb.linker import DuckDBLinker
 
     settings = {
         "link_type": "link_only",
@@ -78,7 +78,7 @@ The `link_only` link type expects the user to provide a list of input tables, an
     ```
 === "Spark"
     ``` python
-    from splink.spark.spark_linker import SparkLinker
+    from splink.spark.linker import SparkLinker
 
     settings = {
         "link_type": "link_only",
@@ -90,7 +90,7 @@ The `link_only` link type expects the user to provide a list of input tables, an
     ```
 === "Athena"
     ``` python
-    from splink.athena.athena_linker import AthenaLinker
+    from splink.athena.linker import AthenaLinker
 
     settings = {
         "link_type": "link_only",
@@ -102,7 +102,7 @@ The `link_only` link type expects the user to provide a list of input tables, an
     ```
 === "SQLite"
     ``` python
-    from splink.sqlite.sqlite_linker import SQLiteLinker
+    from splink.sqlite.linker import SQLiteLinker
 
     settings = {
         "link_type": "link_only",
@@ -121,7 +121,7 @@ The `link_and_dedupe` link type expects the user to provide a list of input tabl
 
 === "DuckDB"
     ``` python
-    from splink.duckdb.duckdb_linker import DuckDBLinker
+    from splink.duckdb.linker import DuckDBLinker
 
     settings = {
         "link_type": "link_and_dedupe",
@@ -133,7 +133,7 @@ The `link_and_dedupe` link type expects the user to provide a list of input tabl
     ```
 === "Spark"
     ``` python
-    from splink.spark.spark_linker import SparkLinker
+    from splink.spark.linker import SparkLinker
 
     settings = {
         "link_type": "link_and_dedupe",
@@ -145,7 +145,7 @@ The `link_and_dedupe` link type expects the user to provide a list of input tabl
     ```
 === "Athena"
     ``` python
-    from splink.athena.athena_linker import AthenaLinker
+    from splink.athena.linker import AthenaLinker
 
     settings = {
         "link_type": "link_and_dedupe",
@@ -157,7 +157,7 @@ The `link_and_dedupe` link type expects the user to provide a list of input tabl
     ```
 === "SQLite"
     ``` python
-    from splink.sqlite.sqlite_linker import SQLiteLinker
+    from splink.sqlite.linker import SQLiteLinker
 
     settings = {
         "link_type": "link_and_dedupe",
@@ -167,5 +167,5 @@ The `link_and_dedupe` link type expects the user to provide a list of input tabl
     input_aliases = ["table_1", "table_2", "table_3"]
     linker = SQLiteLinker([df_1, df_2, df_3], settings, input_table_aliases=input_aliases)
     ```
-    
+
 The `input_table_aliases` argument is optional and are used to label the tables in the outputs. If not provided, defaults will be automatically chosen by Splink.

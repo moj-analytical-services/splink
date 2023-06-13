@@ -3,7 +3,7 @@ import sqlite3
 
 import pandas as pd
 
-from splink.sqlite.sqlite_linker import SQLiteLinker
+from splink.sqlite.linker import SQLiteLinker
 
 from .basic_settings import get_settings_dict
 from .linker_utils import _test_table_registration, register_roc_data

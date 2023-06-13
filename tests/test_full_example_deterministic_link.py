@@ -1,8 +1,10 @@
+import os
+
 import pandas as pd
 import pytest
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
+from splink.duckdb.linker import DuckDBLinker
+from splink.spark.linker import SparkLinker
 
 
 @pytest.mark.parametrize(
@@ -12,7 +14,7 @@ from splink.spark.spark_linker import SparkLinker
         pytest.param(SparkLinker, id="Spark Deterministic Link Test"),
     ],
 )
-def test_deterministic_link_full_example(spark, Linker):
+def test_deterministic_link_full_example(tmp_path, spark, Linker):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings = {
@@ -44,7 +46,7 @@ def test_deterministic_link_full_example(spark, Linker):
     linker.cluster_studio_dashboard(
         df_predict,
         clusters,
-        "test_cluster_studio.html",
+        out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
         sampling_method="by_cluster_size",
         overwrite=True,
     )

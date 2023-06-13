@@ -350,3 +350,38 @@ def cumulative_blocking_rule_comparisons_generated(records, as_dict=False):
     chart["data"]["values"] = records
 
     return vegalite_or_json(chart, as_dict=as_dict)
+
+
+def _comparator_score_chart(similarity_records, distance_records, as_dict=False):
+    chart_path = "comparator_score_chart.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["datasets"]["data-similarity"] = similarity_records
+    chart["datasets"]["data-distance"] = distance_records
+
+    return vegalite_or_json(chart, as_dict=as_dict)
+
+
+def _comparator_score_threshold_chart(
+    records, similarity_threshold, distance_threshold, as_dict=False
+):
+    chart_path = "comparator_score_threshold_chart.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["layer"][0]["title"] = (
+        f"Heatmap of Matches for "
+        f"distance_threshold = {distance_threshold}, "
+        f"similarity_threshold = {similarity_threshold}"
+    )
+    chart["datasets"]["data-with-thresholds"] = records
+
+    return vegalite_or_json(chart, as_dict=as_dict)
+
+
+def _phonetic_match_chart(records, as_dict=False):
+    chart_path = "phonetic_match_chart.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["datasets"]["data-phonetic"] = records
+
+    return vegalite_or_json(chart, as_dict=as_dict)

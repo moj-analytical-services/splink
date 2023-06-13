@@ -27,6 +27,7 @@ from ...comparison_library import (
 )
 from ...comparison_template_library import (
     DateComparisonBase,
+    EmailComparisonBase,
     ForenameSurnameComparisonBase,
     NameComparisonBase,
     PostcodeComparisonBase,
@@ -246,3 +247,9 @@ class forename_surname_comparison(
 
 class postcode_comparison(SparkComparisonProperties, PostcodeComparisonBase):
     pass
+
+
+class email_comparison(SparkComparisonProperties, EmailComparisonBase):
+    @property
+    def _distance_level(self):
+        return distance_function_level
