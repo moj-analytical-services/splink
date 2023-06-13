@@ -376,6 +376,11 @@ class Linker:
             f"infinity sql expression not available for {type(self)}"
         )
 
+    def _random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        raise NotImplementedError("Random sample sql not implemented for this linker")
+
     @property
     def _verify_link_only_job(self):
         cache = self._intermediate_table_cache

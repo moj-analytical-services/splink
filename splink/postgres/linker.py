@@ -10,6 +10,7 @@ from ..input_column import InputColumn
 from ..linker import Linker
 from ..misc import ensure_is_list
 from ..splink_dataframe import SplinkDataFrame
+from ..unique_id_concat import _composite_unique_id_from_nodes_sql
 
 logger = logging.getLogger(__name__)
 
@@ -168,7 +169,9 @@ class PostgresLinker(Linker):
         self._table_registration(input, table_name)
         return self._table_to_splink_dataframe(table_name, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size, seed=None):
+    def _random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
         if proportion == 1.0:
             return ""
         if seed:
@@ -178,17 +181,21 @@ class PostgresLinker(Linker):
                 "Postgres does not support seeds in random "
                 "samples. Please remove the `seed` parameter."
             )
-        # ideally would use TABLESAMPLE
-        # can't use currently as not supported for CTEs, which we need
+
         sample_size = int(sample_size)
-        return f"""
-            WHERE unique_id IN (
-                SELECT unique_id
-                FROM __splink__df_concat_with_tf
-                ORDER BY random()
-                LIMIT {sample_size}
-            )
-        """
+
+        if unique_id is None:
+            # unique_id col, with source_dataset column if needed to disambiguate
+            unique_id_cols = self._settings_obj._unique_id_input_columns
+            unique_id = _composite_unique_id_from_nodes_sql(unique_id_cols)
+        if table is None:
+            table = "__splink__df_concat_with_tf"
+        return (
+            f"WHERE {unique_id} IN ("
+            f"    SELECT {unique_id} FROM {table}"
+            f"    ORDER BY RANDOM() LIMIT {sample_size}"
+            f")"
+        )
 
     @property
     def _infinity_expression(self):
