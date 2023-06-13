@@ -286,22 +286,10 @@ def tf_adjustment_chart(
         f'{cl["label_for_charts"]} (TF col: {cl["tf_adjustment_column"]})' for cl in c
     ]
 
-    width_dict = df.groupby("gamma").count()["value"].to_dict()
-    width_expression = (
-        " ".join(
-            [
-                f"gamma_sel == {lev} ? {width_dict[lev] * 20 + 150} :"
-                for lev in tf_levels[:-1]
-            ]
-        )
-        + f" {width_dict[tf_levels[-1]] * 20 + 150}"
-    )
-
     df = df[df["gamma"].isin(tf_levels)].sort_values("least_freq_rank")
 
     chart["datasets"]["data"] = df.to_dict("records")
     chart["datasets"]["hist"] = binned_df.to_dict("records")
-    chart["config"]["width"]["signal"] = width_expression
     chart["config"]["params"][0]["value"] = max(tf_levels)
     chart["config"]["params"][0]["bind"]["options"] = tf_levels
     chart["config"]["params"][0]["bind"]["labels"] = labels

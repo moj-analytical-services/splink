@@ -38,6 +38,9 @@
             "data": {
                 "name": "data"
             },
+            "width": {
+                "step": 20
+            },
             "layer": [
                 {
                     "mark": {
@@ -270,7 +273,8 @@
                         "title": "Match weight"
                     },
                     {
-                        "field": "count", "title": "Number of values"
+                        "field": "count",
+                        "title": "Number of values"
                     }
                 ]
             }
