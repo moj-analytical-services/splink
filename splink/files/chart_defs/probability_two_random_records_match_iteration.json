@@ -5,7 +5,7 @@
     }
   },
   "data": {
-    "values": null
+    "values": []
   },
   "mark": "bar",
   "encoding": {
