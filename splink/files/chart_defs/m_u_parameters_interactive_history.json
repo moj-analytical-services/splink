@@ -1,8 +1,8 @@
 {
   "config": {
     "view": {
-      "width": 400,
-      "height": 300
+      "discreteWidth": 400,
+      "discreteHeight": 300
     },
     "title": {
       "anchor": "middle",
@@ -21,8 +21,7 @@
         "min": 0,
         "max": 10,
         "step": 1
-      },
-      "description": "Filter by the interation number"
+      }
     }
   ],
   "hconcat": [
@@ -240,5 +239,5 @@
     "text": "Proportion of record comparisons in each comparison level by match status",
     "subtitle": "(m and u probabilities)"
   },
-  "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json"
 }
