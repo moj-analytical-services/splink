@@ -36,6 +36,10 @@ class TestHelper(ABC):
     def extra_linker_args(self):
         return {}
 
+    @property
+    def date_format(self):
+        return "yyyy-mm-dd"
+
     @abstractmethod
     def convert_frame(self, df):
         pass
@@ -69,6 +73,10 @@ class DuckDBTestHelper(TestHelper):
 
     def convert_frame(self, df):
         return df
+
+    @property
+    def date_format(self):
+        return "%Y-%m-%d"
 
     @property
     def cll(self):

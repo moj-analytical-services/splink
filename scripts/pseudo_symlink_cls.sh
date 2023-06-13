@@ -45,7 +45,7 @@ do
     | awk '{print $2}' \
     | paste -sd ", " -)
 
-    cleaned_original_path="splink.${backend}.${backend}_linker"
+    cleaned_original_path=splink."$backend"."$backend"_linker
     full_import_path="splink.$backend.linker"
 
     # Create file and add new import path
@@ -64,7 +64,8 @@ do
 
         # Extract the filename without the backend extension
         # This is then used to check if the file has already been processed
-        f_name="${$(basename "$file")#"$backend"_}"
+        file_name=$(basename "$file")
+        f_name=${file_name/"$backend"_/}
 
         if [[ " ${comparison_files[@]} " =~ " ${f_name} " ]]; then
             continue  # exit if we've already processed
