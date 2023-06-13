@@ -131,6 +131,9 @@ class SparkTestHelper(TestHelper):
 
 
 class SQLiteTestHelper(TestHelper):
+
+    _frame_counter = 0
+
     def __init__(self):
         from rapidfuzz.distance.Levenshtein import distance
 
@@ -149,9 +152,10 @@ class SQLiteTestHelper(TestHelper):
     def extra_linker_args(self):
         return {"connection": self.con}
 
-    def _get_input_name(self):
-        name = f"input_alias_{self._frame_counter}"
-        self._frame_counter += 1
+    @classmethod
+    def _get_input_name(cls):
+        name = f"input_alias_{cls._frame_counter}"
+        cls._frame_counter += 1
         return name
 
     def convert_frame(self, df):
@@ -179,11 +183,13 @@ class SQLiteTestHelper(TestHelper):
 
 
 class PostgresTestHelper(TestHelper):
+
+    _frame_counter = 0
+
     def __init__(self, pg_engine):
         if pg_engine is None:
             raise SplinkTestException("No Postgres connection found")
         self.engine = pg_engine
-        self._frame_counter = 0
 
     @property
     def Linker(self):
@@ -192,9 +198,10 @@ class PostgresTestHelper(TestHelper):
     def extra_linker_args(self):
         return {"engine": self.engine}
 
-    def _get_input_name(self):
-        name = f"input_alias_{self._frame_counter}"
-        self._frame_counter += 1
+    @classmethod
+    def _get_input_name(cls):
+        name = f"input_alias_{cls._frame_counter}"
+        cls._frame_counter += 1
         return name
 
     def convert_frame(self, df):
