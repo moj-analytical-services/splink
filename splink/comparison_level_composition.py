@@ -36,12 +36,12 @@ def and_(
         === "DuckDB"
             Simple null level composition with an `AND` clause
             ``` python
-            import splink.duckdb.duckdb_comparison_level_library as cll
+            import splink.duckdb.comparison_level_library as cll
             cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
             Composing a levenshtein level with a custom `contains` level
             ``` python
-            import splink.duckdb.duckdb_comparison_level_library as cll
+            import splink.duckdb.comparison_level_library as cll
             misspelling = cll.levenshtein_level("name", 1)
             contains = {
                 "sql_condition": "(contains(name_l, name_r) OR " \
@@ -60,12 +60,12 @@ def and_(
         === "Spark"
             Simple null level composition with an `AND` clause
             ``` python
-            import splink.spark.spark_comparison_level_library as cll
+            import splink.spark.comparison_level_library as cll
             cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
             Composing a levenshtein level with a custom `contains` level
             ``` python
-            import splink.spark.spark_comparison_level_library as cll
+            import splink.spark.comparison_level_library as cll
             misspelling = cll.levenshtein_level("name", 1)
             contains = {
                 "sql_condition": "(contains(name_l, name_r) OR " \
@@ -84,12 +84,12 @@ def and_(
         === "Athena"
             Simple null level composition with an `AND` clause
             ``` python
-            import splink.athena.athena_comparison_level_library as cll
+            import splink.athena.comparison_level_library as cll
             cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
             Composing a levenshtein level with a custom `contains` level
             ``` python
-            import splink.athena.athena_comparison_level_library as cll
+            import splink.athena.comparison_level_library as cll
             misspelling = cll.levenshtein_level("name", 1)
             contains = {
                 "sql_condition": "(contains(name_l, name_r) OR " \
@@ -108,7 +108,7 @@ def and_(
         === "SQLite"
             Simple null level composition with an `AND` clause
             ``` python
-            import splink.sqlite.sqlite_comparison_level_library as cll
+            import splink.sqlite.comparison_level_library as cll
             cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
 
@@ -156,12 +156,12 @@ def or_(
         === "DuckDB"
             Simple null level composition with an `OR` clause
             ``` python
-            import splink.duckdb.duckdb_comparison_level_library as cll
+            import splink.duckdb.comparison_level_library as cll
             cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
             Composing a levenshtein level with a custom `contains` level
             ``` python
-            import splink.duckdb.duckdb_comparison_level_library as cll
+            import splink.duckdb.comparison_level_library as cll
             misspelling = cll.levenshtein_level("name", 1)
             contains = {
                 "sql_condition": "(contains(name_l, name_r) OR " \
@@ -180,12 +180,12 @@ def or_(
         === "Spark"
             Simple null level composition with an `OR` clause
             ``` python
-            import splink.spark.spark_comparison_level_library as cll
+            import splink.spark.comparison_level_library as cll
             cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
             Composing a levenshtein level with a custom `contains` level
             ``` python
-            import splink.spark.spark_comparison_level_library as cll
+            import splink.spark.comparison_level_library as cll
             misspelling = cll.levenshtein_level("name", 1)
             contains = {
                 "sql_condition": "(contains(name_l, name_r) OR " \
@@ -204,12 +204,12 @@ def or_(
         === "Athena"
             Simple null level composition with an `OR` clause
             ``` python
-            import splink.athena.athena_comparison_level_library as cll
+            import splink.athena.comparison_level_library as cll
             cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
             Composing a levenshtein level with a custom `contains` level
             ``` python
-            import splink.athena.athena_comparison_level_library as cll
+            import splink.athena.comparison_level_library as cll
             misspelling = cll.levenshtein_level("name", 1)
             contains = {
                 "sql_condition": "(contains(name_l, name_r) OR " \
@@ -228,7 +228,7 @@ def or_(
         === "SQLite"
             Simple null level composition with an `OR` clause
             ``` python
-            import splink.sqlite.sqlite_comparison_level_library as cll
+            import splink.sqlite.comparison_level_library as cll
             cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
 
@@ -272,12 +272,12 @@ def not_(
         === "DuckDB"
             *Not* an exact match on first name
             ``` python
-            import splink.duckdb.duckdb_comparison_level_library as cll
+            import splink.duckdb.comparison_level_library as cll
             cll.not_(cll.exact_match("first_name"))
             ```
             Find all exact matches *not* on the first of January
             ``` python
-            import splink.duckdb.duckdb_comparison_level_library as cll
+            import splink.duckdb.comparison_level_library as cll
             dob_first_jan =  {
                "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
                "label_for_charts": "Date is 1st Jan",
@@ -291,12 +291,12 @@ def not_(
         === "Spark"
             *Not* an exact match on first name
             ``` python
-            import splink.spark.spark_comparison_level_library as cll
+            import splink.spark.comparison_level_library as cll
             cll.not_(cll.exact_match("first_name"))
             ```
             Find all exact matches *not* on the first of January
             ``` python
-            import splink.spark.spark_comparison_level_library as cll
+            import splink.spark.comparison_level_library as cll
             dob_first_jan =  {
                "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
                "label_for_charts": "Date is 1st Jan",
@@ -310,12 +310,12 @@ def not_(
         === "Athena"
             *Not* an exact match on first name
             ``` python
-            import splink.athena.athena_comparison_level_library as cll
+            import splink.athena.comparison_level_library as cll
             cll.not_(cll.exact_match("first_name"))
             ```
             Find all exact matches *not* on the first of January
             ``` python
-            import splink.athena.athena_comparison_level_library as cll
+            import splink.athena.comparison_level_library as cll
             dob_first_jan =  {
                "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
                "label_for_charts": "Date is 1st Jan",
@@ -329,12 +329,12 @@ def not_(
         === "SQLite"
             *Not* an exact match on first name
             ``` python
-            import splink.sqlite.sqlite_comparison_level_library as cll
+            import splink.sqlite.comparison_level_library as cll
             cll.not_(cll.exact_match("first_name"))
             ```
             Find all exact matches *not* on the first of January
             ``` python
-            import splink.sqlite.sqlite_comparison_level_library as cll
+            import splink.sqlite.comparison_level_library as cll
             dob_first_jan =  {
                "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
                "label_for_charts": "Date is 1st Jan",

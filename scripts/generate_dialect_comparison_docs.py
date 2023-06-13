@@ -10,7 +10,7 @@ from splink.dialect_base import DialectBase
 
 # could always pick this up dynamically,
 # but this way we get to fix the order, and feels like not unreasonable upkeep
-dialects = ("duckdb", "spark", "athena", "sqlite")
+dialects = ("duckdb", "spark", "athena", "sqlite", "postgres")
 
 dialect_levels = {}
 dialect_comparisons = {}

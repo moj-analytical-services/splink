@@ -24,6 +24,7 @@ The pre-made Splink comparison levels available for each SQL dialect are as give
 {% include-markdown "./includes/generated_files/comparison_level_library_dialect_table.md" %}
 
 
+
 The detailed API for each of these are outlined below.
 
 ## Library comparison level APIs

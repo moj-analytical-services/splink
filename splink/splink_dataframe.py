@@ -22,6 +22,7 @@ class SplinkDataFrame:
         self.templated_name = templated_name
         self.physical_name = physical_name
         self.linker = linker
+        self._target_schema = "splink"
 
     @property
     def columns(self):

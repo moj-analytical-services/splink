@@ -262,7 +262,7 @@ class DuckDBLinker(Linker):
 
     @property
     def _infinity_expression(self):
-        return "cast('infinity' as double)"
+        return "cast('infinity' as float8)"
 
     def _table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"

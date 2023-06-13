@@ -124,7 +124,7 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
     sql = """
-    select *, cast(0.0 as double) as match_probability
+    select *, cast(0.0 as float8) as match_probability
     from __splink__df_comparison_vectors
     """
 
