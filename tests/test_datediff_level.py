@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from splink import exceptions
-from tests.decorator import mark_with_dialects_excluding
+from .decorator import mark_with_dialects_excluding
 
 
 # No SQLite - no array comparisons in library

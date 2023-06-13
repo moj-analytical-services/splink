@@ -1,13 +1,13 @@
 import pandas as pd
 
-from splink.duckdb.duckdb_comparison_level_library import (
+from splink.duckdb.comparison_level_library import (
     columns_reversed_level,
     else_level,
     exact_match_level,
     null_level,
     percentage_difference_level,
 )
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.linker import DuckDBLinker
 
 
 def test_column_reversal():

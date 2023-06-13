@@ -61,3 +61,22 @@ def test_helpers(spark):
         "spark": SparkTestHelper(spark),
         "sqlite": SQLiteTestHelper(),
     }
+
+
+# Function to easily see if the gamma column added to the linker matches
+# With the sets of tuples provided
+@pytest.fixture(scope="module")
+def test_gamma_assert():
+    def _test_gamma_assert(linker_output, size_gamma_lookup, col_name):
+        for gamma, id_pairs in size_gamma_lookup.items():
+            for left, right in id_pairs:
+                print(f"Checking IDs: {left}, {right}")
+                assert (
+                    linker_output.loc[
+                        (linker_output.unique_id_l == left)
+                        & (linker_output.unique_id_r == right)
+                    ]["gamma_" + col_name].values[0]
+                    == gamma
+                )
+
+    return _test_gamma_assert

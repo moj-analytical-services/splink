@@ -6,9 +6,9 @@ import pyarrow.csv as pa_csv
 import pyarrow.parquet as pq
 import pytest
 
-import splink.duckdb.duckdb_comparison_level_library as cll
-import splink.duckdb.duckdb_comparison_library as cl
-from splink.duckdb.duckdb_linker import DuckDBLinker
+import splink.duckdb.comparison_level_library as cll
+import splink.duckdb.comparison_library as cl
+from splink.duckdb.linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
@@ -111,9 +111,10 @@ def test_full_example_duckdb(tmp_path):
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
-    linker.save_settings_to_json(path)
+    linker.save_model_to_json(path)
 
-    linker_2 = DuckDBLinker(df, connection=":memory:")
+    linker_2 = DuckDBLinker(df)
+    linker_2.load_model(path)
     linker_2.load_settings(path)
     linker_2.load_settings_from_json(path)
     DuckDBLinker(df, settings_dict=path)

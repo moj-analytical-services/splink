@@ -21,7 +21,7 @@ E.g. For a comparison including a [Double Metaphone](#double-metaphone) phonetic
 
 === "DuckDB"
     ```python
-    import splink.duckdb.duckdb_comparison_template_library as ctl
+    import splink.duckdb.comparison_template_library as ctl
 
     first_name_comparison = ctl.name_comparison(
                             "first_name",
@@ -30,7 +30,7 @@ E.g. For a comparison including a [Double Metaphone](#double-metaphone) phonetic
     ```
 === "Spark"
     ```python
-    import splink.spark.spark_comparison_template_library as ctl
+    import splink.spark.comparison_template_library as ctl
 
     first_name_comparison = ctl.name_comparison(
                             "first_name",

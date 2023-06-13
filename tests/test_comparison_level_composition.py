@@ -1,9 +1,9 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.duckdb_comparison_level_library as cll
-import splink.duckdb.duckdb_comparison_level_library as scll
-from splink.duckdb.duckdb_linker import DuckDBLinker
+import splink.duckdb.comparison_level_library as cll
+import splink.duckdb.comparison_level_library as scll
+from splink.duckdb.linker import DuckDBLinker
 
 
 def test_not():

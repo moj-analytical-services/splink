@@ -78,9 +78,9 @@ The following code demonstrates how to estimate the parameters of a deduplicatio
 For more detailed tutorials, please see [here](https://moj-analytical-services.github.io/splink/demos/00_Tutorial_Introduction.html).
 
 ```py
-from splink.duckdb.duckdb_linker import DuckDBLinker
-import splink.duckdb.duckdb_comparison_library as cl
-import splink.duckdb.duckdb_comparison_template_library as ctl
+from splink.duckdb.linker import DuckDBLinker
+import splink.duckdb.comparison_library as cl
+import splink.duckdb.comparison_template_library as ctl
 
 import pandas as pd
 
@@ -97,7 +97,7 @@ settings = {
         ctl.name_comparison("surname"),
         ctl.date_comparison("dob", cast_strings_to_date=True),
         cl.exact_match("city", term_frequency_adjustments=True),
-        cl.levenshtein_at_thresholds("email", 2),
+        ctl.email_comparison("email"),
     ],
 }
 
