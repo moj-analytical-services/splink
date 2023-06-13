@@ -188,7 +188,7 @@
             },
             "x": {
               "type": "nominal",
-              "axis": { "labelAngle": 0, "title": "Column" },
+              "axis": { "labelAngle": -20, "title": "Column" },
               "field": "column_name",
               "sort": { "field": "bar_sort_order", "order": "ascending" }
             },
@@ -215,7 +215,7 @@
             },
             "x": {
               "type": "nominal",
-              "axis": { "labelAngle": 0, "title": "Column" },
+              "axis": { "labelAngle": -20, "title": "Column" },
               "field": "column_name",
               "sort": { "field": "bar_sort_order", "order": "ascending" }
             },
@@ -237,7 +237,7 @@
             },
             "x": {
               "type": "nominal",
-              "axis": { "labelAngle": 0, "title": "Column" },
+              "axis": { "labelAngle": -20, "title": "Column" },
               "field": "column_name",
               "sort": { "field": "bar_sort_order", "order": "ascending" }
             },
@@ -259,7 +259,7 @@
             },
             "x": {
               "type": "nominal",
-              "axis": { "labelAngle": 0, "title": "Column" },
+              "axis": { "labelAngle": -20, "title": "Column" },
               "field": "column_name",
               "sort": { "field": "bar_sort_order", "order": "ascending" }
             },
@@ -279,7 +279,7 @@
       "encoding": {
         "x": {
           "type": "nominal",
-          "axis": { "labelAngle": 0, "title": "Column" },
+          "axis": { "labelAngle": -20, "title": "Column" },
           "field": "column_name",
           "sort": { "field": "bar_sort_order", "order": "ascending" }
         },
