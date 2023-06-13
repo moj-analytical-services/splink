@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from splink import exceptions
+
 from .decorator import mark_with_dialects_excluding
 
 
