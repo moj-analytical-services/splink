@@ -96,8 +96,10 @@ class SQLiteLinker(Linker):
             connection = sqlite3.connect(connection)
         self.con = connection
         self.con.row_factory = dict_factory
+        # maths functions not always available by default depending on system
         self.con.create_function("log2", 1, log2)
         self.con.create_function("pow", 2, pow)
+        self.con.create_function("power", 2, pow)
         if register_udfs:
             self._register_udfs()
 
