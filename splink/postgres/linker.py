@@ -72,7 +72,7 @@ class PostgresDataFrame(SplinkDataFrame):
             sql += f" LIMIT {limit}"
         sql += ";"
         res = self.linker._run_sql_execution(sql).mappings().all()
-        return res
+        return [dict(r) for r in res]
 
 
 class PostgresLinker(Linker):
