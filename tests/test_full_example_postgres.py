@@ -83,20 +83,19 @@ def test_full_example_postgres(tmp_path, pg_engine):
 
     _test_table_registration(linker)
 
-    # record = {
-    #     "unique_id": 1,
-    #     "first_name": "John",
-    #     "surname": "Smith",
-    #     "dob": "1971-05-24",
-    #     "city": "London",
-    #     "email": "john@smith.net",
-    #     "group": 10000,
-    # }
+    record = {
+        "unique_id": 1,
+        "first_name": "John",
+        "surname": "Smith",
+        "dob": "1971-05-24",
+        "city": "London",
+        "email": "john@smith.net",
+        "group": 10000,
+    }
 
-    # TODO: fix bug and restore:
-    # linker.find_matches_to_new_records(
-    #     [record], blocking_rules=[], match_weight_threshold=-10000
-    # )
+    linker.find_matches_to_new_records(
+        [record], blocking_rules=[], match_weight_threshold=-10000
+    )
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
