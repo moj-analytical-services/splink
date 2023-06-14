@@ -12,7 +12,7 @@ from .charts import (
 )
 from .comparison_helpers_utils import threshold_match
 from .comparison_vector_values import compute_comparison_vector_values_sql
-
+from .settings import Settings
 
 def get_comparison_levels(values_to_compare: list, comparison):
     """
@@ -56,14 +56,6 @@ def get_comparison_levels(values_to_compare: list, comparison):
         ```
 
     """
-
-    if type(comparison) != dict:
-        comparison_dict = comparison.as_dict()
-    else:
-        comparison_dict = comparison
-
-    comparison_col = comparison_dict["output_column_name"]
-
     settings = {
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [],
@@ -71,6 +63,10 @@ def get_comparison_levels(values_to_compare: list, comparison):
             comparison,
         ],
     }
+    settings_obj = Settings(settings)
+
+    comparison_dict = settings_obj.comparisons[0].as_dict()
+    comparison_col = comparison_dict["output_column_name"]
 
     values_df = pd.DataFrame(values_to_compare, columns=[comparison_col])
     values_df["unique_id"] = values_df.reset_index().index
@@ -90,7 +86,7 @@ def get_comparison_levels(values_to_compare: list, comparison):
 
     labels = pd.DataFrame(comparison_dict["comparison_levels"])
     labels["gamma"] = labels.index[::-1]
-    labels.loc[labels["is_null_level"] is True, "gamma"] = -1
+    labels.loc[labels["is_null_level"] == True, "gamma"] = -1
 
     comp_df = pd.merge(
         df,
