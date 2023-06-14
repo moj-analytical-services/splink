@@ -141,7 +141,7 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     return sql
 
 
-def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name):
+def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name, cast_arrays_as_str):
     cols_or_exprs = ensure_is_list(cols_or_exprs)
     column_expressions = expressions_to_sql(cols_or_exprs)
     sqls = []
@@ -167,8 +167,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name)
                 end
             """
 
-#       if cast_arrays_as_str == True:
-        if raw_expr in array_cols:
+        if not cast_arrays_as_str and raw_expr in array_cols:
 
             sql = f"""
                 SELECT * FROM
@@ -187,15 +186,13 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name)
 
                 FROM
                 (select cast(unnest({col_or_expr}) as varchar) as value,
-            
+                
                 from {table_name})
                 GROUP BY value
                 order by count(*) desc)
 
                 """
-
-            sqls.append(sql)
-            
+ 
         else:
             sql = f"""
             select * from
@@ -213,9 +210,9 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name)
             order by count(*) desc)
             """
 
-            sqls.append(sql)
+        sqls.append(sql)
 
-    return " union all ".join(sqls)           
+    return " union all ".join(sqls)                 
 
 
 def _add_100_percentile_to_df_percentiles(percentile_rows):
@@ -230,7 +227,7 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
     return percentile_rows
 
 
-def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
+def profile_columns(linker, column_expressions, top_n=10, bottom_n=10, cast_arrays_as_str= False): 
 
     df_concat = linker._initialise_df_concat_with_tf()
 
@@ -244,7 +241,7 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
     column_expressions = expressions_to_sql(column_expressions_raw)
 
     sql = _col_or_expr_frequencies_raw_data_sql(
-        column_expressions_raw, array_cols, df_concat.physical_name
+        column_expressions_raw, array_cols, df_concat.physical_name, cast_arrays_as_str
     )
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
