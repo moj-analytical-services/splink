@@ -79,8 +79,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
-    # TODO: fix bug and restore:
-    # linker.unlinkables_chart(source_dataset="Testing")
+    linker.unlinkables_chart(source_dataset="Testing")
 
     _test_table_registration(linker)
 
