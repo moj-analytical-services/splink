@@ -1755,7 +1755,7 @@ class Linker:
             uid = ascii_uid(8)
             new_records_tablename = f"__splink__df_new_records_{uid}"
             self.register_table(
-                records_or_tablename, new_records_tablename , overwrite=True
+                records_or_tablename, new_records_tablename, overwrite=True
             )
 
         else:
