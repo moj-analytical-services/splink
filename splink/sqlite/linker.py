@@ -213,15 +213,17 @@ class SQLiteLinker(Linker):
         self.con.execute(drop_sql)
 
     def _register_udfs(self):
-        from rapidfuzz.distance.Levenshtein import distance as levenshtein
         from rapidfuzz.distance.DamerauLevenshtein import distance as dam_lev
         from rapidfuzz.distance.Jaro import distance as jaro
         from rapidfuzz.distance.JaroWinkler import distance as jaro_winkler
+        from rapidfuzz.distance.Levenshtein import distance as levenshtein
 
         def wrap_func_with_str(func):
             def wrapped_func(str_l, str_r):
                 return func(str(str_l), str(str_r))
+
             return wrapped_func
+
         # name in SQL : python function
         funcs_to_register = {
             "levenshtein": levenshtein,
