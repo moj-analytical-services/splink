@@ -214,8 +214,21 @@ class SQLiteLinker(Linker):
 
     def _register_udfs(self):
         from rapidfuzz.distance.Levenshtein import distance as levenshtein
+        from rapidfuzz.distance.DamerauLevenshtein import distance as dam_lev
+        from rapidfuzz.distance.Jaro import distance as jaro
+        from rapidfuzz.distance.JaroWinkler import distance as jaro_winkler
 
-        def levenshtein_wrap(str_l, str_r):
-            return levenshtein(str(str_l), str(str_r))
+        def wrap_func_with_str(func):
+            def wrapped_func(str_l, str_r):
+                return func(str(str_l), str(str_r))
+            return wrapped_func
+        # name in SQL : python function
+        funcs_to_register = {
+            "levenshtein": levenshtein,
+            "damerau_levenshtein": dam_lev,
+            "jaro_winkler": jaro_winkler,
+            "jaro": jaro,
+        }
 
-        self.con.create_function("levenshtein", 2, levenshtein_wrap)
+        for sql_name, func in funcs_to_register.items():
+            self.con.create_function(sql_name, 2, wrap_func_with_str(func))
