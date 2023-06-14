@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
-from math import log2, pow
 import sqlite3
+from math import log2, pow
 
 import pandas as pd
 
