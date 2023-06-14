@@ -102,8 +102,7 @@ def test_u_train_link_only(test_helpers, dialect):
     assert cl_no.u_probability == (denom - 3) / denom
 
 
-# TODO: restore postgres backend once bug fixed
-@mark_with_dialects_excluding("postgres")
+@mark_with_dialects_excluding()
 def test_u_train_link_only_sample(test_helpers, dialect):
     helper = test_helpers[dialect]
     df_l = (
