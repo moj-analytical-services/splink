@@ -32,15 +32,14 @@ def test_full_example_postgres(tmp_path, pg_engine):
         ]
     )
 
-    # TODO: fix bug and restore:
-    # linker.profile_columns(
-    #     [
-    #         "first_name",
-    #         '"surname"',
-    #         'first_name || "surname"',
-    #         "concat(city, first_name)",
-    #     ]
-    # )
+    linker.profile_columns(
+        [
+            "first_name",
+            '"surname"',
+            'first_name || "surname"',
+            "concat(city, first_name)",
+        ]
+    )
     linker.missingness_chart()
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
