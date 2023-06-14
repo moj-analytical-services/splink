@@ -1,7 +1,7 @@
 import re
 from copy import deepcopy
 
-from .charts import load_chart_definition, vegalite_or_json
+from .charts import altair_or_json, load_chart_definition
 from .misc import ensure_is_list
 
 
@@ -247,4 +247,4 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
 
     outer_spec["vconcat"] = inner_charts
 
-    return vegalite_or_json(outer_spec)
+    return altair_or_json(outer_spec)

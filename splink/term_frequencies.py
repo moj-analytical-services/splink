@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from numpy import arange, ceil, floor, log2
 from pandas import concat, cut
 
-from .charts import load_chart_definition, vegalite_or_json
+from .charts import altair_or_json, load_chart_definition
 from .input_column import InputColumn, remove_quotes_from_identifiers
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -308,4 +308,4 @@ def tf_adjustment_chart(
     chart["hconcat"][0]["layer"][-1]["encoding"]["x"]["title"] = "TF column value"
     chart["hconcat"][0]["layer"][0]["encoding"]["tooltip"][0]["title"] = "Value"
 
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)

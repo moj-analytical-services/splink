@@ -2182,9 +2182,7 @@ class Linker:
                 ```
 
         Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
+            altair.Chart: An altair chart
         """
         labels_tablename = self._get_labels_tablename_from_input(
             labels_splinkdataframe_or_table_name
@@ -2248,9 +2246,7 @@ class Linker:
                 ```
 
         Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
+            altair.Chart: An altair chart
         """
         labels_tablename = self._get_labels_tablename_from_input(
             labels_splinkdataframe_or_table_name
@@ -2360,9 +2356,7 @@ class Linker:
             ```
 
         Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
+            altair.Chart: An altair chart
         """
 
         df_truth_space = truth_space_table_from_labels_column(
@@ -2399,9 +2393,7 @@ class Linker:
             ```
 
         Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
+            altair.Chart: An altair chart
         """
 
         df_truth_space = truth_space_table_from_labels_column(
@@ -2458,9 +2450,7 @@ class Linker:
 
 
         Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
+            altair.Chart: An altair chart
 
         """
         df = histogram_data(self, df_predict, target_bins)
@@ -2490,9 +2480,7 @@ class Linker:
 
 
         Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
+            altair.Chart: An altair chart
 
         """
         self._raise_error_if_necessary_waterfall_columns_not_computed()
@@ -2531,9 +2519,7 @@ class Linker:
             that estimates your m and u values, before `unlinkables_chart().
 
         Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
+            altair.Chart: An altair chart
         """
 
         # Link our initial df on itself and calculate the % of unlinkable entries
@@ -2649,6 +2635,9 @@ class Linker:
             from IPython.display import IFrame
             IFrame(src="./test_chart.html", width=1000, height=500
             ```
+
+        Returns:
+            altair.Chart: An altair chart
         """
         records = missingness_data(self, input_dataset)
         return missingness_chart(records)
@@ -2805,9 +2794,7 @@ class Linker:
             ```
 
         Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
+            altair.Chart: An altair chart
         """
 
         if blocking_rules:
@@ -2873,9 +2860,7 @@ class Linker:
             ```
 
         Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
+            altair.Chart: An altair chart
         """
         return self._settings_obj.match_weights_chart()
 
@@ -2905,9 +2890,7 @@ class Linker:
                 Defaults to None.
 
         Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
+            altair.Chart: An altair chart
         """
 
         # Comparisons with TF adjustments
@@ -2953,9 +2936,7 @@ class Linker:
             ```
 
         Returns:
-            VegaLite: A VegaLite chart object. See altair.vegalite.v4.display.VegaLite.
-                The vegalite spec is available as a dictionary using the `spec`
-                attribute.
+            altair.Chart: An altair chart
         """
 
         return self._settings_obj.m_u_parameters_chart()
