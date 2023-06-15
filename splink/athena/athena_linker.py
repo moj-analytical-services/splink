@@ -36,7 +36,7 @@ class AthenaDataFrame(SplinkDataFrame):
         )
 
         cols = list(d.keys())
-        return [InputColumn(c, sql_dialect="trino") for c in cols]
+        return [InputColumn(c, sql_dialect="presto") for c in cols]
 
     def validate(self):
         pass
@@ -190,7 +190,7 @@ class AthenaLinker(Linker):
         if not type(boto3_session) == boto3.session.Session:
             raise ValueError("Please enter a valid boto3 session object.")
 
-        self._sql_dialect_ = "trino"
+        self._sql_dialect_ = "presto"
 
         _verify_athena_inputs(output_database, output_bucket, boto3_session)
         self.boto3_session = boto3_session
