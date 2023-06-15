@@ -424,6 +424,22 @@ class NameComparisonBase(Comparison):
                                     jaro_winkler_thresholds=[],
                                     jaccard_thresholds=[1]
                                     )
+            === "SQLite"
+                Basic Name Comparison
+                ``` python
+                import splink.sqlite.comparison_template_library as ctl
+                ctl.name_comparison("name")
+                ```
+                Bespoke Name Comparison
+                ``` python
+                import splink.sqlite.comparison_template_library as ctl
+                ctl.name_comparison("name",
+                                    phonetic_col_name = "name_dm",
+                                    term_frequency_adjustments = True,
+                                    levenshtein_thresholds=[2],
+                                    damerau_levenshtein_thresholds=[],
+                                    jaro_winkler_thresholds=[0.8],
+                                    )
                 ```
 
         Returns:
@@ -791,6 +807,27 @@ class ForenameSurnameComparisonBase(Comparison):
                         levenshtein_thresholds=[2],
                         jaro_winkler_thresholds=[],
                         jaccard_thresholds=[1],
+                    )
+                ```
+            === "SQLite"
+                Basic Forename Surname Comparison
+                ```py
+                import splink.sqlite.comparison_template_library as ctl
+                ctl.forename_surname_comparison("first_name", "surname)
+                ```
+
+                Bespoke Forename Surname Comparison
+                ```py
+                import splink.sqlite.comparison_template_library as ctl
+                ctl.forename_surname_comparison(
+                        "forename",
+                        "surname",
+                        term_frequency_adjustments=True,
+                        tf_adjustment_col_forename_and_surname="full_name",
+                        phonetic_forename_col_name="forename_dm",
+                        phonetic_surname_col_name="surname_dm",
+                        levenshtein_thresholds=[2],
+                        jaro_winkler_thresholds=[0.8],
                     )
                 ```
 

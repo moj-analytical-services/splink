@@ -231,6 +231,17 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                                    distance_threshold_or_thresholds = [0.9, 0.7],
                                    regex_extract="^[A-Z]{1,4}
                                    )
+            === "SQLite"
+                Apply the `levenshtein` function in a comparison with
+                levels 1 and 2
+                ``` python
+                import splink.sqlite.comparison_library as cl
+                cl.distance_function_at_thresholds("name",
+                                   distance_function_name = 'levenshtein',
+                                   distance_threshold_or_thresholds = [1, 2],
+                                   higher_is_more_similar = False
+                                   )
+                ```
             === "PostgreSQL"
                 Apply the `levenshtein` function in a comparison with
                 levels 1 and 2
@@ -395,6 +406,13 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                 ``` python
                 import splink.athena.comparison_library as cl
                 cl.levenshtein_at_thresholds("first_name", [1,2], regex_extract="^A|B")
+            === "SQLite"
+                Create comparison with levenshtein match levels with distance <=1
+                and <=2
+                ``` python
+                import splink.athena.comparison_library as cl
+                cl.levenshtein_at_thresholds("first_name", [1,2])
+                ```
             === "PostgreSQL"
                 Create comparison with levenshtein match levels with distance <=1
                 and <=2
@@ -477,7 +495,7 @@ class DamerauLevenshteinAtThresholdsComparisonBase(
         Examples:
             === "DuckDB"
                 Create comparison with damerau-levenshtein match levels with
-                distance <= 1
+                distance <= 1, 2
                 ``` python
                 import splink.duckdb.comparison_library as cl
                 cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
@@ -493,19 +511,26 @@ class DamerauLevenshteinAtThresholdsComparisonBase(
                 ```
             === "Spark"
                 Create comparison with damerau-levenshtein match levels with
-                distance <= 1
+                distance <= 1, 2
                 ``` python
                 import splink.spark.comparison_library as cl
                 cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
                 ```
                 Create comparison with damerau-evenshtein match levels with
-                distance <= 1
+                distance <= 1, 2
                 on a substring of name column as determined by a regular expression
                 ``` python
                 import splink.spark.comparison_library as cl
                 cl.damerau_levenshtein_at_thresholds("first_name",
                                                      [1,2],
                                                      regex_extract="^A|B")
+                ```
+            === "SQLite"
+                Create comparison with damerau-levenshtein match levels with
+                distance <= 1, 2
+                ``` python
+                import splink.sqlite.comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
                 ```
 
         Returns:
@@ -707,6 +732,13 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
                 import splink.spark.comparison_library as cl
                 cl.jaro_at_thresholds("first_name", [0.9, 0.7], regex_extract="^[A-Z]")
                 ```
+            === "SQLite"
+                Create comparison with jaro match levels with similarity score >=0.9
+                and >=0.7
+                ``` python
+                import splink.sqlite.comparison_library as cl
+                cl.jaro_at_thresholds("first_name", [0.9, 0.7])
+                ```
 
         Returns:
             Comparison:
@@ -812,6 +844,13 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
                                               [0.9, 0.7],
                                               regex_extract="^[A-Z]"
                                               )
+                ```
+            === "SQLite"
+                Create comparison with jaro_winkler match levels with similarity
+                score >=0.9 and >=0.7
+                ``` python
+                import splink.sqlite.comparison_library as cl
+                cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
                 ```
 
         Returns:

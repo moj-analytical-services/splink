@@ -1,6 +1,7 @@
 from ...comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
+    DamerauLevenshteinLevelBase,
     DateDiffLevelBase,
     DistanceFunctionLevelBase,
     DistanceInKMLevelBase,
@@ -119,7 +120,7 @@ class levenshtein_level(SparkBase, LevenshteinLevelBase):
     pass
 
 
-class damerau_levenshtein_level(SparkBase, LevenshteinLevelBase):
+class damerau_levenshtein_level(SparkBase, DamerauLevenshteinLevelBase):
     pass
 
 

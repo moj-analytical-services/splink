@@ -332,6 +332,14 @@ class DistanceFunctionLevelBase(ComparisonLevel):
                                             "levenshtein_distance",
                                             2,
                                             False)
+            === "SQLite
+                Apply the `levenshtein` function to a comparison level
+                ``` python
+                import splink.sqlite.comparison_level_library as cll
+                cll.distance_function_level("name",
+                                            "levenshtein",
+                                            2,
+                                            False)
             === "PostgreSQL"
                 Apply the `levenshtein` function to a comparison level
                 ``` python
@@ -466,6 +474,12 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
                 ```python
                 import splink.athena.comparison_level_library as cll
                 cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
+            === "SQLite"
+                Comparison level with levenshtein distance score less than (or equal
+                 to) 1
+                ``` python
+                import splink.sqlite.comparison_level_library as cll
+                cll.levenshtein_level("name", 1)
             === "PostgreSQL"
                 Comparison level with levenshtein distance score less than (or equal
                  to) 1
@@ -549,6 +563,12 @@ class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
                 ```python
                 import splink.spark.comparison_level_library as cll
                 cll.damerau_levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
+            === "SQLite"
+                Comparison level with damerau-levenshtein distance score less than
+                (or equal to) 1
+                ``` python
+                import splink.sqlite.comparison_level_library as cll
+                cll.damerau_levenshtein_level("name", 1)
                 ```
 
         Returns:
@@ -621,6 +641,12 @@ class JaroLevelBase(DistanceFunctionLevelBase):
                 import splink.spark.comparison_level_library as cll
                 cll.jaro_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
                 ```
+            === "SQLite"
+                Comparison level with jaro score greater than 0.9
+                ``` python
+                import splink.sqlite.comparison_level_library as cll
+                cll.jaro_level("name", 0.9)
+                ```
 
         Returns:
             ComparisonLevel: A comparison level that evaluates the
@@ -690,6 +716,12 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
                 ``` python
                 import splink.spark.comparison_level_library as cll
                 cll.jaro_winkler_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
+                ```
+            === "SQLite"
+                Comparison level with jaro-winkler score greater than 0.9
+                ``` python
+                import splink.sqlite.comparison_level_library as cll
+                cll.jaro_winkler_level("name", 0.9)
                 ```
 
         Returns:
