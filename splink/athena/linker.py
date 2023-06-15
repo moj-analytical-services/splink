@@ -297,7 +297,7 @@ class AthenaLinker(Linker):
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
         self._delete_table_from_database(physical_name)
-        sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
+        sql = sqlglot_transform_sql(sql, cast_concat_as_varchar, dialect="presto")
         sql = sql.replace("FLOAT", "double").replace("float", "double")
 
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
