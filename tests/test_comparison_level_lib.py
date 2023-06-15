@@ -1,16 +1,13 @@
 import pandas as pd
 
-from splink.duckdb.comparison_level_library import (
-    columns_reversed_level,
-    else_level,
-    exact_match_level,
-    null_level,
-    percentage_difference_level,
-)
-from splink.duckdb.linker import DuckDBLinker
+from .decorator import mark_with_dialects_excluding
 
 
-def test_column_reversal():
+@mark_with_dialects_excluding()
+def test_column_reversal(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    cll = helper.cll
+
     data = [
         {"id": 1, "forename": "John", "surname": "Smith", "full_name": "John Smith"},
         {"id": 2, "forename": "Smith", "surname": "John", "full_name": "Smith John"},
@@ -26,10 +23,10 @@ def test_column_reversal():
             {
                 "output_column_name": "full_name",
                 "comparison_levels": [
-                    null_level("full_name"),
-                    exact_match_level("full_name"),
-                    columns_reversed_level("forename", "surname"),
-                    else_level(),
+                    cll.null_level("full_name"),
+                    cll.exact_match_level("full_name"),
+                    cll.columns_reversed_level("forename", "surname"),
+                    cll.else_level(),
                 ],
             },
         ],
@@ -38,8 +35,9 @@ def test_column_reversal():
     }
 
     df = pd.DataFrame(data)
+    df = helper.convert_frame(df)
 
-    linker = DuckDBLinker(df, settings)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
     df_e = linker.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])
@@ -49,7 +47,11 @@ def test_column_reversal():
     assert row["gamma_full_name"] == 2
 
 
-def test_perc_difference():
+@mark_with_dialects_excluding()
+def test_perc_difference(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    cll = helper.cll
+
     data = [
         {"id": 1, "amount": 1.2},
         {"id": 2, "amount": 1.0},
@@ -66,12 +68,12 @@ def test_perc_difference():
             {
                 "output_column_name": "amount",
                 "comparison_levels": [
-                    null_level("amount"),
-                    percentage_difference_level("amount", 0.0),  # 4
-                    percentage_difference_level("amount", (0.2 / 1.2) + 1e-4),  # 3
-                    percentage_difference_level("amount", (0.2 / 1.0) + 1e-4),  # 2
-                    percentage_difference_level("amount", (60 / 200) + 1e-4),  # 1
-                    else_level(),
+                    cll.null_level("amount"),
+                    cll.percentage_difference_level("amount", 0.0),  # 4
+                    cll.percentage_difference_level("amount", (0.2 / 1.2) + 1e-4),  # 3
+                    cll.percentage_difference_level("amount", (0.2 / 1.0) + 1e-4),  # 2
+                    cll.percentage_difference_level("amount", (60 / 200) + 1e-4),  # 1
+                    cll.else_level(),
                 ],
             },
         ],
@@ -80,8 +82,9 @@ def test_perc_difference():
     }
 
     df = pd.DataFrame(data)
+    df = helper.convert_frame(df)
 
-    linker = DuckDBLinker(df, settings)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
     df_e = linker.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])  # 16.66%
