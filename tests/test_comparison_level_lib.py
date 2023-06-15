@@ -95,3 +95,87 @@ def test_perc_difference(test_helpers, dialect):
 
     row = dict(df_e.query("id_l == 4 and id_r == 5").iloc[0])  # 30%
     assert row["gamma_amount"] == 1
+
+
+@mark_with_dialects_excluding()
+def test_levenshtein_level(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    cll = helper.cll
+
+    data = [
+        {"id": 1, "name": "harry"},
+        {"id": 2, "name": "harry"},
+        {"id": 3, "name": "barry"},
+        {"id": 4, "name": "gary"},
+        {"id": 5, "name": "sally"},
+        {"id": 6, "name": "sharry"},
+        {"id": 7, "name": "haryr"},
+        {"id": 8, "name": "ahryr"},
+        {"id": 9, "name": "harry12345"},
+        {"id": 10, "name": "ahrryt"},
+        {"id": 11, "name": "hy"},
+        {"id": 12, "name": "r"},
+    ]
+    # id and expected levenshtein distance from id:1 "harry"
+    id_distance_from_1 = {
+        2: 0,
+        3: 1,
+        4: 2,
+        5: 3,
+        6: 1,
+        7: 2,
+        8: 3,
+        9: 5,
+        10: 3,
+        11: 3,
+        12: 4,
+    }
+
+    settings = {
+        "unique_id_column_name": "id",
+        "link_type": "dedupe_only",
+        "comparisons": [
+            {
+                "output_column_name": "name",
+                "comparison_levels": [
+                    cll.null_level("name"),
+                    cll.levenshtein_level("name", 0),  # 4
+                    cll.levenshtein_level("name", 1),  # 3
+                    cll.levenshtein_level("name", 2),  # 2
+                    cll.levenshtein_level("name", 3),  # 1
+                    cll.else_level(),  # 0
+                ],
+            },
+        ],
+        "retain_matching_columns": True,
+        "retain_intermediate_calculation_columns": True,
+    }
+
+    def gamma_lev_from_distance(dist):
+        # which gamma value will I get for a given levenshtein distance?
+        if dist == 0:
+            return 4
+        elif dist == 1:
+            return 3
+        elif dist == 2:
+            return 2
+        elif dist == 3:
+            return 1
+        elif dist > 3:
+            return 0
+        raise ValueError(f"Invalid distance supplied ({dist})")
+
+    df = pd.DataFrame(data)
+    df = helper.convert_frame(df)
+
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    df_e = linker.predict().as_pandas_dataframe()
+
+    for id_r, lev_dist in id_distance_from_1.items():
+        expected_gamma_lev = gamma_lev_from_distance(lev_dist)
+        print(
+            f"id: {id_r}, expected_lev: {lev_dist}, "
+            f"expected_gamma: {expected_gamma_lev}"
+        )
+        row = dict(df_e.query(f"id_l == 1 and id_r == {id_r}").iloc[0])
+        assert row["gamma_name"] == expected_gamma_lev
