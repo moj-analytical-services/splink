@@ -17,6 +17,10 @@ from ...comparison_library import (
     JaroWinklerAtThresholdsComparisonBase,
     LevenshteinAtThresholdsComparisonBase,
 )
+from ...comparison_template_library import (
+    ForenameSurnameComparisonBase,
+    NameComparisonBase,
+)
 from .sqlite_base import (
     SqliteBase,
 )
@@ -150,6 +154,15 @@ class jaro_winkler_at_thresholds(
 ###################################
 ### COMPARISON TEMPLATE LIBRARY ###
 ###################################
-# Not yet implemented
-# Currently does not support the necessary comparison levels
-# required for existing comparison templates
+class name_comparison(SqliteComparisonProperties, NameComparisonBase):
+    @property
+    def _distance_level(self):
+        return distance_function_level
+
+
+class forename_surname_comparison(
+    SqliteComparisonProperties, ForenameSurnameComparisonBase
+):
+    @property
+    def _distance_level(self):
+        return distance_function_level
