@@ -41,7 +41,7 @@ def datediff_sql(
 class AthenaBase(DialectBase):
     @property
     def _sql_dialect(self):
-        return "trino"
+        return "presto"
 
     @property
     def _levenshtein_name(self):
