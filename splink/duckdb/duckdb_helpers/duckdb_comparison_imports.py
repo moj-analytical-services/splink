@@ -1,6 +1,7 @@
 from ...comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
+    DamerauLevenshteinLevelBase,
     DateDiffLevelBase,
     DistanceFunctionLevelBase,
     DistanceInKMLevelBase,
@@ -119,7 +120,7 @@ class levenshtein_level(DuckDBBase, LevenshteinLevelBase):
     pass
 
 
-class damerau_levenshtein_level(DuckDBBase, LevenshteinLevelBase):
+class damerau_levenshtein_level(DuckDBBase, DamerauLevenshteinLevelBase):
     pass
 
 

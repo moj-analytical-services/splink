@@ -1,5 +1,6 @@
 from ...comparison_level_library import (
     ColumnsReversedLevelBase,
+    DamerauLevenshteinLevelBase,
     DistanceFunctionLevelBase,
     ElseLevelBase,
     ExactMatchLevelBase,
@@ -84,7 +85,7 @@ class levenshtein_level(SqliteBase, LevenshteinLevelBase):
     pass
 
 
-class damerau_levenshtein_level(SqliteBase, LevenshteinLevelBase):
+class damerau_levenshtein_level(SqliteBase, DamerauLevenshteinLevelBase):
     pass
 
 
