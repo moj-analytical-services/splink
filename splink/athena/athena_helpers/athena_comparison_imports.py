@@ -99,8 +99,10 @@ class array_intersect_level(AthenaBase, ArrayIntersectLevelBase):
 class percentage_difference_level(AthenaBase, PercentageDifferenceLevelBase):
     pass
 
+
 class datediff_level(AthenaBase, DateDiffLevelBase):
     pass
+
 
 class distance_in_km_level(AthenaBase, DistanceInKMLevelBase):
     pass
@@ -134,10 +136,12 @@ class array_intersect_at_sizes(
 ):
     pass
 
+
 class datediff_at_thresholds(
     AthenaComparisonProperties, DateDiffAtThresholdsComparisonBase
 ):
     pass
+
 
 class distance_in_km_at_thresholds(
     AthenaComparisonProperties, DistanceInKMAtThresholdsComparisonBase
