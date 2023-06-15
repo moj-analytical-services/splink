@@ -6,10 +6,12 @@ from ...dialect_base import (
 def size_array_intersect_sql(col_name_l, col_name_r):
     return f"cardinality(array_intersect({col_name_l}, {col_name_r}))"
 
+
 def regex_extract_sql(col_name, regex):
     return f"""
         regexp_extract({col_name}, '{regex}')
     """
+
 
 def datediff_sql(
     col_name_l,
@@ -54,6 +56,6 @@ class AthenaBase(DialectBase):
     @property
     def _regex_extract_function(self):
         return regex_extract_sql
-        
+
     def _datediff_function(self):
         return datediff_sql
