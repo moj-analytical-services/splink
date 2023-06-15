@@ -12,6 +12,7 @@ from ...comparison_level_library import (
 )
 from ...comparison_library import (
     ArrayIntersectAtSizesComparisonBase,
+    DateDiffAtThresholdsComparisonBase,
     DistanceFunctionAtThresholdsComparisonBase,
     DistanceInKMAtThresholdsComparisonBase,
     ExactMatchBase,
