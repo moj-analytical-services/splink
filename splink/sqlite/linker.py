@@ -6,6 +6,7 @@ from math import log2, pow
 
 import pandas as pd
 
+from ..exceptions import SplinkException
 from ..input_column import InputColumn
 from ..linker import Linker
 from ..misc import ensure_is_list
@@ -213,10 +214,21 @@ class SQLiteLinker(Linker):
         self.con.execute(drop_sql)
 
     def _register_udfs(self):
-        from rapidfuzz.distance.DamerauLevenshtein import distance as dam_lev
-        from rapidfuzz.distance.Jaro import distance as jaro
-        from rapidfuzz.distance.JaroWinkler import distance as jaro_winkler
-        from rapidfuzz.distance.Levenshtein import distance as levenshtein
+        try:
+            from rapidfuzz.distance.DamerauLevenshtein import distance as dam_lev
+            from rapidfuzz.distance.Jaro import distance as jaro
+            from rapidfuzz.distance.JaroWinkler import distance as jaro_winkler
+            from rapidfuzz.distance.Levenshtein import distance as levenshtein
+        except ModuleNotFoundError as e:
+            raise SplinkException(
+                "To use fuzzy string-matching udfs in SQLite you must install "
+                "the python package 'rapidfuzz'.  "
+                "If you do not wish to do so, and do not need to use any "
+                "fuzzy string-matching comparisons, you can use the linker argument "
+                "`register_udfs=False`.\n"
+                "See https://moj-analytical-services.github.io/splink/"
+                "topic_guides/backends.html#sqlite for more information"
+            ) from e
 
         def wrap_func_with_str(func):
             def wrapped_func(str_l, str_r):
