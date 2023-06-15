@@ -542,7 +542,7 @@ class ComparisonLevel:
         sql = f"""
         WHEN
         {self.comparison._gamma_column_name} = {self._comparison_vector_value}
-        THEN cast({bayes_factor} as double)
+        THEN cast({bayes_factor} as float8)
         """
         return dedent(sql)
 
@@ -555,13 +555,13 @@ class ComparisonLevel:
 
         # A tf adjustment of 1D is a multiplier of 1.0, i.e. no adjustment
         if self._comparison_vector_value == -1:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as double)"
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
         elif not self._has_tf_adjustments:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as double)"
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
         elif self._tf_adjustment_weight == 0:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as double)"
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
         elif self._is_else_level:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as double)"
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
         else:
             tf_adj_col = self._tf_adjustment_input_column
 
@@ -596,11 +596,11 @@ class ComparisonLevel:
                 divisor_sql = f"""
                 (CASE
                     WHEN {coalesce_l_r} >= {coalesce_r_l}
-                    AND {coalesce_l_r} > cast({self._tf_minimum_u_value} as double)
+                    AND {coalesce_l_r} > cast({self._tf_minimum_u_value} as float8)
                         THEN {coalesce_l_r}
-                    WHEN {coalesce_r_l}  > cast({self._tf_minimum_u_value} as double)
+                    WHEN {coalesce_r_l}  > cast({self._tf_minimum_u_value} as float8)
                         THEN {coalesce_r_l}
-                    ELSE cast({self._tf_minimum_u_value} as double)
+                    ELSE cast({self._tf_minimum_u_value} as float8)
                 END)
                 """
 
@@ -609,10 +609,10 @@ class ComparisonLevel:
                 (CASE WHEN {tf_adjustment_exists}
                 THEN
                 POW(
-                    cast({u_prob_exact_match} as double) /{divisor_sql},
-                    cast({self._tf_adjustment_weight} as double)
+                    cast({u_prob_exact_match} as float8) /{divisor_sql},
+                    cast({self._tf_adjustment_weight} as float8)
                 )
-                ELSE cast(1 as double)
+                ELSE cast(1 as float8)
                 END)
             """
         return dedent(sql).strip()

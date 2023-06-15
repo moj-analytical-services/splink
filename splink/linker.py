@@ -206,7 +206,7 @@ class Linker:
                 input database are long or unspecific, this argument can be used
                 to attach more easily readable/interpretable names. Defaults to None.
         """
-
+        self._db_schema = "splink"
         if set_up_basic_logging:
             logging.basicConfig(
                 format="%(message)s",
@@ -375,6 +375,11 @@ class Linker:
         raise NotImplementedError(
             f"infinity sql expression not available for {type(self)}"
         )
+
+    def _random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
+        raise NotImplementedError("Random sample sql not implemented for this linker")
 
     @property
     def _verify_link_only_job(self):
@@ -643,7 +648,8 @@ class Linker:
 
             raise SplinkException(
                 f"Error executing the following sql for table "
-                f"`{templated_name}` ({physical_name}):\n{final_sql}"
+                f"`{templated_name}`({physical_name}):\n{final_sql}"
+                f"\n\nError was: {e}"
             ) from e
 
     def register_table(self, input, table_name, overwrite=False):
@@ -1289,7 +1295,7 @@ class Linker:
         Examples:
             === "DuckDB"
             ```py
-            from splink.duckdb.duckdb_linker import DuckDBLinker
+            from splink.duckdb.linker import DuckDBLinker
 
             settings = {
                 "link_type": "dedupe_only",
@@ -1305,7 +1311,7 @@ class Linker:
             ```
             === "Spark"
             ```py
-            from splink.spark.spark_linker import SparkLinker
+            from splink.spark.linker import SparkLinker
 
             settings = {
                 "link_type": "dedupe_only",
@@ -1321,7 +1327,7 @@ class Linker:
             ```
             === "Athena"
             ```py
-            from splink.athena.athena_linker import AthenaLinker
+            from splink.athena.linker import AthenaLinker
 
             settings = {
                 "link_type": "dedupe_only",
@@ -1337,7 +1343,7 @@ class Linker:
             ```
             === "SQLite"
             ```py
-            from splink.sqlite.sqlite_linker import SQLiteLinker
+            from splink.sqlite.linker import SQLiteLinker
 
             settings = {
                 "link_type": "dedupe_only",

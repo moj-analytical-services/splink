@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.linker import DuckDBLinker
 from splink.exceptions import SplinkException
 from tests.basic_settings import get_settings_dict
 
@@ -10,7 +10,7 @@ df_l = df.copy()
 df_r = df.copy()
 df_l["source_dataset"] = "my_left_ds"
 df_r["source_dataset"] = "my_right_ds"
-df_final = df_l.append(df_r)
+df_final = pd.concat([df_l, df_r])
 
 settings = get_settings_dict()
 settings["link_type"] = "link_only"

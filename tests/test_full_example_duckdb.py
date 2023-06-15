@@ -6,9 +6,9 @@ import pyarrow.csv as pa_csv
 import pyarrow.parquet as pq
 import pytest
 
-import splink.duckdb.duckdb_comparison_level_library as cll
-import splink.duckdb.duckdb_comparison_library as cl
-from splink.duckdb.duckdb_linker import DuckDBLinker
+import splink.duckdb.comparison_level_library as cll
+import splink.duckdb.comparison_library as cl
+from splink.duckdb.linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
@@ -129,7 +129,7 @@ df_l = df.copy()
 df_r = df.copy()
 df_l["source_dataset"] = "my_left_ds"
 df_r["source_dataset"] = "my_right_ds"
-df_final = df_l.append(df_r)
+df_final = pd.concat([df_l, df_r])
 
 
 # Tests link only jobs under different inputs:

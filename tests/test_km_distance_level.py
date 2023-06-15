@@ -1,12 +1,12 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.duckdb_comparison_level_library as clld
-import splink.duckdb.duckdb_comparison_library as cld
-import splink.spark.spark_comparison_level_library as clls
-import splink.spark.spark_comparison_library as cls
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
+import splink.duckdb.comparison_level_library as clld
+import splink.duckdb.comparison_library as cld
+import splink.spark.comparison_level_library as clls
+import splink.spark.comparison_library as cls
+from splink.duckdb.linker import DuckDBLinker
+from splink.spark.linker import SparkLinker
 
 
 @pytest.mark.parametrize(

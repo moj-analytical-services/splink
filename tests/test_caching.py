@@ -4,7 +4,7 @@ from unittest.mock import create_autospec, patch
 import pandas as pd
 import pytest
 
-from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
+from splink.duckdb.linker import DuckDBLinker, DuckDBLinkerDataFrame
 from splink.linker import SplinkDataFrame
 from tests.basic_settings import get_settings_dict
 

@@ -26,8 +26,8 @@ All aspects of a Splink model are defined via the settings dictionary. The setti
 For example, consider a simple model (as defined in the [README](https://github.com/moj-analytical-services/splink#quickstart)). The model is defined by the following settings dictionary
 
 ```py linenums="1"
-import splink.duckdb.duckdb_comparison_library as cl
-import splink.duckdb.duckdb_comparison_template_library as ctl
+import splink.duckdb.comparison_library as cl
+import splink.duckdb.comparison_template_library as ctl
 
 settings = {
     "link_type": "dedupe_only",
@@ -52,7 +52,7 @@ Where:
 The `"link_type"` is defined as a deduplication for a single dataset.
 
 ```py linenums="5"
-    "link_type": "dedupe_only", 
+    "link_type": "dedupe_only",
 ```
 
 **2. Pairs of records to consider**
@@ -83,9 +83,9 @@ The `"comparisons"` define the features to be compared between records: `"first_
 Using functions from the [comparison template library](comparison_templates.ipynb) and [comparison library](./customising_comparisons.ipynb#method-1-using-the-comparisonlibrary) to define **how** these features should be compared.
 
 ```py linenums="1"
-import splink.duckdb.duckdb_comparison_library as cl
-import splink.duckdb.duckdb_comparison_template_library as ctl
-``` 
+import splink.duckdb.comparison_library as cl
+import splink.duckdb.comparison_template_library as ctl
+```
 
 For more information on how comparisons are defined, see the [dedicated topic guide](./customising_comparisons.ipynb).
 
@@ -255,9 +255,9 @@ With our finalised settings object, we can train a splink model using the follow
 ??? example "Example model using the settings dictionary"
 
     ```py
-    from splink.duckdb.duckdb_linker import DuckDBLinker
-    import splink.duckdb.duckdb_comparison_library as cl
-    import splink.duckdb.duckdb_comparison_template_library as ctl
+    from splink.duckdb.linker import DuckDBLinker
+    import splink.duckdb.comparison_library as cl
+    import splink.duckdb.comparison_template_library as ctl
 
     import pandas as pd
 
@@ -293,7 +293,7 @@ With our finalised settings object, we can train a splink model using the follow
     clusters.as_pandas_dataframe(limit=5)
     ```
 
-    
+
 
 ## Advanced usage of the settings dictionary
 
@@ -301,7 +301,7 @@ The section above refers to the three key aspects of the Splink settings diction
 
 For a list of all possible parameters that can be used within the settings dictionary, see the [Settings Dictionary Reference](../settings_dict_guide.md) and the [Interactive Settings Editor](../settingseditor/editor.md).
 
-## Saving a trained model 
+## Saving a trained model
 
 Once you have have a trained Splink model, it is often helpful to save out the model. The `save_model_to_json` function allows the user to save out the specifications of their trained model.
 
@@ -524,7 +524,7 @@ For example in the first name exact match level:
 
 ```
 
-where the `m_probability` and `u_probability` values here are then used to generate the match weight for an exact match on `"first_name"` between two records (i.e. the amount of evidence provided by records having the same first name) in model predictions. 
+where the `m_probability` and `u_probability` values here are then used to generate the match weight for an exact match on `"first_name"` between two records (i.e. the amount of evidence provided by records having the same first name) in model predictions.
 
 ## Loading a pre-trained model
 

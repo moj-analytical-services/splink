@@ -156,7 +156,7 @@ class AthenaLinker(Linker):
             import awswrangler as wr
             wr.catalog.create_database("splink_awswrangler_test", exist_ok=True)
             >>>
-            from splink.athena.athena_linker import AthenaLinker
+            from splink.athena.linker import AthenaLinker
             import boto3
             # Create a session - please see the boto3 documentation for more info
             my_session = boto3.Session(region_name="eu-west-1")
@@ -174,7 +174,7 @@ class AthenaLinker(Linker):
             import awswrangler as wr
             wr.catalog.create_database("splink_awswrangler_test2", exist_ok=True)
             >>>
-            from splink.athena.athena_linker import AthenaLinker
+            from splink.athena.linker import AthenaLinker
             import boto3
             my_session = boto3.Session(region_name="eu-west-1")
             >>>
@@ -340,7 +340,9 @@ class AthenaLinker(Linker):
         # Errors if an invalid data type is passed
         self.register_data_on_s3(input, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size, seed=None):
+    def _random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
         if proportion == 1.0:
             return ""
         percent = proportion * 100

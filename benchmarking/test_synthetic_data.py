@@ -1,7 +1,7 @@
 import pandas as pd
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
+from splink.duckdb.linker import DuckDBLinker
+from splink.spark.linker import SparkLinker
 
 full_name_cc = {
     "output_column_name": "full_name",
