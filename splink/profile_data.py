@@ -1,9 +1,12 @@
 import re
+import logging
+
 from copy import deepcopy
 
 from .charts import load_chart_definition, vegalite_or_json
 from .misc import ensure_is_list
 
+logger = logging.getLogger(__name__)
 
 def _group_name(cols_or_expr):
     cols_or_expr = re.sub(r"[^0-9a-zA-Z_]", " ", cols_or_expr)
@@ -230,19 +233,26 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
         percentile_rows = [
             p for p in percentile_rows_all if p["group_name"] == _group_name(expression)
         ]
-        percentile_rows = _add_100_percentile_to_df_percentiles(percentile_rows)
-        top_n_rows = [
-            p for p in top_n_rows_all if p["group_name"] == _group_name(expression)
-        ]
-        bottom_n_rows = [
-            p for p in bottom_n_rows_all if p["group_name"] == _group_name(expression)
-        ]
-        # remove concat blank from expression title
-        expression = expression.replace(", ' '", "")
-        inner_chart = _get_inner_chart_spec_freq(
-            percentile_rows, top_n_rows, bottom_n_rows, expression
-        )
-        inner_charts.append(inner_chart)
+        if percentile_rows==[]:
+            logger.warning(
+                    "Warning: No charts produce for "
+                    f"{expression}"
+                    " as the column only contains null values."
+                )
+        else:
+            percentile_rows = _add_100_percentile_to_df_percentiles(percentile_rows)
+            top_n_rows = [
+                p for p in top_n_rows_all if p["group_name"] == _group_name(expression)
+            ]
+            bottom_n_rows = [
+                p for p in bottom_n_rows_all if p["group_name"] == _group_name(expression)
+            ]
+            # remove concat blank from expression title
+            expression = expression.replace(", ' '", "")
+            inner_chart = _get_inner_chart_spec_freq(
+                percentile_rows, top_n_rows, bottom_n_rows, expression
+            )
+            inner_charts.append(inner_chart)
     outer_spec = deepcopy(_outer_chart_spec_freq)
 
     outer_spec["vconcat"] = inner_charts
