@@ -1,5 +1,5 @@
 {
-    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.0.json",
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
     "title": {
         "text": "Term frequency adjusted match weights",
         "fontSize": 16,
@@ -7,9 +7,6 @@
         "anchor": "middle"
     },
     "config": {
-        "width": {
-            "signal": ""
-        },
         "params": [
             {
                 "name": "gamma_sel",
@@ -40,6 +37,9 @@
             ],
             "data": {
                 "name": "data"
+            },
+            "width": {
+                "step": 20
             },
             "layer": [
                 {
@@ -182,8 +182,7 @@
                             "field": "log2_bf_final"
                         },
                         "y2": {
-                            "type": "quantitative",
-                            "field": "log2_bf"
+                            "type": "quantitative"
                         },
                         "color": {
                             "type": "quantitative",
@@ -274,7 +273,8 @@
                         "title": "Match weight"
                     },
                     {
-                        "field": "count", "title": "Number of values"
+                        "field": "count",
+                        "title": "Number of values"
                     }
                 ]
             }

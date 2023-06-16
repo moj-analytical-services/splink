@@ -1,7 +1,7 @@
 import re
 from copy import deepcopy
 
-from .charts import load_chart_definition, vegalite_or_json
+from .charts import altair_or_json, load_chart_definition
 from .misc import ensure_is_list
 
 
@@ -25,7 +25,7 @@ def expressions_to_sql(expressions):
 _outer_chart_spec_freq = {
     "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
     "vconcat": [],
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
 }
 
 chart_path = "profile_data.json"
@@ -247,4 +247,4 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
 
     outer_spec["vconcat"] = inner_charts
 
-    return vegalite_or_json(outer_spec)
+    return altair_or_json(outer_spec)

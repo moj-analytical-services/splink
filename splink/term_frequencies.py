@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from numpy import arange, ceil, floor, log2
 from pandas import concat, cut
 
-from .charts import load_chart_definition, vegalite_or_json
+from .charts import altair_or_json, load_chart_definition
 from .input_column import InputColumn, remove_quotes_from_identifiers
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -286,22 +286,10 @@ def tf_adjustment_chart(
         f'{cl["label_for_charts"]} (TF col: {cl["tf_adjustment_column"]})' for cl in c
     ]
 
-    width_dict = df.groupby("gamma").count()["value"].to_dict()
-    width_expression = (
-        " ".join(
-            [
-                f"gamma_sel == {lev} ? {width_dict[lev] * 20 + 150} :"
-                for lev in tf_levels[:-1]
-            ]
-        )
-        + f" {width_dict[tf_levels[-1]] * 20 + 150}"
-    )
-
     df = df[df["gamma"].isin(tf_levels)].sort_values("least_freq_rank")
 
     chart["datasets"]["data"] = df.to_dict("records")
     chart["datasets"]["hist"] = binned_df.to_dict("records")
-    chart["config"]["width"]["signal"] = width_expression
     chart["config"]["params"][0]["value"] = max(tf_levels)
     chart["config"]["params"][0]["bind"]["options"] = tf_levels
     chart["config"]["params"][0]["bind"]["labels"] = labels
@@ -320,4 +308,4 @@ def tf_adjustment_chart(
     chart["hconcat"][0]["layer"][-1]["encoding"]["x"]["title"] = "TF column value"
     chart["hconcat"][0]["layer"][0]["encoding"]["tooltip"][0]["title"] = "Value"
 
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
