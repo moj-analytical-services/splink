@@ -23,20 +23,31 @@
 
         <div id="observablehq-styles"></div>
         <h1>Splink Clerical Labelling Tool</h1>
+        <div id="observablehq-beta_header"></div>
         <div id="observablehq-blurb"></div>
         <div id="observablehq-checkboxes"></div>
+{% if show_splink_predictions_in_interface %}
         <div id="observablehq-show_splink_predictions_in_interface"></div>
+{% endif %}
         <div id="observablehq-existing_labels_csv"></div>
         <div id="observablehq-table-interface"></div>
         <div id="observablehq-dl"></div>
-        <div id="observablehq-copy_to_clipboard_button"></div>
 
 
+{% if view_in_jupyter %}
+        <div id="observablehq-labels_in_textarea"></div>
+{% endif %}
 
 
     </div>
 
-
+<script>
+{% if show_splink_predictions_in_interface %}
+        SHOW_SPLINK_PREDICTIONS = true
+{% else %}
+        SHOW_SPLINK_PREDICTIONS = false
+{% endif %}
+</script>
 
 
 {% if pairwise_comparison_data %}
@@ -61,12 +72,20 @@
 
         if (name === "styles") return new slt.Inspector(document.querySelector("#observablehq-styles"));
         if (name === "viewof checkboxes") return new slt.Inspector(document.querySelector("#observablehq-checkboxes"));
+
+{% if show_splink_predictions_in_interface %}
         if (name === "viewof show_splink_predictions_in_interface") return new slt.Inspector(document.querySelector("#observablehq-show_splink_predictions_in_interface"));
+{% endif %}
         if (name === "viewof table_interface") return new slt.Inspector(document.querySelector("#observablehq-table-interface"));
         if (name === "viewof existing_labels_csv") return new slt.Inspector(document.querySelector("#observablehq-existing_labels_csv"));
         if (name === "dl") return new slt.Inspector(document.querySelector("#observablehq-dl"));
-        if (name === "copy_to_clipboard_button") return new slt.Inspector(document.querySelector("#observablehq-copy_to_clipboard_button"));
+
         if (name === "blurb") return new slt.Inspector(document.querySelector("#observablehq-blurb"));
+        if (name === "beta_header") return new slt.Inspector(document.querySelector("#observablehq-beta_header"));
+
+{% if view_in_jupyter %}
+        if (name === "labels_in_textarea") return new slt.Inspector(document.querySelector("#observablehq-labels_in_textarea"));
+{% endif %}
 
 
 

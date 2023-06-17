@@ -53,6 +53,8 @@ def render_labelling_tool_html(
     linker: "Linker",
     df_comparisons: SplinkDataFrame,
     out_path="labelling_tool.html",
+    view_in_jupyter=False,
+    show_splink_predictions_in_interface=True,
     overwrite: bool = True,
 ):
     settings: dict = linker._settings_obj.as_dict()
@@ -77,6 +79,8 @@ def render_labelling_tool_html(
         "slt": slt_text,
         "pairwise_comparison_data": json.dumps(comparisons_recs, cls=EverythingEncoder),
         "splink_settings_data": json.dumps(settings, cls=EverythingEncoder),
+        "view_in_jupyter": view_in_jupyter,
+        "show_splink_predictions_in_interface": show_splink_predictions_in_interface,
     }
 
     rendered = template.render(**template_data)

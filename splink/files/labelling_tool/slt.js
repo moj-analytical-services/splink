@@ -332,7 +332,7 @@
  * ---
  *
  * Name: 0420fc5db15e44ab
- * Version: 3047.0.0
+ * Version: 3280.0.0
  * License: null
  * Private: false
  * Homepage: https://observablehq.com/d/0420fc5db15e44ab
@@ -8571,11 +8571,20 @@
 <details>
   <summary>Click here for instructions for using this tool</summary>
   <p>Use this tool to label which records represent a match to the <mark>original record, which is highlighted in yellow</mark> at the top of the table.</p>
-  <p>Subsequent rows are potential matches to the original row.</p>
-  <p>Use the slider on the left hand side to choose a clerical match probability, which is the probability with which you think the potential match is the same entity as the original record.</p>
+  <p>Subsequent rows are possible matches to the original row.</p>
+  <p>Use the slider on the left hand side to choose a clerical match probability, which is the probability with which you think the possible match is the same entity as the original record.</p>
   <p>You may also enter notes to explain why you made a particular decision.</p>
   <p>When you're finished labelling, click the download button below the table to export your labels.</p>
 </details>
+`
+  )}
+
+  function _beta_header(html){return(
+  html`
+   <div id="beta-notice">
+        <p><span>BETA</span>
+        The Splink labelling tool is still in development, which means some features may change and there may be bugs. Your  <a href="https://github.com/moj-analytical-services/splink/discussions">feedback</a>  will help us improve it.</p>
+    </div>
 `
   )}
 
@@ -8600,10 +8609,11 @@
     const table_second_header = table_element.append("tr");
 
     const column_header_translations = {
-      clerical_match_score: "Clerical Score",
+      clerical_match_score: "Clerical Probability",
       notes_input: "Notes",
       match_probability: "Match Probability",
-      match_weight: "Match Weight"
+      match_weight: "Match Weight",
+      model_truth_status: "Label category"
     };
 
     d3.select(table_second_header.node())
@@ -8813,13 +8823,6 @@
   }
   )}
 
-  function _fonts(html){return(
-  html`
-
-
-`
-  )}
-
   function _colspan_spec(show_splink_predictions_in_interface)
   {
     let spec = [
@@ -8836,7 +8839,7 @@
 
     if (splink_predictions) {
       spec.push({
-        span: 2,
+        span: 3,
         text: "Splink predictions",
         css_class: "splink_predictions_column"
       });
@@ -9033,6 +9036,7 @@ details {
   border-radius: 4px;
   margin-bottom: 16px;
   line-height: 1.5;
+  max-width: 1400px;
 }
 
 details summary {
@@ -9073,15 +9077,46 @@ details p {
   margin-bottom: 20px;
 }
 
+#beta-notice {
+    background-color: white; 
+    color: #000000; /* You can choose the color you like for the text */
+    border: 1px solid #000000;
+    border-radius: 5px;
+    padding: 20px;
+    margin: 0;
+    padding:8px;
+    font-family: "Source Sans Pro", sans-serif;
+    margin-bottom: 16px;
+    max-width: 1400px;
+  box-sizing: border-box;
+}
+
+#beta-notice span {
+    font-size:1.2em;    
+    font-weight:800;
+    padding:4px;
+    margin-right:5px;
+    background-color: #1d70b8; 
+    color: white;
+}
+
+#beta-notice p {
+    font-size: 1em; /* You can adjust the size of the paragraph text */
+}
+
+#copy_labels_textarea {
+  width: 100%;
+  max-width: 1400px;
+}
 
 </style>`;
   }
 
 
-  function _show_splink_predictions_in_interface(slt)
+  function _show_splink_predictions_in_interface(slt,show_splink_predictions_initial_value)
   {
     let cb = slt.checkbox(["Show splink predictions"], {
-      value: ["Show splink predictions"]
+      value: show_splink_predictions_initial_value
     });
     cb.classList.add("labelling-tool-checkbox");
     return cb;
@@ -9213,6 +9248,18 @@ details p {
   }
 
 
+  function _labels_in_textarea(html,slt,output_data){return(
+  html`
+<h3>Note for JupyterLab users</h3>
+<p> If you're viewing this within the Jupyter Lab html viewer, html is sandboxed so the 'download labels' button will not work.</p>
+<p> As a workaround, you can manually copy and paste the following text and use
+<code>pd.read_clipboard()</code> to load this data into a pandas dataframe in Python.</p>
+<textarea id="copy_labels_textarea" rows=10 onfocus="this.select()">
+${slt.d3.csvFormat(output_data)}
+
+`
+  )}
+
   function _tooltip(slt){return(
   slt.d3
     .select("body")
@@ -9221,11 +9268,11 @@ details p {
     .style("z-index", "10")
   )}
 
-  function _24(md){return(
+  function _25(md){return(
   md`### Styling`
   )}
 
-  function _shade_potential_match_cells(original_row,white_green_colour_scale,columns_to_highlight_similarity,leven,white_blue_colour_scale,transitive_highlight_width,padding_with_highlight){return(
+  function _shade_potential_match_cells(original_row,white_green_colour_scale_match_prob,columns_to_highlight_similarity,white_green_colour_scale,leven,white_blue_colour_scale,transitive_highlight_width,padding_with_highlight,score_to_truth_status){return(
   function (d3_data, sel, el) {
     // The cell additional cell styling
     // that gives a visual representation of the similarity
@@ -9249,10 +9296,9 @@ details p {
       }
     });
 
-    
     if (d3_data["_key"] == "clerical_match_score") {
       sel.style("background-color", (d) => {
-        return white_green_colour_scale(d["_td_contents"].value);
+        return white_green_colour_scale_match_prob(d["_td_contents"].value);
       });
     }
 
@@ -9308,6 +9354,37 @@ details p {
           }
         }
       }
+    }
+
+    if (["match_probability", "match_weight"].includes(d3_data["_key"])) {
+      sel.style("background-color", (d) => {
+        let mp = d["_orig_data"]["match_probability"];
+        mp = parseFloat(mp);
+        return white_green_colour_scale_match_prob(mp);
+      });
+    }
+
+    if (d3_data["_key"] == "model_truth_status") {
+      sel.select("p").html((d) => {
+        let data = d["_orig_data"];
+        let clerical_score = data["clerical_match_score"].value;
+        let splink_score = parseFloat(data["match_probability"]);
+        return score_to_truth_status(clerical_score, splink_score);
+      });
+    }
+
+    if (d3_data["_key"] == "model_truth_status") {
+      sel.style("background-color", (d) => {
+        let data = d["_orig_data"];
+        let clerical_score = data["clerical_match_score"].value;
+        let splink_score = parseFloat(data["match_probability"]);
+        let truth_status = score_to_truth_status(clerical_score, splink_score);
+        if (["FN", "FP"].includes(truth_status)) {
+          return "#ff6d6d";
+        } else {
+          return null;
+        }
+      });
     }
   }
   )}
@@ -9420,7 +9497,7 @@ details p {
   }
   )}
 
-  function _29(md){return(
+  function _30(md){return(
   md`## Dataflow`
   )}
 
@@ -9470,6 +9547,7 @@ details p {
       formatted_data = formatted_data.filter((d) => !has_same_source_dataset(d));
     }
 
+
     return formatted_data;
   }
 
@@ -9506,7 +9584,6 @@ details p {
 
         existing_labels_csv.forEach((existing_label) => {
           if (has_existing_label(existing_label, pairwise_comparison)) {
-            debugger;
             match_score = existing_label["clerical_match_score"];
             notes_value = existing_label["clerical_notes"];
           }
@@ -9518,7 +9595,7 @@ details p {
         {
           clerical_match_score: slt.range([0, 1], {
             value: match_score,
-            step: 0.01
+            step: 0.001
           }),
           notes_input: slt.textarea({ value: notes_value })
         },
@@ -9548,7 +9625,10 @@ details p {
           match_probability: data.match_probability,
           match_weight: data.match_weight,
           clerical_match_score: data.clerical_match_score_value,
-          clerical_notes: data.notes_input_value
+          clerical_notes: data.notes_input_value,
+          original_record_source_dataset:
+            original_row[source_dataset_column_name],
+          original_record_unique_id: original_row[unique_id_column_name]
         };
       } else {
         return {
@@ -9557,7 +9637,8 @@ details p {
           match_probability: data.match_probability,
           match_weight: data.match_weight,
           clerical_match_score: data.clerical_match_score_value,
-          clerical_notes: data.notes_input_value
+          clerical_notes: data.notes_input_value,
+          original_record_unique_id: original_row[unique_id_column_name]
         };
       }
     });
@@ -9575,7 +9656,7 @@ details p {
   }
 
 
-  function _38(md){return(
+  function _39(md){return(
   md`## Constants`
   )}
 
@@ -9641,7 +9722,7 @@ details p {
   }
 
 
-  function _46(md){return(
+  function _47(md){return(
   md`## Pure functions`
   )}
 
@@ -9749,7 +9830,11 @@ details p {
     if (show_splink_scores) {
       return true;
     } else {
-      return !["match_probability", "match_weight"].includes(data._key);
+      return ![
+        "match_probability",
+        "match_weight",
+        "model_truth_status"
+      ].includes(data._key);
     }
   }
   )}
@@ -9807,6 +9892,7 @@ details p {
     transformed_record["match_probability"] =
       pairwise_comparison["match_probability"];
     transformed_record["match_weight"] = pairwise_comparison["match_weight"];
+    transformed_record["model_truth_status"] = null;
     if (original_record) {
       transformed_record["match_probability"] = null;
       transformed_record["match_weight"] = null;
@@ -10012,7 +10098,21 @@ details p {
   }
   )}
 
-  function _60(md){return(
+  function _score_to_truth_status(){return(
+  function score_to_truth_status(clerical_score, splink_score) {
+    if (clerical_score > 0.5 && splink_score > 0.5) {
+      return "TP";
+    } else if (clerical_score <= 0.5 && splink_score <= 0.5) {
+      return "TN";
+    } else if (clerical_score > 0.5 && splink_score <= 0.5) {
+      return "FN";
+    } else {
+      return "FP";
+    }
+  }
+  )}
+
+  function _62(md){return(
   md`### Formatting`
   )}
 
@@ -10029,11 +10129,25 @@ details p {
     .range(["red", "orange", "green"])
   )}
 
+  function _red_white_green_colour_scale(slt){return(
+  slt.d3
+    .scaleLinear()
+    .domain([0, 0.1, 0.5, 0.9, 1])
+    .range(["#FF9898", "#FFDBDB", "white", "#E5FFE5", "limegreen"])
+  )}
+
   function _white_green_colour_scale(slt){return(
   slt.d3
     .scaleLinear()
     .domain([0, 0.7, 1])
     .range(["white", "rgb(214, 245, 214)", "limegreen"])
+  )}
+
+  function _white_green_colour_scale_match_prob(slt){return(
+  slt.d3
+    .scaleLinear()
+    .domain([0, 1])
+    .range(["white", "limegreen"])
   )}
 
   function _white_blue_colour_scale(slt){return(
@@ -10043,7 +10157,7 @@ details p {
     .range(["white", "rgb(143, 200, 255)", "dodgerblue"])
   )}
 
-  function _65(md){return(
+  function _69(md){return(
   md`## Constants`
   )}
 
@@ -10063,7 +10177,19 @@ details p {
   }
 
 
-  function _69(md){return(
+  function _show_splink_predictions_initial_value(globalThis)
+  {
+    if (typeof globalThis.SHOW_SPLINK_PREDICTIONS == "undefined") {
+      return ["Show splink predictions"];
+    } else if (globalThis.SHOW_SPLINK_PREDICTIONS == true) {
+      return ["Show splink predictions"];
+    } else {
+      return [];
+    }
+  }
+
+
+  function _74(md){return(
   md`## Embedding things
 `
   )}
@@ -10072,7 +10198,7 @@ details p {
   "http://127.0.0.1:8080/dist/slt.js"
   )}
 
-  function _71(md){return(
+  function _76(md){return(
   md`## TODO:
 
 
@@ -10090,16 +10216,16 @@ details p {
     main.variable(observer("slt")).define("slt", ["globalThis","require","localUrl","refresh"], _slt);
     main.variable(observer("in_settings")).define("in_settings", _in_settings);
     main.variable(observer("blurb")).define("blurb", ["html"], _blurb);
+    main.variable(observer("beta_header")).define("beta_header", ["html"], _beta_header);
     main.variable(observer("draw_header")).define("draw_header", ["slt","original_row","d3","colspan_spec","splink_scores_filter","styling_lookup"], _draw_header);
     main.variable(observer("render_tooltip_contents")).define("render_tooltip_contents", ["original_row","leven","jaro_winkler_distance","match_prob_number_format","insert_del_differences"], _render_tooltip_contents);
     main.variable(observer("draw_original_row")).define("draw_original_row", ["slt","original_row","match_prob_number_format","splink_scores_filter","styling_lookup"], _draw_original_row);
     main.variable(observer("draw_potential_matches_spacer_row")).define("draw_potential_matches_spacer_row", _draw_potential_matches_spacer_row);
     main.variable(observer("draw_potential_matches_rows")).define("draw_potential_matches_rows", ["table_cells_d3_data_mapper","columns_to_highlight_similarity","styling_lookup","HTMLElement","form_oninput_update_value","redraw_potential_match_cells","slt","render_tooltip_contents","tooltip"], _draw_potential_matches_rows);
-    main.variable(observer("fonts")).define("fonts", ["html"], _fonts);
     main.variable(observer("colspan_spec")).define("colspan_spec", ["show_splink_predictions_in_interface"], _colspan_spec);
     main.variable(observer("styling_lookup")).define("styling_lookup", ["colspan_spec"], _styling_lookup);
     main.variable(observer("styles")).define("styles", ["html"], _styles);
-    main.variable(observer("viewof show_splink_predictions_in_interface")).define("viewof show_splink_predictions_in_interface", ["slt"], _show_splink_predictions_in_interface);
+    main.variable(observer("viewof show_splink_predictions_in_interface")).define("viewof show_splink_predictions_in_interface", ["slt","show_splink_predictions_initial_value"], _show_splink_predictions_in_interface);
     main.variable(observer("show_splink_predictions_in_interface")).define("show_splink_predictions_in_interface", ["Generators", "viewof show_splink_predictions_in_interface"], (G, _) => G.input(_));
     main.variable(observer("viewof existing_labels_csv")).define("viewof existing_labels_csv", ["html","slt","Event"], _existing_labels_csv);
     main.variable(observer("existing_labels_csv")).define("existing_labels_csv", ["Generators", "viewof existing_labels_csv"], (G, _) => G.input(_));
@@ -10109,13 +10235,14 @@ details p {
     main.variable(observer("table_interface")).define("table_interface", ["Generators", "viewof table_interface"], (G, _) => G.input(_));
     main.variable(observer("dl")).define("dl", ["DOM","slt","output_data","output_filename"], _dl);
     main.variable(observer("copy_to_clipboard_button")).define("copy_to_clipboard_button", ["html","slt","output_data"], _copy_to_clipboard_button);
+    main.variable(observer("labels_in_textarea")).define("labels_in_textarea", ["html","slt","output_data"], _labels_in_textarea);
     main.variable(observer("tooltip")).define("tooltip", ["slt"], _tooltip);
-    main.variable(observer()).define(["md"], _24);
-    main.variable(observer("shade_potential_match_cells")).define("shade_potential_match_cells", ["original_row","white_green_colour_scale","columns_to_highlight_similarity","leven","white_blue_colour_scale","transitive_highlight_width","padding_with_highlight"], _shade_potential_match_cells);
+    main.variable(observer()).define(["md"], _25);
+    main.variable(observer("shade_potential_match_cells")).define("shade_potential_match_cells", ["original_row","white_green_colour_scale_match_prob","columns_to_highlight_similarity","white_green_colour_scale","leven","white_blue_colour_scale","transitive_highlight_width","padding_with_highlight","score_to_truth_status"], _shade_potential_match_cells);
     main.variable(observer("redraw_potential_match_cells")).define("redraw_potential_match_cells", ["table_cells_d3_data_mapper","checkboxes","columns_to_highlight_similarity","original_row","insert_del_differences","slt","shade_potential_match_cells"], _redraw_potential_match_cells);
     main.variable(observer("table_cells_d3_data_mapper")).define("table_cells_d3_data_mapper", ["splink_scores_filter"], _table_cells_d3_data_mapper);
     main.variable(observer("form_oninput_update_value")).define("form_oninput_update_value", ["Event"], _form_oninput_update_value);
-    main.variable(observer()).define(["md"], _29);
+    main.variable(observer()).define(["md"], _30);
     main.variable(observer("splink_settings")).define("splink_settings", ["globalThis","default_splink_settings"], _splink_settings);
     main.variable(observer("pairwise_comparison_data")).define("pairwise_comparison_data", ["globalThis","default_pairwise_comparison_data"], _pairwise_comparison_data);
     main.variable(observer("pairwise_comparison_data_formatted")).define("pairwise_comparison_data_formatted", ["pairwise_comparison_data","match_prob_number_format","is_self_match","splink_settings","has_same_source_dataset"], _pairwise_comparison_data_formatted);
@@ -10124,7 +10251,7 @@ details p {
     main.variable(observer("data_with_inputs")).define("data_with_inputs", ["potential_matches_data","existing_labels_csv","has_existing_label","slt"], _data_with_inputs);
     main.variable(observer("output_data")).define("output_data", ["table_interface","has_source_dataset_column","source_dataset_column_name","original_row","unique_id_column_name"], _output_data);
     main.variable(observer("output_filename")).define("output_filename", ["has_source_dataset_column","original_row","source_dataset_column_name","unique_id_column_name"], _output_filename);
-    main.variable(observer()).define(["md"], _38);
+    main.variable(observer()).define(["md"], _39);
     main.variable(observer("comparison_records_suffix")).define("comparison_records_suffix", ["get_suffix_of_comparison_records_l_or_r","pairwise_comparison_data","unique_id_column_name"], _comparison_records_suffix);
     main.variable(observer("original_record_suffix")).define("original_record_suffix", ["get_suffix_of_original_record_l_or_r","pairwise_comparison_data","unique_id_column_name"], _original_record_suffix);
     main.variable(observer("unique_id_column_name")).define("unique_id_column_name", ["splink_settings"], _unique_id_column_name);
@@ -10132,7 +10259,7 @@ details p {
     main.variable(observer("columns_to_highlight_similarity")).define("columns_to_highlight_similarity", ["unique_id_column_name","source_dataset_column_name","additional_columns_to_retain","pairwise_comparison_data"], _columns_to_highlight_similarity);
     main.variable(observer("additional_columns_to_retain")).define("additional_columns_to_retain", ["splink_settings"], _additional_columns_to_retain);
     main.variable(observer("has_source_dataset_column")).define("has_source_dataset_column", ["pairwise_comparison_data","source_dataset_column_name"], _has_source_dataset_column);
-    main.variable(observer()).define(["md"], _46);
+    main.variable(observer()).define(["md"], _47);
     main.variable(observer("is_self_match")).define("is_self_match", ["has_source_dataset_column","source_dataset_column_name","unique_id_column_name"], _is_self_match);
     main.variable(observer("has_same_source_dataset")).define("has_same_source_dataset", ["has_source_dataset_column","source_dataset_column_name"], _has_same_source_dataset);
     main.variable(observer("get_output_columns")).define("get_output_columns", _get_output_columns);
@@ -10146,18 +10273,22 @@ details p {
     main.variable(observer("leven")).define("leven", _leven);
     main.variable(observer("jaro_winkler_distance")).define("jaro_winkler_distance", ["slt"], _jaro_winkler_distance);
     main.variable(observer("insert_del_differences")).define("insert_del_differences", ["slt"], _insert_del_differences);
-    main.variable(observer()).define(["md"], _60);
+    main.variable(observer("score_to_truth_status")).define("score_to_truth_status", _score_to_truth_status);
+    main.variable(observer()).define(["md"], _62);
     main.variable(observer("match_prob_number_format")).define("match_prob_number_format", _match_prob_number_format);
     main.variable(observer("red_orange_green_colour_scale")).define("red_orange_green_colour_scale", ["slt"], _red_orange_green_colour_scale);
+    main.variable(observer("red_white_green_colour_scale")).define("red_white_green_colour_scale", ["slt"], _red_white_green_colour_scale);
     main.variable(observer("white_green_colour_scale")).define("white_green_colour_scale", ["slt"], _white_green_colour_scale);
+    main.variable(observer("white_green_colour_scale_match_prob")).define("white_green_colour_scale_match_prob", ["slt"], _white_green_colour_scale_match_prob);
     main.variable(observer("white_blue_colour_scale")).define("white_blue_colour_scale", ["slt"], _white_blue_colour_scale);
-    main.variable(observer()).define(["md"], _65);
+    main.variable(observer()).define(["md"], _69);
     main.variable(observer("table_cell_padding")).define("table_cell_padding", _table_cell_padding);
     main.variable(observer("transitive_highlight_width")).define("transitive_highlight_width", _transitive_highlight_width);
     main.variable(observer("padding_with_highlight")).define("padding_with_highlight", ["table_cell_padding","transitive_highlight_width"], _padding_with_highlight);
-    main.variable(observer()).define(["md"], _69);
+    main.variable(observer("show_splink_predictions_initial_value")).define("show_splink_predictions_initial_value", ["globalThis"], _show_splink_predictions_initial_value);
+    main.variable(observer()).define(["md"], _74);
     main.variable(observer("localUrl")).define("localUrl", _localUrl);
-    main.variable(observer()).define(["md"], _71);
+    main.variable(observer()).define(["md"], _76);
     return main;
   }
 
