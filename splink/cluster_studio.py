@@ -131,13 +131,21 @@ def _get_random_cluster_ids(
 
     proportion = sample_size / cluster_count
 
+    random_sample_sql = linker._random_sample_sql(
+        proportion,
+        sample_size,
+        seed,
+        table=connected_components.physical_name,
+        unique_id="cluster_id",
+    )
+
     sql = f"""
     with distinct_clusters as (
     select distinct(cluster_id)
     from {connected_components.physical_name}
     )
     select cluster_id from distinct_clusters
-    {linker._random_sample_sql(proportion, sample_size, seed)}
+    {random_sample_sql}
     """
 
     df_sample = linker._sql_to_splink_dataframe_checking_cache(

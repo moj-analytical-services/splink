@@ -1,0 +1,155 @@
+{
+    "config": {
+        "view": {
+            "continuousWidth": 400,
+            "continuousHeight": 300
+        }
+    },
+    "hconcat": [
+        {
+            "height": 300,
+            "width": 300,
+            "layer": [
+                {
+                    "mark": {
+                        "type": "rect"
+                    },
+                    "encoding": {
+                        "color": {
+                            "field": "score",
+                            "scale": {
+                                "domain": [
+                                    0,
+                                    1
+                                ],
+                                "range": [
+                                    "red",
+                                    "green"
+                                ]
+                            },
+                            "type": "quantitative"
+                        },
+                        "x": {
+                            "field": "comparator",
+                            "type": "ordinal"
+                        },
+                        "y": {
+                            "field": "strings_to_compare",
+                            "type": "ordinal"
+                        }
+                    },
+                    "title": "Heatmap of Similarity Scores"
+                },
+                {
+                    "mark": {
+                        "type": "text",
+                        "baseline": "middle"
+                    },
+                    "encoding": {
+                        "color": {
+                            "condition": {
+                                "value": "white",
+                                "test": "(datum.quantity > 3)"
+                            },
+                            "value": "black"
+                        },
+                        "text": {
+                            "field": "score",
+                            "format": ".2f",
+                            "type": "quantitative"
+                        },
+                        "x": {
+                            "field": "comparator",
+                            "type": "ordinal"
+                        },
+                        "y": {
+                            "field": "strings_to_compare",
+                            "type": "ordinal"
+                        }
+                    },
+                    "title": "Heatmap of Similarity Scores"
+                }
+            ],
+            "data": {
+                "name": "data-similarity"
+            }
+        },
+        {
+            "height": 300,
+            "width": 200,
+            "layer": [
+                {
+                    "mark": {
+                        "type": "rect"
+                    },
+                    "encoding": {
+                        "color": {
+                            "field": "score",
+                            "scale": {
+                                "domain": [
+                                    0,
+                                    5
+                                ],
+                                "range": [
+                                    "green",
+                                    "red"
+                                ]
+                            },
+                            "type": "quantitative"
+                        },
+                        "x": {
+                            "field": "comparator",
+                            "type": "ordinal"
+                        },
+                        "y": {
+                            "field": "strings_to_compare",
+                            "type": "ordinal"
+                        }
+                    },
+                    "title": "Heatmap of Distance Scores"
+                },
+                {
+                    "mark": {
+                        "type": "text",
+                        "baseline": "middle"
+                    },
+                    "encoding": {
+                        "color": {
+                            "condition": {
+                                "value": "white",
+                                "test": "(datum.quantity > 3)"
+                            },
+                            "value": "black"
+                        },
+                        "text": {
+                            "field": "score",
+                            "type": "quantitative"
+                        },
+                        "x": {
+                            "field": "comparator",
+                            "type": "ordinal"
+                        },
+                        "y": {
+                            "field": "strings_to_compare",
+                            "type": "ordinal"
+                        }
+                    },
+                    "title": "Heatmap of Distance Scores"
+                }
+            ],
+            "data": {
+                "name": "data-distance"
+            }
+        }
+    ],
+    "resolve": {
+        "scale": {
+            "color": "independent"
+        }
+    },
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
+    "datasets": {
+        "data-similarity": [],
+        "data-distance": []
+    }
+}

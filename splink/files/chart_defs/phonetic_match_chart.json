@@ -1,0 +1,71 @@
+{
+    "config": {
+        "view": {
+            "discreteWidth": 300,
+            "discreteHeight": 600
+        }
+    },
+    "layer": [
+        {
+            "mark": {
+                "type": "rect"
+            },
+            "encoding": {
+                "color": {
+                    "field": "match",
+                    "scale": {
+                        "range": [
+                            "red",
+                            "green"
+                        ]
+                    },
+                    "type": "ordinal"
+                },
+                "x": {
+                    "field": "phonetic",
+                    "type": "ordinal"
+                },
+                "y": {
+                    "field": "strings_to_compare",
+                    "type": "ordinal"
+                }
+            },
+            "title": "Heatmap of Phonetic Matches"
+        },
+        {
+            "mark": {
+                "type": "text",
+                "baseline": "middle"
+            },
+            "encoding": {
+                "color": {
+                    "condition": {
+                        "value": "white",
+                        "test": "(datum.quantity > 3)"
+                    },
+                    "value": "black"
+                },
+                "text": {
+                    "field": "transform",
+                    "type": "ordinal"
+                },
+                "x": {
+                    "field": "phonetic",
+                    "type": "ordinal"
+                },
+                "y": {
+                    "field": "strings_to_compare",
+                    "type": "ordinal"
+                }
+            },
+            "title": "Heatmap of Phonetic Matches"
+        }
+    ],
+    "data": {
+        "name": "data-phonetic"
+    },
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
+    "datasets": {
+        "data-phonetic": []
+    }
+}

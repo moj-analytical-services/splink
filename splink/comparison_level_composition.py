@@ -33,24 +33,84 @@ def and_(
             Defaults to None.
 
     Examples:
-        >>> # Simple null level composition with an `AND` clause
-        >>> import splink.duckdb.duckdb_comparison_level_library as cll
-        >>> cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
-
-        >>> # Composing a levenshtein level with a custom `contains` level
-        >>> import splink.duckdb.duckdb_comparison_level_library as cll
-        >>> misspelling = cll.levenshtein_level("name", 1)
-        >>> contains = {
-        >>>     "sql_condition": "(contains(name_l, name_r) OR " \
-        >>>     "contains(name_r, name_l))"
-        >>> }
-        >>> merged = cll.and_(misspelling, contains, label_for_charts="Spelling error")
-        >>> merged.as_dict()
-        >>> {
-        >>>    'sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
-        >>>    'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
-        >>>    'label_for_charts': 'Spelling error'
-        >>> }
+        === "DuckDB"
+            Simple null level composition with an `AND` clause
+            ``` python
+            import splink.duckdb.comparison_level_library as cll
+            cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
+            ```
+            Composing a levenshtein level with a custom `contains` level
+            ``` python
+            import splink.duckdb.comparison_level_library as cll
+            misspelling = cll.levenshtein_level("name", 1)
+            contains = {
+                "sql_condition": "(contains(name_l, name_r) OR " \
+                "contains(name_r, name_l))"
+            }
+            merged = cll.and_(misspelling, contains, label_for_charts="Spelling error")
+            ```
+            ```python
+            merged.as_dict()
+            ```
+            >{
+            > 'sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
+            >  'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+            >  'label_for_charts': 'Spelling error'
+            >}
+        === "Spark"
+            Simple null level composition with an `AND` clause
+            ``` python
+            import splink.spark.comparison_level_library as cll
+            cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
+            ```
+            Composing a levenshtein level with a custom `contains` level
+            ``` python
+            import splink.spark.comparison_level_library as cll
+            misspelling = cll.levenshtein_level("name", 1)
+            contains = {
+                "sql_condition": "(contains(name_l, name_r) OR " \
+                "contains(name_r, name_l))"
+            }
+            merged = cll.and_(misspelling, contains, label_for_charts="Spelling error")
+            ```
+            ```python
+            merged.as_dict()
+            ```
+            >{
+            > 'sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
+            >  'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+            >  'label_for_charts': 'Spelling error'
+            >}
+        === "Athena"
+            Simple null level composition with an `AND` clause
+            ``` python
+            import splink.athena.comparison_level_library as cll
+            cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
+            ```
+            Composing a levenshtein level with a custom `contains` level
+            ``` python
+            import splink.athena.comparison_level_library as cll
+            misspelling = cll.levenshtein_level("name", 1)
+            contains = {
+                "sql_condition": "(contains(name_l, name_r) OR " \
+                "contains(name_r, name_l))"
+            }
+            merged = cll.and_(misspelling, contains, label_for_charts="Spelling error")
+            ```
+            ```python
+            merged.as_dict()
+            ```
+            >{
+            > 'sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
+            >  'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+            >  'label_for_charts': 'Spelling error'
+            >}
+        === "SQLite"
+            Simple null level composition with an `AND` clause
+            ``` python
+            import splink.sqlite.comparison_level_library as cll
+            cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
+            ```
 
     Returns:
         ComparisonLevel: A new ComparisonLevel with the merged
@@ -93,24 +153,84 @@ def or_(
             Defaults to None.
 
     Examples:
-        >>> # Simple null level composition with an `OR` clause
-        >>> import splink.duckdb.duckdb_comparison_level_library as cll
-        >>> cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
-
-        >>> # Composing a levenshtein level with a custom `contains` level
-        >>> import splink.duckdb.duckdb_comparison_level_library as cll
-        >>> misspelling = cll.levenshtein_level("name", 1)
-        >>> contains = {
-        >>>     "sql_condition": "(contains(name_l, name_r) OR " \
-        >>>     "contains(name_r, name_l))"
-        >>> }
-        >>> merged = cll.or_(misspelling, contains, label_for_charts="Spelling error")
-        >>> merged.as_dict()
-        >>> {
-        >>>    'sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
-        >>>    'OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
-        >>>    'label_for_charts': 'Spelling error'
-        >>> }
+        === "DuckDB"
+            Simple null level composition with an `OR` clause
+            ``` python
+            import splink.duckdb.comparison_level_library as cll
+            cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
+            ```
+            Composing a levenshtein level with a custom `contains` level
+            ``` python
+            import splink.duckdb.comparison_level_library as cll
+            misspelling = cll.levenshtein_level("name", 1)
+            contains = {
+                "sql_condition": "(contains(name_l, name_r) OR " \
+                "contains(name_r, name_l))"
+            }
+            merged = cll.or_(misspelling, contains, label_for_charts="Spelling error")
+            ```
+            ```python
+            merged.as_dict()
+            ```
+            >{
+            > sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
+            >  'OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+            >  'label_for_charts': 'Spelling error'
+            >}
+        === "Spark"
+            Simple null level composition with an `OR` clause
+            ``` python
+            import splink.spark.comparison_level_library as cll
+            cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
+            ```
+            Composing a levenshtein level with a custom `contains` level
+            ``` python
+            import splink.spark.comparison_level_library as cll
+            misspelling = cll.levenshtein_level("name", 1)
+            contains = {
+                "sql_condition": "(contains(name_l, name_r) OR " \
+                "contains(name_r, name_l))"
+            }
+            merged = cll.or_(misspelling, contains, label_for_charts="Spelling error")
+            ```
+            ```python
+            merged.as_dict()
+            ```
+            >{
+            > sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
+            >  'OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+            >  'label_for_charts': 'Spelling error'
+            >}
+        === "Athena"
+            Simple null level composition with an `OR` clause
+            ``` python
+            import splink.athena.comparison_level_library as cll
+            cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
+            ```
+            Composing a levenshtein level with a custom `contains` level
+            ``` python
+            import splink.athena.comparison_level_library as cll
+            misspelling = cll.levenshtein_level("name", 1)
+            contains = {
+                "sql_condition": "(contains(name_l, name_r) OR " \
+                "contains(name_r, name_l))"
+            }
+            merged = cll.or_(misspelling, contains, label_for_charts="Spelling error")
+            ```
+            ```python
+            merged.as_dict()
+            ```
+            >{
+            > sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
+            >  'OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+            >  'label_for_charts': 'Spelling error'
+            >}
+        === "SQLite"
+            Simple null level composition with an `OR` clause
+            ``` python
+            import splink.sqlite.comparison_level_library as cll
+            cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
+            ```
 
     Returns:
         ComparisonLevel: A new ComparisonLevel with the merged
@@ -149,22 +269,82 @@ def not_(
             Defaults to None.
 
     Examples:
-        >>> import splink.duckdb.duckdb_comparison_level_library as cll
-        >>> # *Not* a null on first name `first_name`
-        >>> cll.not_(cll.exact_match("first_name"))
-
-        >>> import splink.duckdb.duckdb_comparison_level_library as cll
-        >>> # Find all exact matches *not* on the first of January
-        >>> dob_first_jan =  {
-        >>>    "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
-        >>>    "label_for_charts": "Date is 1st Jan",
-        >>> }
-        >>> exact_match_not_first_jan = cll.and_(
-        >>>     cll.exact_match_level("dob"),
-        >>>     cll.not_(dob_first_jan),
-        >>>     label_for_charts = "Exact match and not the 1st Jan"
-        >>> )
-
+        === "DuckDB"
+            *Not* an exact match on first name
+            ``` python
+            import splink.duckdb.comparison_level_library as cll
+            cll.not_(cll.exact_match("first_name"))
+            ```
+            Find all exact matches *not* on the first of January
+            ``` python
+            import splink.duckdb.comparison_level_library as cll
+            dob_first_jan =  {
+               "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
+               "label_for_charts": "Date is 1st Jan",
+            }
+            exact_match_not_first_jan = cll.and_(
+                cll.exact_match_level("dob"),
+                cll.not_(dob_first_jan),
+                label_for_charts = "Exact match and not the 1st Jan"
+            )
+            ```
+        === "Spark"
+            *Not* an exact match on first name
+            ``` python
+            import splink.spark.comparison_level_library as cll
+            cll.not_(cll.exact_match("first_name"))
+            ```
+            Find all exact matches *not* on the first of January
+            ``` python
+            import splink.spark.comparison_level_library as cll
+            dob_first_jan =  {
+               "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
+               "label_for_charts": "Date is 1st Jan",
+            }
+            exact_match_not_first_jan = cll.and_(
+                cll.exact_match_level("dob"),
+                cll.not_(dob_first_jan),
+                label_for_charts = "Exact match and not the 1st Jan"
+            )
+            ```
+        === "Athena"
+            *Not* an exact match on first name
+            ``` python
+            import splink.athena.comparison_level_library as cll
+            cll.not_(cll.exact_match("first_name"))
+            ```
+            Find all exact matches *not* on the first of January
+            ``` python
+            import splink.athena.comparison_level_library as cll
+            dob_first_jan =  {
+               "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
+               "label_for_charts": "Date is 1st Jan",
+            }
+            exact_match_not_first_jan = cll.and_(
+                cll.exact_match_level("dob"),
+                cll.not_(dob_first_jan),
+                label_for_charts = "Exact match and not the 1st Jan"
+            )
+            ```
+        === "SQLite"
+            *Not* an exact match on first name
+            ``` python
+            import splink.sqlite.comparison_level_library as cll
+            cll.not_(cll.exact_match("first_name"))
+            ```
+            Find all exact matches *not* on the first of January
+            ``` python
+            import splink.sqlite.comparison_level_library as cll
+            dob_first_jan =  {
+               "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
+               "label_for_charts": "Date is 1st Jan",
+            }
+            exact_match_not_first_jan = cll.and_(
+                cll.exact_match_level("dob"),
+                cll.not_(dob_first_jan),
+                label_for_charts = "Exact match and not the 1st Jan"
+            )
+            ```
 
     Returns:
         ComparisonLevel

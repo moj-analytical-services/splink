@@ -14,6 +14,9 @@ class ExactMatchBase(Comparison):
     def __init__(
         self,
         col_name,
+        regex_extract: str = None,
+        valid_string_regex: str = None,
+        set_to_lowercase: bool = False,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
         m_probability_else=None,
@@ -25,23 +28,67 @@ class ExactMatchBase(Comparison):
 
         Args:
             col_name (str): The name of the column to compare
+            regex_extract (str): Regular expression pattern to evaluate a match on.
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
+            set_to_lowercase (bool): If True, sets all entries to lowercase.
             term_frequency_adjustments (bool, optional): If True, term frequency
                 adjustments will be made on the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
             include_colname_in_charts_label: If true, append col name to label for
                 charts.  Defaults to False.
 
         Examples:
-            >>> # Simple DuckDB exact_match comparison
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.exact_match("first_name")
-
-            >>> # Simple Spark exact_match comparison
-            >>> import splink.spark.spark_comparison_library as cl
-            >>> cl.exact_match("first_name")
+            === "DuckDB"
+                Create comparison with exact match level
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.exact_match("first_name")
+                ```
+                Create comparison with exact match level based on a
+                substring of first_name as determined by a regular expression
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.exact_match("first_name", regex_extract="^[A-Z]{1,4}")
+                ```
+            === "Spark"
+                Create comparison with exact match level
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.exact_match("first_name")
+                ```
+                Create comparison with exact match level based on a
+                substring of first_name as determined by a regular expression
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.exact_match("first_name", regex_extract="^[A-Z]{1,4}")
+                ```
+            === "Athena"
+                Create comparison with exact match level
+                ``` python
+                import splink.athena.comparison_library as cl
+                cl.exact_match("first_name")
+                ```
+                Create comparison with exact match level based on a
+                substring of first_name as determined by a regular expression
+                ``` python
+                import splink.athena.comparison_library as cl
+                cl.exact_match("first_name", regex_extract="^[A-Z]{1,4}")
+                ```
+            === "SQLite"
+                Create comparison with exact match level
+                ``` python
+                import splink.sqlite.comparison_library as cl
+                cl.exact_match("first_name")
+            === "PostgreSQL"
+                Create comparison with exact match level
+                ``` python
+                import splink.postgres.postgres_comparison_library as cl
+                cl.exact_match("first_name")
+                ```
 
         Returns:
             Comparison: A comparison for exact match that can be included in the Splink
@@ -51,9 +98,11 @@ class ExactMatchBase(Comparison):
         comparison_dict = {
             "comparison_description": "Exact match vs. anything else",
             "comparison_levels": [
-                self._null_level(col_name),
+                self._null_level(col_name, valid_string_regex),
                 self._exact_match_level(
                     col_name,
+                    regex_extract=regex_extract,
+                    set_to_lowercase=set_to_lowercase,
                     term_frequency_adjustments=term_frequency_adjustments,
                     m_probability=m_probability_exact_match,
                     include_colname_in_charts_label=include_colname_in_charts_label,
@@ -70,6 +119,9 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         col_name: str,
         distance_function_name: str,
         distance_threshold_or_thresholds: float | list,
+        regex_extract: str = None,
+        valid_string_regex: str = None,
+        set_to_lowercase: bool = False,
         higher_is_more_similar: bool = True,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
@@ -100,6 +152,10 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             distance_threshold_or_thresholds (Union[int, list], optional): The
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [1, 2].
+            regex_extract (str): Regular expression pattern to evaluate a match on.
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
+            set_to_lowercase (bool): If True, sets all entries to lowercase.
             higher_is_more_similar (bool): If True, a higher value of the distance
                 function indicates a higher similarity (e.g. jaro_winkler).
                 If false, a higher value indicates a lower similarity
@@ -108,29 +164,96 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_thres (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            >>> # DuckDB Jaccard Comparison at thresholds 0.9 and 0.7
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.distance_function_at_thresholds("name",
-            >>>                    distance_function_name = 'jaccard',
-            >>>                    distance_threshold_or_thresholds = [0.9, 0.7]
-            >>>                    )
-
-            >>> # Spark Jaccard Comparison at thresholds 0.9 and 0.7
-            >>> import splink.spark.spark_comparison_library as cl
-            >>> cl.distance_function_at_thresholds("name",
-            >>>                    distance_function_name = 'jaccard',
-            >>>                    distance_threshold_or_thresholds = [0.9, 0.7]
-            >>>                    )
-
+            === "DuckDB"
+                Apply the `jaccard` function in a comparison with levels 0.9 and 0.7
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.distance_function_at_thresholds("name",
+                                   distance_function_name = 'jaccard',
+                                   distance_threshold_or_thresholds = [0.9, 0.7]
+                                   )
+                ```
+                Apply the `jaccard` function in a comparison with levels 0.9 and 0.7 on
+                a substring of name column as determined by a regular expression
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.distance_function_at_thresholds("name",
+                                   distance_function_name = 'jaccard',
+                                   distance_threshold_or_thresholds = [0.9, 0.7],
+                                   regex_extract="^[A-Z]{1,4}
+                                   )
+                ```
+            === "Spark"
+                Apply the `jaccard` function in a comparison with levels 0.9 and 0.7
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.distance_function_at_thresholds("name",
+                                   distance_function_name = 'jaccard',
+                                   distance_threshold_or_thresholds = [0.9, 0.7]
+                                   )
+                ```
+                Apply the `jaccard` function in a comparison with levels 0.9 and 0.7 on
+                a substring of name column as determined by a regular expression
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.distance_function_at_thresholds("name",
+                                   distance_function_name = 'jaccard',
+                                   distance_threshold_or_thresholds = [0.9, 0.7],
+                                   regex_extract="^[A-Z]{1,4}
+                                   )
+                ```
+            === "Athena"
+                Apply the `levenshtein_distance` function in a comparison with
+                levels 1 and 2
+                ``` python
+                import splink.athena.comparison_library as cl
+                cl.distance_function_at_thresholds("name",
+                                   distance_function_name = 'levenshtein_distance',
+                                   distance_threshold_or_thresholds = [1, 2],
+                                   higher_is_more_similar = False
+                                   )
+                ```
+                Apply the `jaccard` function in a comparison with levels 0.9 and 0.7 on
+                a substring of name column as determined by a regular expression
+                ``` python
+                import splink.athena.comparison_library as cl
+                cl.distance_function_at_thresholds("name",
+                                   distance_function_name = 'jaccard',
+                                   distance_threshold_or_thresholds = [0.9, 0.7],
+                                   regex_extract="^[A-Z]{1,4}
+                                   )
+            === "SQLite"
+                Apply the `levenshtein` function in a comparison with
+                levels 1 and 2
+                ``` python
+                import splink.sqlite.comparison_library as cl
+                cl.distance_function_at_thresholds("name",
+                                   distance_function_name = 'levenshtein',
+                                   distance_threshold_or_thresholds = [1, 2],
+                                   higher_is_more_similar = False
+                                   )
+                ```
+            === "PostgreSQL"
+                Apply the `levenshtein` function in a comparison with
+                levels 1 and 2
+                ``` python
+                import splink.postgres.postgres_comparison_library as cl
+                cl.distance_function_at_thresholds("name",
+                                   distance_function_name = 'levenshtein',
+                                   distance_threshold_or_thresholds = [1, 2],
+                                   higher_is_more_similar = False
+                                   )
+                ```
+                ```
 
         Returns:
             Comparison: A comparison for a chosen distance function similarity that
@@ -147,11 +270,13 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         )
 
         comparison_levels = []
-        comparison_levels.append(self._null_level(col_name))
+        comparison_levels.append(self._null_level(col_name, valid_string_regex))
         if include_exact_match_level:
             level = self._exact_match_level(
                 col_name,
                 term_frequency_adjustments=term_frequency_adjustments,
+                regex_extract=regex_extract,
+                set_to_lowercase=set_to_lowercase,
                 m_probability=m_probability_exact_match,
             )
             comparison_levels.append(level)
@@ -161,6 +286,8 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
             col_name,
             distance_function_name,
             distance_threshold_or_thresholds,
+            regex_extract,
+            set_to_lowercase,
             m_probability_or_probabilities_thres,
         )
         comparison_levels = comparison_levels + threshold_comparison_levels
@@ -197,6 +324,9 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         self,
         col_name: str,
         distance_threshold_or_thresholds: int | list = [1, 2],
+        regex_extract: str = None,
+        valid_string_regex: str = None,
+        set_to_lowercase: bool = False,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
@@ -208,9 +338,10 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
 
         An example of the output with default arguments and setting
         `distance_threshold_or_thresholds = [1,2]` would be
+
         - Exact match
-        - levenshtein distance <= 1
-        - levenshtein distance <= 2
+        - Levenshtein distance <= 1
+        - Levenshtein distance <= 2
         - Anything else
 
         Args:
@@ -218,25 +349,78 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             distance_threshold_or_thresholds (Union[int, list], optional): The
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [1, 2].
+            regex_extract (str): Regular expression pattern to evaluate a match on.
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_lev (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
-        Examples:
-            >>> # DuckDB Levenshtein comparison at thresholds 1 and 2
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.levenshtein_at_thresholds("first_name", [1,2])
 
-            >>> # Spark Levenshtein comparison at thresholds 1 and 2
-            >>> import splink.spark.spark_comparison_library as cl
-            >>> cl.levenshtein_at_thresholds("first_name", [1,2])
+        Examples:
+            === "DuckDB"
+                Create comparison with levenshtein match levels with distance <=1
+                and <=2
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.levenshtein_at_thresholds("first_name", [1,2])
+                ```
+                Create comparison with levenshtein match levels with distance <=1
+                and <=2
+                on a substring of name column as determined by a regular expression
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.levenshtein_at_thresholds("first_name", [1,2], regex_extract="^A|B")
+                ```
+            === "Spark"
+                Create comparison with levenshtein match levels with distance <=1
+                and <=2
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.levenshtein_at_thresholds("first_name", [1,2])
+                ```
+                Create comparison with levenshtein match levels with distance <=1
+                and <=2
+                on a substring of name column as determined by a regular expression
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.levenshtein_at_thresholds("first_name", [1,2], regex_extract="^A|B")
+                ```
+            === "Athena"
+                Create comparison with levenshtein match levels with distance <=1
+                and <=2
+                ``` python
+                import splink.athena.comparison_library as cl
+                cl.levenshtein_at_thresholds("first_name", [1,2])
+                ```
+                Create comparison with levenshtein match levels with distance <=1
+                and <=2
+                on a substring of name column as determined by a regular expression
+                ``` python
+                import splink.athena.comparison_library as cl
+                cl.levenshtein_at_thresholds("first_name", [1,2], regex_extract="^A|B")
+            === "SQLite"
+                Create comparison with levenshtein match levels with distance <=1
+                and <=2
+                ``` python
+                import splink.athena.comparison_library as cl
+                cl.levenshtein_at_thresholds("first_name", [1,2])
+                ```
+            === "PostgreSQL"
+                Create comparison with levenshtein match levels with distance <=1
+                and <=2
+                ``` python
+                import splink.postgres.postgres_comparison_library as cl
+                cl.levenshtein_at_thresholds("first_name", [1,2])
+                ```
+                ```
 
         Returns:
             Comparison: A comparison for Levenshtein similarity that can be included
@@ -245,14 +429,128 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
 
         super().__init__(
             col_name,
-            self._levenshtein_name,
-            distance_threshold_or_thresholds,
-            False,
-            include_exact_match_level,
-            term_frequency_adjustments,
-            m_probability_exact_match,
-            m_probability_or_probabilities_lev,
-            m_probability_else,
+            distance_function_name=self._levenshtein_name,
+            distance_threshold_or_thresholds=distance_threshold_or_thresholds,
+            regex_extract=regex_extract,
+            valid_string_regex=valid_string_regex,
+            set_to_lowercase=set_to_lowercase,
+            higher_is_more_similar=False,
+            include_exact_match_level=include_exact_match_level,
+            term_frequency_adjustments=term_frequency_adjustments,
+            m_probability_exact_match=m_probability_exact_match,
+            m_probability_or_probabilities_thres=m_probability_or_probabilities_lev,
+            m_probability_else=m_probability_else,
+        )
+
+    @property
+    def _is_distance_subclass(self):
+        return True
+
+
+class DamerauLevenshteinAtThresholdsComparisonBase(
+    DistanceFunctionAtThresholdsComparisonBase
+):
+    def __init__(
+        self,
+        col_name: str,
+        distance_threshold_or_thresholds: int | list = 1,
+        regex_extract: str = None,
+        valid_string_regex: str = None,
+        set_to_lowercase: bool = False,
+        include_exact_match_level=True,
+        term_frequency_adjustments=False,
+        m_probability_exact_match=None,
+        m_probability_or_probabilities_dl: float | list = None,
+        m_probability_else=None,
+    ) -> Comparison:
+        """A comparison of the data in `col_name` with the damerau-levenshtein distance
+        used to assess middle similarity levels.
+
+        An example of the output with default arguments and setting
+        `distance_threshold_or_thresholds = [1]` would be
+
+        - Exact match
+        - Damerau-Levenshtein distance <= 1
+        - Anything else
+
+        Args:
+            col_name (str): The name of the column to compare
+            distance_threshold_or_thresholds (Union[int, list], optional): The
+                threshold(s) to use for the middle similarity level(s).
+                Defaults to 1.
+            regex_extract (str): Regular expression pattern to evaluate a match on.
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
+            include_exact_match_level (bool, optional): If True, include an exact match
+                level. Defaults to True.
+            term_frequency_adjustments (bool, optional): If True, apply term frequency
+                adjustments to the exact match level. Defaults to False.
+            m_probability_exact_match (_type_, optional): If provided, overrides the
+                default m probability for the exact match level. Defaults to None.
+            m_probability_or_probabilities_dl (Union[float, list], optional):
+                _description_. If provided, overrides the default m probabilities
+                for the thresholds specified for given function. Defaults to None.
+            m_probability_else (_type_, optional): If provided, overrides the
+                default m probability for the 'anything else' level. Defaults to None.
+        Examples:
+            === "DuckDB"
+                Create comparison with damerau-levenshtein match levels with
+                distance <= 1, 2
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
+                ```
+                Create comparison with damerau-levenshtein match levels with
+                distance <= 1
+                on a substring of name column as determined by a regular expression
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name",
+                                                     [1,2],
+                                                     regex_extract="^A|B")
+                ```
+            === "Spark"
+                Create comparison with damerau-levenshtein match levels with
+                distance <= 1, 2
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
+                ```
+                Create comparison with damerau-evenshtein match levels with
+                distance <= 1, 2
+                on a substring of name column as determined by a regular expression
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name",
+                                                     [1,2],
+                                                     regex_extract="^A|B")
+                ```
+            === "SQLite"
+                Create comparison with damerau-levenshtein match levels with
+                distance <= 1, 2
+                ``` python
+                import splink.sqlite.comparison_library as cl
+                cl.damerau_levenshtein_at_thresholds("first_name", [1,2])
+                ```
+
+        Returns:
+            Comparison: A comparison for Damerau-Levenshtein similarity that can be
+            included in the Splink settings dictionary.
+        """
+
+        super().__init__(
+            col_name,
+            distance_function_name=self._levenshtein_name,
+            distance_threshold_or_thresholds=distance_threshold_or_thresholds,
+            regex_extract=regex_extract,
+            valid_string_regex=valid_string_regex,
+            set_to_lowercase=set_to_lowercase,
+            higher_is_more_similar=False,
+            include_exact_match_level=include_exact_match_level,
+            term_frequency_adjustments=term_frequency_adjustments,
+            m_probability_exact_match=m_probability_exact_match,
+            m_probability_or_probabilities_thres=m_probability_or_probabilities_dl,
+            m_probability_else=m_probability_else,
         )
 
     @property
@@ -265,6 +563,9 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
         self,
         col_name: str,
         distance_threshold_or_thresholds: int | list = [0.9, 0.7],
+        regex_extract: str = None,
+        valid_string_regex: str = None,
+        set_to_lowercase: bool = False,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
@@ -276,6 +577,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
 
         An example of the output with default arguments and setting
         `distance_threshold_or_thresholds = [0.9,0.7]` would be
+
         - Exact match
         - Jaccard distance <= 0.9
         - Jaccard distance <= 0.7
@@ -286,26 +588,50 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
             distance_threshold_or_thresholds (Union[int, list], optional): The
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [0.9, 0.7].
+            regex_extract (str): Regular expression pattern to evaluate a match on.
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_jac (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
-        Examples:
-            >>> # DuckDB Jaccard comparison at thresholds 0.9 and 0.7
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.jaccard_at_thresholds("first_name", [0.9, 0.7])
-
-            >>> # Spark Jaccard comparison at thresholds 0.9 and 0.7
-            >>> import splink.spark.spark_comparison_library as cl
-            >>> cl.jaccard_at_thresholds("first_name", [0.9, 0.7])
+                Examples:
+            === "DuckDB"
+                Create comparison with jaccard match levels with similarity score >=0.9
+                and >=0.7
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.jaccard_at_thresholds("first_name", [1,2])
+                ```
+                Create comparison with jaccard match levels with similarity score >=0.9
+                and >=0.7 on a substring of name column as determined by a regular
+                expression
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.jaccard_at_thresholds("first_name", [1,2], regex_extract="^A|B")
+                ```
+            === "Spark"
+                Create comparison with jaccard match levels with similarity score >=0.9
+                and >=0.7
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.jaccard_at_thresholds("first_name", [1,2])
+                ```
+                Create comparison with jaccard match levels with similarity score >=0.9
+                and >=0.7 on a substring of name column as determined by a regular
+                expression
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.jaccard_at_thresholds("first_name", [1,2], regex_extract="^A|B")
+                ```
 
         Returns:
             Comparison: A comparison for Jaccard similarity that can be included
@@ -314,14 +640,17 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
 
         super().__init__(
             col_name,
-            self._jaccard_name,
-            distance_threshold_or_thresholds,
-            True,
-            include_exact_match_level,
-            term_frequency_adjustments,
-            m_probability_exact_match,
-            m_probability_or_probabilities_jac,
-            m_probability_else,
+            distance_function_name=self._jaccard_name,
+            distance_threshold_or_thresholds=distance_threshold_or_thresholds,
+            regex_extract=regex_extract,
+            valid_string_regex=valid_string_regex,
+            set_to_lowercase=set_to_lowercase,
+            higher_is_more_similar=True,
+            include_exact_match_level=include_exact_match_level,
+            term_frequency_adjustments=term_frequency_adjustments,
+            m_probability_exact_match=m_probability_exact_match,
+            m_probability_or_probabilities_thres=m_probability_or_probabilities_jac,
+            m_probability_else=m_probability_else,
         )
 
     @property
@@ -334,6 +663,9 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
         self,
         col_name: str,
         distance_threshold_or_thresholds: int | list = [0.9, 0.7],
+        regex_extract: str = None,
+        valid_string_regex: str = None,
+        set_to_lowercase: bool = False,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
@@ -345,9 +677,10 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
 
         An example of the output with default arguments and setting
         `distance_threshold_or_thresholds = [0.9, 0.7]` would be
+
         - Exact match
-        - jaro distance <= 0.9
-        - jaro distance <= 0.7
+        - Jaro distance <= 0.9
+        - Jaro distance <= 0.7
         - Anything else
 
         Args:
@@ -355,26 +688,57 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
             distance_threshold_or_thresholds (Union[int, list], optional): The
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [0.9, 0.7].
+            regex_extract (str): Regular expression pattern to evaluate a match on.
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_jar (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            >>> # DuckDB Jaro comparison at thresholds 0.9 and 0.7
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.jaro_at_thresholds("first_name", [0.9, 0.7])
-
-            >>> # Spark Jaccard comparison at thresholds 0.9 and 0.7
-            >>> import splink.spark.spark_comparison_library as cl
-            >>> cl.jaro_at_thresholds("first_name", [0.9, 0.7])
+            === "DuckDB"
+                Create comparison with jaro match levels with similarity score >=0.9
+                and >=0.7
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.jaro_at_thresholds("first_name", [0.9, 0.7])
+                ```
+                Create comparison with jaro match levels with similarity score >=0.9
+                and >=0.7 on a substring of name column as determined by a regular
+                expression
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.jaro_at_thresholds("first_name", [0.9, 0.7], regex_extract="^[A-Z]")
+                ```
+            === "Spark"
+                Create comparison with jaro match levels with similarity score >=0.9
+                and >=0.7
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.jaro_at_thresholds("first_name", [0.9, 0.7])
+                ```
+                Create comparison with jaro match levels with similarity score >=0.9
+                and >=0.7 on a substring of name column as determined by a regular
+                expression
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.jaro_at_thresholds("first_name", [0.9, 0.7], regex_extract="^[A-Z]")
+                ```
+            === "SQLite"
+                Create comparison with jaro match levels with similarity score >=0.9
+                and >=0.7
+                ``` python
+                import splink.sqlite.comparison_library as cl
+                cl.jaro_at_thresholds("first_name", [0.9, 0.7])
+                ```
 
         Returns:
             Comparison:
@@ -382,14 +746,17 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
 
         super().__init__(
             col_name,
-            self._jaro_name,
-            distance_threshold_or_thresholds,
-            True,
-            include_exact_match_level,
-            term_frequency_adjustments,
-            m_probability_exact_match,
-            m_probability_or_probabilities_jar,
-            m_probability_else,
+            distance_function_name=self._jaro_name,
+            distance_threshold_or_thresholds=distance_threshold_or_thresholds,
+            regex_extract=regex_extract,
+            valid_string_regex=valid_string_regex,
+            set_to_lowercase=set_to_lowercase,
+            higher_is_more_similar=True,
+            include_exact_match_level=include_exact_match_level,
+            term_frequency_adjustments=term_frequency_adjustments,
+            m_probability_exact_match=m_probability_exact_match,
+            m_probability_or_probabilities_thres=m_probability_or_probabilities_jar,
+            m_probability_else=m_probability_else,
         )
 
     @property
@@ -402,6 +769,9 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         self,
         col_name: str,
         distance_threshold_or_thresholds: int | list = [0.9, 0.7],
+        regex_extract: str = None,
+        valid_string_regex: str = None,
+        set_to_lowercase: bool = False,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
@@ -413,9 +783,10 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
 
         An example of the output with default arguments and setting
         `distance_threshold_or_thresholds = [0.9, 0.7]` would be
+
         - Exact match
-        - jaro_winkler distance <= 0.9
-        - jaro_winkler distance <= 0.7
+        - Jaro-Winkler distance <= 0.9
+        - Jaro-Winkler distance <= 0.7
         - Anything else
 
         Args:
@@ -423,26 +794,64 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
             distance_threshold_or_thresholds (Union[int, list], optional): The
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [0.9, 0.7].
+            regex_extract (str): Regular expression pattern to evaluate a match on.
+            valid_string_regex (str): regular expression pattern that if not
+                matched will result in column being treated as a null.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
                 adjustments to the exact match level. Defaults to False.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_jw (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the thresholds specified for given function. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
-        Examples:
-            >>> # DuckDB Jaro-winkler comparison at thresholds 0.9 and 0.7
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
 
-            >>> # Spark Jaro-winkler comparison at thresholds 0.9 and 0.7
-            >>> import splink.spark.saprk_comparison_library as cl
-            >>> cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
+        Examples:
+            === "DuckDB"
+                Create comparison with jaro_winkler match levels with similarity
+                score >= 0.9 and >=0.7
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
+                ```
+                Create comparison with jaro_winkler match levels with similarity
+                score =>0.9 and >=0.7 on a substring of name column as determined by
+                a regular expression
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.jaro_winkler_at_thresholds("first_name",
+                                              [0.9, 0.7],
+                                              regex_extract="^[A-Z]"
+                                              )
+                ```
+            === "Spark"
+                Create comparison with jaro_winkler match levels with similarity
+                score >=0.9 and >=0.7
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
+                ```
+                Create comparison with jaro_winkler match levels with similarity
+                score >=0.9 and >=0.7 on a substring of name column as determined
+                by a regular expression
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.jaro_winkler_at_thresholds("first_name",
+                                              [0.9, 0.7],
+                                              regex_extract="^[A-Z]"
+                                              )
+                ```
+            === "SQLite"
+                Create comparison with jaro_winkler match levels with similarity
+                score >=0.9 and >=0.7
+                ``` python
+                import splink.sqlite.comparison_library as cl
+                cl.jaro_winkler_at_thresholds("first_name", [0.9, 0.7])
+                ```
 
         Returns:
             Comparison: A comparison for Jaro Winkler similarity that can be included
@@ -451,14 +860,17 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
 
         super().__init__(
             col_name,
-            self._jaro_winkler_name,
-            distance_threshold_or_thresholds,
-            True,
-            include_exact_match_level,
-            term_frequency_adjustments,
-            m_probability_exact_match,
-            m_probability_or_probabilities_jw,
-            m_probability_else,
+            distance_function_name=self._jaro_winkler_name,
+            distance_threshold_or_thresholds=distance_threshold_or_thresholds,
+            regex_extract=regex_extract,
+            valid_string_regex=valid_string_regex,
+            set_to_lowercase=set_to_lowercase,
+            higher_is_more_similar=True,
+            include_exact_match_level=include_exact_match_level,
+            term_frequency_adjustments=term_frequency_adjustments,
+            m_probability_exact_match=m_probability_exact_match,
+            m_probability_or_probabilities_thres=m_probability_or_probabilities_jw,
+            m_probability_else=m_probability_else,
         )
 
     @property
@@ -479,6 +891,7 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
 
         An example of the output with default arguments and setting
         `size_or_sizes = [3, 1]` would be
+
         - Intersection has at least 3 elements
         - Intersection has at least 1 element (i.e. 1 or 2)
         - Anything else (i.e. empty intersection)
@@ -491,17 +904,29 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
             m_probability_or_probabilities_sizes (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the sizes specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            >>> # DuckDB Array intersect comparison at sizes 3 and 1
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.array_intersect_at_sizes("first_name", [3, 1])
-
-            >>> # Spark Array intersect comparison at sizes 3 and 1
-            >>> import splink.spark.spark_comparison_library as cl
-            >>> cl.array_intersect_at_sizes("first_name", [3, 1])
+            === "DuckDB"
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.array_intersect_at_sizes("first_name", [3, 1])
+                ```
+            === "Spark"
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.array_intersect_at_sizes("first_name", [3, 1])
+                ```
+            === "Athena"
+                ``` python
+                import splink.athena.comparison_library as cl
+                cl.array_intersect_at_sizes("first_name", [3, 1])
+            === "PostgreSQL"
+                ``` python
+                import splink.postgres.postgres_comparison_library as cl
+                cl.array_intersect_at_sizes("first_name", [3, 1])
+                ```
 
         Returns:
             Comparison: A comparison for the intersection of arrays that can be included
@@ -560,13 +985,14 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         col_name: str,
         date_thresholds: int | list = [1],
         date_metrics: str | list = ["year"],
+        cast_strings_to_date=False,
+        date_format: str = None,
+        invalid_dates_as_null: bool = False,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
         m_probability_or_probabilities_dat: float | list = None,
         m_probability_else=None,
-        cast_strings_to_date=False,
-        date_format=None,
     ) -> Comparison:
         """A comparison of the data in the date column `col_name` with various
         date thresholds and metrics to assess similarity levels.
@@ -580,6 +1006,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         with one another.
         For example, `date_thresholds = [10, 12, 15]` with
         `date_metrics = ['day', 'month', 'year']` would result in the following checks:
+
         - The two dates are within 10 days of one another
         - The two dates are within 12 months of one another
         - And the two dates are within 15 years of one another
@@ -594,6 +1021,18 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
             date_metrics (Union[str, list], optional): The unit of time you wish your
                 `date_thresholds` to be measured against.
                 Metrics should be one of `day`, `month` or `year`.
+            cast_strings_to_date (bool, optional): Set to True to
+                enable date-casting when input dates are strings. Also adjust
+                date_format if date-strings are not in (yyyy-mm-dd) format.
+                Defaults to False.
+            date_format(str, optional): Format of input dates if date-strings
+                are given. Must be consistent across record pairs. If None
+                (the default), downstream functions for each backend assign
+                date_format to ISO 8601 format (yyyy-mm-dd).
+                Set to "yyyy-MM-dd" for Spark and "%Y-%m-%d" for DuckDB
+                when invalid_dates_as_null=True
+            invalid_dates_as_null (bool, optional): assign any dates that do not adhere
+                to date_format to the null level. Defaults to False.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
             term_frequency_adjustments (bool, optional): If True, apply term frequency
@@ -605,50 +1044,102 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                 for the sizes specified. Defaults to None.
             m_probability_else (_type_, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
-            cast_strings_to_date (bool, optional): Set to True to
-                enable date-casting when input dates are strings. Also adjust
-                date_format if date-strings are not in (yyyy-mm-dd) format.
-                Defaults to False.
-            date_format(str, optional): Format of input dates if date-strings
-                are given. Must be consistent across record pairs. If None
-                (the default), downstream functions for each backend assign
-                date_format to ISO 8601 format (yyyy-mm-dd).
 
         Examples:
-            >>> # DuckDB Date Difference comparison at thresholds 10 days, 12 months
-            >>> # and 15 years
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.datediff_at_thresholds("date",
-            >>>                             date_thresholds = [10, 12, 15],
-            >>>                             date_metrics = ['day', 'month', 'year']
-            >>>                             )
+            === "DuckDB"
+                Date Difference comparison at thresholds 10 days, 12 months and 15 years
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.datediff_at_thresholds("date",
+                                            date_thresholds = [10, 12, 15],
+                                            date_metrics = ['day', 'month', 'year']
+                                            )
+                ```
 
-            >>> # Spark Date Difference comparison at thresholds 10 days, 12 months
-            >>> # and 15 years
-            >>> import splink.spark.spark_comparison_library as cl
-            >>> cl.datediff_at_thresholds("date",
-            >>>                             date_thresholds = [10, 12, 15],
-            >>>                             date_metrics = ['day', 'month', 'year']
-            >>>                             )
-
-            >>> # DuckDB datediff comparison with date-casting and unspecified
-            >>> # (default = %Y-%m-%d) date_format
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.datediff_at_thresholds("dob",
+                Datediff comparison with date-casting and unspecified date_format
+                (default = %Y-%m-%d)
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.datediff_at_thresholds("date",
                                             date_thresholds=[1,5],
                                             date_metrics = ["day", "year"],
                                             cast_strings_to_date=True
                                             )
-
-            >>> # DuckDB datediff comparison with date-casting and specified
-            >>> # (non-default) date_format
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.datediff_at_thresholds("dob",
+                ```
+                Datediff comparison with date-casting and specified (non-default)
+                date_format
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.datediff_at_thresholds("date",
                                             date_thresholds=[1,5],
                                             date_metrics = ["day", "year"],
                                             cast_strings_to_date=True,
                                             date_format='%d/%m/%Y'
                                             )
+                ```
+            === "Spark"
+                Date Difference comparison at thresholds 10 days, 12 months and 15 years
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.datediff_at_thresholds("date",
+                                            date_thresholds = [10, 12, 15],
+                                            date_metrics = ['day', 'month', 'year']
+                                            )
+                ```
+
+                Datediff comparison with date-casting and unspecified date_format
+                (default = %Y-%m-%d)
+                ``` python
+                    import splink.spark.comparison_library as cl
+                    cl.datediff_at_thresholds("date",
+                                                date_thresholds=[1,5],
+                                                date_metrics = ["day", "year"],
+                                                cast_strings_to_date=True
+                                                )
+                ```
+
+                Datediff comparison with date-casting and specified (non-default)
+                date_format
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.datediff_at_thresholds("date",
+                                            date_thresholds=[1,5],
+                                            date_metrics = ["day", "year"],
+                                            cast_strings_to_date=True,
+                                            date_format='%d/%m/%Y'
+                                            )
+            === "PostgreSQL"
+                Date Difference comparison at thresholds 10 days, 12 months and 15 years
+                ``` python
+                import splink.postgres.postgres_comparison_library as cl
+                cl.datediff_at_thresholds("date",
+                                            date_thresholds = [10, 12, 15],
+                                            date_metrics = ['day', 'month', 'year']
+                                            )
+                ```
+
+                Datediff comparison with date-casting and unspecified date_format
+                (default = yyyy-MM-dd)
+                ``` python
+                    import splink.postgres.postgres_comparison_library as cl
+                    cl.datediff_at_thresholds("date",
+                                                date_thresholds=[1,5],
+                                                date_metrics = ["day", "year"],
+                                                cast_strings_to_date=True
+                                                )
+                ```
+
+                Datediff comparison with date-casting and specified (non-default)
+                date_format
+                ``` python
+                import splink.postgres.postgres_comparison_library as cl
+                cl.datediff_at_thresholds("date",
+                                            date_thresholds=[1,5],
+                                            date_metrics = ["day", "year"],
+                                            cast_strings_to_date=True,
+                                            date_format='dd/MM/yyyy'
+                                            )
+                ```
 
         Returns:
             Comparison: A comparison for Datediff that can be included in the Splink
@@ -667,7 +1158,11 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         m_probabilities = ensure_is_iterable(m_probability_or_probabilities_dat)
 
         comparison_levels = []
-        comparison_levels.append(self._null_level(col_name))
+        if invalid_dates_as_null:
+            comparison_levels.append(self._null_level(col_name, date_format))
+        else:
+            comparison_levels.append(self._null_level(col_name))
+
         if include_exact_match_level:
             level = self._exact_match_level(
                 col_name,
@@ -731,6 +1226,7 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
 
         An example of the output with default arguments and settings
         `km_thresholds = [1]` would be
+
         - The two coordinates within 1 km of one another
         - Anything else (i.e.  the distance between all coordinate lie outside
         this range)
@@ -746,28 +1242,46 @@ class DistanceInKMAtThresholdsComparisonBase(Comparison):
                 distance.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
-            m_probability_exact_match (_type_, optional): If provided, overrides the
+            m_probability_exact_match (float, optional): If provided, overrides the
                 default m probability for the exact match level. Defaults to None.
             m_probability_or_probabilities_km (Union[float, list], optional):
                 If provided, overrides the default m probabilities
                 for the sizes specified. Defaults to None.
-            m_probability_else (_type_, optional): If provided, overrides the
+            m_probability_else (float, optional): If provided, overrides the
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            >>> # DuckDB KM Distance comparison at thresholds 0.1, 1, 10 kilometres
-            >>> import splink.duckdb.duckdb_comparison_library as cl
-            >>> cl.datediff_at_thresholds("lat_col",
-            >>>                            "long_col",
-            >>>                            km_thresholds = [0.1, 1, 10]
-            >>>                            )
-
-            >>> # Spark KM Distance comparison at thresholds 0.1, 1, 10 kilometres
-            >>> import splink.spark.spark_comparison_library as cl
-            >>> cl.datediff_at_thresholds("lat_col",
-            >>>                            "long_col",
-            >>>                            km_thresholds = [0.1, 1, 10]
-            >>>                            )
+            === "DuckDB"
+                ``` python
+                import splink.duckdb.comparison_library as cl
+                cl.distance_in_km_at_thresholds("lat_col",
+                                           "long_col",
+                                           km_thresholds = [0.1, 1, 10]
+                                        )
+                ```
+            === "Spark"
+                ``` python
+                import splink.spark.comparison_library as cl
+                cl.distance_in_km_at_thresholds("lat_col",
+                                           "long_col",
+                                           km_thresholds = [0.1, 1, 10]
+                                        )
+                ```
+            === "Athena"
+                ``` python
+                import splink.athena.comparison_library as cl
+                cl.distance_in_km_at_thresholds("lat_col",
+                                           "long_col",
+                                           km_thresholds = [0.1, 1, 10]
+                                        )
+            === "PostgreSQL"
+                ``` python
+                import splink.postgres.postgres_comparison_library as cl
+                cl.distance_in_km_at_thresholds("lat_col",
+                                           "long_col",
+                                           km_thresholds = [0.1, 1, 10]
+                                        )
+                ```
 
         Returns:
             Comparison: A comparison for Distance in KM that can be included in the

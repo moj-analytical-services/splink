@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ class SplinkDataFrame:
         self.templated_name = templated_name
         self.physical_name = physical_name
         self.linker = linker
+        self._target_schema = "splink"
 
     @property
     def columns(self):
@@ -33,9 +35,6 @@ class SplinkDataFrame:
 
     def validate():
         pass
-
-    def _random_sample_sql(percent):
-        raise NotImplementedError("Random sample sql not implemented for this linker")
 
     @property
     def physical_and_template_names_equal(self):
@@ -90,3 +89,18 @@ class SplinkDataFrame:
             f"{self.templated_name}"
         )
         p.text(msg)
+
+    def to_parquet(self, filepath, overwrite=False):
+        raise NotImplementedError("`to_parquet` not implemented for this linker")
+
+    def to_csv(self, filepath, overwrite=False):
+        raise NotImplementedError("`to_csv` not implemented for this linker")
+
+    def check_file_exists(self, filepath):
+        p = Path(filepath)
+        if p.exists():
+            raise FileExistsError(
+                "The filepath you've supplied already exists. Please use "
+                "either `overwrite = True` or manually move or delete the "
+                "existing file."
+            )

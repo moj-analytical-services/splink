@@ -2,6 +2,7 @@
 tags:
   - API
   - comparisons
+  - Damerau-Levenshtein
   - Levenshtein
   - Jaro-Winkler
   - Jaccard
@@ -10,6 +11,7 @@ tags:
   - Array Intersect
   - Columns Reversed
   - Percentage Difference
+toc_depth: 2
 ---
 # Documentation for `comparison_level_library` 
 
@@ -29,9 +31,6 @@ The detailed API for each of these are outlined below.
 
 ::: splink.comparison_level_library.NullLevelBase
     handler: python
-    selection:
-      members:
-        -  __init__
     rendering:
       show_root_heading: true
       show_source: false
@@ -76,6 +75,18 @@ The detailed API for each of these are outlined below.
 ---
 
 ::: splink.comparison_level_library.LevenshteinLevelBase
+    handler: python
+    selection:
+      members:
+        -  __init__
+    rendering:
+      show_root_heading: true
+      show_source: false   
+      heading_level: 2
+
+---
+
+::: splink.comparison_level_library.DamerauLevenshteinLevelBase
     handler: python
     selection:
       members:

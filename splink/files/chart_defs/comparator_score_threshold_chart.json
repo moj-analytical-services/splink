@@ -1,0 +1,70 @@
+{
+    "config": {
+        "view": {
+            "discreteWidth": 500,
+            "discreteHeight": 300
+        }
+    },
+    "layer": [
+        {
+            "mark": {
+                "type": "rect"
+            },
+            "encoding": {
+                "color": {
+                    "field": "threshold_match",
+                    "scale": {
+                        "range": [
+                            "red",
+                            "green"
+                        ]
+                    },
+                    "type": "ordinal"
+                },
+                "x": {
+                    "field": "comparator",
+                    "type": "ordinal"
+                },
+                "y": {
+                    "field": "strings_to_compare",
+                    "type": "ordinal"
+                }
+            },
+            "title": []
+        },
+        {
+            "mark": {
+                "type": "text",
+                "baseline": "middle"
+            },
+            "encoding": {
+                "color": {
+                    "condition": {
+                        "value": "white",
+                        "test": "(datum.quantity > 3)"
+                    },
+                    "value": "black"
+                },
+                "text": {
+                    "field": "score",
+                    "type": "ordinal"
+                },
+                "x": {
+                    "field": "comparator",
+                    "type": "ordinal"
+                },
+                "y": {
+                    "field": "strings_to_compare",
+                    "type": "ordinal"
+                }
+            }
+        }
+    ],
+    "data": {
+        "name": "data-with-thresholds"
+    },
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
+    "datasets": {
+        "data-with-thresholds": []
+    }
+}

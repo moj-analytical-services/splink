@@ -3,15 +3,28 @@ import os
 import pyspark.sql.functions as f
 from pyspark.sql.types import StringType, StructField, StructType
 
-import splink.spark.spark_comparison_level_library as cll
-import splink.spark.spark_comparison_library as cl
-from splink.spark.spark_linker import SparkLinker
+import splink.spark.comparison_level_library as cll
+import splink.spark.comparison_library as cl
+from splink.spark.linker import SparkLinker
 
 from .basic_settings import get_settings_dict, name_comparison
-from .linker_utils import _test_table_registration, register_roc_data
+from .linker_utils import (
+    _test_write_functionality,
+    register_roc_data,
+)
 
 
 def test_full_example_spark(df_spark, tmp_path):
+    # Annoyingly, this needs an independent linker as csv doesn't
+    # accept arrays as inputs, which we are adding to df_spark below
+    linker = SparkLinker(df_spark, get_settings_dict())
+
+    # Test that writing to files works as expected
+    def spark_csv_read(x):
+        return linker.spark.read.csv(x, header=True).toPandas()
+
+    _test_write_functionality(linker, spark_csv_read)
+
     # Convert a column to an array to enable testing intersection
     df_spark = df_spark.withColumn("email", f.array("email"))
     settings_dict = get_settings_dict()
@@ -29,7 +42,7 @@ def test_full_example_spark(df_spark, tmp_path):
         "comparisons": [
             cl.jaro_winkler_at_thresholds("first_name", 0.9),
             cl.jaro_at_thresholds("surname", 0.9),
-            cl.levenshtein_at_thresholds("dob", 2),
+            cl.damerau_levenshtein_at_thresholds("dob", 2),
             {
                 "comparison_levels": [
                     cll.array_intersect_level("email"),
@@ -86,22 +99,17 @@ def test_full_example_spark(df_spark, tmp_path):
     )
 
     linker.unlinkables_chart(source_dataset="Testing")
+    # Test that writing to files works as expected
+    # spark_csv_read = lambda x: linker.spark.read.csv(x, header=True).toPandas()
+    # _test_write_functionality(linker, spark_csv_read)
 
     # Check spark tables are being registered correctly
-    data = [
-        ("Thomas", "FakeName"),
-    ]
-    schema = StructType(
+    StructType(
         [
             StructField("firstname", StringType(), True),
             StructField("lastname", StringType(), True),
         ]
     )
-    df = linker.spark.createDataFrame(data=data, schema=schema)
-    _test_table_registration(
-        linker, [df, linker.spark.createDataFrame([], StructType([]))]
-    )
-
     register_roc_data(linker)
     linker.roc_chart_from_labels_table("labels")
 
@@ -128,6 +136,16 @@ def test_full_example_spark(df_spark, tmp_path):
         break_lineage_method="checkpoint",
         num_partitions_on_repartition=2,
     )
+
+    # Test saving and loading
+    path = os.path.join(tmp_path, "model.json")
+    linker.save_model_to_json(path)
+
+    linker_2 = SparkLinker(df_spark)
+    linker_2.load_model(path)
+    linker_2.load_settings(path)
+    linker_2.load_settings_from_json(path)
+    SparkLinker(df_spark, settings_dict=path)
 
 
 def test_link_only(df_spark):

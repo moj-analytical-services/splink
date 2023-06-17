@@ -1,7 +1,7 @@
 import pandas as pd
 
-import splink.spark.spark_comparison_level_library as cll
-from splink.spark.spark_linker import SparkLinker
+import splink.spark.comparison_level_library as cll
+from splink.spark.linker import SparkLinker
 
 first_name_cc = {
     "output_column_name": "first_name",
@@ -68,6 +68,90 @@ def test_udf_registration(spark):
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     linker.predict()
+
+
+def test_damerau_levenshtein(spark):
+    data = ["dave", "david", "", "dave"]
+    df = pd.DataFrame(data, columns=["test_names"])
+    df["id"] = df.index
+    df_spark_dam_lev = spark.createDataFrame(df)
+
+    linker = SparkLinker(
+        df_spark_dam_lev,
+        settings,
+        input_table_aliases="test_dl_df",
+    )
+
+    sql = """
+        select
+
+        /* Output test names for easier review */
+        l.test_names as test_names_l, r.test_names as test_names_r,
+
+        /* Calculate damerau-levenshtein results for our test cases */
+        damerau_levenshtein(l.test_names, r.test_names) as dl_test
+        from test_dl_df as l
+
+        inner join
+        test_dl_df as r
+
+        where l.id < r.id
+    """
+
+    udf_out = linker.query_sql(sql)
+    # Set accuracy level
+    decimals = 4
+
+    # Test damerau-levenshtein outputs are correct
+    dl_w_out = tuple(udf_out.dl_test.round(decimals=decimals))
+    dl_expected = (2.0, 4.0, 0.0, 5.0, 2.0, 4.0)
+
+    assert dl_w_out == dl_expected
+
+    # ensure that newest jar is calculating similarity . dl of strings below is 0.9440
+    assert (
+        spark.sql("""SELECT damerau_levenshtein("MARHTA", "MARTHA")  """).first()[0]
+        == 1.0
+    )
+
+    # ensure totally dissimilar strings have dl sim of 5
+    assert (
+        spark.sql("""SELECT damerau_levenshtein("Local", "Pub")  """).first()[0] == 5.0
+    )
+
+    # ensure totally similar strings have dl sim of 0
+    assert spark.sql("""SELECT damerau_levenshtein("Pub", "Pub")  """).first()[0] == 0.0
+
+    # testcases taken from jaro article on jw sim
+    assert (
+        round(
+            spark.sql("""SELECT damerau_levenshtein("hello", "hallo")  """).first()[0],
+            decimals,
+        )
+        == 1.0
+    )
+
+    assert (
+        round(
+            spark.sql("""SELECT damerau_levenshtein("hippo", "elephant")  """).first()[
+                0
+            ],
+            decimals,
+        )
+        == 7.0
+    )
+    assert (
+        round(
+            spark.sql("""SELECT damerau_levenshtein("elephant", "hippo")  """).first()[
+                0
+            ],
+            decimals,
+        )
+        == 7.0
+    )
+    assert (
+        spark.sql("""SELECT damerau_levenshtein("aaapppp", "")  """).first()[0] == 7.0
+    )
 
 
 def test_jaro(spark):

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
   "title": "Receiver operating characteristic curve",
   "height": 600,
   "width": 600,
@@ -36,11 +36,16 @@
       "field": "curve_label"
     }
   },
-  "selection": {
-    "selector076": {
-      "type": "interval",
-      "bind": "scales",
-      "encodings": ["x"]
+  "params": [
+    {
+      "name": "mouse_zoom",
+      "select": {
+        "type": "interval",
+        "encodings": [
+          "x"
+        ]
+      },
+      "bind": "scales"
     }
-  }
+  ]
 }

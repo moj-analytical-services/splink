@@ -3,23 +3,18 @@ import logging
 import pandas as pd
 import pytest
 
-import splink.duckdb.duckdb_comparison_level_library as clld
-import splink.duckdb.duckdb_comparison_library as cld
-import splink.spark.spark_comparison_level_library as clls
-import splink.spark.spark_comparison_library as cls
 from splink import exceptions
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
+
+from .decorator import mark_with_dialects_excluding
 
 
-@pytest.mark.parametrize(
-    ("cl", "cll", "Linker"),
-    [
-        pytest.param(cld, clld, DuckDBLinker, id="DuckDB Datediff Integration Tests"),
-        pytest.param(cls, clls, SparkLinker, id="Spark Datediff Integration Tests"),
-    ],
-)
-def test_datediff_levels(spark, cl, cll, Linker):
+# No SQLite - no array comparisons in library
+@mark_with_dialects_excluding("sqlite")
+def test_datediff_levels(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    cl = helper.cl
+    cll = helper.cll
+
     # Capture differing comparison levels to allow unique settings generation
     df = pd.DataFrame(
         [
@@ -111,12 +106,9 @@ def test_datediff_levels(spark, cl, cll, Linker):
     # We need to put our column in datetime format for this to work
     df["dob"] = pd.to_datetime(df["dob"])
 
-    if Linker == SparkLinker:
-        df = spark.createDataFrame(df)
-        df.persist()
-    linker = Linker(df, settings_cl)
+    linker = helper.Linker(df, settings_cl, **helper.extra_linker_args())
     cl_df_e = linker.predict().as_pandas_dataframe()
-    linker = Linker(df, settings_cll)
+    linker = helper.Linker(df, settings_cll, **helper.extra_linker_args())
     cll_df_e = linker.predict().as_pandas_dataframe()
 
     linker_outputs = {
@@ -155,14 +147,10 @@ def test_datediff_levels(spark, cl, cll, Linker):
                 )
 
 
-@pytest.mark.parametrize(
-    ("cl"),
-    [
-        pytest.param(cld, id="DuckDB Datediff Error Checks"),
-        pytest.param(cls, id="Spark Datediff Error Checks"),
-    ],
-)
-def test_datediff_error_logger(cl):
+@mark_with_dialects_excluding("sqlite")
+def test_datediff_error_logger(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    cl = helper.cl
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
         cl.datediff_at_thresholds("dob", [1], ["day", "month", "year", "year"])
@@ -180,17 +168,19 @@ def test_datediff_error_logger(cl):
         cl.datediff_at_thresholds("dob", [1], [])
 
 
-@pytest.mark.parametrize(
-    ("cl", "cll", "Linker"),
-    [
-        pytest.param(cld, clld, DuckDBLinker, id="DuckDB Datediff Integration Tests"),
-        pytest.param(cls, clls, SparkLinker, id="Spark Datediff Integration Tests"),
-    ],
-)
-def test_datediff_with_str_casting(spark, cl, cll, Linker, caplog):
+@mark_with_dialects_excluding("sqlite")
+def test_datediff_with_str_casting(test_helpers, dialect, caplog):
     caplog.set_level(logging.INFO)
+    helper = test_helpers[dialect]
+    cl = helper.cl
+    cll = helper.cll
 
-    def simple_dob_linker(spark, df, dobs=[], date_format_param="", Linker=Linker):
+    def simple_dob_linker(
+        df,
+        dobs=[],
+        date_format_param=None,
+        invalid_dates_as_null=False,
+    ):
         settings_cl = {
             "link_type": "dedupe_only",
             "comparisons": [
@@ -201,14 +191,20 @@ def test_datediff_with_str_casting(spark, cl, cll, Linker, caplog):
                     ["day", "month", "year", "year"],
                     cast_strings_to_date=True,
                     date_format=date_format_param,
+                    invalid_dates_as_null=invalid_dates_as_null,
                 ),
             ],
         }
         # For testing the cll version
+        if invalid_dates_as_null:
+            null_level_regex = date_format_param
+        else:
+            null_level_regex = None
+
         dob_diff = {
             "output_column_name": "dob",
             "comparison_levels": [
-                cll.null_level("dob"),
+                cll.null_level("dob", valid_string_regex=null_level_regex),
                 cll.exact_match_level("dob"),
                 cll.datediff_level(
                     date_col="dob",
@@ -249,14 +245,11 @@ def test_datediff_with_str_casting(spark, cl, cll, Linker, caplog):
         if len(dobs) == df.shape[0]:
             df["dob"] = dobs
 
-        if Linker == SparkLinker:
-            df = spark.createDataFrame(df)
-            df.persist()
-
-        linker = Linker(df, settings)
+        df = helper.convert_frame(df)
+        linker = helper.Linker(df, settings, **helper.extra_linker_args())
         df_e1 = linker.predict().as_pandas_dataframe()
 
-        linker = Linker(df, settings_cl)
+        linker = helper.Linker(df, settings_cl, **helper.extra_linker_args())
         df_e2 = linker.predict().as_pandas_dataframe()
         return df_e1, df_e2
 
@@ -275,10 +268,10 @@ def test_datediff_with_str_casting(spark, cl, cll, Linker, caplog):
         ]
     )
 
-    if Linker == SparkLinker:
+    if dialect in ("spark", "postgres"):
         expected_bad_dates_error = exceptions.SplinkException
         valid_date_formats = ["d/M/y", "d-M-y", "M/d/y", "y/M/d", "y-M-d"]
-    elif Linker == DuckDBLinker:
+    elif dialect == "duckdb":
         expected_bad_dates_error = exceptions.SplinkException
         valid_date_formats = [
             "%d/%m/%Y",
@@ -290,100 +283,102 @@ def test_datediff_with_str_casting(spark, cl, cll, Linker, caplog):
 
     # first test some dates which should work
     simple_dob_linker(
-        spark,
         df,
         dobs=["03/04/1994", "19/02/1993"],
         date_format_param=valid_date_formats[0],
-        Linker=Linker,
     )
     simple_dob_linker(
-        spark,
         df,
         dobs=["03-04-1994", "19-02-1993"],
         date_format_param=valid_date_formats[1],
-        Linker=Linker,
     )
     simple_dob_linker(
-        spark,
         df,
         dobs=["04/05/1994", "10/02/1993"],
         date_format_param=valid_date_formats[2],
-        Linker=Linker,
     )
     simple_dob_linker(
-        spark,
         df,
         dobs=["1994/05/04", "1993/05/02"],
         date_format_param=valid_date_formats[3],
-        Linker=Linker,
     )
     simple_dob_linker(
-        spark,
         df,
         dobs=["1994-05-04", "1993-05-02"],
         date_format_param=valid_date_formats[4],
-        Linker=Linker,
     )
     # test the default date formats
     simple_dob_linker(
-        spark,
         df,
         dobs=["1994-05-04", "1993-05-02"],
         date_format_param=None,
-        Linker=Linker,
     )
 
     # now test some bad dates with DuckDB which you
     # expect to throw error. Don't run these tests with
     # Spark as does not throw error
     # in response to badly formatted dates
-    if Linker == DuckDBLinker:
+    if dialect == "duckdb":
         # Then test some bad dates
         # bad date type 1:
         with pytest.raises(expected_bad_dates_error):
             simple_dob_linker(
-                spark,
                 df,
                 dobs=["1994-05-04", "1993-14-02"],
                 date_format_param=None,
-                Linker=Linker,
             )
 
         with pytest.raises(expected_bad_dates_error):
             simple_dob_linker(
-                spark,
                 df,
                 dobs=["1994/05/04", "1993/14/02"],
                 date_format_param=valid_date_formats[3],
-                Linker=Linker,
             )
 
         # bad date type 2:
         with pytest.raises(expected_bad_dates_error):
             simple_dob_linker(
-                spark,
                 df,
                 dobs=["03-14-1994", "19-22-1993"],
                 date_format_param=valid_date_formats[1],
-                Linker=Linker,
             )
 
         # mis-match between date formats:
         with pytest.raises(expected_bad_dates_error):
             simple_dob_linker(
-                spark,
                 df,
                 dobs=["03-14-1994", "19/22/1993"],
                 date_format_param=valid_date_formats[1],
-                Linker=Linker,
             )
 
         # mis-match between input dates and expected date format
         with pytest.raises(expected_bad_dates_error):
             simple_dob_linker(
-                spark,
                 df,
                 dobs=["20-04-1993", "19-02-1993"],
                 date_format_param=valid_date_formats[3],
-                Linker=Linker,
             )
+
+    # Test some incorrectly formatted dates with DuckDB which you
+    # expect to throw error, but with the invalid_dates_as_null
+    # parameter switched on there is no error.
+    # Don't run these tests with
+    # Spark as does not throw error
+    # in response to badly formatted dates
+
+    if dialect == "duckdb":
+        # mis-match between date formats:
+        simple_dob_linker(
+            df,
+            dobs=["03-14-1994", "19/22/1993"],
+            date_format_param=valid_date_formats[1],
+            invalid_dates_as_null=True,
+        )
+
+        # mis-match between input dates and expected date format
+        simple_dob_linker(
+            df,
+            dobs=["20-04-1993", "19-02-1993"],
+            date_format_param=valid_date_formats[3],
+            invalid_dates_as_null=True,
+        )

@@ -6,14 +6,20 @@ import pyarrow.csv as pa_csv
 import pyarrow.parquet as pq
 import pytest
 
-import splink.duckdb.duckdb_comparison_level_library as cll
-import splink.duckdb.duckdb_comparison_library as cl
-from splink.duckdb.duckdb_linker import DuckDBLinker
+import splink.duckdb.comparison_level_library as cll
+import splink.duckdb.comparison_library as cl
+from splink.duckdb.linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict, name_comparison
-from .linker_utils import _test_table_registration, register_roc_data
+from .decorator import mark_with_dialects_including
+from .linker_utils import (
+    _test_table_registration,
+    _test_write_functionality,
+    register_roc_data,
+)
 
 
+@mark_with_dialects_including("duckdb")
 def test_full_example_duckdb(tmp_path):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df = df.rename(columns={"surname": "SUR name"})
@@ -105,12 +111,16 @@ def test_full_example_duckdb(tmp_path):
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")
-    linker.save_settings_to_json(path)
+    linker.save_model_to_json(path)
 
-    linker_2 = DuckDBLinker(df, connection=":memory:")
+    linker_2 = DuckDBLinker(df)
+    linker_2.load_model(path)
     linker_2.load_settings(path)
     linker_2.load_settings_from_json(path)
     DuckDBLinker(df, settings_dict=path)
+
+    # Test that writing to files works as expected
+    _test_write_functionality(linker_2, pd.read_csv)
 
 
 # Create some dummy dataframes for the link only test
@@ -119,7 +129,7 @@ df_l = df.copy()
 df_r = df.copy()
 df_l["source_dataset"] = "my_left_ds"
 df_r["source_dataset"] = "my_right_ds"
-df_final = df_l.append(df_r)
+df_final = pd.concat([df_l, df_r])
 
 
 # Tests link only jobs under different inputs:
@@ -149,6 +159,7 @@ df_final = df_l.append(df_r)
         ),
     ],
 )
+@mark_with_dialects_including("duckdb")
 def test_link_only(input, source_l, source_r):
     settings = get_settings_dict()
     settings["link_type"] = "link_only"
@@ -193,6 +204,7 @@ def test_link_only(input, source_l, source_r):
         ),
     ],
 )
+@mark_with_dialects_including("duckdb")
 def test_duckdb_load_from_file(df):
     settings = get_settings_dict()
 
@@ -214,6 +226,7 @@ def test_duckdb_load_from_file(df):
     assert len(linker.predict().as_pandas_dataframe()) == 7257
 
 
+@mark_with_dialects_including("duckdb")
 def test_duckdb_arrow_array():
     # Checking array fixes problem identified here:
     # https://github.com/moj-analytical-services/splink/issues/680
@@ -242,6 +255,7 @@ def test_duckdb_arrow_array():
     assert len(df) == 2
 
 
+@mark_with_dialects_including("duckdb")
 def test_cast_error():
     from duckdb import InvalidInputException
 
@@ -257,6 +271,7 @@ def test_cast_error():
     DuckDBLinker(df)
 
 
+@mark_with_dialects_including("duckdb")
 def test_small_example_duckdb(tmp_path):
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df["full_name"] = df["first_name"] + df["surname"]
@@ -271,7 +286,7 @@ def test_small_example_duckdb(tmp_path):
             {
                 "output_column_name": "name",
                 "comparison_levels": [
-                    cll.null_level("full_name"),
+                    cll.null_level("full_name", valid_string_regex=".*"),
                     cll.exact_match_level("full_name", term_frequency_adjustments=True),
                     cll.columns_reversed_level(
                         "first_name", "surname", tf_adjustment_column="full_name"
@@ -282,9 +297,11 @@ def test_small_example_duckdb(tmp_path):
                     cll.else_level(),
                 ],
             },
-            cl.levenshtein_at_thresholds("dob", 2, term_frequency_adjustments=True),
-            cl.jaro_at_thresholds("email", term_frequency_adjustments=True),
-            cl.jaro_winkler_at_thresholds("city", term_frequency_adjustments=True),
+            cl.damerau_levenshtein_at_thresholds(
+                "dob", 2, term_frequency_adjustments=True
+            ),
+            cl.jaro_at_thresholds("email", 0.9, term_frequency_adjustments=True),
+            cl.jaro_winkler_at_thresholds("city", 0.9, term_frequency_adjustments=True),
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,

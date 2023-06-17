@@ -1,18 +1,12 @@
-from ..comparison_template_library import (
-    DateComparisonBase,
-    NameComparisonBase,
+import warnings
+
+from ..exceptions import SplinkDeprecated
+from .comparison_template_library import *  # noqa: F403
+
+warnings.warn(
+    "Importing directly from `splink.duckdb.duckdb_comparison_template_library` "
+    "is deprecated and will be removed in Splink v4. "
+    "Please import from `splink.duckdb.comparison_template_library` going forward.",
+    SplinkDeprecated,
+    stacklevel=2,
 )
-from .duckdb_comparison_level_library import distance_function_level
-from .duckdb_comparison_library import DuckDBComparisonProperties
-
-
-class date_comparison(DuckDBComparisonProperties, DateComparisonBase):
-    @property
-    def _distance_level(self):
-        return distance_function_level
-
-
-class name_comparison(DuckDBComparisonProperties, NameComparisonBase):
-    @property
-    def _distance_level(self):
-        return distance_function_level
