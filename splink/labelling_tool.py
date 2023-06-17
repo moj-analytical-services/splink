@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import pkgutil
 from typing import TYPE_CHECKING
@@ -13,6 +14,8 @@ from .splink_dataframe import SplinkDataFrame
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
     from .linker import Linker
+
+logger = logging.getLogger(__name__)
 
 
 def generate_labelling_tool_comparisons(
@@ -57,7 +60,18 @@ def render_labelling_tool_html(
     show_splink_predictions_in_interface=True,
     overwrite: bool = True,
 ):
+
     settings: dict = linker._settings_obj.as_dict()
+
+    logger.warning(
+        "\nWARNING:\n"
+        "The Splink labelling tool is still in development, which means some "
+        "features may change and there may be bugs.\nYour feedback will help us "
+        "improve it. Go to\n"
+        "github.com/moj-analytical-services/splink/discussions/new?category=general"
+        "\nto give us feedback."
+    )
+
     comparisons_recs = df_comparisons.as_pandas_dataframe()
 
     comparisons_recs = comparisons_recs.replace(r"^\s*$", "", regex=True)
