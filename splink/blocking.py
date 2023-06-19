@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 import logging
 
+from .misc import ensure_is_list
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
 
 logger = logging.getLogger(__name__)
@@ -12,19 +13,48 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
+def blocking_rule_to_obj(br):
+    if isinstance(br, BlockingRule):
+        return br
+    elif isinstance(br, dict):
+        blocking_rule = br.get("blocking_rule", None)
+        if blocking_rule is None:
+            raise ValueError("No blocking rule submitted...")
+        salting_partitions = br.get("salting_partitions", 1)
+
+        return BlockingRule(blocking_rule, salting_partitions)
+
+    else:
+        br = BlockingRule(br)
+        return br
+
+
 class BlockingRule:
     def __init__(
         self,
-        blocking_rule,
+        blocking_rule: BlockingRule | dict | str,
         salting_partitions=1,
+        sql_dialect: str = None,
     ):
+        # See comparison level code -> should this duplicate that?
+        if sql_dialect:
+            self._sql_dialect = sql_dialect
+
         self.blocking_rule = blocking_rule
         self.preceding_rules = []
         self.salting_partitions = salting_partitions
 
     @property
+    def sql_dialect(self):
+        return None if not hasattr(self, "_sql_dialect") else self._sql_dialect
+
+    @property
     def match_key(self):
         return len(self.preceding_rules)
+
+    def add_preceding_rules(self, rules):
+        rules = ensure_is_list(rules)
+        self.preceding_rules = rules
 
     @property
     def and_not_preceding_rules_sql(self):
@@ -47,6 +77,22 @@ class BlockingRule:
         else:
             for n in range(self.salting_partitions):
                 yield f"{self.blocking_rule} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
+
+    @property
+    def descr(self):
+        return "Custom" if not hasattr(self, "_description") else self._description
+
+    def _abbreviated_sql(self, cutoff=75):
+        sql = self.blocking_rule
+        return (sql[:cutoff] + "...") if len(sql) > cutoff else sql
+
+    def __repr__(self):
+        return f"<{self._human_readable_succinct}>"
+
+    @property
+    def _human_readable_succinct(self):
+        sql = self._abbreviated_sql(75)
+        return f"{self.descr} blocking rule using SQL: {sql}"
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):
