@@ -1,10 +1,9 @@
 import pandas as pd
 import pytest
 
-from .decorator import mark_with_dialects_excluding
 import splink.duckdb.comparison_level_library as cll
-import splink.duckdb.comparison_level_library as scll
-from splink.duckdb.linker import DuckDBLinker
+
+from .decorator import mark_with_dialects_excluding
 
 
 def binary_composition_internals(clause, c_fun):
