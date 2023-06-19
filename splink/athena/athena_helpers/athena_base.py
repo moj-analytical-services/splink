@@ -57,5 +57,6 @@ class AthenaBase(DialectBase):
     def _regex_extract_function(self):
         return regex_extract_sql
 
+    @property
     def _datediff_function(self):
         return datediff_sql
