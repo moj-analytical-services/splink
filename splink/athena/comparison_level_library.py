@@ -1,4 +1,8 @@
-from ..comparison_level_composition import and_, not_, or_  # noqa: F401
+from ..level_composition import (  # noqa: F401
+    cl_and_ as and_,
+    cl_not as not_,
+    cl_or as or_,
+)
 from .athena_helpers.athena_comparison_imports import (  # noqa: F401
     array_intersect_level,
     columns_reversed_level,
