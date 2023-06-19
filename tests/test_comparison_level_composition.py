@@ -1,32 +1,13 @@
 import pandas as pd
 import pytest
 
+from .decorator import mark_with_dialects_excluding
 import splink.duckdb.comparison_level_library as cll
 import splink.duckdb.comparison_level_library as scll
 from splink.duckdb.linker import DuckDBLinker
 
 
-def test_not():
-    level = cll.not_(cll.null_level("first_name"))
-    assert level.is_null_level is False
-
-    # Integration test for a simple dictionary cl
-    dob_jan_first = {"sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'"}
-    cll.not_(dob_jan_first)
-
-    with pytest.raises(TypeError):
-        cll.not_()
-
-
-@pytest.mark.parametrize(
-    ("clause", "c_fun"),
-    [
-        pytest.param("OR", cll.or_, id="Test or_"),
-        pytest.param("AND", cll.and_, id="Test and_"),
-        pytest.param("OR", scll.or_, id="Test spark or_"),
-    ],
-)
-def test_binary_composition_internals(clause, c_fun):
+def binary_composition_internals(clause, c_fun):
     # Test what happens when only one value is fed
     # It should just report the regular outputs of our comparison level func
     level = c_fun(cll.exact_match_level("tom", include_colname_in_charts_label=True))
@@ -81,7 +62,38 @@ def test_binary_composition_internals(clause, c_fun):
         c_fun()
 
 
-def test_composition_outputs():
+@mark_with_dialects_excluding("postgres")
+def test_binary_composition_internals_OR(test_helpers, dialect):
+    cll = test_helpers[dialect].cll
+    binary_composition_internals("OR", cll.or_)
+
+
+@mark_with_dialects_excluding("postgres")
+def test_binary_composition_internals_AND(test_helpers, dialect):
+    cll = test_helpers[dialect].cll
+    binary_composition_internals("AND", cll.and_)
+
+
+@mark_with_dialects_excluding("postgres")
+def test_not(test_helpers, dialect):
+    cll = test_helpers[dialect].cll
+    level = cll.not_(cll.null_level("first_name"))
+    assert level.is_null_level is False
+
+    # Integration test for a simple dictionary cl
+    dob_jan_first = {"sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'"}
+    cll.not_(dob_jan_first)
+
+    with pytest.raises(TypeError):
+        cll.not_()
+
+
+@mark_with_dialects_excluding("postgres")
+def test_composition_outputs(test_helpers, dialect):
+
+    helper = test_helpers[dialect]
+    cll = helper.cll
+
     # Check our compositions give expected outputs
     df = pd.DataFrame(
         [
@@ -116,7 +128,7 @@ def test_composition_outputs():
         "comparisons": [full_name],
     }
 
-    linker = DuckDBLinker(df, settings)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
 
     pred = linker.predict()
     out = pred.as_pandas_dataframe().sort_values(by=["unique_id_l", "unique_id_r"])
