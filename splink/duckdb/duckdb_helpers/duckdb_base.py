@@ -11,6 +11,7 @@ def size_array_intersect_sql(col_name_l, col_name_r):
     )
 
 
+
 def datediff_sql(
     col_name_l,
     col_name_r,
