@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import warnings
 from typing import Iterable
 
+from .blocking import BlockingRule, blocking_rule_to_obj
 from .comparison_level import ComparisonLevel
 
 
-def and_(
+def cl_and_(
     *clls: ComparisonLevel | dict,
     label_for_charts=None,
     m_probability=None,
@@ -125,7 +127,7 @@ def and_(
     )
 
 
-def or_(
+def cl_or_(
     *clls: ComparisonLevel | dict,
     label_for_charts: str | None = None,
     m_probability: float | None = None,
@@ -246,7 +248,7 @@ def or_(
     )
 
 
-def not_(
+def cl_not_(
     cll: ComparisonLevel | dict,
     label_for_charts: str | None = None,
     m_probability: float | None = None,
@@ -402,12 +404,185 @@ def _cl_merge(
     return ComparisonLevel(result, sql_dialect=sql_dialect)
 
 
+def br_and_(
+    *brls: BlockingRule | dict | str,
+    salting_partitions=1,
+) -> BlockingRule:
+    return _br_merge(
+        *brls,
+        clause="AND",
+        salting_partitions=salting_partitions,
+    )
+
+
+def br_or_(
+    *brls: BlockingRule | dict | str,
+    salting_partitions: int = 1,
+) -> BlockingRule:
+    """Merge BlockingRules using logical "AND".
+
+    Merge multiple BlockingRules into a single BlockingRule by
+    merging their SQL conditions using a logical "AND".
+
+    By default, we generate a new `label_for_charts` for the new BlockingRule.
+    You can override this, and any other ComparisonLevel attributes, by passing
+    them as keyword arguments.
+
+    Args:
+        *brls (BlockingRule | dict | str): BlockingRules or
+            blocking rules in the string/dictionary format.
+        salting_partitions (optional, int):
+
+    Examples:
+        === "DuckDB"
+            Simple null level composition with an `AND` clause
+            ``` python
+            import splink.duckdb.comparison_level_library as cll
+            cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
+            ```
+            Composing a levenshtein level with a custom `contains` level
+            ``` python
+            import splink.duckdb.comparison_level_library as cll
+            misspelling = cll.levenshtein_level("name", 1)
+            contains = {
+                "sql_condition": "(contains(name_l, name_r) OR " \
+                "contains(name_r, name_l))"
+            }
+            merged = cll.and_(misspelling, contains, label_for_charts="Spelling error")
+            ```
+            ```python
+            merged.as_dict()
+            ```
+            >{
+            > 'sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
+            >  'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+            >  'label_for_charts': 'Spelling error'
+            >}
+        === "Spark"
+            Simple null level composition with an `AND` clause
+            ``` python
+            import splink.spark.comparison_level_library as cll
+            cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
+            ```
+            Composing a levenshtein level with a custom `contains` level
+            ``` python
+            import splink.spark.comparison_level_library as cll
+            misspelling = cll.levenshtein_level("name", 1)
+            contains = {
+                "sql_condition": "(contains(name_l, name_r) OR " \
+                "contains(name_r, name_l))"
+            }
+            merged = cll.and_(misspelling, contains, label_for_charts="Spelling error")
+            ```
+            ```python
+            merged.as_dict()
+            ```
+            >{
+            > 'sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
+            >  'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+            >  'label_for_charts': 'Spelling error'
+            >}
+        === "Athena"
+            Simple null level composition with an `AND` clause
+            ``` python
+            import splink.athena.comparison_level_library as cll
+            cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
+            ```
+            Composing a levenshtein level with a custom `contains` level
+            ``` python
+            import splink.athena.comparison_level_library as cll
+            misspelling = cll.levenshtein_level("name", 1)
+            contains = {
+                "sql_condition": "(contains(name_l, name_r) OR " \
+                "contains(name_r, name_l))"
+            }
+            merged = cll.and_(misspelling, contains, label_for_charts="Spelling error")
+            ```
+            ```python
+            merged.as_dict()
+            ```
+            >{
+            > 'sql_condition': '(levenshtein("name_l", "name_r") <= 1) ' \
+            >  'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
+            >  'label_for_charts': 'Spelling error'
+            >}
+        === "SQLite"
+            Simple null level composition with an `AND` clause
+            ``` python
+            import splink.sqlite.comparison_level_library as cll
+            cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
+            ```
+
+    Returns:
+        ComparisonLevel: A new ComparisonLevel with the merged
+            SQL condition
+    """
+    return _br_merge(
+        *brls,
+        clause="OR",
+        salting_partitions=salting_partitions,
+    )
+
+
+def br_not_(
+    *brls: BlockingRule | dict | str, salting_partitions: int = 1
+) -> BlockingRule:
+    if len(brls) == 0:
+        raise ValueError("You must provide at least one BlockingRule")
+    elif len(brls) > 1:
+        warnings.warning(
+            "More than one BlockingRule entered for `NOT` composition. "
+            "This function only accepts one argument and will only use your "
+            "first BlockingRule.",
+            SyntaxWarning,
+            stacklevel=2,
+        )
+
+    brls, sql_dialect, salt = _parse_blocking_rules(*brls)
+    br = brls[0]
+    blocking_rule = f"NOT ({br.blocking_rule})"
+
+    return BlockingRule(
+        blocking_rule,
+        salting_partitions=salting_partitions if salting_partitions > 1 else salt,
+        sql_dialect=sql_dialect,
+    )
+
+
+def _br_merge(
+    *brls: BlockingRule | dict | str,
+    clause: str,
+    salting_partitions: int = 1,
+) -> BlockingRule:
+    if len(brls) == 0:
+        raise ValueError("You must provide at least one BlockingRule")
+
+    brs, sql_dialect, salt = _parse_blocking_rules(*brls)
+    conditions = (f"({br.blocking_rule})" for br in brs)
+    blocking_rule = f" {clause} ".join(conditions)
+
+    return BlockingRule(
+        blocking_rule,
+        salting_partitions=salting_partitions if salting_partitions > 1 else salt,
+        sql_dialect=sql_dialect,
+    )
+
+
 def _parse_comparison_levels(
     *cls: ComparisonLevel | dict,
 ) -> tuple[list[ComparisonLevel], str | None]:
     cls = [_to_comparison_level(cl) for cl in cls]
     sql_dialect = _unify_sql_dialects(cls)
     return cls, sql_dialect
+
+
+def _parse_blocking_rules(
+    *brs: BlockingRule | dict | str,
+) -> tuple[list[BlockingRule], str | None]:
+    brs = [_to_blocking_rule(br) for br in brs]
+    sql_dialect = _unify_sql_dialects(brs)
+    salting_partitions = max([br.salting_partitions for br in brs])
+    return brs, sql_dialect, salting_partitions
 
 
 def _to_comparison_level(cl: ComparisonLevel | dict) -> ComparisonLevel:
@@ -417,8 +592,12 @@ def _to_comparison_level(cl: ComparisonLevel | dict) -> ComparisonLevel:
         return ComparisonLevel(cl)
 
 
+def _to_blocking_rule(br):
+    return blocking_rule_to_obj(br)
+
+
 def _unify_sql_dialects(cls: Iterable[ComparisonLevel]) -> str | None:
-    sql_dialects = set(cl._sql_dialect for cl in cls)
+    sql_dialects = set(cl.sql_dialect for cl in cls)
     sql_dialects.discard(None)
     if len(sql_dialects) > 1:
         raise ValueError("Cannot combine comparison levels with different SQL dialects")
