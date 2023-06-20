@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import pytest
 
-from splink.athena.comparison_library import levenshtein_at_thresholds
+import splink.athena.comparison_library as cl
 
 from .basic_settings import get_settings_dict
 from .linker_utils import _test_table_registration
@@ -25,7 +25,7 @@ except ImportError:
 
 settings_dict = get_settings_dict()
 
-first_name_cc = levenshtein_at_thresholds(
+first_name_cc = cl.levenshtein_at_thresholds(
     col_name="first_name",
     distance_threshold_or_thresholds=2,
     include_exact_match_level=True,
@@ -35,7 +35,7 @@ first_name_cc = levenshtein_at_thresholds(
     m_probability_else=0.1,
 )
 
-dob_cc = datediff_at_thresholds(
+dob_cc = cl.datediff_at_thresholds(
     col_name="dob",
     date_thresholds=[1,3,1],
     date_metrics=["week", "month", "year"],
