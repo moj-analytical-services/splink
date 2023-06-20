@@ -35,6 +35,13 @@ first_name_cc = levenshtein_at_thresholds(
     m_probability_else=0.1,
 )
 
+dob_cc = datediff_at_thresholds(
+    col_name="dob",
+    date_thresholds=[1,3,1],
+    date_metrics=["week", "month", "year"],
+    cast_strings_to_date=True
+)
+
 # Update tf weight and u probabilities to match
 first_name_cc._comparison_dict["comparison_levels"][1]._tf_adjustment_weight = 0.6
 u_probabilities_first_name = [0.1, 0.1, 0.8]
@@ -46,6 +53,7 @@ for u_prob, level in zip(
 
 # Update settings w/ our edited first_name col
 settings_dict["comparisons"][0] = first_name_cc
+settings_dict["comparisons"][2] = dob_cc
 
 # Setup database names for tests
 db_name_read = "splink_awswrangler_test"
