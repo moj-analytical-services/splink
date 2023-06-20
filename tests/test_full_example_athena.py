@@ -37,8 +37,8 @@ first_name_cc = cl.levenshtein_at_thresholds(
 
 dob_cc = cl.datediff_at_thresholds(
     col_name="dob",
-    date_thresholds=[1, 3, 1],
-    date_metrics=["week", "month", "year"],
+    date_thresholds=[7, 3, 1],
+    date_metrics=["day", "month", "year"],
     cast_strings_to_date=True,
 )
 
