@@ -2006,9 +2006,9 @@ class Linker:
         return cc
 
     def profile_columns(
-        self, column_expressions: str | list[str], top_n=10, bottom_n=10
+        self, column_expressions: str | list[str], top_n=10, bottom_n=10, kde_columns=None
     ):
-        return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
+        return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n, kde_columns=kde_columns)
 
     def _get_labels_tablename_from_input(
         self, labels_splinkdataframe_or_table_name: str | SplinkDataFrame

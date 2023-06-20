@@ -32,7 +32,7 @@ chart_path = "profile_data.json"
 _inner_chart_spec_freq = load_chart_definition(chart_path)
 
 
-def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, col_name):
+def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, kde_data, col_name):
     inner_spec = deepcopy(_inner_chart_spec_freq)
 
     total_rows_inc_nulls = percentile_data[0]["total_rows_inc_nulls"]
@@ -64,12 +64,18 @@ def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, col_n
     max_val = top_n_data[0]["value_count"]
     inner_spec["hconcat"][2]["encoding"]["y"]["scale"] = {"domain": [0, max_val]}
 
+    inner_spec["hconcat"][3]["data"]["values"] = kde_data
+    inner_spec["hconcat"][3]["title"] = f"Kernel Density Estimation"
+    inner_spec["hconcat"][3]["mark"] = "area"
+    inner_spec["hconcat"][3]["encoding"]["x"]["field"] = "value"
+    inner_spec["hconcat"][3]["encoding"]["y"]["field"] = "value_count"  # Add density field
+
     return inner_spec
 
 
 def _get_df_percentiles():
     """Take __splink__df_all_column_value_frequencies and
-    turn it into the raw data needed for the percentile cahrt
+    turn it into the raw data needed for the percentile chart
     """
 
     sqls = []
@@ -116,6 +122,14 @@ def _get_df_percentiles():
     sqls.append({"sql": sql, "output_table_name": "__splink__df_percentiles"})
     return sqls
 
+def _get_df_kde():
+    sql = """
+    select 
+        value,
+        value_count
+    from __splink__df_all_column_value_frequencies
+    """
+    return sql
 
 def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     sql = """
@@ -190,7 +204,7 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
     return percentile_rows
 
 
-def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
+def profile_columns(linker, column_expressions, top_n=10, bottom_n=10, kde_columns=None):
     df_concat = linker._initialise_df_concat()
 
     input_dataframes = []
@@ -207,12 +221,21 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
     df_raw = linker._execute_sql_pipeline(input_dataframes)
 
+    #sqls = _get_df_kde()
+    #for sql in sqls:
+    #    linker.eqnqueue_sql(sql["sql"], sql["output_table_name"])
+
     sqls = _get_df_percentiles()
     for sql in sqls:
         linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-
     df_percentiles = linker._execute_sql_pipeline([df_raw])
     percentile_rows_all = df_percentiles.as_record_dict()
+
+    sql = _get_df_kde()
+    linker._enqueue_sql(sql, "__splink__df_kde")
+    df_kde = linker._execute_sql_pipeline([df_raw])
+    kde_all = df_kde.as_record_dict()
+    kde_data = [{"value": item["value"], "value_count": item["value_count"]} for item in kde_all]
 
     sql = _get_df_top_bottom_n(column_expressions, top_n, "desc")
     linker._enqueue_sql(sql, "__splink__df_top_n")
@@ -240,11 +263,18 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
         # remove concat blank from expression title
         expression = expression.replace(", ' '", "")
         inner_chart = _get_inner_chart_spec_freq(
-            percentile_rows, top_n_rows, bottom_n_rows, expression
+            percentile_rows, top_n_rows, bottom_n_rows,kde_data, expression
         )
+        
         inner_charts.append(inner_chart)
-    outer_spec = deepcopy(_outer_chart_spec_freq)
 
+    outer_spec = deepcopy(_outer_chart_spec_freq)
     outer_spec["vconcat"] = inner_charts
 
     return altair_or_json(outer_spec)
+
+
+
+
+
+
