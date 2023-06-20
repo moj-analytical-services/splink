@@ -37,9 +37,9 @@ first_name_cc = levenshtein_at_thresholds(
 
 dob_cc = datediff_at_thresholds(
     col_name="dob",
-    date_thresholds=[1,3,1],
+    date_thresholds=[1, 3, 1],
     date_metrics=["week", "month", "year"],
-    cast_strings_to_date=True
+    cast_strings_to_date=True,
 )
 
 # Update tf weight and u probabilities to match
