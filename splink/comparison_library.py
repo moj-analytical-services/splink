@@ -1101,7 +1101,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
                                             cast_strings_to_date=True,
                                             date_format='%d/%m/%Y'
                                             )
-                ```     
+                ```
             === "PostgreSQL"
                 Date Difference comparison at thresholds 10 days, 12 months and 15 years
                 ``` python
