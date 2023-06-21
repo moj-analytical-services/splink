@@ -332,6 +332,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
                                             "levenshtein_distance",
                                             2,
                                             False)
+                ```
             === "SQLite
                 Apply the `levenshtein` function to a comparison level
                 ``` python
@@ -340,6 +341,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
                                             "levenshtein",
                                             2,
                                             False)
+                ```
             === ":simple-postgresql: PostgreSql"
                 Apply the `levenshtein` function to a comparison level
                 ``` python
@@ -474,19 +476,20 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
                 ```python
                 import splink.athena.comparison_level_library as cll
                 cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
+                ```
             === ":simple-sqlite: SQLite"
                 Comparison level with levenshtein distance score less than (or equal
                  to) 1
                 ``` python
                 import splink.sqlite.comparison_level_library as cll
                 cll.levenshtein_level("name", 1)
+                ```
             === ":simple-postgresql: PostgreSql"
                 Comparison level with levenshtein distance score less than (or equal
                  to) 1
                 ``` python
                 import splink.postgres.comparison_level_library as cll
                 cll.levenshtein_level("name", 1)
-                ```
                 ```
 
         Returns:
@@ -563,6 +566,7 @@ class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
                 ```python
                 import splink.spark.comparison_level_library as cll
                 cll.damerau_levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
+                ```
             === ":simple-sqlite: SQLite"
                 Comparison level with damerau-levenshtein distance score less than
                 (or equal to) 1
@@ -885,6 +889,7 @@ class ColumnsReversedLevelBase(ComparisonLevel):
                 ``` python
                 import splink.sqlite.comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
+                ```
             === ":simple-postgresql: PostgreSql"
                 ``` python
                 import splink.postgres.comparison_level_library as cll
@@ -976,6 +981,7 @@ class DistanceInKMLevelBase(ComparisonLevel):
                 cll.distance_in_km_level("lat_col",
                                         "long_col",
                                         km_threshold=5)
+                ```                                        
             === ":simple-postgresql: PostgreSql"
                 ``` python
                 import splink.postgres.comparison_level_library as cll
@@ -1055,6 +1061,7 @@ class PercentageDifferenceLevelBase(ComparisonLevel):
                 ``` python
                 import splink.sqlite.comparison_level_library as cll
                 cll.percentage_difference_level("value", 0.5)
+                ```
             === ":simple-postgresql: PostgreSql"
                 ``` python
                 import splink.postgres.comparison_level_library as cll
@@ -1124,6 +1131,7 @@ class ArrayIntersectLevelBase(ComparisonLevel):
                 ``` python
                 import splink.athena.comparison_level_library as cll
                 cll.array_intersect_level("name")
+                ```
             === ":simple-postgresql: PostgreSql"
                 ``` python
                 import splink.postgres.comparison_level_library as cll
@@ -1253,6 +1261,7 @@ class DatediffLevelBase(ComparisonLevel):
                                     cast_strings_to_date=True,
                                     date_format='%d/%m/%Y'
                                     )
+                ```
             === ":simple-postgresql: PostgreSql"
                 Date Difference comparison level at threshold 1 year
                 ``` python
