@@ -121,9 +121,7 @@ class levenshtein_at_thresholds(
         return self._levenshtein_level
 
 
-class array_intersect_at_sizes(
-    AthenaComparisonProperties, ArrayIntersectAtSizesBase
-):
+class array_intersect_at_sizes(AthenaComparisonProperties, ArrayIntersectAtSizesBase):
     pass
 
 

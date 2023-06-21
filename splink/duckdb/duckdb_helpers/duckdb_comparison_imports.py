@@ -197,23 +197,17 @@ class jaro_winkler_at_thresholds(
         return self._jaro_winkler_level
 
 
-class jaccard_at_thresholds(
-    DuckDBComparisonProperties, JaccardAtThresholdsBase
-):
+class jaccard_at_thresholds(DuckDBComparisonProperties, JaccardAtThresholdsBase):
     @property
     def _distance_level(self):
         return self._jaccard_level
 
 
-class array_intersect_at_sizes(
-    DuckDBComparisonProperties, ArrayIntersectAtSizesBase
-):
+class array_intersect_at_sizes(DuckDBComparisonProperties, ArrayIntersectAtSizesBase):
     pass
 
 
-class datediff_at_thresholds(
-    DuckDBComparisonProperties, DatediffAtThresholdsBase
-):
+class datediff_at_thresholds(DuckDBComparisonProperties, DatediffAtThresholdsBase):
     pass
 
 
