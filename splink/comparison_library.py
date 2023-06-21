@@ -450,9 +450,7 @@ class LevenshteinAtThresholdsBase(DistanceFunctionAtThresholdsBase):
         return True
 
 
-class DamerauLevenshteinAtThresholdsBase(
-    DistanceFunctionAtThresholdsBase
-):
+class DamerauLevenshteinAtThresholdsBase(DistanceFunctionAtThresholdsBase):
     def __init__(
         self,
         col_name: str,

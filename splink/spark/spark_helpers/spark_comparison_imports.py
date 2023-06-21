@@ -167,9 +167,7 @@ class distance_function_at_thresholds(
         return self._distance_function_level
 
 
-class levenshtein_at_thresholds(
-    SparkComparisonProperties, LevenshteinAtThresholdsBase
-):
+class levenshtein_at_thresholds(SparkComparisonProperties, LevenshteinAtThresholdsBase):
     @property
     def _distance_level(self):
         return self._levenshtein_level
@@ -197,23 +195,17 @@ class jaro_winkler_at_thresholds(
         return self._jaro_winkler_level
 
 
-class jaccard_at_thresholds(
-    SparkComparisonProperties, JaccardAtThresholdsBase
-):
+class jaccard_at_thresholds(SparkComparisonProperties, JaccardAtThresholdsBase):
     @property
     def _distance_level(self):
         return self._jaccard_level
 
 
-class array_intersect_at_sizes(
-    SparkComparisonProperties, ArrayIntersectAtSizesBase
-):
+class array_intersect_at_sizes(SparkComparisonProperties, ArrayIntersectAtSizesBase):
     pass
 
 
-class datediff_at_thresholds(
-    SparkComparisonProperties, DatediffAtThresholdsBase
-):
+class datediff_at_thresholds(SparkComparisonProperties, DatediffAtThresholdsBase):
     pass
 
 
