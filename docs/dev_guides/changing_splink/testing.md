@@ -342,19 +342,19 @@ If you need to exclude _multiple_ dialects this is also possible - just pass eac
 If you intend to write a test for a specific backend, first consider whether it is definitely specific to that backend - if not then a [backend-agnostic test](#backend-agnostic-testing) would be preferable, as then your test will be run against _many_ backends.
 If you really do need to test features peculiar to one backend, then you can write it simply as you would an ordinary `pytest` test. The only difference is that you should decorate it with `@mark_with_dialects_including` (from [tests/decorator.py](https://github.com/moj-analytical-services/splink/blob/master/tests/decorator.py)) - for example:
 
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```py
     @mark_with_dialects_including("duckdb")
     def test_some_specific_duckdb_feature():
         ...
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```py
     @mark_with_dialects_including("spark")
     def test_some_specific_spark_feature():
         ...
     ```
-=== "SQLite"
+=== ":simple-sqlite: SQLite"
     ```py
     @mark_with_dialects_including("sqlite")
     def test_some_specific_sqlite_feature():

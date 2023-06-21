@@ -13,7 +13,7 @@ What is the difference between the list of `blocking_rules_to_generate_predictio
 
 These two kinds of blocking rules can be seen in the following code snippet:
 
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```python
     import splink.duckdb.comparison_library as cl
 
@@ -43,7 +43,7 @@ These two kinds of blocking rules can be seen in the following code snippet:
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```python
     import splink.spark.comparison_library as cl
 
@@ -73,7 +73,7 @@ These two kinds of blocking rules can be seen in the following code snippet:
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
     ```
-=== "Athena"
+=== ":simple-amazonaws: Athena"
     ```python
     import splink.athena.comparison_library as cl
 
