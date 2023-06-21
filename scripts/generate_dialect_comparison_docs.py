@@ -12,11 +12,11 @@ from splink.dialect_base import DialectBase
 # but this way we get to fix the order, and feels like not unreasonable upkeep
 dialects = ("duckdb", "spark", "athena", "sqlite", "postgres")
 dialect_table_headers = (
-    ":simple-duckdb: DuckDB",
-    ":simple-apachespark: Spark",
-    ":simple-amazonaws: Athena",
-    ":simple-sqlite: SQLite",
-    ":simple-postgresql: PostgreSql",
+    ":simple-duckdb: <br> DuckDB",
+    ":simple-apachespark: <br> Spark",
+    ":simple-amazonaws: <br> Athena",
+    ":simple-sqlite: <br> SQLite",
+    ":simple-postgresql: <br> PostgreSql",
 )
 
 dialect_levels = {}
@@ -82,7 +82,7 @@ def make_md_table(opts):
     # start table with a header row of blank column + all dialects
     table = f"||{'|'.join(dialect_table_headers)}|\n"
     # and a separator row
-    table += f"|-|-{'|-'.join('' for d in dialects)}|\n"
+    table += f"|:-:|:-:{'|:-:'.join('' for d in dialects)}|\n"
 
     # then rows for each level indicating which dialects support it
     for level_name, level_dialects in opts.items():
