@@ -11,12 +11,12 @@ from ...comparison_level_library import (
     PercentageDifferenceLevelBase,
 )
 from ...comparison_library import (
-    DamerauLevenshteinAtThresholdsComparisonBase,
-    DistanceFunctionAtThresholdsComparisonBase,
+    DamerauLevenshteinAtThresholdsBase,
+    DistanceFunctionAtThresholdsBase,
     ExactMatchBase,
-    JaroAtThresholdsComparisonBase,
-    JaroWinklerAtThresholdsComparisonBase,
-    LevenshteinAtThresholdsComparisonBase,
+    JaroAtThresholdsBase,
+    JaroWinklerAtThresholdsBase,
+    LevenshteinAtThresholdsBase,
 )
 from ...comparison_template_library import (
     ForenameSurnameComparisonBase,
@@ -117,13 +117,13 @@ class exact_match(SqliteComparisonProperties, ExactMatchBase):
 
 
 class distance_function_at_thresholds(
-    SqliteComparisonProperties, DistanceFunctionAtThresholdsComparisonBase
+    SqliteComparisonProperties, DistanceFunctionAtThresholdsBase
 ):
     pass
 
 
 class levenshtein_at_thresholds(
-    SqliteComparisonProperties, LevenshteinAtThresholdsComparisonBase
+    SqliteComparisonProperties, LevenshteinAtThresholdsBase
 ):
     @property
     def _distance_level(self):
@@ -131,21 +131,21 @@ class levenshtein_at_thresholds(
 
 
 class damerau_levenshtein_at_thresholds(
-    SqliteComparisonProperties, DamerauLevenshteinAtThresholdsComparisonBase
+    SqliteComparisonProperties, DamerauLevenshteinAtThresholdsBase
 ):
     @property
     def _distance_level(self):
         return self._damerau_levenshtein_level
 
 
-class jaro_at_thresholds(SqliteComparisonProperties, JaroAtThresholdsComparisonBase):
+class jaro_at_thresholds(SqliteComparisonProperties, JaroAtThresholdsBase):
     @property
     def _distance_level(self):
         return self._jaro_level
 
 
 class jaro_winkler_at_thresholds(
-    SqliteComparisonProperties, JaroWinklerAtThresholdsComparisonBase
+    SqliteComparisonProperties, JaroWinklerAtThresholdsBase
 ):
     @property
     def _distance_level(self):

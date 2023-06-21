@@ -57,16 +57,28 @@ all_sorted_comparison_templates = sorted(
     {y for x in dialect_comparison_templates.values() for y in x}
 )
 
+def base_function_string(input_string):
+    # Split the input string by underscores
+    words = input_string.split('_')
+
+    # Capitalize the first letter of each word and join them
+    transformed_string = ''.join(word.capitalize() for word in words)
+
+    # Add the suffix "Base"
+    transformed_string += "Base"
+
+    return transformed_string
+
 level_dialects = {
-    lev: [dialect for dialect in dialects if lev in dialect_levels[dialect]]
+    f"[{lev}](#splink.comparison_level_library.{base_function_string(lev)})": [dialect for dialect in dialects if lev in dialect_levels[dialect]]
     for lev in all_sorted_levels
 }
 comparison_dialects = {
-    comp: [dialect for dialect in dialects if comp in dialect_comparisons[dialect]]
+    f"[{comp}](#splink.comparison_library.{base_function_string(comp)})": [dialect for dialect in dialects if comp in dialect_comparisons[dialect]]
     for comp in all_sorted_comparisons
 }
 comparison_template_dialects = {
-    comp_temp: [
+    f"[{comp_temp}](#splink.comparison_library.{base_function_string(comp_temp)})": [
         dialect
         for dialect in dialects
         if comp_temp in dialect_comparison_templates[dialect]
@@ -89,7 +101,7 @@ def make_md_table(opts):
         level_yes_no_dialect_string = (
             yes_string if d in level_dialects else no_string for d in dialects
         )
-        table += f"|`{level_name}`|"
+        table += f"|{level_name}|"
         table += f"{'|'.join(level_yes_no_dialect_string)}|\n"
     return table
 

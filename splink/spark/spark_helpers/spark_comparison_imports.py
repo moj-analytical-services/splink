@@ -2,7 +2,7 @@ from ...comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
     DamerauLevenshteinLevelBase,
-    DateDiffLevelBase,
+    DatediffLevelBase,
     DistanceFunctionLevelBase,
     DistanceInKMLevelBase,
     ElseLevelBase,
@@ -15,16 +15,16 @@ from ...comparison_level_library import (
     PercentageDifferenceLevelBase,
 )
 from ...comparison_library import (
-    ArrayIntersectAtSizesComparisonBase,
-    DamerauLevenshteinAtThresholdsComparisonBase,
-    DateDiffAtThresholdsComparisonBase,
-    DistanceFunctionAtThresholdsComparisonBase,
-    DistanceInKMAtThresholdsComparisonBase,
+    ArrayIntersectAtSizesBase,
+    DamerauLevenshteinAtThresholdsBase,
+    DatediffAtThresholdsBase,
+    DistanceFunctionAtThresholdsBase,
+    DistanceInKMAtThresholdsBase,
     ExactMatchBase,
-    JaccardAtThresholdsComparisonBase,
-    JaroAtThresholdsComparisonBase,
-    JaroWinklerAtThresholdsComparisonBase,
-    LevenshteinAtThresholdsComparisonBase,
+    JaccardAtThresholdsBase,
+    JaroAtThresholdsBase,
+    JaroWinklerAtThresholdsBase,
+    LevenshteinAtThresholdsBase,
 )
 from ...comparison_template_library import (
     DateComparisonBase,
@@ -148,7 +148,7 @@ class distance_in_km_level(SparkBase, DistanceInKMLevelBase):
     pass
 
 
-class datediff_level(SparkBase, DateDiffLevelBase):
+class datediff_level(SparkBase, DatediffLevelBase):
     pass
 
 
@@ -160,7 +160,7 @@ class exact_match(SparkComparisonProperties, ExactMatchBase):
 
 
 class distance_function_at_thresholds(
-    SparkComparisonProperties, DistanceFunctionAtThresholdsComparisonBase
+    SparkComparisonProperties, DistanceFunctionAtThresholdsBase
 ):
     @property
     def _distance_level(self):
@@ -168,7 +168,7 @@ class distance_function_at_thresholds(
 
 
 class levenshtein_at_thresholds(
-    SparkComparisonProperties, LevenshteinAtThresholdsComparisonBase
+    SparkComparisonProperties, LevenshteinAtThresholdsBase
 ):
     @property
     def _distance_level(self):
@@ -176,21 +176,21 @@ class levenshtein_at_thresholds(
 
 
 class damerau_levenshtein_at_thresholds(
-    SparkComparisonProperties, DamerauLevenshteinAtThresholdsComparisonBase
+    SparkComparisonProperties, DamerauLevenshteinAtThresholdsBase
 ):
     @property
     def _distance_level(self):
         return self._damerau_levenshtein_level
 
 
-class jaro_at_thresholds(SparkComparisonProperties, JaroAtThresholdsComparisonBase):
+class jaro_at_thresholds(SparkComparisonProperties, JaroAtThresholdsBase):
     @property
     def _distance_level(self):
         return self._jaro_level
 
 
 class jaro_winkler_at_thresholds(
-    SparkComparisonProperties, JaroWinklerAtThresholdsComparisonBase
+    SparkComparisonProperties, JaroWinklerAtThresholdsBase
 ):
     @property
     def _distance_level(self):
@@ -198,7 +198,7 @@ class jaro_winkler_at_thresholds(
 
 
 class jaccard_at_thresholds(
-    SparkComparisonProperties, JaccardAtThresholdsComparisonBase
+    SparkComparisonProperties, JaccardAtThresholdsBase
 ):
     @property
     def _distance_level(self):
@@ -206,19 +206,19 @@ class jaccard_at_thresholds(
 
 
 class array_intersect_at_sizes(
-    SparkComparisonProperties, ArrayIntersectAtSizesComparisonBase
+    SparkComparisonProperties, ArrayIntersectAtSizesBase
 ):
     pass
 
 
 class datediff_at_thresholds(
-    SparkComparisonProperties, DateDiffAtThresholdsComparisonBase
+    SparkComparisonProperties, DatediffAtThresholdsBase
 ):
     pass
 
 
 class distance_in_km_at_thresholds(
-    SparkComparisonProperties, DistanceInKMAtThresholdsComparisonBase
+    SparkComparisonProperties, DistanceInKMAtThresholdsBase
 ):
     pass
 

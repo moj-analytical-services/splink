@@ -23,6 +23,7 @@ class ExactMatchBase(Comparison):
         include_colname_in_charts_label=False,
     ) -> Comparison:
         """A comparison of the data in `col_name` with two levels:
+
         - Exact match
         - Anything else
 
@@ -114,7 +115,7 @@ class ExactMatchBase(Comparison):
         super().__init__(comparison_dict)
 
 
-class DistanceFunctionAtThresholdsComparisonBase(Comparison):
+class DistanceFunctionAtThresholdsBase(Comparison):
     def __init__(
         self,
         col_name: str,
@@ -321,7 +322,7 @@ class DistanceFunctionAtThresholdsComparisonBase(Comparison):
         return False
 
 
-class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase):
+class LevenshteinAtThresholdsBase(DistanceFunctionAtThresholdsBase):
     def __init__(
         self,
         col_name: str,
@@ -449,8 +450,8 @@ class LevenshteinAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         return True
 
 
-class DamerauLevenshteinAtThresholdsComparisonBase(
-    DistanceFunctionAtThresholdsComparisonBase
+class DamerauLevenshteinAtThresholdsBase(
+    DistanceFunctionAtThresholdsBase
 ):
     def __init__(
         self,
@@ -560,7 +561,7 @@ class DamerauLevenshteinAtThresholdsComparisonBase(
         return True
 
 
-class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase):
+class JaccardAtThresholdsBase(DistanceFunctionAtThresholdsBase):
     def __init__(
         self,
         col_name: str,
@@ -660,7 +661,7 @@ class JaccardAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBa
         return True
 
 
-class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase):
+class JaroAtThresholdsBase(DistanceFunctionAtThresholdsBase):
     def __init__(
         self,
         col_name: str,
@@ -766,7 +767,7 @@ class JaroAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase)
         return True
 
 
-class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparisonBase):
+class JaroWinklerAtThresholdsBase(DistanceFunctionAtThresholdsBase):
     def __init__(
         self,
         col_name: str,
@@ -880,7 +881,7 @@ class JaroWinklerAtThresholdsComparisonBase(DistanceFunctionAtThresholdsComparis
         return True
 
 
-class ArrayIntersectAtSizesComparisonBase(Comparison):
+class ArrayIntersectAtSizesBase(Comparison):
     def __init__(
         self,
         col_name: str,
@@ -981,7 +982,7 @@ class ArrayIntersectAtSizesComparisonBase(Comparison):
         raise NotImplementedError("Intersect level not defined on base class")
 
 
-class DateDiffAtThresholdsComparisonBase(Comparison):
+class DatediffAtThresholdsBase(Comparison):
     def __init__(
         self,
         col_name: str,
@@ -1245,7 +1246,7 @@ class DateDiffAtThresholdsComparisonBase(Comparison):
         raise NotImplementedError("Datediff level not defined on base class")
 
 
-class DistanceInKMAtThresholdsComparisonBase(Comparison):
+class DistanceInKMAtThresholdsBase(Comparison):
     def __init__(
         self,
         lat_col: str,

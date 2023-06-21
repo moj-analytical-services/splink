@@ -1163,7 +1163,7 @@ class ArrayIntersectLevelBase(ComparisonLevel):
         raise NotImplementedError("Intersect function not defined on base class")
 
 
-class DateDiffLevelBase(ComparisonLevel):
+class DatediffLevelBase(ComparisonLevel):
     def __init__(
         self,
         date_col: str,
