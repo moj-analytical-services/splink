@@ -409,6 +409,7 @@ class LevenshteinAtThresholdsBase(DistanceFunctionAtThresholdsBase):
                 ``` python
                 import splink.athena.comparison_library as cl
                 cl.levenshtein_at_thresholds("first_name", [1,2], regex_extract="^A|B")
+                ```
             === ":simple-sqlite: SQLite"
                 Create comparison with levenshtein match levels with distance <=1
                 and <=2
@@ -925,6 +926,7 @@ class ArrayIntersectAtSizesBase(Comparison):
                 ``` python
                 import splink.athena.comparison_library as cl
                 cl.array_intersect_at_sizes("first_name", [3, 1])
+                ```
             === ":simple-postgresql: PostgreSql"
                 ``` python
                 import splink.postgres.comparison_library as cl
@@ -1310,6 +1312,7 @@ class DistanceInKMAtThresholdsBase(Comparison):
                                            "long_col",
                                            km_thresholds = [0.1, 1, 10]
                                         )
+                ```
             === ":simple-postgresql: PostgreSql"
                 ``` python
                 import splink.postgres.comparison_library as cl
