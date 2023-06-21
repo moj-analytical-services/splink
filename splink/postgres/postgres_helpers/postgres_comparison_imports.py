@@ -120,15 +120,11 @@ class levenshtein_at_thresholds(
         return levenshtein_level
 
 
-class array_intersect_at_sizes(
-    PostgresComparisonProperties, ArrayIntersectAtSizesBase
-):
+class array_intersect_at_sizes(PostgresComparisonProperties, ArrayIntersectAtSizesBase):
     pass
 
 
-class datediff_at_thresholds(
-    PostgresComparisonProperties, DatediffAtThresholdsBase
-):
+class datediff_at_thresholds(PostgresComparisonProperties, DatediffAtThresholdsBase):
     pass
 
 
