@@ -1,10 +1,3 @@
----
-name: 'Feature request'
-about: Making a change to Splink
-title: '<title>'
-assignees: ''
----
-
 ### Type of PR
 
 - [ ] BUG
