@@ -10,11 +10,11 @@ from ...comparison_level_library import (
     PercentageDifferenceLevelBase,
 )
 from ...comparison_library import (
-    ArrayIntersectAtSizesComparisonBase,
-    DistanceFunctionAtThresholdsComparisonBase,
-    DistanceInKMAtThresholdsComparisonBase,
+    ArrayIntersectAtSizesBase,
+    DistanceFunctionAtThresholdsBase,
+    DistanceInKMAtThresholdsBase,
     ExactMatchBase,
-    LevenshteinAtThresholdsComparisonBase,
+    LevenshteinAtThresholdsBase,
 )
 from ...comparison_template_library import (
     PostcodeComparisonBase,
@@ -106,7 +106,7 @@ class exact_match(AthenaComparisonProperties, ExactMatchBase):
 
 
 class distance_function_at_thresholds(
-    AthenaComparisonProperties, DistanceFunctionAtThresholdsComparisonBase
+    AthenaComparisonProperties, DistanceFunctionAtThresholdsBase
 ):
     @property
     def _distance_level(self):
@@ -114,7 +114,7 @@ class distance_function_at_thresholds(
 
 
 class levenshtein_at_thresholds(
-    AthenaComparisonProperties, LevenshteinAtThresholdsComparisonBase
+    AthenaComparisonProperties, LevenshteinAtThresholdsBase
 ):
     @property
     def _distance_level(self):
@@ -122,13 +122,13 @@ class levenshtein_at_thresholds(
 
 
 class array_intersect_at_sizes(
-    AthenaComparisonProperties, ArrayIntersectAtSizesComparisonBase
+    AthenaComparisonProperties, ArrayIntersectAtSizesBase
 ):
     pass
 
 
 class distance_in_km_at_thresholds(
-    AthenaComparisonProperties, DistanceInKMAtThresholdsComparisonBase
+    AthenaComparisonProperties, DistanceInKMAtThresholdsBase
 ):
     pass
 
