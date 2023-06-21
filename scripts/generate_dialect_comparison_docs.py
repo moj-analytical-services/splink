@@ -11,12 +11,13 @@ from splink.dialect_base import DialectBase
 # could always pick this up dynamically,
 # but this way we get to fix the order, and feels like not unreasonable upkeep
 dialects = ("duckdb", "spark", "athena", "sqlite", "postgres")
-dialect_table_headers = (":simple-duckdb: DuckDB",
-                         ":simple-apachespark: Spark",
-                         ":simple-amazonaws: Athena",
-                         ":simple-sqlite: SQLite",
-                         ":simple-postgresql: PostgreSql"
-                         )
+dialect_table_headers = (
+    ":simple-duckdb: DuckDB",
+    ":simple-apachespark: Spark",
+    ":simple-amazonaws: Athena",
+    ":simple-sqlite: SQLite",
+    ":simple-postgresql: PostgreSql",
+)
 
 dialect_levels = {}
 dialect_comparisons = {}
