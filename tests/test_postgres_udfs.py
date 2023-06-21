@@ -2,7 +2,7 @@ import pandas as pd
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.types import INTEGER
 
-from splink.postgres.postgres_linker import PostgresLinker
+from splink.postgres.linker import PostgresLinker
 
 from .decorator import mark_with_dialects_including
 

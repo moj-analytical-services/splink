@@ -64,6 +64,9 @@ markdown_extensions:
   - toc:
       permalink: True
       toc_depth: 4
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
 nav:
   - Home: "README.md"
   - Installation: "installations.md"

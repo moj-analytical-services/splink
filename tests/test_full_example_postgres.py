@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import pytest
 
-from splink.postgres.postgres_linker import PostgresLinker
+from splink.postgres.linker import PostgresLinker
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including

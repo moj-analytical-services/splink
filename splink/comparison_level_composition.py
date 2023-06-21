@@ -33,7 +33,7 @@ def and_(
             Defaults to None.
 
     Examples:
-        === "DuckDB"
+        === ":simple-duckdb: DuckDB"
             Simple null level composition with an `AND` clause
             ``` python
             import splink.duckdb.comparison_level_library as cll
@@ -57,7 +57,7 @@ def and_(
             >  'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
             >  'label_for_charts': 'Spelling error'
             >}
-        === "Spark"
+        === ":simple-apachespark: Spark"
             Simple null level composition with an `AND` clause
             ``` python
             import splink.spark.comparison_level_library as cll
@@ -81,7 +81,7 @@ def and_(
             >  'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
             >  'label_for_charts': 'Spelling error'
             >}
-        === "Athena"
+        === ":simple-amazonaws: Athena"
             Simple null level composition with an `AND` clause
             ``` python
             import splink.athena.comparison_level_library as cll
@@ -105,7 +105,7 @@ def and_(
             >  'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
             >  'label_for_charts': 'Spelling error'
             >}
-        === "SQLite"
+        === ":simple-sqlite: SQLite"
             Simple null level composition with an `AND` clause
             ``` python
             import splink.sqlite.comparison_level_library as cll
@@ -153,7 +153,7 @@ def or_(
             Defaults to None.
 
     Examples:
-        === "DuckDB"
+        === ":simple-duckdb: DuckDB"
             Simple null level composition with an `OR` clause
             ``` python
             import splink.duckdb.comparison_level_library as cll
@@ -177,7 +177,7 @@ def or_(
             >  'OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
             >  'label_for_charts': 'Spelling error'
             >}
-        === "Spark"
+        === ":simple-apachespark: Spark"
             Simple null level composition with an `OR` clause
             ``` python
             import splink.spark.comparison_level_library as cll
@@ -201,7 +201,7 @@ def or_(
             >  'OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
             >  'label_for_charts': 'Spelling error'
             >}
-        === "Athena"
+        === ":simple-amazonaws: Athena"
             Simple null level composition with an `OR` clause
             ``` python
             import splink.athena.comparison_level_library as cll
@@ -225,7 +225,7 @@ def or_(
             >  'OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
             >  'label_for_charts': 'Spelling error'
             >}
-        === "SQLite"
+        === ":simple-sqlite: SQLite"
             Simple null level composition with an `OR` clause
             ``` python
             import splink.sqlite.comparison_level_library as cll
@@ -269,7 +269,7 @@ def not_(
             Defaults to None.
 
     Examples:
-        === "DuckDB"
+        === ":simple-duckdb: DuckDB"
             *Not* an exact match on first name
             ``` python
             import splink.duckdb.comparison_level_library as cll
@@ -288,7 +288,7 @@ def not_(
                 label_for_charts = "Exact match and not the 1st Jan"
             )
             ```
-        === "Spark"
+        === ":simple-apachespark: Spark"
             *Not* an exact match on first name
             ``` python
             import splink.spark.comparison_level_library as cll
@@ -307,7 +307,7 @@ def not_(
                 label_for_charts = "Exact match and not the 1st Jan"
             )
             ```
-        === "Athena"
+        === ":simple-amazonaws: Athena"
             *Not* an exact match on first name
             ``` python
             import splink.athena.comparison_level_library as cll
@@ -326,7 +326,7 @@ def not_(
                 label_for_charts = "Exact match and not the 1st Jan"
             )
             ```
-        === "SQLite"
+        === ":simple-sqlite: SQLite"
             *Not* an exact match on first name
             ``` python
             import splink.sqlite.comparison_level_library as cll
