@@ -30,6 +30,7 @@ theme:
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to light mode
+  custom_dir: docs/overrides
 plugins:
   - search
   - semiliterate
