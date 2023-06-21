@@ -981,7 +981,7 @@ class DistanceInKMLevelBase(ComparisonLevel):
                 cll.distance_in_km_level("lat_col",
                                         "long_col",
                                         km_threshold=5)
-                ```                                        
+                ```
             === ":simple-postgresql: PostgreSql"
                 ``` python
                 import splink.postgres.comparison_level_library as cll
