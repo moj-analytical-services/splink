@@ -1,8 +1,9 @@
 import pandas as pd
 import pytest
 
-from .decorator import mark_with_dialects_excluding, mark_with_dialects_including
 from splink.input_column import _get_dialect_quotes
+
+from .decorator import mark_with_dialects_excluding, mark_with_dialects_including
 
 
 def binary_composition_internals(clause, c_fun, cll, q):
@@ -51,7 +52,7 @@ def binary_composition_internals(clause, c_fun, cll, q):
         m_probability=0.5,
     )
 
-    exact_match_sql = f"({q}first_name_l{q} = {q}first_name_r{q}) {clause} ({q}surname_l{q} = {q}surname_r{q})"
+    exact_match_sql = f"({q}first_name_l{q} = {q}first_name_r{q}) {clause} ({q}surname_l{q} = {q}surname_r{q})"  # noqa: E501
     assert level.sql_condition == f"NOT ({exact_match_sql})"
 
     with pytest.raises(ValueError):
@@ -89,7 +90,6 @@ def test_not():
 
 @mark_with_dialects_excluding("postgres")
 def test_composition_outputs(test_helpers, dialect):
-
     helper = test_helpers[dialect]
     cll = helper.cll
 
