@@ -9,29 +9,26 @@ from sqlalchemy.types import (
     TEXT,
 )
 
-from splink.duckdb.linker import DuckDBLinker
+import splink.duckdb.blocking_rule_library as brl_duckdb
 import splink.duckdb.comparison_level_library as cll_duckdb
 import splink.duckdb.comparison_library as cl_duckdb
 import splink.duckdb.comparison_template_library as ctl_duckdb
-import splink.duckdb.blocking_rule_library as brl_duckdb
-
-from splink.postgres.linker import PostgresLinker
+import splink.postgres.blocking_rule_library as brl_postgres
 import splink.postgres.comparison_level_library as cll_postgres
 import splink.postgres.comparison_library as cl_postgres
 import splink.postgres.comparison_template_library as ctl_postgres
-import splink.postgres.blocking_rule_library as brl_postgres
-
-from splink.spark.linker import SparkLinker
+import splink.spark.blocking_rule_library as brl_spark
 import splink.spark.comparison_level_library as cll_spark
 import splink.spark.comparison_library as cl_spark
 import splink.spark.comparison_template_library as ctl_spark
-import splink.spark.blocking_rule_library as brl_spark
-
-from splink.sqlite.linker import SQLiteLinker
+import splink.sqlite.blocking_rule_library as brl_sqlite
 import splink.sqlite.comparison_level_library as cll_sqlite
 import splink.sqlite.comparison_library as cl_sqlite
 import splink.sqlite.comparison_template_library as ctl_sqlite
-import splink.sqlite.blocking_rule_library as brl_sqlite
+from splink.duckdb.linker import DuckDBLinker
+from splink.postgres.linker import PostgresLinker
+from splink.spark.linker import SparkLinker
+from splink.sqlite.linker import SQLiteLinker
 
 
 class TestHelper(ABC):

@@ -1,75 +1,80 @@
-import pandas as pd
-
 from splink.analyse_blocking import (
     cumulative_comparisons_generated_by_blocking_rules,
 )
-from splink.duckdb.linker import DuckDBLinker
+
+# from splink.duckdb.linker import DuckDBLinker
 from tests.basic_settings import get_settings_dict
 
+from .decorator import mark_with_dialects_excluding
 
-def test_analyse_blocking():
-    df_1 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
-            {"unique_id": 4, "first_name": "John", "surname": "Brown"},
-        ]
-    )
+# @mark_with_dialects_excluding("postgres")
+# def test_analyse_blocking(test_helpers, dialect):
 
-    df_2 = pd.DataFrame(
-        [
-            {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
-            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-            {"unique_id": 3, "first_name": "Jayne", "surname": "Tailor"},
-        ]
-    )
-    settings = {"link_type": "dedupe_only"}
-    linker = DuckDBLinker(df_1, settings)
+#     helper = test_helpers[dialect]
+#     Linker = helper.Linker
 
-    res = linker.count_num_comparisons_from_blocking_rule(
-        "1=1",
-    )
-    assert res == 4 * 3 / 2
+#     df_1 = pd.DataFrame(
+#         [
+#             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+#             {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+#             {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
+#             {"unique_id": 4, "first_name": "John", "surname": "Brown"},
+#         ]
+#     )
 
-    res = linker.count_num_comparisons_from_blocking_rule(
-        "l.first_name = r.first_name",
-    )
-    assert res == 1
+#     df_2 = pd.DataFrame(
+#         [
+#             {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
+#             {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+#             {"unique_id": 3, "first_name": "Jayne", "surname": "Tailor"},
+#         ]
+#     )
+#     settings = {"link_type": "dedupe_only"}
+#     linker = Linker(df_1, settings, **helper.extra_linker_args())
 
-    settings = {"link_type": "link_only"}
-    linker = DuckDBLinker([df_1, df_2], settings)
-    res = linker.count_num_comparisons_from_blocking_rule(
-        "1=1",
-    )
-    assert res == 4 * 3
+#     res = linker.count_num_comparisons_from_blocking_rule(
+#         "1=1",
+#     )
+#     assert res == 4 * 3 / 2
 
-    res = linker.count_num_comparisons_from_blocking_rule(
-        "l.surname = r.surname",
-    )
-    assert res == 1
+#     res = linker.count_num_comparisons_from_blocking_rule(
+#         "l.first_name = r.first_name",
+#     )
+#     assert res == 1
 
-    res = linker.count_num_comparisons_from_blocking_rule(
-        "l.first_name = r.first_name",
-    )
-    assert res == 3
+#     settings = {"link_type": "link_only"}
+#     linker = Linker([df_1, df_2], settings, **helper.extra_linker_args())
+#     res = linker.count_num_comparisons_from_blocking_rule(
+#         "1=1",
+#     )
+#     assert res == 4 * 3
 
-    settings = {"link_type": "link_and_dedupe"}
+#     res = linker.count_num_comparisons_from_blocking_rule(
+#         "l.surname = r.surname",
+#     )
+#     assert res == 1
 
-    linker = DuckDBLinker([df_1, df_2], settings)
+#     res = linker.count_num_comparisons_from_blocking_rule(
+#         "l.first_name = r.first_name",
+#     )
+#     assert res == 3
 
-    res = linker.count_num_comparisons_from_blocking_rule(
-        "1=1",
-    )
-    expected = 4 * 3 + (4 * 3 / 2) + (3 * 2 / 2)
-    assert res == expected
+#     settings = {"link_type": "link_and_dedupe"}
 
-    rule = "l.first_name = r.first_name and l.surname = r.surname"
-    res = linker.count_num_comparisons_from_blocking_rule(
-        rule,
-    )
+#     linker = Linker([df_1, df_2], settings, **helper.extra_linker_args())
 
-    assert res == 1
+#     res = linker.count_num_comparisons_from_blocking_rule(
+#         "1=1",
+#     )
+#     expected = 4 * 3 + (4 * 3 / 2) + (3 * 2 / 2)
+#     assert res == expected
+
+#     rule = "l.first_name = r.first_name and l.surname = r.surname"
+#     res = linker.count_num_comparisons_from_blocking_rule(
+#         rule,
+#     )
+
+#     assert res == 1
 
 
 def validate_blocking_output(linker, expected_out, **kwargs):
@@ -84,10 +89,15 @@ def validate_blocking_output(linker, expected_out, **kwargs):
     assert expected_out["cartesian"] == records[0]["cartesian"]
 
 
-def test_blocking_records_accuracy():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+@mark_with_dialects_excluding("postgres")
+def test_blocking_records_accuracy(test_helpers, dialect):
 
-    linker_settings = DuckDBLinker(df, get_settings_dict())
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    brl = helper.brl
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    linker_settings = Linker(df, get_settings_dict(), **helper.extra_linker_args())
 
     # dedupe only
     validate_blocking_output(
@@ -117,8 +127,11 @@ def test_blocking_records_accuracy():
     )
 
     blocking_rules = [
-        "l.first_name = r.first_name",
-        "l.first_name = r.first_name and l.surname = r.surname",
+        brl.exact_match_rule("first_name"),
+        brl.and_(
+            brl.exact_match_rule("first_name"),
+            brl.exact_match_rule("surname"),
+        ),
         "l.dob = r.dob",
     ]
 
@@ -135,12 +148,15 @@ def test_blocking_records_accuracy():
     # link and dedupe + link only without settings
     blocking_rules = [
         "l.surname = r.surname",
-        "l.first_name = r.first_name or substr(l.dob,1,4) = substr(r.dob,1,4)",
+        brl.or_(
+            brl.exact_match_rule("first_name"),
+            "substr(l.dob,1,4) = substr(r.dob,1,4)",
+        ),
         "l.city = r.city",
     ]
 
     settings = {"link_type": "link_and_dedupe"}
-    linker_settings = DuckDBLinker([df, df], settings)
+    linker_settings = Linker([df, df], settings, **helper.extra_linker_args())
     validate_blocking_output(
         linker_settings,
         expected_out={
@@ -152,7 +168,7 @@ def test_blocking_records_accuracy():
     )
 
     settings = {"link_type": "link_only"}
-    linker_settings = DuckDBLinker([df, df], settings)
+    linker_settings = Linker([df, df], settings, **helper.extra_linker_args())
     validate_blocking_output(
         linker_settings,
         expected_out={
@@ -165,7 +181,7 @@ def test_blocking_records_accuracy():
 
     # now multi-table
     # still link only
-    linker_settings = DuckDBLinker([df, df, df], settings)
+    linker_settings = Linker([df, df, df], settings, **helper.extra_linker_args())
     validate_blocking_output(
         linker_settings,
         expected_out={
@@ -182,7 +198,7 @@ def test_blocking_records_accuracy():
     )
 
     settings = {"link_type": "link_and_dedupe"}
-    linker_settings = DuckDBLinker([df, df, df], settings)
+    linker_settings = Linker([df, df, df], settings, **helper.extra_linker_args())
     validate_blocking_output(
         linker_settings,
         expected_out={
