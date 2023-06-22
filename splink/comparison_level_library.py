@@ -1262,6 +1262,34 @@ class DatediffLevelBase(ComparisonLevel):
                                     date_format='%d/%m/%Y'
                                     )
                 ```
+            === ":simple-amazonaws: Athena"
+                Date Difference comparison level at threshold 1 year
+                ``` python
+                import splink.athena.comparison_level_library as cll
+                cll.datediff_level("date",
+                                    date_threshold=1,
+                                    date_metric="year"
+                                    )
+                ```
+                Date Difference comparison with date-casting and unspecified
+                date_format (default = %Y-%m-%d)
+                ``` python
+                import splink.athena.comparison_level_library as cll
+                cll.datediff_level("dob",
+                                    date_threshold=3,
+                                    date_metric='month',
+                                    cast_strings_to_date=True
+                                    )
+                ```
+                Date Difference comparison with date-casting and specified date_format
+                ``` python
+                import splink.athena.comparison_level_library as cll
+                cll.datediff_level("dob",
+                                    date_threshold=3,
+                                    date_metric='month',
+                                    cast_strings_to_date=True,
+                                    date_format='%d/%m/%Y'
+                                    )
             === ":simple-postgresql: PostgreSql"
                 Date Difference comparison level at threshold 1 year
                 ``` python

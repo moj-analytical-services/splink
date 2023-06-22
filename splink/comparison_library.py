@@ -1112,6 +1112,38 @@ class DatediffAtThresholdsBase(Comparison):
                                             date_format='%d/%m/%Y'
                                             )
                 ```
+            === "":simple-amazonaws: Athena"
+                Date Difference comparison at thresholds 10 days, 12 months and 15 years
+                ``` python
+                import splink.athena.comparison_library as cl
+                cl.datediff_at_thresholds("date",
+                                            date_thresholds = [10, 12, 15],
+                                            date_metrics = ['day', 'month', 'year']
+                                            )
+                ```
+
+                Datediff comparison with date-casting and unspecified date_format
+                (default = %Y-%m-%d)
+                ``` python
+                    import splink.athena.comparison_library as cl
+                    cl.datediff_at_thresholds("date",
+                                                date_thresholds=[1,5],
+                                                date_metrics = ["day", "year"],
+                                                cast_strings_to_date=True
+                                                )
+                ```
+
+                Datediff comparison with date-casting and specified (non-default)
+                date_format
+                ``` python
+                import splink.athena.comparison_library as cl
+                cl.datediff_at_thresholds("date",
+                                            date_thresholds=[1,5],
+                                            date_metrics = ["day", "year"],
+                                            cast_strings_to_date=True,
+                                            date_format='%d/%m/%Y'
+                                            )
+                ```
             === ":simple-postgresql: PostgreSql"
                 Date Difference comparison at thresholds 10 days, 12 months and 15 years
                 ``` python
