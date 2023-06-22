@@ -59,21 +59,20 @@ def binary_composition_internals(clause, c_fun, cll, q):
         c_fun()
 
 
-@mark_with_dialects_excluding("postgres")
+@mark_with_dialects_excluding()
 def test_binary_composition_internals_OR(test_helpers, dialect):
     cll = test_helpers[dialect].cll
     quo, _ = _get_dialect_quotes(dialect)
     binary_composition_internals("OR", cll.or_, cll, quo)
 
 
-@mark_with_dialects_excluding("postgres")
+@mark_with_dialects_excluding()
 def test_binary_composition_internals_AND(test_helpers, dialect):
     cll = test_helpers[dialect].cll
     quo, _ = _get_dialect_quotes(dialect)
     binary_composition_internals("AND", cll.and_, cll, quo)
 
 
-@mark_with_dialects_including("duckdb")
 def test_not():
     import splink.duckdb.duckdb_comparison_level_library as cll
 
@@ -88,7 +87,7 @@ def test_not():
         cll.not_()
 
 
-@mark_with_dialects_excluding("postgres")
+@mark_with_dialects_excluding()
 def test_composition_outputs(test_helpers, dialect):
     helper = test_helpers[dialect]
     cll = helper.cll
