@@ -50,7 +50,7 @@ for dialect in dialects:
     ):
         if issubclass(cls, Comparison) and issubclass(cls, DialectBase):
             dialect_comparison_templates[dialect].append(class_name)
-    for class_name, cls in inspect.getmembers(
+    for class_name in inspect.getmembers(
         importlib.import_module(
             ".comparison_level_library", package=f"splink.{dialect}"
         ),

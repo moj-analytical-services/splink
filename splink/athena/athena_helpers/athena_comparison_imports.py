@@ -1,7 +1,7 @@
 from ...comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
-    DateDiffLevelBase,
+    DatediffLevelBase,
     DistanceFunctionLevelBase,
     DistanceInKMLevelBase,
     ElseLevelBase,
@@ -11,10 +11,10 @@ from ...comparison_level_library import (
     PercentageDifferenceLevelBase,
 )
 from ...comparison_library import (
-    ArrayIntersectAtSizesComparisonBase,
-    DatediffAtThresholdsComparisonBase,
-    DistanceFunctionAtThresholdsComparisonBase,
-    DistanceInKMAtThresholdsComparisonBase,
+    ArrayIntersectAtSizesBase,
+    DatediffAtThresholdsBase,
+    DistanceFunctionAtThresholdsBase,
+    DistanceInKMAtThresholdsBase,
     ExactMatchBase,
     LevenshteinAtThresholdsBase,
 )
