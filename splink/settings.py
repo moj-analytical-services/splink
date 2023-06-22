@@ -297,12 +297,9 @@ class Settings:
         raise ValueError(f"No comparison column with name {name}")
 
     def _brs_as_objs(self, brs_as_strings):
-        brs_as_objs = []
-        for br in brs_as_strings:
-            br = blocking_rule_to_obj(br)
-            br.add_preceding_rules(brs_as_objs.copy())
-            brs_as_objs.append(br)
-
+        brs_as_objs = [blocking_rule_to_obj(br) for br in brs_as_strings]
+        for n, br in enumerate(brs_as_objs):
+            br.add_preceding_rules(brs_as_objs[:n])
         return brs_as_objs
 
     def _get_comparison_levels_corresponding_to_training_blocking_rule(
