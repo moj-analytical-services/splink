@@ -123,7 +123,7 @@ The detailed API for each of these are outlined below.
 
 ---
 
-::: splink.comparison_library.DateDiffAtThresholdsComparisonBase
+::: splink.comparison_library.DatediffAtThresholdsComparisonBase
     handler: python
     selection:
       members:
