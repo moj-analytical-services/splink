@@ -104,7 +104,7 @@ comparison_template_dialects = {
     for comp_temp in all_sorted_comparison_templates
 }
 level_composition_dialects = {
-    f"[{lev_comp}](#splink.composition.{lev_comp})": [
+    f"[{lev_comp}](#splink.comparison_level_composition.{lev_comp})": [
         dialect for dialect in dialects if lev_comp in dialect_level_compositions[dialect]
     ]
     for lev_comp in all_sorted_level_compositions
