@@ -90,6 +90,8 @@ nav:
         - Febrl4 link-only: "demos/example_febrl4.ipynb"
       - PySpark:
         - Deduplication using Pyspark: "demos/example_simple_pyspark.ipynb"
+      - Athena:
+        - Deduplicate 50k rows historical persons: "demos/athena_deduplicate_50k_synthetic.ipynb"
   - Topic Guides:
       - Linkage Models in Splink:
         - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/backends.md"

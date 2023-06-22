@@ -1,6 +1,7 @@
 from ...comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
+    DateDiffLevelBase,
     DistanceFunctionLevelBase,
     DistanceInKMLevelBase,
     ElseLevelBase,
@@ -11,6 +12,7 @@ from ...comparison_level_library import (
 )
 from ...comparison_library import (
     ArrayIntersectAtSizesComparisonBase,
+    DateDiffAtThresholdsComparisonBase,
     DistanceFunctionAtThresholdsComparisonBase,
     DistanceInKMAtThresholdsComparisonBase,
     ExactMatchBase,
@@ -45,6 +47,10 @@ class AthenaComparisonProperties(AthenaBase):
     @property
     def _columns_reversed_level(self):
         return columns_reversed_level
+
+    @property
+    def _datediff_level(self):
+        return datediff_level
 
     @property
     def _distance_in_km_level(self):
@@ -94,6 +100,10 @@ class percentage_difference_level(AthenaBase, PercentageDifferenceLevelBase):
     pass
 
 
+class datediff_level(AthenaBase, DateDiffLevelBase):
+    pass
+
+
 class distance_in_km_level(AthenaBase, DistanceInKMLevelBase):
     pass
 
@@ -123,6 +133,12 @@ class levenshtein_at_thresholds(
 
 class array_intersect_at_sizes(
     AthenaComparisonProperties, ArrayIntersectAtSizesComparisonBase
+):
+    pass
+
+
+class datediff_at_thresholds(
+    AthenaComparisonProperties, DateDiffAtThresholdsComparisonBase
 ):
     pass
 
