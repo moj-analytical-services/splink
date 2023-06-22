@@ -1,7 +1,7 @@
-from ..level_composition import (  # noqa: F401
-    cl_and_ as and_,
-    cl_not as not_,
-    cl_or as or_,
+from ..comparison_level_composition import (  # noqa: F401
+    and_,
+    not_,
+    or_,
 )
 from .sqlite_helpers.sqlite_comparison_imports import (  # noqa: F401
     columns_reversed_level,
