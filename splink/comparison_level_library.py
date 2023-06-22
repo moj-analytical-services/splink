@@ -333,7 +333,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
                                             2,
                                             False)
                 ```
-            === "SQLite
+            === ":simple-sqlite: SQLite"
                 Apply the `levenshtein` function to a comparison level
                 ``` python
                 import splink.sqlite.comparison_level_library as cll
