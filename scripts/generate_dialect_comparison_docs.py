@@ -37,9 +37,7 @@ for dialect in dialects:
         if issubclass(cls, ComparisonLevel) and issubclass(cls, DialectBase):
             dialect_levels[dialect].append(class_name)
     for class_name, cls in inspect.getmembers(
-        importlib.import_module(
-            ".comparison_library", package=f"splink.{dialect}"
-        ),
+        importlib.import_module(".comparison_library", package=f"splink.{dialect}"),
         inspect.isclass,
     ):
         if issubclass(cls, Comparison) and issubclass(cls, DialectBase):
@@ -66,7 +64,9 @@ all_sorted_comparisons = sorted({y for x in dialect_comparisons.values() for y i
 all_sorted_comparison_templates = sorted(
     {y for x in dialect_comparison_templates.values() for y in x}
 )
-all_sorted_level_compositions = sorted({y for x in dialect_level_compositions.values() for y in x})
+all_sorted_level_compositions = sorted(
+    {y for x in dialect_level_compositions.values() for y in x}
+)
 
 
 def base_function_string(input_string):
@@ -105,7 +105,9 @@ comparison_template_dialects = {
 }
 level_composition_dialects = {
     f"[{lev_comp}](#splink.comparison_level_composition.{lev_comp})": [
-        dialect for dialect in dialects if lev_comp in dialect_level_compositions[dialect]
+        dialect
+        for dialect in dialects
+        if lev_comp in dialect_level_compositions[dialect]
     ]
     for lev_comp in all_sorted_level_compositions
 }
