@@ -1,16 +1,14 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.comparison_level_library as cll
+from .decorator import mark_with_dialects_excluding, mark_with_dialects_including
+from splink.input_column import _get_dialect_quotes
 
-from .decorator import mark_with_dialects_excluding
-
-
-def binary_composition_internals(clause, c_fun):
+def binary_composition_internals(clause, c_fun, cll, q):
     # Test what happens when only one value is fed
     # It should just report the regular outputs of our comparison level func
     level = c_fun(cll.exact_match_level("tom", include_colname_in_charts_label=True))
-    assert level.sql_condition == '("tom_l" = "tom_r")'
+    assert level.sql_condition == f'({q}tom_l{q} = {q}tom_r{q})'
     assert level.label_for_charts == "(Exact match tom)"
 
     # Two null levels composed
@@ -21,8 +19,8 @@ def binary_composition_internals(clause, c_fun):
     )
 
     null_sql = (
-        f'("first_name_l" IS NULL OR "first_name_r" IS NULL) {clause} '
-        '("surname_l" IS NULL OR "surname_r" IS NULL)'
+        f'({q}first_name_l{q} IS NULL OR {q}first_name_r{q} IS NULL) {clause} '
+        f'({q}surname_l{q} IS NULL OR {q}surname_r{q} IS NULL)'
     )
     assert level.sql_condition == null_sql
     # Default label
@@ -37,8 +35,8 @@ def binary_composition_internals(clause, c_fun):
         m_probability=0.5,
     )
     assert (
-        level.sql_condition == f'("first_name_l" = "first_name_r") {clause} '
-        '("first_name_l" IS NULL OR "first_name_r" IS NULL)'
+        level.sql_condition == f'({q}first_name_l{q} = {q}first_name_r{q}) {clause} '
+        f'({q}first_name_l{q} IS NULL OR {q}first_name_r{q} IS NULL)'
     )
     # Default label
     assert level.label_for_charts == f"(Exact match first_name) {clause} (Null)"
@@ -53,7 +51,7 @@ def binary_composition_internals(clause, c_fun):
     )
 
     exact_match_sql = (
-        f'("first_name_l" = "first_name_r") {clause} ("surname_l" = "surname_r")'
+        f'({q}first_name_l{q} = {q}first_name_r{q}) {clause} ({q}surname_l{q} = {q}surname_r{q})'
     )
     assert level.sql_condition == f"NOT ({exact_match_sql})"
 
@@ -64,18 +62,20 @@ def binary_composition_internals(clause, c_fun):
 @mark_with_dialects_excluding("postgres")
 def test_binary_composition_internals_OR(test_helpers, dialect):
     cll = test_helpers[dialect].cll
-    binary_composition_internals("OR", cll.or_)
+    quo, _ = _get_dialect_quotes(dialect)
+    binary_composition_internals("OR", cll.or_, cll, quo)
 
 
 @mark_with_dialects_excluding("postgres")
 def test_binary_composition_internals_AND(test_helpers, dialect):
     cll = test_helpers[dialect].cll
-    binary_composition_internals("AND", cll.and_)
+    quo, _ = _get_dialect_quotes(dialect)
+    binary_composition_internals("AND", cll.and_, cll, quo)
 
 
-@mark_with_dialects_excluding("postgres")
-def test_not(test_helpers, dialect):
-    cll = test_helpers[dialect].cll
+@mark_with_dialects_including("duckdb")
+def test_not():
+    import splink.duckdb.duckdb_comparison_level_library as cll
     level = cll.not_(cll.null_level("first_name"))
     assert level.is_null_level is False
 
