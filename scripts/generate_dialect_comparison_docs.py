@@ -22,13 +22,15 @@ dialect_table_headers = (
 dialect_levels = {}
 dialect_comparisons = {}
 dialect_comparison_templates = {}
+dialect_level_compositions = {}
 for dialect in dialects:
     dialect_levels[dialect] = []
     dialect_comparisons[dialect] = []
     dialect_comparison_templates[dialect] = []
+    dialect_level_compositions[dialect] = []
     for class_name, cls in inspect.getmembers(
         importlib.import_module(
-            f".{dialect}_comparison_level_library", package=f"splink.{dialect}"
+            ".comparison_level_library", package=f"splink.{dialect}"
         ),
         inspect.isclass,
     ):
@@ -36,7 +38,7 @@ for dialect in dialects:
             dialect_levels[dialect].append(class_name)
     for class_name, cls in inspect.getmembers(
         importlib.import_module(
-            f".{dialect}_comparison_library", package=f"splink.{dialect}"
+            ".comparison_library", package=f"splink.{dialect}"
         ),
         inspect.isclass,
     ):
@@ -44,18 +46,27 @@ for dialect in dialects:
             dialect_comparisons[dialect].append(class_name)
     for class_name, cls in inspect.getmembers(
         importlib.import_module(
-            f".{dialect}_comparison_template_library", package=f"splink.{dialect}"
+            ".comparison_template_library", package=f"splink.{dialect}"
         ),
         inspect.isclass,
     ):
         if issubclass(cls, Comparison) and issubclass(cls, DialectBase):
             dialect_comparison_templates[dialect].append(class_name)
+    for class_name, cls in inspect.getmembers(
+        importlib.import_module(
+            ".comparison_level_library", package=f"splink.{dialect}"
+        ),
+        inspect.isfunction,
+    ):
+        dialect_level_compositions[dialect].append(class_name)
+
 
 all_sorted_levels = sorted({y for x in dialect_levels.values() for y in x})
 all_sorted_comparisons = sorted({y for x in dialect_comparisons.values() for y in x})
 all_sorted_comparison_templates = sorted(
     {y for x in dialect_comparison_templates.values() for y in x}
 )
+all_sorted_level_compositions = sorted({y for x in dialect_level_compositions.values() for y in x})
 
 
 def base_function_string(input_string):
@@ -92,6 +103,12 @@ comparison_template_dialects = {
     ]
     for comp_temp in all_sorted_comparison_templates
 }
+level_composition_dialects = {
+    f"[{lev_comp}](#splink.composition.{lev_comp})": [
+        dialect for dialect in dialects if lev_comp in dialect_level_compositions[dialect]
+    ]
+    for lev_comp in all_sorted_level_compositions
+}
 
 # strings to use in md table for whether function appears in dialect or not
 yes_string, no_string = "✓", ""
@@ -119,6 +136,8 @@ cl_table = make_md_table(comparison_dialects)
 cl_table_file = "comparison_library_dialect_table.md"
 ctl_table = make_md_table(comparison_template_dialects)
 ctl_table_file = "comparison_template_library_dialect_table.md"
+ccl_table = make_md_table(level_composition_dialects)
+ccl_table_file = "comparison_composition_library_dialect_table.md"
 
 with open(Path("docs") / "includes" / "generated_files" / cll_table_file, "w+") as f:
     f.write(cll_table)
@@ -126,3 +145,5 @@ with open(Path("docs") / "includes" / "generated_files" / cl_table_file, "w+") a
     f.write(cl_table)
 with open(Path("docs") / "includes" / "generated_files" / ctl_table_file, "w+") as f:
     f.write(ctl_table)
+with open(Path("docs") / "includes" / "generated_files" / ccl_table_file, "w+") as f:
+    f.write(ccl_table)
