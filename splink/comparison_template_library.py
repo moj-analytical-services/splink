@@ -7,12 +7,12 @@ from __future__ import annotations
 import logging
 
 from .comparison import Comparison  # change to self
+from .comparison_level_composition import and_
 from .comparison_library_utils import (
     datediff_error_logger,
     distance_threshold_comparison_levels,
     distance_threshold_description,
 )
-from .level_composition import cl_and_ as and_
 from .misc import ensure_is_iterable
 
 logger = logging.getLogger(__name__)

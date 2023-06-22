@@ -28,7 +28,10 @@ def and_(
             Simple exact rule composition with an `AND` clause
             ``` python
             import splink.duckdb.blocking_rule_library as brl
-            brl.and_(brl.exact_match_rule("first_name"), brl.exact_match_rule("surname"))
+            brl.and_(
+                brl.exact_match_rule("first_name"),
+                brl.exact_match_rule("surname")
+            )
             ```
             Composing a custom rule with an exact match on name and the year
             from a date of birth column
@@ -50,7 +53,10 @@ def and_(
             Simple exact rule composition with an `AND` clause
             ``` python
             import splink.spark.blocking_rule_library as brl
-            brl.and_(brl.exact_match_rule("first_name"), brl.exact_match_rule("surname"))
+            brl.and_(
+                brl.exact_match_rule("first_name"),
+                brl.exact_match_rule("surname")
+            )
             ```
             Composing a custom rule with an exact match on name and the year
             from a date of birth column, with additional salting (spark exclusive)
@@ -74,7 +80,10 @@ def and_(
             Simple exact rule composition with an `AND` clause
             ``` python
             import splink.athena.blocking_rule_library as brl
-            brl.and_(brl.exact_match_rule("first_name"), brl.exact_match_rule("surname"))
+            brl.and_(
+                brl.exact_match_rule("first_name"),
+                brl.exact_match_rule("surname")
+            )
             ```
             Composing a custom rule with an exact match on name and the year
             from a date of birth column
@@ -96,7 +105,10 @@ def and_(
             Simple exact rule composition with an `AND` clause
             ``` python
             import splink.sqlite.blocking_rule_library as brl
-            brl.and_(brl.exact_match_rule("first_name"), brl.exact_match_rule("surname"))
+            brl.and_(
+                brl.exact_match_rule("first_name"),
+                brl.exact_match_rule("surname")
+            )
             ```
             Composing a custom rule with an exact match on name and the year
             from a date of birth column

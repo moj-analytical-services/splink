@@ -78,6 +78,17 @@ class BlockingRule:
             for n in range(self.salting_partitions):
                 yield f"{self.blocking_rule} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
 
+    def as_dict(self):
+        "The minimal representation of the blocking rule"
+        output = {}
+
+        output["blocking_rule"] = self.blocking_rule
+
+        if self.salting_partitions > 1 and self.sql_dialect == "spark":
+            output["salting_partitions"] = self.salting_partitions
+
+        return output
+
     @property
     def descr(self):
         return "Custom" if not hasattr(self, "_description") else self._description
