@@ -3,7 +3,7 @@ import pytest
 
 from splink.input_column import _get_dialect_quotes
 
-from .decorator import mark_with_dialects_excluding, mark_with_dialects_including
+from .decorator import mark_with_dialects_excluding
 
 
 def binary_composition_internals(clause, c_fun, cll, q):
