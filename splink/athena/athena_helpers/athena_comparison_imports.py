@@ -135,9 +135,7 @@ class array_intersect_at_sizes(AthenaComparisonProperties, ArrayIntersectAtSizes
     pass
 
 
-class datediff_at_thresholds(
-    AthenaComparisonProperties, DateDiffAtThresholdsComparisonBase
-):
+class datediff_at_thresholds(AthenaComparisonProperties, DatediffAtThresholdsBase):
     pass
 
 
