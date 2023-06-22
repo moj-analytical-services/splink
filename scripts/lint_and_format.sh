@@ -16,6 +16,7 @@ while getopts ":f" opt; do
     f)
       ruff --fix splink/ --quiet
       ruff --fix tests/ --quiet
+      ruff --fix scripts/ --quiet
       echo "--fix was run for your scripts" >&2
       ;;
     \?)
@@ -27,3 +28,4 @@ done
 ruff --show-source splink/
 ruff --show-source tests/
 ruff --show-source benchmarking/
+ruff --show-source scripts/

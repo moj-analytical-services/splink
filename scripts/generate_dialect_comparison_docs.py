@@ -84,8 +84,8 @@ comparison_dialects = {
     for comp in all_sorted_comparisons
 }
 comparison_template_dialects = {
-    f"""[{comp_temp}](#splink.comparison_template_library.
-        {base_function_string(comp_temp)})""": [
+    f"[{comp_temp}](#splink.comparison_template_library." +
+    f"{base_function_string(comp_temp)})": [
         dialect
         for dialect in dialects
         if comp_temp in dialect_comparison_templates[dialect]
