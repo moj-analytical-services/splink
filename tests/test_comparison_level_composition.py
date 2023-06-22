@@ -1,36 +1,16 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.comparison_level_library as cll
-import splink.duckdb.comparison_level_library as scll
-from splink.duckdb.linker import DuckDBLinker
+from splink.input_column import _get_dialect_quotes
+
+from .decorator import mark_with_dialects_excluding
 
 
-def test_not():
-    level = cll.not_(cll.null_level("first_name"))
-    assert level.is_null_level is False
-
-    # Integration test for a simple dictionary cl
-    dob_jan_first = {"sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'"}
-    cll.not_(dob_jan_first)
-
-    with pytest.raises(TypeError):
-        cll.not_()
-
-
-@pytest.mark.parametrize(
-    ("clause", "c_fun"),
-    [
-        pytest.param("OR", cll.or_, id="Test or_"),
-        pytest.param("AND", cll.and_, id="Test and_"),
-        pytest.param("OR", scll.or_, id="Test spark or_"),
-    ],
-)
-def test_binary_composition_internals(clause, c_fun):
+def binary_composition_internals(clause, c_fun, cll, q):
     # Test what happens when only one value is fed
     # It should just report the regular outputs of our comparison level func
     level = c_fun(cll.exact_match_level("tom", include_colname_in_charts_label=True))
-    assert level.sql_condition == '("tom_l" = "tom_r")'
+    assert level.sql_condition == f"({q}tom_l{q} = {q}tom_r{q})"
     assert level.label_for_charts == "(Exact match tom)"
 
     # Two null levels composed
@@ -41,8 +21,8 @@ def test_binary_composition_internals(clause, c_fun):
     )
 
     null_sql = (
-        f'("first_name_l" IS NULL OR "first_name_r" IS NULL) {clause} '
-        '("surname_l" IS NULL OR "surname_r" IS NULL)'
+        f"({q}first_name_l{q} IS NULL OR {q}first_name_r{q} IS NULL) {clause} "
+        f"({q}surname_l{q} IS NULL OR {q}surname_r{q} IS NULL)"
     )
     assert level.sql_condition == null_sql
     # Default label
@@ -57,8 +37,8 @@ def test_binary_composition_internals(clause, c_fun):
         m_probability=0.5,
     )
     assert (
-        level.sql_condition == f'("first_name_l" = "first_name_r") {clause} '
-        '("first_name_l" IS NULL OR "first_name_r" IS NULL)'
+        level.sql_condition == f"({q}first_name_l{q} = {q}first_name_r{q}) {clause} "
+        f"({q}first_name_l{q} IS NULL OR {q}first_name_r{q} IS NULL)"
     )
     # Default label
     assert level.label_for_charts == f"(Exact match first_name) {clause} (Null)"
@@ -72,16 +52,46 @@ def test_binary_composition_internals(clause, c_fun):
         m_probability=0.5,
     )
 
-    exact_match_sql = (
-        f'("first_name_l" = "first_name_r") {clause} ("surname_l" = "surname_r")'
-    )
+    exact_match_sql = f"({q}first_name_l{q} = {q}first_name_r{q}) {clause} ({q}surname_l{q} = {q}surname_r{q})"  # noqa: E501
     assert level.sql_condition == f"NOT ({exact_match_sql})"
 
     with pytest.raises(ValueError):
         c_fun()
 
 
-def test_composition_outputs():
+@mark_with_dialects_excluding()
+def test_binary_composition_internals_OR(test_helpers, dialect):
+    cll = test_helpers[dialect].cll
+    quo, _ = _get_dialect_quotes(dialect)
+    binary_composition_internals("OR", cll.or_, cll, quo)
+
+
+@mark_with_dialects_excluding()
+def test_binary_composition_internals_AND(test_helpers, dialect):
+    cll = test_helpers[dialect].cll
+    quo, _ = _get_dialect_quotes(dialect)
+    binary_composition_internals("AND", cll.and_, cll, quo)
+
+
+def test_not():
+    import splink.duckdb.duckdb_comparison_level_library as cll
+
+    level = cll.not_(cll.null_level("first_name"))
+    assert level.is_null_level is False
+
+    # Integration test for a simple dictionary cl
+    dob_jan_first = {"sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'"}
+    cll.not_(dob_jan_first)
+
+    with pytest.raises(TypeError):
+        cll.not_()
+
+
+@mark_with_dialects_excluding()
+def test_composition_outputs(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    cll = helper.cll
+
     # Check our compositions give expected outputs
     df = pd.DataFrame(
         [
@@ -116,7 +126,7 @@ def test_composition_outputs():
         "comparisons": [full_name],
     }
 
-    linker = DuckDBLinker(df, settings)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
 
     pred = linker.predict()
     out = pred.as_pandas_dataframe().sort_values(by=["unique_id_l", "unique_id_r"])
