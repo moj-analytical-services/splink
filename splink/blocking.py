@@ -142,7 +142,6 @@ def block_using_rules_sql(linker: Linker):
         select * from __splink__df_concat_with_tf{sample_switch}
         where {source_dataset_col} = '{df_r.templated_name}'
         """
-
         linker._enqueue_sql(sql, f"__splink__df_concat_with_tf{sample_switch}_right")
 
     # Cover the case where there are no blocking rules
