@@ -297,7 +297,7 @@ class Linker:
             return "__splink__df_concat"
 
         if self._two_dataset_link_only:
-            return "__splink_df_concat_with_tf_right"
+            return "__splink__df_concat_with_tf_right"
         return "__splink__df_concat_with_tf"
 
     @property
