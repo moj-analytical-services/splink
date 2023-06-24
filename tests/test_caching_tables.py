@@ -239,7 +239,7 @@ def test_cache_invalidation():
 
 def test_table_deletions():
     con = duckdb.connect()
-    df = pd.DataFrame(
+    df = pd.DataFrame(  # noqa: F841
         [
             {"unique_id": 1, "name": "Amanda"},
             {"unique_id": 2, "name": "Robin"},
