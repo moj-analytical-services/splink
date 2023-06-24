@@ -263,7 +263,10 @@ class Linker:
             return "__splink__compare_two_records_left_with_tf"
 
         if self._train_u_using_random_sample_mode:
-            return "__splink__df_concat_with_tf_sample"
+            if self._two_dataset_link_only:
+                return "__splink__df_concat_with_tf_sample_left"
+            else:
+                return "__splink__df_concat_with_tf_sample"
 
         if self._analyse_blocking_mode:
             return "__splink__df_concat"
@@ -285,7 +288,10 @@ class Linker:
             return "__splink__compare_two_records_right_with_tf"
 
         if self._train_u_using_random_sample_mode:
-            return "__splink__df_concat_with_tf_sample"
+            if self._two_dataset_link_only:
+                return "__splink__df_concat_with_tf_sample_right"
+            else:
+                return "__splink__df_concat_with_tf_sample"
 
         if self._analyse_blocking_mode:
             return "__splink__df_concat"
@@ -319,12 +325,6 @@ class Linker:
 
         if self._compare_two_records_mode:
             return True
-
-        # in u-train sample mode we are joining the concatenated table mixing
-        # both data sets - hence if we inner join on True we will end up with
-        # samples which both originate from the same dataset
-        if self._train_u_using_random_sample_mode:
-            return False
 
         if self._analyse_blocking_mode:
             return False
