@@ -4,7 +4,7 @@ from unittest.mock import create_autospec, patch
 import pandas as pd
 import pytest
 
-from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
+from splink.duckdb.linker import DuckDBLinker, DuckDBLinkerDataFrame
 from splink.linker import SplinkDataFrame
 from tests.basic_settings import get_settings_dict
 
@@ -23,7 +23,7 @@ def make_mock_execute(linker):
 
 
 def test_cache_id(tmp_path):
-    # Test saving and loading from settings
+    # Test saving and loading a model
     linker = DuckDBLinker(
         df,
         get_settings_dict(),
@@ -32,10 +32,10 @@ def test_cache_id(tmp_path):
     prior = linker._settings_obj._cache_uid
 
     path = os.path.join(tmp_path, "model.json")
-    linker.save_settings_to_json(path, overwrite=True)
+    linker.save_model_to_json(path, overwrite=True)
 
-    linker_2 = DuckDBLinker(df, connection=":memory:")
-    linker_2.load_settings(path)
+    linker_2 = DuckDBLinker(df)
+    linker_2.load_model(path)
 
     assert linker_2._settings_obj._cache_uid == prior
 

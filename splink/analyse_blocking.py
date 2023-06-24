@@ -64,7 +64,8 @@ def cumulative_comparisons_generated_by_blocking_rules(
     # Calculate the Cartesian Product
     if output_chart:
         # We only need the cartesian product if we want to output the chart view
-        if len(linker._input_tables_dict) == 1:
+
+        if settings_obj._link_type == "dedupe_only":
             group_by_statement = ""
         else:
             group_by_statement = "group by source_dataset"

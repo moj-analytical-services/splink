@@ -1,35 +1,12 @@
-from ..comparison_level_library import (
-    ColumnsReversedLevelBase,
-    DistanceFunctionLevelBase,
-    ElseLevelBase,
-    ExactMatchLevelBase,
-    NullLevelBase,
-    PercentageDifferenceLevelBase,
+import warnings
+
+from ..exceptions import SplinkDeprecated
+from .comparison_level_library import *  # noqa: F403
+
+warnings.warn(
+    "Importing directly from `splink.sqlite.sqlite_comparison_level_library` "
+    "is deprecated and will be removed in Splink v4. "
+    "Please import from `splink.sqlite.comparison_level_library` going forward.",
+    SplinkDeprecated,
+    stacklevel=2,
 )
-from .sqlite_base import (
-    SqliteBase,
-)
-
-
-class null_level(SqliteBase, NullLevelBase):
-    pass
-
-
-class exact_match_level(SqliteBase, ExactMatchLevelBase):
-    pass
-
-
-class else_level(SqliteBase, ElseLevelBase):
-    pass
-
-
-class columns_reversed_level(SqliteBase, ColumnsReversedLevelBase):
-    pass
-
-
-class distance_function_level(SqliteBase, DistanceFunctionLevelBase):
-    pass
-
-
-class percentage_difference_level(SqliteBase, PercentageDifferenceLevelBase):
-    pass

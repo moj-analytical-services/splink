@@ -1,19 +1,17 @@
 {
-  "$schema": "https://vega.github.io/schema/vega-lite/v5.2.0.json",
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
   "title": {
     "text": "Comparison of parameter estimates across training sessions",
-    "subtitle": "Use mousewheeel to zoom"
+    "subtitle": "Use mousewheel to zoom"
   },
   "data": {
     "values": []
   },
   "config": {
     "view": { "continuousWidth": 400, "continuousHeight": 300 },
-    "title": { "anchor": "middle" }
+    "title": {"anchor": "middle", "fontSize":18, "subtitleFontSize":14}
   },
-
   "mark": { "type": "point", "filled": false, "opacity": 0.7, "size": 100 },
-
   "encoding": {
     "color": { "type": "nominal", "field": "estimate_description" },
     "row": {
@@ -22,12 +20,21 @@
       "header": {
         "labelAlign": "left",
         "labelAnchor": "middle",
-        "labelAngle": 0
+        "labelAngle": 0,
+        "labelFontWeight": "bold",
+        "labelFontSize": 12
       },
       "sort": { "field": "comparison_sort_order" },
-      "title": null
+      "title": null,
+      "align": "each"
     },
-    "column": { "type": "nominal", "field": "m_or_u", "title": null },
+    "column": { 
+      "type": "nominal", 
+      "field": "col_header", 
+      "title": null,
+      "align": "each",
+      "header": {"labelFontSize":14, "labelFontWeight":"bold"}
+    },
     "shape": {
       "type": "nominal",
       "field": "estimate_description",
@@ -40,7 +47,28 @@
     ],
     "x": {
       "type": "quantitative",
-      "field": "estimated_probability_as_log_odds"
+      "field": "estimated_probability_as_log_odds",
+      "title": "Estimated probability as log odds",
+      "axis": {
+        "gridColor": {
+          "condition": {
+            "test": "abs(datum.value / 10)  <= 1 & datum.value % 10 === 0",
+            "value": "#aaa"
+          },
+          "value": "#ddd"
+        },
+        "gridDash": {
+          "condition": {"test": "abs(datum.value / 10) == 1", "value": [3]},
+          "value": null
+        },
+        "gridWidth": {
+          "condition": {
+            "test": "abs(datum.value / 10)  <= 1 & datum.value % 10 === 0",
+            "value": 2
+          },
+          "value": 1
+        }
+      }
     },
     "y": {
       "type": "nominal",
@@ -49,16 +77,27 @@
       "sort": { "field": "comparison_vector_value", "order": "descending" }
     }
   },
+  "transform": [
+    {
+      "calculate": "datum.m_or_u + '-probability (as log odds)'", 
+      "as": "col_header"
+    }
+  ],
   "resolve": {
     "scale": {
       "y": "independent"
     }
   },
-  "selection": {
-    "selection_zoom": {
-      "type": "interval",
-      "bind": "scales",
-      "encodings": ["x"]
+  "params": [
+    {
+      "name": "mouse_zoom",
+      "select": {
+        "type": "interval",
+        "encodings": [
+          "x"
+        ]
+      },
+      "bind": "scales"
     }
-  }
+  ]
 }

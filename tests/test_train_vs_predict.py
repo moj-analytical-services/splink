@@ -1,11 +1,11 @@
-import pandas as pd
 import pytest
-from basic_settings import get_settings_dict
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from .basic_settings import get_settings_dict
+from .decorator import mark_with_dialects_excluding
 
 
-def test_train_vs_predict():
+@mark_with_dialects_excluding()
+def test_train_vs_predict(test_helpers, dialect):
     """
     If you train parameters blocking on a column (say first_name)
     and then predict() using blocking_rules_to_generate_predictions
@@ -15,11 +15,12 @@ def test_train_vs_predict():
 
     The global version has the param estimate of first_name 'reveresed out'
     """
+    helper = test_helpers[dialect]
 
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
     settings_dict["blocking_rules_to_generate_predictions"] = ["l.surname = r.surname"]
-    linker = DuckDBLinker(df, settings_dict)
+    linker = helper.Linker(df, settings_dict, **helper.extra_linker_args())
 
     training_session = linker.estimate_parameters_using_expectation_maximisation(
         "l.surname = r.surname", fix_u_probabilities=False

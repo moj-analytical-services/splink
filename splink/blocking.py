@@ -119,7 +119,7 @@ def block_using_rules_sql(linker: Linker):
         and not linker._find_new_matches_mode
         and not linker._compare_two_records_mode
     ):
-        source_dataset_col = linker._settings_obj._source_dataset_column_name
+        source_dataset_col = linker._source_dataset_column_name
         # Need df_l to be the one with the lowest id to preeserve the property
         # that the left dataset is the one with the lowest concatenated id
         keys = linker._input_tables_dict.keys()
@@ -146,6 +146,13 @@ def block_using_rules_sql(linker: Linker):
     if not blocking_rules:
         blocking_rules = [BlockingRule("1=1")]
 
+    # For Blocking rules for deterministic rules, add a match probability
+    # column with all probabilities set to 1.
+    if linker._deterministic_link_mode:
+        probability = ", 1.00 as match_probability"
+    else:
+        probability = ""
+
     sqls = []
     for br in blocking_rules:
         # Apply our salted rules to resolve skew issues. If no salt was
@@ -160,6 +167,7 @@ def block_using_rules_sql(linker: Linker):
             select
             {sql_select_expr}
             , '{br.match_key}' as match_key
+            {probability}
             from {linker._input_tablename_l} as l
             inner join {linker._input_tablename_r} as r
             on

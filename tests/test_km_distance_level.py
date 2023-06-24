@@ -1,12 +1,12 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.duckdb_comparison_level_library as clld
-import splink.duckdb.duckdb_comparison_library as cld
-import splink.spark.spark_comparison_level_library as clls
-import splink.spark.spark_comparison_library as cls
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
+import splink.duckdb.comparison_level_library as clld
+import splink.duckdb.comparison_library as cld
+import splink.spark.comparison_level_library as clls
+import splink.spark.comparison_library as cls
+from splink.duckdb.linker import DuckDBLinker
+from splink.spark.linker import SparkLinker
 
 
 @pytest.mark.parametrize(
@@ -17,7 +17,6 @@ from splink.spark.spark_linker import SparkLinker
     ],
 )
 def test_simple_run(cl):
-
     print(
         cl.distance_in_km_at_thresholds(
             lat_col="lat", long_col="long", km_thresholds=[1, 5, 10]
@@ -190,7 +189,6 @@ def test_km_distance_levels(spark, cl, cll, Linker):
     for gamma, id_pairs in gamma_lookup.items():
         for left, right in id_pairs:
             for linker_name, linker_pred in linker_outputs.items():
-
                 print(f"Checking IDs: {left}, {right} for {linker_name}")
 
                 gamma_column_name_options = [

@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "splink"
-version = "3.7.2"
+version = "3.9.2"
 description = "Fast probabilistic data linkage at scale"
-authors = ["Robin Linacre <robinlinacre@hotmail.com>", "Sam Lindsay", "Theodore Manassis", "Tom Hepworth", "Andy Bond"]
+authors = ["Robin Linacre <robinlinacre@hotmail.com>", "Sam Lindsay", "Theodore Manassis", "Tom Hepworth", "Andy Bond", "Ross Kennedy"]
 license = "MIT"
 homepage = "https://github.com/moj-analytical-services/splink"
 repository = "https://github.com/moj-analytical-services/splink"
@@ -13,14 +13,20 @@ python = ">=3.7"
 jsonschema = ">=3.2,<5.0"
 pandas = ">=1.0.0"
 duckdb = ">=0.6.0"
-sqlglot = ">=5.1.0"
-altair = ">=4.2.0"
+# normalize issue in sqlglot - temporarily exclude updates
+sqlglot = ">=5.1.0,<11.4.2"
+altair = "^5.0.1"
 Jinja2 = ">=3.0.3"
+phonetics = "^1.0.5"
 
 [tool.poetry.group.dev]
 [tool.poetry.group.dev.dependencies]
 tabulate = "0.8.9"
 pyspark = "^3.2.1"
+# sqlalchemy >= 2.0.0 not working well with older pandas
+sqlalchemy = ">=1.4.0,<2.0.0"
+# temporarily use binary version, to avoid issues with pg_config path
+psycopg2-binary = ">=2.8.0"
 
 [tool.poetry.group.linting]
 [tool.poetry.group.linting.dependencies]
@@ -44,6 +50,8 @@ lzstring = "1.0.4"
 requires = ["poetry-core>=1.0.8"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.isort]
+profile = "black"
 
 [tool.ruff]
 line-length = 88
@@ -61,4 +69,21 @@ select = [
 ignore = [
     "B905", # `zip()` without an explicit `strict=` parameter
     "B006", # Do not use mutable data structures for argument defaults"
+]
+
+[tool.pytest.ini_options]
+addopts = ["-m default"]
+markers = [
+# only tests where backend is irrelevant:
+    "core",
+# see tests/decorator.py::dialect_groups for group details:
+    "default",
+    "all",
+# backend-specific sets
+    "duckdb",
+    "duckdb_only",
+    "spark",
+    "spark_only",
+    "sqlite",
+    "sqlite_only",
 ]

@@ -1,12 +1,13 @@
 import numpy as np
 import pandas as pd
-from pytest import approx
+import pytest
 
-from splink.duckdb.duckdb_comparison_library import levenshtein_at_thresholds
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from tests.decorator import mark_with_dialects_excluding
 
 
-def test_u_train():
+@mark_with_dialects_excluding()
+def test_u_train(test_helpers, dialect):
+    helper = test_helpers[dialect]
     data = [
         {"unique_id": 1, "name": "Amanda"},
         {"unique_id": 2, "name": "Robin"},
@@ -19,11 +20,12 @@ def test_u_train():
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
+    df_linker = helper.convert_frame(df)
 
-    linker = DuckDBLinker(df, settings)
+    linker = helper.Linker(df_linker, settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
@@ -40,7 +42,9 @@ def test_u_train():
     assert br.blocking_rule == "l.name = r.name"
 
 
-def test_u_train_link_only():
+@mark_with_dialects_excluding()
+def test_u_train_link_only(test_helpers, dialect):
+    helper = test_helpers[dialect]
     data_l = [
         {"unique_id": 1, "name": "Amanda"},
         {"unique_id": 2, "name": "Robin"},
@@ -63,11 +67,14 @@ def test_u_train_link_only():
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
-    linker = DuckDBLinker([df_l, df_r], settings)
+    df_l = helper.convert_frame(df_l)
+    df_r = helper.convert_frame(df_r)
+
+    linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
@@ -95,7 +102,10 @@ def test_u_train_link_only():
     assert cl_no.u_probability == (denom - 3) / denom
 
 
-def test_u_train_link_only_sample():
+# TODO: restore postgres backend once bug fixed
+@mark_with_dialects_excluding("postgres")
+def test_u_train_link_only_sample(test_helpers, dialect):
+    helper = test_helpers[dialect]
     df_l = (
         pd.DataFrame(np.random.randint(0, 3000, size=(3000, 1)), columns=["name"])
         .reset_index()
@@ -106,20 +116,27 @@ def test_u_train_link_only_sample():
         .reset_index()
         .rename(columns={"index": "unique_id"})
     )
+    # levenshtein should be on string types
+    df_l["name"] = df_l["name"].astype("str")
+    df_r["name"] = df_r["name"].astype("str")
 
-    max_pairs = 1800000
+    # max_pairs is a good deal less than total possible pairs = 9_000_000
+    max_pairs = 1_800_000
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
-    linker = DuckDBLinker([df_l, df_r], settings)
+    df_l = helper.convert_frame(df_l)
+    df_r = helper.convert_frame(df_r)
+
+    linker = helper.Linker([df_l, df_r], settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=max_pairs)
-    linker._settings_obj.comparisons[0]
 
+    # count how many pairs we _actually_ generated in random sampling
     check_blocking_sql = """
     SELECT COUNT(*) AS count FROM __splink__df_blocked
     """
@@ -128,15 +145,20 @@ def test_u_train_link_only_sample():
     )
 
     result = self_table_count.as_record_dict()
-
     self_table_count.drop_table_from_database_and_remove_from_cache()
-    max_pairs_proportion = result[0]["count"] / max_pairs
-    # equality only holds probabilistically
-    # chance of failure is approximately 1e-06
-    assert approx(max_pairs_proportion, 0.15) == 1.0
+    pairs_actually_sampled = result[0]["count"]
+
+    proportion_of_max_pairs_sampled = pairs_actually_sampled / max_pairs
+    # proportion_of_max_pairs_sampled should be 1 - i.e. we sample max_pairs rows
+    # as we have many more pairs available than max_pairs
+    # equality only holds probabilistically for some backends, due to sampling strategy
+    # chance of failure is approximately 1e-06 with this choice of relative error
+    assert pytest.approx(proportion_of_max_pairs_sampled, rel=0.15) == 1.0
 
 
-def test_u_train_multilink():
+@mark_with_dialects_excluding()
+def test_u_train_multilink(test_helpers, dialect):
+    helper = test_helpers[dialect]
     datas = [
         [
             {"unique_id": 1, "name": "John"},
@@ -163,18 +185,18 @@ def test_u_train_multilink():
             {"unique_id": 7, "name": "Adil"},
         ],
     ]
-    dfs = list(map(pd.DataFrame, datas))
+    dfs = list(map(lambda x: helper.convert_frame(pd.DataFrame(x)), datas))
 
     expected_total_links = 2 * 3 + 2 * 4 + 2 * 7 + 3 * 4 + 3 * 7 + 4 * 7
     expected_total_links_with_dedupes = (2 + 3 + 4 + 7) * (2 + 3 + 4 + 7 - 1) / 2
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
-    linker = DuckDBLinker(dfs, settings)
+    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
@@ -206,7 +228,7 @@ def test_u_train_multilink():
 
     # also check the numbers on a link + dedupe with same inputs
     settings["link_type"] = "link_and_dedupe"
-    linker = DuckDBLinker(dfs, settings)
+    linker = helper.Linker(dfs, settings, **helper.extra_linker_args())
     linker.debug_mode = True
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
     cc_name = linker._settings_obj.comparisons[0]
@@ -235,3 +257,32 @@ def test_u_train_multilink():
     assert cl_lev.u_probability == 1 / denom
     cl_no = cc_name._get_comparison_level_by_comparison_vector_value(0)
     assert cl_no.u_probability == (denom - 10) / denom
+
+
+# No SQLite or Postgres - don't support random seed
+@mark_with_dialects_excluding("sqlite", "postgres")
+def test_seed_u_outputs(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [helper.cl.levenshtein_at_thresholds("first_name", 2)],
+    }
+
+    linker_1 = helper.Linker(df, settings, **helper.extra_linker_args())
+    linker_2 = helper.Linker(df, settings, **helper.extra_linker_args())
+    linker_3 = helper.Linker(df, settings, **helper.extra_linker_args())
+
+    linker_1.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
+    linker_2.estimate_u_using_random_sampling(max_pairs=1e3, seed=1)
+    linker_3.estimate_u_using_random_sampling(max_pairs=1e3, seed=2)
+
+    assert (
+        linker_1._settings_obj._parameter_estimates_as_records
+        == linker_2._settings_obj._parameter_estimates_as_records
+    )
+    assert (
+        linker_1._settings_obj._parameter_estimates_as_records
+        != linker_3._settings_obj._parameter_estimates_as_records
+    )

@@ -1,13 +1,14 @@
 import pandas as pd
 import pytest
-from basic_settings import get_settings_dict
 
 from splink.accuracy import (
     predictions_from_sample_of_pairwise_labels_sql,
     truth_space_table_from_labels_with_predictions_sqls,
 )
-from splink.duckdb.duckdb_comparison_library import exact_match
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.comparison_library import exact_match
+from splink.duckdb.linker import DuckDBLinker
+
+from .basic_settings import get_settings_dict
 
 
 def test_scored_labels_table():
@@ -149,7 +150,7 @@ def test_truth_space_table():
     # 2,12 is a P at 40% against a clerical N (45%) so is a FP
     # 3,13 is a FP as well
 
-    assert pytest.approx(row["FP_rate"]) == 2 / 3
+    assert pytest.approx(row["fp_rate"]) == 2 / 3
 
     # Precision = TP/TP+FP
     assert row["precision"] == 0.0
@@ -455,18 +456,18 @@ def test_truth_space_table_from_labels_column_dedupe_only():
     tt = linker.truth_space_table_from_labels_column("cluster").as_record_dict()
     # Truth threshold -3.17, meaning all comparisons get classified as positive
     truth_dict = tt[0]
-    assert truth_dict["TP"] == 4
-    assert truth_dict["FP"] == 11
-    assert truth_dict["TN"] == 0
-    assert truth_dict["FN"] == 0
+    assert truth_dict["tp"] == 4
+    assert truth_dict["fp"] == 11
+    assert truth_dict["tn"] == 0
+    assert truth_dict["fn"] == 0
 
     # Truth threshold 3.17, meaning only comparisons where forename match get classified
     # as positive
     truth_dict = tt[1]
-    assert truth_dict["TP"] == 3
-    assert truth_dict["FP"] == 3
-    assert truth_dict["TN"] == 8
-    assert truth_dict["FN"] == 1
+    assert truth_dict["tp"] == 3
+    assert truth_dict["fp"] == 3
+    assert truth_dict["tn"] == 8
+    assert truth_dict["fn"] == 1
 
 
 def test_truth_space_table_from_labels_column_link_only():
@@ -522,15 +523,15 @@ def test_truth_space_table_from_labels_column_link_only():
     tt = linker.truth_space_table_from_labels_column("ground_truth").as_record_dict()
     # Truth threshold -3.17, meaning all comparisons get classified as positive
     truth_dict = tt[0]
-    assert truth_dict["TP"] == 3
-    assert truth_dict["FP"] == 6
-    assert truth_dict["TN"] == 0
-    assert truth_dict["FN"] == 0
+    assert truth_dict["tp"] == 3
+    assert truth_dict["fp"] == 6
+    assert truth_dict["tn"] == 0
+    assert truth_dict["fn"] == 0
 
     # Truth threshold 3.17, meaning only comparisons where forename match get classified
     # as positive
     truth_dict = tt[1]
-    assert truth_dict["TP"] == 1
-    assert truth_dict["FP"] == 1
-    assert truth_dict["TN"] == 5
-    assert truth_dict["FN"] == 2
+    assert truth_dict["tp"] == 1
+    assert truth_dict["fp"] == 1
+    assert truth_dict["tn"] == 5
+    assert truth_dict["fn"] == 2

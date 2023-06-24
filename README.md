@@ -12,11 +12,11 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 
 ## Key Features
 
-- **Speed:** Capable of linking a million records on a laptop in approximately one minute.
-- **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.
-- **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.
-- **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.
-- **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.
+⚡ **Speed:** Capable of linking a million records on a laptop in approximately one minute.  
+🎯 **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.  
+🌐 **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.  
+🎓 **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.  
+📊 **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.  
 
 Splink's core linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customizations to improve accuracy.
 
@@ -24,15 +24,15 @@ Splink's core linkage algorithm is based on Fellegi-Sunter's model of record lin
 
 Consider the following records that lack a unique person identifier:
 
-![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/main_readme_what_does_splink_do_1.drawio.png)
+![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_1.drawio.png)
 
 Splink predicts which rows link together:
 
-![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/main_readme_what_does_splink_do_2.drawio.png)
+![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_2.drawio.png)
 
 and clusters these links to produce an estimated person ID:
 
-![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/main_readme_what_does_splink_do_3.drawio.png)
+![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_3.drawio.png)
 
 ## What data does Splink work best with?
 
@@ -68,6 +68,9 @@ or, if you prefer, you can instead install splink using conda:
 conda install -c conda-forge splink
 ```
 
+Should you require a more bare-bones version of Splink **without DuckDB**, please see the following area of the docs:
+> [DuckDBless Splink Installation](https://moj-analytical-services.github.io/splink/installations.html#duckdb-less-installation)
+
 ## Quickstart
 
 The following code demonstrates how to estimate the parameters of a deduplication model, use it to identify duplicate records, and then use clustering to generate an estimated unique person ID.
@@ -75,11 +78,9 @@ The following code demonstrates how to estimate the parameters of a deduplicatio
 For more detailed tutorials, please see [here](https://moj-analytical-services.github.io/splink/demos/00_Tutorial_Introduction.html).
 
 ```py
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.duckdb.duckdb_comparison_library import (
-    exact_match,
-    levenshtein_at_thresholds,
-)
+from splink.duckdb.linker import DuckDBLinker
+import splink.duckdb.comparison_library as cl
+import splink.duckdb.comparison_template_library as ctl
 
 import pandas as pd
 
@@ -92,11 +93,11 @@ settings = {
         "l.surname = r.surname",
     ],
     "comparisons": [
-        levenshtein_at_thresholds("first_name", 2),
-        exact_match("surname"),
-        exact_match("dob"),
-        exact_match("city", term_frequency_adjustments=True),
-        exact_match("email"),
+        ctl.name_comparison("first_name"),
+        ctl.name_comparison("surname"),
+        ctl.date_comparison("dob", cast_strings_to_date=True),
+        cl.exact_match("city", term_frequency_adjustments=True),
+        ctl.email_comparison("email"),
     ],
 }
 
@@ -141,7 +142,7 @@ If you use Splink in your research, we'd be grateful for a citation as follows:
 ```BibTeX
 @article{Linacre_Lindsay_Manassis_Slade_Hepworth_2022,
 	title        = {Splink: Free software for probabilistic record linkage at scale.},
-	author       = {Linacre, Robin and Lindsay, Sam and Manassis, Theodore and Slade, Zoe and Hepworth, Tom},
+	author       = {Linacre, Robin and Lindsay, Sam and Manassis, Theodore and Slade, Zoe and Hepworth, Tom and Kennedy, Ross and Bond, Andrew},
 	year         = 2022,
 	month        = {Aug.},
 	journal      = {International Journal of Population Data Science},

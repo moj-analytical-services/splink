@@ -1,4 +1,3 @@
-import itertools
 import json
 import random
 import string
@@ -48,6 +47,15 @@ def ensure_is_list(a):
     return a if isinstance(a, list) else [a]
 
 
+def ensure_is_tuple(a):
+    if isinstance(a, tuple):
+        return a
+    elif isinstance(a, list):
+        return tuple(a)
+    else:
+        return (a,)
+
+
 def join_list_with_commas_final_and(lst):
     if len(lst) == 1:
         return lst[0]
@@ -79,17 +87,6 @@ class EverythingEncoder(json.JSONEncoder):
             return json.JSONEncoder.default(self, obj)
         except TypeError:
             return obj.__str__()
-
-
-def all_letter_combos(n):
-    """a,b,....,z,aa,ab,...,aaa"""
-
-    combos = []
-    for size in itertools.count(1):
-        for s in itertools.product(string.ascii_lowercase, repeat=size):
-            combos.append("".join(s))
-            if len(combos) >= n:
-                return combos
 
 
 def calculate_cartesian(df_rows, link_type):
@@ -165,3 +162,12 @@ def major_minor_version_greater_equal_than(this_version, base_comparison_version
 
 def ascii_uid(len):
     return "".join(random.choices(string.ascii_letters + string.digits, k=len))
+
+
+def find_unique_source_dataset(src_ds):
+    sql = f"""
+        select distinct {src_ds} as src
+        from __splink__df_concat_with_tf
+    """
+
+    return sql

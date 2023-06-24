@@ -31,7 +31,7 @@ def _rows_needed_for_n_pairs(n_pairs):
     return sample_rows
 
 
-def estimate_u_values(linker: Linker, max_pairs):
+def estimate_u_values(linker: Linker, max_pairs, seed=None):
     logger.info("----- Estimating u probabilities using random sampling -----")
 
     nodes_with_tf = linker._initialise_df_concat_with_tf()
@@ -61,9 +61,9 @@ def estimate_u_values(linker: Linker, max_pairs):
 
         result = dataframe.as_record_dict()
         dataframe.drop_table_from_database_and_remove_from_cache()
-        count_rows = result[0]["count"]
+        total_nodes = result[0]["count"]
         sample_size = _rows_needed_for_n_pairs(max_pairs)
-        proportion = sample_size / count_rows
+        proportion = sample_size / total_nodes
 
     if settings_obj._link_type == "link_only":
         sql = """
@@ -77,23 +77,29 @@ def estimate_u_values(linker: Linker, max_pairs):
         dataframe.drop_table_from_database_and_remove_from_cache()
         frame_counts = [res["count"] for res in result]
         # total valid links is sum of pairwise product of individual row counts
-        count_rows = (
+        # i.e. if frame_counts are [a, b, c, d, ...],
+        # total_links = a*b + a*c + a*d + ... + b*c + b*d + ... + c*d + ...
+        total_links = (
             sum(frame_counts) ** 2 - sum([count**2 for count in frame_counts])
         ) / 2
+        total_nodes = sum(frame_counts)
 
-        sample_size = (max_pairs * count_rows) ** 0.5
-        proportion = sample_size / count_rows
+        # if we scale each frame by a proportion total_links scales with the square
+        # i.e. (our target) max_pairs == proportion^2 * total_links
+        proportion = (max_pairs / total_links) ** 0.5
+        # sample size is for df_concat_with_tf, i.e. proportion of the total nodes
+        sample_size = proportion * total_nodes
 
     if proportion >= 1.0:
         proportion = 1.0
 
-    if sample_size > count_rows:
-        sample_size = count_rows
+    if sample_size > total_nodes:
+        sample_size = total_nodes
 
     sql = f"""
     select *
     from __splink__df_concat_with_tf
-    {training_linker._random_sample_sql(proportion, sample_size)}
+    {training_linker._random_sample_sql(proportion, sample_size, seed)}
     """
     training_linker._enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
     df_sample = training_linker._execute_sql_pipeline([nodes_with_tf])
@@ -118,7 +124,7 @@ def estimate_u_values(linker: Linker, max_pairs):
     training_linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
     sql = """
-    select *, cast(0.0 as double) as match_probability
+    select *, cast(0.0 as float8) as match_probability
     from __splink__df_comparison_vectors
     """
 

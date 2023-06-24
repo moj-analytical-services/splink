@@ -1,65 +1,12 @@
-from ..comparison_level_library import (
-    ArrayIntersectLevelBase,
-    ColumnsReversedLevelBase,
-    DateDiffLevelBase,
-    DistanceFunctionLevelBase,
-    DistanceInKMLevelBase,
-    ElseLevelBase,
-    ExactMatchLevelBase,
-    JaccardLevelBase,
-    JaroWinklerLevelBase,
-    LevenshteinLevelBase,
-    NullLevelBase,
-    PercentageDifferenceLevelBase,
+import warnings
+
+from ..exceptions import SplinkDeprecated
+from .comparison_level_library import *  # noqa: F403
+
+warnings.warn(
+    "Importing directly from `splink.duckdb.duckdb_comparison_level_library` "
+    "is deprecated and will be removed in Splink v4. "
+    "Please import from `splink.duckdb.comparison_level_library` going forward.",
+    SplinkDeprecated,
+    stacklevel=2,
 )
-from .duckdb_base import (
-    DuckDBBase,
-)
-
-
-class null_level(DuckDBBase, NullLevelBase):
-    pass
-
-
-class exact_match_level(DuckDBBase, ExactMatchLevelBase):
-    pass
-
-
-class else_level(DuckDBBase, ElseLevelBase):
-    pass
-
-
-class columns_reversed_level(DuckDBBase, ColumnsReversedLevelBase):
-    pass
-
-
-class distance_function_level(DuckDBBase, DistanceFunctionLevelBase):
-    pass
-
-
-class levenshtein_level(DuckDBBase, LevenshteinLevelBase):
-    pass
-
-
-class jaro_winkler_level(DuckDBBase, JaroWinklerLevelBase):
-    pass
-
-
-class jaccard_level(DuckDBBase, JaccardLevelBase):
-    pass
-
-
-class array_intersect_level(DuckDBBase, ArrayIntersectLevelBase):
-    pass
-
-
-class percentage_difference_level(DuckDBBase, PercentageDifferenceLevelBase):
-    pass
-
-
-class distance_in_km_level(DuckDBBase, DistanceInKMLevelBase):
-    pass
-
-
-class datediff_level(DuckDBBase, DateDiffLevelBase):
-    pass

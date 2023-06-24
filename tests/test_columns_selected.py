@@ -4,9 +4,9 @@ import os
 
 import pandas as pd
 
-import splink.duckdb.duckdb_comparison_level_library as cll
-from splink.duckdb.duckdb_comparison_level_library import else_level
-from splink.duckdb.duckdb_linker import DuckDBLinker
+import splink.duckdb.comparison_level_library as cll
+from splink.duckdb.comparison_level_library import else_level
+from splink.duckdb.linker import DuckDBLinker
 
 
 def test_regression(tmp_path):

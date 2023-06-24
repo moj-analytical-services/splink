@@ -1,10 +1,12 @@
-from ..comparison_template_library import DateComparisonBase, NameComparisonBase
-from .duckdb_comparison_library import DuckDBComparisonProperties
+import warnings
 
+from ..exceptions import SplinkDeprecated
+from .comparison_template_library import *  # noqa: F403
 
-class date_comparison(DuckDBComparisonProperties, DateComparisonBase):
-    pass
-
-
-class name_comparison(DuckDBComparisonProperties, NameComparisonBase):
-    pass
+warnings.warn(
+    "Importing directly from `splink.duckdb.duckdb_comparison_template_library` "
+    "is deprecated and will be removed in Splink v4. "
+    "Please import from `splink.duckdb.comparison_template_library` going forward.",
+    SplinkDeprecated,
+    stacklevel=2,
+)
