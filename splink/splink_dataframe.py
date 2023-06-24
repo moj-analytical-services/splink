@@ -65,8 +65,8 @@ class SplinkDataFrame:
     def drop_table_from_database_and_remove_from_cache(
         self, force_non_splink_table=False
     ):
-        self.linker._remove_splinkdataframe_from_cache(self)
         self._drop_table_from_database(force_non_splink_table=force_non_splink_table)
+        self.linker._remove_splinkdataframe_from_cache(self)
 
     def as_record_dict(self, limit=None):
         raise NotImplementedError("as_record_dict not implemented for this linker")
