@@ -90,6 +90,8 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
         # sample size is for df_concat_with_tf, i.e. proportion of the total nodes
         sample_size = proportion * total_nodes
 
+        print(f"{proportion=} || {sample_size=}")
+
     if proportion >= 1.0:
         proportion = 1.0
 
