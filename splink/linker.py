@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import re
+import time
 import warnings
 from copy import copy, deepcopy
 from pathlib import Path
@@ -64,6 +65,7 @@ from .misc import (
     ensure_is_list,
     ensure_is_tuple,
     find_unique_source_dataset,
+    parse_duration,
     prob_to_bayes_factor,
 )
 from .missingness import completeness_data, missingness_data
@@ -557,6 +559,7 @@ class Linker:
             # In debug mode, we do not pipeline the sql and print the
             # results of each part of the pipeline
             for task in self._pipeline._generate_pipeline_parts(input_dataframes):
+                start_time = time.time()
                 output_tablename = task.output_table_name
                 sql = task.sql
                 print("------")
@@ -567,6 +570,8 @@ class Linker:
                     output_tablename,
                     use_cache=False,
                 )
+                run_time = parse_duration(time.time() - start_time)
+                print(f"Step ran in: {run_time}")
             self._pipeline.reset()
             return dataframe
 
@@ -3181,7 +3186,6 @@ class Linker:
         return splink_dataframe
 
     def _remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):
-
         keys_to_delete = set()
         for key, df in self._intermediate_table_cache.items():
             if df.physical_name == splink_dataframe.physical_name:

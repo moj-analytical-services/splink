@@ -1,7 +1,9 @@
 import json
 import random
 import string
-from math import inf, log2
+from collections import namedtuple
+from datetime import datetime, timedelta
+from math import ceil, inf, log2
 from typing import Iterable
 
 import numpy as np
@@ -171,3 +173,17 @@ def find_unique_source_dataset(src_ds):
     """
 
     return sql
+
+
+def parse_duration(duration: int):
+    # math.ceil so <1 second gets reported
+    d = datetime(1, 1, 1) + timedelta(seconds=int(ceil(duration)))
+    time_index = namedtuple("Time", ["Days", "Hours", "Minutes", "Seconds"])
+    duration = time_index(d.day - 1, d.hour, d.minute, d.second)
+    txt_duration = [
+        f"{t} {duration._fields[n]}" for n, t in enumerate(duration) if t > 0
+    ]
+    if len(txt_duration) > 1:
+        txt_duration[-1] = "and " + txt_duration[-1]
+
+    return ", ".join(txt_duration)
