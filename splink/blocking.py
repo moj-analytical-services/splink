@@ -127,17 +127,22 @@ def block_using_rules_sql(linker: Linker):
         df_l = linker._input_tables_dict[keys[0]]
         df_r = linker._input_tables_dict[keys[1]]
 
-        sql = f"""
-        select * from __splink__df_concat_with_tf
-        where {source_dataset_col} = '{df_l.templated_name}'
-        """
-        linker._enqueue_sql(sql, "__splink__df_concat_with_tf_left")
+        if linker._train_u_using_random_sample_mode:
+            sample_switch = "_sample"
+        else:
+            sample_switch = ""
 
         sql = f"""
-        select * from __splink__df_concat_with_tf
+        select * from __splink__df_concat_with_tf{sample_switch}
+        where {source_dataset_col} = '{df_l.templated_name}'
+        """
+        linker._enqueue_sql(sql, f"__splink__df_concat_with_tf{sample_switch}_left")
+
+        sql = f"""
+        select * from __splink__df_concat_with_tf{sample_switch}
         where {source_dataset_col} = '{df_r.templated_name}'
         """
-        linker._enqueue_sql(sql, "__splink_df_concat_with_tf_right")
+        linker._enqueue_sql(sql, f"__splink__df_concat_with_tf{sample_switch}_right")
 
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'
