@@ -100,13 +100,12 @@ class PostgresLinker(Linker):
         )
         accepted_df_dtypes = pd.DataFrame
         self._db_schema = schema
+        # Create splink schema
+        self._create_splink_schema(other_schemas_to_search)
 
         # Create custom SQL functions in database
         self._register_custom_functions()
         self._register_extensions()
-
-        # Create splink schema
-        self._create_splink_schema()
 
         super().__init__(
             input_tables,
