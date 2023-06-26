@@ -49,6 +49,7 @@ def _setup_test_env(_engine_factory):
     # force drop as connections are persisting
     # would be good to relax by fixing connection issue, but doesn't matter in this env
     drop_db_sql = f"DROP DATABASE IF EXISTS {db_name} WITH (FORCE)"
+    drop_user_sql = f"DROP USER IF EXISTS {user}"
 
     conn.execution_options(isolation_level="AUTOCOMMIT")
     conn.execute(text(drop_db_sql))
@@ -89,6 +90,7 @@ def _setup_test_env(_engine_factory):
 
     def teardown():
         conn.execute(text(drop_db_sql))
+        conn.execute(text(drop_user_sql))
         conn.close()
 
     return {
