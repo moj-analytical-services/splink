@@ -137,7 +137,9 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     return sql
 
 
-def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name, cast_arrays_as_str):
+def _col_or_expr_frequencies_raw_data_sql(
+    cols_or_exprs, array_cols, table_name, cast_arrays_as_str
+):
     cols_or_exprs = ensure_is_list(cols_or_exprs)
     column_expressions = expressions_to_sql(cols_or_exprs)
     sqls = []
@@ -147,10 +149,10 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name,
         # If the supplied column string is a list of columns to be concatenated,
         # add a quick clause to filter out any instances whereby either column contains
         # a null value. Also raise error of usr tries to supply array columns
-        
+
         if isinstance(raw_expr, list):
-            if any([expr in array_cols for expr in raw_expr ]):
-                raise ValueError('Arrays cannot be concatenated during profiling') 
+            if any([expr in array_cols for expr in raw_expr]):
+                raise ValueError("Arrays cannot be concatenated during profiling")
 
             null_exprs = [f"{c} is null" for c in raw_expr]
             null_exprs = " OR ".join(null_exprs)
@@ -188,7 +190,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name,
                 order by count(*) desc)
 
                 """
- 
+
         else:
             sql = f"""
             select * from
@@ -208,7 +210,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name,
 
         sqls.append(sql)
 
-    return " union all ".join(sqls)                 
+    return " union all ".join(sqls)
 
 
 def _add_100_percentile_to_df_percentiles(percentile_rows):
@@ -222,7 +224,9 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
     return percentile_rows
 
 
-def profile_columns(linker, column_expressions, top_n=10, bottom_n=10, cast_arrays_as_str= False): 
+def profile_columns(
+    linker, column_expressions, top_n=10, bottom_n=10, cast_arrays_as_str=False
+):
 
     df_concat = linker._initialise_df_concat_with_tf()
 
@@ -280,7 +284,6 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10, cast_arra
         inner_charts.append(inner_chart)
     outer_spec = deepcopy(_outer_chart_spec_freq)
 
-    outer_spec["vconcat"] = inner_charts  
+    outer_spec["vconcat"] = inner_charts
 
     return altair_or_json(outer_spec)
-
