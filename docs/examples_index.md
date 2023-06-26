@@ -1,12 +1,12 @@
 ---
+hide:
+  - toc
 tags:
   - Examples
   - DuckDB
   - Spark
   - Athena
 ---
-
-### Examples
 
 This page provides a series of examples to help you get started with splink. You can find the underlying notebooks at the [splink_demos](https://github.com/moj-analytical-services/splink_demos) repo.
 

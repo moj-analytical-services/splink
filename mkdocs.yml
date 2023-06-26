@@ -15,6 +15,9 @@ theme:
     - search.share
     - search.suggest
     - navigation.footer
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
   logo: "img/favicon.ico"
   favicon: "img/favicon.ico"
   palette:
@@ -65,7 +68,7 @@ markdown_extensions:
       permalink: True
       toc_depth: 4
 nav:
-  - Home: "README.md"
+  - Home: "index.md"
   - Installation: "installations.md"
   - Tutorials:
       - 0. Tutorial introduction: "demos/00_Tutorial_Introduction.ipynb"
@@ -112,7 +115,7 @@ nav:
         - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
         - Optimising Spark performance: "topic_guides/optimising_spark.md"
         - Salting blocking rules: "topic_guides/salting.md"
-  - Reference:
+  - Documentation:
       - API:
         - Linker API:
             - Full API: "linker.md"
