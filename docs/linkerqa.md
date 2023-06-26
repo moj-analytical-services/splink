@@ -1,6 +1,9 @@
 ---
 tags:
   - API
+  - QA
+  - Clusters
+  - Labels
 ---
 # Documentation for `Linker` object methods related to QA
 

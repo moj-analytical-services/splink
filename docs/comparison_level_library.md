@@ -2,21 +2,28 @@
 tags:
   - API
   - comparisons
-  - Levenstein
+  - Damerau-Levenshtein
+  - Levenshtein
   - Jaro-Winkler
   - Jaccard
+  - Date Difference
+  - Distance In KM
+  - Array Intersect
+  - Columns Reversed
+  - Percentage Difference
+toc_depth: 2
 ---
 # Documentation for `comparison_level_library` 
 
 The `comparison_level_library` contains pre-made comparison levels available for use to
-construct custom comparisons [as described in this topic guide](../topic_guides/customising_comparisons.html#method-2-comparisonlevels).
-However, not every comparison level is available for every [Splink-compatible SQL backend](../topic_guides/backends.html).
+construct custom comparisons [as described in this topic guide](./topic_guides/customising_comparisons.html#method-3-comparisonlevels).
+However, not every comparison level is available for every [Splink-compatible SQL backend](./topic_guides/backends.html).
 
 The pre-made Splink comparison levels available for each SQL dialect are as given in this table:
 
-{%
-  include-markdown "./includes/generated_files/comparison_level_library_dialect_table.md"
-%}
+{% include-markdown "./includes/generated_files/comparison_level_library_dialect_table.md" %}
+
+
 
 The detailed API for each of these are outlined below.
 
@@ -24,13 +31,10 @@ The detailed API for each of these are outlined below.
 
 ::: splink.comparison_level_library.NullLevelBase
     handler: python
-    selection:
-      members:
-        -  __init__
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -42,7 +46,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
       
 ---
 
@@ -54,7 +58,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -66,7 +70,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -78,7 +82,31 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false   
-      heading_level: 1
+      heading_level: 2
+
+---
+
+::: splink.comparison_level_library.DamerauLevenshteinLevelBase
+    handler: python
+    selection:
+      members:
+        -  __init__
+    rendering:
+      show_root_heading: true
+      show_source: false   
+      heading_level: 2
+
+---
+
+::: splink.comparison_level_library.JaroLevelBase
+    handler: python
+    selection:
+      members:
+        -  __init__
+    rendering:
+      show_root_heading: true
+      show_source: false
+      heading_level: 2
 
 ---
 
@@ -90,7 +118,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -102,7 +130,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -114,7 +142,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -126,7 +154,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1    
+      heading_level: 2    
 
 ---
 
@@ -138,7 +166,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1   
+      heading_level: 2   
 
 ---
 
@@ -150,7 +178,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2
 
 ---
 
@@ -162,4 +190,4 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 1
+      heading_level: 2

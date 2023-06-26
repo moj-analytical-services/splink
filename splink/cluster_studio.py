@@ -28,7 +28,6 @@ def _quo_if_str(x):
 
 
 def _clusters_sql(df_clustered_nodes, cluster_ids: list) -> str:
-
     cluster_ids = [_quo_if_str(x) for x in cluster_ids]
     cluster_ids_joined = ", ".join(cluster_ids)
 
@@ -52,7 +51,6 @@ def df_clusters_as_records(
 
 
 def _nodes_sql(df_clustered_nodes, cluster_ids) -> str:
-
     cluster_ids = [_quo_if_str(x) for x in cluster_ids]
     cluster_ids_joined = ", ".join(cluster_ids)
 
@@ -78,7 +76,6 @@ def create_df_nodes(
 def _edges_sql(
     linker: "Linker", df_predicted_edges: SplinkDataFrame, df_nodes: SplinkDataFrame
 ):
-
     unique_id_cols = linker._settings_obj._unique_id_input_columns
 
     nodes_l_id_expr = _composite_unique_id_from_nodes_sql(unique_id_cols, "nodes_l")
@@ -120,7 +117,7 @@ def df_edges_as_records(
 
 
 def _get_random_cluster_ids(
-    linker: "Linker", connected_components: SplinkDataFrame, sample_size: int
+    linker: "Linker", connected_components: SplinkDataFrame, sample_size: int, seed=None
 ):
     sql = f"""
     select count(distinct cluster_id) as count
@@ -134,13 +131,21 @@ def _get_random_cluster_ids(
 
     proportion = sample_size / cluster_count
 
+    random_sample_sql = linker._random_sample_sql(
+        proportion,
+        sample_size,
+        seed,
+        table=connected_components.physical_name,
+        unique_id="cluster_id",
+    )
+
     sql = f"""
     with distinct_clusters as (
     select distinct(cluster_id)
     from {connected_components.physical_name}
     )
     select cluster_id from distinct_clusters
-    {linker._random_sample_sql(proportion, sample_size)}
+    {random_sample_sql}
     """
 
     df_sample = linker._sql_to_splink_dataframe_checking_cache(
@@ -191,6 +196,7 @@ def render_splink_cluster_studio_html(
     out_path: str,
     sampling_method="random",
     sample_size=10,
+    sample_seed=None,
     cluster_ids: list = None,
     cluster_names: list = None,
     overwrite: bool = False,
@@ -205,7 +211,7 @@ def render_splink_cluster_studio_html(
     if cluster_ids is None:
         if sampling_method == "random":
             cluster_ids = _get_random_cluster_ids(
-                linker, df_clustered_nodes, sample_size
+                linker, df_clustered_nodes, sample_size, sample_seed
             )
         if sampling_method == "by_cluster_size":
             cluster_ids = _get_cluster_id_of_each_size(linker, df_clustered_nodes, 1)

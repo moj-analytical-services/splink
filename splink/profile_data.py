@@ -1,19 +1,17 @@
 import re
 from copy import deepcopy
 
-from .charts import load_chart_definition, vegalite_or_json
+from .charts import altair_or_json, load_chart_definition
 from .misc import ensure_is_list
 
 
 def _group_name(cols_or_expr):
-
     cols_or_expr = re.sub(r"[^0-9a-zA-Z_]", " ", cols_or_expr)
     cols_or_expr = re.sub(r"\s+", "_", cols_or_expr)
     return cols_or_expr
 
 
 def expressions_to_sql(expressions):
-
     e = []
     for expr in expressions:
         if isinstance(expr, list):
@@ -27,7 +25,7 @@ def expressions_to_sql(expressions):
 _outer_chart_spec_freq = {
     "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
     "vconcat": [],
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
 }
 
 chart_path = "profile_data.json"
@@ -35,7 +33,6 @@ _inner_chart_spec_freq = load_chart_definition(chart_path)
 
 
 def _get_inner_chart_spec_freq(percentile_data, top_n_data, bottom_n_data, col_name):
-
     inner_spec = deepcopy(_inner_chart_spec_freq)
 
     total_rows_inc_nulls = percentile_data[0]["total_rows_inc_nulls"]
@@ -121,7 +118,6 @@ def _get_df_percentiles():
 
 
 def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
-
     sql = """
     select * from
     (select *
@@ -141,7 +137,9 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     return sql
 
 
-def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name, cast_arrays_as_str):
+def _col_or_expr_frequencies_raw_data_sql(
+    cols_or_exprs, array_cols, table_name, cast_arrays_as_str
+):
     cols_or_exprs = ensure_is_list(cols_or_exprs)
     column_expressions = expressions_to_sql(cols_or_exprs)
     sqls = []
@@ -151,10 +149,10 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name,
         # If the supplied column string is a list of columns to be concatenated,
         # add a quick clause to filter out any instances whereby either column contains
         # a null value. Also raise error of usr tries to supply array columns
-        
+
         if isinstance(raw_expr, list):
-            if any([expr in array_cols for expr in raw_expr ]):
-                raise ValueError('Arrays cannot be concatenated during profiling') 
+            if any([expr in array_cols for expr in raw_expr]):
+                raise ValueError("Arrays cannot be concatenated during profiling")
 
             null_exprs = [f"{c} is null" for c in raw_expr]
             null_exprs = " OR ".join(null_exprs)
@@ -192,7 +190,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name,
                 order by count(*) desc)
 
                 """
- 
+
         else:
             sql = f"""
             select * from
@@ -212,11 +210,10 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, array_cols, table_name,
 
         sqls.append(sql)
 
-    return " union all ".join(sqls)                 
+    return " union all ".join(sqls)
 
 
 def _add_100_percentile_to_df_percentiles(percentile_rows):
-
     r = percentile_rows[0]
     if r["percentile_ex_nulls"] != 1.0:
         first_row = deepcopy(r)
@@ -227,7 +224,9 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
     return percentile_rows
 
 
-def profile_columns(linker, column_expressions, top_n=10, bottom_n=10, cast_arrays_as_str= False): 
+def profile_columns(
+    linker, column_expressions, top_n=10, bottom_n=10, cast_arrays_as_str=False
+):
 
     df_concat = linker._initialise_df_concat_with_tf()
 
@@ -287,4 +286,4 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10, cast_arra
 
     outer_spec["vconcat"] = inner_charts
 
-    return vegalite_or_json(outer_spec)
+    return altair_or_json(outer_spec)

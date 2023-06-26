@@ -1,11 +1,10 @@
 import pandas as pd
 
-import splink.duckdb.duckdb_comparison_library as cl
-from splink.duckdb.duckdb_linker import DuckDBLinker
+import splink.duckdb.comparison_library as cl
+from splink.duckdb.linker import DuckDBLinker
 
 
 def test_distance_function_comparison():
-
     data = [
         {"unique_id": 1, "forename": "Harry", "surname": "Jones"},
         {"unique_id": 2, "forename": "Garry", "surname": "Johns"},
@@ -58,3 +57,32 @@ def test_distance_function_comparison():
     for col, expected_counts in expected_gamma_counts.items():
         for gamma_val, expected_count in expected_counts.items():
             assert sum(df_pred[f"gamma_{col}"] == gamma_val) == expected_count
+
+
+def test_set_to_lowercase_parameter():
+    data = [
+        {"id": 1, "forename": "John"},
+        {"id": 2, "forename": "john"},
+        {"id": 3, "forename": "Rob"},
+        {"id": 4, "forename": "Rob"},
+    ]
+
+    settings = {
+        "unique_id_column_name": "id",
+        "link_type": "dedupe_only",
+        "blocking_rules_to_generate_predictions": [],
+        "comparisons": [cl.exact_match("forename", set_to_lowercase=True)],
+        "retain_matching_columns": True,
+        "retain_intermediate_calculation_columns": True,
+    }
+
+    df = pd.DataFrame(data)
+
+    linker = DuckDBLinker(df, settings)
+    df_e = linker.predict().as_pandas_dataframe()
+
+    row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])
+    assert row["gamma_forename"] == 1
+
+    row = dict(df_e.query("id_l == 3 and id_r == 4").iloc[0])
+    assert row["gamma_forename"] == 1

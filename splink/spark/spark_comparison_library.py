@@ -1,93 +1,12 @@
-from ..comparison_library import (
-    ArrayIntersectAtSizesComparisonBase,
-    DateDiffAtThresholdsComparisonBase,
-    DistanceFunctionAtThresholdsComparisonBase,
-    ExactMatchBase,
-    JaccardAtThresholdsComparisonBase,
-    JaroWinklerAtThresholdsComparisonBase,
-    LevenshteinAtThresholdsComparisonBase,
+import warnings
+
+from ..exceptions import SplinkDeprecated
+from .comparison_library import *  # noqa: F403
+
+warnings.warn(
+    "Importing directly from `splink.spark.spark_comparison_library` "
+    "is deprecated and will be removed in Splink v4. "
+    "Please import from `splink.spark.comparison_library` going forward.",
+    SplinkDeprecated,
+    stacklevel=2,
 )
-from .spark_base import (
-    SparkBase,
-)
-from .spark_comparison_level_library import (
-    array_intersect_level,
-    datediff_level,
-    distance_function_level,
-    else_level,
-    exact_match_level,
-    jaccard_level,
-    jaro_winkler_level,
-    levenshtein_level,
-    null_level,
-)
-
-
-class SparkComparisonProperties(SparkBase):
-    @property
-    def _exact_match_level(self):
-        return exact_match_level
-
-    @property
-    def _null_level(self):
-        return null_level
-
-    @property
-    def _else_level(self):
-        return else_level
-
-    @property
-    def _array_intersect_level(self):
-        return array_intersect_level
-
-    @property
-    def _datediff_level(self):
-        return datediff_level
-
-
-class exact_match(SparkComparisonProperties, ExactMatchBase):
-    pass
-
-
-class distance_function_at_thresholds(
-    SparkComparisonProperties, DistanceFunctionAtThresholdsComparisonBase
-):
-    @property
-    def _distance_level(self):
-        return distance_function_level
-
-
-class levenshtein_at_thresholds(
-    SparkComparisonProperties, LevenshteinAtThresholdsComparisonBase
-):
-    @property
-    def _distance_level(self):
-        return levenshtein_level
-
-
-class jaro_winkler_at_thresholds(
-    SparkComparisonProperties, JaroWinklerAtThresholdsComparisonBase
-):
-    @property
-    def _distance_level(self):
-        return jaro_winkler_level
-
-
-class jaccard_at_thresholds(
-    SparkComparisonProperties, JaccardAtThresholdsComparisonBase
-):
-    @property
-    def _distance_level(self):
-        return jaccard_level
-
-
-class array_intersect_at_sizes(
-    SparkComparisonProperties, ArrayIntersectAtSizesComparisonBase
-):
-    pass
-
-
-class datediff_at_thresholds(
-    SparkComparisonProperties, DateDiffAtThresholdsComparisonBase
-):
-    pass

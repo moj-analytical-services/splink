@@ -4,13 +4,12 @@ import os
 
 import pandas as pd
 
-import splink.duckdb.duckdb_comparison_level_library as cll
-from splink.duckdb.duckdb_comparison_level_library import else_level
-from splink.duckdb.duckdb_linker import DuckDBLinker
+import splink.duckdb.comparison_level_library as cll
+from splink.duckdb.comparison_level_library import else_level
+from splink.duckdb.linker import DuckDBLinker
 
 
 def test_regression(tmp_path):
-
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(20)
 
     # Overwrite the surname comparison to include duck-db specific syntax
@@ -69,7 +68,6 @@ def test_regression(tmp_path):
 
 
 def test_discussion_example(tmp_path):
-
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv").head(20)
 
     # Overwrite the surname comparison to include duck-db specific syntax

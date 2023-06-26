@@ -1,23 +1,27 @@
 name: Benchmark timeseries commit
 on:
-  push:
-    branches:
-      - master
+  pull_request_target:
+    types:
+      - closed
+
 
 jobs:
-  test:
+  if_merged:
+    if: github.event.pull_request.merged == true && github.repository == 'moj-analytical-services/splink'
     runs-on: ubuntu-20.04
+    # only run this workflow on the upstream
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
       #----------------------------------------------
       - name: Check out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: master
+          token: ${{ secrets.SPLINK_TOKEN }}
       - name: Set up python
         id: setup-python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9.10
 
@@ -47,13 +51,13 @@ jobs:
         uses: actions/cache@v2
         with:
           path: .venv
-          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-00
+          key: venv-bm-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-00
       #----------------------------------------------
       # install dependencies if cache does not exist
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
+        run: poetry install --no-interaction --no-root --with benchmarking
       #----------------------------------------------
       # install your root project, if required
       #----------------------------------------------
@@ -67,11 +71,9 @@ jobs:
           source .venv/bin/activate
           pytest benchmarking/test_performance.py  --benchmark-json benchmarking/output.json -k 'test_2_rounds_1k_sqlite or test_2_rounds_1k_duckdb'
           python benchmarking/combine_benchmarks_timeseries.py
+          git checkout master
           git config --global user.email "actions@users.noreply.github.com"
           git config --global user.name "robin"
           git add -A -f benchmarking/time_series.json
           git commit -m "Updated benchmarks timeseries" || exit 0
-          git push
-
-
-
+          git push --force

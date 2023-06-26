@@ -21,7 +21,6 @@ class Settings:
     linking model"""
 
     def __init__(self, settings_dict):
-
         settings_dict = deepcopy(settings_dict)
 
         # If incoming comparisons are of type Comparison not dict, turn back into dict
@@ -154,7 +153,7 @@ class Settings:
         ]
 
     @property
-    def _source_dataset_column_name(self):
+    def _source_dataset_input_column(self):
         if self._source_dataset_column_name_is_required:
             s_else_d = self._from_settings_dict_else_default
             return s_else_d("source_dataset_column_name")
@@ -162,12 +161,17 @@ class Settings:
             return None
 
     @property
+    def _source_dataset_col(self):
+        input_column = self._source_dataset_input_column
+        return (input_column, InputColumn(input_column, self).name())
+
+    @property
     def _unique_id_input_columns(self) -> list[InputColumn]:
         cols = []
 
         if self._source_dataset_column_name_is_required:
             col = InputColumn(
-                self._source_dataset_column_name,
+                self._source_dataset_input_column,
                 settings_obj=self,
             )
             cols.append(col)
@@ -199,7 +203,7 @@ class Settings:
     def _columns_used_by_comparisons(self):
         cols_used = []
         if self._source_dataset_column_name_is_required:
-            cols_used.append(self._source_dataset_column_name)
+            cols_used.append(self._source_dataset_input_column)
         cols_used.append(self._unique_id_column_name)
         for cc in self.comparisons:
             cols = cc._input_columns_used_by_case_statement
@@ -429,7 +433,7 @@ class Settings:
             "comparisons": [cc._as_completed_dict() for cc in self.comparisons],
             "probability_two_random_records_match": rr_match,
             "unique_id_column_name": self._unique_id_column_name,
-            "source_dataset_column_name": self._source_dataset_column_name,
+            "source_dataset_column_name": self._source_dataset_input_column,
         }
         return {**self._settings_dict, **current_settings}
 

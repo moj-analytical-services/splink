@@ -1,8 +1,8 @@
 import sqlglot
 
-from splink.athena.athena_transforms import cast_concat_as_varchar
+from splink.athena.athena_helpers.athena_transforms import cast_concat_as_varchar
 from splink.input_column import InputColumn
-from splink.spark.custom_spark_dialect import Dialect  # noqa 401
+from splink.spark.spark_helpers.custom_spark_dialect import Dialect  # noqa 401
 from splink.sql_transform import (
     move_l_r_table_prefix_to_column_suffix,
     sqlglot_transform_sql,
@@ -15,7 +15,6 @@ def move_l_r_test(br, expected):
 
 
 def test_move_l_r_table_prefix_to_column_suffix():
-
     br = "l.first_name = r.first_name"
     expected = "first_name_l = first_name_r"
     move_l_r_test(br, expected)
@@ -47,7 +46,6 @@ def test_move_l_r_table_prefix_to_column_suffix():
 
 
 def test_cast_concat_as_varchar():
-
     output = """
         select cast(l.source_dataset as varchar) || '-__-' ||
         cast(l.unique_id as varchar) as concat_id
@@ -78,11 +76,11 @@ def test_cast_concat_as_varchar():
 
 
 def test_set_numeric_as_double():
-    sql = "select cast('a' as double), cast(0.12345 as double)"
+    sql = "select cast('a' as float8), cast(0.12345 as float8)"
     transformed_sql = sqlglot.transpile(sql, write="customspark")[0]
     assert transformed_sql == "SELECT aD, 0.12345D"
 
-    sql = "select cast('a' as string), cast(0.12345 as double)"
+    sql = "select cast('a' as string), cast(0.12345 as float8)"
     transformed_sql = sqlglot.transpile(sql, write="customspark")[0]
     assert transformed_sql == "SELECT CAST('a' AS STRING), 0.12345D"
 

@@ -15,7 +15,6 @@ def number_of_comparisons_generated_by_blocking_rule_sql(
     linker: Linker,
     blocking_rule,
 ) -> str:
-
     settings_obj = linker._settings_obj
 
     where_condition = _sql_gen_where_condition(
@@ -40,7 +39,6 @@ def cumulative_comparisons_generated_by_blocking_rules(
     blocking_rules,
     output_chart=True,
 ):
-
     # Deepcopy our original linker so we can safely adjust our settings.
     # This is particularly important to ensure we don't overwrite our
     # original blocking rules.
@@ -66,7 +64,8 @@ def cumulative_comparisons_generated_by_blocking_rules(
     # Calculate the Cartesian Product
     if output_chart:
         # We only need the cartesian product if we want to output the chart view
-        if len(linker._input_tables_dict) == 1:
+
+        if settings_obj._link_type == "dedupe_only":
             group_by_statement = ""
         else:
             group_by_statement = "group by source_dataset"
@@ -112,13 +111,11 @@ def cumulative_comparisons_generated_by_blocking_rules(
     cumulative_sum = 0
     # Wrap everything into an output dictionary
     for row, br in zip(br_count, brs_as_objs):
-
         out_dict = {
             "row_count": row,
             "rule": br.blocking_rule,
         }
         if output_chart:
-
             cumulative_sum += row
             # Increase round threshold to capture more info on larger datasets
             rr = round(calculate_reduction_ratio(cumulative_sum, cartesian), 6)

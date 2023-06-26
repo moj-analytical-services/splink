@@ -5,7 +5,7 @@ import pandas as pd
 from networkx.algorithms import connected_components as cc_nx
 
 from splink.connected_components import solve_connected_components
-from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
+from splink.duckdb.linker import DuckDBLinker, DuckDBLinkerDataFrame
 
 
 def generate_random_graph(graph_size, seed=None):
@@ -18,7 +18,6 @@ def generate_random_graph(graph_size, seed=None):
 
 
 def register_cc_df(G):
-
     from tests.basic_settings import get_settings_dict
 
     settings_dict = get_settings_dict()
@@ -49,8 +48,7 @@ def register_cc_df(G):
 
 
 def run_cc_implementation(predict_df):
-
-    linker = predict_df.duckdb_linker
+    linker = predict_df.linker
     concat_with_tf = linker._initialise_df_concat_with_tf()
 
     # finally, run our connected components algorithm
@@ -67,9 +65,8 @@ def run_cc_implementation(predict_df):
 
 
 def benchmark_cc_implementation(linker_df):
-
     # add a schema so we don't need to re-register our df
-    linker_df.duckdb_linker._con.execute(
+    linker_df.linker._con.execute(
         """
         create schema if not exists con_comp;
         set schema 'con_comp';
@@ -77,7 +74,7 @@ def benchmark_cc_implementation(linker_df):
     )
 
     df = run_cc_implementation(linker_df)
-    linker_df.duckdb_linker._con.execute("drop schema con_comp cascade")
+    linker_df.linker._con.execute("drop schema con_comp cascade")
 
     return df
 
@@ -92,22 +89,30 @@ def networkx_solve(G):
     return pd.DataFrame(rows)
 
 
-def check_df_equality(df1, df2, columns=None):
+def check_df_equality(df1, df2, skip_dtypes=False):
     """
     Test if two dataframes are equal
-    :param df1: First dataframe
-    :param df2: Second dataframe
-    :return: True if equal, False if not
+
+    Args:
+    df1 (pd.DataFrame): First dataframe for comparisons
+    df2 (pd.DataFrame): Second dataframe for comparisons
+    skip_dtypes (bool, optional): Whether to check the datatypes in both
+        dataframes. This should be skipped if one of your dataframes
+        consistently returns pandas dtypes, instead of numpy dtypes,
+        as is the case in the athena example.
+
+    Returns:
+        True if equal, False if not
     """
     if df1.shape != df2.shape:
         return False
     if df1.columns.tolist() != df2.columns.tolist():
         return False
-    if df1.dtypes.tolist() != df2.dtypes.tolist():
-        return False
+    if not skip_dtypes:
+        if df1.dtypes.tolist() != df2.dtypes.tolist():
+            return False
 
-    if columns is None:
-        columns = df1.columns
+    columns = df1.columns
     for col in columns:
         if df1[col].tolist() != df2[col].tolist():
             return False

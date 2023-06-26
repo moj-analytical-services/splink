@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 
 
 def estimate_m_from_pairwise_labels(linker, table_name):
-
     concat_with_tf = linker._initialise_df_concat_with_tf()
 
     sqls = block_from_labels(linker, table_name)
@@ -28,7 +27,7 @@ def estimate_m_from_pairwise_labels(linker, table_name):
     linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
     sql = """
-    select *, cast(1.0 as double) as match_probability
+    select *, cast(1.0 as float8) as match_probability
     from __splink__df_comparison_vectors
     """
     linker._enqueue_sql(sql, "__splink__df_predict")

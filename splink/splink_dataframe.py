@@ -1,19 +1,28 @@
+from __future__ import annotations
+
 import logging
+from pathlib import Path
+from typing import TYPE_CHECKING
 
 logger = logging.getLogger(__name__)
+
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
 
 
 class SplinkDataFrame:
     """Abstraction over dataframe to handle basic operations like retrieving data and
     retrieving column names, which need different implementations depending on whether
     it's a spark dataframe, sqlite table etc.
-
     Uses methods like `as_pandas_dataframe()` and `as_record_dict()` to retrieve data
     """
 
-    def __init__(self, templated_name, physical_name):
+    def __init__(self, templated_name: str, physical_name: str, linker: Linker):
         self.templated_name = templated_name
         self.physical_name = physical_name
+        self.linker = linker
+        self._target_schema = "splink"
 
     @property
     def columns(self):
@@ -27,15 +36,11 @@ class SplinkDataFrame:
     def validate():
         pass
 
-    def _random_sample_sql(percent):
-        raise NotImplementedError("Random sample sql not implemented for this linker")
-
     @property
     def physical_and_template_names_equal(self):
         return self.templated_name == self.physical_name
 
     def _check_drop_table_created_by_splink(self, force_non_splink_table=False):
-
         if not self.physical_name.startswith("__splink__"):
             if not force_non_splink_table:
                 raise ValueError(
@@ -84,3 +89,18 @@ class SplinkDataFrame:
             f"{self.templated_name}"
         )
         p.text(msg)
+
+    def to_parquet(self, filepath, overwrite=False):
+        raise NotImplementedError("`to_parquet` not implemented for this linker")
+
+    def to_csv(self, filepath, overwrite=False):
+        raise NotImplementedError("`to_csv` not implemented for this linker")
+
+    def check_file_exists(self, filepath):
+        p = Path(filepath)
+        if p.exists():
+            raise FileExistsError(
+                "The filepath you've supplied already exists. Please use "
+                "either `overwrite = True` or manually move or delete the "
+                "existing file."
+            )

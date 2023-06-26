@@ -11,7 +11,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.9
 
@@ -28,6 +28,7 @@ jobs:
       - name: Install environment and check notebooks
         run: |
             cd splink_demos
+            cp ../benchmarking/conftest.py conftest.py
             python3 -m venv venv
             source venv/bin/activate
             pip install --upgrade pip

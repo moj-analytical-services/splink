@@ -41,7 +41,6 @@ def _final_score_record(record_as_dict):
 
 
 def _comparison_records(record_as_dict, comparison: Comparison):
-
     output_records = []
     waterfall_record = {}
 
@@ -51,9 +50,9 @@ def _comparison_records(record_as_dict, comparison: Comparison):
     cl = c._get_comparison_level_by_comparison_vector_value(cv_value)
 
     waterfall_record["column_name"] = c._output_column_name
-    waterfall_record["label_for_charts"] = cl._label_for_charts
+    waterfall_record["label_for_charts"] = cl.label_for_charts
 
-    waterfall_record["sql_condition"] = cl._sql_condition
+    waterfall_record["sql_condition"] = cl.sql_condition
     waterfall_record["log2_bayes_factor"] = cl._log2_bayes_factor
     waterfall_record["bayes_factor"] = cl._bayes_factor
     waterfall_record["comparison_vector_value"] = int(cv_value)
@@ -138,7 +137,6 @@ def record_to_waterfall_data(record_as_dict, settings_obj):
 def records_to_waterfall_data(records, settings_obj):
     waterfall_data = []
     for i, record in enumerate(records):
-
         new_data = record_to_waterfall_data(record, settings_obj)
         for rec in new_data:
             rec["record_number"] = i

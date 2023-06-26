@@ -41,7 +41,6 @@ class EMTrainingSession:
         comparisons_to_deactivate: list[Comparison] = None,
         comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
     ):
-
         logger.info("\n----- Starting EM training session -----\n")
 
         self._original_settings_obj = linker._settings_obj
@@ -167,7 +166,6 @@ class EMTrainingSession:
         return self._training_linker._execute_sql_pipeline(input_dataframes)
 
     def _train(self):
-
         cvv = self._comparison_vectors()
 
         # check that the blocking rule actually generates _some_ record pairs,
@@ -201,7 +199,6 @@ class EMTrainingSession:
                 cc._output_column_name
             )
             for cl in cc._comparison_levels_excluding_null:
-
                 orig_cl = orig_cc._get_comparison_level_by_comparison_vector_value(
                     cl._comparison_vector_value
                 )
@@ -212,7 +209,7 @@ class EMTrainingSession:
                         orig_cl._add_trained_m_probability(not_observed, training_desc)
                         logger.info(
                             f"m probability not trained for {cc._output_column_name} - "
-                            f"{cl._label_for_charts} (comparison vector value: "
+                            f"{cl.label_for_charts} (comparison vector value: "
                             f"{cl._comparison_vector_value}). This usually means the "
                             "comparison level was never observed in the training data."
                         )
@@ -227,7 +224,7 @@ class EMTrainingSession:
                         orig_cl._add_trained_u_probability(not_observed, training_desc)
                         logger.info(
                             f"u probability not trained for {cc._output_column_name} - "
-                            f"{cl._label_for_charts} (comparison vector value: "
+                            f"{cl.label_for_charts} (comparison vector value: "
                             f"{cl._comparison_vector_value}). This usually means the "
                             "comparison level was never observed in the training data."
                         )
@@ -239,12 +236,10 @@ class EMTrainingSession:
         self._original_linker._em_training_sessions.append(self)
 
     def _add_iteration(self):
-
         self._settings_obj_history.append(deepcopy(self._settings_obj))
 
     @property
     def _blocking_adjusted_probability_two_random_records_match(self):
-
         orig_prop_m = self._original_settings_obj._probability_two_random_records_match
 
         adj_bayes_factor = prob_to_bayes_factor(orig_prop_m)
@@ -263,7 +258,7 @@ class EMTrainingSession:
             logger.log(
                 15,
                 f"Increasing prob two random records match using "
-                f"{cl.comparison._output_column_name} - {cl._label_for_charts}"
+                f"{cl.comparison._output_column_name} - {cl.label_for_charts}"
                 f" using bayes factor {cl._bayes_factor:,.3f}",
             )
 
@@ -281,7 +276,6 @@ class EMTrainingSession:
         output_records = []
 
         for iteration, settings_obj in enumerate(self._settings_obj_history):
-
             records = settings_obj._parameters_as_detailed_records
 
             for r in records:
@@ -334,7 +328,7 @@ class EMTrainingSession:
             m_u = max_change_dict["max_change_type"]
             cc_name = cl.comparison._output_column_name
 
-            cl_label = cl._label_for_charts
+            cl_label = cl.label_for_charts
             level_text = f"{cc_name}, level `{cl_label}`"
 
             message = (
@@ -345,7 +339,6 @@ class EMTrainingSession:
         return message
 
     def _max_change_in_parameters_comparison_levels(self):
-
         previous_iteration = self._settings_obj_history[-2]
         this_iteration = self._settings_obj_history[-1]
         max_change = -0.1
@@ -362,7 +355,7 @@ class EMTrainingSession:
             this_cc = comparison[1]
             z_cls = zip(prev_cc.comparison_levels, this_cc.comparison_levels)
             for z_cl in z_cls:
-                if z_cl[0]._is_null_level:
+                if z_cl[0].is_null_level:
                     continue
                 prev_cl = z_cl[0]
                 this_cl = z_cl[1]

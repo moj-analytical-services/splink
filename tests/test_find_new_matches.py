@@ -2,8 +2,8 @@ from copy import deepcopy
 
 import pandas as pd
 
-from splink.duckdb.duckdb_comparison_library import exact_match
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.comparison_library import exact_match
+from splink.duckdb.linker import DuckDBLinker
 from tests.basic_settings import get_settings_dict
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -35,7 +35,6 @@ record = {
 
 def test_tf_tables_init_works():
     for s in [settings_tf, settings_no_tf, settings]:
-
         linker = DuckDBLinker(
             df,
             s,
@@ -67,7 +66,7 @@ def test_matches_work():
     )
 
     # Train our model to get more reasonable outputs...
-    linker.estimate_u_using_random_sampling(target_rows=1e6)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
     blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)

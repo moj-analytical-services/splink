@@ -1,5 +1,5 @@
 {
-  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
   "title": "Precision-recall curve",
   "data": { "values": [] },
   "mark": { "type": "line", "clip": true, "point": true },
@@ -7,15 +7,15 @@
     "tooltip": [
       { "type": "quantitative", "field": "truth_threshold", "format": ".4f" },
       { "type": "quantitative", "field": "match_probability", "format": ".4%" },
-      { "type": "quantitative", "field": "FP_rate", "format": ".4f" },
-      { "type": "quantitative", "field": "TP_rate", "format": ".4f" },
-      { "type": "quantitative", "field": "TP", "format": ",.0f" },
-      { "type": "quantitative", "field": "TN", "format": ",.0f" },
-      { "type": "quantitative", "field": "FP", "format": ",.0f" },
-      { "type": "quantitative", "field": "FN", "format": ",.0f" },
+      { "type": "quantitative", "field": "fp_rate", "format": ".4f", "title": "FP_rate" },
+      { "type": "quantitative", "field": "tp_rate", "format": ".4f", "title": "TP_rate" },
+      { "type": "quantitative", "field": "tp", "format": ",.0f", "title": "TP" },
+      { "type": "quantitative", "field": "tn", "format": ",.0f", "title": "TN" },
+      { "type": "quantitative", "field": "fp", "format": ",.0f", "title": "FP" },
+      { "type": "quantitative", "field": "fn", "format": ",.0f", "title": "FN" },
       { "type": "quantitative", "field": "precision", "format": ".4f" },
       { "type": "quantitative", "field": "recall", "format": ".4f" },
-      { "type": "quantitative", "field": "F1", "format": ".4f" }
+      { "type": "quantitative", "field": "f1", "format": ".4f", "title": "F1" }
     ],
     "x": {
       "type": "quantitative",
@@ -33,5 +33,17 @@
       "type": "nominal",
       "field": "curve_label"
     }
-  }
+  },
+  "params": [
+    {
+      "name": "mouse_zoom",
+      "select": {
+        "type": "interval",
+        "encodings": [
+          "x", "y"
+        ]
+      },
+      "bind": "scales"
+    }
+  ]
 }

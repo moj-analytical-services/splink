@@ -1,6 +1,7 @@
 ---
 tags:
   - API
+  - Prediction
 ---
 # Documentation for `Linker` object methods related to link prediction
 
@@ -15,6 +16,7 @@ tags:
         - deterministic_link
         - find_matches_to_new_records
         - load_settings
+        - load_model
         - load_settings_from_json
         - predict
     rendering:

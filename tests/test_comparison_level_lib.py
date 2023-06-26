@@ -1,17 +1,13 @@
 import pandas as pd
 
-from splink.duckdb.duckdb_comparison_level_library import (
-    columns_reversed_level,
-    distance_in_km_level,
-    else_level,
-    exact_match_level,
-    null_level,
-    percentage_difference_level,
-)
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from .decorator import mark_with_dialects_excluding
 
 
-def test_column_reversal():
+@mark_with_dialects_excluding()
+def test_column_reversal(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    cll = helper.cll
+
     data = [
         {"id": 1, "forename": "John", "surname": "Smith", "full_name": "John Smith"},
         {"id": 2, "forename": "Smith", "surname": "John", "full_name": "Smith John"},
@@ -27,10 +23,10 @@ def test_column_reversal():
             {
                 "output_column_name": "full_name",
                 "comparison_levels": [
-                    null_level("full_name"),
-                    exact_match_level("full_name"),
-                    columns_reversed_level("forename", "surname"),
-                    else_level(),
+                    cll.null_level("full_name"),
+                    cll.exact_match_level("full_name"),
+                    cll.columns_reversed_level("forename", "surname"),
+                    cll.else_level(),
                 ],
             },
         ],
@@ -39,8 +35,9 @@ def test_column_reversal():
     }
 
     df = pd.DataFrame(data)
+    df = helper.convert_frame(df)
 
-    linker = DuckDBLinker(df, settings)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
     df_e = linker.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])
@@ -50,71 +47,11 @@ def test_column_reversal():
     assert row["gamma_full_name"] == 2
 
 
-def test_haversine_level():
-    data = [
-        {"id": 1, "lat": 22.730590, "lon": 9.388589},
-        {"id": 2, "lat": 22.836322, "lon": 9.276112},
-        {"id": 3, "lat": 37.770850, "lon": 95.689880},
-        {"id": 4, "lat": -31.336319, "lon": 145.183685},
-    ]
-    # Add another the array version of the lat_long column
-    for d in data:
-        d["lat_long"] = {"lat": d["lat"], "long": d["lon"]}
-        d["lat_long_arr"] = [d["lat"], d["lon"]]
+@mark_with_dialects_excluding()
+def test_perc_difference(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    cll = helper.cll
 
-    df = pd.DataFrame(data)
-
-    settings = {
-        "unique_id_column_name": "id",
-        "link_type": "dedupe_only",
-        "blocking_rules_to_generate_predictions": [],
-        "comparisons": [
-            {
-                "output_column_name": "lat_long",
-                "comparison_levels": [
-                    null_level("lat"),  # no nulls in test data
-                    distance_in_km_level(
-                        km_threshold=50,
-                        lat_col="lat",
-                        long_col="lon",
-                    ),
-                    distance_in_km_level(
-                        lat_col="lat_long['lat']",
-                        long_col="lat_long['long']",
-                        km_threshold=10000,
-                    ),
-                    distance_in_km_level(
-                        lat_col="lat_long_arr[1]",
-                        long_col="lat_long_arr[2]",
-                        km_threshold=100000,
-                    ),
-                    else_level(),
-                ],
-            },
-        ],
-        "retain_matching_columns": True,
-        "retain_intermediate_calculation_columns": True,
-    }
-
-    linker = DuckDBLinker(df, settings, input_table_aliases="test")
-    df_e = linker.predict().as_pandas_dataframe()
-
-    row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])
-    assert row["gamma_lat_long"] == 3
-
-    # id comparisons w/ dist < 10000km
-    id_comb = {(1, 3), (2, 3), (3, 4)}
-    for id_pair in id_comb:
-        row = dict(df_e.query("id_l == {} and id_r == {}".format(*id_pair)).iloc[0])
-        assert row["gamma_lat_long"] == 2
-
-    id_comb = {(1, 4), (2, 4)}
-    for id_pair in id_comb:
-        row = dict(df_e.query("id_l == {} and id_r == {}".format(*id_pair)).iloc[0])
-        assert row["gamma_lat_long"] == 1
-
-
-def test_perc_difference():
     data = [
         {"id": 1, "amount": 1.2},
         {"id": 2, "amount": 1.0},
@@ -131,12 +68,12 @@ def test_perc_difference():
             {
                 "output_column_name": "amount",
                 "comparison_levels": [
-                    null_level("amount"),
-                    percentage_difference_level("amount", 0.0),  # 4
-                    percentage_difference_level("amount", (0.2 / 1.2) + 1e-4),  # 3
-                    percentage_difference_level("amount", (0.2 / 1.0) + 1e-4),  # 2
-                    percentage_difference_level("amount", (60 / 200) + 1e-4),  # 1
-                    else_level(),
+                    cll.null_level("amount"),
+                    cll.percentage_difference_level("amount", 0.0),  # 4
+                    cll.percentage_difference_level("amount", (0.2 / 1.2) + 1e-4),  # 3
+                    cll.percentage_difference_level("amount", (0.2 / 1.0) + 1e-4),  # 2
+                    cll.percentage_difference_level("amount", (60 / 200) + 1e-4),  # 1
+                    cll.else_level(),
                 ],
             },
         ],
@@ -145,8 +82,9 @@ def test_perc_difference():
     }
 
     df = pd.DataFrame(data)
+    df = helper.convert_frame(df)
 
-    linker = DuckDBLinker(df, settings)
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
     df_e = linker.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])  # 16.66%
@@ -157,3 +95,172 @@ def test_perc_difference():
 
     row = dict(df_e.query("id_l == 4 and id_r == 5").iloc[0])  # 30%
     assert row["gamma_amount"] == 1
+
+
+@mark_with_dialects_excluding()
+def test_levenshtein_level(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    cll = helper.cll
+
+    data = [
+        {"id": 1, "name": "harry"},
+        {"id": 2, "name": "harry"},
+        {"id": 3, "name": "barry"},
+        {"id": 4, "name": "gary"},
+        {"id": 5, "name": "sally"},
+        {"id": 6, "name": "sharry"},
+        {"id": 7, "name": "haryr"},
+        {"id": 8, "name": "ahryr"},
+        {"id": 9, "name": "harry12345"},
+        {"id": 10, "name": "ahrryt"},
+        {"id": 11, "name": "hy"},
+        {"id": 12, "name": "r"},
+    ]
+    # id and expected levenshtein distance from id:1 "harry"
+    id_distance_from_1 = {
+        2: 0,
+        3: 1,
+        4: 2,
+        5: 3,
+        6: 1,
+        7: 2,
+        8: 3,
+        9: 5,
+        10: 3,
+        11: 3,
+        12: 4,
+    }
+
+    settings = {
+        "unique_id_column_name": "id",
+        "link_type": "dedupe_only",
+        "comparisons": [
+            {
+                "output_column_name": "name",
+                "comparison_levels": [
+                    cll.null_level("name"),
+                    cll.levenshtein_level("name", 0),  # 4
+                    cll.levenshtein_level("name", 1),  # 3
+                    cll.levenshtein_level("name", 2),  # 2
+                    cll.levenshtein_level("name", 3),  # 1
+                    cll.else_level(),  # 0
+                ],
+            },
+        ],
+        "retain_matching_columns": True,
+        "retain_intermediate_calculation_columns": True,
+    }
+
+    def gamma_lev_from_distance(dist):
+        # which gamma value will I get for a given levenshtein distance?
+        if dist == 0:
+            return 4
+        elif dist == 1:
+            return 3
+        elif dist == 2:
+            return 2
+        elif dist == 3:
+            return 1
+        elif dist > 3:
+            return 0
+        raise ValueError(f"Invalid distance supplied ({dist})")
+
+    df = pd.DataFrame(data)
+    df = helper.convert_frame(df)
+
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    df_e = linker.predict().as_pandas_dataframe()
+
+    for id_r, lev_dist in id_distance_from_1.items():
+        expected_gamma_lev = gamma_lev_from_distance(lev_dist)
+        print(
+            f"id: {id_r}, expected_lev: {lev_dist}, "
+            f"expected_gamma: {expected_gamma_lev}"
+        )
+        row = dict(df_e.query(f"id_l == 1 and id_r == {id_r}").iloc[0])
+        assert row["gamma_name"] == expected_gamma_lev
+
+
+# postgres has no Damerau-Levenshtein
+@mark_with_dialects_excluding("postgres")
+def test_damerau_levenshtein_level(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    cll = helper.cll
+
+    data = [
+        {"id": 1, "name": "harry"},
+        {"id": 2, "name": "harry"},
+        {"id": 3, "name": "barry"},
+        {"id": 4, "name": "gary"},
+        {"id": 5, "name": "sally"},
+        {"id": 6, "name": "sharry"},
+        {"id": 7, "name": "haryr"},
+        {"id": 8, "name": "ahryr"},
+        {"id": 9, "name": "harry12345"},
+        {"id": 10, "name": "ahrryt"},
+        {"id": 11, "name": "hy"},
+        {"id": 12, "name": "r"},
+    ]
+    # id and expected levenshtein distance from id:1 "harry"
+    id_distance_from_1 = {
+        2: 0,
+        3: 1,
+        4: 2,
+        5: 3,
+        6: 1,
+        7: 1,
+        8: 2,
+        9: 5,
+        10: 2,
+        11: 3,
+        12: 4,
+    }
+
+    settings = {
+        "unique_id_column_name": "id",
+        "link_type": "dedupe_only",
+        "comparisons": [
+            {
+                "output_column_name": "name",
+                "comparison_levels": [
+                    cll.null_level("name"),
+                    cll.damerau_levenshtein_level("name", 0),  # 4
+                    cll.damerau_levenshtein_level("name", 1),  # 3
+                    cll.damerau_levenshtein_level("name", 2),  # 2
+                    cll.damerau_levenshtein_level("name", 3),  # 1
+                    cll.else_level(),  # 0
+                ],
+            },
+        ],
+        "retain_matching_columns": True,
+        "retain_intermediate_calculation_columns": True,
+    }
+
+    def gamma_lev_from_distance(dist):
+        # which gamma value will I get for a given levenshtein distance?
+        if dist == 0:
+            return 4
+        elif dist == 1:
+            return 3
+        elif dist == 2:
+            return 2
+        elif dist == 3:
+            return 1
+        elif dist > 3:
+            return 0
+        raise ValueError(f"Invalid distance supplied ({dist})")
+
+    df = pd.DataFrame(data)
+    df = helper.convert_frame(df)
+
+    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    df_e = linker.predict().as_pandas_dataframe()
+
+    for id_r, lev_dist in id_distance_from_1.items():
+        expected_gamma_lev = gamma_lev_from_distance(lev_dist)
+        print(
+            f"id: {id_r}, expected_lev: {lev_dist}, "
+            f"expected_gamma: {expected_gamma_lev}"
+        )
+        row = dict(df_e.query(f"id_l == 1 and id_r == {id_r}").iloc[0])
+        assert row["gamma_name"] == expected_gamma_lev

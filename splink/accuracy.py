@@ -10,7 +10,6 @@ from .sql_transform import move_l_r_table_prefix_to_column_suffix
 def truth_space_table_from_labels_with_predictions_sqls(
     threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
-
     # Round to match_weight_round_to_nearest.
     # e.g. if it's 0.25, 1.27 gets rounded to 1.25
     if match_weight_round_to_nearest is not None:
@@ -112,21 +111,21 @@ def truth_space_table_from_labels_with_predictions_sqls(
         power(2, truth_threshold) / (1 + power(2, truth_threshold))
             as match_probability,
         row_count,
-        P,
-        N,
-        TP,
-        TN,
-        FP,
-        FN,
+        P as p,
+        N as n,
+        TP as tp,
+        TN as tn,
+        FP as fp,
+        FN as fn,
         P/row_count as P_rate,
         cast(N as float)/row_count as N_rate,
-        cast(TP as float)/P as TP_rate,
-        cast(TN as float)/N as TN_rate,
-        cast(FP as float)/N as FP_rate,
-        cast(FN as float)/P as FN_rate,
+        cast(TP as float)/P as tp_rate,
+        cast(TN as float)/N as tn_rate,
+        cast(FP as float)/N as fp_rate,
+        cast(FN as float)/P as fn_rate,
         cast(TP as float)/(TP+FP) as precision,
         cast(TP as float)/(TP+FN) as recall,
-        cast(TP as float)/(TP + (FP + FN)/2) as F1
+        cast(TP as float)/(TP + (FP + FN)/2) as f1
     from __splink__labels_with_pos_neg_grouped_with_truth_stats
     """
 
@@ -151,7 +150,6 @@ def _select_found_by_blocking_rules(linker):
 def truth_space_table_from_labels_table(
     linker, labels_tablename, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
-
     # Read from the cache or generate
     concat_with_tf = linker._initialise_df_concat_with_tf()
 
@@ -176,7 +174,6 @@ def truth_space_table_from_labels_table(
 def truth_space_table_from_labels_column(
     linker, label_colname, threshold_actual=0.5, match_weight_round_to_nearest=None
 ):
-
     new_matchkey = len(linker._settings_obj._blocking_rules_to_generate_predictions)
 
     df_predict = _predict_from_label_column_sql(
@@ -254,7 +251,6 @@ def prediction_errors_from_labels_table(
     include_false_negatives=True,
     threshold=0.5,
 ):
-
     # Read from the cache or generate
     nodes_with_tf = linker._initialise_df_concat_with_tf()
 
@@ -300,7 +296,6 @@ def prediction_errors_from_labels_table(
 
 
 def _predict_from_label_column_sql(linker, label_colname):
-
     # In the case of labels, we use them to block
     # In the case we have a label column, we want to apply the model's blocking rules
     # but add in blocking on the label colname
@@ -332,7 +327,6 @@ def prediction_errors_from_label_column(
     include_false_negatives=True,
     threshold=0.5,
 ):
-
     df_predict = _predict_from_label_column_sql(
         linker,
         label_colname,

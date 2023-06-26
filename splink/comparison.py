@@ -55,7 +55,6 @@ class Comparison:
     """
 
     def __init__(self, comparison_dict, settings_obj: Settings = None):
-
         # Protected because we don't want to modify
         self._comparison_dict = comparison_dict
         comparison_level_list = comparison_dict["comparison_levels"]
@@ -82,7 +81,7 @@ class Comparison:
         counter = num_levels - 1
 
         for level in self.comparison_levels:
-            if level._is_null_level:
+            if level.is_null_level:
                 level._comparison_vector_value = -1
                 level._max_level = False
             else:
@@ -103,11 +102,11 @@ class Comparison:
 
     @property
     def _num_levels(self):
-        return len([cl for cl in self.comparison_levels if not cl._is_null_level])
+        return len([cl for cl in self.comparison_levels if not cl.is_null_level])
 
     @property
     def _comparison_levels_excluding_null(self):
-        return [cl for cl in self.comparison_levels if not cl._is_null_level]
+        return [cl for cl in self.comparison_levels if not cl.is_null_level]
 
     @property
     def _gamma_prefix(self):
@@ -125,7 +124,7 @@ class Comparison:
 
     @property
     def _has_null_level(self):
-        return any([cl._is_null_level for cl in self.comparison_levels])
+        return any([cl.is_null_level for cl in self.comparison_levels])
 
     @property
     def _bf_tf_adj_column_name(self):
@@ -140,7 +139,6 @@ class Comparison:
 
     @property
     def _case_statement(self):
-
         sqls = [
             cl._when_then_comparison_vector_value_sql for cl in self.comparison_levels
         ]
@@ -205,7 +203,6 @@ class Comparison:
 
     @property
     def _columns_to_select_for_comparison_vector_values(self):
-
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
@@ -226,7 +223,6 @@ class Comparison:
 
     @property
     def _columns_to_select_for_bayes_factor_parts(self):
-
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
@@ -234,7 +230,6 @@ class Comparison:
         output_cols = []
         for col in input_cols:
             if self._settings_obj._retain_matching_columns:
-
                 output_cols.extend(col.names_l_r())
 
         output_cols.append(self._gamma_column_name)
@@ -266,7 +261,6 @@ class Comparison:
 
     @property
     def _columns_to_select_for_predict(self):
-
         input_cols = []
         for cl in self.comparison_levels:
             input_cols.extend(cl._input_columns_used_by_sql_condition)
@@ -406,7 +400,6 @@ class Comparison:
         self, value
     ) -> ComparisonLevel:
         for cl in self.comparison_levels:
-
             if cl._comparison_vector_value == value:
                 return cl
         raise ValueError(f"No comparison level with comparison vector value {value}")
@@ -419,7 +412,6 @@ class Comparison:
 
     @property
     def _not_trained_messages(self):
-
         msgs = []
 
         cname = self._output_column_name
@@ -442,8 +434,8 @@ class Comparison:
         comp_levels = [
             cl_template.format(
                 cvv=cl._comparison_vector_value,
-                label=cl._label_for_charts,
-                sql=cl._sql_condition,
+                label=cl.label_for_charts,
+                sql=cl.sql_condition,
             )
             for cl in self.comparison_levels
         ]
@@ -452,7 +444,6 @@ class Comparison:
 
     @property
     def _human_readable_description_succinct(self):
-
         input_cols = join_list_with_commas_final_and(
             [c.name() for c in self._input_columns_used_by_case_statement]
         )
@@ -471,7 +462,6 @@ class Comparison:
 
     @property
     def human_readable_description(self):
-
         input_cols = join_list_with_commas_final_and(
             [c.name() for c in self._input_columns_used_by_case_statement]
         )

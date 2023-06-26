@@ -1,0 +1,9 @@
+*
+
+!tests/
+!splink/
+!pyproject.toml
+!poetry.lock
+!README.md
+
+**/*.pyc

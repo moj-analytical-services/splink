@@ -1,15 +1,15 @@
 import pandas as pd
 import pytest
-from basic_settings import get_settings_dict
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.linker import DuckDBLinker
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
-from splink.spark.spark_linker import SparkLinker
-from splink.sqlite.sqlite_linker import SQLiteLinker
+from splink.spark.linker import SparkLinker
+from splink.sqlite.linker import SQLiteLinker
+
+from .basic_settings import get_settings_dict
 
 
 def test_splink_2_predict():
-
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
     linker = DuckDBLinker(df, settings_dict)
@@ -47,7 +47,6 @@ def test_splink_2_predict_spark(df_spark):
 
 
 def test_splink_2_predict_sqlite():
-
     import sqlite3
 
     from rapidfuzz.distance.Levenshtein import distance
@@ -80,7 +79,6 @@ def test_splink_2_predict_sqlite():
 
 
 def test_splink_2_em_fixed_u():
-
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
     linker = DuckDBLinker(df, settings_dict)
@@ -125,7 +123,6 @@ def test_splink_2_em_fixed_u():
 
 
 def test_splink_2_em_no_fix():
-
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings_dict = get_settings_dict()
     linker = DuckDBLinker(df, settings_dict)
@@ -170,7 +167,6 @@ def test_splink_2_em_no_fix():
 
 
 def test_lambda():
-
     # Needs precisely 10 EM iterations
     settings_dict = get_settings_dict()
     settings_dict["max_iterations"] = 10
@@ -190,16 +186,16 @@ def test_lambda():
 
     f1 = ma["unique_id_l"] == 924
     f2 = ma["unique_id_r"] == 925
-    actual_record = ma[f1 & f2]
-    actual_record
+    ma[f1 & f2]
+    # actual_record
     ma["match_probability"].mean()
     training_session = linker.estimate_parameters_using_expectation_maximisation(
         "l.dob = r.dob", fix_u_probabilities=False
     )
-    actual_prop_history = pd.DataFrame(training_session._lambda_history_records)
+    pd.DataFrame(training_session._lambda_history_records)
 
     # linker._settings_obj.match_weights_chart()
-    actual_prop_history
+    # actual_prop_history
 
     #########
 
