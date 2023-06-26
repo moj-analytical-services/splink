@@ -9,13 +9,13 @@ from splink.linker import SplinkDataFrame
 from tests.basic_settings import get_settings_dict
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-dummy_frame = pd.DataFrame(["id"])
+__splink__dummy_frame = pd.DataFrame(["id"])
 
 
 def make_mock_execute(linker):
     # creates a mock version of linker._execute_sql_against_backend,
     # so we can count calls
-    dummy_splink_df = DuckDBLinkerDataFrame("template", "dummy_frame", linker)
+    dummy_splink_df = DuckDBLinkerDataFrame("template", "__splink__dummy_frame", linker)
     mock_execute = create_autospec(
         linker._execute_sql_against_backend, return_value=dummy_splink_df
     )
@@ -93,7 +93,7 @@ def test_cache_only_splink_dataframes():
 
     linker = DuckDBLinker(df, settings)
     linker._intermediate_table_cache["new_table"] = DuckDBLinkerDataFrame(
-        "template", "dummy_frame", linker
+        "template", "__splink__dummy_frame", linker
     )
     try:
         linker._intermediate_table_cache["not_a_table"] = 30

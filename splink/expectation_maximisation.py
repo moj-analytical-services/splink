@@ -213,7 +213,7 @@ def expectation_maximisation(
         param_records = df_params.as_pandas_dataframe()
         param_records = compute_proportions_for_new_parameters(param_records)
 
-        df_params.drop_table_from_database()
+        df_params.drop_table_from_database_and_remove_from_cache()
 
         maximisation_step(em_training_session, param_records)
         max_change_dict = (

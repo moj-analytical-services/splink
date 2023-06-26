@@ -86,12 +86,12 @@ def test_calculate_cartesian_equals_total_number_of_links(
     linker = DuckDBLinker(dfs, settings)
     sql = vertically_concatenate_sql(linker)
     linker._enqueue_sql(sql, "__splink__df_concat")
-    linker._execute_sql_pipeline(materialise_as_hash=False)
+    df_concat = linker._execute_sql_pipeline()
 
     # calculate full number of comparisons
     full_count_sql = number_of_comparisons_generated_by_blocking_rule_sql(linker, "1=1")
     linker._enqueue_sql(full_count_sql, "__splink__analyse_blocking_rule")
-    res = linker._execute_sql_pipeline().as_record_dict()[0]
+    res = linker._execute_sql_pipeline([df_concat]).as_record_dict()[0]
 
     # compare with count from each frame
     sql = f"""
@@ -101,9 +101,9 @@ def test_calculate_cartesian_equals_total_number_of_links(
         order by count desc
     """
     linker._enqueue_sql(sql, "__splink__cartesian_product")
-    cartesian_count = linker._execute_sql_pipeline()
+    cartesian_count = linker._execute_sql_pipeline([df_concat])
     row_count_df = cartesian_count.as_record_dict()
-    cartesian_count.drop_table_from_database()
+    cartesian_count.drop_table_from_database_and_remove_from_cache()
     # check this is what we expect from input
     assert frame_sizes == [frame["count"] for frame in row_count_df]
 
