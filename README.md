@@ -12,11 +12,11 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 
 ## Key Features
 
-⚡ **Speed:** Capable of linking a million records on a laptop in approximately one minute.  
-🎯 **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.  
-🌐 **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.  
-🎓 **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.  
-📊 **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.  
+⚡ **Speed:** Capable of linking a million records on a laptop in approximately one minute.
+🎯 **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.
+🌐 **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.
+🎓 **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.
+📊 **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.
 
 Splink's core linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customizations to improve accuracy.
 
@@ -81,6 +81,7 @@ For more detailed tutorial, please see [here](https://moj-analytical-services.gi
 from splink.duckdb.linker import DuckDBLinker
 import splink.duckdb.comparison_library as cl
 import splink.duckdb.comparison_template_library as ctl
+import splink.duckdb.blocking_rule_library as brl
 
 import pandas as pd
 
@@ -90,7 +91,8 @@ settings = {
     "link_type": "dedupe_only",
     "blocking_rules_to_generate_predictions": [
         "l.first_name = r.first_name",
-        "l.surname = r.surname",
+        # or with a pre-built rule
+        brl.exact_match_rule("surname"),
     ],
     "comparisons": [
         ctl.name_comparison("first_name"),

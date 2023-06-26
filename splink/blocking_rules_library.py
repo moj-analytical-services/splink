@@ -18,25 +18,25 @@ class exact_match_rule(BlockingRule):
                 to the blocking rule. More information on salting can
                 be found within the docs. Salting is only valid for Spark.
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Simple Exact match level
                 ``` python
                 import splink.duckdb.blocking_rule_library as brl
                 brl.exact_match_rule("name")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Simple Exact match level
                 ``` python
                 import splink.spark.blocking_rule_library as brl
                 brl.exact_match_rule("name", salting_partitions=1)
                 ```
-            === "Athena"
+            === ":simple-amazonaws: Athena"
                 Simple Exact match level
                 ``` python
                 import splink.athena.blocking_rule_library as brl
                 brl.exact_match_rule("name")
                 ```
-            === "SQLite"
+            === ":simple-sqlite: SQLite"
                 Simple Exact match level
                 ``` python
                 import splink.sqlite.blocking_rule_library as brl

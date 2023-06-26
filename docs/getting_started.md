@@ -19,7 +19,7 @@ conda install -c conda-forge splink
 ```
 
 ??? "DuckDB-less Installation"
-    ### DuckDB-less Installation    
+    ### DuckDB-less Installation
     Should you be unable to install `DuckDB` to your local machine, you can still run `Splink` without the `DuckDB` dependency using a small workaround.
 
     To start, install the latest released version of splink from PyPI without any dependencies using:
@@ -61,6 +61,7 @@ For more detailed tutorial, please see [section below](#tutorial).
     from splink.duckdb.linker import DuckDBLinker
     import splink.duckdb.comparison_library as cl
     import splink.duckdb.comparison_template_library as ctl
+    import splink.duckdb.blocking_rule_library as brl
 
     import pandas as pd
 
@@ -70,7 +71,8 @@ For more detailed tutorial, please see [section below](#tutorial).
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [
             "l.first_name = r.first_name",
-            "l.surname = r.surname",
+            # or with a pre-built rule
+            brl.exact_match_rule("surname"),
         ],
         "comparisons": [
             ctl.name_comparison("first_name"),

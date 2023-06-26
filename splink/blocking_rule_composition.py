@@ -24,7 +24,7 @@ def and_(
             be found within the docs. Salting is only valid for Spark.
 
     Examples:
-        === "DuckDB"
+        === ":simple-duckdb: DuckDB"
             Simple exact rule composition with an `AND` clause
             ``` python
             import splink.duckdb.blocking_rule_library as brl
@@ -42,7 +42,7 @@ def and_(
                 "substr(l.dob,1,4) = substr(r.dob,1,4)"
             )
             ```
-        === "Spark"
+        === ":simple-apachespark: Spark"
             Simple exact rule composition with an `AND` clause
             ``` python
             import splink.spark.blocking_rule_library as brl
@@ -61,7 +61,7 @@ def and_(
                 salting_partitions=5
             )
             ```
-        === "Athena"
+        === ":simple-amazonaws: Athena"
             Simple exact rule composition with an `AND` clause
             ``` python
             import splink.athena.blocking_rule_library as brl
@@ -79,7 +79,7 @@ def and_(
                 "substr(l.dob,1,4) = substr(r.dob,1,4)",
             )
             ```
-        === "SQLite"
+        === ":simple-sqlite: SQLite"
             Simple exact rule composition with an `AND` clause
             ``` python
             import splink.sqlite.blocking_rule_library as brl
@@ -145,7 +145,7 @@ def or_(
             be found within the docs. Salting is only valid for Spark.
 
     Examples:
-        === "DuckDB"
+        === ":simple-duckdb: DuckDB"
             Simple exact rule composition with an `OR` clause
             ``` python
             import splink.duckdb.blocking_rule_library as brl
@@ -160,7 +160,7 @@ def or_(
                 "substr(l.dob,1,4) = substr(r.dob,1,4)"
             )
             ```
-        === "Spark"
+        === ":simple-apachespark: Spark"
             Simple exact rule composition with an `OR` clause
             ``` python
             import splink.spark.blocking_rule_library as brl
@@ -176,7 +176,7 @@ def or_(
                 salting_partitions=5
             )
             ```
-        === "Athena"
+        === ":simple-amazonaws: Athena"
             Simple exact rule composition with an `OR` clause
             ``` python
             import splink.athena.blocking_rule_library as brl
@@ -191,7 +191,7 @@ def or_(
                 "substr(l.dob,1,4) = substr(r.dob,1,4)",
             )
             ```
-        === "SQLite"
+        === ":simple-sqlite: SQLite"
             Simple exact rule composition with an `OR` clause
             ``` python
             import splink.sqlite.blocking_rule_library as brl
@@ -247,25 +247,25 @@ def not_(*brls: BlockingRule | dict | str, salting_partitions: int = 1) -> Block
             be found within the docs. Salting is only valid for Spark.
 
     Examples:
-        === "DuckDB"
+        === ":simple-duckdb: DuckDB"
             Block where we do *not* have an exact match on first name
             ``` python
             import splink.duckdb.blocking_rule_library as brl
             brl.not_(brl.exact_match_rule("first_name"))
             ```
-        === "Spark"
+        === ":simple-apachespark: Spark"
             Block where we do *not* have an exact match on first name
             ``` python
             import splink.spark.blocking_rule_library as brl
             brl.not_(brl.exact_match_rule("first_name"))
             ```
-        === "Athena"
+        === ":simple-amazonaws: Athena"
             Block where we do *not* have an exact match on first name
             ``` python
             import splink.athena.blocking_rule_library as brl
             brl.not_(brl.exact_match_rule("first_name"))
             ```
-        === "SQLite"
+        === ":simple-sqlite: SQLite"
             Block where we do *not* have an exact match on first name
             ``` python
             import splink.sqlite.blocking_rule_library as brl
