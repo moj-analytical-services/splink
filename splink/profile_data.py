@@ -280,6 +280,6 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10, cast_arra
         inner_charts.append(inner_chart)
     outer_spec = deepcopy(_outer_chart_spec_freq)
 
-    outer_spec["vconcat"] = inner_charts
+    outer_spec["vconcat"] = inner_charts  
 
     return altair_or_json(outer_spec)
