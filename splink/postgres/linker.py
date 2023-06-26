@@ -85,6 +85,7 @@ class PostgresLinker(Linker):
         input_table_aliases: str | list = None,
         validate_settings: bool = True,
         schema="splink",
+        other_schemas_to_search: str | list = [],
     ):
         self._sql_dialect_ = "postgres"
         if not isinstance(engine, Engine):
@@ -305,9 +306,13 @@ class PostgresLinker(Linker):
         """
         self._run_sql_execution(sql)
 
-    def _create_splink_schema(self):
+    def _create_splink_schema(self, other_schemas_to_search):
+        other_schemas_to_search = ensure_is_list(other_schemas_to_search)
+        # always search _db_schema first, and public last
+        schemas_to_search = [self._db_schema] + other_schemas_to_search + ["public"]
+        search_path = ",".join(schemas_to_search)
         sql = f"""
         CREATE SCHEMA IF NOT EXISTS {self._db_schema};
-        SET search_path TO {self._db_schema},public;
+        SET search_path TO {search_path};
         """
         self._run_sql_execution(sql)
