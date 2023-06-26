@@ -40,6 +40,7 @@ class EMTrainingSession:
         fix_probability_two_random_records_match: bool = False,
         comparisons_to_deactivate: list[Comparison] = None,
         comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
+        predict_on_agreement_counts: bool = True,
     ):
         logger.info("\n----- Starting EM training session -----\n")
 
@@ -57,6 +58,7 @@ class EMTrainingSession:
 
         self._settings_obj._blocking_rule_for_training = blocking_rule
         self._blocking_rule_for_training = blocking_rule
+        self._settings_obj._predict_on_agreement_counts = predict_on_agreement_counts
 
         if comparison_levels_to_reverse_blocking_rule:
             self._comparison_levels_to_reverse_blocking_rule = (

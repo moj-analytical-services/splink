@@ -1488,6 +1488,7 @@ class Linker:
         fix_probability_two_random_records_match: bool = False,
         fix_m_probabilities=False,
         fix_u_probabilities=True,
+        predict_on_agreement_counts=True,
         populate_probability_two_random_records_match_from_trained_values=False,
     ) -> EMTrainingSession:
         """Estimate the parameters of the linkage model using expectation maximisation.
@@ -1609,6 +1610,7 @@ class Linker:
             fix_probability_two_random_records_match=fix_probability_two_random_records_match,  # noqa 501
             comparisons_to_deactivate=comparisons_to_deactivate,
             comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa 501
+            predict_on_agreement_counts=predict_on_agreement_counts,
         )
 
         em_training_session._train()
