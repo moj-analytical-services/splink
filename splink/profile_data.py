@@ -283,3 +283,4 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10, cast_arra
     outer_spec["vconcat"] = inner_charts  
 
     return altair_or_json(outer_spec)
+
