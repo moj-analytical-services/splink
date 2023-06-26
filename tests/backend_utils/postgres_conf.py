@@ -62,23 +62,27 @@ def _setup_test_env(_engine_factory):
         """
         )
     )
+    # required permission - for extensions + making schema
     conn.execute(
         text(
             f"""
-        GRANT ALL PRIVILEGES ON DATABASE {db_name} TO {user};
+        GRANT CREATE ON DATABASE {db_name} TO {user};
         """
         )
     )
 
     new_conn = _engine_factory(db_name).connect()
     new_conn.execution_options(isolation_level="AUTOCOMMIT")
+    # only need this for creating tables before being fed to Splink
+    # don't need for actual Splink operation
     new_conn.execute(
         text(
             f"""
-        GRANT ALL PRIVILEGES ON SCHEMA public TO {user};
+        GRANT CREATE ON SCHEMA public TO {user};
         """
         )
     )
+    # for UDFs need these two:
     new_conn.execute(text(f"GRANT USAGE ON LANGUAGE SQL TO {user};"))
     new_conn.execute(text(f"GRANT USAGE ON TYPE float8 TO {user};"))
     new_conn.close()
