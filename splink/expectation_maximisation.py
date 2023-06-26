@@ -9,7 +9,10 @@ import pandas as pd
 from .comparison_level import ComparisonLevel
 from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .m_u_records_to_parameters import m_u_records_to_lookup_dict
-from .predict import predict_from_agreement_pattern_counts_sqls, predict_from_comparison_vectors_sqls
+from .predict import (
+    predict_from_agreement_pattern_counts_sqls,
+    predict_from_comparison_vectors_sqls,
+)
 from .settings import Settings
 from .splink_dataframe import SplinkDataFrame
 
@@ -22,9 +25,10 @@ logger = logging.getLogger(__name__)
 
 
 def count_agreement_patterns_sql(settings_obj: Settings):
-
+    """Count how many times each realized agreement pattern
+    was observed across the blocked dataset."""
     gamma_cols = [cc._gamma_column_name for cc in settings_obj.comparisons]
-    gamma_cols_expr = ','.join(gamma_cols)
+    gamma_cols_expr = ",".join(gamma_cols)
 
     sql = f"""
     select
@@ -39,7 +43,7 @@ def count_agreement_patterns_sql(settings_obj: Settings):
 
 def compute_new_parameters_sql(settings_obj: Settings):
     """compute m and u counts from the results of predict"""
-    if getattr(settings_obj, "_predict_on_agreement_counts", False):
+    if getattr(settings_obj, "_estimate_without_term_frequencies", False):
         agreement_pattern_count = "agreement_pattern_count"
     else:
         agreement_pattern_count = "1"
@@ -65,8 +69,10 @@ def compute_new_parameters_sql(settings_obj: Settings):
     # Probability of two random records matching
     sql = f"""
     select 0 as comparison_vector_value,
-           sum(match_probability * {agreement_pattern_count})/sum({agreement_pattern_count}) as m_count,
-           sum((1-match_probability) * {agreement_pattern_count})/sum({agreement_pattern_count}) as u_count,
+           sum(match_probability * {agreement_pattern_count}) /
+               sum({agreement_pattern_count}) as m_count,
+           sum((1-match_probability) * {agreement_pattern_count}) /
+               sum({agreement_pattern_count}) as u_count,
            '_probability_two_random_records_match' as output_column_name
     from __splink__df_predict
     """
@@ -217,7 +223,7 @@ def expectation_maximisation(
     em_convergece = settings_obj._em_convergence
     logger.info("")  # newline
 
-    if settings_obj._predict_on_agreement_counts:
+    if settings_obj._estimate_without_term_frequencies:
         sql = count_agreement_patterns_sql(settings_obj)
         linker._enqueue_sql(sql, "__splink__agreement_pattern_counts")
         agreement_pattern_counts = linker._execute_sql_pipeline(
@@ -228,25 +234,25 @@ def expectation_maximisation(
         start_time = time.time()
 
         # Expectation step
-        if settings_obj._predict_on_agreement_counts:
+        if settings_obj._estimate_without_term_frequencies:
             sqls = predict_from_agreement_pattern_counts_sqls(
                 settings_obj,
                 sql_infinity_expression=linker._infinity_expression,
             )
         else:
             sqls = predict_from_comparison_vectors_sqls(
-                settings_obj, 
+                settings_obj,
                 sql_infinity_expression=linker._infinity_expression,
             )
 
         for sql in sqls:
             linker._enqueue_sql(sql["sql"], sql["output_table_name"])
-        
+
         sql = compute_new_parameters_sql(settings_obj)
         linker._enqueue_sql(sql, "__splink__m_u_counts")
-        if settings_obj._predict_on_agreement_counts:
+        if settings_obj._estimate_without_term_frequencies:
             df_params = linker._execute_sql_pipeline([agreement_pattern_counts])
-        else: 
+        else:
             df_params = linker._execute_sql_pipeline([df_comparison_vector_values])
         param_records = df_params.as_pandas_dataframe()
         param_records = compute_proportions_for_new_parameters(param_records)

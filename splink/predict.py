@@ -105,7 +105,7 @@ def predict_from_comparison_vectors_sqls(
 
 def predict_from_agreement_pattern_counts_sqls(
     settings_obj: Settings,
-    sql_infinity_expression = "'infinity'",
+    sql_infinity_expression="'infinity'",
 ):
     sqls = []
 
@@ -182,4 +182,3 @@ def predict_from_agreement_pattern_counts_sqls(
     sqls.append(sql)
 
     return sqls
-    
