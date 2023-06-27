@@ -1,7 +1,5 @@
 import os
 
-import pandas as pd
-
 from .decorator import mark_with_dialects_excluding
 
 

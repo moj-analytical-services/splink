@@ -1539,8 +1539,8 @@ class Linker:
             ```
 
         Args:
-            blocking_rule (str | BlockingRule): The blocking rule used to generate pairwise record
-                comparisons.
+            blocking_rule (str | BlockingRule): The blocking rule used to generate
+                pairwise record comparisons.
             comparisons_to_deactivate (list, optional): By default, splink will
                 analyse the blocking rule provided and estimate the m parameters for
                 all comaprisons except those included in the blocking rule.  If
