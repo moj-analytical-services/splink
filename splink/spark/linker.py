@@ -8,6 +8,7 @@ from itertools import compress
 
 import pandas as pd
 import sqlglot
+from numpy import nan
 from pyspark.sql.dataframe import DataFrame as spark_df
 from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql.utils import AnalysisException
@@ -470,6 +471,7 @@ class SparkLinker(Linker):
             input = pd.DataFrame.from_records(input)
             input = self.spark.createDataFrame(input)
         elif isinstance(input, pd.DataFrame):
+            input = input.fillna(nan).replace([nan], [None])
             input = self.spark.createDataFrame(input)
 
         input.createOrReplaceTempView(table_name)
