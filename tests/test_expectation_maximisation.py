@@ -52,7 +52,7 @@ def test_estimate_without_term_frequencies():
     linker_0 = DuckDBLinker(df, settings)
 
     linker_1 = DuckDBLinker(df, settings)
-    
+
     session_fast = linker_0.estimate_parameters_using_expectation_maximisation(
         blocking_rule="l.email = r.email",
         estimate_without_term_frequencies=True,
@@ -66,15 +66,15 @@ def test_estimate_without_term_frequencies():
     expected_prop_history = pd.DataFrame(session_slow._lambda_history_records)
 
     compare = expected_prop_history.merge(
-        actual_prop_history, 
-        left_on="iteration", 
+        actual_prop_history,
+        left_on="iteration",
         right_on="iteration",
-        suffixes = ["_e", "_a"],
+        suffixes=["_e", "_a"],
     )
 
     for r in compare.to_dict(orient="records"):
-        assert (r["probability_two_random_records_match_e"] == 
-            pytest.approx(r["probability_two_random_records_match_a"])
+        assert r["probability_two_random_records_match_e"] == pytest.approx(
+            r["probability_two_random_records_match_a"]
         )
 
     actual_m_u_history = pd.DataFrame(session_fast._iteration_history_records)
