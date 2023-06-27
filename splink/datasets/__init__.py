@@ -1,4 +1,5 @@
 from dataclasses import asdict, dataclass
+from math import floor
 from pathlib import Path
 from urllib.request import urlretrieve
 
@@ -26,25 +27,26 @@ class _DataSetMetaData:
             )
 
 
-splink_demo_data_dir = (
+_splink_demo_data_dir = (
     "https://raw.githubusercontent.com/moj-analytical-services/splink_demos/master/data"
 )
 _datasets = [
     _DataSetMetaData(
         "fake_1000",
-        f"{splink_demo_data_dir}/fake_1000.csv",
+        f"{_splink_demo_data_dir}/fake_1000.csv",
         "Fake 1000 from splink demos",
     ),
     _DataSetMetaData(
         "fake_20000",
-        f"{splink_demo_data_dir}/fake_20000.csv",
+        f"{_splink_demo_data_dir}/fake_20000.csv",
         "Fake 20000 from splink demos",
     ),
 ]
+_cache_dir = DATASETDIR / "__splinkdata_cache__"
 
 
 class _SplinkDataSetsMeta(type):
-    cache_dir = DATASETDIR / "__splinkdata_cache__"
+    cache_dir = _cache_dir
 
     def __new__(cls, clsname, bases, attrs, datasets):
         cls.cache_dir.mkdir(exist_ok=True)
@@ -62,14 +64,30 @@ class _SplinkDataSetsMeta(type):
         attributes["__repr__"] = lambda self: repr_text
         return super().__new__(cls, clsname, bases, attributes)
 
+    @classmethod
+    def progress(cls, block_count, block_size, total_size):
+        prop_done = (block_count * block_size) / total_size
+        if prop_done > 1:
+            prop_done = 1
+        perc = round(prop_done*100)
+        display = f"\tdownload progress: {perc} %\t("
+        deciles_done = floor(prop_done*10)
+        for i in range(10):
+            if i < deciles_done:
+                display += "="
+            else:
+                display += "."
+        display += ")\r"
+        print(display, end="")
+
     # TODO: do we want description here?
     @classmethod
     def class_attribute_factory(cls, dataset_name, url, description, data_format):
         def lazyload_data(self):
             file_loc = cls.cache_dir / f"{dataset_name}.{data_format}"
             if not cls.datafile_exists(file_loc):
-                urlretrieve(url, file_loc)
                 print(f"downloading: {url}")
+                urlretrieve(url, file_loc, reporthook=cls.progress)
             # only for checking
             else:
                 print("cached!")
