@@ -15,11 +15,13 @@ theme:
     - search.highlight
     - search.share
     - search.suggest
+    - navigation.indexes
     - navigation.footer
     - content.action.view
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.top
+    - toc.follow
   logo: "img/favicon.ico"
   favicon: "img/favicon.ico"
   palette:
@@ -79,9 +81,9 @@ markdown_extensions:
   - footnotes
 nav:
   - Home: "index.md"
-  - Installation: "installations.md"
+  - Getting Started: "getting_started.md"
   - Tutorials:
-      - 0. Tutorial introduction: "demos/00_Tutorial_Introduction.ipynb"
+      - Introduction: "demos/00_Tutorial_Introduction.ipynb"
       - 1. Data prep prerequisites: "demos/01_Prerequisites.ipynb"
       - 2. Exploratory analysis: "demos/02_Exploratory_analysis.ipynb"
       - 3. Blocking: "demos/03_Blocking.ipynb"
@@ -90,7 +92,7 @@ nav:
       - 6. Visualising predictions: "demos/06_Visualising_predictions.ipynb"
       - 7. Quality assurance: "demos/07_Quality_assurance.ipynb"
   - Examples:
-      - Examples index: "examples_index.md"
+      - "examples_index.md"
       - DuckDB:
         - Deduplicate 50k rows historical persons: "demos/example_deduplicate_50k_synthetic.ipynb"
         - Linking financial transactions: "demos/example_transactions.ipynb"
