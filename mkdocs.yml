@@ -2,7 +2,7 @@ site_name: Splink
 use_directory_urls: false
 repo_url: https://github.com/moj-analytical-services/splink
 theme:
-  icon: 
+  icon:
     repo: fontawesome/brands/github
   name: "material"
   features:
@@ -122,6 +122,9 @@ nav:
             - Comparison Template Library: "comparison_template_library.md"
             - Comparison Level Library: "comparison_level_library.md"
             - Comparison Composition: "comparison_level_composition.md"
+        - Blocking Rule Library API:
+            - Blocking Rule Library: "blocking_rule_library.md"
+            - Blocking Rule Composition: "blocking_rule_composition.md"
         - EM Training Session API: "em_training_session.md"
         - SplinkDataFrame API: "SplinkDataFrame.md"
         - Comparisons API:
