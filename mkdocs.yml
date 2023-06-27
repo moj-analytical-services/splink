@@ -16,11 +16,13 @@ theme:
     - search.share
     - search.suggest
     - navigation.indexes
+    - navigation.indexes
     - navigation.footer
     - content.action.edit
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.top
+    - toc.follow
     - toc.follow
   logo: "img/favicon.ico"
   favicon: "img/favicon.ico"
@@ -197,4 +199,4 @@ extra:
     - icon: fontawesome/solid/chevron-right
       link: https://www.robinlinacre.com/
 
-      
+
