@@ -562,8 +562,10 @@ class Linker:
                 start_time = time.time()
                 output_tablename = task.output_table_name
                 sql = task.sql
-                print("------")
-                print(f"--------Creating table: {output_tablename}--------")
+                print("------")  # noqa: T201
+                print(  # noqa: T201
+                    f"--------Creating table: {output_tablename}--------"
+                )
 
                 dataframe = self._sql_to_splink_dataframe_checking_cache(
                     sql,
@@ -571,7 +573,7 @@ class Linker:
                     use_cache=False,
                 )
                 run_time = parse_duration(time.time() - start_time)
-                print(f"Step ran in: {run_time}")
+                print(f"Step ran in: {run_time}")  # noqa: T201
             self._pipeline.reset()
             return dataframe
 
@@ -790,7 +792,7 @@ class Linker:
                 )
 
         if self.debug_mode:
-            print(sql)
+            print(sql)  # noqa: T201
             splink_dataframe = self._execute_sql_against_backend(
                 sql,
                 output_tablename_templated,
@@ -805,7 +807,7 @@ class Linker:
 
                 display(df_pd)
             except ModuleNotFoundError:
-                print(df_pd)
+                print(df_pd)  # noqa: T201
 
         else:
             splink_dataframe = self._execute_sql_against_backend(

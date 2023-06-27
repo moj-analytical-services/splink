@@ -122,7 +122,6 @@ def test_datediff_levels(test_helpers, dialect):
     # Check gamma sizes are as expected
     for gamma, gamma_lookup in size_gamma_lookup.items():
         for linker_pred in linker_outputs.values():
-            print(type(linker_pred["gamma_dob"]))
             assert sum(linker_pred["gamma_dob"] == gamma) == gamma_lookup
 
     # Check individual IDs are assigned to the correct gamma values
@@ -135,16 +134,13 @@ def test_datediff_levels(test_helpers, dialect):
 
     for gamma, id_pairs in gamma_lookup.items():
         for left, right in id_pairs:
-            for linker_name, linker_pred in linker_outputs.items():
-                print(f"Checking IDs: {left}, {right} for {linker_name}")
-
-                assert (
-                    linker_pred.loc[
-                        (linker_pred.unique_id_l == left)
-                        & (linker_pred.unique_id_r == right)
-                    ]["gamma_dob"].values[0]
-                    == gamma
-                )
+            assert (
+                linker_pred.loc[
+                    (linker_pred.unique_id_l == left)
+                    & (linker_pred.unique_id_r == right)
+                ]["gamma_dob"].values[0]
+                == gamma
+            )
 
 
 @mark_with_dialects_excluding("sqlite")
