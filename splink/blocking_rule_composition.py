@@ -101,7 +101,10 @@ def and_(
             Simple exact rule composition with an `OR` clause
             ``` python
             import splink.postgres.blocking_rule_library as brl
-            brl.and_(brl.exact_match_rule("first_name"), brl.exact_match_rule("surname"))
+            brl.and_(
+                brl.exact_match_rule("first_name"),
+                brl.exact_match_rule("surname")
+            )
             ```
             Composing a custom rule with an exact match on name and the year
             from a date of birth column

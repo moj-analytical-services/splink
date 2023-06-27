@@ -7,6 +7,7 @@ from splink.analyse_blocking import (
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
+
 @mark_with_dialects_excluding()
 def test_analyse_blocking(test_helpers, dialect):
 
