@@ -68,7 +68,6 @@ def test_tf_tables_init_works(test_helpers, dialect):
 
 @mark_with_dialects_excluding()
 def test_matches_work(test_helpers, dialect):
-
     helper = test_helpers[dialect]
     Linker = helper.Linker
     brl = helper.brl

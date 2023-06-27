@@ -50,7 +50,10 @@ def test_prob_rr_match_dedupe(test_helpers, dialect):
     )
 
     # test with BlockingRule object
-    deterministic_rules = [brl.exact_match_rule("first_name"), brl.exact_match_rule("surname")]
+    deterministic_rules = [
+        brl.exact_match_rule("first_name"),
+        brl.exact_match_rule("surname"),
+    ]
     linker.estimate_probability_two_random_records_match(
         deterministic_rules, recall=0.9
     )

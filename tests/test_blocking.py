@@ -80,6 +80,8 @@ def test_simple_end_to_end(test_helpers, dialect):
     )
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    linker.estimate_parameters_using_expectation_maximisation(brl.exact_match_rule("dob"))
+    linker.estimate_parameters_using_expectation_maximisation(
+        brl.exact_match_rule("dob")
+    )
 
     linker.predict()

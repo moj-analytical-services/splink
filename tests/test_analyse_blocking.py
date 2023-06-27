@@ -7,9 +7,9 @@ from splink.analyse_blocking import (
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
+
 @mark_with_dialects_excluding()
 def test_analyse_blocking(test_helpers, dialect):
-
     helper = test_helpers[dialect]
     Linker = helper.Linker
     brl = helper.brl
@@ -100,7 +100,6 @@ def validate_blocking_output(linker, expected_out, **kwargs):
 
 @mark_with_dialects_excluding()
 def test_blocking_records_accuracy(test_helpers, dialect):
-
     helper = test_helpers[dialect]
     Linker = helper.Linker
     brl = helper.brl
@@ -222,7 +221,6 @@ def test_blocking_records_accuracy(test_helpers, dialect):
 
 @mark_with_dialects_excluding()
 def test_cumulative_br_funs(test_helpers, dialect):
-
     helper = test_helpers[dialect]
     Linker = helper.Linker
     brl = helper.brl
@@ -234,7 +232,7 @@ def test_cumulative_br_funs(test_helpers, dialect):
         [
             "l.first_name = r.first_name",
             brl.exact_match_rule("surname"),
-         ]
+        ]
     )
 
     linker.cumulative_num_comparisons_from_blocking_rules_chart(
@@ -244,5 +242,9 @@ def test_cumulative_br_funs(test_helpers, dialect):
         ]
     )
 
-    assert linker.count_num_comparisons_from_blocking_rule(
-        brl.exact_match_rule("first_name")) == 19387
+    assert (
+        linker.count_num_comparisons_from_blocking_rule(
+            brl.exact_match_rule("first_name")
+        )
+        == 19387
+    )
