@@ -7,6 +7,7 @@ from splink.accuracy import (
 )
 from splink.duckdb.comparison_library import exact_match
 from splink.duckdb.linker import DuckDBLinker
+from splink.duckdb.blocking_rule_library import exact_match_rule
 
 from .basic_settings import get_settings_dict
 
@@ -38,7 +39,7 @@ def test_scored_labels_table():
         ],
         "blocking_rules_to_generate_predictions": [
             "l.surname = r.surname",
-            "l.dob = r.dob",
+            exact_match_rule("dob"),
         ],
     }
 
@@ -97,7 +98,7 @@ def test_truth_space_table():
         ],
         "blocking_rules_to_generate_predictions": [
             "l.surname = r.surname",
-            "l.dob = r.dob",
+            exact_match_rule("dob"),
         ],
     }
 

@@ -3,12 +3,13 @@ import logging
 import pandas as pd
 import pytest
 
-from tests.decorator import mark_with_dialects_excluding
+from .decorator import mark_with_dialects_excluding
 
 
 @mark_with_dialects_excluding()
 def test_prob_rr_match_dedupe(test_helpers, dialect):
     helper = test_helpers[dialect]
+    brl = helper.brl
     df = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
@@ -44,6 +45,12 @@ def test_prob_rr_match_dedupe(test_helpers, dialect):
 
     # Test recall works
     deterministic_rules = ["l.first_name = r.first_name and l.surname = r.surname"]
+    linker.estimate_probability_two_random_records_match(
+        deterministic_rules, recall=0.9
+    )
+
+    # test with BlockingRule object
+    deterministic_rules = [brl.exact_match_rule("first_name"), brl.exact_match_rule("surname")]
     linker.estimate_probability_two_random_records_match(
         deterministic_rules, recall=0.9
     )

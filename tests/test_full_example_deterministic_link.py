@@ -1,26 +1,28 @@
 import os
 
 import pandas as pd
-import pytest
 
-from splink.duckdb.linker import DuckDBLinker
-from splink.spark.linker import SparkLinker
+from .decorator import mark_with_dialects_excluding
 
 
-@pytest.mark.parametrize(
-    ("Linker"),
-    [
-        pytest.param(DuckDBLinker, id="DuckDB Deterministic Link Test"),
-        pytest.param(SparkLinker, id="Spark Deterministic Link Test"),
-    ],
-)
-def test_deterministic_link_full_example(tmp_path, spark, Linker):
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+@mark_with_dialects_excluding()
+def test_deterministic_link_full_example(tmp_path, test_helpers, dialect):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    brl = helper.brl
+
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    custom_rule = brl.and_(
+        brl.exact_match_rule("first_name"),
+        brl.exact_match_rule("surname"),
+        brl.exact_match_rule("dob"),
+    )
 
     settings = {
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [
-            "l.first_name = r.first_name and l.surname = r.surname and l.dob = r.dob",
+            custom_rule,
             "l.surname = r.surname and l.dob = r.dob and l.email = r.email",
             "l.first_name = r.first_name and l.surname = r.surname "
             "and l.email = r.email",
@@ -29,13 +31,7 @@ def test_deterministic_link_full_example(tmp_path, spark, Linker):
         "retain_intermediate_calculation_columns": True,
     }
 
-    if Linker == SparkLinker:
-        # ensure the same datatype within a column to solve spark parsing issues
-        df = df.astype(str)
-
-        df = spark.createDataFrame(df)
-        df.persist()
-    linker = Linker(df, settings)
+    linker = Linker(df, settings, **helper.extra_linker_args())
 
     linker.cumulative_num_comparisons_from_blocking_rules_chart()
 

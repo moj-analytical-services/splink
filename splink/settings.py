@@ -323,7 +323,11 @@ class Settings:
         exact match on full name
 
         """
-        blocking_exact_match_columns = set(get_columns_used_from_sql(blocking_rule))
+        blocking_exact_match_columns = set(get_columns_used_from_sql(
+            blocking_rule,
+            dialect=self._sql_dialect,
+            )
+        )
 
         ccs = self.comparisons
 

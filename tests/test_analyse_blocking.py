@@ -12,6 +12,7 @@ def test_analyse_blocking(test_helpers, dialect):
 
     helper = test_helpers[dialect]
     Linker = helper.Linker
+    brl = helper.brl
 
     df_1 = pd.DataFrame(
         [
@@ -70,6 +71,14 @@ def test_analyse_blocking(test_helpers, dialect):
     assert res == expected
 
     rule = "l.first_name = r.first_name and l.surname = r.surname"
+    res = linker.count_num_comparisons_from_blocking_rule(
+        rule,
+    )
+
+    rule = brl.and_(
+        brl.exact_match_rule("first_name"),
+        brl.exact_match_rule("surname"),
+    )
     res = linker.count_num_comparisons_from_blocking_rule(
         rule,
     )
@@ -209,3 +218,31 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         },
         blocking_rules=blocking_rules,
     )
+
+
+@mark_with_dialects_excluding()
+def test_cumulative_br_funs(test_helpers, dialect):
+
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    brl = helper.brl
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    linker = Linker(df, get_settings_dict(), **helper.extra_linker_args())
+    linker.cumulative_comparisons_from_blocking_rules_records()
+    linker.cumulative_comparisons_from_blocking_rules_records(
+        [
+            "l.first_name = r.first_name",
+            brl.exact_match_rule("surname"),
+         ]
+    )
+
+    linker.cumulative_num_comparisons_from_blocking_rules_chart(
+        [
+            "l.first_name = r.first_name",
+            brl.exact_match_rule("surname"),
+        ]
+    )
+
+    assert linker.count_num_comparisons_from_blocking_rule(
+        brl.exact_match_rule("first_name")) == 19387
