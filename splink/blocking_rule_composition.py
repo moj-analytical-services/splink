@@ -20,8 +20,8 @@ def and_(
         *brls (BlockingRule | dict | str): BlockingRules or
             blocking rules in the string/dictionary format.
         salting_partitions (optional, int): Whether to add salting
-            to the blocking rule. Please see the docs for more
-            information on salting. Salting is only valid for Spark.
+            to the blocking rule. More information on salting can
+            be found within the docs. Salting is only valid for Spark.
 
     Examples:
         === "DuckDB"
@@ -37,18 +37,11 @@ def and_(
             from a date of birth column
             ``` python
             import splink.duckdb.blocking_rule_library as brl
-            rule = brl.and_(
+            brl.and_(
                 brl.exact_match_rule("first_name"),
                 "substr(l.dob,1,4) = substr(r.dob,1,4)"
             )
             ```
-            ```python
-            rule.as_dict()
-            ```
-            >{
-            > 'sql_condition': '(l."first_name" = r."first_name") ' \
-            >  'AND (substr(l.dob,1,4) = substr(r.dob,1,4))',
-            >}
         === "Spark"
             Simple exact rule composition with an `AND` clause
             ``` python
@@ -62,20 +55,12 @@ def and_(
             from a date of birth column, with additional salting (spark exclusive)
             ``` python
             import splink.spark.blocking_rule_library as brl
-            rule = brl.and_(
+            brl.and_(
                 brl.exact_match_rule("first_name"),
                 "substr(l.dob,1,4) = substr(r.dob,1,4)",
                 salting_partitions=5
             )
             ```
-            ```python
-            rule.as_dict()
-            ```
-            >{
-            > 'sql_condition': '(l.`first_name` = r.`first_name`) ' \
-            >  'AND (substr(l.dob,1,4) = substr(r.dob,1,4))'
-            > 'salting_partitions': 5
-            >}
         === "Athena"
             Simple exact rule composition with an `AND` clause
             ``` python
@@ -89,18 +74,11 @@ def and_(
             from a date of birth column
             ``` python
             import splink.athena.blocking_rule_library as brl
-            rule = brl.and_(
+            brl.and_(
                 brl.exact_match_rule("first_name"),
                 "substr(l.dob,1,4) = substr(r.dob,1,4)",
             )
             ```
-            ```python
-            rule.as_dict()
-            ```
-            >{
-            > 'sql_condition': '(l.`first_name` = r.`first_name`) ' \
-            >  'AND (substr(l.dob,1,4) = substr(r.dob,1,4))'
-            >}
         === "SQLite"
             Simple exact rule composition with an `AND` clause
             ``` python
@@ -114,18 +92,26 @@ def and_(
             from a date of birth column
             ``` python
             import splink.sqlite.blocking_rule_library as brl
-            rule = brl.and_(
+            brl.and_(
                 brl.exact_match_rule("first_name"),
                 "substr(l.dob,1,4) = substr(r.dob,1,4)",
             )
             ```
-            ```python
-            rule.as_dict()
+        === "PostgreSQL"
+            Simple exact rule composition with an `OR` clause
+            ``` python
+            import splink.postgres.blocking_rule_library as brl
+            brl.and_(brl.exact_match_rule("first_name"), brl.exact_match_rule("surname"))
             ```
-            >{
-            > 'sql_condition': '(l.`first_name` = r.`first_name`) ' \
-            >  'AND (substr(l.dob,1,4) = substr(r.dob,1,4))'
-            >}
+            Composing a custom rule with an exact match on name and the year
+            from a date of birth column
+            ``` python
+            import splink.postgres.blocking_rule_library as brl
+            brl.and_(
+                brl.exact_match_rule("first_name"),
+                "substr(l.dob,1,4) = substr(r.dob,1,4)",
+            )
+            ```
 
     Returns:
         BlockingRule: A new BlockingRule with the merged
@@ -152,8 +138,8 @@ def or_(
         *brls (BlockingRule | dict | str): BlockingRules or
             blocking rules in the string/dictionary format.
         salting_partitions (optional, int): Whether to add salting
-            to the blocking rule. Please see the docs for more
-            information on salting. Salting is only valid for Spark.
+            to the blocking rule. More information on salting can
+            be found within the docs. Salting is only valid for Spark.
 
     Examples:
         === "DuckDB"
@@ -166,18 +152,11 @@ def or_(
             from a date of birth column
             ``` python
             import splink.duckdb.blocking_rule_library as brl
-            rule = brl.or_(
+            brl.or_(
                 brl.exact_match_rule("first_name"),
                 "substr(l.dob,1,4) = substr(r.dob,1,4)"
             )
             ```
-            ```python
-            rule.as_dict()
-            ```
-            >{
-            > 'sql_condition': '(l."first_name" = r."first_name") ' \
-            >  'OR (substr(l.dob,1,4) = substr(r.dob,1,4))',
-            >}
         === "Spark"
             Simple exact rule composition with an `OR` clause
             ``` python
@@ -188,20 +167,12 @@ def or_(
             from a date of birth column, with additional salting (spark exclusive)
             ``` python
             import splink.spark.blocking_rule_library as brl
-            rule = brl.or_(
+            brl.or_(
                 brl.exact_match_rule("first_name"),
                 "substr(l.dob,1,4) = substr(r.dob,1,4)",
                 salting_partitions=5
             )
             ```
-            ```python
-            rule.as_dict()
-            ```
-            >{
-            > 'sql_condition': '(l.`first_name` = r.`first_name`) ' \
-            >  'OR (substr(l.dob,1,4) = substr(r.dob,1,4))'
-            > 'salting_partitions': 5
-            >}
         === "Athena"
             Simple exact rule composition with an `OR` clause
             ``` python
@@ -212,18 +183,11 @@ def or_(
             from a date of birth column
             ``` python
             import splink.athena.blocking_rule_library as brl
-            rule = brl.or_(
+            brl.or_(
                 brl.exact_match_rule("first_name"),
                 "substr(l.dob,1,4) = substr(r.dob,1,4)",
             )
             ```
-            ```python
-            rule.as_dict()
-            ```
-            >{
-            > 'sql_condition': '(l.`first_name` = r.`first_name`) ' \
-            >  'OR (substr(l.dob,1,4) = substr(r.dob,1,4))'
-            >}
         === "SQLite"
             Simple exact rule composition with an `OR` clause
             ``` python
@@ -234,18 +198,26 @@ def or_(
             from a date of birth column
             ``` python
             import splink.sqlite.blocking_rule_library as brl
-            rule = brl.or_(
+            brl.or_(
                 brl.exact_match_rule("first_name"),
                 "substr(l.dob,1,4) = substr(r.dob,1,4)",
             )
             ```
-            ```python
-            rule.as_dict()
+        === "PostgreSQL"
+            Simple exact rule composition with an `OR` clause
+            ``` python
+            import splink.postgres.blocking_rule_library as brl
+            brl.or_(brl.exact_match_rule("first_name"), brl.exact_match_rule("surname"))
             ```
-            >{
-            > 'sql_condition': '(l.`first_name` = r.`first_name`) ' \
-            >  'OR (substr(l.dob,1,4) = substr(r.dob,1,4))'
-            >}
+            Composing a custom rule with an exact match on name and the year
+            from a date of birth column
+            ``` python
+            import splink.postgres.blocking_rule_library as brl
+            brl.or_(
+                brl.exact_match_rule("first_name"),
+                "substr(l.dob,1,4) = substr(r.dob,1,4)",
+            )
+            ```
 
     Returns:
         BlockingRule: A new BlockingRule with the merged
@@ -268,8 +240,8 @@ def not_(*brls: BlockingRule | dict | str, salting_partitions: int = 1) -> Block
         *brls (BlockingRule | dict | str): BlockingRules or
             blocking rules in the string/dictionary format.
         salting_partitions (optional, int): Whether to add salting
-            to the blocking rule. Please see the docs for more
-            information on salting. Salting is only valid for Spark.
+            to the blocking rule. More information on salting can
+            be found within the docs. Salting is only valid for Spark.
 
     Examples:
         === "DuckDB"
@@ -294,6 +266,12 @@ def not_(*brls: BlockingRule | dict | str, salting_partitions: int = 1) -> Block
             Block where we do *not* have an exact match on first name
             ``` python
             import splink.sqlite.blocking_rule_library as brl
+            brl.not_(brl.exact_match_rule("first_name"))
+            ```
+        === "PostgreSQL"
+            Block where we do *not* have an exact match on first name
+            ``` python
+            import splink.postgres.blocking_rule_library as brl
             brl.not_(brl.exact_match_rule("first_name"))
             ```
 

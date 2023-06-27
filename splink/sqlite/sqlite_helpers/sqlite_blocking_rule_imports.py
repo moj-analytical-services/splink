@@ -1,4 +1,4 @@
-from ...blocking_rules import exact_match_rule
+from ...blocking_rules_library import exact_match_rule
 from .sqlite_base import (
     SqliteBase,
 )
