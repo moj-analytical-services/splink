@@ -1,80 +1,80 @@
+import pandas as pd
+
 from splink.analyse_blocking import (
     cumulative_comparisons_generated_by_blocking_rules,
 )
 
-# from splink.duckdb.linker import DuckDBLinker
-from tests.basic_settings import get_settings_dict
-
+from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
-# @mark_with_dialects_excluding("postgres")
-# def test_analyse_blocking(test_helpers, dialect):
+@mark_with_dialects_excluding()
+def test_analyse_blocking(test_helpers, dialect):
 
-#     helper = test_helpers[dialect]
-#     Linker = helper.Linker
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
 
-#     df_1 = pd.DataFrame(
-#         [
-#             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
-#             {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-#             {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
-#             {"unique_id": 4, "first_name": "John", "surname": "Brown"},
-#         ]
-#     )
+    df_1 = pd.DataFrame(
+        [
+            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+            {"unique_id": 3, "first_name": "Jane", "surname": "Taylor"},
+            {"unique_id": 4, "first_name": "John", "surname": "Brown"},
+        ]
+    )
 
-#     df_2 = pd.DataFrame(
-#         [
-#             {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
-#             {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
-#             {"unique_id": 3, "first_name": "Jayne", "surname": "Tailor"},
-#         ]
-#     )
-#     settings = {"link_type": "dedupe_only"}
-#     linker = Linker(df_1, settings, **helper.extra_linker_args())
+    df_2 = pd.DataFrame(
+        [
+            {"unique_id": 1, "first_name": "John", "surname": "Smyth"},
+            {"unique_id": 2, "first_name": "Mary", "surname": "Jones"},
+            {"unique_id": 3, "first_name": "Jayne", "surname": "Tailor"},
+        ]
+    )
+    settings = {"link_type": "dedupe_only"}
+    linker = Linker(df_1, settings, **helper.extra_linker_args())
 
-#     res = linker.count_num_comparisons_from_blocking_rule(
-#         "1=1",
-#     )
-#     assert res == 4 * 3 / 2
+    res = linker.count_num_comparisons_from_blocking_rule(
+        "1=1",
+    )
+    assert res == 4 * 3 / 2
 
-#     res = linker.count_num_comparisons_from_blocking_rule(
-#         "l.first_name = r.first_name",
-#     )
-#     assert res == 1
+    res = linker.count_num_comparisons_from_blocking_rule(
+        "l.first_name = r.first_name",
+    )
+    assert res == 1
 
-#     settings = {"link_type": "link_only"}
-#     linker = Linker([df_1, df_2], settings, **helper.extra_linker_args())
-#     res = linker.count_num_comparisons_from_blocking_rule(
-#         "1=1",
-#     )
-#     assert res == 4 * 3
+    settings = {"link_type": "link_only"}
+    linker = Linker([df_1, df_2], settings, **helper.extra_linker_args())
+    res = linker.count_num_comparisons_from_blocking_rule(
+        "1=1",
+    )
+    assert res == 4 * 3
 
-#     res = linker.count_num_comparisons_from_blocking_rule(
-#         "l.surname = r.surname",
-#     )
-#     assert res == 1
+    res = linker.count_num_comparisons_from_blocking_rule(
+        "l.surname = r.surname",
+    )
+    assert res == 1
 
-#     res = linker.count_num_comparisons_from_blocking_rule(
-#         "l.first_name = r.first_name",
-#     )
-#     assert res == 3
+    res = linker.count_num_comparisons_from_blocking_rule(
+        "l.first_name = r.first_name",
+    )
+    assert res == 3
 
-#     settings = {"link_type": "link_and_dedupe"}
+    settings = {"link_type": "link_and_dedupe"}
 
-#     linker = Linker([df_1, df_2], settings, **helper.extra_linker_args())
+    linker = Linker([df_1, df_2], settings, **helper.extra_linker_args())
 
-#     res = linker.count_num_comparisons_from_blocking_rule(
-#         "1=1",
-#     )
-#     expected = 4 * 3 + (4 * 3 / 2) + (3 * 2 / 2)
-#     assert res == expected
+    res = linker.count_num_comparisons_from_blocking_rule(
+        "1=1",
+    )
+    expected = 4 * 3 + (4 * 3 / 2) + (3 * 2 / 2)
+    assert res == expected
 
-#     rule = "l.first_name = r.first_name and l.surname = r.surname"
-#     res = linker.count_num_comparisons_from_blocking_rule(
-#         rule,
-#     )
+    rule = "l.first_name = r.first_name and l.surname = r.surname"
+    res = linker.count_num_comparisons_from_blocking_rule(
+        rule,
+    )
 
-#     assert res == 1
+    assert res == 1
 
 
 def validate_blocking_output(linker, expected_out, **kwargs):
@@ -89,7 +89,7 @@ def validate_blocking_output(linker, expected_out, **kwargs):
     assert expected_out["cartesian"] == records[0]["cartesian"]
 
 
-@mark_with_dialects_excluding("postgres")
+@mark_with_dialects_excluding()
 def test_blocking_records_accuracy(test_helpers, dialect):
 
     helper = test_helpers[dialect]

@@ -6,7 +6,7 @@ from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
 
-@mark_with_dialects_excluding("postgres")
+@mark_with_dialects_excluding()
 def test_binary_composition_internals_OR(test_helpers, dialect):
     helper = test_helpers[dialect]
     brl = helper.brl
