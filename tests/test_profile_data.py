@@ -178,11 +178,14 @@ def test_profile_using_spark(df_spark):
 
     assert len(generate_raw_profile_dataset([["first_name", "blank"]], linker)) == 0
 
+
 def test_profile_null_columns(caplog):
 
-    df = pd.DataFrame([
-        {"unique_id": 1, "test_1": 1, "test_2": None},
-    ])
+    df = pd.DataFrame(
+        [
+            {"unique_id": 1, "test_1": 1, "test_2": None},
+        ]
+    )
 
     linker = DuckDBLinker(df)
 
@@ -190,7 +193,7 @@ def test_profile_null_columns(caplog):
 
     captured_logs = caplog.text
 
-    assert "Warning: No charts produced for test_2 as the column only contains null values." in captured_logs
-
-
-
+    assert (
+        "Warning: No charts produced for test_2 as the column only contains null values."
+        in captured_logs
+    )
