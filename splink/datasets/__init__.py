@@ -88,7 +88,8 @@ class _SplinkDataSetsMeta(type):
 
     @classmethod
     def class_attribute_factory(
-        cls, dataset_name, url, rows, unique_entities, description, data_format):
+        cls, dataset_name, url, rows, unique_entities, description, data_format
+    ):
         def lazyload_data(self):
             file_loc = cls.cache_dir / f"{dataset_name}.{data_format}"
             if not cls.datafile_exists(file_loc):
