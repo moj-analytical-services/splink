@@ -138,10 +138,10 @@ class _SplinkDataUtils:
 
     def show_downloaded_data(self):
         """Print a list of datasets that have already been pre-downloaded"""
-        print(
+        print(  # noqa: T201
             "Datasets already downloaded and available:\n"
             + ",\n".join(self.list_downloaded_datasets())
-        )  # noqa: T201
+        )
 
     def clear_downloaded_data(self, datasets: list = None):
         """Delete any pre-downloaded data stored locally.
