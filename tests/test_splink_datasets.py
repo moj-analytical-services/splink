@@ -12,7 +12,7 @@ def test_datasets_basic_link(test_helpers):
         df,
         {
             "link_type": "dedupe_only",
-            "comparisons": [cl.exact_match("first_name"), cl.exact_match("surname")]
+            "comparisons": [cl.exact_match("first_name"), cl.exact_match("surname")],
         },
         **helper.extra_linker_args()
     )

@@ -1,6 +1,6 @@
+import os
 from dataclasses import asdict, dataclass
 from math import floor
-import os
 from pathlib import Path
 from urllib.request import urlretrieve
 
@@ -38,8 +38,8 @@ _datasets = [
         (
             "Fake 1000 from splink demos.  ",
             "Records are 250 simulated people, "
-            "with different numbers of duplicates, labelled."
-        )
+            "with different numbers of duplicates, labelled.",
+        ),
     ),
     _DataSetMetaData(
         "fake_20000",
@@ -74,9 +74,9 @@ class _SplinkDataSetsMeta(type):
         prop_done = (block_count * block_size) / total_size
         if prop_done > 1:
             prop_done = 1
-        perc = round(prop_done*100)
+        perc = round(prop_done * 100)
         display = f"\r  download progress: {perc} %\t("
-        deciles_done = floor(prop_done*10)
+        deciles_done = floor(prop_done * 10)
         for i in range(10):
             if i < deciles_done:
                 display += "="
@@ -85,7 +85,6 @@ class _SplinkDataSetsMeta(type):
         display += ")"
         print(display, end="")
 
-    # TODO: do we want description here?
     @classmethod
     def class_attribute_factory(cls, dataset_name, url, description, data_format):
         def lazyload_data(self):
@@ -106,6 +105,7 @@ class _SplinkDataSetsMeta(type):
             raise ValueError(
                 f"Error retrieving dataset {dataset_name} - invalid format!"
             )
+
         # make the docstring be the description
         lazyload_data.__doc__ = description
 
@@ -116,7 +116,7 @@ class _SplinkDataSetsMeta(type):
         return file_loc.is_file()
 
 
-class _SplinkDataUtils():
+class _SplinkDataUtils:
     def __init__(self):
         pass
 
