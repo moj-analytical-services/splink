@@ -1,6 +1,6 @@
 ## Linting your code
 
-For linting, we currently make use of [ruff](https://github.com/charliermarsh/ruff) to perform checks, and if desired, *some* fixes for your data.
+For linting, we currently make use of [ruff](https://github.com/charliermarsh/ruff) to perform checks, and if desired, *some* fixes for your code.
 
 For a standard formatter, we use [black](https://github.com/psf/black) against the code base.
 
