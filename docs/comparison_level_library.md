@@ -182,7 +182,7 @@ The detailed API for each of these are outlined below.
 
 ---
 
-::: splink.comparison_level_library.DateDiffLevelBase
+::: splink.comparison_level_library.DatediffLevelBase
     handler: python
     selection:
       members:

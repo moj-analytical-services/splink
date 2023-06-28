@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "splink"
-version = "3.9.1"
+version = "3.9.2"
 description = "Fast probabilistic data linkage at scale"
 authors = ["Robin Linacre <robinlinacre@hotmail.com>", "Sam Lindsay", "Theodore Manassis", "Tom Hepworth", "Andy Bond", "Ross Kennedy"]
 license = "MIT"
@@ -65,6 +65,8 @@ select = [
     "I001",
     # bugbear
     "B",
+    # flake8-print
+    "T20"
 ]
 ignore = [
     "B905", # `zip()` without an explicit `strict=` parameter

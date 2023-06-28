@@ -146,7 +146,6 @@ def test_regex(spark, Linker, df, level_set, record_pairs_gamma):
 
     for gamma, id_pairs in record_pairs_gamma.items():
         for left, right in id_pairs:
-            print(f"Checking IDs: {left}, {right}")
             assert (
                 linker_output.loc[
                     (linker_output.unique_id_l == left)

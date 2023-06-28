@@ -39,7 +39,7 @@ def _setup_test_env(_engine_factory):
     try:
         conn = _engine_factory().connect()
     except OperationalError as e:
-        print(repr(e))
+        print(repr(e))  # noqa: T201
         return None
     uuid = str(uuid4()).replace("-", "_")
     db_name = f"__splink__testing_database_{uuid}"

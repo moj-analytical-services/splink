@@ -89,8 +89,8 @@ def save_offline_chart(
         f.write(template.format(**fmt_dict))
 
     if print_msg:
-        print(f"Chart saved to {filename}")
-        print(iframe_message.format(filename=filename))
+        print(f"Chart saved to {filename}")  # noqa: T201
+        print(iframe_message.format(filename=filename))  # noqa: T201
 
 
 def match_weights_chart(records, as_dict=False):

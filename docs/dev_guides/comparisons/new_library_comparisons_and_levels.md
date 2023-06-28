@@ -128,7 +128,7 @@ Specifically, it will have the following levels:
 * an `else_level`
 
 ```python
-class ArrayLengthAtThresholdsComparisonBase(Comparison):
+class ArrayLengthAtThresholdsBase(Comparison):
     def __init__(
         self,
         col_name: str,
@@ -221,7 +221,7 @@ but also the new `self._array_length_level` which relates to our new comparison 
 We will need to make sure that the dialect-specific comparisons which will actually be _used_ will have this property.
 
 Each dialect has a comparison properties base, which stores information about all of the dialect-specific comparison levels used by all comparisons.
-We will need to add our new level to this, which we referred to above in `ArrayLengthAtThresholdsComparisonBase` - for this example in [`splink.spark.spark_helpers.spark_comparison_imports`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_helpers/spark_comparison_imports.py):
+We will need to add our new level to this, which we referred to above in `ArrayLengthAtThresholdsBase` - for this example in [`splink.spark.spark_helpers.spark_comparison_imports`](https://github.com/moj-analytical-services/splink/blob/master/splink/spark/spark_helpers/spark_comparison_imports.py):
 ```python
 from splink.spark.comparison_level_library import (
     exact_match_level,

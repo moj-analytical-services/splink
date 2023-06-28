@@ -88,7 +88,7 @@ def test_u_train_link_only(test_helpers, dialect):
     )
 
     result = self_table_count.as_record_dict()
-    self_table_count.drop_table_from_database()
+    self_table_count.drop_table_from_database_and_remove_from_cache()
     assert result[0]["count"] == 0
 
     denom = 6 * 7  # only l <-> r candidate links
@@ -145,7 +145,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
     )
 
     result = self_table_count.as_record_dict()
-    self_table_count.drop_table_from_database()
+    self_table_count.drop_table_from_database_and_remove_from_cache()
     pairs_actually_sampled = result[0]["count"]
 
     proportion_of_max_pairs_sampled = pairs_actually_sampled / max_pairs
@@ -211,7 +211,7 @@ def test_u_train_multilink(test_helpers, dialect):
     )
 
     result = self_table_count.as_record_dict()
-    self_table_count.drop_table_from_database()
+    self_table_count.drop_table_from_database_and_remove_from_cache()
     assert result[0]["count"] == 0
 
     denom = expected_total_links
@@ -243,7 +243,7 @@ def test_u_train_multilink(test_helpers, dialect):
     )
 
     result = self_table_count.as_record_dict()
-    self_table_count.drop_table_from_database()
+    self_table_count.drop_table_from_database_and_remove_from_cache()
     assert result[0]["count"] == (2 * 1 / 2 + 3 * 2 / 2 + 4 * 3 / 2 + 7 * 6 / 2)
 
     denom = expected_total_links_with_dedupes

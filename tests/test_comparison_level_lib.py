@@ -173,10 +173,6 @@ def test_levenshtein_level(test_helpers, dialect):
 
     for id_r, lev_dist in id_distance_from_1.items():
         expected_gamma_lev = gamma_lev_from_distance(lev_dist)
-        print(
-            f"id: {id_r}, expected_lev: {lev_dist}, "
-            f"expected_gamma: {expected_gamma_lev}"
-        )
         row = dict(df_e.query(f"id_l == 1 and id_r == {id_r}").iloc[0])
         assert row["gamma_name"] == expected_gamma_lev
 
@@ -258,9 +254,5 @@ def test_damerau_levenshtein_level(test_helpers, dialect):
 
     for id_r, lev_dist in id_distance_from_1.items():
         expected_gamma_lev = gamma_lev_from_distance(lev_dist)
-        print(
-            f"id: {id_r}, expected_lev: {lev_dist}, "
-            f"expected_gamma: {expected_gamma_lev}"
-        )
         row = dict(df_e.query(f"id_l == 1 and id_r == {id_r}").iloc[0])
         assert row["gamma_name"] == expected_gamma_lev

@@ -127,7 +127,7 @@ def _get_random_cluster_ids(
         sql, "__splink__cluster_count"
     )
     cluster_count = df_cluster_count.as_record_dict()[0]["count"]
-    df_cluster_count.drop_table_from_database()
+    df_cluster_count.drop_table_from_database_and_remove_from_cache()
 
     proportion = sample_size / cluster_count
 

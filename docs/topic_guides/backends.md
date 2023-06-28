@@ -28,7 +28,7 @@ Note however, that not all comparison functions are available in all backends.
 There are tables detailing the available functions for each backend on
 the [comparison library API page](../comparison_library.html) and the [comparison level library API page](../comparison_level_library.html).
 
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
 
     ```python
     from splink.duckdb.linker import DuckDBLinker
@@ -38,7 +38,7 @@ the [comparison library API page](../comparison_library.html) and the [compariso
     linker = DuckDBLinker(your_args)
     ```
 
-=== "Spark"
+=== ":simple-apachespark: Spark"
 
     ```python
     from splink.spark.linker import SparkLinker
@@ -48,7 +48,7 @@ the [comparison library API page](../comparison_library.html) and the [compariso
     linker = SparkLinker(your_args)
     ```
 
-=== "AWS Athena"
+=== ":simple-amazonaws: Athena"
 
     ```python
     from splink.athena.linker import AthenaLinker
@@ -58,7 +58,7 @@ the [comparison library API page](../comparison_library.html) and the [compariso
     linker = AthenaLinker(your_args)
     ```
 
-=== "SQLite"
+=== ":simple-sqlite: SQLite"
 
     ```python
     from splink.sqlite.linker import SQLiteLinker
@@ -69,12 +69,12 @@ the [comparison library API page](../comparison_library.html) and the [compariso
 
     ```
 
-=== "PostgreSQL"
+=== ":simple-postgresql: PostgreSql"
 
     ```python
-    from splink.postgres.postgres_linker import PostgresLinker
-    import splink.postgres.postgres_comparison_library as cl
-    import splink.postgres.postgres_comparison_level_library as cll
+    from splink.postgres.linker import PostgresLinker
+    import splink.postgres.comparison_library as cl
+    import splink.postgres.comparison_level_library as cll
 
     linker = PostgresLinker(your_args)
 
@@ -82,7 +82,7 @@ the [comparison library API page](../comparison_library.html) and the [compariso
 
 ## Information for specific backends
 
-### SQLite
+### :simple-sqlite: SQLite
 
 [**SQLite**](https://www.sqlite.org/index.html) does not have native support for [fuzzy string-matching](./comparators.html) functions.
 However, some are available for Splink users as python [user-defined functions (UDFs)](../dev_guides/udfs.html#sqlite):

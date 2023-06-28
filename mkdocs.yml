@@ -1,8 +1,9 @@
 site_name: Splink
 use_directory_urls: false
 repo_url: https://github.com/moj-analytical-services/splink
+edit_uri: edit/master/docs/
 theme:
-  icon: 
+  icon:
     repo: fontawesome/brands/github
   name: "material"
   features:
@@ -15,6 +16,7 @@ theme:
     - search.share
     - search.suggest
     - navigation.footer
+    - content.action.view
   logo: "img/favicon.ico"
   favicon: "img/favicon.ico"
   palette:
@@ -30,6 +32,7 @@ theme:
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to light mode
+  custom_dir: docs/overrides
 plugins:
   - search
   - semiliterate
@@ -42,6 +45,10 @@ plugins:
           rendering:
             show_source: false
       custom_templates: templates
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+      fallback_to_build_date: true
 markdown_extensions:
   - abbr
   - attr_list
@@ -63,6 +70,10 @@ markdown_extensions:
   - toc:
       permalink: True
       toc_depth: 4
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - footnotes
 nav:
   - Home: "README.md"
   - Installation: "installations.md"
@@ -89,13 +100,20 @@ nav:
         - Febrl4 link-only: "demos/example_febrl4.ipynb"
       - PySpark:
         - Deduplication using Pyspark: "demos/example_simple_pyspark.ipynb"
+      - Athena:
+        - Deduplicate 50k rows historical persons: "demos/athena_deduplicate_50k_synthetic.ipynb"
   - Topic Guides:
+      - Record Linkage Theory:
+        - Why do we need record linkage?: "topic_guides/record_linkage.md"
+        - Probabilistic vs Deterministic linkage: "topic_guides/probabilistic_vs_deterministic.md"
+        - The Fellegi-Sunter Model: "topic_guides/fellegi_sunter.md"
       - Linkage Models in Splink:
         - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/backends.md"
         - Link type - linking vs deduping: "topic_guides/link_type.md"
         - Defining Splink models: "topic_guides/settings.md"
         - Retrieving and querying Splink results: "topic_guides/querying_splink_results.md"
-      - Feature Engineering: "topic_guides/feature_engineering.md"
+      - Data Preparation:
+        - Feature Engineering: "topic_guides/feature_engineering.md"
       - Comparing Records:
         - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
         - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
@@ -134,7 +152,7 @@ nav:
   - Developers' guides:
       - Making Changes to Splink:
         - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
-        - Linting: "dev_guides/changing_splink/lint.md"
+        - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
         - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
         - Testing: "dev_guides/changing_splink/testing.md"
         - Releasing a Package Version: "dev_guides/changing_splink/releases.md"

@@ -14,7 +14,7 @@ jobs:
           token: ${{ secrets.SPLINK_TOKEN }}
       - name: Install poetry
         run: pipx install poetry
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
       - name: Publish to Pypi
