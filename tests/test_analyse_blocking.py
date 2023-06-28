@@ -194,13 +194,10 @@ def test_blocking_records_accuracy():
         blocking_rules=blocking_rules,
     )
 
-    blocking_rules_df=cumulative_comparisons_generated_by_blocking_rules(
-        linker_settings, 
-        blocking_rules=blocking_rules, 
-        return_dataframe=True
+    blocking_rules_df = cumulative_comparisons_generated_by_blocking_rules(
+        linker_settings, blocking_rules=blocking_rules, return_dataframe=True
     )
 
-    expected_row_count=pd.DataFrame({"row_count":[31272, 120993,308880]})
+    expected_row_count = pd.DataFrame({"row_count": [31272, 120993, 308880]})
 
     assert (blocking_rules_df["row_count"] == expected_row_count["row_count"]).all()
-
