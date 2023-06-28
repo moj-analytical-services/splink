@@ -12,7 +12,6 @@ def generate_random_graph(graph_size, seed=None):
     if not seed:
         seed = random.randint(5, 1000000)
 
-    print(f"Seed set to {seed}")
     graph = nx.fast_gnp_random_graph(graph_size, 0.001, seed=seed, directed=False)
     return graph
 

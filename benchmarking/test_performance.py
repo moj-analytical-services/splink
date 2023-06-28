@@ -281,7 +281,6 @@ def test_3_rounds_20k_spark(benchmark):
 
 
 def sqlite_performance(con, max_pairs=1e6):
-    print("**** running sqlite benchmark ***")
     linker = SQLiteLinker(
         "input_df_tablename", settings_dict, connection=con, input_table_aliases="mydf"
     )
