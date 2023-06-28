@@ -1459,6 +1459,7 @@ class Linker:
         blocking_rule: str,
         comparisons_to_deactivate: list[str | Comparison] = None,
         comparison_levels_to_reverse_blocking_rule: list[ComparisonLevel] = None,
+        estimate_without_term_frequencies: bool = False,
         fix_probability_two_random_records_match: bool = False,
         fix_m_probabilities=False,
         fix_u_probabilities=True,
@@ -1529,6 +1530,10 @@ class Linker:
                 specified in the blocking rule. If provided, this argument will overrule
                 this default behaviour. The user must provide a list of ComparisonLevel
                 objects.  Defaults to None.
+            estimate_without_term_frequencies (bool, optional): If True, the iterations
+                of the EM algorithm ignore any term frequency adjustments and only
+                depend on the comparison vectors. This allows the EM algorithm to run
+                much faster, but the estimation of the parameters will change slightly.
             fix_probability_two_random_records_match (bool, optional): If True, do not
                 update the probability two random records match after each iteration.
                 Defaults to False.
@@ -1583,6 +1588,7 @@ class Linker:
             fix_probability_two_random_records_match=fix_probability_two_random_records_match,  # noqa 501
             comparisons_to_deactivate=comparisons_to_deactivate,
             comparison_levels_to_reverse_blocking_rule=comparison_levels_to_reverse_blocking_rule,  # noqa 501
+            estimate_without_term_frequencies=estimate_without_term_frequencies,
         )
 
         em_training_session._train()
