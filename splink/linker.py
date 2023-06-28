@@ -52,6 +52,10 @@ from .connected_components import (
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkException
+from .labelling_tool import (
+    generate_labelling_tool_comparisons,
+    render_labelling_tool_html,
+)
 from .logging_messages import execute_sql_logging_message_info, log_sql
 from .m_from_labels import estimate_m_from_pairwise_labels
 from .m_training import estimate_m_values_from_label_column
@@ -1770,7 +1774,6 @@ class Linker:
 
         self._settings_obj._blocking_rules_to_generate_predictions = blocking_rules
 
-        self._settings_obj._link_type = "link_only_find_matches_to_new_records"
         self._find_new_matches_mode = True
 
         sql = _join_tf_to_input_df_sql(self)
@@ -3192,6 +3195,55 @@ class Linker:
         )
         splink_dataframe.templated_name = "__splink__df_labels"
         return splink_dataframe
+
+    def labelling_tool_for_specific_record(
+        self,
+        unique_id,
+        source_dataset=None,
+        out_path="labelling_tool.html",
+        overwrite=False,
+        match_weight_threshold=-4,
+        view_in_jupyter=False,
+        show_splink_predictions_in_interface=True,
+    ):
+        """Create a standalone, offline labelling dashboard for a specific record
+        as identified by its unique id
+
+        Args:
+            unique_id (str): The unique id of the record for which to create the
+                labelling tool
+            source_dataset (str, optional): If there are multiple datasets, to
+                identify the record you must also specify the source_dataset. Defaults
+                to None.
+            out_path (str, optional): The output path for the labelling tool. Defaults
+                to "labelling_tool.html".
+            overwrite (bool, optional): If true, overwrite files at the output
+                path if they exist. Defaults to False.
+            match_weight_threshold (int, optional): Include possible matches in the
+                output which score above this threshold. Defaults to -4.
+            view_in_jupyter (bool, optional): If you're viewing in the Jupyter
+                html viewer, set this to True to extract your labels. Defaults to False.
+            show_splink_predictions_in_interface (bool, optional): Whether to
+                show information about the Splink model's predictions that could
+                potentially bias the decision of the clerical labeller. Defaults to
+                True.
+        """
+
+        df_comparisons = generate_labelling_tool_comparisons(
+            self,
+            unique_id,
+            source_dataset,
+            match_weight_threshold=match_weight_threshold,
+        )
+
+        render_labelling_tool_html(
+            self,
+            df_comparisons,
+            show_splink_predictions_in_interface=show_splink_predictions_in_interface,
+            out_path=out_path,
+            view_in_jupyter=view_in_jupyter,
+            overwrite=overwrite,
+        )
 
     def _remove_splinkdataframe_from_cache(self, splink_dataframe: SplinkDataFrame):
         keys_to_delete = set()

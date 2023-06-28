@@ -76,6 +76,9 @@ class EverythingEncoder(json.JSONEncoder):
     https://github.com/mpld3/mpld3/issues/434#issuecomment-340255689
     """
 
+    # Note that the default method is only called for data types that are
+    # NOT natively serializable.  The 'encode' method can be used
+    # for natively serializable data
     def default(self, obj):
         if isinstance(obj, np.integer):
             return int(obj)
