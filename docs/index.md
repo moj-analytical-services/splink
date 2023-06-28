@@ -86,56 +86,6 @@ conda install -c conda-forge splink
 Should you require a more bare-bones version of Splink **without DuckDB**, please see the following area of the docs:
 > [DuckDBless Splink Installation](https://moj-analytical-services.github.io/splink/installations.html#duckdb-less-installation)
 
-## Quickstart
-
-The following code demonstrates how to estimate the parameters of a deduplication model, use it to identify duplicate records, and then use clustering to generate an estimated unique person ID.
-
-For more detailed tutorials, please see [here](https://moj-analytical-services.github.io/splink/demos/00_Tutorial_Introduction.html).
-
-```py
-from splink.duckdb.linker import DuckDBLinker
-import splink.duckdb.comparison_library as cl
-import splink.duckdb.comparison_template_library as ctl
-
-import pandas as pd
-
-df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
-
-settings = {
-    "link_type": "dedupe_only",
-    "blocking_rules_to_generate_predictions": [
-        "l.first_name = r.first_name",
-        "l.surname = r.surname",
-    ],
-    "comparisons": [
-        ctl.name_comparison("first_name"),
-        ctl.name_comparison("surname"),
-        ctl.date_comparison("dob", cast_strings_to_date=True),
-        cl.exact_match("city", term_frequency_adjustments=True),
-        ctl.email_comparison("email"),
-    ],
-}
-
-linker = DuckDBLinker(df, settings)
-linker.estimate_u_using_random_sampling(max_pairs=1e6)
-
-blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
-
-blocking_rule_for_training = "l.dob = r.dob"
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
-
-pairwise_predictions = linker.predict()
-
-clusters = linker.cluster_pairwise_predictions_at_threshold(pairwise_predictions, 0.95)
-clusters.as_pandas_dataframe(limit=5)
-```
-
-## Videos
-
-- [A introductory presentation on Splink](https://www.youtube.com/watch?v=msz3T741KQI)
-- [An introduction to the Splink Comparison Viewer dashboard](https://www.youtube.com/watch?v=DNvCMqjipis)
-
 ## Support
 
 Please post on the [discussion forums](https://github.com/moj-analytical-services/splink/discussions) if you have any questions. If you think you have found a bug, pleaase raise an [issue](https://github.com/moj-analytical-services/splink/issues).

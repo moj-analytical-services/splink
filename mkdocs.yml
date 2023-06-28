@@ -17,7 +17,7 @@ theme:
     - search.suggest
     - navigation.indexes
     - navigation.footer
-    - content.action.view
+    - content.action.edit
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.top
@@ -74,7 +74,7 @@ markdown_extensions:
       alternate_style: true
   - toc:
       permalink: True
-      toc_depth: 4
+      toc_depth: 3
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
