@@ -6,17 +6,18 @@ echo "$line_block $black_run $line_block"
 
 black .
 
-OPTIND=1
-
 ruff_run="Running the ruff linter"
 echo "$line_block $ruff_run $line_block"
+
+OPTIND=1
 
 while getopts ":f" opt; do
   case $opt in
     f)
+      ruff --fix splink/ --quiet
+      ruff --fix tests/ --quiet
+      ruff --fix scripts/ --quiet
       echo "--fix was run for your scripts" >&2
-      ruff --fix splink/ --quiet &&\
-      ruff --fix tests/ --quiet &&
       ;;
     \?)
       echo "Invalid option: -$OPTARG. Only -f (fix) is accepted." >&2
@@ -24,6 +25,7 @@ while getopts ":f" opt; do
   esac
 done
 
-ruff --show-source splink/ &&\
-  ruff --show-source tests/ &&\
-  ruff --show-source benchmarking/
+ruff --show-source splink/
+ruff --show-source tests/
+ruff --show-source benchmarking/
+ruff --show-source scripts/

@@ -2,7 +2,9 @@
   "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
   "layer": [
     {
-      "mark": "line",
+      "mark": {
+        "type": "line"
+      },
       "encoding": {
         "x": {
           "type": "quantitative",
@@ -17,9 +19,28 @@
       }
     },
     {
-      "mark": "point",
+      "mark": {
+        "type": "point"
+      },
       "encoding": {
-        "opacity": {"value": 0},
+        "opacity": {
+          "condition": {
+            "param": "x_match_weight_y_cum_prop_coords_of_mouse",
+            "value": 1,
+            "empty": false
+          },
+          "value": 0
+        },
+        "x": {
+          "type": "quantitative",
+          "axis": {"title": "Threshold match weight"},
+          "field": "match_weight"
+        },
+        "y": {
+          "type": "quantitative",
+          "axis": {"format": "%", "title": "Percentage of unlinkable records"},
+          "field": "cum_prop"
+        },
         "tooltip": [
           {
             "type": "quantitative",
@@ -39,48 +60,50 @@
             "format": ".3%",
             "title": "Proportion of unlinkable records"
           }
-        ],
-        "x": {"type": "quantitative", "field": "match_weight"},
-        "y": {"type": "quantitative", "field": "cum_prop"}
+        ]
       },
-      "selection": {
-        "selector112": {
-          "type": "single",
-          "nearest": true,
-          "on": "mouseover",
-          "fields": ["match_weight", "cum_prop"],
-          "empty": "none"
-        }
-      }
-    },
-    {
-      "mark": "point",
-      "encoding": {
-        "opacity": {
-          "condition": {"value": 1, "selection": "selector112"},
-          "value": 0
-        },
-        "x": {
-          "type": "quantitative",
-          "axis": {"title": "Threshold match weight"},
-          "field": "match_weight"
-        },
-        "y": {
-          "type": "quantitative",
-          "axis": {"format": "%", "title": "Percentage of unlinkable records"},
-          "field": "cum_prop"
-        }
-      }
+      "name": "mouse_coords"
+
     },
     {
       "mark": {"type": "rule", "color": "gray"},
       "encoding": {"x": {"type": "quantitative", "field": "match_weight"}},
-      "transform": [{"filter": {"selection": "selector112"}}]
+      "transform": [
+        {
+          "filter": {
+            "param": "x_match_weight_y_cum_prop_coords_of_mouse",
+            "empty": false
+          }
+        }
+      ]
     },
     {
       "mark": {"type": "rule", "color": "gray"},
       "encoding": {"y": {"type": "quantitative", "field": "cum_prop"}},
-      "transform": [{"filter": {"selection": "selector112"}}]
+      "transform": [
+        {
+          "filter": {
+            "param": "x_match_weight_y_cum_prop_coords_of_mouse",
+            "empty": false
+          }
+        }
+      ]
+    }
+  ],
+  "params": [
+    {
+      "name": "x_match_weight_y_cum_prop_coords_of_mouse",
+      "select": {
+        "type": "point",
+        "fields": [
+          "match_weight", "cum_prop"
+        ],
+        "nearest": true,
+        "on": "mouseover"
+      },
+      "views": [
+        "mouse_coords"
+      ]
     }
   ],
   "data": {"values": null},
@@ -90,5 +113,5 @@
     "subtitle": "Records with insufficient information to exceed a given match threshold"
   },
   "width": 400,
-  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json"
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json"
 }

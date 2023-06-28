@@ -5,14 +5,13 @@ import pandas as pd
 from networkx.algorithms import connected_components as cc_nx
 
 from splink.connected_components import solve_connected_components
-from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
+from splink.duckdb.linker import DuckDBLinker, DuckDBLinkerDataFrame
 
 
 def generate_random_graph(graph_size, seed=None):
     if not seed:
         seed = random.randint(5, 1000000)
 
-    print(f"Seed set to {seed}")
     graph = nx.fast_gnp_random_graph(graph_size, 0.001, seed=seed, directed=False)
     return graph
 
@@ -38,11 +37,10 @@ def register_cc_df(G):
     linker.register_table(df_concat, table_name, overwrite=True)
 
     df_nodes = pd.DataFrame({"unique_id": G.nodes})
-    linker.register_table(df_nodes, "__splink__df_concat_with_tf", overwrite=True)
+    linker.register_table_input_nodes_concat_with_tf(df_nodes)
 
     # add our prediction df to our list of created tables
     predict_df = DuckDBLinkerDataFrame(table_name, table_name, linker)
-    linker._names_of_tables_created_by_splink.add(predict_df)
 
     return predict_df
 

@@ -127,9 +127,17 @@ def _get_random_cluster_ids(
         sql, "__splink__cluster_count"
     )
     cluster_count = df_cluster_count.as_record_dict()[0]["count"]
-    df_cluster_count.drop_table_from_database()
+    df_cluster_count.drop_table_from_database_and_remove_from_cache()
 
     proportion = sample_size / cluster_count
+
+    random_sample_sql = linker._random_sample_sql(
+        proportion,
+        sample_size,
+        seed,
+        table=connected_components.physical_name,
+        unique_id="cluster_id",
+    )
 
     sql = f"""
     with distinct_clusters as (
@@ -137,7 +145,7 @@ def _get_random_cluster_ids(
     from {connected_components.physical_name}
     )
     select cluster_id from distinct_clusters
-    {linker._random_sample_sql(proportion, sample_size, seed)}
+    {random_sample_sql}
     """
 
     df_sample = linker._sql_to_splink_dataframe_checking_cache(

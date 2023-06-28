@@ -27,7 +27,7 @@ def estimate_m_from_pairwise_labels(linker, table_name):
     linker._enqueue_sql(sql, "__splink__df_comparison_vectors")
 
     sql = """
-    select *, cast(1.0 as double) as match_probability
+    select *, cast(1.0 as float8) as match_probability
     from __splink__df_comparison_vectors
     """
     linker._enqueue_sql(sql, "__splink__df_predict")

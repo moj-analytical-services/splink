@@ -1,6 +1,7 @@
 from ...comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
+    DamerauLevenshteinLevelBase,
     DateDiffLevelBase,
     DistanceFunctionLevelBase,
     DistanceInKMLevelBase,
@@ -27,6 +28,7 @@ from ...comparison_library import (
 )
 from ...comparison_template_library import (
     DateComparisonBase,
+    EmailComparisonBase,
     ForenameSurnameComparisonBase,
     NameComparisonBase,
     PostcodeComparisonBase,
@@ -118,7 +120,7 @@ class levenshtein_level(SparkBase, LevenshteinLevelBase):
     pass
 
 
-class damerau_levenshtein_level(SparkBase, LevenshteinLevelBase):
+class damerau_levenshtein_level(SparkBase, DamerauLevenshteinLevelBase):
     pass
 
 
@@ -246,3 +248,9 @@ class forename_surname_comparison(
 
 class postcode_comparison(SparkComparisonProperties, PostcodeComparisonBase):
     pass
+
+
+class email_comparison(SparkComparisonProperties, EmailComparisonBase):
+    @property
+    def _distance_level(self):
+        return distance_function_level

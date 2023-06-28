@@ -7,9 +7,13 @@
     },
     "hconcat": [
         {
+            "height": 300,
+            "width": 300,
             "layer": [
                 {
-                    "mark": "rect",
+                    "mark": {
+                        "type": "rect"
+                    },
                     "encoding": {
                         "color": {
                             "field": "score",
@@ -34,9 +38,7 @@
                             "type": "ordinal"
                         }
                     },
-                    "height": 300,
-                    "title": "Heatmap of Similarity Scores",
-                    "width": 300
+                    "title": "Heatmap of Similarity Scores"
                 },
                 {
                     "mark": {
@@ -65,9 +67,7 @@
                             "type": "ordinal"
                         }
                     },
-                    "height": 300,
-                    "title": "Heatmap of Similarity Scores",
-                    "width": 300
+                    "title": "Heatmap of Similarity Scores"
                 }
             ],
             "data": {
@@ -75,9 +75,13 @@
             }
         },
         {
+            "height": 300,
+            "width": 200,
             "layer": [
                 {
-                    "mark": "rect",
+                    "mark": {
+                        "type": "rect"
+                    },
                     "encoding": {
                         "color": {
                             "field": "score",
@@ -102,9 +106,7 @@
                             "type": "ordinal"
                         }
                     },
-                    "height": 300,
-                    "title": "Heatmap of Distance Scores",
-                    "width": 200
+                    "title": "Heatmap of Distance Scores"
                 },
                 {
                     "mark": {
@@ -132,9 +134,7 @@
                             "type": "ordinal"
                         }
                     },
-                    "height": 300,
-                    "title": "Heatmap of Distance Scores",
-                    "width": 200
+                    "title": "Heatmap of Distance Scores"
                 }
             ],
             "data": {
@@ -147,7 +147,7 @@
             "color": "independent"
         }
     },
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.17.0.json",
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
     "datasets": {
         "data-similarity": [],
         "data-distance": []

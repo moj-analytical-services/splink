@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import pytest
 
-from splink.athena.athena_comparison_library import levenshtein_at_thresholds
+import splink.athena.comparison_library as cl
 
 from .basic_settings import get_settings_dict
 from .linker_utils import _test_table_registration
@@ -17,15 +17,15 @@ try:
     response = sts_client.get_caller_identity()
     import awswrangler as wr
 
-    from splink.athena.athena_linker import AthenaLinker
     from splink.athena.athena_utils import athena_warning_text
+    from splink.athena.linker import AthenaLinker
 except ImportError:
     # Skip if no AWS Connection exists
     pytestmark = pytest.mark.skip(reason="AWS Connection Required")
 
 settings_dict = get_settings_dict()
 
-first_name_cc = levenshtein_at_thresholds(
+first_name_cc = cl.levenshtein_at_thresholds(
     col_name="first_name",
     distance_threshold_or_thresholds=2,
     include_exact_match_level=True,
@@ -33,6 +33,13 @@ first_name_cc = levenshtein_at_thresholds(
     m_probability_exact_match=0.7,
     m_probability_or_probabilities_lev=0.2,
     m_probability_else=0.1,
+)
+
+dob_cc = cl.datediff_at_thresholds(
+    col_name="dob",
+    date_thresholds=[7, 3, 1],
+    date_metrics=["day", "month", "year"],
+    cast_strings_to_date=True,
 )
 
 # Update tf weight and u probabilities to match
@@ -46,6 +53,7 @@ for u_prob, level in zip(
 
 # Update settings w/ our edited first_name col
 settings_dict["comparisons"][0] = first_name_cc
+settings_dict["comparisons"][2] = dob_cc
 
 # Setup database names for tests
 db_name_read = "splink_awswrangler_test"
