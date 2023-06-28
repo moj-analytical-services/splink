@@ -84,7 +84,7 @@ class _SplinkDataSetsMeta(type):
             else:
                 display += "."
         display += ")"
-        print(display, end="")
+        print(display, end="")  # noqa: T201
 
     @classmethod
     def class_attribute_factory(
@@ -93,9 +93,9 @@ class _SplinkDataSetsMeta(type):
         def lazyload_data(self):
             file_loc = cls.cache_dir / f"{dataset_name}.{data_format}"
             if not cls.datafile_exists(file_loc):
-                print(f"downloading: {url}")
+                print(f"downloading: {url}")  # noqa: T201
                 urlretrieve(url, file_loc, reporthook=cls.progress)
-                print("")
+                print("")  # noqa: T201
 
             if data_format == "csv":
                 return pd.read_csv(file_loc)
@@ -141,7 +141,7 @@ class _SplinkDataUtils:
         print(
             "Datasets already downloaded and available:\n"
             + ",\n".join(self.list_downloaded_datasets())
-        )
+        )  # noqa: T201
 
     def clear_downloaded_data(self, datasets: list = None):
         """Delete any pre-downloaded data stored locally.
