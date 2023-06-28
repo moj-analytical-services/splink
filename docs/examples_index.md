@@ -14,7 +14,7 @@ You can try these demos live in your web browser using the following link:
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab)
 
-### DuckDB examples
+### :simple-duckdb: DuckDB examples
 
 ##### Entity type: Persons
 
@@ -37,7 +37,7 @@ You can try these demos live in your web browser using the following link:
 [Linking financial transactions](./demos/example_transactions.ipynb)
 
 
-### PySpark examples
+### :simple-apachespark: PySpark examples
 
 [Deduplication of a small dataset using Pyspark. Entity type is persons.](./demos/example_simple_pyspark.ipynb)
 

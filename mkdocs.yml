@@ -1,6 +1,7 @@
 site_name: Splink
 use_directory_urls: false
 repo_url: https://github.com/moj-analytical-services/splink
+edit_uri: edit/master/docs/
 theme:
   icon:
     repo: fontawesome/brands/github
@@ -15,6 +16,7 @@ theme:
     - search.share
     - search.suggest
     - navigation.footer
+    - content.action.view
   logo: "img/favicon.ico"
   favicon: "img/favicon.ico"
   palette:
@@ -43,6 +45,10 @@ plugins:
           rendering:
             show_source: false
       custom_templates: templates
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+      fallback_to_build_date: true
 markdown_extensions:
   - abbr
   - attr_list

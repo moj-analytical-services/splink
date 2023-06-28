@@ -1,7 +1,7 @@
 from ...comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
-    DateDiffLevelBase,
+    DatediffLevelBase,
     DistanceFunctionLevelBase,
     DistanceInKMLevelBase,
     ElseLevelBase,
@@ -11,12 +11,12 @@ from ...comparison_level_library import (
     PercentageDifferenceLevelBase,
 )
 from ...comparison_library import (
-    ArrayIntersectAtSizesComparisonBase,
-    DateDiffAtThresholdsComparisonBase,
-    DistanceFunctionAtThresholdsComparisonBase,
-    DistanceInKMAtThresholdsComparisonBase,
+    ArrayIntersectAtSizesBase,
+    DatediffAtThresholdsBase,
+    DistanceFunctionAtThresholdsBase,
+    DistanceInKMAtThresholdsBase,
     ExactMatchBase,
-    LevenshteinAtThresholdsComparisonBase,
+    LevenshteinAtThresholdsBase,
 )
 from .postgres_base import (
     PostgresBase,
@@ -93,7 +93,7 @@ class distance_in_km_level(PostgresBase, DistanceInKMLevelBase):
     pass
 
 
-class datediff_level(PostgresBase, DateDiffLevelBase):
+class datediff_level(PostgresBase, DatediffLevelBase):
     pass
 
 
@@ -105,7 +105,7 @@ class exact_match(PostgresComparisonProperties, ExactMatchBase):
 
 
 class distance_function_at_thresholds(
-    PostgresComparisonProperties, DistanceFunctionAtThresholdsComparisonBase
+    PostgresComparisonProperties, DistanceFunctionAtThresholdsBase
 ):
     @property
     def _distance_level(self):
@@ -113,27 +113,23 @@ class distance_function_at_thresholds(
 
 
 class levenshtein_at_thresholds(
-    PostgresComparisonProperties, LevenshteinAtThresholdsComparisonBase
+    PostgresComparisonProperties, LevenshteinAtThresholdsBase
 ):
     @property
     def _distance_level(self):
         return levenshtein_level
 
 
-class array_intersect_at_sizes(
-    PostgresComparisonProperties, ArrayIntersectAtSizesComparisonBase
-):
+class array_intersect_at_sizes(PostgresComparisonProperties, ArrayIntersectAtSizesBase):
     pass
 
 
-class datediff_at_thresholds(
-    PostgresComparisonProperties, DateDiffAtThresholdsComparisonBase
-):
+class datediff_at_thresholds(PostgresComparisonProperties, DatediffAtThresholdsBase):
     pass
 
 
 class distance_in_km_at_thresholds(
-    PostgresComparisonProperties, DistanceInKMAtThresholdsComparisonBase
+    PostgresComparisonProperties, DistanceInKMAtThresholdsBase
 ):
     pass
 

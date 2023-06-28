@@ -39,7 +39,7 @@ For guidance on how to choose the most suitable string comparator, and associate
 
 !!! info "At a glance" 
     **Useful for:** Data entry errors e.g. character miskeys.  
-    **Splink comparison functions:** [levenshtein_level()](../comparison_level_library.md#splink.comparison_level_library.LevenshteinLevelBase) and [levenshtein_at_thresholds()](../comparison_library.md#splink.comparison_library.LevenshteinAtThresholdsComparisonBase)  
+    **Splink comparison functions:** [levenshtein_level()](../comparison_level_library.md#splink.comparison_level_library.LevenshteinLevelBase) and [levenshtein_at_thresholds()](../comparison_library.md#splink.comparison_library.LevenshteinAtThresholdsBase)  
     **Returns:** An integer (lower is more similar).
 
 ##### Description
@@ -94,7 +94,7 @@ levenshtein_distance("CAKE", "ACKE)
 
 !!! info "At a glance" 
     **Useful for:** Data entry errors e.g. character transpositions and miskeys  
-    **Splink comparison functions:** [damerau_levenshtein_level()](../comparison_level_library.md#splink.comparison_level_library.DamerauLevenshteinLevelBase) and [damerau_levenshtein_at_thresholds()](../comparison_library.md#splink.comparison_library.DamerauLevenshteinAtThresholdsComparisonBase)  
+    **Splink comparison functions:** [damerau_levenshtein_level()](../comparison_level_library.md#splink.comparison_level_library.DamerauLevenshteinLevelBase) and [damerau_levenshtein_at_thresholds()](../comparison_library.md#splink.comparison_library.DamerauLevenshteinAtThresholdsBase)  
     **Returns:** An integer (lower is more similar).
 
 ##### Description
@@ -150,7 +150,7 @@ damerau_levenshtein_distance("CAKE", "ACKE)
 
 !!! info "At a glance" 
     **Useful for:**  Strings where all characters are considered equally important, regardless of order e.g. ID numbers  
-    **Splink comparison functions:**  [jaro_level()](../comparison_level_library.md#splink.comparison_level_library.JaroLevelBase) and [jaro_at_thresholds()](../comparison_library.md#splink.comparison_library.JaroAtThresholdsComparisonBase)  
+    **Splink comparison functions:**  [jaro_level()](../comparison_level_library.md#splink.comparison_level_library.JaroLevelBase) and [jaro_at_thresholds()](../comparison_library.md#splink.comparison_library.JaroAtThresholdsBase)  
     **Returns:**  A score between 0 and 1 (higher is more similar).
 
 ##### Description
@@ -207,7 +207,7 @@ jellyfish.jaro_similarity("MARTHA", "AMRTHA)
 
 !!! info "At a glance" 
     **Useful for:** Strings where importance is weighted towards the first 4 characters e.g. Names  
-    **Splink comparison functions:** [jaro_winkler_level()](../comparison_level_library.md#splink.comparison_level_library.JaroWinklerLevelBase) and [jaro_winkler_at_thresholds()](../comparison_library.md#splink.comparison_library.JaroWinklerAtThresholdsComparisonBase)  
+    **Splink comparison functions:** [jaro_winkler_level()](../comparison_level_library.md#splink.comparison_level_library.JaroWinklerLevelBase) and [jaro_winkler_at_thresholds()](../comparison_library.md#splink.comparison_library.JaroWinklerAtThresholdsBase)  
     **Returns:**  A score between 0 and 1 (higher is more similar).
 
 
@@ -260,7 +260,7 @@ jellyfish.jaro_winkler_similarity("MARTHA", "MARHTA)
 
 !!! info "At a glance" 
     **Useful for:**   
-    **Splink comparison functions:** [jaccard_level()](../comparison_level_library.md#splink.comparison_level_library.JaccardLevelBase) and [jaccard_at_thresholds()](../comparison_library.md#splink.comparison_library.JaccardAtThresholdsComparisonBase)  
+    **Splink comparison functions:** [jaccard_level()](../comparison_level_library.md#splink.comparison_level_library.JaccardLevelBase) and [jaccard_at_thresholds()](../comparison_library.md#splink.comparison_library.JaccardAtThresholdsBase)  
     **Returns:**  A score between 0 and 1 (higher is more similar).
 
 
