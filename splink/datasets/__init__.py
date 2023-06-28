@@ -7,9 +7,9 @@ from urllib.request import urlretrieve
 
 import pandas as pd
 
-DATASETDIR = Path(__file__).parent
+_DATASETDIR = Path(__file__).parent
 
-valid_formats = ("csv", "parquet")
+_valid_formats = ("csv", "parquet")
 
 
 @dataclass
@@ -20,8 +20,8 @@ class _DataSetMetaData:
     data_format: str = "csv"
 
     def __post_init__(self):
-        if self.data_format not in valid_formats:
-            valid_format_str = "', '".join(valid_formats)
+        if self.data_format not in _valid_formats:
+            valid_format_str = "', '".join(_valid_formats)
             raise ValueError(
                 f"`data_format` must be one of '{valid_format_str}'.  "
                 f"Dataset '{self.dataset_name}' labelled with format: "
@@ -37,9 +37,9 @@ _datasets = [
         "fake_1000",
         f"{_splink_demo_data_dir}/fake_1000.csv",
         (
-            "Fake 1000 from splink demos.  ",
+            "Fake 1000 from splink demos.  "
             "Records are 250 simulated people, "
-            "with different numbers of duplicates, labelled.",
+            "with different numbers of duplicates, labelled."
         ),
     ),
     _DataSetMetaData(
@@ -48,7 +48,7 @@ _datasets = [
         "Fake 20000 from splink demos",
     ),
 ]
-_cache_dir = DATASETDIR / "__splinkdata_cache__"
+_cache_dir = _DATASETDIR / "__splinkdata_cache__"
 
 
 class _SplinkDataSetsMeta(type):
@@ -94,9 +94,6 @@ class _SplinkDataSetsMeta(type):
                 print(f"downloading: {url}")
                 urlretrieve(url, file_loc, reporthook=cls.progress)
                 print("")
-            # only for checking
-            else:
-                print("cached!")
 
             if data_format == "csv":
                 return pd.read_csv(file_loc)
@@ -128,8 +125,7 @@ class _SplinkDataUtils:
         return filename.split(".")[0]
 
     def list_downloaded_datasets(self):
-        """Return a list of datasets that have already been pre-downloaded
-        """
+        """Return a list of datasets that have already been pre-downloaded"""
         return [self._trim_suffix(f) for f in self._list_downloaded_data_files()]
 
     def list_all_datasets(self):
@@ -139,8 +135,7 @@ class _SplinkDataUtils:
         return [d.dataset_name for d in _datasets]
 
     def show_downloaded_data(self):
-        """Print a list of datasets that have already been pre-downloaded
-        """
+        """Print a list of datasets that have already been pre-downloaded"""
         print(
             "Datasets already downloaded and available:\n"
             + ",\n".join(self.list_downloaded_datasets())
@@ -150,7 +145,8 @@ class _SplinkDataUtils:
         """Delete any pre-downloaded data stored locally.
 
         Args:
-            datasets (list): A list of dataset names (without any file suffix) to delete.
+            datasets (list): A list of dataset names (without any file suffix)
+                to delete.
                 If `None`, all datasets will be deleted. Default `None`
         """
         available_datasets = self.list_all_datasets()
@@ -159,7 +155,8 @@ class _SplinkDataUtils:
         for ds in datasets:
             if ds not in available_datasets:
                 warnings.warn(
-                    f"Dataset '{ds}' not recognised, ignoring"
+                    f"Dataset '{ds}' not recognised, ignoring",
+                    stacklevel=2,
                 )
         for f in self._list_downloaded_data_files():
             if self._trim_suffix(f) in datasets:
@@ -170,5 +167,6 @@ class _SplinkDataSets(metaclass=_SplinkDataSetsMeta, datasets=_datasets):
     pass
 
 
+# these two singleton objects are the only user-facing portion:
 splink_datasets = _SplinkDataSets()
 splink_dataset_utils = _SplinkDataUtils()
