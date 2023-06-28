@@ -235,7 +235,7 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
         ]
         if percentile_rows == []:
             logger.warning(
-                "Warning: No charts produce for "
+                "Warning: No charts produced for "
                 f"{expression}"
                 " as the column only contains null values."
             )
