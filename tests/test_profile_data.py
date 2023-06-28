@@ -14,6 +14,7 @@ from splink.spark.spark_linker import SparkLinker
 from splink.sqlite.sqlite_linker import SQLiteLinker
 
 from .basic_settings import get_settings_dict
+from splink.profile_data import _get_df_percentiles
 
 
 def generate_raw_profile_dataset(columns_to_profile, linker):
@@ -176,3 +177,20 @@ def test_profile_using_spark(df_spark):
     )
 
     assert len(generate_raw_profile_dataset([["first_name", "blank"]], linker)) == 0
+
+def test_profile_null_columns(caplog):
+
+    df = pd.DataFrame([
+        {"unique_id": 1, "test_1": 1, "test_2": None},
+    ])
+
+    linker = DuckDBLinker(df)
+
+    linker.profile_columns(["test_1", "test_2"])
+
+    captured_logs = caplog.text
+
+    assert "Warning: No charts produced for test_2 as the column only contains null values." in captured_logs
+
+
+
