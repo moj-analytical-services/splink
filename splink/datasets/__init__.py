@@ -1,5 +1,6 @@
 from dataclasses import asdict, dataclass
 from math import floor
+import os
 from pathlib import Path
 from urllib.request import urlretrieve
 
@@ -34,7 +35,11 @@ _datasets = [
     _DataSetMetaData(
         "fake_1000",
         f"{_splink_demo_data_dir}/fake_1000.csv",
-        "Fake 1000 from splink demos",
+        (
+            "Fake 1000 from splink demos.  ",
+            "Records are 250 simulated people, "
+            "with different numbers of duplicates, labelled."
+        )
     ),
     _DataSetMetaData(
         "fake_20000",
@@ -70,14 +75,14 @@ class _SplinkDataSetsMeta(type):
         if prop_done > 1:
             prop_done = 1
         perc = round(prop_done*100)
-        display = f"\tdownload progress: {perc} %\t("
+        display = f"\r  download progress: {perc} %\t("
         deciles_done = floor(prop_done*10)
         for i in range(10):
             if i < deciles_done:
                 display += "="
             else:
                 display += "."
-        display += ")\r"
+        display += ")"
         print(display, end="")
 
     # TODO: do we want description here?
@@ -88,6 +93,7 @@ class _SplinkDataSetsMeta(type):
             if not cls.datafile_exists(file_loc):
                 print(f"downloading: {url}")
                 urlretrieve(url, file_loc, reporthook=cls.progress)
+                print("")
             # only for checking
             else:
                 print("cached!")
@@ -100,6 +106,8 @@ class _SplinkDataSetsMeta(type):
             raise ValueError(
                 f"Error retrieving dataset {dataset_name} - invalid format!"
             )
+        # make the docstring be the description
+        lazyload_data.__doc__ = description
 
         return property(lazyload_data)
 
@@ -108,8 +116,33 @@ class _SplinkDataSetsMeta(type):
         return file_loc.is_file()
 
 
+class _SplinkDataUtils():
+    def __init__(self):
+        pass
+
+    def _list_downloaded_data_files(self):
+        return os.listdir(_cache_dir)
+
+    def _trim_suffix(self, filename):
+        return filename.split(".")[0]
+
+    def list_downloaded_datasets(self):
+        return [self._trim_suffix(f) for f in self._list_downloaded_data_files()]
+
+    def show_downloaded_data(self):
+        print(
+            "Datasets already downloaded and available:\n" +
+            ",\n".join(self.list_downloaded_datasets())
+        )
+
+    def clear_downloaded_data(self, files=None):
+        for f in self._list_downloaded_data_files():
+            os.remove(_cache_dir / f)
+
+
 class _SplinkDataSets(metaclass=_SplinkDataSetsMeta, datasets=_datasets):
     pass
 
 
 splink_data_sets = _SplinkDataSets()
+splink_data_utils = _SplinkDataUtils()
