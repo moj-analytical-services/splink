@@ -29,7 +29,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 4
 
 ---
 
@@ -41,7 +41,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 4
 
 ---
 
@@ -53,7 +53,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 4
 
 ---
 
@@ -65,7 +65,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 4
 
 ---
 
@@ -77,6 +77,6 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 4
 
 ---
