@@ -100,7 +100,7 @@ class percentage_difference_level(AthenaBase, PercentageDifferenceLevelBase):
     pass
 
 
-class datediff_level(AthenaBase, DateDiffLevelBase):
+class datediff_level(AthenaBase, DatediffLevelBase):
     pass
 
 

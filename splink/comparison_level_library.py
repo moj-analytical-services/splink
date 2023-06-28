@@ -1261,7 +1261,8 @@ class DatediffLevelBase(ComparisonLevel):
                                     cast_strings_to_date=True,
                                     date_format='%d/%m/%Y'
                                     )
-             === "Athena"
+                ```
+            === ":simple-amazonaws: Athena"
                 Date Difference comparison level at threshold 1 year
                 ``` python
                 import splink.athena.comparison_level_library as cll

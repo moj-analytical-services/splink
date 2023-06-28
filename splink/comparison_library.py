@@ -1112,7 +1112,7 @@ class DatediffAtThresholdsBase(Comparison):
                                             date_format='%d/%m/%Y'
                                             )
                 ```
-            === "Athena"
+            === "":simple-amazonaws: Athena"
                 Date Difference comparison at thresholds 10 days, 12 months and 15 years
                 ``` python
                 import splink.athena.comparison_library as cl
