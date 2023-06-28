@@ -1,4 +1,5 @@
 import os
+import warnings
 from dataclasses import asdict, dataclass
 from math import floor
 from pathlib import Path
@@ -127,17 +128,42 @@ class _SplinkDataUtils:
         return filename.split(".")[0]
 
     def list_downloaded_datasets(self):
+        """Return a list of datasets that have already been pre-downloaded
+        """
         return [self._trim_suffix(f) for f in self._list_downloaded_data_files()]
 
+    def list_all_datasets(self):
+        """Return a list of all available datasets, regardless of whether
+        or note they have already been pre-downloaded
+        """
+        return [d.dataset_name for d in _datasets]
+
     def show_downloaded_data(self):
+        """Print a list of datasets that have already been pre-downloaded
+        """
         print(
-            "Datasets already downloaded and available:\n" +
-            ",\n".join(self.list_downloaded_datasets())
+            "Datasets already downloaded and available:\n"
+            + ",\n".join(self.list_downloaded_datasets())
         )
 
-    def clear_downloaded_data(self, files=None):
+    def clear_downloaded_data(self, datasets: list = None):
+        """Delete any pre-downloaded data stored locally.
+
+        Args:
+            datasets (list): A list of dataset names (without any file suffix) to delete.
+                If `None`, all datasets will be deleted. Default `None`
+        """
+        available_datasets = self.list_all_datasets()
+        if datasets is None:
+            datasets = available_datasets
+        for ds in datasets:
+            if ds not in available_datasets:
+                warnings.warn(
+                    f"Dataset '{ds}' not recognised, ignoring"
+                )
         for f in self._list_downloaded_data_files():
-            os.remove(_cache_dir / f)
+            if self._trim_suffix(f) in datasets:
+                os.remove(_cache_dir / f)
 
 
 class _SplinkDataSets(metaclass=_SplinkDataSetsMeta, datasets=_datasets):
