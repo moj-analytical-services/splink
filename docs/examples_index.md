@@ -8,6 +8,8 @@ tags:
   - Athena
 ---
 
+# Example Notebooks
+
 This page provides a series of examples to help you get started with splink. You can find the underlying notebooks at the [splink_demos](https://github.com/moj-analytical-services/splink_demos) repo.
 
 You can try these demos live in your web browser using the following link:
@@ -41,6 +43,6 @@ You can try these demos live in your web browser using the following link:
 
 [Deduplication of a small dataset using Pyspark. Entity type is persons.](./demos/example_simple_pyspark.ipynb)
 
-### Athena examples
+### :simple-amazonaws: Athena examples
 
 [Deduplicating 50,000 records of realistic data based on historical persons](./demos/athena_deduplicate_50k_synthetic.ipynb)

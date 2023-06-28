@@ -3,7 +3,7 @@ hide:
   - navigation
 ---
 
-# Getting Satrted
+# Getting Started
 
 ## Install
 Splink supports python 3.7+.
@@ -101,4 +101,6 @@ You can learn more about Splink in the step-by-step [tutorials](./demos/00_Tutor
 
 ## Example Notebooks
 
-You can see end-to-end example of several use cases in the [example notebooks](./examples_index.md)
+You can see end-to-end example of several use cases in the [example notebooks](./examples_index.md), or by clicking the following Binder link:
+
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab)

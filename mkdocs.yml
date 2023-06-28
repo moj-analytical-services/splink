@@ -92,7 +92,7 @@ nav:
       - 6. Visualising predictions: "demos/06_Visualising_predictions.ipynb"
       - 7. Quality assurance: "demos/07_Quality_assurance.ipynb"
   - Examples:
-      - "examples_index.md"
+      - Introduction: "examples_index.md"
       - DuckDB:
         - Deduplicate 50k rows historical persons: "demos/example_deduplicate_50k_synthetic.ipynb"
         - Linking financial transactions: "demos/example_transactions.ipynb"
@@ -108,6 +108,7 @@ nav:
       - Athena:
         - Deduplicate 50k rows historical persons: "demos/athena_deduplicate_50k_synthetic.ipynb"
   - Topic Guides:
+      - Introduction: "topic_guides/topic_guides_index.md"
       - Record Linkage Theory:
         - Why do we need record linkage?: "topic_guides/record_linkage.md"
         - Probabilistic vs Deterministic linkage: "topic_guides/probabilistic_vs_deterministic.md"
@@ -119,6 +120,9 @@ nav:
         - Retrieving and querying Splink results: "topic_guides/querying_splink_results.md"
       - Data Preparation:
         - Feature Engineering: "topic_guides/feature_engineering.md"
+      - Blocking:
+        - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
+        - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
       - Comparing Records:
         - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
         - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
@@ -128,11 +132,10 @@ nav:
           - Phonetic transformations: "topic_guides/phonetic.md"
         - Term-Frequency adjustments: "topic_guides/term-frequency.md"
       - Performance:
-        - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
-        - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
         - Optimising Spark performance: "topic_guides/optimising_spark.md"
         - Salting blocking rules: "topic_guides/salting.md"
   - Documentation:
+      - Introduction: "documentation_index.md"
       - API:
         - Linker API:
             - Full API: "linker.md"
@@ -182,3 +185,10 @@ extra:
   analytics:
     provider: google
     property: G-L6JT8NK528
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/moj-analytical-services/splink
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/splink/
+
+      
