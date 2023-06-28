@@ -16,6 +16,8 @@ _valid_formats = ("csv", "parquet")
 class _DataSetMetaData:
     dataset_name: str
     url: str
+    rows: int
+    unique_entities: int
     description: str = ""
     data_format: str = "csv"
 
@@ -36,6 +38,9 @@ _datasets = [
     _DataSetMetaData(
         "fake_1000",
         f"{_splink_demo_data_dir}/fake_1000.csv",
+        # hard code metadata to avoid needing to download to build docs
+        1000,
+        250,
         (
             "Fake 1000 from splink demos.  "
             "Records are 250 simulated people, "
@@ -45,6 +50,8 @@ _datasets = [
     _DataSetMetaData(
         "fake_20000",
         f"{_splink_demo_data_dir}/fake_20000.csv",
+        20000,
+        5726,
         "Fake 20000 from splink demos",
     ),
 ]
@@ -87,7 +94,8 @@ class _SplinkDataSetsMeta(type):
         print(display, end="")
 
     @classmethod
-    def class_attribute_factory(cls, dataset_name, url, description, data_format):
+    def class_attribute_factory(
+        cls, dataset_name, url, rows, unique_entities, description, data_format):
         def lazyload_data(self):
             file_loc = cls.cache_dir / f"{dataset_name}.{data_format}"
             if not cls.datafile_exists(file_loc):

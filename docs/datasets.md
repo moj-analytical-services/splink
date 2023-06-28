@@ -42,7 +42,7 @@ which also contains information on available datasets, and which have already be
 
 The datasets available are listed below:
 
-{% include-markdown "./includes/generated_files/datasets.md" %}
+{% include-markdown "./includes/generated_files/datasets_table.md" %}
 
 ## `splink_dataset_utils` API
 
