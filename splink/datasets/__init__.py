@@ -47,13 +47,6 @@ _datasets = [
             "with different numbers of duplicates, labelled."
         ),
     ),
-    _DataSetMetaData(
-        "fake_20000",
-        f"{_splink_demo_data_dir}/fake_20000.csv",
-        20000,
-        5726,
-        "Fake 20000 from splink demos",
-    ),
 ]
 _cache_dir = _DATASETDIR / "__splinkdata_cache__"
 
