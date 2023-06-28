@@ -57,7 +57,7 @@ class _SplinkDataSetsMeta(type):
     def __new__(cls, clsname, bases, attrs, datasets):
         cls.cache_dir.mkdir(exist_ok=True)
         attributes = {}
-        repr_text = "splink_data_sets object with datasets:"
+        repr_text = "splink_datasets object with datasets:"
         for dataset_meta in datasets:
             dataset_name = dataset_meta.dataset_name
             description = dataset_meta.description
@@ -170,5 +170,5 @@ class _SplinkDataSets(metaclass=_SplinkDataSetsMeta, datasets=_datasets):
     pass
 
 
-splink_data_sets = _SplinkDataSets()
-splink_data_utils = _SplinkDataUtils()
+splink_datasets = _SplinkDataSets()
+splink_dataset_utils = _SplinkDataUtils()

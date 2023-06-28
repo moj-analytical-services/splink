@@ -1,4 +1,4 @@
-from splink.datasets import splink_data_sets
+from splink.datasets import splink_datasets
 
 
 def test_datasets_basic_link(test_helpers):
@@ -7,7 +7,7 @@ def test_datasets_basic_link(test_helpers):
     helper = test_helpers["duckdb"]
     cl = helper.cl
 
-    df = splink_data_sets.fake_1000
+    df = splink_datasets.fake_1000
     linker = helper.Linker(
         df,
         {
