@@ -153,6 +153,7 @@ nav:
         - Comparisons API:
             - Comparison: "comparison.md"
             - Comparison Level: "comparison_level.md"
+      - In-build datasets: "datasets.md"
       - Settings:
         - Settings Dictionary Reference: "settings_dict_guide.md"
         - Interactive Settings Editor: "settingseditor/editor.md"

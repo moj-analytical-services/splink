@@ -134,7 +134,7 @@ class _SplinkDataUtils:
 
     def list_all_datasets(self):
         """Return a list of all available datasets, regardless of whether
-        or note they have already been pre-downloaded
+        or not they have already been pre-downloaded
         """
         return [d.dataset_name for d in _datasets]
 
