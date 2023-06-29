@@ -138,7 +138,6 @@ def test_m_u_charts():
         fix_probability_two_random_records_match=True,
     )
 
-    print(linker._settings_obj.as_dict())
     assert linker._settings_obj.comparisons[1].comparison_levels[1].u_probability == 0.0
 
     linker.match_weights_chart()
@@ -170,7 +169,6 @@ def test_parameter_estimate_charts():
         fix_probability_two_random_records_match=True,
     )
 
-    print(linker._settings_obj.as_dict())
     exact_gender_m_estimates = [
         prob["probability"]
         for prob in linker._settings_obj.comparisons[0]

@@ -105,7 +105,7 @@ class DateComparisonBase(Comparison):
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Basic Date Comparison
                 ``` python
                 import splink.duckdb.comparison_template_library as ctl
@@ -129,7 +129,7 @@ class DateComparisonBase(Comparison):
                                     date_format='%d/%m/%Y',
                                     invalid_dates_as_null=True)
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Basic Date Comparison
                 ``` python
                 import splink.spark.comparison_template_library as ctl
@@ -389,7 +389,7 @@ class NameComparisonBase(Comparison):
 
         Examples:
 
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Basic Name Comparison
                 ``` python
                 import splink.duckdb.comparison_template_library as ctl
@@ -407,7 +407,7 @@ class NameComparisonBase(Comparison):
                                     jaccard_thresholds=[1]
                                     )
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Basic Name Comparison
                 ``` python
                 import splink.spark.comparison_template_library as ctl
@@ -423,6 +423,23 @@ class NameComparisonBase(Comparison):
                                     damerau_levenshtein_thresholds=[],
                                     jaro_winkler_thresholds=[],
                                     jaccard_thresholds=[1]
+                                    )
+                ```
+            === ":simple-sqlite: SQLite"
+                Basic Name Comparison
+                ``` python
+                import splink.sqlite.comparison_template_library as ctl
+                ctl.name_comparison("name")
+                ```
+                Bespoke Name Comparison
+                ``` python
+                import splink.sqlite.comparison_template_library as ctl
+                ctl.name_comparison("name",
+                                    phonetic_col_name = "name_dm",
+                                    term_frequency_adjustments = True,
+                                    levenshtein_thresholds=[2],
+                                    damerau_levenshtein_thresholds=[],
+                                    jaro_winkler_thresholds=[0.8],
                                     )
                 ```
 
@@ -749,7 +766,7 @@ class ForenameSurnameComparisonBase(Comparison):
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Basic Forename Surname Comparison
                 ```py
                 import splink.duckdb.comparison_template_library as ctl
@@ -771,7 +788,7 @@ class ForenameSurnameComparisonBase(Comparison):
                         jaccard_thresholds=[1],
                     )
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Basic Forename Surname Comparison
                 ```py
                 import splink.spark.comparison_template_library as ctl
@@ -791,6 +808,27 @@ class ForenameSurnameComparisonBase(Comparison):
                         levenshtein_thresholds=[2],
                         jaro_winkler_thresholds=[],
                         jaccard_thresholds=[1],
+                    )
+                ```
+            === ":simple-sqlite: SQLite"
+                Basic Forename Surname Comparison
+                ```py
+                import splink.sqlite.comparison_template_library as ctl
+                ctl.forename_surname_comparison("first_name", "surname)
+                ```
+
+                Bespoke Forename Surname Comparison
+                ```py
+                import splink.sqlite.comparison_template_library as ctl
+                ctl.forename_surname_comparison(
+                        "forename",
+                        "surname",
+                        term_frequency_adjustments=True,
+                        tf_adjustment_col_forename_and_surname="full_name",
+                        phonetic_forename_col_name="forename_dm",
+                        phonetic_surname_col_name="surname_dm",
+                        levenshtein_thresholds=[2],
+                        jaro_winkler_thresholds=[0.8],
                     )
                 ```
 
@@ -1179,7 +1217,7 @@ class PostcodeComparisonBase(Comparison):
                 the 'everything else' level. Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Basic Postcode Comparison
                 ``` python
                 import splink.duckdb.comparison_template_library as ctl
@@ -1196,7 +1234,7 @@ class PostcodeComparisonBase(Comparison):
                                     km_thresholds=[10, 100]
                                     )
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Basic Postcode Comparison
                 ``` python
                 import splink.spark.comparison_template_library as ctl
@@ -1213,7 +1251,7 @@ class PostcodeComparisonBase(Comparison):
                                     km_thresholds=[10, 100]
                                     )
                 ```
-            === "Athena"
+            === ":simple-amazonaws: Athena"
                 Basic Postcode Comparison
                 ``` python
                 import splink.athena.comparison_template_library as ctl
@@ -1440,7 +1478,7 @@ class EmailComparisonBase(Comparison):
                 the 'everything else' level. Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Basic email Comparison
                 ``` python
                 import splink.duckdb.duckdb_comparison_template_library as ctl
@@ -1457,7 +1495,7 @@ class EmailComparisonBase(Comparison):
                                     include_domain_match_level = True,
                                     )
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Basic email Comparison
                 ``` python
                 import splink.spark.spark_comparison_template_library as ctl

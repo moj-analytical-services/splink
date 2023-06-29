@@ -59,7 +59,7 @@ class PostgresDataFrame(SplinkDataFrame):
                 " postgres table that exists in the provided db."
             )
 
-    def drop_table_from_database(self, force_non_splink_table=False):
+    def _drop_table_from_database(self, force_non_splink_table=False):
         self._check_drop_table_created_by_splink(force_non_splink_table)
         self.linker._delete_table_from_database(self.physical_name)
 
@@ -72,7 +72,7 @@ class PostgresDataFrame(SplinkDataFrame):
             sql += f" LIMIT {limit}"
         sql += ";"
         res = self.linker._run_sql_execution(sql).mappings().all()
-        return res
+        return [dict(r) for r in res]
 
 
 class PostgresLinker(Linker):

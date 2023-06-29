@@ -149,10 +149,7 @@ class Settings:
 
     @property
     def _source_dataset_column_name_is_required(self):
-        return self._link_type not in [
-            "dedupe_only",
-            "link_only_find_matches_to_new_records",
-        ]
+        return self._link_type not in ["dedupe_only"]
 
     @property
     def _source_dataset_input_column(self):

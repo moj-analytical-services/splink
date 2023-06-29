@@ -1,4 +1,13 @@
-def unlinkables_data(linker):
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+# https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
+if TYPE_CHECKING:
+    from .linker import Linker
+
+
+def unlinkables_data(linker: Linker):
     """Generate data displaying the proportion of records that are "unlinkable"
     for a given splink score threshold and model parameters. These are records that,
     even when compared with themselves, do not contain enough information to confirm
@@ -38,8 +47,8 @@ def unlinkables_data(linker):
         where match_probability < 1
     """
     linker._enqueue_sql(sql, "__splink__df_unlinkables_proportions_cumulative")
-    data = linker._execute_sql_pipeline(materialise_as_hash=False, use_cache=False)
+    data = linker._execute_sql_pipeline(use_cache=False)
 
     unlinkables_dict = data.as_record_dict()
-
+    data.drop_table_from_database_and_remove_from_cache()
     return unlinkables_dict

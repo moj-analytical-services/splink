@@ -28,7 +28,7 @@ Note however, that not all comparison functions are available in all backends.
 There are tables detailing the available functions for each backend on
 the [comparison library API page](../comparison_library.html) and the [comparison level library API page](../comparison_level_library.html).
 
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
 
     ```python
     from splink.duckdb.linker import DuckDBLinker
@@ -38,7 +38,7 @@ the [comparison library API page](../comparison_library.html) and the [compariso
     linker = DuckDBLinker(your_args)
     ```
 
-=== "Spark"
+=== ":simple-apachespark: Spark"
 
     ```python
     from splink.spark.linker import SparkLinker
@@ -48,7 +48,7 @@ the [comparison library API page](../comparison_library.html) and the [compariso
     linker = SparkLinker(your_args)
     ```
 
-=== "AWS Athena"
+=== ":simple-amazonaws: Athena"
 
     ```python
     from splink.athena.linker import AthenaLinker
@@ -58,7 +58,7 @@ the [comparison library API page](../comparison_library.html) and the [compariso
     linker = AthenaLinker(your_args)
     ```
 
-=== "SQLite"
+=== ":simple-sqlite: SQLite"
 
     ```python
     from splink.sqlite.linker import SQLiteLinker
@@ -69,14 +69,33 @@ the [comparison library API page](../comparison_library.html) and the [compariso
 
     ```
 
-=== "PostgreSQL"
+=== ":simple-postgresql: PostgreSql"
 
     ```python
-    from splink.postgres.postgres_linker import PostgresLinker
-    import splink.postgres.postgres_comparison_library as cl
-    import splink.postgres.postgres_comparison_level_library as cll
+    from splink.postgres.linker import PostgresLinker
+    import splink.postgres.comparison_library as cl
+    import splink.postgres.comparison_level_library as cll
 
     linker = PostgresLinker(your_args)
 
     ```
 
+## Information for specific backends
+
+### :simple-sqlite: SQLite
+
+[**SQLite**](https://www.sqlite.org/index.html) does not have native support for [fuzzy string-matching](./comparators.html) functions.
+However, some are available for Splink users as python [user-defined functions (UDFs)](../dev_guides/udfs.html#sqlite):
+
+* [`levenshtein`](../comparison_level_library.html#splink.comparison_level_library.LevenshteinLevelBase)
+* [`damerau_levenshtein`](../comparison_level_library.html#splink.comparison_level_library.DamerauLevenshteinLevelBase)
+* [`jaro`](../comparison_level_library.html#splink.comparison_level_libraryJaroLevelBase)
+* [`jaro_winkler`](../comparison_level_library.html#splink.comparison_level_library.JaroWinklerLevelBase)
+
+However, there are a couple of points to note:
+
+* These functions are implemented using the [rapidfuzz](https://maxbachmann.github.io/RapidFuzz/) package, which must be installed if you wish to make use of them, via e.g. `pip install rapidfuzz`. If you do not wish to do so you can disable the use of these functions when creating your linker:
+```py
+linker = SQLiteLinker(df, settings, ..., register_udfs=False)
+```
+* As these functions are implemented in python they will be considerably slower than any native-SQL comparisons. If you find that your model-training or predictions are taking a large time to run, you may wish to consider instead switching to DuckDB (or some other backend).

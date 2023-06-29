@@ -23,6 +23,8 @@ class SplinkDataFrame:
         self.physical_name = physical_name
         self.linker = linker
         self._target_schema = "splink"
+        self.created_by_splink = False
+        self.sql_used_to_create = None
 
     @property
     def columns(self):
@@ -41,7 +43,8 @@ class SplinkDataFrame:
         return self.templated_name == self.physical_name
 
     def _check_drop_table_created_by_splink(self, force_non_splink_table=False):
-        if not self.physical_name.startswith("__splink__"):
+
+        if not self.created_by_splink:
             if not force_non_splink_table:
                 raise ValueError(
                     f"You've asked to drop table {self.physical_name} from your "
@@ -54,13 +57,19 @@ class SplinkDataFrame:
             f"physical name {self.physical_name}"
         )
 
-    def drop_table_from_database(self, force_non_splink_table=False):
+    def _drop_table_from_database(self, force_non_splink_table=False):
         raise NotImplementedError(
-            "Drop table from database not implemented for this linker"
+            "_drop_table_from_database from database not " "implemented for this linker"
         )
 
+    def drop_table_from_database_and_remove_from_cache(
+        self, force_non_splink_table=False
+    ):
+        self._drop_table_from_database(force_non_splink_table=force_non_splink_table)
+        self.linker._remove_splinkdataframe_from_cache(self)
+
     def as_record_dict(self, limit=None):
-        pass
+        raise NotImplementedError("as_record_dict not implemented for this linker")
 
     def as_pandas_dataframe(self, limit=None):
         """Return the dataframe as a pandas dataframe.

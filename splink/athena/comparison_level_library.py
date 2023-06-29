@@ -6,6 +6,7 @@ from ..comparison_level_composition import (  # noqa: F401
 from .athena_helpers.athena_comparison_imports import (  # noqa: F401
     array_intersect_level,
     columns_reversed_level,
+    datediff_level,
     distance_function_level,
     distance_in_km_level,
     else_level,

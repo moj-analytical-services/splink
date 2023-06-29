@@ -152,14 +152,7 @@ class SQLiteTestHelper(TestHelper):
     _frame_counter = 0
 
     def __init__(self):
-        from rapidfuzz.distance.Levenshtein import distance
-
-        def lev_wrap(str_l, str_r):
-            return distance(str(str_l), str(str_r))
-
-        con = sqlite3.connect(":memory:")
-        con.create_function("levenshtein", 2, lev_wrap)
-        self.con = con
+        self.con = sqlite3.connect(":memory:")
         self._frame_counter = 0
 
     @property

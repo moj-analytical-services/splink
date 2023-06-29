@@ -34,7 +34,6 @@ def test_splink_2_predict_spark(df_spark):
     linker = SparkLinker(df_spark, settings_dict)
 
     df_e = linker.predict().as_pandas_dataframe()
-    print(len(df_e))
     f1 = df_e["unique_id_l"] == "479"
     f2 = df_e["unique_id_r"] == "481"
     actual_record = df_e[f1 & f2]
@@ -182,8 +181,6 @@ def test_lambda():
     linker = DuckDBLinker(df, settings_dict)
 
     ma = linker.predict().as_pandas_dataframe()
-    print(len(ma))
-
     f1 = ma["unique_id_l"] == 924
     f2 = ma["unique_id_r"] == 925
     ma[f1 & f2]

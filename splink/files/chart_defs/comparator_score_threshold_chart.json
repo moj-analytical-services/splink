@@ -1,13 +1,15 @@
 {
     "config": {
         "view": {
-            "continuousWidth": 400,
-            "continuousHeight": 300
+            "discreteWidth": 500,
+            "discreteHeight": 300
         }
     },
     "layer": [
         {
-            "mark": "rect",
+            "mark": {
+                "type": "rect"
+            },
             "encoding": {
                 "color": {
                     "field": "threshold_match",
@@ -28,9 +30,7 @@
                     "type": "ordinal"
                 }
             },
-            "height": 300,
-            "title": [],
-            "width": 500
+            "title": []
         },
         {
             "mark": {
@@ -57,15 +57,13 @@
                     "field": "strings_to_compare",
                     "type": "ordinal"
                 }
-            },
-            "height": 300,
-            "width": 500
+            }
         }
     ],
     "data": {
         "name": "data-with-thresholds"
     },
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.17.0.json",
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
     "datasets": {
         "data-with-thresholds": []
     }

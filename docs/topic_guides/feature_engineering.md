@@ -28,21 +28,21 @@ See [image source](https://ideal-postcodes.co.uk/guides/uk-postcode-format) for 
 Splink already includes a pre-built [postcode comparison template](../comparison_template_library.md##splink.comparison_template_library.PostcodeComparisonBase) which does this for you, generating by default a comparison with levels for an exact match on full postcode, sector, district and area in turn. These individual postcode components are engineered under-the-hood using the `regex_extract` argument (see below and [comparison_templates.ipynb](comparison_templates.ipynb) for more details).
 
 Code examples to use the comparison template:
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```python
     import splink.duckdb.comparison_template_library as ctl
 
     pc_comparison = ctl.postcode_comparison("postcode")
     print(pc_comparison.human_readable_description)
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```python
     import splink.spark.comparison_template_library as ctl
 
     pc_comparison = ctl.postcode_comparison("postcode")
     print(pc_comparison.human_readable_description)
     ```
-=== "Athena"
+=== ":simple-amazonaws: Athena"
     ```python
     import splink.athena.comparison_template_library as ctl
 
@@ -78,7 +78,7 @@ Note that the 'Exact match Postcode District' level also captures matches on sub
 
 However, performing comparisons based on substrings alone doesn't always give the best sense of whether two postcodes are close together since locations which are geographically close can be in different postcode regions e.g. London postcodes starting 'N' vs 'SW'.
 
-Fortunately, Splink includes functions [cll.distance_in_km_level()](../comparison_level_library.md#splink.comparison_level_library.DistanceFunctionLevelBase) and [cl.distance_in_km_at_thresholds()](../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsComparisonBase) to calculate the physical distance between two sets of latitude and longitude coordinates.
+Fortunately, Splink includes functions [cll.distance_in_km_level()](../comparison_level_library.md#splink.comparison_level_library.DistanceFunctionLevelBase) and [cl.distance_in_km_at_thresholds()](../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsBase) to calculate the physical distance between two sets of latitude and longitude coordinates.
 Users have the option to include `cll.distance_in_km_level()` as additional levels in the `postcode_comparison()` template by supplying `lat_col`, `long_col` and `km_thresholds` arguments. Doing so can help to improve results. Latitude and longitude coordinates can be derived from a postcode column as described in the example below.
 
 ### Example
@@ -148,7 +148,7 @@ df_with_coordinates.head()
 
 Now that coordinates have been added, a more detailed postcode comparison can be produced using the `postcode_comparison` template:
 
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```python
     import splink.duckdb.comparison_template_library as ctl
 
@@ -160,7 +160,7 @@ Now that coordinates have been added, a more detailed postcode comparison can be
     )
     print(pc_comparison.human_readable_description)
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```python
     import splink.spark.comparison_template_library as ctl
 
@@ -172,7 +172,7 @@ Now that coordinates have been added, a more detailed postcode comparison can be
     )
     print(pc_comparison.human_readable_description)
     ```
-=== "Athena"
+=== ":simple-amazonaws: Athena"
     ```python
     import splink.athena.comparison_template_library as ctl
 
@@ -304,7 +304,7 @@ Now that coordinates have been added, a more detailed postcode comparison can be
 
 or by using `cll.distance_in_km_level()` in conjunction with other comparison levels:
 
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```python
     import splink.duckdb.comparison_level_library as cll
 
@@ -321,7 +321,7 @@ or by using `cll.distance_in_km_level()` in conjunction with other comparison le
         ],
     }
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```python
     import splink.spark.comparison_level_library as cll
 
@@ -338,7 +338,7 @@ or by using `cll.distance_in_km_level()` in conjunction with other comparison le
         ],
     }
     ```
-=== "Athena"
+=== ":simple-amazonaws: Athena"
     ```python
     import splink.athena.comparison_level_library as cll
 
@@ -401,7 +401,7 @@ Note: [Soundex](phonetic.md#soundex) and [Metaphone](phonetic.md#metaphone) are 
 
 Now that the dmetaphone columns have been added, they can be used within comparisons. For example, using the [name_comparison](../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons).
 
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```python
     import splink.duckdb.comparison_template_library as ctl
 
@@ -410,7 +410,7 @@ Now that the dmetaphone columns have been added, they can be used within compari
                             phonetic_col_name = "first_name_dm")
     print(first_name_comparison.human_readable_description)
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```python
     import splink.spark.comparison_template_library as ctl
 
@@ -466,7 +466,7 @@ df.head()
 
 Now that the `full_name` column has been added, it can be used within comparisons. For example, using the [forenname_surname_comparison](../comparison_template_library.md#splink.comparison_template_library.ForenameSurnameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons).
 
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```python
     import splink.duckdb.comparison_template_library as ctl
 
@@ -478,7 +478,7 @@ Now that the `full_name` column has been added, it can be used within comparison
     )
     print(full_name_comparison.human_readable_description)
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```python
     import splink.spark.comparison_template_library as ctl
 

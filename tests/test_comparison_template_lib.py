@@ -113,7 +113,6 @@ def test_datediff_levels(spark, ctl, Linker, test_gamma_assert):
 
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
-        print(f"gamma={gamma} and gamma_lookup={expected_size}")
         assert sum(linker_output["gamma_dob"] == gamma) == expected_size
 
     # Check individual IDs are assigned to the correct gamma values
@@ -249,8 +248,6 @@ def test_name_comparison_levels(spark, ctl, Linker):
 
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
-        print(f"gamma={gamma} and gamma_lookup={expected_size}")
-
         assert (
             sum(linker_output["gamma_custom_first_name_first_name_metaphone"] == gamma)
             == expected_size
@@ -269,8 +266,6 @@ def test_name_comparison_levels(spark, ctl, Linker):
 
     for gamma, id_pairs in size_gamma_lookup.items():
         for left, right in id_pairs:
-            print(f"Checking IDs: {left}, {right}")
-
             assert (
                 linker_output.loc[
                     (linker_output.unique_id_l == left)
@@ -371,7 +366,6 @@ def test_forename_surname_comparison_levels(spark, ctl, Linker):
 
     # Check gamma sizes are as expected
     for gamma, expected_size in size_gamma_lookup.items():
-        print(f"gamma={gamma} and gamma_lookup={expected_size}")
         gamma_matches = linker_output.filter(like="gamma_custom") == gamma
         gamma_matches_size = gamma_matches.sum().values[0]
         assert gamma_matches_size == expected_size
@@ -387,11 +381,8 @@ def test_forename_surname_comparison_levels(spark, ctl, Linker):
         1: [(1, 4), (4, 6)],
         0: [(3, 4), (6, 7)],
     }
-    print(linker_output)
     for gamma, id_pairs in size_gamma_lookup.items():
         for left, right in id_pairs:
-            print(f"Checking IDs: {left}, {right}")
-
             assert (
                 linker_output.loc[
                     (linker_output.unique_id_l == left)
@@ -542,8 +533,6 @@ def test_email_comparison_levels(spark, ctl, Linker, test_gamma_assert):
 
     linker = Linker(df, settings)
     linker_output = linker.predict().as_pandas_dataframe()
-
-    print(linker_output)
 
     # Check individual IDs are assigned to the correct gamma values
     # Dict key: {gamma_level: tuple of ID pairs}

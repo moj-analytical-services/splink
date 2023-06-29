@@ -76,19 +76,15 @@ def test_array_comparisons(test_helpers, dialect):
 
     for size, id_comb in intersection_size_ids.items():
         gamma_val = size_gamma_lookup[size]
-        print(f"Size {size}")
-        print(
-            postcode_comparison._get_comparison_level_by_comparison_vector_value(
-                gamma_val
-            ).as_dict()
-        )
+        postcode_comparison._get_comparison_level_by_comparison_vector_value(
+            gamma_val
+        ).as_dict()
         for id_pair in id_comb:
             row = dict(
                 df_e.query(
                     "unique_id_l == {} and unique_id_r == {}".format(*id_pair)
                 ).iloc[0]
             )
-            print(id_pair)
             assert row["gamma_postcode"] == gamma_val
 
     # and again but with coarser levels
@@ -113,19 +109,15 @@ def test_array_comparisons(test_helpers, dialect):
 
     for size, id_comb in intersection_size_ids.items():
         gamma_val = size_gamma_lookup[size]
-        print(f"Size {size}")
-        print(
-            postcode_comparison._get_comparison_level_by_comparison_vector_value(
-                gamma_val
-            ).as_dict()
-        )
+        postcode_comparison._get_comparison_level_by_comparison_vector_value(
+            gamma_val
+        ).as_dict()
         for id_pair in id_comb:
             row = dict(
                 df_e.query(
                     "unique_id_l == {} and unique_id_r == {}".format(*id_pair)
                 ).iloc[0]
             )
-            print(id_pair)
             assert row["gamma_postcode"] == gamma_val
 
     # check we get an error if we try to pass -ve sizes

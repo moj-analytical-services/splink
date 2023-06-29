@@ -1,5 +1,5 @@
 {
-  "$schema": "https://vega.github.io/schema/vega-lite/v5.2.0.json",
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
   "height": 450,
   "resolve": { "axis": { "y": "independent" } },
   "width": { "step": 75 },
@@ -14,8 +14,7 @@
         "min": 0,
         "max": 10,
         "step": 1
-      },
-      "description": "Filter by the interation number"
+      }
     }
   ],
   "title": {
@@ -189,7 +188,7 @@
             },
             "x": {
               "type": "nominal",
-              "axis": { "labelAngle": 0, "title": "Column" },
+              "axis": { "labelAngle": -20, "title": "Column" },
               "field": "column_name",
               "sort": { "field": "bar_sort_order", "order": "ascending" }
             },
@@ -216,7 +215,7 @@
             },
             "x": {
               "type": "nominal",
-              "axis": { "labelAngle": 0, "title": "Column" },
+              "axis": { "labelAngle": -20, "title": "Column" },
               "field": "column_name",
               "sort": { "field": "bar_sort_order", "order": "ascending" }
             },
@@ -238,7 +237,7 @@
             },
             "x": {
               "type": "nominal",
-              "axis": { "labelAngle": 0, "title": "Column" },
+              "axis": { "labelAngle": -20, "title": "Column" },
               "field": "column_name",
               "sort": { "field": "bar_sort_order", "order": "ascending" }
             },
@@ -260,7 +259,7 @@
             },
             "x": {
               "type": "nominal",
-              "axis": { "labelAngle": 0, "title": "Column" },
+              "axis": { "labelAngle": -20, "title": "Column" },
               "field": "column_name",
               "sort": { "field": "bar_sort_order", "order": "ascending" }
             },
@@ -280,7 +279,7 @@
       "encoding": {
         "x": {
           "type": "nominal",
-          "axis": { "labelAngle": 0, "title": "Column" },
+          "axis": { "labelAngle": -20, "title": "Column" },
           "field": "column_name",
           "sort": { "field": "bar_sort_order", "order": "ascending" }
         },
