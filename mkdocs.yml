@@ -82,7 +82,7 @@ markdown_extensions:
 nav:
   - Home: "index.md"
   - Getting Started: "getting_started.md"
-  - Tutorials:
+  - Tutorial:
       - Introduction: "demos/00_Tutorial_Introduction.ipynb"
       - 1. Data prep prerequisites: "demos/01_Prerequisites.ipynb"
       - 2. Exploratory analysis: "demos/02_Exploratory_analysis.ipynb"
@@ -144,8 +144,8 @@ nav:
             - Predicting results: "linkerpred.md"
             - Visualisation and quality assurance: "linkerqa.md"
         - Comparisons Library API:
-            - Comparison Library: "comparison_library.md"
             - Comparison Template Library: "comparison_template_library.md"
+            - Comparison Library: "comparison_library.md"
             - Comparison Level Library: "comparison_level_library.md"
             - Comparison Composition: "comparison_level_composition.md"
         - EM Training Session API: "em_training_session.md"
@@ -157,20 +157,21 @@ nav:
         - Settings Dictionary Reference: "settings_dict_guide.md"
         - Interactive Settings Editor: "settingseditor/editor.md"
 
-  - Developers' guides:
+  - Contributing:
+      - Introduction: "dev_guides/dev_guides_index.md"
       - Making Changes to Splink:
         - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
         - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
-        - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
         - Testing: "dev_guides/changing_splink/testing.md"
+        - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
         - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
       - How Splink works:
         - Understanding and debugging Splink: "dev_guides/debug_modes.md"
         - Transpilation using sqlglot: "dev_guides/transpilation.md"
-        - Performance & caching:
+        - Performance and caching:
           - Caching and pipelining: "dev_guides/caching.md"
           - Spark caching: "dev_guides/spark_pipelining_and_caching.md"
-        - Comparisons and comparison levels:
+        - Comparison and comparison level libraries:
           - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
           - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
         - User-Defined Functions: "dev_guides/udfs.md"
@@ -190,5 +191,7 @@ extra:
       link: https://github.com/moj-analytical-services/splink
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/splink/
+    - icon: fontawesome/solid/chevron-right
+      link: https://www.robinlinacre.com/
 
       

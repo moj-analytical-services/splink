@@ -5,25 +5,17 @@ hide:
 ---
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png" alt="Splink Logo" height="150px">
+<img src="https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png" alt="Splink Logo" style="max-width: 500px;">
 </p>
-
-[![pypi](https://img.shields.io/github/v/release/moj-analytical-services/splink?include_prereleases)](https://pypi.org/project/splink/#history)
-[![Downloads](https://pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
-[![Documentation](https://img.shields.io/badge/API-documentation-blue)](https://moj-analytical-services.github.io/splink/)
 
 # Fast, accurate and scalable probabilistic data linkage
 
 Splink is a Python package for probabilistic record linkage (entity resolution) that allows you to deduplicate and link records from datasets without unique identifiers.
 
-## Navigating the Splink Docs
 
-These docs are split into a number of sections:
-1
-2
-3
-4
+[Get Started with Splink](./getting_started.md){ .md-button .md-button--primary } 
 
+<hr>
 
 ## Key Features
 
@@ -58,24 +50,6 @@ Splink performs best with input data containing **multiple** columns that are **
 High correlation occurs when the value of a column is highly constrained (predictable) from the value of another column. For example, a 'city' field is almost perfectly correlated with 'postcode'. Gender is highly correlated with 'first name'. Correlation is particularly problematic if **all** of your input columns are highly correlated.
 
 Splink is not designed for linking a single column containing a 'bag of words'. For example, a table with a single 'company name' column, and no other details.
-
-
-## Installation
-
-Splink supports python 3.7+. To obtain the latest released version of splink you can install from PyPI using pip:
-
-```sh
-pip install splink
-```
-
-or, if you prefer, you can instead install splink using conda:
-
-```sh
-conda install -c conda-forge splink
-```
-
-Should you require a more bare-bones version of Splink **without DuckDB**, please see the following area of the docs:
-> [DuckDBless Splink Installation](https://moj-analytical-services.github.io/splink/installations.html#duckdb-less-installation)
 
 ## Support
 

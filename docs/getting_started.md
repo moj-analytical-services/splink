@@ -48,52 +48,57 @@ conda install -c conda-forge splink
 
 ## Quickstart
 
-The following code demonstrates how to estimate the parameters of a deduplication model, use it to identify duplicate records, and then use clustering to generate an estimated unique person ID.
+To get a basic Splink model up and running, use the following code which demonstrates how to:
 
-For more detailed tutorials, please see [section below](#tutorials).
+1. Estimate the parameters of a deduplication model
+2. Use the parameter estimates to identify duplicate records
+3. Use clustering to generate an estimated unique person ID.
 
-```py
-from splink.duckdb.linker import DuckDBLinker
-import splink.duckdb.comparison_library as cl
-import splink.duckdb.comparison_template_library as ctl
+For more detailed tutorial, please see [section below](#tutorial).
 
-import pandas as pd
+???+ note "Simple Splink Model Example"
+    ```py
+    from splink.duckdb.linker import DuckDBLinker
+    import splink.duckdb.comparison_library as cl
+    import splink.duckdb.comparison_template_library as ctl
 
-df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    import pandas as pd
 
-settings = {
-    "link_type": "dedupe_only",
-    "blocking_rules_to_generate_predictions": [
-        "l.first_name = r.first_name",
-        "l.surname = r.surname",
-    ],
-    "comparisons": [
-        ctl.name_comparison("first_name"),
-        ctl.name_comparison("surname"),
-        ctl.date_comparison("dob", cast_strings_to_date=True),
-        cl.exact_match("city", term_frequency_adjustments=True),
-        ctl.email_comparison("email"),
-    ],
-}
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-linker = DuckDBLinker(df, settings)
-linker.estimate_u_using_random_sampling(max_pairs=1e6)
+    settings = {
+        "link_type": "dedupe_only",
+        "blocking_rules_to_generate_predictions": [
+            "l.first_name = r.first_name",
+            "l.surname = r.surname",
+        ],
+        "comparisons": [
+            ctl.name_comparison("first_name"),
+            ctl.name_comparison("surname"),
+            ctl.date_comparison("dob", cast_strings_to_date=True),
+            cl.exact_match("city", term_frequency_adjustments=True),
+            ctl.email_comparison("email"),
+        ],
+    }
 
-blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+    linker = DuckDBLinker(df, settings)
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
-blocking_rule_for_training = "l.dob = r.dob"
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+    blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
-pairwise_predictions = linker.predict()
+    blocking_rule_for_training = "l.dob = r.dob"
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
-clusters = linker.cluster_pairwise_predictions_at_threshold(pairwise_predictions, 0.95)
-clusters.as_pandas_dataframe(limit=5)
-```
+    pairwise_predictions = linker.predict()
+
+    clusters = linker.cluster_pairwise_predictions_at_threshold(pairwise_predictions, 0.95)
+    clusters.as_pandas_dataframe(limit=5)
+    ```
 
 ## Tutorials
 
-You can learn more about Splink in the step-by-step [tutorials](./demos/00_Tutorial_Introduction.ipynb).
+You can learn more about Splink in the step-by-step [tutorial](./demos/00_Tutorial_Introduction.ipynb).
 
 ## Videos
 
