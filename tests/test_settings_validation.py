@@ -1,4 +1,5 @@
 from copy import deepcopy
+
 import pandas as pd
 
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
@@ -7,6 +8,7 @@ from splink.settings_validator import (
     InvalidCols,
     InvalidSettingsLogger,
 )
+
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
