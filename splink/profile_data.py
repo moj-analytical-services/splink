@@ -298,7 +298,7 @@ def profile_columns(
 
         print(expression)
         print(_group_name(expression))
-        if distribution_plots!=None:
+        if distribution_plots:
             percentile_rows = [
                 p for p in percentile_rows_all if p["group_name"] == _group_name(expression)
             ]
