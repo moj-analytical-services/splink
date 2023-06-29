@@ -333,7 +333,6 @@ def profile_columns(
             col_name=expression,
         )
 
-
         inner_charts.append(inner_chart)
 
     outer_spec = deepcopy(_outer_chart_spec_freq)
