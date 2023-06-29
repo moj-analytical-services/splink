@@ -1,16 +1,14 @@
 from copy import deepcopy
-
 import pandas as pd
 
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.linker import DuckDBLinker
 from splink.settings_validator import (
     InvalidCols,
     InvalidSettingsLogger,
 )
-from tests.basic_settings import get_settings_dict
-
-df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+from .basic_settings import get_settings_dict
+from .decorator import mark_with_dialects_excluding
 
 
 def alter_settings(linker, new_settings):
@@ -74,12 +72,18 @@ def verify_complicated_settings_objects(invalid, expected):
             )
 
 
-def test_invalid_cols_detected():
+@mark_with_dialects_excluding()
+def test_invalid_cols_detected(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
     # Create random settings to check outputs with
     settings = get_settings_dict()
-    linker = DuckDBLinker(
+    linker = Linker(
         df,
         settings,
+        **helper.extra_linker_args(),
     )
     settings_logger = InvalidSettingsLogger(linker)
 
@@ -91,12 +95,18 @@ def test_invalid_cols_detected():
     assert settings_logger.invalid_cols_detected is True
 
 
-def test_columns_from_settings():
+@mark_with_dialects_excluding()
+def test_columns_from_settings(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
     # Create random settings to check outputs with
     settings = get_settings_dict()
-    linker = DuckDBLinker(
+    linker = Linker(
         df,
         settings,
+        **helper.extra_linker_args(),
     )
     settings_logger = InvalidSettingsLogger(linker)
 
@@ -303,6 +313,8 @@ def test_columns_from_settings():
 
 
 def test_settings_validation_on_2_to_3_converter():
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
     # Trial with settings converter
     sql_custom_name = """
     case
