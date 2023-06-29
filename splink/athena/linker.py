@@ -41,7 +41,7 @@ class AthenaDataFrame(SplinkDataFrame):
     def validate(self):
         pass
 
-    def drop_table_from_database(self, force_non_splink_table=False):
+    def _drop_table_from_database(self, force_non_splink_table=False):
         # Check folder and table set for deletion
         self._check_drop_folder_created_by_splink(force_non_splink_table)
         self._check_drop_table_created_by_splink(force_non_splink_table)
@@ -159,7 +159,7 @@ class AthenaLinker(Linker):
             import awswrangler as wr
             wr.catalog.create_database("splink_awswrangler_test", exist_ok=True)
             >>>
-            from splink.athena.athena_linker import AthenaLinker
+            from splink.athena.linker import AthenaLinker
             import boto3
             # Create a session - please see the boto3 documentation for more info
             my_session = boto3.Session(region_name="eu-west-1")
@@ -177,7 +177,7 @@ class AthenaLinker(Linker):
             import awswrangler as wr
             wr.catalog.create_database("splink_awswrangler_test2", exist_ok=True)
             >>>
-            from splink.athena.athena_linker import AthenaLinker
+            from splink.athena.linker import AthenaLinker
             import boto3
             my_session = boto3.Session(region_name="eu-west-1")
             >>>
@@ -301,7 +301,7 @@ class AthenaLinker(Linker):
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
         self._delete_table_from_database(physical_name)
-        sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
+        sql = sqlglot_transform_sql(sql, cast_concat_as_varchar, dialect="presto")
         sql = sql.replace("FLOAT", "double").replace("float", "double")
 
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))
@@ -344,7 +344,7 @@ class AthenaLinker(Linker):
         # Errors if an invalid data type is passed
         self.register_data_on_s3(input, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size, seed=None):
+    def _random_sample_sql(self, proportion, sample_size, seed=None, table=None, unique_id=None):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
