@@ -83,6 +83,7 @@ class PostgresLinker(Linker):
         engine: Engine = None,
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
+        validate_settings: bool = True,
         schema="splink",
     ):
         self._sql_dialect_ = "postgres"
@@ -113,6 +114,7 @@ class PostgresLinker(Linker):
             accepted_df_dtypes,
             set_up_basic_logging,
             input_table_aliases=input_aliases,
+            validate_settings=validate_settings,
         )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
