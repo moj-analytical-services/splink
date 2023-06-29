@@ -34,8 +34,8 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.duckdb_comparison_library as cl
-from splink.duckdb.duckdb_linker import DuckDBLinker, DuckDBLinkerDataFrame
+import splink.duckdb.comparison_library as cl
+from splink.duckdb.linker import DuckDBLinker, DuckDBLinkerDataFrame
 from splink.em_training_session import EMTrainingSession
 from splink.predict import predict_from_comparison_vectors_sqls
 

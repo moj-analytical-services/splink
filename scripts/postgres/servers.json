@@ -1,0 +1,13 @@
+{
+    "Servers": {
+        "1": {
+            "Name": "Splink Server",
+            "Group": "Servers",
+            "Host": "postgres-splink",
+            "Port": 5432,
+            "Username": "splinkognito",
+            "SSLMode": "prefer",
+            "MaintenanceDB": "postgres"
+        }
+    }
+}

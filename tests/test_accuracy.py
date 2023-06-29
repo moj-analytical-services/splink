@@ -5,8 +5,8 @@ from splink.accuracy import (
     predictions_from_sample_of_pairwise_labels_sql,
     truth_space_table_from_labels_with_predictions_sqls,
 )
-from splink.duckdb.duckdb_comparison_library import exact_match
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.comparison_library import exact_match
+from splink.duckdb.linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict
 

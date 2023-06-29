@@ -19,18 +19,18 @@ Once generated, phonetic matches can be used within [comparisons & comparison le
 E.g. For a comparison including a [Double Metaphone](#double-metaphone) phonetic match using the [name_comparison](../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons):
 
 
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```python
-    import splink.duckdb.duckdb_comparison_template_library as ctl
+    import splink.duckdb.comparison_template_library as ctl
 
     first_name_comparison = ctl.name_comparison(
                             "first_name",
                             phonetic_col_name = "first_name_dm")
     print(first_name_comparison.human_readable_description)
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```python
-    import splink.spark.spark_comparison_template_library as ctl
+    import splink.spark.comparison_template_library as ctl
 
     first_name_comparison = ctl.name_comparison(
                             "first_name",

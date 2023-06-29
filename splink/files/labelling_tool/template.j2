@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+
+    <title>Splink Clerical Labelling Tool</title>
+    <meta name="description" content="desc" />
+
+
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600&display=swap">
+
+
+</head>
+
+<body>
+
+    <div id="observablehq-styles"></div>
+    <div id="outer_container">
+
+        <div id="observablehq-styles"></div>
+        <h1>Splink Clerical Labelling Tool</h1>
+        <div id="observablehq-beta_header"></div>
+        <div id="observablehq-blurb"></div>
+        <div id="observablehq-checkboxes"></div>
+{% if show_splink_predictions_in_interface %}
+        <div id="observablehq-show_splink_predictions_in_interface"></div>
+{% endif %}
+        <div id="observablehq-existing_labels_csv"></div>
+        <div id="observablehq-table-interface"></div>
+        <div id="observablehq-dl"></div>
+
+
+{% if view_in_jupyter %}
+        <div id="observablehq-labels_in_textarea"></div>
+{% endif %}
+
+
+    </div>
+
+<script>
+{% if show_splink_predictions_in_interface %}
+        SHOW_SPLINK_PREDICTIONS = true
+{% else %}
+        SHOW_SPLINK_PREDICTIONS = false
+{% endif %}
+</script>
+
+
+{% if pairwise_comparison_data %}
+    <script>
+        pairwise_comparison_data_from_splink = {{ pairwise_comparison_data }};
+    </script>
+{% endif %}
+
+{% if splink_settings_data %}
+    <script>
+        splink_settings_from_splink = {{ splink_settings_data }};
+    </script>
+{% endif %}
+
+<script>
+        {{slt}}
+    </script>
+
+<script type="module">
+
+    new slt.Runtime().module(slt.define, name => {
+
+        if (name === "styles") return new slt.Inspector(document.querySelector("#observablehq-styles"));
+        if (name === "viewof checkboxes") return new slt.Inspector(document.querySelector("#observablehq-checkboxes"));
+
+{% if show_splink_predictions_in_interface %}
+        if (name === "viewof show_splink_predictions_in_interface") return new slt.Inspector(document.querySelector("#observablehq-show_splink_predictions_in_interface"));
+{% endif %}
+        if (name === "viewof table_interface") return new slt.Inspector(document.querySelector("#observablehq-table-interface"));
+        if (name === "viewof existing_labels_csv") return new slt.Inspector(document.querySelector("#observablehq-existing_labels_csv"));
+        if (name === "dl") return new slt.Inspector(document.querySelector("#observablehq-dl"));
+
+        if (name === "blurb") return new slt.Inspector(document.querySelector("#observablehq-blurb"));
+        if (name === "beta_header") return new slt.Inspector(document.querySelector("#observablehq-beta_header"));
+
+{% if view_in_jupyter %}
+        if (name === "labels_in_textarea") return new slt.Inspector(document.querySelector("#observablehq-labels_in_textarea"));
+{% endif %}
+
+
+
+    })
+</script>
+
+
+</body>
+
+</html>
+

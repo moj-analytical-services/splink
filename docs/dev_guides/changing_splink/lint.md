@@ -8,10 +8,10 @@ To quickly run both linters, simply run this bash script. The *-f* flag is calle
 If you simply wish for ruff to print the errors it finds to the console, remove this flag.
 
 ```sh
-source scripts/lint.sh -f  # with the fix flag
+source scripts/lint_and_format.sh -f  # with the fix flag
 ```
 ```sh
-source scripts/lint.sh  # without
+source scripts/lint_and_format.sh  # without
 ```
 
 Alternatively, you can run ruff and black separately from a terminal instance.

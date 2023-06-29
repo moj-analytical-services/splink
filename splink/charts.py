@@ -5,20 +5,9 @@ import pkgutil
 from .waterfall_chart import records_to_waterfall_data
 
 altair_installed = True
+
 try:
-    from altair.vegalite.v4.display import VegaLite
-
-    # Slightly re-write logic to avoid validation
-    # Some splink3 charts do not validate but display fine
-    # When Altair supports Vega Lite v5, this should no longer be a problem
-    # and this logic should be able to be removed
-    class VegaliteNoValidate(VegaLite):
-        def _validate(self):
-            pass
-
-    def vegalite_no_validate(spec):
-        return VegaliteNoValidate(spec)
-
+    import altair as alt
 except ImportError:
     altair_installed = False
 
@@ -45,12 +34,11 @@ def _load_external_libs():
     return loaded
 
 
-def vegalite_or_json(chart_dict, as_dict=False):
+def altair_or_json(chart_dict, as_dict=False):
     if altair_installed:
         if not as_dict:
             try:
-                # Display chart then return its spec
-                return vegalite_no_validate(chart_dict)
+                return alt.Chart.from_dict(chart_dict)
 
             except ModuleNotFoundError:
                 return chart_dict
@@ -101,8 +89,8 @@ def save_offline_chart(
         f.write(template.format(**fmt_dict))
 
     if print_msg:
-        print(f"Chart saved to {filename}")
-        print(iframe_message.format(filename=filename))
+        print(f"Chart saved to {filename}")  # noqa: T201
+        print(iframe_message.format(filename=filename))  # noqa: T201
 
 
 def match_weights_chart(records, as_dict=False):
@@ -115,7 +103,7 @@ def match_weights_chart(records, as_dict=False):
 
     records = [r for r in records if r["comparison_vector_value"] != -1]
     chart["data"]["values"] = records
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def comparison_match_weights_chart(records, as_dict=False):
@@ -130,7 +118,7 @@ def comparison_match_weights_chart(records, as_dict=False):
     chart["title"]["text"] = "Comparison summary"
     records = [r for r in records if r["comparison_vector_value"] != -1]
     chart["data"]["values"] = records
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def m_u_parameters_chart(records, as_dict=False):
@@ -148,7 +136,7 @@ def m_u_parameters_chart(records, as_dict=False):
         and r["comparison_name"] != "probability_two_random_records_match"
     ]
     chart["data"]["values"] = records
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def probability_two_random_records_match_iteration_chart(records, as_dict=False):
@@ -156,7 +144,7 @@ def probability_two_random_records_match_iteration_chart(records, as_dict=False)
     chart = load_chart_definition(chart_path)
 
     chart["data"]["values"] = records
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def match_weights_interactive_history_chart(records, as_dict=False, blocking_rule=None):
@@ -174,7 +162,7 @@ def match_weights_interactive_history_chart(records, as_dict=False, blocking_rul
 
     chart["params"][0]["bind"]["max"] = max_iteration
     chart["params"][0]["value"] = max_iteration
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def m_u_parameters_interactive_history_chart(records, as_dict=False):
@@ -194,7 +182,7 @@ def m_u_parameters_interactive_history_chart(records, as_dict=False):
 
     chart["params"][0]["bind"]["max"] = max_iteration
     chart["params"][0]["value"] = max_iteration
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def waterfall_chart(
@@ -211,7 +199,7 @@ def waterfall_chart(
     if filter_nulls:
         chart["transform"].insert(1, {"filter": "(datum.bayes_factor !== 1.0)"})
 
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def roc_chart(records, width=400, height=400, as_dict=False):
@@ -229,7 +217,7 @@ def roc_chart(records, width=400, height=400, as_dict=False):
     chart["height"] = height
     chart["width"] = width
 
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def precision_recall_chart(records, width=400, height=400, as_dict=False):
@@ -247,7 +235,7 @@ def precision_recall_chart(records, width=400, height=400, as_dict=False):
     chart["height"] = height
     chart["width"] = width
 
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def match_weights_histogram(records, width=500, height=250, as_dict=False):
@@ -259,7 +247,7 @@ def match_weights_histogram(records, width=500, height=250, as_dict=False):
     chart["height"] = height
     chart["width"] = width
 
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def parameter_estimate_comparisons(records, as_dict=False):
@@ -268,7 +256,7 @@ def parameter_estimate_comparisons(records, as_dict=False):
 
     chart["data"]["values"] = records
 
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def missingness_chart(records, as_dict=False):
@@ -282,7 +270,7 @@ def missingness_chart(records, as_dict=False):
     for c in chart["layer"]:
         c["title"] = f"Missingness per column out of {record_count:,.0f} records"
 
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def unlinkables_chart(
@@ -331,7 +319,7 @@ def unlinkables_chart(
     if source_dataset:
         unlinkables_chart_def["title"]["text"] += f" - {source_dataset}"
 
-    return vegalite_or_json(unlinkables_chart_def, as_dict=as_dict)
+    return altair_or_json(unlinkables_chart_def, as_dict=as_dict)
 
 
 def completeness_chart(records, as_dict=False):
@@ -340,7 +328,7 @@ def completeness_chart(records, as_dict=False):
 
     chart["data"]["values"] = records
 
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def cumulative_blocking_rule_comparisons_generated(records, as_dict=False):
@@ -349,7 +337,7 @@ def cumulative_blocking_rule_comparisons_generated(records, as_dict=False):
 
     chart["data"]["values"] = records
 
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def _comparator_score_chart(similarity_records, distance_records, as_dict=False):
@@ -359,7 +347,7 @@ def _comparator_score_chart(similarity_records, distance_records, as_dict=False)
     chart["datasets"]["data-similarity"] = similarity_records
     chart["datasets"]["data-distance"] = distance_records
 
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def _comparator_score_threshold_chart(
@@ -375,7 +363,7 @@ def _comparator_score_threshold_chart(
     )
     chart["datasets"]["data-with-thresholds"] = records
 
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)
 
 
 def _phonetic_match_chart(records, as_dict=False):
@@ -384,4 +372,4 @@ def _phonetic_match_chart(records, as_dict=False):
 
     chart["datasets"]["data-phonetic"] = records
 
-    return vegalite_or_json(chart, as_dict=as_dict)
+    return altair_or_json(chart, as_dict=as_dict)

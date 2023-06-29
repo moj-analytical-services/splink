@@ -8,15 +8,15 @@ tags:
 
 ## Problem Statement
 
-A common shortcoming of the Fellegi-Sunter model is that it doesn’t account for skew in the distributions of linking variables. One of the starkest examples is a binary variable such as gender in the prison population, where male offenders outnumber female offenders by 10:1. 
+A common shortcoming of the Fellegi-Sunter model is that it doesn’t account for skew in the distributions of linking variables. One of the starkest examples is a binary variable such as gender in the prison population, where male offenders outnumber female offenders by 10:1.
 
 ![](../img/term_frequency/gender-distribution.png){width="800"}
 
-#### How does this affect our m and u probabilities? 
+#### How does this affect our m and u probabilities?
 
 - m probability is unaffected - given two records are a match, the gender field should also match with roughly the same probability for males and females
 
-- Given two records are not a match, however, it is far more likely that both records will be male than that they will both be female - u probability is too low for the more common value (male) and too high otherwise. 
+- Given two records are not a match, however, it is far more likely that both records will be male than that they will both be female - u probability is too low for the more common value (male) and too high otherwise.
 
 In this example, one solution might be to create an extra comparison level for matches on gender:
 
@@ -28,9 +28,9 @@ However, this complexity forces us to estimate two m probabilities when one woul
 
 ![](../img/term_frequency/surname-distribution.png){width="800"}
 
-This problem used to be addressed with an ex-post (after the fact) solution - once the linking is done, we have a look at the average match probability for each value in a column to determine which values tend to be stronger indicators of a match. If the average match probability for records pairs that share a surname is 0.2 but the average for the specific surname Smith is 0.1 then we know that the match weight for name should be adjusted downwards for Smiths. 
+This problem used to be addressed with an ex-post (after the fact) solution - once the linking is done, we have a look at the average match probability for each value in a column to determine which values tend to be stronger indicators of a match. If the average match probability for records pairs that share a surname is 0.2 but the average for the specific surname Smith is 0.1 then we know that the match weight for name should be adjusted downwards for Smiths.
 
-The shortcoming of this option is that in practice, the model training is conducted on the assumption that all name matches are equally informative, and all of the underlying probabilities are evaluated accordingly. Ideally, we want to be able to account for term frequencies within the Fellegi-Sunter framework as trained by the EM algorithm. 
+The shortcoming of this option is that in practice, the model training is conducted on the assumption that all name matches are equally informative, and all of the underlying probabilities are evaluated accordingly. Ideally, we want to be able to account for term frequencies within the Fellegi-Sunter framework as trained by the EM algorithm.
 
 ## Toy Example
 
@@ -76,10 +76,10 @@ Depending on how you compose your Splink settings, TF adjustments can be applied
 ### Comparison (template) library functions
 
 ```py
-import splink.duckdb.duckdb_comparison_library as cl
-import splink.duckdb.duckdb_comparison_template_library as ctl
+import splink.duckdb.comparison_library as cl
+import splink.duckdb.comparison_template_library as ctl
 
-sex_comparison = cl.exact_match("sex", 
+sex_comparison = cl.exact_match("sex",
   term_frequency_adjustments = True
 )
 
@@ -89,7 +89,7 @@ name_comparison = cl.distance_function_at_thresholds("name",
   term_frequency_adjustments = True
 )
 
-dob_comparison = ctl.date_comparison("date_of_birth", 
+dob_comparison = ctl.date_comparison("date_of_birth",
   term_frequency_adjustments = True
 )
 ```
@@ -97,7 +97,7 @@ dob_comparison = ctl.date_comparison("date_of_birth",
 ### Comparison level library functions
 
 ```py
-import splink.duckdb.duckdb_comparison_level_library as cll
+import splink.duckdb.comparison_level_library as cll
 
 name_comparison = {
     "output_column_name": "name",
@@ -105,7 +105,7 @@ name_comparison = {
     "comparison_levels": [
         cll.null_level("full_name"),
         cll.exact_match_level("full_name", term_frequency_adjustments = True),
-        cll.columns_reversed_level("first_name", "surname", 
+        cll.columns_reversed_level("first_name", "surname",
           tf_adjustment_column = "surname"
         ),
         cll.else_level(),
@@ -150,7 +150,7 @@ The code examples above show how we can use term frequencies for different colum
 
 ### Multiple columns
 
-Each comparison level can be adjusted on the basis of a specified column. In the case of exact match levels, this is trivial but it allows some partial matches to be reframed as exact matches on a different derived column. 
+Each comparison level can be adjusted on the basis of a specified column. In the case of exact match levels, this is trivial but it allows some partial matches to be reframed as exact matches on a different derived column.
 One example could be **ethnicity**, often provided in codes as a letter (W/M/B/A/O - the ethnic group) and a number. Without TF adjustments, an ethnicity comparison might have 3 levels - exact match, match on ethnic group (`LEFT(ethnicity,1)`), no match. By creating a derived column `ethnic_group = LEFT(ethnicity,1)` we can apply TF adjustments to both levels.
 
 ```py
@@ -186,9 +186,9 @@ name_comparison = {
 
 All of the above discussion of TF adjustments has assumed an exact match on the column in question, but this need not be the case. Where we have a “fuzzy” match between string values, it is generally assumed that there has been some small corruption in the text, for a number of possible reasons. A trivial example could be `"Smith"` vs `"Smith "` which we know to be equivalent if not an exact string match.
 
-In the case of a fuzzy match, we may decide it is desirable to apply TF adjustments for the same reasons as an exact match, but given there are now two distinct sides to the comparison, there are also two different TF adjustments. Building on our assumption that one side is the “correct” or standard value and the other contains some mistake, Splink will simply use the greater of the two term frequencies. There should be more `"Smith"`s than `"Smith "`s, so the former provides the best estimate of the true prevalence of the name Smith in the data. 
+In the case of a fuzzy match, we may decide it is desirable to apply TF adjustments for the same reasons as an exact match, but given there are now two distinct sides to the comparison, there are also two different TF adjustments. Building on our assumption that one side is the “correct” or standard value and the other contains some mistake, Splink will simply use the greater of the two term frequencies. There should be more `"Smith"`s than `"Smith "`s, so the former provides the best estimate of the true prevalence of the name Smith in the data.
 
-In cases where this assumption might not hold and both values are valid and distinct (e.g. `"Alex"` v `"Alexa"`), this behaviour is still desirable. Taking the most common of the two ensures that we err on the side of lowering the match score for a more common name than increasing the score by assuming the less common name.  
+In cases where this assumption might not hold and both values are valid and distinct (e.g. `"Alex"` v `"Alexa"`), this behaviour is still desirable. Taking the most common of the two ensures that we err on the side of lowering the match score for a more common name than increasing the score by assuming the less common name.
 
 TF adjustments will not be applied to any comparison level without explicitly being turned on, but to allow for some middle ground when applying them to fuzzy match column, there is a `tf_adjustment_weight` setting that can down-weight the TF adjustment. A weight of zero is equivalent to turning TF adjustments off, while a weight of 0.5 means the match weights are halved, mitigating their impact:
 
@@ -203,6 +203,6 @@ TF adjustments will not be applied to any comparison level without explicitly be
 
 ### Low-frequency outliers
 
-Another example of where you may wish to limit the impact of TF adjustments is for exceedingly rare values. As defined above, the TF-adjusted match weight, K is inversely proportional to the term frequency, allowing K to become very large in some cases. 
+Another example of where you may wish to limit the impact of TF adjustments is for exceedingly rare values. As defined above, the TF-adjusted match weight, K is inversely proportional to the term frequency, allowing K to become very large in some cases.
 
 Let’s say we have a handful of records with the misspelt first name “Siohban” (rather than “Siobhan”). Fuzzy matches between the two spellings will rightly be adjusted on the basis of the frequency of the correct spelling, but there will be a small number of cases where the misspellings match one another. Given we suspect these values are more likely to be misspellings of more common names, rather than a distinct and very rare name, we can mitigate this effect by imposing a minimum value on the term frequency used (equivalent to the u value). This can be added to your full settings dictionary as in the example above using `"tf_minimum_u_value": 0.001`. This means that for values with a frequency of <1 in 1000, it will be set to 0.001.

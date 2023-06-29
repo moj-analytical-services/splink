@@ -2,8 +2,8 @@ from copy import deepcopy
 
 import pandas as pd
 
-from splink.duckdb.duckdb_comparison_library import exact_match
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.comparison_library import exact_match
+from splink.duckdb.linker import DuckDBLinker
 from tests.basic_settings import get_settings_dict
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")

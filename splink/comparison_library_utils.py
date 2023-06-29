@@ -26,7 +26,7 @@ def comparison_at_thresholds_error_logger(comparison, thresholds):
 
 
 def datediff_error_logger(thresholds, metrics):
-    # Extracted from the DateDiffAtThresholdsComparisonBase class as that was overly
+    # Extracted from the DatediffAtThresholdsBase class as that was overly
     # verbose and failing the lint.
 
     error_logger = []
@@ -71,6 +71,7 @@ def distance_threshold_comparison_levels(
     set_to_lowercase: bool = False,
     higher_is_more_similar: bool = True,
     include_colname_in_charts_label=False,
+    manual_col_name_for_charts_label=None,
     m_probability_or_probabilities_thres: list = None,
 ):
     thresholds = ensure_is_iterable(distance_threshold_or_thresholds)
@@ -104,6 +105,7 @@ def distance_threshold_comparison_levels(
             col_name=col_name,
             distance_threshold=thres,
             include_colname_in_charts_label=include_colname_in_charts_label,
+            manual_col_name_for_charts_label=manual_col_name_for_charts_label,
             regex_extract=regex_extract,
             set_to_lowercase=set_to_lowercase,
             m_probability=m_prob,

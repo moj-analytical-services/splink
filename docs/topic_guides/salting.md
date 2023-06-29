@@ -31,8 +31,8 @@ import logging
 from pyspark.context import SparkContext, SparkConf
 from pyspark.sql import SparkSession
 
-from splink.spark.spark_linker import SparkLinker
-from splink.spark.spark_comparison_library import levenshtein_at_thresholds, exact_match
+from splink.spark.linker import SparkLinker
+from splink.spark.comparison_library import levenshtein_at_thresholds, exact_match
 
 conf = SparkConf()
 conf.set("spark.driver.memory", "12g")

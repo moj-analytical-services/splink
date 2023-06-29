@@ -33,15 +33,15 @@ def and_(
             Defaults to None.
 
     Examples:
-        === "DuckDB"
+        === ":simple-duckdb: DuckDB"
             Simple null level composition with an `AND` clause
             ``` python
-            import splink.duckdb.duckdb_comparison_level_library as cll
+            import splink.duckdb.comparison_level_library as cll
             cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
             Composing a levenshtein level with a custom `contains` level
             ``` python
-            import splink.duckdb.duckdb_comparison_level_library as cll
+            import splink.duckdb.comparison_level_library as cll
             misspelling = cll.levenshtein_level("name", 1)
             contains = {
                 "sql_condition": "(contains(name_l, name_r) OR " \
@@ -57,15 +57,15 @@ def and_(
             >  'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
             >  'label_for_charts': 'Spelling error'
             >}
-        === "Spark"
+        === ":simple-apachespark: Spark"
             Simple null level composition with an `AND` clause
             ``` python
-            import splink.spark.spark_comparison_level_library as cll
+            import splink.spark.comparison_level_library as cll
             cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
             Composing a levenshtein level with a custom `contains` level
             ``` python
-            import splink.spark.spark_comparison_level_library as cll
+            import splink.spark.comparison_level_library as cll
             misspelling = cll.levenshtein_level("name", 1)
             contains = {
                 "sql_condition": "(contains(name_l, name_r) OR " \
@@ -81,15 +81,15 @@ def and_(
             >  'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
             >  'label_for_charts': 'Spelling error'
             >}
-        === "Athena"
+        === ":simple-amazonaws: Athena"
             Simple null level composition with an `AND` clause
             ``` python
-            import splink.athena.athena_comparison_level_library as cll
+            import splink.athena.comparison_level_library as cll
             cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
             Composing a levenshtein level with a custom `contains` level
             ``` python
-            import splink.athena.athena_comparison_level_library as cll
+            import splink.athena.comparison_level_library as cll
             misspelling = cll.levenshtein_level("name", 1)
             contains = {
                 "sql_condition": "(contains(name_l, name_r) OR " \
@@ -105,10 +105,10 @@ def and_(
             >  'AND ((contains(name_l, name_r) OR contains(name_r, name_l)))',
             >  'label_for_charts': 'Spelling error'
             >}
-        === "SQLite"
+        === ":simple-sqlite: SQLite"
             Simple null level composition with an `AND` clause
             ``` python
-            import splink.sqlite.sqlite_comparison_level_library as cll
+            import splink.sqlite.comparison_level_library as cll
             cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
 
@@ -153,15 +153,15 @@ def or_(
             Defaults to None.
 
     Examples:
-        === "DuckDB"
+        === ":simple-duckdb: DuckDB"
             Simple null level composition with an `OR` clause
             ``` python
-            import splink.duckdb.duckdb_comparison_level_library as cll
+            import splink.duckdb.comparison_level_library as cll
             cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
             Composing a levenshtein level with a custom `contains` level
             ``` python
-            import splink.duckdb.duckdb_comparison_level_library as cll
+            import splink.duckdb.comparison_level_library as cll
             misspelling = cll.levenshtein_level("name", 1)
             contains = {
                 "sql_condition": "(contains(name_l, name_r) OR " \
@@ -177,15 +177,15 @@ def or_(
             >  'OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
             >  'label_for_charts': 'Spelling error'
             >}
-        === "Spark"
+        === ":simple-apachespark: Spark"
             Simple null level composition with an `OR` clause
             ``` python
-            import splink.spark.spark_comparison_level_library as cll
+            import splink.spark.comparison_level_library as cll
             cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
             Composing a levenshtein level with a custom `contains` level
             ``` python
-            import splink.spark.spark_comparison_level_library as cll
+            import splink.spark.comparison_level_library as cll
             misspelling = cll.levenshtein_level("name", 1)
             contains = {
                 "sql_condition": "(contains(name_l, name_r) OR " \
@@ -201,15 +201,15 @@ def or_(
             >  'OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
             >  'label_for_charts': 'Spelling error'
             >}
-        === "Athena"
+        === ":simple-amazonaws: Athena"
             Simple null level composition with an `OR` clause
             ``` python
-            import splink.athena.athena_comparison_level_library as cll
+            import splink.athena.comparison_level_library as cll
             cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
             Composing a levenshtein level with a custom `contains` level
             ``` python
-            import splink.athena.athena_comparison_level_library as cll
+            import splink.athena.comparison_level_library as cll
             misspelling = cll.levenshtein_level("name", 1)
             contains = {
                 "sql_condition": "(contains(name_l, name_r) OR " \
@@ -225,10 +225,10 @@ def or_(
             >  'OR ((contains(name_l, name_r) OR contains(name_r, name_l)))',
             >  'label_for_charts': 'Spelling error'
             >}
-        === "SQLite"
+        === ":simple-sqlite: SQLite"
             Simple null level composition with an `OR` clause
             ``` python
-            import splink.sqlite.sqlite_comparison_level_library as cll
+            import splink.sqlite.comparison_level_library as cll
             cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
             ```
 
@@ -269,15 +269,15 @@ def not_(
             Defaults to None.
 
     Examples:
-        === "DuckDB"
+        === ":simple-duckdb: DuckDB"
             *Not* an exact match on first name
             ``` python
-            import splink.duckdb.duckdb_comparison_level_library as cll
+            import splink.duckdb.comparison_level_library as cll
             cll.not_(cll.exact_match("first_name"))
             ```
             Find all exact matches *not* on the first of January
             ``` python
-            import splink.duckdb.duckdb_comparison_level_library as cll
+            import splink.duckdb.comparison_level_library as cll
             dob_first_jan =  {
                "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
                "label_for_charts": "Date is 1st Jan",
@@ -288,15 +288,15 @@ def not_(
                 label_for_charts = "Exact match and not the 1st Jan"
             )
             ```
-        === "Spark"
+        === ":simple-apachespark: Spark"
             *Not* an exact match on first name
             ``` python
-            import splink.spark.spark_comparison_level_library as cll
+            import splink.spark.comparison_level_library as cll
             cll.not_(cll.exact_match("first_name"))
             ```
             Find all exact matches *not* on the first of January
             ``` python
-            import splink.spark.spark_comparison_level_library as cll
+            import splink.spark.comparison_level_library as cll
             dob_first_jan =  {
                "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
                "label_for_charts": "Date is 1st Jan",
@@ -307,15 +307,15 @@ def not_(
                 label_for_charts = "Exact match and not the 1st Jan"
             )
             ```
-        === "Athena"
+        === ":simple-amazonaws: Athena"
             *Not* an exact match on first name
             ``` python
-            import splink.athena.athena_comparison_level_library as cll
+            import splink.athena.comparison_level_library as cll
             cll.not_(cll.exact_match("first_name"))
             ```
             Find all exact matches *not* on the first of January
             ``` python
-            import splink.athena.athena_comparison_level_library as cll
+            import splink.athena.comparison_level_library as cll
             dob_first_jan =  {
                "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
                "label_for_charts": "Date is 1st Jan",
@@ -326,15 +326,15 @@ def not_(
                 label_for_charts = "Exact match and not the 1st Jan"
             )
             ```
-        === "SQLite"
+        === ":simple-sqlite: SQLite"
             *Not* an exact match on first name
             ``` python
-            import splink.sqlite.sqlite_comparison_level_library as cll
+            import splink.sqlite.comparison_level_library as cll
             cll.not_(cll.exact_match("first_name"))
             ```
             Find all exact matches *not* on the first of January
             ``` python
-            import splink.sqlite.sqlite_comparison_level_library as cll
+            import splink.sqlite.comparison_level_library as cll
             dob_first_jan =  {
                "sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'",
                "label_for_charts": "Date is 1st Jan",

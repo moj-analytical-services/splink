@@ -36,7 +36,7 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
     def validate(self):
         pass
 
-    def drop_table_from_database(self, force_non_splink_table=False):
+    def _drop_table_from_database(self, force_non_splink_table=False):
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
         self.linker._delete_table_from_database(self.physical_name)
@@ -253,7 +253,9 @@ class DuckDBLinker(Linker):
         # occur if an invalid data type is passed as an argument
         self._con.register(table_name, input)
 
-    def _random_sample_sql(self, proportion, sample_size, seed=None):
+    def _random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
@@ -264,7 +266,7 @@ class DuckDBLinker(Linker):
 
     @property
     def _infinity_expression(self):
-        return "cast('infinity' as double)"
+        return "cast('infinity' as float8)"
 
     def _table_exists_in_database(self, table_name):
         sql = f"PRAGMA table_info('{table_name}');"

@@ -1,6 +1,6 @@
 import pytest
 
-from splink.spark.spark_linker import SparkLinker
+from splink.spark.linker import SparkLinker
 from tests.basic_settings import get_settings_dict
 
 

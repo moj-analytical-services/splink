@@ -3,9 +3,9 @@ import os
 import pyspark.sql.functions as f
 from pyspark.sql.types import StringType, StructField, StructType
 
-import splink.spark.spark_comparison_level_library as cll
-import splink.spark.spark_comparison_library as cl
-from splink.spark.spark_linker import SparkLinker
+import splink.spark.comparison_level_library as cll
+import splink.spark.comparison_library as cl
+from splink.spark.linker import SparkLinker
 
 from .basic_settings import get_settings_dict, name_comparison
 from .linker_utils import (

@@ -1,20 +1,30 @@
 import sqlite3
 from abc import ABC, abstractmethod
+from collections import UserDict
 
 import pandas as pd
+from sqlalchemy.dialects import postgresql
+from sqlalchemy.types import (
+    INTEGER,
+    TEXT,
+)
 
-import splink.duckdb.duckdb_comparison_level_library as cll_duckdb
-import splink.duckdb.duckdb_comparison_library as cl_duckdb
-import splink.duckdb.duckdb_comparison_template_library as ctl_duckdb
-import splink.spark.spark_comparison_level_library as cll_spark
-import splink.spark.spark_comparison_library as cl_spark
-import splink.spark.spark_comparison_template_library as ctl_spark
-import splink.sqlite.sqlite_comparison_level_library as cll_sqlite
-import splink.sqlite.sqlite_comparison_library as cl_sqlite
-import splink.sqlite.sqlite_comparison_template_library as ctl_sqlite
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
-from splink.sqlite.sqlite_linker import SQLiteLinker
+import splink.duckdb.comparison_level_library as cll_duckdb
+import splink.duckdb.comparison_library as cl_duckdb
+import splink.duckdb.comparison_template_library as ctl_duckdb
+import splink.postgres.comparison_level_library as cll_postgres
+import splink.postgres.comparison_library as cl_postgres
+import splink.postgres.comparison_template_library as ctl_postgres
+import splink.spark.comparison_level_library as cll_spark
+import splink.spark.comparison_library as cl_spark
+import splink.spark.comparison_template_library as ctl_spark
+import splink.sqlite.comparison_level_library as cll_sqlite
+import splink.sqlite.comparison_library as cl_sqlite
+import splink.sqlite.comparison_template_library as ctl_sqlite
+from splink.duckdb.linker import DuckDBLinker
+from splink.postgres.linker import PostgresLinker
+from splink.spark.linker import SparkLinker
+from splink.sqlite.linker import SQLiteLinker
 
 
 class TestHelper(ABC):
@@ -25,6 +35,10 @@ class TestHelper(ABC):
 
     def extra_linker_args(self):
         return {}
+
+    @property
+    def date_format(self):
+        return "yyyy-mm-dd"
 
     @abstractmethod
     def convert_frame(self, df):
@@ -59,6 +73,10 @@ class DuckDBTestHelper(TestHelper):
 
     def convert_frame(self, df):
         return df
+
+    @property
+    def date_format(self):
+        return "%Y-%m-%d"
 
     @property
     def cll(self):
@@ -113,15 +131,11 @@ class SparkTestHelper(TestHelper):
 
 
 class SQLiteTestHelper(TestHelper):
+
+    _frame_counter = 0
+
     def __init__(self):
-        from rapidfuzz.distance.Levenshtein import distance
-
-        def lev_wrap(str_l, str_r):
-            return distance(str(str_l), str(str_r))
-
-        con = sqlite3.connect(":memory:")
-        con.create_function("levenshtein", 2, lev_wrap)
-        self.con = con
+        self.con = sqlite3.connect(":memory:")
         self._frame_counter = 0
 
     @property
@@ -131,9 +145,10 @@ class SQLiteTestHelper(TestHelper):
     def extra_linker_args(self):
         return {"connection": self.con}
 
-    def _get_input_name(self):
-        name = f"input_alias_{self._frame_counter}"
-        self._frame_counter += 1
+    @classmethod
+    def _get_input_name(cls):
+        name = f"input_alias_{cls._frame_counter}"
+        cls._frame_counter += 1
         return name
 
     def convert_frame(self, df):
@@ -158,3 +173,99 @@ class SQLiteTestHelper(TestHelper):
     @property
     def ctl(self):
         return ctl_sqlite
+
+
+class PostgresTestHelper(TestHelper):
+
+    _frame_counter = 0
+
+    def __init__(self, pg_engine):
+        if pg_engine is None:
+            raise SplinkTestException("No Postgres connection found")
+        self.engine = pg_engine
+
+    @property
+    def Linker(self):
+        return PostgresLinker
+
+    def extra_linker_args(self):
+        return {"engine": self.engine}
+
+    @classmethod
+    def _get_input_name(cls):
+        name = f"input_alias_{cls._frame_counter}"
+        cls._frame_counter += 1
+        return name
+
+    def convert_frame(self, df):
+        name = self._get_input_name()
+        # workaround to handle array column conversion
+        # manually mark any list columns so type is handled correctly
+        dtypes = {}
+        for colname, values in df.iteritems():
+            # TODO: will fail if first value is null
+            if isinstance(values[0], list):
+                # TODO: will fail if first array is empty
+                initial_array_val = values[0][0]
+                if isinstance(initial_array_val, int):
+                    dtypes[colname] = postgresql.ARRAY(INTEGER)
+                elif isinstance(initial_array_val, str):
+                    dtypes[colname] = postgresql.ARRAY(TEXT)
+        df.to_sql(name, con=self.engine, if_exists="replace", dtype=dtypes)
+        return name
+
+    def load_frame_from_csv(self, path):
+        return self.convert_frame(super().load_frame_from_csv(path))
+
+    def load_frame_from_parquet(self, path):
+        return self.convert_frame(super().load_frame_from_parquet(path))
+
+    @property
+    def cll(self):
+        return cll_postgres
+
+    @property
+    def cl(self):
+        return cl_postgres
+
+    @property
+    def ctl(self):
+        return ctl_postgres
+
+
+class SplinkTestException(Exception):
+    pass
+
+
+class LazyDict(UserDict):
+    """
+    LazyDict
+    Like a dict, but values passed are tuples of the form (func, args)
+    getting returns the result of the function
+    only instantiate the result when we need it.
+    Need this for handling test fixtures.
+    Disallow setting/deleting entries to catch errors -
+    should be effectively immutable
+    """
+
+    # write only in creation
+    def __init__(self, **kwargs):
+        self.data = {}
+        for key, val in kwargs.items():
+            self.data[key] = val
+
+    def __getitem__(self, key):
+        func, args = self.data[key]
+        return func(*args)
+
+    def __setitem__(self, key, value):
+        raise SplinkTestException(
+            "LazyDict does not support setting values. "
+            "Did you mean to read value instead?"
+        )
+
+    def __delitem__(self, key):
+        raise SplinkTestException(
+            "LazyDict does not support deleting items. "
+            "Did you mean to read value instead?"
+        )

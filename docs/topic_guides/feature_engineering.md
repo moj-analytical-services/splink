@@ -12,7 +12,7 @@ tags:
 
 # Feature Engineering for Data Linkage
 
-During record linkage, the features in a given dataset are used to provide evidence as to whether two records are a match. Like any predictive model, the quality of a Splink model is dictated by the features provided. 
+During record linkage, the features in a given dataset are used to provide evidence as to whether two records are a match. Like any predictive model, the quality of a Splink model is dictated by the features provided.
 
 Below are some examples of features that be created from common columns, and how to create more detailed comparisons with them in a Splink model.
 
@@ -28,27 +28,27 @@ See [image source](https://ideal-postcodes.co.uk/guides/uk-postcode-format) for 
 Splink already includes a pre-built [postcode comparison template](../comparison_template_library.md##splink.comparison_template_library.PostcodeComparisonBase) which does this for you, generating by default a comparison with levels for an exact match on full postcode, sector, district and area in turn. These individual postcode components are engineered under-the-hood using the `regex_extract` argument (see below and [comparison_templates.ipynb](comparison_templates.ipynb) for more details).
 
 Code examples to use the comparison template:
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```python
-    import splink.duckdb.duckdb_comparison_template_library as ctl
+    import splink.duckdb.comparison_template_library as ctl
 
     pc_comparison = ctl.postcode_comparison("postcode")
     print(pc_comparison.human_readable_description)
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```python
-    import splink.spark.spark_comparison_template_library as ctl
+    import splink.spark.comparison_template_library as ctl
 
     pc_comparison = ctl.postcode_comparison("postcode")
     print(pc_comparison.human_readable_description)
     ```
-=== "Athena"
+=== ":simple-amazonaws: Athena"
     ```python
-    import splink.athena.athena_comparison_template_library as ctl
+    import splink.athena.comparison_template_library as ctl
 
     pc_comparison = ctl.postcode_comparison("postcode")
     print(pc_comparison.human_readable_description)
-    ``` 
+    ```
 
 ??? note "Output"
     > Comparison 'Exact match on full postcode vs. exact match on sector vs. exact match on district vs. exact match on area vs. all other comparisons' of "postcode".
@@ -57,33 +57,33 @@ Code examples to use the comparison template:
     >
     >    - 'Null' with SQL rule: "postcode_l" IS NULL OR "postcode_r" IS NULL
     >    - 'Exact match postcode' with SQL rule: "postcode_l" = "postcode_r"
-    >    - 'Exact match Postcode Sector' with SQL rule: 
+    >    - 'Exact match Postcode Sector' with SQL rule:
             regexp_extract("postcode_l", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]')
-        = 
+        =
             regexp_extract("postcode_r", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]')
-        
-    >    - 'Exact match Postcode District' with SQL rule: 
+
+    >    - 'Exact match Postcode District' with SQL rule:
             regexp_extract("postcode_l", '^[A-Z]{1,2}[0-9][A-Z0-9]?')
-        = 
+        =
             regexp_extract("postcode_r", '^[A-Z]{1,2}[0-9][A-Z0-9]?')
-        
-    >    - 'Exact match Postcode Area' with SQL rule: 
+
+    >    - 'Exact match Postcode Area' with SQL rule:
             regexp_extract("postcode_l", '^[A-Z]{1,2}')
-        = 
+        =
             regexp_extract("postcode_r", '^[A-Z]{1,2}')
-        
+
     >    - 'All other comparisons' with SQL rule: ELSE
 
 Note that the 'Exact match Postcode District' level also captures matches on subdistricts where they exist in the data.
 
 However, performing comparisons based on substrings alone doesn't always give the best sense of whether two postcodes are close together since locations which are geographically close can be in different postcode regions e.g. London postcodes starting 'N' vs 'SW'.
 
-Fortunately, Splink includes functions [cll.distance_in_km_level()](../comparison_level_library.md#splink.comparison_level_library.DistanceFunctionLevelBase) and [cl.distance_in_km_at_thresholds()](../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsComparisonBase) to calculate the physical distance between two sets of latitude and longitude coordinates. 
+Fortunately, Splink includes functions [cll.distance_in_km_level()](../comparison_level_library.md#splink.comparison_level_library.DistanceFunctionLevelBase) and [cl.distance_in_km_at_thresholds()](../comparison_library.md#splink.comparison_library.DistanceInKMAtThresholdsBase) to calculate the physical distance between two sets of latitude and longitude coordinates.
 Users have the option to include `cll.distance_in_km_level()` as additional levels in the `postcode_comparison()` template by supplying `lat_col`, `long_col` and `km_thresholds` arguments. Doing so can help to improve results. Latitude and longitude coordinates can be derived from a postcode column as described in the example below.
 
 ### Example
 
-There are a number of open source repositories of geospatial data that can be used for linkage, one example is [geonames](http://download.geonames.org/export/zip/). 
+There are a number of open source repositories of geospatial data that can be used for linkage, one example is [geonames](http://download.geonames.org/export/zip/).
 
 Below is an example of adding latitude and longitude columns from geonames to create a more nuanced comparison.
 
@@ -97,7 +97,7 @@ df["postcode_fake"] = df["postcode_fake"].str.upper()
 df.head()
 ```
 ??? note "Output"
- 
+
     |    | unique_id   | cluster   | full_name                                        | first_and_surname   | first_name   | surname   | dob        | birth_place   | postcode_fake   | gender   | occupation   |
     |---:|:------------|:----------|:-------------------------------------------------|:--------------------|:-------------|:----------|:-----------|:--------------|:----------------|:---------|:-------------|
     |  0 | Q2296770-1  | Q2296770  | thomas clifford, 1st baron clifford of chudleigh | thomas chudleigh    | thomas       | chudleigh | 1630-08-01 | devon         | TQ13 8DF        | male     | politician   |
@@ -128,8 +128,8 @@ postcodes.head(5)
 Now combine the lat-long coordinates from the `GB_full.txt` lookup.
 
 ```python
-df_with_coordinates = df.merge(postcodes[["postal_code", "latitude", "longitude"]], 
-                                    left_on="postcode_fake", 
+df_with_coordinates = df.merge(postcodes[["postal_code", "latitude", "longitude"]],
+                                    left_on="postcode_fake",
                                     right_on="postal_code",
                                     how="left")
 df_with_coordinates = df_with_coordinates.rename({'postcode_fake':'postcode'}, axis=1)
@@ -148,9 +148,9 @@ df_with_coordinates.head()
 
 Now that coordinates have been added, a more detailed postcode comparison can be produced using the `postcode_comparison` template:
 
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```python
-    import splink.duckdb.duckdb_comparison_template_library as ctl
+    import splink.duckdb.comparison_template_library as ctl
 
     pc_comparison = ctl.postcode_comparison(
         "postcode",
@@ -160,9 +160,9 @@ Now that coordinates have been added, a more detailed postcode comparison can be
     )
     print(pc_comparison.human_readable_description)
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```python
-    import splink.spark.spark_comparison_template_library as ctl
+    import splink.spark.comparison_template_library as ctl
 
     pc_comparison = ctl.postcode_comparison(
         "postcode",
@@ -172,9 +172,9 @@ Now that coordinates have been added, a more detailed postcode comparison can be
     )
     print(pc_comparison.human_readable_description)
     ```
-=== "Athena"
+=== ":simple-amazonaws: Athena"
     ```python
-    import splink.athena.athena_comparison_template_library as ctl
+    import splink.athena.comparison_template_library as ctl
 
     pc_comparison = ctl.postcode_comparison(
         "postcode",
@@ -183,43 +183,43 @@ Now that coordinates have been added, a more detailed postcode comparison can be
         km_thresholds=[1, 10, 50]
     )
     print(pc_comparison.human_readable_description)
-    ``` 
+    ```
 ??? note "Output"
-    > 
+    >
     > Comparison 'Exact match on full postcode vs. exact match on sector vs. exact match on district vs. exact match on area vs. Postcode within km_distance thresholds 1, 10, 50 vs. all other comparisons' of "postcode", "long" and "lat".
-    > 
+    >
     > Similarity is assessed using the following ComparisonLevels:
     >
-    >     - 'Null' with SQL rule: 
+    >     - 'Null' with SQL rule:
     >         regexp_extract("postcode_l", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$')
-    >         IS NULL OR 
+    >         IS NULL OR
     >         regexp_extract("postcode_r", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$')
     >         IS NULL OR
     >         regexp_extract("postcode_l", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$')
-    >         =='' OR 
+    >         =='' OR
     >         regexp_extract("postcode_r", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9][A-Z]{2}$')
     >         ==''
     >     - 'Exact match postcode' with SQL rule: "postcode_l" = "postcode_r"
-    >     - 'Exact match Postcode Sector' with SQL rule: 
+    >     - 'Exact match Postcode Sector' with SQL rule:
     >         regexp_extract("postcode_l", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]')
-    >         = 
+    >         =
     >         regexp_extract("postcode_r", '^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]')
-    > 
-    >     - 'Exact match Postcode District' with SQL rule: 
+    >
+    >     - 'Exact match Postcode District' with SQL rule:
     >         regexp_extract("postcode_l", '^[A-Z]{1,2}[0-9][A-Z0-9]?')
-    >         = 
+    >         =
     >         regexp_extract("postcode_r", '^[A-Z]{1,2}[0-9][A-Z0-9]?')
-    > 
-    >     - 'Exact match Postcode Area' with SQL rule: 
+    >
+    >     - 'Exact match Postcode Area' with SQL rule:
     >         regexp_extract("postcode_l", '^[A-Z]{1,2}')
-    >         = 
+    >         =
     >         regexp_extract("postcode_r", '^[A-Z]{1,2}')
-    > 
-    >     - 'Distance less than 1km' with SQL rule: 
-    > 
+    >
+    >     - 'Distance less than 1km' with SQL rule:
+    >
     >         cast(
     >             acos(
-    > 
+    >
     >         case
     >             when (
     >         sin( radians("lat_l") ) * sin( radians("lat_r") ) +
@@ -237,17 +237,17 @@ Now that coordinates have been added, a more detailed postcode comparison can be
     >             * cos( radians("long_r" - "long_l") )
     >     )
     >         end
-    > 
+    >
     >             ) * 6371
     >             as float
     >         )
     >     <= 1
-    > 
-    >     - 'Distance less than 10km' with SQL rule: 
-    > 
+    >
+    >     - 'Distance less than 10km' with SQL rule:
+    >
     >         cast(
     >             acos(
-    >     
+    >
     >         case
     >             when (
     >         sin( radians("lat_l") ) * sin( radians("lat_r") ) +
@@ -265,17 +265,17 @@ Now that coordinates have been added, a more detailed postcode comparison can be
     >             * cos( radians("long_r" - "long_l") )
     >     )
     >         end
-    > 
+    >
     >             ) * 6371
     >             as float
     >         )
     >     <= 10
-    > 
-    >     - 'Distance less than 50km' with SQL rule: 
-    > 
+    >
+    >     - 'Distance less than 50km' with SQL rule:
+    >
     >         cast(
     >             acos(
-    > 
+    >
     >         case
     >             when (
     >         sin( radians("lat_l") ) * sin( radians("lat_r") ) +
@@ -293,20 +293,20 @@ Now that coordinates have been added, a more detailed postcode comparison can be
     >             * cos( radians("long_r" - "long_l") )
     >     )
     >         end
-    > 
+    >
     >             ) * 6371
     >             as float
     >         )
     >     <= 50
-    > 
+    >
     >     - 'All other comparisons' with SQL rule: ELSE
 
 
-or by using `cll.distance_in_km_level()` in conjunction with other comparison levels: 
+or by using `cll.distance_in_km_level()` in conjunction with other comparison levels:
 
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```python
-    import splink.duckdb.duckdb_comparison_level_library as cll
+    import splink.duckdb.comparison_level_library as cll
 
     postcode_comparison = {
         'output_column_name': 'postcode',
@@ -321,9 +321,9 @@ or by using `cll.distance_in_km_level()` in conjunction with other comparison le
         ],
     }
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```python
-    import splink.spark.spark_comparison_level_library as cll
+    import splink.spark.comparison_level_library as cll
 
     postcode_comparison = {
         'output_column_name': 'postcode',
@@ -338,9 +338,9 @@ or by using `cll.distance_in_km_level()` in conjunction with other comparison le
         ],
     }
     ```
-=== "Athena"
+=== ":simple-amazonaws: Athena"
     ```python
-    import splink.athena.athena_comparison_level_library as cll
+    import splink.athena.comparison_level_library as cll
 
     postcode_comparison = {
         'output_column_name': 'postcode',
@@ -354,7 +354,7 @@ or by using `cll.distance_in_km_level()` in conjunction with other comparison le
             cll.else_level()
         ],
     }
-    ``` 
+    ```
 
 <hr>
 
@@ -397,22 +397,22 @@ df.head()
     |  3 |           3 | Julia        | Taylor    | 2015-10-29 |        | hannah88opowersc@m             |       0 | ('JL', 'AL')    | ('TLR', '')      |
     |  4 |           4 | oNah         | Watson    | 2008-03-23 | Bolton | matthew78@ballard-mcdonald.net |       1 | ('AN', '')      | ('ATSN', 'FTSN') |
 
-Note: [Soundex](phonetic.md#soundex) and [Metaphone](phonetic.md#metaphone) are also supported in [phoneitcs](https://pypi.org/project/phonetics/) 
+Note: [Soundex](phonetic.md#soundex) and [Metaphone](phonetic.md#metaphone) are also supported in [phoneitcs](https://pypi.org/project/phonetics/)
 
 Now that the dmetaphone columns have been added, they can be used within comparisons. For example, using the [name_comparison](../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons).
 
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```python
-    import splink.duckdb.duckdb_comparison_template_library as ctl
+    import splink.duckdb.comparison_template_library as ctl
 
     first_name_comparison = ctl.name_comparison(
                             "first_name",
                             phonetic_col_name = "first_name_dm")
     print(first_name_comparison.human_readable_description)
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```python
-    import splink.spark.spark_comparison_template_library as ctl
+    import splink.spark.comparison_template_library as ctl
 
     first_name_comparison = ctl.name_comparison(
                             "first_name",
@@ -422,7 +422,7 @@ Now that the dmetaphone columns have been added, they can be used within compari
     > Comparison 'Exact match vs. Names with phonetic exact match vs. First_Name within jaro_winkler thresholds 0.95, 0.88 vs. anything else' of "first_name" and "first_name_dm".
 
     > Similarity is assessed using the following ComparisonLevels:
-    >    
+    >
     >   - 'Null' with SQL rule: "first_name_l" IS NULL OR "first_name_r" IS NULL
     >   - 'Exact match first_name' with SQL rule: "first_name_l" = "first_name_r"
     >   - 'Exact match first_name_dm' with SQL rule: "first_name_dm_l" = "first_name_dm_r"
@@ -436,7 +436,7 @@ Now that the dmetaphone columns have been added, they can be used within compari
 
 When comparing names, it can be helpful to [construct a single comparison for for comparing the forename and surname](./comparison_templates.ipynb#forename-and-surname-comparisons) of two records. If a splink model has a single comparison for forename and surname, one of the major benefits is being able to consider the term frequency of the full name, as well as for forename and surname individually.
 
-For example, in the UK, “Mohammed Khan” is a relatively common full name despite neither "Mohammed" or "Khan" occurring frequently as forename or surname, respectively. 
+For example, in the UK, “Mohammed Khan” is a relatively common full name despite neither "Mohammed" or "Khan" occurring frequently as forename or surname, respectively.
 
 For more on term frequency, see the dedicated [topic guide](term_frequency.md).
 
@@ -466,9 +466,9 @@ df.head()
 
 Now that the `full_name` column has been added, it can be used within comparisons. For example, using the [forenname_surname_comparison](../comparison_template_library.md#splink.comparison_template_library.ForenameSurnameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons).
 
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```python
-    import splink.duckdb.duckdb_comparison_template_library as ctl
+    import splink.duckdb.comparison_template_library as ctl
 
     full_name_comparison = ctl.forename_surname_comparison(
         "first_name",
@@ -478,9 +478,9 @@ Now that the `full_name` column has been added, it can be used within comparison
     )
     print(full_name_comparison.human_readable_description)
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```python
-    import splink.spark.spark_comparison_template_library as ctl
+    import splink.spark.comparison_template_library as ctl
 
     full_name_comparison = ctl.forename_surname_comparison(
         "first_name",
@@ -496,7 +496,7 @@ Now that the `full_name` column has been added, it can be used within comparison
     >
     > Similarity is assessed using the following ComparisonLevels:
     >
-    >    - 'Null' with SQL rule: ("first_name_l" IS NULL OR "first_name_r" IS NULL) AND ("surname_l" IS NULL OR "surname_r" IS NULL)  
+    >    - 'Null' with SQL rule: ("first_name_l" IS NULL OR "first_name_r" IS NULL) AND ("surname_l" IS NULL OR "surname_r" IS NULL)
     >    - 'Full name exact match' with SQL rule: "first_name_l" = "first_name_r" AND "surname_l" = "surname_r"
     >    - 'Exact match on reversed cols' with SQL rule: "first_name_l" = "surname_r" and "first_name_r" = "surname_l"
     >    - 'Exact match surname' with SQL rule: "surname_l" = "surname_r"
