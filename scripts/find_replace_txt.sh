@@ -4,14 +4,14 @@ original_txt=(
     '=== "Spark"'
     '=== "DuckDB"'
     '=== "Athena"'
-    '=== "Postgres"'
+    '=== "PostgreSql"'
     '=== "SQLite"'
 )
 replacement_txt=(
     '=== ":simple-apachespark: Spark"'
     '=== ":simple-duckdb: DuckDB"'
     '=== ":simple-amazonaws: Athena"'
-    '=== ":simple-postgresql: Postgres"'
+    '=== ":simple-postgresql: PostgreSql"'
     '=== ":simple-sqlite: SQLite"'
 )
 
