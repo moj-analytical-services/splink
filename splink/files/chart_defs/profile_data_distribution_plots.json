@@ -1,0 +1,28 @@
+{
+    "data": { "values": null },
+    "mark": { "type": "line", "interpolate": "step-after" },
+    "encoding": {
+      "x": {
+        "type": "quantitative",
+        "field": "percentile_ex_nulls",
+        "sort": "descending",
+        "title": "Percentile"
+      },
+      "y": {
+        "type": "quantitative",
+        "field": "value_count",
+        "title": "Count of values"
+      },
+      "tooltip": [
+        { "field": "value_count", "type": "quantitative" },
+        { "field": "percentile_ex_nulls", "type": "quantitative" },
+        { "field": "percentile_inc_nulls", "type": "quantitative" },
+        { "field": "total_non_null_rows", "type": "quantitative" },
+        { "field": "total_rows_inc_nulls", "type": "quantitative" }
+      ]
+    },
+    "title": {
+      "text": "Distribution of counts of values in column",
+      "subtitle": "Subtitle Text"
+    }
+  }
