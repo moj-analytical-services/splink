@@ -48,7 +48,7 @@ conda install -c conda-forge splink
 
 ## Quickstart
 
-To get a basic Splink model up and running, use the following code which demonstrates how to:
+To get a basic Splink model up and running, use the following code. It demonstrates how to:
 
 1. Estimate the parameters of a deduplication model
 2. Use the parameter estimates to identify duplicate records

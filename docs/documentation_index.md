@@ -5,9 +5,10 @@ hide:
 
 # Documentation
 
-The documentation of Splink can be broken into 2 main categories, API docs and Splink Settings docs. These are further broken down as explained below:
+This section contains reference material for the modules and functions within Splink. 
 
 ## API
+The documentation for the Splink API is broken up into the following categories:
 
 - [Linker API](./linker.md) - for all of the methods that can be used with an instantiated `Linker` object.
 
@@ -22,6 +23,7 @@ The documentation of Splink can be broken into 2 main categories, API docs and S
 Note: When building a Splink model, the [Linker API](./linker.md) and [Comparisons Library API](./comparison_level_library.md) will be the most useful parts of the API documentation. The other sections are primarily for reference.
 
 ## Splink Settings
+Reference materials for the Splink Settings dictionary:
 
 - [Settings Dictionary Reference](./settings_dict_guide.md) - for reference material on the parameters available within a Splink Settings dictionary.
 

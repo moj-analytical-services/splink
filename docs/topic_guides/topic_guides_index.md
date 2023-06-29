@@ -2,7 +2,7 @@
 
 This section contains in-depth guides on a variety of topics and concepts within Splink, as well as data linking more generally. These are intended to provide an extra layer of detail ontop of the Splink [tutorial](../demos/00_Tutorial_Introduction.ipynb) and [examples](../examples_index.md).
 
-The topic guides are broken up into the following sections:
+The topic guides are broken up into the following categories:
 
 1. [Record Linkage Theory](record_linkage.md), for an introduction to data linkage from a theoretical perspective, and to help build some intuition around the parameters being estimated in Splink models.  
 2. [Linkage Models in Splink](backends.md), for an introduction to the building blocks of a Splink model. Including the supported SQL Backends and how to define a model with a Splink Settings dictionary.
