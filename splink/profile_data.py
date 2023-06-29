@@ -28,24 +28,27 @@ _outer_chart_spec_freq = {
 }
 
 _inner_chart_spec = load_chart_definition("profile_data.json")
-_distribution_plotss_plot = load_chart_definition("profile_data_distribution_plots.json")
+_distribution_plotss_plot = load_chart_definition(
+    "profile_data_distribution_plots.json"
+)
 _top_n_plot = load_chart_definition("profile_data_top_n.json")
 _bottom_n_plot = load_chart_definition("profile_data_bottom_n.json")
 _kde_plot = load_chart_definition("profile_data_kde.json")
 
-def _get_inner_chart_spec_freq(
-        col_name,
-        percentile_data=None, 
-        top_n_data=None, 
-        bottom_n_data=None, 
-        kde_data=None,
-        ):
-    
-    inner_spec = deepcopy(_inner_chart_spec)
-    inner_specs=[]
 
-    if percentile_data!=None:
-        _distribution_plotss_plot_copy=deepcopy(_distribution_plotss_plot)
+def _get_inner_chart_spec_freq(
+    col_name,
+    percentile_data=None,
+    top_n_data=None,
+    bottom_n_data=None,
+    kde_data=None,
+):
+
+    inner_spec = deepcopy(_inner_chart_spec)
+    inner_specs = []
+
+    if percentile_data != None:
+        _distribution_plotss_plot_copy = deepcopy(_distribution_plotss_plot)
         total_rows_inc_nulls = percentile_data[0]["total_rows_inc_nulls"]
         total_non_null_rows = percentile_data[0]["total_non_null_rows"]
         distinct_value_count = percentile_data[0]["distinct_value_count"]
@@ -66,15 +69,15 @@ def _get_inner_chart_spec_freq(
 
         inner_specs.append(_distribution_plotss_plot_copy)
 
-    if top_n_data!=None:
-        _top_n_plot_copy=deepcopy(_top_n_plot)
+    if top_n_data != None:
+        _top_n_plot_copy = deepcopy(_top_n_plot)
         _top_n_plot_copy["data"]["values"] = top_n_data
         _top_n_plot_copy["title"] = f"Top {len(top_n_data)} values by value count"
 
         inner_specs.append(_top_n_plot_copy)
 
-    if bottom_n_data!=None:
-        _bottom_n_plot_copy=deepcopy(_bottom_n_plot)
+    if bottom_n_data != None:
+        _bottom_n_plot_copy = deepcopy(_bottom_n_plot)
         _bottom_n_plot_copy["data"]["values"] = bottom_n_data
         _bottom_n_plot_copy[
             "title"
@@ -85,8 +88,8 @@ def _get_inner_chart_spec_freq(
 
         inner_specs.append(_bottom_n_plot_copy)
 
-    if kde_data!=None:
-        _kde_plot_copy=deepcopy(_kde_plot)
+    if kde_data != None:
+        _kde_plot_copy = deepcopy(_kde_plot)
         _kde_plot_copy["data"]["values"] = kde_data
         _kde_plot_copy["title"] = f"Kernel Density Estimation"
         _kde_plot_copy["mark"] = "area"
@@ -95,7 +98,7 @@ def _get_inner_chart_spec_freq(
 
         inner_specs.append(_kde_plot_copy)
 
-    inner_spec["hconcat"]=inner_specs
+    inner_spec["hconcat"] = inner_specs
 
     return inner_spec
 
@@ -149,6 +152,7 @@ def _get_df_percentiles():
     sqls.append({"sql": sql, "output_table_name": "__splink__df_percentiles"})
     return sqls
 
+
 def _get_df_kde():
     sql = """
     select 
@@ -158,6 +162,7 @@ def _get_df_kde():
     from __splink__df_all_column_value_frequencies
     """
     return sql
+
 
 def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     sql = """
@@ -233,14 +238,14 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 
 
 def profile_columns(
-        linker, 
-        column_expressions, 
-        top_n=10, 
-        bottom_n=10,
-        distribution_plots=True,
-        kde_plots=False,
-        ):
-    
+    linker,
+    column_expressions,
+    top_n=10,
+    bottom_n=10,
+    distribution_plots=True,
+    kde_plots=False,
+):
+
     df_concat = linker._initialise_df_concat()
 
     input_dataframes = []
@@ -257,8 +262,8 @@ def profile_columns(
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
     df_raw = linker._execute_sql_pipeline(input_dataframes)
 
-    #sqls = _get_df_kde()
-    #for sql in sqls:
+    # sqls = _get_df_kde()
+    # for sql in sqls:
     #    linker.eqnqueue_sql(sql["sql"], sql["output_table_name"])
     if distribution_plots:
         sqls = _get_df_percentiles()
@@ -266,28 +271,32 @@ def profile_columns(
             linker._enqueue_sql(sql["sql"], sql["output_table_name"])
         df_percentiles = linker._execute_sql_pipeline([df_raw])
         percentile_rows_all = df_percentiles.as_record_dict()
-    else: percentile_rows_all = None
+    else:
+        percentile_rows_all = None
 
-    if top_n!=None:
+    if top_n != None:
         sql = _get_df_top_bottom_n(column_expressions, top_n, "desc")
         linker._enqueue_sql(sql, "__splink__df_top_n")
         df_top_n = linker._execute_sql_pipeline([df_raw])
         top_n_rows_all = df_top_n.as_record_dict()
-    else: top_n_rows_all = None
+    else:
+        top_n_rows_all = None
 
     if kde_plots:
         sql = _get_df_kde()
         linker._enqueue_sql(sql, "__splink__df_kde")
         df_kde = linker._execute_sql_pipeline([df_raw])
         kde_rows_all = df_kde.as_record_dict()
-    else: kde_rows_all = None
+    else:
+        kde_rows_all = None
 
-    if bottom_n!=None:
+    if bottom_n != None:
         sql = _get_df_top_bottom_n(column_expressions, bottom_n, "asc")
         linker._enqueue_sql(sql, "__splink__df_bottom_n")
         df_bottom_n = linker._execute_sql_pipeline([df_raw])
         bottom_n_rows_all = df_bottom_n.as_record_dict()
-    else: bottom_n_rows_all = None
+    else:
+        bottom_n_rows_all = None
 
     inner_charts = []
 
@@ -297,22 +306,25 @@ def profile_columns(
         print(_group_name(expression))
         if distribution_plots:
             percentile_rows = [
-                p for p in percentile_rows_all if p["group_name"] == _group_name(expression)
+                p
+                for p in percentile_rows_all
+                if p["group_name"] == _group_name(expression)
             ]
             percentile_rows = _add_100_percentile_to_df_percentiles(percentile_rows)
-        if top_n!=None:
+        if top_n != None:
             top_n_rows = [
                 p for p in top_n_rows_all if p["group_name"] == _group_name(expression)
             ]
-        if bottom_n!=None:
+        if bottom_n != None:
             bottom_n_rows = [
-                p for p in bottom_n_rows_all if p["group_name"] == _group_name(expression)
+                p
+                for p in bottom_n_rows_all
+                if p["group_name"] == _group_name(expression)
             ]
         if kde_plots:
             kde_rows = [
                 p for p in kde_rows_all if p["group_name"] == _group_name(expression)
             ]
-
 
         print("Creating inner chart")
         inner_chart = _get_inner_chart_spec_freq(
@@ -331,9 +343,3 @@ def profile_columns(
     outer_spec["vconcat"] = inner_charts
 
     return altair_or_json(outer_spec)
-
-
-
-
-
-
