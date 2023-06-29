@@ -28,21 +28,21 @@ See [image source](https://ideal-postcodes.co.uk/guides/uk-postcode-format) for 
 Splink already includes a pre-built [postcode comparison template](../comparison_template_library.md##splink.comparison_template_library.PostcodeComparisonBase) which does this for you, generating by default a comparison with levels for an exact match on full postcode, sector, district and area in turn. These individual postcode components are engineered under-the-hood using the `regex_extract` argument (see below and [comparison_templates.ipynb](comparison_templates.ipynb) for more details).
 
 Code examples to use the comparison template:
-=== "DuckDB"
+=== ":simple-duckdb: DuckDB"
     ```python
     import splink.duckdb.comparison_template_library as ctl
 
     pc_comparison = ctl.postcode_comparison("postcode")
     print(pc_comparison.human_readable_description)
     ```
-=== "Spark"
+=== ":simple-apachespark: Spark"
     ```python
     import splink.spark.comparison_template_library as ctl
 
     pc_comparison = ctl.postcode_comparison("postcode")
     print(pc_comparison.human_readable_description)
     ```
-=== "Athena"
+=== ":simple-amazonaws: Athena"
     ```python
     import splink.athena.comparison_template_library as ctl
 

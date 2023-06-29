@@ -125,7 +125,7 @@ class Linker:
         holds the data linkage model.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Dedupe
                 ```py
                 df = pd.read_csv("data_to_dedupe.csv")
@@ -146,7 +146,7 @@ class Linker:
                 df = pd.read_csv("data_to_dedupe.csv")
                 linker = DuckDBLinker(df, "model.json")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Dedupe
                 ```py
                 df = spark.read.csv("data_to_dedupe.csv")
@@ -693,13 +693,13 @@ class Linker:
         the resulting output.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 ```py
                 linker = DuckDBLinker(df, settings)
                 df_predict = linker.predict()
                 linker.query_sql(f"select * from {df_predict.physical_name} limit 10")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 ```py
                 linker = SparkLinker(df, settings)
                 df_predict = linker.predict()
@@ -1104,13 +1104,13 @@ class Linker:
         Initialise settings for the linker.  To be used if settings were
         not passed to the linker on creation.
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 ```py
                 linker = DuckDBLinker(df")
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 ```py
                 linker = SparkLinker(df")
                 linker.profile_columns(["first_name", "surname"])
@@ -1182,7 +1182,7 @@ class Linker:
         various models without having to recompute term frequency tables each time
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Real time linkage
                 ```py
                 linker = DuckDBLinker(df)
@@ -1200,7 +1200,7 @@ class Linker:
                 df_first_name_tf = pd.read_parquet("folder/first_name_tf")
                 df_first_name_tf.createOrReplaceTempView("__splink__df_tf_first_name")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Real time linkage
                 ```py
                 linker = SparkLinker(df)
@@ -1271,7 +1271,7 @@ class Linker:
         (false negatives).
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
             ```py
             from splink.duckdb.linker import DuckDBLinker
 
@@ -1287,7 +1287,7 @@ class Linker:
             linker = DuckDBLinker(df, settings)
             df = linker.deterministic_link()
             ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
             ```py
             from splink.spark.linker import SparkLinker
 
@@ -2095,13 +2095,13 @@ class Linker:
                 the number of points plotted on the ROC chart. Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 ```py
                 labels = pd.read_csv("my_labels.csv")
                 linker.register_table(labels, "labels")
                 linker.truth_space_table_from_labels_table("labels")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 ```py
                 labels = spark.read.csv("my_labels.csv", header=True)
                 labels.createDataFrame("labels")
@@ -2157,13 +2157,13 @@ class Linker:
                 the number of points plotted on the ROC chart. Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 ```py
                 labels = pd.read_csv("my_labels.csv")
                 linker.register_table(labels, "labels")
                 linker.roc_chart_from_labels_table("labels")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 ```py
                 labels = spark.read.csv("my_labels.csv", header=True)
                 labels.createDataFrame("labels")
@@ -2221,13 +2221,13 @@ class Linker:
                 sometimes necessary to reduce the size of the ROC table, and therefore
                 the number of points plotted on the ROC chart. Defaults to None.
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 ```py
                 labels = pd.read_csv("my_labels.csv")
                 linker.register_table(labels, "labels")
                 linker.precision_recall_chart_from_labels_table("labels")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 ```py
                 labels = spark.read.csv("my_labels.csv", header=True)
                 labels.createDataFrame("labels")
