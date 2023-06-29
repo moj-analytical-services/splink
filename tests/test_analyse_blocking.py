@@ -92,11 +92,14 @@ def validate_blocking_output(linker, expected_out, **kwargs):
 
 @mark_with_dialects_excluding()
 def test_blocking_records_accuracy(test_helpers, dialect):
+    from numpy import nan
 
     helper = test_helpers[dialect]
     Linker = helper.Linker
     brl = helper.brl
-    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    # resolve an issue w/ pyspark nulls
+    df = df.fillna(nan).replace([nan], [None])
 
     linker_settings = Linker(df, get_settings_dict(), **helper.extra_linker_args())
 
