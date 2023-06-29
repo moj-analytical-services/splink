@@ -323,9 +323,6 @@ def profile_columns(
             col_name=expression,
         )
 
-
-        print("Appending inner chart")
-
         inner_charts.append(inner_chart)
 
         print("Inner chart appended")
