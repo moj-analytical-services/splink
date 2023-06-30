@@ -77,6 +77,7 @@ from .pipeline import SQLPipeline
 from .predict import predict_from_comparison_vectors_sqls
 from .profile_data import profile_columns
 from .settings import Settings
+from .settings_validator import InvalidSettingsLogger
 from .splink_comparison_viewer import (
     comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,
@@ -120,6 +121,7 @@ class Linker:
         accepted_df_dtypes,
         set_up_basic_logging: bool = True,
         input_table_aliases: str | list = None,
+        validate_settings: bool = True,
     ):
         """Initialise the linker object, which manages the data linkage process and
         holds the data linkage model.
@@ -185,6 +187,8 @@ class Linker:
                 input tables in Splink outputs.  If the names of the tables in the
                 input database are long or unspecific, this argument can be used
                 to attach more easily readable/interpretable names. Defaults to None.
+            validate_settings (bool, optional): When True, check your settings
+                dictionary for any potential errors that may cause splink to fail.
         """
         self._db_schema = "splink"
         if set_up_basic_logging:
@@ -219,6 +223,7 @@ class Linker:
         )
 
         self._validate_input_dfs()
+        self._validate_settings(validate_settings)
         self._em_training_sessions = []
 
         self._intermediate_table_cache: CacheDictWithLogging = CacheDictWithLogging()
@@ -446,7 +451,21 @@ class Linker:
         else:
             self._settings_obj_ = Settings(settings_dict)
 
-            self._validate_dialect()
+    def _validate_settings(self, validate_settings):
+        if (
+            # no settings to check
+            self._settings_obj_ is None
+            or
+            # raw tables don't yet exist in db
+            not hasattr(self, "_input_tables_dict")
+        ):
+            return
+
+        self.settings_validator = InvalidSettingsLogger(self)
+        self.settings_validator._validate_dialect()
+        # Constructs output logs for our various settings inputs
+        if validate_settings:
+            self.settings_validator.construct_output_logs()
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
@@ -905,15 +924,6 @@ class Linker:
                         "only a single input table",
                     )
 
-    def _validate_dialect(self):
-        settings_dialect = self._settings_obj._sql_dialect
-        if settings_dialect != self._sql_dialect:
-            raise ValueError(
-                f"Incompatible SQL dialect! `settings` dictionary uses "
-                f"dialect {settings_dialect}, but expecting "
-                f"'{self._sql_dialect}' for Linker of type {type(self)}"
-            )
-
     def _populate_probability_two_random_records_match_from_trained_values(self):
         recip_prop_matches_estimates = []
 
@@ -1028,7 +1038,11 @@ class Linker:
                 "Please re-run your linkage with it set to True."
             )
 
-    def load_settings(self, settings_dict: dict | str | Path):
+    def load_settings(
+        self,
+        settings_dict: dict | str | Path,
+        validate_settings: str = True,
+    ):
         """Initialise settings for the linker.  To be used if settings were
         not passed to the linker on creation. This can either be in the form
         of a settings dictionary or a filepath to a json file containing a
@@ -1038,12 +1052,14 @@ class Linker:
             ```py
             linker = DuckDBLinker(df)
             linker.profile_columns(["first_name", "surname"])
-            linker.load_settings(settings_dict)
+            linker.load_settings(settings_dict, validate_settings=True)
             ```
 
         Args:
             settings_dict (dict | str | Path): A Splink settings dictionary or
                 the path to your settings json file.
+            validate_settings (bool, optional): When True, check your settings
+                dictionary for any potential errors that may cause splink to fail.
         """
 
         if not isinstance(settings_dict, dict):
@@ -1077,7 +1093,7 @@ class Linker:
         self._settings_dict = settings_dict
         self._settings_obj_ = Settings(settings_dict)
         self._validate_input_dfs()
-        self._validate_dialect()
+        self._validate_settings(validate_settings)
 
     def load_model(self, model_path: Path):
         """
