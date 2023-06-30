@@ -380,10 +380,7 @@ def test_settings_validation_on_2_to_3_converter():
 def test_validate_sql_dialect():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    settings = {
-        "link_type": "link_and_dedupe",
-        "sql_dialect": "spark"
-    }
+    settings = {"link_type": "link_and_dedupe", "sql_dialect": "spark"}
 
     with pytest.raises(Exception) as excinfo:
         DuckDBLinker(

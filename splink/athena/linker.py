@@ -344,7 +344,9 @@ class AthenaLinker(Linker):
         # Errors if an invalid data type is passed
         self.register_data_on_s3(input, table_name)
 
-    def _random_sample_sql(self, proportion, sample_size, seed=None, table=None, unique_id=None):
+    def _random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
         if proportion == 1.0:
             return ""
         percent = proportion * 100
