@@ -43,7 +43,7 @@ class ExactMatchBase(Comparison):
                 charts.  Defaults to False.
 
         Examples:
-            === ":simple-duckdb: DuckDB"
+            === "DuckDB"
                 Create comparison with exact match level
                 ``` python
                 import splink.duckdb.comparison_library as cl
@@ -55,7 +55,7 @@ class ExactMatchBase(Comparison):
                 import splink.duckdb.comparison_library as cl
                 cl.exact_match("first_name", regex_extract="^[A-Z]{1,4}")
                 ```
-            === ":simple-apachespark: Spark"
+            === "Spark"
                 Create comparison with exact match level
                 ``` python
                 import splink.spark.comparison_library as cl
@@ -67,7 +67,7 @@ class ExactMatchBase(Comparison):
                 import splink.spark.comparison_library as cl
                 cl.exact_match("first_name", regex_extract="^[A-Z]{1,4}")
                 ```
-            === ":simple-amazonaws: Athena"
+            === "Athena"
                 Create comparison with exact match level
                 ``` python
                 import splink.athena.comparison_library as cl
@@ -79,13 +79,13 @@ class ExactMatchBase(Comparison):
                 import splink.athena.comparison_library as cl
                 cl.exact_match("first_name", regex_extract="^[A-Z]{1,4}")
                 ```
-            === ":simple-sqlite: SQLite"
+            === "SQLite"
                 Create comparison with exact match level
                 ``` python
                 import splink.sqlite.comparison_library as cl
                 cl.exact_match("first_name")
                 ```
-            === ":simple-postgresql: PostgreSql"
+            === "PostgreSql"
                 Create comparison with exact match level
                 ``` python
                 import splink.postgres.comparison_library as cl
