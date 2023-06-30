@@ -1,13 +1,9 @@
 name: Update comparison symlinks
-on:
-  pull_request_target:
-    types:
-      - closed
+on: [pull_request]
 
 
 jobs:
-  if_merged:
-    if: github.event.pull_request.merged == true
+  build:
     runs-on: ubuntu-20.04
     # only run this workflow on the upstream
     steps:
