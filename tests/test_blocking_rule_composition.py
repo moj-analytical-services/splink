@@ -19,7 +19,6 @@ def binary_composition_internals(clause, comp_fun, brl, dialect):
         brl.exact_match_rule("surname"),
     )
     exact_match_sql = f"(l.{q}first_name{q} = r.{q}first_name{q}) {clause} (l.{q}surname{q} = r.{q}surname{q})"  # noqa: E501
-    print(exact_match_sql)
     assert level.blocking_rule == exact_match_sql
     # brl.not_(or_(...)) composition
     level = brl.not_(
