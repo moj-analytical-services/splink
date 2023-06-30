@@ -224,6 +224,16 @@ class PostgresLinker(Linker):
         """
         self._run_sql_execution(sql)
 
+    def _extend_round_function(self):
+        # extension of round to double
+        sql = """
+        CREATE OR REPLACE FUNCTION round(n float8, dp integer)
+        RETURNS numeric AS $$
+        SELECT round(n::numeric, dp);
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
     def _create_datediff_function(self):
         sql = """
         CREATE OR REPLACE FUNCTION datediff(x date, y date)
@@ -285,6 +295,8 @@ class PostgresLinker(Linker):
         self._create_months_between_function()
         # need for array_intersect levels
         self._create_array_intersect_function()
+        # extension of round to handle doubles - used in unlinkables
+        self._extend_round_function()
 
     def _register_extensions(self):
         sql = """

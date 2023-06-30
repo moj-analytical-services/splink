@@ -166,7 +166,8 @@ def major_minor_version_greater_equal_than(this_version, base_comparison_version
 
 
 def ascii_uid(len):
-    return "".join(random.choices(string.ascii_letters + string.digits, k=len))
+    # use only lowercase as case-sensitivity is an issue in e.g. postgres
+    return "".join(random.choices(string.ascii_lowercase + string.digits, k=len))
 
 
 def find_unique_source_dataset(src_ds):

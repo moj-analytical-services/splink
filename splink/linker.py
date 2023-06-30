@@ -1737,10 +1737,11 @@ class Linker:
 
         if not isinstance(records_or_tablename, str):
             uid = ascii_uid(8)
-            self.register_table(
-                records_or_tablename, f"__splink__df_new_records_{uid}", overwrite=True
-            )
             new_records_tablename = f"__splink__df_new_records_{uid}"
+            self.register_table(
+                records_or_tablename, new_records_tablename, overwrite=True
+            )
+
         else:
             new_records_tablename = records_or_tablename
 
