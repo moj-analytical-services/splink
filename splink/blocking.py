@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from sqlglot import parse_one
+from sqlglot.expressions import Join, Column
+from sqlglot.optimizer.eliminate_joins import join_condition
 from typing import TYPE_CHECKING
 import logging
 
@@ -47,6 +50,37 @@ class BlockingRule:
         else:
             for n in range(self.salting_partitions):
                 yield f"{self.blocking_rule} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
+
+    @property
+    def _join_conditions(self):
+        """
+        Extract the join conditions from the blocking rule as a tuple:
+        source_keys, join_keys, condition_expr
+
+        Returns:
+            list of tuples like [(name, name), (substr(name,1,2), substr(name,2,3))]
+        """
+        br = self.blocking_rule
+        j = parse_one("INNER JOIN r", into=Join).on(br)  # using sqlglot==11.4.1
+
+        def remove_table_prefix(tree):
+            for c in tree.find_all(Column):
+                del c.args["table"]
+            return tree
+
+        source_keys, join_keys, condition = join_condition(j)
+
+        keys = zip(source_keys, join_keys)
+
+        rmtp = remove_table_prefix
+
+        keys = [(rmtp(i), rmtp(j)) for (i, j) in keys]
+
+        keys = [(i.sql(), j.sql()) for (i, j) in keys]
+
+        keys = list(set(keys))
+
+        return keys
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):
