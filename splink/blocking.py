@@ -20,9 +20,11 @@ class BlockingRule:
         self,
         blocking_rule,
         salting_partitions=1,
+        sqlglot_dialect=None,
     ):
         self.blocking_rule = blocking_rule
         self.preceding_rules = []
+        self.sqlglot_dialect = sqlglot_dialect
         self.salting_partitions = salting_partitions
 
     @property
@@ -52,6 +54,13 @@ class BlockingRule:
                 yield f"{self.blocking_rule} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
 
     @property
+    def _parsed_join_condition(self):
+        br = self.blocking_rule
+        return parse_one("INNER JOIN r", into=Join, read=self.sqlglot_dialect).on(
+            br
+        )  # using sqlglot==11.4.1
+
+    @property
     def _join_conditions(self):
         """
         Extract the join conditions from the blocking rule as a tuple:
@@ -60,15 +69,15 @@ class BlockingRule:
         Returns:
             list of tuples like [(name, name), (substr(name,1,2), substr(name,2,3))]
         """
-        br = self.blocking_rule
-        j = parse_one("INNER JOIN r", into=Join).on(br)  # using sqlglot==11.4.1
 
         def remove_table_prefix(tree):
             for c in tree.find_all(Column):
                 del c.args["table"]
             return tree
 
-        source_keys, join_keys, condition = join_condition(j)
+        j = self._parsed_join_condition
+
+        source_keys, join_keys, _ = join_condition(j)
 
         keys = zip(source_keys, join_keys)
 
@@ -81,6 +90,15 @@ class BlockingRule:
         keys = list(set(keys))
 
         return keys
+
+    @property
+    def _filter_conditions(self):
+        j = self._parsed_join_condition
+        _, _, filter_condition = join_condition(j)
+        if not filter_condition:
+            return ""
+        else:
+            return filter_condition.sql()
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):
