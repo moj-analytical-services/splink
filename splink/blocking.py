@@ -93,6 +93,10 @@ class BlockingRule:
 
     @property
     def _filter_conditions(self):
+        # A more accurate term might be "non-equi-join conditions"
+        # or "complex join conditions", but to capture the idea these are
+        # filters that have to be applied post-creation of the pairwise record
+        # comparison i've opted to call it a filter
         j = self._parsed_join_condition
         _, _, filter_condition = join_condition(j)
         if not filter_condition:
