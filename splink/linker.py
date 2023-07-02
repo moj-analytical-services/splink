@@ -22,13 +22,13 @@ from .accuracy import (
     truth_space_table_from_labels_table,
 )
 from .analyse_blocking import (
-    number_of_comparisons_generated_by_blocking_rule_sql,
+    count_comparisons_from_blocking_rule_sqls,
     cumulative_comparisons_generated_by_blocking_rules,
+    number_of_comparisons_generated_by_blocking_rule_sql,
 )
 from .blocking import (
     BlockingRule,
     block_using_rules_sql,
-    count_comparisons_from_blocking_rule_sqls,
 )
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
@@ -2757,9 +2757,6 @@ class Linker:
 
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
-
-        # sql = number_of_comparisons_generated_by_blocking_rule_sql(self, blocking_rule)
-        # self._enqueue_sql(sql, "__splink__analyse_blocking_rule")
 
         sqls = count_comparisons_from_blocking_rule_sqls(self, blocking_rule)
         for sql in sqls:
