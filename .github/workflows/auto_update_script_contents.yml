@@ -52,6 +52,8 @@ jobs:
             source .venv/bin/activate
             chmod +x ./scripts/pseudo_symlink_cls.sh
             ./scripts/pseudo_symlink_cls.sh
+            chmod +x ./scripts/find_replace_txt.sh
+            ./scripts/find_replace_txt.sh
         shell: bash
       #----------------------#
       #  commit any changes  #

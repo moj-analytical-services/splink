@@ -166,7 +166,8 @@ def major_minor_version_greater_equal_than(this_version, base_comparison_version
 
 
 def ascii_uid(len):
-    return "".join(random.choices(string.ascii_letters + string.digits, k=len))
+    # use only lowercase as case-sensitivity is an issue in e.g. postgres
+    return "".join(random.choices(string.ascii_lowercase + string.digits, k=len))
 
 
 def find_unique_source_dataset(src_ds):
@@ -190,3 +191,25 @@ def parse_duration(duration: int):
         txt_duration[-1] = "and " + txt_duration[-1]
 
     return ", ".join(txt_duration)
+
+
+class colour:
+    """A class to beautify your text. Simply import and then use this class's
+    attributes to adjust how the text is formatted. For example:
+
+    `f"{colour.BOLD}Send help{colour.END}`
+
+    will print your text to the console in bold.
+    """
+
+    PURPLE = "\033[95m"
+    CYAN = "\033[96m"
+    DARKCYAN = "\033[36m"
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+    ITALICS = "\033[3m"
+    END = "\033[0m"

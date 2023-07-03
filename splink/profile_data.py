@@ -124,7 +124,7 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     from __splink__df_all_column_value_frequencies
     where group_name = '{gn}'
     order by value_count {value_order}
-    limit {limit})
+    limit {limit}) top_bottom_freqs
     """
 
     to_union = [
@@ -172,7 +172,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
         from {table_name}
         where {col_or_expr} is not null
         group by {col_or_expr}
-        order by count(*) desc)
+        order by count(*) desc) column_stats
         """
         sqls.append(sql)
 

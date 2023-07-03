@@ -81,11 +81,12 @@ class SparkLinker(Linker):
     def __init__(
         self,
         input_table_or_tables,
-        settings_dict=None,
+        settings_dict: dict | str = None,
         break_lineage_method=None,
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
         spark=None,
+        validate_settings: bool = True,
         catalog=None,
         database=None,
         repartition_after_blocking=False,
@@ -99,9 +100,10 @@ class SparkLinker(Linker):
                 single table or a list of tables.  Tables can be provided either as
                 a Spark DataFrame, or as the name of the table as a string, as
                 registered in the Spark catalog
-            settings_dict (dict, optional): A Splink settings dictionary. If not
-                provided when the object is created, can later be added using
-                `linker.load_settings()` Defaults to None.
+            settings_dict (dict | Path, optional): A Splink settings dictionary, or
+                 a path to a json defining a settingss dictionary or pre-trained model.
+                  If not provided when the object is created, can later be added using
+                `linker.load_settings()` or `linker.load_model()` Defaults to None.
             break_lineage_method (str, optional): Method to use to cache intermediate
                 results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files",
                 "delta_lake_table". Defaults to "parquet".
@@ -114,6 +116,8 @@ class SparkLinker(Linker):
             spark: The SparkSession. Required only if `input_table_or_tables` are
                 provided as string - otherwise will be inferred from the provided
                 Spark Dataframes.
+            validate_settings (bool, optional): When True, check your settings
+                dictionary for any potential errors that may cause splink to fail.
             repartition_after_blocking (bool, optional): In some cases, especially when
                 the comparisons are very computationally intensive, performance may be
                 improved by repartitioning after blocking to distribute the workload of
@@ -170,6 +174,7 @@ class SparkLinker(Linker):
             accepted_df_dtypes,
             set_up_basic_logging,
             input_table_aliases=input_aliases,
+            validate_settings=validate_settings,
         )
         self._check_ansi_enabled_if_converting_dates()
 

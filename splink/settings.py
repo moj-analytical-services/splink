@@ -76,6 +76,7 @@ class Settings:
 
         self._warn_if_no_null_level_in_comparisons()
 
+        self._additional_cols_to_retain = self._get_raw_additional_cols_to_retain
         self._additional_columns_to_retain_list = (
             self._get_additional_columns_to_retain()
         )
@@ -108,6 +109,14 @@ class Settings:
                     "\nIf the column does not contain null values, or you know what "
                     "you're doing, you can ignore this warning"
                 )
+
+    @property
+    def _get_raw_additional_cols_to_retain(self):
+        a_cols = self._from_settings_dict_else_default("additional_columns_to_retain")
+
+        # Add any columns used in blocking rules but not model
+        if a_cols:
+            return [InputColumn(c) for c in a_cols]
 
     def _get_additional_columns_to_retain(self):
         a_cols = self._from_settings_dict_else_default("additional_columns_to_retain")
