@@ -121,8 +121,9 @@ nav:
       - Data Preparation:
         - Feature Engineering: "topic_guides/feature_engineering.md"
       - Blocking:
-        - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
-        - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
+        - What are Blocking Rules?: "topic_guides/blocking_rules.md"
+        - Model Training Blocking Rules: "topic_guides/blocking_model_training.md"
+        - Prediction Blocking Rules: "topic_guides/blocking_predictions.md"
       - Comparing Records:
         - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
         - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
@@ -132,6 +133,7 @@ nav:
           - Phonetic transformations: "topic_guides/phonetic.md"
         - Term-Frequency adjustments: "topic_guides/term-frequency.md"
       - Performance:
+        - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
         - Optimising Spark performance: "topic_guides/optimising_spark.md"
         - Salting blocking rules: "topic_guides/salting.md"
   - Documentation:

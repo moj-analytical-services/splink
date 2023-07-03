@@ -18,6 +18,8 @@ Additional factors which affect performance are:
 
 ### Blocking rules
 
+Blocking rules are the primary method for managing 
+
 In most large datasets, it is computationally intractable to compare every row with every other row.
 
 The number of comparisons grows with the square of the number of input records, using the formula $\frac{n\left(n-1\right)}2$ . For instance, a million input records implies around 500bn comparisons.

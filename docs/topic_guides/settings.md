@@ -57,7 +57,7 @@ The `"link_type"` is defined as a deduplication for a single dataset.
 
 **2. Pairs of records to consider**
 
-The `"blocking_rules_to_generate_predictions"` define a subset of pairs of records for the model to be trained on where there is a match on `"first_name"` or `"surname"`.
+The `"blocking_rules_to_generate_predictions"` define a subset of pairs of records for the model to be conder when making predictions. In this case, where there is a match on `"first_name"` or `"surname"`.
 
 ```py linenums="6"
     "blocking_rules_to_generate_predictions": [
@@ -65,6 +65,8 @@ The `"blocking_rules_to_generate_predictions"` define a subset of pairs of recor
         "l.surname = r.surname",
     ],
 ```
+
+For more information on how blocking is used in Splink, see the [dedicated topic guide](./blocking_rules.md).
 
 **3. Features to consider, and how they should be compared**
 
