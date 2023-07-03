@@ -45,7 +45,7 @@ See the Spark [deduplication example notebook](../demos/example_simple_pyspark.i
 
 ### :simple-amazonaws: Athena
 
-Athena is a big data SQL backend provided on AWS which is great for large datasets (10+ million records). It requires access to a live AWS account and as a persistent database, requires some additional management of the tables created by Splink. Athena has reasonable, but not complete, coverage for the functions in the Splink [comparison libraries](../comparison_level_library.md), with gaps in string fuzzy matching functionality due to the lack of some string functions in Athena's underlying SQL engine, [Presto](https://prestodb.io/docs/current/). At this time, the Athena backend is not being actively used by the Splink development team so receives minimal levels of support.
+Athena is a big data SQL backend provided on AWS which is great for large datasets (10+ million records). It requires access to a live AWS account and as a persistent database, requires some additional management of the tables created by Splink. Athena has reasonable, but not complete, coverage for the functions in the Splink [comparison libraries](../comparison_level_library.md), with gaps in string fuzzy matching functionality due to the lack of some string functions in Athena's underlying SQL engine, [Presto](https://prestodb.io/docs/current/). At this time, the Athena backend is being used sparingly by the Splink development team so receives minimal levels of support.
 
 In addition, from a development perspective, the neccessity for an AWS connection makes testing Athena code more difficult, so there may be occassional bugs that would normally be caught by our testing framework.
 
