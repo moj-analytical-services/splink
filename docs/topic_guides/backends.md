@@ -19,7 +19,7 @@ The Splink code you write is almost identical between backends, so it's straight
 ### Considerations when choosing a SQL backend for Splink
 When choosing which backend to use when getting started with Splink, there are another factors to consider:
 
-- the size of the datasets
+- the size of the dataset(s)
 - the amount of configuration required
 - access to specific (sometimes proprietary) platforms
 - the backend-specific features offered by Splink
