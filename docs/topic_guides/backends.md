@@ -20,7 +20,7 @@ The Splink code you write is almost identical between backends, so it's straight
 When choosing which backend to use when getting started with Splink, there are a number of factors to consider:
 
 - the size of the dataset(s)
-- the amount of configuration required
+- the amount of boilerplate code/configuration required
 - access to specific (sometimes proprietary) platforms
 - the backend-specific features offered by Splink
 - the level of support and active development offered by Splink  
@@ -53,7 +53,7 @@ See the Athena [deduplication example notebook](../demos/athena_deduplicate_50k_
 
 ### :simple-sqlite: SQLite
 
-SQLite is similar to DuckDB in that it is, generally, more suited to smaller datasets. While not as performant as DuckDB, SQLite is simple to setup and can even be run directly in a Jupyter notebook. SQLite has reasonable, but not complete, coverage for the functions in the Splink [comparison libraries](../comparison_level_library.md), with gaps in array and date comparisons. String fuzzy matching, while not native to SQLite is available via python UDFs which has some [performance implications](#additional-information-for-specific-backends). SQLite is not actively been used by the Splink team so receives minimal levels of support.
+SQLite is similar to DuckDB in that it is, generally, more suited to smaller datasets. SQLite is simple to setup and can be run directly in a Jupyter notebook, but is not as performant as DuckDB. SQLite has reasonable, but not complete, coverage for the functions in the Splink [comparison libraries](../comparison_level_library.md), with gaps in array and date comparisons. String fuzzy matching, while not native to SQLite is available via python UDFs which has some [performance implications](#additional-information-for-specific-backends). SQLite is not actively been used by the Splink team so receives minimal levels of support.
 
 ### :simple-postgresql: PostgreSql
 
