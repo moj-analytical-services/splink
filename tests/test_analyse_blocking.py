@@ -320,7 +320,10 @@ def test_analyse_blocking_fast_methodology():
 
 
 def test_blocking_rule_accepts_different_dialects():
-    br = "l.`first Nname` = r.`first Name`"
+    br = "l.first_name = r.first_name"
     br = BlockingRule(br, sqlglot_dialect="spark")
-    a = br._join_conditions
-    b = 1
+    assert br._join_conditions == [("first_name", "first_name")]
+
+    br = "l.`hi THERE` = r.`hi THERE`"
+    br = BlockingRule(br, sqlglot_dialect="spark")
+    assert br._join_conditions == [("`hi THERE`", "`hi THERE`")]
