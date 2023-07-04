@@ -124,6 +124,7 @@ nav:
         - What are Blocking Rules?: "topic_guides/blocking_rules.md"
         - Model Training Blocking Rules: "topic_guides/blocking_model_training.md"
         - Prediction Blocking Rules: "topic_guides/blocking_predictions.md"
+        - Computational Performance: "topic_guides/blocking_performance.md"
       - Comparing Records:
         - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
         - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"

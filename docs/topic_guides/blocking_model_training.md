@@ -1,111 +1,39 @@
 # Blocking for Model Training
 
-## The purpose of the `blocking_rule` parameter on `estimate_parameters_using_expectation_maximisation`
+Model Training Blocking Rules choose which record pairs from a dataset get considered when training a Splink model. These are used during Expectation Maximisation (EM), where we estimate the [m probability](./fellegi_sunter.md#m-probability) (in most cases).
 
-The purpose of this blocking rule is to reduce the number of pairwise generated to a computationally-tractable number to enable the expectation maximisation algorithm to work.
+The aim of Model Training Blocking Rules is to reduce the number of record pairs considered when training a Splink model in order to reduce the computational resource required. Each Training Blocking Rule define a training "block" of records which have a combination of matches and non-matches that are considered by Splink's Expectation Maximisation algorithm.
 
-The expectation maximisation algorithm seems to work best when the pairwise record comparisons are a mix of anywhere between around 0.1% and 99.9% true matches. It works less effectively if there are very few examples of either matches or non-matches. It works less efficiently if there is a huge imbalance between the two (e.g. a billion non matches and only a hundred matches).
+The Expectation Maximisation algorithm seems to work best when the pairwise record comparisons are a mix of anywhere between around 0.1% and 99.9% true matches. It works less efficiently if there is a huge imbalance between the two (e.g. a billion non matches and only a hundred matches).
 
-It does not matter if this blocking rule excludes some true matches - it just needs to generate examples of matches and non matches.
+Note: Unlike [Prediction Blocking Rules](./blocking_predictions.md), it does not matter if Training Blocking Rules excludes some true matches - it just needs to generate examples of matches and non-matches.
 
-Since they serve different purposes, the blocking rules most appropriate to use with `blocking_rules_to_generate_predictions` will often be different to those for `estimate_parameters_using_expectation_maximisation`, but it is also common for the same rule to be used in both places.
 
 ## Using Training Blocking Rules in Splink
 
 
-What is the difference between the list of `blocking_rules_to_generate_predictions` specifed in the Splink settings dictionary, and the blocking rule that must be provided as an argument to `estimate_parameters_using_expectation_maximisation`?
+Blocking Rules for Model Training are used as a parameter in the `estimate_parameters_using_expectation_maximisation` function. After a `linker` object has been instantiated, you can estimate `m probability` with training sessions such as:
 
-These two kinds of blocking rules can be seen in the following code snippet:
+```python
 
-=== ":simple-duckdb: DuckDB"
-    ```python
-    import splink.duckdb.comparison_library as cl
+blocking_rule_for_training = "l.first_name = r.first_name"
+linker.estimate_parameters_using_expectation_maximisation(
+    blocking_rule_for_training
+    )
 
-    settings = {
-        "link_type": "dedupe_only",
-        "blocking_rules_to_generate_predictions": [
-            "l.first_name = r.first_name and substr(l.surname,1,1) = substr(r.surname,1,1)",
-            "l.dob = r.dob",
-        ],
-        "comparisons": [
-            cl.levenshtein_at_thresholds("first_name", 2),
-            cl.exact_match("surname"),
-            cl.exact_match("dob"),
-            cl.exact_match("city", term_frequency_adjustments=True),
-            cl.exact_match("email"),
-        ],
-    }
+```
 
+Here, we have defined a "block" of records where `first_name` are the same. As names are not unique, we can be pretty sure that there will be a combination of matches and non-matches in this "block" which is what is required for the EM algorithm.
 
-    linker = DuckDBLinker(df, settings)
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+Matching only on `first_name` will likely generate a large "block" of pairwise comparisons which will take longer to run. In this case it may be worthwhile applying a tighter blocking rule to reduce runtime. For example, a match on `first_name` and `surname`:
 
-    blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+```python
 
-    blocking_rule_for_training = "l.dob = r.dob and l.city = r.city"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
+linker.estimate_parameters_using_expectation_maximisation(
+    blocking_rule_for_training
+    )
 
-    ```
-=== ":simple-apachespark: Spark"
-    ```python
-    import splink.spark.comparison_library as cl
+```
 
-    settings = {
-        "link_type": "dedupe_only",
-        "blocking_rules_to_generate_predictions": [
-            "l.first_name = r.first_name and substr(l.surname,1,1) = substr(r.surname,1,1)",
-            "l.dob = r.dob",
-        ],
-        "comparisons": [
-            cl.levenshtein_at_thresholds("first_name", 2),
-            cl.exact_match("surname"),
-            cl.exact_match("dob"),
-            cl.exact_match("city", term_frequency_adjustments=True),
-            cl.exact_match("email"),
-        ],
-    }
-
-
-    linker = SparkLinker(df, settings)
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
-
-    blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
-
-    blocking_rule_for_training = "l.dob = r.dob and l.city = r.city"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
-
-    ```
-=== ":simple-amazonaws: Athena"
-    ```python
-    import splink.athena.comparison_library as cl
-
-    settings = {
-        "link_type": "dedupe_only",
-        "blocking_rules_to_generate_predictions": [
-            "l.first_name = r.first_name and substr(l.surname,1,1) = substr(r.surname,1,1)",
-            "l.dob = r.dob",
-        ],
-        "comparisons": [
-            cl.levenshtein_at_thresholds("first_name", 2),
-            cl.exact_match("surname"),
-            cl.exact_match("dob"),
-            cl.exact_match("city", term_frequency_adjustments=True),
-            cl.exact_match("email"),
-        ],
-    }
-
-
-    linker = AthenaLinker(df, settings)
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
-
-    blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
-
-    blocking_rule_for_training = "l.dob = r.dob and l.city = r.city"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
-
-    ```
-
-The answer is that they serve different purposes.
+which will still have a combination of matches and non-matches, but fewer record pairs to consider.
