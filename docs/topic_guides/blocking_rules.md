@@ -34,7 +34,7 @@ Instead, we can define a subset of potential comparisons using **Blocking Rules*
 
 ???+ "Further Reading"
 
-    For more information on blocking, please refer to XXXX
+    For more information on blocking, please refer to [this article](https://toolkit.data.gov.au/data-integration/data-integration-projects/probabilistic-linking.html#key-steps-in-probabilistic-linking)
 
 ### Choosing Blocking Rules
 

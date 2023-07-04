@@ -135,8 +135,9 @@ nav:
         - Term-Frequency adjustments: "topic_guides/term-frequency.md"
       - Performance:
         - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
-        - Optimising Spark performance: "topic_guides/optimising_spark.md"
-        - Salting blocking rules: "topic_guides/salting.md"
+        - Spark Performance:
+            - Optimising Spark performance: "topic_guides/optimising_spark.md"
+            - Salting blocking rules: "topic_guides/salting.md"
   - Documentation:
       - Introduction: "documentation_index.md"
       - API:
