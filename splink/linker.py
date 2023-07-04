@@ -2701,7 +2701,7 @@ class Linker:
             linker.count_num_comparisons_from_blocking_rule(br)
             ```
             > 19387
-            
+
             ```py
             br = "l.name = r.name and substr(l.dob,1,4) = substr(r.dob,1,4)"
             linker.count_num_comparisons_from_blocking_rule(br)
