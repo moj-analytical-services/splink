@@ -4,8 +4,8 @@ import pandas as pd
 from splink.analyse_blocking import (
     cumulative_comparisons_generated_by_blocking_rules,
 )
-from splink.duckdb.linker import DuckDBLinker
 from splink.blocking import BlockingRule
+from splink.duckdb.linker import DuckDBLinker
 from tests.basic_settings import get_settings_dict
 
 
