@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING, Union
 
-from .blocking import _sql_gen_where_condition, block_using_rules_sql, BlockingRule
+from .blocking import BlockingRule, _sql_gen_where_condition, block_using_rules_sql
 from .misc import calculate_cartesian, calculate_reduction_ratio
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -172,12 +172,31 @@ def count_comparisons_from_blocking_rule_sqls(
 
     sqls = []
 
-    if not join_conditions:
-        sql = """
-        select count(*) * count(*) as count_of_pairwise_comparisons_generated
-        from __splink__df_concat
+    if linker._two_dataset_link_only:
+        #    Can just use the raw input datasets
+        keys = linker._input_tables_dict.keys()
+        input_tablename_l = linker._input_tables_dict[keys[0]].templated_name
+        input_tablename_r = linker._input_tables_dict[keys[1]].templated_name
 
-        """
+    else:
+        input_tablename_l = "__splink__df_concat"
+        input_tablename_r = "__splink__df_concat"
+
+    if not join_conditions:
+        if linker._two_dataset_link_only:
+            sql = f"""
+            SELECT
+                (SELECT COUNT(*) FROM {input_tablename_l})
+                *
+                (SELECT COUNT(*) FROM {input_tablename_r})
+                    AS count_of_pairwise_comparisons_generated
+            """
+        else:
+            sql = """
+            select count(*) * count(*) as count_of_pairwise_comparisons_generated
+            from __splink__df_concat
+
+            """
         sqls.append(
             {"sql": sql, "output_table_name": "__splink__total_of_block_counts"}
         )
@@ -185,7 +204,7 @@ def count_comparisons_from_blocking_rule_sqls(
 
     sql = f"""
     select {l_cols_sel}, count(*) as count_l
-    from __splink__df_concat
+    from {input_tablename_l}
     group by {l_cols_gb}
     """
 
@@ -195,7 +214,7 @@ def count_comparisons_from_blocking_rule_sqls(
 
     sql = f"""
     select {r_cols_sel}, count(*) as count_r
-    from __splink__df_concat
+    from {input_tablename_r}
     group by {r_cols_gb}
     """
 
