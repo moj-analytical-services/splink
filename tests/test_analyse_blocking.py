@@ -1,5 +1,5 @@
-import pandas as pd
 import duckdb
+import pandas as pd
 
 from splink.analyse_blocking import (
     cumulative_comparisons_generated_by_blocking_rules,
