@@ -5,6 +5,7 @@ from splink.analyse_blocking import (
     cumulative_comparisons_generated_by_blocking_rules,
 )
 from splink.duckdb.linker import DuckDBLinker
+from splink.blocking import BlockingRule
 from tests.basic_settings import get_settings_dict
 
 
@@ -316,3 +317,10 @@ def test_analyse_blocking_fast_methodology():
             results[br]["count_from_join_link_only"]
             == results[br]["count_from_efficient_fn_link_only"]
         )
+
+
+def test_blocking_rule_accepts_different_dialects():
+    br = "l.`first Nname` = r.`first Name`"
+    br = BlockingRule(br, sqlglot_dialect="spark")
+    a = br._join_conditions
+    b = 1

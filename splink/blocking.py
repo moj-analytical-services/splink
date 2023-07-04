@@ -56,8 +56,8 @@ class BlockingRule:
     @property
     def _parsed_join_condition(self):
         br = self.blocking_rule
-        return parse_one("INNER JOIN r", into=Join, read=self.sqlglot_dialect).on(
-            br
+        return parse_one("INNER JOIN r", into=Join).on(
+            br, dialect=self.sqlglot_dialect
         )  # using sqlglot==11.4.1
 
     @property
@@ -85,7 +85,10 @@ class BlockingRule:
 
         keys = [(rmtp(i), rmtp(j)) for (i, j) in keys]
 
-        keys = [(i.sql(), j.sql()) for (i, j) in keys]
+        keys = [
+            (i.sql(dialect=self.sqlglot_dialect), j.sql(self.sqlglot_dialect))
+            for (i, j) in keys
+        ]
 
         keys = list(set(keys))
 
@@ -102,7 +105,7 @@ class BlockingRule:
         if not filter_condition:
             return ""
         else:
-            return filter_condition.sql()
+            return filter_condition.sql(self.sqlglot_dialect)
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):
