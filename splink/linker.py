@@ -2723,7 +2723,7 @@ class Linker:
         res = self._execute_sql_pipeline().as_record_dict()[0]
         return res["count_of_pairwise_comparisons_generated"]
 
-    def count_num_comparisons_from_blocking_rule_2(
+    def _count_num_comparisons_from_blocking_rule_pre_filter_conditions(
         self,
         blocking_rule: str,
     ) -> int:

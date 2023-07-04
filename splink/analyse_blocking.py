@@ -174,9 +174,9 @@ def count_comparisons_from_blocking_rule_sqls(
 
     if linker._two_dataset_link_only:
         #    Can just use the raw input datasets
-        keys = linker._input_tables_dict.keys()
-        input_tablename_l = linker._input_tables_dict[keys[0]].templated_name
-        input_tablename_r = linker._input_tables_dict[keys[1]].templated_name
+        keys = list(linker._input_tables_dict.keys())
+        input_tablename_l = linker._input_tables_dict[keys[0]].physical_name
+        input_tablename_r = linker._input_tables_dict[keys[1]].physical_name
 
     else:
         input_tablename_l = "__splink__df_concat"
