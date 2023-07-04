@@ -22,9 +22,9 @@ from .accuracy import (
     truth_space_table_from_labels_table,
 )
 from .analyse_blocking import (
-    count_comparisons_from_blocking_rule_sqls,
+    count_comparisons_from_blocking_rule_pre_filter_conditions_sqls,
     cumulative_comparisons_generated_by_blocking_rules,
-    number_of_comparisons_generated_by_blocking_rule_sql,
+    number_of_comparisons_generated_by_blocking_rule_post_filters_sql,
 )
 from .blocking import (
     BlockingRule,
@@ -2718,7 +2718,9 @@ class Linker:
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
 
-        sql = number_of_comparisons_generated_by_blocking_rule_sql(self, blocking_rule)
+        sql = number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
+            self, blocking_rule
+        )
         self._enqueue_sql(sql, "__splink__analyse_blocking_rule")
         res = self._execute_sql_pipeline().as_record_dict()[0]
         return res["count_of_pairwise_comparisons_generated"]
@@ -2758,7 +2760,9 @@ class Linker:
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
 
-        sqls = count_comparisons_from_blocking_rule_sqls(self, blocking_rule)
+        sqls = count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
+            self, blocking_rule
+        )
         for sql in sqls:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 

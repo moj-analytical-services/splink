@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def number_of_comparisons_generated_by_blocking_rule_sql(
+def number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
     linker: Linker,
     blocking_rule,
 ) -> str:
@@ -141,7 +141,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
     return br_comparisons
 
 
-def count_comparisons_from_blocking_rule_sqls(
+def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     linker: "Linker", blocking_rule: Union[str, "BlockingRule"]
 ):
     if isinstance(blocking_rule, str):
