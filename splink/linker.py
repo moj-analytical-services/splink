@@ -2735,7 +2735,7 @@ class Linker:
                 for. If null, the rules set out in your settings object will be used.
 
         Examples:
-            Generate total comparisons from Blocking Rules defined in settings 
+            Generate total comparisons from Blocking Rules defined in settings
             dictionary
             ```py
             linker_settings = DuckDBLinker(df, settings)
