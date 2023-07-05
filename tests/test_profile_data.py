@@ -31,7 +31,7 @@ from tests.decorator import mark_with_dialects_excluding
 
 #     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
 
-    #return linker._execute_sql_pipeline(materialise_as_hash=True).as_pandas_dataframe()
+#     return linker._execute_sql_pipeline(materialise_as_hash=True).as_pandas_dataframe()
 
 
 def generate_raw_profile_arrays_dataset(columns_to_profile, linker, cast_arrays_as_str):
@@ -55,6 +55,7 @@ def test_profile_using_duckdb():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     df["blank"] = None
     settings_dict = get_settings_dict()
+
     linker = DuckDBLinker(df, settings_dict, connection=":memory:")
 
     bools= [False, True]
@@ -65,6 +66,7 @@ def test_profile_using_duckdb():
             ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
             top_n=15,
             bottom_n=15,
+            cast_arrays_as_str= bool
         )
         linker.profile_columns(
             [
@@ -76,9 +78,10 @@ def test_profile_using_duckdb():
             ],
             top_n=15,
             bottom_n=15,
+            cast_arrays_as_str= bool
         )
 
-        assert len(generate_raw_profile_arrays_dataset([["first_name", "blank"]], linker)) == 0
+        assert len(generate_raw_profile_arrays_dataset([["first_name", "blank"]], linker, cast_arrays_as_str = bool)) == 0
 
 
 def test_profile_using_duckdb_no_settings():
@@ -86,26 +89,22 @@ def test_profile_using_duckdb_no_settings():
 
     linker = DuckDBLinker(df, connection=":memory:")
 
-    bools= [False, True]
-
-    for bool in bools:
-
-        linker.profile_columns(
-            ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
-            top_n=15,
-            bottom_n=15,
-        )
-        linker.profile_columns(
-            [
-                "first_name",
-                ["surname"],
-                ["first_name", "surname"],
-                ["city", "first_name", "dob"],
-                ["first_name", "surname", "city", "dob"],
-            ],
-            top_n=15,
-            bottom_n=15,
-        )
+    linker.profile_columns(
+        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
+        top_n=15,
+        bottom_n=15,
+    )
+    linker.profile_columns(
+        [
+            "first_name",
+            ["surname"],
+            ["first_name", "surname"],
+            ["city", "first_name", "dob"],
+            ["first_name", "surname", "city", "dob"],
+        ],
+        top_n=15,
+        bottom_n=15,
+    )
 
 # @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
 def test_profile_using_spark(df_spark):
@@ -113,28 +112,26 @@ def test_profile_using_spark(df_spark):
     df_spark = df_spark.withColumn("blank", lit(None).cast(StringType()))
     linker = SparkLinker(df_spark, settings_dict)
 
-    bools= [False, True]
+    linker.profile_columns(
+        ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
+        top_n=15,
+        bottom_n=15,
 
-    for bool in bools:
+    )
+    linker.profile_columns(
+        [
+            "first_name",
+            ["surname"],
+            ["first_name", "surname"],
+            ["city", "first_name", "dob"],
+            ["first_name", "surname", "city", "dob"],
+        ],
+        top_n=15,
+        bottom_n=15,
 
-        linker.profile_columns(
-            ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
-            top_n=15,
-            bottom_n=15,
-        )
-        linker.profile_columns(
-            [
-                "first_name",
-                ["surname"],
-                ["first_name", "surname"],
-                ["city", "first_name", "dob"],
-                ["first_name", "surname", "city", "dob"],
-            ],
-            top_n=15,
-            bottom_n=15,
-        )
+    )
 
-        assert len(generate_raw_profile_arrays_dataset([["first_name", "blank"]], linker)) == 0
+    assert len(generate_raw_profile_arrays_dataset([["first_name", "blank"]], linker, cast_arrays_as_str = True)) == 0
 
 
 def test_profile_using_sqlite():
@@ -150,47 +147,7 @@ def test_profile_using_sqlite():
         connection=con,
     )
 
-    bools= [False, True]
-
-    for bool in bools:
-
-        linker.profile_columns(["first_name", "surname", "first_name || surname"])
-
-
-
-# def test_profile_with_arrays_duckdb():
-#     dic = {
-#         "id": {0: 1, 1: 2, 2: 3, 3: 4},
-#         "forename": {0: "Juan", 1: "Sarah", 2: "Leila", 3: "Michaela"},
-#         "surname": {0: "Pene", 1: "Dowel", 2: "Idin", 3: "Bose"},
-#         "offence_code_arr": {
-#             0: np.nan,
-#             1: np.array((1, 2, 3)),
-#             2: np.array((1, 2, 3)),
-#             3: np.array((1, 2, 3)),
-#         },
-#         "lat_long": {
-#             0: {"lat": 22.730590, "lon": 9.388589},
-#             1: {"lat": 22.836322, "lon": 9.276112},
-#             2: {"lat": 37.770850, "lon": 95.689880},
-#             3: None,
-#         },
-#     }
-
-#     df = pd.DataFrame(dic)
-#     settings = {
-#         "link_type": "dedupe_only",
-#         "unique_id_column_name": "id",
-#     }
-#     linker = DuckDBLinker(df, settings, connection=":memory:")
-
-#     column_expressions = ["forename", "surname", "offence_code_arr", "lat_long"]
-
-#     linker.profile_columns(
-#         column_expressions,
-#         top_n=3,
-#         bottom_n=3,
-#     )
+    linker.profile_columns(["first_name", "surname", "first_name || surname"])
 
 
 ##### BAT. EDIT TO INCLUDE OTHER BACKENDS WHEN PROFILING OF ARRAY ELEMENTS IS AVAILABLE ###### 
@@ -287,6 +244,7 @@ def test_profile_with_arrays_spark(spark):
         "unique_id_column_name": "id",
     }
     spark_df = spark.read.parquet("tests/datasets/arrays_df.parquet")
+    spark_df = spark_df.withColumn("blank", lit(None).cast(StringType()))
     spark_df.persist()
 
     linker = SparkLinker(
@@ -302,4 +260,5 @@ def test_profile_with_arrays_spark(spark):
         bottom_n=3,
     )
 
+    assert len(generate_raw_profile_arrays_dataset([["forename", "blank"]], linker, cast_arrays_as_str = False)) == 0
 

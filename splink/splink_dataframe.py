@@ -58,6 +58,10 @@ class SplinkDataFrame:
         raise NotImplementedError(
             "Drop table from database not implemented for this linker"
         )
+    
+    def get_array_cols(self):
+        logger.warning("Profiling arrays is not implemented for this linker")
+        return []
 
     def as_record_dict(self, limit=None):
         pass
