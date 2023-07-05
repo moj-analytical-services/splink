@@ -9,7 +9,7 @@ We encourage contributions from all users. Whether it be adding a feature, fixin
 
 ## Contributing to Splink
 
-Thank you for your interest in contributing to Splink! If this is your first time working with Splink, check our [Contributors Guide](/CONTRIBUTING.md).
+Thank you for your interest in contributing to Splink! If this is your first time working with Splink, check our [Contributors Guide](/CONTRIBUTING.html).
 
 When making changes to Splink, there are a number of common operations that developers need to perform. The guides below lay out some of these common operations, and provides scripts to automate these processes. These include:
 
