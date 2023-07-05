@@ -1,6 +1,5 @@
-import sqlite3
-
 import os
+import sqlite3
 
 import numpy as np
 import pandas as pd
@@ -14,10 +13,9 @@ from splink.profile_data import (
 )
 from splink.spark.linker import SparkLinker
 from splink.sqlite.linker import SQLiteLinker
+from tests.decorator import mark_with_dialects_excluding
 
 from .basic_settings import get_settings_dict
-
-from tests.decorator import mark_with_dialects_excluding
 
 
 def generate_raw_profile_arrays_dataset(columns_to_profile, linker, cast_arrays_as_str):
@@ -29,7 +27,7 @@ def generate_raw_profile_arrays_dataset(columns_to_profile, linker, cast_arrays_
     column_expressions_raw = ensure_is_list(columns_to_profile)
 
     sql = _col_or_expr_frequencies_raw_data_sql(
-        column_expressions_raw, array_cols, df_concat.physical_name, cast_arrays_as_str 
+        column_expressions_raw, array_cols, df_concat.physical_name, cast_arrays_as_str
     )
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
@@ -44,15 +42,20 @@ def test_profile_using_duckdb():
 
     linker = DuckDBLinker(df, settings_dict, connection=":memory:")
 
-    bools= [False, True]
+    bools = [False, True]
 
     for bool in bools:
 
         linker.profile_columns(
-            ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
+            [
+                "first_name",
+                "surname",
+                "first_name || surname",
+                "concat(city, first_name)",
+            ],
             top_n=15,
             bottom_n=15,
-            cast_arrays_as_str= bool
+            cast_arrays_as_str=bool,
         )
         linker.profile_columns(
             [
@@ -64,14 +67,22 @@ def test_profile_using_duckdb():
             ],
             top_n=15,
             bottom_n=15,
-            cast_arrays_as_str= bool
+            cast_arrays_as_str=bool,
         )
 
-        assert len(generate_raw_profile_arrays_dataset([["first_name", "blank"]], linker, cast_arrays_as_str = bool)) == 0
+        assert (
+            len(
+                generate_raw_profile_arrays_dataset(
+                    [["first_name", "blank"]], linker, cast_arrays_as_str=bool
+                )
+            )
+            == 0
+        )
 
 
 def test_profile_using_duckdb_no_settings():
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df["blank"] = None
 
     linker = DuckDBLinker(df, connection=":memory:")
 
@@ -92,6 +103,16 @@ def test_profile_using_duckdb_no_settings():
         bottom_n=15,
     )
 
+    assert (
+        len(
+            generate_raw_profile_arrays_dataset(
+                [["first_name", "blank"]], linker, cast_arrays_as_str=True
+            )
+        )
+        == 0
+    )
+
+
 # @pytest.mark.skip(reason="Uses Spark so slow and heavyweight")
 def test_profile_using_spark(df_spark):
     settings_dict = get_settings_dict()
@@ -102,7 +123,6 @@ def test_profile_using_spark(df_spark):
         ["first_name", "surname", "first_name || surname", "concat(city, first_name)"],
         top_n=15,
         bottom_n=15,
-
     )
     linker.profile_columns(
         [
@@ -114,10 +134,16 @@ def test_profile_using_spark(df_spark):
         ],
         top_n=15,
         bottom_n=15,
-
     )
 
-    assert len(generate_raw_profile_arrays_dataset([["first_name", "blank"]], linker, cast_arrays_as_str = True)) == 0
+    assert (
+        len(
+            generate_raw_profile_arrays_dataset(
+                [["first_name", "blank"]], linker, cast_arrays_as_str=True
+            )
+        )
+        == 0
+    )
 
 
 def test_profile_using_sqlite():
@@ -136,8 +162,7 @@ def test_profile_using_sqlite():
     linker.profile_columns(["first_name", "surname", "first_name || surname"])
 
 
-##### BAT. EDIT TO INCLUDE OTHER BACKENDS WHEN PROFILING OF ARRAY ELEMENTS IS AVAILABLE ###### 
-@mark_with_dialects_excluding('sqlite', 'spark')
+@mark_with_dialects_excluding("sqlite", "spark")
 def test_profile_arrays_bat(test_helpers, dialect, tmp_path):
     helper = test_helpers[dialect]
 
@@ -161,14 +186,14 @@ def test_profile_arrays_bat(test_helpers, dialect, tmp_path):
 
     df = pd.DataFrame(dic)
     df["blank"] = None
-    
-#Writing out and reading in as parquet as the pandas dfs were causing issues
+
+    # Writing out and reading in as parquet as the pandas dfs were causing issues
     r_w_path = os.path.join(tmp_path, "helper_df")
 
     df.to_parquet(r_w_path)
 
     df = helper.load_frame_from_parquet(r_w_path)
-    
+
     settings = {
         "link_type": "dedupe_only",
         "unique_id_column_name": "id",
@@ -177,7 +202,7 @@ def test_profile_arrays_bat(test_helpers, dialect, tmp_path):
 
     column_expressions = ["forename", "surname", "offence_code_arr", "lat_long"]
 
-    bools= [False, True]
+    bools = [False, True]
 
     for bool in bools:
 
@@ -197,33 +222,41 @@ def test_profile_arrays_bat(test_helpers, dialect, tmp_path):
             bottom_n=3,
         )
 
-        assert len(generate_raw_profile_arrays_dataset([["forename", "blank"]], linker,
-                                                cast_arrays_as_str = bool)) == 0
-        
-        out = generate_raw_profile_arrays_dataset("offence_code_arr", linker, cast_arrays_as_str = bool)
+        assert (
+            len(
+                generate_raw_profile_arrays_dataset(
+                    [["forename", "blank"]], linker, cast_arrays_as_str=bool
+                )
+            )
+            == 0
+        )
 
-        if bool == False:
+        out = generate_raw_profile_arrays_dataset(
+            "offence_code_arr", linker, cast_arrays_as_str=bool
+        )
 
-            expected = {'value': [13, 12, 11], 
-                        'value_count': [4, 3, 2]}
-            
-            out['value'] = out['value'].astype('int')
+        if bool is False:
 
+            expected = {"value": [13, 12, 11], "value_count": [4, 3, 2]}
+
+            out["value"] = out["value"].astype("int")
 
         else:
-            
-            expected = {'value': ['[12, 13]','[11, 12, 13]','[11, 12, 13, 13]'], 
-                        'value_count': [1, 1, 1]}
-            
+
+            expected = {
+                "value": ["[12, 13]", "[11, 12, 13]", "[11, 12, 13, 13]"],
+                "value_count": [1, 1, 1],
+            }
+
         expected = pd.DataFrame.from_dict(expected)
 
-        out = out.loc[:, ['value', 'value_count']].sort_values(
-        by='value', ascending= False, ignore_index=True)
+        out = out.loc[:, ["value", "value_count"]].sort_values(
+            by="value", ascending=False, ignore_index=True
+        )
 
         assert expected.equals(out)
 
 
-##### REMOVE AND EDIT BAT ONCE PROFILING OF ARRAY ELEMENTS IS AVAILABLE IN SPARK ########
 def test_profile_with_arrays_spark(spark):
     settings = {
         "link_type": "dedupe_only",
@@ -246,5 +279,11 @@ def test_profile_with_arrays_spark(spark):
         bottom_n=3,
     )
 
-    assert len(generate_raw_profile_arrays_dataset([["forename", "blank"]], linker, cast_arrays_as_str = False)) == 0
-
+    assert (
+        len(
+            generate_raw_profile_arrays_dataset(
+                [["forename", "blank"]], linker, cast_arrays_as_str=False
+            )
+        )
+        == 0
+    )

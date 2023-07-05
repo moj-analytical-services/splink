@@ -168,25 +168,28 @@ def _col_or_expr_frequencies_raw_data_sql(
         if not cast_arrays_as_str and raw_expr in array_cols:
 
             sql = f"""
-                SELECT * FROM
+                select * from
                 (select value,
-                COUNT (*) AS value_count,
+                count (*) as value_count,
                 '{gn}' as group_name,
 
-                (select count(value) FROM
-                (SELECT UNNEST ({col_or_expr}) AS value FROM {table_name})) as total_non_null_rows,
+                (select count(value) from
+                (select unnest ({col_or_expr}
+                ) AS value from {table_name})) as total_non_null_rows,
 
-                (select count(*) FROM
-                (SELECT UNNEST ({col_or_expr}) AS value FROM {table_name})) as total_rows_inc_nulls,
+                (select count(*) from
+                (select unnest ({col_or_expr}
+                ) AS value from {table_name})) as total_rows_inc_nulls,
 
-                (select count(distinct value) FROM
-                (SELECT UNNEST ({col_or_expr}) AS value FROM {table_name})) as distinct_value_count
+                (select count(distinct value) from
+                (select unnest ({col_or_expr}
+                ) AS value from {table_name})) as distinct_value_count
 
-                FROM
+                from
                 (select cast(unnest({col_or_expr}) as varchar) as value,
-                
+
                 from {table_name})
-                GROUP BY value
+                group by value
                 order by count(*) desc)
 
                 """
@@ -228,7 +231,7 @@ def profile_columns(
     linker, column_expressions, top_n=10, bottom_n=10, cast_arrays_as_str=False
 ):
 
-    df_concat = linker._initialise_df_concat_with_tf()
+    df_concat = linker._initialise_df_concat(materialise=True)
 
     input_dataframes = []
     if df_concat:
