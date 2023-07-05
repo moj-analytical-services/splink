@@ -7,10 +7,24 @@ hide:
 
 We encourage contributions from all users. Whether it be adding a feature, fixing a bug or fixing typos in our documentation we are extremely appreciative of the input of external contributors. Splink would not be as good without it!
 
+## Contributors Guide
+
+Thank you for your interest in contributing to Splink! Take a look at our [Contributors Guide](/CONTRIBUTING.md).
 
 ## Developer Guides
 
-The set of guides in this section are intended for users who are making changes to Splink. 
+The set of guides in this section are intended for users who want to learn more about how the codebase is structured or are making changes to Splink. 
+
+### How Splink works
+
+Splink is quite a large, complex codebase. The guides in this section lay out some of the key structures and key areas within the Splink codebase. These include:
+
+* [Understanding and Debugging Splink](./debug_modes.md) - demonstrates several ways of understanding how Splink code is running under the hood. This includes Splink's debug mode and logging.
+* [Transpilation using sqlglot](./transpilation.md) - demonstrates how Splink translates SQL in order to be compatible with multiple SQL engines using the sqlglot package.
+* [Performance and caching](./caching.md) - demonstrates how pipelining and caching is used to make Splink run more efficiently.
+* [Comparison and Comparison Level Libraries](./comparisons/new_library_comparisons_and_levels.md) - demonstrates how `Comparison` Library and `ComparisonLevel` Library functions are structured within Splink, including how to add new functions and edit existing functions.
+* [User-Defined Functions](./udfs.md) - demonstrates how User Defined Functions (UDFs) are used to provide functionality within Splink that is not native to a given SQL backend.
+
 
 ### Making Changes to Splink
 
@@ -22,13 +36,4 @@ When making changes to Splink, there are a number of common operations that deve
 * [Building the Documentation locally](./changing_splink/build_docs_locally.md) - to test any changes to the docs site render correctly.
 * [Releasing a new package version](./changing_splink/releases.md) - to walk-through the release process for new versions of Splink. This generally happens every 2 weeks, or in the case of an urgent bug fix.
 
-### How Splink works
-
-Splink is quite a large, complex codebase. The guides in this section lay out some of the key structures and key areas within the Splink codebase. These include:
-
-* [Understanding and Debugging Splink](./debug_modes.md) - demonstrates several ways of understanding how Splink code is running under the hood. This includes Splink's debug mode and logging.
-* [Transpilation using sqlglot](./transpilation.md) - demonstrates how Splink translates SQL in order to be compatible with multiple SQL engines using the sqlglot package.
-* [Performance and caching](./caching.md) - demonstrates how pipelining and caching is used to make Splink run more efficiently.
-* [Comparison and Comparison Level Libraries](./comparisons/new_library_comparisons_and_levels.md) - demonstrates how `Comparison` Library and `ComparisonLevel` Library functions are structured within Splink, including how to add new functions and edit existing functions.
-* [User-Defined Functions](./udfs.md) - demonstrates how User Defined Functions (UDFs) are used to provide functionality within Splink that is not native to a given SQL backend.
 

@@ -159,12 +159,7 @@ nav:
 
   - Contributing:
       - Introduction: "dev_guides/dev_guides_index.md"
-      - Making Changes to Splink:
-        - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
-        - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
-        - Testing: "dev_guides/changing_splink/testing.md"
-        - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
-        - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
+      - Contributing Guide: "CONTRIBUTING.md"
       - How Splink works:
         - Understanding and debugging Splink: "dev_guides/debug_modes.md"
         - Transpilation using sqlglot: "dev_guides/transpilation.md"
@@ -175,6 +170,13 @@ nav:
           - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
           - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
         - User-Defined Functions: "dev_guides/udfs.md"
+      - Making Changes to Splink:
+        - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
+        - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
+        - Testing: "dev_guides/changing_splink/testing.md"
+        - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
+        - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
+      
 
 extra_css:
 - css/custom.css
