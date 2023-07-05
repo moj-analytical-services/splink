@@ -7,15 +7,19 @@ hide:
 
 We encourage contributions from all users. Whether it be adding a feature, fixing a bug or fixing typos in our documentation we are extremely appreciative of the input of external contributors. Splink would not be as good without it!
 
-## Contributors Guide
+## Contributing to Splink
 
-Thank you for your interest in contributing to Splink! Take a look at our [Contributors Guide](/CONTRIBUTING.md).
+Thank you for your interest in contributing to Splink! If this is your first time working with Splink, check our [Contributors Guide](/CONTRIBUTING.md).
 
-## Developer Guides
+When making changes to Splink, there are a number of common operations that developers need to perform. The guides below lay out some of these common operations, and provides scripts to automate these processes. These include:
 
-The set of guides in this section are intended for users who want to learn more about how the codebase is structured or are making changes to Splink. 
+* [Building a Virtual Environment](./changing_splink/building_env_locally.md) - to replicate the conditions when Splink is installed by users.
+* [Linting and Formatting](./changing_splink/lint_and_format.md) - to ensure consistent code style and to reformat code, where possible.
+* [Testing](./changing_splink/testing.md) - to ensure all of the codebase is performing as intended.
+* [Building the Documentation locally](./changing_splink/build_docs_locally.md) - to test any changes to the docs site render correctly.
+* [Releasing a new package version](./changing_splink/releases.md) - to walk-through the release process for new versions of Splink. This generally happens every 2 weeks, or in the case of an urgent bug fix.
 
-### How Splink works
+## How Splink works
 
 Splink is quite a large, complex codebase. The guides in this section lay out some of the key structures and key areas within the Splink codebase. These include:
 
@@ -26,14 +30,6 @@ Splink is quite a large, complex codebase. The guides in this section lay out so
 * [User-Defined Functions](./udfs.md) - demonstrates how User Defined Functions (UDFs) are used to provide functionality within Splink that is not native to a given SQL backend.
 
 
-### Making Changes to Splink
 
-When making changes to Splink, there are a number of common operations that developers need to perform. The guides in this section lay out some of these common operations, and provides scripts to automate these processes. These include:
-
-* [Building a Virtual Environment](./changing_splink/building_env_locally.md) - to replicate the conditions when Splink is installed by users.
-* [Linting and Formatting](./changing_splink/lint_and_format.md) - to ensure consistent code style and to reformat code, where possible.
-* [Testing](./changing_splink/testing.md) - to ensure all of the codebase is performing as intended.
-* [Building the Documentation locally](./changing_splink/build_docs_locally.md) - to test any changes to the docs site render correctly.
-* [Releasing a new package version](./changing_splink/releases.md) - to walk-through the release process for new versions of Splink. This generally happens every 2 weeks, or in the case of an urgent bug fix.
 
 
