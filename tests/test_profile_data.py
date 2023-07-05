@@ -20,20 +20,6 @@ from .basic_settings import get_settings_dict
 from tests.decorator import mark_with_dialects_excluding
 
 
-# def generate_raw_profile_dataset(columns_to_profile, linker):
-#     linker._initialise_df_concat()
-
-#     column_expressions_raw = ensure_is_list(columns_to_profile)
-
-#     sql = _col_or_expr_frequencies_raw_data_sql(
-#         column_expressions_raw, "__splink__df_concat"
-#     )
-
-#     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-
-#     return linker._execute_sql_pipeline(materialise_as_hash=True).as_pandas_dataframe()
-
-
 def generate_raw_profile_arrays_dataset(columns_to_profile, linker, cast_arrays_as_str):
 
     df_concat = linker._initialise_df_concat()
@@ -176,7 +162,7 @@ def test_profile_arrays_bat(test_helpers, dialect, tmp_path):
     df = pd.DataFrame(dic)
     df["blank"] = None
     
-#Writing out and reading in as parquet as theb pandas dfs were causing issues
+#Writing out and reading in as parquet as the pandas dfs were causing issues
     r_w_path = os.path.join(tmp_path, "helper_df")
 
     df.to_parquet(r_w_path)
