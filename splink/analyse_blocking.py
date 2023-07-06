@@ -160,8 +160,8 @@ def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     ) in enumerate(join_conditions):
         l_cols_sel.append(f"{l_key} as key_{i}")
         r_cols_sel.append(f"{r_key} as key_{i}")
-        l_cols_gb.append(f"{l_key}")
-        r_cols_gb.append(f"{r_key}")
+        l_cols_gb.append(l_key)
+        r_cols_gb.append(r_key)
         using.append(f"key_{i}")
 
     l_cols_sel = ", ".join(l_cols_sel)
