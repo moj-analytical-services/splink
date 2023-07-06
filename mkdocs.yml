@@ -110,34 +110,34 @@ nav:
   - Topic Guides:
       - Introduction: "topic_guides/topic_guides_index.md"
       - Record Linkage Theory:
-        - Why do we need record linkage?: "topic_guides/record_linkage.md"
-        - Probabilistic vs Deterministic linkage: "topic_guides/probabilistic_vs_deterministic.md"
-        - The Fellegi-Sunter Model: "topic_guides/fellegi_sunter.md"
+        - Why do we need record linkage?: "topic_guides/theory/record_linkage.md"
+        - Probabilistic vs Deterministic linkage: "topic_guides/theory/probabilistic_vs_deterministic.md"
+        - The Fellegi-Sunter Model: "topic_guides/theory/fellegi_sunter.md"
       - Linkage Models in Splink:
-        - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/backends.md"
-        - Link type - linking vs deduping: "topic_guides/link_type.md"
-        - Defining Splink models: "topic_guides/settings.md"
-        - Retrieving and querying Splink results: "topic_guides/querying_splink_results.md"
+        - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/splink_fundamentals/backends.md"
+        - Link type - linking vs deduping: "topic_guides/splink_fundamentals/link_type.md"
+        - Defining Splink models: "topic_guides/splink_fundamentals/settings.md"
+        - Retrieving and querying Splink results: "topic_guides/splink_fundamentals/querying_splink_results.md"
       - Data Preparation:
-        - Feature Engineering: "topic_guides/feature_engineering.md"
+        - Feature Engineering: "topic_guides/data_preparation/feature_engineering.md"
       - Blocking:
-        - What are Blocking Rules?: "topic_guides/blocking_rules.md"
-        - Model Training Blocking Rules: "topic_guides/blocking_model_training.md"
-        - Prediction Blocking Rules: "topic_guides/blocking_predictions.md"
-        - Computational Performance: "topic_guides/blocking_performance.md"
+        - What are Blocking Rules?: "topic_guides/blocking/blocking_rules.md"
+        - Model Training Blocking Rules: "topic_guides/blocking/model_training.md"
+        - Prediction Blocking Rules: "topic_guides/blocking/predictions.md"
+        - Computational Performance: "topic_guides/blocking/performance.md"
       - Comparing Records:
-        - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
-        - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
+        - Defining and customising comparisons: "topic_guides/comparisons/customising_comparisons.ipynb"
+        - Out-of-the-box comparisons: "topic_guides/comparisons/comparison_templates.ipynb"
         - Comparing strings:
-          - Choosing comparators and thresholds: "topic_guides/choosing_comparators.ipynb"
-          - String comparators: "topic_guides/comparators.md"
-          - Phonetic transformations: "topic_guides/phonetic.md"
-        - Term-Frequency adjustments: "topic_guides/term-frequency.md"
+          - Choosing comparators and thresholds: "topic_guides/comparisons/choosing_comparators.ipynb"
+          - String comparators: "topic_guides/comparisons/comparators.md"
+          - Phonetic transformations: "topic_guides/comparisons/phonetic.md"
+        - Term-Frequency adjustments: "topic_guides/comparisons/term-frequency.md"
       - Performance:
-        - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
+        - Run times, performance and linking large data: "topic_guides/performance/drivers_of_performance.md"
         - Spark Performance:
-            - Optimising Spark performance: "topic_guides/optimising_spark.md"
-            - Salting blocking rules: "topic_guides/salting.md"
+            - Optimising Spark performance: "topic_guides/performance/optimising_spark.md"
+            - Salting blocking rules: "topic_guides/performance/salting.md"
   - Documentation:
       - Introduction: "documentation_index.md"
       - API:

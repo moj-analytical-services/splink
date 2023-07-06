@@ -22,7 +22,7 @@ Below are some examples of features that be created from common columns, and how
 
 A sensible approach to comparing postcodes is to consider their consituent components. For example, UK postcodes can be broken down into the following substrings:
 
-![UK postcode components from https://ideal-postcodes.co.uk/guides/uk-postcode-format](../img/postcode_components.png)
+![UK postcode components from https://ideal-postcodes.co.uk/guides/uk-postcode-format](.../img/postcode_components.png)
 See [image source](https://ideal-postcodes.co.uk/guides/uk-postcode-format) for more details.
 
 Splink already includes a pre-built [postcode comparison template](../comparison_template_library.md##splink.comparison_template_library.PostcodeComparisonBase) which does this for you, generating by default a comparison with levels for an exact match on full postcode, sector, district and area in turn. These individual postcode components are engineered under-the-hood using the `regex_extract` argument (see below and [comparison_templates.ipynb](comparison_templates.ipynb) for more details).
