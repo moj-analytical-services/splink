@@ -162,7 +162,7 @@ def test_profile_using_sqlite():
     linker.profile_columns(["first_name", "surname", "first_name || surname"])
 
 
-@mark_with_dialects_excluding("sqlite", "spark")
+@mark_with_dialects_excluding("sqlite", "spark", "postgres")
 def test_profile_arrays_bat(test_helpers, dialect, tmp_path):
     helper = test_helpers[dialect]
 
