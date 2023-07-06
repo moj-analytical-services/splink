@@ -59,7 +59,7 @@ class PostgresDataFrame(SplinkDataFrame):
                 " postgres table that exists in the provided db."
             )
 
-    def drop_table_from_database(self, force_non_splink_table=False):
+    def _drop_table_from_database(self, force_non_splink_table=False):
         self._check_drop_table_created_by_splink(force_non_splink_table)
         self.linker._delete_table_from_database(self.physical_name)
 
@@ -83,6 +83,7 @@ class PostgresLinker(Linker):
         engine: Engine = None,
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
+        validate_settings: bool = True,
         schema="splink",
     ):
         self._sql_dialect_ = "postgres"
@@ -113,6 +114,7 @@ class PostgresLinker(Linker):
             accepted_df_dtypes,
             set_up_basic_logging,
             input_table_aliases=input_aliases,
+            validate_settings=validate_settings,
         )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
@@ -224,6 +226,16 @@ class PostgresLinker(Linker):
         """
         self._run_sql_execution(sql)
 
+    def _extend_round_function(self):
+        # extension of round to double
+        sql = """
+        CREATE OR REPLACE FUNCTION round(n float8, dp integer)
+        RETURNS numeric AS $$
+        SELECT round(n::numeric, dp);
+        $$ LANGUAGE SQL IMMUTABLE;
+        """
+        self._run_sql_execution(sql)
+
     def _create_datediff_function(self):
         sql = """
         CREATE OR REPLACE FUNCTION datediff(x date, y date)
@@ -285,6 +297,8 @@ class PostgresLinker(Linker):
         self._create_months_between_function()
         # need for array_intersect levels
         self._create_array_intersect_function()
+        # extension of round to handle doubles - used in unlinkables
+        self._extend_round_function()
 
     def _register_extensions(self):
         sql = """

@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import pytest
 
-from splink.postgres.postgres_linker import PostgresLinker
+from splink.postgres.linker import PostgresLinker
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_including
@@ -32,15 +32,14 @@ def test_full_example_postgres(tmp_path, pg_engine):
         ]
     )
 
-    # TODO: fix bug and restore:
-    # linker.profile_columns(
-    #     [
-    #         "first_name",
-    #         '"surname"',
-    #         'first_name || "surname"',
-    #         "concat(city, first_name)",
-    #     ]
-    # )
+    linker.profile_columns(
+        [
+            "first_name",
+            '"surname"',
+            'first_name || "surname"',
+            "concat(city, first_name)",
+        ]
+    )
     linker.missingness_chart()
     linker.compute_tf_table("city")
     linker.compute_tf_table("first_name")
@@ -80,25 +79,23 @@ def test_full_example_postgres(tmp_path, pg_engine):
         out_path=os.path.join(tmp_path, "test_cluster_studio.html"),
     )
 
-    # TODO: fix bug and restore:
-    # linker.unlinkables_chart(source_dataset="Testing")
+    linker.unlinkables_chart(source_dataset="Testing")
 
     _test_table_registration(linker)
 
-    # record = {
-    #     "unique_id": 1,
-    #     "first_name": "John",
-    #     "surname": "Smith",
-    #     "dob": "1971-05-24",
-    #     "city": "London",
-    #     "email": "john@smith.net",
-    #     "group": 10000,
-    # }
+    record = {
+        "unique_id": 1,
+        "first_name": "John",
+        "surname": "Smith",
+        "dob": "1971-05-24",
+        "city": "London",
+        "email": "john@smith.net",
+        "group": 10000,
+    }
 
-    # TODO: fix bug and restore:
-    # linker.find_matches_to_new_records(
-    #     [record], blocking_rules=[], match_weight_threshold=-10000
-    # )
+    linker.find_matches_to_new_records(
+        [record], blocking_rules=[], match_weight_threshold=-10000
+    )
 
     # Test saving and loading
     path = os.path.join(tmp_path, "model.json")

@@ -61,7 +61,7 @@ class SQLiteDataFrame(SplinkDataFrame):
                 " sqlite table that exists in the provided db."
             )
 
-    def drop_table_from_database(self, force_non_splink_table=False):
+    def _drop_table_from_database(self, force_non_splink_table=False):
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
         drop_sql = f"""
@@ -89,6 +89,7 @@ class SQLiteLinker(Linker):
         connection=":memory:",
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
+        validate_settings: bool = True,
         register_udfs=True,
     ):
         self._sql_dialect_ = "sqlite"
@@ -116,6 +117,7 @@ class SQLiteLinker(Linker):
             accepted_df_dtypes,
             set_up_basic_logging,
             input_table_aliases=input_aliases,
+            validate_settings=validate_settings,
         )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):

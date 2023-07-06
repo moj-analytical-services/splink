@@ -124,7 +124,7 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     from __splink__df_all_column_value_frequencies
     where group_name = '{gn}'
     order by value_count {value_order}
-    limit {limit})
+    limit {limit}) top_bottom_freqs
     """
 
     to_union = [
@@ -247,7 +247,7 @@ def profile_columns(
     )
 
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-    df_raw = linker._execute_sql_pipeline(input_dataframes, materialise_as_hash=True)
+    df_raw = linker._execute_sql_pipeline(input_dataframes)
 
     sqls = _get_df_percentiles()
     for sql in sqls:

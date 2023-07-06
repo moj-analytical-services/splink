@@ -11,6 +11,11 @@ This extends the functionality of our base comparison levels by allowing users t
 
 For example, `or_(null_level("first_name"), null_level("surname"))` creates a check for nulls in *either* `first_name` or `surname`, rather than restricting the user to a single column.
 
+The Splink comparison level composition functions available for each SQL dialect are as given in this table:
+
+{% include-markdown "./includes/generated_files/comparison_composition_library_dialect_table.md" %}
+
+
 The detailed API for each of these are outlined below.
 
 ## Library comparison composition APIs

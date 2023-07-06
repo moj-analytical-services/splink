@@ -41,7 +41,7 @@ class AthenaDataFrame(SplinkDataFrame):
     def validate(self):
         pass
 
-    def drop_table_from_database(self, force_non_splink_table=False):
+    def _drop_table_from_database(self, force_non_splink_table=False):
         # Check folder and table set for deletion
         self._check_drop_folder_created_by_splink(force_non_splink_table)
         self._check_drop_table_created_by_splink(force_non_splink_table)
@@ -120,6 +120,7 @@ class AthenaLinker(Linker):
         input_table_aliases: str | list = None,
         set_up_basic_logging=True,
         output_filepath: str = "",
+        validate_settings: bool = True,
     ):
         """An athena backend for our main linker class. This funnels our generated SQL
         through athena using awswrangler.
@@ -150,6 +151,8 @@ class AthenaLinker(Linker):
             output_filepath (str, optional): Inside of your selected output bucket,
                 where to write output files to.
                 Defaults to "splink_warehouse/{unique_id}".
+            validate_settings (bool, optional): When True, check your settings
+                dictionary for any potential errors that may cause splink to fail.
         Examples:
             ```py
             # Creating a database in athena and writing to it
@@ -235,6 +238,7 @@ class AthenaLinker(Linker):
             accepted_df_dtypes,
             set_up_basic_logging,
             input_table_aliases=input_aliases,
+            validate_settings=validate_settings,
         )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
@@ -297,7 +301,7 @@ class AthenaLinker(Linker):
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
         self._delete_table_from_database(physical_name)
-        sql = sqlglot_transform_sql(sql, cast_concat_as_varchar)
+        sql = sqlglot_transform_sql(sql, cast_concat_as_varchar, dialect="presto")
         sql = sql.replace("FLOAT", "double").replace("float", "double")
 
         logger.debug(execute_sql_logging_message_info(templated_name, physical_name))

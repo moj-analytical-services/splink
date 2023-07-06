@@ -8,6 +8,7 @@ from itertools import compress
 
 import pandas as pd
 import sqlglot
+from numpy import nan
 from pyspark.sql.dataframe import DataFrame as spark_df
 from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql.utils import AnalysisException
@@ -46,7 +47,7 @@ class SparkDataframe(SplinkDataFrame):
 
         return self.linker.spark.sql(sql).toPandas().to_dict(orient="records")
 
-    def drop_table_from_database(self, force_non_splink_table=False):
+    def _drop_table_from_database(self, force_non_splink_table=False):
         # Spark, in general, does not persist its results to disk
         # There is a whitelist of dataframes to either perist() or checkpoint()
         # But there's no real need to clean these up, so we'll just do nothing
@@ -81,11 +82,12 @@ class SparkLinker(Linker):
     def __init__(
         self,
         input_table_or_tables,
-        settings_dict=None,
+        settings_dict: dict | str = None,
         break_lineage_method=None,
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
         spark=None,
+        validate_settings: bool = True,
         catalog=None,
         database=None,
         repartition_after_blocking=False,
@@ -99,9 +101,10 @@ class SparkLinker(Linker):
                 single table or a list of tables.  Tables can be provided either as
                 a Spark DataFrame, or as the name of the table as a string, as
                 registered in the Spark catalog
-            settings_dict (dict, optional): A Splink settings dictionary. If not
-                provided when the object is created, can later be added using
-                `linker.load_settings()` Defaults to None.
+            settings_dict (dict | Path, optional): A Splink settings dictionary, or
+                 a path to a json defining a settingss dictionary or pre-trained model.
+                  If not provided when the object is created, can later be added using
+                `linker.load_settings()` or `linker.load_model()` Defaults to None.
             break_lineage_method (str, optional): Method to use to cache intermediate
                 results.  Can be "checkpoint", "persist", "parquet", "delta_lake_files",
                 "delta_lake_table". Defaults to "parquet".
@@ -114,6 +117,8 @@ class SparkLinker(Linker):
             spark: The SparkSession. Required only if `input_table_or_tables` are
                 provided as string - otherwise will be inferred from the provided
                 Spark Dataframes.
+            validate_settings (bool, optional): When True, check your settings
+                dictionary for any potential errors that may cause splink to fail.
             repartition_after_blocking (bool, optional): In some cases, especially when
                 the comparisons are very computationally intensive, performance may be
                 improved by repartitioning after blocking to distribute the workload of
@@ -170,6 +175,7 @@ class SparkLinker(Linker):
             accepted_df_dtypes,
             set_up_basic_logging,
             input_table_aliases=input_aliases,
+            validate_settings=validate_settings,
         )
         self._check_ansi_enabled_if_converting_dates()
 
@@ -465,14 +471,17 @@ class SparkLinker(Linker):
     def _table_registration(self, input, table_name):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
-            input = self.spark.createDataFrame(input)
         elif isinstance(input, list):
             input = pd.DataFrame.from_records(input)
-            input = self.spark.createDataFrame(input)
-        elif isinstance(input, pd.DataFrame):
+
+        if isinstance(input, pd.DataFrame):
+            input = self._clean_pandas_df(input)
             input = self.spark.createDataFrame(input)
 
         input.createOrReplaceTempView(table_name)
+
+    def _clean_pandas_df(self, df):
+        return df.fillna(nan).replace([nan, pd.NA], [None, None])
 
     def _random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None

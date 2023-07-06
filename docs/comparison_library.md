@@ -35,11 +35,11 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
-::: splink.comparison_library.DistanceFunctionAtThresholdsComparisonBase
+::: splink.comparison_library.DistanceFunctionAtThresholdsBase
     handler: python
     selection:
       members:
@@ -47,11 +47,11 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
-::: splink.comparison_library.LevenshteinAtThresholdsComparisonBase
+::: splink.comparison_library.LevenshteinAtThresholdsBase
     handler: python
     selection:
       members:
@@ -59,11 +59,11 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
-::: splink.comparison_library.DamerauLevenshteinAtThresholdsComparisonBase
+::: splink.comparison_library.DamerauLevenshteinAtThresholdsBase
     handler: python
     selection:
       members:
@@ -71,11 +71,11 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
-::: splink.comparison_library.JaccardAtThresholdsComparisonBase
+::: splink.comparison_library.JaccardAtThresholdsBase
     handler: python
     selection:
       members:
@@ -83,11 +83,11 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false   
-      heading_level: 2
+      heading_level: 3
 
 ---
 
-::: splink.comparison_library.JaroAtThresholdsComparisonBase
+::: splink.comparison_library.JaroAtThresholdsBase
     handler: python
     selection:
       members:
@@ -95,11 +95,11 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
-::: splink.comparison_library.JaroWinklerAtThresholdsComparisonBase
+::: splink.comparison_library.JaroWinklerAtThresholdsBase
     handler: python
     selection:
       members:
@@ -107,11 +107,11 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
-::: splink.comparison_library.ArrayIntersectAtSizesComparisonBase
+::: splink.comparison_library.ArrayIntersectAtSizesBase
     handler: python
     selection:
       members:
@@ -119,11 +119,11 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
-::: splink.comparison_library.DateDiffAtThresholdsComparisonBase
+::: splink.comparison_library.DatediffAtThresholdsBase
     handler: python
     selection:
       members:
@@ -131,11 +131,11 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
-::: splink.comparison_library.DistanceInKMAtThresholdsComparisonBase
+::: splink.comparison_library.DistanceInKMAtThresholdsBase
     handler: python
     selection:
       members:
@@ -143,4 +143,4 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3

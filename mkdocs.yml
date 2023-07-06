@@ -1,8 +1,9 @@
 site_name: Splink
 use_directory_urls: false
 repo_url: https://github.com/moj-analytical-services/splink
+edit_uri: edit/master/docs/
 theme:
-  icon: 
+  icon:
     repo: fontawesome/brands/github
   name: "material"
   features:
@@ -14,7 +15,13 @@ theme:
     - search.highlight
     - search.share
     - search.suggest
+    - navigation.indexes
     - navigation.footer
+    - content.action.edit
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - toc.follow
   logo: "img/favicon.ico"
   favicon: "img/favicon.ico"
   palette:
@@ -30,6 +37,7 @@ theme:
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to light mode
+  custom_dir: docs/overrides
 plugins:
   - search
   - semiliterate
@@ -42,6 +50,10 @@ plugins:
           rendering:
             show_source: false
       custom_templates: templates
+  - git-revision-date-localized:
+      enable_creation_date: true
+      type: timeago
+      fallback_to_build_date: true
 markdown_extensions:
   - abbr
   - attr_list
@@ -62,12 +74,16 @@ markdown_extensions:
       alternate_style: true
   - toc:
       permalink: True
-      toc_depth: 4
+      toc_depth: 3
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - footnotes
 nav:
-  - Home: "README.md"
-  - Installation: "installations.md"
-  - Tutorials:
-      - 0. Tutorial introduction: "demos/00_Tutorial_Introduction.ipynb"
+  - Home: "index.md"
+  - Getting Started: "getting_started.md"
+  - Tutorial:
+      - Introduction: "demos/00_Tutorial_Introduction.ipynb"
       - 1. Data prep prerequisites: "demos/01_Prerequisites.ipynb"
       - 2. Exploratory analysis: "demos/02_Exploratory_analysis.ipynb"
       - 3. Blocking: "demos/03_Blocking.ipynb"
@@ -76,7 +92,7 @@ nav:
       - 6. Visualising predictions: "demos/06_Visualising_predictions.ipynb"
       - 7. Quality assurance: "demos/07_Quality_assurance.ipynb"
   - Examples:
-      - Examples index: "examples_index.md"
+      - Introduction: "examples_index.md"
       - DuckDB:
         - Deduplicate 50k rows historical persons: "demos/example_deduplicate_50k_synthetic.ipynb"
         - Linking financial transactions: "demos/example_transactions.ipynb"
@@ -89,13 +105,24 @@ nav:
         - Febrl4 link-only: "demos/example_febrl4.ipynb"
       - PySpark:
         - Deduplication using Pyspark: "demos/example_simple_pyspark.ipynb"
+      - Athena:
+        - Deduplicate 50k rows historical persons: "demos/athena_deduplicate_50k_synthetic.ipynb"
   - Topic Guides:
+      - Introduction: "topic_guides/topic_guides_index.md"
+      - Record Linkage Theory:
+        - Why do we need record linkage?: "topic_guides/record_linkage.md"
+        - Probabilistic vs Deterministic linkage: "topic_guides/probabilistic_vs_deterministic.md"
+        - The Fellegi-Sunter Model: "topic_guides/fellegi_sunter.md"
       - Linkage Models in Splink:
         - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/backends.md"
         - Link type - linking vs deduping: "topic_guides/link_type.md"
         - Defining Splink models: "topic_guides/settings.md"
         - Retrieving and querying Splink results: "topic_guides/querying_splink_results.md"
-      - Feature Engineering: "topic_guides/feature_engineering.md"
+      - Data Preparation:
+        - Feature Engineering: "topic_guides/feature_engineering.md"
+      - Blocking:
+        - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
+        - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
       - Comparing Records:
         - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
         - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
@@ -105,11 +132,10 @@ nav:
           - Phonetic transformations: "topic_guides/phonetic.md"
         - Term-Frequency adjustments: "topic_guides/term-frequency.md"
       - Performance:
-        - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
-        - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
         - Optimising Spark performance: "topic_guides/optimising_spark.md"
         - Salting blocking rules: "topic_guides/salting.md"
-  - Reference:
+  - Documentation:
+      - Introduction: "documentation_index.md"
       - API:
         - Linker API:
             - Full API: "linker.md"
@@ -118,8 +144,8 @@ nav:
             - Predicting results: "linkerpred.md"
             - Visualisation and quality assurance: "linkerqa.md"
         - Comparisons Library API:
-            - Comparison Library: "comparison_library.md"
             - Comparison Template Library: "comparison_template_library.md"
+            - Comparison Library: "comparison_library.md"
             - Comparison Level Library: "comparison_level_library.md"
             - Comparison Composition: "comparison_level_composition.md"
         - EM Training Session API: "em_training_session.md"
@@ -127,24 +153,26 @@ nav:
         - Comparisons API:
             - Comparison: "comparison.md"
             - Comparison Level: "comparison_level.md"
+      - In-build datasets: "datasets.md"
       - Settings:
         - Settings Dictionary Reference: "settings_dict_guide.md"
         - Interactive Settings Editor: "settingseditor/editor.md"
 
-  - Developers' guides:
+  - Contributing:
+      - Introduction: "dev_guides/dev_guides_index.md"
       - Making Changes to Splink:
         - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
-        - Linting: "dev_guides/changing_splink/lint.md"
-        - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
+        - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
         - Testing: "dev_guides/changing_splink/testing.md"
+        - Building Docs: "dev_guides/changing_splink/build_docs_locally.md"
         - Releasing a Package Version: "dev_guides/changing_splink/releases.md"
       - How Splink works:
         - Understanding and debugging Splink: "dev_guides/debug_modes.md"
         - Transpilation using sqlglot: "dev_guides/transpilation.md"
-        - Performance & caching:
+        - Performance and caching:
           - Caching and pipelining: "dev_guides/caching.md"
           - Spark caching: "dev_guides/spark_pipelining_and_caching.md"
-        - Comparisons and comparison levels:
+        - Comparison and comparison level libraries:
           - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
           - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
         - User-Defined Functions: "dev_guides/udfs.md"
@@ -159,3 +187,12 @@ extra:
   analytics:
     provider: google
     property: G-L6JT8NK528
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/moj-analytical-services/splink
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/splink/
+    - icon: fontawesome/solid/chevron-right
+      link: https://www.robinlinacre.com/
+
+      

@@ -49,7 +49,7 @@ class DuckDBLinkerDataFrame(SplinkDataFrame):
     def validate(self):
         pass
 
-    def drop_table_from_database(self, force_non_splink_table=False):
+    def _drop_table_from_database(self, force_non_splink_table=False):
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
         self.linker._delete_table_from_database(self.physical_name)
@@ -118,6 +118,7 @@ class DuckDBLinker(Linker):
         set_up_basic_logging: bool = True,
         output_schema: str = None,
         input_table_aliases: str | list = None,
+        validate_settings: bool = True,
     ):
         """The Linker object manages the data linkage process and holds the data linkage
         model.
@@ -147,6 +148,8 @@ class DuckDBLinker(Linker):
                 input tables in Splink outputs.  If the names of the tables in the
                 input database are long or unspecific, this argument can be used
                 to attach more easily readable/interpretable names. Defaults to None.
+            validate_settings (bool, optional): When True, check your settings
+                dictionary for any potential errors that may cause splink to fail.
         """
 
         self._sql_dialect_ = "duckdb"
@@ -193,6 +196,7 @@ class DuckDBLinker(Linker):
             accepted_df_dtypes,
             set_up_basic_logging,
             input_table_aliases=input_aliases,
+            validate_settings=validate_settings,
         )
 
         # Quickly check for casting error in duckdb/pandas
