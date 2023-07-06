@@ -59,6 +59,7 @@ SQLite is similar to DuckDB in that it is, generally, more suited to smaller dat
 
 PostgreSql is a relatively new linker, so we have not fully tested performance or what size of datasets can processed with Splink. The Postgres backend requires a Postgres database, so it is recommened to use this backend only if you are working with a pre-existing Postgres database. Postgres has reasonable, but not complete, coverage for the functions in the Splink [comparison libraries](../comparison_level_library.md), with gaps in string fuzzy matching functionality due to the lack of some string functions in Postgres. At this time, the Postgres backend is not being actively used by the Splink development team so receives minimal levels of support.
 
+More details on using Postgres as a Splink backend can be found on the [postgres page](./postgres.md).
 
 ## Using your chosen backend
 
