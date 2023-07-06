@@ -22,7 +22,7 @@ def generate_raw_profile_arrays_dataset(columns_to_profile, linker, cast_arrays_
 
     df_concat = linker._initialise_df_concat()
 
-    array_cols = df_concat.get_array_cols()
+    array_cols = array_cols = [] if cast_arrays_as_str else df_concat.get_array_cols()
 
     column_expressions_raw = ensure_is_list(columns_to_profile)
 
