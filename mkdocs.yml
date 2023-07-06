@@ -116,6 +116,7 @@ nav:
       - Linkage Models in Splink:
         - Splink's SQL backends - Spark, DuckDB etc:
           - Backends overview: "topic_guides/backends/backends.md"
+          - PostgreSQL: "topic_guides/backends/postgres.md"
         - Link type - linking vs deduping: "topic_guides/link_type.md"
         - Defining Splink models: "topic_guides/settings.md"
         - Retrieving and querying Splink results: "topic_guides/querying_splink_results.md"
