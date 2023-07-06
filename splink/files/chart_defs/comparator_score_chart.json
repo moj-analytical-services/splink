@@ -4,6 +4,16 @@
     "anchor": "middle",
     "fontSize": 16
   },
+  "config": {
+    "view": {
+      "discreteHeight": {
+        "step": 30
+      },
+      "discreteWidth": {
+        "step": 40
+      }
+    }
+  },
   "hconcat": [
     {
       "layer": [
@@ -36,13 +46,7 @@
               }
             }
           },
-          "title": "Similarity",
-          "width": {
-            "step": 40
-          },
-          "height": {
-            "step": 30
-          }
+          "title": "Similarity"
         },
         {
           "mark": {
@@ -111,13 +115,7 @@
               "axis": null
             }
           },
-          "title": "Distance",
-          "width": {
-            "step": 40
-          },
-          "height": {
-            "step": 30
-          }
+          "title": "Distance"
         },
         {
           "mark": {

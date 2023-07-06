@@ -4,6 +4,16 @@
         "anchor": "middle",
         "fontSize": 16
     },
+    "config": {
+        "view": {
+            "discreteHeight": {
+                "step": 30
+            },
+            "discreteWidth": {
+                "step": 40
+            }
+        }
+    },
     "params": [
         {
             "name": "similarity_threshold",
@@ -18,7 +28,9 @@
         {
             "layer": [
                 {
-                    "mark": {"type":"rect"},
+                    "mark": {
+                        "type": "rect"
+                    },
                     "encoding": {
                         "color": {
                             "condition": {
@@ -44,12 +56,6 @@
                     "title": {
                         "text": "Similarity",
                         "subtitle": ">= 0.9"
-                    },
-                    "width": {
-                        "step": 40
-                    },
-                    "height": {
-                        "step": 30
                     }
                 },
                 {
@@ -101,7 +107,9 @@
         {
             "layer": [
                 {
-                    "mark": {"type":"rect"},
+                    "mark": {
+                        "type": "rect"
+                    },
                     "encoding": {
                         "color": {
                             "condition": {
@@ -127,12 +135,6 @@
                     "title": {
                         "text": "Distance",
                         "subtitle": "<= 2"
-                    },
-                    "width": {
-                        "step": 40
-                    },
-                    "height": {
-                        "step": 30
                     }
                 },
                 {
