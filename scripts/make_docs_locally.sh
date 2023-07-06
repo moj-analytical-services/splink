@@ -5,10 +5,13 @@
 # python scripts/generate_dialect_comparison_docs.py
 
 UPDATE="TRUE"
-if [[ $UPDATE == "TRUE" ]]
-then
+if [[ $UPDATE == "TRUE" ]]; then
     rm -rf docs/demos/
-    git clone https://github.com/moj-analytical-services/splink_demos.git docs/demos/
+    if [ -n "$1" ]; then
+        git clone -b $1 --single-branch https://github.com/moj-analytical-services/splink_demos.git docs/demos/
+    else
+        git clone https://github.com/moj-analytical-services/splink_demos.git docs/demos/
+    fi
 fi
 
 deactivate
