@@ -351,7 +351,11 @@ def _comparator_score_chart(similarity_records, distance_records, as_dict=False)
 
 
 def _comparator_score_threshold_chart(
-    similarity_records, distance_records, similarity_threshold, distance_threshold, as_dict=False
+    similarity_records,
+    distance_records,
+    similarity_threshold,
+    distance_threshold,
+    as_dict=False,
 ):
     chart_path = "comparator_score_threshold_chart.json"
     chart = load_chart_definition(chart_path)
