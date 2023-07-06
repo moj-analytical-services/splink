@@ -351,17 +351,19 @@ def _comparator_score_chart(similarity_records, distance_records, as_dict=False)
 
 
 def _comparator_score_threshold_chart(
-    records, similarity_threshold, distance_threshold, as_dict=False
+    similarity_records, distance_records, similarity_threshold, distance_threshold, as_dict=False
 ):
     chart_path = "comparator_score_threshold_chart.json"
     chart = load_chart_definition(chart_path)
 
-    chart["layer"][0]["title"] = (
-        f"Heatmap of Matches for "
-        f"distance_threshold = {distance_threshold}, "
-        f"similarity_threshold = {similarity_threshold}"
-    )
-    chart["datasets"]["data-with-thresholds"] = records
+    chart["params"][0]["value"] = similarity_threshold
+    chart["params"][1]["value"] = distance_threshold
+
+    chart["hconcat"][0]["layer"][0]["title"]["subtitle"] = f">= {similarity_threshold}"
+    chart["hconcat"][1]["layer"][0]["title"]["subtitle"] = f">= {distance_threshold}"
+
+    chart["datasets"]["data-similarity"] = similarity_records
+    chart["datasets"]["data-distance"] = distance_records
 
     return altair_or_json(chart, as_dict=as_dict)
 

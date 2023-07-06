@@ -66,7 +66,7 @@ def comparator_score_df(list, col1, col2, decimal_places=2):
     """
     duckdb.connect()
 
-    pd.DataFrame(list)
+    df = pd.DataFrame(list)
 
     sql = f"""
         select
@@ -164,22 +164,13 @@ def comparator_score_threshold_chart(
         value_name="score",
     )
 
-    similarity_title = "Heatmap of Similarity Scores"
-    distance_title = "Heatmap of Distance Scores"
-
-    df_long["threshold_match"] = df_long.apply(
-        lambda row: threshold_match(
-            row["comparator"], row["score"], distance_threshold, similarity_threshold
-        ),
-        axis=1,
-    )
-    similarity_title = f"{similarity_title} with threshold {similarity_threshold}"
-    distance_title = f"{distance_title} with threshold {distance_threshold}"
-
-    records = df_long.to_json(orient="records")
+    similarity_df = df_long[df_long["comparator"].str.contains("similarity")]
+    similarity_records = similarity_df.to_json(orient="records")
+    distance_df = df_long[df_long["comparator"].str.contains("distance")]
+    distance_records = distance_df.to_json(orient="records")
 
     return _comparator_score_threshold_chart(
-        records, similarity_threshold, distance_threshold
+        similarity_records, distance_records, similarity_threshold, distance_threshold
     )
 
 
