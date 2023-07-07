@@ -6,4 +6,4 @@ tags:
 
 # Splink Blog
 
-This page 
+This blog has stuff about Splink.
