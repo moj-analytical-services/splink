@@ -50,10 +50,13 @@ plugins:
           rendering:
             show_source: false
       custom_templates: templates
+<<<<<<< HEAD
   - git-revision-date-localized:
       enable_creation_date: true
       type: timeago
       fallback_to_build_date: true
+=======
+>>>>>>> 9578e19db788cdc01ac8c8e37ad7911db771db95
   - blog
 markdown_extensions:
   - abbr
