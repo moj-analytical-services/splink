@@ -18,7 +18,7 @@ def add_unique_id_and_source_dataset_cols_if_needed(
 
     uid_col = linker._settings_obj._unique_id_column_name
     if uid_col not in cols:
-        uid_sel_sql = f", 'id' as {uid_col}, 'new_record' as {sds_col}"
+        uid_sel_sql = f", 'no_id_provided' as {uid_col}, 'new_record' as {sds_col}"
 
     sql = f"""
         select * {sds_sel_sql} {uid_sel_sql}
