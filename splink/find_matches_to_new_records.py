@@ -1,9 +1,12 @@
-from splink.linker import Linker
-from splink.splink_dataframe import SplinkDataFrame
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .linker import Linker
+    from .splink_dataframe import SplinkDataFrame
 
 
 def add_unique_id_and_source_dataset_cols_if_needed(
-    linker: Linker, new_records_df: SplinkDataFrame
+    linker: "Linker", new_records_df: "SplinkDataFrame"
 ):
     cols = new_records_df.columns
 
