@@ -90,8 +90,6 @@ class BlockingRule:
             for (i, j) in keys
         ]
 
-        keys = list(set(keys))
-
         return keys
 
     @property
