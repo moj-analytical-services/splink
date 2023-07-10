@@ -10,15 +10,19 @@ def add_unique_id_and_source_dataset_cols_if_needed(
 ):
     cols = new_records_df.columns
 
-    sds_col, _ = linker._settings_obj._source_dataset_col
-
+    # Add source dataset column to new records if required and not exists
     sds_sel_sql = ""
-    if sds_col not in cols:
-        sds_sel_sql = f", 'new_record' as {sds_col}"
+    if linker._settings_obj._source_dataset_column_name_is_required:
+        sds_col, _ = linker._settings_obj._source_dataset_col
 
+        if sds_col not in cols:
+            sds_sel_sql = f", 'new_record' as {sds_col}"
+
+    # Add unique_id column to new records if not exists
+    uid_sel_sql = ""
     uid_col = linker._settings_obj._unique_id_column_name
     if uid_col not in cols:
-        uid_sel_sql = f", 'no_id_provided' as {uid_col}, 'new_record' as {sds_col}"
+        uid_sel_sql = f", 'no_id_provided' as {uid_col}"
 
     sql = f"""
         select * {sds_sel_sql} {uid_sel_sql}
