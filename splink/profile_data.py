@@ -190,7 +190,7 @@ def _col_or_expr_frequencies_raw_data_sql(
 
                 from {table_name})
                 group by value
-                order by count(*) desc)
+                order by count(*) desc) column_stats
 
                 """
 
@@ -208,7 +208,7 @@ def _col_or_expr_frequencies_raw_data_sql(
             from {table_name}
             where {col_or_expr} is not null
             group by {col_or_expr}
-            order by count(*) desc)
+            order by count(*) desc) column_stats
             """
 
         sqls.append(sql)
