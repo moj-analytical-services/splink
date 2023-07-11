@@ -14,7 +14,7 @@ When reporting [issues](https://github.com/moj-analytical-services/splink/issues
 
 ## Contributing to documentation
 
-Contributions to Splink are not limited to the code, feedback and input on our documentation from a user's perspective is extremely valuable - even something as small as fixing a typo. More generally, if you are interested in starting to work on Splink, documentation is a great way to get those first commits!
+Contributions to Splink are not limited to the code. Feedback and input on our documentation from a user's perspective is extremely valuable - even something as small as fixing a typo. More generally, if you are interested in starting to work on Splink, documentation is a great way to get those first commits!
 
 Behind the scenes, the Splink documentation is split into 2 parts:
 
@@ -43,8 +43,6 @@ There are a number of ways to get involved:
 
 In either case, we ask that you assign yourself to the relevant issue and open up [a draft PR](https://github.blog/2019-02-14-introducing-draft-pull-requests/) while you are working on your feature/bug-fix. This helps the Splink dev team keep track of developments and means we can start supporting you sooner!
 
-We do not work with a `dev` branch, so any branches should be made from `master`.
-
 !!! note "Small PRs"
     In the Splink dev team, we believe that [small Pull Requests](https://essenceofcode.com/2019/10/29/the-art-of-small-pull-requests/) make better code. They:
 
@@ -59,3 +57,14 @@ When making code changes, we recommend:
 * [Recreating Splink's virtual environment](./docs/dev_guides/changing_splink/building_env_locally.md) to best replicate the conditions in which Splink will be used in practice. 
 * [Adding tests](./docs/dev_guides/changing_splink/testing.md) to ensure your code works as expected. These will be run through GitHub Actions when a PR is opened.
 * [Linting](./docs/dev_guides/changing_splink/lint_and_format.md) to ensure that code is styled consistently.
+
+### Branching Strategy
+
+As mentioned above, we like to keep PRs small and our philosophy on branching reflects that. Splink does not work with a `dev` branch, so all branches/forks should be made from `master` in the first instance. 
+
+For small PRs, simply branching from `master` and merging from there is perfectly fine. However, if you have a larger feature to add we tend to try and break these up into chunks. If you have a larger feature, please consider creating a simple minimum-viable feeature and submit for review. Once this has been reviewed by the Splink dev team there are two options to consider:
+
+1. Merge minimal feature into master then create a new branch with additional features.
+2. Do not merge the initial feature branch and create additional feature branches from the reviewed branch.
+
+The best solution often depends on the specific feature being created and any other development work happening in that area of the codebase. If you are unsure, please ask the dev team for advice on how to best structure your changes in your initial PR and we can come to a decision together.
