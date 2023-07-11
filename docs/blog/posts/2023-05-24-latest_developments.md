@@ -2,8 +2,7 @@
 draft: true 
 date: 2022-07-14
 categories:
-  - Splink Feature Updates
-  - World
+  - Feature Updates
 ---
 
 # Splink Updates - July 2023
