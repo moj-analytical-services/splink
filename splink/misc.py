@@ -7,7 +7,6 @@ from math import ceil, inf, log2
 from typing import Iterable
 
 import numpy as np
-import pkg_resources
 
 
 def dedupe_preserving_order(list_of_items):
@@ -143,16 +142,6 @@ def calculate_reduction_ratio(N, cartesian):
     the total search space.
     """
     return 1 - (N / cartesian)
-
-
-def _check_dependency_installed(module):
-    try:
-        pkg_resources.get_distribution(module)
-    except pkg_resources.DistributionNotFound as e:
-        raise ValueError(
-            f"{module} is not installed.",
-            "Please install and import it before continuing.",
-        ) from e
 
 
 def major_minor_version_greater_equal_than(this_version, base_comparison_version):
