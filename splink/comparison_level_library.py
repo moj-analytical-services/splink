@@ -232,26 +232,26 @@ class ElseLevelBase(ComparisonLevel):
             === ":simple-duckdb: DuckDB"
                 ``` python
                 import splink.duckdb.comparison_level_library as cll
-                cll.else_level("name")
+                cll.else_level()
                 ```
             === ":simple-apachespark: Spark"
                 ``` python
                 import splink.spark.comparison_level_library as cll
-                cll.else_level("name")
+                cll.else_level()
                 ```
             === ":simple-amazonaws: Athena"
                 ``` python
                 import splink.athena.comparison_level_library as cll
-                cll.else_level("name")
+                cll.else_level()
                 ```
             === ":simple-sqlite: SQLite"
                 ``` python
                 import splink.sqlite.comparison_level_library as cll
-                cll.else_level("name")
+                cll.else_level()
             === ":simple-postgresql: PostgreSql"
                 ``` python
                 import splink.postgres.comparison_level_library as cll
-                cll.else_level("name")
+                cll.else_level()
                 ```
         """
         if isinstance(m_probability, str):
