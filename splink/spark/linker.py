@@ -8,6 +8,7 @@ from itertools import compress
 
 import pandas as pd
 import sqlglot
+from numpy import nan
 from pyspark.sql.dataframe import DataFrame as spark_df
 from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql.utils import AnalysisException
@@ -470,14 +471,17 @@ class SparkLinker(Linker):
     def _table_registration(self, input, table_name):
         if isinstance(input, dict):
             input = pd.DataFrame(input)
-            input = self.spark.createDataFrame(input)
         elif isinstance(input, list):
             input = pd.DataFrame.from_records(input)
-            input = self.spark.createDataFrame(input)
-        elif isinstance(input, pd.DataFrame):
+
+        if isinstance(input, pd.DataFrame):
+            input = self._clean_pandas_df(input)
             input = self.spark.createDataFrame(input)
 
         input.createOrReplaceTempView(table_name)
+
+    def _clean_pandas_df(self, df):
+        return df.fillna(nan).replace([nan, pd.NA], [None, None])
 
     def _random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None

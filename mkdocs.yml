@@ -114,7 +114,9 @@ nav:
         - Probabilistic vs Deterministic linkage: "topic_guides/theory/probabilistic_vs_deterministic.md"
         - The Fellegi-Sunter Model: "topic_guides/theory/fellegi_sunter.md"
       - Linkage Models in Splink:
-        - Splink's SQL backends - Spark, DuckDB etc: "topic_guides/splink_fundamentals/backends.md"
+        - Splink's SQL backends - Spark, DuckDB etc:
+          - Backends overview: "topic_guides/backends/backends.md"
+          - PostgreSQL: "topic_guides/backends/postgres.md"
         - Link type - linking vs deduping: "topic_guides/splink_fundamentals/link_type.md"
         - Defining Splink models: "topic_guides/splink_fundamentals/settings.md"
         - Retrieving and querying Splink results: "topic_guides/splink_fundamentals/querying_splink_results.md"
@@ -157,6 +159,7 @@ nav:
         - Comparisons API:
             - Comparison: "comparison.md"
             - Comparison Level: "comparison_level.md"
+      - In-build datasets: "datasets.md"
       - Settings:
         - Settings Dictionary Reference: "settings_dict_guide.md"
         - Interactive Settings Editor: "settingseditor/editor.md"

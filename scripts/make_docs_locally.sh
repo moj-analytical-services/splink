@@ -22,6 +22,7 @@ then
     pip install poetry
     poetry install
     python3 scripts/generate_dialect_comparison_docs.py
+    python3 scripts/generate_dataset_docs.py
 fi
 # manually preprocess include files as include-markdown plugin clashes with mknotebooks
 # make sure not to commit changes to files with inclusions!

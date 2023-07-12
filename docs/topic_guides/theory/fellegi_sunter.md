@@ -9,107 +9,99 @@ Splink implements the Fellegi-Sunter model for probabilistic record linkage. Thi
 The Fellegi-Sunter model has three main parameters that need to be considered to generate a match probability between two records:
 
 !!! note ""
-    * **λ** - probability that any two records match 
-    * **m** - probability of a given observation *given* the records are a match
-    * **u** - probability of a given observation *given* the records are **not** a match
+    * $\lambda$ - probability that any two records match 
+    * $m$ - probability of a given observation *given* the records are a match
+    * $u$ - probability of a given observation *given* the records are **not** a match
 
 <hr>
 
-### **λ** probability
+### λ probability
 
-The lambda (**λ**) parameter is the prior probability that any two records match. I.e. assuming no other knowledge of the data, how likely is a match? Or, as a formula:
+The lambda ($\lambda$) parameter is the prior probability that any two records match. I.e. assuming no other knowledge of the data, how likely is a match? Or, as a formula:
 
 $$
-λ = Pr(RecordsMatch)
+\lambda = Pr(\textsf{Records match})
 $$
 
 This is the same for all records comparisons, but is highly dependent on:
 
 * The total number of records  
-* The number of duplicate records (more duplicates increases **λ**)  
+* The number of duplicate records (more duplicates increases $\lambda$)  
 * The overlap between datasets  
-    * Two datasets covering the same cohort (high overlap, high **λ**)
-    * Two entirely independent datasets (low overlap, low **λ**)
+    * Two datasets covering the same cohort (high overlap, high $\lambda$)
+    * Two entirely independent datasets (low overlap, low $\lambda$)
 
 <hr>
 
-### **m** probability
+### m probability
 
-The **m** probability is the probability of a given observation *given* the records are a match. Or, as a formula:
+The $m$ probability is the probability of a given observation *given the records are a match*. Or, as a formula:
 
 $$
-m = Pr(Observation | RecordsMatch)
+m = Pr(\textsf{Observation | Records match})
 $$
 
-For example, consider the the **m** probability of Date of Birth (DOB). For two records that are a match, what is the probability that:
+For example, consider the the $m$ probability of a match on Date of Birth (DOB). For two records that are a match, what is the probability that:
 
-**DOB is the same**:
+- **DOB is the same**:
+  - Almost 100%, say 98% $\Longrightarrow m \approx 0.98$
+- **DOB is different**:
+  - Maybe a 2% chance of a data error? $\Longrightarrow m \approx 0.02$
 
-Almost 100%, say 98% :arrow_right:  $m = 0.98$
-
-**DOB is different**:
-
-Maybe a 2% chance of a data error? :arrow_right: $m = 0.02$
-
-
-The **m** probability is largely a measure of data quality - if DOB is poorly collected, it may only match exactly for 50% of true matches.
+The $m$ probability is largely a measure of data quality - if DOB is poorly collected, it may only match exactly for 50% of true matches.
 
 <hr>
 
-### **u** probability
+### u probability
 
-The **u** probability is the probability of a given observation *given* the records are **not** a match. Or, as a formula:
+The $u$ probability is the probability of a given observation *given the records are **not** a match*. Or, as a formula:
 
 $$
-m = Pr(Observation | RecordsDoNotMatch)
+m = Pr(\textsf{Observation | Records do not match})
 $$
 
-For example, consider the the **u** probability of Surname. For two records that are a match, what is the probability that:
+For example, consider the the $u$ probability of a match on Surname. For two records that are a match, what is the probability that:
 
-**Surname is the same**:
+- **Surname is the same**:
+  - Depending on the surname, <1%? $\Longrightarrow m \approx 0.005$
+- **Surname is different**:
+  - Almost 100% $\Longrightarrow m \approx 0.995$
 
-Depending on the surname, <1%? :arrow_right:  $m = 0.005$
-
-**Surname is different**:
-
-Almost 100% :arrow_right: $m = 0.995$
-
-
-The **u** probability is a measure of coincidence. As there are so many possible surnames, the chance of sharing the same surname with a randomly-selected person is small.
+The $u$ probability is a measure of coincidence. As there are so many possible surnames, the chance of sharing the same surname with a randomly-selected person is small.
 
 <hr>
 
-## Interpreting **m** and **u**
+## Interpreting m and u
 
 In the case of a perfect unique identifier:
 
-* A person is only assigned one such value - **m = 1** (match) or **0** (non-match)  
-* A value is only ever assigned to one person - **u = 0** (match) or **1** (non-match)
+* A person is only assigned one such value - $m = 1$ (match) or $m=0$ (non-match)  
+* A value is only ever assigned to one person - $u = 0$ (match) or $u = 1$ (non-match)
 
-Where m and u deviate from these ideals can usually be intuitively explained:
+Where $m$ and $u$ deviate from these ideals can usually be intuitively explained:
 
 !!! question ""
-    ### **m** probability
+    ### _m_ probability
     A measure of **data quality/reliability**.
 
     How often might a preson's information change legitimately or through data error? 
 
-    * Names: typos, aliases, nicknames, middle names, married names etc.
-    * DOB: typos, estimates (e.g. 1st Jan YYYY where date not known)
-    * Address: formatting issues, moving house, multiple addresses, temporary addresses
+    * **Names**: typos, aliases, nicknames, middle names, married names etc.
+    * **DOB**: typos, estimates (e.g. 1st Jan YYYY where date not known)
+    * **Address**: formatting issues, moving house, multiple addresses, temporary addresses
 
 !!! bug ""
-    ### **u** probability
+    ### _u_ probability
     A measure of **coincidence/cardinality**[^1].
 
     How many different people might share a given identifier?
 
-    * DOB (high cardinality) – for a flat age distribution spanning ~30 years, there are ~10,000 DOBs (0.01% chance of a match)
-    * Sex (low cardinality) – only 2 potential values (~50% chance of a match)
+    * **DOB** (high cardinality) – for a flat age distribution spanning ~30 years, there are ~10,000 DOBs (0.01% chance of a match)
+    * **Sex** (low cardinality) – only 2 potential values (~50% chance of a match)
 
 [^1]: 
     Cardinality is the the number of items in a set. In record linkage, cardinality refers to the number of possible values a feature could have.
-    This is important in records linkage, as the number of possible options for e.g. date of birth has a significant impact on the amount of evidence that a match on date of birth provides for two records being a match.
+    This is important in record linkage, as the number of possible options for e.g. date of birth has a significant impact on the amount of evidence that a match on date of birth provides for two records being a match.
 
 <hr>
 
@@ -117,120 +109,125 @@ Where m and u deviate from these ideals can usually be intuitively explained:
 
 One of the key measures of evidence of a match between records is the match weight. 
 
-### Deriving Match Weights from **m** and **u**
+### Deriving Match Weights from m and u
 
-The match weight is a measure of the relative size of **m** and **u**:
+The match weight is a measure of the relative size of $m$ and $u$:
 
-\begin{align}
-    M &= log_2\left(\frac{λ}{1-λ}\right) + log_2(K) \\[10pt]
-    &= log_2\left(\frac{λ}{1-λ}\right) + log_2\left(\frac{m}{u}\right)
-\end{align}
+$$
+\begin{equation}
+\begin{aligned}
+    M &= \log_2\left(\frac{\lambda}{1-\lambda}\right) + \log_2 K \\[10pt]
+    &= \log_2\left(\frac{\lambda}{1-\lambda}\right) + \log_2 m - \log_2 u
+\end{aligned}
+\end{equation}
+$$
 
-where  
-$λ$ is the probability that two random records match  
-$K=m/u$ is the Bayes Factor
+where $\lambda$ is the probability that two random records match and $K=m/u$ is the Bayes factor.
 
-A key assumption of the Fellegi Sunter model is that observations from different column/comparisons are independent of one another. This means that the Bayes Factor for two records is the products of the Bayes Factor for each column/comparison.
+A key assumption of the Fellegi Sunter model is that observations from different column/comparisons are independent of one another. This means that the Bayes factor for two records is the products of the Bayes factor for each column/comparison:
 
-$$K_{features} = K_{forename} \cdot K_{surname} \cdot K_{dob} \cdot K_{city} \cdot K_{email}$$
+$$ K_\textsf{features} = K_\textsf{forename} \cdot K_\textsf{surname} \cdot K_\textsf{dob} \cdot K_\textsf{city} \cdot K_\textsf{email} $$
 
 This, in turn, means that match weights are additive:
 
-$$M_{obs} = M_{prior} + M_{features} $$
+$$ M_\textsf{obs} = M_\textsf{prior} + M_\textsf{features} $$
 
-where 
+where $M_\textsf{prior} = \log_2\left(\frac{\lambda}{1-\lambda}\right)$ and
+$M_\textsf{features} = M_\textsf{forename} + M_\textsf{surname} + M_\textsf{dob} + M_\textsf{city} + M_\textsf{email}$.
 
-$M_{prior} = log_2\left(\frac{λ}{1-λ}\right)$  
-$M_{features} = M_{forename} + M_{surname} + M_{dob} + M_{city} + M_{email}$
+So, considering these properties, the total _match weight_ for two observed records can be rewritten as:
 
-So, considering these properties, the total Match Weight for two observed records can be rewritten as:
-
-\begin{align}
-    M_{obs} &= log_2\left(\frac{λ}{1-λ}\right) + \sum_{i}^{features}log_2(\frac{m_{i}}{u_{i}}) \\[10pt]
-    &= log_2\left(\frac{λ}{1-λ}\right) + \log_2(\prod_{i}^{features}\frac{m_{i}}{u_{i}})
-\end{align}
-
+$$
+\begin{equation}
+\begin{aligned}
+    M_\textsf{obs} &= \log_2\left(\frac{\lambda}{1-\lambda}\right) + \sum_{i}^\textsf{features}\log_2(\frac{m_i}{u_i}) \\[10pt]
+    &= \log_2\left(\frac{\lambda}{1-\lambda}\right) + \log_2\left(\prod_i^\textsf{features}\frac{m_i}{u_i}\right)
+\end{aligned}
+\end{equation}
+$$
 
 
 ### Interpreting Match Weights
 
-The Match Weight is the central metric showing the amount of evidence of a match is provided by each of the features in a model.  
+The _match weight_ is the central metric showing the amount of evidence of a match is provided by each of the features in a model.  
 The is most easily shown through Splink's Waterfall Chart:
 
 ![](../../img/fellegi_sunter/waterfall.png)
 
-1️⃣ are the two records being compared
+- 1️⃣ are the two records being compared
+- 2️⃣ is the _match weight_ of the **prior**, $M_\textsf{prior} = \log_2\left(\frac{\lambda}{1-\lambda}\right)$.
+  This is the _match weight_ if no additional knowledge of features is taken into account, and can be thought of as similar to the y-intercept in a simple regression.
 
-2️⃣ is the match weight of the **prior**
+- 3️⃣ are the _match weights_ of **each feature**, $M_\textsf{forename}$, $M_\textsf{surname}$, $M_\textsf{dob}$, $M_\textsf{city}$ and $M_\textsf{email}$ respectively.
+- 4️⃣ is the **total** _match weight_ for two observed records, combining 2️⃣ and 3️⃣:
+    
+    $$ 
+    \begin{equation}
+    \begin{aligned}
+        M_\textsf{obs} &= M_\textsf{prior} + M_\textsf{forename} + M_\textsf{surname} + M_\textsf{dob} + M_\textsf{city} + M_\textsf{email} \\[10pt]
+         &= -6.67 + 4.74 + 6.49 - 1.97 - 1.12 + 8.00 \\[10pt]
+         &= 9.48
+    \end{aligned}
+    \end{equation}
+    $$
 
-$M_{prior} = log_2\left(\frac{λ}{1-λ}\right)$
+- 5️⃣ is an axis representing the $\textsf{match weight} = \log_2(\textsf{Bayes factor})$)
 
-This is the match weight if no additional knowledge of features is taken into account, and can be thought of as similar to the y-intercept in a simple regression.
-
-3️⃣ are the match weights of **each feature** 
-
-$M_{forename}$, $M_{surname}$, $M_{dob}$, $M_{city}$ and $M_{email}$ respectively.
-
-4️⃣ is the **total** match weight for two observed records, combining 2️⃣ and 3️⃣
-
-$M_{obs} = M_{prior} + M_{forename} + M_{surname} + M_{dob} + M_{city} + M_{email}$
-
-$M_{obs} = -6.67 + 4.74 + 6.49 - 1.97 - 1.12 + 8.00 = 9.48$
-
-5️⃣ is an axis representing the match weight (as Match Weight = log2(Bayes Factor))
-
-6️⃣ is an axis representing the equivalent match probability (noting the non-linear scale). For more on the relationship between Match Weight and Probability, see the [sections below](#understanding-the-relationship-between-match-probability-and-match-weight)
+- 6️⃣ is an axis representing the equivalent _match probability_ (noting the non-linear scale). For more on the relationship between _match weight_ and _probability_, see the [sections below](#understanding-the-relationship-between-match-probability-and-match-weight)
 
 <hr>
 
 ## Match Probability
 
-Match probability is a more intuitive measure of similarity that match weight, and is, generally, used when choosing a similarity threshold for record matching.
+_Match probability_ is a more intuitive measure of similarity than _match weight_, and is, generally, used when choosing a similarity threshold for record matching.
 
 ### Deriving Match Probability from Match Weight
 
-Probability of two records being a match can be derived from the total match weight:
+Probability of two records being a match can be derived from the total _match weight_:
 
 $$
-P(match|obs) = \frac{2^{M_{obs}}}{1+2^{M_{obs}}}
+Pr(\textsf{Match | Observation}) = \frac{2^{M_\textsf{obs}}}{1+2^{M_\textsf{obs}}}
 $$
 
 ???+ example "Example"
     Consider the example in the [Interpreting Match Weights](#interpreting-match-weights) section. 
-    The total match weight, $M_{obs} = 9.48$. Therefore,
+    The total _match weight_, $M_\textsf{obs} = 9.48$. Therefore,
 
-    $$ P(match|obs) = \frac{2^{9.48}}{1+2^{9.48}} \approx 0.999 $$
+    $$ Pr(\textsf{Match | Observation}) = \frac{2^{9.48}}{1+2^{9.48}} \approx 0.999 $$
 
 #### Understanding the relationship between Match Probability and Match Weight
 
-It can be helpful to build up some inuition for how Match Weights translate into Match Probabilities. 
+It can be helpful to build up some inuition for how _match weight_ translates into _match probability_. 
 
-Plotting Match Probability versus Match Weight gives the following chart:
+Plotting _match probability_ versus _match weight_ gives the following chart:
 
 ![](../../img/fellegi_sunter/prob_v_weight.png)
 
 Some observations from this chart:
 
-* Match Weight = 0 &nbsp;&nbsp;&nbsp; :arrow_right: &nbsp;&nbsp;&nbsp; Match Probability = 0.5 
-* Match Weight = 2 &nbsp;&nbsp;&nbsp; :arrow_right: &nbsp;&nbsp;&nbsp; Match Probability $\approx$ 0.8
-* Match Weight = 3 &nbsp;&nbsp;&nbsp; :arrow_right: &nbsp;&nbsp;&nbsp; Match Probability $\approx$ 0.9
-* Match Weight = 4 &nbsp;&nbsp;&nbsp; :arrow_right: &nbsp;&nbsp;&nbsp; Match Probability $\approx$ 0.95
-* Match Weight = 7 &nbsp;&nbsp;&nbsp; :arrow_right: &nbsp;&nbsp;&nbsp; Match Probability $\approx$ 0.99
+* $\textsf{Match weight} = 0 \Longrightarrow \textsf{Match probability} = 0.5$
+* $\textsf{Match weight} = 2 \Longrightarrow \textsf{Match probability} = 0.8$ 
+* $\textsf{Match weight} = 3 \Longrightarrow \textsf{Match probability} = 0.9$ 
+* $\textsf{Match weight} = 4 \Longrightarrow \textsf{Match probability} = 0.95$ 
+* $\textsf{Match weight} = 7 \Longrightarrow \textsf{Match probability} = 0.99$ 
 
-So, the impact of any additional Match Weight on Match Probability gets smaller as the total Match Weight increases. This makes intuitive sense as, when comparing two records, after you already have a lot of evidence/features indicating a match, adding more evidence/features will not have much of an impact on the probability of a match.
+So, the impact of any additional _match weight_ on _match probability_ gets smaller as the total _match weight_ increases. This makes intuitive sense as, when comparing two records, after you already have a lot of evidence/features indicating a match, adding more evidence/features will not have much of an impact on the probability of a match.
 
 Similarly, if you already have a lot of negative evidence/features indicating a match, adding more evidence/features will not have much of an impact on the probability of a match.
 
-### Deriving Match Probability from **m** and **u**
+### Deriving Match Probability from m and u
 
-Given the definitions for Probability and Match Weights above, we can rewrite Probability in terms of **m** and **u**.
+Given the definitions for _match probability_ and _match weight_ above, we can rewrite the probability in terms of $m$ and $u$.
 
-\begin{align}
-P(match|obs) &= \frac{2^{log_2\left(\frac{λ}{1-λ}\right) + \log_2(\prod_{i}^{features}\frac{m_{i}}{u_{i}})}}{1+2^{log_2\left(\frac{λ}{1-λ}\right) + \log_2(\prod_{i}^{features}\frac{m_{i}}{u_{i}})}} \\[10pt]
-&= \frac{\left(\frac{λ}{1-λ}\right)\prod_{i}^{features}\frac{m_{i}}{u_{i}}}{1+\left(\frac{λ}{1-λ}\right)\prod_{i}^{features}\frac{m_{i}}{u_{i}}} \\[10pt]
-&= 1 - \frac{1}{1+\left(\frac{λ}{1-λ}\right)\prod_{i}^{features}\frac{m_{i}}{u_{i}}}
-\end{align}
-
+$$
+\begin{equation}
+\begin{aligned}
+Pr(\textsf{Match | Observation}) &= \frac{2^{\log_2\left(\frac{\lambda}{1-\lambda}\right) + \log_2\left(\prod_{i}^\textsf{features}\frac{m_{i}}{u_{i}}\right)}}{1+2^{\log_2\left(\frac{\lambda}{1-\lambda}\right) + \log_2\left(\prod_{i}^\textsf{features}\frac{m_{i}}{u_{i}}\right)}} \\[20pt]
+ &= \frac{\left(\frac{\lambda}{1-\lambda}\right)\prod_{i}^\textsf{features}\frac{m_{i}}{u_{i}}}{1+\left(\frac{\lambda}{1-\lambda}\right)\prod_{i}^\textsf{features}\frac{m_{i}}{u_{i}}} \\[20pt]
+ &= 1 - \left[1+\left(\frac{\lambda}{1-\lambda}\right)\prod_{i}^\textsf{features}\frac{m_{i}}{u_{i}}\right]^{-1}
+\end{aligned}
+\end{equation}
+$$
 
 
 <hr>

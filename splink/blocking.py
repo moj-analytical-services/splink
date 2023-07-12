@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from sqlglot import parse_one
+from sqlglot.expressions import Join, Column
+from sqlglot.optimizer.eliminate_joins import join_condition
+from typing import TYPE_CHECKING, Union
 import logging
 
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
@@ -17,9 +20,11 @@ class BlockingRule:
         self,
         blocking_rule,
         salting_partitions=1,
+        sqlglot_dialect=None,
     ):
         self.blocking_rule = blocking_rule
         self.preceding_rules = []
+        self.sqlglot_dialect = sqlglot_dialect
         self.salting_partitions = salting_partitions
 
     @property
@@ -47,6 +52,58 @@ class BlockingRule:
         else:
             for n in range(self.salting_partitions):
                 yield f"{self.blocking_rule} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
+
+    @property
+    def _parsed_join_condition(self):
+        br = self.blocking_rule
+        return parse_one("INNER JOIN r", into=Join).on(
+            br, dialect=self.sqlglot_dialect
+        )  # using sqlglot==11.4.1
+
+    @property
+    def _join_conditions(self):
+        """
+        Extract the join conditions from the blocking rule as a tuple:
+        source_keys, join_keys, condition_expr
+
+        Returns:
+            list of tuples like [(name, name), (substr(name,1,2), substr(name,2,3))]
+        """
+
+        def remove_table_prefix(tree):
+            for c in tree.find_all(Column):
+                del c.args["table"]
+            return tree
+
+        j = self._parsed_join_condition
+
+        source_keys, join_keys, _ = join_condition(j)
+
+        keys = zip(source_keys, join_keys)
+
+        rmtp = remove_table_prefix
+
+        keys = [(rmtp(i), rmtp(j)) for (i, j) in keys]
+
+        keys = [
+            (i.sql(dialect=self.sqlglot_dialect), j.sql(self.sqlglot_dialect))
+            for (i, j) in keys
+        ]
+
+        return keys
+
+    @property
+    def _filter_conditions(self):
+        # A more accurate term might be "non-equi-join conditions"
+        # or "complex join conditions", but to capture the idea these are
+        # filters that have to be applied post-creation of the pairwise record
+        # comparison i've opted to call it a filter
+        j = self._parsed_join_condition
+        _, _, filter_condition = join_condition(j)
+        if not filter_condition:
+            return ""
+        else:
+            return filter_condition.sql(self.sqlglot_dialect)
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):

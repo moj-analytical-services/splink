@@ -50,13 +50,14 @@ for dialect in dialects:
     ):
         if issubclass(cls, Comparison) and issubclass(cls, DialectBase):
             dialect_comparison_templates[dialect].append(class_name)
-    for class_name in inspect.getmembers(
+    for function in inspect.getmembers(
         importlib.import_module(
             ".comparison_level_library", package=f"splink.{dialect}"
         ),
         inspect.isfunction,
     ):
-        dialect_level_compositions[dialect].append(class_name)
+        function_name = function[0]
+        dialect_level_compositions[dialect].append(function_name)
 
 
 all_sorted_levels = sorted({y for x in dialect_levels.values() for y in x})
