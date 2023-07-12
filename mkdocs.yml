@@ -22,6 +22,7 @@ theme:
     - navigation.tabs.sticky
     - navigation.top
     - toc.follow
+    - navigation.prune
   logo: "img/favicon.ico"
   favicon: "img/favicon.ico"
   palette:
@@ -200,5 +201,6 @@ extra:
       link: https://pypi.org/project/splink/
     - icon: fontawesome/solid/chevron-right
       link: https://www.robinlinacre.com/
+  new: Recently added
 
       
