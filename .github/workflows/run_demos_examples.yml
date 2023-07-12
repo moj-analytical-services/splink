@@ -8,49 +8,33 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
-    runs-on: ubuntu-20.04
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9"]
     steps:
-      - uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-
       - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/checkout@v3
-        with:
-          repository: "moj-analytical-services/splink_demos"
-          ref: master
-          path: "splink_demos/"
-
-      - name: Set up cache for pip packages
-        uses: actions/cache@v2
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install environment and check notebooks
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
         run: |
-            cd splink_demos
-            cp ../benchmarking/conftest.py conftest.py
-            python3 -m venv venv
-            source venv/bin/activate
-            pip install --upgrade pip
-            pip install ..
-            grep -v "^splink==" requirements.txt > temp && mv temp requirements.txt
-            pip install -r requirements.txt
-            python ../scripts/make_test_datasets_smaller.py
-            find . -type f -name 'example_*ipynb' -print0 | while IFS= read -r -d $'\0' file; do
-              if sed -i -E 's/max_pairs\s*=\s*[0-9.eE+-]+/max_pairs = 10000/g' "$file"; then
-                echo "Modified: $file"
-              fi
-            done
-            find . -type f -name 'example_*ipynb' -exec grep -H 'max_pairs' {} \;
-            sed -i 's/display(ui,out)/pass/' example_real_time_record_linkage.ipynb
-            sed -i 's/display(linker.waterfall_chart(recs, filter_nulls=False))/pass/' example_real_time_record_linkage.ipynb
-            python -m pytest --nbmake --nbmake-kernel=python3 example_*ipynb
-
+          python -m pip install --upgrade pip
+          pip install -r docs/demos/requirements.txt
+      #----------------------------------------------
+      # Make sure that the demo notebooks run without error
+      #----------------------------------------------
+      - name: Test DuckDB example notebooks with pytest
+        run: |
+          python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/examples/duckdb/*ipynb
+      - name: Test Spark example notebooks with pytest
+        run: |
+          python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/examples/spark/*ipynb
+      #- name: Test Athena example notebooks with pytest
+      #  run: |
+      #    python -m pytest --nbmake --nbmake-kernel=python3 examples/athena/*ipynb
+      - name: Test SQLite example notebooks with pytest
+        run: |
+          python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/examples/sqlite/*ipynb

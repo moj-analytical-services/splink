@@ -8,33 +8,24 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9"]
     steps:
-      - uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-
       - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/checkout@v3
-        with:
-          repository: "moj-analytical-services/splink_demos"
-          ref: master
-          path: "splink_demos/"
-
-      - name: Install environment and check notebooks
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
         run: |
-            cd splink_demos
-            cp ../benchmarking/conftest.py conftest.py
-            python3 -m venv venv
-            source venv/bin/activate
-            pip install --upgrade pip
-            pip install ..
-            grep -v "splink==" requirements.txt > temp && mv temp requirements.txt
-            pip install -r requirements.txt
-            python -m pytest --nbmake --nbmake-kernel=python3 0[0-6]_*ipynb
-
-
+          python -m pip install --upgrade pip
+          pip install -r docs/demos/requirements.txt
+      #----------------------------------------------
+      # Make sure that the demo notebooks run without error
+      #----------------------------------------------
+      - name: Test with pytest
+        run: |
+          python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/tutorials/*ipynb
