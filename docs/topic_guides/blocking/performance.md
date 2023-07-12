@@ -7,15 +7,15 @@ When considering computational performance of blocking rules, there are two main
 
 Below we run through an example of how to address each of these drivers.
 
-## Tight vs loose Blocking Rules
+## Strict vs lenient Blocking Rules
 
-One way to reduce the number of comparisons being considered within a model is to apply tight (or strict) blocking rules. However, this can have a significant impact on the how well the Splink model works.
+One way to reduce the number of comparisons being considered within a model is to apply strict blocking rules. However, this can have a significant impact on the how well the Splink model works.
 
-In reality, we recommend getting a model up and running with strict Blocking Rules and incrementally loosening them to see the impact on the runtime and quality of the results. By starting with tight blocking rules, the linking process will run faster which will means you can iterate through model versions more quickly.
+In reality, we recommend getting a model up and running with strict Blocking Rules and incrementally loosening them to see the impact on the runtime and quality of the results. By starting with strict blocking rules, the linking process will run faster which will means you can iterate through model versions more quickly.
 
 ??? example "Example - Incrementally loosening Prediction Blocking Rules"
 
-    When choosing Prediction Blocking Rules, consider how `blocking_rules_to_generate_predictions` may be incrementally loosened. We may start with the following rule:
+    When choosing Prediction Blocking Rules, consider how `blocking_rules_to_generate_predictions` may be made incrementally less strict. We may start with the following rule:
 
     `l.first_name = r.first_name and l.surname = r.surname and l.dob = r.dob`.
 

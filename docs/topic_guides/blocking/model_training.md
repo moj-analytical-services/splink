@@ -26,7 +26,7 @@ linker.estimate_parameters_using_expectation_maximisation(
 
 Here, we have defined a "block" of records where `first_name` are the same. As names are not unique, we can be pretty sure that there will be a combination of matches and non-matches in this "block" which is what is required for the EM algorithm.
 
-Matching only on `first_name` will likely generate a large "block" of pairwise comparisons which will take longer to run. In this case it may be worthwhile applying a tighter blocking rule to reduce runtime. For example, a match on `first_name` and `surname`:
+Matching only on `first_name` will likely generate a large "block" of pairwise comparisons which will take longer to run. In this case it may be worthwhile applying a stricter blocking rule to reduce runtime. For example, a match on `first_name` and `surname`:
 
 ```python
 
