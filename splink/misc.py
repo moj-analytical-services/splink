@@ -1,4 +1,5 @@
 import json
+import pkgutil
 import random
 import string
 from collections import namedtuple
@@ -202,3 +203,14 @@ class colour:
     UNDERLINE = "\033[4m"
     ITALICS = "\033[3m"
     END = "\033[0m"
+
+
+def read_resource(path: str) -> str:
+    """Reads a resource file from the splink package"""
+    # In the future we may have to move to importlib.resources
+    # https://github.com/python/cpython/issues/89838#issuecomment-1093935933
+    # But for now this API avoids having to do conditional imports
+    # depending on python version.
+    # Also, if you use importlib.resources, then you have to add an
+    # __init__.py file to every subdirectory, which is annoying.
+    return pkgutil.get_data("splink", path).decode("utf-8")
