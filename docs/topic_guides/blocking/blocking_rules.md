@@ -10,9 +10,7 @@ One of the main challenges to overcome in record linkage is the **scale** of the
 
 The number of pairs of records to compare grows using the formula $\frac{n\left(n-1\right)}2$, i.e. with (approximately) the square of the number of records, as shown in the following chart:
 
-
-
-![](../img/blocking/pairwise_comparisons.png)
+![](../../img/blocking/pairwise_comparisons.png)
 
 For example, a dataset of 1 million input records would generate around 500 billion pairwise record comparisons.
 

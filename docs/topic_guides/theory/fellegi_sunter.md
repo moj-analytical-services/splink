@@ -157,7 +157,7 @@ So, considering these properties, the total Match Weight for two observed record
 The Match Weight is the central metric showing the amount of evidence of a match is provided by each of the features in a model.  
 The is most easily shown through Splink's Waterfall Chart:
 
-![](../img/fellegi_sunter/waterfall.png)
+![](../../img/fellegi_sunter/waterfall.png)
 
 1️⃣ are the two records being compared
 
@@ -207,7 +207,7 @@ It can be helpful to build up some inuition for how Match Weights translate into
 
 Plotting Match Probability versus Match Weight gives the following chart:
 
-![](../img/fellegi_sunter/prob_v_weight.png)
+![](../../img/fellegi_sunter/prob_v_weight.png)
 
 Some observations from this chart:
 

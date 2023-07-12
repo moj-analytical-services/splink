@@ -76,7 +76,7 @@ linker = DuckDBLinker(df, settings)
 linker.cumulative_num_comparisons_from_blocking_rules_chart()
 ```
 
-![](../img/blocking/cumulative_comparisons.png)
+![](../../img/blocking/cumulative_comparisons.png)
 
 Where, similar to the note above, the `l.surname = r.surname` bar in light blue is a count of all record comparisons that match on `surname` that have not already been captured by the `first_name` rule.
 
