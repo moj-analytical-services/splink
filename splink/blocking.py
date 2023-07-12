@@ -233,7 +233,7 @@ def block_using_rules_sql(linker: Linker):
             from {linker._input_tablename_l} as l
             inner join {linker._input_tablename_r} as r
             on
-            {salted_br}
+            ({salted_br})
             {br.and_not_preceding_rules_sql}
             {where_condition}
             """

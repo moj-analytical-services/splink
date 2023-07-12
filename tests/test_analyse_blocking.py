@@ -146,8 +146,8 @@ def test_blocking_records_accuracy():
     validate_blocking_output(
         linker_settings,
         expected_out={
-            "row_count": [13591, 53472, 137280],
-            "cumulative_rows": [13591, 67063, 204343],
+            "row_count": [13591, 50245, 137280],
+            "cumulative_rows": [13591, 63836, 201116],
             "cartesian": 1999000,
         },
         blocking_rules=blocking_rules,
@@ -158,8 +158,8 @@ def test_blocking_records_accuracy():
     validate_blocking_output(
         linker_settings,
         expected_out={
-            "row_count": [7257, 27190, 68640],
-            "cumulative_rows": [7257, 34447, 103087],
+            "row_count": [7257, 25161, 68640],
+            "cumulative_rows": [7257, 32418, 101058],
             "cartesian": 1000000,
         },
         blocking_rules=blocking_rules,
@@ -172,11 +172,11 @@ def test_blocking_records_accuracy():
         linker_settings,
         expected_out={
             # number of links per block simply related to two-frame case
-            "row_count": [3 * 7257, 3 * 27190, 3 * 68640],
+            "row_count": [3 * 7257, 3 * 25161, 3 * 68640],
             "cumulative_rows": [
                 3 * 7257,
-                3 * 7257 + 3 * 27190,
-                3 * 7257 + 3 * 27190 + 3 * 68640,
+                3 * 7257 + 3 * 25161,
+                3 * 7257 + 3 * 25161 + 3 * 68640,
             ],
             "cartesian": 3_000_000,
         },
@@ -189,8 +189,8 @@ def test_blocking_records_accuracy():
         linker_settings,
         expected_out={
             # and as above,
-            "row_count": [31272, 120993, 308880],
-            "cumulative_rows": [31272, 31272 + 120993, 31272 + 120993 + 308880],
+            "row_count": [31272, 113109, 308880],
+            "cumulative_rows": [31272, 31272 + 113109, 31272 + 113109 + 308880],
             "cartesian": (3000 * 2999) // 2,
         },
         blocking_rules=blocking_rules,
