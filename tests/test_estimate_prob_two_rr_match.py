@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 import pytest
 
-from tests.decorator import mark_with_dialects_excluding
+from .decorator import mark_with_dialects_excluding
 
 
 @mark_with_dialects_excluding()
