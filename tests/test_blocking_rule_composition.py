@@ -19,7 +19,6 @@ def binary_composition_internals(clause, comp_fun, brl, dialect):
         brl.exact_match_rule("surname"),
     )
     exact_match_sql = f"(l.{q}first_name{q} = r.{q}first_name{q}) {clause} (l.{q}surname{q} = r.{q}surname{q})"  # noqa: E501
-    print(exact_match_sql)
     assert level.blocking_rule == exact_match_sql
     # brl.not_(or_(...)) composition
     level = brl.not_(
@@ -31,22 +30,13 @@ def binary_composition_internals(clause, comp_fun, brl, dialect):
     # salting included in the composition function
     salt = comp_fun(
         "l.help2 = r.help2",
-        {"blocking_rule": "l.help3 = r.help3", "salting_partitions": 10},
         brl.exact_match_rule("help4"),
         salting_partitions=4,
     ).salting_partitions
 
-    # salting included in one of the levels
-    salt_2 = comp_fun(
-        "l.help2 = r.help2",
-        {"blocking_rule": "l.help3 = r.help3", "salting_partitions": 3},
-        brl.exact_match_rule("help4"),
-    ).salting_partitions
-
     assert salt == 4
-    assert salt_2 == 3
 
-    with pytest.raises(ValueError):
+    with pytest.raises(SyntaxError):
         comp_fun()
 
 
@@ -63,11 +53,59 @@ def test_binary_composition_internals_AND(test_helpers, dialect):
 
 
 def test_not():
-    import splink.duckdb.duckdb_comparison_level_library as brl
+    import splink.duckdb.blocking_rule_library as brl
+    import splink.duckdb.comparison_level_library as cl
 
-    # Integration test for a simple dictionary cl
-    dob_jan_first = {"sql_condition": "SUBSTR(dob_std_l, -5) = '01-01'"}
+    # Integration test for a simple string BR
+    dob_jan_first = "SUBSTR(dob_std_l, -5) = '01-01'"
+    cl.not_(dob_jan_first)  # should stil work
+    out = cl.not_(dob_jan_first, salting_partitions=5)  # should stil work
+    assert out.salting_partitions == 5
+
     brl.not_(dob_jan_first)
 
     with pytest.raises(TypeError):
         brl.not_()
+
+
+def test_error_on_multiple_input_types():
+    # Check that opposing input types cannot be merged
+    # i.e. `and_(ComparisonLevel, BlockingRule)`` should fail
+
+    import splink.duckdb.blocking_rule_library as brl
+    import splink.duckdb.comparison_level_library as cll
+
+    error_txt = (
+        "Error: conflicting data types detected for `{}_` composition. "
+        "Please ensure that only `ComparisonLevel` or `dict` types are "
+        "passed if you're composing comparison levels and `BlockingRule` "
+        "and `str` types for Blocking Rule composition."
+    )
+
+    or_error = error_txt.format("or")
+    and_error = error_txt.format("and")
+
+    cll_test = cll.or_(
+        cll.exact_match_level("first_name", include_colname_in_charts_label=True),
+        cll.exact_match_level("surname"),
+    )
+    br_test = brl.exact_match_rule("first_name")
+
+    # We're expecting a TypeError
+    with pytest.raises(TypeError) as excinfo:
+        cll.or_(cll_test, br_test)
+    assert str(excinfo.value) == or_error
+
+    with pytest.raises(TypeError) as excinfo:
+        brl.and_(cll_test, br_test)
+    assert str(excinfo.value) == and_error
+
+    contains = {
+        "sql_condition": "(contains(name_l, name_r) OR contains(name_r, name_l))"
+    }
+    with pytest.raises(TypeError):
+        brl.or_(contains, br_test)
+
+    dob_jan_first = "SUBSTR(dob_std_l, -5) = '01-01'"
+    with pytest.raises(TypeError):
+        cll.and_(cll_test, dob_jan_first)

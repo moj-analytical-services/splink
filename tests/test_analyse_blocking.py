@@ -243,8 +243,13 @@ def test_cumulative_br_funs(test_helpers, dialect):
     )
 
     assert (
+        linker.count_num_comparisons_from_blocking_rule(brl.exact_match_rule("surname"))
+        == 3167
+    )
+
+    assert (
         linker.count_num_comparisons_from_blocking_rule(
-            brl.exact_match_rule("first_name")
+            brl.or_(brl.exact_match_rule("surname"), brl.exact_match_rule("first_name"))
         )
-        == 19387
+        == 4821
     )

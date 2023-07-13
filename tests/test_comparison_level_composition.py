@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+import splink.duckdb.blocking_rule_library as brl
 import splink.duckdb.comparison_level_library as cll
 import splink.duckdb.comparison_level_library as scll
 from splink.duckdb.linker import DuckDBLinker
@@ -22,6 +23,7 @@ def test_not():
     ("clause", "c_fun"),
     [
         pytest.param("OR", cll.or_, id="Test or_"),
+        pytest.param("OR", brl.or_, id="Test blocking rule or_"),
         pytest.param("AND", cll.and_, id="Test and_"),
         pytest.param("OR", scll.or_, id="Test spark or_"),
     ],
@@ -77,7 +79,7 @@ def test_binary_composition_internals(clause, c_fun):
     )
     assert level.sql_condition == f"NOT ({exact_match_sql})"
 
-    with pytest.raises(ValueError):
+    with pytest.raises(SyntaxError):
         c_fun()
 
 
