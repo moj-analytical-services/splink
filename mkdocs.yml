@@ -101,6 +101,7 @@ nav:
         - QA from ground truth column: "demos/examples/duckdb/accuracy_analysis_from_labels_column.ipynb"
         - Estimating m probabilities from labels: "demos/examples/duckdb/pairwise_labels.ipynb"
         - Quick and dirty persons model: "demos/examples/duckdb/quick_and_dirty_persons.ipynb"
+        - Deterministic dedupe: "demos/examples/duckdb/deterministic_dedupe.ipynb"
         - Febrl3 Dedupe: "demos/examples/duckdb/febrl3.ipynb"
         - Febrl4 link-only: "demos/examples/duckdb/febrl4.ipynb"
       - PySpark:
