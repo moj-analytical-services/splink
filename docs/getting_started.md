@@ -62,10 +62,9 @@ For more detailed tutorial, please see [section below](#tutorial).
     import splink.duckdb.comparison_library as cl
     import splink.duckdb.comparison_template_library as ctl
     import splink.duckdb.blocking_rule_library as brl
+    from splink.datasets import splink_datasets
 
-    import pandas as pd
-
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = splink_datasets.fake_1000
 
     settings = {
         "link_type": "dedupe_only",
