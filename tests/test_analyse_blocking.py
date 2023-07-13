@@ -6,10 +6,17 @@ from splink.analyse_blocking import (
 )
 from splink.blocking import BlockingRule
 from splink.duckdb.linker import DuckDBLinker
-from tests.basic_settings import get_settings_dict
+
+from .basic_settings import get_settings_dict
+from .decorator import mark_with_dialects_excluding
 
 
-def test_analyse_blocking_slow_methodology():
+@mark_with_dialects_excluding()
+def test_analyse_blocking_slow_methodology(test_helpers, dialect):
+
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+
     df_1 = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
@@ -27,7 +34,7 @@ def test_analyse_blocking_slow_methodology():
         ]
     )
     settings = {"link_type": "dedupe_only"}
-    linker = DuckDBLinker(df_1, settings)
+    linker = Linker(df_1, settings, **helper.extra_linker_args())
 
     res = linker.count_num_comparisons_from_blocking_rule(
         "1=1",
@@ -40,7 +47,7 @@ def test_analyse_blocking_slow_methodology():
     assert res == 1
 
     settings = {"link_type": "link_only"}
-    linker = DuckDBLinker([df_1, df_2], settings)
+    linker = Linker([df_1, df_2], settings, **helper.extra_linker_args())
     res = linker.count_num_comparisons_from_blocking_rule(
         "1=1",
     )
@@ -58,7 +65,7 @@ def test_analyse_blocking_slow_methodology():
 
     settings = {"link_type": "link_and_dedupe"}
 
-    linker = DuckDBLinker([df_1, df_2], settings)
+    linker = Linker([df_1, df_2], settings, **helper.extra_linker_args())
 
     res = linker.count_num_comparisons_from_blocking_rule(
         "1=1",
@@ -86,10 +93,18 @@ def validate_blocking_output(linker, expected_out, **kwargs):
     assert expected_out["cartesian"] == records[0]["cartesian"]
 
 
-def test_blocking_records_accuracy():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+@mark_with_dialects_excluding()
+def test_blocking_records_accuracy(test_helpers, dialect):
+    from numpy import nan
 
-    linker_settings = DuckDBLinker(df, get_settings_dict())
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    brl = helper.brl
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    # resolve an issue w/ pyspark nulls
+    df = df.fillna(nan).replace([nan], [None])
+
+    linker_settings = Linker(df, get_settings_dict(), **helper.extra_linker_args())
 
     # dedupe only
     validate_blocking_output(
@@ -119,8 +134,11 @@ def test_blocking_records_accuracy():
     )
 
     blocking_rules = [
-        "l.first_name = r.first_name",
-        "l.first_name = r.first_name and l.surname = r.surname",
+        brl.exact_match_rule("first_name"),
+        brl.and_(
+            brl.exact_match_rule("first_name"),
+            brl.exact_match_rule("surname"),
+        ),
         "l.dob = r.dob",
     ]
 
@@ -137,12 +155,15 @@ def test_blocking_records_accuracy():
     # link and dedupe + link only without settings
     blocking_rules = [
         "l.surname = r.surname",
-        "l.first_name = r.first_name or substr(l.dob,1,4) = substr(r.dob,1,4)",
+        brl.or_(
+            brl.exact_match_rule("first_name"),
+            "substr(l.dob,1,4) = substr(r.dob,1,4)",
+        ),
         "l.city = r.city",
     ]
 
     settings = {"link_type": "link_and_dedupe"}
-    linker_settings = DuckDBLinker([df, df], settings)
+    linker_settings = Linker([df, df], settings, **helper.extra_linker_args())
     validate_blocking_output(
         linker_settings,
         expected_out={
@@ -154,7 +175,7 @@ def test_blocking_records_accuracy():
     )
 
     settings = {"link_type": "link_only"}
-    linker_settings = DuckDBLinker([df, df], settings)
+    linker_settings = Linker([df, df], settings, **helper.extra_linker_args())
     validate_blocking_output(
         linker_settings,
         expected_out={
@@ -167,7 +188,7 @@ def test_blocking_records_accuracy():
 
     # now multi-table
     # still link only
-    linker_settings = DuckDBLinker([df, df, df], settings)
+    linker_settings = Linker([df, df, df], settings, **helper.extra_linker_args())
     validate_blocking_output(
         linker_settings,
         expected_out={
@@ -184,7 +205,7 @@ def test_blocking_records_accuracy():
     )
 
     settings = {"link_type": "link_and_dedupe"}
-    linker_settings = DuckDBLinker([df, df, df], settings)
+    linker_settings = Linker([df, df, df], settings, **helper.extra_linker_args())
     validate_blocking_output(
         linker_settings,
         expected_out={
