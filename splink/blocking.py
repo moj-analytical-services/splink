@@ -134,7 +134,7 @@ class BlockingRule:
         else:
             return filter_condition.sql(self.sqlglot_dialect)
 
-              def as_dict(self):
+    def as_dict(self):
         "The minimal representation of the blocking rule"
         output = {}
 

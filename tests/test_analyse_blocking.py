@@ -6,19 +6,17 @@ from splink.analyse_blocking import (
 )
 from splink.blocking import BlockingRule
 from splink.duckdb.linker import DuckDBLinker
-from tests.basic_settings import get_settings_dict
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
 
 @mark_with_dialects_excluding()
-def test_analyse_blocking(test_helpers, dialect):
+def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     helper = test_helpers[dialect]
     Linker = helper.Linker
 
-def test_analyse_blocking_slow_methodology():
     df_1 = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
