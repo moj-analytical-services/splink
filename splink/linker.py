@@ -2029,31 +2029,38 @@ class Linker:
         bottom_n=10,
         cast_arrays_as_str=False,
     ):
-        """Generate three summary charts for each `column_expression`. 
-        
-        The purpose of these charts is to better understand the cardinality and skew of each 
-        `column_expression` chosen for profiling. 
+        """Generate three summary charts for each `column_expression`.
+
+        The purpose of these charts is to better understand the cardinality and skew of
+        each `column_expression` chosen for profiling. Further information can be found
+        on the Exploratory analysis
+        [tutorial](https://moj-analytical-services.github.io/splink/demos/02_
+        Exploratory_analysis.html#analyse-the-distribution-of-values-in-your-data)
 
 
         Args:
-            column_expressions (str | list[str]): The columns to be profiled or an sql expression
+            column_expressions (str | list[str]): The columns to be profiled or
+                an sql expression
             top_n (int): The number of bars in the chart for the most common values.
             bottom_n (int): The number of bars in the chart for the least common values.
-            cast_arrays_as_str (bool): If False, any columns with arrays will be unnested 
-                and the elements of the array will be profiled. If set to True, the whole array will be profiled
+            cast_arrays_as_str (bool): If False, any columns with arrays will be
+                unnested and the elements of the array will be profiled. If set
+                to True, the whole array will be profiled.
 
         Returns:
-            altair_or_json: An altair line graph, a bar graph of the most common values and a bar 
-            chart of the least common values, for each column profiled.
+            altair_or_json: An altair line graph, a bar graph of the most common values
+            and a bar chart of the least common values, for each column profiled.
 
         Examples:
             ```py
-            linker.profile_columns(["first_name", "city", "surname", "email", "substr(dob, 1,4)"], top_n=10, bottom_n=5)
+            linker.profile_columns(["first_name", "surname", "substr(dob, 1,4)"],
+            top_n=10, bottom_n=5)
 
             ```
 
-             ```py
-            linker.profile_columns([["first_name", "surname"], "email", "postcode_arr", cast_arrays_as_str=True)
+            ```py
+            linker.profile_columns([["first_name", "surname"], "email", "postcode_arr"],
+            cast_arrays_as_str=True)
 
             ```
 
