@@ -13,7 +13,7 @@ hide:
 Splink is a Python package for probabilistic record linkage (entity resolution) that allows you to deduplicate and link records from datasets without unique identifiers.
 
 
-[Get Started with Splink](./getting_started.md){ .md-button .md-button--primary } 
+[Get Started with Splink](./getting_started.md){ .md-button .md-button--primary }
 
 <hr>
 

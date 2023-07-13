@@ -16,11 +16,13 @@ theme:
     - search.share
     - search.suggest
     - navigation.indexes
+    - navigation.indexes
     - navigation.footer
     - content.action.edit
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.top
+    - toc.follow
     - toc.follow
   logo: "img/favicon.ico"
   favicon: "img/favicon.ico"
@@ -101,6 +103,7 @@ nav:
         - QA from ground truth column: "demos/examples/duckdb/accuracy_analysis_from_labels_column.ipynb"
         - Estimating m probabilities from labels: "demos/examples/duckdb/pairwise_labels.ipynb"
         - Quick and dirty persons model: "demos/examples/duckdb/quick_and_dirty_persons.ipynb"
+        - Deterministic dedupe: "demos/examples/duckdb/deterministic_dedupe.ipynb"
         - Febrl3 Dedupe: "demos/examples/duckdb/febrl3.ipynb"
         - Febrl4 link-only: "demos/examples/duckdb/febrl4.ipynb"
       - PySpark:
@@ -152,6 +155,9 @@ nav:
             - Comparison Library: "comparison_library.md"
             - Comparison Level Library: "comparison_level_library.md"
             - Comparison Composition: "comparison_level_composition.md"
+        - Blocking Rule Library API:
+            - Blocking Rule Library: "blocking_rule_library.md"
+            - Blocking Rule Composition: "blocking_rule_composition.md"
         - EM Training Session API: "em_training_session.md"
         - SplinkDataFrame API: "SplinkDataFrame.md"
         - Comparisons API:
@@ -199,4 +205,4 @@ extra:
     - icon: fontawesome/solid/chevron-right
       link: https://www.robinlinacre.com/
 
-      
+

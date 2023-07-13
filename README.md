@@ -81,6 +81,7 @@ For more detailed tutorial, please see [here](https://moj-analytical-services.gi
 from splink.duckdb.linker import DuckDBLinker
 import splink.duckdb.comparison_library as cl
 import splink.duckdb.comparison_template_library as ctl
+import splink.duckdb.blocking_rule_library as brl
 from splink.datasets import splink_datasets
 
 df = splink_datasets.fake_1000
@@ -88,8 +89,8 @@ df = splink_datasets.fake_1000
 settings = {
     "link_type": "dedupe_only",
     "blocking_rules_to_generate_predictions": [
-        "l.first_name = r.first_name",
-        "l.surname = r.surname",
+        brl.exact_match_rule("first_name"),
+        brl.exact_match_rule("surname"),
     ],
     "comparisons": [
         ctl.name_comparison("first_name"),
