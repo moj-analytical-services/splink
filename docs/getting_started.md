@@ -69,8 +69,7 @@ For more detailed tutorial, please see [section below](#tutorial).
     settings = {
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [
-            "l.first_name = r.first_name",
-            # or with a pre-built rule
+            brl.exact_match_rule("first_name"),
             brl.exact_match_rule("surname"),
         ],
         "comparisons": [

@@ -19,11 +19,11 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 
 ## Key Features
 
-⚡ **Speed:** Capable of linking a million records on a laptop in approximately one minute.
-🎯 **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.
-🌐 **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.
-🎓 **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.
-📊 **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.
+⚡ **Speed:** Capable of linking a million records on a laptop in approximately one minute.  
+🎯 **Accuracy:** Full support for term frequency adjustments and user-defined fuzzy matching logic.  
+🌐 **Scalability:** Execute linkage jobs in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.  
+🎓 **Unsupervised Learning:** No training data is required, as models can be trained using an unsupervised approach.  
+📊 **Interactive Outputs:** Provides a wide range of interactive outputs to help users understand their model and diagnose linkage problems.  
 
 Splink's core linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customizations to improve accuracy.
 

@@ -14,9 +14,9 @@ The documentation for the Splink API is broken up into the following categories:
 
 - [Comparisons Library API](./comparison_level_library.md) - for methods that can be used to define `Comparisons` within a Splink Settings dictionary.
 
-- [EM Training Session API](./em_training_session.md) - for methods that be used to inspect the results of individual iterations of the Expectation Maximisation model training algorithm.
-
 - [Blocking Rules Library API](./blocking_rule_library.md) - for methods that can be used to define a `Blocking Rule` for use within a Splink Settings dictionary or in the expectation maximisation step.
+
+- [EM Training Session API](./em_training_session.md) - for methods that be used to inspect the results of individual iterations of the Expectation Maximisation model training algorithm.
 
 - [Splink Dataframe API](./SplinkDataFrame.md) - for methods that can be used to manipulate a `SplinkDataFrame` across all SQL backends.
 
