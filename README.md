@@ -123,7 +123,7 @@ clusters.as_pandas_dataframe(limit=5)
 
 ## Support
 
-Please post on the [discussion forums](https://github.com/moj-analytical-services/splink/discussions) if you have any questions. If you think you have found a bug, please raise an [issue](https://github.com/moj-analytical-services/splink/issues).
+To find the best place to ask a question, report a bug or get general advice, please refer to our [Contributing Guide](./CONTRIBUTING.md).
 
 ## Awards
 

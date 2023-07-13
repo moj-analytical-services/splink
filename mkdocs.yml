@@ -170,7 +170,8 @@ nav:
 
   - Contributing:
       - Introduction: "dev_guides/dev_guides_index.md"
-      - Making Changes to Splink:
+      - Contributing to Splink:
+        - Contributor Guide: "CONTRIBUTING.md"
         - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
         - Linting and Formatting: "dev_guides/changing_splink/lint_and_format.md"
         - Testing: "dev_guides/changing_splink/testing.md"
@@ -186,6 +187,7 @@ nav:
           - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
           - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
         - User-Defined Functions: "dev_guides/udfs.md"
+      
 
 extra_css:
 - css/custom.css
