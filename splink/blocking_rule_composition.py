@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-import warnings
-
-from .blocking import BlockingRule, blocking_rule_to_obj
-from .comparison_level_composition import _unify_sql_dialects
+from .blocking import BlockingRule
+from .composition_helpers import _and_, _not_, _or_
 
 
 def and_(
-    *brls: BlockingRule | dict | str,
-    salting_partitions=1,
+    *brls: BlockingRule | str, salting_partitions: int = 1, **kwargs
 ) -> BlockingRule:
     """Merge BlockingRules using logical "AND".
 
@@ -17,8 +14,8 @@ def and_(
 
 
     Args:
-        *brls (BlockingRule | dict | str): BlockingRules or
-            blocking rules in the string/dictionary format.
+        *brls (BlockingRule | str): BlockingRules or
+            blocking rules as strings.
         salting_partitions (optional, int): Whether to add salting
             to the blocking rule. More information on salting can
             be found within the docs. Salting is only valid for Spark.
@@ -120,16 +117,11 @@ def and_(
         BlockingRule: A new BlockingRule with the merged
             SQL condition
     """
-    return _br_merge(
-        *brls,
-        clause="AND",
-        salting_partitions=salting_partitions,
-    )
+    return _and_(*brls, salting_partitions=salting_partitions, **kwargs)
 
 
 def or_(
-    *brls: BlockingRule | dict | str,
-    salting_partitions: int = 1,
+    *brls: BlockingRule | str, salting_partitions: int = 1, **kwargs
 ) -> BlockingRule:
     """Merge BlockingRules using logical "OR".
 
@@ -138,8 +130,8 @@ def or_(
 
 
     Args:
-        *brls (BlockingRule | dict | str): BlockingRules or
-            blocking rules in the string/dictionary format.
+        *brls (BlockingRule | str): BlockingRules or
+            blocking rules as strings.
         salting_partitions (optional, int): Whether to add salting
             to the blocking rule. More information on salting can
             be found within the docs. Salting is only valid for Spark.
@@ -226,22 +218,20 @@ def or_(
         BlockingRule: A new BlockingRule with the merged
             SQL condition
     """
-    return _br_merge(
-        *brls,
-        clause="OR",
-        salting_partitions=salting_partitions,
-    )
+    return _or_(*brls, salting_partitions=salting_partitions, **kwargs)
 
 
-def not_(*brls: BlockingRule | dict | str, salting_partitions: int = 1) -> BlockingRule:
+def not_(
+    brl: BlockingRule | str, salting_partitions: int = 1, **kwargs
+) -> BlockingRule:
     """Invert a BlockingRule using "NOT".
 
     Returns a BlockingRule with the same SQL condition as the input,
     but prefixed with "NOT".
 
     Args:
-        *brls (BlockingRule | dict | str): BlockingRules or
-            blocking rules in the string/dictionary format.
+        *brls (BlockingRule | str): BlockingRules or
+            blocking rules as strings.
         salting_partitions (optional, int): Whether to add salting
             to the blocking rule. More information on salting can
             be found within the docs. Salting is only valid for Spark.
@@ -282,55 +272,6 @@ def not_(*brls: BlockingRule | dict | str, salting_partitions: int = 1) -> Block
         BlockingRule: A new BlockingRule with the merged
             SQL condition
     """
-    if len(brls) == 0:
-        raise ValueError("You must provide at least one BlockingRule")
-    elif len(brls) > 1:
-        warnings.warning(
-            "More than one BlockingRule entered for `NOT` composition. "
-            "This function only accepts one argument and will only use your "
-            "first BlockingRule.",
-            SyntaxWarning,
-            stacklevel=2,
-        )
-
-    brls, sql_dialect, salt = _parse_blocking_rules(*brls)
-    br = brls[0]
-    blocking_rule = f"NOT ({br.blocking_rule})"
-
-    return BlockingRule(
-        blocking_rule,
-        salting_partitions=salting_partitions if salting_partitions > 1 else salt,
-        sql_dialect=sql_dialect,
+    return _not_(
+        brl, class_name="BlockingRule", salting_partitions=salting_partitions, **kwargs
     )
-
-
-def _br_merge(
-    *brls: BlockingRule | dict | str,
-    clause: str,
-    salting_partitions: int = 1,
-) -> BlockingRule:
-    if len(brls) == 0:
-        raise ValueError("You must provide at least one BlockingRule")
-
-    brs, sql_dialect, salt = _parse_blocking_rules(*brls)
-    conditions = (f"({br.blocking_rule})" for br in brs)
-    blocking_rule = f" {clause} ".join(conditions)
-
-    return BlockingRule(
-        blocking_rule,
-        salting_partitions=salting_partitions if salting_partitions > 1 else salt,
-        sql_dialect=sql_dialect,
-    )
-
-
-def _parse_blocking_rules(
-    *brs: BlockingRule | dict | str,
-) -> tuple[list[BlockingRule], str | None]:
-    brs = [_to_blocking_rule(br) for br in brs]
-    sql_dialect = _unify_sql_dialects(brs)
-    salting_partitions = max([br.salting_partitions for br in brs])
-    return brs, sql_dialect, salting_partitions
-
-
-def _to_blocking_rule(br):
-    return blocking_rule_to_obj(br)
