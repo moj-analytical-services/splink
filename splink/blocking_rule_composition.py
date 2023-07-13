@@ -300,7 +300,7 @@ def not_(*brls: BlockingRule | dict | str, salting_partitions: int = 1) -> Block
     return BlockingRule(
         blocking_rule,
         salting_partitions=salting_partitions if salting_partitions > 1 else salt,
-        sql_dialect=sql_dialect,
+        sqlglot_dialect=sql_dialect,
     )
 
 
@@ -319,7 +319,7 @@ def _br_merge(
     return BlockingRule(
         blocking_rule,
         salting_partitions=salting_partitions if salting_partitions > 1 else salt,
-        sql_dialect=sql_dialect,
+        sqlglot_dialect=sql_dialect,
     )
 
 

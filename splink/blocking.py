@@ -37,11 +37,11 @@ class BlockingRule:
         self,
         blocking_rule: BlockingRule | dict | str,
         salting_partitions=1,
-        sql_dialect: str = None,
+        sqlglot_dialect: str = None,
     ):
-        # See comparison level code -> should this duplicate that?
-        if sql_dialect:
-            self._sql_dialect = sql_dialect
+
+        if sqlglot_dialect:
+            self._sql_dialect = sqlglot_dialect
 
         self.blocking_rule = blocking_rule
         self.preceding_rules = []
