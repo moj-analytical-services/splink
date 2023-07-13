@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from typing import Iterable
-
-from .blocking import BlockingRule
 from .comparison_level import ComparisonLevel
+from .composition_helpers import _and_, _not_, _or_
 
 
 def and_(
@@ -11,6 +9,7 @@ def and_(
     label_for_charts=None,
     m_probability=None,
     is_null_level=None,
+    **kwargs,
 ) -> ComparisonLevel:
     """Merge ComparisonLevels using logical "AND".
 
@@ -117,12 +116,12 @@ def and_(
         ComparisonLevel: A new ComparisonLevel with the merged
             SQL condition
     """
-    return _cl_merge(
+    return _and_(
         *clls,
-        clause="AND",
         label_for_charts=label_for_charts,
         m_probability=m_probability,
         is_null_level=is_null_level,
+        **kwargs,
     )
 
 
@@ -131,6 +130,7 @@ def or_(
     label_for_charts: str | None = None,
     m_probability: float | None = None,
     is_null_level: bool | None = None,
+    **kwargs,
 ) -> ComparisonLevel:
     """Merge ComparisonLevels using logical "OR".
 
@@ -238,12 +238,12 @@ def or_(
             SQL condition
     """
 
-    return _cl_merge(
+    return _or_(
         *clls,
-        clause="OR",
         label_for_charts=label_for_charts,
         m_probability=m_probability,
         is_null_level=is_null_level,
+        **kwargs,
     )
 
 
@@ -251,6 +251,7 @@ def not_(
     cll: ComparisonLevel | dict,
     label_for_charts: str | None = None,
     m_probability: float | None = None,
+    **kwargs,
 ) -> ComparisonLevel:
     """Negate a ComparisonLevel.
 
@@ -351,78 +352,11 @@ def not_(
         ComparisonLevel
             A new ComparisonLevel with the negated SQL condition and label_for_charts
     """
-    cls, sql_dialect = _parse_comparison_levels(cll)
-    cl = cls[0]
-    result = {}
-    result["sql_condition"] = f"NOT ({cl.sql_condition})"
 
-    # Invert if is_null_level.
-    # If NOT is_null_level, then we don't know if the inverted level is null or not
-    if not cl.is_null_level:
-        result["is_null_level"] = False
-
-    result["label_for_charts"] = (
-        label_for_charts if label_for_charts else f"NOT ({cl.label_for_charts})"
+    return _not_(
+        cll,
+        class_name="ComparisonLevel",
+        label_for_charts=label_for_charts,
+        m_probability=m_probability,
+        **kwargs,
     )
-
-    if m_probability:
-        result["m_probability"] = m_probability
-
-    return ComparisonLevel(result, sql_dialect=sql_dialect)
-
-
-def _cl_merge(
-    *clls: ComparisonLevel | dict,
-    clause: str,
-    label_for_charts: str | None = None,
-    m_probability: float | None = None,
-    is_null_level: bool | None = None,
-) -> ComparisonLevel:
-    if len(clls) == 0:
-        raise ValueError("Must provide at least one ComparisonLevel")
-
-    cls, sql_dialect = _parse_comparison_levels(*clls)
-    result = {}
-    conditions = ("(" + cl.sql_condition + ")" for cl in cls)
-    result["sql_condition"] = f" {clause} ".join(conditions)
-
-    # Set to null level if all supplied levels are "null levels"
-    if is_null_level is None:
-        if all(d.is_null_level for d in cls):
-            result["is_null_level"] = True
-
-    if label_for_charts:
-        result["label_for_charts"] = label_for_charts
-    else:
-        labels = ("(" + cl.label_for_charts + ")" for cl in cls)
-        result["label_for_charts"] = f" {clause} ".join(labels)
-
-    if m_probability:
-        result["m_probability"] = m_probability
-
-    return ComparisonLevel(result, sql_dialect=sql_dialect)
-
-
-def _parse_comparison_levels(
-    *cls: ComparisonLevel | dict,
-) -> tuple[list[ComparisonLevel], str | None]:
-    cls = [_to_comparison_level(cl) for cl in cls]
-    sql_dialect = _unify_sql_dialects(cls)
-    return cls, sql_dialect
-
-
-def _to_comparison_level(cl: ComparisonLevel | dict) -> ComparisonLevel:
-    if isinstance(cl, ComparisonLevel):
-        return cl
-    else:
-        return ComparisonLevel(cl)
-
-
-def _unify_sql_dialects(cls: Iterable[ComparisonLevel | BlockingRule]) -> str | None:
-    sql_dialects = set(cl.sql_dialect for cl in cls)
-    sql_dialects.discard(None)
-    if len(sql_dialects) > 1:
-        raise ValueError("Cannot combine comparison levels with different SQL dialects")
-    elif len(sql_dialects) == 0:
-        return None
-    return sql_dialects.pop()
