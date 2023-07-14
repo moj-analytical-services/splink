@@ -46,7 +46,7 @@ From a performance prespective, here we consider two classes of blocking rule:
 - Equi-join conditions
 - Filter conditions
 
-### Equi-join Blocking Rules
+### Equi-join Conditions
 
 Equi-joins are simply equality conditions between records, e.g.
 
