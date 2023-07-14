@@ -76,7 +76,7 @@ Just as how Blocking Rules can impact on performance, so can how they are combin
 
 `l.first_name = r.first_name OR l.surname = r.surname`
 
-
+In most SQL engines, an `OR` condition within a blocking rule will result in all possible record comparisons being generated.  That is, the whole blocking rule becomes a filter condition rather than an equi-join condition, so these should be avoided.  For further information, see [here](https://github.com/moj-analytical-services/splink/discussions/1417#discussioncomment-6420575).
 
 ??? note "Spark-specific Further Reading"
 
