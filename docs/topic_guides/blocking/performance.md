@@ -82,4 +82,4 @@ Just as how Blocking Rules can impact on performance, so can how they are combin
 
     Given the ability to parallelise operations in Spark, there are some additional configuration options which can improve performance of blocking. Please refer to the Spark Performance Topic Guides for more information.
 
-    Note: In Spark Equi-joins can also be referred to as **hashed** rules, and facilitates splitting the workload across multiple machines.
+    Note: In Spark Equi-joins are implemented using hash partitioning, which facilitates splitting the workload across multiple machines.
