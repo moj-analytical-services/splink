@@ -57,7 +57,7 @@ These equality-based blocking rules are extremely efficient and can be executed 
 Equality-based blocking rules should be considered the default method for defining blocking rules and form the basis of the upcoming [Blocking Rules Library](https://github.com/moj-analytical-services/splink/pull/1370).
 
 
-### Filter Blocking Rules
+### Filter Conditions
 
 Filter conditions refer to any Blocking Rule that isn't a simple equality between columns. E.g.
 
