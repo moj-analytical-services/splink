@@ -28,7 +28,7 @@ Instead, we can define a subset of potential comparisons using **Blocking Rules*
  
 will generate pairwise record comparisons amongst pairwise comparisons where first name and surname match.
 
-Within a Splink model, you can specify multiple "blocks" through multiple Blocking Rules to ensure all potential matches are considered.
+Within a Splink model, you can specify multiple Blocking Rules to ensure all potential matches are considered.  These are provided as a list.  Splink will then produce all record comparisons that satisfy at least one of your blocking rules.
 
 ???+ "Further Reading"
 
