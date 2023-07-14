@@ -39,7 +39,6 @@ class BlockingRule:
         salting_partitions=1,
         sqlglot_dialect: str = None,
     ):
-
         if sqlglot_dialect:
             self._sql_dialect = sqlglot_dialect
 
@@ -90,10 +89,10 @@ class BlockingRule:
         )  # using sqlglot==11.4.1
 
     @property
-    def _join_conditions(self):
+    def _equi_join_conditions(self):
         """
-        Extract the join conditions from the blocking rule as a tuple:
-        source_keys, join_keys, condition_expr
+        Extract the equi join conditions from the blocking rule as a tuple:
+        source_keys, join_keys
 
         Returns:
             list of tuples like [(name, name), (substr(name,1,2), substr(name,2,3))]

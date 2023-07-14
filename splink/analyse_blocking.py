@@ -147,7 +147,7 @@ def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     if isinstance(blocking_rule, str):
         blocking_rule = BlockingRule(blocking_rule, sqlglot_dialect=linker._sql_dialect)
 
-    join_conditions = blocking_rule._join_conditions
+    join_conditions = blocking_rule._equi_join_conditions
 
     l_cols_sel = []
     r_cols_sel = []
