@@ -97,7 +97,7 @@ settings = {
         ctl.name_comparison("surname"),
         ctl.date_comparison("dob", cast_strings_to_date=True),
         cl.exact_match("city", term_frequency_adjustments=True),
-        ctl.email_comparison("email"),
+        ctl.email_comparison("email", include_username_fuzzy_level=False),
     ],
 }
 
