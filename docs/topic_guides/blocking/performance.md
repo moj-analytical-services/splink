@@ -54,7 +54,9 @@ Equi-joins are simply equality conditions between records, e.g.
 
 These equality-based blocking rules are extremely efficient and can be executed quickly, even on very large datasets. 
 
-Equality-based blocking rules should be considered the default method for defining blocking rules and form the basis of the upcoming [Blocking Rules Library](https://github.com/moj-analytical-services/splink/pull/1370).
+Equality-based blocking rules should be considered the default method for defining blocking rules and form the basis of the [Blocking Rules Library](../../blocking_rule_library.md). For example, the above example can be written as:
+
+`brl.exact_match_rule("first_name")`
 
 
 ### Filter Conditions

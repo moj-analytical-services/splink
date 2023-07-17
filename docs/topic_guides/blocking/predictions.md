@@ -12,11 +12,14 @@ The aim of Prediction Blocking Rules are to:
 
 Blocking Rules for Prediction are defined through `blocking_rules_to_generate_predictions` in the Settings dictionary of a model. For example:
 
-``` py hl_lines="3-5"
+``` py hl_lines="3-8"
 settings = {
     "link_type": "dedupe_only",
     "blocking_rules_to_generate_predictions": [
-        "l.first_name = r.first_name and l.surname = r.surname"
+       brl.and_(
+                brl.exact_match_rule("first_name"), 
+                brl.exact_match_rule("surname")
+                )
     ],
     "comparisons": [
         ctl.name_comparison("first_name"),
@@ -41,8 +44,11 @@ This is why `blocking_rules_to_generate_predictions` is a list. Suppose we also 
 ```python
 settings_example = {
     "blocking_rules_to_generate_predictions" [
-        "l.first_name = r.first_name and l.surname = r.surname",
-        "l.postcode = r.postcode"
+        brl.and_(
+                brl.exact_match_rule("first_name"), 
+                brl.exact_match_rule("surname")
+                ),
+        brl.exact_match_rule("postcode")
         ]
 }
 ```
@@ -65,8 +71,8 @@ Once a linker has been instatiated, we can use the `cumulative_num_comparisons_f
 ```py
 settings = {
     "blocking_rules_to_generate_predictions": [
-        "l.first_name = r.first_name",
-        "l.surname = r.surname",
+        brl.exact_match_rule("first_name"), 
+        brl.exact_match_rule("surname")
     ],
 }
 ```
