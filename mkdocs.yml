@@ -140,6 +140,11 @@ nav:
           - String comparators: "topic_guides/comparisons/comparators.md"
           - Phonetic transformations: "topic_guides/comparisons/phonetic.md"
         - Term-Frequency adjustments: "topic_guides/comparisons/term-frequency.md"
+      - Model Training:
+        - Model Training Intro: "topic_guides/model_training/model_training.md"
+            - Lambda: "topic_guides/model_training/lambda.md"
+            - m: "topic_guides/model_training/m.md
+            - u: "topic_guides/model_training/u.md"
       - Performance:
         - Run times, performance and linking large data: "topic_guides/performance/drivers_of_performance.md"
         - Spark Performance:
