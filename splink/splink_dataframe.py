@@ -69,6 +69,17 @@ class SplinkDataFrame:
         self.linker._remove_splinkdataframe_from_cache(self)
 
     def as_record_dict(self, limit=None):
+        """Return the dataframe as a list of record dictionaries.
+
+        This can be computationally expensive if the dataframe is large.
+
+        Args:
+            limit (int, optional): If provided, return this number of rows (equivalent
+            to a limit statement in SQL). Defaults to None, meaning return all rows
+
+        Returns:
+            list: a list of records, each of which is a dictionary
+        """
         raise NotImplementedError("as_record_dict not implemented for this linker")
 
     def as_pandas_dataframe(self, limit=None):
@@ -100,9 +111,23 @@ class SplinkDataFrame:
         p.text(msg)
 
     def to_parquet(self, filepath, overwrite=False):
+        """Save the dataframe in parquet format.
+
+        Args:
+            filepath (str): Filepath where csv will be saved.
+            overwrite (bool, optional): If True, overwrites file if it already exists.
+                Default is False.
+        """
         raise NotImplementedError("`to_parquet` not implemented for this linker")
 
     def to_csv(self, filepath, overwrite=False):
+        """Save the dataframe in csv format.
+
+        Args:
+            filepath (str): Filepath where csv will be saved.
+            overwrite (bool, optional): If True, overwrites file if it already exists.
+                Default is False.
+        """
         raise NotImplementedError("`to_csv` not implemented for this linker")
 
     def check_file_exists(self, filepath):
