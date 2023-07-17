@@ -47,6 +47,8 @@ settings_example = {
 }
 ```
 
+This generates all pairwise comparisons that satisfy at least one of the rules.
+
 We will now generate a pairwise comparison for the record where there was a typo in the first name, so long as there isn't also a difference in the postcode.
 
 By specifying a variety of `blocking_rules_to_generate_predictions`, it becomes unlikely that a truly matching record would not be captured by at least one of the rules.
