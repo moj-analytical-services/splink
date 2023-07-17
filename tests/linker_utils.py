@@ -67,6 +67,7 @@ def _test_table_registration(
 
 def register_roc_data(linker):
     from splink.datasets import splink_datasets
+
     df = splink_datasets.fake_1000
     df_10 = df.head(10).copy()
     df_10["merge"] = 1
