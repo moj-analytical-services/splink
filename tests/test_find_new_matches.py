@@ -3,7 +3,7 @@ from copy import deepcopy
 import pandas as pd
 
 from splink.duckdb.comparison_library import exact_match
-from splink.duckdb.linker import DuckDBLinker
+
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
