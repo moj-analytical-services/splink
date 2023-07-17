@@ -65,6 +65,18 @@ class SplinkDataFrame:
     def drop_table_from_database_and_remove_from_cache(
         self, force_non_splink_table=False
     ):
+        """Drops the table from the underlying database, and removes it
+        from the (linker) cache.
+
+        By default this will fail if the table is not one created by Splink,
+        but this check can be overriden
+
+        Args:
+            force_non_splink_table (bool, optional): If True, skip check if the
+                table was created by Splink and always drop regardless. If False,
+                only drop if table was created by Splink. Defaults to False.
+
+        """
         self._drop_table_from_database(force_non_splink_table=force_non_splink_table)
         self.linker._remove_splinkdataframe_from_cache(self)
 
