@@ -52,3 +52,36 @@ def test_binary_composition_internals_OR(test_helpers, dialect):
     assess_preceding_rules(1)
     assess_preceding_rules(2)
     assess_preceding_rules(3)
+
+
+@mark_with_dialects_excluding()
+def test_simple_end_to_end(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    brl = helper.brl
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    settings = get_settings_dict()
+    settings["blocking_rules_to_generate_predictions"] = [
+        brl.and_(
+            brl.exact_match_rule("first_name"),
+            brl.exact_match_rule("surname"),
+        ),
+        brl.exact_match_rule("dob"),
+    ]
+
+    linker = Linker(df, settings, **helper.extra_linker_args())
+
+    linker.estimate_u_using_random_sampling(target_rows=1e5)
+
+    blocking_rule = brl.and_(
+        brl.exact_match_rule("first_name"),
+        brl.exact_match_rule("surname"),
+    )
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+
+    linker.estimate_parameters_using_expectation_maximisation(
+        brl.exact_match_rule("dob")
+    )
+
+    linker.predict()

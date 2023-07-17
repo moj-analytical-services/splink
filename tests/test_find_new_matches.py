@@ -4,7 +4,8 @@ import pandas as pd
 
 from splink.duckdb.comparison_library import exact_match
 from splink.duckdb.linker import DuckDBLinker
-from tests.basic_settings import get_settings_dict
+from .basic_settings import get_settings_dict
+from .decorator import mark_with_dialects_excluding
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -33,11 +34,16 @@ record = {
 }
 
 
-def test_tf_tables_init_works():
+@mark_with_dialects_excluding()
+def test_tf_tables_init_works(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+
     for s in [settings_tf, settings_no_tf, settings]:
-        linker = DuckDBLinker(
+        linker = Linker(
             df,
             s,
+            **helper.extra_linker_args(),
         )
 
         # Compute tf table for first name
@@ -59,16 +65,22 @@ def test_tf_tables_init_works():
         )
 
 
-def test_matches_work():
-    linker = DuckDBLinker(
-        df,
-        settings,
-    )
+@mark_with_dialects_excluding()
+def test_matches_work(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    brl = helper.brl
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    linker = Linker(df, get_settings_dict(), **helper.extra_linker_args())
 
     # Train our model to get more reasonable outputs...
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
-    blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
+    blocking_rule = brl.and_(
+        brl.exact_match_rule("first_name"),
+        brl.exact_match_rule("surname"),
+    )
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"
