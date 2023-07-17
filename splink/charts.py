@@ -1,7 +1,7 @@
 import json
 import os
-import pkgutil
 
+from .misc import read_resource
 from .waterfall_chart import records_to_waterfall_data
 
 altair_installed = True
@@ -14,9 +14,7 @@ except ImportError:
 
 def load_chart_definition(filename):
     path = f"files/chart_defs/{filename}"
-    data = pkgutil.get_data(__name__, path)
-    schema = json.loads(data)
-    return schema
+    return json.loads(read_resource(path))
 
 
 def _load_external_libs():
@@ -25,13 +23,7 @@ def _load_external_libs():
         "vega-lite": "files/external_js/vega-lite@5.2.0",
         "vega": "files/external_js/vega@5.21.0",
     }
-
-    loaded = {}
-    for k, v in to_load.items():
-        script = pkgutil.get_data(__name__, v).decode("utf-8")
-        loaded[k] = script
-
-    return loaded
+    return {k: read_resource(v) for k, v in to_load.items()}
 
 
 def altair_or_json(chart_dict, as_dict=False):
@@ -77,9 +69,7 @@ def save_offline_chart(
     if type(chart_dict).__name__ == "VegaliteNoValidate":
         chart_dict = chart_dict.spec
 
-    # get altair chart as json
-    path = "files/templates/single_chart_template.txt"
-    template = pkgutil.get_data(__name__, path).decode("utf-8")
+    template = read_resource("files/templates/single_chart_template.html")
 
     fmt_dict = _load_external_libs()
 
