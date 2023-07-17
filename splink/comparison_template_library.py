@@ -1385,6 +1385,7 @@ class EmailComparisonBase(Comparison):
         term_frequency_adjustments_full: bool = False,
         include_exact_match_level: bool = True,
         include_username_match_level: bool = True,
+        include_username_fuzzy_level: bool = True,
         include_domain_match_level: bool = False,
         levenshtein_thresholds: int | list = [],
         damerau_levenshtein_thresholds: int | list = [],
@@ -1430,6 +1431,8 @@ class EmailComparisonBase(Comparison):
                 match on full email level. Defaults to True.
             include_username_match_level (bool, optional): If True, include an exact
                 match on username only level. Defaults to True.
+            include_username_fuzzy_level (bool, optional): If True, include a level
+                for fuzzy match on username. Defaults to True.
             include_domain_match_level (bool, optional): If True, include an exact
                 match on domain only level. Defaults to True.
             levenshtein_thresholds (Union[int, list], optional): The thresholds
@@ -1608,55 +1611,56 @@ class EmailComparisonBase(Comparison):
             comparison_levels = comparison_levels + threshold_levels
 
         # Fuzzy match on username only
-        if len(levenshtein_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                regex_extract="^[^@]+",
-                distance_function_name="levenshtein",
-                distance_threshold_or_thresholds=levenshtein_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_username_lev,
-                include_colname_in_charts_label=True,
-                manual_col_name_for_charts_label="Username",
-            )
-            comparison_levels = comparison_levels + threshold_levels
+        if include_username_fuzzy_level:
+            if len(levenshtein_thresholds) > 0:
+                threshold_levels = distance_threshold_comparison_levels(
+                    self,
+                    col_name,
+                    regex_extract="^[^@]+",
+                    distance_function_name="levenshtein",
+                    distance_threshold_or_thresholds=levenshtein_thresholds,
+                    m_probability_or_probabilities_thres=m_probability_or_probabilities_username_lev,
+                    include_colname_in_charts_label=True,
+                    manual_col_name_for_charts_label="Username",
+                )
+                comparison_levels = comparison_levels + threshold_levels
 
-        if len(damerau_levenshtein_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                regex_extract="^[^@]+",
-                distance_function_name="damerau-levenshtein",
-                distance_threshold_or_thresholds=damerau_levenshtein_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_username_dl,
-                include_colname_in_charts_label=True,
-                manual_col_name_for_charts_label="Username",
-            )
-            comparison_levels = comparison_levels + threshold_levels
+            if len(damerau_levenshtein_thresholds) > 0:
+                threshold_levels = distance_threshold_comparison_levels(
+                    self,
+                    col_name,
+                    regex_extract="^[^@]+",
+                    distance_function_name="damerau-levenshtein",
+                    distance_threshold_or_thresholds=damerau_levenshtein_thresholds,
+                    m_probability_or_probabilities_thres=m_probability_or_probabilities_username_dl,
+                    include_colname_in_charts_label=True,
+                    manual_col_name_for_charts_label="Username",
+                )
+                comparison_levels = comparison_levels + threshold_levels
 
-        if len(jaro_winkler_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                regex_extract="^[^@]+",
-                distance_function_name="jaro-winkler",
-                distance_threshold_or_thresholds=jaro_winkler_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_username_jw,
-                include_colname_in_charts_label=True,
-                manual_col_name_for_charts_label="Username",
-            )
-            comparison_levels = comparison_levels + threshold_levels
+            if len(jaro_winkler_thresholds) > 0:
+                threshold_levels = distance_threshold_comparison_levels(
+                    self,
+                    col_name,
+                    regex_extract="^[^@]+",
+                    distance_function_name="jaro-winkler",
+                    distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                    m_probability_or_probabilities_thres=m_probability_or_probabilities_username_jw,
+                    include_colname_in_charts_label=True,
+                    manual_col_name_for_charts_label="Username",
+                )
+                comparison_levels = comparison_levels + threshold_levels
 
-        if len(jaro_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                distance_function_name="jaro",
-                distance_threshold_or_thresholds=jaro_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_email_jar,
-                include_colname_in_charts_label=True,
-            )
-            comparison_levels = comparison_levels + threshold_levels
+            if len(jaro_thresholds) > 0:
+                threshold_levels = distance_threshold_comparison_levels(
+                    self,
+                    col_name,
+                    distance_function_name="jaro",
+                    distance_threshold_or_thresholds=jaro_thresholds,
+                    m_probability_or_probabilities_thres=m_probability_or_probabilities_email_jar,
+                    include_colname_in_charts_label=True,
+                )
+                comparison_levels = comparison_levels + threshold_levels
 
         # Domain-only match
 
