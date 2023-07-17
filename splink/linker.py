@@ -1068,11 +1068,6 @@ class Linker:
 
         if not isinstance(settings_dict, dict):
             p = Path(settings_dict)
-            if not p.is_file():  # check if it's a valid file/filepath
-                raise FileNotFoundError(
-                    "The filepath you have provided is either not a valid file "
-                    "or doesn't exist along the path provided."
-                )
             settings_dict = json.loads(p.read_text())
 
         # Store the cache ID so it can be reloaded after cache invalidation
@@ -1789,7 +1784,7 @@ class Linker:
         rules = []
         for r in blocking_rules:
             br_as_obj = BlockingRule(r) if not isinstance(r, BlockingRule) else r
-            br_as_obj.preceding_rules = rules.copy()
+            br_as_obj.add_preceding_rules(rules.copy())
             rules.append(br_as_obj)
         blocking_rules = rules
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 
-from .blocking import BlockingRule
+from .blocking import blocking_rule_to_obj
 from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -126,7 +126,9 @@ class Settings:
             # Want to add any columns not already by the model
             used_by_brs = []
             for br in self._blocking_rules_to_generate_predictions:
-                used_by_brs.extend(get_columns_used_from_sql(br.blocking_rule))
+                used_by_brs.extend(
+                    get_columns_used_from_sql(br.blocking_rule, br.sql_dialect)
+                )
 
             used_by_brs = [InputColumn(c) for c in used_by_brs]
 
@@ -301,19 +303,9 @@ class Settings:
         raise ValueError(f"No comparison column with name {name}")
 
     def _brs_as_objs(self, brs_as_strings):
-        brs_as_objs = []
-        for br in brs_as_strings:
-            if isinstance(br, dict):
-                br = BlockingRule(
-                    br["blocking_rule"], salting_partitions=br["salting_partitions"]
-                )
-                br.preceding_rules = brs_as_objs.copy()
-                brs_as_objs.append(br)
-            else:
-                br = BlockingRule(br)
-                br.preceding_rules = brs_as_objs.copy()
-                brs_as_objs.append(br)
-
+        brs_as_objs = [blocking_rule_to_obj(br) for br in brs_as_strings]
+        for n, br in enumerate(brs_as_objs):
+            br.add_preceding_rules(brs_as_objs[:n])
         return brs_as_objs
 
     def _get_comparison_levels_corresponding_to_training_blocking_rule(
