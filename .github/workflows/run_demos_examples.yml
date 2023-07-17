@@ -1,4 +1,4 @@
-name: Run splink_demos example notebooks
+name: Run splink example notebooks
 
 on:
   pull_request:

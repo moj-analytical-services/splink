@@ -2515,7 +2515,8 @@ class Linker:
             For the simplest code pipeline, load a pre-trained model
             and run this against the test data.
             ```py
-            df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+            from splink.datasets import splink_datasets
+            df = splink_datasets.fake_1000
             linker = DuckDBLinker(df)
             linker.load_settings("saved_settings.json")
             linker.unlinkables_chart()
