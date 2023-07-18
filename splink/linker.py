@@ -2913,7 +2913,7 @@ class Linker:
             ```
             To view offline (if you don't have an internet connection):
             ```py
-            
+
             c = linker.match_weights_chart()
             c.save("test_chart.html")
             ```
@@ -2989,7 +2989,7 @@ class Linker:
             ```
             To view offline (if you don't have an internet connection):
             ```py
-            
+
             c = linker.match_weights_chart()
             c.save("test_chart.html")
             ```
