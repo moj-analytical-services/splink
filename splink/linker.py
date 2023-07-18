@@ -2643,9 +2643,8 @@ class Linker:
             ```
             To view offline (if you don't have an internet connection):
             ```py
-            from splink.charts import save_offline_chart
             c = linker.missingness_chart()
-            save_offline_chart(c.spec, "test_chart.html")
+            c.save("test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
@@ -2677,9 +2676,8 @@ class Linker:
             ```
             To view offline (if you don't have an internet connection):
             ```py
-            from splink.charts import save_offline_chart
             c = linker.completeness_chart()
-            save_offline_chart(c.spec, "test_chart.html")
+            c.save("test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
@@ -2915,9 +2913,9 @@ class Linker:
             ```
             To view offline (if you don't have an internet connection):
             ```py
-            from splink.charts import save_offline_chart
+            
             c = linker.match_weights_chart()
-            save_offline_chart(c.spec, "test_chart.html")
+            c.save("test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
@@ -2991,9 +2989,9 @@ class Linker:
             ```
             To view offline (if you don't have an internet connection):
             ```py
-            from splink.charts import save_offline_chart
+            
             c = linker.match_weights_chart()
-            save_offline_chart(c.spec, "test_chart.html")
+            c.save("test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
