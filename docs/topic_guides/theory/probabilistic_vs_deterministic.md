@@ -57,11 +57,11 @@ Probabilistic Linkage is a **evidence-based** approach for joining records toget
 Linkage is probabilistic in the sense that it relies on the balance of evidence. In a large dataset, observing that two records match on the full name 'Robert Smith' provides some evidence that these two records may refer to the same person, but this evidence is inconclusive. However, the cumulative evidence from across multiple features within the dataset (e.g. date of birth, home address, email address) can provide conclusive evidence of a match. The evidence for a match is commonly represented as a probability. 
 
 For example, putting the first 2 records of the table above through a probabilistic model gives a an overall probability that the records are a match:
-![](../img/probabilistic_vs_deterministic/probabilistic_example.png)
+![](../../img/probabilistic_vs_deterministic/probabilistic_example.png)
 
 In addition, the breakdown of this probability by the evidence provided by each feature can be shown through a waterfall chart:
 
-![](../img/probabilistic_vs_deterministic/simplified_waterfall.png)
+![](../../img/probabilistic_vs_deterministic/simplified_waterfall.png)
 
 Given these probabilities, unlike (binary) Deterministic linkage, the user can choose an **evidence threshold** for what they consider a match before creating a new unique identifier.
 

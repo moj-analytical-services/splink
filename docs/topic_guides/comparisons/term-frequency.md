@@ -10,7 +10,7 @@ tags:
 
 A common shortcoming of the Fellegi-Sunter model is that it doesn’t account for skew in the distributions of linking variables. One of the starkest examples is a binary variable such as gender in the prison population, where male offenders outnumber female offenders by 10:1.
 
-![](../img/term_frequency/gender-distribution.png){width="800"}
+![](../../img/term_frequency/gender-distribution.png){width="800"}
 
 #### How does this affect our m and u probabilities?
 
@@ -26,7 +26,7 @@ In this example, one solution might be to create an extra comparison level for m
 
 However, this complexity forces us to estimate two m probabilities when one would do, and it becomes impractical if we extend to higher-cardinality variables like surname, requiring thousands of additional comparison levels.
 
-![](../img/term_frequency/surname-distribution.png){width="800"}
+![](../../img/term_frequency/surname-distribution.png){width="800"}
 
 This problem used to be addressed with an ex-post (after the fact) solution - once the linking is done, we have a look at the average match probability for each value in a column to determine which values tend to be stronger indicators of a match. If the average match probability for records pairs that share a surname is 0.2 but the average for the specific surname Smith is 0.1 then we know that the match weight for name should be adjusted downwards for Smiths.
 
@@ -36,7 +36,7 @@ The shortcoming of this option is that in practice, the model training is conduc
 
 Below is an illustration of 2 datasets (10 records each) with skewed distributions of **first name**. A `link_and_dedupe` Splink model concatenates these two tables and deduplicates those 20 records.
 
-![](../img/term_frequency/tf-intro.drawio.png)
+![](../../img/term_frequency/tf-intro.drawio.png)
 
 In principle, u probabilities for a small dataset like this can be estimated directly - out of 190 possible pairwise comparisons, 77 of them have the same **first name**. Based on the assumption that matches are rare (i.e. the vast majority of these comparisons are non-matches), we use this as a direct estimate of u. Random sampling makes the same assumption, but by using a manageable-sized sample of a much larger dataset where it would be prohibitively costly to perform all possible comparisons (a Cartesian join).
 
@@ -44,7 +44,7 @@ Once we have concatenated our input tables, it is useful to calculate the term f
 
 Building on the example above, we can define the m and u probabilities for a specific **first name** value, and work out an expression for the resulting match weight.
 
-![](../img/term_frequency/calc.png)
+![](../../img/term_frequency/calc.png)
 
 Just as we can add independent match weights for **name**, **DOB** and other comparisons (as shown in the Splink waterfall charts), we can also add an independent TF adjustment term for each comparison. This is useful because:
 
@@ -56,17 +56,17 @@ Just as we can add independent match weights for **name**, **DOB** and other com
 
 - We can easily disentangle and visualise the aggregate significance of a particular column, separately from the deviations within it (see charts below)
 
-![](../img/term_frequency/example.png){width="300"}
+![](../../img/term_frequency/example.png){width="300"}
 
 ## Visualising TF Adjustments
 
 For an individual comparison of two records, we can see the impact of TF adjustments in the waterfall charts:
 
-![This example shows two records having a match weight of +15.69 due to a match on **first name**, **surname** and **DOB**. Due to relatively uncommon values for all 3 of these, they each have an additional term frequency adjustment contributing around +5 to the final match weight](../img/term_frequency/waterfall.png)
+![This example shows two records having a match weight of +15.69 due to a match on **first name**, **surname** and **DOB**. Due to relatively uncommon values for all 3 of these, they each have an additional term frequency adjustment contributing around +5 to the final match weight](../../img/term_frequency/waterfall.png)
 
 We can also see these match weights and TF adjustments summarised using a chart like the below to highlight common and uncommon names. We do this already using the Splink linker's profile_columns method, but once we know the u probabilities for our comparison columns, we can show these outliers in terms of their impact on match weight:
 
-![In this example of names from FEBRL data used in the demo notebooks, we see that a match on first name has a match weight of +6. For an uncommon name like Portia this is increased, whereas a common name like Jack has a reduced match weight. This chart can be generated using `linker.tf_adjustment_chart("name")`](../img/term_frequency/tf-match-weight.png){width="800"}
+![In this example of names from FEBRL data used in the demo notebooks, we see that a match on first name has a match weight of +6. For an uncommon name like Portia this is increased, whereas a common name like Jack has a reduced match weight. This chart can be generated using `linker.tf_adjustment_chart("name")`](../../img/term_frequency/tf-match-weight.png){width="800"}
 
 
 ## Applying TF adjustments in Splink
