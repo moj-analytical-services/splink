@@ -147,9 +147,11 @@ nav:
         - Linker API:
             - Full API: "linker.md"
             - Exploratory analysis: "linkerexp.md"
+            - Blocking: "linkerbloc.md"
             - Estimating model parameters: "linkerest.md"
             - Predicting results: "linkerpred.md"
-            - Visualisation and quality assurance: "linkerqa.md"
+            - Visualisation: "linkermodelviz.md"
+            - Quality Assurance: "linkerqa.md"
         - Comparisons Library API:
             - Comparison Template Library: "comparison_template_library.md"
             - Comparison Library: "comparison_library.md"
