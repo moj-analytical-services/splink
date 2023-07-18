@@ -1,8 +1,8 @@
 {
   "config": {
     "view": {
-      "width": 400,
-      "height": 60
+      "discreteWidth": 400,
+      "discreteHeight": 60
     },
     "mark": {
       "tooltip": null
@@ -23,8 +23,7 @@
         "min": 0,
         "max": 10,
         "step": 1
-      },
-      "description": "Filter by the iteration number"
+      }
     }
   ],
   "data": {
@@ -39,13 +38,6 @@
     {
       "height": 20,
       "mark": { "type": "bar", "clip": true, "height": 15 },
-      "selection": {
-        "zoom_selector": {
-          "type": "interval",
-          "bind": "scales",
-          "encodings": ["x"]
-        }
-      },
       "transform": [
         {
           "filter": "(datum.comparison_name == 'probability_two_random_records_match')"
@@ -107,18 +99,21 @@
           },
           "sort": { "field": "comparison_vector_value", "order": "descending" }
         }
-      }
+      },
+      "params": [{
+        "name": "mouse_zoom",
+        "select": {
+          "type": "interval",
+          "encodings": [
+            "x"
+          ]
+        },
+        "bind": "scales"
+      }]
     },
     {
       "height": {"step": 12},
       "mark": { "type": "bar", "clip": true },
-      "selection": {
-        "zoom_selector": {
-          "type": "interval",
-          "bind": "scales",
-          "encodings": ["x"]
-        }
-      },
       "transform": [
         {
           "filter": "(datum.comparison_name != 'probability_two_random_records_match')"
@@ -204,16 +199,19 @@
       "resolve": {
         "axis": { "y": "independent" },
         "scale": { "y": "independent" }
-      }
+      },
+      "params": [{
+        "name": "mouse_zoom",
+        "select": {
+          "type": "interval",
+          "encodings": [
+            "x"
+          ]
+        },
+        "bind": "scales"
+      }]
     }
   ],
-  "selection": {
-    "zoom_selector": {
-      "type": "interval",
-      "bind": "scales",
-      "encodings": ["x"]
-    }
-  },
 
   "resolve": {
     "axis": { "y": "independent" },
@@ -225,5 +223,5 @@
     "text": "Model parameters (components of final match weight)",
     "subtitle": "Use mousewheel to zoom"
   },
-  "$schema": "https://vega.github.io/schema/vega-lite/v5.2.json"
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json"
 }

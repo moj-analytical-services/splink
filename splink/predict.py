@@ -54,7 +54,7 @@ def predict_from_comparison_vectors_sqls(
         bayes_factor = prob_to_bayes_factor(probability_two_random_records_match)
 
         bayes_factor_expr = " * ".join(mult)
-        bayes_factor_expr = f"cast({bayes_factor} as double) * {bayes_factor_expr}"
+        bayes_factor_expr = f"cast({bayes_factor} as float8) * {bayes_factor_expr}"
 
         # if any BF is Infinity then we need to adjust expression,
         # as arithmetic won't go through directly
@@ -92,6 +92,87 @@ def predict_from_comparison_vectors_sqls(
     {select_cols_expr} {clerical_match_score}
     from __splink__df_match_weight_parts
     {threshold_expr}
+    """
+
+    sql = {
+        "sql": sql,
+        "output_table_name": "__splink__df_predict",
+    }
+    sqls.append(sql)
+
+    return sqls
+
+
+def predict_from_agreement_pattern_counts_sqls(
+    settings_obj: Settings,
+    sql_infinity_expression="'infinity'",
+):
+    sqls = []
+
+    select_cols = []
+
+    for cc in settings_obj.comparisons:
+        cc_sqls = [cl._bayes_factor_sql for cl in cc.comparison_levels]
+        sql = " ".join(cc_sqls)
+        sql = f"CASE {sql} END as {cc._bf_column_name}"
+        select_cols.append(cc._gamma_column_name)
+        select_cols.append(sql)
+    select_cols.append("agreement_pattern_count")
+    select_cols_expr = ",".join(select_cols)
+
+    sql = f"""
+    select {select_cols_expr}
+    from __splink__agreement_pattern_counts
+    """
+
+    sql = {
+        "sql": sql,
+        "output_table_name": "__splink__df_match_weight_parts",
+    }
+    sqls.append(sql)
+
+    select_cols = []
+    for cc in settings_obj.comparisons:
+        select_cols.append(cc._gamma_column_name)
+        select_cols.append(cc._bf_column_name)
+    select_cols.append("agreement_pattern_count")
+    select_cols_expr = ",".join(select_cols)
+
+    mult = [cc._bf_column_name for cc in settings_obj.comparisons]
+
+    probability_two_random_records_match = (
+        settings_obj._probability_two_random_records_match
+    )
+
+    if probability_two_random_records_match == 1.0:
+        bayes_factor_expr = sql_infinity_expression
+        match_prob_expr = "1.0"
+    else:
+        bayes_factor = prob_to_bayes_factor(probability_two_random_records_match)
+
+        bayes_factor_expr = " * ".join(mult)
+        bayes_factor_expr = f"cast({bayes_factor} as double) * {bayes_factor_expr}"
+
+        # if any BF is Infinity then we need to adjust expression,
+        # as arithmetic won't go through directly
+        any_bf_inf = " OR ".join(
+            map(lambda col: f"{col} = {sql_infinity_expression}", mult)
+        )
+        bayes_factor_expr = (
+            f"CASE WHEN {any_bf_inf} THEN {sql_infinity_expression} "
+            f"ELSE {bayes_factor_expr} END"
+        )
+        match_prob_expr = (
+            f"CASE WHEN {any_bf_inf} THEN 1.0 "
+            f"ELSE (({bayes_factor_expr})/(1+({bayes_factor_expr}))) END"
+        )
+
+    sql = f"""
+    select
+    log2({bayes_factor_expr}) as match_weight,
+    {match_prob_expr} as match_probability,
+    {select_cols_expr}
+    from __splink__df_match_weight_parts
     """
 
     sql = {

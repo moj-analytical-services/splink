@@ -5,7 +5,7 @@
     }
   },
   "data": {
-    "values": null
+    "values": []
   },
   "mark": "bar",
   "encoding": {
@@ -45,5 +45,5 @@
   "title": {
     "text": "Estimated probability two random records match matches by iteration"
   },
-  "$schema": "https://vega.github.io/schema/vega-lite/v4.json"
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json"
 }

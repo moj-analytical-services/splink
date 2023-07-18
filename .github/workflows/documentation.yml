@@ -16,12 +16,12 @@ jobs:
       #       check-out repo and set-up python
       #----------------------------------------------
       - name: Check out repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.ref }}
       - name: Set up python
         id: setup-python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9.10
 
@@ -64,11 +64,13 @@ jobs:
       - name: Install library
         run: poetry install --no-interaction
 
-      - name: Generate comparison/level library dialect tables
+      - name: Generate comparison/level library dialect + dataset tables
         run: |
           source .venv/bin/activate
           mv scripts/generate_dialect_comparison_docs.py generate_dialect_comparison_docs.py
+          mv scripts/generate_dataset_docs.py generate_dataset_docs.py
           python generate_dialect_comparison_docs.py
+          python generate_dataset_docs.py
 
       - name: Upload generated docs files
         uses: actions/upload-artifact@v3
@@ -80,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: generate-files
     steps:
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.9
 

@@ -1,7 +1,8 @@
 from ...comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
-    DateDiffLevelBase,
+    DamerauLevenshteinLevelBase,
+    DatediffLevelBase,
     DistanceFunctionLevelBase,
     DistanceInKMLevelBase,
     ElseLevelBase,
@@ -14,19 +15,20 @@ from ...comparison_level_library import (
     PercentageDifferenceLevelBase,
 )
 from ...comparison_library import (
-    ArrayIntersectAtSizesComparisonBase,
-    DamerauLevenshteinAtThresholdsComparisonBase,
-    DateDiffAtThresholdsComparisonBase,
-    DistanceFunctionAtThresholdsComparisonBase,
-    DistanceInKMAtThresholdsComparisonBase,
+    ArrayIntersectAtSizesBase,
+    DamerauLevenshteinAtThresholdsBase,
+    DatediffAtThresholdsBase,
+    DistanceFunctionAtThresholdsBase,
+    DistanceInKMAtThresholdsBase,
     ExactMatchBase,
-    JaccardAtThresholdsComparisonBase,
-    JaroAtThresholdsComparisonBase,
-    JaroWinklerAtThresholdsComparisonBase,
-    LevenshteinAtThresholdsComparisonBase,
+    JaccardAtThresholdsBase,
+    JaroAtThresholdsBase,
+    JaroWinklerAtThresholdsBase,
+    LevenshteinAtThresholdsBase,
 )
 from ...comparison_template_library import (
     DateComparisonBase,
+    EmailComparisonBase,
     ForenameSurnameComparisonBase,
     NameComparisonBase,
     PostcodeComparisonBase,
@@ -118,7 +120,7 @@ class levenshtein_level(DuckDBBase, LevenshteinLevelBase):
     pass
 
 
-class damerau_levenshtein_level(DuckDBBase, LevenshteinLevelBase):
+class damerau_levenshtein_level(DuckDBBase, DamerauLevenshteinLevelBase):
     pass
 
 
@@ -146,7 +148,7 @@ class distance_in_km_level(DuckDBBase, DistanceInKMLevelBase):
     pass
 
 
-class datediff_level(DuckDBBase, DateDiffLevelBase):
+class datediff_level(DuckDBBase, DatediffLevelBase):
     pass
 
 
@@ -158,7 +160,7 @@ class exact_match(DuckDBComparisonProperties, ExactMatchBase):
 
 
 class distance_function_at_thresholds(
-    DuckDBComparisonProperties, DistanceFunctionAtThresholdsComparisonBase
+    DuckDBComparisonProperties, DistanceFunctionAtThresholdsBase
 ):
     @property
     def _distance_level(self):
@@ -166,7 +168,7 @@ class distance_function_at_thresholds(
 
 
 class levenshtein_at_thresholds(
-    DuckDBComparisonProperties, LevenshteinAtThresholdsComparisonBase
+    DuckDBComparisonProperties, LevenshteinAtThresholdsBase
 ):
     @property
     def _distance_level(self):
@@ -174,49 +176,43 @@ class levenshtein_at_thresholds(
 
 
 class damerau_levenshtein_at_thresholds(
-    DuckDBComparisonProperties, DamerauLevenshteinAtThresholdsComparisonBase
+    DuckDBComparisonProperties, DamerauLevenshteinAtThresholdsBase
 ):
     @property
     def _distance_level(self):
         return self._damerau_levenshtein_level
 
 
-class jaro_at_thresholds(DuckDBComparisonProperties, JaroAtThresholdsComparisonBase):
+class jaro_at_thresholds(DuckDBComparisonProperties, JaroAtThresholdsBase):
     @property
     def _distance_level(self):
         return self._jaro_level
 
 
 class jaro_winkler_at_thresholds(
-    DuckDBComparisonProperties, JaroWinklerAtThresholdsComparisonBase
+    DuckDBComparisonProperties, JaroWinklerAtThresholdsBase
 ):
     @property
     def _distance_level(self):
         return self._jaro_winkler_level
 
 
-class jaccard_at_thresholds(
-    DuckDBComparisonProperties, JaccardAtThresholdsComparisonBase
-):
+class jaccard_at_thresholds(DuckDBComparisonProperties, JaccardAtThresholdsBase):
     @property
     def _distance_level(self):
         return self._jaccard_level
 
 
-class array_intersect_at_sizes(
-    DuckDBComparisonProperties, ArrayIntersectAtSizesComparisonBase
-):
+class array_intersect_at_sizes(DuckDBComparisonProperties, ArrayIntersectAtSizesBase):
     pass
 
 
-class datediff_at_thresholds(
-    DuckDBComparisonProperties, DateDiffAtThresholdsComparisonBase
-):
+class datediff_at_thresholds(DuckDBComparisonProperties, DatediffAtThresholdsBase):
     pass
 
 
 class distance_in_km_at_thresholds(
-    DuckDBComparisonProperties, DistanceInKMAtThresholdsComparisonBase
+    DuckDBComparisonProperties, DistanceInKMAtThresholdsBase
 ):
     pass
 
@@ -246,3 +242,9 @@ class forename_surname_comparison(
 
 class postcode_comparison(DuckDBComparisonProperties, PostcodeComparisonBase):
     pass
+
+
+class email_comparison(DuckDBComparisonProperties, EmailComparisonBase):
+    @property
+    def _distance_level(self):
+        return distance_function_level
