@@ -23,7 +23,7 @@ from .duckdb_helpers.duckdb_helpers import (
 logger = logging.getLogger(__name__)
 
 
-class DuckDBLinkerDataFrame(SplinkDataFrame):
+class DuckDBDataFrame(SplinkDataFrame):
     linker: DuckDBLinker
 
     @property
@@ -204,8 +204,8 @@ class DuckDBLinker(Linker):
 
     def _table_to_splink_dataframe(
         self, templated_name, physical_name
-    ) -> DuckDBLinkerDataFrame:
-        return DuckDBLinkerDataFrame(templated_name, physical_name, self)
+    ) -> DuckDBDataFrame:
+        return DuckDBDataFrame(templated_name, physical_name, self)
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
         # In the case of a table already existing in the database,
@@ -219,7 +219,7 @@ class DuckDBLinker(Linker):
         """
         self._log_and_run_sql_execution(sql, templated_name, physical_name)
 
-        return DuckDBLinkerDataFrame(templated_name, physical_name, self)
+        return DuckDBDataFrame(templated_name, physical_name, self)
 
     def _run_sql_execution(self, final_sql, templated_name, physical_name):
         self._con.execute(final_sql)

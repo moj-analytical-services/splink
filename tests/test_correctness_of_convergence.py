@@ -35,7 +35,7 @@ import pandas as pd
 import pytest
 
 import splink.duckdb.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker, DuckDBLinkerDataFrame
+from splink.duckdb.linker import DuckDBLinker, DuckDBDataFrame
 from splink.em_training_session import EMTrainingSession
 from splink.predict import predict_from_comparison_vectors_sqls
 
@@ -87,7 +87,7 @@ def test_splink_converges_to_known_params():
 
     linker.match_weights_chart()
 
-    cv = DuckDBLinkerDataFrame(
+    cv = DuckDBDataFrame(
         "__splink__df_comparison_vectors",
         cvv_hashed_tablename,
         linker,
