@@ -71,6 +71,12 @@ class SplinkDataFrame:
         By default this will fail if the table is not one created by Splink,
         but this check can be overriden
 
+        Examples:
+            ```py
+            df_predict = linker.predict()
+            df_predict.drop_table_from_database_and_remove_from_cache()
+            # predictions table no longer in the database / cache
+            ```
         Args:
             force_non_splink_table (bool, optional): If True, skip check if the
                 table was created by Splink and always drop regardless. If False,
@@ -85,6 +91,11 @@ class SplinkDataFrame:
 
         This can be computationally expensive if the dataframe is large.
 
+        Examples:
+            ```py
+            df_predict = linker.predict()
+            ten_edges = df_predict.as_record_dict(10)
+            ```
         Args:
             limit (int, optional): If provided, return this number of rows (equivalent
             to a limit statement in SQL). Defaults to None, meaning return all rows
@@ -103,6 +114,11 @@ class SplinkDataFrame:
             limit (int, optional): If provided, return this number of rows (equivalent
             to a limit statement in SQL). Defaults to None, meaning return all rows
 
+        Examples:
+            ```py
+            df_predict = linker.predict()
+            df_ten_edges = df_predict.as_pandas_dataframe(10)
+            ```
         Returns:
             pandas.DataFrame: pandas Dataframe
         """
@@ -125,6 +141,11 @@ class SplinkDataFrame:
     def to_parquet(self, filepath, overwrite=False):
         """Save the dataframe in parquet format.
 
+        Examples:
+            ```py
+            df_predict = linker.predict()
+            df_predict.to_parquet("model_predictions.parquet", overwrite=True)
+            ```
         Args:
             filepath (str): Filepath where csv will be saved.
             overwrite (bool, optional): If True, overwrites file if it already exists.
@@ -135,6 +156,11 @@ class SplinkDataFrame:
     def to_csv(self, filepath, overwrite=False):
         """Save the dataframe in csv format.
 
+        Examples:
+            ```py
+            df_predict = linker.predict()
+            df_predict.to_csv("model_predictions.csv", overwrite=True)
+            ```
         Args:
             filepath (str): Filepath where csv will be saved.
             overwrite (bool, optional): If True, overwrites file if it already exists.
