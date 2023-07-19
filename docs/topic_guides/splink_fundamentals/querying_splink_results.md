@@ -7,7 +7,7 @@ toc_depth: 2
 ---
 # Retrieving and Querying Splink Results
 
-Once you have [created your linkage model](./settings.md), [trained your parameters](../demos/tutorials/04_Estimating_model_parameters.html) and [predicted your match probabilities](../demos/tutorials/05_Predicting_results.html) you may want to run queries on your results. Splink provides several methods for interacting with the tables produced in this process.
+Once you have [created your linkage model](./settings.md), [trained your parameters](../../demos/tutorials/04_Estimating_model_parameters.html) and [predicted your match probabilities](../../demos/tutorials/05_Predicting_results.html) you may want to run queries on your results. Splink provides several methods for interacting with the tables produced in this process.
 
 ## SplinkDataFrame
 
@@ -15,7 +15,7 @@ Splink returns tables of results using a class called a `SplinkDataFrame`.
 For example, when you run `df_predict = linker.predict()`, the result `df_predict` is a `SplinkDataFrame`.
 
 A `SplinkDataFrame` is an abstraction of a table in the underlying backend database, and provides several convenience methods for interacting with the underlying table.
-For detailed information check [the full API](../SplinkDataFrame.md).
+For detailed information check [the full API](../../SplinkDataFrame.md).
 
 ### Converting to other types
 
@@ -65,7 +65,7 @@ As tables may be large, there are a couple of convenience methods for doing this
 Currently Splink supports saving frames to either `csv` or `parquet` format.
 Of these we generally recommend the latter, as it is typed, compressed, column-oriented, and easily supports nested data.
 
-To save results, simply use the methods [`to_csv()`](../SplinkDataFrame.md#splink.splink_dataframe.SplinkDataFrame.to_csv) or [`to_parquet()`](../SplinkDataFrame.md#splink.splink_dataframe.SplinkDataFrame.to_parquet) - for example:
+To save results, simply use the methods [`to_csv()`](../../SplinkDataFrame.md#splink.splink_dataframe.SplinkDataFrame.to_csv) or [`to_parquet()`](../../SplinkDataFrame.md#splink.splink_dataframe.SplinkDataFrame.to_parquet) - for example:
 ```python
 df_predict = linker.predict()
 df_predict.to_parquet("splink_predictions.parquet", overwrite=True)
@@ -77,17 +77,17 @@ df_predict.to_csv("splink_predictions.csv", overwrite=True)
 
 Generally speaking, any Splink method that results in a table will return a `SplinkDataFrame`. This includes:
 
-* [`linker.predict()`](../linker.md#splink.linker.Linker.predict)
-* [`linker.cluster_pairwise_predictions_at_threshold()`](../linker.md#splink.linker.Linker.cluster_pairwise_predictions_at_threshold)
-* [`linker.find_matches_to_new_records()`](../linker.md#splink.linker.Linker.find_matches_to_new_records)
-* [`linker.compare_two_records()`](../linker.md#splink.linker.Linker.compare_two_records)
-* [`linker.count_num_comparisons_from_blocking_rules_for_prediction()`](../linker.md#count_num_comparisons_from_blocking_rules_for_prediction)
-* [`linker.truth_space_table_from_labels_table()`](../linker.md#splink.linker.Linker.truth_space_table_from_labels_table)
-* [`linker.prediction_errors_from_labels_table()`](../linker.md#splink.linker.Linker.prediction_errors_from_labels_table)
-* [`linker.compute_tf_table()`](../linker.md#splink.linker.Linker.compute_tf_table)
-* [`linker.deterministic_link()`](../linker.md#splink.linker.Linker.deterministic_link)
+* [`linker.predict()`](../../linker.md#splink.linker.Linker.predict)
+* [`linker.cluster_pairwise_predictions_at_threshold()`](../../linker.md#splink.linker.Linker.cluster_pairwise_predictions_at_threshold)
+* [`linker.find_matches_to_new_records()`](../../linker.md#splink.linker.Linker.find_matches_to_new_records)
+* [`linker.compare_two_records()`](../../linker.md#splink.linker.Linker.compare_two_records)
+* [`linker.count_num_comparisons_from_blocking_rules_for_prediction()`](../../linker.md#splink.linker.Linker.count_num_comparisons_from_blocking_rules_for_prediction)
+* [`linker.truth_space_table_from_labels_table()`](../../linker.md#splink.linker.Linker.truth_space_table_from_labels_table)
+* [`linker.prediction_errors_from_labels_table()`](../../linker.md#splink.linker.Linker.prediction_errors_from_labels_table)
+* [`linker.compute_tf_table()`](../../linker.md#splink.linker.Linker.compute_tf_table)
+* [`linker.deterministic_link()`](../../linker.md#splink.linker.Linker.deterministic_link)
 
-Aside from these you can create a `SplinkDataFrame` for any table in your database. You will need to already have a [linker](../linker.md)
+Aside from these you can create a `SplinkDataFrame` for any table in your database. You will need to already have a [linker](../../linker.md)
 to manage interactions with the database:
 ```python
 import pandas as pd
@@ -107,7 +107,7 @@ linker = DuckDBLinker(df, {"link_type": "dedupe_only"}, connection=con)
 my_splink_df = DuckDBDataFrame("a_templated_name", "number_table", linker)
 ```
 
-Alternatively if you have an in-memory data source you can use [`linker.register_table()`](../linker.md#splink.linker.Linker.register_table) which will register the table with the database backend and return a `SplinkDataFrame`:
+Alternatively if you have an in-memory data source you can use [`linker.register_table()`](../../linker.md#splink.linker.Linker.register_table) which will register the table with the database backend and return a `SplinkDataFrame`:
 ```python
 import pandas as pd
 from splink.duckdb.linker import DuckDBLinker, DuckDBDataFrame
