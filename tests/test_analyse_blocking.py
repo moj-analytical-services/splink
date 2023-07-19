@@ -16,6 +16,7 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     helper = test_helpers[dialect]
     Linker = helper.Linker
+    brl = helper.brl
 
     df_1 = pd.DataFrame(
         [
@@ -79,6 +80,14 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
     )
 
     assert res == 1
+
+    rule = brl.and_(
+        brl.exact_match_rule("first_name"),
+        brl.exact_match_rule("surname"),
+    )
+    res = linker.count_num_comparisons_from_blocking_rule(
+        rule,
+    )
 
 
 def validate_blocking_output(linker, expected_out, **kwargs):
@@ -348,3 +357,32 @@ def test_blocking_rule_accepts_different_dialects():
     br = "l.`hi THERE` = r.`hi THERE`"
     br = BlockingRule(br, sqlglot_dialect="spark")
     assert br._join_conditions == [("`hi THERE`", "`hi THERE`")]
+
+
+@mark_with_dialects_excluding()
+def test_cumulative_br_funs(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    brl = helper.brl
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    linker = Linker(df, get_settings_dict(), **helper.extra_linker_args())
+    linker.cumulative_comparisons_from_blocking_rules_records()
+    linker.cumulative_comparisons_from_blocking_rules_records(
+        [
+            "l.first_name = r.first_name",
+            brl.exact_match_rule("surname"),
+        ]
+    )
+
+    linker.cumulative_num_comparisons_from_blocking_rules_chart(
+        [
+            "l.first_name = r.first_name",
+            brl.exact_match_rule("surname"),
+        ]
+    )
+
+    assert (
+        linker.count_num_comparisons_from_blocking_rule(brl.exact_match_rule("surname"))
+        == 3167
+    )

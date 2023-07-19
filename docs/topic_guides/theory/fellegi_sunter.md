@@ -152,7 +152,7 @@ $$
 The _match weight_ is the central metric showing the amount of evidence of a match is provided by each of the features in a model.  
 The is most easily shown through Splink's Waterfall Chart:
 
-![](../img/fellegi_sunter/waterfall.png)
+![](../../img/fellegi_sunter/waterfall.png)
 
 - 1️⃣ are the two records being compared
 - 2️⃣ is the _match weight_ of the **prior**, $M_\textsf{prior} = \log_2\left(\frac{\lambda}{1-\lambda}\right)$.
@@ -201,7 +201,7 @@ It can be helpful to build up some inuition for how _match weight_ translates in
 
 Plotting _match probability_ versus _match weight_ gives the following chart:
 
-![](../img/fellegi_sunter/prob_v_weight.png)
+![](../../img/fellegi_sunter/prob_v_weight.png)
 
 Some observations from this chart:
 
