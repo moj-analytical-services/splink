@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 Dialect["customspark"]
 
 
-class SparkDataframe(SplinkDataFrame):
+class SparkDataFrame(SplinkDataFrame):
     linker: SparkLinker
 
     @property
@@ -75,6 +75,7 @@ class SparkDataframe(SplinkDataFrame):
             self.check_file_exists(filepath)
 
         spark_df = self.as_spark_dataframe()
+        print("ooooh")
         spark_df.write.format("csv").option("header", "true").save(filepath)
 
 
@@ -307,7 +308,7 @@ class SparkLinker(Linker):
             )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
-        return SparkDataframe(templated_name, physical_name, self)
+        return SparkDataFrame(templated_name, physical_name, self)
 
     def _repartition_if_needed(self, spark_df, templated_name):
         # Repartitioning has two effects:

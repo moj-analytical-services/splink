@@ -29,7 +29,7 @@ You can find out the name of the table in the underlying database using `splink_
 You can execute queries using `linker.query_sql` - 
 this is the recommended approach as it's typically faster and more memory efficient than using pandas dataframes.
 
-The following is an example of this approach, in which we use SQL to find the best match to each input record in a `link_type="link_only"` job (i.e remove duplicate matches):
+The following is an example of this approach, in which we use SQL to find the best match to each input record in a `link_type="link_only"` job (i.e remove duplicate _matches_):
 
 ```python
 # linker is a Linker with link_type set to "link_only"
