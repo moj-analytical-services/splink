@@ -93,7 +93,7 @@ where `json`, `html`, `png`, `svg` and `pdf` are all supported.
 
 ## :soon: What's in the pipeline?
 
-:simple-adblock: Some more Blocking improvements
-:clipboard: Settings improvements
-:material-thumbs-up-down: Evaluation Framework
+* :simple-adblock:   More Blocking improvements  
+* :clipboard:   Settings improvements  
+* :material-thumbs-up-down:   Evaluation Framework
 
