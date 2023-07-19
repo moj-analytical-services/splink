@@ -2,25 +2,25 @@ from copy import deepcopy
 
 import pandas as pd
 
-from splink.duckdb.comparison_library import exact_match
-
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
 
-settings = get_settings_dict()
-settings_tf = deepcopy(settings, None)
-# Settings with two term frequency columns
-settings_tf["comparisons"][1] = exact_match(
-    "surname", True, m_probability_exact_match=0.7, m_probability_else=0.1
-)
-settings_no_tf = deepcopy(settings, None)
-# Settings with no term frequencies
-settings_no_tf["comparisons"][0] = exact_match(
-    "first_name", False, m_probability_exact_match=0.7, m_probability_else=0.1
-)
+def get_different_settings_dicts(exact_match):
+    settings = get_settings_dict()
+    settings_tf = deepcopy(settings, None)
+    # Settings with two term frequency columns
+    settings_tf["comparisons"][1] = exact_match(
+        "surname", term_frequency_adjustments=True, m_probability_exact_match=0.7, m_probability_else=0.1
+    )
+    settings_no_tf = deepcopy(settings, None)
+    # Settings with no term frequencies
+    settings_no_tf["comparisons"][0] = exact_match(
+        "first_name", term_frequency_adjustments=False, m_probability_exact_match=0.7, m_probability_else=0.1
+    )
+    return settings_tf, settings_no_tf, settings
 
 # The record to be matched
 record = {
