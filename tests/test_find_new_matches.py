@@ -13,14 +13,21 @@ def get_different_settings_dicts(exact_match):
     settings_tf = deepcopy(settings, None)
     # Settings with two term frequency columns
     settings_tf["comparisons"][1] = exact_match(
-        "surname", term_frequency_adjustments=True, m_probability_exact_match=0.7, m_probability_else=0.1
+        "surname",
+        term_frequency_adjustments=True,
+        m_probability_exact_match=0.7,
+        m_probability_else=0.1,
     )
     settings_no_tf = deepcopy(settings, None)
     # Settings with no term frequencies
     settings_no_tf["comparisons"][0] = exact_match(
-        "first_name", term_frequency_adjustments=False, m_probability_exact_match=0.7, m_probability_else=0.1
+        "first_name",
+        term_frequency_adjustments=False,
+        m_probability_exact_match=0.7,
+        m_probability_else=0.1,
     )
     return settings_tf, settings_no_tf, settings
+
 
 # The record to be matched
 record = {
@@ -44,7 +51,7 @@ def test_tf_tables_init_works(test_helpers, dialect):
             df,
             s,
             **helper.extra_linker_args(),
-            input_table_aliases=f"test_tf_table_alias_{idx}"
+            input_table_aliases=f"test_tf_table_alias_{idx}",
         )
 
         # Compute tf table for first name
