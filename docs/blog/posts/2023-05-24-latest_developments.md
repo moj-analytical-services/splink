@@ -95,5 +95,5 @@ where `json`, `html`, `png`, `svg` and `pdf` are all supported.
 
 * :simple-adblock:   More Blocking improvements  
 * :clipboard:   Settings improvements  
-* :material-thumbs-up-down:   Evaluation Framework
+* :material-thumbs-up-down:   Evaluation Framework - 
 
