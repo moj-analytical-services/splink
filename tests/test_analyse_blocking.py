@@ -1,13 +1,23 @@
+import duckdb
 import pandas as pd
 
 from splink.analyse_blocking import (
     cumulative_comparisons_generated_by_blocking_rules,
 )
+from splink.blocking import BlockingRule
 from splink.duckdb.linker import DuckDBLinker
-from tests.basic_settings import get_settings_dict
+
+from .basic_settings import get_settings_dict
+from .decorator import mark_with_dialects_excluding
 
 
-def test_analyse_blocking():
+@mark_with_dialects_excluding()
+def test_analyse_blocking_slow_methodology(test_helpers, dialect):
+
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    brl = helper.brl
+
     df_1 = pd.DataFrame(
         [
             {"unique_id": 1, "first_name": "John", "surname": "Smith"},
@@ -25,7 +35,7 @@ def test_analyse_blocking():
         ]
     )
     settings = {"link_type": "dedupe_only"}
-    linker = DuckDBLinker(df_1, settings)
+    linker = Linker(df_1, settings, **helper.extra_linker_args())
 
     res = linker.count_num_comparisons_from_blocking_rule(
         "1=1",
@@ -38,7 +48,7 @@ def test_analyse_blocking():
     assert res == 1
 
     settings = {"link_type": "link_only"}
-    linker = DuckDBLinker([df_1, df_2], settings)
+    linker = Linker([df_1, df_2], settings, **helper.extra_linker_args())
     res = linker.count_num_comparisons_from_blocking_rule(
         "1=1",
     )
@@ -56,7 +66,7 @@ def test_analyse_blocking():
 
     settings = {"link_type": "link_and_dedupe"}
 
-    linker = DuckDBLinker([df_1, df_2], settings)
+    linker = Linker([df_1, df_2], settings, **helper.extra_linker_args())
 
     res = linker.count_num_comparisons_from_blocking_rule(
         "1=1",
@@ -71,6 +81,14 @@ def test_analyse_blocking():
 
     assert res == 1
 
+    rule = brl.and_(
+        brl.exact_match_rule("first_name"),
+        brl.exact_match_rule("surname"),
+    )
+    res = linker.count_num_comparisons_from_blocking_rule(
+        rule,
+    )
+
 
 def validate_blocking_output(linker, expected_out, **kwargs):
     records = cumulative_comparisons_generated_by_blocking_rules(linker, **kwargs)
@@ -84,10 +102,18 @@ def validate_blocking_output(linker, expected_out, **kwargs):
     assert expected_out["cartesian"] == records[0]["cartesian"]
 
 
-def test_blocking_records_accuracy():
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+@mark_with_dialects_excluding()
+def test_blocking_records_accuracy(test_helpers, dialect):
+    from numpy import nan
 
-    linker_settings = DuckDBLinker(df, get_settings_dict())
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    brl = helper.brl
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    # resolve an issue w/ pyspark nulls
+    df = df.fillna(nan).replace([nan], [None])
+
+    linker_settings = Linker(df, get_settings_dict(), **helper.extra_linker_args())
 
     # dedupe only
     validate_blocking_output(
@@ -117,8 +143,11 @@ def test_blocking_records_accuracy():
     )
 
     blocking_rules = [
-        "l.first_name = r.first_name",
-        "l.first_name = r.first_name and l.surname = r.surname",
+        brl.exact_match_rule("first_name"),
+        brl.and_(
+            brl.exact_match_rule("first_name"),
+            brl.exact_match_rule("surname"),
+        ),
         "l.dob = r.dob",
     ]
 
@@ -135,29 +164,32 @@ def test_blocking_records_accuracy():
     # link and dedupe + link only without settings
     blocking_rules = [
         "l.surname = r.surname",
-        "l.first_name = r.first_name or substr(l.dob,1,4) = substr(r.dob,1,4)",
+        brl.or_(
+            brl.exact_match_rule("first_name"),
+            "substr(l.dob,1,4) = substr(r.dob,1,4)",
+        ),
         "l.city = r.city",
     ]
 
     settings = {"link_type": "link_and_dedupe"}
-    linker_settings = DuckDBLinker([df, df], settings)
+    linker_settings = Linker([df, df], settings, **helper.extra_linker_args())
     validate_blocking_output(
         linker_settings,
         expected_out={
-            "row_count": [13591, 53472, 137280],
-            "cumulative_rows": [13591, 67063, 204343],
+            "row_count": [13591, 50245, 137280],
+            "cumulative_rows": [13591, 63836, 201116],
             "cartesian": 1999000,
         },
         blocking_rules=blocking_rules,
     )
 
     settings = {"link_type": "link_only"}
-    linker_settings = DuckDBLinker([df, df], settings)
+    linker_settings = Linker([df, df], settings, **helper.extra_linker_args())
     validate_blocking_output(
         linker_settings,
         expected_out={
-            "row_count": [7257, 27190, 68640],
-            "cumulative_rows": [7257, 34447, 103087],
+            "row_count": [7257, 25161, 68640],
+            "cumulative_rows": [7257, 32418, 101058],
             "cartesian": 1000000,
         },
         blocking_rules=blocking_rules,
@@ -165,16 +197,16 @@ def test_blocking_records_accuracy():
 
     # now multi-table
     # still link only
-    linker_settings = DuckDBLinker([df, df, df], settings)
+    linker_settings = Linker([df, df, df], settings, **helper.extra_linker_args())
     validate_blocking_output(
         linker_settings,
         expected_out={
             # number of links per block simply related to two-frame case
-            "row_count": [3 * 7257, 3 * 27190, 3 * 68640],
+            "row_count": [3 * 7257, 3 * 25161, 3 * 68640],
             "cumulative_rows": [
                 3 * 7257,
-                3 * 7257 + 3 * 27190,
-                3 * 7257 + 3 * 27190 + 3 * 68640,
+                3 * 7257 + 3 * 25161,
+                3 * 7257 + 3 * 25161 + 3 * 68640,
             ],
             "cartesian": 3_000_000,
         },
@@ -182,14 +214,175 @@ def test_blocking_records_accuracy():
     )
 
     settings = {"link_type": "link_and_dedupe"}
-    linker_settings = DuckDBLinker([df, df, df], settings)
+    linker_settings = Linker([df, df, df], settings, **helper.extra_linker_args())
     validate_blocking_output(
         linker_settings,
         expected_out={
             # and as above,
-            "row_count": [31272, 120993, 308880],
-            "cumulative_rows": [31272, 31272 + 120993, 31272 + 120993 + 308880],
+            "row_count": [31272, 113109, 308880],
+            "cumulative_rows": [31272, 31272 + 113109, 31272 + 113109 + 308880],
             "cartesian": (3000 * 2999) // 2,
         },
         blocking_rules=blocking_rules,
+    )
+
+
+def test_analyse_blocking_fast_methodology():
+    df_1 = pd.DataFrame(
+        [
+            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+            {"unique_id": 2, "first_name": "John", "surname": "Smith"},
+            {"unique_id": 3, "first_name": "John", "surname": "Jones"},
+            {"unique_id": 4, "first_name": "Mary", "surname": "Jones"},
+            {"unique_id": 5, "first_name": "Brian", "surname": "Taylor"},
+        ]
+    )
+
+    df_2 = pd.DataFrame(
+        [
+            {"unique_id": 1, "first_name": "John", "surname": "Smith"},
+            {"unique_id": 2, "first_name": "John", "surname": "Smith"},
+            {"unique_id": 3, "first_name": "John", "surname": "Jones"},
+        ]
+    )
+    settings = {"link_type": "dedupe_only"}
+    linker = DuckDBLinker(df_1, settings)
+
+    res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
+        "1=1",
+    )
+    assert res == 5 * 5
+
+    settings = {"link_type": "dedupe_only"}
+    linker = DuckDBLinker(df_1, settings)
+
+    res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
+        "l.first_name = r.first_name OR l.surname = r.surname",
+    )
+    assert res == 5 * 5
+
+    res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
+        "l.first_name = r.first_name AND levenshtein(l.surname, r.surname) <2",
+    )
+    assert res == 3 * 3 + 1 * 1 + 1 * 1
+
+    settings = {"link_type": "link_and_dedupe"}
+    linker = DuckDBLinker([df_1, df_2], settings)
+
+    res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
+        "l.first_name = r.first_name"
+    )
+    assert res == 6 * 6 + 1 * 1 + 1 * 1
+
+    settings = {"link_type": "link_only"}
+    linker = DuckDBLinker([df_1, df_2], settings)
+
+    res = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(
+        "l.first_name = r.first_name"
+    )
+    assert res == 3 * 3
+
+    # Test a series of blocking rules with different edge cases.
+    # Assert that the naive methodology gives the same result as the new methodlogy
+
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    blocking_rules = [
+        "l.first_name = r.first_name",
+        "l.first_name = r.first_name AND l.surname = r.surname",
+        "substr(l.first_name,2,3) = substr(r.first_name,3,4)",
+        "substr(l.first_name,1,1) = substr(r.surname,1,1) and l.dob = r.dob",
+        "l.first_name = r.first_name and levenshtein(l.dob, r.dob) > -1",
+        "l.dob = r.dob and substr(l.first_name,2,3) = substr(r.first_name,3,4)",
+    ]
+
+    sql_template = """
+    select count(*)
+    from df as l
+    inner join df as r
+    on {blocking_rule}
+    """
+
+    results = {}
+    for br in blocking_rules:
+        sql = sql_template.format(blocking_rule=br)
+        res = duckdb.sql(sql).df()
+        results[br] = {"count_from_join_dedupe_only": res.iloc[0][0]}
+
+    linker = DuckDBLinker(df, {"link_type": "dedupe_only"})
+    for br in blocking_rules:
+        c = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
+        results[br]["count_from_efficient_fn_dedupe_only"] = c
+
+    for br in blocking_rules:
+        assert (
+            results[br]["count_from_join_dedupe_only"]
+            == results[br]["count_from_efficient_fn_dedupe_only"]
+        )
+
+    # Link only
+    df_l = df.iloc[::2].copy()  # even-indexed rows (starting from 0)
+    df_r = df.iloc[1::2].copy()  # odd-indexed rows (starting from 1)
+
+    sql_template = """
+    select count(*)
+    from df_l as l
+    inner join df_r as r
+    on {blocking_rule}
+    """
+
+    results = {}
+    for br in blocking_rules:
+        sql = sql_template.format(blocking_rule=br)
+        res = duckdb.sql(sql).df()
+        results[br] = {"count_from_join_link_only": res.iloc[0][0]}
+
+    linker = DuckDBLinker([df_l, df_r], {"link_type": "link_only"})
+    for br in blocking_rules:
+        c = linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
+        results[br]["count_from_efficient_fn_link_only"] = c
+
+    for br in blocking_rules:
+        assert (
+            results[br]["count_from_join_link_only"]
+            == results[br]["count_from_efficient_fn_link_only"]
+        )
+
+
+def test_blocking_rule_accepts_different_dialects():
+    br = "l.first_name = r.first_name"
+    br = BlockingRule(br, sqlglot_dialect="spark")
+    assert br._join_conditions == [("first_name", "first_name")]
+
+    br = "l.`hi THERE` = r.`hi THERE`"
+    br = BlockingRule(br, sqlglot_dialect="spark")
+    assert br._join_conditions == [("`hi THERE`", "`hi THERE`")]
+
+
+@mark_with_dialects_excluding()
+def test_cumulative_br_funs(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    brl = helper.brl
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    linker = Linker(df, get_settings_dict(), **helper.extra_linker_args())
+    linker.cumulative_comparisons_from_blocking_rules_records()
+    linker.cumulative_comparisons_from_blocking_rules_records(
+        [
+            "l.first_name = r.first_name",
+            brl.exact_match_rule("surname"),
+        ]
+    )
+
+    linker.cumulative_num_comparisons_from_blocking_rules_chart(
+        [
+            "l.first_name = r.first_name",
+            brl.exact_match_rule("surname"),
+        ]
+    )
+
+    assert (
+        linker.count_num_comparisons_from_blocking_rule(brl.exact_match_rule("surname"))
+        == 3167
     )

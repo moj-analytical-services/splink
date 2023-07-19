@@ -10,7 +10,7 @@ tags:
   - Array Intersect
 toc_depth: 2
 ---
-# Documentation for `comparison_library` 
+# Documentation for `comparison_library`
 
 The `comparison_library` contains pre-made comparisons available for use directly [as described in this topic guide](./topic_guides/customising_comparisons.html#method-1-using-the-comparisonlibrary).
 However, not every comparison is available for every [Splink-compatible SQL backend](./topic_guides/backends.html).
@@ -82,7 +82,7 @@ The detailed API for each of these are outlined below.
         -  __init__
     rendering:
       show_root_heading: true
-      show_source: false   
+      show_source: false
       heading_level: 3
 
 ---

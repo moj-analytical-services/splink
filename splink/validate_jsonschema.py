@@ -2,15 +2,15 @@ import json
 import operator
 from functools import lru_cache, reduce
 
-import pkg_resources
 from jsonschema import Draft7Validator
+
+from .misc import read_resource
 
 
 @lru_cache()
 def get_schema():
-    schema_loc = "files/settings_jsonschema.json"
-    with pkg_resources.resource_stream(__name__, schema_loc) as io:
-        return json.load(io)
+    path = "files/settings_jsonschema.json"
+    return json.loads(read_resource(path))
 
 
 def get_from_dict(dataDict, mapList):

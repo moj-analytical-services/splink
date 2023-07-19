@@ -22,10 +22,15 @@ from .accuracy import (
     truth_space_table_from_labels_table,
 )
 from .analyse_blocking import (
+    count_comparisons_from_blocking_rule_pre_filter_conditions_sqls,
     cumulative_comparisons_generated_by_blocking_rules,
-    number_of_comparisons_generated_by_blocking_rule_sql,
+    number_of_comparisons_generated_by_blocking_rule_post_filters_sql,
 )
-from .blocking import BlockingRule, block_using_rules_sql
+from .blocking import (
+    BlockingRule,
+    block_using_rules_sql,
+    blocking_rule_to_obj,
+)
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
     completeness_chart,
@@ -1064,11 +1069,6 @@ class Linker:
 
         if not isinstance(settings_dict, dict):
             p = Path(settings_dict)
-            if not p.is_file():  # check if it's a valid file/filepath
-                raise FileNotFoundError(
-                    "The filepath you have provided is either not a valid file "
-                    "or doesn't exist along the path provided."
-                )
             settings_dict = json.loads(p.read_text())
 
         # Store the cache ID so it can be reloaded after cache invalidation
@@ -1288,69 +1288,69 @@ class Linker:
 
         Examples:
             === ":simple-duckdb: DuckDB"
-            ```py
-            from splink.duckdb.linker import DuckDBLinker
+                ```py
+                from splink.duckdb.linker import DuckDBLinker
 
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
-                ],
-                "comparisons": []
-            }
-            >>>
-            linker = DuckDBLinker(df, settings)
-            df = linker.deterministic_link()
-            ```
+                settings = {
+                    "link_type": "dedupe_only",
+                    "blocking_rules_to_generate_predictions": [
+                        "l.first_name = r.first_name",
+                        "l.surname = r.surname",
+                    ],
+                    "comparisons": []
+                }
+                >>>
+                linker = DuckDBLinker(df, settings)
+                df = linker.deterministic_link()
+                ```
             === ":simple-apachespark: Spark"
-            ```py
-            from splink.spark.linker import SparkLinker
+                ```py
+                from splink.spark.linker import SparkLinker
 
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
-                ],
-                "comparisons": []
-            }
-            >>>
-            linker = SparkLinker(df, settings)
-            df = linker.deterministic_link()
-            ```
+                settings = {
+                    "link_type": "dedupe_only",
+                    "blocking_rules_to_generate_predictions": [
+                        "l.first_name = r.first_name",
+                        "l.surname = r.surname",
+                    ],
+                    "comparisons": []
+                }
+                >>>
+                linker = SparkLinker(df, settings)
+                df = linker.deterministic_link()
+                ```
             === ":simple-amazonaws: Athena"
-            ```py
-            from splink.athena.linker import AthenaLinker
+                ```py
+                from splink.athena.linker import AthenaLinker
 
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
-                ],
-                "comparisons": []
-            }
-            >>>
-            linker = AthenaLinker(df, settings)
-            df = linker.deterministic_link()
-            ```
+                settings = {
+                    "link_type": "dedupe_only",
+                    "blocking_rules_to_generate_predictions": [
+                        "l.first_name = r.first_name",
+                        "l.surname = r.surname",
+                    ],
+                    "comparisons": []
+                }
+                >>>
+                linker = AthenaLinker(df, settings)
+                df = linker.deterministic_link()
+                ```
             === ":simple-sqlite: SQLite"
-            ```py
-            from splink.sqlite.linker import SQLiteLinker
+                ```py
+                from splink.sqlite.linker import SQLiteLinker
 
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
-                ],
-                "comparisons": []
-            }
-            >>>
-            linker = SQLiteLinker(df, settings)
-            df = linker.deterministic_link()
-            ```
+                settings = {
+                    "link_type": "dedupe_only",
+                    "blocking_rules_to_generate_predictions": [
+                        "l.first_name = r.first_name",
+                        "l.surname = r.surname",
+                    ],
+                    "comparisons": []
+                }
+                >>>
+                linker = SQLiteLinker(df, settings)
+                df = linker.deterministic_link()
+                ```
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
@@ -1534,8 +1534,8 @@ class Linker:
             ```
 
         Args:
-            blocking_rule (str): The blocking rule used to generate pairwise record
-                comparisons.
+            blocking_rule (BlockingRule | str): The blocking rule used to generate
+                pairwise record comparisons.
             comparisons_to_deactivate (list, optional): By default, splink will
                 analyse the blocking rule provided and estimate the m parameters for
                 all comaprisons except those included in the blocking rule.  If
@@ -1570,6 +1570,15 @@ class Linker:
             blocking_rule = "l.first_name = r.first_name and l.dob = r.dob"
             linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
             ```
+            or using pre-built rules
+            ```py
+            import splink.duckdb.blocking_rule_library as brl
+            blocking_rule = brl.and_(
+                brl.exact_match_rule("first_name"),
+                brl.exact_match_rule("surname"),
+            )
+            linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+            ```
 
         Returns:
             EMTrainingSession:  An object containing information about the training
@@ -1579,6 +1588,9 @@ class Linker:
         # Ensure this has been run on the main linker so that it's in the cache
         # to be used by the training linkers
         self._initialise_df_concat_with_tf()
+
+        # Extract the blocking rule
+        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule
 
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
@@ -1751,6 +1763,8 @@ class Linker:
         )
         original_link_type = self._settings_obj._link_type
 
+        blocking_rules = ensure_is_list(blocking_rules)
+
         if not isinstance(records_or_tablename, str):
             uid = ascii_uid(8)
             new_records_tablename = f"__splink__df_new_records_{uid}"
@@ -1782,12 +1796,9 @@ class Linker:
         if concat_with_tf:
             input_dfs.append(concat_with_tf)
 
-        rules = []
-        for r in blocking_rules:
-            br_as_obj = BlockingRule(r) if not isinstance(r, BlockingRule) else r
-            br_as_obj.preceding_rules = rules.copy()
-            rules.append(br_as_obj)
-        blocking_rules = rules
+        blocking_rules = [blocking_rule_to_obj(br) for br in blocking_rules]
+        for n, br in enumerate(blocking_rules):
+            br.add_preceding_rules(blocking_rules[:n])
 
         self._settings_obj._blocking_rules_to_generate_predictions = blocking_rules
 
@@ -2681,13 +2692,13 @@ class Linker:
 
     def count_num_comparisons_from_blocking_rule(
         self,
-        blocking_rule: str,
+        blocking_rule: str | BlockingRule,
     ) -> int:
         """Compute the number of pairwise record comparisons that would be generated by
         a blocking rule
 
         Args:
-            blocking_rule (str): The blocking rule to analyse
+            blocking_rule (str | BlockingRule): The blocking rule to analyse
             link_type (str, optional): The link type.  This is needed only if the
                 linker has not yet been provided with a settings dictionary.  Defaults
                 to None.
@@ -2697,31 +2708,76 @@ class Linker:
 
         Examples:
             ```py
-            br = "l.first_name = r.first_name"
+            br = "l.surname = r.surname"
             linker.count_num_comparisons_from_blocking_rule(br)
             ```
             > 19387
+
             ```py
             br = "l.name = r.name and substr(l.dob,1,4) = substr(r.dob,1,4)"
             linker.count_num_comparisons_from_blocking_rule(br)
             ```
             > 394
+            Alternatively, you can use the blocking rule library functions
+            ```py
+            import splink.duckdb.blocking_rule_library as brl
+            br = brl.exact_match_rule("surname")
+            linker.count_num_comparisons_from_blocking_rule(br)
+            ```
+            > 3167
 
         Returns:
             int: The number of comparisons generated by the blocking rule
         """
 
+        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule
+
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
 
-        sql = number_of_comparisons_generated_by_blocking_rule_sql(self, blocking_rule)
+        sql = number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
+            self, blocking_rule
+        )
         self._enqueue_sql(sql, "__splink__analyse_blocking_rule")
         res = self._execute_sql_pipeline().as_record_dict()[0]
         return res["count_of_pairwise_comparisons_generated"]
 
+    def _count_num_comparisons_from_blocking_rule_pre_filter_conditions(
+        self,
+        blocking_rule: str,
+    ) -> int:
+        """Compute the number of pairwise record comparisons that would be generated by
+        a blocking rule, prior to any filters (non equi-join conditions) being applied
+        by the SQL engine.
+
+        For more information on what this means, see
+        https://github.com/moj-analytical-services/splink/discussions/1391
+
+        Args:
+            blocking_rule (str): The blocking rule to analyse
+
+        Returns:
+            int: The number of comparisons generated by the blocking rule
+        """
+
+        input_dataframes = []
+        df_concat = self._initialise_df_concat()
+
+        if df_concat:
+            input_dataframes.append(df_concat)
+
+        sqls = count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
+            self, blocking_rule
+        )
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        res = self._execute_sql_pipeline(input_dataframes).as_record_dict()[0]
+        return int(res["count_of_pairwise_comparisons_generated"])
+
     def cumulative_comparisons_from_blocking_rules_records(
         self,
-        blocking_rules: str or list = None,
+        blocking_rules: str | BlockingRule | list = None,
     ):
         """Output the number of comparisons generated by each successive blocking rule.
 
@@ -2734,19 +2790,23 @@ class Linker:
                 for. If null, the rules set out in your settings object will be used.
 
         Examples:
+            Generate total comparisons from Blocking Rules defined in settings
+            dictionary
             ```py
             linker_settings = DuckDBLinker(df, settings)
             # Compute the cumulative number of comparisons generated by the rules
             # in your settings object.
             linker_settings.cumulative_comparisons_from_blocking_rules_records()
-            >>>
-            # Generate total comparisons with custom blocking rules.
+            ```
+
+            Generate total comparisons with custom blocking rules.
+            ```py
             blocking_rules = [
                "l.surname = r.surname",
                "l.first_name = r.first_name
                 and substr(l.dob,1,4) = substr(r.dob,1,4)"
             ]
-            >>>
+
             linker_settings.cumulative_comparisons_from_blocking_rules_records(
                 blocking_rules
              )
@@ -2767,7 +2827,7 @@ class Linker:
 
     def cumulative_num_comparisons_from_blocking_rules_chart(
         self,
-        blocking_rules: str or list = None,
+        blocking_rules: str | BlockingRule | list = None,
     ):
         """Display a chart with the cumulative number of comparisons generated by a
         selection of blocking rules.
@@ -2813,7 +2873,7 @@ class Linker:
         return cumulative_blocking_rule_comparisons_generated(records)
 
     def count_num_comparisons_from_blocking_rules_for_prediction(self, df_predict):
-        """Counts the maginal number of edges created from each of the blocking rules
+        """Counts the marginal number of edges created from each of the blocking rules
         in `blocking_rules_to_generate_predictions`
 
         This is different to `count_num_comparisons_from_blocking_rule`
@@ -2827,8 +2887,8 @@ class Linker:
 
         Examples:
             ```py
-            linker = DuckDBLinker(df, connection=":memory:")
-            linker.load_settings("saved_settings.json")
+            linker = DuckDBLinker(df)
+            linker.load_model("settings.json")
             df_predict = linker.predict(threshold_match_probability=0.95)
             count_pairwise = linker.count_num_comparisons_from_blocking_rules_for_prediction(df_predict)
             count_pairwise.as_pandas_dataframe(limit=5)
