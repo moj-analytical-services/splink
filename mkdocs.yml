@@ -56,6 +56,8 @@ plugins:
       fallback_to_build_date: true
   - blog:
       post_date_format: long
+      authors_file: .authors.yml
+      archive: false
 markdown_extensions:
   - abbr
   - attr_list
