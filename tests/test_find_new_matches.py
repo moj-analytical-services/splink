@@ -39,11 +39,12 @@ def test_tf_tables_init_works(test_helpers, dialect):
     helper = test_helpers[dialect]
     Linker = helper.Linker
 
-    for s in [settings_tf, settings_no_tf, settings]:
+    for idx, s in enumerate(get_different_settings_dicts(helper.cl.exact_match)):
         linker = Linker(
             df,
             s,
             **helper.extra_linker_args(),
+            input_table_aliases=f"test_tf_table_alias_{idx}"
         )
 
         # Compute tf table for first name
