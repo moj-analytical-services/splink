@@ -41,6 +41,9 @@ theme:
         name: Switch to light mode
   custom_dir: docs/overrides
 plugins:
+  - blog:
+      post_date_format: long
+      archive: false
   - search
   - semiliterate
   - mknotebooks
@@ -56,9 +59,6 @@ plugins:
       enable_creation_date: true
       type: timeago
       fallback_to_build_date: true
-  - blog:
-      post_date_format: long
-      archive: false
 markdown_extensions:
   - abbr
   - attr_list
@@ -193,8 +193,8 @@ nav:
           - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
           - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
         - User-Defined Functions: "dev_guides/udfs.md"
-  - Blog: 
-    - blog/index.md
+  - Blog:
+    - blog/index.md 
 extra_css:
 - css/custom.css
 extra_javascript:
@@ -213,5 +213,3 @@ extra:
     - icon: fontawesome/solid/chevron-right
       link: https://www.robinlinacre.com/
   new: Recently added
-
-
