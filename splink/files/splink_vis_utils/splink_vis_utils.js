@@ -6859,9 +6859,11 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  const form = html`<form>
     ${ss_cols.map((cc) => {
       let num_levels = cc.num_levels;
-      let select_values = [...Array(num_levels).keys()];
-      select_values.unshift(-1);
-      select_values.unshift("Any");
+	  let select_values = cc.comparison_levels.map((cl) => {
+		return [cl.label_for_charts, cl.comparison_vector_value];
+	  });
+	  select_values.unshift(["Any", "Any"]);
+	  select_values = new Map(select_values);
 
       return html`<div id='id_${cc.name}'>${splink_vis_utils.select(
         select_values,
@@ -7845,11 +7847,15 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  }
 
 	  get num_levels() {
-	    return this.original_dict.comparison_levels.length;
+	    return this.comparison_levels.length;
 	  }
 
 	  get columns_used() {
 	    return this.original_dict["input_columns_used_by_case_statement"];
+	  }
+
+	  get comparison_levels() {
+		return this.original_dict["comparison_levels"];
 	  }
 
 	  // get column_case_expression_lookup() {
