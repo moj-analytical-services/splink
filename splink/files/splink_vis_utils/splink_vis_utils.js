@@ -6954,6 +6954,9 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    (d) => d.count_rows_in_comparison_vector_group >= filter_count
 	  );
 
+	  if (cvd_filtered.length == 0) {
+		cvd_filtered = [{}];
+	  }
 	  return cvd_filtered;
 	}
 
