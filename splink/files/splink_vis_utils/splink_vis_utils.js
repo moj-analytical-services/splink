@@ -6858,7 +6858,6 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 
 	  const form = html`<form>
     ${ss_cols.map((cc) => {
-      let num_levels = cc.num_levels;
 	  let select_values = cc.comparison_levels.map((cl) => {
 		return [cl.label_for_charts, cl.comparison_vector_value];
 	  });
