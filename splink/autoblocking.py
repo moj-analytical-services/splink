@@ -3,13 +3,6 @@ from random import randint
 import pandas as pd
 
 
-def preprocess_data(df):
-    df = df.sort_values(by=["complexity", "count"], ascending=[True, False])
-    df = df.to_dict("records", index=False)
-
-    return df
-
-
 def localised_shuffle(lst, window_percent):
     """
     Performs a localised shuffle on a list.
@@ -114,6 +107,7 @@ def calculate_cost(
         dict: The calculated cost and individual component costs.
     """
     complexity_cost = sum(row["complexity"] for row in combination)
+    total_row_count = sum(row["comparison_count"] for row in combination)
     field_freedom_cost = calculate_field_freedom_cost(combination, field_names)
     row_cost = len(combination)
 
@@ -128,48 +122,39 @@ def calculate_cost(
         "field_freedom_cost": field_freedom_weight * field_freedom_cost,
         "row_cost": row_weight * row_cost,
         "cost": total_cost,
+        "total_comparisons_count": total_row_count,
     }
 
 
-def pretty_print_results(results, cost, run_num):
-    """
-    Pretty prints the results of each run.
+def suggest_blocking_rules_for_prediction(df_blocks_found):
+    df_blocks_found = df_blocks_found.sort_values(
+        by=["complexity", "comparison_count"], ascending=[True, False]
+    )
+    blocks_found_recs = df_blocks_found.to_dict(orient="records")
 
-    Args:
-        results (list): The results of each run.
-        cost (int): The cost of each run.
-        run_num (int): The run number.
-    """
-    print(f"Run {run_num}:")
-    print("Blocking rules:")
-    for row in results:
-        print(row["blocking_rules"])
-    print(f"cost: {cost}\n")
+    blocking_cols = list(blocks_found_recs[0].keys())
+    blocking_cols = [c for c in blocking_cols if c.startswith("__fixed__")]
 
+    results = []
+    for min_freedom in range(1, 4):
+        for run in range(5):
+            selected_rows = heuristic_select_rows(
+                blocks_found_recs, blocking_cols, min_field_freedom=min_freedom
+            )
+            cost_dict = calculate_cost(selected_rows, blocking_cols)
+            cost_dict.update(
+                {
+                    "run_num": run,
+                    "freedom": min_freedom,
+                    "blocking_rules": " || ".join(
+                        [row["blocking_rules"] for row in selected_rows]
+                    ),
+                }
+            )
+            results.append(cost_dict)
 
-df_options = load_data(FILE_PATH)
-df_options, field_names = preprocess_data(df_options)
-
-results = []
-for freedom in range(1, 4):
-    for run in range(5):
-        selected_rows = heuristic_select_rows(
-            df_options, field_names, min_field_freedom=freedom
-        )
-        cost_dict = calculate_cost(selected_rows, field_names)
-        cost_dict.update(
-            {
-                "run_num": run,
-                "freedom": freedom,
-                "blocking_rules": " || ".join(
-                    [row["blocking_rules"] for row in selected_rows]
-                ),
-            }
-        )
-        results.append(cost_dict)
-
-results_df = pd.DataFrame(results)
-min_scores_df = (
-    results_df.sort_values("cost").groupby("freedom", as_index=False).first()
-)
-min_scores_df
+    results_df = pd.DataFrame(results)
+    min_scores_df = (
+        results_df.sort_values("cost").groupby("freedom", as_index=False).first()
+    )
+    return min_scores_df
