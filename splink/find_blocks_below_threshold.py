@@ -61,9 +61,9 @@ def _search_combinations(
     linker: "Linker",
     all_columns: List[str],
     threshold: float,
-    current_combination: List[str] = [],
-    already_visited: Set[frozenset] = set(),
-    results: List[Dict[str, str]] = [],
+    current_combination: List[str] = None,
+    already_visited: Set[frozenset] = None,
+    results: List[Dict[str, str]] = None,
 ) -> List[Dict[str, str]]:
     """
     Recursively search combinations of fields to find ones that result in a count less than the threshold.
@@ -79,6 +79,12 @@ def _search_combinations(
     Returns:
         List[Dict[str, str]]: List of results.
     """
+    if current_combination is None:
+        current_combination = []
+    if already_visited is None:
+        already_visited = set()
+    if results is None:
+        results = []
 
     if len(current_combination) == len(all_columns):
         return results  # All fields have been included, exit recursion
