@@ -1,128 +1,175 @@
-import logging
-from typing import TYPE_CHECKING, Dict, List, Set
+from random import randint
 
 import pandas as pd
 
-if TYPE_CHECKING:
-    from .linker import Linker
-logger = logging.getLogger(__name__)
+
+def preprocess_data(df):
+    df = df.sort_values(by=["complexity", "count"], ascending=[True, False])
+    df = df.to_dict("records", index=False)
+
+    return df
 
 
-def _generate_row(
-    blocking_rules: List[str], count: float, fields: List[str]
-) -> Dict[str, str]:
+def localised_shuffle(lst, window_percent):
     """
-    Generate a row with the current blocking rule, count, complexity, and field values.
+    Performs a localised shuffle on a list.
 
     Args:
-        blocking_rules (List[str]): Current combination of fields.
-        count (float): Current count.
-        fields (List[str]): All available fields.
+        lst (list): The list to shuffle.
+        window_percent (float): The window percent for shuffle e.g. 0.3 for shuffle
+            within 30% of orig position
 
     Returns:
-        Dict[str, str]: Generated row.
+        list: A shuffled copy of the original list.
     """
-    row = {}
-    row["blocking_rules"] = ", ".join(blocking_rules)
-    row["count"] = f"{count:,.0f}"
-    row["complexity"] = len(blocking_rules)
-
-    for field in fields:
-        row[f"field_{field}"] = 1 if field in blocking_rules else 0
-
-    return row
+    window_size = max(1, int(window_percent * len(lst)))
+    return sorted(lst, key=lambda x: lst.index(x) + randint(-window_size, window_size))
 
 
-def _generate_combinations(
-    fields: List[str], current_combination: List[str], already_visited: Set[frozenset]
-) -> List[List[str]]:
+def check_field_freedom(candidate_set, field_names, min_field_freedom):
     """
-    Generate all valid combinations that haven't been visited yet.
+    Checks if each field in the candidate set is allowed to vary at least 'min_field_freedom' times.
 
     Args:
-        fields (List[str]): List of all available fields.
-        current_combination (List[str]): Current combination of fields.
-        already_visited (Set[frozenset]): Set of visited combinations.
+        candidate_set (list): The candidate set of rows.
+        field_names (list): The list of field names.
+        min_field_freedom (int): The minimum field freedom.
 
     Returns:
-        List[List[str]]: List of valid combinations.
+        bool: True if each field can vary at least 'min_field_freedom' times, False otherwise.
     """
-    combinations = []
-    for field in fields:
-        if field not in current_combination:
-            next_combination = current_combination + [field]
-            if frozenset(next_combination) not in already_visited:
-                combinations.append(next_combination)
-
-    return combinations
+    covered_fields = {field: 0 for field in field_names}
+    for row in candidate_set:
+        for field in field_names:
+            if row[field] == 0:
+                covered_fields[field] += 1
+    return all(count >= min_field_freedom for count in covered_fields.values())
 
 
-def _search_combinations(
-    linker: "Linker",
-    fields: List[str],
-    threshold: float,
-    current_combination: List[str] = [],
-    already_visited: Set[frozenset] = set(),
-    results: List[Dict[str, str]] = [],
-) -> List[Dict[str, str]]:
+def heuristic_select_rows(data, field_names, min_field_freedom):
     """
-    Recursively search combinations of fields to find ones that result in a count less than the threshold.
+    Implements a heuristic algorithm to select rows. It ensures that each field is allowed
+    to vary at least 'min_field_freedom' times.
 
     Args:
-        linker: splink.Linker
-        fields (List[str]): List of fields to combine.
-        threshold (float): The count threshold.
-        current_combination (List[str], optional): Current combination of fields. Defaults to [].
-        already_visited (Set[frozenset], optional): Set of visited combinations. Defaults to set().
-        results (List[Dict[str, str]], optional): List of results. Defaults to [].
+        data (list): The data rows.
+        field_names (list): The list of field names.
+        min_field_freedom (int): The minimum field freedom.
 
     Returns:
-        List[Dict[str, str]]: List of results.
+        list: The candidate set of rows.
     """
-    if len(current_combination) == len(fields):
-        return results  # All fields have been included, exit recursion
+    data_sorted_randomised = localised_shuffle(data, 0.3)
+    candidate_set = []
 
-    br = " AND ".join([f"l.{item} = r.{item}" for item in current_combination])
-    current_count = (
-        linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
-    )
-    row = _generate_row(current_combination, current_count, fields)
+    for row in data_sorted_randomised:
+        candidate_set.append(row)
+        if check_field_freedom(candidate_set, field_names, min_field_freedom):
+            break
 
-    already_visited.add(frozenset(current_combination))
-
-    if current_count > threshold:
-        # Generate all valid combinations and continue the search
-        combinations = _generate_combinations(
-            fields, current_combination, already_visited
-        )
-        for next_combination in combinations:
-            _search_combinations(
-                linker, fields, threshold, next_combination, already_visited, results
-            )
-    else:
-        logger.debug(
-            f"Comparison count for {current_combination}: {current_count:,.0f}"
-        )
-
-        results.append(row)
-
-    return results
+    return candidate_set
 
 
-def find_blocking_rules_below_threshold(
-    linker: "Linker", max_comparisons_per_rule, fields=None
+def calculate_field_freedom_cost(combination, field_names):
+    """
+    Calculates the field cost for a given combination of rows. It counts the number of
+    times each field is allowed to vary (i.e., not included in the blocking rules).
+
+    Args:
+        combination (list): The combination of rows.
+        field_names (list): The list of field names.
+
+    Returns:
+        int: The field freedom cost.
+    """
+
+    # max_cost is num rows time num ields
+    field_cost = len(combination) * len(field_names)
+    for field in field_names:
+        variances = sum(row[field] == 0 for row in combination)
+        if variances > 1:
+            field_cost -= variances
+    return field_cost
+
+
+def calculate_cost(
+    combination,
+    field_names,
+    complexity_weight=10,
+    field_freedom_weight=10,
+    row_weight=1000,
 ):
-    # Get columns that aren't in source_dataset or
-    # unique_id or additional_columns_to_retain
+    """
+    Calculates a cost for a given combination of rows. The cost is a weighted sum of the
+    complexity, count, number of fields that are allowed to vary, and number of rows.
 
-    # TODO:  Refactor this into its own function
-    df_obj = next(iter(linker._input_tables_dict.values()))
-    columns = df_obj.columns_escaped
+    Args:
+        combination (list): The combination of rows.
+        field_names (list): The list of field names.
+        complexity_weight (int, optional): The weight for complexity. Defaults to 10.
+        field_freedom_weight (int, optional): The weight for field freedom. Defaults to 10.
+        row_weight (int, optional): The weight for row count. Defaults to 1000.
 
-    remove_cols = linker._settings_obj._unique_id_input_columns
-    remove_cols.extend(linker._settings_obj._additional_columns_to_retain)
-    remove_id_cols = [c.quote().name() for c in remove_cols]
-    columns = [col for col in columns if col not in remove_id_cols]
-    columns = [col.replace('"', "").replace("'", "") for col in columns]
-    results = _search_combinations(linker, columns, max_comparisons_per_rule)
-    return pd.DataFrame(results)
+    Returns:
+        dict: The calculated cost and individual component costs.
+    """
+    complexity_cost = sum(row["complexity"] for row in combination)
+    field_freedom_cost = calculate_field_freedom_cost(combination, field_names)
+    row_cost = len(combination)
+
+    total_cost = (
+        complexity_weight * complexity_cost
+        + field_freedom_weight * field_freedom_cost
+        + row_weight * row_cost
+    )
+
+    return {
+        "complexity_cost": complexity_weight * complexity_cost,
+        "field_freedom_cost": field_freedom_weight * field_freedom_cost,
+        "row_cost": row_weight * row_cost,
+        "cost": total_cost,
+    }
+
+
+def pretty_print_results(results, cost, run_num):
+    """
+    Pretty prints the results of each run.
+
+    Args:
+        results (list): The results of each run.
+        cost (int): The cost of each run.
+        run_num (int): The run number.
+    """
+    print(f"Run {run_num}:")
+    print("Blocking rules:")
+    for row in results:
+        print(row["blocking_rules"])
+    print(f"cost: {cost}\n")
+
+
+df_options = load_data(FILE_PATH)
+df_options, field_names = preprocess_data(df_options)
+
+results = []
+for freedom in range(1, 4):
+    for run in range(5):
+        selected_rows = heuristic_select_rows(
+            df_options, field_names, min_field_freedom=freedom
+        )
+        cost_dict = calculate_cost(selected_rows, field_names)
+        cost_dict.update(
+            {
+                "run_num": run,
+                "freedom": freedom,
+                "blocking_rules": " || ".join(
+                    [row["blocking_rules"] for row in selected_rows]
+                ),
+            }
+        )
+        results.append(cost_dict)
+
+results_df = pd.DataFrame(results)
+min_scores_df = (
+    results_df.sort_values("cost").groupby("freedom", as_index=False).first()
+)
+min_scores_df

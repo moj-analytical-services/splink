@@ -15,7 +15,6 @@ import sqlglot
 
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
 
-from .autoblocking import find_blocking_rules_below_threshold
 from .accuracy import (
     prediction_errors_from_label_column,
     prediction_errors_from_labels_table,
@@ -58,6 +57,7 @@ from .connected_components import (
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkException
+from .find_blocks_below_threshold import find_blocking_rules_below_threshold
 from .find_matches_to_new_records import add_unique_id_and_source_dataset_cols_if_needed
 from .labelling_tool import (
     generate_labelling_tool_comparisons,
@@ -250,6 +250,29 @@ class Linker:
             return self._settings_obj._cache_uid
         else:
             return self._cache_uid_no_settings
+
+    @property
+    def _column_names_as_input_columns(
+        self,
+        include_unique_id_col_names=False,
+        include_additional_columns_to_retain=False,
+    ):
+        """Retrieve the column names from the input dataset(s)"""
+        df_obj: SplinkDataFrame = next(iter(self._input_tables_dict.values()))
+
+        input_columns = df_obj.columns
+        remove_columns = []
+        if not include_unique_id_col_names:
+            remove_columns.extend(self._settings_obj._unique_id_input_columns)
+        if not include_additional_columns_to_retain:
+            remove_columns.extend(self._settings_obj._additional_columns_to_retain)
+
+        remove_id_cols = [c.unquote().name() for c in remove_columns]
+        columns = [
+            col for col in input_columns if col.unquote().name() not in remove_id_cols
+        ]
+
+        return columns
 
     @_cache_uid.setter
     def _cache_uid(self, value):
