@@ -15,6 +15,7 @@ import sqlglot
 
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
 
+from .autoblocking import find_blocking_rules_below_threshold
 from .accuracy import (
     prediction_errors_from_label_column,
     prediction_errors_from_labels_table,
@@ -3337,3 +3338,10 @@ class Linker:
 
         for k in keys_to_delete:
             del self._intermediate_table_cache[k]
+
+    def _find_blocking_rules_below_threshold(
+        self, max_comparisons_per_rule, fields=None
+    ):
+        return find_blocking_rules_below_threshold(
+            self, max_comparisons_per_rule, fields
+        )
