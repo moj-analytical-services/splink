@@ -1,8 +1,10 @@
 import logging
-from typing import TYPE_CHECKING, Dict, List, Set
-from sqlglot import parse_one
-import pandas as pd
 import string
+from typing import TYPE_CHECKING, Dict, List, Set
+
+import pandas as pd
+from sqlglot import parse_one
+
 from .input_column import InputColumn, add_table
 
 if TYPE_CHECKING:
@@ -16,14 +18,14 @@ def sanitise_column_name(column_name):
     return sanitized_name
 
 
-def _generate_row(blocking_columns, count, all_columns):
+def _generate_row(blocking_columns, comparison_count, all_columns):
     row = {}
 
     blocking_columns = [sanitise_column_name(c) for c in blocking_columns]
     all_columns = [sanitise_column_name(c) for c in all_columns]
 
     row["blocking_rules"] = ", ".join(blocking_columns)
-    row["count"] = f"{count:,.0f}"
+    row["comparison_count"] = f"{comparison_count:,.0f}"
     row["complexity"] = len(blocking_columns)
 
     for col in all_columns:
@@ -90,14 +92,14 @@ def _search_combinations(
         return results  # All fields have been included, exit recursion
 
     br = _generate_blocking_rule(linker, current_combination)
-    current_count = (
+    comparison_count = (
         linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
     )
-    row = _generate_row(current_combination, current_count, all_columns)
+    row = _generate_row(current_combination, comparison_count, all_columns)
 
     already_visited.add(frozenset(current_combination))
 
-    if current_count > threshold:
+    if comparison_count > threshold:
         # Generate all valid combinations and continue the search
         combinations = _generate_combinations(
             all_columns, current_combination, already_visited
@@ -113,7 +115,7 @@ def _search_combinations(
             )
     else:
         logger.debug(
-            f"Comparison count for {current_combination}: {current_count:,.0f}"
+            f"Comparison count for {current_combination}: {comparison_count:,.0f}"
         )
 
         results.append(row)
