@@ -5456,6 +5456,10 @@
 	  return format(date, "Invalid Date");
 	}
 
+	function formatObject(obj) {
+		return JSON.stringify(obj);
+	}
+
 	// Memoize the last-returned locale.
 	function localize(f) {
 	  let key = localize, value;
@@ -6153,6 +6157,7 @@
 	    switch (type(data, column)) {
 	      case "number": format[column] = formatLocaleNumber(locale); break;
 	      case "date": format[column] = formatDate; break;
+		  case "object": format[column] = formatObject; break;
 	      default: format[column] = formatLocaleAuto(locale); break;
 	    }
 	  }
@@ -6178,6 +6183,7 @@
 	    if (value == null) continue;
 	    if (typeof value === "number") return "number";
 	    if (value instanceof Date) return "date";
+		if (typeof value == "object") return "object";
 	    return;
 	  }
 	}
