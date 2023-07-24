@@ -20,7 +20,7 @@ Below are some examples of features that be created from common columns, and how
 
 ## Postcodes
 
-A sensible approach to comparing postcodes is to consider their consituent components. For example, UK postcodes can be broken down into the following substrings:
+A sensible approach to comparing postcodes is to consider their constituent components. For example, UK postcodes can be broken down into the following substrings:
 
 ![UK postcode components from https://ideal-postcodes.co.uk/guides/uk-postcode-format](../../img/postcode_components.png)
 See [image source](https://ideal-postcodes.co.uk/guides/uk-postcode-format) for more details.

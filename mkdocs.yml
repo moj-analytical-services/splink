@@ -139,6 +139,7 @@ nav:
           - Choosing comparators and thresholds: "topic_guides/comparisons/choosing_comparators.ipynb"
           - String comparators: "topic_guides/comparisons/comparators.md"
           - Phonetic transformations: "topic_guides/comparisons/phonetic.md"
+          - Regular Expressions: "topic_guides/comparisons/regular_expressions.md"
         - Term-Frequency adjustments: "topic_guides/comparisons/term-frequency.md"
       - Performance:
         - Run times, performance and linking large data: "topic_guides/performance/drivers_of_performance.md"

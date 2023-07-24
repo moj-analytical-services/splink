@@ -57,6 +57,7 @@ from .connected_components import (
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkException
+from .find_matches_to_new_records import add_unique_id_and_source_dataset_cols_if_needed
 from .labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,
@@ -1288,69 +1289,69 @@ class Linker:
 
         Examples:
             === ":simple-duckdb: DuckDB"
-            ```py
-            from splink.duckdb.linker import DuckDBLinker
+                ```py
+                from splink.duckdb.linker import DuckDBLinker
 
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
-                ],
-                "comparisons": []
-            }
-            >>>
-            linker = DuckDBLinker(df, settings)
-            df = linker.deterministic_link()
-            ```
+                settings = {
+                    "link_type": "dedupe_only",
+                    "blocking_rules_to_generate_predictions": [
+                        "l.first_name = r.first_name",
+                        "l.surname = r.surname",
+                    ],
+                    "comparisons": []
+                }
+                >>>
+                linker = DuckDBLinker(df, settings)
+                df = linker.deterministic_link()
+                ```
             === ":simple-apachespark: Spark"
-            ```py
-            from splink.spark.linker import SparkLinker
+                ```py
+                from splink.spark.linker import SparkLinker
 
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
-                ],
-                "comparisons": []
-            }
-            >>>
-            linker = SparkLinker(df, settings)
-            df = linker.deterministic_link()
-            ```
+                settings = {
+                    "link_type": "dedupe_only",
+                    "blocking_rules_to_generate_predictions": [
+                        "l.first_name = r.first_name",
+                        "l.surname = r.surname",
+                    ],
+                    "comparisons": []
+                }
+                >>>
+                linker = SparkLinker(df, settings)
+                df = linker.deterministic_link()
+                ```
             === ":simple-amazonaws: Athena"
-            ```py
-            from splink.athena.linker import AthenaLinker
+                ```py
+                from splink.athena.linker import AthenaLinker
 
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
-                ],
-                "comparisons": []
-            }
-            >>>
-            linker = AthenaLinker(df, settings)
-            df = linker.deterministic_link()
-            ```
+                settings = {
+                    "link_type": "dedupe_only",
+                    "blocking_rules_to_generate_predictions": [
+                        "l.first_name = r.first_name",
+                        "l.surname = r.surname",
+                    ],
+                    "comparisons": []
+                }
+                >>>
+                linker = AthenaLinker(df, settings)
+                df = linker.deterministic_link()
+                ```
             === ":simple-sqlite: SQLite"
-            ```py
-            from splink.sqlite.linker import SQLiteLinker
+                ```py
+                from splink.sqlite.linker import SQLiteLinker
 
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
-                ],
-                "comparisons": []
-            }
-            >>>
-            linker = SQLiteLinker(df, settings)
-            df = linker.deterministic_link()
-            ```
+                settings = {
+                    "link_type": "dedupe_only",
+                    "blocking_rules_to_generate_predictions": [
+                        "l.first_name = r.first_name",
+                        "l.surname = r.surname",
+                    ],
+                    "comparisons": []
+                }
+                >>>
+                linker = SQLiteLinker(df, settings)
+                df = linker.deterministic_link()
+                ```
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
@@ -1775,10 +1776,14 @@ class Linker:
         else:
             new_records_tablename = records_or_tablename
 
+        new_records_df = self._table_to_splink_dataframe(
+            "__splink__df_new_records", new_records_tablename
+        )
+
         cache = self._intermediate_table_cache
         input_dfs = []
-        # If our df_concat_with_tf table already exists, use backwards inference to
-        # find all underlying term frequency tables.
+        # If our df_concat_with_tf table already exists, derive the term frequency
+        # tables from df_concat_with_tf rather than computing them
         if "__splink__df_concat_with_tf" in cache:
             concat_with_tf = cache["__splink__df_concat_with_tf"]
             tf_tables = compute_term_frequencies_from_concat_with_tf(self)
@@ -1806,7 +1811,9 @@ class Linker:
 
         sql = _join_tf_to_input_df_sql(self)
         sql = sql.replace("__splink__df_concat", new_records_tablename)
-        self._enqueue_sql(sql, "__splink__df_new_records_with_tf")
+        self._enqueue_sql(sql, "__splink__df_new_records_with_tf_before_uid_fix")
+
+        add_unique_id_and_source_dataset_cols_if_needed(self, new_records_df)
 
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
