@@ -55,7 +55,7 @@ pyarrow = "7.0.0"
 ipywidgets = "8.0.4"
 nbmake = "1.3.4"
 pytest = "7.1.2"
-pyspark = "3.2.1"
+pyspark = "^3.2.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.8"]
