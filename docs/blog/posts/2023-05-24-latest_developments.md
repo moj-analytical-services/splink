@@ -2,17 +2,22 @@
 date: 2022-07-14
 authors:
   - ross-k
+  - robin-l
 categories:
   - Feature Updates
 ---
 
 # Splink Updates - July 2023
 
-** It has been a busy few months in the Splink team, so here is a round up of the latest features that have been released.**
+** :new: Welcome to the Splink Blog! :new: **
 
-Latest Splink version: [v3.9.3](https://github.com/moj-analytical-services/splink/releases/tag/v3.9.3)
+Its hard to keep up to date with all of the new features being added to Splink, so we have launched this blog to share a round up of latest developments every few months.
+
+So, without further ado, here are some of the highlights from the first half of 2023!
 
 <!-- more -->
+
+Latest Splink version: [v3.9.4](https://github.com/moj-analytical-services/splink/releases/tag/v3.9.4)
 
 
 ## :rocket: Massive speed gains in EM training
@@ -26,7 +31,7 @@ linker.estimate_parameters_using_expectation_maximisation(..., estimate_without_
 ```
 ## :gift: Out-of-the-box Comparisons
 
-Splink now contains lots of new out-of-the-box comparisons for dates, names, postcodes etc. The Comparison Template Library (CTL) provides suggested settings for common types of data used in linkage models. 
+Splink now contains lots of new out-of-the-box comparisons for [dates](../../comparison_template_library.md#splink.comparison_template_library.DateComparisonBase), [names](../../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase), [postcodes](../../comparison_template_library.md#splink.comparison_template_library.PostcodeComparisonBase) etc. The Comparison Template Library (CTL) provides suggested settings for common types of data used in linkage models. 
 
 For example, a Comparison for `"first_name"` can now be written as:
 
@@ -36,7 +41,7 @@ import splink.duckdb.comparison_template_library as ctl
 first_name_comparison = ctl.name_comparison("first_name")
 ```
 
-Check out these new functions in the [CTL Topic Guide](https://moj-analytical-services.github.io/splink/topic_guides/comparisons/comparison_templates.html) and [CTL Documentation](https://moj-analytical-services.github.io/splink/comparison_template_library.html?h=comp).
+Check out these new functions in the [CTL Topic Guide](../../topic_guides/comparisons/comparison_templates.ipynb) and [CTL Documentation](../../comparison_template_library.md).
 
 ## :simple-adblock: Blocking Rule Library
 
@@ -62,23 +67,12 @@ With a massive thanks to external contributor [@hanselmm](https://github.com/moj
 
 Clerical labelling is an important tool for [generating performance metrics](https://moj-analytical-services.github.io/splink/demos/tutorials/07_Quality_assurance.html) for linkage models (False Positive Rate, Recall, Precision etc.).
 
-Splink now has a (beta) GUI for clerical labelling which produces labels in a form that can be easily ingested into Splink to generate these performance metrics.  Example here: https://robinlinacre.com/splink_example_charts/example_charts/splink3/labelling_tool_dedupe_only.html PR here: https://github.com/moj-analytical-services/splink/pull/1208, and some previous tweets:
+Splink now has a (beta) GUI for clerical labelling which produces labels in a form that can be easily ingested into Splink to generate these performance metrics. Check out the [example tool](https://robinlinacre.com/splink_example_charts/example_charts/splink3/labelling_tool_dedupe_only.html), linked [Pull Request](https://github.com/moj-analytical-services/splink/pull/1208), and some previous tweets:
 
 <blockquote class="twitter-tweet"><p lang="en" dir="ltr">Draft new Splink tool to speed up manual labelling of record linkage data. Example dashboard: <a href="https://t.co/yc1yHpa90X">https://t.co/yc1yHpa90X</a> <br><br>Grateful for any feedback whilst I&#39;m still working on this, on Twitter or the draft PR: <a href="https://t.co/eXSNHHe2kc">https://t.co/eXSNHHe2kc</a><br><br>Free and open source <a href="https://t.co/MEo4DmaxO9">pic.twitter.com/MEo4DmaxO9</a></p>&mdash; Robin Linacre (@RobinLinacre) <a href="https://twitter.com/RobinLinacre/status/1651845520057421825?ref_src=twsrc%5Etfw">April 28, 2023</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
+We would love any feedback from users, so please comment on the [PR](https://github.com/moj-analytical-services/splink/pull/1208) or open a [discussion](https://github.com/moj-analytical-services/splink/discussions).
 
-## :books: Documentation Improvements
-
-We have been putting a lot of effort into improving our documentation site, including launching this blog!
-
-Some of the improvements include:
-
-* More Topic Guides covering things such as [Record Linkage Theory](https://moj-analytical-services.github.io/splink/topic_guides/theory/record_linkage.html), [Guidance on Splink's backends](https://moj-analytical-services.github.io/splink/topic_guides/backends/backends.html) and [String Fuzzy Matching](https://moj-analytical-services.github.io/splink/topic_guides/comparisons/choosing_comparators.html)
-* A [Contributors Guide](https://moj-analytical-services.github.io/splink/CONTRIBUTING.html) to make contrbuting to Splink even easier. If you are interested in getting involved in open source, check the guide out!
-* 
-
-
-Thanks to everyone who filled out our [feedback survey](https://forms.gle/4S9PJgFX7opE9ggu9). If you have any more feedback or ideas for how we can make the docs better please do let us know by [raising an issue](https://github.com/moj-analytical-services/splink/issues), [starting a discussion](https://github.com/moj-analytical-services/splink/discussions) or filling out the survey.
 
 ## :bar_chart: Charts in Altair 5
 
@@ -93,9 +87,51 @@ c.save(“chart.png”, scale_factor=2)
 where `json`, `html`, `png`, `svg` and `pdf` are all supported.
 
 
+## :simple-python: API Improvements
+
+We are always keen to improve user experience with the Splink API which can include giving functions clearer names, reducing duplication etc. 
+
+#### Reduced duplication in Comparison libraries
+
+Historically, importing of the comparison libraries ([CL](../../comparison_library.md), [CTL](../../comparison_template_library.md), [CLL](../../comparison_level_library.md)) has included declaring the backend twice. For example:
+
+```py 
+import splink.duckdb.duckdb_comparison_level_library as cll
+```
+This repetition has now been removed
+```py
+import splink.duckdb.comparison_level_library as cll
+```
+The original structure still works, but throws a warning to switch to the new version.
+
+#### In-built datasets
+
+When following along with the tutorial or example notebooks, one issue can be references of paths to data that does not exists on users machines. To overcome this issue, Splink now has a `splink_datasets` module which will store these datasets and make sure any users can copy and paste working code without fear of path issues. For example:
+
+```py
+from splink.datasets import splink_datasets
+
+df = splink_datasets.fake_1000
+```
+returns the fake 1000 row dataset that is used in the Splink [tutorial](../../demos/tutorials/00_Tutorial_Introduction.ipynb).
+
+For more information check out the in-built datasets [Documentation](../../datasets.md).
+
+## :books: Documentation Improvements
+
+We have been putting a lot of effort into improving our documentation site, including launching this blog!
+
+Some of the improvements include:
+
+* More Topic Guides covering things such as [Record Linkage Theory](https://moj-analytical-services.github.io/splink/topic_guides/theory/record_linkage.html), [Guidance on Splink's backends](https://moj-analytical-services.github.io/splink/topic_guides/backends/backends.html) and [String Fuzzy Matching](https://moj-analytical-services.github.io/splink/topic_guides/comparisons/choosing_comparators.html).
+* A [Contributors Guide](https://moj-analytical-services.github.io/splink/CONTRIBUTING.html) to make contrbuting to Splink even easier. If you are interested in getting involved in open source, check the guide out!
+* Adding tables to the Comparison [libraries documentation](../../comparison_level_library.md) to show the functions available for each SQL backend. 
+
+Thanks to everyone who filled out our [feedback survey](https://forms.gle/4S9PJgFX7opE9ggu9). If you have any more feedback or ideas for how we can make the docs better please do let us know by [raising an issue](https://github.com/moj-analytical-services/splink/issues), [starting a discussion](https://github.com/moj-analytical-services/splink/discussions) or filling out the survey.
+
 ## :soon: What's in the pipeline?
 
 * :simple-adblock:   More Blocking improvements  
-* :clipboard:   Settings improvements  
-* :material-thumbs-up-down:   Evaluation Framework - 
+* :clipboard:   Settings dictionary improvements  
+* :material-thumbs-up-down:   More guidance on how to evaluate Splink models and linkages
 
