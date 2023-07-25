@@ -13,7 +13,6 @@ from .decorator import mark_with_dialects_excluding
 
 @mark_with_dialects_excluding()
 def test_analyse_blocking_slow_methodology(test_helpers, dialect):
-
     helper = test_helpers[dialect]
     Linker = helper.Linker
     brl = helper.brl
@@ -352,11 +351,12 @@ def test_analyse_blocking_fast_methodology():
 def test_blocking_rule_accepts_different_dialects():
     br = "l.first_name = r.first_name"
     br = BlockingRule(br, sqlglot_dialect="spark")
-    assert br._join_conditions == [("first_name", "first_name")]
+    assert br._equi_join_conditions == [("first_name", "first_name")]
 
     br = "l.`hi THERE` = r.`hi THERE`"
     br = BlockingRule(br, sqlglot_dialect="spark")
-    assert br._join_conditions == [("`hi THERE`", "`hi THERE`")]
+
+    assert br._equi_join_conditions == [("`hi THERE`", "`hi THERE`")]
 
 
 @mark_with_dialects_excluding()
