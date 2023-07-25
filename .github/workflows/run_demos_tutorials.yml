@@ -54,7 +54,7 @@ jobs:
       #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root --only demos
+        run: poetry install --no-interaction --only demos
       #----------------------------------------------
       # Make sure that the demo notebooks run without error
       #----------------------------------------------
