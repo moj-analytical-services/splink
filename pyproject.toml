@@ -47,7 +47,6 @@ pytest-benchmark = "^4"
 lzstring = "1.0.4"
 
 [tool.poetry.group.demos]
-optional = true
 [tool.poetry.group.demos.dependencies]
 importlib-resources = "5.4.0"
 jupyterlab = "3.6.1"
