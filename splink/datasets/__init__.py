@@ -31,7 +31,8 @@ class _DataSetMetaData:
             )
 
 
-_splink_datasets_data_dir = "https://raw.githubusercontent.com/moj-analytical-services/splink_datasets/master/data"
+_splink_datasets_data_dir = """https://raw.githubusercontent.com/moj-analytical-services
+                                /splink_datasets/master/data"""
 _datasets = [
     _DataSetMetaData(
         "fake_1000",
@@ -84,10 +85,10 @@ _datasets = [
         "5,000",
         "2,000",
         (
-            "The Freely Extensible Biomedical Record Linkage (FEBRL) datasets consist of "
-            "comparison patterns from an epidemiological cancer study in Germany"
-            "FEBRL3 data set contains 5000 records (2000 originals and 3000 duplicates), "
-            "with a maximum of 5 duplicates based on one original record."
+            "The Freely Extensible Biomedical Record Linkage (FEBRL) datasets consist"
+            " of comparison patterns from an epidemiological cancer study in Germany."
+            "FEBRL3 data set contains 5000 records (2000 originals and 3000 duplicates"
+            "), with a maximum of 5 duplicates based on one original record."
         ),
     ),
     _DataSetMetaData(
@@ -97,8 +98,8 @@ _datasets = [
         "5,000",
         "5,000",
         (
-            "The Freely Extensible Biomedical Record Linkage (FEBRL) datasets consist of "
-            "comparison patterns from an epidemiological cancer study in Germany."
+            "The Freely Extensible Biomedical Record Linkage (FEBRL) datasets consist"
+            " of comparison patterns from an epidemiological cancer study in Germany."
             "FEBRL4a contains 5000 original records."
         ),
     ),
@@ -109,8 +110,8 @@ _datasets = [
         "5,000",
         "5,000",
         (
-            "The Freely Extensible Biomedical Record Linkage (FEBRL) datasets consist of "
-            "comparison patterns from an epidemiological cancer study in Germany."
+            "The Freely Extensible Biomedical Record Linkage (FEBRL) datasets consist"
+            " of comparison patterns from an epidemiological cancer study in Germany."
             "FEBRL4b contains 5000 duplicate records, one for each record in FEBRL4a."
         ),
     ),
@@ -121,10 +122,10 @@ _datasets = [
         "45,326",
         "45,326",
         (
-            "This data has been generated to resemble bank transactions leaving an account. "
-            "There are no duplicates within the dataset and each transaction is designed to "
-            "have a counterpart arriving in 'transactions_destination'. "
-            "Memo is sometimes truncated or missing."
+            "This data has been generated to resemble bank transactions leaving an "
+            "account. There are no duplicates within the dataset and each transaction"
+            " is designed to have a counterpart arriving in 'transactions_destination'"
+            ". Memo is sometimes truncated or missing."
         ),
         "parquet",
     ),
@@ -135,12 +136,12 @@ _datasets = [
         "45,326",
         "45,326",
         (
-            "This data has been generated to resemble bank transactions arriving in an account. "
-            "There are no duplicates within the dataset and each transaction is designed to "
-            "have a counterpart sent from 'transactions_origin'. "
-            "There may be a delay between the source and destination account, and the amount "
-            "may vary due to hidden fees and foreign exchange rates."
-            "Memo is sometimes truncated or missing."
+            "This data has been generated to resemble bank transactions arriving in "
+            "an account. There are no duplicates within the dataset and each "
+            "transaction is designed to have a counterpart sent from "
+            "'transactions_origin'. There may be a delay between the source and "
+            "destination account, and the amount may vary due to hidden fees and "
+            "foreign exchange rates. Memo is sometimes truncated or missing."
         ),
         "parquet",
     ),
