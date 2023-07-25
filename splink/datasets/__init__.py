@@ -31,9 +31,7 @@ class _DataSetMetaData:
             )
 
 
-_splink_datasets_data_dir = (
-    "https://raw.githubusercontent.com/moj-analytical-services/splink_datasets/master/data"
-)
+_splink_datasets_data_dir = "https://raw.githubusercontent.com/moj-analytical-services/splink_datasets/master/data"
 _datasets = [
     _DataSetMetaData(
         "fake_1000",
@@ -48,18 +46,15 @@ _datasets = [
         ),
     ),
     _DataSetMetaData(
-         "fake_1000_labels",
+        "fake_1000_labels",
         f"{_splink_datasets_data_dir}/fake_1000_labels.csv",
         # hard code metadata to avoid needing to download to build docs
         "1,225",
         "NA",
-        (
-            "Clerical labels for pairwise comparison  "
-            "from fake_1000 "
-        ),
+        ("Clerical labels for pairwise comparison  " "from fake_1000 "),
     ),
     _DataSetMetaData(
-         "labels_to_estimate_m",
+        "labels_to_estimate_m",
         f"{_splink_datasets_data_dir}/pairwise_labels_to_estimate_m.csv",
         # hard code metadata to avoid needing to download to build docs
         "2,032",
@@ -70,7 +65,7 @@ _datasets = [
         ),
     ),
     _DataSetMetaData(
-         "historical_50k",
+        "historical_50k",
         f"{_splink_datasets_data_dir}/historical_figures_with_errors_50k.parquet",
         # hard code metadata to avoid needing to download to build docs
         "50,000",
@@ -83,12 +78,12 @@ _datasets = [
         "parquet",
     ),
     _DataSetMetaData(
-         "febrl3",
+        "febrl3",
         f"{_splink_datasets_data_dir}/febrl/dataset3.csv",
         # hard code metadata to avoid needing to download to build docs
         "5,000",
         "3,000",
-        (   
+        (
             "The Freely Extensible Biomedical Record Linkage (FEBRL) datasets consist of "
             "comparison patterns from an epidemiological cancer study in Germany"
             "FEBRL3 data set contains 5000 records (2000 originals and 3000 duplicates), "
@@ -96,7 +91,7 @@ _datasets = [
         ),
     ),
     _DataSetMetaData(
-         "febrl4a",
+        "febrl4a",
         f"{_splink_datasets_data_dir}/febrl/dataset4a.csv",
         # hard code metadata to avoid needing to download to build docs
         "5,000",
@@ -108,7 +103,7 @@ _datasets = [
         ),
     ),
     _DataSetMetaData(
-         "febrl4b",
+        "febrl4b",
         f"{_splink_datasets_data_dir}/febrl/dataset4b.csv",
         # hard code metadata to avoid needing to download to build docs
         "5,000",
@@ -120,7 +115,7 @@ _datasets = [
         ),
     ),
     _DataSetMetaData(
-         "transactions_origin",
+        "transactions_origin",
         f"{_splink_datasets_data_dir}/transactions_left.parquet",
         # hard code metadata to avoid needing to download to build docs
         "45,326",
@@ -134,7 +129,7 @@ _datasets = [
         "parquet",
     ),
     _DataSetMetaData(
-         "transactions_destination",
+        "transactions_destination",
         f"{_splink_datasets_data_dir}/transactions_right.parquet",
         # hard code metadata to avoid needing to download to build docs
         "45,326",
