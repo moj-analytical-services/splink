@@ -69,7 +69,7 @@ _datasets = [
         f"{_splink_datasets_data_dir}/historical_figures_with_errors_50k.parquet",
         # hard code metadata to avoid needing to download to build docs
         "50,000",
-        "Unknown",
+        "5,156",
         (
             "The data is based on historical persons scraped from wikidata. "
             "Duplicate records are introduced with a variety of errors "
@@ -82,7 +82,7 @@ _datasets = [
         f"{_splink_datasets_data_dir}/febrl/dataset3.csv",
         # hard code metadata to avoid needing to download to build docs
         "5,000",
-        "3,000",
+        "2,000",
         (
             "The Freely Extensible Biomedical Record Linkage (FEBRL) datasets consist of "
             "comparison patterns from an epidemiological cancer study in Germany"
@@ -95,7 +95,7 @@ _datasets = [
         f"{_splink_datasets_data_dir}/febrl/dataset4a.csv",
         # hard code metadata to avoid needing to download to build docs
         "5,000",
-        "0",
+        "5,000",
         (
             "The Freely Extensible Biomedical Record Linkage (FEBRL) datasets consist of "
             "comparison patterns from an epidemiological cancer study in Germany."
@@ -107,7 +107,7 @@ _datasets = [
         f"{_splink_datasets_data_dir}/febrl/dataset4b.csv",
         # hard code metadata to avoid needing to download to build docs
         "5,000",
-        "0",
+        "5,000",
         (
             "The Freely Extensible Biomedical Record Linkage (FEBRL) datasets consist of "
             "comparison patterns from an epidemiological cancer study in Germany."
@@ -119,7 +119,7 @@ _datasets = [
         f"{_splink_datasets_data_dir}/transactions_left.parquet",
         # hard code metadata to avoid needing to download to build docs
         "45,326",
-        "0",
+        "45,326",
         (
             "This data has been generated to resemble bank transactions leaving an account. "
             "There are no duplicates within the dataset and each transaction is designed to "
@@ -133,7 +133,7 @@ _datasets = [
         f"{_splink_datasets_data_dir}/transactions_right.parquet",
         # hard code metadata to avoid needing to download to build docs
         "45,326",
-        "0",
+        "45,326",
         (
             "This data has been generated to resemble bank transactions arriving in an account. "
             "There are no duplicates within the dataset and each transaction is designed to "
