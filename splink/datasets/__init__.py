@@ -31,21 +31,123 @@ class _DataSetMetaData:
             )
 
 
-_splink_demo_data_dir = (
-    "https://raw.githubusercontent.com/moj-analytical-services/splink_demos/master/data"
+_splink_datasets_data_dir = (
+    "https://raw.githubusercontent.com/moj-analytical-services/splink_datasets/master/data"
 )
 _datasets = [
     _DataSetMetaData(
         "fake_1000",
-        f"{_splink_demo_data_dir}/fake_1000.csv",
+        f"{_splink_datasets_data_dir}/fake_1000.csv",
         # hard code metadata to avoid needing to download to build docs
-        1000,
+        "1,000",
         250,
         (
             "Fake 1000 from splink demos.  "
             "Records are 250 simulated people, "
             "with different numbers of duplicates, labelled."
         ),
+    ),
+    _DataSetMetaData(
+         "fake_1000_labels",
+        f"{_splink_datasets_data_dir}/fake_1000_labels.csv",
+        # hard code metadata to avoid needing to download to build docs
+        "1,225",
+        "NA",
+        (
+            "Clerical labels for pairwise comparison  "
+            "from fake_1000 "
+        ),
+    ),
+    _DataSetMetaData(
+         "labels_to_estimate_m",
+        f"{_splink_datasets_data_dir}/pairwise_labels_to_estimate_m.csv",
+        # hard code metadata to avoid needing to download to build docs
+        "2,032",
+        "NA",
+        (
+            "Clerical labels for pairwise comparison  "
+            " for model training from fake_1000 "
+        ),
+    ),
+    _DataSetMetaData(
+         "historical_50k",
+        f"{_splink_datasets_data_dir}/historical_figures_with_errors_50k.parquet",
+        # hard code metadata to avoid needing to download to build docs
+        "50,000",
+        "Unknown",
+        (
+            "The data is based on historical persons scraped from wikidata. "
+            "Duplicate records are introduced with a variety of errors "
+            "introduced.  "
+        ),
+        "parquet",
+    ),
+    _DataSetMetaData(
+         "febrl3",
+        f"{_splink_datasets_data_dir}/febrl/dataset3.csv",
+        # hard code metadata to avoid needing to download to build docs
+        "5,000",
+        "3,000",
+        (   
+            "The Freely Extensible Biomedical Record Linkage (FEBRL) datasets consist of "
+            "comparison patterns from an epidemiological cancer study in Germany"
+            "FEBRL3 data set contains 5000 records (2000 originals and 3000 duplicates), "
+            "with a maximum of 5 duplicates based on one original record."
+        ),
+    ),
+    _DataSetMetaData(
+         "febrl4a",
+        f"{_splink_datasets_data_dir}/febrl/dataset4a.csv",
+        # hard code metadata to avoid needing to download to build docs
+        "5,000",
+        "0",
+        (
+            "The Freely Extensible Biomedical Record Linkage (FEBRL) datasets consist of "
+            "comparison patterns from an epidemiological cancer study in Germany."
+            "FEBRL4a contains 5000 original records."
+        ),
+    ),
+    _DataSetMetaData(
+         "febrl4b",
+        f"{_splink_datasets_data_dir}/febrl/dataset4b.csv",
+        # hard code metadata to avoid needing to download to build docs
+        "5,000",
+        "0",
+        (
+            "The Freely Extensible Biomedical Record Linkage (FEBRL) datasets consist of "
+            "comparison patterns from an epidemiological cancer study in Germany."
+            "FEBRL4b contains 5000 duplicate records, one for each record in FEBRL4a."
+        ),
+    ),
+    _DataSetMetaData(
+         "transactions_origin",
+        f"{_splink_datasets_data_dir}/transactions_left.parquet",
+        # hard code metadata to avoid needing to download to build docs
+        "45,326",
+        "0",
+        (
+            "This data has been generated to resemble bank transactions leaving an account. "
+            "There are no duplicates within the dataset and each transaction is designed to "
+            "have a counterpart arriving in 'transactions_destination'. "
+            "Memo is sometimes truncated or missing."
+        ),
+        "parquet",
+    ),
+    _DataSetMetaData(
+         "transactions_destination",
+        f"{_splink_datasets_data_dir}/transactions_right.parquet",
+        # hard code metadata to avoid needing to download to build docs
+        "45,326",
+        "0",
+        (
+            "This data has been generated to resemble bank transactions arriving in an account. "
+            "There are no duplicates within the dataset and each transaction is designed to "
+            "have a counterpart sent from 'transactions_origin'. "
+            "There may be a delay between the source and destination account, and the amount "
+            "may vary due to hidden fees and foreign exchange rates."
+            "Memo is sometimes truncated or missing."
+        ),
+        "parquet",
     ),
 ]
 _cache_dir = _DATASETDIR / "__splinkdata_cache__"
