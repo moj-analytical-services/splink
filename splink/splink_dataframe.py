@@ -65,10 +65,44 @@ class SplinkDataFrame:
     def drop_table_from_database_and_remove_from_cache(
         self, force_non_splink_table=False
     ):
+        """Drops the table from the underlying database, and removes it
+        from the (linker) cache.
+
+        By default this will fail if the table is not one created by Splink,
+        but this check can be overriden
+
+        Examples:
+            ```py
+            df_predict = linker.predict()
+            df_predict.drop_table_from_database_and_remove_from_cache()
+            # predictions table no longer in the database / cache
+            ```
+        Args:
+            force_non_splink_table (bool, optional): If True, skip check if the
+                table was created by Splink and always drop regardless. If False,
+                only drop if table was created by Splink. Defaults to False.
+
+        """
         self._drop_table_from_database(force_non_splink_table=force_non_splink_table)
         self.linker._remove_splinkdataframe_from_cache(self)
 
     def as_record_dict(self, limit=None):
+        """Return the dataframe as a list of record dictionaries.
+
+        This can be computationally expensive if the dataframe is large.
+
+        Examples:
+            ```py
+            df_predict = linker.predict()
+            ten_edges = df_predict.as_record_dict(10)
+            ```
+        Args:
+            limit (int, optional): If provided, return this number of rows (equivalent
+            to a limit statement in SQL). Defaults to None, meaning return all rows
+
+        Returns:
+            list: a list of records, each of which is a dictionary
+        """
         raise NotImplementedError("as_record_dict not implemented for this linker")
 
     def as_pandas_dataframe(self, limit=None):
@@ -80,6 +114,11 @@ class SplinkDataFrame:
             limit (int, optional): If provided, return this number of rows (equivalent
             to a limit statement in SQL). Defaults to None, meaning return all rows
 
+        Examples:
+            ```py
+            df_predict = linker.predict()
+            df_ten_edges = df_predict.as_pandas_dataframe(10)
+            ```
         Returns:
             pandas.DataFrame: pandas Dataframe
         """
@@ -100,9 +139,33 @@ class SplinkDataFrame:
         p.text(msg)
 
     def to_parquet(self, filepath, overwrite=False):
+        """Save the dataframe in parquet format.
+
+        Examples:
+            ```py
+            df_predict = linker.predict()
+            df_predict.to_parquet("model_predictions.parquet", overwrite=True)
+            ```
+        Args:
+            filepath (str): Filepath where csv will be saved.
+            overwrite (bool, optional): If True, overwrites file if it already exists.
+                Default is False.
+        """
         raise NotImplementedError("`to_parquet` not implemented for this linker")
 
     def to_csv(self, filepath, overwrite=False):
+        """Save the dataframe in csv format.
+
+        Examples:
+            ```py
+            df_predict = linker.predict()
+            df_predict.to_csv("model_predictions.csv", overwrite=True)
+            ```
+        Args:
+            filepath (str): Filepath where csv will be saved.
+            overwrite (bool, optional): If True, overwrites file if it already exists.
+                Default is False.
+        """
         raise NotImplementedError("`to_csv` not implemented for this linker")
 
     def check_file_exists(self, filepath):

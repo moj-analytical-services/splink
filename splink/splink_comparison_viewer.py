@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import json
 import os
-import pkgutil
 from typing import TYPE_CHECKING
 
 from jinja2 import Template
 
-from .misc import EverythingEncoder
+from .misc import EverythingEncoder, read_resource
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -109,8 +108,7 @@ def render_splink_comparison_viewer_html(
     bundle_observable_notebook = True
 
     template_path = "files/splink_comparison_viewer/template.j2"
-    template = pkgutil.get_data(__name__, template_path).decode("utf-8")
-    template = Template(template)
+    template = Template(read_resource(template_path))
 
     template_data = {
         "comparison_vector_data": json.dumps(
@@ -127,9 +125,7 @@ def render_splink_comparison_viewer_html(
         "custom_css": "files/splink_comparison_viewer/custom.css",
     }
     for k, v in files.items():
-        f = pkgutil.get_data(__name__, v)
-        f = f.decode("utf-8")
-        template_data[k] = f
+        template_data[k] = read_resource(v)
 
     template_data["bundle_observable_notebook"] = bundle_observable_notebook
 

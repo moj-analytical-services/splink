@@ -37,7 +37,8 @@ linker = SparkLinker(
 
 Splink uses an iterative algorithm for model training, and more generally, lineage is long and complex. We have found that big jobs fail to complete without further optimisation. This is a [well-known problem](https://www.pdl.cmu.edu/PDL-FTP/Storage/CMU-PDL-18-101.pdf):
 
-> > > "This long lineage bottleneck is widely known by sophisticated Spark application programmers. A common practice for dealing with long lineage is to have the application program strategically checkpoint RDDs at code locations that truncate much of the lineage for checkpointed data and resume computation immediately from the checkpoint."
+!!! quote
+    "This long lineage bottleneck is widely known by sophisticated Spark application programmers. A common practice for dealing with long lineage is to have the application program strategically checkpoint RDDs at code locations that truncate much of the lineage for checkpointed data and resume computation immediately from the checkpoint."
 
 Splink will automatically break lineage in sensible places. We have found in practice that, when running Spark jobs backed by AWS S3, the fastest method of breaking lineage is persisting outputs to `.parquet` file.
 
