@@ -14,28 +14,44 @@ jobs:
       matrix:
         python-version: ["3.9"]
     steps:
+      #----------------------------------------------
+      #       check-out repo and set-up python
+      #----------------------------------------------
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+      #----------------------------------------------
+      #  -- save a few section by caching poetry --
+      #----------------------------------------------
       - name: Load cached Poetry installation
         uses: actions/cache@v2
         with:
           path: ~/.local  # the path depends on the OS
           key: poetry-0  # increment to reset cache
+      #----------------------------------------------
+      #  -----  install & configure poetry  -----
+      #----------------------------------------------
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
+
+      #----------------------------------------------
+      #       load cached venv if cache exists
+      #----------------------------------------------
       - name: Load cached venv
         id: cached-poetry-dependencies
         uses: actions/cache@v2
         with:
           path: .venv
           key: venv-demos-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-00
+      #----------------------------------------------
+      # install dependencies if cache does not exist
+      #----------------------------------------------
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root --only demos
@@ -44,13 +60,16 @@ jobs:
       #----------------------------------------------
       - name: Test DuckDB example notebooks with pytest
         run: |
+          source .venv/bin/activate
           python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/examples/duckdb/*ipynb
       - name: Test Spark example notebooks with pytest
         run: |
+          source .venv/bin/activate
           python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/examples/spark/*ipynb
       #- name: Test Athena example notebooks with pytest
       #  run: |
       #    python -m pytest --nbmake --nbmake-kernel=python3 examples/athena/*ipynb
       - name: Test SQLite example notebooks with pytest
         run: |
+          source .venv/bin/activate
           python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/examples/sqlite/*ipynb
