@@ -16,8 +16,8 @@ _valid_formats = ("csv", "parquet")
 class _DataSetMetaData:
     dataset_name: str
     url: str
-    rows: int
-    unique_entities: int
+    rows: str
+    unique_entities: str
     description: str = ""
     data_format: str = "csv"
 
@@ -31,38 +31,22 @@ class _DataSetMetaData:
             )
 
 
-_splink_datasets_data_dir = """https://raw.githubusercontent.com/moj-analytical-services
-                                /splink_datasets/master/data"""
+_splink_datasets_data_dir = (
+    "https://raw.githubusercontent.com/"
+    + "moj-analytical-services"
+    + "/splink_datasets/master/data"
+)
 _datasets = [
     _DataSetMetaData(
         "fake_1000",
         f"{_splink_datasets_data_dir}/fake_1000.csv",
         # hard code metadata to avoid needing to download to build docs
         "1,000",
-        250,
+        "250",
         (
             "Fake 1000 from splink demos.  "
             "Records are 250 simulated people, "
             "with different numbers of duplicates, labelled."
-        ),
-    ),
-    _DataSetMetaData(
-        "fake_1000_labels",
-        f"{_splink_datasets_data_dir}/fake_1000_labels.csv",
-        # hard code metadata to avoid needing to download to build docs
-        "1,225",
-        "NA",
-        ("Clerical labels for pairwise comparison  " "from fake_1000 "),
-    ),
-    _DataSetMetaData(
-        "labels_to_estimate_m",
-        f"{_splink_datasets_data_dir}/pairwise_labels_to_estimate_m.csv",
-        # hard code metadata to avoid needing to download to build docs
-        "2,032",
-        "NA",
-        (
-            "Clerical labels for pairwise comparison  "
-            " for model training from fake_1000 "
         ),
     ),
     _DataSetMetaData(
@@ -73,8 +57,7 @@ _datasets = [
         "5,156",
         (
             "The data is based on historical persons scraped from wikidata. "
-            "Duplicate records are introduced with a variety of errors "
-            "introduced.  "
+            "Duplicate records are introduced with a variety of errors."
         ),
         "parquet",
     ),
@@ -144,6 +127,28 @@ _datasets = [
             "foreign exchange rates. Memo is sometimes truncated or missing."
         ),
         "parquet",
+    ),
+]
+
+_labels = [
+    _DataSetMetaData(
+        "fake_1000_labels",
+        f"{_splink_datasets_data_dir}/fake_1000_labels.csv",
+        # hard code metadata to avoid needing to download to build docs
+        "1,225",
+        "NA",
+        ("Clerical labels for pairwise comparison  " "from fake_1000 "),
+    ),
+    _DataSetMetaData(
+        "labels_to_estimate_m",
+        f"{_splink_datasets_data_dir}/pairwise_labels_to_estimate_m.csv",
+        # hard code metadata to avoid needing to download to build docs
+        "2,032",
+        "NA",
+        (
+            "Clerical labels for pairwise comparison  "
+            " for model training from fake_1000 "
+        ),
     ),
 ]
 _cache_dir = _DATASETDIR / "__splinkdata_cache__"
@@ -234,6 +239,12 @@ class _SplinkDataUtils:
         """
         return [d.dataset_name for d in _datasets]
 
+    def list_all_dataset_labels(self):
+        """Return a list of all available dataset labels, regardless of whether
+        or not they have already been pre-downloaded
+        """
+        return [d.dataset_name for d in _labels]
+
     def show_downloaded_data(self):
         """Print a list of datasets that have already been pre-downloaded"""
         print(  # noqa: T201
@@ -250,10 +261,12 @@ class _SplinkDataUtils:
                 If `None`, all datasets will be deleted. Default `None`
         """
         available_datasets = self.list_all_datasets()
+        available_labels = self.list_all_dataset_labels()
+        all_available_data = available_datasets + available_labels
         if datasets is None:
-            datasets = available_datasets
+            datasets = all_available_data
         for ds in datasets:
-            if ds not in available_datasets:
+            if ds not in all_available_data:
                 warnings.warn(
                     f"Dataset '{ds}' not recognised, ignoring",
                     stacklevel=2,
@@ -267,6 +280,11 @@ class _SplinkDataSets(metaclass=_SplinkDataSetsMeta, datasets=_datasets):
     pass
 
 
+class _SplinkDataSetLabels(metaclass=_SplinkDataSetsMeta, datasets=_labels):
+    pass
+
+
 # these two singleton objects are the only user-facing portion:
 splink_datasets = _SplinkDataSets()
+splink_dataset_labels = _SplinkDataSetLabels()
 splink_dataset_utils = _SplinkDataUtils()
