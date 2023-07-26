@@ -30,7 +30,6 @@ with open(
 ) as f:
     f.write(dataset_table)
 
-
 def make_dataset_labels_md_table(datasets):
     # start table with a header row
     table = "|dataset name|description|rows|unique entities|link to source|\n"
@@ -46,7 +45,6 @@ def make_dataset_labels_md_table(datasets):
         table += f"|[source]({ds.url})"
         table += "|\n"
     return table
-
 
 dataset_labels_table = make_dataset_md_table(dataset_labels_info)
 dataset_labels_table_file = "dataset_labels_table.md"
