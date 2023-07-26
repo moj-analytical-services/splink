@@ -100,7 +100,7 @@ _datasets = [
     ),
     _DataSetMetaData(
         "transactions_origin",
-        f"{_splink_datasets_data_dir}/transactions_left.parquet",
+        f"{_splink_datasets_data_dir}/transactions_origin.parquet",
         # hard code metadata to avoid needing to download to build docs
         "45,326",
         "45,326",
@@ -114,7 +114,7 @@ _datasets = [
     ),
     _DataSetMetaData(
         "transactions_destination",
-        f"{_splink_datasets_data_dir}/transactions_right.parquet",
+        f"{_splink_datasets_data_dir}/transactions_destination.parquet",
         # hard code metadata to avoid needing to download to build docs
         "45,326",
         "45,326",
