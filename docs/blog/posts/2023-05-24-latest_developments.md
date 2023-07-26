@@ -9,7 +9,7 @@ categories:
 
 # Splink Updates - July 2023
 
-** :new: Welcome to the Splink Blog! :new: **
+## :new: Welcome to the Splink Blog! :new:
 
 Its hard to keep up to date with all of the new features being added to Splink, so we have launched this blog to share a round up of latest developments every few months.
 
@@ -22,13 +22,16 @@ Latest Splink version: [v3.9.4](https://github.com/moj-analytical-services/splin
 
 ## :rocket: Massive speed gains in EM training
 
-There’s now an option to make EM training much faster - in one example we’ve seen at 1000x fold speedup.  Kudos to external contributor [@aymonwuolanne](https://github.com/moj-analytical-services/splink/pull/1369) from the Australian Bureau of Statistics! 
+There’s now an option to make EM training much faster - in one example we’ve seen at [1000x fold speedup](https://github.com/moj-analytical-services/splink/pull/1369#issuecomment-1611214919).  Kudos to external contributor [@aymonwuolanne](https://github.com/moj-analytical-services/splink/pull/1369) from the Australian Bureau of Statistics! 
 
-To make use of this, set the `estimate_without_term_frequencies` parameter to True, for example:
+To make use of this, set the [`estimate_without_term_frequencies`](https://moj-analytical-services.github.io/splink/linkerest.html#splink.linker.Linker.estimate_parameters_using_expectation_maximisation) parameter to True; for example:
 
 ```py
 linker.estimate_parameters_using_expectation_maximisation(..., estimate_without_term_frequencies=True)
 ```
+
+Note: If True, the EM algorithm ignores term frequency adjustments during the iterations. Instead, the adjustments are added once the EM algorithm has converged. This will result in slight difference in the final parameter estimations.
+
 ## :gift: Out-of-the-box Comparisons
 
 Splink now contains lots of new out-of-the-box comparisons for [dates](../../comparison_template_library.md#splink.comparison_template_library.DateComparisonBase), [names](../../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase), [postcodes](../../comparison_template_library.md#splink.comparison_template_library.PostcodeComparisonBase) etc. The Comparison Template Library (CTL) provides suggested settings for common types of data used in linkage models. 
@@ -57,11 +60,11 @@ brl.exact_match_rule("date_of_birth")
 
 Check out these new functions in the [BRL Documentation](https://moj-analytical-services.github.io/splink/blocking_rule_library.html) as well as some new [Blocking Topic Guides](https://moj-analytical-services.github.io/splink/topic_guides/blocking/blocking_rules.html) to better explain what Blocking Rules are, how they are used in Splink, and how to choose them.
 
-Keep a look out, as there is more improvements in the pipeline for Blocking in the coming months!
+Keep a look out, as there are more improvements in the pipeline for Blocking in the coming months!
 
 ## :elephant: Postgres Support
 
-With a massive thanks to external contributor [@hanselmm](https://github.com/moj-analytical-services/splink/pull/1191), Splink now supports :simple-postgresql: Postgres. To get started, check out the [Postgres Topic Guide](https://moj-analytical-services.github.io/splink/topic_guides/backends/postgres.html).
+With a massive thanks to external contributor [@hanslemm](https://github.com/moj-analytical-services/splink/pull/1191), Splink now supports :simple-postgresql: Postgres. To get started, check out the [Postgres Topic Guide](https://moj-analytical-services.github.io/splink/topic_guides/backends/postgres.html).
 
 ## :label: Clerical Labelling Tool (beta)
 
@@ -87,11 +90,7 @@ c.save(“chart.png”, scale_factor=2)
 where `json`, `html`, `png`, `svg` and `pdf` are all supported.
 
 
-## :simple-python: API Improvements
-
-We are always keen to improve user experience with the Splink API which can include giving functions clearer names, reducing duplication etc. 
-
-#### Reduced duplication in Comparison libraries
+## :octicons-duplicate-24: Reduced duplication in Comparison libraries
 
 Historically, importing of the comparison libraries ([CL](../../comparison_library.md), [CTL](../../comparison_template_library.md), [CLL](../../comparison_level_library.md)) has included declaring the backend twice. For example:
 
@@ -104,7 +103,7 @@ import splink.duckdb.comparison_level_library as cll
 ```
 The original structure still works, but throws a warning to switch to the new version.
 
-#### In-built datasets
+## :material-table: In-built datasets
 
 When following along with the tutorial or example notebooks, one issue can be references of paths to data that does not exists on users machines. To overcome this issue, Splink now has a `splink_datasets` module which will store these datasets and make sure any users can copy and paste working code without fear of path issues. For example:
 
@@ -116,6 +115,26 @@ df = splink_datasets.fake_1000
 returns the fake 1000 row dataset that is used in the Splink [tutorial](../../demos/tutorials/00_Tutorial_Introduction.ipynb).
 
 For more information check out the in-built datasets [Documentation](../../datasets.md).
+
+## :material-regex: Regular Expressions in Comparisons
+
+When comparing records, some columns will have a particular structure (e.g. dates, postcodes, email addresses). It can be useful to compare sections of a column entry. Splink's string comparison level functions now include a `regex_extract` to extract a portion of strings to be compared. For example, an `exact_match` comparison that compares the first section of a postcode (outcode) can be written as:
+
+```py
+import splink.duckdb.duckdb_comparison_library as cl
+
+pc_comparison = cl.exact_match("postcode", regex_extract="^[A-Z]{1,2}")
+```
+
+Splink's string comparison level functions also now include a `valid_string_regex` parameter which sends any entries that do not conform to a specified structure to the null level. For example, a `levenshtein` comparison that ensures emails have an "@" symbol can be written as:
+
+```py
+import splink.duckdb.duckdb_comparison_library as cl
+
+email_comparison = cl.levenshtein_at_thresholds("email", valid_string_regex="^[^@]+")
+```
+
+For more on how Regular Expressions can be used in Splink, check out the [Regex topic guide](https://moj-analytical-services.github.io/splink/topic_guides/comparisons/regular_expressions.html#example-using-valid_string_regex).
 
 ## :books: Documentation Improvements
 
