@@ -8949,7 +8949,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 								],
 								range: [
 									"red",
-									"white",
+									"#bbbbbb",
 									"green",
 								],
 								interpolate: "lab"  
