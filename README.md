@@ -168,6 +168,6 @@ We are extremely grateful to professors Katie Harron, James Doidge and Peter Chr
 While Splink is a standalone package, there are a number of repositories in the Splink ecosystem:
 
 - [splink_demos](https://github.com/moj-analytical-services/splink_demos) contains a copy of the Splink tutorial and example notebooks that are hosted via [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab)
-- [splink_scalauds](https://github.com/moj-analytical-services/splink_scalaudfs) contains the code to generate [User Defined Functions](https://moj-analytical-services.github.io/splink/dev_guides/udfs.html#spark) in scala which are then callable in Spark.
+- [splink_scalaudfs](https://github.com/moj-analytical-services/splink_scalaudfs) contains the code to generate [User Defined Functions](https://moj-analytical-services.github.io/splink/dev_guides/udfs.html#spark) in scala which are then callable in Spark.
 - [splink_datasets](https://github.com/moj-analytical-services/splink_datasets) contains datasets that can be installed automatically as a part of Splink through the [In-build datasets](https://moj-analytical-services.github.io/splink/datasets.html) functionality.
 - [splink_synthetic_data] contains code to generate synthetic data.
