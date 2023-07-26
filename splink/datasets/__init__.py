@@ -31,9 +31,11 @@ class _DataSetMetaData:
             )
 
 
-_splink_datasets_data_dir = ("https://raw.githubusercontent.com/" +
-                            "moj-analytical-services" +
-                            "/splink_datasets/master/data")
+_splink_datasets_data_dir = (
+    "https://raw.githubusercontent.com/"
+    + "moj-analytical-services"
+    + "/splink_datasets/master/data"
+)
 _datasets = [
     _DataSetMetaData(
         "fake_1000",
@@ -129,7 +131,7 @@ _datasets = [
 ]
 
 _labels = [
-        _DataSetMetaData(
+    _DataSetMetaData(
         "fake_1000_labels",
         f"{_splink_datasets_data_dir}/fake_1000_labels.csv",
         # hard code metadata to avoid needing to download to build docs
@@ -276,6 +278,7 @@ class _SplinkDataUtils:
 
 class _SplinkDataSets(metaclass=_SplinkDataSetsMeta, datasets=_datasets):
     pass
+
 
 class _SplinkDataSetLabels(metaclass=_SplinkDataSetsMeta, datasets=_labels):
     pass
