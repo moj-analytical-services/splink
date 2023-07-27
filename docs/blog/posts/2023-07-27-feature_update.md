@@ -1,5 +1,5 @@
 ---
-date: 2022-07-14
+date: 2022-07-27
 authors:
   - ross-k
   - robin-l
@@ -73,6 +73,8 @@ Clerical labelling is an important tool for [generating performance metrics](htt
 Splink now has a (beta) GUI for clerical labelling which produces labels in a form that can be easily ingested into Splink to generate these performance metrics. Check out the [example tool](https://robinlinacre.com/splink_example_charts/example_charts/splink3/labelling_tool_dedupe_only.html), linked [Pull Request](https://github.com/moj-analytical-services/splink/pull/1208), and some previous tweets:
 
 <blockquote class="twitter-tweet"><p lang="en" dir="ltr">Draft new Splink tool to speed up manual labelling of record linkage data. Example dashboard: <a href="https://t.co/yc1yHpa90X">https://t.co/yc1yHpa90X</a> <br><br>Grateful for any feedback whilst I&#39;m still working on this, on Twitter or the draft PR: <a href="https://t.co/eXSNHHe2kc">https://t.co/eXSNHHe2kc</a><br><br>Free and open source <a href="https://t.co/MEo4DmaxO9">pic.twitter.com/MEo4DmaxO9</a></p>&mdash; Robin Linacre (@RobinLinacre) <a href="https://twitter.com/RobinLinacre/status/1651845520057421825?ref_src=twsrc%5Etfw">April 28, 2023</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+
+This tool is still in the beta phase, so is a work in progress and subject to change based on feedback we get from users. As a result, it is not thoroughly documented at this stage. We recommend checking out the links above to see a ready-made example of the tool. However, if you would like to generate your own, [this example](https://gist.github.com/RobinL/7512b8b3b31c42b13b5a28aac5a363b4) is a good starting point.
 
 We would love any feedback from users, so please comment on the [PR](https://github.com/moj-analytical-services/splink/pull/1208) or open a [discussion](https://github.com/moj-analytical-services/splink/discussions).
 
