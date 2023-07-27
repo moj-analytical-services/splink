@@ -7,7 +7,7 @@ toc_depth: 2
 ---
 # Retrieving and Querying Splink Results
 
-Once you have [created your linkage model](./settings.md), [trained your parameters](../../demos/tutorials/04_Estimating_model_parameters.html) and [predicted your match probabilities](../../demos/tutorials/05_Predicting_results.html) you may want to run queries on your results. Splink provides several methods for interacting with the tables produced in this process.
+Once you have [created your linkage model](./settings.md), [trained your parameters](../../demos/tutorials/04_Estimating_model_parameters.ipynb) and [predicted your match probabilities](../../demos/tutorials/05_Predicting_results.html) you may want to run queries on your results. Splink provides several methods for interacting with the tables produced in this process.
 
 ## SplinkDataFrame
 

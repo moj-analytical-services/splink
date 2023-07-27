@@ -75,6 +75,6 @@ This is important, as it allows the linkage to be customised to best support the
 
 ??? note "Probabilistic Linkage in Splink"
 
-    Splink is primarily a tool for Probabilistic linkage, and implements the Fellegi-Sunter model - the most common probabilistic record linkage model. See the [Splink Tutorial](../demos/00_Tutorial_Introduction.ipynb) for a step by step guide for Probabilistic linkage in Splink.
+    Splink is primarily a tool for Probabilistic linkage, and implements the Fellegi-Sunter model - the most common probabilistic record linkage model. See the [Splink Tutorial](../../demos/tutorials/00_Tutorial_Introduction.ipynb) for a step by step guide for Probabilistic linkage in Splink.
     
     A Topic Guide on the Fellegi-Sunter model is can be found [here](./fellegi_sunter.md)!

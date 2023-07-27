@@ -12,11 +12,11 @@ tags:
 
 # Phonetic transformation algorithms
 
-Phonetic transformation algorithms can be used to identify words that sound similar, even if they are spelled differently (e.g. "Stephen" vs "Steven"). These algorithms to give another type of fuzzy match and are often generated in the [Feature Engineering](feature_engineering.md#phonetic-transformations) step of record linkage.
+Phonetic transformation algorithms can be used to identify words that sound similar, even if they are spelled differently (e.g. "Stephen" vs "Steven"). These algorithms to give another type of fuzzy match and are often generated in the [Feature Engineering](../data_preparation/feature_engineering.md#phonetic-transformations) step of record linkage.
 
-Once generated, phonetic matches can be used within [comparisons & comparison levels](customising_comparisons.ipynb) and [blocking rules](blocking_rules.md).
+Once generated, phonetic matches can be used within [comparisons & comparison levels](customising_comparisons.ipynb) and [blocking rules](../blocking/blocking_rules.md).
 
-E.g. For a comparison including a [Double Metaphone](#double-metaphone) phonetic match using the [name_comparison](../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons):
+E.g. For a comparison including a [Double Metaphone](#double-metaphone) phonetic match using the [name_comparison](../../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase) function from the [comparison template library](customising_comparisons.ipynb#name-comparisons):
 
 
 === ":simple-duckdb: DuckDB"

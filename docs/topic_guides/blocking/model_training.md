@@ -1,13 +1,13 @@
 # Blocking for Model Training
 
-Model Training Blocking Rules choose which record pairs from a dataset get considered when training a Splink model. These are used during Expectation Maximisation (EM), where we estimate the [m probability](./fellegi_sunter.md#m-probability) (in most cases).
+Model Training Blocking Rules choose which record pairs from a dataset get considered when training a Splink model. These are used during Expectation Maximisation (EM), where we estimate the [m probability](../theory/fellegi_sunter.md#m-probability) (in most cases).
 
 The aim of Model Training Blocking Rules is to reduce the number of record pairs considered when training a Splink model in order to reduce the computational resource required. Each Training Blocking Rule define a training "block" of records which have a combination of matches and non-matches that are considered by Splink's Expectation Maximisation algorithm.
 
 The Expectation Maximisation algorithm seems to work best when the pairwise record comparisons are a mix of anywhere between around 0.1% and 99.9% true matches. It works less efficiently if there is a huge imbalance between the two (e.g. a billion non matches and only a hundred matches).
 
 !!! note
-    Unlike [Prediction Rules](./blocking_predictions.md), it does not matter if Training Rules excludes some true matches - it just needs to generate examples of matches and non-matches.
+    Unlike [Prediction Rules](./predictions.md), it does not matter if Training Rules excludes some true matches - it just needs to generate examples of matches and non-matches.
 
 
 ## Using Training Rules in Splink
@@ -62,4 +62,4 @@ linker.count_num_comparisons_from_blocking_rule(blocking_rule)
 It is recommended that you run this function to check how many comparisons are generated before training a model so that you do not needlessly run a training session on billions of comparisons.
 
 !!! note
-    Unlike [Prediction Rules](./blocking_predictions.md), Training Rules are treated separately for each EM training session therefore the tota number of comparisons for Model Training is simply the sum of `count_num_comparisons_from_blocking_rule` across all Blocking Rules (as opposed to the result of `cumulative_comparisons_from_blocking_rules_records`).
+    Unlike [Prediction Rules](./predictions.md), Training Rules are treated separately for each EM training session therefore the tota number of comparisons for Model Training is simply the sum of `count_num_comparisons_from_blocking_rule` across all Blocking Rules (as opposed to the result of `cumulative_comparisons_from_blocking_rules_records`).
