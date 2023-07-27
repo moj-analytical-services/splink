@@ -2285,7 +2285,7 @@ class Linker:
         )
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
-    
+
     def accuracy_chart_from_labels_table(
         self,
         labels_splinkdataframe_or_table_name,
@@ -2492,7 +2492,7 @@ class Linker:
         )
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
-    
+
     def accuracy_chart_from_labels_column(
         self,
         labels_column_name,
