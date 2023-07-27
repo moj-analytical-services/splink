@@ -1,0 +1,345 @@
+{
+  "width": 400,
+  "height": 400,
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
+  "data": {"values": []},
+  "title": {
+    "text": "Pairwise Link Quality - Performance Metrics",
+    "subtitle": [
+      "Click a legend value to show a specific metric",
+      "Shift + Click to show multiple metrics"
+    ],
+    "fontSize": 18
+  },
+  "transform": [
+    {
+      "fold": [
+        "precision",
+        "recall",
+        "F1",
+        "P4",
+        "accuracy"
+      ],
+      "as": [
+        "score",
+        "y"
+      ]
+    },
+    {
+      "calculate": "0.275 - 0.05*indexof(['precision', 'recall', 'F1', 'P4', 'accuracy'], datum.score)",
+      "as": "score_index"
+    },
+    {
+      "calculate": "datum.score + ' = ' + format(datum.y, ',.3f')",
+      "as": "y_text"
+    }
+  ],
+  "layer": [
+    {
+      "mark": {
+        "type": "point"
+      },
+      "params": [
+        {
+          "name": "metric_point",
+          "select": {
+            "type": "point",
+            "fields": [
+              "score"
+            ]
+          },
+          "value": [
+            {
+              "score": "precision"
+            },
+            {
+              "score": "recall"
+            }
+          ],
+          "bind": "legend"
+        },
+        {
+          "name": "point_selection",
+          "select": {
+            "type": "point",
+            "fields": [
+              "truth_threshold"
+            ],
+            "encodings": [
+              "x"
+            ],
+            "nearest": true,
+            "on": "mouseover"
+          }
+        }
+      ],
+      "transform": [
+        {
+          "filter": {
+            "param": "metric_point",
+            "empty": true
+          }
+        }
+      ],
+      "encoding": {
+        "opacity": {
+          "condition": {
+            "param": "point_selection",
+            "value": 1,
+            "empty": false
+          },
+          "value": 0
+        },
+        "x": {
+          "field": "truth_threshold",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "y",
+          "type": "quantitative"
+        },
+        "color": {
+          "field": "score",
+          "type": "nominal",
+          "sort": [
+            "precision",
+            "recall",
+            "F1",
+            "P4",
+            "accuracy"
+          ]
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "line",
+        "clip": true
+      },
+      "params": [
+        {
+          "name": "metric_line",
+          "select": {
+            "type": "point",
+            "fields": [
+              "score"
+            ]
+          },
+          "value": [
+            {
+              "score": "precision"
+            },
+            {
+              "score": "recall"
+            }
+          ],
+          "bind": "legend"
+        }
+      ],
+      "encoding": {
+        "tooltip": [
+          {
+            "type": "quantitative",
+            "field": "truth_threshold",
+            "format": "+.3f",
+            "title": "Match weight"
+          },
+          {
+            "type": "quantitative",
+            "field": "match_probability",
+            "format": ".4%",
+            "title": "Match probability"
+          },
+          {
+            "type": "quantitative",
+            "field": "FP_rate",
+            "format": ".4f"
+          },
+          {
+            "type": "quantitative",
+            "field": "TP_rate",
+            "format": ".4f"
+          },
+          {
+            "type": "quantitative",
+            "field": "TP",
+            "format": ",.0f"
+          },
+          {
+            "type": "quantitative",
+            "field": "TN",
+            "format": ",.0f"
+          },
+          {
+            "type": "quantitative",
+            "field": "FP",
+            "format": ",.0f"
+          },
+          {
+            "type": "quantitative",
+            "field": "FN",
+            "format": ",.0f"
+          }
+        ],
+        "x": {
+          "type": "quantitative",
+          "field": "truth_threshold",
+          "axis": {
+            "title": "Match weight threshold",
+            "titleFontSize": 16,
+            "labelFontSize": 12
+          }
+        },
+        "y": {
+          "type": "quantitative",
+          "field": "y",
+          "axis": {
+            "title": "Score",
+            "titleFontSize": 18,
+            "labelFontSize": 12
+          }
+        },
+        "color": {
+          "field": "score",
+          "type": "nominal",
+          "sort": [
+            "precision",
+            "recall",
+            "F1",
+            "P4",
+            "accuracy"
+          ],
+          "title": "Metric"
+        },
+        "opacity": {
+          "condition": {
+            "param": "metric_line",
+            "value": 1
+          },
+          "value": 0.1
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "rule",
+        "color": "gray"
+      },
+      "encoding": {
+        "x": {
+          "field": "truth_threshold",
+          "type": "quantitative"
+        }
+      },
+      "transform": [
+        {
+          "filter": {
+            "param": "point_selection",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "mark": {
+        "type": "text",
+        "color": "black",
+        "y": "height",
+        "yOffset": -20,
+        "xOffset": 25,
+        "fontSize": 14
+      },
+      "encoding": {
+        "x": {
+          "field": "truth_threshold",
+          "type": "quantitative"
+        },
+        "text": {
+          "condition": {
+            "param": "point_selection",
+            "empty": false,
+            "aggregate": "min",
+            "field": "truth_threshold",
+            "type": "nominal",
+            "format": "+.2f"
+          },
+          "value": " "
+        }
+      },
+      "transform": [
+        {
+          "filter": {
+            "param": "point_selection",
+            "empty": false
+          }
+        }
+      ]
+    },
+    {
+      "mark": {
+        "type": "text",
+        "align": "right",
+        "baseline": "middle",
+        "fontSize": 14,
+        "x2": 200,
+        "y": 100,
+        "y2": 200,
+        "xOffset": -10
+      },
+      "params": [
+        {
+          "name": "metric_text",
+          "select": {
+            "type": "point",
+            "fields": [
+              "score"
+            ]
+          },
+          "value": [
+            {
+              "score": "precision"
+            },
+            {
+              "score": "recall"
+            }
+          ],
+          "bind": "legend"
+        }
+      ],
+      "encoding": {
+        "color": {
+          "field": "score",
+          "type": "nominal",
+          "sort": [
+            "precision",
+            "recall",
+            "F1",
+            "P4",
+            "accuracy"
+          ]
+        },
+        "text": {
+          "condition": {
+            "param": "point_selection",
+            "empty": false,
+            "field": "y_text",
+            "type": "nominal"
+          },
+          "value": " "
+        },
+        "yOffset": {
+          "field": "score_index",
+          "type": "quantitative"
+        }
+      },
+      "transform": [
+        {
+          "filter": {
+            "param": "metric_text",
+            "empty": true
+          }
+        }
+      ]
+    }
+  ]
+}

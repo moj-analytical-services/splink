@@ -227,6 +227,17 @@ def precision_recall_chart(records, width=400, height=400, as_dict=False):
 
     return altair_or_json(chart, as_dict=as_dict)
 
+def accuracy_chart(records, width=400, height=400, as_dict=False):
+    chart_path = "accuracy_chart.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["data"]["values"] = records
+
+    chart["height"] = height
+    chart["width"] = width
+
+    return altair_or_json(chart, as_dict=as_dict)
+
 
 def match_weights_histogram(records, width=500, height=250, as_dict=False):
     chart_path = "match_weight_histogram.json"
