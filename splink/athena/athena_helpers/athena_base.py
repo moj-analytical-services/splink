@@ -39,6 +39,7 @@ def datediff_sql(
                 ) <= {date_threshold}
         """
 
+
 def valid_date_sql(col_name, date_format=None):
     if date_format is None:
         date_format = "%Y-%m-%d"
@@ -46,6 +47,7 @@ def valid_date_sql(col_name, date_format=None):
     return f"""
         try(date_parse({col_name}, '{date_format}'))
     """
+
 
 class AthenaBase(DialectBase):
     @property
