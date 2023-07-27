@@ -1,7 +1,7 @@
 mkdocs==1.4.2
 mknotebooks
 mkdocs-schema-reader
-mkdocs-material
+mkdocs-material==9.2.0b1
 mkdocs-gen-files
 mkdocs-autorefs
 mkdocs-include-markdown-plugin
