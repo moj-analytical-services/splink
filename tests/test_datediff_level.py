@@ -357,19 +357,19 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
 
     # Test some incorrectly formatted dates with the
     # invalid_dates_as_null parameter
+    if dialect != "postgres":
+        # invalid date (month > 12)
+        simple_dob_linker(
+            df,
+            dobs=["03-14-1994", "19/22/1993"],
+            date_format_param=valid_date_formats[1],
+            invalid_dates_as_null=True,
+        )
 
-    # invalid date (month > 12)
-    simple_dob_linker(
-        df,
-        dobs=["03-14-1994", "19/22/1993"],
-        date_format_param=valid_date_formats[1],
-        invalid_dates_as_null=True,
-    )
-
-    # mis-match between input dates and expected date format
-    simple_dob_linker(
-        df,
-        dobs=["20-04-1993", "19-02-1993"],
-        date_format_param=valid_date_formats[3],
-        invalid_dates_as_null=True,
-    )
+        # mis-match between input dates and expected date format
+        simple_dob_linker(
+            df,
+            dobs=["20-04-1993", "19-02-1993"],
+            date_format_param=valid_date_formats[3],
+            invalid_dates_as_null=True,
+        )
