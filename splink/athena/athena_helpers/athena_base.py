@@ -69,3 +69,7 @@ class AthenaBase(DialectBase):
     @property
     def _datediff_function(self):
         return datediff_sql
+
+    @property
+    def _valid_date_function(self):
+        return valid_date_sql
