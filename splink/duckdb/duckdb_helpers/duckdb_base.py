@@ -41,7 +41,7 @@ def valid_date_sql(col_name, date_format=None):
         date_format = "%Y-%m-%d"
 
     return f"""
-        try_cast({col_name} as date format '{date_format}')
+        try_strptime({col_name}, '{date_format}')
     """
 
 
