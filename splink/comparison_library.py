@@ -1080,6 +1080,16 @@ class DatediffAtThresholdsBase(Comparison):
                                             date_format='%d/%m/%Y'
                                             )
                 ```
+                Datediff comparison with date-casting and invalid dates set to null
+                ```py
+                import splink.duckdb.comparison_library as cl
+                cl.datediff_at_thresholds("date",
+                                            date_thresholds=[1,5],
+                                            date_metrics = ["day", "year"],
+                                            cast_strings_to_date=True,
+                                            invalid_dates_as_null=True
+                                            )
+                ```
             === ":simple-apachespark: Spark"
                 Date Difference comparison at thresholds 10 days, 12 months and 15 years
                 ``` python
@@ -1112,6 +1122,16 @@ class DatediffAtThresholdsBase(Comparison):
                                             date_format='%d/%m/%Y'
                                             )
                 ```
+                 Datediff comparison with date-casting and invalid dates set to null
+                ```py
+                import splink.spark.comparison_library as cl
+                cl.datediff_at_thresholds("date",
+                                            date_thresholds=[1,5],
+                                            date_metrics = ["day", "year"],
+                                            cast_strings_to_date=True,
+                                            invalid_dates_as_null=True
+                                            )
+                ```
             === "":simple-amazonaws: Athena"
                 Date Difference comparison at thresholds 10 days, 12 months and 15 years
                 ``` python
@@ -1142,6 +1162,16 @@ class DatediffAtThresholdsBase(Comparison):
                                             date_metrics = ["day", "year"],
                                             cast_strings_to_date=True,
                                             date_format='%d/%m/%Y'
+                                            )
+                ```
+                 Datediff comparison with date-casting and invalid dates set to null
+                ```py
+                import splink.athena.comparison_library as cl
+                cl.datediff_at_thresholds("date",
+                                            date_thresholds=[1,5],
+                                            date_metrics = ["day", "year"],
+                                            cast_strings_to_date=True,
+                                            invalid_dates_as_null=True
                                             )
                 ```
             === ":simple-postgresql: PostgreSql"
