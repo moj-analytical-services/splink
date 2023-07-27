@@ -1,7 +1,7 @@
 import pandas as pd
 
-from splink.duckdb.duckdb_comparison_library import levenshtein_at_thresholds
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.comparison_library import levenshtein_at_thresholds
+from splink.duckdb.linker import DuckDBLinker
 
 
 def test_m_train():

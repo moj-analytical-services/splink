@@ -5,9 +5,9 @@ import sys
 import pandas as pd
 from rapidfuzz.distance.Levenshtein import distance
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
-from splink.sqlite.sqlite_linker import SQLiteLinker
+from splink.duckdb.linker import DuckDBLinker
+from splink.spark.linker import SparkLinker
+from splink.sqlite.linker import SQLiteLinker
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 
@@ -281,7 +281,6 @@ def test_3_rounds_20k_spark(benchmark):
 
 
 def sqlite_performance(con, max_pairs=1e6):
-    print("**** running sqlite benchmark ***")
     linker = SQLiteLinker(
         "input_df_tablename", settings_dict, connection=con, input_table_aliases="mydf"
     )

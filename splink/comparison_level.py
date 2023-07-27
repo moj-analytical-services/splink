@@ -169,6 +169,10 @@ class ComparisonLevel:
         self._validate()
 
     @property
+    def sql_dialect(self):
+        return self._sql_dialect
+
+    @property
     def is_null_level(self) -> bool:
         return self._is_null_level
 
@@ -186,7 +190,7 @@ class ComparisonLevel:
     def _tf_adjustment_input_column(self):
         val = self._level_dict_val_else_default("tf_adjustment_column")
         if val:
-            return InputColumn(val, sql_dialect=self._sql_dialect)
+            return InputColumn(val, sql_dialect=self.sql_dialect)
         else:
             return None
 
@@ -410,8 +414,8 @@ class ComparisonLevel:
         sql = self.sql_condition
         if self._is_else_level:
             return True
-        dialect = self._sql_dialect
-        # TODO: really self._sql_dialect should always be set, something gets
+        dialect = self.sql_dialect
+        # TODO: really self._sql_dialect_ should always be set, something gets
         # messed up during the deepcopy()ing of a Comparison
         if dialect is None:
             dialect = "spark"
@@ -429,7 +433,7 @@ class ComparisonLevel:
         if self._is_else_level:
             return []
 
-        cols = get_columns_used_from_sql(self.sql_condition, dialect=self._sql_dialect)
+        cols = get_columns_used_from_sql(self.sql_condition, dialect=self.sql_dialect)
         # Parsed order seems to be roughly in reverse order of apearance
         cols = cols[::-1]
 
@@ -442,7 +446,7 @@ class ComparisonLevel:
             # If so, we want to set the tf adjustments against the surname col,
             # not the dmeta_surname one
 
-            input_cols.append(InputColumn(c, sql_dialect=self._sql_dialect))
+            input_cols.append(InputColumn(c, sql_dialect=self.sql_dialect))
 
         return input_cols
 
@@ -482,7 +486,7 @@ class ComparisonLevel:
             return False
 
         sql_syntax_tree = sqlglot.parse_one(
-            self.sql_condition.lower(), read=self._sql_dialect
+            self.sql_condition.lower(), read=self.sql_dialect
         )
         sql_cnf = normalize(sql_syntax_tree)
 
@@ -495,7 +499,7 @@ class ComparisonLevel:
     @property
     def _exact_match_colnames(self):
         sql_syntax_tree = sqlglot.parse_one(
-            self.sql_condition.lower(), read=self._sql_dialect
+            self.sql_condition.lower(), read=self.sql_dialect
         )
         sql_cnf = normalize(sql_syntax_tree)
 
@@ -542,7 +546,7 @@ class ComparisonLevel:
         sql = f"""
         WHEN
         {self.comparison._gamma_column_name} = {self._comparison_vector_value}
-        THEN cast({bayes_factor} as double)
+        THEN cast({bayes_factor} as float8)
         """
         return dedent(sql)
 
@@ -555,13 +559,13 @@ class ComparisonLevel:
 
         # A tf adjustment of 1D is a multiplier of 1.0, i.e. no adjustment
         if self._comparison_vector_value == -1:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as double)"
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
         elif not self._has_tf_adjustments:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as double)"
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
         elif self._tf_adjustment_weight == 0:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as double)"
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
         elif self._is_else_level:
-            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as double)"
+            sql = f"WHEN  {gamma_colname_value_is_this_level} then cast(1 as float8)"
         else:
             tf_adj_col = self._tf_adjustment_input_column
 
@@ -596,11 +600,11 @@ class ComparisonLevel:
                 divisor_sql = f"""
                 (CASE
                     WHEN {coalesce_l_r} >= {coalesce_r_l}
-                    AND {coalesce_l_r} > cast({self._tf_minimum_u_value} as double)
+                    AND {coalesce_l_r} > cast({self._tf_minimum_u_value} as float8)
                         THEN {coalesce_l_r}
-                    WHEN {coalesce_r_l}  > cast({self._tf_minimum_u_value} as double)
+                    WHEN {coalesce_r_l}  > cast({self._tf_minimum_u_value} as float8)
                         THEN {coalesce_r_l}
-                    ELSE cast({self._tf_minimum_u_value} as double)
+                    ELSE cast({self._tf_minimum_u_value} as float8)
                 END)
                 """
 
@@ -609,10 +613,10 @@ class ComparisonLevel:
                 (CASE WHEN {tf_adjustment_exists}
                 THEN
                 POW(
-                    cast({u_prob_exact_match} as double) /{divisor_sql},
-                    cast({self._tf_adjustment_weight} as double)
+                    cast({u_prob_exact_match} as float8) /{divisor_sql},
+                    cast({self._tf_adjustment_weight} as float8)
                 )
-                ELSE cast(1 as double)
+                ELSE cast(1 as float8)
                 END)
             """
         return dedent(sql).strip()
@@ -705,7 +709,7 @@ class ComparisonLevel:
 
     def _abbreviated_sql(self, cutoff=75):
         sql = self.sql_condition
-        return (sql[:75] + "...") if len(sql) > 75 else sql
+        return (sql[:cutoff] + "...") if len(sql) > cutoff else sql
 
     def __repr__(self):
         return f"<{self._human_readable_succinct}>"

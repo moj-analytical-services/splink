@@ -3,22 +3,15 @@ import sqlite3
 
 import pandas as pd
 
-from splink.sqlite.sqlite_linker import SQLiteLinker
+from splink.sqlite.linker import SQLiteLinker
 
 from .basic_settings import get_settings_dict
 from .linker_utils import _test_table_registration, register_roc_data
 
 
 def test_full_example_sqlite(tmp_path):
-    from rapidfuzz.distance.Levenshtein import distance
 
     con = sqlite3.connect(":memory:")
-    con.create_function("levenshtein", 2, distance)
-
-    def power(val, exp):
-        return val**exp
-
-    con.create_function("power", 2, power)
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -65,11 +58,8 @@ def test_full_example_sqlite(tmp_path):
 
 
 def test_small_link_example_sqlite():
-    from rapidfuzz.distance.Levenshtein import distance
 
     con = sqlite3.connect(":memory:")
-    con.create_function("levenshtein", 2, distance)
-
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings_dict = get_settings_dict()
@@ -84,5 +74,15 @@ def test_small_link_example_sqlite():
         connection=con,
         input_table_aliases=["fake_data_1", "fake_data_2"],
     )
+
+    linker.predict()
+
+
+def test_default_conn_sqlite(tmp_path):
+
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    settings_dict = get_settings_dict()
+    linker = SQLiteLinker(df, settings_dict)
 
     linker.predict()

@@ -1,0 +1,26 @@
+version: '3.1'
+
+services:
+
+  postgres-splink:
+    image: postgres:15.2
+    container_name: splink-db-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: splinkognito
+      POSTGRES_PASSWORD: splink123!
+      POSTGRES_DB: splink_db
+    ports:
+      - 5432:5432
+
+  pgad:
+    image: dpage/pgadmin4:latest
+    container_name: splink-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: a@b.com
+      PGADMIN_DEFAULT_PASSWORD: b
+    ports:
+      - 80:80
+    volumes:
+      - ./servers.json:/pgadmin4/servers.json

@@ -1,7 +1,7 @@
 import pandas as pd
 
-import splink.spark.spark_comparison_level_library as cll
-from splink.spark.spark_linker import SparkLinker
+import splink.spark.comparison_level_library as cll
+from splink.spark.linker import SparkLinker
 
 first_name_cc = {
     "output_column_name": "first_name",

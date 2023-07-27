@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import json
 import os
-import pkgutil
 import random
 from typing import TYPE_CHECKING
 
 from jinja2 import Template
 
-from .misc import EverythingEncoder
+from .misc import EverythingEncoder, read_resource
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -127,9 +126,17 @@ def _get_random_cluster_ids(
         sql, "__splink__cluster_count"
     )
     cluster_count = df_cluster_count.as_record_dict()[0]["count"]
-    df_cluster_count.drop_table_from_database()
+    df_cluster_count.drop_table_from_database_and_remove_from_cache()
 
     proportion = sample_size / cluster_count
+
+    random_sample_sql = linker._random_sample_sql(
+        proportion,
+        sample_size,
+        seed,
+        table=connected_components.physical_name,
+        unique_id="cluster_id",
+    )
 
     sql = f"""
     with distinct_clusters as (
@@ -137,7 +144,7 @@ def _get_random_cluster_ids(
     from {connected_components.physical_name}
     )
     select cluster_id from distinct_clusters
-    {linker._random_sample_sql(proportion, sample_size, seed)}
+    {random_sample_sql}
     """
 
     df_sample = linker._sql_to_splink_dataframe_checking_cache(
@@ -223,8 +230,7 @@ def render_splink_cluster_studio_html(
 
     # Render template with cluster, nodes and edges
     template_path = "files/splink_cluster_studio/cluster_template.j2"
-    template = pkgutil.get_data(__name__, template_path).decode("utf-8")
-    template = Template(template)
+    template = Template(read_resource(template_path))
 
     template_data = {
         "raw_edge_data": json.dumps(edges_recs, cls=EverythingEncoder),
@@ -251,11 +257,8 @@ def render_splink_cluster_studio_html(
         "svu_text": "files/splink_vis_utils/splink_vis_utils.js",
         "custom_css": "files/splink_cluster_studio/custom.css",
     }
-
     for k, v in files.items():
-        f = pkgutil.get_data(__name__, v)
-        f = f.decode("utf-8")
-        template_data[k] = f
+        template_data[k] = read_resource(v)
 
     template_data["bundle_observable_notebook"] = bundle_observable_notebook
 

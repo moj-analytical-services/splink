@@ -1,11 +1,13 @@
 import json
+import pkgutil
 import random
 import string
-from math import inf, log2
+from collections import namedtuple
+from datetime import datetime, timedelta
+from math import ceil, inf, log2
 from typing import Iterable
 
 import numpy as np
-import pkg_resources
 
 
 def dedupe_preserving_order(list_of_items):
@@ -74,6 +76,9 @@ class EverythingEncoder(json.JSONEncoder):
     https://github.com/mpld3/mpld3/issues/434#issuecomment-340255689
     """
 
+    # Note that the default method is only called for data types that are
+    # NOT natively serializable.  The 'encode' method can be used
+    # for natively serializable data
     def default(self, obj):
         if isinstance(obj, np.integer):
             return int(obj)
@@ -140,16 +145,6 @@ def calculate_reduction_ratio(N, cartesian):
     return 1 - (N / cartesian)
 
 
-def _check_dependency_installed(module):
-    try:
-        pkg_resources.get_distribution(module)
-    except pkg_resources.DistributionNotFound as e:
-        raise ValueError(
-            f"{module} is not installed.",
-            "Please install and import it before continuing.",
-        ) from e
-
-
 def major_minor_version_greater_equal_than(this_version, base_comparison_version):
     this_version = this_version.split(".")[:2]
     this_version = [v.zfill(10) for v in this_version]
@@ -161,7 +156,8 @@ def major_minor_version_greater_equal_than(this_version, base_comparison_version
 
 
 def ascii_uid(len):
-    return "".join(random.choices(string.ascii_letters + string.digits, k=len))
+    # use only lowercase as case-sensitivity is an issue in e.g. postgres
+    return "".join(random.choices(string.ascii_lowercase + string.digits, k=len))
 
 
 def find_unique_source_dataset(src_ds):
@@ -171,3 +167,50 @@ def find_unique_source_dataset(src_ds):
     """
 
     return sql
+
+
+def parse_duration(duration: int):
+    # math.ceil so <1 second gets reported
+    d = datetime(1, 1, 1) + timedelta(seconds=int(ceil(duration)))
+    time_index = namedtuple("Time", ["Days", "Hours", "Minutes", "Seconds"])
+    duration = time_index(d.day - 1, d.hour, d.minute, d.second)
+    txt_duration = [
+        f"{t} {duration._fields[n]}" for n, t in enumerate(duration) if t > 0
+    ]
+    if len(txt_duration) > 1:
+        txt_duration[-1] = "and " + txt_duration[-1]
+
+    return ", ".join(txt_duration)
+
+
+class colour:
+    """A class to beautify your text. Simply import and then use this class's
+    attributes to adjust how the text is formatted. For example:
+
+    `f"{colour.BOLD}Send help{colour.END}`
+
+    will print your text to the console in bold.
+    """
+
+    PURPLE = "\033[95m"
+    CYAN = "\033[96m"
+    DARKCYAN = "\033[36m"
+    BLUE = "\033[94m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    RED = "\033[91m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+    ITALICS = "\033[3m"
+    END = "\033[0m"
+
+
+def read_resource(path: str) -> str:
+    """Reads a resource file from the splink package"""
+    # In the future we may have to move to importlib.resources
+    # https://github.com/python/cpython/issues/89838#issuecomment-1093935933
+    # But for now this API avoids having to do conditional imports
+    # depending on python version.
+    # Also, if you use importlib.resources, then you have to add an
+    # __init__.py file to every subdirectory, which is annoying.
+    return pkgutil.get_data("splink", path).decode("utf-8")

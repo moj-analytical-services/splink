@@ -1,10 +1,10 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.duckdb_comparison_level_library as clld
-import splink.spark.spark_comparison_level_library as clls
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from splink.spark.spark_linker import SparkLinker
+import splink.duckdb.comparison_level_library as clld
+import splink.spark.comparison_level_library as clls
+from splink.duckdb.linker import DuckDBLinker
+from splink.spark.linker import SparkLinker
 
 df = pd.DataFrame(
     [
@@ -146,7 +146,6 @@ def test_regex(spark, Linker, df, level_set, record_pairs_gamma):
 
     for gamma, id_pairs in record_pairs_gamma.items():
         for left, right in id_pairs:
-            print(f"Checking IDs: {left}, {right}")
             assert (
                 linker_output.loc[
                     (linker_output.unique_id_l == left)
