@@ -1032,7 +1032,7 @@ class DatediffAtThresholdsBase(Comparison):
                 are given. Must be consistent across record pairs. If None
                 (the default), downstream functions for each backend assign
                 date_format to ISO 8601 format (yyyy-mm-dd).
-                Set to "yyyy-MM-dd" for Spark and "%Y-%m-%d" for DuckDB
+                Set to "yyyy-MM-dd" for Spark and "%Y-%m-%d" for DuckDB and Athena
                 when invalid_dates_as_null=True
             invalid_dates_as_null (bool, optional): assign any dates that do not adhere
                 to date_format to the null level. Defaults to False.

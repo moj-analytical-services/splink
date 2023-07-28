@@ -200,7 +200,10 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
         dob_diff = {
             "output_column_name": "dob",
             "comparison_levels": [
-                cll.null_level("dob", valid_string_regex=null_level_regex),
+                cll.null_level("dob", 
+                              valid_string_regex=null_level_regex,
+                              invalid_dates_as_null=invalid_dates_as_null,
+                              ),
                 cll.exact_match_level("dob"),
                 cll.datediff_level(
                     date_col="dob",
@@ -361,7 +364,7 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
         # invalid date (month > 12)
         simple_dob_linker(
             df,
-            dobs=["03-14-1994", "19/22/1993"],
+            dobs=["03-14-1994", "19-12-1993"],
             date_format_param=valid_date_formats[1],
             invalid_dates_as_null=True,
         )
@@ -369,7 +372,7 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
         # mis-match between input dates and expected date format
         simple_dob_linker(
             df,
-            dobs=["20-04-1993", "19-02-1993"],
+            dobs=["20/04/1993", "19-02-1993"],
             date_format_param=valid_date_formats[3],
             invalid_dates_as_null=True,
         )
