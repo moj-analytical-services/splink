@@ -60,7 +60,7 @@ We will now generate a pairwise comparison for the record where there was a typo
 By specifying a variety of `blocking_rules_to_generate_predictions`, it becomes unlikely that a truly matching record would not be captured by at least one of the rules.
 
 !!! note 
-    Unlike [Training Rules](./blocking_model_training.md), Prediction Rules are considered collectively, and are order-dependent. So, in the example above, the `l.postcode = r.postcode` blocking rule only generates record comparisons that are a match on `postcode` were not already captured by the `first_name` and `surname` rule.
+    Unlike [Training Rules](./model_training.md), Prediction Rules are considered collectively, and are order-dependent. So, in the example above, the `l.postcode = r.postcode` blocking rule only generates record comparisons that are a match on `postcode` were not already captured by the `first_name` and `surname` rule.
 
 ## Choosing Prediction Rules
 

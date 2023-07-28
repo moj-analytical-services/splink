@@ -48,7 +48,7 @@ def make_dataset_labels_md_table(datasets):
     return table
 
 
-dataset_labels_table = make_dataset_md_table(dataset_labels_info)
+dataset_labels_table = make_dataset_labels_md_table(dataset_labels_info)
 dataset_labels_table_file = "dataset_labels_table.md"
 with open(
     Path("docs") / "includes" / "generated_files" / dataset_labels_table_file, "w+"

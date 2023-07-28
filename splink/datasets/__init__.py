@@ -135,20 +135,9 @@ _labels = [
         "fake_1000_labels",
         f"{_splink_datasets_data_dir}/fake_1000_labels.csv",
         # hard code metadata to avoid needing to download to build docs
-        "1,225",
+        "3,176",
         "NA",
-        ("Clerical labels for pairwise comparison  " "from fake_1000 "),
-    ),
-    _DataSetMetaData(
-        "labels_to_estimate_m",
-        f"{_splink_datasets_data_dir}/pairwise_labels_to_estimate_m.csv",
-        # hard code metadata to avoid needing to download to build docs
-        "2,032",
-        "NA",
-        (
-            "Clerical labels for pairwise comparison  "
-            " for model training from fake_1000 "
-        ),
+        ("Clerical labels for fake_1000 "),
     ),
 ]
 _cache_dir = _DATASETDIR / "__splinkdata_cache__"
