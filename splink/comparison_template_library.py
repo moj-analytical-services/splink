@@ -1527,7 +1527,10 @@ class EmailComparisonBase(Comparison):
 
         # Decide whether invalid emails should be treated as null
         if invalid_emails_as_null:
-            comparison_levels.append(self._null_level(col_name, valid_email_regex))
+            comparison_levels.append(self._null_level(
+                                        col_name, 
+                                        valid_string_regex=valid_email_regex)
+                                    )
         else:
             comparison_levels.append(self._null_level(col_name))
 

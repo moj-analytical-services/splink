@@ -85,10 +85,9 @@ class NullLevelBase(ComparisonLevel):
         elif valid_string_regex:
             col_name_l = self._regex_extract_function(col_name_l, valid_string_regex)
             col_name_r = self._regex_extract_function(col_name_r, valid_string_regex)
-            sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL OR
+            
+        sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL OR
                       {col_name_l}=='' OR {col_name_r} ==''"""
-
-        sql = f"{col_name_l} IS NULL OR {col_name_r} IS NULL"
 
         level_dict = {
             "sql_condition": sql,
