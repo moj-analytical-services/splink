@@ -200,10 +200,11 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
         dob_diff = {
             "output_column_name": "dob",
             "comparison_levels": [
-                cll.null_level("dob", 
-                              valid_string_regex=null_level_regex,
-                              invalid_dates_as_null=invalid_dates_as_null,
-                              ),
+                cll.null_level(
+                    "dob",
+                    valid_string_regex=null_level_regex,
+                    invalid_dates_as_null=invalid_dates_as_null,
+                ),
                 cll.exact_match_level("dob"),
                 cll.datediff_level(
                     date_col="dob",
