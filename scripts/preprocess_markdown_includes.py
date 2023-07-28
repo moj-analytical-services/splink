@@ -31,7 +31,9 @@ for root, _dirs, files in os.walk("docs"):
                     try:
                         with open(Path(root) / include_path) as f_inc:
                             include_text = f_inc.read()
-                            new_text = re.sub(text_to_replace, include_text, current_text)
+                            new_text = re.sub(
+                                text_to_replace, include_text, current_text
+                            )
                             with open(Path(root) / file, "w") as f:
                                 f.write(new_text)
                             # update text, in case we are iterating
