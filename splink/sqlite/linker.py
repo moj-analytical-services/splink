@@ -169,7 +169,12 @@ class SQLiteLinker(Linker):
             input = pd.DataFrame.from_records(input)
 
         # Will error if an invalid data type is passed
-        input.to_sql(table_name, self.con, index=False)
+        input.to_sql(
+            table_name,
+            self.con,
+            index=False,
+            if_exists="replace",
+        )
 
     def _random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None
