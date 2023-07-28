@@ -361,7 +361,7 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
 
     # Test some incorrectly formatted dates with the
     # invalid_dates_as_null parameter
-        # invalid date (month > 12)
+    # invalid date (month > 12)
     simple_dob_linker(
         df,
         dobs=["03-14-1994", "19-12-1993"],
