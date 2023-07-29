@@ -5,7 +5,7 @@ hide:
 ---
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png" alt="Splink Logo" style="max-width: 500px;">
+<img src="https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png" alt="Splink: data linkage at scale. (Splink logo)." style="max-width: 500px;">
 </p>
 
 # Fast, accurate and scalable probabilistic data linkage
