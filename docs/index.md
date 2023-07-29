@@ -57,13 +57,13 @@ To find the best place to ask a question, report a bug or get general advice, pl
 
 ## Awards
 
-🥇 Analysis in Government Awards 2020: Innovative Methods: [Winner](https://www.gov.uk/government/news/launch-of-the-analysis-in-government-awards)
+🥇 [Analysis in Government Awards 2020: Innovative Methods: Winner](https://www.gov.uk/government/news/launch-of-the-analysis-in-government-awards)
 
 🥇 MoJ DASD Awards 2020: Innovation and Impact - Winner
 
-🥇 Analysis in Government Awards 2022: People's Choice Award - [Winner](https://analysisfunction.civilservice.gov.uk/news/announcing-the-winner-of-the-first-analysis-in-government-peoples-choice-award/)
+🥇 [Analysis in Government Awards 2022: People's Choice Award - Winner](https://analysisfunction.civilservice.gov.uk/news/announcing-the-winner-of-the-first-analysis-in-government-peoples-choice-award/)
 
-🥈 Analysis in Government Awards 2022: Innovative Methods [Runner up](https://twitter.com/gov_analysis/status/1616073633692274689?s=20&t=6TQyNLJRjnhsfJy28Zd6UQ)
+🥈 [Analysis in Government Awards 2022: Innovative Methods Runner up](https://twitter.com/gov_analysis/status/1616073633692274689?s=20&t=6TQyNLJRjnhsfJy28Zd6UQ)
 
 ## Citation
 
