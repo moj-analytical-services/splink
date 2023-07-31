@@ -243,21 +243,23 @@ def accuracy_chart(records, width=400, height=400, as_dict=False, add_metrics=[]
 
     # Metric-label mapping
     mapping = {
-        'precision': 'Precision (PPV)', 
-        'recall': 'Recall (TPR)', 
-        'specificity': 'Specificity (TNR)', 
-        'accuracy': 'Accuracy', 
-        'npv':'NPV', 
-        'f1': 'F1', 
-        'f2':'F2', 
-        'f0_5':'F0.5', 
-        'p4':'P4', 
-        'phi':'\u03C6 (MCC)'
+        "precision": "Precision (PPV)",
+        "recall": "Recall (TPR)",
+        "specificity": "Specificity (TNR)",
+        "accuracy": "Accuracy",
+        "npv": "NPV",
+        "f1": "F1",
+        "f2": "F2",
+        "f0_5": "F0.5",
+        "p4": "P4",
+        "phi": "\u03C6 (MCC)",
     }
     chart["transform"][2]["calculate"] = chart["transform"][2]["calculate"].replace(
         "__mapping__", str(mapping)
     )
-    chart["layer"][0]["encoding"]["color"]["legend"]["labelExpr"] = chart["layer"][0]["encoding"]["color"]["legend"]["labelExpr"].replace("__mapping__", str(mapping))
+    chart["layer"][0]["encoding"]["color"]["legend"]["labelExpr"] = chart["layer"][0][
+        "encoding"
+    ]["color"]["legend"]["labelExpr"].replace("__mapping__", str(mapping))
 
     chart["data"]["values"] = records
 
