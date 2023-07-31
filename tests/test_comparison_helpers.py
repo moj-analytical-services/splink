@@ -3,6 +3,7 @@ import splink.duckdb.comparison_template_library as ctl
 import splink.duckdb.comparison_library as cl
 import splink.duckdb.comparison_level_library as cll
 
+
 def test_get_comparison_levels_list():
     names = ["Julia", "Julia", "Julie", "Rachel"]
 
@@ -44,16 +45,22 @@ def test_get_comparison_levels_list():
     }
     ch.get_comparison_levels(names, dict_comparison)
 
+
 def test_get_comparison_levels_df():
     import pandas as pd
 
     data = {
-        'first_name': ['John', 'Emma', 'Michael', 'Sophia', 'David'],
-        'surname': ['Smith', 'Johnson', 'Brown', 'Williams', 'Jones'],
-        'dob': ['1985-03-12', '1990-07-15', '1982-11-30', '1988-04-20', '1995-09-08'],
-        'postcode': ['SW1A 1AA', 'EC2V 7HN', 'W1J 5JT', 'WC2N 5DU', 'E1 6AN'],
-        'email_address': ['john.smith@example.com', 'emma.johnson@example.com', 'michael.brown@example.com',
-                        'sophia.williams@example.com', 'david.jones@example.com']
+        "first_name": ["John", "Emma", "Michael", "Sophia", "David"],
+        "surname": ["Smith", "Johnson", "Brown", "Williams", "Jones"],
+        "dob": ["1985-03-12", "1990-07-15", "1982-11-30", "1988-04-20", "1995-09-08"],
+        "postcode": ["SW1A 1AA", "EC2V 7HN", "W1J 5JT", "WC2N 5DU", "E1 6AN"],
+        "email_address": [
+            "john.smith@example.com",
+            "emma.johnson@example.com",
+            "michael.brown@example.com",
+            "sophia.williams@example.com",
+            "david.jones@example.com",
+        ],
     }
 
     df = pd.DataFrame(data)

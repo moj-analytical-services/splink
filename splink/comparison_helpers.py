@@ -1,6 +1,7 @@
 import duckdb
 import pandas as pd
-#import phonetics
+
+# import phonetics
 
 from splink.duckdb.linker import DuckDBLinker
 
@@ -14,17 +15,20 @@ from .comparison_helpers_utils import threshold_match
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .settings import Settings
 
-def get_comparison_levels(values_to_compare: list | dataframe, comparison, max_df_rows=5):
+
+def get_comparison_levels(
+    values_to_compare: list | dataframe, comparison, max_df_rows=5
+):
     """
     Helper function returning the comparison levels that all combinations of
-    values in the values_to_compare list. 
-    
+    values in the values_to_compare list.
+
     Notes:
 
-    * This function is intended for development purposes so uses the 
+    * This function is intended for development purposes so uses the
     DuckDBLinker in the background. Any comparison levels should translate across
     to any Splink backend (assuming all of the comparison levels are available).
-    * This function currently only works with comparisons based on a single 
+    * This function currently only works with comparisons based on a single
     column. For example, `cl.distance_in_km_at_thresholds` is not currently supported
     at it requires a `"lat_col"` and `"long_col"`.
 
@@ -33,7 +37,7 @@ def get_comparison_levels(values_to_compare: list | dataframe, comparison, max_d
             comparison.
         comparison (Comparison): A DuckDB Comparison object defining the comparison
             levels to assign the pairs of values in values_to_compare.
-        max_df_rows (int): When values_to_compare, the maximum number of rows to 
+        max_df_rows (int): When values_to_compare, the maximum number of rows to
             compare. Defaults to 5.
 
     Examples:
@@ -76,7 +80,7 @@ def get_comparison_levels(values_to_compare: list | dataframe, comparison, max_d
     elif isinstance(values_to_compare, list):
         comparison_col = comparison_dict["output_column_name"]
         values_df = pd.DataFrame(values_to_compare, columns=[comparison_col])
-    
+
     values_df["unique_id"] = values_df.reset_index().index
 
     linker = DuckDBLinker(values_df, settings)
