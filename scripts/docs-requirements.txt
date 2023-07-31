@@ -17,3 +17,4 @@ mkdocs-semiliterate
 mkdocs-click
 jinja2==3.0.3
 mkdocs-git-revision-date-localized-plugin
+mkdocs-gallery
