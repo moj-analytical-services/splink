@@ -227,10 +227,15 @@ def precision_recall_chart(records, width=400, height=400, as_dict=False):
 
     return altair_or_json(chart, as_dict=as_dict)
 
-
-def accuracy_chart(records, width=400, height=400, as_dict=False):
+def accuracy_chart(records, width=400, height=400, as_dict=False, add_metrics=[]):
     chart_path = "accuracy_chart.json"
     chart = load_chart_definition(chart_path)
+
+    metrics = ['precision', 'recall', *add_metrics]
+    chart["transform"][0]["fold"] = metrics
+    chart["transform"][1]["calculate"] = chart["transform"][1]["calculate"].replace("__metrics__", str(metrics))
+    chart["layer"][0]["encoding"]["color"]["sort"] = metrics
+    chart["layer"][1]["layer"][1]["encoding"]["color"]["sort"] = metrics
 
     chart["data"]["values"] = records
 

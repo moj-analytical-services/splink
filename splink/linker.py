@@ -2291,6 +2291,7 @@ class Linker:
         labels_splinkdataframe_or_table_name,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
+        add_metrics: list = []
     ):
         """Generate an accuracy measure chart from labelled (ground truth) data.
 
@@ -2319,18 +2320,28 @@ class Linker:
                 are rounded.  When large numbers of labels are provided, this is
                 sometimes necessary to reduce the size of the ROC table, and therefore
                 the number of points plotted on the ROC chart. Defaults to None.
+            add_metrics (list, optional): Precision and recall metrics are always 
+                included. Where provided, `add_metrics` specifies additional metrics
+                to show, with the following options:
+                    - 'specificity' - specificity, selectivity, true negative rate (TNR)
+                    - 'npv' - negative predictive value (NPV)
+                    - 'accuracy' - overall accuracy (TP+TN)/(P+N)
+                    - 'f1', 'f2', 'f0_5' - F-scores for \u03B2=1 (balanced), 
+                    \u03B2=2 (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                    - 'p4' -  an extended F1 score with specificity and NPV included
+                    - 'phi' - \u03C6 coefficient, or Matthews correlation coefficient (MCC)
         Examples:
             === ":simple-duckdb: DuckDB"
                 ```py
                 labels = pd.read_csv("my_labels.csv")
                 linker.register_table(labels, "labels")
-                linker.accuracy_chart_from_labels_table("labels")
+                linker.accuracy_chart_from_labels_table("labels", add_metrics=['f1'])
                 ```
             === ":simple-apachespark: Spark"
                 ```py
                 labels = spark.read.csv("my_labels.csv", header=True)
                 labels.createDataFrame("labels")
-                linker.accuracy_chart_from_labels_table("labels")
+                linker.accuracy_chart_from_labels_table("labels", add_metrics=['f1'])
                 ```
 
         Returns:
@@ -2347,7 +2358,7 @@ class Linker:
             match_weight_round_to_nearest=match_weight_round_to_nearest,
         )
         recs = df_truth_space.as_record_dict()
-        return accuracy_chart(recs)
+        return accuracy_chart(recs, add_metrics=add_metrics)
 
     def prediction_errors_from_labels_table(
         self,
@@ -2498,6 +2509,7 @@ class Linker:
         labels_column_name,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
+        add_metrics: list = []
     ):
         """Generate an accuracy chart from ground truth data, whereby the ground
         truth is in a column in the input dataset called `labels_column_name`
@@ -2512,9 +2524,19 @@ class Linker:
                 are rounded.  When large numbers of labels are provided, this is
                 sometimes necessary to reduce the size of the ROC table, and therefore
                 the number of points plotted on the ROC chart. Defaults to None.
+            add_metrics (list, optional): Precision and recall metrics are always 
+                included. Where provided, `add_metrics` specifies additional metrics
+                to show, with the following options:
+                    - 'specificity' - specificity, selectivity, true negative rate (TNR)
+                    - 'npv' - negative predictive value (NPV)
+                    - 'accuracy' - overall accuracy (TP+TN)/(P+N)
+                    - 'f1', 'f2', 'f0_5' - F-scores for \u03B2=1 (balanced), 
+                    \u03B2=2 (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                    - 'p4' -  an extended F1 score with specificity and NPV included
+                    - 'phi' - \u03C6 coefficient, or Matthews correlation coefficient (MCC)
         Examples:
             ```py
-            linker.accuracy_chart_from_labels_column("ground_truth")
+            linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=['f1'])
             ```
 
         Returns:
@@ -2528,7 +2550,7 @@ class Linker:
             match_weight_round_to_nearest=match_weight_round_to_nearest,
         )
         recs = df_truth_space.as_record_dict()
-        return accuracy_chart(recs)
+        return accuracy_chart(recs, add_metrics=add_metrics)
 
     def prediction_errors_from_labels_column(
         self,

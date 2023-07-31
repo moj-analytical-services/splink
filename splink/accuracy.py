@@ -105,7 +105,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
     }
     sqls.append(sql)
 
-    sql = """
+    sql = f"""
     select
         truth_threshold,
         power(2, truth_threshold) / (1 + power(2, truth_threshold))
@@ -124,14 +124,16 @@ def truth_space_table_from_labels_with_predictions_sqls(
         cast(FP as float)/N as fp_rate,
         cast(FN as float)/P as fn_rate,
         cast(TP as float)/(TP+FP) as precision, -- (positive predictive value)
-        cast(TP as float)/(TP+FN) as recall, -- SAME AS TPR (sensitivity)
+        cast(TP as float)/P as recall, -- SAME AS TPR (sensitivity)
         cast(TN as float)/N as specificity, -- SAME AS TNR (selectivity)
         cast(TN as float)/(TN+FN) as npv, -- (negative predictive value)
         cast(TP+TN as float)/(P+N) as accuracy,
-        (2 * precision * recall)/(precision + recall) as F1,
-        (5 * precision * recall)/(4 * precision + recall) as F2,
-        (1.25 * precision * recall)/(0.25 * precision + recall) as F0_5,
-        4/((1./precision)+(1./recall)+(1./specificity)+(1./npv)) as P4
+        (2 * precision * recall)/(precision + recall) as f1,
+        (5 * precision * recall)/(4 * precision + recall) as f2,
+        (1.25 * precision * recall)/(0.25 * precision + recall) as f0_5,
+        4/((1./precision)+(1./recall)+(1./specificity)+(1./npv)) as p4,
+        cast((TP*TN)-(FP*FN) as float)/sqrt((TP+FP)*P*N*(TN+FN)) as phi
+
     from __splink__labels_with_pos_neg_grouped_with_truth_stats
     """
 
