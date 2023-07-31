@@ -4,6 +4,7 @@ dialect_groups = {
     "duckdb": ["default"],
     "spark": ["default"],
     "sqlite": [],
+    "postgres": [],
 }
 for groups in dialect_groups.values():
     groups.append("all")

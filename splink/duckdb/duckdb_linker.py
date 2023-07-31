@@ -1,7 +1,7 @@
 import warnings
 
 from ..exceptions import SplinkDeprecated
-from .linker import DuckDBLinker, DuckDBLinkerDataFrame  # noqa: F401
+from .linker import DuckDBDataFrame, DuckDBLinker  # noqa: F401
 
 warnings.warn(
     "Importing directly from `splink.duckdb.duckdb_linker` "

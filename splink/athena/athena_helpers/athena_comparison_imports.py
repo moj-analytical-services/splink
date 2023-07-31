@@ -1,6 +1,7 @@
 from ...comparison_level_library import (
     ArrayIntersectLevelBase,
     ColumnsReversedLevelBase,
+    DatediffLevelBase,
     DistanceFunctionLevelBase,
     DistanceInKMLevelBase,
     ElseLevelBase,
@@ -10,11 +11,12 @@ from ...comparison_level_library import (
     PercentageDifferenceLevelBase,
 )
 from ...comparison_library import (
-    ArrayIntersectAtSizesComparisonBase,
-    DistanceFunctionAtThresholdsComparisonBase,
-    DistanceInKMAtThresholdsComparisonBase,
+    ArrayIntersectAtSizesBase,
+    DatediffAtThresholdsBase,
+    DistanceFunctionAtThresholdsBase,
+    DistanceInKMAtThresholdsBase,
     ExactMatchBase,
-    LevenshteinAtThresholdsComparisonBase,
+    LevenshteinAtThresholdsBase,
 )
 from ...comparison_template_library import (
     PostcodeComparisonBase,
@@ -45,6 +47,10 @@ class AthenaComparisonProperties(AthenaBase):
     @property
     def _columns_reversed_level(self):
         return columns_reversed_level
+
+    @property
+    def _datediff_level(self):
+        return datediff_level
 
     @property
     def _distance_in_km_level(self):
@@ -94,6 +100,10 @@ class percentage_difference_level(AthenaBase, PercentageDifferenceLevelBase):
     pass
 
 
+class datediff_level(AthenaBase, DatediffLevelBase):
+    pass
+
+
 class distance_in_km_level(AthenaBase, DistanceInKMLevelBase):
     pass
 
@@ -106,7 +116,7 @@ class exact_match(AthenaComparisonProperties, ExactMatchBase):
 
 
 class distance_function_at_thresholds(
-    AthenaComparisonProperties, DistanceFunctionAtThresholdsComparisonBase
+    AthenaComparisonProperties, DistanceFunctionAtThresholdsBase
 ):
     @property
     def _distance_level(self):
@@ -114,21 +124,23 @@ class distance_function_at_thresholds(
 
 
 class levenshtein_at_thresholds(
-    AthenaComparisonProperties, LevenshteinAtThresholdsComparisonBase
+    AthenaComparisonProperties, LevenshteinAtThresholdsBase
 ):
     @property
     def _distance_level(self):
         return self._levenshtein_level
 
 
-class array_intersect_at_sizes(
-    AthenaComparisonProperties, ArrayIntersectAtSizesComparisonBase
-):
+class array_intersect_at_sizes(AthenaComparisonProperties, ArrayIntersectAtSizesBase):
+    pass
+
+
+class datediff_at_thresholds(AthenaComparisonProperties, DatediffAtThresholdsBase):
     pass
 
 
 class distance_in_km_at_thresholds(
-    AthenaComparisonProperties, DistanceInKMAtThresholdsComparisonBase
+    AthenaComparisonProperties, DistanceInKMAtThresholdsBase
 ):
     pass
 

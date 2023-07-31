@@ -1,13 +1,15 @@
 {
     "config": {
         "view": {
-            "continuousWidth": 400,
-            "continuousHeight": 300
+            "discreteWidth": 300,
+            "discreteHeight": 600
         }
     },
     "layer": [
         {
-            "mark": "rect",
+            "mark": {
+                "type": "rect"
+            },
             "encoding": {
                 "color": {
                     "field": "match",
@@ -28,9 +30,7 @@
                     "type": "ordinal"
                 }
             },
-            "height": 600,
-            "title": "Heatmap of Phonetic Matches",
-            "width": 300
+            "title": "Heatmap of Phonetic Matches"
         },
         {
             "mark": {
@@ -58,15 +58,13 @@
                     "type": "ordinal"
                 }
             },
-            "height": 600,
-            "title": "Heatmap of Phonetic Matches",
-            "width": 300
+            "title": "Heatmap of Phonetic Matches"
         }
     ],
     "data": {
         "name": "data-phonetic"
     },
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.17.0.json",
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
     "datasets": {
         "data-phonetic": []
     }

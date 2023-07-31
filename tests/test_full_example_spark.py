@@ -1,13 +1,16 @@
 import os
 
+import pandas as pd
 import pyspark.sql.functions as f
+import pytest
 from pyspark.sql.types import StringType, StructField, StructType
 
-import splink.spark.spark_comparison_level_library as cll
-import splink.spark.spark_comparison_library as cl
-from splink.spark.spark_linker import SparkLinker
+import splink.spark.comparison_level_library as cll
+import splink.spark.comparison_library as cl
+from splink.spark.linker import SparkLinker
 
 from .basic_settings import get_settings_dict, name_comparison
+from .decorator import mark_with_dialects_including
 from .linker_utils import (
     _test_write_functionality,
     register_roc_data,
@@ -167,3 +170,25 @@ def test_link_only(df_spark):
     assert len(df_predict) == 7257
     assert set(df_predict.source_dataset_l.values) == {"my_left_ds"}
     assert set(df_predict.source_dataset_r.values) == {"my_right_ds"}
+
+
+@pytest.mark.parametrize(
+    ("df"),
+    [
+        pytest.param(
+            pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv"),
+            id="Spark load from pandas df",
+        )
+    ],
+)
+@mark_with_dialects_including("spark")
+def test_spark_load_from_file(df, spark):
+    settings = get_settings_dict()
+
+    linker = SparkLinker(
+        df,
+        settings,
+        spark=spark,
+    )
+
+    assert len(linker.predict().as_pandas_dataframe()) == 3167

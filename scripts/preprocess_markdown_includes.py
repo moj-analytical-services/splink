@@ -25,13 +25,19 @@ for root, _dirs, files in os.walk("docs"):
                 current_text = f.read()
             if re.search(regex, current_text):
                 # if we have an include tag, replace text and overwrite
-                include_path = re.search(regex, current_text).group(1)
-                try:
-                    with open(Path(root) / include_path) as f_inc:
-                        include_text = f_inc.read()
-                        new_text = re.sub(regex, include_text, current_text)
-                        with open(Path(root) / file, "w") as f:
-                            f.write(new_text)
-                # if we can't find include file then warn but carry on
-                except FileNotFoundError as e:
-                    logging.warning(f"Couldn't find specified include file: {e}")
+                for match in re.finditer(regex, current_text):
+                    text_to_replace = match.group(0)
+                    include_path = match.group(1)
+                    try:
+                        with open(Path(root) / include_path) as f_inc:
+                            include_text = f_inc.read()
+                            new_text = re.sub(
+                                text_to_replace, include_text, current_text
+                            )
+                            with open(Path(root) / file, "w") as f:
+                                f.write(new_text)
+                            # update text, in case we are iterating
+                            current_text = new_text
+                    # if we can't find include file then warn but carry on
+                    except FileNotFoundError as e:
+                        logging.warning(f"Couldn't find specified include file: {e}")

@@ -12,8 +12,8 @@
           },
           "tooltip": [
             {
-              "field": "source_dataset", 
-              "type": "nominal", 
+              "field": "source_dataset",
+              "type": "nominal",
               "title":"Source dataset"},
             {
               "field": "total_rows_inc_nulls",
@@ -22,7 +22,7 @@
               "type": "quantitative"
             },
             {
-              "field": "column_name", 
+              "field": "column_name",
               "type": "nominal",
               "title": "Column name"
             },
@@ -93,5 +93,5 @@
     "data": {},
     "height": {"step": 40},
     "width": {"step": 40},
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.17.0.json"
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json"
 }
