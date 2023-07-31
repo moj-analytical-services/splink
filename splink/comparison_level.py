@@ -165,6 +165,9 @@ class ComparisonLevel:
         # Enable the level to 'know' when it's been trained
         self._trained_m_probabilities: list = []
         self._trained_u_probabilities: list = []
+        # controls warnings from model training - ensures we only send once
+        self._m_warning_sent = False
+        self._u_warning_sent = False
 
         self._validate()
 
@@ -224,11 +227,13 @@ class ComparisonLevel:
         if value == LEVEL_NOT_OBSERVED_TEXT:
             cc_n = self.comparison._output_column_name
             cl_n = self.label_for_charts
-            logger.warning(
-                "\nWARNING:\n"
-                f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
-                "unable to train m value"
-            )
+            if not self._m_warning_sent:
+                logger.warning(
+                    "WARNING:\n"
+                    f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
+                    "unable to train m value\n"
+                )
+                self._m_warning_sent = True
 
         self._m_probability = value
 
@@ -250,11 +255,13 @@ class ComparisonLevel:
         if value == LEVEL_NOT_OBSERVED_TEXT:
             cc_n = self.comparison._output_column_name
             cl_n = self.label_for_charts
-            logger.warning(
-                "\nWARNING:\n"
-                f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
-                "unable to train u value"
-            )
+            if not self._u_warning_sent:
+                logger.warning(
+                    "WARNING:\n"
+                    f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
+                    "unable to train u value\n"
+                )
+                self._u_warning_sent = True
         self._u_probability = value
 
     @property
