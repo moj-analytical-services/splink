@@ -17,23 +17,26 @@ from .settings import Settings
 
 
 def get_comparison_levels(
-    values_to_compare: list | dataframe, comparison, max_df_rows=5
+    values_to_compare: "list | pd.DataFrame", comparison, max_df_rows=5
 ):
     """
     Helper function returning the comparison levels that all combinations of
-    values in the values_to_compare list.
+    values in the values_to_compare list or dataframe.
 
     Notes:
 
-    * This function is intended for development purposes so uses the
-    DuckDBLinker in the background. Any comparison levels should translate across
-    to any Splink backend (assuming all of the comparison levels are available).
-    * This function currently only works with comparisons based on a single
+    - This function is intended for development purposes only, therefore:
+        - it uses the DuckDBLinker in the background. Any comparison levels should 
+        translate across to any Splink backend (assuming all of the comparison 
+        levels are available).
+        - it should be used with a small subset of records. If a dataframe is provided,
+         the function will default to a random sample of 5 records.
+    - This function currently only works with comparisons based on a single
     column. For example, `cl.distance_in_km_at_thresholds` is not currently supported
     at it requires a `"lat_col"` and `"long_col"`.
 
     Args:
-        values_to_compare (list): A list of values to compare in the
+        values_to_compare (list | dataframe): A list of values to compare in the
             comparison.
         comparison (Comparison): A DuckDB Comparison object defining the comparison
             levels to assign the pairs of values in values_to_compare.
@@ -46,7 +49,7 @@ def get_comparison_levels(
         import splink.comparison_helpers as ch
         import splink.duckdb.comparison_template_library as ctl
 
-        values = ["Robert", "Rob", "Robbie", "Robin"]
+        values = ["Robert", "Rob", "Robbie", "Bob"]
         comparison = ctl.name_comparison("name")
 
         ch.get_comparison_levels(values, comparison)
@@ -61,7 +64,17 @@ def get_comparison_levels(
 
         ch.get_comparison_levels(values, comparison)
         ```
+        Check comparison_levels for a dataframe
+        ```py
+        import splink.comparison_helpers as ch
+        import splink.duckdb.comparison_template_library as ctl
+        from splink.datasets import splink_datasets
 
+        df = splink_datasets.fake_1000
+        comparison = ctl.name_comparison("first_name")
+
+        ch.get_comparison_levels(df, comparison)
+        ```
 
     """
     settings = {
@@ -74,11 +87,11 @@ def get_comparison_levels(
     settings_obj = Settings(settings)
 
     comparison_dict = settings_obj.comparisons[0].as_dict()
+    comparison_col = comparison_dict["output_column_name"]
 
-    if isinstance(values_to_compare, pd.Dataframe):
-        values_df = values_to_compare
+    if isinstance(values_to_compare, pd.DataFrame):
+        values_df = values_to_compare.sample(max_df_rows)
     elif isinstance(values_to_compare, list):
-        comparison_col = comparison_dict["output_column_name"]
         values_df = pd.DataFrame(values_to_compare, columns=[comparison_col])
 
     values_df["unique_id"] = values_df.reset_index().index
