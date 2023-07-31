@@ -2327,7 +2327,7 @@ class Linker:
                 - `"specificity"`: specificity, selectivity, true negative rate (TNR)
                 - `"npv"`: negative predictive value (NPV)
                 - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
-                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2 
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
                 (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
                 - `"p4"` -  an extended F1 score with specificity and NPV included
                 - `"phi"` - \u03C6 coefficient, or Matthews correlation coefficient (MCC)
@@ -2532,7 +2532,7 @@ class Linker:
                 - `"specificity"`: specificity, selectivity, true negative rate (TNR)
                 - `"npv"`: negative predictive value (NPV)
                 - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
-                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2 
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
                 (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
                 - `"p4"` -  an extended F1 score with specificity and NPV included
                 - `"phi"` - \u03C6 coefficient, or Matthews correlation coefficient (MCC)
