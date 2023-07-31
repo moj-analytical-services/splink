@@ -26,8 +26,8 @@ def get_comparison_levels(
     Notes:
 
     - This function is intended for development purposes only, therefore:
-        - it uses the DuckDBLinker in the background. Any comparison levels should 
-        translate across to any Splink backend (assuming all of the comparison 
+        - it uses the DuckDBLinker in the background. Any comparison levels should
+        translate across to any Splink backend (assuming all of the comparison
         levels are available).
         - it should be used with a small subset of records. If a dataframe is provided,
          the function will default to a random sample of 5 records.
