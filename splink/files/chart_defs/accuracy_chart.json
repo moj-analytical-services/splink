@@ -29,7 +29,7 @@
       "as": "score_index"
     },
     {
-      "calculate": "{'precision': 'Precision', 'recall': 'Recall (TPR)', 'specificity': 'Specificity (TNR)', 'accuracy': 'Accuracy', 'npv':'NPV', 'f1': 'F1', 'f2':'F2', 'f0_5':'F0.5', 'p4':'P4', 'phi':'\u03C6'}[datum.metric]",
+      "calculate": "__mapping__[datum.metric]",
       "as": "metric_text"
     },
     {
@@ -69,7 +69,7 @@
           ],
           "title": "Metric",
           "legend": {
-            "labelExpr": "{'precision': 'Precision', 'recall': 'Recall (TPR)', 'specificity': 'Specificity (TNR)', 'accuracy': 'Accuracy', 'npv':'NPV', 'f1': 'F1', 'f2':'F2', 'f0_5':'F0.5', 'p4':'P4', 'phi':'\u03C6 (MCC)'}[datum.value]"
+            "labelExpr": "__mapping__[datum.value]"
           }
         }
       },
