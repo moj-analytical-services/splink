@@ -332,7 +332,7 @@ class ComparisonLevel:
     def _m_is_trained(self):
         if self.is_null_level:
             return True
-        if self._m_probability == "level not observed in data":
+        if self._m_probability == LEVEL_NOT_OBSERVED_TEXT:
             return False
         if self._m_probability is None:
             return False
@@ -342,7 +342,7 @@ class ComparisonLevel:
     def _u_is_trained(self):
         if self.is_null_level:
             return True
-        if self._u_probability == "level not observed in data":
+        if self._u_probability == LEVEL_NOT_OBSERVED_TEXT:
             return False
         if self._u_probability is None:
             return False
