@@ -2319,23 +2319,24 @@ class Linker:
             match_weight_round_to_nearest (float, optional): When provided, thresholds
                 are rounded.  When large numbers of labels are provided, this is
                 sometimes necessary to reduce the size of the ROC table, and therefore
-                the number of points plotted on the ROC chart. Defaults to None.
-            add_metrics (list, optional): Precision and recall metrics are always
+                the number of points plotted on the chart. Defaults to None.
+            add_metrics (list(str), optional): Precision and recall metrics are always
                 included. Where provided, `add_metrics` specifies additional metrics
                 to show, with the following options:
-                    - 'specificity' - specificity, selectivity, true negative rate (TNR)
-                    - 'npv' - negative predictive value (NPV)
-                    - 'accuracy' - overall accuracy (TP+TN)/(P+N)
-                    - 'f1', 'f2', 'f0_5' - F-scores for \u03B2=1 (balanced),
-                    \u03B2=2 (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
-                    - 'p4' -  an extended F1 score with specificity and NPV included
-                    - 'phi' - \u03C6 coefficient, or Matthews correlation coefficient (MCC)
+
+                - `"specificity"`: specificity, selectivity, true negative rate (TNR)
+                - `"npv"`: negative predictive value (NPV)
+                - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2 
+                (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                - `"p4"` -  an extended F1 score with specificity and NPV included
+                - `"phi"` - \u03C6 coefficient, or Matthews correlation coefficient (MCC)
         Examples:
             === ":simple-duckdb: DuckDB"
                 ```py
                 labels = pd.read_csv("my_labels.csv")
                 linker.register_table(labels, "labels")
-                linker.accuracy_chart_from_labels_table("labels", add_metrics=['f1'])
+                linker.accuracy_chart_from_labels_table("labels", add_metrics=["f1"])
                 ```
             === ":simple-apachespark: Spark"
                 ```py
@@ -2523,20 +2524,21 @@ class Linker:
             match_weight_round_to_nearest (float, optional): When provided, thresholds
                 are rounded.  When large numbers of labels are provided, this is
                 sometimes necessary to reduce the size of the ROC table, and therefore
-                the number of points plotted on the ROC chart. Defaults to None.
-            add_metrics (list, optional): Precision and recall metrics are always
+                the number of points plotted on the chart. Defaults to None.
+            add_metrics (list(str), optional): Precision and recall metrics are always
                 included. Where provided, `add_metrics` specifies additional metrics
                 to show, with the following options:
-                    - 'specificity' - specificity, selectivity, true negative rate (TNR)
-                    - 'npv' - negative predictive value (NPV)
-                    - 'accuracy' - overall accuracy (TP+TN)/(P+N)
-                    - 'f1', 'f2', 'f0_5' - F-scores for \u03B2=1 (balanced),
-                    \u03B2=2 (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
-                    - 'p4' -  an extended F1 score with specificity and NPV included
-                    - 'phi' - \u03C6 coefficient, or Matthews correlation coefficient (MCC)
+
+                - `"specificity"`: specificity, selectivity, true negative rate (TNR)
+                - `"npv"`: negative predictive value (NPV)
+                - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2 
+                (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                - `"p4"` -  an extended F1 score with specificity and NPV included
+                - `"phi"` - \u03C6 coefficient, or Matthews correlation coefficient (MCC)
         Examples:
             ```py
-            linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=['f1'])
+            linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=["f1"])
             ```
 
         Returns:
