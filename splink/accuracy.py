@@ -105,7 +105,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
     }
     sqls.append(sql)
 
-    sql = f"""
+    sql = """
     select
         truth_threshold,
         power(2, truth_threshold) / (1 + power(2, truth_threshold))

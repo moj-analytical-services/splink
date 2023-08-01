@@ -2330,7 +2330,7 @@ class Linker:
                 - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
                 (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
                 - `"p4"` -  an extended F1 score with specificity and NPV included
-                - `"phi"` - \u03C6 coefficient, or Matthews correlation coefficient (MCC)
+                - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
         Examples:
             === ":simple-duckdb: DuckDB"
                 ```py
@@ -2535,7 +2535,7 @@ class Linker:
                 - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
                 (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
                 - `"p4"` -  an extended F1 score with specificity and NPV included
-                - `"phi"` - \u03C6 coefficient, or Matthews correlation coefficient (MCC)
+                - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
         Examples:
             ```py
             linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=["f1"])
