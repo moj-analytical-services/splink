@@ -128,6 +128,7 @@ def get_comparison_levels(
         {comparison_col: lambda x: list(x)}
     )
     comp_df = comp_df.sort_values(by="gamma", ascending=False)
+    comp_df = comp_df.reset_index()
 
     return comp_df
 
