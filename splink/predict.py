@@ -153,12 +153,11 @@ def _combine_prior_and_bfs(
         return bf_expr, match_prob_expr
 
     bf_prior = prob_to_bayes_factor(prior)
-    bf_raw = f"cast({bf_prior} as float8) * " + " * ".join(bf_terms)
-    mp_raw = f"({bf_raw})/(1+({bf_raw}))"
+    bf_expr = f"cast({bf_prior} as float8) * " + " * ".join(bf_terms)
 
-    # if any BF is Infinity then we need to adjust expression,
-    # as arithmetic won't go through directly
+    mp_raw = f"({bf_expr})/(1+({bf_expr}))"
+    # if any BF is Infinity then we need to adjust the match probability
     any_term_inf = " OR ".join((f"{term} = {sql_infinity_expr}" for term in bf_terms))
-    bf_expr = f"CASE WHEN {any_term_inf} THEN {sql_infinity_expr} ELSE {bf_raw} END"
     match_prob_expr = f"CASE WHEN {any_term_inf} THEN 1.0 ELSE {mp_raw} END"
+
     return bf_expr, match_prob_expr
