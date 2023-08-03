@@ -1,9 +1,21 @@
 {
-    "config": {
-        "view": {
-            "discreteWidth": 300,
-            "discreteHeight": 600
-        }
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
+    "height": {
+        "step": 40
+    },
+    "width": {
+        "step": 70
+    },
+    "datasets": {
+        "data-phonetic": []
+    },
+    "data": {
+        "name": "data-phonetic"
+    },
+    "title": {
+        "text": "Heatmaps of phonetic comparison metrics",
+        "anchor": "middle",
+        "fontSize": 16
     },
     "layer": [
         {
@@ -13,43 +25,62 @@
             "encoding": {
                 "color": {
                     "field": "match",
+                    "type": "nominal",
                     "scale": {
                         "range": [
-                            "red",
-                            "green"
+                            "lightgray",
+                            "lightgreen"
                         ]
                     },
-                    "type": "ordinal"
+                    "legend": {
+                        "labelExpr": "{'true': 'Match', 'false': 'Non-match'}[datum.label]",
+                        "title": null,
+                        "symbolSize": 1000,
+                        "labelFontWeight": "bold"
+                    }
                 },
                 "x": {
                     "field": "phonetic",
-                    "type": "ordinal"
+                    "title": null,
+                    "type": "nominal",
+                    "axis": {
+                        "labelAngle": -10,
+                        "labelFontWeight": "bold",
+                        "labelAlign": "center",
+                        "orient": "top"
+                    }
                 },
                 "y": {
+                    "axis": {
+                        "titleFontSize": 14
+                    },
                     "field": "strings_to_compare",
+                    "title": "String comparison",
                     "type": "ordinal"
                 }
-            },
-            "title": "Heatmap of Phonetic Matches"
+            }
         },
         {
             "mark": {
-                "type": "text",
-                "baseline": "middle"
+                "baseline": "bottom",
+                "type": "text"
             },
             "encoding": {
-                "color": {
+                "opacity": {
                     "condition": {
-                        "value": "white",
-                        "test": "(datum.quantity > 3)"
+                        "test": "datum.match",
+                        "value": 1
                     },
-                    "value": "black"
+                    "value": 0.5
                 },
                 "text": {
                     "field": "transform",
-                    "type": "ordinal"
+                    "type": "nominal"
                 },
                 "x": {
+                    "axis": {
+                        "labelFontSize": 12
+                    },
                     "field": "phonetic",
                     "type": "ordinal"
                 },
@@ -57,15 +88,7 @@
                     "field": "strings_to_compare",
                     "type": "ordinal"
                 }
-            },
-            "title": "Heatmap of Phonetic Matches"
+            }
         }
-    ],
-    "data": {
-        "name": "data-phonetic"
-    },
-    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
-    "datasets": {
-        "data-phonetic": []
-    }
+    ]
 }

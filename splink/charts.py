@@ -364,7 +364,7 @@ def _comparator_score_threshold_chart(
     chart["params"][1]["value"] = distance_threshold
 
     chart["hconcat"][0]["layer"][0]["title"]["subtitle"] = f">= {similarity_threshold}"
-    chart["hconcat"][1]["layer"][0]["title"]["subtitle"] = f">= {distance_threshold}"
+    chart["hconcat"][1]["layer"][0]["title"]["subtitle"] = f"<= {distance_threshold}"
 
     chart["datasets"]["data-similarity"] = similarity_records
     chart["datasets"]["data-distance"] = distance_records

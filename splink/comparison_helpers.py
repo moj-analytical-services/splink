@@ -118,8 +118,10 @@ def comparator_score_chart(list, col1, col2):
     )
 
     similarity_df = df_long[df_long["comparator"].str.contains("similarity")]
+    similarity_df["comparator"] = similarity_df["comparator"].str.replace("_similarity", "")
     similarity_records = similarity_df.to_json(orient="records")
     distance_df = df_long[df_long["comparator"].str.contains("distance")]
+    distance_df["comparator"] = distance_df["comparator"].str.replace("_distance", "")
     distance_records = distance_df.to_json(orient="records")
 
     return _comparator_score_chart(similarity_records, distance_records)
@@ -165,8 +167,10 @@ def comparator_score_threshold_chart(
     )
 
     similarity_df = df_long[df_long["comparator"].str.contains("similarity")]
+    similarity_df["comparator"] = similarity_df["comparator"].str.replace("_similarity", "")
     similarity_records = similarity_df.to_json(orient="records")
     distance_df = df_long[df_long["comparator"].str.contains("distance")]
+    distance_df["comparator"] = distance_df["comparator"].str.replace("_distance", "")
     distance_records = distance_df.to_json(orient="records")
 
     return _comparator_score_threshold_chart(
