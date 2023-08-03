@@ -13,7 +13,7 @@
         "name": "data-phonetic"
     },
     "title": {
-        "text": "Heatmaps of phonetic comparison metrics",
+        "text": "Heatmap of Phonetic Matches",
         "anchor": "middle",
         "fontSize": 16
     },
