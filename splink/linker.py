@@ -2348,6 +2348,17 @@ class Linker:
         Returns:
             altair.Chart: An altair chart
         """
+        allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
+
+        if not isinstance(add_metrics, list):
+            raise Exception(
+                "add_metrics must be a list containing one or more of the following:",
+                allowed
+            )
+
+        # Silently filter out invalid entries (except case errors - e.g. ["NPV", "F1"])
+        add_metrics = list(set(map(str.lower, add_metrics)).intersection(allowed))
+
         labels_tablename = self._get_labels_tablename_from_input(
             labels_splinkdataframe_or_table_name
         )
@@ -2544,6 +2555,17 @@ class Linker:
         Returns:
             altair.Chart: An altair chart
         """
+
+        allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
+
+        if not isinstance(add_metrics, list):
+            raise Exception(
+                "add_metrics must be a list containing one or more of the following:",
+                allowed
+            )
+
+        # Silently filter out invalid entries (except case errors - e.g. ["NPV", "F1"])
+        add_metrics = list(set(map(str.lower, add_metrics)).intersection(allowed))
 
         df_truth_space = truth_space_table_from_labels_column(
             self,
