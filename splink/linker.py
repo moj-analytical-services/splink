@@ -2353,7 +2353,7 @@ class Linker:
         if not isinstance(add_metrics, list):
             raise Exception(
                 "add_metrics must be a list containing one or more of the following:",
-                allowed
+                allowed,
             )
 
         # Silently filter out invalid entries (except case errors - e.g. ["NPV", "F1"])
@@ -2561,7 +2561,7 @@ class Linker:
         if not isinstance(add_metrics, list):
             raise Exception(
                 "add_metrics must be a list containing one or more of the following:",
-                allowed
+                allowed,
             )
 
         # Silently filter out invalid entries (except case errors - e.g. ["NPV", "F1"])
