@@ -163,7 +163,7 @@ class DateComparisonBase(Comparison):
             self._null_level(
                 col_name,
                 invalid_dates_as_null=invalid_dates_as_null,
-                valid_string_regex=date_format,
+                valid_string_pattern=date_format,
             )
         )
 
@@ -1531,7 +1531,7 @@ class EmailComparisonBase(Comparison):
         # Decide whether invalid emails should be treated as null
         if invalid_emails_as_null:
             comparison_levels.append(
-                self._null_level(col_name, valid_string_regex=valid_email_regex)
+                self._null_level(col_name, valid_string_pattern=valid_email_regex)
             )
         else:
             comparison_levels.append(self._null_level(col_name))

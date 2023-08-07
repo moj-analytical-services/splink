@@ -10,7 +10,6 @@ from .linker_utils import _test_table_registration, register_roc_data
 
 
 def test_full_example_sqlite(tmp_path):
-
     con = sqlite3.connect(":memory:")
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -58,7 +57,6 @@ def test_full_example_sqlite(tmp_path):
 
 
 def test_small_link_example_sqlite():
-
     con = sqlite3.connect(":memory:")
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -79,7 +77,6 @@ def test_small_link_example_sqlite():
 
 
 def test_default_conn_sqlite(tmp_path):
-
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     settings_dict = get_settings_dict()

@@ -202,7 +202,7 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
             "comparison_levels": [
                 cll.null_level(
                     "dob",
-                    valid_string_regex=null_level_regex,
+                    valid_string_pattern=null_level_regex,
                     invalid_dates_as_null=invalid_dates_as_null,
                 ),
                 cll.exact_match_level("dob"),

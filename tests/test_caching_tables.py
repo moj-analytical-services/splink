@@ -11,14 +11,12 @@ from splink.duckdb.duckdb_linker import DuckDBLinker
 
 
 def get_duckdb_table_names_as_list(con):
-
     result = con.execute("SHOW TABLES")
     tables = result.fetchall()
     return [x[0] for x in tables]
 
 
 def test_cache_tracking_works():
-
     data = [
         {"unique_id": 1, "name": "Amanda"},
         {"unique_id": 2, "name": "Robin"},

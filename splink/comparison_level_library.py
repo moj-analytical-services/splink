@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import warnings
+
 from .comparison_level import ComparisonLevel
 from .comparison_level_sql import great_circle_distance_km_sql
 from .input_column import InputColumn
@@ -80,19 +82,20 @@ class NullLevelBase(ComparisonLevel):
 
         # TODO: Remove this compatibility code in a future release once we drop
         # support for "valid_string_regex". Deprecation warning added in 3.9.6
-        if valid_string_pattern is not None and valis_string_regex is not None:
+        if valid_string_pattern is not None and valid_string_regex is not None:
             # user supplied both
             raise TypeError("Just use valid_string_pattern")
         elif valid_string_pattern is not None:
             # user is doing it correctly
             pass
-        elif target_rows is not None:
+        elif valid_string_regex is not None:
             # user is using deprecated argument
             warnings.warn(
-                "valid_string_regex is deprecated; use valid_string_pattern", DeprecationWarning, 2
+                "valid_string_regex is deprecated; use valid_string_pattern",
+                DeprecationWarning,
+                stacklevel=2,
             )
             valid_string_pattern = valid_string_regex
-        
 
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
         col_name_l, col_name_r = col.name_l(), col.name_r()
