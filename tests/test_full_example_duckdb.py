@@ -286,7 +286,7 @@ def test_small_example_duckdb(tmp_path):
             {
                 "output_column_name": "name",
                 "comparison_levels": [
-                    cll.null_level("full_name", valid_string_regex=".*"),
+                    cll.null_level("full_name", valid_string_pattern=".*"),
                     cll.exact_match_level("full_name", term_frequency_adjustments=True),
                     cll.columns_reversed_level(
                         "first_name", "surname", tf_adjustment_column="full_name"

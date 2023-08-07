@@ -15,7 +15,7 @@ class ExactMatchBase(Comparison):
         self,
         col_name,
         regex_extract: str = None,
-        valid_string_regex: str = None,
+        valid_string_pattern: str = None,
         set_to_lowercase: bool = False,
         term_frequency_adjustments=False,
         m_probability_exact_match=None,
@@ -30,7 +30,7 @@ class ExactMatchBase(Comparison):
         Args:
             col_name (str): The name of the column to compare
             regex_extract (str): Regular expression pattern to evaluate a match on.
-            valid_string_regex (str): regular expression pattern that if not
+            valid_string_pattern (str): regular expression pattern that if not
                 matched will result in column being treated as a null.
             set_to_lowercase (bool): If True, sets all entries to lowercase.
             term_frequency_adjustments (bool, optional): If True, term frequency
@@ -100,7 +100,7 @@ class ExactMatchBase(Comparison):
         comparison_dict = {
             "comparison_description": "Exact match vs. anything else",
             "comparison_levels": [
-                self._null_level(col_name, valid_string_regex),
+                self._null_level(col_name, valid_string_pattern),
                 self._exact_match_level(
                     col_name,
                     regex_extract=regex_extract,
@@ -122,7 +122,7 @@ class DistanceFunctionAtThresholdsBase(Comparison):
         distance_function_name: str,
         distance_threshold_or_thresholds: float | list,
         regex_extract: str = None,
-        valid_string_regex: str = None,
+        valid_string_pattern: str = None,
         set_to_lowercase: bool = False,
         higher_is_more_similar: bool = True,
         include_exact_match_level=True,
@@ -155,7 +155,7 @@ class DistanceFunctionAtThresholdsBase(Comparison):
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [1, 2].
             regex_extract (str): Regular expression pattern to evaluate a match on.
-            valid_string_regex (str): regular expression pattern that if not
+            valid_string_pattern (str): regular expression pattern that if not
                 matched will result in column being treated as a null.
             set_to_lowercase (bool): If True, sets all entries to lowercase.
             higher_is_more_similar (bool): If True, a higher value of the distance
@@ -273,7 +273,7 @@ class DistanceFunctionAtThresholdsBase(Comparison):
         )
 
         comparison_levels = []
-        comparison_levels.append(self._null_level(col_name, valid_string_regex))
+        comparison_levels.append(self._null_level(col_name, valid_string_pattern))
         if include_exact_match_level:
             level = self._exact_match_level(
                 col_name,
@@ -328,7 +328,7 @@ class LevenshteinAtThresholdsBase(DistanceFunctionAtThresholdsBase):
         col_name: str,
         distance_threshold_or_thresholds: int | list = [1, 2],
         regex_extract: str = None,
-        valid_string_regex: str = None,
+        valid_string_pattern: str = None,
         set_to_lowercase: bool = False,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
@@ -353,7 +353,7 @@ class LevenshteinAtThresholdsBase(DistanceFunctionAtThresholdsBase):
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [1, 2].
             regex_extract (str): Regular expression pattern to evaluate a match on.
-            valid_string_regex (str): regular expression pattern that if not
+            valid_string_pattern (str): regular expression pattern that if not
                 matched will result in column being treated as a null.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
@@ -436,7 +436,7 @@ class LevenshteinAtThresholdsBase(DistanceFunctionAtThresholdsBase):
             distance_function_name=self._levenshtein_name,
             distance_threshold_or_thresholds=distance_threshold_or_thresholds,
             regex_extract=regex_extract,
-            valid_string_regex=valid_string_regex,
+            valid_string_pattern=valid_string_pattern,
             set_to_lowercase=set_to_lowercase,
             higher_is_more_similar=False,
             include_exact_match_level=include_exact_match_level,
@@ -457,7 +457,7 @@ class DamerauLevenshteinAtThresholdsBase(DistanceFunctionAtThresholdsBase):
         col_name: str,
         distance_threshold_or_thresholds: int | list = 1,
         regex_extract: str = None,
-        valid_string_regex: str = None,
+        valid_string_pattern: str = None,
         set_to_lowercase: bool = False,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
@@ -481,7 +481,7 @@ class DamerauLevenshteinAtThresholdsBase(DistanceFunctionAtThresholdsBase):
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to 1.
             regex_extract (str): Regular expression pattern to evaluate a match on.
-            valid_string_regex (str): regular expression pattern that if not
+            valid_string_pattern (str): regular expression pattern that if not
                 matched will result in column being treated as a null.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
@@ -545,7 +545,7 @@ class DamerauLevenshteinAtThresholdsBase(DistanceFunctionAtThresholdsBase):
             distance_function_name=self._levenshtein_name,
             distance_threshold_or_thresholds=distance_threshold_or_thresholds,
             regex_extract=regex_extract,
-            valid_string_regex=valid_string_regex,
+            valid_string_pattern=valid_string_pattern,
             set_to_lowercase=set_to_lowercase,
             higher_is_more_similar=False,
             include_exact_match_level=include_exact_match_level,
@@ -566,7 +566,7 @@ class JaccardAtThresholdsBase(DistanceFunctionAtThresholdsBase):
         col_name: str,
         distance_threshold_or_thresholds: int | list = [0.9, 0.7],
         regex_extract: str = None,
-        valid_string_regex: str = None,
+        valid_string_pattern: str = None,
         set_to_lowercase: bool = False,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
@@ -591,7 +591,7 @@ class JaccardAtThresholdsBase(DistanceFunctionAtThresholdsBase):
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [0.9, 0.7].
             regex_extract (str): Regular expression pattern to evaluate a match on.
-            valid_string_regex (str): regular expression pattern that if not
+            valid_string_pattern (str): regular expression pattern that if not
                 matched will result in column being treated as a null.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
@@ -645,7 +645,7 @@ class JaccardAtThresholdsBase(DistanceFunctionAtThresholdsBase):
             distance_function_name=self._jaccard_name,
             distance_threshold_or_thresholds=distance_threshold_or_thresholds,
             regex_extract=regex_extract,
-            valid_string_regex=valid_string_regex,
+            valid_string_pattern=valid_string_pattern,
             set_to_lowercase=set_to_lowercase,
             higher_is_more_similar=True,
             include_exact_match_level=include_exact_match_level,
@@ -666,7 +666,7 @@ class JaroAtThresholdsBase(DistanceFunctionAtThresholdsBase):
         col_name: str,
         distance_threshold_or_thresholds: int | list = [0.9, 0.7],
         regex_extract: str = None,
-        valid_string_regex: str = None,
+        valid_string_pattern: str = None,
         set_to_lowercase: bool = False,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
@@ -691,7 +691,7 @@ class JaroAtThresholdsBase(DistanceFunctionAtThresholdsBase):
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [0.9, 0.7].
             regex_extract (str): Regular expression pattern to evaluate a match on.
-            valid_string_regex (str): regular expression pattern that if not
+            valid_string_pattern (str): regular expression pattern that if not
                 matched will result in column being treated as a null.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
@@ -751,7 +751,7 @@ class JaroAtThresholdsBase(DistanceFunctionAtThresholdsBase):
             distance_function_name=self._jaro_name,
             distance_threshold_or_thresholds=distance_threshold_or_thresholds,
             regex_extract=regex_extract,
-            valid_string_regex=valid_string_regex,
+            valid_string_pattern=valid_string_pattern,
             set_to_lowercase=set_to_lowercase,
             higher_is_more_similar=True,
             include_exact_match_level=include_exact_match_level,
@@ -772,7 +772,7 @@ class JaroWinklerAtThresholdsBase(DistanceFunctionAtThresholdsBase):
         col_name: str,
         distance_threshold_or_thresholds: int | list = [0.9, 0.7],
         regex_extract: str = None,
-        valid_string_regex: str = None,
+        valid_string_pattern: str = None,
         set_to_lowercase: bool = False,
         include_exact_match_level=True,
         term_frequency_adjustments=False,
@@ -797,7 +797,7 @@ class JaroWinklerAtThresholdsBase(DistanceFunctionAtThresholdsBase):
                 threshold(s) to use for the middle similarity level(s).
                 Defaults to [0.9, 0.7].
             regex_extract (str): Regular expression pattern to evaluate a match on.
-            valid_string_regex (str): regular expression pattern that if not
+            valid_string_pattern (str): regular expression pattern that if not
                 matched will result in column being treated as a null.
             include_exact_match_level (bool, optional): If True, include an exact match
                 level. Defaults to True.
@@ -865,7 +865,7 @@ class JaroWinklerAtThresholdsBase(DistanceFunctionAtThresholdsBase):
             distance_function_name=self._jaro_winkler_name,
             distance_threshold_or_thresholds=distance_threshold_or_thresholds,
             regex_extract=regex_extract,
-            valid_string_regex=valid_string_regex,
+            valid_string_pattern=valid_string_pattern,
             set_to_lowercase=set_to_lowercase,
             higher_is_more_similar=True,
             include_exact_match_level=include_exact_match_level,
@@ -1228,7 +1228,7 @@ class DatediffAtThresholdsBase(Comparison):
             self._null_level(
                 col_name,
                 invalid_dates_as_null=invalid_dates_as_null,
-                valid_string_regex=date_format,
+                valid_string_pattern=date_format,
             )
         )
 
