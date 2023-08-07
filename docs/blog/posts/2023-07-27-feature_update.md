@@ -138,6 +138,8 @@ email_comparison = cl.levenshtein_at_thresholds("email", valid_string_regex="^[^
 
 For more on how Regular Expressions can be used in Splink, check out the [Regex topic guide](https://moj-analytical-services.github.io/splink/topic_guides/comparisons/regular_expressions.html#example-using-valid_string_regex).
 
+Note: from Splink v3.9.6, `valid_string_regex` has been renamed as `valid_string_pattern`.
+
 ## :books: Documentation Improvements
 
 We have been putting a lot of effort into improving our documentation site, including launching this blog!

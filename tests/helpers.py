@@ -148,7 +148,6 @@ class SparkTestHelper(TestHelper):
 
 
 class SQLiteTestHelper(TestHelper):
-
     _frame_counter = 0
 
     def __init__(self):
@@ -197,7 +196,6 @@ class SQLiteTestHelper(TestHelper):
 
 
 class PostgresTestHelper(TestHelper):
-
     _frame_counter = 0
 
     def __init__(self, pg_engine):

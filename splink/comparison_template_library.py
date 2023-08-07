@@ -159,10 +159,13 @@ class DateComparisonBase(Comparison):
         """
         # Construct Comparison
         comparison_levels = []
-        if invalid_dates_as_null:
-            comparison_levels.append(self._null_level(col_name, date_format))
-        else:
-            comparison_levels.append(self._null_level(col_name))
+        comparison_levels.append(
+            self._null_level(
+                col_name,
+                invalid_dates_as_null=invalid_dates_as_null,
+                valid_string_pattern=date_format,
+            )
+        )
 
         # Validate user inputs
         datediff_error_logger(thresholds=datediff_thresholds, metrics=datediff_metrics)
@@ -1527,7 +1530,9 @@ class EmailComparisonBase(Comparison):
 
         # Decide whether invalid emails should be treated as null
         if invalid_emails_as_null:
-            comparison_levels.append(self._null_level(col_name, valid_email_regex))
+            comparison_levels.append(
+                self._null_level(col_name, valid_string_pattern=valid_email_regex)
+            )
         else:
             comparison_levels.append(self._null_level(col_name))
 
