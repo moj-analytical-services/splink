@@ -89,10 +89,11 @@ class NullLevelBase(ComparisonLevel):
         elif target_rows is not None:
             # user is using deprecated argument
             warnings.warn(
-                "valid_string_regex is deprecated; use valid_string_pattern", DeprecationWarning, 2
+                "valid_string_regex is deprecated; use valid_string_pattern",
+                DeprecationWarning,
+                2,
             )
             valid_string_pattern = valid_string_regex
-        
 
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
         col_name_l, col_name_r = col.name_l(), col.name_r()
