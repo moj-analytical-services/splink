@@ -14,7 +14,7 @@ tags:
 This document enumerates all the settings and configuration options available when
 developing your data linkage model.
 
-You can find an interative settings editor [here](/docs/settingseditor/editor.md).
+You can find an [interative settings editor here](/docs/settingseditor/editor.md).
 
 <hr>
 

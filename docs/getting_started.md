@@ -84,11 +84,16 @@ For more detailed tutorial, please see [section below](#tutorial).
     linker = DuckDBLinker(df, settings)
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
-    blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
+    blocking_rule_for_training = brl.and_(
+                                brl.exact_match_rule("first_name"), 
+                                brl.exact_match_rule("surname")
+                                )
+
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
-    blocking_rule_for_training = "l.dob = r.dob"
+    blocking_rule_for_training = brl.exact_match_rule("dob")
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+
 
     pairwise_predictions = linker.predict()
 

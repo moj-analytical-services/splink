@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import json
 import os
-import pkgutil
 import random
 from typing import TYPE_CHECKING
 
 from jinja2 import Template
 
-from .misc import EverythingEncoder
+from .misc import EverythingEncoder, read_resource
 from .splink_dataframe import SplinkDataFrame
 from .unique_id_concat import (
     _composite_unique_id_from_edges_sql,
@@ -231,8 +230,7 @@ def render_splink_cluster_studio_html(
 
     # Render template with cluster, nodes and edges
     template_path = "files/splink_cluster_studio/cluster_template.j2"
-    template = pkgutil.get_data(__name__, template_path).decode("utf-8")
-    template = Template(template)
+    template = Template(read_resource(template_path))
 
     template_data = {
         "raw_edge_data": json.dumps(edges_recs, cls=EverythingEncoder),
@@ -259,11 +257,8 @@ def render_splink_cluster_studio_html(
         "svu_text": "files/splink_vis_utils/splink_vis_utils.js",
         "custom_css": "files/splink_cluster_studio/custom.css",
     }
-
     for k, v in files.items():
-        f = pkgutil.get_data(__name__, v)
-        f = f.decode("utf-8")
-        template_data[k] = f
+        template_data[k] = read_resource(v)
 
     template_data["bundle_observable_notebook"] = bundle_observable_notebook
 

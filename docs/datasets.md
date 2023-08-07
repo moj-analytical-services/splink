@@ -44,6 +44,16 @@ The datasets available are listed below:
 
 {% include-markdown "./includes/generated_files/datasets_table.md" %}
 
+## `splink_dataset_labels`
+
+Some of the `splink_datasets` have corresponding clerical labels to help assess model performance. These are requested through the `splink_dataset_labels` module.
+
+### Available datasets
+
+The datasets available are listed below:
+
+{% include-markdown "./includes/generated_files/dataset_labels_table.md" %}
+
 ## `splink_dataset_utils` API
 
 In addition to `splink_datasets`, you can also import `splink_dataset_utils`, 

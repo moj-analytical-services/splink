@@ -23,7 +23,7 @@ theme:
     - navigation.tabs.sticky
     - navigation.top
     - toc.follow
-    - toc.follow
+    - navigation.prune
   logo: "img/favicon.ico"
   favicon: "img/favicon.ico"
   palette:
@@ -41,6 +41,9 @@ theme:
         name: Switch to light mode
   custom_dir: docs/overrides
 plugins:
+  - blog:
+      post_date_format: long
+      archive: false
   - search
   - semiliterate
   - mknotebooks
@@ -56,6 +59,8 @@ plugins:
       enable_creation_date: true
       type: timeago
       fallback_to_build_date: true
+  - charts
+
 markdown_extensions:
   - abbr
   - attr_list
@@ -66,6 +71,9 @@ markdown_extensions:
       generic: true
   - pymdownx.superfences:
       custom_fences:
+        - name: vegalite
+          class: vegalite
+          format: !!python/name:mkdocs_charts_plugin.fences.fence_vegalite
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
@@ -115,32 +123,37 @@ nav:
   - Topic Guides:
       - Introduction: "topic_guides/topic_guides_index.md"
       - Record Linkage Theory:
-        - Why do we need record linkage?: "topic_guides/record_linkage.md"
-        - Probabilistic vs Deterministic linkage: "topic_guides/probabilistic_vs_deterministic.md"
-        - The Fellegi-Sunter Model: "topic_guides/fellegi_sunter.md"
+        - Why do we need record linkage?: "topic_guides/theory/record_linkage.md"
+        - Probabilistic vs Deterministic linkage: "topic_guides/theory/probabilistic_vs_deterministic.md"
+        - The Fellegi-Sunter Model: "topic_guides/theory/fellegi_sunter.md"
       - Linkage Models in Splink:
         - Splink's SQL backends - Spark, DuckDB etc:
           - Backends overview: "topic_guides/backends/backends.md"
           - PostgreSQL: "topic_guides/backends/postgres.md"
-        - Link type - linking vs deduping: "topic_guides/link_type.md"
-        - Defining Splink models: "topic_guides/settings.md"
-        - Retrieving and querying Splink results: "topic_guides/querying_splink_results.md"
+        - Link type - linking vs deduping: "topic_guides/splink_fundamentals/link_type.md"
+        - Defining Splink models: "topic_guides/splink_fundamentals/settings.md"
+        - Retrieving and querying Splink results: "topic_guides/splink_fundamentals/querying_splink_results.md"
       - Data Preparation:
-        - Feature Engineering: "topic_guides/feature_engineering.md"
+        - Feature Engineering: "topic_guides/data_preparation/feature_engineering.md"
       - Blocking:
-        - Run times, performance and linking large data: "topic_guides/drivers_of_performance.md"
-        - Blocking rules for prediction vs estimation: "topic_guides/blocking_rules.md"
+        - What are Blocking Rules?: "topic_guides/blocking/blocking_rules.md"
+        - Prediction Blocking Rules: "topic_guides/blocking/predictions.md"        
+        - Model Training Blocking Rules: "topic_guides/blocking/model_training.md"
+        - Computational Performance: "topic_guides/blocking/performance.md"
       - Comparing Records:
-        - Defining and customising comparisons: "topic_guides/customising_comparisons.ipynb"
-        - Out-of-the-box comparisons: "topic_guides/comparison_templates.ipynb"
+        - Defining and customising comparisons: "topic_guides/comparisons/customising_comparisons.ipynb"
+        - Out-of-the-box comparisons: "topic_guides/comparisons/comparison_templates.ipynb"
         - Comparing strings:
-          - Choosing comparators and thresholds: "topic_guides/choosing_comparators.ipynb"
-          - String comparators: "topic_guides/comparators.md"
-          - Phonetic transformations: "topic_guides/phonetic.md"
-        - Term-Frequency adjustments: "topic_guides/term-frequency.md"
+          - Choosing comparators and thresholds: "topic_guides/comparisons/choosing_comparators.ipynb"
+          - String comparators: "topic_guides/comparisons/comparators.md"
+          - Phonetic transformations: "topic_guides/comparisons/phonetic.md"
+          - Regular Expressions: "topic_guides/comparisons/regular_expressions.md"
+        - Term-Frequency adjustments: "topic_guides/comparisons/term-frequency.md"
       - Performance:
-        - Optimising Spark performance: "topic_guides/optimising_spark.md"
-        - Salting blocking rules: "topic_guides/salting.md"
+        - Run times, performance and linking large data: "topic_guides/performance/drivers_of_performance.md"
+        - Spark Performance:
+            - Optimising Spark performance: "topic_guides/performance/optimising_spark.md"
+            - Salting blocking rules: "topic_guides/performance/salting.md"
   - Documentation:
       - Introduction: "documentation_index.md"
       - API:
@@ -169,7 +182,6 @@ nav:
       - Settings:
         - Settings Dictionary Reference: "settings_dict_guide.md"
         - Interactive Settings Editor: "settingseditor/editor.md"
-
   - Contributing:
       - Introduction: "dev_guides/dev_guides_index.md"
       - Contributing to Splink:
@@ -189,14 +201,17 @@ nav:
           - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
           - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
         - User-Defined Functions: "dev_guides/udfs.md"
-      
-
+  - Blog:
+    - blog/index.md 
 extra_css:
 - css/custom.css
 extra_javascript:
   - javascripts/mathjax.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://cdn.jsdelivr.net/npm/vega@5
+  - https://cdn.jsdelivr.net/npm/vega-lite@5
+  - https://cdn.jsdelivr.net/npm/vega-embed@6
 extra:
   analytics:
     provider: google
@@ -208,5 +223,4 @@ extra:
       link: https://pypi.org/project/splink/
     - icon: fontawesome/solid/chevron-right
       link: https://www.robinlinacre.com/
-
-
+  new: Recently added
