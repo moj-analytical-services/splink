@@ -24,6 +24,7 @@ tags:
         - prediction_errors_from_labels_table
         - roc_chart_from_labels_column
         - roc_chart_from_labels_table
+        - tf_adjustment_chart
         - truth_space_table_from_labels_column
         - truth_space_table_from_labels_table
         - unlinkables_chart
