@@ -66,6 +66,7 @@ markdown_extensions:
   - attr_list
   - meta
   - admonition
+  - md_in_html
   - pymdownx.details
   - pymdownx.arithmatex:
       generic: true
