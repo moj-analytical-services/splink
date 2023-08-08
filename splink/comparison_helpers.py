@@ -7,7 +7,6 @@ from .charts import (
     _comparator_score_threshold_chart,
     _phonetic_match_chart,
 )
-from .comparison_helpers_utils import threshold_match
 
 comparator_cols_sql = """
     levenshtein({comparison1}, {comparison2}) as levenshtein_distance,
