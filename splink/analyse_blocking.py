@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
-from .blocking import _sql_gen_where_condition, block_using_rules_sql
+from .blocking import BlockingRule, _sql_gen_where_condition, block_using_rules_sql
 from .misc import calculate_cartesian, calculate_reduction_ratio
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
-def number_of_comparisons_generated_by_blocking_rule_sql(
+def number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
     linker: Linker,
     blocking_rule,
 ) -> str:
@@ -99,8 +99,12 @@ def cumulative_comparisons_generated_by_blocking_rules(
     linker._enqueue_sql(sql, "__splink__df_count_cumulative_blocks")
     cumulative_blocking_rule_count = linker._execute_sql_pipeline([concat])
     br_n = cumulative_blocking_rule_count.as_pandas_dataframe()
+    # not all dialects return column names when frame is empty (e.g. sqlite, postgres)
+    if br_n.empty:
+        br_n["row_count"] = []
+        br_n["match_key"] = []
     cumulative_blocking_rule_count.drop_table_from_database_and_remove_from_cache()
-    br_count, br_keys = list(br_n.row_count), list(br_n["match_key"].astype("int"))
+    br_count, br_keys = list(br_n["row_count"]), list(br_n["match_key"].astype("int"))
 
     if len(br_count) != len(brs_as_objs):
         missing_br = [x for x in range(len(brs_as_objs)) if x not in br_keys]
@@ -139,3 +143,103 @@ def cumulative_comparisons_generated_by_blocking_rules(
     linker._analyse_blocking_mode = False
 
     return br_comparisons
+
+
+def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
+    linker: "Linker", blocking_rule: Union[str, "BlockingRule"]
+):
+    if isinstance(blocking_rule, str):
+        blocking_rule = BlockingRule(blocking_rule, sqlglot_dialect=linker._sql_dialect)
+
+    join_conditions = blocking_rule._equi_join_conditions
+
+    l_cols_sel = []
+    r_cols_sel = []
+    l_cols_gb = []
+    r_cols_gb = []
+    using = []
+    for (
+        i,
+        (l_key, r_key),
+    ) in enumerate(join_conditions):
+        l_cols_sel.append(f"{l_key} as key_{i}")
+        r_cols_sel.append(f"{r_key} as key_{i}")
+        l_cols_gb.append(l_key)
+        r_cols_gb.append(r_key)
+        using.append(f"key_{i}")
+
+    l_cols_sel = ", ".join(l_cols_sel)
+    r_cols_sel = ", ".join(r_cols_sel)
+    l_cols_gb = ", ".join(l_cols_gb)
+    r_cols_gb = ", ".join(r_cols_gb)
+    using = ", ".join(using)
+
+    sqls = []
+
+    if linker._two_dataset_link_only:
+        #    Can just use the raw input datasets
+        keys = list(linker._input_tables_dict.keys())
+        input_tablename_l = linker._input_tables_dict[keys[0]].physical_name
+        input_tablename_r = linker._input_tables_dict[keys[1]].physical_name
+
+    else:
+        input_tablename_l = "__splink__df_concat"
+        input_tablename_r = "__splink__df_concat"
+
+    if not join_conditions:
+        if linker._two_dataset_link_only:
+            sql = f"""
+            SELECT
+                (SELECT COUNT(*) FROM {input_tablename_l})
+                *
+                (SELECT COUNT(*) FROM {input_tablename_r})
+                    AS count_of_pairwise_comparisons_generated
+            """
+        else:
+            sql = """
+            select count(*) * count(*) as count_of_pairwise_comparisons_generated
+            from __splink__df_concat
+
+            """
+        sqls.append(
+            {"sql": sql, "output_table_name": "__splink__total_of_block_counts"}
+        )
+        return sqls
+
+    sql = f"""
+    select {l_cols_sel}, count(*) as count_l
+    from {input_tablename_l}
+    group by {l_cols_gb}
+    """
+
+    sqls.append(
+        {"sql": sql, "output_table_name": "__splink__count_comparisons_from_blocking_l"}
+    )
+
+    sql = f"""
+    select {r_cols_sel}, count(*) as count_r
+    from {input_tablename_r}
+    group by {r_cols_gb}
+    """
+
+    sqls.append(
+        {"sql": sql, "output_table_name": "__splink__count_comparisons_from_blocking_r"}
+    )
+
+    sql = f"""
+    select *, count_l, count_r, count_l * count_r as block_count
+    from __splink__count_comparisons_from_blocking_l
+    inner join __splink__count_comparisons_from_blocking_r
+    using ({using})
+    """
+
+    sqls.append({"sql": sql, "output_table_name": "__splink__block_counts"})
+
+    sql = """
+    select sum(block_count) as count_of_pairwise_comparisons_generated
+    from __splink__block_counts
+    """
+
+    sqls.append({"sql": sql, "output_table_name": "__splink__total_of_block_counts"})
+
+    return sqls

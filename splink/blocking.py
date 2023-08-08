@@ -1,8 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from sqlglot import parse_one
+from sqlglot.expressions import Join, Column
+from sqlglot.optimizer.eliminate_joins import join_condition
+from typing import TYPE_CHECKING, Union
 import logging
 
+from .misc import ensure_is_list
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
 
 logger = logging.getLogger(__name__)
@@ -12,19 +16,48 @@ if TYPE_CHECKING:
     from .linker import Linker
 
 
+def blocking_rule_to_obj(br):
+    if isinstance(br, BlockingRule):
+        return br
+    elif isinstance(br, dict):
+        blocking_rule = br.get("blocking_rule", None)
+        if blocking_rule is None:
+            raise ValueError("No blocking rule submitted...")
+        salting_partitions = br.get("salting_partitions", 1)
+
+        return BlockingRule(blocking_rule, salting_partitions)
+
+    else:
+        br = BlockingRule(br)
+        return br
+
+
 class BlockingRule:
     def __init__(
         self,
-        blocking_rule,
+        blocking_rule: BlockingRule | dict | str,
         salting_partitions=1,
+        sqlglot_dialect: str = None,
     ):
+        if sqlglot_dialect:
+            self._sql_dialect = sqlglot_dialect
+
         self.blocking_rule = blocking_rule
         self.preceding_rules = []
+        self.sqlglot_dialect = sqlglot_dialect
         self.salting_partitions = salting_partitions
+
+    @property
+    def sql_dialect(self):
+        return None if not hasattr(self, "_sql_dialect") else self._sql_dialect
 
     @property
     def match_key(self):
         return len(self.preceding_rules)
+
+    def add_preceding_rules(self, rules):
+        rules = ensure_is_list(rules)
+        self.preceding_rules = rules
 
     @property
     def and_not_preceding_rules_sql(self):
@@ -47,6 +80,85 @@ class BlockingRule:
         else:
             for n in range(self.salting_partitions):
                 yield f"{self.blocking_rule} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
+
+    @property
+    def _parsed_join_condition(self):
+        br = self.blocking_rule
+        return parse_one("INNER JOIN r", into=Join).on(
+            br, dialect=self.sqlglot_dialect
+        )  # using sqlglot==11.4.1
+
+    @property
+    def _equi_join_conditions(self):
+        """
+        Extract the equi join conditions from the blocking rule as a tuple:
+        source_keys, join_keys
+
+        Returns:
+            list of tuples like [(name, name), (substr(name,1,2), substr(name,2,3))]
+        """
+
+        def remove_table_prefix(tree):
+            for c in tree.find_all(Column):
+                del c.args["table"]
+            return tree
+
+        j = self._parsed_join_condition
+
+        source_keys, join_keys, _ = join_condition(j)
+
+        keys = zip(source_keys, join_keys)
+
+        rmtp = remove_table_prefix
+
+        keys = [(rmtp(i), rmtp(j)) for (i, j) in keys]
+
+        keys = [
+            (i.sql(dialect=self.sqlglot_dialect), j.sql(self.sqlglot_dialect))
+            for (i, j) in keys
+        ]
+
+        return keys
+
+    @property
+    def _filter_conditions(self):
+        # A more accurate term might be "non-equi-join conditions"
+        # or "complex join conditions", but to capture the idea these are
+        # filters that have to be applied post-creation of the pairwise record
+        # comparison i've opted to call it a filter
+        j = self._parsed_join_condition
+        _, _, filter_condition = join_condition(j)
+        if not filter_condition:
+            return ""
+        else:
+            return filter_condition.sql(self.sqlglot_dialect)
+
+    def as_dict(self):
+        "The minimal representation of the blocking rule"
+        output = {}
+
+        output["blocking_rule"] = self.blocking_rule
+
+        if self.salting_partitions > 1 and self.sql_dialect == "spark":
+            output["salting_partitions"] = self.salting_partitions
+
+        return output
+
+    @property
+    def descr(self):
+        return "Custom" if not hasattr(self, "_description") else self._description
+
+    def _abbreviated_sql(self, cutoff=75):
+        sql = self.blocking_rule
+        return (sql[:cutoff] + "...") if len(sql) > cutoff else sql
+
+    def __repr__(self):
+        return f"<{self._human_readable_succinct}>"
+
+    @property
+    def _human_readable_succinct(self):
+        sql = self._abbreviated_sql(75)
+        return f"{self.descr} blocking rule using SQL: {sql}"
 
 
 def _sql_gen_where_condition(link_type, unique_id_cols):
@@ -176,7 +288,7 @@ def block_using_rules_sql(linker: Linker):
             from {linker._input_tablename_l} as l
             inner join {linker._input_tablename_r} as r
             on
-            {salted_br}
+            ({salted_br})
             {br.and_not_preceding_rules_sql}
             {where_condition}
             """

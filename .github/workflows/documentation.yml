@@ -95,12 +95,6 @@ jobs:
           name: generated_files
           path: docs/includes/generated_files
 
-      - uses: actions/checkout@v3
-        with:
-          repository: "moj-analytical-services/splink_demos"
-          ref: master
-          path: "docs/demos/"
-
       - name: Preprocess markdown include files
         run: python3 scripts/preprocess_markdown_includes.py
 

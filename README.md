@@ -46,7 +46,7 @@ Splink is not designed for linking a single column containing a 'bag of words'. 
 
 ## Documentation
 
-The homepage for the Splink documentation can be found [here](https://moj-analytical-services.github.io/splink/). Interactive demos can be found [here](https://github.com/moj-analytical-services/splink_demos/tree/splink3_demos), or by clicking the following Binder link:
+The homepage for the Splink documentation can be found [here](https://moj-analytical-services.github.io/splink/). Interactive demos can be found [here](https://github.com/moj-analytical-services/splink/tree/master/docs/demos), or by clicking the following Binder link:
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab)
 
@@ -81,6 +81,7 @@ For more detailed tutorial, please see [here](https://moj-analytical-services.gi
 from splink.duckdb.linker import DuckDBLinker
 import splink.duckdb.comparison_library as cl
 import splink.duckdb.comparison_template_library as ctl
+import splink.duckdb.blocking_rule_library as brl
 from splink.datasets import splink_datasets
 
 df = splink_datasets.fake_1000
@@ -88,25 +89,29 @@ df = splink_datasets.fake_1000
 settings = {
     "link_type": "dedupe_only",
     "blocking_rules_to_generate_predictions": [
-        "l.first_name = r.first_name",
-        "l.surname = r.surname",
+        brl.exact_match_rule("first_name"),
+        brl.exact_match_rule("surname"),
     ],
     "comparisons": [
         ctl.name_comparison("first_name"),
         ctl.name_comparison("surname"),
         ctl.date_comparison("dob", cast_strings_to_date=True),
         cl.exact_match("city", term_frequency_adjustments=True),
-        ctl.email_comparison("email"),
+        ctl.email_comparison("email", include_username_fuzzy_level=False),
     ],
 }
 
 linker = DuckDBLinker(df, settings)
 linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
-blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
+blocking_rule_for_training = brl.and_(
+                                brl.exact_match_rule("first_name"), 
+                                brl.exact_match_rule("surname")
+                                )
+
 linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
-blocking_rule_for_training = "l.dob = r.dob"
+blocking_rule_for_training = brl.exact_match_rule("dob")
 linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
 pairwise_predictions = linker.predict()
@@ -122,7 +127,7 @@ clusters.as_pandas_dataframe(limit=5)
 
 ## Support
 
-Please post on the [discussion forums](https://github.com/moj-analytical-services/splink/discussions) if you have any questions. If you think you have found a bug, please raise an [issue](https://github.com/moj-analytical-services/splink/issues).
+To find the best place to ask a question, report a bug or get general advice, please refer to our [Contributing Guide](./CONTRIBUTING.md).
 
 ## Awards
 
@@ -157,3 +162,12 @@ If you use Splink in your research, we'd be grateful for a citation as follows:
 We are very grateful to [ADR UK](https://www.adruk.org/) (Administrative Data Research UK) for providing the initial funding for this work as part of the [Data First](https://www.adruk.org/our-work/browse-all-projects/data-first-harnessing-the-potential-of-linked-administrative-data-for-the-justice-system-169/) project.
 
 We are extremely grateful to professors Katie Harron, James Doidge and Peter Christen for their expert advice and guidance in the development of Splink. We are also very grateful to colleagues at the UK's Office for National Statistics for their expert advice and peer review of this work. Any errors remain our own.
+
+## Related Repositories
+
+While Splink is a standalone package, there are a number of repositories in the Splink ecosystem:
+
+- [splink_demos](https://github.com/moj-analytical-services/splink_demos) contains a copy of the Splink tutorial and example notebooks that are hosted via [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab)
+- [splink_scalaudfs](https://github.com/moj-analytical-services/splink_scalaudfs) contains the code to generate [User Defined Functions](https://moj-analytical-services.github.io/splink/dev_guides/udfs.html#spark) in scala which are then callable in Spark.
+- [splink_datasets](https://github.com/moj-analytical-services/splink_datasets) contains datasets that can be installed automatically as a part of Splink through the [In-build datasets](https://moj-analytical-services.github.io/splink/datasets.html) functionality.
+- [splink_synthetic_data] contains code to generate synthetic data.

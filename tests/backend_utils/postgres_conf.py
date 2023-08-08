@@ -49,6 +49,7 @@ def _setup_test_env(_engine_factory):
     # force drop as connections are persisting
     # would be good to relax by fixing connection issue, but doesn't matter in this env
     drop_db_sql = f"DROP DATABASE IF EXISTS {db_name} WITH (FORCE)"
+    drop_user_sql = f"DROP USER IF EXISTS {user}"
 
     conn.execution_options(isolation_level="AUTOCOMMIT")
     conn.execute(text(drop_db_sql))
@@ -62,29 +63,34 @@ def _setup_test_env(_engine_factory):
         """
         )
     )
+    # required permission - for extensions + making schema
     conn.execute(
         text(
             f"""
-        GRANT ALL PRIVILEGES ON DATABASE {db_name} TO {user};
+        GRANT CREATE ON DATABASE {db_name} TO {user};
         """
         )
     )
 
     new_conn = _engine_factory(db_name).connect()
     new_conn.execution_options(isolation_level="AUTOCOMMIT")
+    # only need this for creating tables before being fed to Splink
+    # don't need for actual Splink operation
     new_conn.execute(
         text(
             f"""
-        GRANT ALL PRIVILEGES ON SCHEMA public TO {user};
+        GRANT CREATE ON SCHEMA public TO {user};
         """
         )
     )
+    # for UDFs need these two:
     new_conn.execute(text(f"GRANT USAGE ON LANGUAGE SQL TO {user};"))
     new_conn.execute(text(f"GRANT USAGE ON TYPE float8 TO {user};"))
     new_conn.close()
 
     def teardown():
         conn.execute(text(drop_db_sql))
+        conn.execute(text(drop_user_sql))
         conn.close()
 
     return {

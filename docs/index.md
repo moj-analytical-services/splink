@@ -5,7 +5,7 @@ hide:
 ---
 
 <p align="center">
-<img src="https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png" alt="Splink Logo" style="max-width: 500px;">
+<img src="https://user-images.githubusercontent.com/7570107/85285114-3969ac00-b488-11ea-88ff-5fca1b34af1f.png" alt="Splink: data linkage at scale. (Splink logo)." style="max-width: 500px;">
 </p>
 
 # Fast, accurate and scalable probabilistic data linkage
@@ -13,7 +13,7 @@ hide:
 Splink is a Python package for probabilistic record linkage (entity resolution) that allows you to deduplicate and link records from datasets without unique identifiers.
 
 
-[Get Started with Splink](./getting_started.md){ .md-button .md-button--primary } 
+[Get Started with Splink](./getting_started.md){ .md-button .md-button--primary }
 
 <hr>
 
@@ -53,17 +53,17 @@ Splink is not designed for linking a single column containing a 'bag of words'. 
 
 ## Support
 
-Please post on the [discussion forums](https://github.com/moj-analytical-services/splink/discussions) if you have any questions. If you think you have found a bug, pleaase raise an [issue](https://github.com/moj-analytical-services/splink/issues).
+To find the best place to ask a question, report a bug or get general advice, please refer to our [Contributing Guide](./CONTRIBUTING.md).
 
 ## Awards
 
-🥇 Analysis in Government Awards 2020: Innovative Methods: [Winner](https://www.gov.uk/government/news/launch-of-the-analysis-in-government-awards)
+🥇 [Analysis in Government Awards 2020: Innovative Methods: Winner](https://www.gov.uk/government/news/launch-of-the-analysis-in-government-awards)
 
 🥇 MoJ DASD Awards 2020: Innovation and Impact - Winner
 
-🥇 Analysis in Government Awards 2022: People's Choice Award - [Winner](https://analysisfunction.civilservice.gov.uk/news/announcing-the-winner-of-the-first-analysis-in-government-peoples-choice-award/)
+🥇 [Analysis in Government Awards 2022: People's Choice Award - Winner](https://analysisfunction.civilservice.gov.uk/news/announcing-the-winner-of-the-first-analysis-in-government-peoples-choice-award/)
 
-🥈 Analysis in Government Awards 2022: Innovative Methods [Runner up](https://twitter.com/gov_analysis/status/1616073633692274689?s=20&t=6TQyNLJRjnhsfJy28Zd6UQ)
+🥈 [Analysis in Government Awards 2022: Innovative Methods Runner up](https://twitter.com/gov_analysis/status/1616073633692274689?s=20&t=6TQyNLJRjnhsfJy28Zd6UQ)
 
 ## Citation
 

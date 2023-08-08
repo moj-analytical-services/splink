@@ -35,7 +35,7 @@ import pandas as pd
 import pytest
 
 import splink.duckdb.comparison_library as cl
-from splink.duckdb.linker import DuckDBLinker, DuckDBLinkerDataFrame
+from splink.duckdb.linker import DuckDBDataFrame, DuckDBLinker
 from splink.em_training_session import EMTrainingSession
 from splink.predict import predict_from_comparison_vectors_sqls
 
@@ -68,7 +68,7 @@ def test_splink_converges_to_known_params():
     # CREATE TABLE __splink__df_comparison_vectors_abc123
     # and modify the following line to include the value of the hash (abc123 above)
 
-    cvv_hashed_tablename = "__splink__df_comparison_vectors_27e26184a"
+    cvv_hashed_tablename = "__splink__df_comparison_vectors_ee08ffa85"
     linker.register_table(df, cvv_hashed_tablename)
 
     em_training_session = EMTrainingSession(
@@ -87,7 +87,7 @@ def test_splink_converges_to_known_params():
 
     linker.match_weights_chart()
 
-    cv = DuckDBLinkerDataFrame(
+    cv = DuckDBDataFrame(
         "__splink__df_comparison_vectors",
         cvv_hashed_tablename,
         linker,

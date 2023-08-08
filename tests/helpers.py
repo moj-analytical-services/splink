@@ -9,15 +9,19 @@ from sqlalchemy.types import (
     TEXT,
 )
 
+import splink.duckdb.blocking_rule_library as brl_duckdb
 import splink.duckdb.comparison_level_library as cll_duckdb
 import splink.duckdb.comparison_library as cl_duckdb
 import splink.duckdb.comparison_template_library as ctl_duckdb
+import splink.postgres.blocking_rule_library as brl_postgres
 import splink.postgres.comparison_level_library as cll_postgres
 import splink.postgres.comparison_library as cl_postgres
 import splink.postgres.comparison_template_library as ctl_postgres
+import splink.spark.blocking_rule_library as brl_spark
 import splink.spark.comparison_level_library as cll_spark
 import splink.spark.comparison_library as cl_spark
 import splink.spark.comparison_template_library as ctl_spark
+import splink.sqlite.blocking_rule_library as brl_sqlite
 import splink.sqlite.comparison_level_library as cll_sqlite
 import splink.sqlite.comparison_library as cl_sqlite
 import splink.sqlite.comparison_template_library as ctl_sqlite
@@ -65,6 +69,11 @@ class TestHelper(ABC):
     def ctl(self):
         pass
 
+    @property
+    @abstractmethod
+    def brl(self):
+        pass
+
 
 class DuckDBTestHelper(TestHelper):
     @property
@@ -89,6 +98,10 @@ class DuckDBTestHelper(TestHelper):
     @property
     def ctl(self):
         return ctl_duckdb
+
+    @property
+    def brl(self):
+        return brl_duckdb
 
 
 class SparkTestHelper(TestHelper):
@@ -128,6 +141,10 @@ class SparkTestHelper(TestHelper):
     @property
     def ctl(self):
         return ctl_spark
+
+    @property
+    def brl(self):
+        return brl_spark
 
 
 class SQLiteTestHelper(TestHelper):
@@ -173,6 +190,10 @@ class SQLiteTestHelper(TestHelper):
     @property
     def ctl(self):
         return ctl_sqlite
+
+    @property
+    def brl(self):
+        return brl_sqlite
 
 
 class PostgresTestHelper(TestHelper):
@@ -231,6 +252,10 @@ class PostgresTestHelper(TestHelper):
     @property
     def ctl(self):
         return ctl_postgres
+
+    @property
+    def brl(self):
+        return brl_postgres
 
 
 class SplinkTestException(Exception):

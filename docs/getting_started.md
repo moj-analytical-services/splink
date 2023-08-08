@@ -19,7 +19,7 @@ conda install -c conda-forge splink
 ```
 
 ??? "DuckDB-less Installation"
-    ### DuckDB-less Installation    
+    ### DuckDB-less Installation
     Should you be unable to install `DuckDB` to your local machine, you can still run `Splink` without the `DuckDB` dependency using a small workaround.
 
     To start, install the latest released version of splink from PyPI without any dependencies using:
@@ -61,6 +61,7 @@ For more detailed tutorial, please see [section below](#tutorial).
     from splink.duckdb.linker import DuckDBLinker
     import splink.duckdb.comparison_library as cl
     import splink.duckdb.comparison_template_library as ctl
+    import splink.duckdb.blocking_rule_library as brl
     from splink.datasets import splink_datasets
 
     df = splink_datasets.fake_1000
@@ -68,26 +69,31 @@ For more detailed tutorial, please see [section below](#tutorial).
     settings = {
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [
-            "l.first_name = r.first_name",
-            "l.surname = r.surname",
+            brl.exact_match_rule("first_name"),
+            brl.exact_match_rule("surname"),
         ],
         "comparisons": [
             ctl.name_comparison("first_name"),
             ctl.name_comparison("surname"),
             ctl.date_comparison("dob", cast_strings_to_date=True),
             cl.exact_match("city", term_frequency_adjustments=True),
-            ctl.email_comparison("email"),
+            ctl.email_comparison("email", include_username_fuzzy_level=False),
         ],
     }
 
     linker = DuckDBLinker(df, settings)
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
-    blocking_rule_for_training = "l.first_name = r.first_name and l.surname = r.surname"
+    blocking_rule_for_training = brl.and_(
+                                brl.exact_match_rule("first_name"), 
+                                brl.exact_match_rule("surname")
+                                )
+
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
-    blocking_rule_for_training = "l.dob = r.dob"
+    blocking_rule_for_training = brl.exact_match_rule("dob")
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+
 
     pairwise_predictions = linker.predict()
 
@@ -105,6 +111,6 @@ You can learn more about Splink in the step-by-step [tutorial](./demos/00_Tutori
 
 ## Example Notebooks
 
-You can see end-to-end example of several use cases in the [example notebooks](./examples_index.md), or by clicking the following Binder link:
+You can see end-to-end example of several use cases in the [example notebooks](./demos/examples/examples_index.md), or by clicking the following Binder link:
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab)

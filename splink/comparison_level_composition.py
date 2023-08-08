@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable
 
+from .blocking import BlockingRule
 from .comparison_level import ComparisonLevel
 
 
@@ -417,8 +418,8 @@ def _to_comparison_level(cl: ComparisonLevel | dict) -> ComparisonLevel:
         return ComparisonLevel(cl)
 
 
-def _unify_sql_dialects(cls: Iterable[ComparisonLevel]) -> str | None:
-    sql_dialects = set(cl._sql_dialect for cl in cls)
+def _unify_sql_dialects(cls: Iterable[ComparisonLevel | BlockingRule]) -> str | None:
+    sql_dialects = set(cl.sql_dialect for cl in cls)
     sql_dialects.discard(None)
     if len(sql_dialects) > 1:
         raise ValueError("Cannot combine comparison levels with different SQL dialects")
