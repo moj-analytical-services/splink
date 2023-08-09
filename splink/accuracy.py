@@ -133,7 +133,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
         1.25*TP/(1.25*TP + 0.25*FN + FP) as f0_5,
         4.0*TP*TN/((4.0*TP*TN) + ((TP + TN)*(FP + FN))) as p4,
         case when TN+FN=0 or TP+FP=0 or P=0 or N=0 then 0
-            else cast((TP*TN)-(FP*FN) as float)/sqrt((TP+FP)*P*N*(TN+FN)) as phi
+            else cast((TP*TN)-(FP*FN) as float)/sqrt((TP+FP)*P*N*(TN+FN)) end as phi
 
     from __splink__labels_with_pos_neg_grouped_with_truth_stats
     """
