@@ -14,7 +14,7 @@ from .linker_utils import _test_table_registration, register_roc_data
 def test_full_example_sqlite(tmp_path):
 
     con = sqlite3.connect(":memory:")
-    con.create_function('sqrt', 1, sqrt)
+    con.create_function("sqrt", 1, sqrt)
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
