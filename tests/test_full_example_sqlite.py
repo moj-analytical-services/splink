@@ -1,11 +1,10 @@
 import os
 import sqlite3
+from math import sqrt
 
 import pandas as pd
 
 from splink.sqlite.linker import SQLiteLinker
-
-from math import sqrt
 
 from .basic_settings import get_settings_dict
 from .linker_utils import _test_table_registration, register_roc_data

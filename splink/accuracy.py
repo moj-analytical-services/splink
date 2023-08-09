@@ -124,7 +124,7 @@ def truth_space_table_from_labels_with_predictions_sqls(
         cast(FP as float)/N as fp_rate,
         cast(FN as float)/P as fn_rate,
         cast(TP as float)/(TP+FP) as precision,
-        cast(TP as float)/P as recall, 
+        cast(TP as float)/P as recall,
         cast(TN as float)/N as specificity,
         cast(TN as float)/(TN+FN) as npv,
         cast(TP+TN as float)/(P+N) as accuracy,
