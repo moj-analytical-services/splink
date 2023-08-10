@@ -59,16 +59,22 @@ plugins:
       enable_creation_date: true
       type: timeago
       fallback_to_build_date: true
+  - charts
+
 markdown_extensions:
   - abbr
   - attr_list
   - meta
   - admonition
+  - md_in_html
   - pymdownx.details
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.superfences:
       custom_fences:
+        - name: vegalite
+          class: vegalite
+          format: !!python/name:mkdocs_charts_plugin.fences.fence_vegalite
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
@@ -204,6 +210,9 @@ extra_javascript:
   - javascripts/mathjax.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://cdn.jsdelivr.net/npm/vega@5
+  - https://cdn.jsdelivr.net/npm/vega-lite@5
+  - https://cdn.jsdelivr.net/npm/vega-embed@6
 extra:
   analytics:
     provider: google

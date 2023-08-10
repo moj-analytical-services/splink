@@ -1,20 +1,31 @@
 from __future__ import annotations
 
+import warnings
+
 from .comparison_level import ComparisonLevel
 from .comparison_level_sql import great_circle_distance_km_sql
 from .input_column import InputColumn
 
 
 class NullLevelBase(ComparisonLevel):
-    def __init__(self, col_name, valid_string_regex: str = None) -> ComparisonLevel:
+    def __init__(
+        self,
+        col_name,
+        valid_string_pattern: str = None,
+        invalid_dates_as_null: bool = False,
+        valid_string_regex: str = None,
+    ) -> ComparisonLevel:
         """Represents comparisons level where one or both sides of the comparison
         contains null values so the similarity cannot be evaluated.
         Assumed to have a partial match weight of zero (null effect
         on overall match weight)
         Args:
             col_name (str): Input column name
-            valid_string_regex (str): regular expression pattern that if not
+            valid_string_pattern (str): pattern (regex or otherwise) that if not
                 matched will result in column being treated as a null.
+            invalid_dates_as_null (bool): If True, set all invalid dates to null.
+                The "correct" format of a date is set by valid_string_pattern.
+                Defaults to false.
 
         Examples:
             === ":simple-duckdb: DuckDB"
@@ -27,7 +38,7 @@ class NullLevelBase(ComparisonLevel):
                 a given regex pattern
                 ``` python
                 import splink.duckdb.comparison_level_library as cll
-                cll.null_level("name", valid_string_regex="^[A-Z]{1,7}$")
+                cll.null_level("name", valid_string_pattern="^[A-Z]{1,7}$")
                 ```
             === ":simple-apachespark: Spark"
                 Simple null level
@@ -39,7 +50,7 @@ class NullLevelBase(ComparisonLevel):
                 a given regex pattern
                 ``` python
                 import splink.spark.comparison_level_library as cll
-                cll.null_level("name", valid_string_regex="^[A-Z]{1,7}$")
+                cll.null_level("name", valid_string_pattern="^[A-Z]{1,7}$")
                 ```
             === ":simple-amazonaws: Athena"
                 Simple null level
@@ -51,7 +62,7 @@ class NullLevelBase(ComparisonLevel):
                 a given regex pattern
                 ``` python
                 import splink.athena.comparison_level_library as cll
-                cll.null_level("name", valid_string_regex="^[A-Z]{1,7}$")
+                cll.null_level("name", valid_string_pattern="^[A-Z]{1,7}$")
                 ```
             === ":simple-sqlite: SQLite"
                 Simple null level
@@ -69,14 +80,37 @@ class NullLevelBase(ComparisonLevel):
             ComparisonLevel: Comparison level for null entries
         """
 
+        # TODO: Remove this compatibility code in a future release once we drop
+        # support for "valid_string_regex". Deprecation warning added in 3.9.6
+        if valid_string_pattern is not None and valid_string_regex is not None:
+            # user supplied both
+            raise TypeError("Just use valid_string_pattern")
+        elif valid_string_pattern is not None:
+            # user is doing it correctly
+            pass
+        elif valid_string_regex is not None:
+            # user is using deprecated argument
+            warnings.warn(
+                "valid_string_regex is deprecated; use valid_string_pattern",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            valid_string_pattern = valid_string_regex
+
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
-        if valid_string_regex:
-            col_name_l = self._regex_extract_function(col.name_l(), valid_string_regex)
-            col_name_r = self._regex_extract_function(col.name_r(), valid_string_regex)
+        col_name_l, col_name_r = col.name_l(), col.name_r()
+
+        if invalid_dates_as_null:
+            col_name_l = self._valid_date_function(col_name_l, valid_string_pattern)
+            col_name_r = self._valid_date_function(col_name_r, valid_string_pattern)
+            sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL OR
+                      {col_name_l}=='' OR {col_name_r} ==''"""
+        elif valid_string_pattern:
+            col_name_l = self._regex_extract_function(col_name_l, valid_string_pattern)
+            col_name_r = self._regex_extract_function(col_name_r, valid_string_pattern)
             sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL OR
                       {col_name_l}=='' OR {col_name_r} ==''"""
         else:
-            col_name_l, col_name_r = col.name_l(), col.name_r()
             sql = f"{col_name_l} IS NULL OR {col_name_r} IS NULL"
 
         level_dict = {

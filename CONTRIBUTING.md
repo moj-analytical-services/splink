@@ -32,6 +32,8 @@ There are some user restrictions on both the splink and splink_demos repos, so t
 
 For small changes, such as wording and typos, changes can be made directly in GitHub. However, for larger changes it may be worth cloning the relevant repo to your local machine. This way, you can [build the docs site locally](./docs/dev_guides/changing_splink/build_docs_locally.md) to check how the changes will look in the deployed doc site.
 
+We are trying to make our documentation as accessible to as many people as possible. If you find any problems with accessibility then please let us know by raising an issue, or feel free to put in a Pull Request with your suggested fixes.
+
 
 ## Contributing code
 Thanks for your interest in contributing code to Splink!
