@@ -38,7 +38,7 @@ _distribution_plotss_plot = load_chart_definition(
 _top_n_plot = load_chart_definition("profile_data_top_n.json")
 _bottom_n_plot = load_chart_definition("profile_data_bottom_n.json")
 _kde_plot = load_chart_definition("profile_data_kde.json")
-
+_correlation_plot = load_chart_definition("profile_data_correlation_heatmap.json")
 
 def _get_inner_chart_spec_freq(
     col_name,
@@ -167,6 +167,48 @@ def _get_df_kde():
     """
     return sql
 
+def _get_df_correlations(column_expressions):
+    sql = f"""
+    WITH column_list AS (
+    SELECT unnest(ARRAY{column_expressions}) AS column_name
+    ),
+    column_data AS (
+    SELECT {', '.join(column_expressions)} 
+    FROM __splink__df_concat
+    )
+    SELECT
+    t1.column_name AS column1,
+    t2.column_name AS column2,
+    CORR(d1.val::DOUBLE PRECISION, d2.val::DOUBLE PRECISION) AS correlation
+    FROM
+    column_list AS t1
+    CROSS JOIN
+    column_list AS t2
+    JOIN
+    (
+        SELECT
+        unnest(ARRAY{column_expressions}) AS column_name,
+        unnest(ARRAY[{', '.join(f't.{column_name}' for column_name in column_expressions)}]) AS val
+        FROM column_data AS t
+    ) AS d1 ON t1.column_name = d1.column_name
+    JOIN
+    (
+        SELECT
+        unnest(ARRAY{column_expressions}) AS column_name,
+        unnest(ARRAY[{', '.join(f't.{column_name}' for column_name in column_expressions)}]) AS val
+        FROM column_data AS t
+    ) AS d2 ON t2.column_name = d2.column_name
+    WHERE
+    t1.column_name < t2.column_name
+    GROUP BY
+    t1.column_name,
+    t2.column_name
+    ORDER BY
+    t1.column_name,
+    t2.column_name
+    """
+    return sql
+
 
 def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     sql = """
@@ -248,6 +290,7 @@ def profile_columns(
     bottom_n=10,
     distribution_plots=True,
     kde_plots=False,
+    correlation_plot=False
 ):
 
     df_concat = linker._initialise_df_concat()
@@ -262,9 +305,35 @@ def profile_columns(
     sql = _col_or_expr_frequencies_raw_data_sql(
         column_expressions_raw, "__splink__df_concat"
     )
-
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
     df_raw = linker._execute_sql_pipeline(input_dataframes, materialise_as_hash=True)
+
+    # if correlation_plot:
+    #     sql = _get_df_correlations(column_expressions)
+    #     linker._enqueue_sql(sql, "__splink__df_test")
+    #     correlation_rows = linker._execute_sql_pipeline(input_dataframes, materialise_as_hash=True)
+    #     correlation_data=correlation_rows.as_record_dict()
+    #     correlation_matrix = {}
+    #     for item in correlation_data:
+    #         row = item['column1']
+    #         col = item['column2']
+    #         value = item['correlation']
+            
+    #         if row not in correlation_matrix:
+    #             correlation_matrix[row] = {}
+            
+    #         correlation_matrix[row][col] = value
+    #     correlation_matrix_data = []
+    #     for row in correlation_matrix:
+    #         for col in correlation_matrix[row]:
+    #             correlation_matrix_data.append({
+    #                 "column1": row,
+    #                 "column2": col,
+    #                 "correlation": correlation_matrix[row][col]
+    #             })
+    # else:
+    #     correlation_rows_all = None
+    #     correlation_rows = None
 
     if distribution_plots:
         sqls = _get_df_percentiles()
@@ -274,6 +343,7 @@ def profile_columns(
         percentile_rows_all = df_percentiles.as_record_dict()
     else:
         percentile_rows_all = None
+        percentile_rows = None
 
     if top_n is not None:
         sql = _get_df_top_bottom_n(column_expressions, top_n, "desc")
@@ -282,6 +352,7 @@ def profile_columns(
         top_n_rows_all = df_top_n.as_record_dict()
     else:
         top_n_rows_all = None
+        top_n_rows = None
 
     if kde_plots:
         sql = _get_df_kde()
@@ -290,6 +361,7 @@ def profile_columns(
         kde_rows_all = df_kde.as_record_dict()
     else:
         kde_rows_all = None
+        kde_rows = None
 
     if bottom_n is not None:
         sql = _get_df_top_bottom_n(column_expressions, bottom_n, "asc")
@@ -298,6 +370,7 @@ def profile_columns(
         bottom_n_rows_all = df_bottom_n.as_record_dict()
     else:
         bottom_n_rows_all = None
+        bottom_n_rows = None
 
     inner_charts = []
 
@@ -334,6 +407,11 @@ def profile_columns(
         )
 
         inner_charts.append(inner_chart)
+    
+    # if correlation_plot:
+    #     _correlation_plot_copy = deepcopy(_correlation_plot)
+    #     _correlation_plot_copy["hconcat"][0]["data"]["values"] = correlation_matrix_data
+    #     inner_charts.append(_correlation_plot_copy)
 
     outer_spec = deepcopy(_outer_chart_spec_freq)
     outer_spec["vconcat"] = inner_charts

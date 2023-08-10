@@ -2023,6 +2023,7 @@ class Linker:
         bottom_n=10,
         kde_plots=False,
         distribution_plots=True,
+        correlation_plot=True
     ):
         return profile_columns(
             self,
@@ -2031,6 +2032,7 @@ class Linker:
             bottom_n=bottom_n,
             kde_plots=kde_plots,
             distribution_plots=distribution_plots,
+            correlation_plot=correlation_plot,
         )
 
     def _get_labels_tablename_from_input(
