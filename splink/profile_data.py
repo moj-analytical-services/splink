@@ -193,8 +193,7 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
 
     if column_expressions is None:
-        df = linker._initialise_df_concat_with_tf(materialise=True)
-        column_expressions = df.columns_escaped[1:]
+        column_expressions = [col.input_name for df in linker._input_tables_dict.values() for col in df.columns]
 
     df_concat = linker._initialise_df_concat()
 
