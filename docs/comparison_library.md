@@ -17,7 +17,19 @@ However, not every comparison is available for every [Splink-compatible SQL back
 
 The pre-made Splink comparisons available for each SQL dialect are as given in this table:
 
-{% include-markdown "./includes/generated_files/comparison_library_dialect_table.md" %}
+||:simple-duckdb: <br> DuckDB|:simple-apachespark: <br> Spark|:simple-amazonaws: <br> Athena|:simple-sqlite: <br> SQLite|:simple-postgresql: <br> PostgreSql|
+|:-:|:-:|:-:|:-:|:-:|:-:|
+|[array_intersect_at_sizes](#splink.comparison_library.ArrayIntersectAtSizesBase)|✓|✓|✓||✓|
+|[damerau_levenshtein_at_thresholds](#splink.comparison_library.DamerauLevenshteinAtThresholdsBase)|✓|✓||✓||
+|[datediff_at_thresholds](#splink.comparison_library.DatediffAtThresholdsBase)|✓|✓|✓||✓|
+|[distance_function_at_thresholds](#splink.comparison_library.DistanceFunctionAtThresholdsBase)|✓|✓|✓|✓|✓|
+|[distance_in_km_at_thresholds](#splink.comparison_library.DistanceInKmAtThresholdsBase)|✓|✓|✓||✓|
+|[exact_match](#splink.comparison_library.ExactMatchBase)|✓|✓|✓|✓|✓|
+|[jaccard_at_thresholds](#splink.comparison_library.JaccardAtThresholdsBase)|✓|✓||||
+|[jaro_at_thresholds](#splink.comparison_library.JaroAtThresholdsBase)|✓|✓||✓||
+|[jaro_winkler_at_thresholds](#splink.comparison_library.JaroWinklerAtThresholdsBase)|✓|✓||✓||
+|[levenshtein_at_thresholds](#splink.comparison_library.LevenshteinAtThresholdsBase)|✓|✓|✓|✓|✓|
+
 
 
 

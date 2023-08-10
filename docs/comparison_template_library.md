@@ -13,7 +13,14 @@ However, not every comparison is available for every [Splink-compatible SQL back
 
 The pre-made Splink comparison templates available for each SQL dialect are as given in this table:
 
-{% include-markdown "./includes/generated_files/comparison_template_library_dialect_table.md" %}
+||:simple-duckdb: <br> DuckDB|:simple-apachespark: <br> Spark|:simple-amazonaws: <br> Athena|:simple-sqlite: <br> SQLite|:simple-postgresql: <br> PostgreSql|
+|:-:|:-:|:-:|:-:|:-:|:-:|
+|[date_comparison](#splink.comparison_template_library.DateComparisonBase)|✓|✓||||
+|[email_comparison](#splink.comparison_template_library.EmailComparisonBase)|✓|✓||||
+|[forename_surname_comparison](#splink.comparison_template_library.ForenameSurnameComparisonBase)|✓|✓||✓||
+|[name_comparison](#splink.comparison_template_library.NameComparisonBase)|✓|✓||✓||
+|[postcode_comparison](#splink.comparison_template_library.PostcodeComparisonBase)|✓|✓|✓|||
+
 
 
 
