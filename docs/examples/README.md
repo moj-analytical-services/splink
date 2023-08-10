@@ -1,2 +1,0 @@
-# Charts example gallery
-
