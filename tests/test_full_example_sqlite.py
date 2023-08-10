@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from math import sqrt
 
 import pandas as pd
 
@@ -11,6 +12,7 @@ from .linker_utils import _test_table_registration, register_roc_data
 
 def test_full_example_sqlite(tmp_path):
     con = sqlite3.connect(":memory:")
+    con.create_function("sqrt", 1, sqrt)
 
     df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -54,6 +56,7 @@ def test_full_example_sqlite(tmp_path):
 
     register_roc_data(linker)
     linker.roc_chart_from_labels_table("labels")
+    linker.accuracy_chart_from_labels_table("labels")
 
 
 def test_small_link_example_sqlite():
