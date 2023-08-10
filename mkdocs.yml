@@ -64,6 +64,7 @@ plugins:
       gallery_dirs: docs/generated/ # where to save generated gallery
       # ... (other options)
 
+
 markdown_extensions:
   - abbr
   - attr_list
@@ -95,7 +96,6 @@ markdown_extensions:
   - footnotes
 nav:
   - Home: "index.md"
-  - My Gallery: "generated/gallery"
   - Getting Started: "getting_started.md"
   - Tutorial:
       - Introduction: "demos/tutorials/00_Tutorial_Introduction.ipynb"
@@ -154,6 +154,8 @@ nav:
           - Phonetic transformations: "topic_guides/comparisons/phonetic.md"
           - Regular Expressions: "topic_guides/comparisons/regular_expressions.md"
         - Term-Frequency adjustments: "topic_guides/comparisons/term-frequency.md"
+      - Charts:
+        - profile_columns: "topic_guides/charts/profile_columns.ipynb"
       - Performance:
         - Run times, performance and linking large data: "topic_guides/performance/drivers_of_performance.md"
         - Spark Performance:
