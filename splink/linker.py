@@ -2023,7 +2023,7 @@ class Linker:
         bottom_n=10,
         kde_plots=False,
         distribution_plots=True,
-        correlation_plot=True
+        correlation_plot=True,
     ):
         return profile_columns(
             self,

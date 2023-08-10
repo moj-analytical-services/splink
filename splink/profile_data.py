@@ -40,6 +40,7 @@ _bottom_n_plot = load_chart_definition("profile_data_bottom_n.json")
 _kde_plot = load_chart_definition("profile_data_kde.json")
 _correlation_plot = load_chart_definition("profile_data_correlation_heatmap.json")
 
+
 def _get_inner_chart_spec_freq(
     col_name,
     percentile_data=None,
@@ -167,6 +168,7 @@ def _get_df_kde():
     """
     return sql
 
+
 def _get_df_correlations(column_expressions):
     sql = f"""
     WITH column_list AS (
@@ -290,7 +292,7 @@ def profile_columns(
     bottom_n=10,
     distribution_plots=True,
     kde_plots=False,
-    correlation_plot=False
+    correlation_plot=False,
 ):
 
     df_concat = linker._initialise_df_concat()
@@ -318,10 +320,10 @@ def profile_columns(
     #         row = item['column1']
     #         col = item['column2']
     #         value = item['correlation']
-            
+
     #         if row not in correlation_matrix:
     #             correlation_matrix[row] = {}
-            
+
     #         correlation_matrix[row][col] = value
     #     correlation_matrix_data = []
     #     for row in correlation_matrix:
@@ -407,7 +409,7 @@ def profile_columns(
         )
 
         inner_charts.append(inner_chart)
-    
+
     # if correlation_plot:
     #     _correlation_plot_copy = deepcopy(_correlation_plot)
     #     _correlation_plot_copy["hconcat"][0]["data"]["values"] = correlation_matrix_data
