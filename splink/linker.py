@@ -33,6 +33,7 @@ from .blocking import (
 )
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
+    accuracy_chart,
     completeness_chart,
     cumulative_blocking_rule_comparisons_generated,
     match_weights_histogram,
@@ -2285,6 +2286,92 @@ class Linker:
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
 
+    def accuracy_chart_from_labels_table(
+        self,
+        labels_splinkdataframe_or_table_name,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+        add_metrics: list = [],
+    ):
+        """Generate an accuracy measure chart from labelled (ground truth) data.
+
+        The table of labels should be in the following format, and should be registered
+        as a table with your database:
+
+        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
+        |----------------|-----------|----------------|-----------|--------------------|
+        |df_1            |1          |df_2            |2          |0.99                |
+        |df_1            |1          |df_2            |3          |0.2                 |
+
+        Note that `source_dataset` and `unique_id` should correspond to the values
+        specified in the settings dict, and the `input_table_aliases` passed to the
+        `linker` object.
+
+        For `dedupe_only` links, the `source_dataset` columns can be ommitted.
+
+        Args:
+            labels_splinkdataframe_or_table_name (str | SplinkDataFrame): Name of table
+                containing labels in the database
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the chart. Defaults to None.
+            add_metrics (list(str), optional): Precision and recall metrics are always
+                included. Where provided, `add_metrics` specifies additional metrics
+                to show, with the following options:
+
+                - `"specificity"`: specificity, selectivity, true negative rate (TNR)
+                - `"npv"`: negative predictive value (NPV)
+                - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
+                (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                - `"p4"` -  an extended F1 score with specificity and NPV included
+                - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
+        Examples:
+            === ":simple-duckdb: DuckDB"
+                ```py
+                labels = pd.read_csv("my_labels.csv")
+                linker.register_table(labels, "labels")
+                linker.accuracy_chart_from_labels_table("labels", add_metrics=["f1"])
+                ```
+            === ":simple-apachespark: Spark"
+                ```py
+                labels = spark.read.csv("my_labels.csv", header=True)
+                labels.createDataFrame("labels")
+                linker.accuracy_chart_from_labels_table("labels", add_metrics=['f1'])
+                ```
+
+        Returns:
+            altair.Chart: An altair chart
+        """
+        allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
+
+        if not isinstance(add_metrics, list):
+            raise Exception(
+                "add_metrics must be a list containing one or more of the following:",
+                allowed,
+            )
+
+        # Silently filter out invalid entries (except case errors - e.g. ["NPV", "F1"])
+        add_metrics = list(set(map(str.lower, add_metrics)).intersection(allowed))
+
+        labels_tablename = self._get_labels_tablename_from_input(
+            labels_splinkdataframe_or_table_name
+        )
+        self._raise_error_if_necessary_accuracy_columns_not_computed()
+        df_truth_space = truth_space_table_from_labels_table(
+            self,
+            labels_tablename,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
+        recs = df_truth_space.as_record_dict()
+        return accuracy_chart(recs, add_metrics=add_metrics)
+
     def prediction_errors_from_labels_table(
         self,
         labels_splinkdataframe_or_table_name,
@@ -2428,6 +2515,66 @@ class Linker:
         )
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
+
+    def accuracy_chart_from_labels_column(
+        self,
+        labels_column_name,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+        add_metrics: list = [],
+    ):
+        """Generate an accuracy chart from ground truth data, whereby the ground
+        truth is in a column in the input dataset called `labels_column_name`
+
+        Args:
+            labels_column_name (str): Column name containing labels in the input table
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the chart. Defaults to None.
+            add_metrics (list(str), optional): Precision and recall metrics are always
+                included. Where provided, `add_metrics` specifies additional metrics
+                to show, with the following options:
+
+                - `"specificity"`: specificity, selectivity, true negative rate (TNR)
+                - `"npv"`: negative predictive value (NPV)
+                - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
+                (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                - `"p4"` -  an extended F1 score with specificity and NPV included
+                - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
+        Examples:
+            ```py
+            linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=["f1"])
+            ```
+
+        Returns:
+            altair.Chart: An altair chart
+        """
+
+        allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
+
+        if not isinstance(add_metrics, list):
+            raise Exception(
+                "add_metrics must be a list containing one or more of the following:",
+                allowed,
+            )
+
+        # Silently filter out invalid entries (except case errors - e.g. ["NPV", "F1"])
+        add_metrics = list(set(map(str.lower, add_metrics)).intersection(allowed))
+
+        df_truth_space = truth_space_table_from_labels_column(
+            self,
+            labels_column_name,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
+        recs = df_truth_space.as_record_dict()
+        return accuracy_chart(recs, add_metrics=add_metrics)
 
     def prediction_errors_from_labels_column(
         self,
