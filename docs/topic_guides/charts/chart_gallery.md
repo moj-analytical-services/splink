@@ -88,9 +88,9 @@
 ::cards::
 [
     {
-    "title": "`accuracy_chart`",
-    "image": "./img/accuracy_chart.png",
-    "url": "./accuracy_chart.ipynb"
+    "title": "`accuracy_chart_from_labels_table`",
+    "image": "./img/accuracy_chart_from_labels_table.png",
+    "url": "./accuracy_chart_from_labels_table.ipynb"
     },
     {
     "title": "`precision_recall_chart_from_labels_table`",
