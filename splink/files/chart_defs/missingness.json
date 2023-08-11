@@ -20,7 +20,7 @@
             "format": ".0%",
             "offset": 30
           },
-          "scale": {
+          "scale": {"domain": [0, 1],
             "range": "heatmap"
           },
           "title": "Missingness"
