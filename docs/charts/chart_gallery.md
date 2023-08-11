@@ -29,6 +29,28 @@
 ]
 ::/cards::
 
+## Comparison Helpers
+
+::cards::
+[
+    {
+    "title": "`comparator score chart`",
+    "image": "./img/comparator_score_chart.png",
+    "url": "../topic_guides/comparisons/choosing_comparators.ipynb#comparing-string-similarity-and-distance-scores"
+    },
+    {
+    "title": "`comparator score threshold chart`",
+    "image": "./img/comparator_score_threshold_chart.png",
+    "url": "../topic_guides/comparisons/choosing_comparators.ipynb#choosing-thresholds"
+    },
+    {
+    "title": "`phonetic match chart`",
+    "image": "./img/phonetic_match_chart.png",
+    "url": "../topic_guides/comparisons/choosing_comparators.ipynb#phonetic-matching"
+    },
+]
+::/cards::
+
 ## Model Training
 
 ::cards::
@@ -107,7 +129,6 @@
 
 ## All Charts
 ::cards::
-
 [
   {
     "title": "`accuracy chart from labels table`",
@@ -118,6 +139,16 @@
     "title": "`cluster studio dashboard`",
     "image": "./img/cluster_studio_dashboard.png",
     "url": "./cluster_studio_dashboard.ipynb"
+  },
+  {
+    "title": "`comparator score chart`",
+    "image": "./img/comparator_score_chart.png",
+    "url": "../topic_guides/comparisons/choosing_comparators.ipynb#comparing-string-similarity-and-distance-scores"
+  },
+  {
+    "title": "`comparator score threshold chart`",
+    "image": "./img/comparator_score_threshold_chart.png",
+    "url": "../topic_guides/comparisons/choosing_comparators.ipynb#choosing-thresholds"
   },
   {
     "title": "`comparison viewer dashboard`",
@@ -150,6 +181,11 @@
     "url": "./parameter_estimate_comparisons_chart.ipynb"
   },
   {
+    "title": "`phonetic match chart`",
+    "image": "./img/phonetic_match_chart.png",
+    "url": "../topic_guides/comparisons/choosing_comparators.ipynb#phonetic-matching"
+  },
+  {
     "title": "`precision recall chart from labels table`",
     "image": "./img/precision_recall_chart_from_labels_table.png",
     "url": "./precision_recall_chart_from_labels_table.ipynb"
@@ -180,5 +216,4 @@
     "url": "./waterfall_chart.ipynb"
   },
 ]
-
 ::/cards::
