@@ -11,7 +11,7 @@ from .default_from_jsonschema import default_value_from_schema
 from .input_column import InputColumn
 from .misc import dedupe_preserving_order, prob_to_bayes_factor, prob_to_match_weight
 from .parse_sql import get_columns_used_from_sql
-from .settings_validation.valid_types import validate_comparison_levels
+from .settings_validation.valid_types import log_comparison_errors
 from .validate_jsonschema import validate_settings_against_schema
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class Settings:
         settings_dict["comparisons"] = ccs
 
         # In incoming comparisons have nested ComparisonLevels, turn back into dict
-        validate_comparison_levels(ccs)
+        log_comparison_errors(ccs)
         for comparison_dict in settings_dict["comparisons"]:
             comparison_dict["comparison_levels"] = [
                 cl.as_dict() if isinstance(cl, ComparisonLevel) else cl
