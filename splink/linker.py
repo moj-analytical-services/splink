@@ -252,7 +252,9 @@ class Linker:
         """Retrieve the column names from the input dataset(s)"""
         df_obj: SplinkDataFrame = next(iter(self._input_tables_dict.values()))
 
-        column_names = [col.name() for col in df_obj.columns] if as_list else df_obj.columns
+        column_names = (
+            [col.name() for col in df_obj.columns] if as_list else df_obj.columns
+        )
 
         return column_names
 

@@ -194,7 +194,7 @@ def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
 
     if not column_expressions:
         column_expressions = linker._get_input_columns
-        
+
     df_concat = linker._initialise_df_concat()
 
     input_dataframes = []
