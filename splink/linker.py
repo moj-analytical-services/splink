@@ -57,7 +57,7 @@ from .connected_components import (
 )
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
-from .exceptions import SplinkException
+from .exceptions import SplinkException, SplinkDeprecated
 from .find_matches_to_new_records import add_unique_id_and_source_dataset_cols_if_needed
 from .labelling_tool import (
     generate_labelling_tool_comparisons,
@@ -106,8 +106,6 @@ from .unlinkables import unlinkables_data
 from .vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
-
-warnings.simplefilter("always", DeprecationWarning)
 
 
 class Linker:
@@ -1163,7 +1161,7 @@ class Linker:
             "`initialise_settings` is deprecated. We advise you use "
             "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
-            DeprecationWarning,
+            SplinkDeprecated,
             stacklevel=2,
         )
 
@@ -1188,7 +1186,7 @@ class Linker:
             "`load_settings_from_json` is deprecated. We advise you use "
             "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
-            DeprecationWarning,
+            SplinkDeprecated,
             stacklevel=2,
         )
 
@@ -1420,7 +1418,7 @@ class Linker:
             # user is using deprecated argument
             warnings.warn(
                 "target_rows is deprecated; use max_pairs",
-                DeprecationWarning,
+                SplinkDeprecated,
                 stacklevel=2,
             )
             max_pairs = target_rows
@@ -3267,7 +3265,7 @@ class Linker:
         """
         warnings.warn(
             "This function is deprecated. Use save_model_to_json() instead.",
-            DeprecationWarning,
+            SplinkDeprecated,
             stacklevel=2,
         )
         return self.save_model_to_json(out_path, overwrite)
