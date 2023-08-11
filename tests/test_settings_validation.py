@@ -9,6 +9,7 @@ from splink.settings_validation.column_lookups import (
     InvalidCols,
     InvalidColumnsLogger,
 )
+from splink.settings_validation.valid_types import validate_comparison_levels
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
@@ -392,3 +393,39 @@ def test_validate_sql_dialect():
         "Incompatible SQL dialect! `settings` dictionary uses dialect "
         "spark, but expecting 'duckdb' for Linker of type `DuckDBLinker`"
     )
+
+
+def test_comparison_validation():
+
+    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    settings = get_settings_dict()
+
+    # Contents aren't tested as of yet
+    email_no_comp_level = {
+        "comparison_lvls": [
+        ],
+    }
+    import splink.duckdb.comparison_level_library as cll
+    # cll instead of cl
+    email_cc = cll.exact_match_level("email")
+    settings["comparisons"][3] = email_cc
+    # random str
+    settings["comparisons"][4] = "help"
+    # missing key dict key and replaced w/ `comparison_lvls`
+    settings["comparisons"].append(email_no_comp_level)
+
+    error_logger = validate_comparison_levels(settings["comparisons"])
+
+    # Check our three errors are raised
+    assert len(error_logger.e) == 3
+
+    # Our expected error types and part of the corresponding error text
+    expected_errors = (
+        (TypeError, "is a comparison level"),
+        (TypeError, "is an invalid data type."),
+        (SyntaxError, "missing the required `comparison_levels`"),
+    )
+
+    for n, (e, txt) in enumerate(expected_errors):
+        with pytest.raises(e, match=txt):
+            raise error_logger.e[n]

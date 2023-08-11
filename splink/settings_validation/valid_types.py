@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import logging
 
-from ..comparison_level import ComparisonLevel
 from ..comparison import Comparison
-from ..exceptions import ErrorLogger, ComparisonSettingsException
+from ..comparison_level import ComparisonLevel
+from ..exceptions import ComparisonSettingsException, ErrorLogger
 from .settings_validator import SettingsValidator
 
 logger = logging.getLogger(__name__)
@@ -30,4 +30,83 @@ class InvalidTypesAndValuesLogger(SettingsValidator):
                 f"Incompatible SQL dialect! `settings` dictionary uses "
                 f"dialect {settings_dialect}, but expecting "
                 f"'{linker_dialect}' for Linker of type `{linker_type}`"
+            )
+
+
+def validate_comparison_levels(comparisons: list):
+    """Takes in a list of comparisons from your settings
+    object and evaluates whether:
+    1) It is of a valid type (ComparisonLevel or Dict).
+    2) It contains valid dictionary key(s).
+
+    Args:
+        comparisons (list): Your comparisons, as outlined in
+            `settings["comparisons"]`.
+    """
+
+    # Extract problematic comparisons
+    comp_error_logger = ErrorLogger()
+    for c_dict in comparisons:
+        eval_dtype = evaluate_comparison_dtype_and_contents(c_dict)
+        if eval_dtype:
+            comp_error_logger.append(eval_dtype)
+
+
+    return comp_error_logger
+
+
+def log_comparison_errors(comparisons):
+    """
+    Log any errors arising from `validate_comparison_levels`.
+    """
+    error_logger = validate_comparison_levels(comparisons)
+
+    # Raise and log any errors identified
+    comp_hyperlink_txt = """
+    For more info on this error, please visit:
+    https://moj-analytical-services.github.io/splink/topic_guides/comparisons/customising_comparisons.html
+    """
+
+    error_logger.raise_and_log_all_errors(
+        exception=ComparisonSettingsException, additional_txt=comp_hyperlink_txt
+    )
+
+
+def evaluate_comparison_dtype_and_contents(comparison_dict):
+    """
+    Given a comparison_dict, evaluate the comparison is valid.
+    If it's invalid, queue up an error.
+
+    This can then be logged with `ErrorLogger.raise_and_log_all_errors`
+    or raised instantly as an error.
+    """
+
+    comp_str = f"{str(comparison_dict)[:30]}... "
+
+    if not isinstance(comparison_dict, (Comparison, dict)):
+
+        if isinstance(comparison_dict, ComparisonLevel):
+            return TypeError(
+                f"""
+            {comp_str} is a comparison level and
+            cannot be used as a standalone comparison.
+            """
+            )
+        else:
+            return TypeError(
+                f"""
+            `{comp_str}` is an invalid data type.
+            Please only include dictionaries or objects of
+            the `Comparison` class.
+            """
+            )
+    else:
+        comp_level = comparison_dict.get("comparison_levels")
+        if comp_level is None:
+            return SyntaxError(
+                f"""
+            {comp_str} is missing the required `comparison_levels`
+            key. Please ensure you include this in all comparisons
+            used in your settings object.
+            """
             )
