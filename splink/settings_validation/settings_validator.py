@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import logging
-
+import re
 from functools import reduce
 from operator import and_
-import re
 
 import sqlglot
 

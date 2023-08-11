@@ -14,6 +14,8 @@ from statistics import median
 import sqlglot
 
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
+from splink.settings_validation.column_lookups import InvalidColumnsLogger
+from splink.settings_validation.valid_types import InvalidTypesAndValuesLogger
 
 from .accuracy import (
     prediction_errors_from_label_column,
@@ -83,8 +85,6 @@ from .pipeline import SQLPipeline
 from .predict import predict_from_comparison_vectors_sqls
 from .profile_data import profile_columns
 from .settings import Settings
-from splink.settings_validation.column_lookups import InvalidColumnsLogger
-from splink.settings_validation.valid_types import InvalidTypesAndValuesLogger
 from .splink_comparison_viewer import (
     comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,

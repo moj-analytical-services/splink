@@ -2,9 +2,6 @@ from __future__ import annotations
 
 import logging
 
-from ..comparison_level import ComparisonLevel
-from ..comparison import Comparison
-from ..exceptions import ErrorLogger, ComparisonSettingsException
 from .settings_validator import SettingsValidator
 
 logger = logging.getLogger(__name__)
