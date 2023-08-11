@@ -46,6 +46,7 @@ tags:
         - roc_chart_from_labels_table
         - save_model_to_json
         - save_settings_to_json
+        - tf_adjustment_chart
         - train_m_from_pairwise_labels
         - truth_space_table_from_labels_column
         - truth_space_table_from_labels_table

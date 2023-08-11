@@ -169,18 +169,30 @@ def find_unique_source_dataset(src_ds):
     return sql
 
 
-def parse_duration(duration: int):
-    # math.ceil so <1 second gets reported
-    d = datetime(1, 1, 1) + timedelta(seconds=int(ceil(duration)))
-    time_index = namedtuple("Time", ["Days", "Hours", "Minutes", "Seconds"])
-    duration = time_index(d.day - 1, d.hour, d.minute, d.second)
-    txt_duration = [
-        f"{t} {duration._fields[n]}" for n, t in enumerate(duration) if t > 0
-    ]
-    if len(txt_duration) > 1:
-        txt_duration[-1] = "and " + txt_duration[-1]
+def parse_duration(duration: float) -> str:
+    # math.ceil to clean up our output for anything over a minute
+    d = int(ceil(duration))
+    if d < 60:
+        return "{:.5f} seconds".format(duration)
 
-    return ", ".join(txt_duration)
+    d = datetime(1, 1, 1) + timedelta(seconds=d)
+    time_index = namedtuple("Time", ["Hour", "Minute", "Second"])
+    duration = time_index(d.hour, d.minute, d.second)
+
+    txt_duration = []
+    for t, field in zip(duration, duration._fields):
+        if t == 0:
+            continue
+        txt = f"{t} {field}s" if t > 1 else f"{t} {field}"
+        txt_duration.append(txt)
+
+    if len(txt_duration) > 1:
+        # pop off the final bit of text so we can return
+        # " and n seconds"
+        fin = f" and {txt_duration.pop(-1)}"
+        return ", ".join(txt_duration) + fin
+    else:
+        return txt_duration.pop()
 
 
 class colour:
