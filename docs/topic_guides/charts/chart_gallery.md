@@ -5,12 +5,12 @@
 ::cards::
 [
   {
-    "title": "`missingness_chart`",
+    "title": "`missingness chart`",
     "image": "./img/missingness_chart.png",
     "url": "./missingness_chart.ipynb"
   },
   {
-    "title": "`profile_columns`",
+    "title": "`profile columns`",
     "image": "./img/profile_columns1.png",
     "url": "./profile_columns.ipynb"
   },
@@ -22,7 +22,7 @@
 ::cards::
 [
     {
-    "title": "`cumulative_num_comparisons_from_blocking_rules_chart`",
+    "title": "`cumulative num comparisons from blocking rules chart`",
     "image": "./img/cumulative_num_comparisons_from_blocking_rules_chart.png",
     "url": "./cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
     },
@@ -34,37 +34,37 @@
 ::cards::
 [
     {
-    "title": "`comparison_viewer_dashboard`",
+    "title": "`comparison viewer dashboard`",
     "image": "./img/comparison_viewer_dashboard.png",
     "url": "./comparison_viewer_dashboard.ipynb"
     },
     {
-    "title": "`match_weights_chart`",
+    "title": "`match weights chart`",
     "image": "./img/match_weights_chart.png",
     "url": "./match_weights_chart.ipynb"
     },
     {
-    "title": "`m_u_parameters_chart`",
+    "title": "`m u parameters chart`",
     "image": "./img/m_u_parameters_chart.png",
     "url": "./m_u_parameters_chart.ipynb"
     },
     {
-    "title": "`parameter_estimate_comparisons_chart`",
+    "title": "`parameter estimate comparisons chart`",
     "image": "./img/parameter_estimate_comparisons_chart.png",
     "url": "./parameter_estimate_comparisons_chart.ipynb"
     },
     {
-    "title": "`tf_adjustment_chart`",
+    "title": "`tf adjustment chart`",
     "image": "./img/tf_adjustment_chart.png",
     "url": "./tf_adjustment_chart.ipynb"
     },
     {
-    "title": "`unlinkables_chart`",
+    "title": "`unlinkables chart`",
     "image": "./img/unlinkables_chart.png",
     "url": "./unlinkables_chart.ipynb"
     },
     {
-    "title": "`waterfall_chart`",
+    "title": "`waterfall chart`",
     "image": "./img/waterfall_chart.png",
     "url": "./waterfall_chart.ipynb"
     },   
@@ -76,7 +76,7 @@
 ::cards::
 [
     {
-    "title": "`cluster_studio_dashboard`",
+    "title": "`cluster studio dashboard`",
     "image": "./img/cluster_studio_dashboard.png",
     "url": "./cluster_studio_dashboard.ipynb"
     },
@@ -88,17 +88,17 @@
 ::cards::
 [
     {
-    "title": "`accuracy_chart_from_labels_table`",
+    "title": "`accuracy chart from labels table`",
     "image": "./img/accuracy_chart_from_labels_table.png",
     "url": "./accuracy_chart_from_labels_table.ipynb"
     },
     {
-    "title": "`precision_recall_chart_from_labels_table`",
-    "image": "./img/roc_chart_from_labels_table.png",
-    "url": "./roc_chart_from_labels_table.ipynb"
+    "title": "`precision recall chart from labels table`",
+    "image": "./img/precision_recall_chart_from_labels_table.png",
+    "url": "./precision_recall_chart_from_labels_table.ipynb"
     },
     {
-    "title": "`roc_chart_from_labels_table`",
+    "title": "`roc chart fromm labels table`",
     "image": "./img/roc_chart_from_labels_table.png",
     "url": "./roc_chart_from_labels_table.ipynb"
     },
@@ -110,74 +110,74 @@
 
 [
   {
-    "title": "`profile_columns`",
-    "image": "./img/profile_columns1.png",
-    "url": "./profile_columns.ipynb"
+    "title": "`accuracy chart from labels table`",
+    "image": "./img/accuracy_chart_from_labels_table.png",
+    "url": "./accuracy_chart_from_labels_table.ipynb"
   },
   {
-    "title": "`missingness_chart`",
-    "image": "./img/missingness_chart.png",
-    "url": "./missingness_chart.ipynb"
-  },
-  {
-    "title": "`cumulative_num_comparisons_from_blocking_rules_chart`",
-    "image": "./img/cumulative_num_comparisons_from_blocking_rules_chart.png",
-    "url": "./cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
-  },
-  {
-    "title": "`unlinkables_chart`",
-    "image": "./img/unlinkables_chart.png",
-    "url": "./unlinkables_chart.ipynb"
-  },
-  {
-    "title": "`tf_adjustment_chart`",
-    "image": "./img/tf_adjustment_chart.png",
-    "url": "./tf_adjustment_chart.ipynb"
-  },
-  {
-    "title": "`parameter_estimate_comparisons_chart`",
-    "image": "./img/parameter_estimate_comparisons_chart.png",
-    "url": "./parameter_estimate_comparisons_chart.ipynb"
-  },
-  {
-    "title": "`m_u_parameters_chart`",
-    "image": "./img/m_u_parameters_chart.png",
-    "url": "./m_u_parameters_chart.ipynb"
-  },
-  {
-    "title": "`match_weights_chart`",
-    "image": "./img/match_weights_chart.png",
-    "url": "./match_weights_chart.ipynb"
-  },
-  {
-    "title": "`waterfall_chart`",
-    "image": "./img/waterfall_chart.png",
-    "url": "./waterfall_chart.ipynb"
-  },
-  {
-    "title": "`comparison_viewer_dashboard`",
-    "image": "./img/comparison_viewer_dashboard.png",
-    "url": "./comparison_viewer_dashboard.ipynb"
-  },
-  {
-    "title": "`cluster_studio_dashboard`",
+    "title": "`cluster studio dashboard`",
     "image": "./img/cluster_studio_dashboard.png",
     "url": "./cluster_studio_dashboard.ipynb"
   },
   {
-    "title": "`roc_chart_from_labels_table`",
+    "title": "`comparison viewer dashboard`",
+    "image": "./img/comparison_viewer_dashboard.png",
+    "url": "./comparison_viewer_dashboard.ipynb"
+  },
+  {
+    "title": "`cumulative num comparisons from blocking rules chart`",
+    "image": "./img/cumulative_num_comparisons_from_blocking_rules_chart.png",
+    "url": "./cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
+  },
+  {
+    "title": "`m u parameters chart`",
+    "image": "./img/m_u_parameters_chart.png",
+    "url": "./m_u_parameters_chart.ipynb"
+  },
+  {
+    "title": "`match weights chart`",
+    "image": "./img/match_weights_chart.png",
+    "url": "./match_weights_chart.ipynb"
+  },
+  {
+    "title": "`missingness chart`",
+    "image": "./img/missingness_chart.png",
+    "url": "./missingness_chart.ipynb"
+  },
+  {
+    "title": "`parameter estimate comparisons chart`",
+    "image": "./img/parameter_estimate_comparisons_chart.png",
+    "url": "./parameter_estimate_comparisons_chart.ipynb"
+  },
+  {
+    "title": "`precision recall chart from labels table`",
+    "image": "./img/precision_recall_chart_from_labels_table.png",
+    "url": "./precision_recall_chart_from_labels_table.ipynb"
+  },
+  {
+    "title": "`profile columns`",
+    "image": "./img/profile_columns1.png",
+    "url": "./profile_columns.ipynb"
+  },
+  {
+    "title": "`roc chart from labels table`",
     "image": "./img/roc_chart_from_labels_table.png",
     "url": "./roc_chart_from_labels_table.ipynb"
   },
   {
-    "title": "`precision_recall_chart_from_labels_table`",
-    "image": "./img/roc_chart_from_labels_table.png",
-    "url": "./roc_chart_from_labels_table.ipynb"
+    "title": "`tf adjustment chart`",
+    "image": "./img/tf_adjustment_chart.png",
+    "url": "./tf_adjustment_chart.ipynb"
   },
   {
-    "title": "`accuracy_chart`",
-    "image": "./img/accuracy_chart.png",
-    "url": "./accuracy_chart.ipynb"
+    "title": "`unlinkables chart`",
+    "image": "./img/unlinkables_chart.png",
+    "url": "./unlinkables_chart.ipynb"
+  },
+  {
+    "title": "`waterfall chart`",
+    "image": "./img/waterfall_chart.png",
+    "url": "./waterfall_chart.ipynb"
   },
 ]
 
