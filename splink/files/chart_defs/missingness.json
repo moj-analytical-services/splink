@@ -17,7 +17,8 @@
           "type": "quantitative",
           "field": "null_proportion",
           "legend": {
-            "format": ".0%"
+            "format": ".0%",
+            "offset": 30
           },
           "scale": {
             "range": "heatmap"
@@ -51,7 +52,9 @@
         ],
         "x": {
           "type": "quantitative",
+          "scale": {"domain": [0, 1]},
           "axis": {
+            "labelAlign": "center",
             "format": "%",
             "title": "Percentage of nulls"
           },
