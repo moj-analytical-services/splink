@@ -402,10 +402,10 @@ def test_comparison_validation():
 
     # Contents aren't tested as of yet
     email_no_comp_level = {
-        "comparison_lvls": [
-        ],
+        "comparison_lvls": [],
     }
     import splink.duckdb.comparison_level_library as cll
+
     # cll instead of cl
     email_cc = cll.exact_match_level("email")
     settings["comparisons"][3] = email_cc

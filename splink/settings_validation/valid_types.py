@@ -51,7 +51,6 @@ def validate_comparison_levels(comparisons: list):
         if eval_dtype:
             comp_error_logger.append(eval_dtype)
 
-
     return comp_error_logger
 
 
