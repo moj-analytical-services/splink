@@ -245,6 +245,18 @@ class Linker:
         self.debug_mode = False
 
     @property
+    def _get_input_columns(
+        self,
+        as_list=True,
+    ):
+        """Retrieve the column names from the input dataset(s)"""
+        df_obj: SplinkDataFrame = next(iter(self._input_tables_dict.values()))
+
+        column_names = [col.name() for col in df_obj.columns] if as_list else df_obj.columns
+
+        return column_names
+
+    @property
     def _cache_uid(self):
         if self._settings_dict:
             return self._settings_obj._cache_uid
