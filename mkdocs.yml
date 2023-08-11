@@ -178,6 +178,7 @@ nav:
             - Comparison Library: "comparison_library.md"
             - Comparison Level Library: "comparison_level_library.md"
             - Comparison Composition: "comparison_level_composition.md"
+            - Comparison Helpers: "comparison_helpers.md"
         - Blocking Rule Library API:
             - Blocking Rule Library: "blocking_rule_library.md"
             - Blocking Rule Composition: "blocking_rule_composition.md"
@@ -186,6 +187,7 @@ nav:
         - Comparisons API:
             - Comparison: "comparison.md"
             - Comparison Level: "comparison_level.md"
+      - Charts Gallery: "charts/chart_gallery.md"
       - In-build datasets: "datasets.md"
       - Settings:
         - Settings Dictionary Reference: "settings_dict_guide.md"
