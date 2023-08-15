@@ -187,12 +187,12 @@ nav:
         - Blocking: 
           - cumulative num comparisons from blocking rules chart: "charts/cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
         - Comparison Helpers:
-          - comparator score chart: "topic_guides/comparisons/choosing_comparators.ipynb#comparing-string-similarity-and-distance-scores"
-          - comparator score threshold chart: "topic_guides/comparisons/choosing_comparators.ipynb#choosing-thresholds"
-          - phonetic match chart: "charts/topic_guides/comparisons/choosing_comparators.ipynb#phonetic-matching"
+          - comparator score chart: "topic_guides/comparisons/choosing_comparators.html#comparing-string-similarity-and-distance-scores"
+          - comparator score threshold chart: "topic_guides/comparisons/choosing_comparators.html#choosing-thresholds"
+          - phonetic match chart: "charts/topic_guides/comparisons/choosing_comparators.html#phonetic-matching"
         - Model Training:
-          - comparison viewer dashboard: "charts/omparison_viewer_dashboard.ipynb"
-          - match weights chart: "match_weights_chart.ipynb"
+          - comparison viewer dashboard: "charts/comparison_viewer_dashboard.ipynb"
+          - match weights chart: "charts/match_weights_chart.ipynb"
           - m u parameters chart: "charts//match_weights_chart.ipynb"
           - parameter estimate comparisons chart: "charts/parameter_estimate_comparisons_chart.ipynb"
           - tf adjustment chart: "charts/tf_adjustment_chart.ipynb"

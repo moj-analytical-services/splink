@@ -26,7 +26,7 @@ Note: When building a Splink model, the [Linker API](./linker.md) and [Compariso
 
 ## Charts Gallery
 
-The [Splink Charts Gallery](./charts/chart_gallery.md) contains examples for all of the interactive charts and dashboards that are provided in Splink to help the linking process.
+The [Splink Charts Gallery](./charts/index.md) contains examples for all of the interactive charts and dashboards that are provided in Splink to help the linking process.
 
 ## In-built datasets
 Information on pre-made data tables available within Splink suitable for linking, to get up-and-running or to try out ideas.
