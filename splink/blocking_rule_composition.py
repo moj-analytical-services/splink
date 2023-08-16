@@ -313,7 +313,11 @@ def _br_merge(
         raise ValueError("You must provide at least one BlockingRule")
 
     brs, sql_dialect, salt = _parse_blocking_rules(*brls)
-    conditions = (f"({br.blocking_rule})" for br in brs)
+    if len(brs) > 1:
+        conditions = (f"({br.blocking_rule})" for br in brs)
+    else:
+        conditions = (br.blocking_rule for br in brs)
+
     blocking_rule = f" {clause} ".join(conditions)
 
     return BlockingRule(
