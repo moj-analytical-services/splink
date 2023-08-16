@@ -7,6 +7,7 @@ from .blocking_rule_composition import and_
 from .misc import ensure_is_list
 from .sql_transform import add_quotes_and_table_prefix
 
+
 class exact_match_rule(BlockingRule):
     def __init__(
         self,
@@ -139,7 +140,7 @@ def block_on_columns(
                 sql = "substr(surname,1,2)"
                 block_on_columns([sql, "surname"])
                 ```
-        """
+    """
 
     col_names = ensure_is_list(col_names)
     em_rules = [_exact_match(col) for col in col_names]

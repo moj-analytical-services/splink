@@ -1,7 +1,9 @@
 from ...blocking_rules_library import (
     BlockingRule,
-    block_on_columns as _block_on_columns_,
     exact_match_rule,
+)
+from ...blocking_rules_library import (
+    block_on_columns as _block_on_columns_,
 )
 from .spark_base import (
     SparkBase,
