@@ -115,6 +115,6 @@ You can see end-to-end example of several use cases in the [example notebooks](.
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab)
 
-## :chart_with_upwards_trend: Charts Gallery
+## :bar_chart: Charts Gallery
 
 You can see all of the interactive charts provided in Splink by checking out the [Charts Gallery](./charts/index.md).

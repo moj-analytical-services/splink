@@ -11,7 +11,7 @@
   },
   {
     "title": "`profile columns`",
-    "image": "./img/profile_columns1.png",
+    "image": "./img/profile_columns.png",
     "url": "./profile_columns.ipynb"
   },
 ]
@@ -192,7 +192,7 @@
   },
   {
     "title": "`profile columns`",
-    "image": "./img/profile_columns1.png",
+    "image": "./img/profile_columns.png",
     "url": "./profile_columns.ipynb"
   },
   {
