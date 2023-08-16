@@ -268,7 +268,8 @@ def accuracy_chart(records, width=400, height=400, as_dict=False, add_metrics=[]
 
     return altair_or_json(chart, as_dict=as_dict)
 
-def confusion_matrix_chart(records, match_weight_range=[-15,15], as_dict=False):
+
+def confusion_matrix_chart(records, match_weight_range=[-15, 15], as_dict=False):
     chart_path = "confusion_matrix.json"
     chart = load_chart_definition(chart_path)
 

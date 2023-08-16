@@ -2370,13 +2370,13 @@ class Linker:
         )
         recs = df_truth_space.as_record_dict()
         return accuracy_chart(recs, add_metrics=add_metrics)
-    
+
     def confusion_matrix_from_labels_table(
         self,
         labels_splinkdataframe_or_table_name,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
-        match_weight_range = [-15,15]
+        match_weight_range=[-15, 15],
     ):
         """Generate an interactive confusion matrix from labelled (ground truth) data.
 
@@ -2424,7 +2424,7 @@ class Linker:
         Returns:
             altair.Chart: An altair chart
         """
-        
+
         labels_tablename = self._get_labels_tablename_from_input(
             labels_splinkdataframe_or_table_name
         )
@@ -2437,8 +2437,8 @@ class Linker:
         )
 
         recs = df_truth_space.as_record_dict()
-        a,b = match_weight_range
-        recs = [r for r in recs if a < r["truth_threshold"] < b ]
+        a, b = match_weight_range
+        recs = [r for r in recs if a < r["truth_threshold"] < b]
         return confusion_matrix_chart(recs, match_weight_range=match_weight_range)
 
     def prediction_errors_from_labels_table(
@@ -2644,13 +2644,13 @@ class Linker:
         )
         recs = df_truth_space.as_record_dict()
         return accuracy_chart(recs, add_metrics=add_metrics)
-    
+
     def confusion_matrix_from_labels_column(
         self,
         labels_column_name,
         threshold_actual=0.5,
         match_weight_round_to_nearest: float = None,
-        match_weight_range = [-15,15]
+        match_weight_range=[-15, 15],
     ):
         """Generate an accuracy chart from ground truth data, whereby the ground
         truth is in a column in the input dataset called `labels_column_name`
@@ -2684,8 +2684,8 @@ class Linker:
         )
 
         recs = df_truth_space.as_record_dict()
-        a,b = match_weight_range
-        recs = [r for r in recs if a < r["truth_threshold"] < b ]
+        a, b = match_weight_range
+        recs = [r for r in recs if a < r["truth_threshold"] < b]
         return confusion_matrix_chart(recs, match_weight_range=match_weight_range)
 
     def prediction_errors_from_labels_column(
