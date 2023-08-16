@@ -59,11 +59,7 @@ plugins:
       enable_creation_date: true
       type: timeago
       fallback_to_build_date: true
-  - gallery:
-      examples_dirs: docs/examples/         # path to your example scripts
-      gallery_dirs: docs/generated/ # where to save generated gallery
-      # ... (other options)
-
+  - charts
 
 markdown_extensions:
   - abbr
