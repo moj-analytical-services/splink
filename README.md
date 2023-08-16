@@ -12,11 +12,11 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 
 ## Key Features
 
-⚡ **Speed:** Capable of linking a million records on a laptop in around a minute.  
-🎯 **Accuracy:** Support for term frequency adjustments and user-defined fuzzy matching logic.  
-🌐 **Scalability:** Execute linkage in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.  
-🎓 **Unsupervised Learning:** No training data is required for model training.  
-📊 **Interactive Outputs:** Multiple interactive visualisations help users understand their model and diagnose problems.  
+⚡ **Speed:** Capable of linking a million records on a laptop in around a minute.
+🎯 **Accuracy:** Support for term frequency adjustments and user-defined fuzzy matching logic.
+🌐 **Scalability:** Execute linkage in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.
+🎓 **Unsupervised Learning:** No training data is required for model training.
+📊 **Interactive Outputs:** Multiple interactive visualisations help users understand their model and diagnose problems.
 
 Splink's linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customizations to improve accuracy.
 
@@ -82,6 +82,9 @@ from splink.duckdb.linker import DuckDBLinker
 import splink.duckdb.comparison_library as cl
 import splink.duckdb.comparison_template_library as ctl
 import splink.duckdb.blocking_rule_library as brl
+from splink.duckdb.blocking_rule_library import (
+    exact_match_rule, block_on_columns
+)
 from splink.datasets import splink_datasets
 
 df = splink_datasets.fake_1000
@@ -89,8 +92,8 @@ df = splink_datasets.fake_1000
 settings = {
     "link_type": "dedupe_only",
     "blocking_rules_to_generate_predictions": [
-        brl.exact_match_rule("first_name"),
-        brl.exact_match_rule("surname"),
+        exact_match_rule("first_name"),
+        exact_match_rule("surname"),
     ],
     "comparisons": [
         ctl.name_comparison("first_name"),
@@ -104,14 +107,11 @@ settings = {
 linker = DuckDBLinker(df, settings)
 linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
-blocking_rule_for_training = brl.and_(
-                                brl.exact_match_rule("first_name"), 
-                                brl.exact_match_rule("surname")
-                                )
+blocking_rule_for_training = block_on_columns(["first_name", "surname"])
 
 linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
-blocking_rule_for_training = brl.exact_match_rule("dob")
+blocking_rule_for_training = exact_match_rule("dob")
 linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
 pairwise_predictions = linker.predict()
