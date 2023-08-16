@@ -59,7 +59,10 @@ plugins:
       enable_creation_date: true
       type: timeago
       fallback_to_build_date: true
-  - charts
+  - gallery:
+      examples_dirs: docs/examples/         # path to your example scripts
+      gallery_dirs: docs/generated/ # where to save generated gallery
+      # ... (other options)
 
 markdown_extensions:
   - abbr
@@ -92,6 +95,7 @@ markdown_extensions:
   - footnotes
 nav:
   - Home: "index.md"
+  - My Gallery: "generated/gallery"
   - Getting Started: "getting_started.md"
   - Tutorial:
       - Introduction: "demos/tutorials/00_Tutorial_Introduction.ipynb"
