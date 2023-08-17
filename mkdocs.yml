@@ -189,7 +189,7 @@ nav:
         - Comparison Helpers:
           - comparator score chart: "topic_guides/comparisons/choosing_comparators.html#comparing-string-similarity-and-distance-scores"
           - comparator score threshold chart: "topic_guides/comparisons/choosing_comparators.html#choosing-thresholds"
-          - phonetic match chart: "charts/topic_guides/comparisons/choosing_comparators.html#phonetic-matching"
+          - phonetic match chart: "topic_guides/comparisons/choosing_comparators.html#phonetic-matching"
         - Model Training:
           - comparison viewer dashboard: "charts/comparison_viewer_dashboard.ipynb"
           - match weights chart: "charts/match_weights_chart.ipynb"
