@@ -10,6 +10,7 @@ tags:
     selection:
       members:
         - __init__
+        - accuracy_chart_from_labels_table
         - cluster_pairwise_predictions_at_threshold
         - cluster_studio_dashboard
         - compare_two_records

@@ -2749,7 +2749,7 @@ class Linker:
         if return_html_as_string:
             return rendered
 
-    def parameter_estimate_comparisons_chart(self, include_m=True, include_u=True):
+    def parameter_estimate_comparisons_chart(self, include_m=True, include_u=False):
         """Show a chart that shows how parameter estimates have differed across
         the different estimation methods you have used.
 
@@ -2762,7 +2762,7 @@ class Linker:
             include_m (bool, optional): Show different estimates of m values. Defaults
                 to True.
             include_u (bool, optional): Show different estimates of u values. Defaults
-                to True.
+                to False.
 
         """
         records = self._settings_obj._parameter_estimates_as_records

@@ -5,7 +5,7 @@ hide:
 
 # Getting Started
 
-## Install
+## :material-download: Install
 Splink supports python 3.7+.
 
 To obtain the latest released version of splink you can install from PyPI using pip:
@@ -46,7 +46,7 @@ conda install -c conda-forge splink
     pip install -r splink_requirements.txt
     ```
 
-## Quickstart
+## :rocket: Quickstart
 
 To get a basic Splink model up and running, use the following code. It demonstrates how to:
 
@@ -98,16 +98,20 @@ For more detailed tutorial, please see [section below](#tutorial).
     clusters.as_pandas_dataframe(limit=5)
     ```
 
-## Tutorials
+## :link: Tutorials
 
 You can learn more about Splink in the step-by-step [tutorial](./demos/00_Tutorial_Introduction.ipynb).
 
-## Videos
+## :material-video: Videos
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/msz3T741KQI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-## Example Notebooks
+## :simple-jupyter: Example Notebooks
 
 You can see end-to-end example of several use cases in the [example notebooks](./demos/examples/examples_index.md), or by clicking the following Binder link:
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab)
+
+## :bar_chart: Charts Gallery
+
+You can see all of the interactive charts provided in Splink by checking out the [Charts Gallery](./charts/index.md).
