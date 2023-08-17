@@ -146,6 +146,11 @@
     "url": "./cluster_studio_dashboard.ipynb"
   },
   {
+    "title": "`confusion matrix from labels table`",
+    "image": "./img/confusion_matrix_from_labels_table.png",
+    "url": "./confusion_matrix_from_labels_table.ipynb"
+  },
+  {
     "title": "`comparator score chart`",
     "image": "./img/comparator_score_chart.png",
     "url": "../topic_guides/comparisons/choosing_comparators.ipynb#comparing-string-similarity-and-distance-scores"
