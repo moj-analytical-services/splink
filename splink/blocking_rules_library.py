@@ -80,7 +80,7 @@ class exact_match_rule(BlockingRule):
         warnings.warn(
             "`exact_match_rule` is deprecated; use `block_on`",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
 
         syntax_tree = sqlglot.parse_one(col_name, read=self._sql_dialect)
