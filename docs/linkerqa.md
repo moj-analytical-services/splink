@@ -11,6 +11,7 @@ tags:
     handler: python
     selection:
       members:
+        - accuracy_chart_from_labels_table
         - precision_recall_chart_from_labels_column
         - precision_recall_chart_from_labels_table
         - prediction_errors_from_label_column
