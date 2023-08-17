@@ -161,6 +161,11 @@
     "url": "./comparison_viewer_dashboard.ipynb"
   },
   {
+    "title": "`confusion matrix from labels table`",
+    "image": "./img/confusion_matrix_from_labels_table.png",
+    "url": "./confusion_matrix_from_labels_table.ipynb"
+  },
+  {
     "title": "`cumulative num comparisons from blocking rules chart`",
     "image": "./img/cumulative_num_comparisons_from_blocking_rules_chart.png",
     "url": "./cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
