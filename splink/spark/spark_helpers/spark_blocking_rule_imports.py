@@ -27,4 +27,5 @@ def block_on(
         salting_partitions,
     )
 
+
 block_on.__doc__ = _block_on_.__doc__
