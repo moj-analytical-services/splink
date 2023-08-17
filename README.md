@@ -109,10 +109,10 @@ linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
 blocking_rule_for_training = block_on(["first_name", "surname"])
 
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
 
 blocking_rule_for_training = block_on("dob")
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
 
 pairwise_predictions = linker.predict()
 
