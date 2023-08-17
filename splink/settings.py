@@ -426,9 +426,7 @@ class Settings:
         rr_match = self._probability_two_random_records_match
         brs = self._blocking_rules_to_generate_predictions
         current_settings = {
-            "blocking_rules_to_generate_predictions": [
-                br.as_dict() for br in brs
-            ],
+            "blocking_rules_to_generate_predictions": [br.as_dict() for br in brs],
             "comparisons": [cc.as_dict() for cc in self.comparisons],
             "probability_two_random_records_match": rr_match,
         }

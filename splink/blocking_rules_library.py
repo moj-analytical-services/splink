@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import sqlglot
 import warnings
+
+import sqlglot
 
 from .blocking import BlockingRule
 from .blocking_rule_composition import and_
