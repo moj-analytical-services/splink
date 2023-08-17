@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from ...blocking_rules_library import (
     BlockingRule,
     exact_match_rule,
@@ -24,3 +26,5 @@ def block_on(
         col_names,
         salting_partitions,
     )
+
+block_on.__doc__ = _block_on_.__doc__
