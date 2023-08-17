@@ -55,6 +55,11 @@ class BlockingRule:
     def match_key(self):
         return len(self.preceding_rules)
 
+    @property
+    def sql(self):
+        # Wrapper to reveal the underlying SQL
+        return self.blocking_rule
+
     def add_preceding_rules(self, rules):
         rules = ensure_is_list(rules)
         self.preceding_rules = rules
@@ -143,6 +148,13 @@ class BlockingRule:
             output["salting_partitions"] = self.salting_partitions
 
         return output
+
+    def _as_completed_dict(self):
+
+        if not self.salting_partitions > 1 and self.sql_dialect == "spark":
+            return self.blocking_rule
+        else:
+            return self.as_dict()
 
     @property
     def descr(self):

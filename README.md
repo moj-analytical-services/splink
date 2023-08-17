@@ -3,8 +3,10 @@
 </p>
 
 [![pypi](https://img.shields.io/github/v/release/moj-analytical-services/splink?include_prereleases)](https://pypi.org/project/splink/#history)
-[![Downloads](https://pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
+[![Downloads](https://static.pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
 [![Documentation](https://img.shields.io/badge/API-documentation-blue)](https://moj-analytical-services.github.io/splink/)
+
+
 
 # Fast, accurate and scalable probabilistic data linkage
 
