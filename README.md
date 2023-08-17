@@ -3,8 +3,10 @@
 </p>
 
 [![pypi](https://img.shields.io/github/v/release/moj-analytical-services/splink?include_prereleases)](https://pypi.org/project/splink/#history)
-[![Downloads](https://pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
+[![Downloads](https://static.pepy.tech/badge/splink/month)](https://pepy.tech/project/splink)
 [![Documentation](https://img.shields.io/badge/API-documentation-blue)](https://moj-analytical-services.github.io/splink/)
+
+
 
 # Fast, accurate and scalable probabilistic data linkage
 
@@ -16,7 +18,7 @@ Splink is a Python package for probabilistic record linkage (entity resolution) 
 🎯 **Accuracy:** Support for term frequency adjustments and user-defined fuzzy matching logic.  
 🌐 **Scalability:** Execute linkage in Python (using DuckDB) or big-data backends like AWS Athena or Spark for 100+ million records.  
 🎓 **Unsupervised Learning:** No training data is required for model training.  
-📊 **Interactive Outputs:** Multiple interactive visualisations help users understand their model and diagnose problems.  
+📊 **Interactive Outputs:** A suite of interactive visualisations help users understand their model and diagnose problems.  
 
 Splink's linkage algorithm is based on Fellegi-Sunter's model of record linkage, with various customizations to improve accuracy.
 
@@ -82,6 +84,7 @@ from splink.duckdb.linker import DuckDBLinker
 import splink.duckdb.comparison_library as cl
 import splink.duckdb.comparison_template_library as ctl
 import splink.duckdb.blocking_rule_library as brl
+from splink.duckdb.blocking_rule_library import block_on
 from splink.datasets import splink_datasets
 
 df = splink_datasets.fake_1000
@@ -89,8 +92,8 @@ df = splink_datasets.fake_1000
 settings = {
     "link_type": "dedupe_only",
     "blocking_rules_to_generate_predictions": [
-        brl.exact_match_rule("first_name"),
-        brl.exact_match_rule("surname"),
+        block_on("first_name"),
+        block_on("surname"),
     ],
     "comparisons": [
         ctl.name_comparison("first_name"),
@@ -104,14 +107,11 @@ settings = {
 linker = DuckDBLinker(df, settings)
 linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
-blocking_rule_for_training = brl.and_(
-                                brl.exact_match_rule("first_name"), 
-                                brl.exact_match_rule("surname")
-                                )
+blocking_rule_for_training = block_on(["first_name", "surname"])
 
 linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
-blocking_rule_for_training = brl.exact_match_rule("dob")
+blocking_rule_for_training = block_on("dob")
 linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
 pairwise_predictions = linker.predict()
@@ -124,6 +124,10 @@ clusters.as_pandas_dataframe(limit=5)
 
 - [A introductory presentation on Splink](https://www.youtube.com/watch?v=msz3T741KQI)
 - [An introduction to the Splink Comparison Viewer dashboard](https://www.youtube.com/watch?v=DNvCMqjipis)
+
+## Charts Gallery
+
+You can see all of the interactive charts provided in Splink by checking out the [Charts Gallery](./charts/index.md).
 
 ## Support
 
@@ -170,4 +174,4 @@ While Splink is a standalone package, there are a number of repositories in the 
 - [splink_demos](https://github.com/moj-analytical-services/splink_demos) contains a copy of the Splink tutorial and example notebooks that are hosted via [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab)
 - [splink_scalaudfs](https://github.com/moj-analytical-services/splink_scalaudfs) contains the code to generate [User Defined Functions](https://moj-analytical-services.github.io/splink/dev_guides/udfs.html#spark) in scala which are then callable in Spark.
 - [splink_datasets](https://github.com/moj-analytical-services/splink_datasets) contains datasets that can be installed automatically as a part of Splink through the [In-build datasets](https://moj-analytical-services.github.io/splink/datasets.html) functionality.
-- [splink_synthetic_data] contains code to generate synthetic data.
+- [splink_synthetic_data](https://github.com/moj-analytical-services/splink_synthetic_data) contains code to generate synthetic data.
