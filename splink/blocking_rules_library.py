@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlglot
+import warnings
 
 from .blocking import BlockingRule
 from .blocking_rule_composition import and_
@@ -15,6 +16,10 @@ class exact_match_rule(BlockingRule):
         salting_partitions: int = 1,
     ) -> BlockingRule:
         """Represents an exact match blocking rule.
+
+        DEPRECATED:
+        `exact_match_rule` is deprecated. Please use `block_on`
+        instead, which acts as a wrapper with additional functionality.
 
         Args:
             col_name (str): Input column name, or a str represent a sql
@@ -71,6 +76,12 @@ class exact_match_rule(BlockingRule):
                 brl.exact_match_rule(sql)
                 ```
         """
+
+        warnings.warn(
+            "`exact_match_rule` is deprecated; use `block_on`",
+            DeprecationWarning,
+            stacklevel=2
+        )
 
         syntax_tree = sqlglot.parse_one(col_name, read=self._sql_dialect)
 

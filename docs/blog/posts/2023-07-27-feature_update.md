@@ -55,8 +55,10 @@ For example, a Blocking Rule for `"date_of_birth"` can now be written as:
 ```py
 import splink.duckdb.blocking_rule_library as brl
 
-brl.block_on("date_of_birth")
+brl.exact_match_rule("date_of_birth")
 ```
+
+**Note**: from Splink v3.9.6, `exact_match_rule` has been superceded by `block_on`. We advise using this going forward.
 
 Check out these new functions in the [BRL Documentation](https://moj-analytical-services.github.io/splink/blocking_rule_library.html) as well as some new [Blocking Topic Guides](https://moj-analytical-services.github.io/splink/topic_guides/blocking/blocking_rules.html) to better explain what Blocking Rules are, how they are used in Splink, and how to choose them.
 
