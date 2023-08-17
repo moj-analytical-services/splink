@@ -85,7 +85,7 @@ class exact_match_rule(BlockingRule):
         )
 
 
-def block_on_columns(
+def block_on(
     _exact_match,
     col_names: list[str],
     salting_partitions: int = 1,
@@ -114,31 +114,31 @@ def block_on_columns(
                 ``` python
                 import splink.duckdb.blocking_rule_library as brl
                 sql = "substr(surname,1,2)"
-                block_on_columns([sql, "surname"])
+                block_on([sql, "surname"])
                 ```
             === ":simple-apachespark: Spark"
                 ``` python
                 import splink.spark.blocking_rule_library as brl
                 sql = "substr(surname,1,2)"
-                block_on_columns([sql, "surname"], salting_partitions=1)
+                block_on([sql, "surname"], salting_partitions=1)
                 ```
             === ":simple-amazonaws: Athena"
                 ``` python
                 import splink.athena.blocking_rule_library as brl
                 sql = "substr(surname,1,2)"
-                block_on_columns([sql, "surname"])
+                block_on([sql, "surname"])
                 ```
             === ":simple-sqlite: SQLite"
                 ``` python
                 import splink.sqlite.blocking_rule_library as brl
                 sql = "substr(surname,1,2)"
-                block_on_columns([sql, "surname"])
+                block_on([sql, "surname"])
                 ```
             === "PostgreSQL"
                 ``` python
                 import splink.postgres.blocking_rule_library as brl
                 sql = "substr(surname,1,2)"
-                block_on_columns([sql, "surname"])
+                block_on([sql, "surname"])
                 ```
     """
 

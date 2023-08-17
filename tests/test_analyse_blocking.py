@@ -80,7 +80,7 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     assert res == 1
 
-    rule = brl.block_on_columns(["first_name", "surname"])
+    rule = brl.block_on(["first_name", "surname"])
     res = linker.count_num_comparisons_from_blocking_rule(
         rule,
     )
@@ -140,7 +140,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
 
     blocking_rules = [
         brl.exact_match_rule("first_name"),
-        brl.block_on_columns(["first_name", "surname"]),
+        brl.block_on(["first_name", "surname"]),
         "l.dob = r.dob",
     ]
 

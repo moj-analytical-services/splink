@@ -61,10 +61,7 @@ For more detailed tutorial, please see [section below](#tutorial).
     from splink.duckdb.linker import DuckDBLinker
     import splink.duckdb.comparison_library as cl
     import splink.duckdb.comparison_template_library as ctl
-    from splink.duckdb.blocking_rule_library import (
-        block_on_columns,
-        exact_match_rule
-    )
+    from splink.duckdb.blocking_rule_library import block_on
     from splink.datasets import splink_datasets
 
     df = splink_datasets.fake_1000
@@ -72,8 +69,8 @@ For more detailed tutorial, please see [section below](#tutorial).
     settings = {
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [
-            exact_match_rule("first_name"),
-            exact_match_rule("surname"),
+            block_on("first_name"),
+            block_on("surname"),
         ],
         "comparisons": [
             ctl.name_comparison("first_name"),
@@ -87,11 +84,11 @@ For more detailed tutorial, please see [section below](#tutorial).
     linker = DuckDBLinker(df, settings)
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
-    blocking_rule_for_training = block_on_columns(["first_name", "surname"])
+    blocking_rule_for_training = block_on(["first_name", "surname"])
 
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
-    blocking_rule_for_training = brl.exact_match_rule("dob")
+    blocking_rule_for_training = brl.block_on("dob")
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
 
 

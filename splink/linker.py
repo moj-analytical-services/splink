@@ -1572,8 +1572,8 @@ class Linker:
             ```
             or using pre-built rules
             ```py
-            from splink.duckdb.blocking_rule_library import block_on_columns
-            blocking_rule = block_on_columns(["first_name", "surname"])
+            from splink.duckdb.blocking_rule_library import block_on
+            blocking_rule = block_on(["first_name", "surname"])
             linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
             ```
 

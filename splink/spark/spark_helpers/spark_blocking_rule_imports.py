@@ -3,7 +3,7 @@ from ...blocking_rules_library import (
     exact_match_rule,
 )
 from ...blocking_rules_library import (
-    block_on_columns as _block_on_columns_,
+    block_on as _block_on_,
 )
 from .spark_base import (
     SparkBase,
@@ -14,12 +14,12 @@ class exact_match_rule(SparkBase, exact_match_rule):
     pass
 
 
-def block_on_columns(
+def block_on(
     col_names: list[str],
     salting_partitions: int = 1,
 ) -> BlockingRule:
 
-    return _block_on_columns_(
+    return _block_on_(
         exact_match_rule,
         col_names,
         salting_partitions,

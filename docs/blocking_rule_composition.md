@@ -9,7 +9,7 @@ tags:
 
 This extends the functionality of our base blocking rules by allowing users to "join" existing comparisons by various SQL clauses.
 
-For example, `or_(exact_match_rule("first_name"), exact_match_rule("surname"))` creates a dual check for an exact match in *either* `first_name` or `surname`, rather than restricting the user to a single blocking rule.
+For example, `and_(exact_match_rule("first_name"), exact_match_rule("surname"))` creates a dual check for an exact match in *either* `first_name` and `surname`, rather than restricting the user to a single blocking rule.
 
 The detailed API for each of these are outlined below.
 

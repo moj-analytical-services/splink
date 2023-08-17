@@ -16,8 +16,8 @@ Blocking Rules for Prediction are defined through `blocking_rules_to_generate_pr
 settings = {
     "link_type": "dedupe_only",
     "blocking_rules_to_generate_predictions": [
-       brl.block_on_columns(["first_name", "surname"]),
-       brl.exact_match_rule("dob"),
+       brl.block_on(["first_name", "surname"]),
+       brl.block_on("dob"),
     ],
     "comparisons": [
         ctl.name_comparison("first_name"),
@@ -42,8 +42,8 @@ This is why `blocking_rules_to_generate_predictions` is a list. Suppose we also 
 ```python
 settings_example = {
     "blocking_rules_to_generate_predictions" [
-        brl.block_on_columns(["first_name", "surname"]),
-        brl.exact_match_rule("postcode")
+        brl.block_on(["first_name", "surname"]),
+        brl.block_on("postcode")
     ]
 }
 ```
@@ -66,8 +66,8 @@ Once a linker has been instatiated, we can use the `cumulative_num_comparisons_f
 ```py
 settings = {
     "blocking_rules_to_generate_predictions": [
-        brl.exact_match_rule("first_name"),
-        brl.exact_match_rule("surname")
+        brl.block_on("first_name"),
+        brl.block_on("surname")
     ],
 }
 ```
