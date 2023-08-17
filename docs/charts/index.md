@@ -115,6 +115,11 @@
     "url": "./accuracy_chart_from_labels_table.ipynb"
     },
     {
+    "title": "`confusion matrix from labels table`",
+    "image": "./img/confusion_matrix_from_labels_table.png",
+    "url": "./confusion_matrix_from_labels_table.ipynb"
+    },
+    {
     "title": "`precision recall chart from labels table`",
     "image": "./img/precision_recall_chart_from_labels_table.png",
     "url": "./precision_recall_chart_from_labels_table.ipynb"
