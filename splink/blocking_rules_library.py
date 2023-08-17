@@ -72,9 +72,10 @@ class exact_match_rule(BlockingRule):
                 ```
         """
 
-        syntax_tree = sqlglot.parse_one(col_name)
-        l_col = add_quotes_and_table_prefix(syntax_tree, "l").sql()
-        r_col = add_quotes_and_table_prefix(syntax_tree, "r").sql()
+        syntax_tree = sqlglot.parse_one(col_name, read=self._sql_dialect)
+
+        l_col = add_quotes_and_table_prefix(syntax_tree, "l").sql(self._sql_dialect)
+        r_col = add_quotes_and_table_prefix(syntax_tree, "r").sql(self._sql_dialect)
 
         blocking_rule = f"{l_col} = {r_col}"
         self._description = "Exact match"
