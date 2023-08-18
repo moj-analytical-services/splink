@@ -23,9 +23,14 @@ def blocking_rule_to_obj(br):
         blocking_rule = br.get("blocking_rule", None)
         if blocking_rule is None:
             raise ValueError("No blocking rule submitted...")
+        sqlglot_dialect = br.get("sql_dialect", None)
         salting_partitions = br.get("salting_partitions", 1)
 
-        return BlockingRule(blocking_rule, salting_partitions)
+        return BlockingRule(
+            blocking_rule,
+            salting_partitions,
+            sqlglot_dialect,
+        )
 
     else:
         br = BlockingRule(br)
@@ -143,6 +148,7 @@ class BlockingRule:
         output = {}
 
         output["blocking_rule"] = self.blocking_rule
+        output["sql_dialect"] = self.sql_dialect
 
         if self.salting_partitions > 1 and self.sql_dialect == "spark":
             output["salting_partitions"] = self.salting_partitions
