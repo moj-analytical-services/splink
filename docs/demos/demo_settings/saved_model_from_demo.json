@@ -192,12 +192,18 @@
         }
     ],
     "blocking_rules_to_generate_predictions": [
-        "l.first_name = r.first_name",
-        "l.surname = r.surname"
+        {
+            "blocking_rule": "l.\"first_name\" = r.\"first_name\"",
+            "sql_dialect": "duckdb"
+        },
+        {
+            "blocking_rule": "l.\"surname\" = r.\"surname\"",
+            "sql_dialect": "duckdb"
+        }
     ],
     "retain_matching_columns": true,
     "retain_intermediate_calculation_columns": true,
     "sql_dialect": "duckdb",
-    "linker_uid": "woy242d3",
+    "linker_uid": "1gnhsucd",
     "probability_two_random_records_match": 0.0033319033319033323
 }
