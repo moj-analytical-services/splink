@@ -83,7 +83,6 @@ For more detailed tutorial, please see [here](https://moj-analytical-services.gi
 from splink.duckdb.linker import DuckDBLinker
 import splink.duckdb.comparison_library as cl
 import splink.duckdb.comparison_template_library as ctl
-import splink.duckdb.blocking_rule_library as brl
 from splink.duckdb.blocking_rule_library import block_on
 from splink.datasets import splink_datasets
 
