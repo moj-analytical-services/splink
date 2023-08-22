@@ -70,14 +70,16 @@ or, if you prefer, you can instead install splink using conda:
 conda install -c conda-forge splink
 ```
 
-#### Backend Specific Installs
-
-From Splink v3.9.7, you can now install the required packages for a specific splink backend by adding the `[<backend>]` to the end of your `pip install`.
-
 <details>
-<summary>The following backends are supported:</summary>
+<summary><b>Backend Specific Installs</b></summary>
 
 <br>
+
+From Splink v3.9.7, packages required by specific splink backends can be optionally installed by adding the `[<backend>]` suffix to the end of your `pip install`.
+
+**Note** - As SQLite and DuckDB come packaged with Splink, they cannot be optionally installed.
+
+Backends supported by optional installs:
 
 **Spark**
 ```sh
