@@ -70,6 +70,33 @@ or, if you prefer, you can instead install splink using conda:
 conda install -c conda-forge splink
 ```
 
+#### Backend Specific Installs
+
+From Splink v3.9.7, you can now install the required packages for a specific splink backend by adding the `[<version>]` to the end of your `pip install`.
+
+<details>
+<summary>The following backends are supported:</summary>
+
+<br>
+
+**Spark**
+```sh
+pip install 'splink[spark]'
+```
+
+**Athena**
+```sh
+pip install 'splink[athena]'
+```
+
+**PostgreSQL**
+```sh
+pip install 'splink[postgres]'
+```
+</details>
+
+
+#### DuckDBLess Splink
 Should you require a more bare-bones version of Splink **without DuckDB**, please see the following area of the docs:
 > [DuckDBless Splink Installation](https://moj-analytical-services.github.io/splink/installations.html#duckdb-less-installation)
 
