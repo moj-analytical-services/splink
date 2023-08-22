@@ -16,4 +16,5 @@ folder_path="dist"
 whl_files=$(find "$folder_path" -type f -name "*.whl")
 # pip install
 # pip3 install "$whl_files"
-pip3 install $whl_files'[spark]'
+# pip3 install $whl_files'[spark]'
+pip3 install $whl_files'[postgres]'
