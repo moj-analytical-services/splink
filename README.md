@@ -72,7 +72,7 @@ conda install -c conda-forge splink
 
 #### Backend Specific Installs
 
-From Splink v3.9.7, you can now install the required packages for a specific splink backend by adding the `[<version>]` to the end of your `pip install`.
+From Splink v3.9.7, you can now install the required packages for a specific splink backend by adding the `[<backend>]` to the end of your `pip install`.
 
 <details>
 <summary>The following backends are supported:</summary>
