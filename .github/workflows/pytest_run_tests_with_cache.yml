@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [ "3.8.16", "3.9.10" ]
+        python-version: [ "3.7.15", "3.8.16", "3.9.10" ]
     name: Run tests with python verion ${{ matrix.python-version }}
     steps:
       #----------------------------------------------
@@ -37,6 +37,7 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
+          vesion: 1.6.0
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
