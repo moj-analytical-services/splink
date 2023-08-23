@@ -227,7 +227,7 @@ class SparkLinker(Linker):
         # be stored. The filter will remove none, so if catalog is not provided and
         # spark version is < 3.3.0 we will use the default catalog.
         self.splink_data_store = ".".join(
-            filter(lambda x: x, [self.catalog, self.database])
+            [f"`{x}`" for x in [self.catalog, self.database] if x is not None]
         )
 
     def _drop_splink_cached_tables(self):
