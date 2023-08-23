@@ -46,6 +46,7 @@ jobs:
       - name: Load cached Poetry installation
         uses: actions/cache@v2
         with:
+          vesion: 1.6.0
           path: ~/.local  # the path depends on the OS
           key: poetry-0  # increment to reset cache
       #----------------------------------------------
