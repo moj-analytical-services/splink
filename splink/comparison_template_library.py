@@ -173,10 +173,10 @@ class DateComparisonBase(Comparison):
                 "label_for_charts": "Date is 1st Jan",
             }
             comparison_level = and_(
-                    self._exact_match_level(col_name),
-                    dob_first_jan,
-                    label_for_charts="Exact match and 1st Jan",
-                )
+                self._exact_match_level(col_name),
+                dob_first_jan,
+                label_for_charts="Exact match and 1st Jan",
+            )
 
             if m_probability_1st_january:
                 comparison_level["m_probability"] = m_probability_1st_january
