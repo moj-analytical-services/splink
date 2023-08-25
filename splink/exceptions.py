@@ -67,7 +67,9 @@ class ErrorLogger:
             logged_exception = f"{error_name}: {str(error)}"
             self.error_queue.append(logged_exception)
         else:
-            raise ValueError("The 'error' argument must be a string or an Exception instance.")
+            raise ValueError(
+                "The 'error' argument must be a string or an Exception instance."
+            )
 
     def raise_and_log_all_errors(self, exception=SplinkException, additional_txt=""):
         """Raise a custom exception with all logged errors.

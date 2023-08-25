@@ -51,7 +51,6 @@ def validate_comparison_levels(comparisons: list):
         # If no error is found, append won't do anything
         comp_error_logger.append(eval_dtype)
 
-
     return comp_error_logger
 
 
