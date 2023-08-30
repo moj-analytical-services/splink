@@ -209,7 +209,7 @@ def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
 
     Args:
         linker (object): The initiated linker.
-        column_expressions (list, optional): A list of strings containing the specified column names. 
+        column_expressions (list, optional): A list of strings containing the specified column names.
             If left empty this will default to all columns.
         top_n (int, optional): The number of top n values to plot.
         bottom_n (int, optional): The number of bottom n values to plot.
