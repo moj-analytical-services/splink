@@ -292,7 +292,6 @@ def profile_columns(
     bottom_n=10,
     distribution_plots=True,
     kde_plots=False,
-    correlation_plot=False,
 ):
 
     df_concat = linker._initialise_df_concat()
@@ -309,33 +308,6 @@ def profile_columns(
     )
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
     df_raw = linker._execute_sql_pipeline(input_dataframes, materialise_as_hash=True)
-
-    # if correlation_plot:
-    #     sql = _get_df_correlations(column_expressions)
-    #     linker._enqueue_sql(sql, "__splink__df_test")
-    #     correlation_rows = linker._execute_sql_pipeline(input_dataframes, materialise_as_hash=True)
-    #     correlation_data=correlation_rows.as_record_dict()
-    #     correlation_matrix = {}
-    #     for item in correlation_data:
-    #         row = item['column1']
-    #         col = item['column2']
-    #         value = item['correlation']
-
-    #         if row not in correlation_matrix:
-    #             correlation_matrix[row] = {}
-
-    #         correlation_matrix[row][col] = value
-    #     correlation_matrix_data = []
-    #     for row in correlation_matrix:
-    #         for col in correlation_matrix[row]:
-    #             correlation_matrix_data.append({
-    #                 "column1": row,
-    #                 "column2": col,
-    #                 "correlation": correlation_matrix[row][col]
-    #             })
-    # else:
-    #     correlation_rows_all = None
-    #     correlation_rows = None
 
     if distribution_plots:
         sqls = _get_df_percentiles()
@@ -409,11 +381,6 @@ def profile_columns(
         )
 
         inner_charts.append(inner_chart)
-
-    # if correlation_plot:
-    #     _correlation_plot_copy = deepcopy(_correlation_plot)
-    #     _correlation_plot_copy["hconcat"][0]["data"]["values"] = correlation_matrix_data
-    #     inner_charts.append(_correlation_plot_copy)
 
     outer_spec = deepcopy(_outer_chart_spec_freq)
     outer_spec["vconcat"] = inner_charts
