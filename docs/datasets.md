@@ -44,6 +44,7 @@ The datasets available are listed below:
 
 {% include-markdown "./includes/generated_files/datasets_table.md" %}
 
+
 ## `splink_dataset_labels`
 
 Some of the `splink_datasets` have corresponding clerical labels to help assess model performance. These are requested through the `splink_dataset_labels` module.
@@ -53,6 +54,7 @@ Some of the `splink_datasets` have corresponding clerical labels to help assess 
 The datasets available are listed below:
 
 {% include-markdown "./includes/generated_files/dataset_labels_table.md" %}
+
 
 ## `splink_dataset_utils` API
 
