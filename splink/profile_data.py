@@ -311,7 +311,7 @@ def profile_columns(
         linker (object): The initiated linker.
         column_expressions (list, optional): A list of strings containing the specified column names.
             If left empty this will default to all columns.
-        top_n (int, optional): The number of top n values to plot. 
+        top_n (int, optional): The number of top n values to plot.
         Will default to 10, but if set to None the chart will not be produced.
         bottom_n (int, optional): The number of bottom n values to plot.
         Will default to 10, but if set to None the chart will not be produced.
@@ -324,7 +324,7 @@ def profile_columns(
         - The provided `column_expressions` can be a list of column names to profile. If left empty,
           all columns will be profiled.
         - The `top_n` and `bottom_n` parameters determine the number of top and bottom values to display
-          in the respective charts. 
+          in the respective charts.
     """
     df_concat = linker._initialise_df_concat()
 
