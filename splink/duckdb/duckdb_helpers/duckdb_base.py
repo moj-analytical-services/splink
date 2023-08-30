@@ -24,15 +24,25 @@ def datediff_sql(
 
     if cast_str:
         return f"""
-            abs(date_diff('{date_metric}',strptime({col_name_l},
-              '{date_format}'),strptime({col_name_r},
-              '{date_format}'))) <= {date_threshold}
+            abs(date_diff('{date_metric}',
+                strptime({col_name_l}, '{date_format}'),
+                strptime({col_name_r}, '{date_format}'))
+                ) <= {date_threshold}
         """
     else:
         return f"""
             abs(date_diff('{date_metric}', {col_name_l},
               {col_name_r})) <= {date_threshold}
         """
+
+
+def valid_date_sql(col_name, date_format=None):
+    if date_format is None:
+        date_format = "%Y-%m-%d"
+
+    return f"""
+        try_strptime({col_name}, '{date_format}')
+    """
 
 
 def regex_extract_sql(col_name, regex):
@@ -53,6 +63,10 @@ class DuckDBBase(DialectBase):
     @property
     def _datediff_function(self):
         return datediff_sql
+
+    @property
+    def _valid_date_function(self):
+        return valid_date_sql
 
     @property
     def _regex_extract_function(self):

@@ -1,0 +1,364 @@
+{
+    "transform": [
+        {
+            "fold": [
+                "tp",
+                "tn",
+                "fp",
+                "fn"
+            ],
+            "as": [
+                "label",
+                "count"
+            ]
+        },
+        {
+            "calculate": "datum.label === 'tp' ? 'True Positive (TP)' : datum.label === 'tn' ? 'True Negative (TN)' : datum.label === 'fp' ? 'False Positive (FP)' : 'False Negative (FN)'",
+            "as": "confusion_label"
+        },
+        {
+            "calculate": "datum.label === 'tp' || datum.label === 'fp' ? 1 : 0",
+            "as": "predicted"
+        },
+        {
+            "calculate": "datum.label === 'tp' || datum.label === 'fn' ? 1 : 0",
+            "as": "actual"
+        },
+        {
+            "joinaggregate": [
+                {
+                    "op": "max",
+                    "field": "truth_threshold",
+                    "as": "max_threshold"
+                }
+            ]
+        }
+    ],
+    "hconcat": [
+        {
+            "title": {
+                "text": "Interactive Confusion Matrix",
+                "fontSize": 20,
+                "subtitle": [
+                    "Hover over the line graph to view the confusion",
+                    "matrix for the selected match threshold"
+                ],
+                "subtitlePadding": 10,
+                "offset": -20,
+                "baseline": "line-bottom"
+            },
+            "width": 250,
+            "height": 300,
+            "encoding": {
+                "x": {
+                    "field": "truth_threshold",
+                    "type": "quantitative",
+                    "title": "Match weight threshold",
+                    "axis": {
+                        "labelFontSize": 12,
+                        "titleFontSize": 16
+                    },
+                    "scale": {
+                        "domain": [
+                            -15,
+                            15
+                        ]
+                    }
+                }
+            },
+            "layer": [
+                {
+                    "params": [
+                        {
+                            "name": "threshold",
+                            "select": {
+                                "type": "point",
+                                "fields": [
+                                    "truth_threshold"
+                                ],
+                                "nearest": true,
+                                "on": "mouseover"
+                            }
+                        }
+                    ],
+                    "mark": {
+                        "type": "rule",
+                        "clip": true
+                    },
+                    "encoding": {
+                        "opacity": {
+                            "condition": {
+                                "value": 0.3,
+                                "param": "threshold",
+                                "empty": false
+                            },
+                            "value": 0
+                        }
+                    }
+                },
+                {
+                    "encoding": {
+                        "y": {
+                            "field": "match_probability",
+                            "type": "quantitative",
+                            "axis": {
+                                "title": "Match probability",
+                                "titlePadding": 5,
+                                "labelFontSize": 12,
+                                "titleFontSize": 16
+                            }
+                        }
+                    },
+                    "layer": [
+                        {
+                            "mark": {
+                                "type": "text",
+                                "xOffset": {
+                                    "expr": "50*(toNumber(datum.truth_threshold>0)-0.5)"
+                                },
+                                "yOffset": {
+                                    "expr": "25*(toNumber(datum.truth_threshold>0)-0.5)"
+                                },
+                                "fontSize": 14,
+                                "clip": true
+                            },
+                            "transform": [
+                                {
+                                    "filter": {
+                                        "param": "threshold",
+                                        "empty": false
+                                    }
+                                }
+                            ],
+                            "encoding": {
+                                "text": {
+                                    "field": "truth_threshold",
+                                    "aggregate": "min",
+                                    "format": "+.2f"
+                                }
+                            }
+                        },
+                        {
+                            "mark": {
+                                "type": "line",
+                                "color": "red",
+                                "opacity": 0.5,
+                                "clip": true
+                            }
+                        },
+                        {
+                            "mark": {
+                                "type": "line",
+                                "color": "green",
+                                "opacity": 0.5,
+                                "strokeWidth": 3,
+                                "clip": true
+                            },
+                            "transform": [
+                                {
+                                    "filter": "datum.truth_threshold >= threshold.truth_threshold"
+                                }
+                            ]
+                        },
+                        {
+                            "mark": {
+                                "type": "point",
+                                "size": 100,
+                                "color": "green",
+                                "clip": true
+                            },
+                            "encoding": {
+                                "opacity": {
+                                    "condition": {
+                                        "value": 1,
+                                        "param": "threshold",
+                                        "empty": false
+                                    },
+                                    "value": 0
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "width": {
+                "step": 150
+            },
+            "height": {
+                "step": 150
+            },
+            "transform": [
+                {
+                    "filter": {
+                        "or": [
+                            {
+                                "param": "threshold",
+                                "empty": false
+                            },
+                            {
+                                "and": [
+                                    {
+                                        "param": "threshold",
+                                        "empty": true
+                                    },
+                                    "datum.truth_threshold == datum.max_threshold"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ],
+            "encoding": {
+                "y": {
+                    "field": "predicted",
+                    "type": "nominal",
+                    "title": "Predicted",
+                    "axis": {
+                        "labelExpr": "datum.label == 1 ? 'Match' : 'Non-match'",
+                        "titleAngle": 0,
+                        "titleFontSize": 20,
+                        "labelFontSize": 18,
+                        "labelPadding": 10,
+                        "titlePadding": -30,
+                        "ticks": false,
+                        "domain": false
+                    },
+                    "sort": "-y"
+                },
+                "x": {
+                    "field": "actual",
+                    "type": "nominal",
+                    "title": "Actual",
+                    "axis": {
+                        "labelExpr": "datum.label == 1 ? 'Match' : 'Non-match'",
+                        "titleAngle": 0,
+                        "titleFontSize": 20,
+                        "labelFontSize": 18,
+                        "labelPadding": 10,
+                        "labelAngle": 0,
+                        "ticks": false,
+                        "orient": "top",
+                        "domain": false
+                    },
+                    "sort": "-x"
+                }
+            },
+            "resolve": {
+                "scale": {
+                    "color": "independent"
+                }
+            },
+            "layer": [
+                {
+                    "mark": {
+                        "type": "rect",
+                        "opacity": 0.5
+                    },
+                    "transform": [
+                        {
+                            "filter": "datum.predicted == 0"
+                        }
+                    ],
+                    "encoding": {
+                        "color": {
+                            "field": "count",
+                            "type": "quantitative",
+                            "legend": null,
+                            "scale": {
+                                "scheme": "reds",
+                                "zero": true
+                            }
+                        }
+                    }
+                },
+                {
+                    "mark": {
+                        "type": "rect",
+                        "opacity": 0.5
+                    },
+                    "transform": [
+                        {
+                            "filter": "datum.predicted == 1"
+                        }
+                    ],
+                    "encoding": {
+                        "color": {
+                            "field": "count",
+                            "type": "quantitative",
+                            "legend": null,
+                            "scale": {
+                                "scheme": "greens",
+                                "zero": true
+                            }
+                        }
+                    }
+                },
+                {
+                    "mark": {
+                        "type": "text",
+                        "fontSize": 14,
+                        "yOffset": -40
+                    },
+                    "encoding": {
+                        "text": {
+                            "field": "confusion_label",
+                            "type": "nominal"
+                        },
+                        "opacity": {
+                            "condition": {
+                                "test": "datum.predicted != datum.actual",
+                                "value": 1
+                            },
+                            "value": 0.5
+                        },
+                        "color": {
+                            "condition": [
+                                {
+                                    "test": "datum.predicted==1 && datum.actual==1",
+                                    "value": "darkgreen"
+                                },
+                                {
+                                    "test": "datum.predicted==0 && datum.actual==0",
+                                    "value": "darkred"
+                                }
+                            ],
+                            "value": "black"
+                        }
+                    }
+                },
+                {
+                    "mark": {
+                        "type": "text",
+                        "fontSize": 28,
+                        "yOffset": 10,
+                        "fontWeight": "bold"
+                    },
+                    "encoding": {
+                        "text": {
+                            "field": "count",
+                            "type": "nominal",
+                            "format": ","
+                        },
+                        "color": {
+                            "condition": [
+                                {
+                                    "test": "datum.predicted==1 && datum.actual==1",
+                                    "value": "darkgreen"
+                                },
+                                {
+                                    "test": "datum.predicted==0 && datum.actual==0",
+                                    "value": "darkred"
+                                }
+                            ],
+                            "value": "black"
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.14.1.json",
+    "data": {"values": []}
+}

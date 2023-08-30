@@ -1,13 +1,4 @@
-# The Comparison Template Library is not currently implemented
-# for SQLite due to limited string matching capability in
-# cll.comparison_level_library
-
-import logging
-
-logger = logging.getLogger(__name__)
-
-logger.warn(
-    "The Comparison Template Library is not currently implemented "
-    "for SQLite due to limited string matching capability in "
-    "`cll.comparison_level_library`"
+from .sqlite_helpers.sqlite_comparison_imports import (  # noqa: F401
+    forename_surname_comparison,
+    name_comparison,
 )

@@ -76,11 +76,11 @@ def test_cast_concat_as_varchar():
 
 
 def test_set_numeric_as_double():
-    sql = "select cast('a' as double), cast(0.12345 as double)"
+    sql = "select cast('a' as float8), cast(0.12345 as float8)"
     transformed_sql = sqlglot.transpile(sql, write="customspark")[0]
     assert transformed_sql == "SELECT aD, 0.12345D"
 
-    sql = "select cast('a' as string), cast(0.12345 as double)"
+    sql = "select cast('a' as string), cast(0.12345 as float8)"
     transformed_sql = sqlglot.transpile(sql, write="customspark")[0]
     assert transformed_sql == "SELECT CAST('a' AS STRING), 0.12345D"
 

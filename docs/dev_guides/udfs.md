@@ -2,9 +2,9 @@
 
 User Defined Functions (UDFs) are functions that can be created to add functionality to a given [SQL backend](../topic_guides/backends.md) that does not already exist. These are particularly useful within Splink as it supports multiple SQL engines each with different inherent functionalty. UDFs are an important tool for creating consistent functionality across backends.
 
-For example, DuckDB has an in-built string comparison function for [Jaccard similarity](https://duckdb.org/docs/sql/functions/char.html#text-similarity-functions) whereas Spark SQL doesn't have [an equivalent function](https://spark.apache.org/docs/2.3.0/api/sql/index.html). Therefore, a UDF is required to use functions like [jaccard_at_thresholds()](../comparison_library.md#splink.comparison_library.JaccardAtThresholdsComparisonBase) and [jaccard_level()](../comparison_level_library.md#splink.comparison_level_library.JaccardLevelBase) with a Spark backend.
+For example, DuckDB has an in-built string comparison function for [Jaccard similarity](https://duckdb.org/docs/sql/functions/char.html#text-similarity-functions) whereas Spark SQL doesn't have [an equivalent function](https://spark.apache.org/docs/2.3.0/api/sql/index.html). Therefore, a UDF is required to use functions like [jaccard_at_thresholds()](../comparison_library.md#splink.comparison_library.JaccardAtThresholdsBase) and [jaccard_level()](../comparison_level_library.md#splink.comparison_level_library.JaccardLevelBase) with a Spark backend.
 
-## Spark
+## :simple-apachespark: Spark
 
 Spark supports [UDFs written in Scala and Java](https://spark.apache.org/docs/latest/sql-ref-functions-udf-scalar.html#:~:text=User%2DDefined%20Functions%20(UDFs),invoke%20them%20in%20Spark%20SQL.).
 
@@ -22,9 +22,9 @@ Now the Spark UDFs have been successfully registered, they can be used in SparkS
 jaccard("name_column_1", "name_column_2") >= 0.9
 ```
 
-which provides the basis for functions such as [jaccard_at_thresholds()](../comparison_library.md#splink.comparison_library.JaccardAtThresholdsComparisonBase) and [jaccard_level()](../comparison_level_library.md#splink.comparison_level_library.JaccardLevelBase).
+which provides the basis for functions such as [jaccard_at_thresholds()](../comparison_library.md#splink.comparison_library.JaccardAtThresholdsBase) and [jaccard_level()](../comparison_level_library.md#splink.comparison_level_library.JaccardLevelBase).
 
-## DuckDB
+## :simple-duckdb: DuckDB
 
 Python UDFs can be registered to a DuckDB connection from version 0.8.0 onwards.
 
@@ -32,11 +32,11 @@ The documentation is [here](https://duckdb.org/docs/api/python/reference/#duckdb
 
 Note that performance will generally be substantially slower than using native DuckDB functions.  Consider using vectorised UDFs were possible - see [here](https://github.com/duckdb/duckdb/pull/7171).
 
-## Athena
+## :simple-amazonaws: Athena
 
 Athena supports [UDFs written in Java](https://docs.aws.amazon.com/athena/latest/ug/querying-udf.html), however these have not yet been implemented in Splink.
 
-## SQLite
+## :simple-sqlite: SQLite
 
 Python UDFs can be registered to a sqlite connection using the [`create_function` function](https://docs.python.org/3/library/sqlite3.html#sqlite3.Connection.create_function).  An example is as follows:
 

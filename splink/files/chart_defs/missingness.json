@@ -2,8 +2,7 @@
   "config": {
     "view": {
       "continuousWidth": 400,
-      "continuousHeight": 300,
-      "width": 400
+      "continuousHeight": 300
     },
     "axis": {
       "labelFontSize": 11
@@ -18,9 +17,10 @@
           "type": "quantitative",
           "field": "null_proportion",
           "legend": {
-            "format": ".0%"
+            "format": ".0%",
+            "offset": 30
           },
-          "scale": {
+          "scale": {"domain": [0, 1],
             "range": "heatmap"
           },
           "title": "Missingness"
@@ -52,7 +52,9 @@
         ],
         "x": {
           "type": "quantitative",
+          "scale": {"domain": [0, 1]},
           "axis": {
+            "labelAlign": "center",
             "format": "%",
             "title": "Percentage of nulls"
           },
@@ -74,5 +76,5 @@
     "values": "",
     "name": "data-0e7bce5a1d2f132e282789d6ef7780fe"
   },
-  "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json"
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json"
 }

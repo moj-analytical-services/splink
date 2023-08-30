@@ -2,7 +2,7 @@ import logging
 import re
 from copy import deepcopy
 
-from .charts import load_chart_definition, vegalite_or_json
+from .charts import altair_or_json, load_chart_definition
 from .misc import ensure_is_list
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ def expressions_to_sql(expressions):
 _outer_chart_spec_freq = {
     "config": {"view": {"continuousWidth": 400, "continuousHeight": 300}},
     "vconcat": [],
-    "$schema": "https://vega.github.io/schema/vega-lite/v4.8.1.json",
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
 }
 
 _inner_chart_spec = load_chart_definition("profile_data.json")
@@ -219,7 +219,7 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     from __splink__df_all_column_value_frequencies
     where group_name = '{gn}'
     order by value_count {value_order}
-    limit {limit})
+    limit {limit}) top_bottom_freqs
     """
 
     to_union = [
@@ -267,7 +267,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
         from {table_name}
         where {col_or_expr} is not null
         group by {col_or_expr}
-        order by count(*) desc)
+        order by count(*) desc) column_stats
         """
         sqls.append(sql)
 
@@ -339,7 +339,7 @@ def profile_columns(
         column_expressions_raw, "__splink__df_concat"
     )
     linker._enqueue_sql(sql, "__splink__df_all_column_value_frequencies")
-    df_raw = linker._execute_sql_pipeline(input_dataframes, materialise_as_hash=True)
+    df_raw = linker._execute_sql_pipeline(input_dataframes)
 
     if distribution_plots:
         sqls = _get_df_percentiles()
@@ -417,4 +417,4 @@ def profile_columns(
     outer_spec = deepcopy(_outer_chart_spec_freq)
     outer_spec["vconcat"] = inner_charts
 
-    return vegalite_or_json(outer_spec)
+    return altair_or_json(outer_spec)
