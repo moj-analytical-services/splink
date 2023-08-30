@@ -293,7 +293,39 @@ def profile_columns(
     distribution_plots=True,
     kde_plots=False,
 ):
+    """
+    Profiles the specified columns of the dataframe initiated with the linker.
+    This can be computationally expensive if the dataframe is large.
+    For the provided columns with column_expressions (or for all columns if left empty)
+    we can calculate:
+    - A distribution plot that shows the count of values at each percentile.
+    - A top n chart, that produces a chart showing the count of the top n values within the column
+    - A bottom n chart, that produces a chart showing the count of the bottom n values within the column
+    - A kernel density plot of a numeric variable.
 
+    This should be used to explore the dataframe, determine if columns have sufficient completeness
+    for linking, analyse the cardinality of columns, and identify the need for standardisation
+    within a given column.
+
+    Args:
+        linker (object): The initiated linker.
+        column_expressions (list, optional): A list of strings containing the specified column names.
+            If left empty this will default to all columns.
+        top_n (int, optional): The number of top n values to plot. 
+        Will default to 10, but if set to None the chart will not be produced.
+        bottom_n (int, optional): The number of bottom n values to plot.
+        Will default to 10, but if set to None the chart will not be produced.
+        kde_plot (bool, optional): A boolean value indicating whether kde plots should be produced.
+        distribution_plots (bool, optional): A boolean value indicating whether distribution plots should be produced.
+    Returns:
+        altair.Chart or dict: A visualization or JSON specification describing the profiling charts.
+    Note:
+        - The `linker` object should be an instance of the initiated linker.
+        - The provided `column_expressions` can be a list of column names to profile. If left empty,
+          all columns will be profiled.
+        - The `top_n` and `bottom_n` parameters determine the number of top and bottom values to display
+          in the respective charts. 
+    """
     df_concat = linker._initialise_df_concat()
 
     input_dataframes = []
