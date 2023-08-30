@@ -199,7 +199,7 @@ def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
 
     For the provided columns with column_expressions (or for all columns if left empty)
     calculate:
-    - A missingness chart that shows the % of all rows within that column that are NA
+    - A distribution plot that shows the count of values at each percentile.
     - A top n chart, that produces a chart showing the count of the top n values within the column
     - A bottom n chart, that produces a chart showing the count of the bottom n values within the column
 
