@@ -22,7 +22,7 @@ Latest Splink version: [v3.9.4](https://github.com/moj-analytical-services/splin
 
 ## :rocket: Massive speed gains in EM training
 
-There’s now an option to make EM training much faster - in one example we’ve seen at [1000x fold speedup](https://github.com/moj-analytical-services/splink/pull/1369#issuecomment-1611214919).  Kudos to external contributor [@aymonwuolanne](https://github.com/moj-analytical-services/splink/pull/1369) from the Australian Bureau of Statistics! 
+There’s now an option to make EM training much faster - in one example we’ve seen at [1000x fold speedup](https://github.com/moj-analytical-services/splink/pull/1369#issuecomment-1611214919).  Kudos to external contributor [@aymonwuolanne](https://github.com/moj-analytical-services/splink/pull/1369) from the Australian Bureau of Statistics!
 
 To make use of this, set the [`estimate_without_term_frequencies`](https://moj-analytical-services.github.io/splink/linkerest.html#splink.linker.Linker.estimate_parameters_using_expectation_maximisation) parameter to True; for example:
 
@@ -34,7 +34,7 @@ Note: If True, the EM algorithm ignores term frequency adjustments during the it
 
 ## :gift: Out-of-the-box Comparisons
 
-Splink now contains lots of new out-of-the-box comparisons for [dates](../../comparison_template_library.md#splink.comparison_template_library.DateComparisonBase), [names](../../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase), [postcodes](../../comparison_template_library.md#splink.comparison_template_library.PostcodeComparisonBase) etc. The Comparison Template Library (CTL) provides suggested settings for common types of data used in linkage models. 
+Splink now contains lots of new out-of-the-box comparisons for [dates](../../comparison_template_library.md#splink.comparison_template_library.DateComparisonBase), [names](../../comparison_template_library.md#splink.comparison_template_library.NameComparisonBase), [postcodes](../../comparison_template_library.md#splink.comparison_template_library.PostcodeComparisonBase) etc. The Comparison Template Library (CTL) provides suggested settings for common types of data used in linkage models.
 
 For example, a Comparison for `"first_name"` can now be written as:
 
@@ -48,7 +48,7 @@ Check out these new functions in the [CTL Topic Guide](../../topic_guides/compar
 
 ## :simple-adblock: Blocking Rule Library
 
-Blocking has, historically, been a point of confusion for users so we have been working behind the scenes to make that easier! The recently launched Blocking Rules Library (BRL) provides a set of functions for defining Blocking Rules (similar to the Comparison Library functions). 
+Blocking has, historically, been a point of confusion for users so we have been working behind the scenes to make that easier! The recently launched Blocking Rules Library (BRL) provides a set of functions for defining Blocking Rules (similar to the Comparison Library functions).
 
 For example, a Blocking Rule for `"date_of_birth"` can now be written as:
 
@@ -57,6 +57,8 @@ import splink.duckdb.blocking_rule_library as brl
 
 brl.exact_match_rule("date_of_birth")
 ```
+
+**Note**: from Splink v3.9.6, `exact_match_rule` has been superceded by `block_on`. We advise using this going forward.
 
 Check out these new functions in the [BRL Documentation](https://moj-analytical-services.github.io/splink/blocking_rule_library.html) as well as some new [Blocking Topic Guides](https://moj-analytical-services.github.io/splink/topic_guides/blocking/blocking_rules.html) to better explain what Blocking Rules are, how they are used in Splink, and how to choose them.
 
@@ -81,7 +83,7 @@ We would love any feedback from users, so please comment on the [PR](https://git
 
 ## :bar_chart: Charts in Altair 5
 
-Charts are now all fully-fledged Altair charts, making them much easier to work with.  
+Charts are now all fully-fledged Altair charts, making them much easier to work with.
 
 For example, a chart `c` can now be saved with:
 
@@ -96,7 +98,7 @@ where `json`, `html`, `png`, `svg` and `pdf` are all supported.
 
 Historically, importing of the comparison libraries ([CL](../../comparison_library.md), [CTL](../../comparison_template_library.md), [CLL](../../comparison_level_library.md)) has included declaring the backend twice. For example:
 
-```py 
+```py
 import splink.duckdb.duckdb_comparison_level_library as cll
 ```
 This repetition has now been removed
@@ -148,13 +150,13 @@ Some of the improvements include:
 
 * More Topic Guides covering things such as [Record Linkage Theory](https://moj-analytical-services.github.io/splink/topic_guides/theory/record_linkage.html), [Guidance on Splink's backends](https://moj-analytical-services.github.io/splink/topic_guides/backends/backends.html) and [String Fuzzy Matching](https://moj-analytical-services.github.io/splink/topic_guides/comparisons/choosing_comparators.html).
 * A [Contributors Guide](https://moj-analytical-services.github.io/splink/CONTRIBUTING.html) to make contrbuting to Splink even easier. If you are interested in getting involved in open source, check the guide out!
-* Adding tables to the Comparison [libraries documentation](../../comparison_level_library.md) to show the functions available for each SQL backend. 
+* Adding tables to the Comparison [libraries documentation](../../comparison_level_library.md) to show the functions available for each SQL backend.
 
 Thanks to everyone who filled out our [feedback survey](https://forms.gle/4S9PJgFX7opE9ggu9). If you have any more feedback or ideas for how we can make the docs better please do let us know by [raising an issue](https://github.com/moj-analytical-services/splink/issues), [starting a discussion](https://github.com/moj-analytical-services/splink/discussions) or filling out the survey.
 
 ## :soon: What's in the pipeline?
 
-* :simple-adblock:   More Blocking improvements  
-* :clipboard:   Settings dictionary improvements  
+* :simple-adblock:   More Blocking improvements
+* :clipboard:   Settings dictionary improvements
 * :material-thumbs-up-down:   More guidance on how to evaluate Splink models and linkages
 

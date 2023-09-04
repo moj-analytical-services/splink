@@ -116,6 +116,7 @@ def test_full_example_spark(df_spark, tmp_path):
     register_roc_data(linker)
     linker.roc_chart_from_labels_table("labels")
     linker.accuracy_chart_from_labels_table("labels")
+    linker.confusion_matrix_from_labels_table("labels")
 
     record = {
         "unique_id": 1,
