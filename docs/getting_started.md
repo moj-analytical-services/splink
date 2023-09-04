@@ -27,19 +27,19 @@ conda install -c conda-forge splink
     The following backends are supported:
 
     === ":simple-apachespark: Spark"
-    ```sh
-    pip install 'splink[spark]'
-    ```
+        ```sh
+        pip install 'splink[spark]'
+        ```
 
     === ":simple-amazonaws: Athena"
-    ```sh
-    pip install 'splink[athena]'
-    ```
+        ```sh
+        pip install 'splink[athena]'
+        ```
 
     === ":simple-postgresql: PostgreSql"
-    ```sh
-    pip install 'splink[postgres]'
-    ```
+        ```sh
+        pip install 'splink[postgres]'
+        ```
 
 ??? "DuckDB-less Installation"
     ### DuckDB-less Installation
