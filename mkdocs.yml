@@ -193,7 +193,7 @@ nav:
         - Model Training:
           - comparison viewer dashboard: "charts/comparison_viewer_dashboard.ipynb"
           - match weights chart: "charts/match_weights_chart.ipynb"
-          - m u parameters chart: "charts//match_weights_chart.ipynb"
+          - m u parameters chart: "charts/m_u_parameters_chart.ipynb"
           - parameter estimate comparisons chart: "charts/parameter_estimate_comparisons_chart.ipynb"
           - tf adjustment chart: "charts/tf_adjustment_chart.ipynb"
           - unlinkables chart: "charts/unlinkables_chart.ipynb"
