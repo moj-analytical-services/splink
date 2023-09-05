@@ -1,197 +1,36 @@
 from __future__ import annotations
 
 import logging
-import re
 from copy import deepcopy
-from functools import reduce
-from operator import and_
 from typing import NamedTuple
 
 import sqlglot
 import sqlglot.expressions as exp
 
-from .input_column import InputColumn, remove_quotes_from_identifiers
-from .misc import colour, ensure_is_list
+from ..input_column import remove_quotes_from_identifiers
+from ..misc import colour
+from .settings_validator import SettingsValidator
 
 logger = logging.getLogger(__name__)
 
 
-def remove_suffix(c):
-    return re.sub("_[l|r]{1}$", "", c)
+class InvalidColValidator(SettingsValidator):
+    """An invalid columns validator. This class aims to identify any
+    columns outlined in a user's settings object, that do not exist
+    in their underlying dataframe(s).
 
+    This is an extension of the `SettingsValidator` class, which extracts
+    key values from a settings dictionary and contains some core cleaning
+    functionality.
 
-class InvalidCols(NamedTuple):
-    """
-    A simple NamedTuple to aid in the construction of
-    our log strings.
-
-    It takes in two arguments:
-        invalid_type (str): The type of invalid column
-            detected. This can be one of invalid_cols,
-            invalid_table_pref or invalid_col_suffix.
-        invalid_columns (list): A list of the invalid
-            columns that have been detected.
+    Args:
+        SettingsValidator (_type_): The central settings validation class,
+            containing key values from a settings dictionary and
+            some core cleaning functionality.
     """
 
-    invalid_type: str
-    invalid_columns: list
-
-    @property
-    def is_valid(self):
-        # Quick check to see whether invalid cols exist.
-        # Makes list comprehension simpler.
-        return True if len(self.invalid_columns) > 0 else False
-
-    @property
-    def _columns(self):
-        return "columns" if len(self.invalid_columns) > 1 else "column"
-
-    @property
-    def columns_as_text(self):
-        return ", ".join(
-            f"{colour.ITALICS}`{c}`{colour.END}" for c in self.invalid_columns
-        )
-
-    @property
-    def invalid_cols(self):
-        _c = self._columns
-        _is_are = "are" if _c == "columns" else "is"
-        return (
-            f"The following {_c} {_is_are} missing from one or more "
-            f"of your input dataframe(s):\n{self.columns_as_text}"
-        )
-
-    @property
-    def invalid_table_pref_intro_text(self):
-        _c = self._columns
-        cont = "contain" if _c == "columns" else "contains"
-        return f"The following {_c} {cont} invalid "
-
-    @property
-    def invalid_table_pref(self):
-        return (
-            f"{self.invalid_table_pref_intro_text}\n"
-            "table prefixes (only `l.` and `r.` are valid):"
-            f"\n{self.columns_as_text}"
-        )
-
-    @property
-    def invalid_col_suffix(self):
-        return (
-            f"{self.invalid_table_pref_intro_text}\n"
-            "table suffixes (only `_l` and `_r` are valid):"
-            f"\n{self.columns_as_text}"
-        )
-
-    @property
-    def construct_log_string(self):
-        if self.invalid_columns:
-            # calls invalid_cols, invalid_table_pref, etc
-            return getattr(self, self.invalid_type)
-
-
-class SettingsValidator:
     def __init__(self, linker):
         self.linker = linker
-        self.validation_dict = {}
-
-    @property
-    def _sql_dialect(self):
-        if self.linker._settings_obj:
-            return self.linker._settings_obj._sql_dialect
-        else:
-            return None
-
-    @property
-    def cols_to_retain(self):
-        return self.clean_list_of_column_names(
-            self.linker._settings_obj._additional_cols_to_retain
-        )
-
-    @property
-    def uid(self):
-        uid_as_tree = InputColumn(self.linker._settings_obj._unique_id_column_name)
-        return self.clean_list_of_column_names(uid_as_tree)
-
-    @property
-    def blocking_rules(self):
-        brs = self.linker._settings_obj._blocking_rules_to_generate_predictions
-        return [br.blocking_rule for br in brs]
-
-    @property
-    def comparisons(self):
-        return self.linker._settings_obj.comparisons
-
-    def _validate_dialect(self):
-        settings_dialect = self.linker._settings_obj._sql_dialect
-        linker_dialect = self.linker._sql_dialect
-        if settings_dialect != linker_dialect:
-            linker_type = self.linker.__class__.__name__
-            raise ValueError(
-                f"Incompatible SQL dialect! `settings` dictionary uses "
-                f"dialect {settings_dialect}, but expecting "
-                f"'{linker_dialect}' for Linker of type `{linker_type}`"
-            )
-
-    @property
-    def input_columns_by_df(self):
-        """A dictionary containing all input dataframes and the columns located
-        within.
-
-        Returns:
-            dict: A dictionary of the format `{"table_name": [col1, col2, ...]}
-        """
-        # For each input dataframe, grab the column names and create a dictionary
-        # of the form: {table_name: [column_1, column_2, ...]}
-        input_columns = {
-            k: self.clean_list_of_column_names(v.columns)
-            for k, v in self.linker._input_tables_dict.items()
-        }
-
-        return input_columns
-
-    @property
-    def input_columns(self):
-        """
-        Returns:
-            set: The set intersection of all columns contained within each dataset.
-        """
-        return reduce(and_, self.input_columns_by_df.values())
-
-    def clean_list_of_column_names(self, col_list, as_tree=True):
-        """Clean a list of columns names by removing the quote characters
-        that may exist.
-
-        Args:
-            col_list (list): A list of columns names.
-            as_tree (bool): Whether the input columns are already SQL
-                trees or need conversions.
-
-        Returns:
-            set: A set of column names without quotes.
-        """
-        if col_list is None:
-            return ()  # needs to be a blank iterable
-
-        col_list = ensure_is_list(col_list)
-        if as_tree:
-            col_list = [c.input_name_as_tree for c in col_list]
-        return set(remove_quotes_from_identifiers(tree).sql() for tree in col_list)
-
-    def remove_prefix_and_suffix_from_column(
-        self, col_syntax_tree: sqlglot.expressions
-    ):
-        """Remove the prefix and suffix from a given sqlglot syntax tree
-        and return it as a string of SQL.
-
-        Args:
-            col_syntax_tree (sqlglot.expressions): _description_
-
-        Returns:
-            str: A column without `l.` or `_l`
-        """
-        col_syntax_tree.args["table"] = None
-        return remove_suffix(col_syntax_tree.sql())
 
     def check_column_exists(self, column_name: str):
         """Check whether a column name exists within all of the input
@@ -422,7 +261,12 @@ class SettingsValidator:
         return invalid_col_tracker
 
 
-class InvalidSettingsLogger(SettingsValidator):
+class InvalidColumnsLogger(InvalidColValidator):
+    """Takes the methods created in `InvalidColValidator`
+    and assess them to evaluate whether any columns included in the
+    user's settings dictionary are invaid.
+    """
+
     def __init__(self, linker):
         self.settings_validator = super().__init__(linker)
         self.bold_underline = colour.BOLD + colour.UNDERLINE
@@ -523,3 +367,73 @@ class InvalidSettingsLogger(SettingsValidator):
             "valid inputs in all fields before continuing."
             f"{colour.END}"
         )
+
+
+class InvalidCols(NamedTuple):
+    """
+    A simple NamedTuple to aid in the construction of
+    our log strings.
+
+    It takes in two arguments:
+        invalid_type (str): The type of invalid column
+            detected. This can be one of: `invalid_cols`,
+            `invalid_table_pref` or `invalid_col_suffix`.
+        invalid_columns (list): A list of the invalid
+            columns that have been detected.
+    """
+
+    invalid_type: str
+    invalid_columns: list
+
+    @property
+    def is_valid(self):
+        # Quick check to see whether invalid cols exist.
+        # Makes list comprehension simpler.
+        return True if len(self.invalid_columns) > 0 else False
+
+    @property
+    def _columns(self):
+        return "columns" if len(self.invalid_columns) > 1 else "column"
+
+    @property
+    def columns_as_text(self):
+        return ", ".join(
+            f"{colour.ITALICS}`{c}`{colour.END}" for c in self.invalid_columns
+        )
+
+    @property
+    def invalid_cols(self):
+        _c = self._columns
+        _is_are = "are" if _c == "columns" else "is"
+        return (
+            f"The following {_c} {_is_are} missing from one or more "
+            f"of your input dataframe(s):\n{self.columns_as_text}"
+        )
+
+    @property
+    def invalid_table_pref_intro_text(self):
+        _c = self._columns
+        cont = "contain" if _c == "columns" else "contains"
+        return f"The following {_c} {cont} invalid "
+
+    @property
+    def invalid_table_pref(self):
+        return (
+            f"{self.invalid_table_pref_intro_text}\n"
+            "table prefixes (only `l.` and `r.` are valid):"
+            f"\n{self.columns_as_text}"
+        )
+
+    @property
+    def invalid_col_suffix(self):
+        return (
+            f"{self.invalid_table_pref_intro_text}\n"
+            "table suffixes (only `_l` and `_r` are valid):"
+            f"\n{self.columns_as_text}"
+        )
+
+    @property
+    def construct_log_string(self):
+        if self.invalid_columns:
+            # calls invalid_cols, invalid_table_pref, etc
+            return getattr(self, self.invalid_type)
