@@ -200,29 +200,33 @@ def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
     For the provided columns with column_expressions (or for all columns if left empty)
     calculate:
     - A distribution plot that shows the count of values at each percentile.
-    - A top n chart, that produces a chart showing the count of the top n values within the column
-    - A bottom n chart, that produces a chart showing the count of the bottom n values within the column
+    - A top n chart, that produces a chart showing the count of the top n values
+    within the column
+    - A bottom n chart, that produces a chart showing the count of the bottom
+    n values within the column
 
-    This should be used to explore the dataframe, determine if columns have sufficient completeness
-    for linking, analyse the cardinality of columns, and identify the need for standardisation
-    within a given column.
+    This should be used to explore the dataframe, determine if columns have
+    sufficient completeness for linking, analyse the cardinality of columns, and
+    identify the need for standardisation within a given column.
 
     Args:
         linker (object): The initiated linker.
-        column_expressions (list, optional): A list of strings containing the specified column names.
+        column_expressions (list, optional): A list of strings containing the
+            specified column names.
             If left empty this will default to all columns.
         top_n (int, optional): The number of top n values to plot.
         bottom_n (int, optional): The number of bottom n values to plot.
 
     Returns:
-        altair.Chart or dict: A visualization or JSON specification describing the profiling charts.
+        altair.Chart or dict: A visualization or JSON specification describing the
+         profiling charts.
 
     Note:
         - The `linker` object should be an instance of the initiated linker.
-        - The provided `column_expressions` can be a list of column names to profile. If left empty,
-          all columns will be profiled.
-        - The `top_n` and `bottom_n` parameters determine the number of top and bottom values to display
-          in the respective charts.
+        - The provided `column_expressions` can be a list of column names to profile.
+            If left empty, all columns will be profiled.
+        - The `top_n` and `bottom_n` parameters determine the number of top and bottom
+            values to display in the respective charts.
     """
 
     if not column_expressions:
