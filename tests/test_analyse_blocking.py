@@ -227,6 +227,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
 
     assert (blocking_rules_df["row_count"] == expected_row_count["row_count"]).all()
 
+
 def test_analyse_blocking_fast_methodology():
     df_1 = pd.DataFrame(
         [
