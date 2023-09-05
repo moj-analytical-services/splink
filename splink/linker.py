@@ -2090,7 +2090,7 @@ class Linker:
             - The `top_n` and `bottom_n` parameters determine the number of top and bottom
                 values to display in the respective charts.
         """
-        
+
         return profile_columns(
             self, column_expressions=column_expressions, top_n=top_n, bottom_n=bottom_n
         )
