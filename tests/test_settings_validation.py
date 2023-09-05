@@ -5,9 +5,9 @@ import pytest
 
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
 from splink.duckdb.linker import DuckDBLinker
-from splink.settings_validator import (
+from splink.settings_validation.column_lookups import (
     InvalidCols,
-    InvalidSettingsLogger,
+    InvalidColumnsLogger,
 )
 
 from .basic_settings import get_settings_dict
@@ -17,7 +17,7 @@ from .decorator import mark_with_dialects_excluding
 def alter_settings(linker, new_settings):
     linker = deepcopy(linker)
     linker.load_settings(new_settings)
-    return InvalidSettingsLogger(linker)
+    return InvalidColumnsLogger(linker)
 
 
 def verify_single_setting_validation(
@@ -32,9 +32,9 @@ def verify_single_setting_validation(
 
     Args:
         invalid_cols_tuple (tuple): The output from
-            `InvalidSettingsLogger(linker).validate_{}`.
+            `InvalidColumnsLogger(linker).validate_{}`.
         settings_reference (str): The reference assigned
-            to that given validation check. See the `InvalidSettingsLogger`
+            to that given validation check. See the `InvalidColumnsLogger`
             class for more.
         invalid_type (str): One of: `invalid_cols`, `invalid_table_pref`
             or `invalid_col_suffix`.
@@ -55,9 +55,9 @@ def verify_complicated_settings_objects(invalid, expected):
 
     Args:
         invalid_cols_tuple (tuple): The output from
-            `InvalidSettingsLogger(linker).validate_{}`.
+            `InvalidColumnsLogger(linker).validate_{}`.
         settings_reference (str): The reference assigned
-            to that given validation check. See the `InvalidSettingsLogger`
+            to that given validation check. See the `InvalidColumnsLogger`
             class for more.
         invalid_type (str): One of: `invalid_cols`, `invalid_table_pref`
             or `invalid_col_suffix`.
@@ -88,7 +88,7 @@ def test_invalid_cols_detected(test_helpers, dialect):
         settings,
         **helper.extra_linker_args(),
     )
-    settings_logger = InvalidSettingsLogger(linker)
+    settings_logger = InvalidColumnsLogger(linker)
 
     # Check that `invalid_cols_detected` is triggered correctly
     assert settings_logger.invalid_cols_detected is False
@@ -111,7 +111,7 @@ def test_columns_from_settings(test_helpers, dialect):
         settings,
         **helper.extra_linker_args(),
     )
-    settings_logger = InvalidSettingsLogger(linker)
+    settings_logger = InvalidColumnsLogger(linker)
 
     #############
     # UNIQUE ID #
@@ -138,7 +138,7 @@ def test_columns_from_settings(test_helpers, dialect):
     # COLS TO RETAIN #
     ##################
     # Only "group" supplied. As such, we expect a value of None to be returned
-    settings_logger = InvalidSettingsLogger(linker)
+    settings_logger = InvalidColumnsLogger(linker)
     assert settings_logger.validate_cols_to_retain is None
 
     # Add additional faulty columns to retain
@@ -347,7 +347,7 @@ def test_settings_validation_on_2_to_3_converter():
         df,
         converted,
     )
-    i_logger = InvalidSettingsLogger(linker)
+    i_logger = InvalidColumnsLogger(linker)
     # Longer form output without an output column name
     assert i_logger.validate_comparison_levels == [
         (

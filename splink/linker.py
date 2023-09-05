@@ -14,6 +14,8 @@ from statistics import median
 import sqlglot
 
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
+from splink.settings_validation.column_lookups import InvalidColumnsLogger
+from splink.settings_validation.valid_types import InvalidTypesAndValuesLogger
 
 from .accuracy import (
     prediction_errors_from_label_column,
@@ -85,7 +87,6 @@ from .pipeline import SQLPipeline
 from .predict import predict_from_comparison_vectors_sqls
 from .profile_data import profile_columns
 from .settings import Settings
-from .settings_validator import InvalidSettingsLogger
 from .splink_comparison_viewer import (
     comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,
@@ -242,6 +243,20 @@ class Linker:
         self._deterministic_link_mode = False
 
         self.debug_mode = False
+
+    @property
+    def _get_input_columns(
+        self,
+        as_list=True,
+    ):
+        """Retrieve the column names from the input dataset(s)"""
+        df_obj: SplinkDataFrame = next(iter(self._input_tables_dict.values()))
+
+        column_names = (
+            [col.name() for col in df_obj.columns] if as_list else df_obj.columns
+        )
+
+        return column_names
 
     @property
     def _cache_uid(self):
@@ -467,11 +482,13 @@ class Linker:
         ):
             return
 
-        self.settings_validator = InvalidSettingsLogger(self)
-        self.settings_validator._validate_dialect()
+        # Run miscellaneous checks on our settings dictionary.
+        settings_invalid_types_values = InvalidTypesAndValuesLogger(self)
+        settings_invalid_types_values._validate_dialect()
+
         # Constructs output logs for our various settings inputs
         if validate_settings:
-            self.settings_validator.construct_output_logs()
+            InvalidColumnsLogger(self).construct_output_logs()
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
@@ -1123,25 +1140,25 @@ class Linker:
         Examples:
             === ":simple-duckdb: DuckDB"
                 ```py
-                linker = DuckDBLinker(df")
+                linker = DuckDBLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
             === ":simple-apachespark: Spark"
                 ```py
-                linker = SparkLinker(df")
+                linker = SparkLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
             === ":simple-amazonaws: Athena"
                 ```py
-                linker = AthenaLinker(df")
+                linker = AthenaLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
             === ":simple-sqlite: SQLite"
                 ```py
-                linker = SQLiteLinker(df")
+                linker = SQLiteLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
@@ -2038,9 +2055,70 @@ class Linker:
         return cc
 
     def profile_columns(
-        self, column_expressions: str | list[str], top_n=10, bottom_n=10
+        self, column_expressions: str | list[str] = None, top_n=10, bottom_n=10
     ):
-        return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
+        """
+        Profiles the specified columns of the dataframe initiated with the linker.
+
+        This can be computationally expensive if the dataframe is large.
+
+        For the provided columns with column_expressions (or for all columns if
+         left empty) calculate:
+        - A distribution plot that shows the count of values at each percentile.
+        - A top n chart, that produces a chart showing the count of the top n values
+        within the column
+        - A bottom n chart, that produces a chart showing the count of the bottom
+        n values within the column
+
+        This should be used to explore the dataframe, determine if columns have
+        sufficient completeness for linking, analyse the cardinality of columns, and
+        identify the need for standardisation within a given column.
+
+        Args:
+            linker (object): The initiated linker.
+            column_expressions (list, optional): A list of strings containing the
+                specified column names.
+                If left empty this will default to all columns.
+            top_n (int, optional): The number of top n values to plot.
+            bottom_n (int, optional): The number of bottom n values to plot.
+
+        Returns:
+            altair.Chart or dict: A visualization or JSON specification describing the
+            profiling charts.
+
+        Examples:
+            === ":simple-duckdb: DuckDB"
+                ```py
+                linker = DuckDBLinker(df)
+                linker.profile_columns()
+                ```
+            === ":simple-apachespark: Spark"
+                ```py
+                linker = SparkLinker(df)
+                linker.profile_columns()
+                ```
+            === ":simple-amazonaws: Athena"
+                ```py
+                linker = AthenaLinker(df)
+                linker.profile_columns()
+                ```
+            === ":simple-sqlite: SQLite"
+                ```py
+                linker = SQLiteLinker(df)
+                linker.profile_columns()
+                ```
+
+        Note:
+            - The `linker` object should be an instance of the initiated linker.
+            - The provided `column_expressions` can be a list of column names to
+                profile. If left empty, all columns will be profiled.
+            - The `top_n` and `bottom_n` parameters determine the number of top and
+                 bottom values to display in the respective charts.
+        """
+
+        return profile_columns(
+            self, column_expressions=column_expressions, top_n=top_n, bottom_n=bottom_n
+        )
 
     def _get_labels_tablename_from_input(
         self, labels_splinkdataframe_or_table_name: str | SplinkDataFrame
