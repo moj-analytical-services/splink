@@ -202,6 +202,7 @@ nav:
           - cluster studio dashboard: "charts/cluster_studio_dashboard.ipynb"
         - Model Evaluation:
           - accuracy chart from labels table: "charts/accuracy_chart_from_labels_table.ipynb"
+          - confusion matrix from labels table: "charts/confusion_matrix_from_labels_table.ipynb"
           - precision recall chart from labels table: "charts/precision_recall_chart_from_labels_table.ipynb"
           - roc chart fromm labels table: "charts/roc_chart_from_labels_table.ipynb"
       - In-build datasets: "datasets.md"

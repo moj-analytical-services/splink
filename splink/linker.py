@@ -35,6 +35,7 @@ from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
     accuracy_chart,
     completeness_chart,
+    confusion_matrix_chart,
     cumulative_blocking_rule_comparisons_generated,
     match_weights_histogram,
     missingness_chart,
@@ -2367,6 +2368,76 @@ class Linker:
         recs = df_truth_space.as_record_dict()
         return accuracy_chart(recs, add_metrics=add_metrics)
 
+    def confusion_matrix_from_labels_table(
+        self,
+        labels_splinkdataframe_or_table_name,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+        match_weight_range=[-15, 15],
+    ):
+        """Generate an interactive confusion matrix from labelled (ground truth) data.
+
+        The table of labels should be in the following format, and should be registered
+        as a table with your database:
+
+        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
+        |----------------|-----------|----------------|-----------|--------------------|
+        |df_1            |1          |df_2            |2          |0.99                |
+        |df_1            |1          |df_2            |3          |0.2                 |
+
+        Note that `source_dataset` and `unique_id` should correspond to the values
+        specified in the settings dict, and the `input_table_aliases` passed to the
+        `linker` object.
+
+        For `dedupe_only` links, the `source_dataset` columns can be ommitted.
+
+        Args:
+            labels_splinkdataframe_or_table_name (str | SplinkDataFrame): Name of table
+                containing labels in the database
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the chart. Defaults to None.
+            match_weight_range (list(float), optional): minimum and maximum thresholds
+                to include in chart output. Defaults to [-15,15].
+        Examples:
+            === ":simple-duckdb: DuckDB"
+                ```py
+                labels = pd.read_csv("my_labels.csv")
+                linker.register_table(labels, "labels")
+                linker.confusion_matrix_from_labels_table("labels")
+                ```
+            === ":simple-apachespark: Spark"
+                ```py
+                labels = spark.read.csv("my_labels.csv", header=True)
+                labels.createDataFrame("labels")
+                linker.confusion_matrix_from_labels_table("labels")
+                ```
+
+        Returns:
+            altair.Chart: An altair chart
+        """
+
+        labels_tablename = self._get_labels_tablename_from_input(
+            labels_splinkdataframe_or_table_name
+        )
+        self._raise_error_if_necessary_accuracy_columns_not_computed()
+        df_truth_space = truth_space_table_from_labels_table(
+            self,
+            labels_tablename,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
+
+        recs = df_truth_space.as_record_dict()
+        a, b = match_weight_range
+        recs = [r for r in recs if a < r["truth_threshold"] < b]
+        return confusion_matrix_chart(recs, match_weight_range=match_weight_range)
+
     def prediction_errors_from_labels_table(
         self,
         labels_splinkdataframe_or_table_name,
@@ -2570,6 +2641,49 @@ class Linker:
         )
         recs = df_truth_space.as_record_dict()
         return accuracy_chart(recs, add_metrics=add_metrics)
+
+    def confusion_matrix_from_labels_column(
+        self,
+        labels_column_name,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+        match_weight_range=[-15, 15],
+    ):
+        """Generate an accuracy chart from ground truth data, whereby the ground
+        truth is in a column in the input dataset called `labels_column_name`
+
+        Args:
+            labels_column_name (str): Column name containing labels in the input table
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the chart. Defaults to None.
+            match_weight_range (list(float), optional): minimum and maximum thresholds
+                to include in chart output. Defaults to [-15,15].
+        Examples:
+            ```py
+            linker.confusion_matrix_from_labels_column("ground_truth")
+            ```
+
+        Returns:
+            altair.Chart: An altair chart
+        """
+
+        df_truth_space = truth_space_table_from_labels_column(
+            self,
+            labels_column_name,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
+
+        recs = df_truth_space.as_record_dict()
+        a, b = match_weight_range
+        recs = [r for r in recs if a < r["truth_threshold"] < b]
+        return confusion_matrix_chart(recs, match_weight_range=match_weight_range)
 
     def prediction_errors_from_labels_column(
         self,

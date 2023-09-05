@@ -57,6 +57,7 @@ def test_full_example_sqlite(tmp_path):
     register_roc_data(linker)
     linker.roc_chart_from_labels_table("labels")
     linker.accuracy_chart_from_labels_table("labels")
+    linker.confusion_matrix_from_labels_table("labels")
 
 
 def test_small_link_example_sqlite():
