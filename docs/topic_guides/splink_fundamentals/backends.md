@@ -26,7 +26,7 @@ Once you have initialised the `linker` object, there is no difference in the sub
 
 Note however, that not all comparison functions are available in all backends.
 There are tables detailing the available functions for each backend on
-the [comparison library API page](../comparison_library.html) and the [comparison level library API page](../comparison_level_library.html).
+the [comparison library API page](../../comparison_library.md) and the [comparison level library API page](../../comparison_level_library.md).
 
 === ":simple-duckdb: DuckDB"
 
@@ -84,13 +84,13 @@ the [comparison library API page](../comparison_library.html) and the [compariso
 
 ### :simple-sqlite: SQLite
 
-[**SQLite**](https://www.sqlite.org/index.html) does not have native support for [fuzzy string-matching](./comparators.html) functions.
-However, some are available for Splink users as python [user-defined functions (UDFs)](../dev_guides/udfs.html#sqlite):
+[**SQLite**](https://www.sqlite.org/index.html) does not have native support for [fuzzy string-matching](../comparisons/comparators.html) functions.
+However, some are available for Splink users as python [user-defined functions (UDFs)](../../dev_guides/udfs.html#sqlite):
 
-* [`levenshtein`](../comparison_level_library.html#splink.comparison_level_library.LevenshteinLevelBase)
-* [`damerau_levenshtein`](../comparison_level_library.html#splink.comparison_level_library.DamerauLevenshteinLevelBase)
-* [`jaro`](../comparison_level_library.html#splink.comparison_level_libraryJaroLevelBase)
-* [`jaro_winkler`](../comparison_level_library.html#splink.comparison_level_library.JaroWinklerLevelBase)
+* [`levenshtein`](../../comparison_level_library.html#splink.comparison_level_library.LevenshteinLevelBase)
+* [`damerau_levenshtein`](../../comparison_level_library.html#splink.comparison_level_library.DamerauLevenshteinLevelBase)
+* [`jaro`](../../comparison_level_library.html#splink.comparison_level_libraryJaroLevelBase)
+* [`jaro_winkler`](../../comparison_level_library.html#splink.comparison_level_library.JaroWinklerLevelBase)
 
 However, there are a couple of points to note:
 

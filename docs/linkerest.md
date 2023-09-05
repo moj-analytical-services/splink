@@ -20,6 +20,7 @@ tags:
         - save_model_to_json 
         - estimate_m_from_pairwise_labels
         - estimate_probability_two_random_records_match
+        - unlinkables_chart
     rendering:
       show_root_heading: false
       show_source: false

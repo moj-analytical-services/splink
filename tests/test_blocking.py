@@ -25,7 +25,7 @@ def test_binary_composition_internals_OR(test_helpers, dialect):
 
     preceding_rules = [
         brl.exact_match_rule("first_name"),
-        brl.exact_match_rule("dob"),
+        brl.block_on(["dob"]),
     ]
     br_surname.add_preceding_rules(preceding_rules)
     assert br_surname.preceding_rules == preceding_rules
@@ -63,10 +63,7 @@ def test_simple_end_to_end(test_helpers, dialect):
 
     settings = get_settings_dict()
     settings["blocking_rules_to_generate_predictions"] = [
-        brl.and_(
-            brl.exact_match_rule("first_name"),
-            brl.exact_match_rule("surname"),
-        ),
+        brl.block_on(["first_name", "surname"]),
         brl.exact_match_rule("dob"),
     ]
 
@@ -74,10 +71,7 @@ def test_simple_end_to_end(test_helpers, dialect):
 
     linker.estimate_u_using_random_sampling(target_rows=1e5)
 
-    blocking_rule = brl.and_(
-        brl.exact_match_rule("first_name"),
-        brl.exact_match_rule("surname"),
-    )
+    blocking_rule = brl.block_on(["first_name", "surname"])
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     linker.estimate_parameters_using_expectation_maximisation(

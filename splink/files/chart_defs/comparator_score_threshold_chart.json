@@ -1,70 +1,196 @@
 {
+    "title": {
+        "text": "Heatmaps of string comparison metrics",
+        "anchor": "middle",
+        "fontSize": 16
+    },
     "config": {
         "view": {
-            "discreteWidth": 500,
-            "discreteHeight": 300
+            "discreteHeight": {
+                "step": 30
+            },
+            "discreteWidth": {
+                "step": 40
+            }
         }
     },
-    "layer": [
+    "params": [
         {
-            "mark": {
-                "type": "rect"
-            },
-            "encoding": {
-                "color": {
-                    "field": "threshold_match",
-                    "scale": {
-                        "range": [
-                            "red",
-                            "green"
-                        ]
-                    },
-                    "type": "ordinal"
-                },
-                "x": {
-                    "field": "comparator",
-                    "type": "ordinal"
-                },
-                "y": {
-                    "field": "strings_to_compare",
-                    "type": "ordinal"
-                }
-            },
-            "title": []
+            "name": "similarity_threshold",
+            "value": 0.9
         },
         {
-            "mark": {
-                "type": "text",
-                "baseline": "middle"
-            },
-            "encoding": {
-                "color": {
-                    "condition": {
-                        "value": "white",
-                        "test": "(datum.quantity > 3)"
+            "name": "distance_threshold",
+            "value": 2
+        }
+    ],
+    "hconcat": [
+        {
+            "layer": [
+                {
+                    "mark": {
+                        "type": "rect"
                     },
-                    "value": "black"
+                    "encoding": {
+                        "color": {
+                            "condition": {
+                                "test": "datum.score > similarity_threshold",
+                                "value": "lightgreen"
+                            },
+                            "value": "lightgrey"
+                        },
+                        "x": {
+                            "field": "comparator",
+                            "type": "ordinal",
+                            "title": null
+                        },
+                        "y": {
+                            "field": "strings_to_compare",
+                            "type": "ordinal",
+                            "title": "String comparison",
+                            "axis": {
+                                "titleFontSize": 14
+                            }
+                        }
+                    },
+                    "title": {
+                        "text": "Similarity",
+                        "subtitle": ">= 0.9"
+                    }
                 },
-                "text": {
-                    "field": "score",
-                    "type": "ordinal"
-                },
-                "x": {
-                    "field": "comparator",
-                    "type": "ordinal"
-                },
-                "y": {
-                    "field": "strings_to_compare",
-                    "type": "ordinal"
+                {
+                    "mark": {
+                        "type": "text",
+                        "baseline": "middle"
+                    },
+                    "encoding": {
+                        "size": {
+                            "field": "score",
+                            "scale": {
+                                "range": [
+                                    8,
+                                    14
+                                ]
+                            },
+                            "legend": null
+                        },
+                        "text": {
+                            "field": "score",
+                            "format": ".2f",
+                            "type": "quantitative"
+                        },
+                        "x": {
+                            "field": "comparator",
+                            "type": "ordinal",
+                            "axis": {
+                                "labelFontSize": 12
+                            }
+                        },
+                        "y": {
+                            "field": "strings_to_compare",
+                            "type": "ordinal"
+                        },
+                        "opacity": {
+                            "condition": {
+                                "test": "datum.score > 0.9",
+                                "value": 1
+                            },
+                            "value": 0.5
+                        }
+                    }
                 }
+            ],
+            "data": {
+                "name": "data-similarity"
+            }
+        },
+        {
+            "layer": [
+                {
+                    "mark": {
+                        "type": "rect"
+                    },
+                    "encoding": {
+                        "color": {
+                            "condition": {
+                                "test": "datum.score <= distance_threshold",
+                                "value": "lightgreen"
+                            },
+                            "value": "lightgrey"
+                        },
+                        "x": {
+                            "field": "comparator",
+                            "type": "ordinal",
+                            "title": null,
+                            "axis": {
+                                "labelFontSize": 12
+                            }
+                        },
+                        "y": {
+                            "field": "strings_to_compare",
+                            "type": "ordinal",
+                            "axis": null
+                        }
+                    },
+                    "title": {
+                        "text": "Distance",
+                        "subtitle": "<= 2"
+                    }
+                },
+                {
+                    "mark": {
+                        "type": "text",
+                        "baseline": "middle"
+                    },
+                    "encoding": {
+                        "size": {
+                            "field": "score",
+                            "scale": {
+                                "range": [
+                                    8,
+                                    14
+                                ],
+                                "reverse": true
+                            },
+                            "legend": null
+                        },
+                        "text": {
+                            "field": "score",
+                            "type": "quantitative"
+                        },
+                        "x": {
+                            "field": "comparator",
+                            "type": "ordinal"
+                        },
+                        "y": {
+                            "field": "strings_to_compare",
+                            "type": "ordinal"
+                        },
+                        "opacity": {
+                            "condition": {
+                                "test": "datum.score <= 2",
+                                "value": 1
+                            },
+                            "value": 0.5
+                        }
+                    }
+                }
+            ],
+            "data": {
+                "name": "data-distance"
             }
         }
     ],
-    "data": {
-        "name": "data-with-thresholds"
+    "resolve": {
+        "scale": {
+            "color": "independent",
+            "y": "shared",
+            "size": "independent"
+        }
     },
     "$schema": "https://vega.github.io/schema/vega-lite/v5.9.3.json",
     "datasets": {
-        "data-with-thresholds": []
+        "data-similarity": [],
+        "data-distance": []
     }
 }

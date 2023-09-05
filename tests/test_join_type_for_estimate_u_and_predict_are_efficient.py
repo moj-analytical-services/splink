@@ -91,7 +91,6 @@ data_three = [
 
 
 def test_dedupe_only():
-
     df_one = pd.DataFrame(data_one)
 
     log_list = []
@@ -142,7 +141,6 @@ def test_dedupe_only():
 
 
 def test_link_and_dedupe():
-
     df_one = pd.DataFrame(data_one)
     df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -196,7 +194,6 @@ def test_link_and_dedupe():
 
 
 def test_link_only_two():
-
     df_one = pd.DataFrame(data_one)
     df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -251,7 +248,6 @@ def test_link_only_two():
 
 
 def test_link_only_three():
-
     df_one = pd.DataFrame(data_one)
     df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
     df_three = pd.DataFrame(data_three)

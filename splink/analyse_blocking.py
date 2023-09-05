@@ -3,6 +3,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING, Union
 
+import pandas as pd
+
 from .blocking import BlockingRule, _sql_gen_where_condition, block_using_rules_sql
 from .misc import calculate_cartesian, calculate_reduction_ratio
 
@@ -35,9 +37,7 @@ def number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
 
 
 def cumulative_comparisons_generated_by_blocking_rules(
-    linker: Linker,
-    blocking_rules,
-    output_chart=True,
+    linker: Linker, blocking_rules, output_chart=True, return_dataframe=False
 ):
     # Deepcopy our original linker so we can safely adjust our settings.
     # This is particularly important to ensure we don't overwrite our
@@ -99,8 +99,12 @@ def cumulative_comparisons_generated_by_blocking_rules(
     linker._enqueue_sql(sql, "__splink__df_count_cumulative_blocks")
     cumulative_blocking_rule_count = linker._execute_sql_pipeline([concat])
     br_n = cumulative_blocking_rule_count.as_pandas_dataframe()
+    # not all dialects return column names when frame is empty (e.g. sqlite, postgres)
+    if br_n.empty:
+        br_n["row_count"] = []
+        br_n["match_key"] = []
     cumulative_blocking_rule_count.drop_table_from_database_and_remove_from_cache()
-    br_count, br_keys = list(br_n.row_count), list(br_n["match_key"].astype("int"))
+    br_count, br_keys = list(br_n["row_count"]), list(br_n["match_key"].astype("int"))
 
     if len(br_count) != len(brs_as_objs):
         missing_br = [x for x in range(len(brs_as_objs)) if x not in br_keys]
@@ -138,7 +142,10 @@ def cumulative_comparisons_generated_by_blocking_rules(
 
     linker._analyse_blocking_mode = False
 
-    return br_comparisons
+    if return_dataframe:
+        return pd.DataFrame(br_comparisons)
+    else:
+        return br_comparisons
 
 
 def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
@@ -147,7 +154,7 @@ def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(
     if isinstance(blocking_rule, str):
         blocking_rule = BlockingRule(blocking_rule, sqlglot_dialect=linker._sql_dialect)
 
-    join_conditions = blocking_rule._join_conditions
+    join_conditions = blocking_rule._equi_join_conditions
 
     l_cols_sel = []
     r_cols_sel = []

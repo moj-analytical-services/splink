@@ -13,7 +13,6 @@ from .decorator import mark_with_dialects_excluding
 
 @mark_with_dialects_excluding()
 def test_analyse_blocking_slow_methodology(test_helpers, dialect):
-
     helper = test_helpers[dialect]
     Linker = helper.Linker
     brl = helper.brl
@@ -81,10 +80,7 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     assert res == 1
 
-    rule = brl.and_(
-        brl.exact_match_rule("first_name"),
-        brl.exact_match_rule("surname"),
-    )
+    rule = brl.block_on(["first_name", "surname"])
     res = linker.count_num_comparisons_from_blocking_rule(
         rule,
     )
@@ -144,10 +140,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
 
     blocking_rules = [
         brl.exact_match_rule("first_name"),
-        brl.and_(
-            brl.exact_match_rule("first_name"),
-            brl.exact_match_rule("surname"),
-        ),
+        brl.block_on(["first_name", "surname"]),
         "l.dob = r.dob",
     ]
 
@@ -226,6 +219,13 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         blocking_rules=blocking_rules,
     )
 
+    blocking_rules_df = cumulative_comparisons_generated_by_blocking_rules(
+        linker_settings, blocking_rules=blocking_rules, return_dataframe=True
+    )
+
+    expected_row_count = pd.DataFrame({"row_count": [31272, 120993, 308880]})
+
+    assert (blocking_rules_df["row_count"] == expected_row_count["row_count"]).all()
 
 def test_analyse_blocking_fast_methodology():
     df_1 = pd.DataFrame(
@@ -352,11 +352,12 @@ def test_analyse_blocking_fast_methodology():
 def test_blocking_rule_accepts_different_dialects():
     br = "l.first_name = r.first_name"
     br = BlockingRule(br, sqlglot_dialect="spark")
-    assert br._join_conditions == [("first_name", "first_name")]
+    assert br._equi_join_conditions == [("first_name", "first_name")]
 
     br = "l.`hi THERE` = r.`hi THERE`"
     br = BlockingRule(br, sqlglot_dialect="spark")
-    assert br._join_conditions == [("`hi THERE`", "`hi THERE`")]
+
+    assert br._equi_join_conditions == [("`hi THERE`", "`hi THERE`")]
 
 
 @mark_with_dialects_excluding()
