@@ -86,10 +86,10 @@ For more detailed tutorial, please see [section below](#tutorial).
 
     blocking_rule_for_training = block_on(["first_name", "surname"])
 
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
 
     blocking_rule_for_training = block_on("substr(dob, 1, 4)")  # block on year
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
 
 
     pairwise_predictions = linker.predict()
