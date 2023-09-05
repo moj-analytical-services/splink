@@ -1137,25 +1137,25 @@ class Linker:
         Examples:
             === ":simple-duckdb: DuckDB"
                 ```py
-                linker = DuckDBLinker(df")
+                linker = DuckDBLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
             === ":simple-apachespark: Spark"
                 ```py
-                linker = SparkLinker(df")
+                linker = SparkLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
             === ":simple-amazonaws: Athena"
                 ```py
-                linker = AthenaLinker(df")
+                linker = AthenaLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
             === ":simple-sqlite: SQLite"
                 ```py
-                linker = SQLiteLinker(df")
+                linker = SQLiteLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
@@ -2082,6 +2082,28 @@ class Linker:
         Returns:
             altair.Chart or dict: A visualization or JSON specification describing the
             profiling charts.
+
+        Examples:
+            === ":simple-duckdb: DuckDB"
+                ```py
+                linker = DuckDBLinker(df)
+                linker.profile_columns()
+                ```
+            === ":simple-apachespark: Spark"
+                ```py
+                linker = SparkLinker(df)
+                linker.profile_columns()
+                ```
+            === ":simple-amazonaws: Athena"
+                ```py
+                linker = AthenaLinker(df)
+                linker.profile_columns()
+                ```
+            === ":simple-sqlite: SQLite"
+                ```py
+                linker = SQLiteLinker(df)
+                linker.profile_columns()
+                ```
 
         Note:
             - The `linker` object should be an instance of the initiated linker.
