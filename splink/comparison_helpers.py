@@ -65,7 +65,7 @@ def comparator_score_df(list, col1, col2, decimal_places=2):
     """
     duckdb.connect()
 
-    pd.DataFrame(list)
+    list = pd.DataFrame(list)
 
     sql = f"""
         select
@@ -75,7 +75,7 @@ def comparator_score_df(list, col1, col2, decimal_places=2):
             comparison2 = col2,
             decimal_places=decimal_places
         )},
-        from df
+        from list
     """
 
     return duckdb.sql(sql).df()

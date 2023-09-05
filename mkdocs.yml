@@ -16,14 +16,12 @@ theme:
     - search.share
     - search.suggest
     - navigation.indexes
-    - navigation.indexes
     - navigation.footer
     - content.action.edit
     - navigation.tabs
     - navigation.tabs.sticky
     - navigation.top
     - toc.follow
-    - navigation.prune
   logo: "img/favicon.ico"
   favicon: "img/favicon.ico"
   palette:
@@ -90,6 +88,7 @@ markdown_extensions:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
   - footnotes
+  - neoteroi.cards
 nav:
   - Home: "index.md"
   - Getting Started: "getting_started.md"
@@ -171,6 +170,7 @@ nav:
             - Comparison Library: "comparison_library.md"
             - Comparison Level Library: "comparison_level_library.md"
             - Comparison Composition: "comparison_level_composition.md"
+            - Comparison Helpers: "comparison_helpers.md"
         - Blocking Rule Library API:
             - Blocking Rule Library: "blocking_rule_library.md"
             - Blocking Rule Composition: "blocking_rule_composition.md"
@@ -179,6 +179,32 @@ nav:
         - Comparisons API:
             - Comparison: "comparison.md"
             - Comparison Level: "comparison_level.md"
+      - Charts Gallery: 
+        - "charts/index.md"
+        - Exploratory Analysis:
+          - missingness chart: "charts/missingness_chart.ipynb"
+          - profile columns: "charts/profile_columns.ipynb"
+        - Blocking: 
+          - cumulative num comparisons from blocking rules chart: "charts/cumulative_num_comparisons_from_blocking_rules_chart.ipynb"
+        - Comparison Helpers:
+          - comparator score chart: "topic_guides/comparisons/choosing_comparators.html#comparing-string-similarity-and-distance-scores"
+          - comparator score threshold chart: "topic_guides/comparisons/choosing_comparators.html#choosing-thresholds"
+          - phonetic match chart: "topic_guides/comparisons/choosing_comparators.html#phonetic-matching"
+        - Model Training:
+          - comparison viewer dashboard: "charts/comparison_viewer_dashboard.ipynb"
+          - match weights chart: "charts/match_weights_chart.ipynb"
+          - m u parameters chart: "charts//match_weights_chart.ipynb"
+          - parameter estimate comparisons chart: "charts/parameter_estimate_comparisons_chart.ipynb"
+          - tf adjustment chart: "charts/tf_adjustment_chart.ipynb"
+          - unlinkables chart: "charts/unlinkables_chart.ipynb"
+          - waterfall chart: "charts/waterfall_chart.ipynb"
+        - Clustering:
+          - cluster studio dashboard: "charts/cluster_studio_dashboard.ipynb"
+        - Model Evaluation:
+          - accuracy chart from labels table: "charts/accuracy_chart_from_labels_table.ipynb"
+          - confusion matrix from labels table: "charts/confusion_matrix_from_labels_table.ipynb"
+          - precision recall chart from labels table: "charts/precision_recall_chart_from_labels_table.ipynb"
+          - roc chart fromm labels table: "charts/roc_chart_from_labels_table.ipynb"
       - In-build datasets: "datasets.md"
       - Settings:
         - Settings Dictionary Reference: "settings_dict_guide.md"
@@ -206,6 +232,7 @@ nav:
     - blog/index.md 
 extra_css:
 - css/custom.css
+- css/neoteroi-mkdocs.css
 extra_javascript:
   - javascripts/mathjax.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6

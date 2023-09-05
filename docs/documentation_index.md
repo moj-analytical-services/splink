@@ -24,6 +24,10 @@ The documentation for the Splink API is broken up into the following categories:
 
 Note: When building a Splink model, the [Linker API](./linker.md) and [Comparisons Library API](./comparison_level_library.md) will be the most useful parts of the API documentation. The other sections are primarily for reference.
 
+## Charts Gallery
+
+The [Splink Charts Gallery](./charts/index.md) contains examples for all of the interactive charts and dashboards that are provided in Splink to help the linking process.
+
 ## In-built datasets
 Information on pre-made data tables available within Splink suitable for linking, to get up-and-running or to try out ideas.
 
