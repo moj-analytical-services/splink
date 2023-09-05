@@ -26,7 +26,7 @@ def comparison_at_thresholds_error_logger(comparison, thresholds):
 
 
 def datediff_error_logger(thresholds, metrics):
-    # Extracted from the DateDiffAtThresholdsComparisonBase class as that was overly
+    # Extracted from the DatediffAtThresholdsBase class as that was overly
     # verbose and failing the lint.
 
     error_logger = []

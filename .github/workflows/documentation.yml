@@ -64,11 +64,13 @@ jobs:
       - name: Install library
         run: poetry install --no-interaction
 
-      - name: Generate comparison/level library dialect tables
+      - name: Generate comparison/level library dialect + dataset tables
         run: |
           source .venv/bin/activate
           mv scripts/generate_dialect_comparison_docs.py generate_dialect_comparison_docs.py
+          mv scripts/generate_dataset_docs.py generate_dataset_docs.py
           python generate_dialect_comparison_docs.py
+          python generate_dataset_docs.py
 
       - name: Upload generated docs files
         uses: actions/upload-artifact@v3
@@ -92,12 +94,6 @@ jobs:
         with:
           name: generated_files
           path: docs/includes/generated_files
-
-      - uses: actions/checkout@v3
-        with:
-          repository: "moj-analytical-services/splink_demos"
-          ref: master
-          path: "docs/demos/"
 
       - name: Preprocess markdown include files
         run: python3 scripts/preprocess_markdown_includes.py

@@ -23,7 +23,7 @@ from .duckdb_helpers.duckdb_helpers import (
 logger = logging.getLogger(__name__)
 
 
-class DuckDBLinkerDataFrame(SplinkDataFrame):
+class DuckDBDataFrame(SplinkDataFrame):
     linker: DuckDBLinker
 
     @property
@@ -105,6 +105,7 @@ class DuckDBLinker(Linker):
         set_up_basic_logging: bool = True,
         output_schema: str = None,
         input_table_aliases: str | list = None,
+        validate_settings: bool = True,
     ):
         """The Linker object manages the data linkage process and holds the data linkage
         model.
@@ -134,6 +135,8 @@ class DuckDBLinker(Linker):
                 input tables in Splink outputs.  If the names of the tables in the
                 input database are long or unspecific, this argument can be used
                 to attach more easily readable/interpretable names. Defaults to None.
+            validate_settings (bool, optional): When True, check your settings
+                dictionary for any potential errors that may cause splink to fail.
         """
 
         self._sql_dialect_ = "duckdb"
@@ -180,6 +183,7 @@ class DuckDBLinker(Linker):
             accepted_df_dtypes,
             set_up_basic_logging,
             input_table_aliases=input_aliases,
+            validate_settings=validate_settings,
         )
 
         # Quickly check for casting error in duckdb/pandas
@@ -200,8 +204,8 @@ class DuckDBLinker(Linker):
 
     def _table_to_splink_dataframe(
         self, templated_name, physical_name
-    ) -> DuckDBLinkerDataFrame:
-        return DuckDBLinkerDataFrame(templated_name, physical_name, self)
+    ) -> DuckDBDataFrame:
+        return DuckDBDataFrame(templated_name, physical_name, self)
 
     def _execute_sql_against_backend(self, sql, templated_name, physical_name):
         # In the case of a table already existing in the database,
@@ -215,7 +219,7 @@ class DuckDBLinker(Linker):
         """
         self._log_and_run_sql_execution(sql, templated_name, physical_name)
 
-        return DuckDBLinkerDataFrame(templated_name, physical_name, self)
+        return DuckDBDataFrame(templated_name, physical_name, self)
 
     def _run_sql_execution(self, final_sql, templated_name, physical_name):
         self._con.execute(final_sql)

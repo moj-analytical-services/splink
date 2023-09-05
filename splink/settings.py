@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from copy import deepcopy
 
-from .blocking import BlockingRule
+from .blocking import blocking_rule_to_obj
 from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -76,6 +76,7 @@ class Settings:
 
         self._warn_if_no_null_level_in_comparisons()
 
+        self._additional_cols_to_retain = self._get_raw_additional_cols_to_retain
         self._additional_columns_to_retain_list = (
             self._get_additional_columns_to_retain()
         )
@@ -109,6 +110,14 @@ class Settings:
                     "you're doing, you can ignore this warning"
                 )
 
+    @property
+    def _get_raw_additional_cols_to_retain(self):
+        a_cols = self._from_settings_dict_else_default("additional_columns_to_retain")
+
+        # Add any columns used in blocking rules but not model
+        if a_cols:
+            return [InputColumn(c) for c in a_cols]
+
     def _get_additional_columns_to_retain(self):
         a_cols = self._from_settings_dict_else_default("additional_columns_to_retain")
 
@@ -117,7 +126,9 @@ class Settings:
             # Want to add any columns not already by the model
             used_by_brs = []
             for br in self._blocking_rules_to_generate_predictions:
-                used_by_brs.extend(get_columns_used_from_sql(br.blocking_rule))
+                used_by_brs.extend(
+                    get_columns_used_from_sql(br.blocking_rule, br.sql_dialect)
+                )
 
             used_by_brs = [InputColumn(c) for c in used_by_brs]
 
@@ -147,10 +158,7 @@ class Settings:
 
     @property
     def _source_dataset_column_name_is_required(self):
-        return self._link_type not in [
-            "dedupe_only",
-            "link_only_find_matches_to_new_records",
-        ]
+        return self._link_type not in ["dedupe_only"]
 
     @property
     def _source_dataset_input_column(self):
@@ -295,19 +303,9 @@ class Settings:
         raise ValueError(f"No comparison column with name {name}")
 
     def _brs_as_objs(self, brs_as_strings):
-        brs_as_objs = []
-        for br in brs_as_strings:
-            if isinstance(br, dict):
-                br = BlockingRule(
-                    br["blocking_rule"], salting_partitions=br["salting_partitions"]
-                )
-                br.preceding_rules = brs_as_objs.copy()
-                brs_as_objs.append(br)
-            else:
-                br = BlockingRule(br)
-                br.preceding_rules = brs_as_objs.copy()
-                brs_as_objs.append(br)
-
+        brs_as_objs = [blocking_rule_to_obj(br) for br in brs_as_strings]
+        for n, br in enumerate(brs_as_objs):
+            br.add_preceding_rules(brs_as_objs[:n])
         return brs_as_objs
 
     def _get_comparison_levels_corresponding_to_training_blocking_rule(
@@ -331,7 +329,12 @@ class Settings:
         exact match on full name
 
         """
-        blocking_exact_match_columns = set(get_columns_used_from_sql(blocking_rule))
+        blocking_exact_match_columns = set(
+            get_columns_used_from_sql(
+                blocking_rule,
+                dialect=self._sql_dialect,
+            )
+        )
 
         ccs = self.comparisons
 
@@ -421,7 +424,9 @@ class Settings:
         to a dictionary, enabling the settings to be saved to disk and reloaded
         """
         rr_match = self._probability_two_random_records_match
+        brs = self._blocking_rules_to_generate_predictions
         current_settings = {
+            "blocking_rules_to_generate_predictions": [br.as_dict() for br in brs],
             "comparisons": [cc.as_dict() for cc in self.comparisons],
             "probability_two_random_records_match": rr_match,
         }
@@ -429,7 +434,11 @@ class Settings:
 
     def _as_completed_dict(self):
         rr_match = self._probability_two_random_records_match
+        brs = self._blocking_rules_to_generate_predictions
         current_settings = {
+            "blocking_rules_to_generate_predictions": [
+                br._as_completed_dict() for br in brs
+            ],
             "comparisons": [cc._as_completed_dict() for cc in self.comparisons],
             "probability_two_random_records_match": rr_match,
             "unique_id_column_name": self._unique_id_column_name,

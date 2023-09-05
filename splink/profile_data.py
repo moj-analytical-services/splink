@@ -124,7 +124,7 @@ def _get_df_top_bottom_n(expressions, limit=20, value_order="desc"):
     from __splink__df_all_column_value_frequencies
     where group_name = '{gn}'
     order by value_count {value_order}
-    limit {limit})
+    limit {limit}) top_bottom_freqs
     """
 
     to_union = [
@@ -172,7 +172,7 @@ def _col_or_expr_frequencies_raw_data_sql(cols_or_exprs, table_name):
         from {table_name}
         where {col_or_expr} is not null
         group by {col_or_expr}
-        order by count(*) desc)
+        order by count(*) desc) column_stats
         """
         sqls.append(sql)
 
@@ -190,7 +190,48 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
     return percentile_rows
 
 
-def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
+def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
+
+    """
+    Profiles the specified columns of the dataframe initiated with the linker.
+
+    This can be computationally expensive if the dataframe is large.
+
+    For the provided columns with column_expressions (or for all columns if left empty)
+    calculate:
+    - A distribution plot that shows the count of values at each percentile.
+    - A top n chart, that produces a chart showing the count of the top n values
+    within the column
+    - A bottom n chart, that produces a chart showing the count of the bottom
+    n values within the column
+
+    This should be used to explore the dataframe, determine if columns have
+    sufficient completeness for linking, analyse the cardinality of columns, and
+    identify the need for standardisation within a given column.
+
+    Args:
+        linker (object): The initiated linker.
+        column_expressions (list, optional): A list of strings containing the
+            specified column names.
+            If left empty this will default to all columns.
+        top_n (int, optional): The number of top n values to plot.
+        bottom_n (int, optional): The number of bottom n values to plot.
+
+    Returns:
+        altair.Chart or dict: A visualization or JSON specification describing the
+         profiling charts.
+
+    Note:
+        - The `linker` object should be an instance of the initiated linker.
+        - The provided `column_expressions` can be a list of column names to profile.
+            If left empty, all columns will be profiled.
+        - The `top_n` and `bottom_n` parameters determine the number of top and bottom
+            values to display in the respective charts.
+    """
+
+    if not column_expressions:
+        column_expressions = linker._get_input_columns
+
     df_concat = linker._initialise_df_concat()
 
     input_dataframes = []

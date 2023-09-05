@@ -4,13 +4,6 @@
 # python scripts/json_schema_to_md_doc.py
 # python scripts/generate_dialect_comparison_docs.py
 
-UPDATE="TRUE"
-if [[ $UPDATE == "TRUE" ]]
-then
-    rm -rf docs/demos/
-    git clone https://github.com/moj-analytical-services/splink_demos.git docs/demos/
-fi
-
 deactivate
 python3 -m venv docs-venv
 source docs-venv/bin/activate
@@ -22,6 +15,7 @@ then
     pip install poetry
     poetry install
     python3 scripts/generate_dialect_comparison_docs.py
+    python3 scripts/generate_dataset_docs.py
 fi
 # manually preprocess include files as include-markdown plugin clashes with mknotebooks
 # make sure not to commit changes to files with inclusions!

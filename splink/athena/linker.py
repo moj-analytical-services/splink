@@ -120,6 +120,7 @@ class AthenaLinker(Linker):
         input_table_aliases: str | list = None,
         set_up_basic_logging=True,
         output_filepath: str = "",
+        validate_settings: bool = True,
     ):
         """An athena backend for our main linker class. This funnels our generated SQL
         through athena using awswrangler.
@@ -150,6 +151,8 @@ class AthenaLinker(Linker):
             output_filepath (str, optional): Inside of your selected output bucket,
                 where to write output files to.
                 Defaults to "splink_warehouse/{unique_id}".
+            validate_settings (bool, optional): When True, check your settings
+                dictionary for any potential errors that may cause splink to fail.
         Examples:
             ```py
             # Creating a database in athena and writing to it
@@ -235,6 +238,7 @@ class AthenaLinker(Linker):
             accepted_df_dtypes,
             set_up_basic_logging,
             input_table_aliases=input_aliases,
+            validate_settings=validate_settings,
         )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):

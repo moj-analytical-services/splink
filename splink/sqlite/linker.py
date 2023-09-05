@@ -89,6 +89,7 @@ class SQLiteLinker(Linker):
         connection=":memory:",
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
+        validate_settings: bool = True,
         register_udfs=True,
     ):
         self._sql_dialect_ = "sqlite"
@@ -116,6 +117,7 @@ class SQLiteLinker(Linker):
             accepted_df_dtypes,
             set_up_basic_logging,
             input_table_aliases=input_aliases,
+            validate_settings=validate_settings,
         )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
@@ -167,7 +169,12 @@ class SQLiteLinker(Linker):
             input = pd.DataFrame.from_records(input)
 
         # Will error if an invalid data type is passed
-        input.to_sql(table_name, self.con, index=False)
+        input.to_sql(
+            table_name,
+            self.con,
+            index=False,
+            if_exists="replace",
+        )
 
     def _random_sample_sql(
         self, proportion, sample_size, seed=None, table=None, unique_id=None

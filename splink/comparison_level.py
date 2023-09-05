@@ -165,8 +165,15 @@ class ComparisonLevel:
         # Enable the level to 'know' when it's been trained
         self._trained_m_probabilities: list = []
         self._trained_u_probabilities: list = []
+        # controls warnings from model training - ensures we only send once
+        self._m_warning_sent = False
+        self._u_warning_sent = False
 
         self._validate()
+
+    @property
+    def sql_dialect(self):
+        return self._sql_dialect
 
     @property
     def is_null_level(self) -> bool:
@@ -186,7 +193,7 @@ class ComparisonLevel:
     def _tf_adjustment_input_column(self):
         val = self._level_dict_val_else_default("tf_adjustment_column")
         if val:
-            return InputColumn(val, sql_dialect=self._sql_dialect)
+            return InputColumn(val, sql_dialect=self.sql_dialect)
         else:
             return None
 
@@ -220,11 +227,13 @@ class ComparisonLevel:
         if value == LEVEL_NOT_OBSERVED_TEXT:
             cc_n = self.comparison._output_column_name
             cl_n = self.label_for_charts
-            logger.warning(
-                "\nWARNING:\n"
-                f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
-                "unable to train m value"
-            )
+            if not self._m_warning_sent:
+                logger.warning(
+                    "WARNING:\n"
+                    f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
+                    "unable to train m value\n"
+                )
+                self._m_warning_sent = True
 
         self._m_probability = value
 
@@ -246,11 +255,13 @@ class ComparisonLevel:
         if value == LEVEL_NOT_OBSERVED_TEXT:
             cc_n = self.comparison._output_column_name
             cl_n = self.label_for_charts
-            logger.warning(
-                "\nWARNING:\n"
-                f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
-                "unable to train u value"
-            )
+            if not self._u_warning_sent:
+                logger.warning(
+                    "WARNING:\n"
+                    f"Level {cl_n} on comparison {cc_n} not observed in dataset, "
+                    "unable to train u value\n"
+                )
+                self._u_warning_sent = True
         self._u_probability = value
 
     @property
@@ -321,7 +332,7 @@ class ComparisonLevel:
     def _m_is_trained(self):
         if self.is_null_level:
             return True
-        if self._m_probability == "level not observed in data":
+        if self._m_probability == LEVEL_NOT_OBSERVED_TEXT:
             return False
         if self._m_probability is None:
             return False
@@ -331,7 +342,7 @@ class ComparisonLevel:
     def _u_is_trained(self):
         if self.is_null_level:
             return True
-        if self._u_probability == "level not observed in data":
+        if self._u_probability == LEVEL_NOT_OBSERVED_TEXT:
             return False
         if self._u_probability is None:
             return False
@@ -410,8 +421,8 @@ class ComparisonLevel:
         sql = self.sql_condition
         if self._is_else_level:
             return True
-        dialect = self._sql_dialect
-        # TODO: really self._sql_dialect should always be set, something gets
+        dialect = self.sql_dialect
+        # TODO: really self._sql_dialect_ should always be set, something gets
         # messed up during the deepcopy()ing of a Comparison
         if dialect is None:
             dialect = "spark"
@@ -429,7 +440,7 @@ class ComparisonLevel:
         if self._is_else_level:
             return []
 
-        cols = get_columns_used_from_sql(self.sql_condition, dialect=self._sql_dialect)
+        cols = get_columns_used_from_sql(self.sql_condition, dialect=self.sql_dialect)
         # Parsed order seems to be roughly in reverse order of apearance
         cols = cols[::-1]
 
@@ -442,7 +453,7 @@ class ComparisonLevel:
             # If so, we want to set the tf adjustments against the surname col,
             # not the dmeta_surname one
 
-            input_cols.append(InputColumn(c, sql_dialect=self._sql_dialect))
+            input_cols.append(InputColumn(c, sql_dialect=self.sql_dialect))
 
         return input_cols
 
@@ -482,7 +493,7 @@ class ComparisonLevel:
             return False
 
         sql_syntax_tree = sqlglot.parse_one(
-            self.sql_condition.lower(), read=self._sql_dialect
+            self.sql_condition.lower(), read=self.sql_dialect
         )
         sql_cnf = normalize(sql_syntax_tree)
 
@@ -495,7 +506,7 @@ class ComparisonLevel:
     @property
     def _exact_match_colnames(self):
         sql_syntax_tree = sqlglot.parse_one(
-            self.sql_condition.lower(), read=self._sql_dialect
+            self.sql_condition.lower(), read=self.sql_dialect
         )
         sql_cnf = normalize(sql_syntax_tree)
 
@@ -705,7 +716,7 @@ class ComparisonLevel:
 
     def _abbreviated_sql(self, cutoff=75):
         sql = self.sql_condition
-        return (sql[:75] + "...") if len(sql) > 75 else sql
+        return (sql[:cutoff] + "...") if len(sql) > cutoff else sql
 
     def __repr__(self):
         return f"<{self._human_readable_succinct}>"

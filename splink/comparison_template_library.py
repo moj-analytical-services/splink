@@ -105,7 +105,7 @@ class DateComparisonBase(Comparison):
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Basic Date Comparison
                 ``` python
                 import splink.duckdb.comparison_template_library as ctl
@@ -129,7 +129,7 @@ class DateComparisonBase(Comparison):
                                     date_format='%d/%m/%Y',
                                     invalid_dates_as_null=True)
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Basic Date Comparison
                 ``` python
                 import splink.spark.comparison_template_library as ctl
@@ -159,10 +159,13 @@ class DateComparisonBase(Comparison):
         """
         # Construct Comparison
         comparison_levels = []
-        if invalid_dates_as_null:
-            comparison_levels.append(self._null_level(col_name, date_format))
-        else:
-            comparison_levels.append(self._null_level(col_name))
+        comparison_levels.append(
+            self._null_level(
+                col_name,
+                invalid_dates_as_null=invalid_dates_as_null,
+                valid_string_pattern=date_format,
+            )
+        )
 
         # Validate user inputs
         datediff_error_logger(thresholds=datediff_thresholds, metrics=datediff_metrics)
@@ -172,13 +175,11 @@ class DateComparisonBase(Comparison):
                 "sql_condition": f"SUBSTR({col_name}_l, 6, 5) = '01-01'",
                 "label_for_charts": "Date is 1st Jan",
             }
-            comparison_level = {
-                and_(
-                    self._exact_match_level(col_name),
-                    dob_first_jan,
-                    label_for_charts="Exact match and 1st Jan",
-                )
-            }
+            comparison_level = and_(
+                self._exact_match_level(col_name),
+                dob_first_jan,
+                label_for_charts="Exact match and 1st Jan",
+            )
 
             if m_probability_1st_january:
                 comparison_level["m_probability"] = m_probability_1st_january
@@ -389,7 +390,7 @@ class NameComparisonBase(Comparison):
 
         Examples:
 
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Basic Name Comparison
                 ``` python
                 import splink.duckdb.comparison_template_library as ctl
@@ -407,7 +408,7 @@ class NameComparisonBase(Comparison):
                                     jaccard_thresholds=[1]
                                     )
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Basic Name Comparison
                 ``` python
                 import splink.spark.comparison_template_library as ctl
@@ -424,7 +425,8 @@ class NameComparisonBase(Comparison):
                                     jaro_winkler_thresholds=[],
                                     jaccard_thresholds=[1]
                                     )
-            === "SQLite"
+                ```
+            === ":simple-sqlite: SQLite"
                 Basic Name Comparison
                 ``` python
                 import splink.sqlite.comparison_template_library as ctl
@@ -765,7 +767,7 @@ class ForenameSurnameComparisonBase(Comparison):
                 default m probability for the 'anything else' level. Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Basic Forename Surname Comparison
                 ```py
                 import splink.duckdb.comparison_template_library as ctl
@@ -787,7 +789,7 @@ class ForenameSurnameComparisonBase(Comparison):
                         jaccard_thresholds=[1],
                     )
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Basic Forename Surname Comparison
                 ```py
                 import splink.spark.comparison_template_library as ctl
@@ -809,7 +811,7 @@ class ForenameSurnameComparisonBase(Comparison):
                         jaccard_thresholds=[1],
                     )
                 ```
-            === "SQLite"
+            === ":simple-sqlite: SQLite"
                 Basic Forename Surname Comparison
                 ```py
                 import splink.sqlite.comparison_template_library as ctl
@@ -1216,7 +1218,7 @@ class PostcodeComparisonBase(Comparison):
                 the 'everything else' level. Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Basic Postcode Comparison
                 ``` python
                 import splink.duckdb.comparison_template_library as ctl
@@ -1233,7 +1235,7 @@ class PostcodeComparisonBase(Comparison):
                                     km_thresholds=[10, 100]
                                     )
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Basic Postcode Comparison
                 ``` python
                 import splink.spark.comparison_template_library as ctl
@@ -1250,7 +1252,7 @@ class PostcodeComparisonBase(Comparison):
                                     km_thresholds=[10, 100]
                                     )
                 ```
-            === "Athena"
+            === ":simple-amazonaws: Athena"
                 Basic Postcode Comparison
                 ``` python
                 import splink.athena.comparison_template_library as ctl
@@ -1384,6 +1386,7 @@ class EmailComparisonBase(Comparison):
         term_frequency_adjustments_full: bool = False,
         include_exact_match_level: bool = True,
         include_username_match_level: bool = True,
+        include_username_fuzzy_level: bool = True,
         include_domain_match_level: bool = False,
         levenshtein_thresholds: int | list = [],
         damerau_levenshtein_thresholds: int | list = [],
@@ -1429,6 +1432,8 @@ class EmailComparisonBase(Comparison):
                 match on full email level. Defaults to True.
             include_username_match_level (bool, optional): If True, include an exact
                 match on username only level. Defaults to True.
+            include_username_fuzzy_level (bool, optional): If True, include a level
+                for fuzzy match on username. Defaults to True.
             include_domain_match_level (bool, optional): If True, include an exact
                 match on domain only level. Defaults to True.
             levenshtein_thresholds (Union[int, list], optional): The thresholds
@@ -1477,7 +1482,7 @@ class EmailComparisonBase(Comparison):
                 the 'everything else' level. Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Basic email Comparison
                 ``` python
                 import splink.duckdb.duckdb_comparison_template_library as ctl
@@ -1494,7 +1499,7 @@ class EmailComparisonBase(Comparison):
                                     include_domain_match_level = True,
                                     )
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Basic email Comparison
                 ``` python
                 import splink.spark.spark_comparison_template_library as ctl
@@ -1523,7 +1528,9 @@ class EmailComparisonBase(Comparison):
 
         # Decide whether invalid emails should be treated as null
         if invalid_emails_as_null:
-            comparison_levels.append(self._null_level(col_name, valid_email_regex))
+            comparison_levels.append(
+                self._null_level(col_name, valid_string_pattern=valid_email_regex)
+            )
         else:
             comparison_levels.append(self._null_level(col_name))
 
@@ -1607,55 +1614,56 @@ class EmailComparisonBase(Comparison):
             comparison_levels = comparison_levels + threshold_levels
 
         # Fuzzy match on username only
-        if len(levenshtein_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                regex_extract="^[^@]+",
-                distance_function_name="levenshtein",
-                distance_threshold_or_thresholds=levenshtein_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_username_lev,
-                include_colname_in_charts_label=True,
-                manual_col_name_for_charts_label="Username",
-            )
-            comparison_levels = comparison_levels + threshold_levels
+        if include_username_fuzzy_level:
+            if len(levenshtein_thresholds) > 0:
+                threshold_levels = distance_threshold_comparison_levels(
+                    self,
+                    col_name,
+                    regex_extract="^[^@]+",
+                    distance_function_name="levenshtein",
+                    distance_threshold_or_thresholds=levenshtein_thresholds,
+                    m_probability_or_probabilities_thres=m_probability_or_probabilities_username_lev,
+                    include_colname_in_charts_label=True,
+                    manual_col_name_for_charts_label="Username",
+                )
+                comparison_levels = comparison_levels + threshold_levels
 
-        if len(damerau_levenshtein_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                regex_extract="^[^@]+",
-                distance_function_name="damerau-levenshtein",
-                distance_threshold_or_thresholds=damerau_levenshtein_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_username_dl,
-                include_colname_in_charts_label=True,
-                manual_col_name_for_charts_label="Username",
-            )
-            comparison_levels = comparison_levels + threshold_levels
+            if len(damerau_levenshtein_thresholds) > 0:
+                threshold_levels = distance_threshold_comparison_levels(
+                    self,
+                    col_name,
+                    regex_extract="^[^@]+",
+                    distance_function_name="damerau-levenshtein",
+                    distance_threshold_or_thresholds=damerau_levenshtein_thresholds,
+                    m_probability_or_probabilities_thres=m_probability_or_probabilities_username_dl,
+                    include_colname_in_charts_label=True,
+                    manual_col_name_for_charts_label="Username",
+                )
+                comparison_levels = comparison_levels + threshold_levels
 
-        if len(jaro_winkler_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                regex_extract="^[^@]+",
-                distance_function_name="jaro-winkler",
-                distance_threshold_or_thresholds=jaro_winkler_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_username_jw,
-                include_colname_in_charts_label=True,
-                manual_col_name_for_charts_label="Username",
-            )
-            comparison_levels = comparison_levels + threshold_levels
+            if len(jaro_winkler_thresholds) > 0:
+                threshold_levels = distance_threshold_comparison_levels(
+                    self,
+                    col_name,
+                    regex_extract="^[^@]+",
+                    distance_function_name="jaro-winkler",
+                    distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                    m_probability_or_probabilities_thres=m_probability_or_probabilities_username_jw,
+                    include_colname_in_charts_label=True,
+                    manual_col_name_for_charts_label="Username",
+                )
+                comparison_levels = comparison_levels + threshold_levels
 
-        if len(jaro_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                distance_function_name="jaro",
-                distance_threshold_or_thresholds=jaro_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_email_jar,
-                include_colname_in_charts_label=True,
-            )
-            comparison_levels = comparison_levels + threshold_levels
+            if len(jaro_thresholds) > 0:
+                threshold_levels = distance_threshold_comparison_levels(
+                    self,
+                    col_name,
+                    distance_function_name="jaro",
+                    distance_threshold_or_thresholds=jaro_thresholds,
+                    m_probability_or_probabilities_thres=m_probability_or_probabilities_email_jar,
+                    include_colname_in_charts_label=True,
+                )
+                comparison_levels = comparison_levels + threshold_levels
 
         # Domain-only match
 
