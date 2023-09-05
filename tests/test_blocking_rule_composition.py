@@ -11,7 +11,7 @@ def binary_composition_internals(clause, comp_fun, brl, dialect):
     # Test what happens when only one value is fed
     # It should just report the regular outputs of our comparison level func
     level = comp_fun(brl.exact_match_rule("tom"))
-    assert level.blocking_rule == f"(l.{q}tom{q} = r.{q}tom{q})"
+    assert level.blocking_rule == f"l.{q}tom{q} = r.{q}tom{q}"
 
     # Exact match and null level composition
     level = comp_fun(

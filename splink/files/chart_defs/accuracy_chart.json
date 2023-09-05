@@ -1,0 +1,283 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.14.1.json",
+  "width": 400,
+  "height": 400,
+  "data": {
+    "values": []
+  },
+  "title": {
+    "text": "Link Quality Evaluation",
+    "subtitle": [
+      "Click a legend value to show a specific evaluation metric",
+      "Shift + Click to show multiple metrics"
+    ],
+    "fontSize": 20
+  },
+  "transform": [
+    {
+      "fold": [
+        "precision",
+        "recall"
+      ],
+      "as": [
+        "metric",
+        "value"
+      ]
+    },
+    {
+      "calculate": "0.275 - 0.05*indexof(__metrics__, datum.metric)",
+      "as": "score_index"
+    },
+    {
+      "calculate": "__mapping__[datum.metric]",
+      "as": "metric_text"
+    },
+    {
+      "calculate": "datum.metric_text + ' = ' + format(datum.value, ',.3f')",
+      "as": "y_text"
+    }
+  ],
+  "layer": [
+    {
+      "encoding": {
+        "x": {
+          "type": "quantitative",
+          "field": "truth_threshold",
+          "axis": {
+            "title": "Match weight threshold",
+            "titleFontSize": 16,
+            "labelFontSize": 12,
+            "titlePadding": 10
+          }
+        },
+        "y": {
+          "field": "value",
+          "type": "quantitative",
+          "axis": {
+            "title": "Score",
+            "titleFontSize": 18,
+            "labelFontSize": 12,
+            "titlePadding": 10
+          }
+        },
+        "color": {
+          "field": "metric",
+          "type": "nominal",
+          "sort": [
+            "precision",
+            "recall"
+          ],
+          "title": "Metric",
+          "legend": {
+            "labelExpr": "__mapping__[datum.value]"
+          }
+        }
+      },
+      "layer": [
+        {
+          "params": [
+            {
+              "name": "metric",
+              "select": {
+                "type": "point",
+                "fields": [
+                  "metric"
+                ]
+              },
+              "value": [{"metric": "precision"},{"metric": "recall"}],
+              "bind": "legend"
+            },
+            {
+              "name": "point_selection",
+              "select": {
+                "type": "point",
+                "fields": [
+                  "truth_threshold"
+                ],
+                "encodings": [
+                  "x"
+                ],
+                "nearest": true,
+                "on": "mouseover"
+              }
+            }
+          ],
+          "mark": "point",
+          "encoding": {
+            "opacity": {
+              "condition": {
+                "param": "point_selection",
+                "empty": false,
+                "value": 1
+              },
+              "value": 0
+            },
+            "tooltip": [
+              {
+                "field": "truth_threshold",
+                "format": ".3f",
+                "type": "quantitative",
+                "title": "Match weight"
+              },
+              {
+                "field": "match_probability",
+                "format": ".3%",
+                "type": "quantitative",
+                "title": "Match probability"
+              },
+              {
+                "field": "tp",
+                "format": ",.0f",
+                "title": "TP",
+                "type": "quantitative"
+              },
+              {
+                "field": "tn",
+                "format": ",.0f",
+                "title": "TN",
+                "type": "quantitative"
+              },
+              {
+                "field": "fp",
+                "format": ",.0f",
+                "title": "FP",
+                "type": "quantitative"
+              },
+              {
+                "field": "fn",
+                "format": ",.0f",
+                "title": "FN",
+                "type": "quantitative"
+              },
+              {
+                "field": "precision",
+                "format": ".4f",
+                "title": "Precision",
+                "type": "quantitative"
+              },
+              {
+                "field": "recall",
+                "format": ".4f",
+                "title": "Recall (TPR)",
+                "type": "quantitative"
+              },
+              {
+                "field": "fp_rate",
+                "format": ".4f",
+                "title": "FPR",
+                "type": "quantitative"
+              }
+            ]
+          },
+          "transform": [
+            {
+              "filter": {
+                "param": "metric",
+                "empty": true
+              }
+            }
+          ]
+        },
+        {
+          "mark": "line",
+          "encoding": {
+            "opacity": {
+              "condition": {
+                "param": "metric",
+                "value": 1
+              },
+              "value": 0.1
+            }
+          }
+        }
+      ]
+    },
+    {
+      "transform": [
+        {
+          "filter": {
+            "param": "point_selection",
+            "empty": false
+          }
+        }
+      ],
+      "layer": [
+        {
+          "mark": {
+            "type": "rule",
+            "color": "gray"
+          },
+          "encoding": {
+            "x": {
+              "field": "truth_threshold",
+              "type": "quantitative"
+            }
+          }
+        },
+        {
+          "encoding": {
+            "color": {
+              "field": "metric"
+            },
+            "text": {
+              "field": "y_text"
+            },
+            "yOffset": {
+              "field": "score_index",
+              "type": "quantitative"
+            }
+          },
+          "layer": [
+            {
+              "mark": {
+                "type": "text",
+                "align": "right",
+                "baseline": "middle",
+                "fontSize": 14,
+                "x2": 200,
+                "y": 100,
+                "y2": 200,
+                "xOffset": -10
+              },
+              "transform": [
+                {
+                  "filter": {
+                    "param": "metric",
+                    "empty": true
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "mark": {
+            "type": "text",
+            "color": "black",
+            "y": "height",
+            "yOffset": -20,
+            "xOffset": 25,
+            "fontSize": 14
+          },
+          "encoding": {
+            "x": {
+              "field": "truth_threshold",
+              "type": "quantitative"
+            },
+            "text": {
+              "condition": {
+                "param": "point_selection",
+                "empty": false,
+                "aggregate": "min",
+                "field": "truth_threshold",
+                "type": "nominal",
+                "format": "+.2f"
+              },
+              "value": " "
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

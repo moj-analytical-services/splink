@@ -15,8 +15,8 @@ tags:
 When building any linkage model in Splink, there are 3 key things which need to be defined:
 
 1. What **type of linkage** you want (defined by the [link type](link_type.md))
-2. What **pairs of records** to consider (defined by [blocking rules](./blocking_rules.md))
-3. What **features** to consider, and how they should be **compared** (defined by [comparisons](./customising_comparisons.ipynb))
+2. What **pairs of records** to consider (defined by [blocking rules](../blocking/blocking_rules.md))
+3. What **features** to consider, and how they should be **compared** (defined by [comparisons](../comparisons/customising_comparisons.ipynb))
 
 
 ## Defining a Splink model with a settings dictionary
@@ -66,7 +66,7 @@ The `"blocking_rules_to_generate_predictions"` define a subset of pairs of recor
     ],
 ```
 
-For more information on how blocking is used in Splink, see the [dedicated topic guide](./blocking_rules.md).
+For more information on how blocking is used in Splink, see the [dedicated topic guide](../blocking/blocking_rules.md).
 
 **3. Features to consider, and how they should be compared**
 
@@ -82,14 +82,14 @@ The `"comparisons"` define the features to be compared between records: `"first_
     ],
 ```
 
-Using functions from the [comparison template library](comparison_templates.ipynb) and [comparison library](./customising_comparisons.ipynb#method-1-using-the-comparisonlibrary) to define **how** these features should be compared.
+Using functions from the [comparison template library](../comparisons//comparison_templates.ipynb) and [comparison library](../comparisons/customising_comparisons.ipynb#method-1-using-the-comparisonlibrary) to define **how** these features should be compared.
 
 ```py linenums="1"
 import splink.duckdb.comparison_library as cl
 import splink.duckdb.comparison_template_library as ctl
 ```
 
-For more information on how comparisons are defined, see the [dedicated topic guide](./customising_comparisons.ipynb).
+For more information on how comparisons are defined, see the [dedicated topic guide](../comparisons/customising_comparisons.ipynb).
 
 These functions generate comparisons within the settings dictionary. See below for the full settings dictionary once the `comparison_library` and `comparison_template_library` functions have been evaluated and constructed:
 
@@ -260,10 +260,9 @@ With our finalised settings object, we can train a splink model using the follow
     from splink.duckdb.linker import DuckDBLinker
     import splink.duckdb.comparison_library as cl
     import splink.duckdb.comparison_template_library as ctl
+    from splink.datasets import splink_datasets
 
-    import pandas as pd
-
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    df = splink_datasets.fake_1000
 
     settings = {
         "link_type": "dedupe_only",
@@ -301,7 +300,7 @@ With our finalised settings object, we can train a splink model using the follow
 
 The section above refers to the three key aspects of the Splink settings dictionary. In reality, these are a small proportion of the possible parameters that can be defined within the settings. However, these additional parameters are used much less frequently, either because they are not required or they have a sensible default.
 
-For a list of all possible parameters that can be used within the settings dictionary, see the [Settings Dictionary Reference](../settings_dict_guide.md) and the [Interactive Settings Editor](../settingseditor/editor.md).
+For a list of all possible parameters that can be used within the settings dictionary, see the [Settings Dictionary Reference](../../settings_dict_guide.md) and the [Interactive Settings Editor](../../settingseditor/editor.md).
 
 ## Saving a trained model
 

@@ -23,9 +23,14 @@ def blocking_rule_to_obj(br):
         blocking_rule = br.get("blocking_rule", None)
         if blocking_rule is None:
             raise ValueError("No blocking rule submitted...")
+        sqlglot_dialect = br.get("sql_dialect", None)
         salting_partitions = br.get("salting_partitions", 1)
 
-        return BlockingRule(blocking_rule, salting_partitions)
+        return BlockingRule(
+            blocking_rule,
+            salting_partitions,
+            sqlglot_dialect,
+        )
 
     else:
         br = BlockingRule(br)
@@ -39,7 +44,6 @@ class BlockingRule:
         salting_partitions=1,
         sqlglot_dialect: str = None,
     ):
-
         if sqlglot_dialect:
             self._sql_dialect = sqlglot_dialect
 
@@ -55,6 +59,11 @@ class BlockingRule:
     @property
     def match_key(self):
         return len(self.preceding_rules)
+
+    @property
+    def sql(self):
+        # Wrapper to reveal the underlying SQL
+        return self.blocking_rule
 
     def add_preceding_rules(self, rules):
         rules = ensure_is_list(rules)
@@ -90,10 +99,10 @@ class BlockingRule:
         )  # using sqlglot==11.4.1
 
     @property
-    def _join_conditions(self):
+    def _equi_join_conditions(self):
         """
-        Extract the join conditions from the blocking rule as a tuple:
-        source_keys, join_keys, condition_expr
+        Extract the equi join conditions from the blocking rule as a tuple:
+        source_keys, join_keys
 
         Returns:
             list of tuples like [(name, name), (substr(name,1,2), substr(name,2,3))]
@@ -139,11 +148,19 @@ class BlockingRule:
         output = {}
 
         output["blocking_rule"] = self.blocking_rule
+        output["sql_dialect"] = self.sql_dialect
 
         if self.salting_partitions > 1 and self.sql_dialect == "spark":
             output["salting_partitions"] = self.salting_partitions
 
         return output
+
+    def _as_completed_dict(self):
+
+        if not self.salting_partitions > 1 and self.sql_dialect == "spark":
+            return self.blocking_rule
+        else:
+            return self.as_dict()
 
     @property
     def descr(self):

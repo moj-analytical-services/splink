@@ -139,7 +139,7 @@
                 "type": "quantitative",
                 "field": "prob",
                 "format": ".4f",
-                "title": "Adjusted match score"
+                "title": "Cumulative match probability"
               },
               {
                 "type": "nominal",
@@ -166,7 +166,7 @@
               "axis": {
                 "grid": false,
                 "orient": "left",
-                "title": "log2(Bayes factor)"
+                "title": "Match Weight"
               },
               "field": "previous_sum"
             },

@@ -30,6 +30,12 @@ linker = DuckDBLinker(
 )
 ```
 
+??? tip "Troubleshooting"
+
+    If you get a `SSLCertVerificationError` when trying to use the inbuilt datasets, this can be fixed with the `ssl` package by running:
+    
+    `ssl._create_default_https_context = ssl._create_unverified_context`.
+
 ## `splink_datasets`
 
 Each attribute of `splink_datasets` is a dataset available for use, which exists as a pandas `DataFrame`.
@@ -43,6 +49,18 @@ which also contains information on available datasets, and which have already be
 The datasets available are listed below:
 
 {% include-markdown "./includes/generated_files/datasets_table.md" %}
+
+
+## `splink_dataset_labels`
+
+Some of the `splink_datasets` have corresponding clerical labels to help assess model performance. These are requested through the `splink_dataset_labels` module.
+
+### Available datasets
+
+The datasets available are listed below:
+
+{% include-markdown "./includes/generated_files/dataset_labels_table.md" %}
+
 
 ## `splink_dataset_utils` API
 

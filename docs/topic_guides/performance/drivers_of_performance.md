@@ -6,7 +6,7 @@ tags:
 
 This topic guide covers the fundamental drivers of the run time of Splink jobs. 
 
-The primary driver of run time is **the number of record pairs that the Splink model has to process**. In Splink, the number of pairs to consider is reduced using **Blocking Rules** which are covered in depth in their own set of [topic guides](./blocking_rules.md). 
+The primary driver of run time is **the number of record pairs that the Splink model has to process**. In Splink, the number of pairs to consider is reduced using **Blocking Rules** which are covered in depth in their own set of [topic guides](../blocking/blocking_rules.md). 
 
 Additional factors which affect performance are:
 
