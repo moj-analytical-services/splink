@@ -2059,8 +2059,8 @@ class Linker:
 
         This can be computationally expensive if the dataframe is large.
 
-        For the provided columns with column_expressions (or for all columns if left empty)
-        calculate:
+        For the provided columns with column_expressions (or for all columns if
+         left empty) calculate:
         - A distribution plot that shows the count of values at each percentile.
         - A top n chart, that produces a chart showing the count of the top n values
         within the column
@@ -2085,10 +2085,10 @@ class Linker:
 
         Note:
             - The `linker` object should be an instance of the initiated linker.
-            - The provided `column_expressions` can be a list of column names to profile.
-                If left empty, all columns will be profiled.
-            - The `top_n` and `bottom_n` parameters determine the number of top and bottom
-                values to display in the respective charts.
+            - The provided `column_expressions` can be a list of column names to
+                profile. If left empty, all columns will be profiled.
+            - The `top_n` and `bottom_n` parameters determine the number of top and
+                 bottom values to display in the respective charts.
         """
 
         return profile_columns(
