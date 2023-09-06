@@ -397,7 +397,7 @@ def test_validate_sql_dialect():
 
 def test_comparison_validation():
 
-    df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     settings = get_settings_dict()
 
     # Contents aren't tested as of yet

@@ -1,5 +1,5 @@
 import warnings
-from typing import Union, Type, List
+from typing import List, Union
 
 
 # base class for any type of custom exception
