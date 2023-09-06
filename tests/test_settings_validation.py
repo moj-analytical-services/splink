@@ -5,11 +5,15 @@ import pytest
 
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
 from splink.duckdb.linker import DuckDBLinker
+from splink.exceptions import ErrorLogger
 from splink.settings_validation.column_lookups import (
     InvalidCols,
     InvalidColumnsLogger,
 )
-from splink.settings_validation.valid_types import validate_comparison_levels
+from splink.settings_validation.valid_types import (
+    validate_comparison_levels,
+    log_comparison_errors,
+)
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
@@ -396,15 +400,25 @@ def test_validate_sql_dialect():
 
 
 def test_comparison_validation():
+    from splink.spark.comparison_library import exact_match
+    import splink.duckdb.comparison_level_library as cll
+    import splink.spark.comparison_level_library as sp_cll
+    import splink.athena.comparison_level_library as ath_cll
+    from splink.exceptions import InvalidDialect
 
-    pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    # Check blank settings aren't flagged
+    # Trimmed settings (settings w/ only the link type, for example)
+    # are tested elsewhere.
+    DuckDBLinker(
+        pd.DataFrame({"a": [1,2,3]}),
+    )
+
     settings = get_settings_dict()
 
     # Contents aren't tested as of yet
     email_no_comp_level = {
         "comparison_lvls": [],
     }
-    import splink.duckdb.comparison_level_library as cll
 
     # cll instead of cl
     email_cc = cll.exact_match_level("email")
@@ -413,20 +427,47 @@ def test_comparison_validation():
     settings["comparisons"][4] = "help"
     # missing key dict key and replaced w/ `comparison_lvls`
     settings["comparisons"].append(email_no_comp_level)
+    # Check invalid import is detected
+    settings["comparisons"].append(exact_match("test"))
+    # mismashed comparison
+    settings["comparisons"].append({
+        "comparison_levels": [
+            sp_cll.null_level("test"),
+            # Invalid Spark cll
+            ath_cll.exact_match_level("test"),
+            cll.else_level(),
+            ]
+    })
 
-    error_logger = validate_comparison_levels(settings["comparisons"])
+    log_comparison_errors(
+        None,  # confirm it works with None as an input...
+        "duckdb"
+    )
 
-    # Check our three errors are raised
+    # Init the error logger. This is normally handled in
+    # `log_comparison_errors`, but here we want to capture the
+    # errors instead of logging.
+    error_logger = ErrorLogger()
+    error_logger = validate_comparison_levels(
+        error_logger,
+        settings["comparisons"],
+        "duckdb"
+    )
+
+    # Check our errors are raised
     errors = error_logger.raw_errors
-    assert len(errors) == 3
+    assert len(error_logger.raw_errors) == len(settings["comparisons"])-3
 
     # Our expected error types and part of the corresponding error text
     expected_errors = (
         (TypeError, "is a comparison level"),
-        (TypeError, "is an invalid data type."),
+        (TypeError, "is of an invalid data type."),
         (SyntaxError, "missing the required `comparison_levels`"),
+        (InvalidDialect, "within its comparison levels - spark."),
+        (InvalidDialect, "within its comparison levels - presto, spark."),
     )
 
     for n, (e, txt) in enumerate(expected_errors):
         with pytest.raises(e, match=txt):
+            raise errors[n]
             raise errors[n]
