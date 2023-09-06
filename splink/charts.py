@@ -96,7 +96,7 @@ def match_weights_chart(records, as_dict=False):
     records = [r for r in records if r["comparison_vector_value"] != -1]
     chart["data"]["values"] = records
 
-    max_value = pd.DataFrame.from_records(records)['log2_bayes_factor'].abs().max()
+    max_value = pd.DataFrame.from_records(records)["log2_bayes_factor"].abs().max()
     max_value = math.ceil(max_value)
 
     chart["vconcat"][0]["encoding"]["x"]["scale"]["domain"] = [-max_value, max_value]
