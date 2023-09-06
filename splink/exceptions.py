@@ -1,4 +1,5 @@
 import warnings
+from typing import Union, Type, List
 
 
 # base class for any type of custom exception
@@ -38,28 +39,46 @@ class ErrorLogger:
     # https://docs.python.org/3/library/exceptions.html#ExceptionGroup
 
     def __init__(self):
-        self.Q = []
-        self.e = []
+        self.error_queue: List[str] = []  # error queue for formatted errors
+        # Raw input errors. Used for debugging.
+        self.raw_errors: List[Union[str, Exception]] = []
 
     @property
-    def errors(self):
-        return "\n".join(self.Q)
+    def errors(self) -> str:
+        """Return concatenated error messages."""
+        return "\n".join(self.error_queue)
 
-    def append(self, error):
-        self.e.append(error)
+    def append(self, error: Union[str, Exception]) -> None:
+        """Append an error to the error list.
+
+        Args:
+            error: An error message string or an Exception instance.
+        """
+        # Ignore if None
+        if error is None:
+            return
+
+        self.raw_errors.append(error)
 
         if isinstance(error, str):
-            self.Q.append(error)
-        else:
-            # Potentially needs a validation check to
-            # ensure an error is passed.
+            self.error_queue.append(error)
+        elif isinstance(error, Exception):
             error_name = error.__class__.__name__
-
             logged_exception = f"{error_name}: {str(error)}"
-            self.Q.append(logged_exception)
+            self.error_queue.append(logged_exception)
+        else:
+            raise ValueError(
+                "The 'error' argument must be a string or an Exception instance."
+            )
 
     def raise_and_log_all_errors(self, exception=SplinkException, additional_txt=""):
-        if self.Q:
+        """Raise a custom exception with all logged errors.
+
+        Args:
+            exception: The type of exception to raise (default is SplinkException).
+            additional_txt: Additional text to append to the error message.
+        """
+        if self.error_queue:
             raise exception(f"\n{self.errors}{additional_txt}")
 
 

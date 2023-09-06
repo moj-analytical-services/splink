@@ -23,7 +23,7 @@ class InvalidTypesAndValuesLogger(SettingsValidator):
 
     def _validate_dialect(self):
         settings_dialect = self.linker._settings_obj._sql_dialect
-        linker_dialect = self.linker._sql_dialect
+        linker_dialect = self._sql_dialect
         if settings_dialect != linker_dialect:
             linker_type = self.linker.__class__.__name__
             raise ValueError(
@@ -45,11 +45,11 @@ def validate_comparison_levels(comparisons: list):
     """
 
     # Extract problematic comparisons
-    comp_error_logger = ErrorLogger()
+    comp_error_logger = ErrorLogger()  # logger to track all identified errors
     for c_dict in comparisons:
         eval_dtype = evaluate_comparison_dtype_and_contents(c_dict)
-        if eval_dtype:
-            comp_error_logger.append(eval_dtype)
+        # If no error is found, append won't do anything
+        comp_error_logger.append(eval_dtype)
 
     return comp_error_logger
 
@@ -100,12 +100,15 @@ def evaluate_comparison_dtype_and_contents(comparison_dict):
             """
             )
     else:
+        if isinstance(comparison_dict, Comparison):
+            comparison_dict = comparison_dict.as_dict()
         comp_level = comparison_dict.get("comparison_levels")
+
         if comp_level is None:
             return SyntaxError(
                 f"""
-            {comp_str} is missing the required `comparison_levels`
-            key. Please ensure you include this in all comparisons
-            used in your settings object.
-            """
+                {comp_str} is missing the required `comparison_levels`
+                key. Please ensure you include this in all comparisons
+                used in your settings object.
+                """
             )
