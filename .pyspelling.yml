@@ -1,0 +1,28 @@
+# Aspell spellchecker is default, can override with:
+# spellchecker: hunspell
+
+matrix:
+- name: Markdown docs
+  group: docs
+  aspell:
+    lang: en
+    d: en_US
+    # check all markdown files
+    mode: markdown
+  dictionary:
+    wordlists:
+    - scripts/custom_dictionary.txt
+    # output: build/dictionary/python.dic
+  sources:
+  - docs/getting_started.md
+  # - docs/*.md
+  # - docs/*/*.md
+  # - docs/*/*/*.md
+# - name: ipynb docs
+#   group: docs
+#   aspell:
+#     lang: en
+#     d: en_US
+#   sources:
+#   - docs/*/
+
