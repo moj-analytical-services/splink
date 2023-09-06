@@ -1,7 +1,8 @@
 import json
 import math
-import pandas as pd
 import os
+
+import pandas as pd
 
 from .misc import read_resource
 from .waterfall_chart import records_to_waterfall_data

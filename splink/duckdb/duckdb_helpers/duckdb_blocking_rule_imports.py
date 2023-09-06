@@ -20,7 +20,6 @@ def block_on(
     col_names: list[str],
     salting_partitions: int = 1,
 ) -> BlockingRule:
-
     return _block_on_(
         exact_match_rule,
         col_names,
