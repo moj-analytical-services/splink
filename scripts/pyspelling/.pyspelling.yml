@@ -1,4 +1,4 @@
-spellchecker: hunspell
+# spellchecker: hunspell
 
 matrix:
 - name: Markdown docs
