@@ -5456,6 +5456,10 @@
 	  return format(date, "Invalid Date");
 	}
 
+	function formatObject(obj) {
+		return JSON.stringify(obj);
+	}
+
 	// Memoize the last-returned locale.
 	function localize(f) {
 	  let key = localize, value;
@@ -6153,6 +6157,7 @@
 	    switch (type(data, column)) {
 	      case "number": format[column] = formatLocaleNumber(locale); break;
 	      case "date": format[column] = formatDate; break;
+		  case "object": format[column] = formatObject; break;
 	      default: format[column] = formatLocaleAuto(locale); break;
 	    }
 	  }
@@ -6178,6 +6183,7 @@
 	    if (value == null) continue;
 	    if (typeof value === "number") return "number";
 	    if (value instanceof Date) return "date";
+		if (typeof value == "object") return "object";
 	    return;
 	  }
 	}
@@ -6858,10 +6864,11 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 
 	  const form = html`<form>
     ${ss_cols.map((cc) => {
-      let num_levels = cc.num_levels;
-      let select_values = [...Array(num_levels).keys()];
-      select_values.unshift(-1);
-      select_values.unshift("Any");
+	  let select_values = cc.comparison_levels.map((cl) => {
+		return [cl.label_for_charts, cl.comparison_vector_value];
+	  });
+	  select_values.unshift(["Any", "Any"]);
+	  select_values = new Map(select_values);
 
       return html`<div id='id_${cc.name}'>${splink_vis_utils.select(
         select_values,
@@ -6952,6 +6959,9 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    (d) => d.count_rows_in_comparison_vector_group >= filter_count
 	  );
 
+	  if (cvd_filtered.length == 0) {
+		cvd_filtered = [{}];
+	  }
 	  return cvd_filtered;
 	}
 
@@ -7845,11 +7855,15 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  }
 
 	  get num_levels() {
-	    return this.original_dict.comparison_levels.length;
+	    return this.comparison_levels.length;
 	  }
 
 	  get columns_used() {
 	    return this.original_dict["input_columns_used_by_case_statement"];
+	  }
+
+	  get comparison_levels() {
+		return this.original_dict["comparison_levels"];
 	  }
 
 	  // get column_case_expression_lookup() {
@@ -8070,8 +8084,9 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    "match_weight",
 	  ];
 
+	  const first_edge = edge_data.length > 0 ? edge_data[0] : [];
 	  additional_cols = additional_cols.filter((col) => {
-	    return col in edge_data[0];
+	    return col in first_edge;
 	  });
 
 	  edge_data.forEach(function (edge) {

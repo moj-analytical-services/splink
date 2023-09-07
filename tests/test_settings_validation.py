@@ -419,6 +419,7 @@ def test_comparison_validation():
     email_no_comp_level = {
         "comparison_lvls": [],
     }
+    import splink.duckdb.comparison_level_library as cll
 
     # cll instead of cl
     email_cc = cll.exact_match_level("email")
@@ -454,9 +455,11 @@ def test_comparison_validation():
         "duckdb"
     )
 
+
     # Check our errors are raised
     errors = error_logger.raw_errors
     assert len(error_logger.raw_errors) == len(settings["comparisons"])-3
+
 
     # Our expected error types and part of the corresponding error text
     expected_errors = (

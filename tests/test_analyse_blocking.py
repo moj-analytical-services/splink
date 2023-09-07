@@ -80,10 +80,7 @@ def test_analyse_blocking_slow_methodology(test_helpers, dialect):
 
     assert res == 1
 
-    rule = brl.and_(
-        brl.exact_match_rule("first_name"),
-        brl.exact_match_rule("surname"),
-    )
+    rule = brl.block_on(["first_name", "surname"])
     res = linker.count_num_comparisons_from_blocking_rule(
         rule,
     )
@@ -143,10 +140,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
 
     blocking_rules = [
         brl.exact_match_rule("first_name"),
-        brl.and_(
-            brl.exact_match_rule("first_name"),
-            brl.exact_match_rule("surname"),
-        ),
+        brl.block_on(["first_name", "surname"]),
         "l.dob = r.dob",
     ]
 
@@ -224,6 +218,13 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         },
         blocking_rules=blocking_rules,
     )
+
+    blocking_rules_df = cumulative_comparisons_generated_by_blocking_rules(
+        linker_settings, blocking_rules=blocking_rules, return_dataframe=True
+    )
+
+    expected_row_count = pd.DataFrame({"row_count": [31272, 113109, 308880]})
+    assert (blocking_rules_df["row_count"] == expected_row_count["row_count"]).all()
 
 
 def test_analyse_blocking_fast_methodology():

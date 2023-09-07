@@ -423,7 +423,9 @@ class Settings:
         to a dictionary, enabling the settings to be saved to disk and reloaded
         """
         rr_match = self._probability_two_random_records_match
+        brs = self._blocking_rules_to_generate_predictions
         current_settings = {
+            "blocking_rules_to_generate_predictions": [br.as_dict() for br in brs],
             "comparisons": [cc.as_dict() for cc in self.comparisons],
             "probability_two_random_records_match": rr_match,
         }
@@ -431,7 +433,11 @@ class Settings:
 
     def _as_completed_dict(self):
         rr_match = self._probability_two_random_records_match
+        brs = self._blocking_rules_to_generate_predictions
         current_settings = {
+            "blocking_rules_to_generate_predictions": [
+                br._as_completed_dict() for br in brs
+            ],
             "comparisons": [cc._as_completed_dict() for cc in self.comparisons],
             "probability_two_random_records_match": rr_match,
             "unique_id_column_name": self._unique_id_column_name,

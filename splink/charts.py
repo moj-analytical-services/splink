@@ -228,6 +228,58 @@ def precision_recall_chart(records, width=400, height=400, as_dict=False):
     return altair_or_json(chart, as_dict=as_dict)
 
 
+def accuracy_chart(records, width=400, height=400, as_dict=False, add_metrics=[]):
+    chart_path = "accuracy_chart.json"
+    chart = load_chart_definition(chart_path)
+
+    # User-specified metrics to include
+    metrics = ["precision", "recall", *add_metrics]
+    chart["transform"][0]["fold"] = metrics
+    chart["transform"][1]["calculate"] = chart["transform"][1]["calculate"].replace(
+        "__metrics__", str(metrics)
+    )
+    chart["layer"][0]["encoding"]["color"]["sort"] = metrics
+    chart["layer"][1]["layer"][1]["encoding"]["color"]["sort"] = metrics
+
+    # Metric-label mapping
+    mapping = {
+        "precision": "Precision (PPV)",
+        "recall": "Recall (TPR)",
+        "specificity": "Specificity (TNR)",
+        "accuracy": "Accuracy",
+        "npv": "NPV",
+        "f1": "F1",
+        "f2": "F2",
+        "f0_5": "F0.5",
+        "p4": "P4",
+        "phi": "\u03C6 (MCC)",
+    }
+    chart["transform"][2]["calculate"] = chart["transform"][2]["calculate"].replace(
+        "__mapping__", str(mapping)
+    )
+    chart["layer"][0]["encoding"]["color"]["legend"]["labelExpr"] = chart["layer"][0][
+        "encoding"
+    ]["color"]["legend"]["labelExpr"].replace("__mapping__", str(mapping))
+
+    chart["data"]["values"] = records
+
+    chart["height"] = height
+    chart["width"] = width
+
+    return altair_or_json(chart, as_dict=as_dict)
+
+
+def confusion_matrix_chart(records, match_weight_range=[-15, 15], as_dict=False):
+    chart_path = "confusion_matrix.json"
+    chart = load_chart_definition(chart_path)
+
+    chart["data"]["values"] = records
+
+    chart["hconcat"][0]["encoding"]["x"]["scale"]["domain"] = match_weight_range
+
+    return altair_or_json(chart, as_dict=as_dict)
+
+
 def match_weights_histogram(records, width=500, height=250, as_dict=False):
     chart_path = "match_weight_histogram.json"
     chart = load_chart_definition(chart_path)
@@ -341,17 +393,23 @@ def _comparator_score_chart(similarity_records, distance_records, as_dict=False)
 
 
 def _comparator_score_threshold_chart(
-    records, similarity_threshold, distance_threshold, as_dict=False
+    similarity_records,
+    distance_records,
+    similarity_threshold,
+    distance_threshold,
+    as_dict=False,
 ):
     chart_path = "comparator_score_threshold_chart.json"
     chart = load_chart_definition(chart_path)
 
-    chart["layer"][0]["title"] = (
-        f"Heatmap of Matches for "
-        f"distance_threshold = {distance_threshold}, "
-        f"similarity_threshold = {similarity_threshold}"
-    )
-    chart["datasets"]["data-with-thresholds"] = records
+    chart["params"][0]["value"] = similarity_threshold
+    chart["params"][1]["value"] = distance_threshold
+
+    chart["hconcat"][0]["layer"][0]["title"]["subtitle"] = f">= {similarity_threshold}"
+    chart["hconcat"][1]["layer"][0]["title"]["subtitle"] = f"<= {distance_threshold}"
+
+    chart["datasets"]["data-similarity"] = similarity_records
+    chart["datasets"]["data-distance"] = distance_records
 
     return altair_or_json(chart, as_dict=as_dict)
 

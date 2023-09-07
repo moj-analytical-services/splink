@@ -12,14 +12,12 @@ The aim of Prediction Blocking Rules are to:
 
 Blocking Rules for Prediction are defined through `blocking_rules_to_generate_predictions` in the Settings dictionary of a model. For example:
 
-``` py hl_lines="3-8"
+``` py hl_lines="3-6"
 settings = {
     "link_type": "dedupe_only",
     "blocking_rules_to_generate_predictions": [
-       brl.and_(
-                brl.exact_match_rule("first_name"), 
-                brl.exact_match_rule("surname")
-                )
+       brl.block_on(["first_name", "surname"]),
+       brl.block_on("dob"),
     ],
     "comparisons": [
         ctl.name_comparison("first_name"),
@@ -44,12 +42,9 @@ This is why `blocking_rules_to_generate_predictions` is a list. Suppose we also 
 ```python
 settings_example = {
     "blocking_rules_to_generate_predictions" [
-        brl.and_(
-                brl.exact_match_rule("first_name"), 
-                brl.exact_match_rule("surname")
-                ),
-        brl.exact_match_rule("postcode")
-        ]
+        brl.block_on(["first_name", "surname"]),
+        brl.block_on("postcode")
+    ]
 }
 ```
 
@@ -59,7 +54,7 @@ We will now generate a pairwise comparison for the record where there was a typo
 
 By specifying a variety of `blocking_rules_to_generate_predictions`, it becomes unlikely that a truly matching record would not be captured by at least one of the rules.
 
-!!! note 
+!!! note
     Unlike [Training Rules](./model_training.md), Prediction Rules are considered collectively, and are order-dependent. So, in the example above, the `l.postcode = r.postcode` blocking rule only generates record comparisons that are a match on `postcode` were not already captured by the `first_name` and `surname` rule.
 
 ## Choosing Prediction Rules
@@ -71,8 +66,8 @@ Once a linker has been instatiated, we can use the `cumulative_num_comparisons_f
 ```py
 settings = {
     "blocking_rules_to_generate_predictions": [
-        brl.exact_match_rule("first_name"), 
-        brl.exact_match_rule("surname")
+        brl.block_on("first_name"),
+        brl.block_on("surname")
     ],
 }
 ```
@@ -93,5 +88,5 @@ You can also return the underlying data for this chart using the `cumulative_com
 ```py
 linker.cumulative_comparisons_from_blocking_rules_records()
 ```
-> [{'row_count': 2253, 'rule': 'l.first_name = r.first_name'},  
+> [{'row_count': 2253, 'rule': 'l.first_name = r.first_name'},
 > {'row_count': 2568, 'rule': 'l.surname = r.surname'}]
