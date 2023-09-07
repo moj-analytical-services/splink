@@ -23,7 +23,7 @@ class InvalidTypesAndValuesLogger(SettingsValidator):
 
     def _validate_dialect(self):
         settings_dialect = self.linker._settings_obj._sql_dialect
-        linker_dialect = self._sql_dialect
+        linker_dialect = self.linker._sql_dialect
         if settings_dialect != linker_dialect:
             linker_type = self.linker.__class__.__name__
             raise ValueError(

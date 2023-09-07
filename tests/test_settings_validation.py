@@ -417,7 +417,8 @@ def test_comparison_validation():
     error_logger = validate_comparison_levels(settings["comparisons"])
 
     # Check our three errors are raised
-    assert len(error_logger.e) == 3
+    errors = error_logger.raw_errors
+    assert len(errors) == 3
 
     # Our expected error types and part of the corresponding error text
     expected_errors = (
@@ -428,4 +429,4 @@ def test_comparison_validation():
 
     for n, (e, txt) in enumerate(expected_errors):
         with pytest.raises(e, match=txt):
-            raise error_logger.e[n]
+            raise errors[n]
