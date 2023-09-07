@@ -410,7 +410,7 @@ def test_comparison_validation():
     # Trimmed settings (settings w/ only the link type, for example)
     # are tested elsewhere.
     DuckDBLinker(
-        pd.DataFrame({"a": [1,2,3]}),
+        pd.DataFrame({"a": [1, 2, 3]}),
     )
 
     settings = get_settings_dict()
@@ -431,35 +431,30 @@ def test_comparison_validation():
     # Check invalid import is detected
     settings["comparisons"].append(exact_match("test"))
     # mismashed comparison
-    settings["comparisons"].append({
-        "comparison_levels": [
-            sp_cll.null_level("test"),
-            # Invalid Spark cll
-            ath_cll.exact_match_level("test"),
-            cll.else_level(),
+    settings["comparisons"].append(
+        {
+            "comparison_levels": [
+                sp_cll.null_level("test"),
+                # Invalid Spark cll
+                ath_cll.exact_match_level("test"),
+                cll.else_level(),
             ]
-    })
-
-    log_comparison_errors(
-        None,  # confirm it works with None as an input...
-        "duckdb"
+        }
     )
+
+    log_comparison_errors(None, "duckdb")  # confirm it works with None as an input...
 
     # Init the error logger. This is normally handled in
     # `log_comparison_errors`, but here we want to capture the
     # errors instead of logging.
     error_logger = ErrorLogger()
     error_logger = validate_comparison_levels(
-        error_logger,
-        settings["comparisons"],
-        "duckdb"
+        error_logger, settings["comparisons"], "duckdb"
     )
-
 
     # Check our errors are raised
     errors = error_logger.raw_errors
-    assert len(error_logger.raw_errors) == len(settings["comparisons"])-3
-
+    assert len(error_logger.raw_errors) == len(settings["comparisons"]) - 3
 
     # Our expected error types and part of the corresponding error text
     expected_errors = (
