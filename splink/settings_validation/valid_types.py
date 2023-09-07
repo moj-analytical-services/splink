@@ -174,11 +174,17 @@ def evaluate_comparison_dialects(comparison_dict, sql_dialect):
     # `comparison_dict.__class__`
     if isinstance(comparison_dict, Comparison):
         comparison_dialects = set(
-            [extract_sql_dialect_from_cll(comp_level) for comp_level in comparison_dict.comparison_levels]
+            [
+                extract_sql_dialect_from_cll(comp_level)
+                for comp_level in comparison_dict.comparison_levels
+            ]
         )
     else:  # only other value here is a dict
         comparison_dialects = set(
-            [extract_sql_dialect_from_cll(comp_level) for comp_level in comparison_dict.get("comparison_levels", [])]
+            [
+                extract_sql_dialect_from_cll(comp_level)
+                for comp_level in comparison_dict.get("comparison_levels", [])
+            ]
         )
     # if no dialect has been supplied, ignore it
     comparison_dialects.discard(None)
