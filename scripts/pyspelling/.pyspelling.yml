@@ -1,8 +1,10 @@
-# spellchecker: hunspell
+
 
 matrix:
 - name: Markdown docs
-  group: docs
+  sources:
+  - docs/getting_started.md
+  # - docs/**/*.md
   aspell:
     lang: en
     d: en_GB
@@ -11,16 +13,24 @@ matrix:
     wordlists:
     - scripts/pyspelling/custom_dictionary.txt
     output: scripts/dictionary.dic
+  pipeline:
+    - pyspelling.filters.context:
+        delimiters:
+      # Ignore text between colons
+        - open: ':(?P<content>[^:]+):'
+          close: ':(?P=content):'
+- name: ipynb docs
   sources:
-  - docs/getting_started.md
-  # - docs/*.md
-  # - docs/*/*.md
-  # - docs/*/*/*.md
-# - name: ipynb docs
-#   group: docs
-#   aspell:
-#     lang: en
-#     d: en_US
-#   sources:
-#   - docs/*/
-
+  - docs/topic_guides/comparisons/comparison_templates.ipynb
+  # - docs/**/*.ipynb
+  aspell:
+    lang: en
+    d: en_US
+    mode: markdown
+  dictionary:
+    wordlists:
+    - scripts/pyspelling/custom_dictionary.txt
+    output: scripts/dictionary.dic
+  pipeline:
+   - pyspelling.filters.python:
+      outputs: false
