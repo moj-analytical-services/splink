@@ -1,3 +1,0 @@
-Splink
-DuckDB
-PyPI
