@@ -4,7 +4,7 @@ line_block="=============="
 
 package_name="aspell"
 
-#Check if Homebrew is installed
+# Check if Homebrew is installed
 if command -v brew >/dev/null 2>&1; then
     # Check if aspell is installed
     if brew list --formula | grep -q "${package_name}"; then
