@@ -18,7 +18,7 @@ class exact_match_rule(BlockingRule):
     ) -> BlockingRule:
         """Represents an exact match blocking rule.
 
-        DEPRECATED:
+        **DEPRECATED:**
         `exact_match_rule` is deprecated. Please use `block_on`
         instead, which acts as a wrapper with additional functionality.
 
@@ -30,6 +30,7 @@ class exact_match_rule(BlockingRule):
                 to the blocking rule. More information on salting can
                 be found within the docs. Salting is currently only valid
                 for Spark.
+
         Examples:
             === ":simple-duckdb: DuckDB"
                 Simple Exact match level
@@ -103,18 +104,28 @@ def block_on(
     col_names: list[str],
     salting_partitions: int = 1,
 ) -> BlockingRule:
-    """Creates a series of blocking rules on designated columns or sql
-        statements, that are then joined by "AND" clauses.
+    """The `block_on` function generates blocking rules that facilitate
+        efficient equi-joins based on the columns or SQL statements
+        specified in the col_names argument. When multiple columns or
+        SQL snippets are provided, the function generates a compound
+        blocking rule, connecting individual match conditions with
+        "AND" clauses.
 
-    It is recommended that you try to ensure your rules are equi-joins
-    and only include `AND` clauses to join rules.
+        This function is designed for scenarios where you aim to achieve
+        efficient yet straightforward blocking conditions based on one
+        or more columns or SQL snippets.
 
-    More information can be found
-    [here](https://moj-analytical-services.github.io/splink/topic_guides/blocking/performance.html)
+        For more information on the intended use cases of `block_on`, please see
+        [the following discussion](https://github.com/moj-analytical-services/splink/issues/1376).
 
-    This function acts as a shorthand alias for the `brl.and_` syntax:
-    > import splink.duckdb.blocking_rule_library as brl
-    > `brl.and_(brl.exact_match_rule, brl.exact_match_rule, ...)`
+        Further information on equi-join conditions can be found
+        [here](https://moj-analytical-services.github.io/splink/topic_guides/blocking/performance.html)
+
+        This function acts as a shorthand alias for the `brl.and_` syntax:
+        ```py
+        import splink.duckdb.blocking_rule_library as brl
+        brl.and_(brl.exact_match_rule, brl.exact_match_rule, ...)
+        ```
 
         Args:
             col_names (list[str]): A list of input columns or sql conditions
@@ -122,34 +133,40 @@ def block_on(
             salting_partitions (optional, int): Whether to add salting
                 to the blocking rule. More information on salting can
                 be found within the docs. Salting is only valid for Spark.
+
         Examples:
             === ":simple-duckdb: DuckDB"
                 ``` python
-                import splink.duckdb.blocking_rule_library as brl
+                from splink.duckdb.blocking_rule_library import block_on
+                block_on("first_name")  # check for exact matches on first name
                 sql = "substr(surname,1,2)"
                 block_on([sql, "surname"])
                 ```
             === ":simple-apachespark: Spark"
                 ``` python
-                import splink.spark.blocking_rule_library as brl
+                from splink.spark.blocking_rule_library import block_on
+                block_on("first_name")  # check for exact matches on first name
                 sql = "substr(surname,1,2)"
                 block_on([sql, "surname"], salting_partitions=1)
                 ```
             === ":simple-amazonaws: Athena"
                 ``` python
-                import splink.athena.blocking_rule_library as brl
+                from splink.athena.blocking_rule_library import block_on
+                block_on("first_name")  # check for exact matches on first name
                 sql = "substr(surname,1,2)"
                 block_on([sql, "surname"])
                 ```
             === ":simple-sqlite: SQLite"
                 ``` python
-                import splink.sqlite.blocking_rule_library as brl
+                from splink.sqlite.blocking_rule_library import block_on
+                block_on("first_name")  # check for exact matches on first name
                 sql = "substr(surname,1,2)"
                 block_on([sql, "surname"])
                 ```
             === "PostgreSQL"
                 ``` python
-                import splink.postgres.blocking_rule_library as brl
+                from splink.postgres.blocking_rule_library import block_on
+                block_on("first_name")  # check for exact matches on first name
                 sql = "substr(surname,1,2)"
                 block_on([sql, "surname"])
                 ```
