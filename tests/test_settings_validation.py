@@ -138,16 +138,16 @@ def test_columns_from_settings(test_helpers, dialect):
     ##################
     # COLS TO RETAIN #
     ##################
-    # Only "group" supplied. As such, we expect a value of None to be returned
+    # Only "cluster" supplied. As such, we expect a value of None to be returned
     settings_logger = InvalidColumnsLogger(linker)
     assert settings_logger.validate_cols_to_retain is None
 
     # Add additional faulty columns to retain
     settings["additional_columns_to_retain"] = [
-        "group",
+        "cluster",
         "invalid column name",
         "also_invalid",
-        "group",  # duplicate - check it is ignored
+        "cluster",  # duplicate - check it is ignored
     ]
     c_to_retain = alter_settings(linker, settings).validate_cols_to_retain
     verify_single_setting_validation(
@@ -191,9 +191,9 @@ def test_columns_from_settings(test_helpers, dialect):
     blocking_rules_to_check = [
         'levenshtein("sur_name", r."sur Name") < 3',
         "coalesce(l.first_name, NULL) = coalesce(first_name, NULL)",
-        "datediff('day', l.\"group\", r.dob_test)",
+        "datediff('day', l.\"cluster\", r.dob_test)",
         # Identical rule - should be ignored
-        "datediff('day', l.\"group\", r.dob_test)",
+        "datediff('day', l.\"cluster\", r.dob_test)",
     ]
     settings["blocking_rules_to_generate_predictions"] = blocking_rules_to_check
     invalid_brs = alter_settings(linker, settings).validate_blocking_rules

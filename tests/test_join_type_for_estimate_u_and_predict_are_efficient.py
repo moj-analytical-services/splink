@@ -28,7 +28,7 @@ data_one = [
         "dob": "2015-07-31",
         "city": "London",
         "email": "hannah88@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
     {
         "unique_id": "a1",
@@ -37,7 +37,7 @@ data_one = [
         "dob": "2015-07-31",
         "city": "London",
         "email": "hannah8@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
     {
         "unique_id": "a2",
@@ -46,7 +46,7 @@ data_one = [
         "dob": "2015-07-31",
         "city": "Lambeth",
         "email": "hannah88@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
     {
         "unique_id": "a3",
@@ -55,7 +55,7 @@ data_one = [
         "dob": "2015-07-31",
         "city": "Lambeth",
         "email": "hannah88@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
 ]
 
@@ -67,7 +67,7 @@ data_three = [
         "dob": "2015-07-31",
         "city": "London",
         "email": "hannah88@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
     {
         "unique_id": "b1",
@@ -76,7 +76,7 @@ data_three = [
         "dob": "2015-07-31",
         "city": "London",
         "email": "hannah8@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
     {
         "unique_id": "b2",
@@ -85,7 +85,7 @@ data_three = [
         "dob": "2015-07-31",
         "city": "Lambeth",
         "email": "hannah88@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
 ]
 
