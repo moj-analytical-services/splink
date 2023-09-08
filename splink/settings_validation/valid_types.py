@@ -14,7 +14,7 @@ def extract_sql_dialect_from_cll(cll):
     if isinstance(cll, dict):
         return cll.get("sql_dialect")
     else:
-        return getattr(cll, "_sql_dialect")
+        return getattr(cll, "_sql_dialect", None)
 
 
 class InvalidTypesAndValuesLogger(SettingsValidator):

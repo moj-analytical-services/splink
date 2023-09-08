@@ -11,8 +11,8 @@ from splink.settings_validation.column_lookups import (
     InvalidColumnsLogger,
 )
 from splink.settings_validation.valid_types import (
-    validate_comparison_levels,
     log_comparison_errors,
+    validate_comparison_levels,
 )
 
 from .basic_settings import get_settings_dict
@@ -400,11 +400,11 @@ def test_validate_sql_dialect():
 
 
 def test_comparison_validation():
-    from splink.spark.comparison_library import exact_match
+    import splink.athena.comparison_level_library as ath_cll
     import splink.duckdb.comparison_level_library as cll
     import splink.spark.comparison_level_library as sp_cll
-    import splink.athena.comparison_level_library as ath_cll
     from splink.exceptions import InvalidDialect
+    from splink.spark.comparison_library import exact_match
 
     # Check blank settings aren't flagged
     # Trimmed settings (settings w/ only the link type, for example)
@@ -419,7 +419,6 @@ def test_comparison_validation():
     email_no_comp_level = {
         "comparison_lvls": [],
     }
-    import splink.duckdb.comparison_level_library as cll
 
     # cll instead of cl
     email_cc = cll.exact_match_level("email")
