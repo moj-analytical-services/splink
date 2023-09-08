@@ -4,7 +4,6 @@ matrix:
 - name: Markdown docs
   sources:
   - docs/**/*.md
-  # - docs/getting_started.md
   aspell:
     lang: en
     d: en_GB
