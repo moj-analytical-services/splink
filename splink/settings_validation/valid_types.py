@@ -4,10 +4,17 @@ import logging
 
 from ..comparison import Comparison
 from ..comparison_level import ComparisonLevel
-from ..exceptions import ComparisonSettingsException, ErrorLogger
+from ..exceptions import ComparisonSettingsException, ErrorLogger, InvalidDialect
 from .settings_validator import SettingsValidator
 
 logger = logging.getLogger(__name__)
+
+
+def extract_sql_dialect_from_cll(cll):
+    if isinstance(cll, dict):
+        return cll.get("sql_dialect")
+    else:
+        return getattr(cll, "_sql_dialect")
 
 
 class InvalidTypesAndValuesLogger(SettingsValidator):
@@ -33,7 +40,9 @@ class InvalidTypesAndValuesLogger(SettingsValidator):
             )
 
 
-def validate_comparison_levels(comparisons: list):
+def validate_comparison_levels(
+    error_logger: ErrorLogger, comparisons: list, linker_dialect: str
+):
     """Takes in a list of comparisons from your settings
     object and evaluates whether:
     1) It is of a valid type (ComparisonLevel or Dict).
@@ -45,24 +54,31 @@ def validate_comparison_levels(comparisons: list):
     """
 
     # Extract problematic comparisons
-    comp_error_logger = ErrorLogger()  # logger to track all identified errors
     for c_dict in comparisons:
-        eval_dtype = evaluate_comparison_dtype_and_contents(c_dict)
         # If no error is found, append won't do anything
-        comp_error_logger.append(eval_dtype)
+        error_logger.append(evaluate_comparison_dtype_and_contents(c_dict))
+        error_logger.append(evaluate_comparison_dialects(c_dict, linker_dialect))
 
-    return comp_error_logger
+    return error_logger
 
 
-def log_comparison_errors(comparisons):
+def log_comparison_errors(comparisons, linker_dialect):
     """
     Log any errors arising from `validate_comparison_levels`.
     """
-    error_logger = validate_comparison_levels(comparisons)
+
+    # Check for empty inputs - Expecting None or []
+    if not comparisons:
+        return
+
+    error_logger = ErrorLogger()
+
+    error_logger = validate_comparison_levels(error_logger, comparisons, linker_dialect)
 
     # Raise and log any errors identified
-    comp_hyperlink_txt = """
-    For more info on this error, please visit:
+    plural_this = "this" if len(error_logger.raw_errors) == 1 else "these"
+    comp_hyperlink_txt = f"""
+    For more info on {plural_this} error, please visit:
     https://moj-analytical-services.github.io/splink/topic_guides/comparisons/customising_comparisons.html
     """
 
@@ -80,21 +96,23 @@ def evaluate_comparison_dtype_and_contents(comparison_dict):
     or raised instantly as an error.
     """
 
-    comp_str = f"{str(comparison_dict)[:30]}... "
+    comp_str = f"{str(comparison_dict)[:65]}... "
 
     if not isinstance(comparison_dict, (Comparison, dict)):
 
         if isinstance(comparison_dict, ComparisonLevel):
             return TypeError(
                 f"""
-            {comp_str} is a comparison level and
+            {comp_str}
+            is a comparison level and
             cannot be used as a standalone comparison.
             """
             )
         else:
             return TypeError(
                 f"""
-            `{comp_str}` is an invalid data type.
+            The comparison level `{comp_str}`
+            is of an invalid data type.
             Please only include dictionaries or objects of
             the `Comparison` class.
             """
@@ -107,8 +125,85 @@ def evaluate_comparison_dtype_and_contents(comparison_dict):
         if comp_level is None:
             return SyntaxError(
                 f"""
-                {comp_str} is missing the required `comparison_levels`
-                key. Please ensure you include this in all comparisons
-                used in your settings object.
-                """
+            {comp_str}
+            is missing the required `comparison_levels` dictionary
+            key. Please ensure you include this in all comparisons
+            used in your settings object.
+            """
             )
+
+
+def evaluate_comparison_dialects(comparison_dict, sql_dialect):
+    """
+    Given a comparison_dict, assess whether the sql dialect is valid for
+    your selected linker.
+
+    This function is aimed at preventing invalid imports when users are
+    working across multiple linker dialects.
+
+    This function is aiming to flag the following behaviour:
+    ```
+    from splink.duckdb.comparison_library import exact_match
+    from splink.spark.linker import SparkLiner
+
+    settings = {
+        ...,
+        comparisons = [
+            ...,
+            exact_match("dob")  # em taken from duckdb library
+        ]
+    }
+
+    SparkLinker(df, settings)  # errors due to mismatched CL imports
+    ```
+    """
+    comp_str = f"{str(comparison_dict)[:65]}... "
+
+    # This function doesn't currently support dictionary comparisons
+    # as it's assumed users won't submit the sql dialect when using
+    # that functionality.
+
+    # All other scenarios will be captured by
+    # `evaluate_comparison_dtype_and_contents` and can be skipped.
+    # Where sql_dialect is empty, we also can't verify the CLs.
+    if not isinstance(comparison_dict, (Comparison, dict)) or sql_dialect is None:
+        return
+
+    # Alternatively, if we just want to check where the import's origin,
+    # we could evalute the import signature using:
+    # `comparison_dict.__class__`
+    if isinstance(comparison_dict, Comparison):
+        comparison_dialects = set(
+            [
+                extract_sql_dialect_from_cll(comp_level)
+                for comp_level in comparison_dict.comparison_levels
+            ]
+        )
+    else:  # only other value here is a dict
+        comparison_dialects = set(
+            [
+                extract_sql_dialect_from_cll(comp_level)
+                for comp_level in comparison_dict.get("comparison_levels", [])
+            ]
+        )
+    # if no dialect has been supplied, ignore it
+    comparison_dialects.discard(None)
+
+    comparison_dialects = [
+        dialect for dialect in comparison_dialects if sql_dialect != dialect
+    ]  # sort only needed to ensure our tests pass
+    # comparison_dialects = [
+    #     dialect for dialect in comparison_dialects if sql_dialect != dialect
+    # ].sort()  # sort only needed to ensure our tests pass
+
+    if comparison_dialects:
+        comparison_dialects.sort()
+        return InvalidDialect(
+            f"""
+            {comp_str}
+            contains the following invalid SQL dialect(s)
+            within its comparison levels - {', '.join(comparison_dialects)}.
+            Please ensure that you're importing comparisons designed
+            for your specified linker.
+        """
+        )
