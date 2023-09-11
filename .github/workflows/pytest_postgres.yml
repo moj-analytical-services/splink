@@ -4,6 +4,9 @@ on:
     branches:
       - master
       - '**dev'
+    paths:
+      - splink/**
+      - tests/**
 
 jobs:
   test:
