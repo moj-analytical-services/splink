@@ -293,7 +293,7 @@ def test_lambda():
 #         {"col_name": "city", "fix_u_probabilities": True},
 #         {"col_name": "email", "fix_u_probabilities": True},
 #     ],
-#     "additional_columns_to_retain": ["group"],
+#     "additional_columns_to_retain": ["cluster"],
 #     "em_convergence": 0.00001,
 #     "max_iterations": 2,
 #     "retain_matching_columns": True,

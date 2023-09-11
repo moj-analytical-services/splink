@@ -58,6 +58,9 @@ plugins:
       type: timeago
       fallback_to_build_date: true
   - charts
+  - mkdocs-video:
+      is_video: True
+      video_autoplay: false
 
 markdown_extensions:
   - abbr
@@ -210,7 +213,7 @@ nav:
         - Settings Dictionary Reference: "settings_dict_guide.md"
         - Interactive Settings Editor: "settingseditor/editor.md"
   - Contributing:
-      - Introduction: "dev_guides/dev_guides_index.md"
+      - "dev_guides/index.md"
       - Contributing to Splink:
         - Contributor Guide: "CONTRIBUTING.md"
         - Building a Virtual Environment: "dev_guides/changing_splink/building_env_locally.md"
@@ -227,6 +230,9 @@ nav:
         - Comparison and comparison level libraries:
           - Creating new comparisons and comparison levels: "dev_guides/comparisons/new_library_comparisons_and_levels.md"
           - Extending existing comparisons and comparison levels: "dev_guides/comparisons/extending_library_comparisons_and_levels.md"
+        - Charts: 
+          - Understanding and editing charts: "dev_guides/charts/understanding_and_editing_charts.md"
+          - Building new charts: "dev_guides/charts/building_charts.ipynb"
         - User-Defined Functions: "dev_guides/udfs.md"
   - Blog:
     - blog/index.md 

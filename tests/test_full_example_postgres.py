@@ -92,7 +92,7 @@ def test_full_example_postgres(tmp_path, pg_engine):
         "dob": "1971-05-24",
         "city": "London",
         "email": "john@smith.net",
-        "group": 10000,
+        "cluster": 10000,
     }
 
     linker.find_matches_to_new_records(

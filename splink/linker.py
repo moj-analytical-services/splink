@@ -15,7 +15,10 @@ import sqlglot
 
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
 from splink.settings_validation.column_lookups import InvalidColumnsLogger
-from splink.settings_validation.valid_types import InvalidTypesAndValuesLogger
+from splink.settings_validation.valid_types import (
+    InvalidTypesAndValuesLogger,
+    log_comparison_errors,
+)
 
 from .accuracy import (
     prediction_errors_from_label_column,
@@ -216,6 +219,7 @@ class Linker:
             self._setup_settings_objs(None)
             self.load_settings(settings_dict)
         else:
+            self._validate_settings_components(settings_dict)
             settings_dict = deepcopy(settings_dict)
             self._setup_settings_objs(settings_dict)
 
@@ -472,7 +476,7 @@ class Linker:
         else:
             self._settings_obj_ = Settings(settings_dict)
 
-    def _validate_settings(self, validate_settings):
+    def _check_for_valid_settings(self):
         if (
             # no settings to check
             self._settings_obj_ is None
@@ -480,6 +484,27 @@ class Linker:
             # raw tables don't yet exist in db
             not hasattr(self, "_input_tables_dict")
         ):
+            return False
+        else:
+            return True
+
+    def _validate_settings_components(self, settings_dict):
+
+        # Vaidate our settings after plugging them through
+        # `Settings(<settings>)`
+        if settings_dict is None:
+            return
+
+        log_comparison_errors(
+            # null if not in dict - check using value is ignored
+            settings_dict.get("comparisons", None),
+            self._sql_dialect,
+        )
+
+    def _validate_settings(self, validate_settings):
+        # Vaidate our settings after plugging them through
+        # `Settings(<settings>)`
+        if not self._check_for_valid_settings():
             return
 
         # Run miscellaneous checks on our settings dictionary.

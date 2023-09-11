@@ -27,6 +27,10 @@ class SplinkDeprecated(DeprecationWarning):
     pass
 
 
+class InvalidDialect(SplinkException):
+    pass
+
+
 class ErrorLogger:
     """A basic error loggger. This function allows you to collate
     errors into a single list and then log them.
