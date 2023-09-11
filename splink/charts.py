@@ -1,8 +1,8 @@
 import json
 import math
-import numpy as np
 import os
 
+import numpy as np
 import pandas as pd
 
 from .misc import read_resource
