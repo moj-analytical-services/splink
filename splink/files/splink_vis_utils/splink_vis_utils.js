@@ -7092,9 +7092,19 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 
 	  let this_cc = splink_settings.get_col_by_name(col_name);
 	  let this_cl = this_cc.get_comparison_level(gamma_value);
+	  const columns_used = this_cc.columns_used;
 
-	  let value_l = row[col_name + "_l"];
-	  let value_r = row[col_name + "_r"];
+	  function get_data_value(dataset_suffix){
+		// dataset_suffix is 'l' or 'r'
+		// for each column used, get the row value,
+		// and join together in comma-separated fashion
+		return columns_used.map(
+			(col_name) => row[`${col_name}_${dataset_suffix}`]
+		).join(", ");
+	  }
+
+	  let value_l = get_data_value("l");
+	  let value_r = get_data_value("r");
 
 	  let bayes_factor = row["bf_" + col_name];
 
