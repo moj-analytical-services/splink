@@ -1,5 +1,6 @@
 import json
 import math
+import numpy as np
 import os
 
 import pandas as pd
@@ -97,7 +98,11 @@ def match_weights_chart(records, as_dict=False):
     records = [r for r in records if r["comparison_vector_value"] != -1]
     chart["data"]["values"] = records
 
-    max_value = pd.DataFrame.from_records(records)["log2_bayes_factor"].abs().max()
+    df = pd.DataFrame.from_records(records)["log2_bayes_factor"]
+    df = df.replace([np.inf, -np.inf], np.nan)
+    df = df.dropna()
+
+    max_value = df.abs().max()
     max_value = math.ceil(max_value)
 
     chart["vconcat"][0]["encoding"]["x"]["scale"]["domain"] = [-max_value, max_value]
