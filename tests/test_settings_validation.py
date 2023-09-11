@@ -467,3 +467,4 @@ def test_comparison_validation():
     for n, (e, txt) in enumerate(expected_errors):
         with pytest.raises(e, match=txt):
             raise errors[n]
+            raise errors[n]
