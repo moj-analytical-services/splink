@@ -6887,7 +6887,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  form.oninput = function () {
 	    let mydict = {};
 	    ss_cols.forEach((cc) => {
-	      mydict[cc.name] = form.querySelector(`#${get_id_from_comparison(cc)} form`).value;
+	      mydict[cc.sanitised_name] = form.querySelector(`#${get_id_from_comparison(cc)} form`).value;
 	    });
 	    form.value = mydict;
 	  };
