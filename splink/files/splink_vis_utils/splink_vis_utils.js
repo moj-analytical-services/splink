@@ -6877,7 +6877,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
       return html`<div id='${get_id_from_comparison(cc)}'>${splink_vis_utils.select(
         select_values,
         {
-          label: `Filter ${cc.name}`
+          label: `Filter '${cc.name}'`
         }
       )}</div>`;
     })}
