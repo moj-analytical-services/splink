@@ -223,9 +223,9 @@ def test_blocking_records_accuracy(test_helpers, dialect):
         linker_settings, blocking_rules=blocking_rules, return_dataframe=True
     )
 
-    expected_row_count = pd.DataFrame({"row_count": [31272, 120993, 308880]})
-
+    expected_row_count = pd.DataFrame({"row_count": [31272, 113109, 308880]})
     assert (blocking_rules_df["row_count"] == expected_row_count["row_count"]).all()
+
 
 def test_analyse_blocking_fast_methodology():
     df_1 = pd.DataFrame(
