@@ -45,7 +45,7 @@ def test_model_heavily_customised_settings(test_helpers, dialect, tmp_path):
         "unique_id_column_name": uid,
         # not currently fully functional:
         # "source_dataset_column_name": source_ds_col,
-        "additional_columns_to_retain": ["group"],
+        "additional_columns_to_retain": ["cluster"],
         "bayes_factor_column_prefix": "bayes_f__",
         "term_frequency_adjustment_column_prefix": "term_freq__",
         "comparison_vector_value_column_prefix": "cvv__",

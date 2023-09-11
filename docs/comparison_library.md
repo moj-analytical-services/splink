@@ -23,6 +23,7 @@ The pre-made Splink comparisons available for each SQL dialect are as given in t
 
 
 
+
 The detailed API for each of these are outlined below.
 
 ## Library comparison APIs

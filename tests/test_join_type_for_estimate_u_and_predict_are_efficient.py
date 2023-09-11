@@ -28,7 +28,7 @@ data_one = [
         "dob": "2015-07-31",
         "city": "London",
         "email": "hannah88@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
     {
         "unique_id": "a1",
@@ -37,7 +37,7 @@ data_one = [
         "dob": "2015-07-31",
         "city": "London",
         "email": "hannah8@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
     {
         "unique_id": "a2",
@@ -46,7 +46,7 @@ data_one = [
         "dob": "2015-07-31",
         "city": "Lambeth",
         "email": "hannah88@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
     {
         "unique_id": "a3",
@@ -55,7 +55,7 @@ data_one = [
         "dob": "2015-07-31",
         "city": "Lambeth",
         "email": "hannah88@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
 ]
 
@@ -67,7 +67,7 @@ data_three = [
         "dob": "2015-07-31",
         "city": "London",
         "email": "hannah88@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
     {
         "unique_id": "b1",
@@ -76,7 +76,7 @@ data_three = [
         "dob": "2015-07-31",
         "city": "London",
         "email": "hannah8@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
     {
         "unique_id": "b2",
@@ -85,13 +85,12 @@ data_three = [
         "dob": "2015-07-31",
         "city": "Lambeth",
         "email": "hannah88@powers.com",
-        "group": "0",
+        "cluster": "0",
     },
 ]
 
 
 def test_dedupe_only():
-
     df_one = pd.DataFrame(data_one)
 
     log_list = []
@@ -142,7 +141,6 @@ def test_dedupe_only():
 
 
 def test_link_and_dedupe():
-
     df_one = pd.DataFrame(data_one)
     df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -196,7 +194,6 @@ def test_link_and_dedupe():
 
 
 def test_link_only_two():
-
     df_one = pd.DataFrame(data_one)
     df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -251,7 +248,6 @@ def test_link_only_two():
 
 
 def test_link_only_three():
-
     df_one = pd.DataFrame(data_one)
     df_two = pd.read_csv("tests/datasets/fake_1000_from_splink_demos.csv")
     df_three = pd.DataFrame(data_three)

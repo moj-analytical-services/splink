@@ -56,7 +56,7 @@ def test_full_example_spark(df_spark, tmp_path):
         ],
         "retain_matching_columns": True,
         "retain_intermediate_calculation_columns": True,
-        "additional_columns_to_retain": ["group"],
+        "additional_columns_to_retain": ["cluster"],
         "em_convergence": 0.01,
         "max_iterations": 2,
     }
@@ -115,6 +115,8 @@ def test_full_example_spark(df_spark, tmp_path):
     )
     register_roc_data(linker)
     linker.roc_chart_from_labels_table("labels")
+    linker.accuracy_chart_from_labels_table("labels")
+    linker.confusion_matrix_from_labels_table("labels")
 
     record = {
         "unique_id": 1,
@@ -123,7 +125,7 @@ def test_full_example_spark(df_spark, tmp_path):
         "dob": "1971-05-24",
         "city": "London",
         "email": ["john@smith.net"],
-        "group": 10000,
+        "cluster": 10000,
     }
 
     linker.find_matches_to_new_records(

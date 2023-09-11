@@ -82,7 +82,7 @@ To run only the Splink tests that run against Postgres, you can run simply:
 ```bash
 pytest -m postgres_only tests/
 ```
-For more information see the [documentation page for testing in Splink](../dev_guides/changing_splink/testing.md#running-tests-for-specific-backends-or-backend-groups).
+For more information see the [documentation page for testing in Splink](../../dev_guides/changing_splink/testing.md#running-tests-for-specific-backends-or-backend-groups).
 
 The tests will are run using a temporary database and user that are created at the start of the test session, and destroyed at the end.
 

@@ -62,8 +62,8 @@ Guidance for choosing Blocking Rules can be found in the two [Blocking in Splink
 
 There are two areas in Splink where blocking is used:
 
-- The first is to [generate pairwise comparisons when finding links](./blocking_predictions.md) (running `predict()`). This is the sense in which 'blocking' is usually understood in the context of record linkage
+- The first is to [generate pairwise comparisons when finding links](./predictions.md) (running `predict()`). This is the sense in which 'blocking' is usually understood in the context of record linkage
 
-- The second is a less familiar application of blocking: using it for [model training](./blocking_model_training.md).
+- The second is a less familiar application of blocking: using it for [model training](./model_training.md).
 
 each of which is described in their own, dedicated topic guide.
