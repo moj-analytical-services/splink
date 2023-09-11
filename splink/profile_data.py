@@ -191,7 +191,6 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
 
 
 def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
-
     """
     Profiles the specified columns of the dataframe initiated with the linker.
 

@@ -156,7 +156,6 @@ class BlockingRule:
         return output
 
     def _as_completed_dict(self):
-
         if not self.salting_partitions > 1 and self.sql_dialect == "spark":
             return self.blocking_rule
         else:
