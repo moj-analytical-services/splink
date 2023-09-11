@@ -6,7 +6,7 @@ on:
       - master
     paths:
       - splink/**
-      - docs/demos/**
+      - docs/demos/examples/**
 
   workflow_dispatch:
 

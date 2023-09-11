@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
       - master
+    paths:
+      - splink/**
+      - docs/demos/tutorials/**
 
   workflow_dispatch:
 
