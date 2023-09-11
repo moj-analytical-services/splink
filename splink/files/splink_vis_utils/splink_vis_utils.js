@@ -6862,6 +6862,10 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	function get_gammas_filters(splink_settings_object) {
 	  let ss_cols = splink_settings_object.comparisons;
 
+	  function get_id_from_comparison(cc){
+		return `id_${cc.sanitised_name}`;
+	  }
+
 	  const form = html`<form>
     ${ss_cols.map((cc) => {
 	  let select_values = cc.comparison_levels.map((cl) => {
@@ -6870,7 +6874,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  select_values.unshift(["Any", "Any"]);
 	  select_values = new Map(select_values);
 
-      return html`<div id='id_${cc.name}'>${splink_vis_utils.select(
+      return html`<div id='${get_id_from_comparison(cc)}'>${splink_vis_utils.select(
         select_values,
         {
           label: `Filter ${cc.name}`
@@ -6883,7 +6887,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  form.oninput = function () {
 	    let mydict = {};
 	    ss_cols.forEach((cc) => {
-	      mydict[cc.name] = form.querySelector(`#id_${cc.name} form`).value;
+	      mydict[cc.name] = form.querySelector(`#${get_id_from_comparison(cc)} form`).value;
 	    });
 	    form.value = mydict;
 	  };
@@ -7854,6 +7858,11 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    return this.original_dict["column_name"];
 	  }
 
+	  get sanitised_name() {
+		// replace spaces in names in same fashion as Splink does behind the scenes
+		return this.name.replaceAll(' ', '_')
+	  };
+
 	  get num_levels() {
 	    return this.comparison_levels.length;
 	  }
@@ -7972,7 +7981,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    let lookup = {};
 
 	    this.comparisons.forEach((cc) => {
-	      lookup[cc.name] = cc;
+	      lookup[cc.sanitised_name] = cc;
 	    });
 
 	    return lookup;
