@@ -1308,9 +1308,12 @@ class Linker:
             self._pipeline.reset()
             input_dfs = []
 
-            if "__splink__df_concat_with_tf" in cache and column_name in concat_tf_tables:
-                # If our df_concat_with_tf table already exists, use backwards inference to
-                # find a given tf table
+            if (
+                "__splink__df_concat_with_tf" in cache
+                and column_name in concat_tf_tables
+            ):
+                # If our df_concat_with_tf table already exists, use backwards
+                # inference to find a given tf table
                 colname = InputColumn(column_name)
                 sql = term_frequencies_from_concat_with_tf(colname)
                 self._enqueue_sql(sql, colname_to_tf_tablename(colname))
@@ -1327,7 +1330,7 @@ class Linker:
 
         return tf_df
 
-    def _materialise_tf_tables(self, column_names = []) -> None:
+    def _materialise_tf_tables(self, column_names=[]) -> None:
         """Compute all term frequency tables identified within your settings object,
         or supplied within the `column_names` argument.
         """
@@ -1354,7 +1357,8 @@ class Linker:
         pull the individual term frequency tables.
 
         If it doesn't exist, we can queue up the SQL required to create it using
-        `init_df_concat_with_tf`, which generate all of our tf tables as intermediate steps.
+        `init_df_concat_with_tf`, which generate all of our tf tables as intermediate
+        steps.
         """
         input_dfs = []
         cache = self._intermediate_table_cache
@@ -1999,7 +2003,7 @@ class Linker:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         predictions = self._execute_sql_pipeline(
-            tf_tables+[df_records_left, df_records_right], use_cache=False
+            tf_tables + [df_records_left, df_records_right], use_cache=False
         )
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
