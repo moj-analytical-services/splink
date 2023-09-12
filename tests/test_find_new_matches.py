@@ -1,9 +1,11 @@
+import os
 from copy import deepcopy
 
 import pandas as pd
 
 from .basic_settings import get_settings_dict
 from .decorator import mark_with_dialects_excluding
+from .linker_utils import run_basic_splink_model
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
@@ -74,24 +76,20 @@ def test_tf_tables_init_works(test_helpers, dialect):
 
 
 @mark_with_dialects_excluding()
-def test_matches_work(test_helpers, dialect):
+def test_matches_work(
+    test_helpers,
+    dialect,
+    tmp_path,
+):
     helper = test_helpers[dialect]
     Linker = helper.Linker
-    brl = helper.brl
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     linker = Linker(df, get_settings_dict(), **helper.extra_linker_args())
-
-    # Train our model to get more reasonable outputs...
-    linker.estimate_u_using_random_sampling(max_pairs=1e6)
-
-    blocking_rule = brl.block_on(["first_name", "surname"])
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
-
-    blocking_rule = "l.dob = r.dob"
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+    linker = run_basic_splink_model(linker)
 
     brs = ["l.surname = r.surname"]
+    linker.compute_tf_table("first_name")
 
     matches = linker.find_matches_to_new_records(
         [record], blocking_rules=brs, match_weight_threshold=-10000
@@ -106,3 +104,51 @@ def test_matches_work(test_helpers, dialect):
 
     matches = matches.as_pandas_dataframe()
     assert len(matches) == 2
+
+    path = os.path.join(tmp_path, "model.json")
+    linker.save_model_to_json(path)
+
+    linker = Linker(df, settings_dict=path)
+    # Works w/ loaded settings and no `compute_tf_table`
+    matches = linker.find_matches_to_new_records(
+        [record], blocking_rules=brs, match_weight_threshold=0
+    )
+
+
+@mark_with_dialects_excluding()
+def test_compare_two_records(test_helpers, dialect, tmp_path):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    settings = get_settings_dict()
+    settings["additional_columns_to_retain"] = []
+
+    linker = Linker(df, settings, **helper.extra_linker_args())
+    linker = run_basic_splink_model(linker)
+
+    record_1 = {
+        "unique_id": 1,
+        "first_name": "Lucas",
+        "surname": "Smith",
+        "dob": "1984-01-02",
+        "city": "London",
+        "email": "lucas.smith@hotmail.com",
+    }
+
+    record_2 = {
+        "unique_id": 2,
+        "first_name": "Lucas",
+        "surname": "Smith",
+        "dob": "1983-02-12",
+        "city": "Machester",
+        "email": "lucas.smith@hotmail.com",
+    }
+    # Compare by directly computing tf tables.
+    linker.compute_tf_table("first_name")
+    linker.compare_two_records(record_1, record_2)
+    path = os.path.join(tmp_path, "model.json")
+    linker.save_model_to_json(path)
+    linker = Linker(df, path, **helper.extra_linker_args())
+
+    # Now trial from a saved settings object in which we haven't computed tf tables...
+    linker.compare_two_records(record_1, record_2)

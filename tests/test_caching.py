@@ -4,6 +4,7 @@ from unittest.mock import create_autospec, patch
 import pandas as pd
 import pytest
 
+from splink.duckdb.comparison_library import exact_match
 from splink.duckdb.linker import DuckDBDataFrame, DuckDBLinker
 from splink.linker import SplinkDataFrame
 from tests.basic_settings import get_settings_dict
@@ -137,19 +138,32 @@ def test_cache_access_initialise_df_concat(debug_mode):
 @pytest.mark.parametrize("debug_mode", (False, True))
 def test_cache_access_compute_tf_table(debug_mode):
     settings = get_settings_dict()
+    settings["comparisons"][1] = exact_match("surname", term_frequency_adjustments=True)
 
     linker = DuckDBLinker(df, settings)
+    assert len(linker._queue_term_frequency_tables()) == 0
     linker.debug_mode = debug_mode
     with patch.object(
         linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
     ) as mock_execute_sql_pipeline:
         linker.compute_tf_table("first_name")
         mock_execute_sql_pipeline.assert_called()
+        assert len(linker._queue_term_frequency_tables()) == 1
         # reset the call counter on the mock
         mock_execute_sql_pipeline.reset_mock()
 
+        # Check queued vals - should be concat + surname tf + df_conc_w_tf
+        assert len(linker._pipeline.queue) == 3
+
         linker.compute_tf_table("first_name")
         mock_execute_sql_pipeline.assert_not_called()
+
+        linker.compute_tf_table("surname")
+        assert len(linker._queue_term_frequency_tables()) == 2
+
+        concat_queue = ["__splink__df_concat", "__splink__df_concat_with_tf"]
+        queued_tables = [q.output_table_name for q in linker._pipeline.queue]
+        assert queued_tables == concat_queue
 
 
 @pytest.mark.parametrize("debug_mode", (False, True))

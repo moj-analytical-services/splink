@@ -7,6 +7,22 @@ import pytest
 from tests.cc_testing_utils import check_df_equality
 
 
+def run_basic_splink_model(linker):
+    # A very basic model that can be used in any tests to run a very simplistic
+    # training session
+    linker.estimate_u_using_random_sampling(max_pairs=1e6)
+
+    blocking_rule = "(l.first_name = r.first_name) AND (l.surname = r.surname)"
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+
+    blocking_rule = "l.dob = r.dob"
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
+
+    linker.predict()
+
+    return linker
+
+
 def _test_table_registration(
     linker, additional_tables_to_register=[], skip_dtypes=False
 ):
