@@ -8818,7 +8818,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 				color: {
 					field: "match_probability",
 					legend: {
-						title: ""
+						title: "Match probability"
 					},
 					scale: {
 						domain: [
@@ -8830,7 +8830,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 							"red",
 							"orange",
 							"green"
-						]
+						],
 					},
 					type: "quantitative"
 				},
@@ -8917,6 +8917,11 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						"x"
 					]
 				}
+			},
+			resolve: {
+				scale: {
+					color: "shared"
+				}
 			}
 		},
 		{
@@ -8965,22 +8970,23 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 							title: ""
 						},
 						color: {
-							field: "gam_value_norm",
+							field: "match_weight",
 							legend: {
-								title: ""
+								title: "Match weight"
 							},
 							type: "quantitative",
 							scale: {
 								domain: [
+									-5,
 									0,
-									0.5,
-									1
+									5
 								],
 								range: [
 									"red",
-									"orange",
-									"green"
-								]
+									"#bbbbbb",
+									"green",
+								],
+								interpolate: "lab"  
 							}
 						},
 						tooltip: [
@@ -8990,6 +8996,10 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 							},
 							{
 								field: "gam_value",
+								type: "quantitative"
+							},
+							{
+								field: "match_weight",
 								type: "quantitative"
 							}
 						]
@@ -9046,7 +9056,12 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						}
 					}
 				}
-			]
+			],
+			resolve: {
+				scale: {
+					color: "independent"
+				}
+			}
 		},
 		{
 			encoding: {
@@ -9117,14 +9132,19 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						]
 					}
 				}
-			]
+			],
+			resolve: {
+				scale: {
+					color: "shared"
+				}
+			}
 		}
 	];
 	var base_spec = {
 		$schema: $schema,
 		config: config,
 		data: data,
-		vconcat: vconcat
+		vconcat: vconcat,
 	};
 
 	function sort_match_weight(a, b) {
@@ -9187,7 +9207,8 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    counter += 1;
 	    let gam_key_counter = 0;
 	    gamma_keys.forEach((k) => {
-	      let settings_col = ss_object.get_col_by_name(k.replace("gamma_", ""));
+		  let data_col_name = k.replace("gamma_", "");
+	      let settings_col = ss_object.get_col_by_name(data_col_name);
 	      let num_levels = settings_col.num_levels;
 
 	      let row = {};
@@ -9198,6 +9219,10 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	      row["gam_concat"] = d["gam_concat"];
 	      row["gam_concat_id"] = counter;
 	      row["gam_key_count"] = gam_key_counter;
+
+		  // TODO: variable prefix?
+		  row["bayes_factor"] = d[`bf_${data_col_name}`];
+		  row["match_weight"] = log2(d[`bf_${data_col_name}`]);
 	      result_data.push(row);
 	      gam_key_counter += 1;
 	    });
