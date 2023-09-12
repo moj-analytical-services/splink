@@ -49,7 +49,8 @@
           "field": "log2_bayes_factor",
           "title": "Match weight",
           "scale": {
-            "range": ["red", "orange", "green"],
+            "range": ["red", "#bbbbbb", "green"],
+            "interpolate": "lab",
             "domain": [-10, 0, 10]
           }
         },
@@ -83,7 +84,25 @@
             "labels": false,
             "domain": false,
             "title": "",
-            "ticks": false
+            "ticks": false,
+            "gridColor": {
+              "condition": {
+                "test": "abs(datum.value / 10)  <= 1 & datum.value % 10 === 0",
+                "value": "#aaa"
+              },
+              "value": "#ddd"
+            },
+            "gridDash": {
+              "condition": {"test": "abs(datum.value / 10) == 1", "value": [3]},
+              "value": null
+            },
+            "gridWidth": {
+              "condition": {
+                "test": "abs(datum.value / 10)  <= 1 & datum.value % 10 === 0",
+                "value": 2
+              },
+              "value": 1
+            }
           },
           "field": "log2_bayes_factor",
           "scale": { "domain": [-10, 10] }
@@ -125,7 +144,8 @@
           "field": "log2_bayes_factor",
           "title": "Match weight",
           "scale": {
-            "range": ["red", "orange", "green"],
+            "range": ["red", "#bbbbbb", "green"],
+            "interpolate": "lab",  
             "domain": [-10, 0, 10]
           }
         },
@@ -184,7 +204,25 @@
         "x": {
           "type": "quantitative",
           "axis": {
-            "title": "Comparison level match weight = log2(m/u)"
+            "title": "Comparison level match weight = log2(m/u)",
+            "gridColor": {
+              "condition": {
+                "test": "abs(datum.value / 10)  <= 1 & datum.value % 10 === 0",
+                "value": "#aaa"
+              },
+              "value": "#ddd"
+            },
+            "gridDash": {
+              "condition": {"test": "abs(datum.value / 10) == 1", "value": [3]},
+              "value": null
+            },
+            "gridWidth": {
+              "condition": {
+                "test": "abs(datum.value / 10)  <= 1 & datum.value % 10 === 0",
+                "value": 2
+              },
+              "value": 1
+            }
           },
           "field": "log2_bayes_factor",
           "scale": { "domain": [-10, 10] }
