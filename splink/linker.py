@@ -1293,30 +1293,96 @@ class Linker:
             for tf_col in self._settings_obj._term_frequency_columns
         ]
 
+        # There are three paths we can walk down:
+        # 1) The term frequency table we require already exist in the cache.
+        # In this case, grab it and return it to the user/method.
+        # 2) df_concat_with_tf exists. In this case, check if the tf table
+        # requested exists within our settings object and if it does, simply
+        # calculate the requested tf table from our concat_with_tf table.
+        # 3) If nothing above triggers, simply calculate our required tf tables.
         if tf_tablename in cache:
+            # If it exists in the cache, grab it and return...
             tf_df = cache.get_with_logging(tf_tablename)
-        elif "__splink__df_concat_with_tf" in cache and column_name in concat_tf_tables:
-            self._pipeline.reset()
-            # If our df_concat_with_tf table already exists, use backwards inference to
-            # find a given tf table
-            colname = InputColumn(column_name)
-            sql = term_frequencies_from_concat_with_tf(colname)
-            self._enqueue_sql(sql, colname_to_tf_tablename(colname))
-            tf_df = self._execute_sql_pipeline([cache["__splink__df_concat_with_tf"]])
-            self._intermediate_table_cache[tf_tablename] = tf_df
         else:
             # Clear the pipeline if we are materialising
             self._pipeline.reset()
-            df_concat = self._initialise_df_concat()
             input_dfs = []
-            if df_concat:
-                input_dfs.append(df_concat)
-            sql = term_frequencies_for_single_column_sql(input_col)
-            self._enqueue_sql(sql, tf_tablename)
+
+            if "__splink__df_concat_with_tf" in cache and column_name in concat_tf_tables:
+                # If our df_concat_with_tf table already exists, use backwards inference to
+                # find a given tf table
+                colname = InputColumn(column_name)
+                sql = term_frequencies_from_concat_with_tf(colname)
+                self._enqueue_sql(sql, colname_to_tf_tablename(colname))
+                input_dfs.append(cache["__splink__df_concat_with_tf"])
+            else:
+                df_concat = self._initialise_df_concat()
+                if df_concat:
+                    input_dfs.append(df_concat)
+                sql = term_frequencies_for_single_column_sql(input_col)
+                self._enqueue_sql(sql, tf_tablename)
+
             tf_df = self._execute_sql_pipeline(input_dfs)
             self._intermediate_table_cache[tf_tablename] = tf_df
 
         return tf_df
+
+    def _materialise_tf_tables(self, column_names = []) -> None:
+        """Compute all term frequency tables identified within your settings object,
+        or supplied within the `column_names` argument.
+        """
+
+        # If custom tf tables are requested, materialise
+        if not column_names:
+            column_names = [
+                remove_quotes_from_identifiers(tf_col.input_name_as_tree).sql()
+                for tf_col in self._settings_obj._term_frequency_columns
+            ]
+        # If we want to materialise, pass it directly through `compute_tf_table`
+        for tf_table in column_names:
+            # If mat = False, merely queue up the instructions to produce our
+            # tf tables.
+            self.compute_tf_table(tf_table)
+
+    def _queue_term_frequency_tables(self) -> list:
+        """Queue all term frequency tables identified in your settings object.
+
+        This method takes advantage of the fact that we can compute any term frequencies
+        using in concat_with_tf, from that same table using a simple distinct call.
+
+        So, if concat_with_tf already exists, we can queue up a series of basic calls to
+        pull the individual term frequency tables.
+
+        If it doesn't exist, we can queue up the SQL required to create it using
+        `init_df_concat_with_tf`, which generate all of our tf tables as intermediate steps.
+        """
+        input_dfs = []
+        cache = self._intermediate_table_cache
+
+        tf_tables = compute_term_frequencies_from_concat_with_tf(self)
+        for tf in tf_tables:
+            # if tf is a SplinkDataFrame, then the table already exists
+            # i.e. no need to recompute...
+            if isinstance(tf, SplinkDataFrame):
+                input_dfs.append(tf)
+                # rm if it's a SplinkDF - no need to process anymore
+                tf_tables.remove(tf)
+
+        # If our df_concat_with_tf table already exists, derive the term frequency
+        # tables from df_concat_with_tf rather than computing them
+        if "__splink__df_concat_with_tf" in cache:
+            concat_with_tf = cache["__splink__df_concat_with_tf"]
+            # This queues up our tf tables, rather than materialising them
+            for tf in tf_tables:
+                self._enqueue_sql(tf["sql"], tf["output_table_name"])
+        else:
+            # This queues up our cols_with_tf and df_concat_with_tf tables.
+            concat_with_tf = self._initialise_df_concat_with_tf(materialise=False)
+
+        if concat_with_tf:
+            input_dfs.append(concat_with_tf)
+
+        return input_dfs
 
     def deterministic_link(self) -> SplinkDataFrame:
         """Uses the blocking rules specified by
@@ -1781,9 +1847,6 @@ class Linker:
             ```py
             linker = DuckDBLinker(df)
             linker.load_settings("saved_settings.json")
-            # Pre-compute tf tables for any tables with
-            # term frequency adjustments
-            linker.compute_tf_table("first_name")
             record = {'unique_id': 1,
                 'first_name': "John",
                 'surname': "Smith",
@@ -1797,6 +1860,10 @@ class Linker:
         Returns:
             SplinkDataFrame: The pairwise comparisons.
         """
+
+        # Generate our term frequency tables. Outputs None if concat_with_tf
+        # is queued or tables are queued.
+        tf_tables = self._queue_term_frequency_tables()
 
         original_blocking_rules = (
             self._settings_obj._blocking_rules_to_generate_predictions
@@ -1818,27 +1885,6 @@ class Linker:
         new_records_df = self._table_to_splink_dataframe(
             "__splink__df_new_records", new_records_tablename
         )
-
-        cache = self._intermediate_table_cache
-        input_dfs = []
-        # If our df_concat_with_tf table already exists, derive the term frequency
-        # tables from df_concat_with_tf rather than computing them
-        if "__splink__df_concat_with_tf" in cache:
-            concat_with_tf = cache["__splink__df_concat_with_tf"]
-            tf_tables = compute_term_frequencies_from_concat_with_tf(self)
-            # This queues up our tf tables, rather materialising them
-            for tf in tf_tables:
-                # if tf is a SplinkDataFrame, then the table already exists
-                if isinstance(tf, SplinkDataFrame):
-                    input_dfs.append(tf)
-                else:
-                    self._enqueue_sql(tf["sql"], tf["output_table_name"])
-        else:
-            # This queues up our cols_with_tf and df_concat_with_tf tables.
-            concat_with_tf = self._initialise_df_concat_with_tf(materialise=False)
-
-        if concat_with_tf:
-            input_dfs.append(concat_with_tf)
 
         blocking_rules = [blocking_rule_to_obj(br) for br in blocking_rules]
         for n, br in enumerate(blocking_rules):
@@ -1874,9 +1920,7 @@ class Linker:
 
         self._enqueue_sql(sql, "__splink__find_matches_predictions")
 
-        predictions = self._execute_sql_pipeline(
-            input_dataframes=input_dfs, use_cache=False
-        )
+        predictions = self._execute_sql_pipeline(tf_tables, use_cache=False)
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
             original_blocking_rules
@@ -1906,6 +1950,9 @@ class Linker:
         Returns:
             SplinkDataFrame: Pairwise comparison with scored prediction
         """
+
+        tf_tables = self._queue_term_frequency_tables()
+
         original_blocking_rules = (
             self._settings_obj._blocking_rules_to_generate_predictions
         )
@@ -1952,7 +1999,7 @@ class Linker:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         predictions = self._execute_sql_pipeline(
-            [df_records_left, df_records_right], use_cache=False
+            tf_tables+[df_records_left, df_records_right], use_cache=False
         )
 
         self._settings_obj._blocking_rules_to_generate_predictions = (
