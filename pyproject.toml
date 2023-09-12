@@ -63,6 +63,7 @@ pyspark = "^3.2.1"
 [tool.poetry.extras]
 pyspark = ["pyspark"]
 spark = ["pyspark"]
+athena = ["awswrangler"]
 postgres = ["sqlalchemy", "psycopg2-binary"]
 
 [build-system]
