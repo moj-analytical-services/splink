@@ -5,7 +5,8 @@ on:
       - master
     paths:
       - splink/**
-      - tests/**
+      - benchmarking/**
+      - pyproject.toml
 
 jobs:
   test:

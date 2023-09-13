@@ -7,6 +7,7 @@ on:
     paths:
       - splink/**
       - docs/demos/tutorials/**
+      - pyproject.toml
 
   workflow_dispatch:
 
