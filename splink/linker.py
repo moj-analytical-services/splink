@@ -3001,8 +3001,8 @@ class Linker:
 
         Args:
             input_dataset (str, optional): Name of one of the input tables in the
-            database.  If provided, missingness will be computed for this table alone.
-            Defaults to None.
+                database.  If provided, missingness will be computed for this table alone.
+                Defaults to None.
 
         Examples:
             ```py
