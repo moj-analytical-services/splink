@@ -4,6 +4,10 @@ on:
     branches:
       - master
       - '**dev'
+    paths:
+      - splink/**
+      - tests/**
+      - pyproject.toml
 
 jobs:
   test:
