@@ -251,16 +251,37 @@ class Linker:
     @property
     def _get_input_columns(
         self,
-        as_list=True,
     ):
         """Retrieve the column names from the input dataset(s)"""
-        df_obj: SplinkDataFrame = next(iter(self._input_tables_dict.values()))
+        input_dfs = self._input_tables_dict.values()
 
-        column_names = (
-            [col.name() for col in df_obj.columns] if as_list else df_obj.columns
-        )
+        # get a list of the column names for each input frame
+        # sort it for consistent ordering, and give each frame's
+        # columns as a tuple so we can hash it
+        column_names_by_input_df = [
+            tuple(
+                sorted([col.name() for col in input_df.columns])
+            )
+            for input_df in input_dfs
+        ]
+        # check that the set of input columns is the same for each frame,
+        # fail if the sets are different
+        if len(set(column_names_by_input_df)) > 1:
+            common_cols = set.intersection(
+                *(set(col_names) for col_names in column_names_by_input_df)
+            )
+            problem_names = {
+                col
+                for frame_col_names in column_names_by_input_df
+                for col in frame_col_names
+                if col not in common_cols
+            }
+            raise SplinkException(
+                "The following columns were not found in all input frames: " +
+                ", ".join(problem_names)
+            )
 
-        return column_names
+        return next(iter(input_dfs)).columns
 
     @property
     def _cache_uid(self):
