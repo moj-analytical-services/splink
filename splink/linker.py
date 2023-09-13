@@ -249,7 +249,7 @@ class Linker:
         self.debug_mode = False
 
     @property
-    def _get_input_columns(
+    def _input_columns(
         self,
     ):
         """Retrieve the column names from the input dataset(s)"""
