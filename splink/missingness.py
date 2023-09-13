@@ -40,13 +40,13 @@ def missingness_sqls(columns, input_tablename):
 
 
 def missingness_data(linker, input_tablename):
+    columns = linker._get_input_columns
     if input_tablename is None:
         splink_dataframe = linker._initialise_df_concat(materialise=True)
     else:
         splink_dataframe = linker._table_to_splink_dataframe(
             input_tablename, input_tablename
         )
-    columns = splink_dataframe.columns
 
     sqls = missingness_sqls(columns, splink_dataframe.physical_name)
 
