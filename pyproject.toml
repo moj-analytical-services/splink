@@ -11,12 +11,13 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0.0"
 jsonschema = ">=3.2,<5.0"
-pandas = "^1.2.0"
+pandas = ">=1.2.0"
 duckdb = ">=0.8.0"
 pyspark = {version="^3.2.1", optional=true}
 awswrangler = {version=">=3.0.0,<4.0.0", optional=true}
 psycopg2-binary = {version=">=2.8.0", optional=true}
-sqlalchemy = {version=">=2.0.0", optional=true}
+# sqlalchemy >= 2.0.0 not working well with older pandas
+sqlalchemy = ">=1.4.0,<2.0.0"
 # normalize issue in sqlglot - temporarily exclude updates
 sqlglot = ">=7.0.0,<11.4.2"
 altair = "^5.0.1"
@@ -27,7 +28,8 @@ phonetics = "^1.0.5"
 [tool.poetry.group.dev.dependencies]
 tabulate = "0.8.9"
 pyspark = "^3.2.1"
-sqlalchemy = ">=2.0.0"
+# sqlalchemy >= 2.0.0 not working well with older pandas
+sqlalchemy = ">=1.4.0,<2.0.0"
 # temporarily use binary version, to avoid issues with pg_config path
 psycopg2-binary = ">=2.8.0"
 
