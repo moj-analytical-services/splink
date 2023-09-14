@@ -152,7 +152,7 @@ def test_cache_access_compute_tf_table(debug_mode):
 
         # Double `_queue_term_frequency_tables` has the potential to queue up
         # two instances of both fn and surname tf
-        expected_tables = ['__splink__df_tf_first_name', '__splink__df_tf_surname']
+        expected_tables = ["__splink__df_tf_first_name", "__splink__df_tf_surname"]
         queued_tables = [q.output_table_name for q in linker._pipeline.queue]
         assert expected_tables.sort() == queued_tables.sort()
 
