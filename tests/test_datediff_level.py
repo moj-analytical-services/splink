@@ -103,9 +103,10 @@ def test_datediff_levels(test_helpers, dialect):
         "comparisons": [
             exact_match_fn,
             cl.datediff_at_thresholds(
-                "dob", [30, 12, 5, 100],
+                "dob",
+                [30, 12, 5, 100],
                 ["day", "month", "year", "year"],
-                cast_strings_to_date=True
+                cast_strings_to_date=True,
             ),
         ],
     }
