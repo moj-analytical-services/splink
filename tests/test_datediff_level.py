@@ -55,6 +55,7 @@ def test_datediff_levels(test_helpers, dialect):
             },
         ]
     )
+    df = helper.convert_frame(df)
 
     exact_match_fn = cl.exact_match("first_name")
 
@@ -68,21 +69,25 @@ def test_datediff_levels(test_helpers, dialect):
                 date_col="dob",
                 date_threshold=30,
                 date_metric="day",
+                cast_strings_to_date=True,
             ),
             cll.datediff_level(
                 date_col="dob",
                 date_threshold=12,
                 date_metric="month",
+                cast_strings_to_date=True,
             ),
             cll.datediff_level(
                 date_col="dob",
                 date_threshold=5,
                 date_metric="year",
+                cast_strings_to_date=True,
             ),
             cll.datediff_level(
                 date_col="dob",
                 date_threshold=100,
                 date_metric="year",
+                cast_strings_to_date=True,
             ),
             cll.else_level(),
         ],
@@ -98,14 +103,14 @@ def test_datediff_levels(test_helpers, dialect):
         "comparisons": [
             exact_match_fn,
             cl.datediff_at_thresholds(
-                "dob", [30, 12, 5, 100], ["day", "month", "year", "year"]
+                "dob", [30, 12, 5, 100],
+                ["day", "month", "year", "year"],
+                cast_strings_to_date=True
             ),
         ],
     }
 
     # We need to put our column in datetime format for this to work
-    df["dob"] = pd.to_datetime(df["dob"])
-
     linker = helper.Linker(df, settings_cl, **helper.extra_linker_args())
     cl_df_e = linker.predict().as_pandas_dataframe()
     linker = helper.Linker(df, settings_cll, **helper.extra_linker_args())
