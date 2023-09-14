@@ -1366,9 +1366,11 @@ class Linker:
         # We could also set this to False and automatically queue up the creation
         # of our cols_with_tf and df_concat_with_tf tables.
         concat_with_tf = self._initialise_df_concat_with_tf(materialise=True)
+        input_dfs.append(concat_with_tf)
 
         tf_tables = compute_term_frequencies_from_concat_with_tf(self)
-        for tf in tf_tables:
+
+        for tf in tf_tables.copy():
             # if tf is a SplinkDataFrame, then the table already exists
             # i.e. no need to recompute...
             if isinstance(tf, SplinkDataFrame):
@@ -1379,11 +1381,15 @@ class Linker:
         # derive the term frequency tables from df_concat_with_tf
         # rather than computing them the traditional way
         concat_with_tf = cache["__splink__df_concat_with_tf"]
+
+        # Check our current SQL queue for tf tables that have already been queued
+        existing_queue = [q.output_table_name for q in self._pipeline.queue]
         # This queues up our tf tables, rather than materialising them
         for tf in tf_tables:
-            self._enqueue_sql(tf["sql"], tf["output_table_name"])
-
-        input_dfs.append(concat_with_tf)
+            # if isinstance(tf, dict):
+            if tf.get("output_table_name") not in existing_queue:
+                self._enqueue_sql(tf["sql"], tf["output_table_name"])
+            # self._enqueue_sql(tf["sql"], tf["output_table_name"])
 
         return input_dfs
 

@@ -141,29 +141,38 @@ def test_cache_access_compute_tf_table(debug_mode):
     settings["comparisons"][1] = exact_match("surname", term_frequency_adjustments=True)
 
     linker = DuckDBLinker(df, settings)
-    assert len(linker._queue_term_frequency_tables()) == 0
+    # conc w/ tf is always materialised
+    assert len(linker._queue_term_frequency_tables()) == 1
+    # check re-queueing just reaches into the cache
+    assert len(linker._queue_term_frequency_tables()) == 1
     linker.debug_mode = debug_mode
     with patch.object(
         linker, "_execute_sql_against_backend", new=make_mock_execute(linker)
     ) as mock_execute_sql_pipeline:
+
+        # Double `_queue_term_frequency_tables` has the potential to queue up
+        # two instances of both fn and surname tf
+        expected_tables = ['__splink__df_tf_first_name', '__splink__df_tf_surname']
+        queued_tables = [q.output_table_name for q in linker._pipeline.queue]
+        assert expected_tables.sort() == queued_tables.sort()
+
         linker.compute_tf_table("first_name")
         mock_execute_sql_pipeline.assert_called()
-        assert len(linker._queue_term_frequency_tables()) == 1
+        assert len(linker._queue_term_frequency_tables()) == 2
         # reset the call counter on the mock
         mock_execute_sql_pipeline.reset_mock()
 
-        # Check queued vals - should be concat + surname tf + df_conc_w_tf
-        assert len(linker._pipeline.queue) == 3
+        queued_tables = [q.output_table_name for q in linker._pipeline.queue]
+        assert [expected_tables[1]] == queued_tables
 
         linker.compute_tf_table("first_name")
         mock_execute_sql_pipeline.assert_not_called()
 
         linker.compute_tf_table("surname")
-        assert len(linker._queue_term_frequency_tables()) == 2
+        assert len(linker._queue_term_frequency_tables()) == 3
 
-        concat_queue = ["__splink__df_concat", "__splink__df_concat_with_tf"]
         queued_tables = [q.output_table_name for q in linker._pipeline.queue]
-        assert queued_tables == concat_queue
+        assert len(queued_tables) == 0
 
 
 @pytest.mark.parametrize("debug_mode", (False, True))
