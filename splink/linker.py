@@ -275,6 +275,7 @@ class Linker:
                 if col not in common_cols
             }
             raise SplinkException(
+                "All linker input frames must have the same set of columns.  "
                 "The following columns were not found in all input frames: "
                 + ", ".join(problem_names)
             )
