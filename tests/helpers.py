@@ -221,7 +221,7 @@ class PostgresTestHelper(TestHelper):
         # workaround to handle array column conversion
         # manually mark any list columns so type is handled correctly
         dtypes = {}
-        for colname, values in df.iteritems():
+        for colname, values in df.items():
             # TODO: will fail if first value is null
             if isinstance(values[0], list):
                 # TODO: will fail if first array is empty

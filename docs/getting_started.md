@@ -6,7 +6,7 @@ hide:
 # Getting Started
 
 ## :material-download: Install
-Splink supports python 3.7+.
+Splink supports python 3.8+.
 
 To obtain the latest released version of splink you can install from PyPI using pip:
 ```shell
@@ -17,6 +17,29 @@ or if you prefer, you can instead install splink using conda:
 ```shell
 conda install -c conda-forge splink
 ```
+
+??? "Backend Specific Installs"
+    ### Backend Specific Installs
+    From Splink v3.9.7, packages required by specific splink backends can be optionally installed by adding the `[<backend>]` suffix to the end of your pip install.
+
+    **Note** that SQLite and DuckDB come packaged with Splink and cannot be optionally installed.
+
+    The following backends are supported:
+
+    === ":simple-apachespark: Spark"
+        ```sh
+        pip install 'splink[spark]'
+        ```
+
+    === ":simple-amazonaws: Athena"
+        ```sh
+        pip install 'splink[athena]'
+        ```
+
+    === ":simple-postgresql: PostgreSql"
+        ```sh
+        pip install 'splink[postgres]'
+        ```
 
 ??? "DuckDB-less Installation"
     ### DuckDB-less Installation

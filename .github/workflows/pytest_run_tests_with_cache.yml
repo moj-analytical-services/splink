@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        python-version: [ "3.7.15", "3.8.16", "3.9.10" ]
+        python-version: [ "3.8.16", "3.9.10" ]
     name: Run tests with python verion ${{ matrix.python-version }}
     steps:
       #----------------------------------------------
