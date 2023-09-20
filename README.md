@@ -105,9 +105,6 @@ Should you require a more bare-bones version of Splink **without DuckDB**, pleas
 
 </details>
 
-
-
-
 ## Quickstart
 
 The following code demonstrates how to estimate the parameters of a deduplication model, use it to identify duplicate records, and then use clustering to generate an estimated unique person ID.
