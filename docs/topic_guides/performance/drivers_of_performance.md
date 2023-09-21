@@ -35,7 +35,7 @@ Reducing the number of pairwise comparisons that need to be returned will make S
 
 As :simple-apachespark: Spark is designed to distribute processing across multiple machines so there are additional configuration options available to make jobs run more quickly. For more information, check out the [Spark Performance Topic Guide](./optimising_spark.md).
 
-!!! tip "Balancing computational performance and model acccuracy"
+!!! tip "Balancing computational performance and model accuracy"
 
     There is usually a trade off between performance and accuracy in Splink models. I.e. some model design decisions that improve computational performance can also have a negative impact the accuracy of the model. 
     

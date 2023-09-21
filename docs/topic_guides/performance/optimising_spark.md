@@ -86,4 +86,4 @@ For very large jobs, you may find that [salting your blocking keys](https://moj-
 
 ## General Spark config
 
-Splink generates large numbers of record comparisons from relatively small input datasets. This is an unusual type of workload, and so default Spark parameters are not always appropriate. Some of the issues encountered are similar to performance issues encountered with cartesian joins - so some of the tips in [relevant articles](https://www.google.com/search?q=optimising+cartesian+join+spark) may help.
+Splink generates large numbers of record comparisons from relatively small input datasets. This is an unusual type of workload, and so default Spark parameters are not always appropriate. Some of the issues encountered are similar to performance issues encountered with Cartesian joins - so some of the tips in [relevant articles](https://www.google.com/search?q=optimising+cartesian+join+spark) may help.
