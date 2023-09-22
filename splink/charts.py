@@ -1,5 +1,9 @@
 import json
+import math
 import os
+
+import numpy as np
+import pandas as pd
 
 from .misc import read_resource
 from .waterfall_chart import records_to_waterfall_data
@@ -93,6 +97,17 @@ def match_weights_chart(records, as_dict=False):
 
     records = [r for r in records if r["comparison_vector_value"] != -1]
     chart["data"]["values"] = records
+
+    df = pd.DataFrame.from_records(records)["log2_bayes_factor"]
+    df = df.replace([np.inf, -np.inf], np.nan)
+    df = df.dropna()
+
+    max_value = df.abs().max()
+    max_value = math.ceil(max_value)
+
+    chart["vconcat"][0]["encoding"]["x"]["scale"]["domain"] = [-max_value, max_value]
+    chart["vconcat"][1]["encoding"]["x"]["scale"]["domain"] = [-max_value, max_value]
+
     return altair_or_json(chart, as_dict=as_dict)
 
 

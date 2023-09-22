@@ -284,7 +284,6 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
     percentile_rows.append(first_row)
     return percentile_rows
 
-
 def profile_columns(
     linker,
     column_expressions,
@@ -326,6 +325,7 @@ def profile_columns(
         - The `top_n` and `bottom_n` parameters determine the number of top and bottom values to display
           in the respective charts.
     """
+
     df_concat = linker._initialise_df_concat()
 
     input_dataframes = []

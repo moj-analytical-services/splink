@@ -15,6 +15,14 @@ The detailed API for each of these are outlined below.
 
 ## Blocking Rule APIs
 
+::: splink.blocking_rules_library.block_on
+    handler: python
+    rendering:
+      show_root_heading: true
+      show_source: false
+      heading_level: 2
+
+
 ::: splink.blocking_rules_library.exact_match_rule
     handler: python
     rendering:

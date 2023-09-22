@@ -105,16 +105,19 @@ def test_add_pref_and_suffix():
 
     assert ll.l_r_tf_names_as_l_r() == ll_tf_l_r
 
-    group = InputColumn("group")
-    assert group.name_l() == '"group_l"'
-    assert group.bf_name() == '"bf_group"'
-    group_l_r_names = ['"l"."group" as "group_l"', '"r"."group" as "group_r"']
+    group = InputColumn("cluster")
+    assert group.name_l() == '"cluster_l"'
+    assert group.bf_name() == '"bf_cluster"'
+    group_l_r_names = ['"l"."cluster" as "cluster_l"', '"r"."cluster" as "cluster_r"']
     assert group.l_r_names_as_l_r() == group_l_r_names
 
-    group_tf_l_r = ['"l"."tf_group" as "tf_group_l"', '"r"."tf_group" as "tf_group_r"']
+    group_tf_l_r = [
+        '"l"."tf_cluster" as "tf_cluster_l"',
+        '"r"."tf_cluster" as "tf_cluster_r"',
+    ]
     assert group.l_r_tf_names_as_l_r() == group_tf_l_r
 
-    cols = ["unique_id", "SUR name", "group"]
-    out_cols = ['"unique_id"', '"SUR name"', '"group"']
+    cols = ["unique_id", "SUR name", "cluster"]
+    out_cols = ['"unique_id"', '"SUR name"', '"cluster"']
     cols_class = [InputColumn(c) for c in cols]
     assert [c.name() for c in cols_class] == out_cols

@@ -389,7 +389,6 @@ class NameComparisonBase(Comparison):
                 the 'everything else' level. Defaults to None.
 
         Examples:
-
             === ":simple-duckdb: DuckDB"
                 Basic Name Comparison
                 ``` python

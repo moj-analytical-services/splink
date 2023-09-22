@@ -339,7 +339,6 @@ class DistanceFunctionLevelBase(ComparisonLevel):
                 Defaults to None.
 
         Examples:
-
             === ":simple-duckdb: DuckDB"
                 Apply the `levenshtein` function to a comparison level
                 ``` python

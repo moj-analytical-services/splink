@@ -4,6 +4,10 @@ on:
   pull_request:
     branches:
       - master
+    paths:
+      - splink/**
+      - docs/demos/examples/**
+      - pyproject.toml
 
   workflow_dispatch:
 

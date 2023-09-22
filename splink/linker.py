@@ -14,6 +14,11 @@ from statistics import median
 import sqlglot
 
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
+from splink.settings_validation.column_lookups import InvalidColumnsLogger
+from splink.settings_validation.valid_types import (
+    InvalidTypesAndValuesLogger,
+    log_comparison_errors,
+)
 
 from .accuracy import (
     prediction_errors_from_label_column,
@@ -85,7 +90,6 @@ from .pipeline import SQLPipeline
 from .predict import predict_from_comparison_vectors_sqls
 from .profile_data import profile_columns
 from .settings import Settings
-from .settings_validator import InvalidSettingsLogger
 from .splink_comparison_viewer import (
     comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,
@@ -215,6 +219,7 @@ class Linker:
             self._setup_settings_objs(None)
             self.load_settings(settings_dict)
         else:
+            self._validate_settings_components(settings_dict)
             settings_dict = deepcopy(settings_dict)
             self._setup_settings_objs(settings_dict)
 
@@ -242,6 +247,20 @@ class Linker:
         self._deterministic_link_mode = False
 
         self.debug_mode = False
+
+    @property
+    def _get_input_columns(
+        self,
+        as_list=True,
+    ):
+        """Retrieve the column names from the input dataset(s)"""
+        df_obj: SplinkDataFrame = next(iter(self._input_tables_dict.values()))
+
+        column_names = (
+            [col.name() for col in df_obj.columns] if as_list else df_obj.columns
+        )
+
+        return column_names
 
     @property
     def _cache_uid(self):
@@ -457,7 +476,7 @@ class Linker:
         else:
             self._settings_obj_ = Settings(settings_dict)
 
-    def _validate_settings(self, validate_settings):
+    def _check_for_valid_settings(self):
         if (
             # no settings to check
             self._settings_obj_ is None
@@ -465,13 +484,36 @@ class Linker:
             # raw tables don't yet exist in db
             not hasattr(self, "_input_tables_dict")
         ):
+            return False
+        else:
+            return True
+
+    def _validate_settings_components(self, settings_dict):
+
+        # Vaidate our settings after plugging them through
+        # `Settings(<settings>)`
+        if settings_dict is None:
             return
 
-        self.settings_validator = InvalidSettingsLogger(self)
-        self.settings_validator._validate_dialect()
+        log_comparison_errors(
+            # null if not in dict - check using value is ignored
+            settings_dict.get("comparisons", None),
+            self._sql_dialect,
+        )
+
+    def _validate_settings(self, validate_settings):
+        # Vaidate our settings after plugging them through
+        # `Settings(<settings>)`
+        if not self._check_for_valid_settings():
+            return
+
+        # Run miscellaneous checks on our settings dictionary.
+        settings_invalid_types_values = InvalidTypesAndValuesLogger(self)
+        settings_invalid_types_values._validate_dialect()
+
         # Constructs output logs for our various settings inputs
         if validate_settings:
-            self.settings_validator.construct_output_logs()
+            InvalidColumnsLogger(self).construct_output_logs()
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
@@ -1123,25 +1165,25 @@ class Linker:
         Examples:
             === ":simple-duckdb: DuckDB"
                 ```py
-                linker = DuckDBLinker(df")
+                linker = DuckDBLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
             === ":simple-apachespark: Spark"
                 ```py
-                linker = SparkLinker(df")
+                linker = SparkLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
             === ":simple-amazonaws: Athena"
                 ```py
-                linker = AthenaLinker(df")
+                linker = AthenaLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
             === ":simple-sqlite: SQLite"
                 ```py
-                linker = SQLiteLinker(df")
+                linker = SQLiteLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```

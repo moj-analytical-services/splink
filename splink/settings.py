@@ -21,6 +21,7 @@ class Settings:
     linking model"""
 
     def __init__(self, settings_dict):
+
         settings_dict = deepcopy(settings_dict)
 
         # If incoming comparisons are of type Comparison not dict, turn back into dict
@@ -32,19 +33,17 @@ class Settings:
 
         settings_dict["comparisons"] = ccs
 
-        # In incoming comparisons have nested ComparisonLevels, turn back into dict
         for comparison_dict in settings_dict["comparisons"]:
             comparison_dict["comparison_levels"] = [
                 cl.as_dict() if isinstance(cl, ComparisonLevel) else cl
                 for cl in comparison_dict["comparison_levels"]
             ]
 
+        # Validate against schema before processing
         validate_settings_against_schema(settings_dict)
-
         self._settings_dict = settings_dict
-
-        ccs = self._settings_dict["comparisons"]
         s_else_d = self._from_settings_dict_else_default
+        ccs = self._settings_dict["comparisons"]
         self._sql_dialect = s_else_d("sql_dialect")
 
         self.comparisons: list[Comparison] = []

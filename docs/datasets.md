@@ -30,6 +30,12 @@ linker = DuckDBLinker(
 )
 ```
 
+??? tip "Troubleshooting"
+
+    If you get a `SSLCertVerificationError` when trying to use the inbuilt datasets, this can be fixed with the `ssl` package by running:
+    
+    `ssl._create_default_https_context = ssl._create_unverified_context`.
+
 ## `splink_datasets`
 
 Each attribute of `splink_datasets` is a dataset available for use, which exists as a pandas `DataFrame`.

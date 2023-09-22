@@ -37,7 +37,7 @@ record = {
     "dob": "1971-05-24",
     "city": "London",
     "email": "eliza@smith.net",
-    "group": 10000,
+    "cluster": 10000,
 }
 
 

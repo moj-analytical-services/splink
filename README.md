@@ -58,7 +58,7 @@ The Office for National Statistics have written a [case study about using Splink
 
 ## Installation
 
-Splink supports python 3.7+. To obtain the latest released version of splink you can install from PyPI using pip:
+Splink supports python 3.8+. To obtain the latest released version of splink you can install from PyPI using pip:
 
 ```sh
 pip install splink
@@ -70,6 +70,35 @@ or, if you prefer, you can instead install splink using conda:
 conda install -c conda-forge splink
 ```
 
+<details>
+<summary><b>Backend Specific Installs</b></summary>
+
+<br>
+
+From Splink v3.9.7, packages required by specific splink backends can be optionally installed by adding the `[<backend>]` suffix to the end of your `pip install`.
+
+**Note** - As SQLite and DuckDB come packaged with Splink, they cannot be optionally installed.
+
+Backends supported by optional installs:
+
+**Spark**
+```sh
+pip install 'splink[spark]'
+```
+
+**Athena**
+```sh
+pip install 'splink[athena]'
+```
+
+**PostgreSQL**
+```sh
+pip install 'splink[postgres]'
+```
+</details>
+
+
+#### DuckDBLess Splink
 Should you require a more bare-bones version of Splink **without DuckDB**, please see the following area of the docs:
 > [DuckDBless Splink Installation](https://moj-analytical-services.github.io/splink/installations.html#duckdb-less-installation)
 
@@ -108,10 +137,10 @@ linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
 blocking_rule_for_training = block_on(["first_name", "surname"])
 
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
 
 blocking_rule_for_training = block_on("dob")
-linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
 
 pairwise_predictions = linker.predict()
 

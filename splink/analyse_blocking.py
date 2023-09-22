@@ -3,6 +3,8 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING, Union
 
+import pandas as pd
+
 from .blocking import BlockingRule, _sql_gen_where_condition, block_using_rules_sql
 from .misc import calculate_cartesian, calculate_reduction_ratio
 
@@ -35,9 +37,7 @@ def number_of_comparisons_generated_by_blocking_rule_post_filters_sql(
 
 
 def cumulative_comparisons_generated_by_blocking_rules(
-    linker: Linker,
-    blocking_rules,
-    output_chart=True,
+    linker: Linker, blocking_rules, output_chart=True, return_dataframe=False
 ):
     # Deepcopy our original linker so we can safely adjust our settings.
     # This is particularly important to ensure we don't overwrite our
@@ -142,7 +142,10 @@ def cumulative_comparisons_generated_by_blocking_rules(
 
     linker._analyse_blocking_mode = False
 
-    return br_comparisons
+    if return_dataframe:
+        return pd.DataFrame(br_comparisons)
+    else:
+        return br_comparisons
 
 
 def count_comparisons_from_blocking_rule_pre_filter_conditions_sqls(

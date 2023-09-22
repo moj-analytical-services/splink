@@ -19,3 +19,4 @@ jinja2==3.0.3
 mkdocs-git-revision-date-localized-plugin
 mkdocs-charts-plugin
 neoteroi-mkdocs
+mkdocs-video
