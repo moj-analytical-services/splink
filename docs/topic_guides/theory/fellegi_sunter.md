@@ -84,7 +84,7 @@ Where $m$ and $u$ deviate from these ideals can usually be intuitively explained
     ### _m_ probability
     A measure of **data quality/reliability**.
 
-    How often might a preson's information change legitimately or through data error? 
+    How often might a person's information change legitimately or through data error? 
 
     * **Names**: typos, aliases, nicknames, middle names, married names etc.
     * **DOB**: typos, estimates (e.g. 1st Jan YYYY where date not known)
@@ -197,7 +197,7 @@ $$
 
 #### Understanding the relationship between Match Probability and Match Weight
 
-It can be helpful to build up some inuition for how _match weight_ translates into _match probability_. 
+It can be helpful to build up some intuition for how _match weight_ translates into _match probability_. 
 
 Plotting _match probability_ versus _match weight_ gives the following chart:
 

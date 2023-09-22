@@ -8,7 +8,7 @@ tags:
 
 ## Optimising Spark jobs
 
-This topic guide describes how to configue Spark to optimise performance - especially large linkage jobs which are slow or are not completing using default settings.
+This topic guide describes how to configure Spark to optimise performance - especially large linkage jobs which are slow or are not completing using default settings.
 
 It is assumed readers have already read the more general [guide to linking big data](https://moj-analytical-services.github.io/splink/topic_guides/drivers_of_performance.html), and blocking rules are proportionate to the size of the Spark cluster. As a _very_ rough guide, on a small cluster of (say) 8 machines, we recommend starting with blocking rules that generate around 100 million comparisons. Once this is working, loosening the blocking rules to around 1 billion comparisons or more is often achievable.
 

@@ -287,7 +287,7 @@ We calculate the Jaccard similarity using the formula:
 
 $$\textsf{Jaccard}(\textrm{Address1}, \textrm{Address2})=\frac{5}{9}=0.5556$$
 
-However, this functionality is not curently implemented within Splink
+However, this functionality is not currently implemented within Splink
 
 ##### Examples 
 

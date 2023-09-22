@@ -31,15 +31,15 @@ Splink's core linkage algorithm is based on Fellegi-Sunter's model of record lin
 
 Consider the following records that lack a unique person identifier:
 
-![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_1.drawio.png)
+![tables showing what Splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_1.drawio.png)
 
 Splink predicts which rows link together:
 
-![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_2.drawio.png)
+![tables showing what Splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_2.drawio.png)
 
 and clusters these links to produce an estimated person ID:
 
-![tables showing what splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_3.drawio.png)
+![tables showing what Splink does](https://raw.githubusercontent.com/moj-analytical-services/splink/master/docs/img/README/what_does_splink_do_3.drawio.png)
 
 ## What data does Splink work best with?
 

@@ -58,7 +58,7 @@ import splink.duckdb.blocking_rule_library as brl
 brl.exact_match_rule("date_of_birth")
 ```
 
-**Note**: from Splink v3.9.6, `exact_match_rule` has been superceded by `block_on`. We advise using this going forward.
+**Note**: from Splink v3.9.6, `exact_match_rule` has been superseded by `block_on`. We advise using this going forward.
 
 Check out these new functions in the [BRL Documentation](https://moj-analytical-services.github.io/splink/blocking_rule_library.html) as well as some new [Blocking Topic Guides](https://moj-analytical-services.github.io/splink/topic_guides/blocking/blocking_rules.html) to better explain what Blocking Rules are, how they are used in Splink, and how to choose them.
 
@@ -149,7 +149,7 @@ We have been putting a lot of effort into improving our documentation site, incl
 Some of the improvements include:
 
 * More Topic Guides covering things such as [Record Linkage Theory](https://moj-analytical-services.github.io/splink/topic_guides/theory/record_linkage.html), [Guidance on Splink's backends](https://moj-analytical-services.github.io/splink/topic_guides/backends/backends.html) and [String Fuzzy Matching](https://moj-analytical-services.github.io/splink/topic_guides/comparisons/choosing_comparators.html).
-* A [Contributors Guide](https://moj-analytical-services.github.io/splink/CONTRIBUTING.html) to make contrbuting to Splink even easier. If you are interested in getting involved in open source, check the guide out!
+* A [Contributors Guide](https://moj-analytical-services.github.io/splink/CONTRIBUTING.html) to make contributing to Splink even easier. If you are interested in getting involved in open source, check the guide out!
 * Adding tables to the Comparison [libraries documentation](../../comparison_level_library.md) to show the functions available for each SQL backend.
 
 Thanks to everyone who filled out our [feedback survey](https://forms.gle/4S9PJgFX7opE9ggu9). If you have any more feedback or ideas for how we can make the docs better please do let us know by [raising an issue](https://github.com/moj-analytical-services/splink/issues), [starting a discussion](https://github.com/moj-analytical-services/splink/discussions) or filling out the survey.

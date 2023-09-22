@@ -252,7 +252,7 @@ These functions generate comparisons within the settings dictionary. See below f
 
     ```
 
-With our finalised settings object, we can train a splink model using the following code:
+With our finalised settings object, we can train a Splink model using the following code:
 
 ??? example "Example model using the settings dictionary"
 
@@ -529,7 +529,7 @@ where the `m_probability` and `u_probability` values here are then used to gener
 
 ## Loading a pre-trained model
 
-When using a pre-trained model, you can read in the model from a json and recreate the linker object to make new pariwise predictions. For example:
+When using a pre-trained model, you can read in the model from a json and recreate the linker object to make new pairwise predictions. For example:
 
 ```py
 linker = DuckDBLinker(new_df)
