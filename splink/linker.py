@@ -2042,6 +2042,22 @@ class Linker:
         column_expressions: str | list[str],
         top_n=10,
         bottom_n=10,
+        distribution_plots=True,
+    ):
+        return profile_columns(
+            self,
+            column_expressions,
+            top_n=top_n,
+            bottom_n=bottom_n,
+            kde_plots=False,
+            distribution_plots=distribution_plots,
+        )
+    
+    def profile_numeric_columns(
+        self,
+        column_expressions: str | list[str],
+        top_n=10,
+        bottom_n=10,
         kde_plots=False,
         distribution_plots=True,
     ):
