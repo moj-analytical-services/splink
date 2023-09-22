@@ -2094,7 +2094,7 @@ class Linker:
             kde_plots=False,
             distribution_plots=distribution_plots,
         )
-    
+
     def profile_numeric_columns(
         self,
         column_expressions: str | list[str],
