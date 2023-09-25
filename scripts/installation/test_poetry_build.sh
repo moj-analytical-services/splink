@@ -8,11 +8,11 @@ if [ "$#" -ge 1 ]; then
 fi
 
 # Deactivate the current virtual environment if it is active
-# if command -v deactivate > /dev/null 2>&1; then
-#     deactivate
-# fi
+if command -v deactivate > /dev/null 2>&1; then
+    deactivate
+fi
 # Delete the dist folder if it exists
-# rm -rf dist/ venv/
+rm -rf dist/ venv/
 
 # Setup python and build the package
 python3 -m venv venv && source venv/bin/activate
