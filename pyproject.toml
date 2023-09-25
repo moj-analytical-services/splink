@@ -52,7 +52,7 @@ ruff = "0.0.257"
 pytest = "7.3"
 pyarrow = ">=7.0.0"
 networkx = "2.5.1"
-rapidfuzz = "2.0.3"
+rapidfuzz = "^2.0.3"
 
 [tool.poetry.group.benchmarking]
 optional = true
