@@ -16,9 +16,9 @@ from ..databricks.enable_splink import enable_splink
 from ..input_column import InputColumn
 from ..linker import Linker
 from ..misc import ensure_is_list, major_minor_version_greater_equal_than
-from .jar_location import get_scala_udfs
 from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
+from .jar_location import get_scala_udfs
 from .spark_helpers.custom_spark_dialect import Dialect
 
 logger = logging.getLogger(__name__)
