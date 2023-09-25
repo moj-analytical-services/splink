@@ -12,6 +12,7 @@ def _spark_v_3_check() -> bool:
 
     return version.parse(spark.__version__) >= version.parse("3.0")
 
+
 def similarity_jar_location():
     import splink
 
@@ -67,8 +68,6 @@ def get_scala_udfs():
             ),
         ]
         # Register spark 3 excl. functions
-        udfs_register.extend(
-            spark_3_udfs
-        )
+        udfs_register.extend(spark_3_udfs)
 
     return udfs_register
