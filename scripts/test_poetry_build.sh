@@ -4,13 +4,16 @@
 # environment be used - "--current_venv" -
 # install poetry (if not already installed) and the latest Splink build.
 # Otherwise, deactivate and create a new venv.
-if [ "$1" == "--current_venv" ]; then
+if [ "$1" = "--current_venv" ]; then
+    # Installing poetry in the current virtual environment
     pip3 install poetry
 else
-    deactivate
+    # Deactivate the current virtual environment if it is active
+    if command -v deactivate > /dev/null 2>&1; then
+        deactivate
+    fi
     # Delete the dist folder if it exists
-    rm -rf dist/
-    rm -rf venv
+    rm -rf dist/ venv/
 
     # Setup python and build the package
     python3 -m venv venv
