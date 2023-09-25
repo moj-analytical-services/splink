@@ -10,7 +10,7 @@ tags:
 
 # Example Notebooks
 
-This section provides a series of examples to help you get started with splink. You can find the underlying notebooks in the [demos folder](https://github.com/moj-analytical-services/splink/tree/master/docs/demos/examples) of the Splink repo.
+This section provides a series of examples to help you get started with Splink. You can find the underlying notebooks in the [demos folder](https://github.com/moj-analytical-services/splink/tree/master/docs/demos/examples) of the Splink repo.
 
 You can try these demos live in your web browser using the following link:
 
@@ -43,7 +43,7 @@ You can try these demos live in your web browser using the following link:
 
 ### :simple-apachespark: PySpark examples
 
-[Deduplication of a small dataset using Pyspark. Entity type is persons.](./spark/deduplicate_1k_synthetic.ipynb)
+[Deduplication of a small dataset using PySpark. Entity type is persons.](./spark/deduplicate_1k_synthetic.ipynb)
 
 ### :simple-amazonaws: Athena examples
 

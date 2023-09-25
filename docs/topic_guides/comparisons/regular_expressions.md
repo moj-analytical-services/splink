@@ -11,7 +11,7 @@ Further regex functionality is provided by the `valid_string_pattern` option. Th
 
 ### Exact match
 
-Supppose you wish to make comparisons on a postcode column in your data, however only care about finding links between people who share the same area code (given by the first 1 to 2 letters of the postcode). The `regex_extract` option can be used within an exact match comparison to do this by passing it the regular expression pattern "`^[A-Z]{1,2}`":
+Suppose you wish to make comparisons on a postcode column in your data, however only care about finding links between people who share the same area code (given by the first 1 to 2 letters of the postcode). The `regex_extract` option can be used within an exact match comparison to do this by passing it the regular expression pattern "`^[A-Z]{1,2}`":
 
 === "DuckDB"
     ```python
@@ -137,7 +137,7 @@ Here is an example set of record comparisons that could have been generated usin
 |-------------|-------------|---------|---------|--------------------------------|
 | 7           | 1           |         |         | exact match                    |
 | 5           | 1           |         |         | jaro-winkler similarity >= 0.9 |
-| 9           | 2           |         |         | jaro-winkler similairty >= 0.7 |
+| 9           | 2           |         |         | jaro-winkler similarity >= 0.7 |
 | 4           | 8           |         |         | else level                     |
 | 6           | 3           |         |         | null level                     |
 

@@ -10,7 +10,7 @@ tags:
 
 # Splink's SQL backends: Spark, DuckDB, etc
 
-Splink is a Python library. It implements all data linking computations by generating SQL, and submitting the SQL statements to a backend of the user's chosing for execution.
+Splink is a Python library. It implements all data linking computations by generating SQL, and submitting the SQL statements to a backend of the user's choosing for execution.
 
 The Splink code you write is almost identical between backends, so it's straightforward to migrate between backends. Often, it's a good idea to start working using DuckDB on a sample of data, because it will produce results very quickly. When you're comfortable with your model, you may wish to migrate to a big data backend to estimate/predict on the full dataset.
 
@@ -47,7 +47,7 @@ See the Spark [deduplication example notebook](../../demos/examples/spark/dedupl
 
 Athena is a big data SQL backend provided on AWS which is great for large datasets (10+ million records). It requires access to a live AWS account and as a persistent database, requires some additional management of the tables created by Splink. Athena has reasonable, but not complete, coverage for the functions in the Splink [comparison libraries](../../comparison_level_library.md), with gaps in string fuzzy matching functionality due to the lack of some string functions in Athena's underlying SQL engine, [Presto](https://prestodb.io/docs/current/). At this time, the Athena backend is being used sparingly by the Splink development team so receives minimal levels of support.
 
-In addition, from a development perspective, the neccessity for an AWS connection makes testing Athena code more difficult, so there may be occassional bugs that would normally be caught by our testing framework.
+In addition, from a development perspective, the necessity for an AWS connection makes testing Athena code more difficult, so there may be occasional bugs that would normally be caught by our testing framework.
 
 See the Athena [deduplication example notebook](../../demos/examples/athena/deduplicate_50k_synthetic.ipynb) to get a better idea of how Splink works with Athena.
 
@@ -57,7 +57,7 @@ SQLite is similar to DuckDB in that it is, generally, more suited to smaller dat
 
 ### :simple-postgresql: PostgreSql
 
-PostgreSql is a relatively new linker, so we have not fully tested performance or what size of datasets can processed with Splink. The Postgres backend requires a Postgres database, so it is recommened to use this backend only if you are working with a pre-existing Postgres database. Postgres has reasonable, but not complete, coverage for the functions in the Splink [comparison libraries](../../comparison_level_library.md), with gaps in string fuzzy matching functionality due to the lack of some string functions in Postgres. At this time, the Postgres backend is not being actively used by the Splink development team so receives minimal levels of support.
+PostgreSql is a relatively new linker, so we have not fully tested performance or what size of datasets can processed with Splink. The Postgres backend requires a Postgres database, so it is recommend to use this backend only if you are working with a pre-existing Postgres database. Postgres has reasonable, but not complete, coverage for the functions in the Splink [comparison libraries](../../comparison_level_library.md), with gaps in string fuzzy matching functionality due to the lack of some string functions in Postgres. At this time, the Postgres backend is not being actively used by the Splink development team so receives minimal levels of support.
 
 More details on using Postgres as a Splink backend can be found on the [postgres page](./postgres.md).
 
@@ -65,7 +65,7 @@ More details on using Postgres as a Splink backend can be found on the [postgres
 
 Import the linker from the backend of your choosing, and the backend-specific comparison libraries.
 
-Once you have initialised the `linker` object, there is no difference in the subequent code between backends.
+Once you have initialised the `linker` object, there is no difference in the subsequent code between backends.
 
 === ":simple-duckdb: DuckDB"
 

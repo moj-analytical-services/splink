@@ -10,11 +10,11 @@ Details are as follows:
 
 ### 1. Core data linking algorithms are Splink
 
-Core data linking algorithms are implmented in 'backend agnostic' SQL. So they're written using basic SQL functions that are common across the available in all the target backends, and don't need any translation.
+Core data linking algorithms are implemented in 'backend agnostic' SQL. So they're written using basic SQL functions that are common across the available in all the target backends, and don't need any translation.
 
 It has been possible to write all of the core Splink logic in SQL that is consistent between dialects.
 
-However, this is not the case with `Comparisons`, which tend to use backend specific SQL functions like `jaro_winker`, whose functino names and signatures differ between backends.
+However, this is not the case with `Comparisons`, which tend to use backend specific SQL functions like `jaro_winker`, whose function names and signatures differ between backends.
 
 ### 2. User-provided SQL is interpolated into these dialect-agnostic SQL statements
 
@@ -33,7 +33,7 @@ Users are also able to use the `comparison_level_library` and `comparison_librar
 
 These are backend specific and are imported like `from splink.spark.comparison_level_library import jaro_winkler_level`. This ensures that the syntax matches the chosen execution backend
 
-### 3. Backends can implement transpilation and or dielct steps to further transform the SQL if needed
+### 3. Backends can implement transpilation and or dialect steps to further transform the SQL if needed
 
 Occasionally some modifications are needed to the SQL to ensure it executes against the target backend.
 

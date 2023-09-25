@@ -54,7 +54,7 @@ E.g. For a comparison including a [Double Metaphone](#double-metaphone) phonetic
 
 ## Algorithms
 
-Below are some examples of well known phonetic transformation algorithmns.
+Below are some examples of well known phonetic transformation algorithms.
 
 ### Soundex
 
