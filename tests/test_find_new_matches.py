@@ -108,7 +108,7 @@ def test_matches_work(
     path = os.path.join(tmp_path, "model.json")
     linker.save_model_to_json(path)
 
-    linker = Linker(df, settings_dict=path)
+    linker = Linker(df, settings_dict=path, **helper.extra_linker_args())
     # Works w/ loaded settings and no `compute_tf_table`
     matches = linker.find_matches_to_new_records(
         [record], blocking_rules=brs, match_weight_threshold=0
