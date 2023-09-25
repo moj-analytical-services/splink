@@ -48,10 +48,11 @@ class SparkDataFrame(SplinkDataFrame):
         return self.linker.spark.sql(sql).toPandas().to_dict(orient="records")
 
     def _drop_table_from_database(self, force_non_splink_table=False):
-        # Spark, in general, does not persist its results to disk
-        # There is a whitelist of dataframes to either perist() or checkpoint()
-        # But there's no real need to clean these up, so we'll just do nothing
-        pass
+        if self.linker.break_lineage_method == "delta_lake_table":
+            self._check_drop_table_created_by_splink(force_non_splink_table)
+            self.linker._delete_table_from_database(self.physical_name)
+        else:
+            pass
 
     def as_pandas_dataframe(self, limit=None):
         sql = f"select * from {self.physical_name}"
@@ -515,6 +516,9 @@ class SparkLinker(Linker):
             return True
         elif len(query_result) == 0:
             return False
+
+    def _delete_table_from_database(self, name):
+        self.spark.sql(f"drop table {name}")
 
     def register_tf_table(self, df, col_name, overwrite=False):
         self.register_table(df, colname_to_tf_tablename(col_name), overwrite)
