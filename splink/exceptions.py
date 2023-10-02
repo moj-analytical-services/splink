@@ -2,7 +2,6 @@ import warnings
 from typing import List, Union
 
 
-
 # base class for any type of custom exception
 class SplinkException(Exception):
     pass

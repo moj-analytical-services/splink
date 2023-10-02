@@ -58,6 +58,7 @@ def test_distance_function_comparison():
         for gamma_val, expected_count in expected_counts.items():
             assert sum(df_pred[f"gamma_{col}"] == gamma_val) == expected_count
 
+
 @mark_with_dialects_excluding()
 def test_set_to_lowercase_parameter():
     data = [
