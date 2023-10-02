@@ -58,7 +58,7 @@ def test_distance_function_comparison():
         for gamma_val, expected_count in expected_counts.items():
             assert sum(df_pred[f"gamma_{col}"] == gamma_val) == expected_count
 
-
+@mark_with_dialects_excluding()
 def test_set_to_lowercase_parameter():
     data = [
         {"id": 1, "forename": "John"},
@@ -78,7 +78,6 @@ def test_set_to_lowercase_parameter():
 
     df = pd.DataFrame(data)
 
-    linker = DuckDBLinker(df, settings)
     df_e = linker.predict().as_pandas_dataframe()
 
     row = dict(df_e.query("id_l == 1 and id_r == 2").iloc[0])
