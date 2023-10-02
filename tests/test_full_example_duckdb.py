@@ -6,9 +6,9 @@ import pyarrow.csv as pa_csv
 import pyarrow.parquet as pq
 import pytest
 
-import splink.duckdb.duckdb_comparison_level_library as cll
-import splink.duckdb.duckdb_comparison_library as cl
-from splink.duckdb.duckdb_linker import DuckDBLinker
+import splink.duckdb.comparison_level_library as cll
+import splink.duckdb.comparison_library as cl
+from splink.duckdb.linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict, name_comparison
 from .decorator import mark_with_dialects_including
@@ -81,6 +81,8 @@ def test_full_example_duckdb(tmp_path):
 
     register_roc_data(linker)
     linker.roc_chart_from_labels_table("labels")
+    linker.accuracy_chart_from_labels_table("labels")
+    linker.confusion_matrix_from_labels_table("labels")
 
     df_clusters = linker.cluster_pairwise_predictions_at_threshold(df_predict, 0.1)
 
@@ -102,7 +104,7 @@ def test_full_example_duckdb(tmp_path):
         "dob": "1971-05-24",
         "city": "London",
         "email": "john@smith.net",
-        "group": 10000,
+        "cluster": 10000,
     }
 
     linker.find_matches_to_new_records(
@@ -129,7 +131,7 @@ df_l = df.copy()
 df_r = df.copy()
 df_l["source_dataset"] = "my_left_ds"
 df_r["source_dataset"] = "my_right_ds"
-df_final = df_l.append(df_r)
+df_final = pd.concat([df_l, df_r])
 
 
 # Tests link only jobs under different inputs:
@@ -286,7 +288,7 @@ def test_small_example_duckdb(tmp_path):
             {
                 "output_column_name": "name",
                 "comparison_levels": [
-                    cll.null_level("full_name", valid_string_regex=".*"),
+                    cll.null_level("full_name", valid_string_pattern=".*"),
                     cll.exact_match_level("full_name", term_frequency_adjustments=True),
                     cll.columns_reversed_level(
                         "first_name", "surname", tf_adjustment_column="full_name"

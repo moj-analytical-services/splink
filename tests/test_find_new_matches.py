@@ -2,24 +2,32 @@ from copy import deepcopy
 
 import pandas as pd
 
-from splink.duckdb.duckdb_comparison_library import exact_match
-from splink.duckdb.duckdb_linker import DuckDBLinker
-from tests.basic_settings import get_settings_dict
+from .basic_settings import get_settings_dict
+from .decorator import mark_with_dialects_excluding
 
 df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
 
-settings = get_settings_dict()
-settings_tf = deepcopy(settings, None)
-# Settings with two term frequency columns
-settings_tf["comparisons"][1] = exact_match(
-    "surname", True, m_probability_exact_match=0.7, m_probability_else=0.1
-)
-settings_no_tf = deepcopy(settings, None)
-# Settings with no term frequencies
-settings_no_tf["comparisons"][0] = exact_match(
-    "first_name", False, m_probability_exact_match=0.7, m_probability_else=0.1
-)
+def get_different_settings_dicts(exact_match):
+    settings = get_settings_dict()
+    settings_tf = deepcopy(settings, None)
+    # Settings with two term frequency columns
+    settings_tf["comparisons"][1] = exact_match(
+        "surname",
+        term_frequency_adjustments=True,
+        m_probability_exact_match=0.7,
+        m_probability_else=0.1,
+    )
+    settings_no_tf = deepcopy(settings, None)
+    # Settings with no term frequencies
+    settings_no_tf["comparisons"][0] = exact_match(
+        "first_name",
+        term_frequency_adjustments=False,
+        m_probability_exact_match=0.7,
+        m_probability_else=0.1,
+    )
+    return settings_tf, settings_no_tf, settings
+
 
 # The record to be matched
 record = {
@@ -29,15 +37,21 @@ record = {
     "dob": "1971-05-24",
     "city": "London",
     "email": "eliza@smith.net",
-    "group": 10000,
+    "cluster": 10000,
 }
 
 
-def test_tf_tables_init_works():
-    for s in [settings_tf, settings_no_tf, settings]:
-        linker = DuckDBLinker(
+@mark_with_dialects_excluding()
+def test_tf_tables_init_works(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+
+    for idx, s in enumerate(get_different_settings_dicts(helper.cl.exact_match)):
+        linker = Linker(
             df,
             s,
+            **helper.extra_linker_args(),
+            input_table_aliases=f"test_tf_table_alias_{idx}",
         )
 
         # Compute tf table for first name
@@ -59,16 +73,19 @@ def test_tf_tables_init_works():
         )
 
 
-def test_matches_work():
-    linker = DuckDBLinker(
-        df,
-        settings,
-    )
+@mark_with_dialects_excluding()
+def test_matches_work(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    brl = helper.brl
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    linker = Linker(df, get_settings_dict(), **helper.extra_linker_args())
 
     # Train our model to get more reasonable outputs...
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
-    blocking_rule = "l.first_name = r.first_name and l.surname = r.surname"
+    blocking_rule = brl.block_on(["first_name", "surname"])
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     blocking_rule = "l.dob = r.dob"

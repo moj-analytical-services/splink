@@ -1,76 +1,116 @@
 from __future__ import annotations
 
+import warnings
+
 from .comparison_level import ComparisonLevel
 from .comparison_level_sql import great_circle_distance_km_sql
 from .input_column import InputColumn
 
 
 class NullLevelBase(ComparisonLevel):
-    def __init__(self, col_name, valid_string_regex: str = None) -> ComparisonLevel:
+    def __init__(
+        self,
+        col_name,
+        valid_string_pattern: str = None,
+        invalid_dates_as_null: bool = False,
+        valid_string_regex: str = None,
+    ) -> ComparisonLevel:
         """Represents comparisons level where one or both sides of the comparison
         contains null values so the similarity cannot be evaluated.
         Assumed to have a partial match weight of zero (null effect
         on overall match weight)
         Args:
             col_name (str): Input column name
-            valid_string_regex (str): regular expression pattern that if not
+            valid_string_pattern (str): pattern (regex or otherwise) that if not
                 matched will result in column being treated as a null.
+            invalid_dates_as_null (bool): If True, set all invalid dates to null.
+                The "correct" format of a date is set by valid_string_pattern.
+                Defaults to false.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Simple null comparison level
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.null_level("name")
                 ```
                 Null comparison level including strings that do not match
                 a given regex pattern
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
-                cll.null_level("name", valid_string_regex="^[A-Z]{1,7}$")
+                import splink.duckdb.comparison_level_library as cll
+                cll.null_level("name", valid_string_pattern="^[A-Z]{1,7}$")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Simple null level
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.null_level("name")
                 ```
                 Null comparison level including strings that do not match
                 a given regex pattern
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
-                cll.null_level("name", valid_string_regex="^[A-Z]{1,7}$")
+                import splink.spark.comparison_level_library as cll
+                cll.null_level("name", valid_string_pattern="^[A-Z]{1,7}$")
                 ```
-            === "Athena"
+            === ":simple-amazonaws: Athena"
                 Simple null level
                 ``` python
-                import splink.athena.athena_comparison_level_library as cll
+                import splink.athena.comparison_level_library as cll
                 cll.null_level("name")
                 ```
                 Null comparison level including strings that do not match
                 a given regex pattern
                 ``` python
-                import splink.athena.athena_comparison_level_library as cll
-                cll.null_level("name", valid_string_regex="^[A-Z]{1,7}$")
+                import splink.athena.comparison_level_library as cll
+                cll.null_level("name", valid_string_pattern="^[A-Z]{1,7}$")
                 ```
-            === "SQLite"
+            === ":simple-sqlite: SQLite"
                 Simple null level
                 ``` python
-                import splink.sqlite.sqlite_comparison_level_library as cll
+                import splink.sqlite.comparison_level_library as cll
+                cll.null_level("name")
+                ```
+            === ":simple-postgresql: PostgreSql"
+                Simple null level
+                ``` python
+                import splink.postgres.comparison_level_library as cll
                 cll.null_level("name")
                 ```
         Returns:
             ComparisonLevel: Comparison level for null entries
         """
 
+        # TODO: Remove this compatibility code in a future release once we drop
+        # support for "valid_string_regex". Deprecation warning added in 3.9.6
+        if valid_string_pattern is not None and valid_string_regex is not None:
+            # user supplied both
+            raise TypeError("Just use valid_string_pattern")
+        elif valid_string_pattern is not None:
+            # user is doing it correctly
+            pass
+        elif valid_string_regex is not None:
+            # user is using deprecated argument
+            warnings.warn(
+                "valid_string_regex is deprecated; use valid_string_pattern",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            valid_string_pattern = valid_string_regex
+
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
-        if valid_string_regex:
-            col_name_l = self._regex_extract_function(col.name_l(), valid_string_regex)
-            col_name_r = self._regex_extract_function(col.name_r(), valid_string_regex)
+        col_name_l, col_name_r = col.name_l(), col.name_r()
+
+        if invalid_dates_as_null:
+            col_name_l = self._valid_date_function(col_name_l, valid_string_pattern)
+            col_name_r = self._valid_date_function(col_name_r, valid_string_pattern)
+            sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL OR
+                      {col_name_l}=='' OR {col_name_r} ==''"""
+        elif valid_string_pattern:
+            col_name_l = self._regex_extract_function(col_name_l, valid_string_pattern)
+            col_name_r = self._regex_extract_function(col_name_r, valid_string_pattern)
             sql = f"""{col_name_l} IS NULL OR {col_name_r} IS NULL OR
                       {col_name_l}=='' OR {col_name_r} ==''"""
         else:
-            col_name_l, col_name_r = col.name_l(), col.name_r()
             sql = f"{col_name_l} IS NULL OR {col_name_r} IS NULL"
 
         level_dict = {
@@ -90,7 +130,7 @@ class ExactMatchLevelBase(ComparisonLevel):
         m_probability=None,
         term_frequency_adjustments=False,
         include_colname_in_charts_label=False,
-        manual_chart_label=None,
+        manual_col_name_for_charts_label=None,
     ) -> ComparisonLevel:
         """Represents a comparison level where there is an exact match,
 
@@ -104,70 +144,81 @@ class ExactMatchLevelBase(ComparisonLevel):
                 adjustments to the exact match level. Defaults to False.
             include_colname_in_charts_label (bool, optional): If True, include col_name
                 in chart labels (e.g. linker.match_weights_chart())
-            chart_label (str, optional): string to include in chart label. Setting to
-                col_name would recreate behaviour of
+            manual_col_name_for_charts_label (str, optional): string to include as
+                 column name in chart label. Acts as a manual overwrite of the
+                 colname when include_colname_in_charts_label is True.
                 include_colname_in_charts_label=True
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Simple Exact match level
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.exact_match_level("name")
                 ```
                 Exact match level with term-frequency adjustments
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.exact_match_level("name", term_frequency_adjustments=True)
                 ```
                 Exact match level on a substring of col_name as
                  determined by a regular expression
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.exact_match_level("name", regex_extract="^[A-Z]{1,4}")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Simple Exact match level
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.exact_match_level("name")
                 ```
                 Exact match level with term-frequency adjustments
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.exact_match_level("name", term_frequency_adjustments=True)
                 ```
                 Exact match level on a substring of col_name as
                  determined by a regular expression
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.exact_match_level("name", regex_extract="^[A-Z]{1,4}")
                 ```
-            === "Athena"
+            === ":simple-amazonaws: Athena"
                 Simple Exact match level
                 ``` python
-                import splink.athena.athena_comparison_level_library as cll
+                import splink.athena.comparison_level_library as cll
                 cll.exact_match_level("name")
                 ```
                 Exact match level with term-frequency adjustments
                 ``` python
-                import splink.athena.athena_comparison_level_library as cll
+                import splink.athena.comparison_level_library as cll
                 cll.exact_match_level("name", term_frequency_adjustments=True)
                 ```
                 Exact match level on a substring of col_name as
                  determined by a regular expression
                 ``` python
-                import splink.athena.athena_comparison_level_library as cll
+                import splink.athena.comparison_level_library as cll
                 cll.exact_match_level("name", regex_extract="^[A-Z]{1,4}")
                 ```
-            === "SQLite"
+            === ":simple-sqlite: SQLite"
                 Simple Exact match level
                 ``` python
-                import splink.sqlite.sqlite_comparison_level_library as cll
+                import splink.sqlite.comparison_level_library as cll
                 cll.exact_match_level("name")
                 ```
                 Exact match level with term-frequency adjustments
                 ``` python
-                import splink.sqlite.sqlite_comparison_level_library as cll
+                import splink.sqlite.comparison_level_library as cll
+                cll.exact_match_level("name", term_frequency_adjustments=True)
+            === ":simple-postgresql: PostgreSql"
+                Simple Exact match level
+                ``` python
+                import splink.postgres.comparison_level_library as cll
+                cll.exact_match_level("name")
+                ```
+                Exact match level with term-frequency adjustments
+                ``` python
+                import splink.postgres.comparison_level_library as cll
                 cll.exact_match_level("name", term_frequency_adjustments=True)
                 ```
         """
@@ -175,8 +226,8 @@ class ExactMatchLevelBase(ComparisonLevel):
 
         if include_colname_in_charts_label:
             label_suffix = f" {col_name}"
-        elif manual_chart_label:
-            label_suffix = f" {manual_chart_label}"
+        elif manual_col_name_for_charts_label:
+            label_suffix = f" {manual_col_name_for_charts_label}"
         else:
             label_suffix = ""
 
@@ -212,25 +263,29 @@ class ElseLevelBase(ComparisonLevel):
         considered by preceding comparison levels,
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
-                cll.else_level("name")
+                import splink.duckdb.comparison_level_library as cll
+                cll.else_level()
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
-                cll.else_level("name")
+                import splink.spark.comparison_level_library as cll
+                cll.else_level()
                 ```
-            === "Athena"
+            === ":simple-amazonaws: Athena"
                 ``` python
-                import splink.athena.athena_comparison_level_library as cll
-                cll.else_level("name")
+                import splink.athena.comparison_level_library as cll
+                cll.else_level()
                 ```
-            === "SQLite"
+            === ":simple-sqlite: SQLite"
                 ``` python
-                import splink.sqlite.sqlite_comparison_level_library as cll
-                cll.else_level("name")
+                import splink.sqlite.comparison_level_library as cll
+                cll.else_level()
+            === ":simple-postgresql: PostgreSql"
+                ``` python
+                import splink.postgres.comparison_level_library as cll
+                cll.else_level()
                 ```
         """
         if isinstance(m_probability, str):
@@ -258,6 +313,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         set_to_lowercase=False,
         higher_is_more_similar: bool = True,
         include_colname_in_charts_label=False,
+        manual_col_name_for_charts_label=None,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a user-provided distance function,
@@ -275,36 +331,56 @@ class DistanceFunctionLevelBase(ComparisonLevel):
                 If false, a higher value indicates a lower similarity
                 (e.g. levenshtein).
             include_colname_in_charts_label (bool, optional): If True, includes
-                col_name in charts label
+                col_name in charts label.
+            manual_col_name_for_charts_label (str, optional): string to include as
+                 column name in chart label. Acts as a manual overwrite of the
+                 colname when include_colname_in_charts_label is True.
             m_probability (float, optional): Starting value for m probability
                 Defaults to None.
 
         Examples:
-
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Apply the `levenshtein` function to a comparison level
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.distance_function_level("name",
                                             "levenshtein",
                                             2,
                                             False)
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Apply the `levenshtein` function to a comparison level
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.distance_function_level("name",
                                             "levenshtein",
                                             2,
                                             False)
                 ```
-            === "Athena"
+            === ":simple-amazonaws: Athena"
                 Apply the `levenshtein_distance` function to a comparison level
                 ``` python
-                import splink.athena.athena_comparison_level_library as cll
+                import splink.athena.comparison_level_library as cll
                 cll.distance_function_level("name",
                                             "levenshtein_distance",
+                                            2,
+                                            False)
+                ```
+            === ":simple-sqlite: SQLite"
+                Apply the `levenshtein` function to a comparison level
+                ``` python
+                import splink.sqlite.comparison_level_library as cll
+                cll.distance_function_level("name",
+                                            "levenshtein",
+                                            2,
+                                            False)
+                ```
+            === ":simple-postgresql: PostgreSql"
+                Apply the `levenshtein` function to a comparison level
+                ``` python
+                import splink.postgres.comparison_level_library as cll
+                cll.distance_function_level("name",
+                                            "levenshtein",
                                             2,
                                             False)
                 ```
@@ -334,7 +410,13 @@ class DistanceFunctionLevelBase(ComparisonLevel):
             f"{operator} {distance_threshold}"
         )
 
-        label_suffix = f" {col_name}" if include_colname_in_charts_label else ""
+        if include_colname_in_charts_label:
+            if manual_col_name_for_charts_label:
+                col_name = manual_col_name_for_charts_label
+
+            label_suffix = f" {col_name}"
+        else:
+            label_suffix = ""
 
         chart_label = (
             f"{distance_function_name.capitalize()}{label_suffix} {operator} "
@@ -363,6 +445,7 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
         regex_extract: str = None,
         set_to_lowercase=False,
         include_colname_in_charts_label=False,
+        manual_col_name_for_charts_label=None,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a levenshtein distance function,
@@ -375,15 +458,18 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
             set_to_lowercase (bool): If True, sets all entries to lowercase.
             include_colname_in_charts_label (bool, optional): If True, includes
                 col_name in charts label
+            manual_col_name_for_charts_label (str, optional): string to include as
+                 column name in chart label. Acts as a manual overwrite of the
+                 colname when include_colname_in_charts_label is True.
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Comparison level with levenshtein distance score less than (or equal
                  to) 1
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.levenshtein_level("name", 1)
                 ```
 
@@ -391,14 +477,14 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
                  to) 1 on a subtring of name column as determined by a regular
                 expression.
                 ```python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Comparison level with levenshtein distance score less than (or equal
                  to) 1
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.levenshtein_level("name", 1)
                 ```
 
@@ -406,14 +492,14 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
                  to) 1 on a subtring of name column as determined by a regular
                 expression.
                 ```python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
                 ```
-            === "Athena"
+            === ":simple-amazonaws: Athena"
                 Comparison level with levenshtein distance score less than (or equal
                  to) 1
                 ``` python
-                import splink.athena.athena_comparison_level_library as cll
+                import splink.athena.comparison_level_library as cll
                 cll.levenshtein_level("name", 1)
                 ```
 
@@ -421,8 +507,22 @@ class LevenshteinLevelBase(DistanceFunctionLevelBase):
                  to) 1 on a subtring of name column as determined by a regular
                 expression.
                 ```python
-                import splink.athena.athena_comparison_level_library as cll
+                import splink.athena.comparison_level_library as cll
                 cll.levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
+                ```
+            === ":simple-sqlite: SQLite"
+                Comparison level with levenshtein distance score less than (or equal
+                 to) 1
+                ``` python
+                import splink.sqlite.comparison_level_library as cll
+                cll.levenshtein_level("name", 1)
+                ```
+            === ":simple-postgresql: PostgreSql"
+                Comparison level with levenshtein distance score less than (or equal
+                 to) 1
+                ``` python
+                import splink.postgres.comparison_level_library as cll
+                cll.levenshtein_level("name", 1)
                 ```
 
         Returns:
@@ -449,6 +549,7 @@ class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
         regex_extract: str = None,
         set_to_lowercase=False,
         include_colname_in_charts_label=False,
+        manual_col_name_for_charts_label=None,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a damerau-levenshtein distance
@@ -462,15 +563,18 @@ class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
             set_to_lowercase (bool): If True, sets all entries to lowercase.
             include_colname_in_charts_label (bool, optional): If True, includes
                 col_name in charts label
+            manual_col_name_for_charts_label (str, optional): string to include as
+                 column name in chart label. Acts as a manual overwrite of the
+                 colname when include_colname_in_charts_label is True.
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Comparison level with damerau-levenshtein distance score less than
                 (or equal to) 1
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.damerau_levenshtein_level("name", 1)
                 ```
 
@@ -478,14 +582,14 @@ class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
                 (or equal to) 1 on a subtring of name column as determined by a regular
                 expression.
                 ```python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.damerau_levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Comparison level with damerau-levenshtein distance score less than
                 (or equal to) 1
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.damerau_levenshtein_level("name", 1)
                 ```
 
@@ -493,8 +597,15 @@ class DamerauLevenshteinLevelBase(DistanceFunctionLevelBase):
                 (or equal to) 1 on a subtring of name column as determined by a regular
                 expression.
                 ```python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.damerau_levenshtein_level("name", 1, regex_extract="^[A-Z]{1,4}")
+                ```
+            === ":simple-sqlite: SQLite"
+                Comparison level with damerau-levenshtein distance score less than
+                (or equal to) 1
+                ``` python
+                import splink.sqlite.comparison_level_library as cll
+                cll.damerau_levenshtein_level("name", 1)
                 ```
 
         Returns:
@@ -521,6 +632,7 @@ class JaroLevelBase(DistanceFunctionLevelBase):
         regex_extract: str = None,
         set_to_lowercase=False,
         include_colname_in_charts_label=False,
+        manual_col_name_for_charts_label=None,
         m_probability=None,
     ):
         """Represents a comparison using the jaro distance function
@@ -533,35 +645,44 @@ class JaroLevelBase(DistanceFunctionLevelBase):
             set_to_lowercase (bool): If True, sets all entries to lowercase.
             include_colname_in_charts_label (bool, optional): If True, includes
                 col_name in charts label
+            manual_col_name_for_charts_label (str, optional): string to include as
+                 column name in chart label. Acts as a manual overwrite of the
+                 colname when include_colname_in_charts_label is True.
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Comparison level with jaro score greater than 0.9
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.jaro_level("name", 0.9)
                 ```
                 Comparison level with a jaro score greater than 0.9 on a substring
                 of name column as determined by a regular expression.
 
                 ```python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.jaro_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Comparison level with jaro score greater than 0.9
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.jaro_level("name", 0.9)
                 ```
                 Comparison level with a jaro score greater than 0.9 on a substring
                 of name column as determined by a regular expression.
 
                 ```python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.jaro_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
+                ```
+            === ":simple-sqlite: SQLite"
+                Comparison level with jaro score greater than 0.9
+                ``` python
+                import splink.sqlite.comparison_level_library as cll
+                cll.jaro_level("name", 0.9)
                 ```
 
         Returns:
@@ -589,6 +710,7 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
         regex_extract: str = None,
         set_to_lowercase=False,
         include_colname_in_charts_label=False,
+        manual_col_name_for_charts_label=None,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using the jaro winkler distance function
@@ -601,33 +723,42 @@ class JaroWinklerLevelBase(DistanceFunctionLevelBase):
             set_to_lowercase (bool): If True, sets all entries to lowercase.
             include_colname_in_charts_label (bool, optional): If True, includes
                 col_name in charts label
+            manual_col_name_for_charts_label (str, optional): string to include as
+                 column name in chart label. Acts as a manual overwrite of the
+                 colname when include_colname_in_charts_label is True.
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Comparison level with jaro-winkler score greater than 0.9
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.jaro_winkler_level("name", 0.9)
                 ```
                 Comparison level with jaro-winkler score greater than 0.9 on a
                 substring of name column as determined by a regular expression.
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.jaro_winkler_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Comparison level with jaro-winkler score greater than 0.9
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.jaro_winkler_level("name", 0.9)
                 ```
                 Comparison level with jaro-winkler score greater than 0.9 on a
                 substring of name column as determined by a regular expression.
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.jaro_winkler_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
+                ```
+            === ":simple-sqlite: SQLite"
+                Comparison level with jaro-winkler score greater than 0.9
+                ``` python
+                import splink.sqlite.comparison_level_library as cll
+                cll.jaro_winkler_level("name", 0.9)
                 ```
 
         Returns:
@@ -661,6 +792,7 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
         regex_extract: str = None,
         set_to_lowercase=False,
         include_colname_in_charts_label=False,
+        manual_col_name_for_charts_label=None,
         m_probability=None,
     ) -> ComparisonLevel:
         """Represents a comparison level using a jaccard distance function
@@ -673,31 +805,34 @@ class JaccardLevelBase(DistanceFunctionLevelBase):
             set_to_lowercase (bool): If True, sets all entries to lowercase.
             include_colname_in_charts_label (bool, optional): If True, includes
                 col_name in charts label
+            manual_col_name_for_charts_label (str, optional): string to include as
+                 column name in chart label. Acts as a manual overwrite of the
+                 colname when include_colname_in_charts_label is True.
             m_probability (float, optional): Starting value for m probability.
                 Defaults to None.
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Comparison level with jaccard score greater than 0.9
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.jaccard_level("name", 0.9)
                 ```
                 Comparison level with jaccard score greater than 0.9 on a
                 substring of name column as determined by a regular expression.
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.jaccard_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Comparison level with jaccard score greater than 0.9
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.jaccard_level("name", 0.9)
                 ```
                 Comparison level with jaccard score greater than 0.9 on a
                 substring of name column as determined by a regular expression.
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.jaccard_level("name", 0.9, regex_extract="^[A-Z]{1,4}")
                 ```
 
@@ -740,52 +875,57 @@ class ColumnsReversedLevelBase(ComparisonLevel):
                 adjustments if an exact match is observed. Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Comparison level on first_name and surname columns reversed
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
                 ```
                 Comparison level on first_name and surname column reversed
                 on a substring of each column as determined by a regular expression.
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.columns_reversed_level("first_name",
                                            "surname",
                                            regex_extract="^[A-Z]{1,4}")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Comparison level on first_name and surname columns reversed
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
                 ```
                 Comparison level on first_name and surname column reversed
                 on a substring of each column as determined by a regular expression.
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.columns_reversed_level("first_name",
                                            "surname",
                                            regex_extract="^[A-Z]{1,4}")
                 ```
-            === "Athena"
+            === ":simple-amazonaws: Athena"
                 Comparison level on first_name and surname columns reversed
                 ``` python
-                import splink.athena.athena_comparison_level_library as cll
+                import splink.athena.comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
                 ```
                 Comparison level on first_name and surname column reversed
                 on a substring of each column as determined by a regular expression.
                 ``` python
-                import splink.athena.athena_comparison_level_library as cll
+                import splink.athena.comparison_level_library as cll
                 cll.columns_reversed_level("first_name",
                                            "surname",
                                            regex_extract="^[A-Z]{1,4}")
                 ```
-            === "SQLite"
+            === ":simple-sqlite: SQLite"
                 Comparison level on first_name and surname columns reversed
                 ``` python
-                import splink.sqlite.sqlite_comparison_level_library as cll
+                import splink.sqlite.comparison_level_library as cll
+                cll.columns_reversed_level("first_name", "surname")
+                ```
+            === ":simple-postgresql: PostgreSql"
+                ``` python
+                import splink.postgres.comparison_level_library as cll
                 cll.columns_reversed_level("first_name", "surname")
                 ```
 
@@ -854,23 +994,30 @@ class DistanceInKMLevelBase(ComparisonLevel):
                 Defaults to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.distance_in_km_level("lat_col",
                                         "long_col",
                                         km_threshold=5)
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.distance_in_km_level("lat_col",
                                         "long_col",
                                         km_threshold=5)
                 ```
-            === "Athena"
+            === ":simple-amazonaws: Athena"
                 ``` python
-                import splink.athena.athena_comparison_level_library as cll
+                import splink.athena.comparison_level_library as cll
+                cll.distance_in_km_level("lat_col",
+                                        "long_col",
+                                        km_threshold=5)
+                ```
+            === ":simple-postgresql: PostgreSql"
+                ``` python
+                import splink.postgres.comparison_level_library as cll
                 cll.distance_in_km_level("lat_col",
                                         "long_col",
                                         km_threshold=5)
@@ -928,24 +1075,29 @@ class PercentageDifferenceLevelBase(ComparisonLevel):
                 to None.
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.percentage_difference_level("value", 0.5)
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.percentage_difference_level("value", 0.5)
                 ```
-            === "Athena"
+            === ":simple-amazonaws: Athena"
                 ``` python
-                import splink.athena.athena_comparison_level_library as cll
+                import splink.athena.comparison_level_library as cll
                 cll.percentage_difference_level("value", 0.5)
                 ```
-            === "SQLite"
+            === ":simple-sqlite: SQLite"
                 ``` python
-                import splink.sqlite.sqlite_comparison_level_library as cll
+                import splink.sqlite.comparison_level_library as cll
+                cll.percentage_difference_level("value", 0.5)
+                ```
+            === ":simple-postgresql: PostgreSql"
+                ``` python
+                import splink.postgres.comparison_level_library as cll
                 cll.percentage_difference_level("value", 0.5)
                 ```
 
@@ -998,19 +1150,24 @@ class ArrayIntersectLevelBase(ComparisonLevel):
                 contain the column name? Defaults to False
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.array_intersect_level("name")
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.array_intersect_level("name")
                 ```
-            === "Athena"
+            === ":simple-amazonaws: Athena"
                 ``` python
-                import splink.athena.athena_comparison_level_library as cll
+                import splink.athena.comparison_level_library as cll
+                cll.array_intersect_level("name")
+                ```
+            === ":simple-postgresql: PostgreSql"
+                ``` python
+                import splink.postgres.comparison_level_library as cll
                 cll.array_intersect_level("name")
                 ```
 
@@ -1046,7 +1203,7 @@ class ArrayIntersectLevelBase(ComparisonLevel):
         raise NotImplementedError("Intersect function not defined on base class")
 
 
-class DateDiffLevelBase(ComparisonLevel):
+class DatediffLevelBase(ComparisonLevel):
     def __init__(
         self,
         date_col: str,
@@ -1080,10 +1237,10 @@ class DateDiffLevelBase(ComparisonLevel):
                 date_format to ISO 8601 format (yyyy-mm-dd).
 
         Examples:
-            === "DuckDB"
+            === ":simple-duckdb: DuckDB"
                 Date Difference comparison level at threshold 1 year
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.datediff_level("date",
                                     date_threshold=1,
                                     date_metric="year"
@@ -1092,7 +1249,7 @@ class DateDiffLevelBase(ComparisonLevel):
                 Date Difference comparison with date-casting and unspecified
                 date_format (default = %Y-%m-%d)
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.datediff_level("dob",
                                     date_threshold=3,
                                     date_metric='month',
@@ -1101,7 +1258,7 @@ class DateDiffLevelBase(ComparisonLevel):
                 ```
                 Date Difference comparison with date-casting and specified date_format
                 ``` python
-                import splink.duckdb.duckdb_comparison_level_library as cll
+                import splink.duckdb.comparison_level_library as cll
                 cll.datediff_level("dob",
                                     date_threshold=3,
                                     date_metric='month',
@@ -1109,10 +1266,10 @@ class DateDiffLevelBase(ComparisonLevel):
                                     date_format='%d/%m/%Y'
                                     )
                 ```
-            === "Spark"
+            === ":simple-apachespark: Spark"
                 Date Difference comparison level at threshold 1 year
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.datediff_level("date",
                                     date_threshold=1,
                                     date_metric="year"
@@ -1121,7 +1278,7 @@ class DateDiffLevelBase(ComparisonLevel):
                 Date Difference comparison with date-casting and unspecified
                 date_format (default = %Y-%m-%d)
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.datediff_level("dob",
                                     date_threshold=3,
                                     date_metric='month',
@@ -1130,12 +1287,70 @@ class DateDiffLevelBase(ComparisonLevel):
                 ```
                 Date Difference comparison with date-casting and specified date_format
                 ``` python
-                import splink.spark.spark_comparison_level_library as cll
+                import splink.spark.comparison_level_library as cll
                 cll.datediff_level("dob",
                                     date_threshold=3,
                                     date_metric='month',
                                     cast_strings_to_date=True,
                                     date_format='%d/%m/%Y'
+                                    )
+                ```
+            === ":simple-amazonaws: Athena"
+                Date Difference comparison level at threshold 1 year
+                ``` python
+                import splink.athena.comparison_level_library as cll
+                cll.datediff_level("date",
+                                    date_threshold=1,
+                                    date_metric="year"
+                                    )
+                ```
+                Date Difference comparison with date-casting and unspecified
+                date_format (default = %Y-%m-%d)
+                ``` python
+                import splink.athena.comparison_level_library as cll
+                cll.datediff_level("dob",
+                                    date_threshold=3,
+                                    date_metric='month',
+                                    cast_strings_to_date=True
+                                    )
+                ```
+                Date Difference comparison with date-casting and specified date_format
+                ``` python
+                import splink.athena.comparison_level_library as cll
+                cll.datediff_level("dob",
+                                    date_threshold=3,
+                                    date_metric='month',
+                                    cast_strings_to_date=True,
+                                    date_format='%d/%m/%Y'
+                                    )
+                ```
+            === ":simple-postgresql: PostgreSql"
+                Date Difference comparison level at threshold 1 year
+                ``` python
+                import splink.postgres.comparison_level_library as cll
+                cll.datediff_level("date",
+                                    date_threshold=1,
+                                    date_metric="year"
+                                    )
+                ```
+                Date Difference comparison with date-casting and unspecified
+                date_format (default = yyyy-MM-dd)
+                ``` python
+                import splink.postgres.comparison_level_library as cll
+                cll.datediff_level("dob",
+                                    date_threshold=3,
+                                    date_metric='month',
+                                    cast_strings_to_date=True
+                                    )
+                ```
+                Date Difference comparison with date-casting and specified date_format
+                ``` python
+                import splink.postgres.comparison_level_library as cll
+                cll.datediff_level("dob",
+                                    date_threshold=3,
+                                    date_metric='month',
+                                    cast_strings_to_date=True,
+                                    date_format='dd/MM/yyyy'
                                     )
                 ```
         Returns:

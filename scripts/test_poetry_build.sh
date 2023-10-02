@@ -15,4 +15,6 @@ folder_path="dist"
 # Use find command to get paths of all .whl files within the folder
 whl_files=$(find "$folder_path" -type f -name "*.whl")
 # pip install
-pip3 install "$whl_files"
+# pip3 install "$whl_files"
+# pip3 install $whl_files'[spark]'
+pip3 install $whl_files'[postgres]'

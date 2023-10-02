@@ -4,9 +4,9 @@ import os
 
 import pandas as pd
 
-import splink.duckdb.duckdb_comparison_level_library as cll
-from splink.duckdb.duckdb_comparison_level_library import else_level
-from splink.duckdb.duckdb_linker import DuckDBLinker
+import splink.duckdb.comparison_level_library as cll
+from splink.duckdb.comparison_level_library import else_level
+from splink.duckdb.linker import DuckDBLinker
 
 
 def test_regression(tmp_path):
@@ -52,7 +52,7 @@ def test_regression(tmp_path):
                 ],
                 "retain_matching_columns": rmc,
                 "retain_intermediate_calculation_columns": ricc,
-                "additional_columns_to_retain": ["group"],
+                "additional_columns_to_retain": ["cluster"],
                 "max_iterations": 10,
                 "em_convergence": 0.01,
             }
@@ -116,7 +116,7 @@ def test_discussion_example(tmp_path):
                 ],
                 "retain_matching_columns": rmc,
                 "retain_intermediate_calculation_columns": ricc,
-                "additional_columns_to_retain": ["group"],
+                "additional_columns_to_retain": ["cluster"],
                 "max_iterations": 10,
                 "em_convergence": 0.01,
             }

@@ -4,37 +4,65 @@ on:
   pull_request:
     branches:
       - master
+    paths:
+      - splink/**
+      - docs/demos/tutorials/**
+      - pyproject.toml
 
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9"]
     steps:
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
-
+      #----------------------------------------------
+      #       check-out repo and set-up python
+      #----------------------------------------------
       - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: actions/checkout@v3
+          python-version: ${{ matrix.python-version }}
+      #----------------------------------------------
+      #  -- save a few section by caching poetry --
+      #----------------------------------------------
+      - name: Load cached Poetry installation
+        uses: actions/cache@v2
         with:
-          repository: "moj-analytical-services/splink_demos"
-          ref: master
-          path: "splink_demos/"
+          path: ~/.local  # the path depends on the OS
+          key: poetry-0  # increment to reset cache
+      #----------------------------------------------
+      #  -----  install & configure poetry  -----
+      #----------------------------------------------
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
 
-      - name: Install environment and check notebooks
+      #----------------------------------------------
+      #       load cached venv if cache exists
+      #----------------------------------------------
+      - name: Load cached venv
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: venv-demos-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}-00
+      #----------------------------------------------
+      # install dependencies if cache does not exist
+      #----------------------------------------------
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction
+      #----------------------------------------------
+      # Make sure that the demo notebooks run without error
+      #----------------------------------------------
+      - name: Test with pytest
         run: |
-            cd splink_demos
-            cp ../benchmarking/conftest.py conftest.py
-            python3 -m venv venv
-            source venv/bin/activate
-            pip install --upgrade pip
-            pip install ..
-            grep -v "splink==" requirements.txt > temp && mv temp requirements.txt
-            pip install -r requirements.txt
-            python -m pytest --nbmake --nbmake-kernel=python3 0[0-6]_*ipynb
-
-
+          source .venv/bin/activate
+          python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/tutorials/*ipynb

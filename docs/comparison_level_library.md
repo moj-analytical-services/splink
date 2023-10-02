@@ -13,7 +13,7 @@ tags:
   - Percentage Difference
 toc_depth: 2
 ---
-# Documentation for `comparison_level_library` 
+# Documentation for `comparison_level_library`
 
 The `comparison_level_library` contains pre-made comparison levels available for use to
 construct custom comparisons [as described in this topic guide](./topic_guides/customising_comparisons.html#method-3-comparisonlevels).
@@ -22,6 +22,7 @@ However, not every comparison level is available for every [Splink-compatible SQ
 The pre-made Splink comparison levels available for each SQL dialect are as given in this table:
 
 {% include-markdown "./includes/generated_files/comparison_level_library_dialect_table.md" %}
+
 
 
 The detailed API for each of these are outlined below.
@@ -33,7 +34,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
@@ -45,8 +46,8 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
-      
+      heading_level: 3
+
 ---
 
 ::: splink.comparison_level_library.ElseLevelBase
@@ -57,7 +58,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
@@ -69,7 +70,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
@@ -80,8 +81,8 @@ The detailed API for each of these are outlined below.
         -  __init__
     rendering:
       show_root_heading: true
-      show_source: false   
-      heading_level: 2
+      show_source: false
+      heading_level: 3
 
 ---
 
@@ -92,8 +93,8 @@ The detailed API for each of these are outlined below.
         -  __init__
     rendering:
       show_root_heading: true
-      show_source: false   
-      heading_level: 2
+      show_source: false
+      heading_level: 3
 
 ---
 
@@ -105,7 +106,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
@@ -117,7 +118,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
@@ -129,7 +130,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
@@ -141,7 +142,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
@@ -153,7 +154,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2    
+      heading_level: 3
 
 ---
 
@@ -165,7 +166,7 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2   
+      heading_level: 3
 
 ---
 
@@ -177,11 +178,11 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3
 
 ---
 
-::: splink.comparison_level_library.DateDiffLevelBase
+::: splink.comparison_level_library.DatediffLevelBase
     handler: python
     selection:
       members:
@@ -189,4 +190,4 @@ The detailed API for each of these are outlined below.
     rendering:
       show_root_heading: true
       show_source: false
-      heading_level: 2
+      heading_level: 3

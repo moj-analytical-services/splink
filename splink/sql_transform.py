@@ -2,10 +2,10 @@ import sqlglot
 import sqlglot.expressions as exp
 
 
-def sqlglot_transform_sql(sql, func):
-    syntax_tree = sqlglot.parse_one(sql, read=None)
+def sqlglot_transform_sql(sql, func, dialect=None):
+    syntax_tree = sqlglot.parse_one(sql, read=dialect)
     transformed_tree = syntax_tree.transform(func)
-    return transformed_tree.sql()
+    return transformed_tree.sql(dialect)
 
 
 def _add_l_or_r_to_identifier(node: exp.Expression):
@@ -39,3 +39,31 @@ def move_l_r_table_prefix_to_column_suffix(blocking_rule):
     transformed_tree = expression_tree.transform(_add_l_or_r_to_identifier)
     transformed_tree = transformed_tree.transform(_remove_table_prefix)
     return transformed_tree.sql()
+
+
+def add_quotes_and_table_prefix(syntax_tree, table_name):
+    """Quotes and adds a table name to your input column(s).
+
+    > tree = sqlglot.parse_one("concat(first_name, surname)")
+    > add_quote_and_table_prefix(tree, "l")
+    > tree.sql() -> `concat(l."first_name", l."surname")`
+
+    Args:
+        syntax_tree (sqlglot.expression): A sqlglot syntax
+            tree.
+        table_name (str): The table prefix you wish to add
+            to all columns.
+
+    Returns:
+        sqlglot.expression: A sqlglot syntax tree with quoted
+            columns and a table prefix.
+    """
+
+    tree = syntax_tree.copy()
+
+    for col in tree.find_all(exp.Column):
+        identifier = col.find(exp.Identifier)
+        identifier.args["quoted"] = True
+        col.args["table"] = table_name
+
+    return tree

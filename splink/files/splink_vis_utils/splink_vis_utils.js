@@ -5456,6 +5456,10 @@
 	  return format(date, "Invalid Date");
 	}
 
+	function formatObject(obj) {
+		return JSON.stringify(obj);
+	}
+
 	// Memoize the last-returned locale.
 	function localize(f) {
 	  let key = localize, value;
@@ -6153,6 +6157,7 @@
 	    switch (type(data, column)) {
 	      case "number": format[column] = formatLocaleNumber(locale); break;
 	      case "date": format[column] = formatDate; break;
+		  case "object": format[column] = formatObject; break;
 	      default: format[column] = formatLocaleAuto(locale); break;
 	    }
 	  }
@@ -6178,6 +6183,7 @@
 	    if (value == null) continue;
 	    if (typeof value === "number") return "number";
 	    if (value instanceof Date) return "date";
+		if (typeof value == "object") return "object";
 	    return;
 	  }
 	}
@@ -6856,17 +6862,22 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	function get_gammas_filters(splink_settings_object) {
 	  let ss_cols = splink_settings_object.comparisons;
 
+	  function get_id_from_comparison(cc){
+		return `id_${cc.sanitised_name}`;
+	  }
+
 	  const form = html`<form>
     ${ss_cols.map((cc) => {
-      let num_levels = cc.num_levels;
-      let select_values = [...Array(num_levels).keys()];
-      select_values.unshift(-1);
-      select_values.unshift("Any");
+	  let select_values = cc.comparison_levels.map((cl) => {
+		return [cl.label_for_charts, cl.comparison_vector_value];
+	  });
+	  select_values.unshift(["Any", "Any"]);
+	  select_values = new Map(select_values);
 
-      return html`<div id='id_${cc.name}'>${splink_vis_utils.select(
+      return html`<div id='${get_id_from_comparison(cc)}'>${splink_vis_utils.select(
         select_values,
         {
-          label: `Filter ${cc.name}`
+          label: `Filter '${cc.name}'`
         }
       )}</div>`;
     })}
@@ -6876,7 +6887,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  form.oninput = function () {
 	    let mydict = {};
 	    ss_cols.forEach((cc) => {
-	      mydict[cc.name] = form.querySelector(`#id_${cc.name} form`).value;
+	      mydict[cc.sanitised_name] = form.querySelector(`#${get_id_from_comparison(cc)} form`).value;
 	    });
 	    form.value = mydict;
 	  };
@@ -6952,6 +6963,9 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    (d) => d.count_rows_in_comparison_vector_group >= filter_count
 	  );
 
+	  if (cvd_filtered.length == 0) {
+		cvd_filtered = [{}];
+	  }
 	  return cvd_filtered;
 	}
 
@@ -7078,9 +7092,19 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 
 	  let this_cc = splink_settings.get_col_by_name(col_name);
 	  let this_cl = this_cc.get_comparison_level(gamma_value);
+	  const columns_used = this_cc.columns_used;
 
-	  let value_l = row[col_name + "_l"];
-	  let value_r = row[col_name + "_r"];
+	  function get_data_value(dataset_suffix){
+		// dataset_suffix is 'l' or 'r'
+		// for each column used, get the row value,
+		// and join together in comma-separated fashion
+		return columns_used.map(
+			(col_name) => row[`${col_name}_${dataset_suffix}`]
+		).join(", ");
+	  }
+
+	  let value_l = get_data_value("l");
+	  let value_r = get_data_value("r");
 
 	  let bayes_factor = row["bf_" + col_name];
 
@@ -7844,12 +7868,21 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    return this.original_dict["column_name"];
 	  }
 
+	  get sanitised_name() {
+		// replace spaces in names in same fashion as Splink does behind the scenes
+		return this.name.replaceAll(' ', '_')
+	  };
+
 	  get num_levels() {
-	    return this.original_dict.comparison_levels.length;
+	    return this.comparison_levels.length;
 	  }
 
 	  get columns_used() {
 	    return this.original_dict["input_columns_used_by_case_statement"];
+	  }
+
+	  get comparison_levels() {
+		return this.original_dict["comparison_levels"];
 	  }
 
 	  // get column_case_expression_lookup() {
@@ -7958,7 +7991,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    let lookup = {};
 
 	    this.comparisons.forEach((cc) => {
-	      lookup[cc.name] = cc;
+	      lookup[cc.sanitised_name] = cc;
 	    });
 
 	    return lookup;
@@ -8070,8 +8103,9 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    "match_weight",
 	  ];
 
+	  const first_edge = edge_data.length > 0 ? edge_data[0] : [];
 	  additional_cols = additional_cols.filter((col) => {
-	    return col in edge_data[0];
+	    return col in first_edge;
 	  });
 
 	  edge_data.forEach(function (edge) {
@@ -8784,7 +8818,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 				color: {
 					field: "match_probability",
 					legend: {
-						title: ""
+						title: "Match probability"
 					},
 					scale: {
 						domain: [
@@ -8796,7 +8830,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 							"red",
 							"orange",
 							"green"
-						]
+						],
 					},
 					type: "quantitative"
 				},
@@ -8883,6 +8917,11 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						"x"
 					]
 				}
+			},
+			resolve: {
+				scale: {
+					color: "shared"
+				}
 			}
 		},
 		{
@@ -8931,22 +8970,23 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 							title: ""
 						},
 						color: {
-							field: "gam_value_norm",
+							field: "match_weight",
 							legend: {
-								title: ""
+								title: "Match weight"
 							},
 							type: "quantitative",
 							scale: {
 								domain: [
+									-5,
 									0,
-									0.5,
-									1
+									5
 								],
 								range: [
 									"red",
-									"orange",
-									"green"
-								]
+									"#bbbbbb",
+									"green",
+								],
+								interpolate: "lab"  
 							}
 						},
 						tooltip: [
@@ -8956,6 +8996,10 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 							},
 							{
 								field: "gam_value",
+								type: "quantitative"
+							},
+							{
+								field: "match_weight",
 								type: "quantitative"
 							}
 						]
@@ -9012,7 +9056,12 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						}
 					}
 				}
-			]
+			],
+			resolve: {
+				scale: {
+					color: "independent"
+				}
+			}
 		},
 		{
 			encoding: {
@@ -9083,14 +9132,19 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						]
 					}
 				}
-			]
+			],
+			resolve: {
+				scale: {
+					color: "shared"
+				}
+			}
 		}
 	];
 	var base_spec = {
 		$schema: $schema,
 		config: config,
 		data: data,
-		vconcat: vconcat
+		vconcat: vconcat,
 	};
 
 	function sort_match_weight(a, b) {
@@ -9153,7 +9207,8 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    counter += 1;
 	    let gam_key_counter = 0;
 	    gamma_keys.forEach((k) => {
-	      let settings_col = ss_object.get_col_by_name(k.replace("gamma_", ""));
+		  let data_col_name = k.replace("gamma_", "");
+	      let settings_col = ss_object.get_col_by_name(data_col_name);
 	      let num_levels = settings_col.num_levels;
 
 	      let row = {};
@@ -9164,6 +9219,10 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	      row["gam_concat"] = d["gam_concat"];
 	      row["gam_concat_id"] = counter;
 	      row["gam_key_count"] = gam_key_counter;
+
+		  // TODO: variable prefix?
+		  row["bayes_factor"] = d[`bf_${data_col_name}`];
+		  row["match_weight"] = log2(d[`bf_${data_col_name}`]);
 	      result_data.push(row);
 	      gam_key_counter += 1;
 	    });

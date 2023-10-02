@@ -1,14 +1,17 @@
 from __future__ import annotations
 
 import logging
+import sqlite3
 from math import log2, pow
 
 import pandas as pd
 
+from ..exceptions import SplinkException
 from ..input_column import InputColumn
 from ..linker import Linker
 from ..misc import ensure_is_list
 from ..splink_dataframe import SplinkDataFrame
+from ..unique_id_concat import _composite_unique_id_from_nodes_sql
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +61,7 @@ class SQLiteDataFrame(SplinkDataFrame):
                 " sqlite table that exists in the provided db."
             )
 
-    def drop_table_from_database(self, force_non_splink_table=False):
+    def _drop_table_from_database(self, force_non_splink_table=False):
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
         drop_sql = f"""
@@ -86,13 +89,21 @@ class SQLiteLinker(Linker):
         connection=":memory:",
         set_up_basic_logging=True,
         input_table_aliases: str | list = None,
+        validate_settings: bool = True,
+        register_udfs=True,
     ):
         self._sql_dialect_ = "sqlite"
 
+        if isinstance(connection, str):
+            connection = sqlite3.connect(connection)
         self.con = connection
         self.con.row_factory = dict_factory
+        # maths functions not always available by default depending on system
         self.con.create_function("log2", 1, log2)
         self.con.create_function("pow", 2, pow)
+        self.con.create_function("power", 2, pow)
+        if register_udfs:
+            self._register_udfs()
 
         input_tables = ensure_is_list(input_table_or_tables)
         input_aliases = self._ensure_aliases_populated_and_is_list(
@@ -106,6 +117,7 @@ class SQLiteLinker(Linker):
             accepted_df_dtypes,
             set_up_basic_logging,
             input_table_aliases=input_aliases,
+            validate_settings=validate_settings,
         )
 
     def _table_to_splink_dataframe(self, templated_name, physical_name):
@@ -157,9 +169,16 @@ class SQLiteLinker(Linker):
             input = pd.DataFrame.from_records(input)
 
         # Will error if an invalid data type is passed
-        input.to_sql(table_name, self.con, index=False)
+        input.to_sql(
+            table_name,
+            self.con,
+            index=False,
+            if_exists="replace",
+        )
 
-    def _random_sample_sql(self, proportion, sample_size, seed=None):
+    def _random_sample_sql(
+        self, proportion, sample_size, seed=None, table=None, unique_id=None
+    ):
         if proportion == 1.0:
             return ""
         if seed:
@@ -169,9 +188,18 @@ class SQLiteLinker(Linker):
             )
 
         sample_size = int(sample_size)
+
+        if unique_id is None:
+            # unique_id col, with source_dataset column if needed to disambiguate
+            unique_id_cols = self._settings_obj._unique_id_input_columns
+            unique_id = _composite_unique_id_from_nodes_sql(unique_id_cols)
+        if table is None:
+            table = "__splink__df_concat_with_tf"
         return (
-            "where unique_id IN (SELECT unique_id FROM __splink__df_concat_with_tf"
-            f" ORDER BY RANDOM() LIMIT {sample_size})"
+            f"WHERE {unique_id} IN ("
+            f"    SELECT {unique_id} FROM {table}"
+            f"    ORDER BY RANDOM() LIMIT {sample_size}"
+            f")"
         )
 
     @property
@@ -191,3 +219,37 @@ class SQLiteLinker(Linker):
         drop_sql = f"""
         DROP TABLE IF EXISTS {name}"""
         self.con.execute(drop_sql)
+
+    def _register_udfs(self):
+        try:
+            from rapidfuzz.distance.DamerauLevenshtein import distance as dam_lev
+            from rapidfuzz.distance.Jaro import distance as jaro
+            from rapidfuzz.distance.JaroWinkler import distance as jaro_winkler
+            from rapidfuzz.distance.Levenshtein import distance as levenshtein
+        except ModuleNotFoundError as e:
+            raise SplinkException(
+                "To use fuzzy string-matching udfs in SQLite you must install "
+                "the python package 'rapidfuzz'.  "
+                "If you do not wish to do so, and do not need to use any "
+                "fuzzy string-matching comparisons, you can use the linker argument "
+                "`register_udfs=False`.\n"
+                "See https://moj-analytical-services.github.io/splink/"
+                "topic_guides/backends.html#sqlite for more information"
+            ) from e
+
+        def wrap_func_with_str(func):
+            def wrapped_func(str_l, str_r):
+                return func(str(str_l), str(str_r))
+
+            return wrapped_func
+
+        # name in SQL : python function
+        funcs_to_register = {
+            "levenshtein": levenshtein,
+            "damerau_levenshtein": dam_lev,
+            "jaro_winkler": jaro_winkler,
+            "jaro": jaro,
+        }
+
+        for sql_name, func in funcs_to_register.items():
+            self.con.create_function(sql_name, 2, wrap_func_with_str(func))

@@ -1,10 +1,10 @@
 import pandas as pd
 import pytest
 
-from splink.duckdb.duckdb_linker import DuckDBLinker
+from splink.duckdb.linker import DuckDBLinker
 from splink.misc import bayes_factor_to_prob, prob_to_bayes_factor
-from splink.spark.spark_linker import SparkLinker
-from splink.sqlite.sqlite_linker import SQLiteLinker
+from splink.spark.linker import SparkLinker
+from splink.sqlite.linker import SQLiteLinker
 
 from .basic_settings import get_settings_dict
 
@@ -34,7 +34,6 @@ def test_splink_2_predict_spark(df_spark):
     linker = SparkLinker(df_spark, settings_dict)
 
     df_e = linker.predict().as_pandas_dataframe()
-    print(len(df_e))
     f1 = df_e["unique_id_l"] == "479"
     f2 = df_e["unique_id_r"] == "481"
     actual_record = df_e[f1 & f2]
@@ -182,8 +181,6 @@ def test_lambda():
     linker = DuckDBLinker(df, settings_dict)
 
     ma = linker.predict().as_pandas_dataframe()
-    print(len(ma))
-
     f1 = ma["unique_id_l"] == 924
     f2 = ma["unique_id_r"] == 925
     ma[f1 & f2]
@@ -296,7 +293,7 @@ def test_lambda():
 #         {"col_name": "city", "fix_u_probabilities": True},
 #         {"col_name": "email", "fix_u_probabilities": True},
 #     ],
-#     "additional_columns_to_retain": ["group"],
+#     "additional_columns_to_retain": ["cluster"],
 #     "em_convergence": 0.00001,
 #     "max_iterations": 2,
 #     "retain_matching_columns": True,

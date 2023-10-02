@@ -123,9 +123,18 @@ def truth_space_table_from_labels_with_predictions_sqls(
         cast(TN as float)/N as tn_rate,
         cast(FP as float)/N as fp_rate,
         cast(FN as float)/P as fn_rate,
-        cast(TP as float)/(TP+FP) as precision,
-        cast(TP as float)/(TP+FN) as recall,
-        cast(TP as float)/(TP + (FP + FN)/2) as f1
+        case when TP+FP=0 then 1 else cast(TP as float)/(TP+FP) end as precision,
+        cast(TP as float)/P as recall,
+        cast(TN as float)/N as specificity,
+        case when TN+FN=0 then 1 else cast(TN as float)/(TN+FN) end as npv,
+        cast(TP+TN as float)/(P+N) as accuracy,
+        2.0*TP/(2*TP + FN + FP) as f1,
+        5.0*TP/(5*TP + 4*FN + FP) as f2,
+        1.25*TP/(1.25*TP + 0.25*FN + FP) as f0_5,
+        4.0*TP*TN/((4.0*TP*TN) + ((TP + TN)*(FP + FN))) as p4,
+        case when TN+FN=0 or TP+FP=0 or P=0 or N=0 then 0
+            else cast((TP*TN)-(FP*FN) as float)/sqrt((TP+FP)*P*N*(TN+FN)) end as phi
+
     from __splink__labels_with_pos_neg_grouped_with_truth_stats
     """
 
