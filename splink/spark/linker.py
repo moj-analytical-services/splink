@@ -76,7 +76,9 @@ class SparkDataFrame(SplinkDataFrame):
             self.check_file_exists(filepath)
 
         spark_df = self.as_spark_dataframe()
-        spark_df.write.format("csv").option("header", "true").save(filepath)
+        spark_df.write.mode("overwrite").format("csv").option("header", "true").save(
+            filepath
+        )
 
 
 class SparkLinker(Linker):
