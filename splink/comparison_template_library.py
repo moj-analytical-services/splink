@@ -670,15 +670,16 @@ class ForenameSurnameComparisonBase(Comparison):
                 Defaults to True
             phonetic_forename_col_name (str, optional): The name of the column with
                 phonetic reduction (such as dmetaphone) of forename_col_name. Including
-                parameter will create an exact match level for
-                phonetic_forename_col_name.
+                parameter along with phonetic_surname_col_name will create an exact
+                match level for "Full name phonetic match".
                 The phonetic column must be present in the dataset to use this
                 parameter.
                 Defaults to None
             phonetic_surname_col_name (str, optional): The name of the column with
                 phonetic reduction (such as dmetaphone) of surname_col_name. Including
-                this parameter will create an exact match level for
-                phonetic_surname_col_name. The phonetic column must be present in
+                this parameter along with phonetic_forename_col_name will create an
+                exact match level for "Full name phonetic match".
+                The phonetic column must be present in
                 the dataset to use this parameter.
                 Defaults to None
             levenshtein_thresholds (Union[int, list], optional): The thresholds
