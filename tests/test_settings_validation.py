@@ -255,7 +255,7 @@ def test_blocking_rule_settings_validation(test_helpers, dialect, caplog):
     blocking_rules_to_check = [
         'levenshtein("sur_name", r."sur Name") < 3',
         "coalesce(l.first_name, NULL) = coalesce(first_name, NULL)",
-        "datediff('day', l.\"cluster\", r.dob_test)",
+        "datediff('day', l.\"dob_test\", r.cluster)",
         # Identical rule - should be ignored
         "datediff('day', l.\"dob_test\", r.cluster)",
     ]
