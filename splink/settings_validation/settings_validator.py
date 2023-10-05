@@ -28,7 +28,7 @@ class SettingsValidator:
 
     @property
     def settings_obj(self):
-       return self.linker._settings_obj
+        return self.linker._settings_obj
 
     @property
     def _sql_dialect(self):

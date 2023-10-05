@@ -1,8 +1,8 @@
+import logging
 from copy import deepcopy
 
 import pandas as pd
 import pytest
-import logging
 
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
 from splink.duckdb.linker import DuckDBLinker
@@ -149,8 +149,7 @@ def test_unique_id_settings_validation(test_helpers, dialect, caplog):
             "======================================\n"
         )
         str_error = (
-        "       - Missing column(s) from input dataframe(s): "
-        f"`{invalid_id}`\n"
+            "       - Missing column(s) from input dataframe(s): " f"`{invalid_id}`\n"
         )
         for string in [str_header, str_error]:
             assert string in caplog.text
@@ -191,7 +190,7 @@ def test_retained_cols_settings_validation(test_helpers, dialect, caplog):
         c_to_retain.validate_cols_to_retain,
         "additional_columns_to_retain",
         "invalid_cols",
-        exp_cols_to_retain
+        exp_cols_to_retain,
     )
     # Check logger formatting is approximately what we expect...
     with caplog.at_level(logging.WARNING):
@@ -202,9 +201,7 @@ def test_retained_cols_settings_validation(test_helpers, dialect, caplog):
         )
         # column names are stored in a hashset, so we can't check for exact equality
         # including the column names
-        str_error = (
-        "       - Missing column(s) from input dataframe(s): `"
-        )
+        str_error = "       - Missing column(s) from input dataframe(s): `"
         for string in [str_header, str_error]:
             assert string in caplog.text
 
@@ -271,14 +268,18 @@ def test_blocking_rule_settings_validation(test_helpers, dialect, caplog):
         ),
         InvalidCols(invalid_type="invalid_table_pref", invalid_columns=["sur_name"]),
     ]
-    coal_br = InvalidCols(invalid_type="invalid_table_pref", invalid_columns=["first_name"])
+    coal_br = InvalidCols(
+        invalid_type="invalid_table_pref", invalid_columns=["first_name"]
+    )
     datediff_br = InvalidCols(invalid_type="invalid_cols", invalid_columns=["dob_test"])
     invalid_rules = (lev_br, [coal_br], [datediff_br])
     expected_out = {
         br: inv_cols for br, inv_cols in zip(blocking_rules_to_check, invalid_rules)
     }
     # Check both dictionaries are identical
-    verify_complicated_settings_objects(invalid_brs.validate_blocking_rules, expected_out)
+    verify_complicated_settings_objects(
+        invalid_brs.validate_blocking_rules, expected_out
+    )
 
     # Check logger formatting is approximately what we expect...
     with caplog.at_level(logging.WARNING):
@@ -291,15 +292,14 @@ def test_blocking_rule_settings_validation(test_helpers, dialect, caplog):
         # column names are stored in a hashset, so we can't check for exact equality
         # where we have multiple column names
         missing_cols = (
-        "       - Missing column(s) from input dataframe(s): "
-        "`sur_name`"
+            "       - Missing column(s) from input dataframe(s): " "`sur_name`"
         )
         invalid_prefix = (
-        "       - Invalid table prefixes (only `l.` and `r.` are valid): "
-        "`first_name`"
+            "       - Invalid table prefixes (only `l.` and `r.` are valid): "
+            "`first_name`"
         )
         for string in [str_header, missing_cols, invalid_prefix]:
-        # for string in [str_header, missing_cols]:
+            # for string in [str_header, missing_cols]:
             assert string in caplog.text
 
 
@@ -415,8 +415,7 @@ def test_comparison_settings_validation(test_helpers, dialect, caplog):
         invalid_cls.validate_comparison_levels[0][1], expected_email_invalid_output
     )
     verify_complicated_settings_objects(
-        invalid_cls.validate_comparison_levels[1][1],
-        expected_city_invalid_output
+        invalid_cls.validate_comparison_levels[1][1], expected_city_invalid_output
     )
     # Check logger formatting is approximately what we expect...
     with caplog.at_level(logging.WARNING):
@@ -427,12 +426,11 @@ def test_comparison_settings_validation(test_helpers, dialect, caplog):
             "======================================\n"
         )
         missing_cols = (
-        "\n       - Missing column(s) from input dataframe(s): "
-        "`city_test`\n"
+            "\n       - Missing column(s) from input dataframe(s): " "`city_test`\n"
         )
         invalid_prefix = (
-        "\n       - Invalid table suffixes (only `_l` and `_r` are valid): "
-        f"`city`\n"
+            "\n       - Invalid table suffixes (only `_l` and `_r` are valid): "
+            "`city`\n"
         )
         for string in [str_header, missing_cols, invalid_prefix]:
             assert string in caplog.text

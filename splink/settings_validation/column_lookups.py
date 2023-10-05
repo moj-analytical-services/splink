@@ -41,7 +41,7 @@ class InvalidColValidator(SettingsValidator):
         """
         # the key to use when producing our warning logs
         invalid_type = "invalid_cols"
-        missing_cols = [col for col in cols_to_check if not col in self.input_columns]
+        missing_cols = [col for col in cols_to_check if col not in self.input_columns]
         return InvalidCols(invalid_type, missing_cols)
 
     def clean_and_return_missing_columns(
@@ -125,15 +125,19 @@ class InvalidColValidator(SettingsValidator):
         validation_dict = {}
         for sql_string in sql_strings:
             cols = parse_columns_in_sql(sql_string, sql_dialect=self._sql_dialect)
-            if not cols: continue  # checks if our sql string is parseable
-            # Collect trees for checks and filter only those that contain invalid columns
+            if not cols:
+                continue  # checks if our sql string is parseable
+            # Collect trees for checks and filter only those that
+            # contain invalid columns
             invalid_column_trees = [
                 # deepcopy to ensure our syntax trees aren't manipulated
-                inv_cols for inv_cols in (check(deepcopy(cols)) for check in checks)
+                inv_cols
+                for inv_cols in (check(deepcopy(cols)) for check in checks)
                 if inv_cols.contains_invalid_columns
             ]
 
-            if invalid_column_trees: validation_dict[sql_string] = invalid_column_trees
+            if invalid_column_trees:
+                validation_dict[sql_string] = invalid_column_trees
 
         return validation_dict
 
@@ -237,7 +241,8 @@ class InvalidColumnsLogger(InvalidColValidator):
         return invalid_col_tracker
 
     def construct_generic_settings_log_string(self, constructor_dict) -> str:
-        if not constructor_dict: return ""
+        if not constructor_dict:
+            return ""
 
         settings_id, InvCols = constructor_dict
         output_warning = [
@@ -251,8 +256,7 @@ class InvalidColumnsLogger(InvalidColValidator):
         logger.warning("\n".join(output_warning))
 
     def log_invalid_warnings_within_sql(
-        self,
-        invalid_sql_statements: dict[str, list[InvalidCols]]
+        self, invalid_sql_statements: dict[str, list[InvalidCols]]
     ) -> str:
         log_str = []
         for sql, invalid_cols in invalid_sql_statements.items():
@@ -266,7 +270,8 @@ class InvalidColumnsLogger(InvalidColValidator):
         return "\n".join(log_str)
 
     def construct_blocking_rule_log_strings(self, invalid_brs):
-        if not invalid_brs: return ""
+        if not invalid_brs:
+            return ""
 
         # `invalid_brs` are in the format of:
         # {
@@ -285,7 +290,8 @@ class InvalidColumnsLogger(InvalidColValidator):
         logger.warning("\n".join(output_warning))
 
     def construct_comparison_level_log_strings(self, invalid_cls) -> str:
-        if not invalid_cls: return ""
+        if not invalid_cls:
+            return ""
 
         # `invalid_cls` is made up of a tuple containing:
         # 1) The `output_column_name` for the level, if it exists
@@ -302,7 +308,8 @@ class InvalidColumnsLogger(InvalidColValidator):
             # Annoyingly, `output_comparison_name` can be None,
             # so this allows those entries without a name to pass
             # through.
-            if cn is not None: output_warning.append(f"Comarpison: {cn}")
+            if cn is not None:
+                output_warning.append(f"Comarpison: {cn}")
             output_warning.append("--------------------------------------")
 
             output_warning.append(self.log_invalid_warnings_within_sql(cls))
@@ -315,8 +322,8 @@ class InvalidColumnsLogger(InvalidColValidator):
             return
 
         logger.warning(
-            "SETTINGS VALIDATION: The following errors were identified in your settings "
-            "dictionary. \n"
+            "SETTINGS VALIDATION: Errors were identified in your "
+            "settings dictionary. \n"
         )
 
         self.construct_generic_settings_log_string(self.valid_uid)
@@ -324,8 +331,7 @@ class InvalidColumnsLogger(InvalidColValidator):
         self.construct_blocking_rule_log_strings(self.invalid_brs)
         self.construct_comparison_level_log_strings(self.invalid_cls)
 
-        # print so this doesn't appear in the logs
-        print(
+        logger.warning(
             "You may want to verify your settings dictionary has "
             "valid inputs in all fields before continuing."
         )
