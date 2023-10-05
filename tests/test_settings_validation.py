@@ -257,7 +257,7 @@ def test_blocking_rule_settings_validation(test_helpers, dialect, caplog):
         "coalesce(l.first_name, NULL) = coalesce(first_name, NULL)",
         "datediff('day', l.\"cluster\", r.dob_test)",
         # Identical rule - should be ignored
-        "datediff('day', l.\"cluster\", r.dob_test)",
+        "datediff('day', l.\"dob_test\", r.cluster)",
     ]
     settings["blocking_rules_to_generate_predictions"] = blocking_rules_to_check
     invalid_brs = alter_settings(linker, settings)
@@ -292,7 +292,7 @@ def test_blocking_rule_settings_validation(test_helpers, dialect, caplog):
         # column names are stored in a hashset, so we can't check for exact equality
         # where we have multiple column names
         missing_cols = (
-            "       - Missing column(s) from input dataframe(s): " "`sur_name`"
+            "       - Missing column(s) from input dataframe(s): `dob_test`"
         )
         invalid_prefix = (
             "       - Invalid table prefixes (only `l.` and `r.` are valid): "
