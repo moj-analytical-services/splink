@@ -310,8 +310,6 @@ class InvalidColumnsLogger(InvalidColValidator):
         logger.warning("\n".join(output_warning))
 
     def construct_output_logs(self):
-        # self.check_for_single_column_dataset()
-
         # if no errors exist, then we can exit early
         if not self.invalid_cols_detected:
             return
