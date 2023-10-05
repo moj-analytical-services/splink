@@ -36,12 +36,12 @@ def test_move_l_r_table_prefix_to_column_suffix():
     move_l_r_test(br, expected)
 
     br = "len(list_filter(l.name_list, x -> list_contains(r.name_list, x))) >= 1"
-    expected = "len(list_filter(name_list_l, x -> list_contains(name_list_r, x))) >= 1"
+    expected = "length(list_filter(name_list_l, x -> list_contains(name_list_r, x))) >= 1"
     move_l_r_test(br, expected)
 
     br = "len(list_filter(l.name_list, x -> list_contains(r.name_list, x))) >= 1"
     res = move_l_r_table_prefix_to_column_suffix(br)
-    expected = "len(list_filter(name_list_l, x -> list_contains(name_list_r, x))) >= 1"
+    expected = "length(list_filter(name_list_l, x -> list_contains(name_list_r, x))) >= 1"
     assert res.lower() == expected.lower()
 
 

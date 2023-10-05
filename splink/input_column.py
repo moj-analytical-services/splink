@@ -227,14 +227,5 @@ def _get_dialect_quotes(dialect):
 
 
 def _get_sqlglot_dialect_quotes(dialect: sqlglot.Dialect):
-    # TODO: once we drop support for sqlglot < 6.0.0, we can simplify this
-    try:
-        # For sqlglot < 6.0.0
-        quotes = dialect.identifiers
-        quote = '"' if '"' in quotes else quotes[0]
-        start = end = quote
-    except AttributeError:
-        # For sqlglot >= 6.0.0
-        start = dialect.identifier_start
-        end = dialect.identifier_end
-    return start, end
+    # For sqlglot ^18.0.0
+    return dialect.IDENTIFIER_START, dialect.IDENTIFIER_END
