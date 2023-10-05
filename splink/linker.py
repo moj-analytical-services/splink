@@ -489,7 +489,6 @@ class Linker:
             return True
 
     def _validate_settings_components(self, settings_dict):
-
         # Vaidate our settings after plugging them through
         # `Settings(<settings>)`
         if settings_dict is None:

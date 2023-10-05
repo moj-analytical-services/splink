@@ -99,7 +99,6 @@ def evaluate_comparison_dtype_and_contents(comparison_dict):
     comp_str = f"{str(comparison_dict)[:65]}... "
 
     if not isinstance(comparison_dict, (Comparison, dict)):
-
         if isinstance(comparison_dict, ComparisonLevel):
             return TypeError(
                 f"""

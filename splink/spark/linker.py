@@ -10,7 +10,6 @@ import pandas as pd
 import sqlglot
 from numpy import nan
 from pyspark.sql.dataframe import DataFrame as spark_df
-from pyspark.sql.types import DoubleType, StringType
 from pyspark.sql.utils import AnalysisException
 
 from ..databricks.enable_splink import enable_splink
@@ -19,6 +18,7 @@ from ..linker import Linker
 from ..misc import ensure_is_list, major_minor_version_greater_equal_than
 from ..splink_dataframe import SplinkDataFrame
 from ..term_frequencies import colname_to_tf_tablename
+from .jar_location import get_scala_udfs
 from .spark_helpers.custom_spark_dialect import Dialect
 
 logger = logging.getLogger(__name__)
@@ -267,32 +267,12 @@ class SparkLinker(Linker):
             self.break_lineage_method = "parquet"
 
     def _register_udfs_from_jar(self):
-        # register udf functions
-        # will for loop through this list to register UDFs.
-        # List is a tuple of structure (UDF Name, class path, spark return type)
-        udfs_register = [
-            ("jaro_sim", "uk.gov.moj.dash.linkage.JaroSimilarity", DoubleType()),
-            (
-                "jaro_winkler",
-                "uk.gov.moj.dash.linkage.JaroWinklerSimilarity",
-                DoubleType(),
-            ),
-            ("jaccard", "uk.gov.moj.dash.linkage.JaccardSimilarity", DoubleType()),
-            ("cosine_distance", "uk.gov.moj.dash.linkage.CosineDistance", DoubleType()),
-            (
-                "damerau_levenshtein",
-                "uk.gov.moj.dash.linkage.LevDamerauDistance",
-                DoubleType(),
-            ),
-            ("Dmetaphone", "uk.gov.moj.dash.linkage.DoubleMetaphone", StringType()),
-            (
-                "DmetaphoneAlt",
-                "uk.gov.moj.dash.linkage.DoubleMetaphoneAlt",
-                StringType(),
-            ),
-            ("QgramTokeniser", "uk.gov.moj.dash.linkage.QgramTokeniser", StringType()),
-        ]
+        # Grab all available udfs and required info to register them
+        udfs_register = get_scala_udfs()
+
         try:
+            # Register our scala functions. Note that this will only work if the jar has
+            # been registered by the user
             for udf in udfs_register:
                 self.spark.udf.registerJavaFunction(*udf)
         except AnalysisException as e:

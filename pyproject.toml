@@ -9,20 +9,28 @@ repository = "https://github.com/moj-analytical-services/splink"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.8,<4.0.0"
+python = ">=3.7.1,<4.0.0"
 jsonschema = ">=3.2,<5.0"
-pandas = ">=1.2.0"
+# 1.3.5 is the last version supporting py 3.7.1
+pandas = ">1.3.0"
 duckdb = ">=0.8.0"
-pyspark = {version="^3.2.1", optional=true}
-awswrangler = {version=">=3.0.0,<4.0.0", optional=true}
-psycopg2-binary = {version=">=2.8.0", optional=true}
-# sqlalchemy >= 2.0.0 not working well with older pandas
-sqlalchemy = ">=1.4.0,<2.0.0"
 # normalize issue in sqlglot - temporarily exclude updates
 sqlglot = ">=7.0.0,<11.4.2"
 altair = "^5.0.1"
 Jinja2 = ">=3.0.3"
 phonetics = "^1.0.5"
+
+# Optional installs
+pyspark = {version="^3.2.1", optional=true}
+
+awswrangler = [
+    {version = "2.18.0,<3.0.0", python = ">=3.7.1,<3.8", optional=true},
+    {version=">=3.0.0,<4.0.0", python = "^3.8", optional=true}
+]
+
+# sqlalchemy >= 2.0.0 not working well with older pandas
+sqlalchemy = {version=">=1.4.0,<2.0.0", optional=true}
+psycopg2-binary = {version=">=2.8.0", optional=true}
 
 [tool.poetry.group.dev]
 [tool.poetry.group.dev.dependencies]
@@ -40,7 +48,8 @@ ruff = "0.0.257"
 
 [tool.poetry.group.testing]
 [tool.poetry.group.testing.dependencies]
-pytest = "^7.0"
+# pin to reduce dependencies
+pytest = "7.3"
 pyarrow = ">=7.0.0"
 networkx = "2.5.1"
 rapidfuzz = "^2.0.3"
