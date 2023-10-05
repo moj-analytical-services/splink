@@ -291,9 +291,7 @@ def test_blocking_rule_settings_validation(test_helpers, dialect, caplog):
         )
         # column names are stored in a hashset, so we can't check for exact equality
         # where we have multiple column names
-        missing_cols = (
-            "       - Missing column(s) from input dataframe(s): `dob_test`"
-        )
+        missing_cols = "       - Missing column(s) from input dataframe(s): `dob_test`"
         invalid_prefix = (
             "       - Invalid table prefixes (only `l.` and `r.` are valid): "
             "`first_name`"
