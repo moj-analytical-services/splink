@@ -17,19 +17,19 @@ def make_comparison_level(sql_condition, dialect):
 
 # SQL conditions that are of 'exact match' type
 exact_matchy_sql_conditions_and_columns = [
-    ("col_l = col_r", ["col"]),
-    ("col_l = col_r AND another_col_l = another_col_r", ["col", "another_col"]),
+    ("col_l = col_r", {"col"}),
+    ("col_l = col_r AND another_col_l = another_col_r", {"col", "another_col"}),
     (
         "col_l = col_r AND another_col_l = another_col_r AND third_l = third_r",
-        ["col", "another_col", "third"],
+        {"col", "another_col", "third"},
     ),
     (
         "(col_l = col_r AND another_col_l = another_col_r) AND third_l = third_r",
-        ["col", "another_col", "third"],
+        {"col", "another_col", "third"},
     ),
     (
         "col_l = col_r AND (another_col_l = another_col_r AND third_l = third_r)",
-        ["col", "another_col", "third"],
+        {"col", "another_col", "third"},
     ),
 ]
 
@@ -53,7 +53,7 @@ def test_exact_match_colnames_for_exact_matchy_levels(
     sql_condition, exact_match_cols, dialect
 ):
     lev = make_comparison_level(sql_condition, dialect)
-    assert lev._exact_match_colnames == exact_match_cols
+    assert set(lev._exact_match_colnames) == exact_match_cols
 
 
 # SQL conditions that are NOT of 'exact match' type
