@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 import sqlglot
 from sqlglot.expressions import Identifier
 from sqlglot.optimizer.normalize import normalize
+from sqlglot.optimizer.simplify import simplify
 
 from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .default_from_jsonschema import default_value_from_schema
@@ -495,7 +496,7 @@ class ComparisonLevel:
         sql_syntax_tree = sqlglot.parse_one(
             self.sql_condition.lower(), read=self.sql_dialect
         )
-        sql_cnf = normalize(sql_syntax_tree)
+        sql_cnf = simplify(normalize(sql_syntax_tree))
 
         exprs = _get_and_subclauses(sql_cnf)
         for expr in exprs:
@@ -508,7 +509,7 @@ class ComparisonLevel:
         sql_syntax_tree = sqlglot.parse_one(
             self.sql_condition.lower(), read=self.sql_dialect
         )
-        sql_cnf = normalize(sql_syntax_tree)
+        sql_cnf = simplify(normalize(sql_syntax_tree))
 
         exprs = _get_and_subclauses(sql_cnf)
         for expr in exprs:
