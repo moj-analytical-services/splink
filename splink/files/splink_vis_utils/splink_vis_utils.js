@@ -1,18 +1,3 @@
-// Observable runtime, inputs, stdlib and inspector are Copyright 2018-2021 Observable, Inc.
-// The licence for these libraries is as follows:
-
-// Permission to use, copy, modify, and/or distribute this software for any purpose
-// with or without fee is hereby granted, provided that the above copyright notice
-// and this permission notice appear in all copies.
-
-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-// FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
-// OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
-// TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
-// THIS SOFTWARE
-
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -5456,10 +5441,6 @@
 	  return format(date, "Invalid Date");
 	}
 
-	function formatObject(obj) {
-		return JSON.stringify(obj);
-	}
-
 	// Memoize the last-returned locale.
 	function localize(f) {
 	  let key = localize, value;
@@ -6157,7 +6138,6 @@
 	    switch (type(data, column)) {
 	      case "number": format[column] = formatLocaleNumber(locale); break;
 	      case "date": format[column] = formatDate; break;
-		  case "object": format[column] = formatObject; break;
 	      default: format[column] = formatLocaleAuto(locale); break;
 	    }
 	  }
@@ -6183,7 +6163,6 @@
 	    if (value == null) continue;
 	    if (typeof value === "number") return "number";
 	    if (value instanceof Date) return "date";
-		if (typeof value == "object") return "object";
 	    return;
 	  }
 	}
@@ -6550,7 +6529,7 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	md`## Data processing`
 	)}
 
-	function _cluster_unique_ids(splink_vis_utils,raw_nodes_data,svu_options)
+	function _cluster_unique_ids(splink_vis_utils,raw_nodes_data,svu_options,named_clusters)
 	{
 	  let cluster_ids = splink_vis_utils.get_unique_cluster_ids_from_nodes_data(
 	    raw_nodes_data,
@@ -6706,7 +6685,7 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	  main.variable(observer("no_edge_selected")).define("no_edge_selected", ["selected_edge"], _no_edge_selected$1);
 	  main.variable(observer("no_node_selected")).define("no_node_selected", ["selected_node"], _no_node_selected);
 	  main.variable(observer()).define(["md"], _27);
-	  main.variable(observer("cluster_unique_ids")).define("cluster_unique_ids", ["splink_vis_utils","raw_nodes_data","svu_options"], _cluster_unique_ids);
+	  main.variable(observer("cluster_unique_ids")).define("cluster_unique_ids", ["splink_vis_utils","raw_nodes_data","svu_options","named_clusters"], _cluster_unique_ids);
 	  main.variable(observer("selected_edge")).define("selected_edge", ["observe_chart_data","force_directed_chart"], _selected_edge$1);
 	  main.variable(observer("observe_chart_data")).define("observe_chart_data", ["Generators"], _observe_chart_data$1);
 	  main.variable(observer("selected_node")).define("selected_node", ["observe_chart_data","force_directed_chart"], _selected_node);
@@ -6723,7 +6702,7 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	}
 
 	function _1(md){return(
-	md`# splink_comparison_viewer`
+	md`# splink_comparison_viewer splink3 version`
 	)}
 
 	function _show_edge_comparison_type(splink_vis_utils){return(
@@ -6862,22 +6841,17 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	function get_gammas_filters(splink_settings_object) {
 	  let ss_cols = splink_settings_object.comparisons;
 
-	  function get_id_from_comparison(cc){
-		return `id_${cc.sanitised_name}`;
-	  }
-
 	  const form = html`<form>
     ${ss_cols.map((cc) => {
-	  let select_values = cc.comparison_levels.map((cl) => {
-		return [cl.label_for_charts, cl.comparison_vector_value];
-	  });
-	  select_values.unshift(["Any", "Any"]);
-	  select_values = new Map(select_values);
+      let num_levels = cc.num_levels;
+      let select_values = [...Array(num_levels).keys()];
+      select_values.unshift(-1);
+      select_values.unshift("Any");
 
-      return html`<div id='${get_id_from_comparison(cc)}'>${splink_vis_utils.select(
+      return html`<div id='id_${cc.name}'>${splink_vis_utils.select(
         select_values,
         {
-          label: `Filter '${cc.name}'`
+          label: `Filter ${cc.name}`
         }
       )}</div>`;
     })}
@@ -6887,7 +6861,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  form.oninput = function () {
 	    let mydict = {};
 	    ss_cols.forEach((cc) => {
-	      mydict[cc.sanitised_name] = form.querySelector(`#${get_id_from_comparison(cc)} form`).value;
+	      mydict[cc.name] = form.querySelector(`#id_${cc.name} form`).value;
 	    });
 	    form.value = mydict;
 	  };
@@ -6963,9 +6937,6 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    (d) => d.count_rows_in_comparison_vector_group >= filter_count
 	  );
 
-	  if (cvd_filtered.length == 0) {
-		cvd_filtered = [{}];
-	  }
 	  return cvd_filtered;
 	}
 
@@ -7026,6 +6997,34 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	md`## Data`
 	)}
 
+	function _localUrl(){return(
+	"http://127.0.0.1:8080/dist/splink_vis_utils.js"
+	)}
+
+	function _vegaEmbed(require){return(
+	require("vega-embed@6")
+	)}
+
+	function _comparison_vector_data(d3){return(
+	d3.json(
+	  "https://gist.githubusercontent.com/RobinL/e6945533df4f7d062cf756dedef3c7d0/raw/379640ebd1e7a02f04ff6d63723fb7977c71bee3/synthetic_50_example_recs.json"
+	)
+	)}
+
+	function _splink_settings(d3){return(
+	d3.json(
+	  "https://gist.githubusercontent.com/RobinL/68a9a6e28497dc4fc4cbb95c5585f08d/raw/406cc0af3d21bfc080947a2daecf50e79fa2abbc/splink_settings_50k_synthetic.json"
+	)
+	)}
+
+	function _ss2(splink_vis_utils,splink_settings){return(
+	new splink_vis_utils.SplinkSettings(JSON.stringify(splink_settings))
+	)}
+
+	function _35(ss2){return(
+	ss2.cols_used_by_model
+	)}
+
 	function define(runtime, observer) {
 	  const main = runtime.module();
 	  main.variable(observer()).define(["md"], _1);
@@ -7063,6 +7062,12 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  main.variable(observer()).define(["md"], _26);
 	  main.variable(observer("chart_spec_with_data")).define("chart_spec_with_data", ["splink_vis_utils","filtered_comparison_vector_data","ss","new_width","sort_bars_option"], _chart_spec_with_data);
 	  main.variable(observer()).define(["md"], _28);
+	  main.variable(observer("localUrl")).define("localUrl", _localUrl);
+	  main.variable(observer("vegaEmbed")).define("vegaEmbed", ["require"], _vegaEmbed);
+	  main.variable(observer("comparison_vector_data")).define("comparison_vector_data", ["d3"], _comparison_vector_data);
+	  main.variable(observer("splink_settings")).define("splink_settings", ["d3"], _splink_settings);
+	  main.variable(observer("ss2")).define("ss2", ["splink_vis_utils","splink_settings"], _ss2);
+	  main.variable(observer()).define(["ss2"], _35);
 	  return main;
 	}
 
@@ -7092,19 +7097,9 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 
 	  let this_cc = splink_settings.get_col_by_name(col_name);
 	  let this_cl = this_cc.get_comparison_level(gamma_value);
-	  const columns_used = this_cc.columns_used;
 
-	  function get_data_value(dataset_suffix){
-		// dataset_suffix is 'l' or 'r'
-		// for each column used, get the row value,
-		// and join together in comma-separated fashion
-		return columns_used.map(
-			(col_name) => row[`${col_name}_${dataset_suffix}`]
-		).join(", ");
-	  }
-
-	  let value_l = get_data_value("l");
-	  let value_r = get_data_value("r");
+	  let value_l = row[col_name + "_l"];
+	  let value_r = row[col_name + "_r"];
 
 	  let bayes_factor = row["bf_" + col_name];
 
@@ -7868,21 +7863,12 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    return this.original_dict["column_name"];
 	  }
 
-	  get sanitised_name() {
-		// replace spaces in names in same fashion as Splink does behind the scenes
-		return this.name.replaceAll(' ', '_')
-	  };
-
 	  get num_levels() {
-	    return this.comparison_levels.length;
+	    return this.original_dict.comparison_levels.length;
 	  }
 
 	  get columns_used() {
 	    return this.original_dict["input_columns_used_by_case_statement"];
-	  }
-
-	  get comparison_levels() {
-		return this.original_dict["comparison_levels"];
 	  }
 
 	  // get column_case_expression_lookup() {
@@ -7991,7 +7977,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    let lookup = {};
 
 	    this.comparisons.forEach((cc) => {
-	      lookup[cc.sanitised_name] = cc;
+	      lookup[cc.name] = cc;
 	    });
 
 	    return lookup;
@@ -8103,9 +8089,8 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    "match_weight",
 	  ];
 
-	  const first_edge = edge_data.length > 0 ? edge_data[0] : [];
 	  additional_cols = additional_cols.filter((col) => {
-	    return col in first_edge;
+	    return col in edge_data[0];
 	  });
 
 	  edge_data.forEach(function (edge) {
@@ -8818,7 +8803,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 				color: {
 					field: "match_probability",
 					legend: {
-						title: "Match probability"
+						title: ""
 					},
 					scale: {
 						domain: [
@@ -8830,7 +8815,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 							"red",
 							"orange",
 							"green"
-						],
+						]
 					},
 					type: "quantitative"
 				},
@@ -8917,11 +8902,6 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						"x"
 					]
 				}
-			},
-			resolve: {
-				scale: {
-					color: "shared"
-				}
 			}
 		},
 		{
@@ -8970,23 +8950,22 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 							title: ""
 						},
 						color: {
-							field: "match_weight",
+							field: "gam_value_norm",
 							legend: {
-								title: "Match weight"
+								title: ""
 							},
 							type: "quantitative",
 							scale: {
 								domain: [
-									-5,
 									0,
-									5
+									0.5,
+									1
 								],
 								range: [
 									"red",
-									"#bbbbbb",
-									"green",
-								],
-								interpolate: "lab"  
+									"orange",
+									"green"
+								]
 							}
 						},
 						tooltip: [
@@ -8996,10 +8975,6 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 							},
 							{
 								field: "gam_value",
-								type: "quantitative"
-							},
-							{
-								field: "match_weight",
 								type: "quantitative"
 							}
 						]
@@ -9056,12 +9031,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						}
 					}
 				}
-			],
-			resolve: {
-				scale: {
-					color: "independent"
-				}
-			}
+			]
 		},
 		{
 			encoding: {
@@ -9132,19 +9102,14 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						]
 					}
 				}
-			],
-			resolve: {
-				scale: {
-					color: "shared"
-				}
-			}
+			]
 		}
 	];
 	var base_spec = {
 		$schema: $schema,
 		config: config,
 		data: data,
-		vconcat: vconcat,
+		vconcat: vconcat
 	};
 
 	function sort_match_weight(a, b) {
@@ -9163,14 +9128,14 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	) {
 	  let base_spec_2 = cloneDeep(base_spec);
 	  let sort_field;
-	  data.forEach((d) => {
-		d.sum_matches = d.match_probability * d.count;
-	  });
 	  if (sort_bars == "sort_match_weight") {
 	    data.sort(sort_match_weight);
 	    sort_field = "match_weight";
 	  }
 	  if (sort_bars == "sort_sum_matches") {
+	    data.forEach((d) => {
+	      d.sum_matches = d.match_probability * d.count;
+	    });
 	    data.sort(sort_sum_matches);
 	    sort_field = "sum_matches";
 	  }
@@ -9207,8 +9172,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    counter += 1;
 	    let gam_key_counter = 0;
 	    gamma_keys.forEach((k) => {
-		  let data_col_name = k.replace("gamma_", "");
-	      let settings_col = ss_object.get_col_by_name(data_col_name);
+	      let settings_col = ss_object.get_col_by_name(k.replace("gamma_", ""));
 	      let num_levels = settings_col.num_levels;
 
 	      let row = {};
@@ -9219,10 +9183,6 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	      row["gam_concat"] = d["gam_concat"];
 	      row["gam_concat_id"] = counter;
 	      row["gam_key_count"] = gam_key_counter;
-
-		  // TODO: variable prefix?
-		  row["bayes_factor"] = d[`bf_${data_col_name}`];
-		  row["match_weight"] = log2(d[`bf_${data_col_name}`]);
 	      result_data.push(row);
 	      gam_key_counter += 1;
 	    });
