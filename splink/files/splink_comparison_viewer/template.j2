@@ -16,11 +16,25 @@
 
 <body>
 
+
+
+
+<script>{{stdlib}}</script>
+<script>
+
+
+const lib = new window.observablehq.Library()
+Generators = lib.Generators
+width = lib.width()
+html = lib.html()
+
+
+</script>
 <script>{{vega}}</script>
 <script>{{vegalite}}</script>
 <script>{{embed}}</script>
-
 <script>{{svu_text}} </script>
+
 
 
 <script>
@@ -57,7 +71,7 @@
 
 {% if bundle_observable_notebook %}
 
-new splink_vis_utils.Runtime().module(splink_vis_utils.define_comparison, name => {
+new splink_vis_utils.Runtime({}).module(splink_vis_utils.define_comparison, name => {
 
 {% else %}
 
