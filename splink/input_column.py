@@ -227,5 +227,11 @@ def _get_dialect_quotes(dialect):
 
 
 def _get_sqlglot_dialect_quotes(dialect: sqlglot.Dialect):
-    # For sqlglot ^18.0.0
-    return dialect.IDENTIFIER_START, dialect.IDENTIFIER_END
+    try:
+        # For sqlglot >= 16.0.0
+        start = dialect.IDENTIFIER_START
+        end = dialect.IDENTIFIER_END
+    except AttributeError:
+        start = dialect.identifier_start
+        end = dialect.identifier_end
+    return start, end
