@@ -18,18 +18,22 @@
 
 
 
-
+# The observable standard library
+# This is usually made available automatically within an observable notebook
+# Unfortunately, when used in a notebook, it tries to retrieve
+# libraries from online cdns
+# https://github.com/observablehq/runtime#Runtime
 <script>{{stdlib}}</script>
+
+
 <script>
-
-
 const lib = new window.observablehq.Library()
 Generators = lib.Generators
 width = lib.width()
 html = lib.html()
-
-
 </script>
+
+
 <script>{{vega}}</script>
 <script>{{vegalite}}</script>
 <script>{{embed}}</script>
