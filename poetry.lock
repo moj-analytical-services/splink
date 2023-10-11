@@ -3585,13 +3585,13 @@ sqlcipher = ["sqlcipher3-binary"]
 
 [[package]]
 name = "sqlglot"
-version = "18.11.3"
+version = "18.12.0"
 description = "An easily customizable SQL parser and transpiler"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "sqlglot-18.11.3-py3-none-any.whl", hash = "sha256:7a6bf3eb3612e5e88cfc790c4df97b5ec1560b7984d9cd248789b86a7417aa20"},
-    {file = "sqlglot-18.11.3.tar.gz", hash = "sha256:128ded18b4a1bec7c3ee789c0a0b3c69851a0806b783bf9a6635c487353a687b"},
+    {file = "sqlglot-18.12.0-py3-none-any.whl", hash = "sha256:e43489daa6ca685e4a95ba316f4a43c367d4c39b87788eec38718ea4bfd58451"},
+    {file = "sqlglot-18.12.0.tar.gz", hash = "sha256:71269ea98e158978362afaa5a3db313641a96b3ac70aaee35ff1b129dec3e9e6"},
 ]
 
 [package.extras]
@@ -4067,4 +4067,4 @@ spark = ["pyspark"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.7.1,<4.0.0"
-content-hash = "f985027558f6f548d19b58929c1745a52137651fb21cc97ea5086581c9236ff2"
+content-hash = "d82f5bb46ea123dbc14cadd37849fff5a112b409a2d864de3c4bf6ccee6b798b"
