@@ -3585,17 +3585,17 @@ sqlcipher = ["sqlcipher3-binary"]
 
 [[package]]
 name = "sqlglot"
-version = "11.4.1"
+version = "18.12.0"
 description = "An easily customizable SQL parser and transpiler"
 optional = false
-python-versions = "*"
+python-versions = ">=3.7"
 files = [
-    {file = "sqlglot-11.4.1-py3-none-any.whl", hash = "sha256:88e00a34b3771fa00bc688eb10719da3e5046c92502b055f19e4e3420a646c14"},
-    {file = "sqlglot-11.4.1.tar.gz", hash = "sha256:c5029e6c4a5deab04ccdcbd5722294f5a1888f7f297467de9c27dbe3a7213112"},
+    {file = "sqlglot-18.12.0-py3-none-any.whl", hash = "sha256:e43489daa6ca685e4a95ba316f4a43c367d4c39b87788eec38718ea4bfd58451"},
+    {file = "sqlglot-18.12.0.tar.gz", hash = "sha256:71269ea98e158978362afaa5a3db313641a96b3ac70aaee35ff1b129dec3e9e6"},
 ]
 
 [package.extras]
-dev = ["autoflake", "black", "duckdb", "isort", "mypy (>=0.990)", "pandas", "pdoc", "pre-commit", "pyspark", "python-dateutil"]
+dev = ["autoflake", "black", "duckdb (>=0.6)", "isort", "mypy (>=0.990)", "pandas", "pdoc", "pre-commit", "pyspark", "python-dateutil", "types-python-dateutil"]
 
 [[package]]
 name = "tabulate"
@@ -4067,4 +4067,4 @@ spark = ["pyspark"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.7.1,<4.0.0"
-content-hash = "4959ce0faf49469abe224d385df9c1b00a4477589ae8b880680b671bc11bf376"
+content-hash = "d82f5bb46ea123dbc14cadd37849fff5a112b409a2d864de3c4bf6ccee6b798b"
