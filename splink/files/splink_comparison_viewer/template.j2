@@ -18,12 +18,23 @@
 
 
 
-# The observable standard library
-# This is usually made available automatically within an observable notebook
-# Unfortunately, when used in a notebook, it tries to retrieve
-# libraries from online cdns
-# https://github.com/observablehq/runtime#Runtime
+{# The observable standard library #}
+{# This is usually made available automatically within an observable notebook #}
+{# Unfortunately, when used in a notebook, it tries to retrieve #}
+{# libraries from online CDNs. #}
+{# https://github.com/observablehq/runtime#Runtime #}
+
+{# The issue is that within the notebook, it's using functions from the stdlib like #}
+{# the html`` template literal, and Generators.observe #}
+{# We could bundle those in splink_vis_utils, but then they'd all have to be prefixed #}
+{# with splink_vis_utils like splink_vis_utils.html, and I struggled to get this to work #}
+
+{# So instead, I inline the stdlib code #}
 <script>{{stdlib}}</script>
+
+{# And then globally load the functions we need #}
+{# This also seems to avoid the problem of stdlib trying and failing to load d3 from a CDNs #}
+{# and causing the whole notebook to error #}
 
 
 <script>
