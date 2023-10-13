@@ -94,6 +94,14 @@ class EverythingEncoder(json.JSONEncoder):
             return obj.__str__()
 
 
+class JanitorClass:
+    def __init__(self, RootClass, *args, **kwargs):
+        self.wrapped = RootClass(*args, **kwargs)
+
+    def __getattr__(self, name):
+        return getattr(self.wrapped, name.upper())
+
+
 def calculate_cartesian(df_rows, link_type):
     """
     Calculates the cartesian product for the input df(s).

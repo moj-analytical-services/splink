@@ -7,6 +7,7 @@ import sqlglot.expressions as exp
 from sqlglot.errors import ParseError
 
 from .default_from_jsonschema import default_value_from_schema
+from .misc import JanitorClass
 
 
 def sqlglot_tree_signature(tree):
@@ -223,15 +224,9 @@ def _get_dialect_quotes(dialect):
         sqlglot_dialect = sqlglot.Dialect[dialect.lower()]
     except KeyError:
         return start, end
-    return _get_sqlglot_dialect_quotes(sqlglot_dialect)
+    return _get_sqlglot_dialect_quotes(JanitorClass(sqlglot_dialect))
 
 
 def _get_sqlglot_dialect_quotes(dialect: sqlglot.Dialect):
-    try:
-        # For sqlglot >= 16.0.0
-        start = dialect.IDENTIFIER_START
-        end = dialect.IDENTIFIER_END
-    except AttributeError:
-        start = dialect.identifier_start
-        end = dialect.identifier_end
-    return start, end
+    # From sqlglot >= 16.0.0 all static variables are uppercase
+    return dialect.IDENTIFIER_START, dialect.IDENTIFIER_END
