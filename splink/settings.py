@@ -488,7 +488,11 @@ class Settings:
         for c in self.comparisons:
             messages.extend(c._not_trained_messages)
         if self._lambda_is_default:
-            messages.extend(["Lambda has been set to the default value (0.0001). If this is not the desired behaviour, either: \n - assign a value for `probability_two_random_records_match` in your settings dictionary, or \n - estimate with the `linker.estimate_probability_two_random_records_match` function."])
+            messages.extend(
+                [
+                    "Lambda has been set to the default value (0.0001). If this is not the desired behaviour, either: \n - assign a value for `probability_two_random_records_match` in your settings dictionary, or \n - estimate with the `linker.estimate_probability_two_random_records_match` function."
+                ]
+            )
         return messages
 
     @property
