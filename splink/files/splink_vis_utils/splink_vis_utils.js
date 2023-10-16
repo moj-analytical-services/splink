@@ -1,12 +1,8 @@
 (function (global, factory) {
-	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('5496e67e6ca05c7b')) :
-	typeof define === 'function' && define.amd ? define(['exports', '5496e67e6ca05c7b'], factory) :
-	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.splink_vis_utils = {}, global._5496e67e6ca05c7b));
-})(this, (function (exports, _5496e67e6ca05c7b) { 'use strict';
-
-	function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
-
-	var _5496e67e6ca05c7b__default = /*#__PURE__*/_interopDefaultLegacy(_5496e67e6ca05c7b);
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+	typeof define === 'function' && define.amd ? define(['exports'], factory) :
+	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.splink_vis_utils = {}));
+})(this, (function (exports) { 'use strict';
 
 	var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -2872,7 +2868,7 @@
 	      };
 	      script.async = true;
 	      script.src = url;
-	      window.define = define$1;
+	      window.define = define$2;
 	      document.head.appendChild(script);
 	    }));
 	    return module;
@@ -2926,7 +2922,7 @@
 	  return name === "exports" || name === "module";
 	}
 
-	function define$1(name, dependencies, factory) {
+	function define$2(name, dependencies, factory) {
 	  const n = arguments.length;
 	  if (n < 2) factory = name, dependencies = [];
 	  else if (n < 3) factory = dependencies, dependencies = typeof name === "string" ? [] : name;
@@ -2947,7 +2943,7 @@
 	  });
 	}
 
-	define$1.amd = {};
+	define$2.amd = {};
 
 	// TODO Allow this to be overridden using the Library’s resolver.
 	const cdn = "https://cdn.observableusercontent.com/npm/";
@@ -7669,6 +7665,520 @@
 	    return formattedRow;
 	}
 
+	function _1$1(md){return(
+	md`# Splink cluster studio (splink3 version)`
+	)}
+
+	function _selected_cluster_id(splink_vis_utils,cluster_unique_ids){return(
+	splink_vis_utils.select(cluster_unique_ids, {
+	  label: "Choose cluster: "
+	})
+	)}
+
+	function _edge_colour_metric(splink_vis_utils,raw_edges_data)
+	{
+	  const node_size_options = splink_vis_utils.detect_edge_colour_metrics(
+	    raw_edges_data
+	  );
+
+	  let v = splink_vis_utils.select(node_size_options, {
+	    label: "Choose metric for edge colour: "
+	  });
+	  if (node_size_options.length == 1) {
+	    v.style.visibility = "hidden";
+	  }
+	  return v;
+	}
+
+
+	function _node_size_metric(splink_vis_utils,raw_nodes_data)
+	{
+	  const node_size_options = splink_vis_utils.detect_node_size_metrics(
+	    raw_nodes_data
+	  );
+	  let v = splink_vis_utils.select(node_size_options, {
+	    label: "Choose metric for node size: "
+	  });
+	  if (node_size_options.length == 1) {
+	    v.style.visibility = "hidden";
+	  }
+	  return v;
+	}
+
+
+	function _node_colour_metric(splink_vis_utils,raw_nodes_data)
+	{
+	  const node_size_options = splink_vis_utils.detect_node_colour_metrics(
+	    raw_nodes_data
+	  );
+
+	  let v = splink_vis_utils.select(node_size_options, {
+	    label: "Choose metric for node colour: "
+	  });
+	  if (node_size_options.length == 1) {
+	    v.style.visibility = "hidden";
+	  }
+	  return v;
+	}
+
+
+	function _show_edge_comparison_type$1(splink_vis_utils){return(
+	splink_vis_utils.checkbox(
+	  new Map([
+	    ["Show waterfall chart on edge click", "show_waterfall"],
+	    ["Show raw edge data on edge click", "raw_edge_data"],
+
+	    ["Show comparison columns on edge click", "cc_data"],
+	    ["Show history of node clicks", "node_history"]
+	  ]),
+	  {
+	    label: "",
+	    value: ["show_waterfall", "raw_edge_data", "node_history"]
+	  }
+	)
+	)}
+
+	function _show_full_tables(raw_clusters_data,splink_vis_utils)
+	{
+	  let options;
+	  
+	  if (raw_clusters_data == null) {
+	    options = new Map([
+	      ["Show table of all edges", "edges"],
+	      ["Show table of all nodes", "nodes"]
+	    ]);
+	  } else {
+	    options = new Map([
+	      ["Show cluster info", "clusters"],
+	      ["Show table of all edges", "edges"],
+	      ["Show table of all nodes", "nodes"],
+	      ["Show table of all clusters", "all_clusters"]
+	    ]);
+	  }
+
+	  return splink_vis_utils.checkbox(options, {
+	    label: ""
+	  });
+	}
+
+
+	function _score_threshold_filter(splink_vis_utils){return(
+	splink_vis_utils.range([-20, 20], {
+	  label: 'Filter out edges with match weight below threshold:',
+	  value: -20,
+	  step: 0.1
+	})
+	)}
+
+	function _corresponding_probability(html,splink_vis_utils,score_threshold_filter){return(
+	html`Your chosen threshold corresponds to a match probability of ${splink_vis_utils
+  .log2_bayes_factor_to_prob(score_threshold_filter)
+  .toPrecision(4)}`
+	)}
+
+	function _additional_graph_controls(splink_vis_utils){return(
+	splink_vis_utils.checkbox(
+	  new Map([["Show additional graph controls", "graph_controls"]]),
+	  {
+	    label: ""
+	  }
+	)
+	)}
+
+	function _edge_table(selected_edge,html,show_edge_comparison_type,splink_vis_utils,ss)
+	{
+	  if (selected_edge == undefined) {
+	    return html``;
+	  }
+
+	  if (show_edge_comparison_type.includes("raw_edge_data")) {
+	    return html`
+  <h3>Rows compared by selected edge</h3>   
+    ${splink_vis_utils.edge_row_to_table(selected_edge, ss)}
+
+`;
+	  }
+
+	  return html``;
+	}
+
+
+	function _nothing_selected_message$1(no_edge_selected,no_node_selected,html,selected_edge)
+	{
+	  if (no_edge_selected && no_node_selected) {
+	    return html`<span style="color:red"'>Click on nodes and/or edges in the below graph to show data and chart</span>`;
+	  }
+
+	  if (typeof selected_edge == 'undefined') {
+	    return html`<span style="color:red"'>Click on an edges in the below graph to show waterfall chart and table</span>`;
+	  }
+
+	  return html``;
+	}
+
+
+	function _force_directed_chart(vegaEmbed,splink_vis_utils,spec){return(
+	vegaEmbed(splink_vis_utils.cloneDeep(spec))
+	)}
+
+	function _node_history_table(node_history,html,show_edge_comparison_type,splink_vis_utils,ss)
+	{
+	  if (node_history.length == 0) {
+	    return html``;
+	  }
+	  if (show_edge_comparison_type.includes("node_history")) {
+	    return html`
+<h3>History of clicked nodes</h3> 
+${splink_vis_utils.node_rows_to_table(node_history, ss)}
+`;
+	  }
+	  return html``;
+	}
+
+
+	function _refresh$1(Inputs){return(
+	Inputs.button("refresh splink_vis_utils javascript lib")
+	)}
+
+	function _cluster_table(selected_cluster_metrics,html,show_full_tables,splink_vis_utils)
+	{
+	  if (selected_cluster_metrics == null) {
+	    return html``;
+	  }
+	  if (!show_full_tables.includes("clusters")) {
+	    return html``;
+	  }
+	  return html`
+  <h3> Cluster metrics </h3>
+  ${splink_vis_utils.single_cluster_table(selected_cluster_metrics)}
+`;
+	}
+
+
+	function _comparison_columns_table$1(no_edge_selected,html,show_edge_comparison_type,splink_vis_utils,selected_edge,ss)
+	{
+	  if (no_edge_selected) {
+	    return html``;
+	  }
+	  if (show_edge_comparison_type.includes("cc_data")) {
+	    return splink_vis_utils.comparison_column_table(selected_edge, ss);
+	  }
+	  return html``;
+	}
+
+
+	function _waterfall_chart$1(no_edge_selected,html,show_edge_comparison_type,splink_vis_utils,selected_edge,ss,vegaEmbed)
+	{
+	  if (no_edge_selected) {
+	    return html``;
+	  } else if (!show_edge_comparison_type.includes("show_waterfall")) {
+	    return html``;
+	  } else {
+	    let waterfall_data = splink_vis_utils.get_waterfall_chart_data(
+	      selected_edge,
+	      ss
+	    );
+
+	    return vegaEmbed(
+	      splink_vis_utils.get_waterfall_chart_spec(waterfall_data, {})
+	    );
+	  }
+	}
+
+
+	function _edges_full_table(show_full_tables,filtered_edges,splink_vis_utils,html)
+	{
+	  if (show_full_tables.includes("edges")) {
+	    // const filtered_edges = filtered_edges.filter(
+	    //   d => d[svu_options.cluster_colname + "_l"] == selected_cluster_id
+	    // );
+	    let filtered_edges2 = filtered_edges.map(
+	      splink_vis_utils.formatRowToAppearInTable
+	    );
+	    return html`
+    <h3>Edges corresponding to selected cluster, filtered by threshold</h3>
+    Click column headers to sort
+    
+    ${splink_vis_utils.table(filtered_edges2, { layout: "auto" })}
+
+  `;
+	  } else {
+	    return html``;
+	  }
+	}
+
+
+	function _nodes_full_table(show_full_tables,raw_nodes_data,svu_options,selected_cluster_id,html,splink_vis_utils)
+	{
+	  if (show_full_tables.includes("nodes")) {
+	    const filtered_nodes = raw_nodes_data.filter(
+	      d => d[svu_options.cluster_colname] == selected_cluster_id
+	    );
+
+	    return html`
+    <h3>All nodes corresponding to selected cluster</h3>
+    Click column headers to sort
+    
+    ${splink_vis_utils.table(filtered_nodes, { layout: "auto" })}
+
+  `;
+	  } else {
+	    return html``;
+	  }
+	}
+
+
+	function _clusters_full_table(show_full_tables,html,splink_vis_utils,raw_clusters_data)
+	{
+	  if (show_full_tables.includes("all_clusters")) {
+	    return html`
+    <h3>All clusters</h3>
+    Click column headers to sort
+    
+    ${splink_vis_utils.table(raw_clusters_data, { layout: "auto" })}
+
+  `;
+	  } else {
+	    return html``;
+	  }
+	}
+
+
+	function _22$1(md){return(
+	md`## Outputs`
+	)}
+
+	function _spec(splink_vis_utils,filtered_nodes,ss,filtered_edges,edge_colour_metric,node_size_metric,node_colour_metric,width,additional_graph_controls)
+	{
+	  let formatted_nodes = splink_vis_utils.format_nodes_data_for_force_directed(
+	    filtered_nodes,
+	    ss
+	  );
+
+	  let formatted_edges = splink_vis_utils.format_edges_data_for_force_directed(
+	    filtered_edges,
+	    ss
+	  );
+	  let s = new splink_vis_utils.ForceDirectedChart(
+	    formatted_nodes,
+	    formatted_edges
+	  );
+
+	  let edge_colour_args =
+	    splink_vis_utils.metric_vis_args["edge_colour"][edge_colour_metric];
+
+	  s.set_edge_colour_metric(...Object.values(edge_colour_args));
+
+	  if (node_size_metric != "none") {
+	    let node_size_args =
+	      splink_vis_utils.metric_vis_args["node_size"][node_size_metric];
+	    s.set_node_area_metric(...Object.values(node_size_args));
+	  }
+
+	  if (node_colour_metric != "none") {
+	    let node_size_args =
+	      splink_vis_utils.metric_vis_args["node_colour"][node_colour_metric];
+	    s.set_node_colour_metric(...Object.values(node_size_args));
+	  }
+
+	  s.set_height_from_nodes_data();
+
+	  let new_width = width;
+	  if (width > 1500) {
+	    new_width = 1500;
+	  }
+	  s.set_starting_width(new_width);
+	  if (additional_graph_controls.length == 0) {
+	    s.remove_all_sliders();
+	  }
+
+	  return s.spec;
+	}
+
+
+	function _ss$1(splink_vis_utils,splink_settings){return(
+	new splink_vis_utils.SplinkSettings(JSON.stringify(splink_settings))
+	)}
+
+	function _no_edge_selected$1(selected_edge){return(
+	typeof selected_edge == 'undefined'
+	)}
+
+	function _no_node_selected(selected_node){return(
+	typeof selected_node == 'undefined'
+	)}
+
+	function _27(md){return(
+	md`## Data processing`
+	)}
+
+	function _cluster_unique_ids(splink_vis_utils,raw_nodes_data,svu_options,named_clusters)
+	{
+	  let cluster_ids = splink_vis_utils.get_unique_cluster_ids_from_nodes_data(
+	    raw_nodes_data,
+	    svu_options.cluster_colname
+	  );
+	  cluster_ids = cluster_ids.map(d => d.toString());
+
+	  if (named_clusters != null) {
+	    let cid_map = new Map();
+
+	    Object.entries(named_clusters).forEach(e => {
+	      cid_map.set(e[1], e[0]);
+
+	      const index = cluster_ids.indexOf(e[0]);
+
+	      if (index > -1) {
+	        cluster_ids.splice(index, 1);
+	      }
+	    });
+
+	    cluster_ids.forEach(d => cid_map.set(d, d));
+
+	    return cid_map;
+	  }
+	  return cluster_ids;
+	}
+
+
+	function _selected_edge$1(observe_chart_data,force_directed_chart){return(
+	observe_chart_data(force_directed_chart, "edge_click")
+	)}
+
+	function _observe_chart_data$1(Generators){return(
+	function observe_chart_data(chart, signal_name) {
+	  return Generators.observe(function(notify) {
+	    // change is a function; calling change triggers the resolution of the current promise with the passed value.
+
+	    // Yield the element’s initial value.
+	    const signaled = (name, value) => notify(chart.signal(signal_name));
+	    chart.addSignalListener(signal_name, signaled);
+	    notify(chart.signal(signal_name));
+
+	    return () => chart.removeSignalListener(signal_name, signaled);
+	  });
+	}
+	)}
+
+	function _selected_node(observe_chart_data,force_directed_chart){return(
+	observe_chart_data(force_directed_chart, "node_click")
+	)}
+
+	function _selected_cluster_metrics(raw_clusters_data,svu_options,selected_cluster_id)
+	{
+	  if (raw_clusters_data == null) {
+	    return null;
+	  } else {
+	    let data = raw_clusters_data.filter(
+	      d => d[svu_options.cluster_colname] == selected_cluster_id
+	    );
+	    return data[0];
+	  }
+	}
+
+
+	function _filtered_nodes(splink_vis_utils,raw_nodes_data,svu_options,selected_cluster_id){return(
+	splink_vis_utils.filter_nodes_with_cluster_id(
+	  raw_nodes_data,
+	  svu_options.cluster_colname,
+	  selected_cluster_id
+	)
+	)}
+
+	function _filtered_edges(splink_vis_utils,raw_edges_data,svu_options,selected_cluster_id,score_threshold_filter)
+	{
+	  let edges = splink_vis_utils.filter_edges_with_cluster_id(
+	    raw_edges_data,
+	    svu_options.cluster_colname,
+	    selected_cluster_id
+	  );
+
+	  edges = edges.filter(
+	    d =>
+	      d[svu_options.prob_colname] >=
+	      splink_vis_utils.log2_bayes_factor_to_prob(score_threshold_filter)
+	  );
+
+	  return edges;
+	}
+
+
+	function _node_history(){return(
+	[]
+	)}
+
+	function _control_node_history(selected_node,force_directed_chart,$0)
+	{
+
+	  if (typeof force_directed_chart._signals.node_click.value == 'undefined') {
+	    $0.value = [];
+	  } else {
+	    $0.value.unshift(
+	      force_directed_chart._signals.node_click.value
+	    );
+	    $0.value = $0.value;
+	  }
+	}
+
+
+	function _37(md){return(
+	md`## Following are global variables embedded in final html so not needed in final version`
+	)}
+
+	function define$1(runtime, observer) {
+	  const main = runtime.module();
+	  main.variable(observer()).define(["md"], _1$1);
+	  main.variable(observer("viewof selected_cluster_id")).define("viewof selected_cluster_id", ["splink_vis_utils","cluster_unique_ids"], _selected_cluster_id);
+	  main.variable(observer("selected_cluster_id")).define("selected_cluster_id", ["Generators", "viewof selected_cluster_id"], (G, _) => G.input(_));
+	  main.variable(observer("viewof edge_colour_metric")).define("viewof edge_colour_metric", ["splink_vis_utils","raw_edges_data"], _edge_colour_metric);
+	  main.variable(observer("edge_colour_metric")).define("edge_colour_metric", ["Generators", "viewof edge_colour_metric"], (G, _) => G.input(_));
+	  main.variable(observer("viewof node_size_metric")).define("viewof node_size_metric", ["splink_vis_utils","raw_nodes_data"], _node_size_metric);
+	  main.variable(observer("node_size_metric")).define("node_size_metric", ["Generators", "viewof node_size_metric"], (G, _) => G.input(_));
+	  main.variable(observer("viewof node_colour_metric")).define("viewof node_colour_metric", ["splink_vis_utils","raw_nodes_data"], _node_colour_metric);
+	  main.variable(observer("node_colour_metric")).define("node_colour_metric", ["Generators", "viewof node_colour_metric"], (G, _) => G.input(_));
+	  main.variable(observer("viewof show_edge_comparison_type")).define("viewof show_edge_comparison_type", ["splink_vis_utils"], _show_edge_comparison_type$1);
+	  main.variable(observer("show_edge_comparison_type")).define("show_edge_comparison_type", ["Generators", "viewof show_edge_comparison_type"], (G, _) => G.input(_));
+	  main.variable(observer("viewof show_full_tables")).define("viewof show_full_tables", ["raw_clusters_data","splink_vis_utils"], _show_full_tables);
+	  main.variable(observer("show_full_tables")).define("show_full_tables", ["Generators", "viewof show_full_tables"], (G, _) => G.input(_));
+	  main.variable(observer("viewof score_threshold_filter")).define("viewof score_threshold_filter", ["splink_vis_utils"], _score_threshold_filter);
+	  main.variable(observer("score_threshold_filter")).define("score_threshold_filter", ["Generators", "viewof score_threshold_filter"], (G, _) => G.input(_));
+	  main.variable(observer("corresponding_probability")).define("corresponding_probability", ["html","splink_vis_utils","score_threshold_filter"], _corresponding_probability);
+	  main.variable(observer("viewof additional_graph_controls")).define("viewof additional_graph_controls", ["splink_vis_utils"], _additional_graph_controls);
+	  main.variable(observer("additional_graph_controls")).define("additional_graph_controls", ["Generators", "viewof additional_graph_controls"], (G, _) => G.input(_));
+	  main.variable(observer("edge_table")).define("edge_table", ["selected_edge","html","show_edge_comparison_type","splink_vis_utils","ss"], _edge_table);
+	  main.variable(observer("nothing_selected_message")).define("nothing_selected_message", ["no_edge_selected","no_node_selected","html","selected_edge"], _nothing_selected_message$1);
+	  main.variable(observer("viewof force_directed_chart")).define("viewof force_directed_chart", ["vegaEmbed","splink_vis_utils","spec"], _force_directed_chart);
+	  main.variable(observer("force_directed_chart")).define("force_directed_chart", ["Generators", "viewof force_directed_chart"], (G, _) => G.input(_));
+	  main.variable(observer("node_history_table")).define("node_history_table", ["node_history","html","show_edge_comparison_type","splink_vis_utils","ss"], _node_history_table);
+	  main.variable(observer("viewof refresh")).define("viewof refresh", ["Inputs"], _refresh$1);
+	  main.variable(observer("refresh")).define("refresh", ["Generators", "viewof refresh"], (G, _) => G.input(_));
+	  main.variable(observer("cluster_table")).define("cluster_table", ["selected_cluster_metrics","html","show_full_tables","splink_vis_utils"], _cluster_table);
+	  main.variable(observer("comparison_columns_table")).define("comparison_columns_table", ["no_edge_selected","html","show_edge_comparison_type","splink_vis_utils","selected_edge","ss"], _comparison_columns_table$1);
+	  main.variable(observer("waterfall_chart")).define("waterfall_chart", ["no_edge_selected","html","show_edge_comparison_type","splink_vis_utils","selected_edge","ss","vegaEmbed"], _waterfall_chart$1);
+	  main.variable(observer("edges_full_table")).define("edges_full_table", ["show_full_tables","filtered_edges","splink_vis_utils","html"], _edges_full_table);
+	  main.variable(observer("nodes_full_table")).define("nodes_full_table", ["show_full_tables","raw_nodes_data","svu_options","selected_cluster_id","html","splink_vis_utils"], _nodes_full_table);
+	  main.variable(observer("clusters_full_table")).define("clusters_full_table", ["show_full_tables","html","splink_vis_utils","raw_clusters_data"], _clusters_full_table);
+	  main.variable(observer()).define(["md"], _22$1);
+	  main.variable(observer("spec")).define("spec", ["splink_vis_utils","filtered_nodes","ss","filtered_edges","edge_colour_metric","node_size_metric","node_colour_metric","width","additional_graph_controls"], _spec);
+	  main.variable(observer("ss")).define("ss", ["splink_vis_utils","splink_settings"], _ss$1);
+	  main.variable(observer("no_edge_selected")).define("no_edge_selected", ["selected_edge"], _no_edge_selected$1);
+	  main.variable(observer("no_node_selected")).define("no_node_selected", ["selected_node"], _no_node_selected);
+	  main.variable(observer()).define(["md"], _27);
+	  main.variable(observer("cluster_unique_ids")).define("cluster_unique_ids", ["splink_vis_utils","raw_nodes_data","svu_options","named_clusters"], _cluster_unique_ids);
+	  main.variable(observer("selected_edge")).define("selected_edge", ["observe_chart_data","force_directed_chart"], _selected_edge$1);
+	  main.variable(observer("observe_chart_data")).define("observe_chart_data", ["Generators"], _observe_chart_data$1);
+	  main.variable(observer("selected_node")).define("selected_node", ["observe_chart_data","force_directed_chart"], _selected_node);
+	  main.variable(observer("selected_cluster_metrics")).define("selected_cluster_metrics", ["raw_clusters_data","svu_options","selected_cluster_id"], _selected_cluster_metrics);
+	  main.variable(observer("filtered_nodes")).define("filtered_nodes", ["splink_vis_utils","raw_nodes_data","svu_options","selected_cluster_id"], _filtered_nodes);
+	  main.variable(observer("filtered_edges")).define("filtered_edges", ["splink_vis_utils","raw_edges_data","svu_options","selected_cluster_id","score_threshold_filter"], _filtered_edges);
+	  main.define("initial node_history", _node_history);
+	  main.variable(observer("mutable node_history")).define("mutable node_history", ["Mutable", "initial node_history"], (M, _) => new M(_));
+	  main.variable(observer("node_history")).define("node_history", ["mutable node_history"], _ => _.generator);
+	  main.variable(observer("control_node_history")).define("control_node_history", ["selected_node","force_directed_chart","mutable node_history"], _control_node_history);
+	  main.variable(observer()).define(["md"], _37);
+	  return main;
+	}
+
 	function _1(md){return(
 	md`# splink_comparison_viewer splink3 version`
 	)}
@@ -10194,10 +10704,6 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  return result_data;
 	}
 
-	Object.defineProperty(exports, 'define_cluster', {
-		enumerable: true,
-		get: function () { return _5496e67e6ca05c7b__default["default"]; }
-	});
 	exports.Comparison = Comparison;
 	exports.ForceDirectedChart = ForceDirectedChart;
 	exports.Inspector = Inspector;
@@ -10207,6 +10713,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	exports.checkbox = checkbox;
 	exports.cloneDeep = cloneDeep;
 	exports.comparison_column_table = comparison_column_table;
+	exports.define_cluster = define$1;
 	exports.define_comparison = define;
 	exports.detect_edge_colour_metrics = detect_edge_colour_metrics;
 	exports.detect_node_colour_metrics = detect_node_colour_metrics;
