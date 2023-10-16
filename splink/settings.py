@@ -473,6 +473,13 @@ class Settings:
         logger.info(message)
 
     @property
+    def _lambda_is_default(self):
+        if self._probability_two_random_records_match == 0.0001:
+            return True
+        else:
+            return False
+
+    @property
     def _is_fully_trained(self):
         return all([c._is_trained for c in self.comparisons])
 
@@ -480,6 +487,8 @@ class Settings:
         messages = []
         for c in self.comparisons:
             messages.extend(c._not_trained_messages)
+        if self._lambda_is_default:
+            messages.extend(["Lambda has been set to the default value (0.0001). If this is not the desired behaviour, either: \n - assign a value for `probability_two_random_records_match` in your settings dictionary, or \n - estimate with the `linker.estimate_probability_two_random_records_match` function."])
         return messages
 
     @property
