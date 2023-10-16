@@ -30,12 +30,8 @@ def row_examples(linker: Linker, example_rows_per_category=2):
     # See https://github.com/moj-analytical-services/splink/issues/1651
     # This ensures we have an average match weight that isn't affected by tf
     bf_columns_no_tf = [c._bf_column_name for c in linker._settings_obj.comparisons]
-    # bf_columns_no_tf = [f"log2({bf})" for bf in bf_columns_no_tf]
-    # match_weight_no_tf = " + ".join(bf_columns_no_tf)
-    # match_weight_no_tf = f"({prior_bf} + {match_weight_no_tf})"
 
     p = linker._settings_obj._probability_two_random_records_match
-    # prior_bf = log2(p / (1 - p))
     bf_final_no_tf = _combine_prior_and_bfs(
         p, bf_terms=bf_columns_no_tf, sql_infinity_expr=linker._infinity_expression
     )[0]
