@@ -81,7 +81,8 @@ To get a basic Splink model up and running, use the following code. It demonstra
 For more detailed tutorial, please see [section below](#tutorial).
 
 ???+ note "Simple Splink Model Example"
-```py
+
+````py
 from splink.duckdb.linker import DuckDBLinker
 import splink.duckdb.comparison_library as cl
 import splink.duckdb.comparison_template_library as ctl
@@ -134,8 +135,9 @@ You can learn more about Splink in the step-by-step [tutorial](./demos/00_Tutori
 
 You can see end-to-end example of several use cases in the [example notebooks](./demos/examples/examples_index.md), or by clicking the following Binder link:
 
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink/enable_binder?labpath=docs%2Fdemos%2Ftutorials%2Fexamples_index.md)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink/enable_binder?labpath=docs%2Fdemos%2Fexamples%2Fduckdb%2Fdeduplicate_50k_synthetic.ipynb)
 
 ## :bar_chart: Charts Gallery
 
 You can see all of the interactive charts provided in Splink by checking out the [Charts Gallery](./charts/index.md).
+````
