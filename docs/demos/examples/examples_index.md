@@ -40,6 +40,7 @@ You can try these demos live in your web browser using the following link:
 
 [Linking financial transactions](./duckdb/transactions.ipynb)
 
+
 ### :simple-apachespark: PySpark examples
 
 [Deduplication of a small dataset using PySpark. Entity type is persons.](./spark/deduplicate_1k_synthetic.ipynb)
