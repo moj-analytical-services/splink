@@ -1,1 +1,2 @@
 splink==3.9.8
+pyarrow==13.0.0
