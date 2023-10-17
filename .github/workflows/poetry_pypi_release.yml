@@ -24,12 +24,16 @@ jobs:
       # Create duckdbless requirements
       - name: Run duckdbless setup
         run: |
-           chmod +x ./scripts/duckdb-less_packages.sh
-           ./scripts/duckdb-less_packages.sh
+          chmod +x ./scripts/duckdb-less_packages.sh
+          ./scripts/duckdb-less_packages.sh
         shell: bash
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Update duckdbless requirements
           # feed exact file for ease
-          file_pattern: 'duckdbless_requirements.txt'
+          file_pattern: "duckdbless_requirements.txt"
           repository: ./scripts
+      - name: Update binder_branch branch so binder points to current master
+        run: |
+          git branch -f binder_branch master
+          git push origin binder_branch
