@@ -1,0 +1,3 @@
+ipywidgets==8.1.1
+pyspark==3.5.0
+splink==3.9.8
