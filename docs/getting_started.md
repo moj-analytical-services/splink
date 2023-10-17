@@ -6,23 +6,21 @@ hide:
 # Getting Started
 
 ## :material-download: Install
-
 Splink supports python 3.8+.
 
 To obtain the latest released version of splink you can install from PyPI using pip:
-
 ```shell
 pip install splink
 ```
 
 or if you prefer, you can instead install splink using conda:
-
 ```shell
 conda install -c conda-forge splink
 ```
 
-??? "Backend Specific Installs" ### Backend Specific Installs
-From Splink v3.9.7, packages required by specific splink backends can be optionally installed by adding the `[<backend>]` suffix to the end of your pip install.
+??? "Backend Specific Installs"
+    ### Backend Specific Installs
+    From Splink v3.9.7, packages required by specific splink backends can be optionally installed by adding the `[<backend>]` suffix to the end of your pip install.
 
     **Note** that SQLite and DuckDB come packaged with Splink and do not need to be optionally installed.
 
@@ -43,8 +41,9 @@ From Splink v3.9.7, packages required by specific splink backends can be optiona
         pip install 'splink[postgres]'
         ```
 
-??? "DuckDB-less Installation" ### DuckDB-less Installation
-Should you be unable to install `DuckDB` to your local machine, you can still run `Splink` without the `DuckDB` dependency using a small workaround.
+??? "DuckDB-less Installation"
+    ### DuckDB-less Installation
+    Should you be unable to install `DuckDB` to your local machine, you can still run `Splink` without the `DuckDB` dependency using a small workaround.
 
     To start, install the latest released version of splink from PyPI without any dependencies using:
     ```shell
@@ -81,13 +80,12 @@ To get a basic Splink model up and running, use the following code. It demonstra
 For more detailed tutorial, please see [section below](#tutorial).
 
 ???+ note "Simple Splink Model Example"
-
-````py
-from splink.duckdb.linker import DuckDBLinker
-import splink.duckdb.comparison_library as cl
-import splink.duckdb.comparison_template_library as ctl
-from splink.duckdb.blocking_rule_library import block_on
-from splink.datasets import splink_datasets
+    ```py
+    from splink.duckdb.linker import DuckDBLinker
+    import splink.duckdb.comparison_library as cl
+    import splink.duckdb.comparison_template_library as ctl
+    from splink.duckdb.blocking_rule_library import block_on
+    from splink.datasets import splink_datasets
 
     df = splink_datasets.fake_1000
 
@@ -135,9 +133,8 @@ You can learn more about Splink in the step-by-step [tutorial](./demos/00_Tutori
 
 You can see end-to-end example of several use cases in the [example notebooks](./demos/examples/examples_index.md), or by clicking the following Binder link:
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink/enable_binder?labpath=docs%2Fdemos%2Fexamples%2Fduckdb%2Fdeduplicate_50k_synthetic.ipynb)
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink/enable_binder?labpath=docs%2Fdemos%2Fexamples%2Ftutorials%2Fexamples_index.md)
 
 ## :bar_chart: Charts Gallery
 
 You can see all of the interactive charts provided in Splink by checking out the [Charts Gallery](./charts/index.md).
-````
