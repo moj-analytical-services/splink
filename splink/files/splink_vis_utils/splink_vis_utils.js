@@ -10288,7 +10288,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 		{
 			encoding: {
 				color: {
-					field: "match_probability",
+					field: "avg_match_probability",
 					scale: {
 						domain: [
 							0,
@@ -10317,14 +10317,16 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						type: "quantitative"
 					},
 					{
-						field: "match_probability",
+						field: "avg_match_probability",
 						type: "quantitative",
-						format: ",.1%"
+						format: ",.1%",
+						title: "Match probability"
 					},
 					{
 						field: "match_weight",
 						type: "quantitative",
-						format: ",.2f"
+						format: ",.2f",
+						title: "Match weight"
 					},
 					{
 						field: "sum_matches",
@@ -10335,17 +10337,12 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						field: "proportion_of_comparisons",
 						type: "quantitative",
 						format: ",.1%"
-					},
-					{
-						field: "cumulative_comparisons",
-						type: "quantitative",
-						format: ",.1%"
 					}
 				],
 				x: {
 					field: "gam_concat",
 					sort: {
-						field: "match_weight",
+						field: "sort_avg_match_weight",
 						op: "sum",
 						order: "ascending"
 					},
@@ -10544,7 +10541,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 		{
 			encoding: {
 				color: {
-					field: "match_probability",
+					field: "avg_match_probability",
 					legend: null,
 					scale: {
 						domain: [
@@ -10563,7 +10560,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 				x: {
 					field: "gam_concat",
 					sort: {
-						field: "match_weight",
+						field: "sort_avg_match_weight",
 						op: "sum",
 						order: "ascending"
 					},
@@ -10636,10 +10633,13 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  let sort_field;
 	  data.forEach((d) => {
 	    d.sum_matches = d.match_probability * d.count;
+
+	    const bf = Math.pow(2, d.sort_avg_match_weight);
+	    d.avg_match_probability = bf / (1 + bf);
 	  });
 	  if (sort_bars == "sort_match_weight") {
 	    data.sort(sort_match_weight);
-	    sort_field = "match_weight";
+	    sort_field = "sort_avg_match_weight";
 	  }
 	  if (sort_bars == "sort_sum_matches") {
 
@@ -10693,6 +10693,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	      row["bayes_factor"] = d[`bf_${data_col_name}`];
 	      const log2 = Math.log2;
 	      row["match_weight"] = log2(d[`bf_${data_col_name}`]);
+	      row["sort_avg_match_weight"] = d["sort_avg_match_weight"];
 
 	      row["label_for_charts"] = settings_col.comparison_level_lookup[row["gam_value"]]["label_for_charts"];
 	      row["sql_condition"] = settings_col.comparison_level_lookup[row["gam_value"]]["sql_condition"];
