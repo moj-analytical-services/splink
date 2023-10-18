@@ -14,7 +14,7 @@ This section provides a series of examples to help you get started with Splink. 
 
 You can try these demos live in your web browser using the following link:
 
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink/binder_branch?labpath=docs%2Fdemos%2Fexamples%2Fduckdb%2Fdeduplicate_50k_synthetic.ipynb)
 
 ### :simple-duckdb: DuckDB examples
 

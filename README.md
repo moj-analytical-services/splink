@@ -50,7 +50,7 @@ Splink is not designed for linking a single column containing a 'bag of words'. 
 
 The homepage for the Splink documentation can be found [here](https://moj-analytical-services.github.io/splink/). Interactive demos can be found [here](https://github.com/moj-analytical-services/splink/tree/master/docs/demos), or by clicking the following Binder link:
 
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab)
+[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink/binder_branch?labpath=docs%2Fdemos%2Ftutorials%2F00_Tutorial_Introduction.ipynb)
 
 The specification of the Fellegi Sunter statistical model behind `splink` is similar as that used in the R [fastLink package](https://github.com/kosukeimai/fastLink). Accompanying the fastLink package is an [academic paper](http://imai.fas.harvard.edu/research/files/linkage.pdf) that describes this model. The [Splink documentation site](https://moj-analytical-services.github.io/splink/topic_guides/fellegi_sunter.html) and a [series of interactive articles](https://www.robinlinacre.com/probabilistic_linkage/) also explores the theory behind Splink.
 
@@ -202,7 +202,7 @@ We are extremely grateful to professors Katie Harron, James Doidge and Peter Chr
 
 While Splink is a standalone package, there are a number of repositories in the Splink ecosystem:
 
-- [splink_demos](https://github.com/moj-analytical-services/splink_demos) contains a copy of the Splink tutorial and example notebooks that are hosted via [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab)
+
 - [splink_scalaudfs](https://github.com/moj-analytical-services/splink_scalaudfs) contains the code to generate [User Defined Functions](https://moj-analytical-services.github.io/splink/dev_guides/udfs.html#spark) in scala which are then callable in Spark.
 - [splink_datasets](https://github.com/moj-analytical-services/splink_datasets) contains datasets that can be installed automatically as a part of Splink through the [In-build datasets](https://moj-analytical-services.github.io/splink/datasets.html) functionality.
 - [splink_synthetic_data](https://github.com/moj-analytical-services/splink_synthetic_data) contains code to generate synthetic data.
