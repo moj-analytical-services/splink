@@ -84,6 +84,8 @@ def render_labelling_tool_html(
 
     template_data = {
         "slt": read_resource("files/labelling_tool/slt.js"),
+        "d3": read_resource("files/external_js/d3@7.8.5"),
+        "stdlib": read_resource("files/external_js/stdlib.js@5.8.3"),
         "pairwise_comparison_data": json.dumps(comparisons_recs, cls=EverythingEncoder),
         "splink_settings_data": json.dumps(settings, cls=EverythingEncoder),
         "view_in_jupyter": view_in_jupyter,
