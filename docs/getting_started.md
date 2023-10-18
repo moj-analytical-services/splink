@@ -133,7 +133,7 @@ You can learn more about Splink in the step-by-step [tutorial](./demos/00_Tutori
 
 You can see end-to-end example of several use cases in the [example notebooks](./demos/examples/examples_index.md), or by clicking the following Binder link:
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink/enable_binder?labpath=docs%2Fdemos%2Fexamples%2Fduckdb%2Fdeduplicate_50k_synthetic.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink/binder_branch?labpath=docs%2Fdemos%2Fexamples%2Fduckdb%2Fdeduplicate_50k_synthetic.ipynb)
 
 ## :bar_chart: Charts Gallery
 
