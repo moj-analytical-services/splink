@@ -131,8 +131,8 @@ nav:
         - The Fellegi-Sunter Model: "topic_guides/theory/fellegi_sunter.md"
       - Linkage Models in Splink:
         - Splink's SQL backends - Spark, DuckDB etc:
-          - Backends overview: "topic_guides/backends/backends.md"
-          - PostgreSQL: "topic_guides/backends/postgres.md"
+          - Backends overview: "topic_guides/splink_fundamentals/backends/backends.md"
+          - PostgreSQL: "topic_guides/splink_fundamentals/backends/postgres.md"
         - Link type - linking vs deduping: "topic_guides/splink_fundamentals/link_type.md"
         - Defining Splink models: "topic_guides/splink_fundamentals/settings.md"
         - Retrieving and querying Splink results: "topic_guides/splink_fundamentals/querying_splink_results.md"
