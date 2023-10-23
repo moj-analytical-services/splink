@@ -632,9 +632,9 @@ class Linker:
                 start_time = time.time()
                 output_tablename = task.output_table_name
                 sql = task.sql
-                print("------")  # noqa: T201
+                print("------", flush=True)  # noqa: T201
                 print(  # noqa: T201
-                    f"--------Creating table: {output_tablename}--------"
+                    f"--------Creating table: {output_tablename}--------", flush=True
                 )
 
                 dataframe = self._sql_to_splink_dataframe_checking_cache(
@@ -3696,3 +3696,8 @@ class Linker:
 
         for k in keys_to_delete:
             del self._intermediate_table_cache[k]
+
+    def _gen_explode_sql(self, tbl_name, columns_to_explode, other_columns_to_retain):
+        raise NotImplementedError(
+            f"Unnesting blocking rules are not supported for {type(self)}"
+        )
