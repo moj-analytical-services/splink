@@ -64,7 +64,9 @@ from .connected_components import (
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkDeprecated, SplinkException
-from .find_blocks_below_threshold import find_blocking_rules_below_threshold
+from .find_blocks_below_threshold import (
+    find_blocking_rules_below_threshold_comparison_count,
+)
 from .find_matches_to_new_records import add_unique_id_and_source_dataset_cols_if_needed
 from .labelling_tool import (
     generate_labelling_tool_comparisons,
@@ -3724,6 +3726,6 @@ class Linker:
     def _find_blocking_rules_below_threshold(
         self, max_comparisons_per_rule, fields=None
     ):
-        return find_blocking_rules_below_threshold(
+        return find_blocking_rules_below_threshold_comparison_count(
             self, max_comparisons_per_rule, fields
         )

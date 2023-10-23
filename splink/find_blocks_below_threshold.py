@@ -18,13 +18,15 @@ def sanitise_column_name(column_name):
     return sanitized_name
 
 
-def _generate_row(blocking_columns, comparison_count, all_columns):
+def _generate_output_combinations_table_row(
+    blocking_columns, comparison_count, all_columns
+):
     row = {}
 
     blocking_columns = [sanitise_column_name(c) for c in blocking_columns]
     all_columns = [sanitise_column_name(c) for c in all_columns]
 
-    row["blocking_rules"] = ", ".join(blocking_columns)
+    row["blocking_rules"] = blocking_columns
     row["comparison_count"] = comparison_count
     row["complexity"] = len(blocking_columns)
 
@@ -48,7 +50,8 @@ def _generate_combinations(
 
 
 def _generate_blocking_rule(linker, cols_as_string):
-    # User might have inputted e.g. substr(name, 1,2)
+    # Can't easily currently use blocking_rules_library.block_on for this
+    # because there isn't an easy way of grabbing the linker-specific variant
 
     trees = [parse_one(c, read=linker._sql_dialect) for c in cols_as_string]
     equi_joins = [
@@ -59,7 +62,7 @@ def _generate_blocking_rule(linker, cols_as_string):
     return br
 
 
-def _search_combinations(
+def _search_tree_for_blocking_rules_below_threshold_count(
     linker: "Linker",
     all_columns: List[str],
     threshold: float,
@@ -95,7 +98,9 @@ def _search_combinations(
     comparison_count = (
         linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
     )
-    row = _generate_row(current_combination, comparison_count, all_columns)
+    row = _generate_output_combinations_table_row(
+        current_combination, comparison_count, all_columns
+    )
 
     already_visited.add(frozenset(current_combination))
 
@@ -105,7 +110,7 @@ def _search_combinations(
             all_columns, current_combination, already_visited
         )
         for next_combination in combinations:
-            _search_combinations(
+            _search_tree_for_blocking_rules_below_threshold_count(
                 linker,
                 all_columns,
                 threshold,
@@ -114,18 +119,32 @@ def _search_combinations(
                 results,
             )
     else:
-        logger.debug(
-            f"Comparison count for {current_combination}: {comparison_count:,.0f}"
-        )
-
         results.append(row)
 
     return results
 
 
-def find_blocking_rules_below_threshold(
+def find_blocking_rules_below_threshold_comparison_count(
     linker: "Linker", max_comparisons_per_rule, columns=None
-):
+) -> pd.DataFrame:
+    """
+    Finds blocking rules which return a comparison count below a given threshold.
+
+    In addition to returning blocking rules, returns the comparison count and
+    'complexity', which refers to the number of equi-joins used by the rule
+
+    e.g. equality on first_name and surname is complexity of 2
+
+    Args:
+        linker (Linker): The Linker object
+        max_comparisons_per_rule (int): Max comparisons allowed per blocking rule.
+        columns: Columns to consider. If None, uses all columns used by the
+            ComparisonLevels of the Linker.
+
+    Returns:
+        pd.DataFrame: DataFrame with blocking rules, comparison_count, and complexity.
+    """
+
     if not columns:
         columns = linker._column_names_as_input_columns
 
@@ -137,5 +156,7 @@ def find_blocking_rules_below_threshold(
         else:
             columns_as_strings.append(c)
 
-    results = _search_combinations(linker, columns_as_strings, max_comparisons_per_rule)
+    results = _search_tree_for_blocking_rules_below_threshold_count(
+        linker, columns_as_strings, max_comparisons_per_rule
+    )
     return pd.DataFrame(results)
