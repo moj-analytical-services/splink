@@ -40,6 +40,15 @@ def datediff_sql(
         """
 
 
+def valid_date_sql(col_name, date_format=None):
+    if date_format is None:
+        date_format = "%Y-%m-%d"
+
+    return f"""
+        try(date_parse({col_name}, '{date_format}'))
+    """
+
+
 class AthenaBase(DialectBase):
     @property
     def _sql_dialect(self):
@@ -60,3 +69,7 @@ class AthenaBase(DialectBase):
     @property
     def _datediff_function(self):
         return datediff_sql
+
+    @property
+    def _valid_date_function(self):
+        return valid_date_sql

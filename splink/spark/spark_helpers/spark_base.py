@@ -35,6 +35,15 @@ def datediff_sql(
     """
 
 
+def valid_date_sql(col_name, date_format=None):
+    if date_format is None:
+        date_format = "yyyy-MM-dd"
+
+    return f"""
+        to_date({col_name}, '{date_format}')
+    """
+
+
 def regex_extract_sql(col_name, regex):
     if "\\" in regex:
         raise SyntaxError(
@@ -57,6 +66,10 @@ class SparkBase(DialectBase):
     @property
     def _datediff_function(self):
         return datediff_sql
+
+    @property
+    def _valid_date_function(self):
+        return valid_date_sql
 
     @property
     def _size_array_intersect_function(self):

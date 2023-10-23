@@ -10,7 +10,7 @@ tags:
 
 # Splink's SQL backends: Spark, DuckDB, etc
 
-Splink is a Python library. It implements all data linking computations by generating SQL, and submitting the SQL statements to a backend of the user's chosing for execution.
+Splink is a Python library. It implements all data linking computations by generating SQL, and submitting the SQL statements to a backend of the user's choosing for execution.
 
 For smaller input datasets of up to 1-2 million records, users can link data in Python on their laptop using the DuckDB backend. This is the recommended approach because the DuckDB backend is installed automatically when the user installs Splink using `pip install splink`. No additional configuration is needed.
 
@@ -22,11 +22,11 @@ The Splink code you write is almost identical between backends, so it's straight
 
 Import the linker from the backend of your choosing, and the backend-specific comparison libraries.
 
-Once you have initialised the `linker` object, there is no difference in the subequent code between backends.
+Once you have initialised the `linker` object, there is no difference in the subsequent code between backends.
 
 Note however, that not all comparison functions are available in all backends.
 There are tables detailing the available functions for each backend on
-the [comparison library API page](../comparison_library.html) and the [comparison level library API page](../comparison_level_library.html).
+the [comparison library API page](../../comparison_library.md) and the [comparison level library API page](../../comparison_level_library.md).
 
 === ":simple-duckdb: DuckDB"
 
@@ -84,13 +84,13 @@ the [comparison library API page](../comparison_library.html) and the [compariso
 
 ### :simple-sqlite: SQLite
 
-[**SQLite**](https://www.sqlite.org/index.html) does not have native support for [fuzzy string-matching](./comparators.html) functions.
-However, some are available for Splink users as python [user-defined functions (UDFs)](../dev_guides/udfs.html#sqlite):
+[**SQLite**](https://www.sqlite.org/index.html) does not have native support for [fuzzy string-matching](../comparisons/comparators.html) functions.
+However, some are available for Splink users as python [user-defined functions (UDFs)](../../dev_guides/udfs.html#sqlite):
 
-* [`levenshtein`](../comparison_level_library.html#splink.comparison_level_library.LevenshteinLevelBase)
-* [`damerau_levenshtein`](../comparison_level_library.html#splink.comparison_level_library.DamerauLevenshteinLevelBase)
-* [`jaro`](../comparison_level_library.html#splink.comparison_level_libraryJaroLevelBase)
-* [`jaro_winkler`](../comparison_level_library.html#splink.comparison_level_library.JaroWinklerLevelBase)
+* [`levenshtein`](../../comparison_level_library.html#splink.comparison_level_library.LevenshteinLevelBase)
+* [`damerau_levenshtein`](../../comparison_level_library.html#splink.comparison_level_library.DamerauLevenshteinLevelBase)
+* [`jaro`](../../comparison_level_library.html#splink.comparison_level_libraryJaroLevelBase)
+* [`jaro_winkler`](../../comparison_level_library.html#splink.comparison_level_library.JaroWinklerLevelBase)
 
 However, there are a couple of points to note:
 

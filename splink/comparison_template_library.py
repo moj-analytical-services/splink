@@ -159,10 +159,13 @@ class DateComparisonBase(Comparison):
         """
         # Construct Comparison
         comparison_levels = []
-        if invalid_dates_as_null:
-            comparison_levels.append(self._null_level(col_name, date_format))
-        else:
-            comparison_levels.append(self._null_level(col_name))
+        comparison_levels.append(
+            self._null_level(
+                col_name,
+                invalid_dates_as_null=invalid_dates_as_null,
+                valid_string_pattern=date_format,
+            )
+        )
 
         # Validate user inputs
         datediff_error_logger(thresholds=datediff_thresholds, metrics=datediff_metrics)
@@ -172,13 +175,11 @@ class DateComparisonBase(Comparison):
                 "sql_condition": f"SUBSTR({col_name}_l, 6, 5) = '01-01'",
                 "label_for_charts": "Date is 1st Jan",
             }
-            comparison_level = {
-                and_(
-                    self._exact_match_level(col_name),
-                    dob_first_jan,
-                    label_for_charts="Exact match and 1st Jan",
-                )
-            }
+            comparison_level = and_(
+                self._exact_match_level(col_name),
+                dob_first_jan,
+                label_for_charts="Exact match and 1st Jan",
+            )
 
             if m_probability_1st_january:
                 comparison_level["m_probability"] = m_probability_1st_january
@@ -388,7 +389,6 @@ class NameComparisonBase(Comparison):
                 the 'everything else' level. Defaults to None.
 
         Examples:
-
             === ":simple-duckdb: DuckDB"
                 Basic Name Comparison
                 ``` python
@@ -670,15 +670,16 @@ class ForenameSurnameComparisonBase(Comparison):
                 Defaults to True
             phonetic_forename_col_name (str, optional): The name of the column with
                 phonetic reduction (such as dmetaphone) of forename_col_name. Including
-                parameter will create an exact match level for
-                phonetic_forename_col_name.
+                parameter along with phonetic_surname_col_name will create an exact
+                match level for "Full name phonetic match".
                 The phonetic column must be present in the dataset to use this
                 parameter.
                 Defaults to None
             phonetic_surname_col_name (str, optional): The name of the column with
                 phonetic reduction (such as dmetaphone) of surname_col_name. Including
-                this parameter will create an exact match level for
-                phonetic_surname_col_name. The phonetic column must be present in
+                this parameter along with phonetic_forename_col_name will create an
+                exact match level for "Full name phonetic match".
+                The phonetic column must be present in
                 the dataset to use this parameter.
                 Defaults to None
             levenshtein_thresholds (Union[int, list], optional): The thresholds
@@ -1385,6 +1386,7 @@ class EmailComparisonBase(Comparison):
         term_frequency_adjustments_full: bool = False,
         include_exact_match_level: bool = True,
         include_username_match_level: bool = True,
+        include_username_fuzzy_level: bool = True,
         include_domain_match_level: bool = False,
         levenshtein_thresholds: int | list = [],
         damerau_levenshtein_thresholds: int | list = [],
@@ -1430,6 +1432,8 @@ class EmailComparisonBase(Comparison):
                 match on full email level. Defaults to True.
             include_username_match_level (bool, optional): If True, include an exact
                 match on username only level. Defaults to True.
+            include_username_fuzzy_level (bool, optional): If True, include a level
+                for fuzzy match on username. Defaults to True.
             include_domain_match_level (bool, optional): If True, include an exact
                 match on domain only level. Defaults to True.
             levenshtein_thresholds (Union[int, list], optional): The thresholds
@@ -1524,7 +1528,9 @@ class EmailComparisonBase(Comparison):
 
         # Decide whether invalid emails should be treated as null
         if invalid_emails_as_null:
-            comparison_levels.append(self._null_level(col_name, valid_email_regex))
+            comparison_levels.append(
+                self._null_level(col_name, valid_string_pattern=valid_email_regex)
+            )
         else:
             comparison_levels.append(self._null_level(col_name))
 
@@ -1608,55 +1614,56 @@ class EmailComparisonBase(Comparison):
             comparison_levels = comparison_levels + threshold_levels
 
         # Fuzzy match on username only
-        if len(levenshtein_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                regex_extract="^[^@]+",
-                distance_function_name="levenshtein",
-                distance_threshold_or_thresholds=levenshtein_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_username_lev,
-                include_colname_in_charts_label=True,
-                manual_col_name_for_charts_label="Username",
-            )
-            comparison_levels = comparison_levels + threshold_levels
+        if include_username_fuzzy_level:
+            if len(levenshtein_thresholds) > 0:
+                threshold_levels = distance_threshold_comparison_levels(
+                    self,
+                    col_name,
+                    regex_extract="^[^@]+",
+                    distance_function_name="levenshtein",
+                    distance_threshold_or_thresholds=levenshtein_thresholds,
+                    m_probability_or_probabilities_thres=m_probability_or_probabilities_username_lev,
+                    include_colname_in_charts_label=True,
+                    manual_col_name_for_charts_label="Username",
+                )
+                comparison_levels = comparison_levels + threshold_levels
 
-        if len(damerau_levenshtein_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                regex_extract="^[^@]+",
-                distance_function_name="damerau-levenshtein",
-                distance_threshold_or_thresholds=damerau_levenshtein_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_username_dl,
-                include_colname_in_charts_label=True,
-                manual_col_name_for_charts_label="Username",
-            )
-            comparison_levels = comparison_levels + threshold_levels
+            if len(damerau_levenshtein_thresholds) > 0:
+                threshold_levels = distance_threshold_comparison_levels(
+                    self,
+                    col_name,
+                    regex_extract="^[^@]+",
+                    distance_function_name="damerau-levenshtein",
+                    distance_threshold_or_thresholds=damerau_levenshtein_thresholds,
+                    m_probability_or_probabilities_thres=m_probability_or_probabilities_username_dl,
+                    include_colname_in_charts_label=True,
+                    manual_col_name_for_charts_label="Username",
+                )
+                comparison_levels = comparison_levels + threshold_levels
 
-        if len(jaro_winkler_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                regex_extract="^[^@]+",
-                distance_function_name="jaro-winkler",
-                distance_threshold_or_thresholds=jaro_winkler_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_username_jw,
-                include_colname_in_charts_label=True,
-                manual_col_name_for_charts_label="Username",
-            )
-            comparison_levels = comparison_levels + threshold_levels
+            if len(jaro_winkler_thresholds) > 0:
+                threshold_levels = distance_threshold_comparison_levels(
+                    self,
+                    col_name,
+                    regex_extract="^[^@]+",
+                    distance_function_name="jaro-winkler",
+                    distance_threshold_or_thresholds=jaro_winkler_thresholds,
+                    m_probability_or_probabilities_thres=m_probability_or_probabilities_username_jw,
+                    include_colname_in_charts_label=True,
+                    manual_col_name_for_charts_label="Username",
+                )
+                comparison_levels = comparison_levels + threshold_levels
 
-        if len(jaro_thresholds) > 0:
-            threshold_levels = distance_threshold_comparison_levels(
-                self,
-                col_name,
-                distance_function_name="jaro",
-                distance_threshold_or_thresholds=jaro_thresholds,
-                m_probability_or_probabilities_thres=m_probability_or_probabilities_email_jar,
-                include_colname_in_charts_label=True,
-            )
-            comparison_levels = comparison_levels + threshold_levels
+            if len(jaro_thresholds) > 0:
+                threshold_levels = distance_threshold_comparison_levels(
+                    self,
+                    col_name,
+                    distance_function_name="jaro",
+                    distance_threshold_or_thresholds=jaro_thresholds,
+                    m_probability_or_probabilities_thres=m_probability_or_probabilities_email_jar,
+                    include_colname_in_charts_label=True,
+                )
+                comparison_levels = comparison_levels + threshold_levels
 
         # Domain-only match
 

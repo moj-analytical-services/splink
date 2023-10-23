@@ -5,8 +5,8 @@ hide:
 
 # Getting Started
 
-## Install
-Splink supports python 3.7+.
+## :material-download: Install
+Splink supports python 3.8+.
 
 To obtain the latest released version of splink you can install from PyPI using pip:
 ```shell
@@ -17,6 +17,29 @@ or if you prefer, you can instead install splink using conda:
 ```shell
 conda install -c conda-forge splink
 ```
+
+??? "Backend Specific Installs"
+    ### Backend Specific Installs
+    From Splink v3.9.7, packages required by specific splink backends can be optionally installed by adding the `[<backend>]` suffix to the end of your pip install.
+
+    **Note** that SQLite and DuckDB come packaged with Splink and do not need to be optionally installed.
+
+    The following backends are supported:
+
+    === ":simple-apachespark: Spark"
+        ```sh
+        pip install 'splink[spark]'
+        ```
+
+    === ":simple-amazonaws: Athena"
+        ```sh
+        pip install 'splink[athena]'
+        ```
+
+    === ":simple-postgresql: PostgreSql"
+        ```sh
+        pip install 'splink[postgres]'
+        ```
 
 ??? "DuckDB-less Installation"
     ### DuckDB-less Installation
@@ -46,7 +69,7 @@ conda install -c conda-forge splink
     pip install -r splink_requirements.txt
     ```
 
-## Quickstart
+## :rocket: Quickstart
 
 To get a basic Splink model up and running, use the following code. It demonstrates how to:
 
@@ -61,7 +84,7 @@ For more detailed tutorial, please see [section below](#tutorial).
     from splink.duckdb.linker import DuckDBLinker
     import splink.duckdb.comparison_library as cl
     import splink.duckdb.comparison_template_library as ctl
-    import splink.duckdb.blocking_rule_library as brl
+    from splink.duckdb.blocking_rule_library import block_on
     from splink.datasets import splink_datasets
 
     df = splink_datasets.fake_1000
@@ -69,30 +92,27 @@ For more detailed tutorial, please see [section below](#tutorial).
     settings = {
         "link_type": "dedupe_only",
         "blocking_rules_to_generate_predictions": [
-            brl.exact_match_rule("first_name"),
-            brl.exact_match_rule("surname"),
+            block_on("first_name"),
+            block_on("surname"),
         ],
         "comparisons": [
             ctl.name_comparison("first_name"),
             ctl.name_comparison("surname"),
             ctl.date_comparison("dob", cast_strings_to_date=True),
             cl.exact_match("city", term_frequency_adjustments=True),
-            ctl.email_comparison("email"),
+            ctl.email_comparison("email", include_username_fuzzy_level=False),
         ],
     }
 
     linker = DuckDBLinker(df, settings)
     linker.estimate_u_using_random_sampling(max_pairs=1e6)
 
-    blocking_rule_for_training = brl.and_(
-                                brl.exact_match_rule("first_name"), 
-                                brl.exact_match_rule("surname")
-                                )
+    blocking_rule_for_training = block_on(["first_name", "surname"])
 
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
 
-    blocking_rule_for_training = brl.exact_match_rule("dob")
-    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training)
+    blocking_rule_for_training = block_on("substr(dob, 1, 4)")  # block on year
+    linker.estimate_parameters_using_expectation_maximisation(blocking_rule_for_training, estimate_without_term_frequencies=True)
 
 
     pairwise_predictions = linker.predict()
@@ -101,16 +121,20 @@ For more detailed tutorial, please see [section below](#tutorial).
     clusters.as_pandas_dataframe(limit=5)
     ```
 
-## Tutorials
+## :link: Tutorials
 
 You can learn more about Splink in the step-by-step [tutorial](./demos/00_Tutorial_Introduction.ipynb).
 
-## Videos
+## :material-video: Videos
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/msz3T741KQI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
 
-## Example Notebooks
+## :simple-jupyter: Example Notebooks
 
-You can see end-to-end example of several use cases in the [example notebooks](./examples_index.md), or by clicking the following Binder link:
+You can see end-to-end example of several use cases in the [example notebooks](./demos/examples/examples_index.md), or by clicking the following Binder link:
 
-[![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink_demos/master?urlpath=lab)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/moj-analytical-services/splink/binder_branch?labpath=docs%2Fdemos%2Fexamples%2Fduckdb%2Fdeduplicate_50k_synthetic.ipynb)
+
+## :bar_chart: Charts Gallery
+
+You can see all of the interactive charts provided in Splink by checking out the [Charts Gallery](./charts/index.md).

@@ -3,6 +3,10 @@ on:
   pull_request:
     branches:
       - master
+    paths:
+      - splink/**
+      - benchmarking/**
+      - pyproject.toml
 
 jobs:
   test:

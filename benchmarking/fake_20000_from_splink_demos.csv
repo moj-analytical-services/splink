@@ -1,4 +1,4 @@
-unique_id,first_name,surname,dob,city,email,group
+unique_id,first_name,surname,dob,city,email,cluster
 0,Robert,Alan,1971-06-24,,robert255@smith.net,0
 1,Robert,Allen,1971-05-24,,roberta25@smith.net,0
 2,Rob,Allen,1971-06-24,London,roberta25@smith.net,0
