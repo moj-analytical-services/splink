@@ -3,7 +3,7 @@ from random import randint
 import pandas as pd
 
 
-def localised_shuffle(lst, window_percent):
+def localised_shuffle(lst: list, window_percent: float) -> list:
     """
     Performs a localised shuffle on a list.
 

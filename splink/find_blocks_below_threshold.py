@@ -25,7 +25,7 @@ def _generate_row(blocking_columns, comparison_count, all_columns):
     all_columns = [sanitise_column_name(c) for c in all_columns]
 
     row["blocking_rules"] = ", ".join(blocking_columns)
-    row["comparison_count"] = f"{comparison_count:,.0f}"
+    row["comparison_count"] = comparison_count
     row["complexity"] = len(blocking_columns)
 
     for col in all_columns:
