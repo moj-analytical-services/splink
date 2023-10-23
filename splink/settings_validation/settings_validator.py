@@ -27,34 +27,38 @@ class SettingsValidator:
         self.linker = linker
 
     @property
+    def settings_obj(self):
+        return self.linker._settings_obj
+
+    @property
     def _sql_dialect(self):
-        if self.linker._settings_obj:
-            return self.linker._settings_obj._sql_dialect
+        if self.settings_obj:
+            return self.settings_obj._sql_dialect
         else:
             return None
 
     @property
     def cols_to_retain(self):
         return self.clean_list_of_column_names(
-            self.linker._settings_obj._additional_cols_to_retain
+            self.settings_obj._additional_cols_to_retain
         )
 
     @property
     def uid(self):
-        uid_as_tree = InputColumn(self.linker._settings_obj._unique_id_column_name)
+        uid_as_tree = InputColumn(self.settings_obj._unique_id_column_name)
         return self.clean_list_of_column_names(uid_as_tree)
 
     @property
     def blocking_rules(self):
-        brs = self.linker._settings_obj._blocking_rules_to_generate_predictions
+        brs = self.settings_obj._blocking_rules_to_generate_predictions
         return [br.blocking_rule for br in brs]
 
     @property
     def comparisons(self):
-        return self.linker._settings_obj.comparisons
+        return self.settings_obj.comparisons
 
     @property
-    def input_columns_by_df(self):
+    def _input_columns_by_df(self):
         """A dictionary containing all input dataframes and the columns located
         within.
 
@@ -71,12 +75,12 @@ class SettingsValidator:
         return input_columns
 
     @property
-    def input_columns(self):
+    def _input_columns(self):
         """
         Returns:
             set: The set intersection of all columns contained within each dataset.
         """
-        return reduce(and_, self.input_columns_by_df.values())
+        return reduce(and_, self._input_columns_by_df.values())
 
     def clean_list_of_column_names(self, col_list, as_tree=True):
         """Clean a list of columns names by removing the quote characters
