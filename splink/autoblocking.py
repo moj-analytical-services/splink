@@ -65,6 +65,14 @@ def heuristic_select_rows(data, field_names, min_field_freedom):
 
 def calculate_field_freedom_cost(combination, field_names):
     """
+    We want a better score for combinations that allow each field to
+    vary as much as possible.
+
+    e.g. we don't like combiantions of four rules
+    that holds first_name and surname constant in 3 out of four
+    and only allows them to vary in one, even if that affords greater
+    variance to other
+
     Calculates the field cost for a given combination of rows. It counts the number of
     times each field is allowed to vary (i.e., not included in the blocking rules).
 
@@ -76,13 +84,23 @@ def calculate_field_freedom_cost(combination, field_names):
         int: The field freedom cost.
     """
 
-    # max_cost is num rows time num ields
-    field_cost = len(combination) * len(field_names)
+    max_variances = len(combination)
+
+    total_cost = 0
     for field in field_names:
         variances = sum(row[field] == 0 for row in combination)
-        if variances > 1:
-            field_cost -= variances
-    return field_cost
+        cost = max_variances - variances
+        # Quadratic so we punish fields that rarely get to vary
+        # more than a broad spread of fields
+        cost = cost * cost
+        total_cost = total_cost + 1
+    return total_cost
+
+
+# How many times is each field allowed to vary?
+# Best case, vary in every rule = no cost
+# worse caes, vary in no rule = high cost
+#
 
 
 def calculate_cost(
@@ -90,7 +108,7 @@ def calculate_cost(
     field_names,
     complexity_weight=10,
     field_freedom_weight=10,
-    row_weight=1000,
+    num_brs_weight=1000,
 ):
     """
     Calculates a cost for a given combination of rows. The cost is a weighted sum of the
@@ -100,61 +118,114 @@ def calculate_cost(
         combination (list): The combination of rows.
         field_names (list): The list of field names.
         complexity_weight (int, optional): The weight for complexity. Defaults to 10.
-        field_freedom_weight (int, optional): The weight for field freedom. Defaults to 10.
-        row_weight (int, optional): The weight for row count. Defaults to 1000.
+        field_freedom_weight (int, optional): The weight for field freedom. Defaults to
+            10.
+        num_brs_weight (int, optional): The weight for the number of blocking rules
+            found. Defaults to 1000.
 
     Returns:
         dict: The calculated cost and individual component costs.
     """
+    # Complexity is the number of fields held constant in a given blocking rule
     complexity_cost = sum(row["complexity"] for row in combination)
     total_row_count = sum(row["comparison_count"] for row in combination)
+
+    # We want a better score for combinations that allow each field to
+    # vary as much as possible.
     field_freedom_cost = calculate_field_freedom_cost(combination, field_names)
-    row_cost = len(combination)
+    num_brs_cost = len(combination)
 
     total_cost = (
         complexity_weight * complexity_cost
         + field_freedom_weight * field_freedom_cost
-        + row_weight * row_cost
+        + num_brs_weight * num_brs_cost
     )
 
     return {
         "complexity_cost": complexity_weight * complexity_cost,
         "field_freedom_cost": field_freedom_weight * field_freedom_cost,
-        "row_cost": row_weight * row_cost,
+        "num_brs_cost": num_brs_weight * num_brs_cost,
         "cost": total_cost,
         "total_comparisons_count": total_row_count,
     }
 
 
-def suggest_blocking_rules_for_prediction(df_blocks_found):
-    df_blocks_found = df_blocks_found.sort_values(
+def suggest_blocking_rules_for_prediction(df_block_stats, min_freedom=1, num_runs=5):
+    """Use a cost optimiser to suggest blocking rules for prediction
+
+    Args:
+        df_block_stats: Dataframe returned by find_blocking_rules_below_threshold
+        min_freedom (int, optional): Each column should have at least this many
+            opportunities to vary amongst the blockign rules. Defaults to 1.
+        num_runs (int, optional): How many random combinations of
+            rules to try.  The best will be selected. Defaults to 5.
+
+    Returns:
+        _type_: _description_
+    """
+    df_block_stats = df_block_stats.sort_values(
         by=["complexity", "comparison_count"], ascending=[True, False]
     )
-    blocks_found_recs = df_blocks_found.to_dict(orient="records")
+    blocks_found_recs = df_block_stats.to_dict(orient="records")
 
     blocking_cols = list(blocks_found_recs[0].keys())
     blocking_cols = [c for c in blocking_cols if c.startswith("__fixed__")]
 
     results = []
-    for min_freedom in range(1, 4):
-        for run in range(5):
-            selected_rows = heuristic_select_rows(
-                blocks_found_recs, blocking_cols, min_field_freedom=min_freedom
-            )
-            cost_dict = calculate_cost(selected_rows, blocking_cols)
-            cost_dict.update(
-                {
-                    "run_num": run,
-                    "freedom": min_freedom,
-                    "blocking_rules": " || ".join(
-                        [row["blocking_rules"] for row in selected_rows]
-                    ),
-                }
-            )
-            results.append(cost_dict)
+
+    for run in range(num_runs):
+        selected_rows = heuristic_select_rows(
+            blocks_found_recs, blocking_cols, min_field_freedom=min_freedom
+        )
+        cost_dict = calculate_cost(selected_rows, blocking_cols)
+        cost_dict.update(
+            {
+                "run_num": run,
+                "minimum_freedom_for_each_column": min_freedom,
+                "suggested_blocking_rules_string": " || ".join(
+                    [" AND ".join(row["blocking_columns"]) for row in selected_rows]
+                ),
+                "suggested_blocking_rules_as_splink_brs": [
+                    row["splink_blocking_rule"] for row in selected_rows
+                ],
+            }
+        )
+        results.append(cost_dict)
 
     results_df = pd.DataFrame(results)
     min_scores_df = (
-        results_df.sort_values("cost").groupby("freedom", as_index=False).first()
+        results_df.sort_values("cost")
+        .groupby("minimum_freedom_for_each_column", as_index=False)
+        .first()
     )
-    return min_scores_df
+    return min_scores_df.to_dict(orient="records")[0]
+
+
+def blocking_rules_for_prediction_report(suggested_blocking_rules_dict):
+    d = suggested_blocking_rules_dict
+    serialized_brs = [f"{br.sql}" for br in d["suggested_blocking_rules_as_splink_brs"]]
+
+    lines = []
+    lines.append("Blocking Rules for Prediction Report")
+    lines.append("=====================================")
+    lines.append("Recommended blocking rules for prediction:")
+    lines.append("")
+    lines.extend(serialized_brs)
+    lines.append("")
+
+    msg1 = f"These will generate {d['total_comparisons_count']:,.0f} comparisons"
+    msg2 = "prior to deduping"
+    lines.append(f"{msg1} {msg2}")
+    lines.append("")
+
+    msg = "Each column can vary in at least"
+    lines.append(f"{msg} {d['minimum_freedom_for_each_column']} different rules")
+    lines.append(f"Complexity Cost: {d['complexity_cost']}")
+    lines.append(f"Field Freedom Cost: {d['field_freedom_cost']}")
+    lines.append(f"Num BRs Cost: {d['num_brs_cost']}")
+    lines.append(f"Total Cost: {d['cost']}")
+
+    lines.append(f"Run Num: {d['run_num']}")
+
+    report = "\n".join(lines)
+    return report

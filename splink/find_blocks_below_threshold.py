@@ -19,14 +19,15 @@ def sanitise_column_name(column_name):
 
 
 def _generate_output_combinations_table_row(
-    blocking_columns, comparison_count, all_columns
+    blocking_columns, splink_blocking_rule, comparison_count, all_columns
 ):
     row = {}
 
     blocking_columns = [sanitise_column_name(c) for c in blocking_columns]
     all_columns = [sanitise_column_name(c) for c in all_columns]
 
-    row["blocking_rules"] = blocking_columns
+    row["blocking_columns"] = blocking_columns
+    row["splink_blocking_rule"] = splink_blocking_rule
     row["comparison_count"] = comparison_count
     row["complexity"] = len(blocking_columns)
 
@@ -49,16 +50,29 @@ def _generate_combinations(
     return combinations
 
 
-def _generate_blocking_rule(linker, cols_as_string):
-    # Can't easily currently use blocking_rules_library.block_on for this
-    # because there isn't an easy way of grabbing the linker-specific variant
+def _generate_blocking_rule(linker: "Linker", cols_as_string):
+    dialect = linker._sql_dialect
 
-    trees = [parse_one(c, read=linker._sql_dialect) for c in cols_as_string]
-    equi_joins = [
-        (add_table(tree, "l").sql(), add_table(tree, "r").sql()) for tree in trees
-    ]
+    module_mapping = {
+        "presto": "splink.athena.blocking_rule_library",
+        "duckdb": "splink.duckdb.blocking_rule_library",
+        "postgres": "splink.postgres.blocking_rule_library",
+        "spark": "splink.spark.blocking_rule_library",
+        "sqlite": "splink.sqlite.blocking_rule_library",
+    }
 
-    br = " AND ".join([f"{item[0]} = {item[1]}" for item in equi_joins])
+    if dialect not in module_mapping:
+        raise ValueError(f"Unsupported SQL dialect: {dialect}")
+
+    module_name = module_mapping[dialect]
+    block_on_module = __import__(module_name, fromlist=["block_on"])
+    block_on = block_on_module.block_on
+
+    if len(cols_as_string) == 0:
+        return "1 = 1"
+
+    br = block_on(cols_as_string)
+
     return br
 
 
@@ -99,7 +113,10 @@ def _search_tree_for_blocking_rules_below_threshold_count(
         linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
     )
     row = _generate_output_combinations_table_row(
-        current_combination, comparison_count, all_columns
+        current_combination,
+        br,
+        comparison_count,
+        all_columns,
     )
 
     already_visited.add(frozenset(current_combination))
