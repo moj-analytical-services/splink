@@ -2,13 +2,11 @@ import copy
 import random
 
 import pandas as pd
-
-from pyspark import SparkContext, SparkConf
+from pyspark import SparkConf, SparkContext
 from pyspark.sql import SparkSession
-from splink.spark.linker import SparkLinker
+
 import splink.spark.comparison_library as cl
-
-
+from splink.spark.linker import SparkLinker
 from tests.decorator import mark_with_dialects_including
 
 
@@ -188,7 +186,6 @@ def test_array_based_blocking_with_random_data_link_only(test_helpers, dialect):
     assert sum(df_predict.cluster_l == df_predict.cluster_r) == 1000
 
 
-
 @mark_with_dialects_including("spark")
 def test_array_based_blocking_with_salted_rules():
     input_data_l, input_data_r = generate_array_based_datasets_helper()
@@ -219,16 +216,14 @@ def test_array_based_blocking_with_salted_rules():
         "additional_columns_to_retain": ["cluster"],
         "comparisons": [cl.array_intersect_at_sizes("array_column_1", [1])],
     }
-    
+
     conf = SparkConf()
     sc = SparkContext.getOrCreate(conf=conf)
     spark = SparkSession(sc)
     input_l_spark = spark.createDataFrame(input_data_l)
     input_r_spark = spark.createDataFrame(input_data_r)
 
-    linker = SparkLinker(
-        [input_l_spark, input_r_spark], settings
-    ) 
+    linker = SparkLinker([input_l_spark, input_r_spark], settings)
     df_predict = linker.predict().as_pandas_dataframe()
 
     ## check that there are no duplicates in the output
@@ -244,9 +239,7 @@ def test_array_based_blocking_with_salted_rules():
     for br in blocking_rules_no_salt:
         br.pop("salting_partitions")
     settings_no_salt["blocking_rules_to_generate_predictions"] = blocking_rules_no_salt
-    linker_no_salt = SparkLinker(
-        [input_l_spark, input_r_spark], settings_no_salt
-    )
+    linker_no_salt = SparkLinker([input_l_spark, input_r_spark], settings_no_salt)
     df_predict_no_salt = linker_no_salt.predict().as_pandas_dataframe()
     predictions_no_salt = set(
         zip(
@@ -258,5 +251,5 @@ def test_array_based_blocking_with_salted_rules():
     predictions_with_salt = set(
         zip(df_predict.cluster_l, df_predict.cluster_r, df_predict.match_key)
     )
-    
+
     assert predictions_no_salt == predictions_with_salt

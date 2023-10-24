@@ -331,7 +331,7 @@ def block_using_rules_sql(linker: Linker):
                         where_condition + " and l.source_dataset < r.source_dataset"
                     )
 
-                # ensure that table names are unique 
+                # ensure that table names are unique
                 if apply_salt:
                     to_hash = (salted_br + linker._cache_uid).encode("utf-8")
                     salt_id = "salt_id_" + hashlib.sha256(to_hash).hexdigest()[:9]
