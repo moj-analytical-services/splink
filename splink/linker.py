@@ -263,6 +263,29 @@ class Linker:
         return column_names
 
     @property
+    def _column_names_as_input_columns(
+        self,
+        include_unique_id_col_names=False,
+        include_additional_columns_to_retain=False,
+    ):
+        """Retrieve the column names from the input dataset(s)"""
+        df_obj: SplinkDataFrame = next(iter(self._input_tables_dict.values()))
+
+        input_columns = df_obj.columns
+        remove_columns = []
+        if not include_unique_id_col_names:
+            remove_columns.extend(self._settings_obj._unique_id_input_columns)
+        if not include_additional_columns_to_retain:
+            remove_columns.extend(self._settings_obj._additional_columns_to_retain)
+
+        remove_id_cols = [c.unquote().name() for c in remove_columns]
+        columns = [
+            col for col in input_columns if col.unquote().name() not in remove_id_cols
+        ]
+
+        return columns
+
+    @property
     def _cache_uid(self):
         if self._settings_dict:
             return self._settings_obj._cache_uid
