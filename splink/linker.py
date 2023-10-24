@@ -26,7 +26,7 @@ from .accuracy import (
     truth_space_table_from_labels_column,
     truth_space_table_from_labels_table,
 )
-from .autoblocking import suggest_blocking_rules_for_prediction
+from .autoblocking import suggest_blocking_rules
 from .analyse_blocking import (
     count_comparisons_from_blocking_rule_pre_filter_conditions_sqls,
     cumulative_comparisons_generated_by_blocking_rules,
@@ -3779,7 +3779,7 @@ class Linker:
                 rules are close to the max_comparisons_per_rule.  A higher
                  weight here prefers sets of rules which generate lower total
                 comparisons. Defaults to 10.
-            return_as_df (bool, optional): If false, return just the recommendation.
+            return_as_df (bool, optional): If false, assign recommendation to settings.
                 If true, return a dataframe containing details of the weights.
                 Defaults to False.
         """
@@ -3788,7 +3788,7 @@ class Linker:
             max_comparisons_per_rule, blocking_expressions
         )
 
-        blocking_rule_suggestions = suggest_blocking_rules_for_prediction(
+        blocking_rule_suggestions = suggest_blocking_rules(
             df_br_below_thres,
             min_freedom=min_freedom,
             num_runs=num_runs,
@@ -3801,7 +3801,7 @@ class Linker:
         if return_as_df:
             return blocking_rule_suggestions
         else:
-            if len(blocking_rule_suggestions) == 0:
+            if blocking_rule_suggestions is None or len(blocking_rule_suggestions) == 0:
                 logger.warning("No set of blocking rules found within constraints")
             else:
                 suggestion = blocking_rule_suggestions[
@@ -3814,7 +3814,7 @@ class Linker:
                 ].iloc[0]
                 msg = (
                     "The following blocking_rules_to_generate_predictions were "
-                    "automatically detected:\n"
+                    "automatically detected and assigned to your settings:\n"
                 )
                 logger.info(f"{msg}{suggestion_str}")
 
@@ -3868,7 +3868,7 @@ class Linker:
             max_comparisons_per_rule
         )
 
-        blocking_rule_suggestions = suggest_blocking_rules_for_prediction(
+        blocking_rule_suggestions = suggest_blocking_rules(
             df_br_below_thres,
             min_freedom=min_freedom,
             num_runs=num_runs,
@@ -3881,11 +3881,17 @@ class Linker:
         if return_as_df:
             return blocking_rule_suggestions
         else:
-            if len(blocking_rule_suggestions) == 0:
+            if blocking_rule_suggestions is None or len(blocking_rule_suggestions) == 0:
                 logger.warning("No set of blocking rules found within constraints")
+                return None
             else:
                 suggestion_str = blocking_rule_suggestions[
                     "suggested_EM_training_statements"
                 ].iloc[0]
                 msg = "The following EM training strategy was detected:\n"
-                logger.info(f"{msg}{suggestion_str}")
+                msg = f"{msg}{suggestion_str}"
+                logger.info(msg)
+                suggestion = blocking_rule_suggestions[
+                    "suggested_blocking_rules_as_splink_brs"
+                ].iloc[0]
+                return suggestion

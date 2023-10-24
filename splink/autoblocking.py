@@ -199,7 +199,7 @@ def get_em_training_string(br_rows):
     return " \n".join(training_statements)
 
 
-def suggest_blocking_rules_for_prediction(
+def suggest_blocking_rules(
     df_block_stats,
     min_freedom=1,
     num_runs=5,
@@ -208,23 +208,29 @@ def suggest_blocking_rules_for_prediction(
     num_brs_weight=10,
     num_comparison_weight=10,
 ):
-    """Use a cost optimiser to suggest blocking rules for prediction
+    """Use a cost optimiser to suggest blocking rules
 
     Args:
         df_block_stats: Dataframe returned by find_blocking_rules_below_threshold
         min_freedom (int, optional): Each column should have at least this many
-            opportunities to vary amongst the blockign rules. Defaults to 1.
+            opportunities to vary amongst the blocking rules. Defaults to 1.
         num_runs (int, optional): How many random combinations of
             rules to try.  The best will be selected. Defaults to 5.
         complexity_weight (int, optional): The weight for complexity. Defaults to 10.
         field_freedom_weight (int, optional): The weight for field freedom. Defaults to
             10.
         num_brs_weight (int, optional): The weight for the number of blocking rules
-            found. Defaults to 1000.
+            found. Defaults to 10.
 
     Returns:
-        _type_: _description_
+        pd.DataFrame: A DataFrame containing the results of the blocking rules
+            suggestion. It includes columns such as
+            'suggested_blocking_rules_for_prediction',
+            'suggested_EM_training_statements', and various cost information
+
     """
+    if len(df_block_stats) == 0:
+        return None
 
     max_comparison_count = df_block_stats["comparison_count"].max()
 
