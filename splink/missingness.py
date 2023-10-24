@@ -74,7 +74,7 @@ def completeness_data(linker, input_tablename=None, cols=None):
         # Set source dataset to a literal string if dedupe_only
         source_name = "'_a'"
 
-    for col in columns:
+    for col in cols:
         sql = f"""
         (select
             {source_name} as source_dataset,
