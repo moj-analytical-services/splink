@@ -321,7 +321,7 @@ def block_using_rules_sql(linker: Linker):
                 ]
                 linker._enqueue_sql(
                     f"{linker._gen_explode_sql('__splink__df_concat_with_tf',br.arrays_to_explode,list(input_colnames.difference(arrays_to_explode_quoted)))}",
-                    "unnested_input",
+                    "__splink__df_concat_with_tf_unnested",
                 )
                 unique_id_col = settings_obj._unique_id_column_name
 
@@ -333,7 +333,7 @@ def block_using_rules_sql(linker: Linker):
                 linker._enqueue_sql(
                     f"""
                     select distinct l.{unique_id_col} as {unique_id_col}_l,r.{unique_id_col} as {unique_id_col}_r
-                    from unnested_input as l inner join unnested_input as r on ({salted_br})
+                    from __splink__df_concat_with_tf_unnested as l inner join __splink__df_concat_with_tf_unnested as r on ({salted_br})
                     {where_condition} {br.and_not_preceding_rules_sql(linker)}""",
                     f"ids_to_compare_blocking_rule_{br.match_key}",
                 )
