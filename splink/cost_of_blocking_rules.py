@@ -1,7 +1,6 @@
 import logging
 from typing import Dict, List, Union
 
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -51,13 +50,13 @@ def calculate_field_freedom_cost(combination_of_brs: List[Dict]) -> int:
 
 
 def calculate_cost_of_combination_of_brs(
-    br_combination: pd.DataFrame,
-    max_comparison_count: int,
-    complexity_weight: Union[int, float] = 1,
-    field_freedom_weight: Union[int, float] = 1,
-    num_brs_weight: Union[int, float] = 1,
-    num_comparison_weight: Union[int, float] = 1,
-) -> dict:
+    br_combination: List[Dict],
+    max_comparison_count,
+    complexity_weight,
+    field_freedom_weight,
+    num_brs_weight,
+    num_comparison_weight,
+):
     """
     Calculates the cost for a given combination of blocking rules.
 
@@ -81,7 +80,6 @@ def calculate_cost_of_combination_of_brs(
     Returns:
         dict: The calculated cost and individual component costs.
     """
-    br_combination = br_combination.to_dict(orient="records")
 
     num_equi_join_cost = sum(row["num_equi_joins"] for row in br_combination)
     total_row_count = sum(row["comparison_count"] for row in br_combination)
