@@ -334,4 +334,5 @@ class DuckDBLinker(Linker):
                 + columns_to_explode
             )
             other_columns_to_retain.append(column_to_explode)
-            return f"select {','.join(cols_to_select)} from ({self._gen_explode_sql(tbl_name,columns_to_explode,other_columns_to_retain)})"
+            return f"""select {','.join(cols_to_select)}
+                from ({self._gen_explode_sql(tbl_name,columns_to_explode,other_columns_to_retain)})"""  # noqa: E501

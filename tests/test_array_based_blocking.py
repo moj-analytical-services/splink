@@ -1,11 +1,10 @@
+import copy
 import random
-import copy 
 
 import pandas as pd
 
 from tests.decorator import mark_with_dialects_including
 
-from splink.spark.linker import SparkLinker
 
 @mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
 def test_simple_example_link_only(test_helpers, dialect):
@@ -87,11 +86,14 @@ def test_array_based_blocking_with_random_data_dedupe(test_helpers, dialect):
     input_data = pd.concat([input_data_l, input_data_r])
     blocking_rules = [
         {
-            "blocking_rule": "l.array_column_0 = r.array_column_0 and l.array_column_1 = r.array_column_1",
+            "blocking_rule": """l.array_column_0 = r.array_column_0
+                and l.array_column_1 = r.array_column_1""",
             "arrays_to_explode": ["array_column_0", "array_column_1"],
         },
         {
-            "blocking_rule": "l.array_column_0 = r.array_column_0 and l.array_column_1 = r.array_column_1 and l.array_column_2 = r.array_column_2",
+            "blocking_rule": """l.array_column_0 = r.array_column_0
+                and l.array_column_1 = r.array_column_1
+                and l.array_column_2 = r.array_column_2""",
             "arrays_to_explode": ["array_column_0", "array_column_1"],
         },
         {
@@ -115,14 +117,14 @@ def test_array_based_blocking_with_random_data_dedupe(test_helpers, dialect):
         == df_predict.shape[0]
     )
 
-    ## check that the output contains no links with match_key=1, 
-    ## since all pairs returned by the second rule should also be 
+    ## check that the output contains no links with match_key=1,
+    ## since all pairs returned by the second rule should also be
     ## returned by the first rule and so should be filtered out
     assert df_predict[df_predict.match_key == 1].shape[0] == 0
 
-    ## check that all 1000 true matches are in the output (this is guaranteed by how the data was generated)
+    ## check that all 1000 true matches are in the output
+    ## (this is guaranteed by how the data was generated)
     assert sum(df_predict.cluster_l == df_predict.cluster_r) == 1000
-
 
 
 @mark_with_dialects_including("duckdb", "spark", pass_dialect=True)
@@ -131,11 +133,14 @@ def test_array_based_blocking_with_random_data_link_only(test_helpers, dialect):
     input_data_l, input_data_r = generate_array_based_datasets_helper()
     blocking_rules = [
         {
-            "blocking_rule": "l.array_column_0 = r.array_column_0 and l.array_column_1 = r.array_column_1",
+            "blocking_rule": """l.array_column_0 = r.array_column_0
+                and l.array_column_1 = r.array_column_1""",
             "arrays_to_explode": ["array_column_0", "array_column_1"],
         },
         {
-            "blocking_rule": "l.array_column_0 = r.array_column_0 and l.array_column_1 = r.array_column_1 and l.array_column_2=r.array_column_2",
+            "blocking_rule": """l.array_column_0 = r.array_column_0
+                and l.array_column_1 = r.array_column_1
+                and l.array_column_2=r.array_column_2""",
             "arrays_to_explode": ["array_column_0", "array_column_1", "array_column_2"],
         },
         {
@@ -153,7 +158,7 @@ def test_array_based_blocking_with_random_data_link_only(test_helpers, dialect):
     linker = helper.Linker(
         [input_data_l, input_data_r], settings, **helper.extra_linker_args()
     )
-    linker.debug_mode=False
+    linker.debug_mode = False
     df_predict = linker.predict().as_pandas_dataframe()
 
     ## check that we get no within-dataset links
@@ -169,59 +174,78 @@ def test_array_based_blocking_with_random_data_link_only(test_helpers, dialect):
     )
 
     ## check that the second blocking rule returns no matches,
-    ## since every pair matching the second rule will also match the first, and so should be filtered out
+    ## since every pair matching the second rule will also match the first,
+    ## and so should be filtered out
     assert df_predict[df_predict.match_key == 1].shape[0] == 0
 
     ## check that all 1000 true matches are returned
     assert sum(df_predict.cluster_l == df_predict.cluster_r) == 1000
 
-@mark_with_dialects_including('spark',pass_dialect=True)
-def test_array_based_blocking_with_salted_rules(test_helpers,dialect):
+
+@mark_with_dialects_including("spark", pass_dialect=True)
+def test_array_based_blocking_with_salted_rules(test_helpers, dialect):
     helper = test_helpers[dialect]
-    input_data_l,input_data_r = generate_array_based_datasets_helper() 
+    input_data_l, input_data_r = generate_array_based_datasets_helper()
     blocking_rules = [
         {
-            "blocking_rule": "l.array_column_0 = r.array_column_0 and l.array_column_1 = r.array_column_1",
+            "blocking_rule": """l.array_column_0 = r.array_column_0
+                and l.array_column_1 = r.array_column_1""",
             "arrays_to_explode": ["array_column_0", "array_column_1"],
-            "salting_partitions": 3
+            "salting_partitions": 3,
         },
         {
-            "blocking_rule": "l.array_column_0 = r.array_column_0 and l.array_column_1 = r.array_column_1 and l.array_column_2=r.array_column_2",
+            "blocking_rule": """l.array_column_0 = r.array_column_0
+                and l.array_column_1 = r.array_column_1
+                and l.array_column_2=r.array_column_2""",
             "arrays_to_explode": ["array_column_0", "array_column_1", "array_column_2"],
-            "salting_partitions": 2
+            "salting_partitions": 2,
         },
         {
             "blocking_rule": "l.array_column_2 = r.array_column_2",
             "arrays_to_explode": ["array_column_2"],
-            "salting_partitions": 1
+            "salting_partitions": 1,
         },
     ]
     settings = {
-        "link_type":"link_only",
-        "blocking_rules_to_generate_predictions":blocking_rules,
-        "unique_id_column_name":"cluster",
-        "additional_columns_to_retain":["cluster"],
-        "comparisons":[helper.cl.array_intersect_at_sizes("array_column_1",[1])]
+        "link_type": "link_only",
+        "blocking_rules_to_generate_predictions": blocking_rules,
+        "unique_id_column_name": "cluster",
+        "additional_columns_to_retain": ["cluster"],
+        "comparisons": [helper.cl.array_intersect_at_sizes("array_column_1", [1])],
     }
-    
+
     linker = helper.Linker(
         [input_data_l, input_data_r], settings, **helper.extra_linker_args()
     )
-    linker.debug_mode=False
+    linker.debug_mode = False
     df_predict = linker.predict().as_pandas_dataframe()
-    
+
     ## check that there are no duplicates in the output
-    assert df_predict.drop_duplicates(['cluster_l','cluster_r']).shape[0] == df_predict.shape[0]
-    
-    ## check that results include the same pairs (and with the same match keys) as an equivalent linkage with no salting 
+    assert (
+        df_predict.drop_duplicates(["cluster_l", "cluster_r"]).shape[0]
+        == df_predict.shape[0]
+    )
+
+    ## check that results include the same pairs (and with the same match keys)
+    ## as an equivalent linkage with no salting
     blocking_rules_no_salt = copy.deepcopy(blocking_rules)
     settings_no_salt = copy.deepcopy(settings)
     for br in blocking_rules_no_salt:
-        br.pop('salting_partitions')
-    settings_no_salt['blocking_rules_to_generate_predictions'] = blocking_rules_no_salt
-    linker_no_salt = helper.Linker([input_data_l,input_data_r],settings_no_salt,**helper.extra_linker_args())
+        br.pop("salting_partitions")
+    settings_no_salt["blocking_rules_to_generate_predictions"] = blocking_rules_no_salt
+    linker_no_salt = helper.Linker(
+        [input_data_l, input_data_r], settings_no_salt, **helper.extra_linker_args()
+    )
     df_predict_no_salt = linker_no_salt.predict().as_pandas_dataframe()
-    predictions_no_salt = set(zip(df_predict_no_salt.cluster_l,df_predict_no_salt.cluster_r,df_predict_no_salt.match_key))
-    predictions_with_salt = set(zip(df_predict.cluster_l,df_predict.cluster_r,df_predict.match_key))
-    
+    predictions_no_salt = set(
+        zip(
+            df_predict_no_salt.cluster_l,
+            df_predict_no_salt.cluster_r,
+            df_predict_no_salt.match_key,
+        )
+    )
+    predictions_with_salt = set(
+        zip(df_predict.cluster_l, df_predict.cluster_r, df_predict.match_key)
+    )
+
     assert predictions_no_salt == predictions_with_salt

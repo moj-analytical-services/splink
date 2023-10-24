@@ -548,4 +548,5 @@ class SparkLinker(Linker):
                 + other_columns_to_retain
                 + columns_to_explode
             )
-        return f"select {','.join(cols_to_select)} from ({self._gen_explode_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"
+        return f"""select {','.join(cols_to_select)}
+                from ({self._gen_explode_sql(tbl_name,columns_to_explode,other_columns_to_retain+[column_to_explode])})"""  # noqa: E501

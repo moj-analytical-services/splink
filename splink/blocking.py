@@ -30,10 +30,7 @@ def blocking_rule_to_obj(br):
         arrays_to_explode = br.get("arrays_to_explode", list())
 
         return BlockingRule(
-            blocking_rule,
-            salting_partitions,
-            sqlglot_dialect,
-            arrays_to_explode
+            blocking_rule, salting_partitions, sqlglot_dialect, arrays_to_explode
         )
 
     else:
@@ -47,7 +44,7 @@ class BlockingRule:
         blocking_rule: BlockingRule | dict | str,
         salting_partitions=1,
         sqlglot_dialect: str = None,
-        arrays_to_explode: list =[],
+        arrays_to_explode: list = [],
     ):
         if sqlglot_dialect:
             self._sql_dialect = sqlglot_dialect
@@ -80,10 +77,12 @@ class BlockingRule:
         unique_id_column = linker._settings_obj._unique_id_column_name
 
         if self.ids_to_compare:
-        
-            ids_to_compare_sql = ' union all '.join([f'select * from {ids.physical_name}' for ids in self.ids_to_compare])
-            #self.ids_to_compare[0].physical_name
-        
+
+            ids_to_compare_sql = " union all ".join(
+                [f"select * from {ids.physical_name}" for ids in self.ids_to_compare]
+            )
+            # self.ids_to_compare[0].physical_name
+
             return f"""EXISTS (
                 select 1 from ({ids_to_compare_sql}) as ids_to_compare
                 where (
@@ -176,7 +175,7 @@ class BlockingRule:
 
         if self.salting_partitions > 1 and self.sql_dialect == "spark":
             output["salting_partitions"] = self.salting_partitions
-        
+
         if self.arrays_to_explode:
             output["arrays_to_explode"] = self.arrays_to_explode
 
@@ -221,6 +220,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
         )
 
     return where_condition
+
 
 # flake8: noqa: C901
 def block_using_rules_sql(linker: Linker):
