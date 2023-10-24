@@ -58,14 +58,16 @@ def heuristic_select_rows(data, field_names, min_field_freedom):
         list: The candidate set of rows.
     """
     data_sorted_randomised = localised_shuffle(data, 0.3)
-    candidate_set = []
+    candidate_rows = []
 
     for row in data_sorted_randomised:
-        candidate_set.append(row)
-        if check_field_freedom(candidate_set, field_names, min_field_freedom):
+        candidate_rows.append(row)
+        if check_field_freedom(candidate_rows, field_names, min_field_freedom):
             break
 
-    return candidate_set
+    sorted_candidate_rows = sorted(candidate_rows, key=lambda x: x["blocking_columns"])
+
+    return sorted_candidate_rows
 
 
 def calculate_field_freedom_cost(combination_of_brs, field_names):
@@ -89,46 +91,34 @@ def calculate_field_freedom_cost(combination_of_brs, field_names):
         int: The field freedom cost.
     """
 
-    max_variances = len(combination_of_brs)
-
     logger.debug("--")
     logger.debug("Beginning calculating field freedom cost")
-    logger.debug(
-        f"There are {max_variances} BRs so each field can vary a maximum of "
-        f"{max_variances}  times"
-    )
+
     for row in combination_of_brs:
         logger.debug(f"  {row['blocking_columns']}")
 
     total_cost = 0
     for field in field_names:
-        variances = sum(row[field] == 0 for row in combination_of_brs)
-        logger.debug(f"{field} can vary in {variances} rules")
-        cost = max_variances - variances
-        # Quadratic so we punish fields that rarely get to vary
-        # more than a broad spread of fields
-        cost_squared = cost * cost
-        logger.debug(f"Cost of {field} is {cost_squared}")
-        total_cost = total_cost + cost_squared
+        field_can_vary_count = sum(row[field] == 0 for row in combination_of_brs)
+
+        costs_by_count = {0: 20, 1: 10, 2: 2, 3: 1, 4: 1}
+        cost = costs_by_count.get(field_can_vary_count, 0) / 10
+        logger.debug(f"{field} can vary in {field_can_vary_count} rules, cost: {cost}")
+
+        total_cost = total_cost + cost
     logger.debug(f"Ending: total cost = {total_cost}")
     logger.debug("--")
     return total_cost
-
-
-# How many times is each field allowed to vary?
-# Best case, vary in every rule = no cost
-# worse caes, vary in no rule = high cost
-#
 
 
 def calculate_cost(
     combination,
     field_names,
     max_comparison_count,
-    complexity_weight=0,
-    field_freedom_weight=1,
-    num_brs_weight=2,
-    num_comparison_weight=4,
+    complexity_weight,
+    field_freedom_weight,
+    num_brs_weight,
+    num_comparison_weight,
 ):
     """
     Calculates a cost for a given combination of rows. The cost is a weighted sum of the
@@ -164,11 +154,16 @@ def calculate_cost(
     )
 
     return {
+        "cost": total_cost,
+        "complexity_cost_weighted": complexity_weight * complexity_cost,
+        "field_freedom_cost_weighted": field_freedom_weight * field_freedom_cost,
+        "num_brs_cost_weighted": num_brs_weight * num_brs_cost,
+        "num_comparison_rows_cost_weighted": num_comparison_weight
+        * normalised_row_count,
         "complexity_cost": complexity_cost,
         "field_freedom_cost": field_freedom_cost,
         "num_brs_cost": num_brs_cost,
         "num_comparison_rows_cost": normalised_row_count,
-        "cost": total_cost,
         "total_comparisons_count": total_row_count,
     }
 
@@ -179,8 +174,8 @@ def suggest_blocking_rules_for_prediction(
     num_runs=5,
     complexity_weight=0,
     field_freedom_weight=1,
-    num_brs_weight=2,
-    num_comparison_weight=4,
+    num_brs_weight=10,
+    num_comparison_weight=10,
 ):
     """Use a cost optimiser to suggest blocking rules for prediction
 
@@ -240,11 +235,20 @@ def suggest_blocking_rules_for_prediction(
         results.append(cost_dict)
 
     results_df = pd.DataFrame(results)
+    # easier to read if we normalise the cost to the best is 0
+    min_ = results_df["field_freedom_cost"].min()
+    results_df["field_freedom_cost"] = results_df["field_freedom_cost"] - min_
 
-    min_scores_df = results_df.sort_values("cost").head()
+    min_ = results_df["field_freedom_cost_weighted"].min()
+    results_df["field_freedom_cost_weighted"] = (
+        results_df["field_freedom_cost_weighted"] - min_
+    )
+    results_df["cost"] = results_df["cost"] - min_
+
+    min_scores_df = results_df.sort_values("cost")
+    min_scores_df = min_scores_df.drop_duplicates("suggested_blocking_rules_string")
 
     return min_scores_df
-    return min_scores_df.to_dict(orient="records")[0]
 
 
 def blocking_rules_for_prediction_report(suggested_blocking_rules_dict):
