@@ -99,6 +99,7 @@ def calculate_cost_of_combination_of_brs(
 
     return {
         "cost": total_cost,
+        "total_pairwise_rows_created": total_row_count,
         "complexity_cost_weighted": complexity_cost_weighted,
         "field_freedom_cost_weighted": field_freedom_cost_weighted,
         "num_brs_cost_weighted": num_brs_cost_weighted,
