@@ -62,12 +62,17 @@ Just as we can add independent match weights for **name**, **DOB** and other com
 
 For an individual comparison of two records, we can see the impact of TF adjustments in the waterfall charts:
 
-![This example shows two records having a match weight of +15.69 due to a match on **first name**, **surname** and **DOB**. Due to relatively uncommon values for all 3 of these, they each have an additional term frequency adjustment contributing around +5 to the final match weight](../../img/term_frequency/waterfall.png)
+<figure markdown>
+  ![](../../img/term_frequency/waterfall.png)
+  <figcaption>This example shows two records having a match weight of +15.69 due to a match on <b>first name</b>, <b>surname</b> and <b>DOB</b>. Due to relatively uncommon values for all 3 of these, they each have an additional term frequency adjustment contributing around +5 to the final match weight</figcaption>
+</figure>
 
 We can also see these match weights and TF adjustments summarised using a chart like the below to highlight common and uncommon names. We do this already using the Splink linker's profile_columns method, but once we know the u probabilities for our comparison columns, we can show these outliers in terms of their impact on match weight:
 
-![In this example of names from FEBRL data used in the demo notebooks, we see that a match on first name has a match weight of +6. For an uncommon name like Portia this is increased, whereas a common name like Jack has a reduced match weight. This chart can be generated using `linker.tf_adjustment_chart("name")`](../../img/term_frequency/tf-match-weight.png){width="800"}
-
+<figure markdown>
+  ![](../../img/term_frequency/tf-match-weight.png){width="800"}
+  <figcaption>In this example of names from FEBRL data used in the demo notebooks, we see that a match on first name has a match weight of +6. For an uncommon name like Portia this is increased, whereas a common name like Jack has a reduced match weight. This chart can be generated using `linker.tf_adjustment_chart("name")`</figcaption>
+</figure>
 
 ## Applying TF adjustments in Splink
 

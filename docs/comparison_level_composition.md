@@ -16,6 +16,7 @@ The Splink comparison level composition functions available for each SQL dialect
 {% include-markdown "./includes/generated_files/comparison_composition_library_dialect_table.md" %}
 
 
+
 The detailed API for each of these are outlined below.
 
 ## Library comparison composition APIs

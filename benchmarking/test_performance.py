@@ -154,7 +154,7 @@ settings_dict = {
     ],
     "retain_matching_columns": False,
     "retain_intermediate_calculation_columns": False,
-    "additional_columns_to_retain": ["group"],
+    "additional_columns_to_retain": ["cluster"],
     "max_iterations": 10,
 }
 

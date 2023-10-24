@@ -1,4 +1,4 @@
-unique_id,first_name,surname,dob,city,email,group
+unique_id,first_name,surname,dob,city,email,cluster
 0,Julia ,,2015-10-29,London,hannah88@powers.com,0
 1,Julia ,Taylor,2015-07-31,London,hannah88@powers.com,0
 2,Julia ,Taylor,2016-01-27,London,hannah88@powers.com,0

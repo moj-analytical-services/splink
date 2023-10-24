@@ -1,0 +1,15 @@
+
+
+matrix:
+- name: Markdown docs
+  sources:
+  - docs/**/*.md
+  aspell:
+    lang: en
+    d: en_GB
+    mode: markdown
+  dictionary:
+    wordlists:
+    - scripts/pyspelling/custom_dictionary.txt
+    output: scripts/dictionary.dic
+

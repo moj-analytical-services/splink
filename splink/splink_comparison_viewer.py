@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import json
 import os
-import pkgutil
 from typing import TYPE_CHECKING
 
 from jinja2 import Template
 
-from .misc import EverythingEncoder
+from .misc import EverythingEncoder, read_resource
+from .predict import _combine_prior_and_bfs
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
@@ -27,11 +27,21 @@ def row_examples(linker: Linker, example_rows_per_category=2):
 
     gam_concat = " || ',' || ".join(gamma_columns)
 
+    # See https://github.com/moj-analytical-services/splink/issues/1651
+    # This ensures we have an average match weight that isn't affected by tf
+    bf_columns_no_tf = [c._bf_column_name for c in linker._settings_obj.comparisons]
+
+    p = linker._settings_obj._probability_two_random_records_match
+    bf_final_no_tf = _combine_prior_and_bfs(
+        p, bf_terms=bf_columns_no_tf, sql_infinity_expr=linker._infinity_expression
+    )[0]
+
     sql = f"""
     select
         *,
         {uid_expr} as rec_comparison_id,
         {gam_concat} as gam_concat,
+        log2({bf_final_no_tf}) as sort_avg_match_weight,
         random() as rand_order
     from __splink__df_predict
     """
@@ -109,8 +119,7 @@ def render_splink_comparison_viewer_html(
     bundle_observable_notebook = True
 
     template_path = "files/splink_comparison_viewer/template.j2"
-    template = pkgutil.get_data(__name__, template_path).decode("utf-8")
-    template = Template(template)
+    template = Template(read_resource(template_path))
 
     template_data = {
         "comparison_vector_data": json.dumps(
@@ -123,13 +132,12 @@ def render_splink_comparison_viewer_html(
         "embed": "files/external_js/vega-embed@6.20.2",
         "vega": "files/external_js/vega@5.21.0",
         "vegalite": "files/external_js/vega-lite@5.2.0",
+        "stdlib": "files/external_js/stdlib.js@5.8.3",
         "svu_text": "files/splink_vis_utils/splink_vis_utils.js",
         "custom_css": "files/splink_comparison_viewer/custom.css",
     }
     for k, v in files.items():
-        f = pkgutil.get_data(__name__, v)
-        f = f.decode("utf-8")
-        template_data[k] = f
+        template_data[k] = read_resource(v)
 
     template_data["bundle_observable_notebook"] = bundle_observable_notebook
 
