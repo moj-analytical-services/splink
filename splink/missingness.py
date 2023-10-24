@@ -65,7 +65,8 @@ def completeness_data(linker, input_tablename=None, cols=None):
         df_concat = linker._initialise_df_concat(materialise=True)
         input_tablename = df_concat.physical_name
 
-    columns = linker._settings_obj._columns_used_by_comparisons
+    if cols is None:
+        cols = linker._settings_obj._columns_used_by_comparisons
 
     if linker._settings_obj._source_dataset_column_name_is_required:
         source_name = linker._source_dataset_column_name
@@ -80,7 +81,7 @@ def completeness_data(linker, input_tablename=None, cols=None):
             '{col}' as column_name,
             count(*) - count({col}) as total_null_rows,
             count(*) as total_rows_inc_nulls,
-            count({col})*1.0/count(*) as completeness
+            cast(count({col})*1.0/count(*) as float) as completeness
         from {input_tablename}
         group by source_dataset
         order by count(*) desc)
