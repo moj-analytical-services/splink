@@ -36,10 +36,6 @@ from .blocking import (
     block_using_rules_sqls,
     blocking_rule_to_obj,
 )
-
-from .find_brs_with_comparison_counts_below_threshold import (
-    find_blocking_rules_below_threshold_comparison_count,
-)
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
     accuracy_chart,
