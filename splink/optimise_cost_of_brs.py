@@ -62,7 +62,7 @@ def heuristic_select_brs_that_have_min_freedom(data, field_names, min_field_free
     Returns:
         list: The candidate set of rows.
     """
-    data_sorted_randomised = localised_shuffle(data, 0.3)
+    data_sorted_randomised = localised_shuffle(data, 0.5)
     candidate_rows = []
 
     for row in data_sorted_randomised:
@@ -117,7 +117,7 @@ def get_em_training_string(br_rows):
 def suggest_blocking_rules(
     df_block_stats,
     min_freedom=1,
-    num_runs=5,
+    num_runs=100,
     complexity_weight=0,
     field_freedom_weight=1,
     num_brs_weight=10,
