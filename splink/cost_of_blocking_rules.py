@@ -1,7 +1,6 @@
 import logging
 from typing import Dict, List
 
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +43,7 @@ def calculate_field_freedom_cost(combination_of_brs: List[Dict]) -> int:
 
 
 def calculate_cost_of_combination_of_brs(
-    br_combination: pd.DataFrame,
+    br_combination: List[Dict],
     max_comparison_count,
     complexity_weight,
     field_freedom_weight,
@@ -75,7 +74,6 @@ def calculate_cost_of_combination_of_brs(
     Returns:
         dict: The calculated cost and individual component costs.
     """
-    br_combination = br_combination.to_dict(orient="records")
 
     # Complexity is the number of fields held constant in a given blocking rule
     complexity_cost = sum(row["complexity"] for row in br_combination)
