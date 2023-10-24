@@ -3,6 +3,12 @@ import random
 
 import pandas as pd
 
+from pyspark import SparkContext, SparkConf
+from pyspark.sql import SparkSession
+from splink.spark.linker import SparkLinker
+import splink.spark.comparison_library as cl
+
+
 from tests.decorator import mark_with_dialects_including
 
 
@@ -182,9 +188,9 @@ def test_array_based_blocking_with_random_data_link_only(test_helpers, dialect):
     assert sum(df_predict.cluster_l == df_predict.cluster_r) == 1000
 
 
-@mark_with_dialects_including("spark", pass_dialect=True)
-def test_array_based_blocking_with_salted_rules(test_helpers, dialect):
-    helper = test_helpers[dialect]
+
+@mark_with_dialects_including("spark")
+def test_array_based_blocking_with_salted_rules():
     input_data_l, input_data_r = generate_array_based_datasets_helper()
     blocking_rules = [
         {
@@ -211,13 +217,18 @@ def test_array_based_blocking_with_salted_rules(test_helpers, dialect):
         "blocking_rules_to_generate_predictions": blocking_rules,
         "unique_id_column_name": "cluster",
         "additional_columns_to_retain": ["cluster"],
-        "comparisons": [helper.cl.array_intersect_at_sizes("array_column_1", [1])],
+        "comparisons": [cl.array_intersect_at_sizes("array_column_1", [1])],
     }
+    
+    conf = SparkConf()
+    sc = SparkContext.getOrCreate(conf=conf)
+    spark = SparkSession(sc)
+    input_l_spark = spark.createDataFrame(input_data_l)
+    input_r_spark = spark.createDataFrame(input_data_r)
 
-    linker = helper.Linker(
-        [input_data_l, input_data_r], settings, **helper.extra_linker_args()
-    )
-    linker.debug_mode = False
+    linker = SparkLinker(
+        [input_l_spark, input_r_spark], settings
+    ) 
     df_predict = linker.predict().as_pandas_dataframe()
 
     ## check that there are no duplicates in the output
@@ -233,8 +244,8 @@ def test_array_based_blocking_with_salted_rules(test_helpers, dialect):
     for br in blocking_rules_no_salt:
         br.pop("salting_partitions")
     settings_no_salt["blocking_rules_to_generate_predictions"] = blocking_rules_no_salt
-    linker_no_salt = helper.Linker(
-        [input_data_l, input_data_r], settings_no_salt, **helper.extra_linker_args()
+    linker_no_salt = SparkLinker(
+        [input_l_spark, input_r_spark], settings_no_salt
     )
     df_predict_no_salt = linker_no_salt.predict().as_pandas_dataframe()
     predictions_no_salt = set(
@@ -247,5 +258,5 @@ def test_array_based_blocking_with_salted_rules(test_helpers, dialect):
     predictions_with_salt = set(
         zip(df_predict.cluster_l, df_predict.cluster_r, df_predict.match_key)
     )
-
+    
     assert predictions_no_salt == predictions_with_salt
