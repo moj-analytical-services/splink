@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 from sqlglot import parse_one
 from sqlglot.expressions import Join, Column
 from sqlglot.optimizer.eliminate_joins import join_condition
@@ -330,12 +331,19 @@ def block_using_rules_sql(linker: Linker):
                         where_condition + " and l.source_dataset < r.source_dataset"
                     )
 
+                # ensure that table names are unique 
+                if apply_salt:
+                    to_hash = (salted_br + linker._cache_uid).encode("utf-8")
+                    salt_id = "salt_id_" + hashlib.sha256(to_hash).hexdigest()[:9]
+                else:
+                    salt_id = ""
+
                 linker._enqueue_sql(
                     f"""
                     select distinct l.{unique_id_col} as {unique_id_col}_l,r.{unique_id_col} as {unique_id_col}_r
                     from __splink__df_concat_with_tf_unnested as l inner join __splink__df_concat_with_tf_unnested as r on ({salted_br})
                     {where_condition} {br.and_not_preceding_rules_sql(linker)}""",
-                    f"ids_to_compare_blocking_rule_{br.match_key}",
+                    f"ids_to_compare_blocking_rule_{br.match_key}{salt_id}",
                 )
                 ids_to_compare = linker._execute_sql_pipeline([input_dataframe])
                 br.ids_to_compare.append(ids_to_compare)
