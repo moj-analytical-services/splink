@@ -44,10 +44,10 @@ def check_field_freedom(candidate_set, field_names, min_field_freedom):
     return all(count >= min_field_freedom for count in covered_fields.values())
 
 
-def heuristic_select_rows(data, field_names, min_field_freedom):
+def heuristic_select_brs_that_have_min_freedom(data, field_names, min_field_freedom):
     """
-    Implements a heuristic algorithm to select rows. It ensures that each field is allowed
-    to vary at least 'min_field_freedom' times.
+    A heuristic algorithm to select blocking rules that between them
+    ensure that each field is allowed to vary at least 'min_field_freedom' times.
 
     Args:
         data (list): The data rows.
@@ -91,23 +91,15 @@ def calculate_field_freedom_cost(combination_of_brs, field_names):
         int: The field freedom cost.
     """
 
-    logger.debug("--")
-    logger.debug("Beginning calculating field freedom cost")
-
-    for row in combination_of_brs:
-        logger.debug(f"  {row['blocking_columns']}")
-
     total_cost = 0
     for field in field_names:
         field_can_vary_count = sum(row[field] == 0 for row in combination_of_brs)
 
         costs_by_count = {0: 20, 1: 10, 2: 2, 3: 1, 4: 1}
         cost = costs_by_count.get(field_can_vary_count, 0) / 10
-        logger.debug(f"{field} can vary in {field_can_vary_count} rules, cost: {cost}")
 
         total_cost = total_cost + cost
-    logger.debug(f"Ending: total cost = {total_cost}")
-    logger.debug("--")
+
     return total_cost
 
 
@@ -168,6 +160,30 @@ def calculate_cost(
     }
 
 
+def get_block_on_string(br_rows):
+    block_on_strings = []
+
+    for row in br_rows:
+        block_on_args = ", ".join(row["blocking_columns"])
+        block_on_strings.append(f"block_on({block_on_args})")
+    return " \n".join(block_on_strings)
+
+
+def get_em_training_string(br_rows):
+    block_on_strings = []
+
+    for row in br_rows:
+        block_on_args = ", ".join(row["blocking_columns"])
+        block_on_strings.append(f"block_on({block_on_args})")
+
+    training_statements = [
+        f"linker.estimate_parameters_using_expectation_maximisation({b})"
+        for b in block_on_strings
+    ]
+
+    return " \n".join(training_statements)
+
+
 def suggest_blocking_rules_for_prediction(
     df_block_stats,
     min_freedom=1,
@@ -208,10 +224,18 @@ def suggest_blocking_rules_for_prediction(
     results = []
 
     for run in range(num_runs):
-        selected_rows = heuristic_select_rows(
+        selected_rows = heuristic_select_brs_that_have_min_freedom(
             blocks_found_recs, blocking_cols, min_field_freedom=min_freedom
         )
-        cost_dict = calculate_cost(
+
+        cost_dict = {
+            "suggested_blocking_rules_for_prediction": get_block_on_string(
+                selected_rows
+            ),
+            "suggested_EM_training_statements": get_em_training_string(selected_rows),
+        }
+
+        costs = calculate_cost(
             selected_rows,
             blocking_cols,
             max_comparison_count,
@@ -220,13 +244,12 @@ def suggest_blocking_rules_for_prediction(
             num_brs_weight,
             num_comparison_weight,
         )
+
+        cost_dict.update(costs)
         cost_dict.update(
             {
                 "run_num": run,
                 "minimum_freedom_for_each_column": min_freedom,
-                "suggested_blocking_rules_string": " || ".join(
-                    [" AND ".join(row["blocking_columns"]) for row in selected_rows]
-                ),
                 "suggested_blocking_rules_as_splink_brs": [
                     row["splink_blocking_rule"] for row in selected_rows
                 ],
@@ -246,7 +269,9 @@ def suggest_blocking_rules_for_prediction(
     results_df["cost"] = results_df["cost"] - min_
 
     min_scores_df = results_df.sort_values("cost")
-    min_scores_df = min_scores_df.drop_duplicates("suggested_blocking_rules_string")
+    min_scores_df = min_scores_df.drop_duplicates(
+        "suggested_blocking_rules_for_prediction"
+    )
 
     return min_scores_df
 
