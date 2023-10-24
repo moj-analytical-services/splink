@@ -164,8 +164,15 @@ def get_block_on_string(br_rows):
     block_on_strings = []
 
     for row in br_rows:
-        block_on_args = ", ".join(row["blocking_columns"])
-        block_on_strings.append(f"block_on({block_on_args})")
+        quoted_args = []
+        for arg in row["blocking_columns"]:
+            quoted_arg = f'"{arg}"'
+            quoted_args.append(quoted_arg)
+
+        block_on_args = ", ".join(quoted_args)
+        block_on_string = f"block_on({block_on_args})"
+        block_on_strings.append(block_on_string)
+
     return " \n".join(block_on_strings)
 
 
@@ -173,13 +180,21 @@ def get_em_training_string(br_rows):
     block_on_strings = []
 
     for row in br_rows:
-        block_on_args = ", ".join(row["blocking_columns"])
-        block_on_strings.append(f"block_on({block_on_args})")
+        quoted_args = []
+        for arg in row["blocking_columns"]:
+            quoted_arg = f'"{arg}"'
+            quoted_args.append(quoted_arg)
 
-    training_statements = [
-        f"linker.estimate_parameters_using_expectation_maximisation({b})"
-        for b in block_on_strings
-    ]
+        block_on_args = ", ".join(quoted_args)
+        block_on_string = f"block_on({block_on_args})"
+        block_on_strings.append(block_on_string)
+
+    training_statements = []
+    for block_on_str in block_on_strings:
+        statement = (
+            f"linker.estimate_parameters_using_expectation_maximisation({block_on_str})"
+        )
+        training_statements.append(statement)
 
     return " \n".join(training_statements)
 
@@ -274,33 +289,3 @@ def suggest_blocking_rules_for_prediction(
     )
 
     return min_scores_df
-
-
-def blocking_rules_for_prediction_report(suggested_blocking_rules_dict):
-    d = suggested_blocking_rules_dict
-    serialized_brs = [f"{br.sql}" for br in d["suggested_blocking_rules_as_splink_brs"]]
-
-    lines = []
-    lines.append("Blocking Rules for Prediction Report")
-    lines.append("=====================================")
-    lines.append("Recommended blocking rules for prediction:")
-    lines.append("")
-    lines.extend(serialized_brs)
-    lines.append("")
-
-    msg1 = f"These will generate {d['total_comparisons_count']:,.0f} comparisons"
-    msg2 = "prior to deduping"
-    lines.append(f"{msg1} {msg2}")
-    lines.append("")
-
-    msg = "Each column can vary in at least"
-    lines.append(f"{msg} {d['minimum_freedom_for_each_column']} different rules")
-    lines.append(f"Complexity Cost: {d['complexity_cost']}")
-    lines.append(f"Field Freedom Cost: {d['field_freedom_cost']}")
-    lines.append(f"Num BRs Cost: {d['num_brs_cost']}")
-    lines.append(f"Total Cost: {d['cost']}")
-
-    lines.append(f"Run Num: {d['run_num']}")
-
-    report = "\n".join(lines)
-    return report

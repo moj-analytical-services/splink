@@ -3812,7 +3812,10 @@ class Linker:
                 suggestion_str = blocking_rule_suggestions[
                     "suggested_blocking_rules_for_prediction"
                 ].iloc[0]
-                msg = "The following blocking rules were automatically detected:\n"
+                msg = (
+                    "The following blocking_rules_to_generate_predictions were "
+                    "automatically detected:\n"
+                )
                 logger.info(f"{msg}{suggestion_str}")
 
     def _detect_blocking_rules_for_em_training(
@@ -3881,13 +3884,8 @@ class Linker:
             if len(blocking_rule_suggestions) == 0:
                 logger.warning("No set of blocking rules found within constraints")
             else:
-                suggestion = blocking_rule_suggestions[
-                    "suggested_blocking_rules_as_splink_brs"
-                ].iloc[0]
-                self._settings_obj._blocking_rules_to_generate_predictions = suggestion
-
                 suggestion_str = blocking_rule_suggestions[
-                    "suggested_blocking_rules_for_prediction"
+                    "suggested_EM_training_statements"
                 ].iloc[0]
-                msg = "The following blocking rules were automatically detected:\n"
+                msg = "The following EM training strategy was detected:\n"
                 logger.info(f"{msg}{suggestion_str}")
