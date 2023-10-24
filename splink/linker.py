@@ -36,10 +36,6 @@ from .blocking import (
     block_using_rules_sql,
     blocking_rule_to_obj,
 )
-
-from .find_brs_with_comparison_counts_below_threshold import (
-    find_blocking_rules_below_threshold_comparison_count,
-)
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
     accuracy_chart,
@@ -68,6 +64,9 @@ from .connected_components import (
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
 from .exceptions import SplinkDeprecated, SplinkException
+from .find_brs_with_comparison_counts_below_threshold import (
+    find_blocking_rules_below_threshold_comparison_count,
+)
 from .find_matches_to_new_records import add_unique_id_and_source_dataset_cols_if_needed
 from .labelling_tool import (
     generate_labelling_tool_comparisons,
