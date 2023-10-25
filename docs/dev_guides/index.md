@@ -29,4 +29,4 @@ Splink is quite a large, complex codebase. The guides in this section lay out so
 * [Comparison and Comparison Level Libraries](./comparisons/new_library_comparisons_and_levels.md) - demonstrates how `Comparison` Library and `ComparisonLevel` Library functions are structured within Splink, including how to add new functions and edit existing functions.
 * [Charts](./charts.ipynb) - demonstrates how charts are built in Splink, including how to add new charts and edit existing charts.
 * [User-Defined Functions](./udfs.md) - demonstrates how User Defined Functions (UDFs) are used to provide functionality within Splink that is not native to a given SQL backend.
-
+* [Settings Validation](./settings_validation.md) - summarises how to use and expand the existing settings schema and validation functions.
