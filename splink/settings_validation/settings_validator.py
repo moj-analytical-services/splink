@@ -17,45 +17,9 @@ def remove_suffix(c):
     return re.sub("_[l|r]{1}$", "", c)
 
 
-class SettingsValidator:
-    """A base class for settings validation. This stores key variables and values
-    from our central settings object and cleans adds functions to perform preliminary
-    value cleaning.
-    """
-
+class DataFrameColumns:
     def __init__(self, linker):
-        self.linker = linker
-
-    @property
-    def settings_obj(self):
-        return self.linker._settings_obj
-
-    @property
-    def _sql_dialect(self):
-        if self.settings_obj:
-            return self.settings_obj._sql_dialect
-        else:
-            return None
-
-    @property
-    def cols_to_retain(self):
-        return self.clean_list_of_column_names(
-            self.settings_obj._additional_cols_to_retain
-        )
-
-    @property
-    def uid(self):
-        uid_as_tree = InputColumn(self.settings_obj._unique_id_column_name)
-        return self.clean_list_of_column_names(uid_as_tree)
-
-    @property
-    def blocking_rules(self):
-        brs = self.settings_obj._blocking_rules_to_generate_predictions
-        return [br.blocking_rule for br in brs]
-
-    @property
-    def comparisons(self):
-        return self.settings_obj.comparisons
+        self.linker = linker  # Pointer to our initial linker class.
 
     @property
     def _input_columns_by_df(self):
@@ -116,3 +80,42 @@ class SettingsValidator:
         """
         col_syntax_tree.args["table"] = None
         return remove_suffix(col_syntax_tree.sql())
+
+
+class SettingsValidator(DataFrameColumns):
+    """A base class for settings validation. This stores key variables and values
+    from our central settings object and cleans adds functions to perform preliminary
+    value cleaning.
+    """
+
+    def __init__(self, linker):
+        super().__init__(linker)
+        self.linker = linker  # Pointer to our initial linker class.
+
+    @property
+    def settings_obj(self):
+        return self.linker._settings_obj
+
+    @property
+    def _sql_dialect(self):
+        return self.linker._sql_dialect
+
+    @property
+    def cols_to_retain(self):
+        return self.clean_list_of_column_names(
+            self.settings_obj._additional_cols_to_retain
+        )
+
+    @property
+    def uid(self):
+        uid_as_tree = InputColumn(self.settings_obj._unique_id_column_name)
+        return self.clean_list_of_column_names(uid_as_tree)
+
+    @property
+    def blocking_rules(self):
+        brs = self.settings_obj._blocking_rules_to_generate_predictions
+        return [br.blocking_rule for br in brs]
+
+    @property
+    def comparisons(self):
+        return self.settings_obj.comparisons
