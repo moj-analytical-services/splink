@@ -1,18 +1,3 @@
-// Observable runtime, inputs, stdlib and inspector are Copyright 2018-2021 Observable, Inc.
-// The licence for these libraries is as follows:
-
-// Permission to use, copy, modify, and/or distribute this software for any purpose
-// with or without fee is hereby granted, provided that the above copyright notice
-// and this permission notice appear in all copies.
-
-// THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-// REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
-// FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-// INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
-// OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
-// TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
-// THIS SOFTWARE
-
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
 	typeof define === 'function' && define.amd ? define(['exports'], factory) :
@@ -2761,16 +2746,46 @@
 	// https://github.com/d3/d3-dsv/issues/45
 	const fixtz = new Date("2019-01-01T00:00").getHours() || new Date("2019-07-01T00:00").getHours();
 
+	function dependency(name, version, main) {
+	  return {
+	    resolve(path = main) {
+	      return `${name}@${version}/${path}`;
+	    }
+	  };
+	}
+
+	const d3 = dependency("d3", "7.8.5", "dist/d3.min.js");
+	const inputs = dependency("@observablehq/inputs", "0.10.6", "dist/inputs.min.js");
+	const plot = dependency("@observablehq/plot", "0.6.11", "dist/plot.umd.min.js");
+	const graphviz = dependency("@observablehq/graphviz", "0.2.1", "dist/graphviz.min.js");
+	const highlight = dependency("@observablehq/highlight.js", "2.0.0", "highlight.min.js");
+	const katex = dependency("@observablehq/katex", "0.11.1", "dist/katex.min.js");
+	const lodash = dependency("lodash", "4.17.21", "lodash.min.js");
+	const htl = dependency("htl", "0.3.1", "dist/htl.min.js");
+	const jszip = dependency("jszip", "3.10.1", "dist/jszip.min.js");
+	const marked = dependency("marked", "0.3.12", "marked.min.js");
+	const sql = dependency("sql.js", "1.8.0", "dist/sql-wasm.js");
+	const vega = dependency("vega", "5.22.1", "build/vega.min.js");
+	const vegalite = dependency("vega-lite", "5.6.0", "build/vega-lite.min.js");
+	const vegaliteApi = dependency("vega-lite-api", "5.0.0", "build/vega-lite-api.min.js");
+	const arrow4 = dependency("apache-arrow", "4.0.1", "Arrow.es2015.min.js");
+	const arrow9 = dependency("apache-arrow", "9.0.0", "+esm");
+	const arrow11 = dependency("apache-arrow", "11.0.0", "+esm");
+	const arquero = dependency("arquero", "4.8.8", "dist/arquero.min.js");
+	const topojson = dependency("topojson-client", "3.1.0", "dist/topojson-client.min.js");
+	const exceljs = dependency("exceljs", "4.3.0", "dist/exceljs.min.js");
+	const mermaid$1 = dependency("mermaid", "9.2.2", "dist/mermaid.min.js");
+	const leaflet$1 = dependency("leaflet", "1.9.3", "dist/leaflet.js");
+	const duckdb = dependency("@duckdb/duckdb-wasm", "1.24.0", "+esm");
+
 	const metas = new Map;
 	const queue$1 = [];
 	const map$2 = queue$1.map;
 	const some = queue$1.some;
 	const hasOwnProperty = queue$1.hasOwnProperty;
-	const origin = "https://cdn.jsdelivr.net/npm/";
 	const identifierRe = /^((?:@[^/@]+\/)?[^/@]+)(?:@([^/]+))?(?:\/(.*))?$/;
 	const versionRe = /^\d+\.\d+\.\d+(-[\w-.+]+)?$/;
-	const extensionRe = /\.[^/]*$/;
-	const mains = ["unpkg", "jsdelivr", "browser", "main"];
+	const extensionRe = /(?:\.[^/]*|\/)$/;
 
 	class RequireError extends Error {
 	  constructor(message) {
@@ -2779,15 +2794,6 @@
 	}
 
 	RequireError.prototype.name = RequireError.name;
-
-	function main(meta) {
-	  for (const key of mains) {
-	    const value = meta[key];
-	    if (typeof value === "string") {
-	      return extensionRe.test(value) ? value : `${value}.js`;
-	    }
-	  }
-	}
 
 	function parseIdentifier(identifier) {
 	  const match = identifierRe.exec(identifier);
@@ -2798,35 +2804,49 @@
 	  };
 	}
 
-	function resolveMeta(target) {
-	  const url = `${origin}${target.name}${target.version ? `@${target.version}` : ""}/package.json`;
-	  let meta = metas.get(url);
-	  if (!meta) metas.set(url, meta = fetch(url).then(response => {
-	    if (!response.ok) throw new RequireError("unable to load package.json");
-	    if (response.redirected && !metas.has(response.url)) metas.set(response.url, meta);
-	    return response.json();
-	  }));
-	  return meta;
-	}
+	function resolveFrom(origin = "https://cdn.jsdelivr.net/npm/", mains = ["unpkg", "jsdelivr", "browser", "main"]) {
+	  if (!/\/$/.test(origin)) throw new Error("origin lacks trailing slash");
 
-	async function resolve$2(name, base) {
-	  if (name.startsWith(origin)) name = name.substring(origin.length);
-	  if (/^(\w+:)|\/\//i.test(name)) return name;
-	  if (/^[.]{0,2}\//i.test(name)) return new URL(name, base == null ? location : base).href;
-	  if (!name.length || /^[\s._]/.test(name) || /\s$/.test(name)) throw new RequireError("illegal name");
-	  const target = parseIdentifier(name);
-	  if (!target) return `${origin}${name}`;
-	  if (!target.version && base != null && base.startsWith(origin)) {
-	    const meta = await resolveMeta(parseIdentifier(base.substring(origin.length)));
-	    target.version = meta.dependencies && meta.dependencies[target.name] || meta.peerDependencies && meta.peerDependencies[target.name];
+	  function main(meta) {
+	    for (const key of mains) {
+	      let value = meta[key];
+	      if (typeof value === "string") {
+	        if (value.startsWith("./")) value = value.slice(2);
+	        return extensionRe.test(value) ? value : `${value}.js`;
+	      }
+	    }
 	  }
-	  if (target.path && !extensionRe.test(target.path)) target.path += ".js";
-	  if (target.path && target.version && versionRe.test(target.version)) return `${origin}${target.name}@${target.version}/${target.path}`;
-	  const meta = await resolveMeta(target);
-	  return `${origin}${meta.name}@${meta.version}/${target.path || main(meta) || "index.js"}`;
+
+	  function resolveMeta(target) {
+	    const url = `${origin}${target.name}${target.version ? `@${target.version}` : ""}/package.json`;
+	    let meta = metas.get(url);
+	    if (!meta) metas.set(url, meta = fetch(url).then(response => {
+	      if (!response.ok) throw new RequireError("unable to load package.json");
+	      if (response.redirected && !metas.has(response.url)) metas.set(response.url, meta);
+	      return response.json();
+	    }));
+	    return meta;
+	  }
+
+	  return async function resolve(name, base) {
+	    if (name.startsWith(origin)) name = name.substring(origin.length);
+	    if (/^(\w+:)|\/\//i.test(name)) return name;
+	    if (/^[.]{0,2}\//i.test(name)) return new URL(name, base == null ? location : base).href;
+	    if (!name.length || /^[\s._]/.test(name) || /\s$/.test(name)) throw new RequireError("illegal name");
+	    const target = parseIdentifier(name);
+	    if (!target) return `${origin}${name}`;
+	    if (!target.version && base != null && base.startsWith(origin)) {
+	      const meta = await resolveMeta(parseIdentifier(base.substring(origin.length)));
+	      target.version = meta.dependencies && meta.dependencies[target.name] || meta.peerDependencies && meta.peerDependencies[target.name];
+	    }
+	    if (target.path && !extensionRe.test(target.path)) target.path += ".js";
+	    if (target.path && target.version && versionRe.test(target.version)) return `${origin}${target.name}@${target.version}/${target.path}`;
+	    const meta = await resolveMeta(target);
+	    return `${origin}${meta.name}@${meta.version}/${target.path || main(meta) || "index.js"}`;
+	  };
 	}
 
-	var require = requireFrom(resolve$2);
+	var require = requireFrom(resolveFrom());
 
 	function requireFrom(resolver) {
 	  const cache = new Map;
@@ -2925,38 +2945,22 @@
 
 	define$2.amd = {};
 
-	function dependency(name, version, main) {
-	  return {
-	    resolve(path = main) {
-	      return `https://cdn.jsdelivr.net/npm/${name}@${version}/${path}`;
-	    }
-	  };
+	// TODO Allow this to be overridden using the Library’s resolver.
+	const cdn = "https://cdn.observableusercontent.com/npm/";
+
+	let requireDefault = require;
+
+	function setDefaultRequire(require) {
+	  requireDefault = require;
 	}
 
-	const d3 = dependency("d3", "7.4.4", "dist/d3.min.js");
-	const inputs = dependency("@observablehq/inputs", "0.10.4", "dist/inputs.min.js");
-	const plot = dependency("@observablehq/plot", "0.4.3", "dist/plot.umd.min.js");
-	const graphviz = dependency("@observablehq/graphviz", "0.2.1", "dist/graphviz.min.js");
-	const highlight = dependency("@observablehq/highlight.js", "2.0.0", "highlight.min.js");
-	const katex = dependency("@observablehq/katex", "0.11.1", "dist/katex.min.js");
-	const lodash = dependency("lodash", "4.17.21", "lodash.min.js");
-	const htl = dependency("htl", "0.3.1", "dist/htl.min.js");
-	const jszip = dependency("jszip", "3.9.1", "dist/jszip.min.js");
-	const marked = dependency("marked", "0.3.12", "marked.min.js");
-	const sql = dependency("sql.js", "1.6.2", "dist/sql-wasm.js");
-	const vega = dependency("vega", "5.22.1", "build/vega.min.js");
-	const vegalite = dependency("vega-lite", "5.2.0", "build/vega-lite.min.js");
-	const vegaliteApi = dependency("vega-lite-api", "5.0.0", "build/vega-lite-api.min.js");
-	const arrow = dependency("apache-arrow", "4.0.1", "Arrow.es2015.min.js");
-	const arquero = dependency("arquero", "4.8.8", "dist/arquero.min.js");
-	const topojson = dependency("topojson-client", "3.1.0", "dist/topojson-client.min.js");
-	const exceljs = dependency("exceljs", "4.3.0", "dist/exceljs.min.js");
-	const mermaid$1 = dependency("mermaid", "9.0.0", "dist/mermaid.min.js");
-	const leaflet$1 = dependency("leaflet", "1.8.0", "dist/leaflet.js");
+	function requirer(resolver) {
+	  return resolver == null ? requireDefault : requireFrom(resolver);
+	}
 
-	async function sqlite(require) {
-	  const init = await require(sql.resolve());
-	  return init({locateFile: file => sql.resolve(`dist/${file}`)});
+	async function SQLite(require) {
+	  const [init, dist] = await Promise.all([require(sql.resolve()), require.resolve(sql.resolve("dist/"))]);
+	  return init({locateFile: file => `${dist}${file}`});
 	}
 
 	class SQLiteDatabaseClient {
@@ -2966,7 +2970,7 @@
 	    });
 	  }
 	  static async open(source) {
-	    const [SQL, buffer] = await Promise.all([sqlite(require), Promise.resolve(source).then(load$1)]);
+	    const [SQL, buffer] = await Promise.all([SQLite(requireDefault), Promise.resolve(source).then(load)]);
 	    return new SQLiteDatabaseClient(new SQL.Database(buffer));
 	  }
 	  async query(query, params) {
@@ -2981,6 +2985,15 @@
 	      text$2(rows.map(row => row.detail).join("\n"))
 	    ]);
 	  }
+	  async describeTables({schema} = {}) {
+	    return this.query(`SELECT NULLIF(schema, 'main') AS schema, name FROM pragma_table_list() WHERE type = 'table'${schema == null ? "" : ` AND schema = ?`} AND name NOT LIKE 'sqlite_%' ORDER BY schema, name`, schema == null ? [] : [schema]);
+	  }
+	  async describeColumns({schema, table} = {}) {
+	    if (table == null) throw new Error(`missing table`);
+	    const rows = await this.query(`SELECT name, type, "notnull" FROM pragma_table_info(?${schema == null ? "" : `, ?`}) ORDER BY cid`, schema == null ? [table] : [table, schema]);
+	    if (!rows.length) throw new Error(`table not found: ${table}`);
+	    return rows.map(({name, type, notnull}) => ({name, type: sqliteType(type), databaseType: type, nullable: !notnull}));
+	  }
 	  async describe(object) {
 	    const rows = await (object === undefined
 	      ? this.query(`SELECT name FROM sqlite_master WHERE type = 'table'`)
@@ -2992,17 +3005,57 @@
 	      element$1("tbody", rows.map(r => element$1("tr", columns.map(c => element$1("td", [text$2(r[c])])))))
 	    ]);
 	  }
-	  async sql(strings, ...args) {
-	    return this.query(strings.join("?"), args);
+	  async sql() {
+	    return this.query(...this.queryTag.apply(this, arguments));
+	  }
+	  queryTag(strings, ...params) {
+	    return [strings.join("?"), params];
 	  }
 	}
+
 	Object.defineProperty(SQLiteDatabaseClient.prototype, "dialect", {
 	  value: "sqlite"
 	});
 
-	function load$1(source) {
-	  return typeof source === "string" ? fetch(source).then(load$1)
-	    : source instanceof Response || source instanceof Blob ? source.arrayBuffer().then(load$1)
+	// https://www.sqlite.org/datatype3.html
+	function sqliteType(type) {
+	  switch (type) {
+	    case "NULL":
+	      return "null";
+	    case "INT":
+	    case "INTEGER":
+	    case "TINYINT":
+	    case "SMALLINT":
+	    case "MEDIUMINT":
+	    case "BIGINT":
+	    case "UNSIGNED BIG INT":
+	    case "INT2":
+	    case "INT8":
+	      return "integer";
+	    case "TEXT":
+	    case "CLOB":
+	      return "string";
+	    case "REAL":
+	    case "DOUBLE":
+	    case "DOUBLE PRECISION":
+	    case "FLOAT":
+	    case "NUMERIC":
+	      return "number";
+	    case "BLOB":
+	      return "buffer";
+	    case "DATE":
+	    case "DATETIME":
+	      return "string"; // TODO convert strings to Date instances in sql.js
+	    default:
+	      return /^(?:(?:(?:VARYING|NATIVE) )?CHARACTER|(?:N|VAR|NVAR)CHAR)\(/.test(type) ? "string"
+	        : /^(?:DECIMAL|NUMERIC)\(/.test(type) ? "number"
+	        : "other";
+	  }
+	}
+
+	function load(source) {
+	  return typeof source === "string" ? fetch(source).then(load)
+	    : source instanceof Response || source instanceof Blob ? source.arrayBuffer().then(load)
 	    : source instanceof ArrayBuffer ? new Uint8Array(source)
 	    : source;
 	}
@@ -3028,14 +3081,1356 @@
 	  return document.createTextNode(value);
 	}
 
+	function ascending$1(a, b) {
+	  return a == null || b == null ? NaN : a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
+	}
+
+	function greatest(values, compare = ascending$1) {
+	  let max;
+	  let defined = false;
+	  if (compare.length === 1) {
+	    let maxValue;
+	    for (const element of values) {
+	      const value = compare(element);
+	      if (defined
+	          ? ascending$1(value, maxValue) > 0
+	          : ascending$1(value, value) === 0) {
+	        max = element;
+	        maxValue = value;
+	        defined = true;
+	      }
+	    }
+	  } else {
+	    for (const value of values) {
+	      if (defined
+	          ? compare(value, max) > 0
+	          : compare(value, value) === 0) {
+	        max = value;
+	        defined = true;
+	      }
+	    }
+	  }
+	  return max;
+	}
+
+	function reverse(values) {
+	  if (typeof values[Symbol.iterator] !== "function") throw new TypeError("values is not iterable");
+	  return Array.from(values).reverse();
+	}
+
+	function isArqueroTable(value) {
+	  // Arquero tables have a `toArrowBuffer` function
+	  return value && typeof value.toArrowBuffer === "function";
+	}
+
+	// Returns true if the vaue is an Apache Arrow table. This uses a “duck” test
+	// (instead of strict instanceof) because we want it to work with a range of
+	// Apache Arrow versions at least 7.0.0 or above.
+	// https://arrow.apache.org/docs/7.0/js/classes/Arrow_dom.Table.html
+	function isArrowTable(value) {
+	  return (
+	    value &&
+	    typeof value.getChild === "function" &&
+	    typeof value.toArray === "function" &&
+	    value.schema &&
+	    Array.isArray(value.schema.fields)
+	  );
+	}
+
+	function getArrowTableSchema(table) {
+	  return table.schema.fields.map(getArrowFieldSchema);
+	}
+
+	function getArrowFieldSchema(field) {
+	  return {
+	    name: field.name,
+	    type: getArrowType(field.type),
+	    nullable: field.nullable,
+	    databaseType: String(field.type)
+	  };
+	}
+
+	// https://github.com/apache/arrow/blob/89f9a0948961f6e94f1ef5e4f310b707d22a3c11/js/src/enum.ts#L140-L141
+	function getArrowType(type) {
+	  switch (type.typeId) {
+	    case 2: // Int
+	      return "integer";
+	    case 3: // Float
+	    case 7: // Decimal
+	      return "number";
+	    case 4: // Binary
+	    case 15: // FixedSizeBinary
+	      return "buffer";
+	    case 5: // Utf8
+	      return "string";
+	    case 6: // Bool
+	      return "boolean";
+	    case 8: // Date
+	    case 9: // Time
+	    case 10: // Timestamp
+	      return "date";
+	    case 12: // List
+	    case 16: // FixedSizeList
+	      return "array";
+	    case 13: // Struct
+	    case 14: // Union
+	      return "object";
+	    case 11: // Interval
+	    case 17: // Map
+	    default:
+	      return "other";
+	  }
+	}
+
+	async function loadArrow() {
+	  return await import(`${cdn}${arrow11.resolve()}`);
+	}
+
+	// Adapted from https://observablehq.com/@cmudig/duckdb-client
+	// Copyright 2021 CMU Data Interaction Group
+	//
+	// Redistribution and use in source and binary forms, with or without
+	// modification, are permitted provided that the following conditions are met:
+	//
+	// 1. Redistributions of source code must retain the above copyright notice,
+	//    this list of conditions and the following disclaimer.
+	//
+	// 2. Redistributions in binary form must reproduce the above copyright notice,
+	//    this list of conditions and the following disclaimer in the documentation
+	//    and/or other materials provided with the distribution.
+	//
+	// 3. Neither the name of the copyright holder nor the names of its contributors
+	//    may be used to endorse or promote products derived from this software
+	//    without specific prior written permission.
+	//
+	// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+	// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+	// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+	// ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+	// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+	// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+	// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+	// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+	// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+	// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+	// POSSIBILITY OF SUCH DAMAGE.
+
+	let promise;
+
+	class DuckDBClient {
+	  constructor(db) {
+	    Object.defineProperties(this, {
+	      _db: {value: db}
+	    });
+	  }
+
+	  async queryStream(query, params) {
+	    const connection = await this._db.connect();
+	    let reader, batch;
+	    try {
+	      if (params?.length > 0) {
+	        const statement = await connection.prepare(query);
+	        reader = await statement.send(...params);
+	      } else {
+	        reader = await connection.send(query);
+	      }
+	      batch = await reader.next();
+	      if (batch.done) throw new Error("missing first batch");
+	    } catch (error) {
+	      await connection.close();
+	      throw error;
+	    }
+	    return {
+	      schema: getArrowTableSchema(batch.value),
+	      async *readRows() {
+	        try {
+	          while (!batch.done) {
+	            yield batch.value.toArray();
+	            batch = await reader.next();
+	          }
+	        } finally {
+	          await connection.close();
+	        }
+	      }
+	    };
+	  }
+
+	  async query(query, params) {
+	    const result = await this.queryStream(query, params);
+	    const results = [];
+	    for await (const rows of result.readRows()) {
+	      for (const row of rows) {
+	        results.push(row);
+	      }
+	    }
+	    results.schema = result.schema;
+	    return results;
+	  }
+
+	  async queryRow(query, params) {
+	    const result = await this.queryStream(query, params);
+	    const reader = result.readRows();
+	    try {
+	      const {done, value} = await reader.next();
+	      return done || !value.length ? null : value[0];
+	    } finally {
+	      await reader.return();
+	    }
+	  }
+
+	  async sql(strings, ...args) {
+	    return await this.query(strings.join("?"), args);
+	  }
+
+	  queryTag(strings, ...params) {
+	    return [strings.join("?"), params];
+	  }
+
+	  escape(name) {
+	    return `"${name}"`;
+	  }
+
+	  async describeTables() {
+	    const tables = await this.query(`SHOW TABLES`);
+	    return tables.map(({name}) => ({name}));
+	  }
+
+	  async describeColumns({table} = {}) {
+	    const columns = await this.query(`DESCRIBE ${this.escape(table)}`);
+	    return columns.map(({column_name, column_type, null: nullable}) => ({
+	      name: column_name,
+	      type: getDuckDBType(column_type),
+	      nullable: nullable !== "NO",
+	      databaseType: column_type
+	    }));
+	  }
+
+	  static async of(sources = {}, config = {}) {
+	    const db = await createDuckDB();
+	    if (config.query?.castTimestampToDate === undefined) {
+	      config = {...config, query: {...config.query, castTimestampToDate: true}};
+	    }
+	    if (config.query?.castBigIntToDouble === undefined) {
+	      config = {...config, query: {...config.query, castBigIntToDouble: true}};
+	    }
+	    await db.open(config);
+	    await Promise.all(
+	      Object.entries(sources).map(async ([name, source]) => {
+	        if (source instanceof FileAttachment) { // bare file
+	          await insertFile(db, name, source);
+	        } else if (isArrowTable(source)) { // bare arrow table
+	          await insertArrowTable(db, name, source);
+	        } else if (Array.isArray(source)) { // bare array of objects
+	          await insertArray(db, name, source);
+	        } else if (isArqueroTable(source)) {
+	          await insertArqueroTable(db, name, source);
+	        } else if ("data" in source) { // data + options
+	          const {data, ...options} = source;
+	          if (isArrowTable(data)) {
+	            await insertArrowTable(db, name, data, options);
+	          } else {
+	            await insertArray(db, name, data, options);
+	          }
+	        } else if ("file" in source) { // file + options
+	          const {file, ...options} = source;
+	          await insertFile(db, name, file, options);
+	        } else {
+	          throw new Error(`invalid source: ${source}`);
+	        }
+	      })
+	    );
+	    return new DuckDBClient(db);
+	  }
+	}
+
+	Object.defineProperty(DuckDBClient.prototype, "dialect", {
+	  value: "duckdb"
+	});
+
+	async function insertFile(database, name, file, options) {
+	  const url = await file.url();
+	  if (url.startsWith("blob:")) {
+	    const buffer = await file.arrayBuffer();
+	    await database.registerFileBuffer(file.name, new Uint8Array(buffer));
+	  } else {
+	    await database.registerFileURL(file.name, url, 4); // duckdb.DuckDBDataProtocol.HTTP
+	  }
+	  const connection = await database.connect();
+	  try {
+	    switch (file.mimeType) {
+	      case "text/csv":
+	      case "text/tab-separated-values": {
+	        return await connection.insertCSVFromPath(file.name, {
+	          name,
+	          schema: "main",
+	          ...options
+	        }).catch(async (error) => {
+	          // If initial attempt to insert CSV resulted in a conversion
+	          // error, try again, this time treating all columns as strings.
+	          if (error.toString().includes("Could not convert")) {
+	            return await insertUntypedCSV(connection, file, name);
+	          }
+	          throw error;
+	        });
+	      }
+	      case "application/json":
+	        return await connection.insertJSONFromPath(file.name, {
+	          name,
+	          schema: "main",
+	          ...options
+	        });
+	      default:
+	        if (/\.arrow$/i.test(file.name)) {
+	          const buffer = new Uint8Array(await file.arrayBuffer());
+	          return await connection.insertArrowFromIPCStream(buffer, {
+	            name,
+	            schema: "main",
+	            ...options
+	          });
+	        }
+	        if (/\.parquet$/i.test(file.name)) {
+	          return await connection.query(
+	            `CREATE VIEW '${name}' AS SELECT * FROM parquet_scan('${file.name}')`
+	          );
+	        }
+	        throw new Error(`unknown file type: ${file.mimeType}`);
+	    }
+	  } finally {
+	    await connection.close();
+	  }
+	}
+
+	async function insertUntypedCSV(connection, file, name) {
+	  const statement = await connection.prepare(
+	    `CREATE TABLE '${name}' AS SELECT * FROM read_csv_auto(?, ALL_VARCHAR=TRUE)`
+	  );
+	  return await statement.send(file.name);
+	}
+
+	async function insertArrowTable(database, name, table, options) {
+	  const connection = await database.connect();
+	  try {
+	    await connection.insertArrowTable(table, {
+	      name,
+	      schema: "main",
+	      ...options
+	    });
+	  } finally {
+	    await connection.close();
+	  }
+	}
+
+	async function insertArqueroTable(database, name, source) {
+	  // TODO When we have stdlib versioning and can upgrade Arquero to version 5,
+	  // we can then call source.toArrow() directly, with insertArrowTable()
+	  const arrow = await loadArrow();
+	  const table = arrow.tableFromIPC(source.toArrowBuffer());
+	  return await insertArrowTable(database, name, table);
+	}
+
+	async function insertArray(database, name, array, options) {
+	  const arrow = await loadArrow();
+	  const table = arrow.tableFromJSON(array);
+	  return await insertArrowTable(database, name, table, options);
+	}
+
+	async function loadDuckDB() {
+	  const module = await import(`${cdn}${duckdb.resolve()}`);
+	  const bundle = await module.selectBundle({
+	    mvp: {
+	      mainModule: `${cdn}${duckdb.resolve("dist/duckdb-mvp.wasm")}`,
+	      mainWorker: `${cdn}${duckdb.resolve("dist/duckdb-browser-mvp.worker.js")}`
+	    },
+	    eh: {
+	      mainModule: `${cdn}${duckdb.resolve("dist/duckdb-eh.wasm")}`,
+	      mainWorker: `${cdn}${duckdb.resolve("dist/duckdb-browser-eh.worker.js")}`
+	    }
+	  });
+	  const logger = new module.ConsoleLogger();
+	  return {module, bundle, logger};
+	}
+
+	async function createDuckDB() {
+	  if (promise === undefined) promise = loadDuckDB();
+	  const {module, bundle, logger} = await promise;
+	  const worker = await module.createWorker(bundle.mainWorker);
+	  const db = new module.AsyncDuckDB(logger, worker);
+	  await db.instantiate(bundle.mainModule);
+	  return db;
+	}
+
+	// https://duckdb.org/docs/sql/data_types/overview
+	function getDuckDBType(type) {
+	  switch (type) {
+	    case "BIGINT":
+	    case "HUGEINT":
+	    case "UBIGINT":
+	      return "bigint";
+	    case "DOUBLE":
+	    case "REAL":
+	    case "FLOAT":
+	      return "number";
+	    case "INTEGER":
+	    case "SMALLINT":
+	    case "TINYINT":
+	    case "USMALLINT":
+	    case "UINTEGER":
+	    case "UTINYINT":
+	      return "integer";
+	    case "BOOLEAN":
+	      return "boolean";
+	    case "DATE":
+	    case "TIMESTAMP":
+	    case "TIMESTAMP WITH TIME ZONE":
+	      return "date";
+	    case "VARCHAR":
+	    case "UUID":
+	      return "string";
+	    // case "BLOB":
+	    // case "INTERVAL":
+	    // case "TIME":
+	    default:
+	      if (/^DECIMAL\(/.test(type)) return "integer";
+	      return "other";
+	  }
+	}
+
+	const nChecks = 20; // number of values to check in each array
+
+	// We support two levels of DatabaseClient. The simplest DatabaseClient
+	// implements only the client.sql tagged template literal. More advanced
+	// DatabaseClients implement client.query and client.queryStream, which support
+	// streaming and abort, and the client.queryTag tagged template literal is used
+	// to translate the contents of a SQL cell or Table cell into the appropriate
+	// arguments for calling client.query or client.queryStream. For table cells, we
+	// additionally require client.describeColumns. The client.describeTables method
+	// is optional.
+	function isDatabaseClient(value, mode) {
+	  return (
+	    value &&
+	    (typeof value.sql === "function" ||
+	      (typeof value.queryTag === "function" &&
+	        (typeof value.query === "function" ||
+	          typeof value.queryStream === "function"))) &&
+	    (mode !== "table" || typeof value.describeColumns === "function") &&
+	    value !== __query // don’t match our internal helper
+	  );
+	}
+
+	// Returns true if the value is a typed array (for a single-column table), or if
+	// it’s an array. In the latter case, the elements of the array must be
+	// consistently typed: either plain objects or primitives or dates.
+	function isDataArray(value) {
+	  return (
+	    (Array.isArray(value) &&
+	      (isQueryResultSetSchema(value.schema) ||
+	        isQueryResultSetColumns(value.columns) ||
+	        arrayContainsObjects(value) ||
+	        arrayContainsPrimitives(value) ||
+	        arrayContainsDates(value))) ||
+	    isTypedArray(value)
+	  );
+	}
+
+	// Given an array, checks that the given value is an array that does not contain
+	// any primitive values (at least for the first few values that we check), and
+	// that the first object contains enumerable keys (see computeSchema for how we
+	// infer the columns). We assume that the contents of the table are homogenous,
+	// but we don’t currently enforce this.
+	// https://observablehq.com/@observablehq/database-client-specification#§1
+	function arrayContainsObjects(value) {
+	  const n = Math.min(nChecks, value.length);
+	  for (let i = 0; i < n; ++i) {
+	    const v = value[i];
+	    if (v === null || typeof v !== "object") return false;
+	  }
+	  return n > 0 && objectHasEnumerableKeys(value[0]);
+	}
+
+	// Using a for-in loop here means that we can abort after finding at least one
+	// enumerable key (whereas Object.keys would require materializing the array of
+	// all keys, which would be considerably slower if the value has many keys!).
+	// This function assumes that value is an object; see arrayContainsObjects.
+	function objectHasEnumerableKeys(value) {
+	  for (const _ in value) return true;
+	  return false;
+	}
+
+	function isQueryResultSetSchema(schemas) {
+	  return (
+	    Array.isArray(schemas) &&
+	    schemas.every(isColumnSchema)
+	  );
+	}
+
+	function isQueryResultSetColumns(columns) {
+	  return (Array.isArray(columns) && columns.every((name) => typeof name === "string"));
+	}
+
+	function isColumnSchema(schema) {
+	  return schema && typeof schema.name === "string" && typeof schema.type === "string";
+	}
+
+	// Returns true if the value represents an array of primitives (i.e., a
+	// single-column table). This should only be passed values for which
+	// isDataArray returns true.
+	function arrayIsPrimitive(value) {
+	  return (
+	    isTypedArray(value) ||
+	    arrayContainsPrimitives(value) ||
+	    arrayContainsDates(value)
+	  );
+	}
+
+	// Given an array, checks that the first n elements are primitives (number,
+	// string, boolean, bigint) of a consistent type.
+	function arrayContainsPrimitives(value) {
+	  const n = Math.min(nChecks, value.length);
+	  if (!(n > 0)) return false;
+	  let type;
+	  let hasPrimitive = false; // ensure we encounter 1+ primitives
+	  for (let i = 0; i < n; ++i) {
+	    const v = value[i];
+	    if (v == null) continue; // ignore null and undefined
+	    const t = typeof v;
+	    if (type === undefined) {
+	      switch (t) {
+	        case "number":
+	        case "boolean":
+	        case "string":
+	        case "bigint":
+	          type = t;
+	          break;
+	        default:
+	          return false;
+	      }
+	    } else if (t !== type) {
+	      return false;
+	    }
+	    hasPrimitive = true;
+	  }
+	  return hasPrimitive;
+	}
+
+	// Given an array, checks that the first n elements are dates.
+	function arrayContainsDates(value) {
+	  const n = Math.min(nChecks, value.length);
+	  if (!(n > 0)) return false;
+	  let hasDate = false; // ensure we encounter 1+ dates
+	  for (let i = 0; i < n; ++i) {
+	    const v = value[i];
+	    if (v == null) continue; // ignore null and undefined
+	    if (!(v instanceof Date)) return false;
+	    hasDate = true;
+	  }
+	  return hasDate;
+	}
+
+	function isTypedArray(value) {
+	  return (
+	    value instanceof Int8Array ||
+	    value instanceof Int16Array ||
+	    value instanceof Int32Array ||
+	    value instanceof Uint8Array ||
+	    value instanceof Uint8ClampedArray ||
+	    value instanceof Uint16Array ||
+	    value instanceof Uint32Array ||
+	    value instanceof Float32Array ||
+	    value instanceof Float64Array
+	  );
+	}
+
+	// __query is used by table cells; __query.sql is used by SQL cells.
+	const __query = Object.assign(
+	  async (source, operations, invalidation, name) => {
+	    source = await loadTableDataSource(await source, name);
+	    if (isDatabaseClient(source)) return evaluateQuery(source, makeQueryTemplate(operations, source), invalidation);
+	    if (isDataArray(source)) return __table(source, operations);
+	    if (!source) throw new Error("missing data source");
+	    throw new Error("invalid data source");
+	  },
+	  {
+	    sql(source, invalidation, name) {
+	      return async function () {
+	        return evaluateQuery(await loadSqlDataSource(await source, name), arguments, invalidation);
+	      };
+	    }
+	  }
+	);
+
+	// We use a weak map to cache loaded data sources by key so that we don’t have
+	// to e.g. create separate SQLiteDatabaseClients every time we’re querying the
+	// same SQLite file attachment. Since this is a weak map, unused references will
+	// be garbage collected when they are no longer desired. Note: the name should
+	// be consistent, as it is not part of the cache key!
+	function sourceCache(loadSource) {
+	  const cache = new WeakMap();
+	  return (source, name) => {
+	    if (!source || typeof source !== "object") throw new Error("invalid data source");
+	    let promise = cache.get(source);
+	    if (!promise || (isDataArray(source) && source.length !== promise._numRows)) {
+	      // Warning: do not await here! We need to populate the cache synchronously.
+	      promise = loadSource(source, name);
+	      promise._numRows = source.length; // This will be undefined for DatabaseClients
+	      cache.set(source, promise);
+	    }
+	    return promise;
+	  };
+	}
+
+	const loadTableDataSource = sourceCache(async (source, name) => {
+	  if (source instanceof FileAttachment) {
+	    switch (source.mimeType) {
+	      case "text/csv": return source.csv();
+	      case "text/tab-separated-values": return source.tsv();
+	      case "application/json": return source.json();
+	      case "application/x-sqlite3": return source.sqlite();
+	    }
+	    if (/\.(arrow|parquet)$/i.test(source.name)) return loadDuckDBClient(source, name);
+	    throw new Error(`unsupported file type: ${source.mimeType}`);
+	  }
+	  if (isArrowTable(source) || isArqueroTable(source)) return loadDuckDBClient(source, name);
+	  if (isDataArray(source) && arrayIsPrimitive(source))
+	    return Array.from(source, (value) => ({value}));
+	  return source;
+	});
+
+	const loadSqlDataSource = sourceCache(async (source, name) => {
+	  if (source instanceof FileAttachment) {
+	    switch (source.mimeType) {
+	      case "text/csv":
+	      case "text/tab-separated-values":
+	      case "application/json": return loadDuckDBClient(source, name);
+	      case "application/x-sqlite3": return source.sqlite();
+	    }
+	    if (/\.(arrow|parquet)$/i.test(source.name)) return loadDuckDBClient(source, name);
+	    throw new Error(`unsupported file type: ${source.mimeType}`);
+	  }
+	  if (isDataArray(source)) return loadDuckDBClient(await asArrowTable(source, name), name);
+	  if (isArrowTable(source) || isArqueroTable(source)) return loadDuckDBClient(source, name);
+	  return source;
+	});
+
+	async function asArrowTable(array, name) {
+	  const arrow = await loadArrow();
+	  return arrayIsPrimitive(array)
+	    ? arrow.tableFromArrays({[name]: array})
+	    : arrow.tableFromJSON(array);
+	}
+
+	function loadDuckDBClient(
+	  source,
+	  name = source instanceof FileAttachment
+	    ? getFileSourceName(source)
+	    : "__table"
+	) {
+	  return DuckDBClient.of({[name]: source});
+	}
+
+	function getFileSourceName(file) {
+	  return file.name
+	    .replace(/@\d+(?=\.|$)/, "") // strip Observable file version number
+	    .replace(/\.\w+$/, ""); // strip file extension
+	}
+
+	async function evaluateQuery(source, args, invalidation) {
+	  if (!source) throw new Error("missing data source");
+
+	  // If this DatabaseClient supports abort and streaming, use that.
+	  if (typeof source.queryTag === "function") {
+	    const abortController = new AbortController();
+	    const options = {signal: abortController.signal};
+	    invalidation.then(() => abortController.abort("invalidated"));
+	    if (typeof source.queryStream === "function") {
+	      return accumulateQuery(
+	        source.queryStream(...source.queryTag.apply(source, args), options)
+	      );
+	    }
+	    if (typeof source.query === "function") {
+	      return source.query(...source.queryTag.apply(source, args), options);
+	    }
+	  }
+
+	  // Otherwise, fallback to the basic sql tagged template literal.
+	  if (typeof source.sql === "function") {
+	    return source.sql.apply(source, args);
+	  }
+
+	  // TODO: test if source is a file attachment, and support CSV etc.
+	  throw new Error("source does not implement query, queryStream, or sql");
+	}
+
+	// Generator function that yields accumulated query results client.queryStream
+	async function* accumulateQuery(queryRequest) {
+	  let then = performance.now();
+	  const queryResponse = await queryRequest;
+	  const values = [];
+	  values.done = false;
+	  values.error = null;
+	  values.schema = queryResponse.schema;
+	  try {
+	    for await (const rows of queryResponse.readRows()) {
+	      if (performance.now() - then > 150 && values.length > 0) {
+	        yield values;
+	        then = performance.now();
+	      }
+	      for (const value of rows) {
+	        values.push(value);
+	      }
+	    }
+	    values.done = true;
+	    yield values;
+	  } catch (error) {
+	    values.error = error;
+	    yield values;
+	  }
+	}
+
+	/**
+	 * Returns a SQL query in the form [[parts], ...params] where parts is an array
+	 * of sub-strings and params are the parameter values to be inserted between each
+	 * sub-string.
+	 */
+	function makeQueryTemplate(operations, source) {
+	  const escaper =
+	    typeof source.escape === "function" ? source.escape : (i) => i;
+	  const {select, from, filter, sort, slice} = operations;
+	  if (!from.table)
+	    throw new Error("missing from table");
+	  if (select.columns && select.columns.length === 0)
+	    throw new Error("at least one column must be selected");
+	  const names = new Map(operations.names?.map(({column, name}) => [column, name]));
+	  const columns = select.columns ? select.columns.map((column) =>  {
+	    const override = names.get(column);
+	    return override ? `${escaper(column)} AS ${escaper(override)}` : escaper(column);
+	  }).join(", ") : "*";
+	  const args = [
+	    [`SELECT ${columns} FROM ${formatTable(from.table, escaper)}`]
+	  ];
+	  for (let i = 0; i < filter.length; ++i) {
+	    appendSql(i ? `\nAND ` : `\nWHERE `, args);
+	    appendWhereEntry(filter[i], args, escaper);
+	  }
+	  for (let i = 0; i < sort.length; ++i) {
+	    appendSql(i ? `, ` : `\nORDER BY `, args);
+	    appendOrderBy(sort[i], args, escaper);
+	  }
+	  if (source.dialect === "mssql" || source.dialect === "oracle") {
+	    if (slice.to !== null || slice.from !== null) {
+	      if (!sort.length) {
+	        if (!select.columns)
+	          throw new Error(
+	              "at least one column must be explicitly specified. Received '*'."
+	          );
+	        appendSql(`\nORDER BY `, args);
+	        appendOrderBy(
+	          {column: select.columns[0], direction: "ASC"},
+	          args,
+	          escaper
+	        );
+	      }
+	      appendSql(`\nOFFSET ${slice.from || 0} ROWS`, args);
+	      appendSql(
+	        `\nFETCH NEXT ${
+          slice.to !== null ? slice.to - (slice.from || 0) : 1e9
+        } ROWS ONLY`,
+	        args
+	      );
+	    }
+	  } else {
+	    if (slice.to !== null || slice.from !== null) {
+	      appendSql(
+	        `\nLIMIT ${slice.to !== null ? slice.to - (slice.from || 0) : 1e9}`,
+	        args
+	      );
+	    }
+	    if (slice.from !== null) {
+	      appendSql(` OFFSET ${slice.from}`, args);
+	    }
+	  }
+	  return args;
+	}
+
+	function formatTable(table, escaper) {
+	  if (typeof table === "object") { // i.e., not a bare string specifier
+	    let from = "";
+	    if (table.database != null) from += escaper(table.database) + ".";
+	    if (table.schema != null) from += escaper(table.schema) + ".";
+	    from += escaper(table.table);
+	    return from;
+	  } else {
+	    return escaper(table);
+	  }
+	}
+
+	function appendSql(sql, args) {
+	  const strings = args[0];
+	  strings[strings.length - 1] += sql;
+	}
+
+	function appendOrderBy({column, direction}, args, escaper) {
+	  appendSql(`${escaper(column)} ${direction.toUpperCase()}`, args);
+	}
+
+	function appendWhereEntry({type, operands}, args, escaper) {
+	  if (operands.length < 1) throw new Error("Invalid operand length");
+
+	  // Unary operations
+	  // We treat `v` and `nv` as `NULL` and `NOT NULL` unary operations in SQL,
+	  // since the database already validates column types.
+	  if (operands.length === 1 || type === "v" || type === "nv") {
+	    appendOperand(operands[0], args, escaper);
+	    switch (type) {
+	      case "n":
+	      case "nv":
+	        appendSql(` IS NULL`, args);
+	        return;
+	      case "nn":
+	      case "v":
+	        appendSql(` IS NOT NULL`, args);
+	        return;
+	      default:
+	        throw new Error("Invalid filter operation");
+	    }
+	  }
+
+	  // Binary operations
+	  if (operands.length === 2) {
+	    if (["in", "nin"].includes(type)) ; else if (["c", "nc"].includes(type)) {
+	      // TODO: Case (in)sensitive?
+	      appendOperand(operands[0], args, escaper);
+	      switch (type) {
+	        case "c":
+	          appendSql(` LIKE `, args);
+	          break;
+	        case "nc":
+	          appendSql(` NOT LIKE `, args);
+	          break;
+	      }
+	      appendOperand(likeOperand(operands[1]), args, escaper);
+	      return;
+	    } else {
+	      appendOperand(operands[0], args, escaper);
+	      switch (type) {
+	        case "eq":
+	          appendSql(` = `, args);
+	          break;
+	        case "ne":
+	          appendSql(` <> `, args);
+	          break;
+	        case "gt":
+	          appendSql(` > `, args);
+	          break;
+	        case "lt":
+	          appendSql(` < `, args);
+	          break;
+	        case "gte":
+	          appendSql(` >= `, args);
+	          break;
+	        case "lte":
+	          appendSql(` <= `, args);
+	          break;
+	        default:
+	          throw new Error("Invalid filter operation");
+	      }
+	      appendOperand(operands[1], args, escaper);
+	      return;
+	    }
+	  }
+
+	  // List operations
+	  appendOperand(operands[0], args, escaper);
+	  switch (type) {
+	    case "in":
+	      appendSql(` IN (`, args);
+	      break;
+	    case "nin":
+	      appendSql(` NOT IN (`, args);
+	      break;
+	    default:
+	      throw new Error("Invalid filter operation");
+	  }
+	  appendListOperands(operands.slice(1), args);
+	  appendSql(")", args);
+	}
+
+	function appendOperand(o, args, escaper) {
+	  if (o.type === "column") {
+	    appendSql(escaper(o.value), args);
+	  } else {
+	    args.push(o.value);
+	    args[0].push("");
+	  }
+	}
+
+	// TODO: Support column operands here?
+	function appendListOperands(ops, args) {
+	  let first = true;
+	  for (const op of ops) {
+	    if (first) first = false;
+	    else appendSql(",", args);
+	    args.push(op.value);
+	    args[0].push("");
+	  }
+	}
+
+	function likeOperand(operand) {
+	  return {...operand, value: `%${operand.value}%`};
+	}
+
+	// Comparator function that moves null values (undefined, null, NaN) to the
+	// end of the array.
+	function defined$1(a, b) {
+	  return (a == null || !(a >= a)) - (b == null || !(b >= b));
+	}
+
+	// Comparator function that sorts values in ascending order, with null values at
+	// the end.
+	function ascendingDefined(a, b) {
+	  return defined$1(a, b) || (a < b ? -1 : a > b ? 1 : 0);
+	}
+
+	// Comparator function that sorts values in descending order, with null values
+	// at the end.
+	function descendingDefined(a, b) {
+	  return defined$1(a, b) || (a > b ? -1 : a < b ? 1 : 0);
+	}
+
+	// Functions for checking type validity
+	const isValidNumber = (value) => typeof value === "number" && !Number.isNaN(value);
+	const isValidInteger = (value) => Number.isInteger(value) && !Number.isNaN(value);
+	const isValidString = (value) => typeof value === "string";
+	const isValidBoolean = (value) => typeof value === "boolean";
+	const isValidBigint = (value) => typeof value === "bigint";
+	const isValidDate = (value) => value instanceof Date && !isNaN(value);
+	const isValidBuffer = (value) => value instanceof ArrayBuffer;
+	const isValidArray = (value) => Array.isArray(value);
+	const isValidObject = (value) => typeof value === "object" && value !== null;
+	const isValidOther = (value) => value != null;
+
+	// Function to get the correct validity checking function based on type
+	function getTypeValidator(colType) {
+	  switch (colType) {
+	    case "string":
+	      return isValidString;
+	    case "bigint":
+	      return isValidBigint;
+	    case "boolean":
+	      return isValidBoolean;
+	    case "number":
+	      return isValidNumber;
+	    case "integer":
+	      return isValidInteger;
+	    case "date":
+	      return isValidDate;
+	    case "buffer":
+	      return isValidBuffer;
+	    case "array":
+	      return isValidArray;
+	    case "object":
+	      return isValidObject;
+	    case "other":
+	    default:
+	      return isValidOther;
+	  }
+	}
+
+	// Accepts dates in the form of ISOString and LocaleDateString, with or without time
+	const DATE_TEST = /^(([-+]\d{2})?\d{4}(-\d{2}(-\d{2}))|(\d{1,2})\/(\d{1,2})\/(\d{2,4}))([T ]\d{2}:\d{2}(:\d{2}(\.\d{3})?)?(Z|[-+]\d{2}:\d{2})?)?$/;
+
+	function coerceToType(value, type) {
+	  switch (type) {
+	    case "string":
+	      return typeof value === "string" || value == null ? value : String(value);
+	    case "boolean":
+	      if (typeof value === "string") {
+	        const trimValue = value.trim().toLowerCase();
+	        return trimValue === "true"
+	          ? true
+	          : trimValue === "false"
+	          ? false
+	          : null;
+	      }
+	      return typeof value === "boolean" || value == null
+	        ? value
+	        : Boolean(value);
+	    case "bigint":
+	      return typeof value === "bigint" || value == null
+	        ? value
+	        : Number.isInteger(typeof value === "string" && !value.trim() ? NaN : +value)
+	        ? BigInt(value) // eslint-disable-line no-undef
+	        : undefined;
+	    case "integer": // not a target type for coercion, but can be inferred
+	    case "number": {
+	      return typeof value === "number"
+	        ? value
+	        : value == null || (typeof value === "string" && !value.trim())
+	        ? NaN
+	        : Number(value);
+	    }
+	    case "date": {
+	      if (value instanceof Date || value == null) return value;
+	      if (typeof value === "number") return new Date(value);
+	      const trimValue = String(value).trim();
+	      if (typeof value === "string" && !trimValue) return null;
+	      return new Date(DATE_TEST.test(trimValue) ? trimValue : NaN);
+	    }
+	    case "array":
+	    case "object":
+	    case "buffer":
+	    case "other":
+	      return value;
+	    default:
+	      throw new Error(`Unable to coerce to type: ${type}`);
+	  }
+	}
+
+	function getSchema(source) {
+	  const {columns} = source;
+	  let {schema} = source;
+	  if (!isQueryResultSetSchema(schema)) {
+	    schema = inferSchema(source, isQueryResultSetColumns(columns) ? columns : undefined);
+	    return {schema, inferred: true};
+	  }
+	  return {schema, inferred: false};
+	}
+
+	// This function infers a schema from the source data, if one doesn't already
+	// exist, and merges type assertions into that schema. If the schema was
+	// inferred or if there are type assertions, it then coerces the rows in the
+	// source data to the types specified in the schema.
+	function applyTypes(source, operations) {
+	  const input = source;
+	  let {schema, inferred} = getSchema(source);
+	  const types = new Map(schema.map(({name, type}) => [name, type]));
+	  if (operations.types) {
+	    for (const {name, type} of operations.types) {
+	      types.set(name, type);
+	      // update schema with user-selected type
+	      if (schema === input.schema) schema = schema.slice(); // copy on write
+	      const colIndex = schema.findIndex((col) => col.name === name);
+	      if (colIndex > -1) schema[colIndex] = {...schema[colIndex], type};
+	    }
+	    source = source.map(d => coerceRow(d, types, schema));
+	  } else if (inferred) {
+	    // Coerce data according to new schema, unless that happened due to
+	    // operations.types, above.
+	    source = source.map(d => coerceRow(d, types, schema));
+	  }
+	  return {source, schema};
+	}
+
+	function applyNames(source, operations) {
+	  if (!operations.names) return source;
+	  const overridesByName = new Map(operations.names.map((n) => [n.column, n]));
+	  return source.map((d) =>
+	    Object.fromEntries(Object.keys(d).map((k) => {
+	      const override = overridesByName.get(k);
+	      return [override?.name ?? k, d[k]];
+	    }))
+	  );
+	}
+
+	// This function applies table cell operations to an in-memory table (array of
+	// objects); it should be equivalent to the corresponding SQL query. TODO Use
+	// DuckDBClient for data arrays, too, and then we wouldn’t need our own __table
+	// function to do table operations on in-memory data?
+	function __table(source, operations) {
+	  const errors = new Map();
+	  const input = source;
+	  const typed = applyTypes(source, operations);
+	  source = typed.source;
+	  let schema = typed.schema;
+	  if (operations.derive) {
+	    // Derived columns may depend on coerced values from the original data source,
+	    // so we must evaluate derivations after the initial inference and coercion
+	    // step.
+	    const derivedSource = [];
+	    operations.derive.map(({name, value}) => {
+	      let columnErrors = [];
+	      // Derived column formulas may reference renamed columns, so we must
+	      // compute derivations on the renamed source. However, we don't modify the
+	      // source itself with renamed names until after the other operations are
+	      // applied, because operations like filter and sort reference original
+	      // column names.
+	      // TODO Allow derived columns to reference other derived columns.
+	      applyNames(source, operations).map((row, index) => {
+	        let resolved;
+	        try {
+	          // TODO Support referencing `index` and `rows` in the derive function.
+	          resolved = value(row);
+	        } catch (error) {
+	          columnErrors.push({index, error});
+	          resolved = undefined;
+	        }
+	        if (derivedSource[index]) {
+	          derivedSource[index] = {...derivedSource[index], [name]: resolved};
+	        } else {
+	          derivedSource.push({[name]: resolved});
+	        }
+	      });
+	      if (columnErrors.length) errors.set(name, columnErrors);
+	    });
+	    // Since derived columns are untyped by default, we do a pass of type
+	    // inference and coercion after computing the derived values.
+	    const typedDerived = applyTypes(derivedSource, operations);
+	    // Merge derived source and schema with the source dataset.
+	    source = source.map((row, i) => ({...row, ...typedDerived.source[i]}));
+	    schema = [...schema, ...typedDerived.schema];
+	  }
+	  for (const {type, operands} of operations.filter) {
+	    const [{value: column}] = operands;
+	    const values = operands.slice(1).map(({value}) => value);
+	    switch (type) {
+	      // valid (matches the column type)
+	      case "v": {
+	        const [colType] = values;
+	        const isValid = getTypeValidator(colType);
+	        source = source.filter(d => isValid(d[column]));
+	        break;
+	      }
+	      // not valid (doesn't match the column type)
+	      case "nv": {
+	        const [colType] = values;
+	        const isValid = getTypeValidator(colType);
+	        source = source.filter(d => !isValid(d[column]));
+	        break;
+	      }
+	      case "eq": {
+	        const [value] = values;
+	        if (value instanceof Date) {
+	          const time = +value; // compare as primitive
+	          source = source.filter((d) => +d[column] === time);
+	        } else {
+	          source = source.filter((d) => d[column] === value);
+	        }
+	        break;
+	      }
+	      case "ne": {
+	        const [value] = values;
+	        source = source.filter((d) => d[column] !== value);
+	        break;
+	      }
+	      case "c": {
+	        const [value] = values;
+	        source = source.filter(
+	          (d) => typeof d[column] === "string" && d[column].includes(value)
+	        );
+	        break;
+	      }
+	      case "nc": {
+	        const [value] = values;
+	        source = source.filter(
+	          (d) => typeof d[column] === "string" && !d[column].includes(value)
+	        );
+	        break;
+	      }
+	      case "in": {
+	        const set = new Set(values); // TODO support dates?
+	        source = source.filter((d) => set.has(d[column]));
+	        break;
+	      }
+	      case "nin": {
+	        const set = new Set(values); // TODO support dates?
+	        source = source.filter((d) => !set.has(d[column]));
+	        break;
+	      }
+	      case "n": {
+	        source = source.filter((d) => d[column] == null);
+	        break;
+	      }
+	      case "nn": {
+	        source = source.filter((d) => d[column] != null);
+	        break;
+	      }
+	      case "lt": {
+	        const [value] = values;
+	        source = source.filter((d) => d[column] < value);
+	        break;
+	      }
+	      case "lte": {
+	        const [value] = values;
+	        source = source.filter((d) => d[column] <= value);
+	        break;
+	      }
+	      case "gt": {
+	        const [value] = values;
+	        source = source.filter((d) => d[column] > value);
+	        break;
+	      }
+	      case "gte": {
+	        const [value] = values;
+	        source = source.filter((d) => d[column] >= value);
+	        break;
+	      }
+	      default:
+	        throw new Error(`unknown filter type: ${type}`);
+	    }
+	  }
+	  for (const {column, direction} of reverse(operations.sort)) {
+	    const compare = direction === "desc" ? descendingDefined : ascendingDefined;
+	    if (source === input) source = source.slice(); // defensive copy
+	    source.sort((a, b) => compare(a[column], b[column]));
+	  }
+	  let {from, to} = operations.slice;
+	  from = from == null ? 0 : Math.max(0, from);
+	  to = to == null ? Infinity : Math.max(0, to);
+	  if (from > 0 || to < Infinity) {
+	    source = source.slice(Math.max(0, from), Math.max(0, to));
+	  }
+	  // Preserve the schema for all columns.
+	  let fullSchema = schema.slice();
+	  if (operations.select.columns) {
+	    if (schema) {
+	      const schemaByName = new Map(schema.map((s) => [s.name, s]));
+	      schema = operations.select.columns.map((c) => schemaByName.get(c));
+	    }
+	    source = source.map((d) =>
+	      Object.fromEntries(operations.select.columns.map((c) => [c, d[c]]))
+	    );
+	  }
+	  if (operations.names) {
+	    const overridesByName = new Map(operations.names.map((n) => [n.column, n]));
+	    if (schema) {
+	      schema = schema.map((s) => {
+	        const override = overridesByName.get(s.name);
+	        return ({...s, ...(override ? {name: override.name} : null)});
+	      });
+	    }
+	    if (fullSchema) {
+	      fullSchema = fullSchema.map((s) => {
+	        const override = overridesByName.get(s.name);
+	        return ({...s, ...(override ? {name: override.name} : null)});
+	      });
+	    }
+	    source = applyNames(source, operations);
+	  }
+	  if (source !== input) {
+	    if (schema) source.schema = schema;
+	  }
+	  source.fullSchema = fullSchema;
+	  source.errors = errors;
+	  return source;
+	}
+
+	function coerceRow(object, types, schema) {
+	  const coerced = {};
+	  for (const col of schema) {
+	    const type = types.get(col.name);
+	    const value = object[col.name];
+	    coerced[col.name] = type === "raw" ? value : coerceToType(value, type);
+	  }
+	  return coerced;
+	}
+
+	function createTypeCount() {
+	  return {
+	    boolean: 0,
+	    integer: 0,
+	    number: 0,
+	    date: 0,
+	    string: 0,
+	    array: 0,
+	    object: 0,
+	    bigint: 0,
+	    buffer: 0,
+	    defined: 0
+	  };
+	}
+
+	// Caution: the order below matters! 🌶️ The first one that passes the ≥90% test
+	// should be the one that we chose, and therefore these types should be listed
+	// from most specific to least specific.
+	const types = [
+	  "boolean",
+	  "integer",
+	  "number",
+	  "date",
+	  "bigint",
+	  "array",
+	  "object",
+	  "buffer"
+	  // Note: "other" and "string" are intentionally omitted; see below!
+	];
+
+	// We need to show *all* keys present in the array of Objects
+	function getAllKeys(rows) {
+	  const keys = new Set();
+	  for (const row of rows) {
+	    // avoid crash if row is null or undefined
+	    if (row) {
+	      // only enumerable properties
+	      for (const key in row) {
+	        // only own properties
+	        if (Object.prototype.hasOwnProperty.call(row, key)) {
+	          // unique properties, in the order they appear
+	          keys.add(key);
+	        }
+	      }
+	    }
+	  }
+	  return Array.from(keys);
+	}
+
+	function inferSchema(source, columns = getAllKeys(source)) {
+	  const schema = [];
+	  const sampleSize = 100;
+	  const sample = source.slice(0, sampleSize);
+	  for (const col of columns) {
+	    const colCount = createTypeCount();
+	    for (const d of sample) {
+	      let value = d[col];
+	      if (value == null) continue;
+	      const type = typeof value;
+	      if (type !== "string") {
+	        ++colCount.defined;
+	        if (Array.isArray(value)) ++colCount.array;
+	        else if (value instanceof Date) ++colCount.date;
+	        else if (value instanceof ArrayBuffer) ++colCount.buffer;
+	        else if (type === "number") {
+	          ++colCount.number;
+	          if (Number.isInteger(value)) ++colCount.integer;
+	        }
+	        // bigint, boolean, or object
+	        else if (type in colCount) ++colCount[type];
+	      } else {
+	        value = value.trim();
+	        if (!value) continue;
+	        ++colCount.defined;
+	        ++colCount.string;
+	        if (/^(true|false)$/i.test(value)) {
+	          ++colCount.boolean;
+	        } else if (value && !isNaN(value)) {
+	          ++colCount.number;
+	          if (Number.isInteger(+value)) ++colCount.integer;
+	        } else if (DATE_TEST.test(value)) ++colCount.date;
+	      }
+	    }
+	    // Chose the non-string, non-other type with the greatest count that is also
+	    // ≥90%; or if no such type meets that criterion, fallback to string if
+	    // ≥90%; and lastly fallback to other.
+	    const minCount = Math.max(1, colCount.defined * 0.9);
+	    const type =
+	      greatest(types, (type) =>
+	        colCount[type] >= minCount ? colCount[type] : NaN
+	      ) ?? (colCount.string >= minCount ? "string" : "other");
+	    schema.push({
+	      name: col,
+	      type: type,
+	      inferred: type
+	    });
+	  }
+	  return schema;
+	}
+
 	class Workbook {
 	  constructor(workbook) {
 	    Object.defineProperties(this, {
 	      _: {value: workbook},
 	      sheetNames: {
 	        value: workbook.worksheets.map((s) => s.name),
-	        enumerable: true,
-	      },
+	        enumerable: true
+	      }
 	    });
 	  }
 	  sheet(name, options) {
@@ -3112,7 +4507,7 @@
 	    specifier.split(":").map(fromCellReference);
 	  return [
 	    [c0, r0],
-	    [c1, r1],
+	    [c1, r1]
 	  ];
 	}
 
@@ -3144,11 +4539,21 @@
 	  return response;
 	}
 
+	function enforceSchema(source, schema) {
+	  const types = new Map(schema.map(({name, type}) => [name, type]));
+	  return Object.assign(source.map(d => coerceRow(d, types, schema)), {schema});
+	}
+
 	async function dsv(file, delimiter, {array = false, typed = false} = {}) {
 	  const text = await file.text();
-	  return (delimiter === "\t"
-	      ? (array ? tsvParseRows : tsvParse)
-	      : (array ? csvParseRows : csvParse))(text, typed && autoType);
+	  const parse = (delimiter === "\t"
+	    ? (array ? tsvParseRows : tsvParse)
+	    : (array ? csvParseRows : csvParse));
+	  if (typed === "auto" && !array) {
+	    const source = parse(text);
+	    return enforceSchema(source, inferSchema(source, source.columns));
+	  }
+	  return parse(text, typed && autoType);
 	}
 
 	class AbstractFile {
@@ -3190,15 +4595,28 @@
 	      i.src = url;
 	    });
 	  }
-	  async arrow() {
-	    const [Arrow, response] = await Promise.all([require(arrow.resolve()), remote_fetch(this)]);
-	    return Arrow.Table.from(response);
+	  async arrow({version = 4} = {}) {
+	    switch (version) {
+	      case 4: {
+	        const [Arrow, response] = await Promise.all([requireDefault(arrow4.resolve()), remote_fetch(this)]);
+	        return Arrow.Table.from(response);
+	      }
+	      case 9: {
+	        const [Arrow, response] = await Promise.all([import(`${cdn}${arrow9.resolve()}`), remote_fetch(this)]);
+	        return Arrow.tableFromIPC(response);
+	      }
+	      case 11: {
+	        const [Arrow, response] = await Promise.all([import(`${cdn}${arrow11.resolve()}`), remote_fetch(this)]);
+	        return Arrow.tableFromIPC(response);
+	      }
+	      default: throw new Error(`unsupported arrow version: ${version}`);
+	    }
 	  }
 	  async sqlite() {
 	    return SQLiteDatabaseClient.open(remote_fetch(this));
 	  }
 	  async zip() {
-	    const [JSZip, buffer] = await Promise.all([require(jszip.resolve()), this.arrayBuffer()]);
+	    const [JSZip, buffer] = await Promise.all([requireDefault(jszip.resolve()), this.arrayBuffer()]);
 	    return new ZipArchive(await JSZip.loadAsync(buffer));
 	  }
 	  async xml(mimeType = "application/xml") {
@@ -3208,7 +4626,7 @@
 	    return this.xml("text/html");
 	  }
 	  async xlsx() {
-	    const [ExcelJS, buffer] = await Promise.all([require(exceljs.resolve()), this.arrayBuffer()]);
+	    const [ExcelJS, buffer] = await Promise.all([requireDefault(exceljs.resolve()), this.arrayBuffer()]);
 	    return new Workbook(await new ExcelJS.Workbook().xlsx.load(buffer));
 	  }
 	}
@@ -3404,18 +4822,19 @@
 	  return "url(" + this.href + ")";
 	};
 
-	var DOM = {
-	  canvas: canvas,
-	  context2d: context2d,
-	  download: download,
-	  element: element,
-	  input: input$1,
-	  range: range$2,
-	  select: select$1,
-	  svg: svg$1,
-	  text: text$1,
-	  uid: uid
-	};
+	var DOM = /*#__PURE__*/Object.freeze({
+		__proto__: null,
+		canvas: canvas,
+		context2d: context2d,
+		download: download,
+		element: element,
+		input: input$1,
+		range: range$2,
+		select: select$1,
+		svg: svg$1,
+		text: text$1,
+		uid: uid
+	});
 
 	function buffer(file) {
 	  return new Promise(function(resolve, reject) {
@@ -3444,11 +4863,12 @@
 	  });
 	}
 
-	var Files = {
-	  buffer: buffer,
-	  text: text,
-	  url: url
-	};
+	var Files = /*#__PURE__*/Object.freeze({
+		__proto__: null,
+		buffer: buffer,
+		text: text,
+		url: url
+	});
 
 	function that() {
 	  return this;
@@ -3607,17 +5027,18 @@
 	  });
 	}
 
-	var Generators = {
-	  disposable: disposable,
-	  filter: filter,
-	  input: input,
-	  map: map$1,
-	  observe: observe,
-	  queue: queue,
-	  range: range$1,
-	  valueAt: valueAt,
-	  worker: worker
-	};
+	var Generators = /*#__PURE__*/Object.freeze({
+		__proto__: null,
+		disposable: disposable,
+		filter: filter,
+		input: input,
+		map: map$1,
+		observe: observe,
+		queue: queue,
+		range: range$1,
+		valueAt: valueAt,
+		worker: worker
+	});
 
 	function template(render, wrapper) {
 	  return function(strings) {
@@ -3685,7 +5106,7 @@
 	  };
 	}
 
-	var html$1 = template(function(string) {
+	const html$1 = template(function(string) {
 	  var template = document.createElement("template");
 	  template.innerHTML = string.trim();
 	  return document.importNode(template.content, true);
@@ -3698,7 +5119,7 @@
 	  if (!L._style) {
 	    const link = document.createElement("link");
 	    link.rel = "stylesheet";
-	    link.href = leaflet$1.resolve("dist/leaflet.css");
+	    link.href = await require.resolve(leaflet$1.resolve("dist/leaflet.css"));
 	    L._style = document.head.appendChild(link);
 	  }
 	  return L;
@@ -3801,11 +5222,12 @@
 	  return when(Math.ceil((Date.now() + 1) / duration) * duration, value);
 	}
 
-	var Promises = {
-	  delay: delay,
-	  tick: tick,
-	  when: when
-	};
+	var Promises = /*#__PURE__*/Object.freeze({
+		__proto__: null,
+		delay: delay,
+		tick: tick,
+		when: when
+	});
 
 	function resolve$1(name, base) {
 	  if (/^(\w+:)|\/\//i.test(name)) return name;
@@ -3814,11 +5236,7 @@
 	  return "https://unpkg.com/" + name;
 	}
 
-	function requirer(resolve) {
-	  return resolve == null ? require : requireFrom(resolve);
-	}
-
-	var svg = template(function(string) {
+	const svg = template(function(string) {
 	  var root = document.createElementNS("http://www.w3.org/2000/svg", "g");
 	  root.innerHTML = string.trim();
 	  return root;
@@ -3842,7 +5260,7 @@
 	function tex(require) {
 	  return Promise.all([
 	    require(katex.resolve()),
-	    style(katex.resolve("dist/katex.min.css"))
+	    require.resolve(katex.resolve("dist/katex.min.css")).then(style)
 	  ]).then(function(values) {
 	    var katex = values[0], tex = renderer();
 
@@ -3879,7 +5297,7 @@
 	  });
 	}
 
-	var Library = Object.assign(function Library(resolver) {
+	const Library = Object.assign(Object.defineProperties(function Library(resolver) {
 	  const require = requirer(resolver);
 	  Object.defineProperties(this, properties({
 	    FileAttachment: () => NoFileAttachments,
@@ -3898,30 +5316,35 @@
 	    // Recommended libraries
 	    // https://observablehq.com/@observablehq/recommended-libraries
 	    _: () => require(lodash.resolve()),
-	    aq: () => require.alias({"apache-arrow": arrow.resolve()})(arquero.resolve()),
-	    Arrow: () => require(arrow.resolve()),
+	    aq: () => require.alias({"apache-arrow": arrow4.resolve()})(arquero.resolve()), // TODO upgrade to apache-arrow@9
+	    Arrow: () => require(arrow4.resolve()), // TODO upgrade to apache-arrow@9
 	    d3: () => require(d3.resolve()),
+	    DuckDBClient: () => DuckDBClient,
 	    Inputs: () => require(inputs.resolve()).then(Inputs => ({...Inputs, file: Inputs.fileOf(AbstractFile)})),
 	    L: () => leaflet(require),
 	    mermaid: () => mermaid(require),
 	    Plot: () => require(plot.resolve()),
+	    __query: () => __query,
 	    require: () => require,
 	    resolve: () => resolve$1, // deprecated; use async require.resolve instead
-	    SQLite: () => sqlite(require),
+	    SQLite: () => SQLite(require),
 	    SQLiteDatabaseClient: () => SQLiteDatabaseClient,
 	    topojson: () => require(topojson.resolve()),
 	    vl: () => vl(require),
 
 	    // Sample datasets
-	    // https://observablehq.com/@observablehq/datasets
+	    // https://observablehq.com/@observablehq/sample-datasets
 	    aapl: () => new FileAttachment("https://static.observableusercontent.com/files/3ccff97fd2d93da734e76829b2b066eafdaac6a1fafdec0faf6ebc443271cfc109d29e80dd217468fcb2aff1e6bffdc73f356cc48feb657f35378e6abbbb63b9").csv({typed: true}),
 	    alphabet: () => new FileAttachment("https://static.observableusercontent.com/files/75d52e6c3130b1cae83cda89305e17b50f33e7420ef205587a135e8562bcfd22e483cf4fa2fb5df6dff66f9c5d19740be1cfaf47406286e2eb6574b49ffc685d").csv({typed: true}),
 	    cars: () => new FileAttachment("https://static.observableusercontent.com/files/048ec3dfd528110c0665dfa363dd28bc516ffb7247231f3ab25005036717f5c4c232a5efc7bb74bc03037155cb72b1abe85a33d86eb9f1a336196030443be4f6").csv({typed: true}),
 	    citywages: () => new FileAttachment("https://static.observableusercontent.com/files/39837ec5121fcc163131dbc2fe8c1a2e0b3423a5d1e96b5ce371e2ac2e20a290d78b71a4fb08b9fa6a0107776e17fb78af313b8ea70f4cc6648fad68ddf06f7a").csv({typed: true}),
 	    diamonds: () => new FileAttachment("https://static.observableusercontent.com/files/87942b1f5d061a21fa4bb8f2162db44e3ef0f7391301f867ab5ba718b225a63091af20675f0bfe7f922db097b217b377135203a7eab34651e21a8d09f4e37252").csv({typed: true}),
+	    flare: () => new FileAttachment("https://static.observableusercontent.com/files/a6b0d94a7f5828fd133765a934f4c9746d2010e2f342d335923991f31b14120de96b5cb4f160d509d8dc627f0107d7f5b5070d2516f01e4c862b5b4867533000").csv({typed: true}),
 	    industries: () => new FileAttachment("https://static.observableusercontent.com/files/76f13741128340cc88798c0a0b7fa5a2df8370f57554000774ab8ee9ae785ffa2903010cad670d4939af3e9c17e5e18e7e05ed2b38b848ac2fc1a0066aa0005f").csv({typed: true}),
+	    miserables: () => new FileAttachment("https://static.observableusercontent.com/files/31d904f6e21d42d4963ece9c8cc4fbd75efcbdc404bf511bc79906f0a1be68b5a01e935f65123670ed04e35ca8cae3c2b943f82bf8db49c5a67c85cbb58db052").json(),
 	    olympians: () => new FileAttachment("https://static.observableusercontent.com/files/31ca24545a0603dce099d10ee89ee5ae72d29fa55e8fc7c9ffb5ded87ac83060d80f1d9e21f4ae8eb04c1e8940b7287d179fe8060d887fb1f055f430e210007c").csv({typed: true}),
 	    penguins: () => new FileAttachment("https://static.observableusercontent.com/files/715db1223e067f00500780077febc6cebbdd90c151d3d78317c802732252052ab0e367039872ab9c77d6ef99e5f55a0724b35ddc898a1c99cb14c31a379af80a").csv({typed: true}),
+	    pizza: () => new FileAttachment("https://static.observableusercontent.com/files/c653108ab176088cacbb338eaf2344c4f5781681702bd6afb55697a3f91b511c6686ff469f3e3a27c75400001a2334dbd39a4499fe46b50a8b3c278b7d2f7fb5").csv({typed: true}),
 	    weather: () => new FileAttachment("https://static.observableusercontent.com/files/693a46b22b33db0f042728700e0c73e836fa13d55446df89120682d55339c6db7cc9e574d3d73f24ecc9bc7eb9ac9a1e7e104a1ee52c00aab1e77eb102913c1f").csv({typed: true}),
 
 	    // Note: these are namespace objects, and thus exposed directly rather than
@@ -3932,7 +5355,22 @@
 	    Generators,
 	    Promises
 	  }));
-	}, {resolve: require.resolve});
+	}, {
+	  resolve: {
+	    get: () => requireDefault.resolve,
+	    enumerable: true,
+	    configurable: true
+	  },
+	  require: {
+	    get: () => requireDefault,
+	    set: setDefaultRequire,
+	    enumerable: true,
+	    configurable: true
+	  }
+	}), {
+	  resolveFrom,
+	  requireFrom
+	});
 
 	function properties(values) {
 	  return Object.fromEntries(Object.entries(values).map(property));
@@ -3942,14 +5380,14 @@
 	  return [key, ({value, writable: true, enumerable: true})];
 	}
 
-	function RuntimeError(message, input) {
-	  this.message = message + "";
-	  this.input = input;
+	class RuntimeError extends Error {
+	  constructor(message, input) {
+	    super(message);
+	    this.input = input;
+	  }
 	}
 
-	RuntimeError.prototype = Object.create(Error.prototype);
 	RuntimeError.prototype.name = "RuntimeError";
-	RuntimeError.prototype.constructor = RuntimeError;
 
 	function generatorish(value) {
 	  return value
@@ -3957,65 +5395,32 @@
 	      && typeof value.return === "function";
 	}
 
-	function load(notebook, library, observer) {
-	  if (typeof library == "function") observer = library, library = null;
-	  if (typeof observer !== "function") throw new Error("invalid observer");
-	  if (library == null) library = new Library();
-
-	  const {modules, id} = notebook;
-	  const map = new Map;
-	  const runtime = new Runtime(library);
-	  const main = runtime_module(id);
-
-	  function runtime_module(id) {
-	    let module = map.get(id);
-	    if (!module) map.set(id, module = runtime.module());
-	    return module;
-	  }
-
-	  for (const m of modules) {
-	    const module = runtime_module(m.id);
-	    let i = 0;
-	    for (const v of m.variables) {
-	      if (v.from) module.import(v.remote, v.name, runtime_module(v.from));
-	      else if (module === main) module.variable(observer(v, i, m.variables)).define(v.name, v.inputs, v.value);
-	      else module.define(v.name, v.inputs, v.value);
-	      ++i;
-	    }
-	  }
-
-	  return runtime;
-	}
-
-	var prototype = Array.prototype;
-	var map = prototype.map;
-	var forEach = prototype.forEach;
-
 	function constant(x) {
-	  return function() {
-	    return x;
-	  };
+	  return () => x;
 	}
 
 	function identity$1(x) {
 	  return x;
 	}
 
-	function rethrow(e) {
-	  return function() {
-	    throw e;
+	function rethrow(error) {
+	  return () => {
+	    throw error;
 	  };
 	}
 
+	const prototype = Array.prototype;
+	const map = prototype.map;
+
 	function noop() {}
 
-	var TYPE_NORMAL = 1; // a normal variable
-	var TYPE_IMPLICIT = 2; // created on reference
-	var TYPE_DUPLICATE = 3; // created on duplicate definition
+	const TYPE_NORMAL = 1; // a normal variable
+	const TYPE_IMPLICIT = 2; // created on reference
+	const TYPE_DUPLICATE = 3; // created on duplicate definition
 
-	var no_observer = {};
+	const no_observer = Symbol("no-observer");
 
-	function Variable(type, module, observer) {
+	function Variable(type, module, observer, options) {
 	  if (!observer) observer = no_observer;
 	  Object.defineProperties(this, {
 	    _observer: {value: observer, writable: true},
@@ -4031,6 +5436,7 @@
 	    _promise: {value: Promise.resolve(undefined), writable: true},
 	    _reachable: {value: observer !== no_observer, writable: true}, // Is this variable transitively visible?
 	    _rejector: {value: variable_rejector(this)},
+	    _shadow: {value: initShadow(module, options)},
 	    _type: {value: type},
 	    _value: {value: undefined, writable: true},
 	    _version: {value: 0, writable: true}
@@ -4041,10 +5447,19 @@
 	  _pending: {value: variable_pending, writable: true, configurable: true},
 	  _fulfilled: {value: variable_fulfilled, writable: true, configurable: true},
 	  _rejected: {value: variable_rejected, writable: true, configurable: true},
+	  _resolve: {value: variable_resolve, writable: true, configurable: true},
 	  define: {value: variable_define, writable: true, configurable: true},
 	  delete: {value: variable_delete, writable: true, configurable: true},
 	  import: {value: variable_import, writable: true, configurable: true}
 	});
+
+	function initShadow(module, options) {
+	  if (!options?.shadow) return null;
+	  return new Map(
+	    Object.entries(options.shadow)
+	      .map(([name, definition]) => [name, (new Variable(TYPE_IMPLICIT, module)).define([], definition)])
+	  );
+	}
 
 	function variable_attach(variable) {
 	  variable._module._runtime._dirty.add(variable);
@@ -4060,17 +5475,22 @@
 	  throw variable_undefined;
 	}
 
+	function variable_stale() {
+	  throw variable_stale;
+	}
+
 	function variable_rejector(variable) {
-	  return function(error) {
-	    if (error === variable_undefined) throw new RuntimeError(variable._name + " is not defined", variable._name);
+	  return (error) => {
+	    if (error === variable_stale) throw error;
+	    if (error === variable_undefined) throw new RuntimeError(`${variable._name} is not defined`, variable._name);
 	    if (error instanceof Error && error.message) throw new RuntimeError(error.message, variable._name);
-	    throw new RuntimeError(variable._name + " could not be resolved", variable._name);
+	    throw new RuntimeError(`${variable._name} could not be resolved`, variable._name);
 	  };
 	}
 
 	function variable_duplicate(name) {
-	  return function() {
-	    throw new RuntimeError(name + " is defined more than once");
+	  return () => {
+	    throw new RuntimeError(`${name} is defined more than once`);
 	  };
 	}
 
@@ -4088,14 +5508,18 @@
 	    }
 	  }
 	  return variable_defineImpl.call(this,
-	    name == null ? null : name + "",
-	    inputs == null ? [] : map.call(inputs, this._module._resolve, this._module),
+	    name == null ? null : String(name),
+	    inputs == null ? [] : map.call(inputs, this._resolve, this),
 	    typeof definition === "function" ? definition : constant(definition)
 	  );
 	}
 
+	function variable_resolve(name) {
+	  return this._shadow?.get(name) ?? this._module._resolve(name);
+	}
+
 	function variable_defineImpl(name, inputs, definition) {
-	  var scope = this._module._scope, runtime = this._module._runtime;
+	  const scope = this._module._scope, runtime = this._module._runtime;
 
 	  this._inputs.forEach(variable_detach, this);
 	  inputs.forEach(variable_attach, this);
@@ -4109,7 +5533,7 @@
 
 	  // Did the variable’s name change? Time to patch references!
 	  if (name !== this._name || scope.get(name) !== this) {
-	    var error, found;
+	    let error, found;
 
 	    if (this._name) { // Did this variable previously have a name?
 	      if (this._outputs.size) { // And did other variables reference this variable?
@@ -4172,6 +5596,11 @@
 	    this._name = name;
 	  }
 
+	  // If this redefined variable was previously evaluated, invalidate it. (If the
+	  // variable was never evaluated, then the invalidated value could never have
+	  // been exposed and we can avoid this extra work.)
+	  if (this._version > 0) ++this._version;
+
 	  runtime._updates.add(this);
 	  runtime._compute();
 	  return this;
@@ -4179,7 +5608,7 @@
 
 	function variable_import(remote, name, module) {
 	  if (arguments.length < 3) module = name, name = remote;
-	  return variable_defineImpl.call(this, name + "", [module._resolve(remote + "")], identity$1);
+	  return variable_defineImpl.call(this, String(name), [module._resolve(String(remote))], identity$1);
 	}
 
 	function variable_delete() {
@@ -4198,11 +5627,16 @@
 	  if (this._observer.rejected) this._observer.rejected(error, this._name);
 	}
 
+	const variable_variable = Symbol("variable");
+	const variable_invalidation = Symbol("invalidation");
+	const variable_visibility = Symbol("visibility");
+
 	function Module(runtime, builtins = []) {
 	  Object.defineProperties(this, {
 	    _runtime: {value: runtime},
 	    _scope: {value: new Map},
 	    _builtins: {value: new Map([
+	      ["@variable", variable_variable],
 	      ["invalidation", variable_invalidation],
 	      ["visibility", variable_visibility],
 	      ...builtins
@@ -4212,7 +5646,6 @@
 	}
 
 	Object.defineProperties(Module.prototype, {
-	  _copy: {value: module_copy, writable: true, configurable: true},
 	  _resolve: {value: module_resolve, writable: true, configurable: true},
 	  redefine: {value: module_redefine, writable: true, configurable: true},
 	  define: {value: module_define, writable: true, configurable: true},
@@ -4224,87 +5657,113 @@
 	});
 
 	function module_redefine(name) {
-	  var v = this._scope.get(name);
-	  if (!v) throw new RuntimeError(name + " is not defined");
-	  if (v._type === TYPE_DUPLICATE) throw new RuntimeError(name + " is defined more than once");
+	  const v = this._scope.get(name);
+	  if (!v) throw new RuntimeError(`${name} is not defined`);
+	  if (v._type === TYPE_DUPLICATE) throw new RuntimeError(`${name} is defined more than once`);
 	  return v.define.apply(v, arguments);
 	}
 
 	function module_define() {
-	  var v = new Variable(TYPE_NORMAL, this);
+	  const v = new Variable(TYPE_NORMAL, this);
 	  return v.define.apply(v, arguments);
 	}
 
 	function module_import() {
-	  var v = new Variable(TYPE_NORMAL, this);
+	  const v = new Variable(TYPE_NORMAL, this);
 	  return v.import.apply(v, arguments);
 	}
 
-	function module_variable(observer) {
-	  return new Variable(TYPE_NORMAL, this, observer);
+	function module_variable(observer, options) {
+	  return new Variable(TYPE_NORMAL, this, observer, options);
 	}
 
 	async function module_value(name) {
-	  var v = this._scope.get(name);
-	  if (!v) throw new RuntimeError(name + " is not defined");
+	  let v = this._scope.get(name);
+	  if (!v) throw new RuntimeError(`${name} is not defined`);
 	  if (v._observer === no_observer) {
-	    v._observer = true;
-	    this._runtime._dirty.add(v);
+	    v = this.variable(true).define([name], identity$1);
+	    try {
+	      return await module_revalue(this._runtime, v);
+	    } finally {
+	      v.delete();
+	    }
+	  } else {
+	    return module_revalue(this._runtime, v);
 	  }
-	  await this._runtime._compute();
-	  return v._promise;
+	}
+
+	// If the variable is redefined before its value resolves, try again.
+	async function module_revalue(runtime, variable) {
+	  await runtime._compute();
+	  try {
+	    return await variable._promise;
+	  } catch (error) {
+	    if (error === variable_stale) return module_revalue(runtime, variable);
+	    throw error;
+	  }
 	}
 
 	function module_derive(injects, injectModule) {
-	  var copy = new Module(this._runtime, this._builtins);
-	  copy._source = this;
-	  forEach.call(injects, function(inject) {
-	    if (typeof inject !== "object") inject = {name: inject + ""};
-	    if (inject.alias == null) inject.alias = inject.name;
-	    copy.import(inject.name, inject.alias, injectModule);
-	  });
-	  Promise.resolve().then(() => {
-	    const modules = new Set([this]);
-	    for (const module of modules) {
-	      for (const variable of module._scope.values()) {
-	        if (variable._definition === identity$1) { // import
-	          const module = variable._inputs[0]._module;
-	          const source = module._source || module;
-	          if (source === this) { // circular import-with!
-	            console.warn("circular module definition; ignoring"); // eslint-disable-line no-console
-	            return;
-	          }
-	          modules.add(source);
-	        }
+	  const map = new Map();
+	  const modules = new Set();
+	  const copies = [];
+
+	  // Given a module, derives an alias of that module with an initially-empty
+	  // definition. The variables will be copied later in a second pass below.
+	  function alias(source) {
+	    let target = map.get(source);
+	    if (target) return target;
+	    target = new Module(source._runtime, source._builtins);
+	    target._source = source;
+	    map.set(source, target);
+	    copies.push([target, source]);
+	    modules.add(source);
+	    return target;
+	  }
+
+	  // Inject the given variables as reverse imports into the derived module.
+	  const derive = alias(this);
+	  for (const inject of injects) {
+	    const {alias, name} = typeof inject === "object" ? inject : {name: inject};
+	    derive.import(name, alias == null ? name : alias, injectModule);
+	  }
+
+	  // Iterate over all the variables (currently) in this module. If any
+	  // represents an import-with (i.e., an import of a module with a _source), the
+	  // transitive import-with must be copied, too, as direct injections may affect
+	  // transitive injections. Note that an import-with can only be created with
+	  // module.derive and hence it’s not possible for an import-with to be added
+	  // later; therefore we only need to apply this check once, now.
+	  for (const module of modules) {
+	    for (const [name, variable] of module._scope) {
+	      if (variable._definition === identity$1) { // import
+	        if (module === this && derive._scope.has(name)) continue; // overridden by injection
+	        const importedModule = variable._inputs[0]._module;
+	        if (importedModule._source) alias(importedModule);
 	      }
 	    }
-	    this._copy(copy, new Map);
-	  });
-	  return copy;
-	}
+	  }
 
-	function module_copy(copy, map) {
-	  copy._source = this;
-	  map.set(this, copy);
-	  for (const [name, source] of this._scope) {
-	    var target = copy._scope.get(name);
-	    if (target && target._type === TYPE_NORMAL) continue; // injection
-	    if (source._definition === identity$1) { // import
-	      var sourceInput = source._inputs[0],
-	          sourceModule = sourceInput._module;
-	      copy.import(sourceInput._name, name, map.get(sourceModule)
-	        || (sourceModule._source
-	           ? sourceModule._copy(new Module(copy._runtime, copy._builtins), map) // import-with
-	           : sourceModule));
-	    } else {
-	      copy.define(name, source._inputs.map(variable_name), source._definition);
+	  // Finally, with the modules resolved, copy the variable definitions.
+	  for (const [target, source] of copies) {
+	    for (const [name, sourceVariable] of source._scope) {
+	      const targetVariable = target._scope.get(name);
+	      if (targetVariable && targetVariable._type !== TYPE_IMPLICIT) continue; // preserve injection
+	      if (sourceVariable._definition === identity$1) { // import
+	        const sourceInput = sourceVariable._inputs[0];
+	        const sourceModule = sourceInput._module;
+	        target.import(sourceInput._name, name, map.get(sourceModule) || sourceModule);
+	      } else { // non-import
+	        target.define(name, sourceVariable._inputs.map(variable_name), sourceVariable._definition);
+	      }
 	    }
 	  }
-	  return copy;
+
+	  return derive;
 	}
 
 	function module_resolve(name) {
-	  var variable = this._scope.get(name), value;
+	  let variable = this._scope.get(name), value;
 	  if (!variable) {
 	    variable = new Variable(TYPE_IMPLICIT, this);
 	    if (this._builtins.has(name)) {
@@ -4339,11 +5798,8 @@
 	  : typeof setImmediate === "function" ? setImmediate
 	  : f => setTimeout(f, 0);
 
-	var variable_invalidation = {};
-	var variable_visibility = {};
-
 	function Runtime(builtins = new Library, global = window_global) {
-	  var builtin = this.module();
+	  const builtin = this.module();
 	  Object.defineProperties(this, {
 	    _dirty: {value: new Set},
 	    _updates: {value: new Set},
@@ -4356,14 +5812,10 @@
 	    _builtin: {value: builtin},
 	    _global: {value: global}
 	  });
-	  if (builtins) for (var name in builtins) {
+	  if (builtins) for (const name in builtins) {
 	    (new Variable(TYPE_IMPLICIT, builtin)).define(name, [], builtins[name]);
 	  }
 	}
-
-	Object.defineProperties(Runtime, {
-	  load: {value: load, writable: true, configurable: true}
-	});
 
 	Object.defineProperties(Runtime.prototype, {
 	  _precompute: {value: runtime_precompute, writable: true, configurable: true},
@@ -4419,7 +5871,7 @@
 	}
 
 	async function runtime_computeNow() {
-	  var queue = [],
+	  let queue = [],
 	      variables,
 	      variable,
 	      precomputes = this._precomputes;
@@ -4572,10 +6024,10 @@
 
 	  // Compute the initial value of the variable.
 	  function define(inputs) {
-	    if (variable._version !== version) return;
+	    if (variable._version !== version) throw variable_stale;
 
 	    // Replace any reference to invalidation with the promise, lazily.
-	    for (var i = 0, n = inputs.length; i < n; ++i) {
+	    for (let i = 0, n = inputs.length; i < n; ++i) {
 	      switch (inputs[i]) {
 	        case variable_invalidation: {
 	          inputs[i] = invalidation = variable_invalidator(variable);
@@ -4584,6 +6036,10 @@
 	        case variable_visibility: {
 	          if (!invalidation) invalidation = variable_invalidator(variable);
 	          inputs[i] = variable_intersector(invalidation, variable);
+	          break;
+	        }
+	        case variable_variable: {
+	          inputs[i] = variable;
 	          break;
 	        }
 	      }
@@ -4597,8 +6053,8 @@
 	  // already have been invalidated here, in which case we need to terminate the
 	  // generator immediately!
 	  function generate(value) {
+	    if (variable._version !== version) throw variable_stale;
 	    if (generatorish(value)) {
-	      if (variable._version !== version) return void value.return();
 	      (invalidation || variable_invalidator(variable)).then(variable_return(value));
 	      return variable_generate(variable, version, value);
 	    }
@@ -4606,11 +6062,10 @@
 	  }
 
 	  promise.then((value) => {
-	    if (variable._version !== version) return;
 	    variable._value = value;
 	    variable._fulfilled(value);
 	  }, (error) => {
-	    if (variable._version !== version) return;
+	    if (error === variable_stale) return;
 	    variable._value = undefined;
 	    variable._rejected(error);
 	  });
@@ -4635,14 +6090,14 @@
 	  // successful, reject the variable, compute downstream variables, and return.
 	  function recompute() {
 	    const promise = compute((value) => {
-	      if (variable._version !== version) return;
+	      if (variable._version !== version) throw variable_stale;
 	      currentValue = value;
 	      postcompute(value, promise).then(() => runtime._precompute(recompute));
 	      variable._fulfilled(value);
 	      return value;
 	    });
 	    promise.catch((error) => {
-	      if (variable._version !== version) return;
+	      if (error === variable_stale || variable._version !== version) return;
 	      postcompute(undefined, promise);
 	      variable._rejected(error);
 	    });
@@ -4660,7 +6115,7 @@
 	  // When retrieving the first value from the generator, the promise graph is
 	  // already established, so we only need to queue the next pull.
 	  return compute((value) => {
-	    if (variable._version !== version) return;
+	    if (variable._version !== version) throw variable_stale;
 	    currentValue = value;
 	    runtime._precompute(recompute);
 	    return value;
@@ -4686,7 +6141,7 @@
 
 	function variable_reachable(variable) {
 	  if (variable._observer !== no_observer) return true; // Directly reachable.
-	  var outputs = new Set(variable._outputs);
+	  const outputs = new Set(variable._outputs);
 	  for (const output of outputs) {
 	    if (output._observer !== no_observer) return true;
 	    output._outputs.forEach(outputs.add, outputs);
@@ -4695,7 +6150,7 @@
 	}
 
 	function window_global(name) {
-	  return window[name];
+	  return globalThis[name];
 	}
 
 	function renderHtml(string) {
@@ -5456,10 +6911,6 @@
 	  return format(date, "Invalid Date");
 	}
 
-	function formatObject(obj) {
-		return JSON.stringify(obj);
-	}
-
 	// Memoize the last-returned locale.
 	function localize(f) {
 	  let key = localize, value;
@@ -6157,7 +7608,6 @@
 	    switch (type(data, column)) {
 	      case "number": format[column] = formatLocaleNumber(locale); break;
 	      case "date": format[column] = formatDate; break;
-		  case "object": format[column] = formatObject; break;
 	      default: format[column] = formatLocaleAuto(locale); break;
 	    }
 	  }
@@ -6183,7 +7633,6 @@
 	    if (value == null) continue;
 	    if (typeof value === "number") return "number";
 	    if (value instanceof Date) return "date";
-		if (typeof value == "object") return "object";
 	    return;
 	  }
 	}
@@ -6202,6 +7651,18 @@
 	    }
 	  }
 	  return Array.from(columns);
+	}
+
+	function formatRowToAppearInTable(row) {
+	    let formattedRow = {};
+	    for (const key in row) {
+	        if (typeof row[key] === "object") {
+	            formattedRow[key] = JSON.stringify(row[key]);
+	        } else {
+	            formattedRow[key] = row[key];
+	        }
+	    }
+	    return formattedRow;
 	}
 
 	function _1$1(md){return(
@@ -6413,12 +7874,10 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	  } else if (!show_edge_comparison_type.includes("show_waterfall")) {
 	    return html``;
 	  } else {
-	    debugger;
 	    let waterfall_data = splink_vis_utils.get_waterfall_chart_data(
 	      selected_edge,
 	      ss
 	    );
-	    debugger;
 
 	    return vegaEmbed(
 	      splink_vis_utils.get_waterfall_chart_spec(waterfall_data, {})
@@ -6427,17 +7886,20 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	}
 
 
-	function _edges_full_table(show_full_tables,html,splink_vis_utils,filtered_edges)
+	function _edges_full_table(show_full_tables,filtered_edges,splink_vis_utils,html)
 	{
 	  if (show_full_tables.includes("edges")) {
 	    // const filtered_edges = filtered_edges.filter(
 	    //   d => d[svu_options.cluster_colname + "_l"] == selected_cluster_id
 	    // );
+	    let filtered_edges2 = filtered_edges.map(
+	      splink_vis_utils.formatRowToAppearInTable
+	    );
 	    return html`
     <h3>Edges corresponding to selected cluster, filtered by threshold</h3>
     Click column headers to sort
     
-    ${splink_vis_utils.table(filtered_edges, { layout: "auto" })}
+    ${splink_vis_utils.table(filtered_edges2, { layout: "auto" })}
 
   `;
 	  } else {
@@ -6550,7 +8012,7 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	md`## Data processing`
 	)}
 
-	function _cluster_unique_ids(splink_vis_utils,raw_nodes_data,svu_options)
+	function _cluster_unique_ids(splink_vis_utils,raw_nodes_data,svu_options,named_clusters)
 	{
 	  let cluster_ids = splink_vis_utils.get_unique_cluster_ids_from_nodes_data(
 	    raw_nodes_data,
@@ -6663,10 +8125,6 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	md`## Following are global variables embedded in final html so not needed in final version`
 	)}
 
-	function _named_clusters(){return(
-	null
-	)}
-
 	function define$1(runtime, observer) {
 	  const main = runtime.module();
 	  main.variable(observer()).define(["md"], _1$1);
@@ -6697,7 +8155,7 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	  main.variable(observer("cluster_table")).define("cluster_table", ["selected_cluster_metrics","html","show_full_tables","splink_vis_utils"], _cluster_table);
 	  main.variable(observer("comparison_columns_table")).define("comparison_columns_table", ["no_edge_selected","html","show_edge_comparison_type","splink_vis_utils","selected_edge","ss"], _comparison_columns_table$1);
 	  main.variable(observer("waterfall_chart")).define("waterfall_chart", ["no_edge_selected","html","show_edge_comparison_type","splink_vis_utils","selected_edge","ss","vegaEmbed"], _waterfall_chart$1);
-	  main.variable(observer("edges_full_table")).define("edges_full_table", ["show_full_tables","html","splink_vis_utils","filtered_edges"], _edges_full_table);
+	  main.variable(observer("edges_full_table")).define("edges_full_table", ["show_full_tables","filtered_edges","splink_vis_utils","html"], _edges_full_table);
 	  main.variable(observer("nodes_full_table")).define("nodes_full_table", ["show_full_tables","raw_nodes_data","svu_options","selected_cluster_id","html","splink_vis_utils"], _nodes_full_table);
 	  main.variable(observer("clusters_full_table")).define("clusters_full_table", ["show_full_tables","html","splink_vis_utils","raw_clusters_data"], _clusters_full_table);
 	  main.variable(observer()).define(["md"], _22$1);
@@ -6706,7 +8164,7 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	  main.variable(observer("no_edge_selected")).define("no_edge_selected", ["selected_edge"], _no_edge_selected$1);
 	  main.variable(observer("no_node_selected")).define("no_node_selected", ["selected_node"], _no_node_selected);
 	  main.variable(observer()).define(["md"], _27);
-	  main.variable(observer("cluster_unique_ids")).define("cluster_unique_ids", ["splink_vis_utils","raw_nodes_data","svu_options"], _cluster_unique_ids);
+	  main.variable(observer("cluster_unique_ids")).define("cluster_unique_ids", ["splink_vis_utils","raw_nodes_data","svu_options","named_clusters"], _cluster_unique_ids);
 	  main.variable(observer("selected_edge")).define("selected_edge", ["observe_chart_data","force_directed_chart"], _selected_edge$1);
 	  main.variable(observer("observe_chart_data")).define("observe_chart_data", ["Generators"], _observe_chart_data$1);
 	  main.variable(observer("selected_node")).define("selected_node", ["observe_chart_data","force_directed_chart"], _selected_node);
@@ -6718,12 +8176,11 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	  main.variable(observer("node_history")).define("node_history", ["mutable node_history"], _ => _.generator);
 	  main.variable(observer("control_node_history")).define("control_node_history", ["selected_node","force_directed_chart","mutable node_history"], _control_node_history);
 	  main.variable(observer()).define(["md"], _37);
-	  main.variable(observer("named_clusters")).define("named_clusters", _named_clusters);
 	  return main;
 	}
 
 	function _1(md){return(
-	md`# splink_comparison_viewer`
+	md`# splink_comparison_viewer splink3 version`
 	)}
 
 	function _show_edge_comparison_type(splink_vis_utils){return(
@@ -6768,7 +8225,9 @@ ${splink_vis_utils.node_rows_to_table(node_history, ss)}
 	)}
 
 	function _comparison_vector_distribution_chart(vegaEmbed,chart_spec_with_data){return(
-	vegaEmbed(chart_spec_with_data)
+	vegaEmbed(
+	  chart_spec_with_data
+	)
 	)}
 
 	function _nothing_selected_message(no_edge_selected,html)
@@ -6860,26 +8319,26 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 
 	function _get_gammas_filters(html,splink_vis_utils){return(
 	function get_gammas_filters(splink_settings_object) {
+	  // splink settings Comparisons
 	  let ss_cols = splink_settings_object.comparisons;
 
-	  function get_id_from_comparison(cc){
-		return `id_${cc.sanitised_name}`;
+	  function get_id_from_comparison(cc) {
+	    return `id_${cc.sanitised_name}`;
 	  }
 
 	  const form = html`<form>
     ${ss_cols.map((cc) => {
-	  let select_values = cc.comparison_levels.map((cl) => {
-		return [cl.label_for_charts, cl.comparison_vector_value];
-	  });
-	  select_values.unshift(["Any", "Any"]);
-	  select_values = new Map(select_values);
+      let select_values = cc.comparison_levels.map((cl) => {
+        return [cl.label_for_charts, cl.comparison_vector_value];
+      });
+      select_values.unshift(["Any", "Any"]);
+      select_values = new Map(select_values);
 
-      return html`<div id='${get_id_from_comparison(cc)}'>${splink_vis_utils.select(
-        select_values,
-        {
-          label: `Filter '${cc.name}'`
-        }
-      )}</div>`;
+      return html`<div id='${get_id_from_comparison(
+        cc
+      )}'>${splink_vis_utils.select(select_values, {
+        label: `Filter '${cc.name}'`
+      })}</div>`;
     })}
 
 </form>`;
@@ -6887,7 +8346,9 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  form.oninput = function () {
 	    let mydict = {};
 	    ss_cols.forEach((cc) => {
-	      mydict[cc.sanitised_name] = form.querySelector(`#${get_id_from_comparison(cc)} form`).value;
+	      mydict[cc.sanitised_name] = form.querySelector(
+	        `#${get_id_from_comparison(cc)} form`
+	      ).value;
 	    });
 	    form.value = mydict;
 	  };
@@ -6964,8 +8425,9 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  );
 
 	  if (cvd_filtered.length == 0) {
-		cvd_filtered = [{}];
+	    cvd_filtered = [{}];
 	  }
+
 	  return cvd_filtered;
 	}
 
@@ -6995,12 +8457,10 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 
 	function _observe_chart_data(Generators){return(
 	function observe_chart_data(chart, signal_name) {
-	  return Generators.observe(function(notify) {
+	  return Generators.observe(function (notify) {
 	    const signaled = (name, value) => notify(chart.signal(signal_name));
 	    chart.addSignalListener(signal_name, signaled);
 	    notify(chart.signal(signal_name));
-
-	    return () => chart.removeSignalListener(signal_name, signaled);
 	  });
 	}
 	)}
@@ -7024,6 +8484,10 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 
 	function _28(md){return(
 	md`## Data`
+	)}
+
+	function _localUrl(){return(
+	"http://127.0.0.1:8080/dist/splink_vis_utils.js"
 	)}
 
 	function define(runtime, observer) {
@@ -7063,6 +8527,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  main.variable(observer()).define(["md"], _26);
 	  main.variable(observer("chart_spec_with_data")).define("chart_spec_with_data", ["splink_vis_utils","filtered_comparison_vector_data","ss","new_width","sort_bars_option"], _chart_spec_with_data);
 	  main.variable(observer()).define(["md"], _28);
+	  main.variable(observer("localUrl")).define("localUrl", _localUrl);
 	  return main;
 	}
 
@@ -7092,15 +8557,16 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 
 	  let this_cc = splink_settings.get_col_by_name(col_name);
 	  let this_cl = this_cc.get_comparison_level(gamma_value);
+
 	  const columns_used = this_cc.columns_used;
 
-	  function get_data_value(dataset_suffix){
-		// dataset_suffix is 'l' or 'r'
-		// for each column used, get the row value,
-		// and join together in comma-separated fashion
-		return columns_used.map(
-			(col_name) => row[`${col_name}_${dataset_suffix}`]
-		).join(", ");
+	  function get_data_value(dataset_suffix) {
+	    // dataset_suffix is 'l' or 'r'
+	    // for each column used, get the row value,
+	    // and join together in comma-separated fashion
+	    return columns_used.map(
+	      (col_name) => row[`${col_name}_${dataset_suffix}`]
+	    ).join(", ");
 	  }
 
 	  let value_l = get_data_value("l");
@@ -7868,22 +9334,22 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    return this.original_dict["column_name"];
 	  }
 
-	  get sanitised_name() {
-		// replace spaces in names in same fashion as Splink does behind the scenes
-		return this.name.replaceAll(' ', '_')
-	  };
-
 	  get num_levels() {
 	    return this.comparison_levels.length;
+	  }
+
+	  get comparison_levels() {
+	    return this.original_dict["comparison_levels"];
 	  }
 
 	  get columns_used() {
 	    return this.original_dict["input_columns_used_by_case_statement"];
 	  }
 
-	  get comparison_levels() {
-		return this.original_dict["comparison_levels"];
-	  }
+	  get sanitised_name() {
+	    // replace spaces in names in same fashion as Splink does behind the scenes
+	    return this.name.replaceAll(' ', '_')
+	  };
 
 	  // get column_case_expression_lookup() {
 	  //   let lookup = {};
@@ -8156,7 +9622,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 		}
 	};
 	var title = {
-		text: "Bayes factor intuition chart",
+		text: "Match weights waterfall chart",
 		subtitle: "How each comparison column contributes to the final match score"
 	};
 	var transform = [
@@ -8336,7 +9802,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 							axis: {
 								grid: false,
 								orient: "left",
-								title: "log2(Bayes factor)"
+								title: "Match weight"
 							},
 							field: "previous_sum"
 						},
@@ -8626,6 +10092,10 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    row_1_ordered[col] = row_1[col];
 	    row_2_ordered[col] = row_2[col];
 	  });
+
+	  row_1_ordered = formatRowToAppearInTable(row_1_ordered);
+	  row_2_ordered = formatRowToAppearInTable(row_2_ordered);
+
 	  let table_data = [row_1_ordered, row_2_ordered];
 
 	  return table(table_data, { layout: "auto" });
@@ -8798,6 +10268,8 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    return d2;
 	  });
 
+	  new_data = new_data.map(formatRowToAppearInTable);
+
 	  return table(new_data, { layout: "auto" });
 	}
 
@@ -8816,10 +10288,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 		{
 			encoding: {
 				color: {
-					field: "match_probability",
-					legend: {
-						title: "Match probability"
-					},
+					field: "avg_match_probability",
 					scale: {
 						domain: [
 							0,
@@ -8830,9 +10299,13 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 							"red",
 							"orange",
 							"green"
-						],
+						]
 					},
-					type: "quantitative"
+					type: "quantitative",
+					legend: {
+						title: "Match probability",
+						offset: -70
+					}
 				},
 				tooltip: [
 					{
@@ -8844,14 +10317,16 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						type: "quantitative"
 					},
 					{
-						field: "match_probability",
+						field: "avg_match_probability",
 						type: "quantitative",
-						format: ",.1%"
+						format: ",.1%",
+						title: "Match probability"
 					},
 					{
 						field: "match_weight",
 						type: "quantitative",
-						format: ",.2f"
+						format: ",.2f",
+						title: "Match weight"
 					},
 					{
 						field: "sum_matches",
@@ -8862,17 +10337,12 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						field: "proportion_of_comparisons",
 						type: "quantitative",
 						format: ",.1%"
-					},
-					{
-						field: "cumulative_comparisons",
-						type: "quantitative",
-						format: ",.1%"
 					}
 				],
 				x: {
 					field: "gam_concat",
 					sort: {
-						field: "match_weight",
+						field: "sort_avg_match_weight",
 						op: "sum",
 						order: "ascending"
 					},
@@ -8880,12 +10350,12 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 					type: "nominal",
 					axis: {
 						labels: false,
-						ticks: 0,
+						ticks: false,
 						grid: false
 					}
 				},
 				y: {
-					field: "count_rows_in_comparison_vector_group",
+					field: "count",
 					scale: {
 						constant: 40,
 						type: "symlog"
@@ -8910,19 +10380,17 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 					}
 				}
 			],
-			selection: {
-				gam_concat_signal: {
-					type: "single",
-					encodings: [
-						"x"
-					]
+			params: [
+				{
+					name: "gam_concat_signal",
+					select: {
+						type: "point",
+						encodings: [
+							"x"
+						]
+					}
 				}
-			},
-			resolve: {
-				scale: {
-					color: "shared"
-				}
-			}
+			]
 		},
 		{
 			layer: [
@@ -8971,27 +10439,30 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						},
 						color: {
 							field: "match_weight",
-							legend: {
-								title: "Match weight"
-							},
 							type: "quantitative",
 							scale: {
 								domain: [
-									-5,
+									-10,
 									0,
-									5
+									10
 								],
 								range: [
 									"red",
 									"#bbbbbb",
-									"green",
-								],
-								interpolate: "lab"  
+									"green"
+								]
+							},
+							legend: {
+								title: "Match weight"
 							}
 						},
 						tooltip: [
 							{
 								field: "gam_name",
+								type: "nominal"
+							},
+							{
+								field: "label_for_charts",
 								type: "nominal"
 							},
 							{
@@ -9001,6 +10472,10 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 							{
 								field: "match_weight",
 								type: "quantitative"
+							},
+							{
+								field: "sql_condition",
+								type: "nominal"
 							}
 						]
 					}
@@ -9066,10 +10541,8 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 		{
 			encoding: {
 				color: {
-					field: "match_probability",
-					legend: {
-						title: ""
-					},
+					field: "avg_match_probability",
+					legend: null,
 					scale: {
 						domain: [
 							0,
@@ -9087,7 +10560,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 				x: {
 					field: "gam_concat",
 					sort: {
-						field: "match_weight",
+						field: "sort_avg_match_weight",
 						op: "sum",
 						order: "ascending"
 					},
@@ -9100,17 +10573,17 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 					}
 				},
 				y: {
-					field: "count_rows_in_comparison_vector_group",
+					field: "count",
 					scale: {
 						constant: 1,
 						type: "symlog"
 					},
-					title: "count",
 					type: "quantitative",
 					axis: {
 						tickCount: 0,
 						grid: false
-					}
+					},
+					title: null
 				}
 			},
 			mark: {
@@ -9132,19 +10605,14 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 						]
 					}
 				}
-			],
-			resolve: {
-				scale: {
-					color: "shared"
-				}
-			}
+			]
 		}
 	];
 	var base_spec = {
 		$schema: $schema,
 		config: config,
 		data: data,
-		vconcat: vconcat,
+		vconcat: vconcat
 	};
 
 	function sort_match_weight(a, b) {
@@ -9164,13 +10632,17 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	  let base_spec_2 = cloneDeep(base_spec);
 	  let sort_field;
 	  data.forEach((d) => {
-		d.sum_matches = d.match_probability * d.count;
+	    d.sum_matches = d.match_probability * d.count;
+
+	    const bf = Math.pow(2, d.sort_avg_match_weight);
+	    d.avg_match_probability = bf / (1 + bf);
 	  });
 	  if (sort_bars == "sort_match_weight") {
 	    data.sort(sort_match_weight);
-	    sort_field = "match_weight";
+	    sort_field = "sort_avg_match_weight";
 	  }
 	  if (sort_bars == "sort_sum_matches") {
+
 	    data.sort(sort_sum_matches);
 	    sort_field = "sum_matches";
 	  }
@@ -9207,22 +10679,24 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	    counter += 1;
 	    let gam_key_counter = 0;
 	    gamma_keys.forEach((k) => {
-		  let data_col_name = k.replace("gamma_", "");
+	      let data_col_name = k.replace("gamma_", "");
 	      let settings_col = ss_object.get_col_by_name(data_col_name);
-	      let num_levels = settings_col.num_levels;
+	      settings_col.num_levels;
 
 	      let row = {};
 	      row["gam_name"] = k;
 	      row["gam_value"] = d[k];
-	      row["gam_value_norm"] = d[k] == -1 ? null : d[k] / (num_levels - 1);
 
 	      row["gam_concat"] = d["gam_concat"];
 	      row["gam_concat_id"] = counter;
 	      row["gam_key_count"] = gam_key_counter;
+	      row["bayes_factor"] = d[`bf_${data_col_name}`];
+	      const log2 = Math.log2;
+	      row["match_weight"] = log2(d[`bf_${data_col_name}`]);
+	      row["sort_avg_match_weight"] = d["sort_avg_match_weight"];
 
-		  // TODO: variable prefix?
-		  row["bayes_factor"] = d[`bf_${data_col_name}`];
-		  row["match_weight"] = log2(d[`bf_${data_col_name}`]);
+	      row["label_for_charts"] = settings_col.comparison_level_lookup[row["gam_value"]]["label_for_charts"];
+	      row["sql_condition"] = settings_col.comparison_level_lookup[row["gam_value"]]["sql_condition"];
 	      result_data.push(row);
 	      gam_key_counter += 1;
 	    });
@@ -9247,6 +10721,7 @@ ${splink_vis_utils.comparison_column_table(selected_edge, ss)}`;
 	exports.edge_row_to_table = edge_row_to_table;
 	exports.filter_edges_with_cluster_id = filter_edges_with_cluster_id;
 	exports.filter_nodes_with_cluster_id = filter_nodes_with_cluster_id;
+	exports.formatRowToAppearInTable = formatRowToAppearInTable;
 	exports.format_edges_data_for_force_directed = format_edges_data_for_force_directed;
 	exports.format_nodes_data_for_force_directed = format_nodes_data_for_force_directed;
 	exports.get_gamma_distribution_chart = get_gamma_distribution_chart;

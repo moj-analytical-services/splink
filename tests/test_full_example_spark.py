@@ -17,7 +17,8 @@ from .linker_utils import (
 )
 
 
-def test_full_example_spark(df_spark, tmp_path):
+def test_full_example_spark(spark, df_spark, tmp_path):
+    spark.sql("CREATE DATABASE IF NOT EXISTS `1111`")
     # Annoyingly, this needs an independent linker as csv doesn't
     # accept arrays as inputs, which we are adding to df_spark below
     linker = SparkLinker(df_spark, get_settings_dict())
@@ -66,6 +67,7 @@ def test_full_example_spark(df_spark, tmp_path):
         settings,
         break_lineage_method="checkpoint",
         num_partitions_on_repartition=2,
+        database="1111",
     )
 
     linker.profile_columns(
