@@ -76,7 +76,6 @@ def evaluate_comparison(
     """
 
     if not isinstance(comparison_dict, (Comparison, dict)):
-
         if isinstance(comparison_dict, ComparisonLevel):
             log = _invalid_comparison_level_used_log_str(comp_str)
         else:
@@ -84,7 +83,6 @@ def evaluate_comparison(
 
         return TypeError(log)
     else:
-
         if isinstance(comparison_dict, Comparison):
             comparison_dict = comparison_dict.as_dict()
 
@@ -205,7 +203,7 @@ def validate_comparison_levels(
     return error_logger
 
 
-def validate_input_dataframe_size(linker, settings_dict: dict) -> Exception:
+def validate_input_comparison_dataframe_size(linker, settings_dict: dict) -> Exception:
     # Check if the input dataframe/comparisons are invalid -
     # https://github.com/moj-analytical-services/splink/issues/1362
 

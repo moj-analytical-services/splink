@@ -1,4 +1,5 @@
 import logging
+import sys
 
 import pytest
 
@@ -22,6 +23,17 @@ from tests.helpers import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def pytest_configure(config):
+    # Hacky way of only preventing the running
+    # of specific code in the Splink code base.
+    # Search for `hasattr(sys, "_called_from_test")`
+    sys._called_from_test = True
+
+
+def pytest_unconfigure(config):
+    del sys._called_from_test
 
 
 def pytest_collection_modifyitems(items, config):

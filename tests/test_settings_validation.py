@@ -513,20 +513,48 @@ def test_validate_sql_dialect():
     )
 
 
-def test_comparison_validation():
+# Test currently disabled throughout the test suite.
+
+# def test_splink_exception_message():
+#     # Testing for errors based on a single comparison settings dictionaries
+#     # is currently disabled. For now, only check if it errors if the user
+#     # inputs a dataframe with a single linkage column.
+
+#    import re
+#    import sys
+#    from splink.duckdb.comparison_library import exact_match
+#    from splink.exceptions import SplinkException
+
+#     data = {"a": [1], "unique_id": [2]}
+#     expected_error = "Splink is not designed for linking based"
+
+#     # Settings object with a single comparison
+#     settings = {
+#         "link_type": "link_only",
+#         "comparisons": [exact_match("first_name")],
+#     }
+
+#     with pytest.raises(SplinkException, match=expected_error):
+#         DuckDBLinker(pd.DataFrame(data), settings)
+
+
+def test_invalid_input_dataframe_validation():
     import splink.athena.comparison_level_library as ath_cll
     import splink.duckdb.comparison_level_library as cll
     import splink.spark.comparison_level_library as sp_cll
     from splink.exceptions import InvalidDialect
     from splink.spark.comparison_library import exact_match
 
-    # Check blank settings aren't flagged
-    # Trimmed settings (settings w/ only the link type, for example)
-    # are tested elsewhere.
-    DuckDBLinker(
-        pd.DataFrame({"a": [1, 2, 3]}),
-    )
+    # Check blank settings aren't flagged.
+    # Blank settings objects can currently be used for profiling data,
+    # so adding in errors at this stage would preclude users from using this
+    # functionality.
+    DuckDBLinker(pd.DataFrame({"a": [1, 2, 3]}))
 
+    settings = {"link_type": "link_only"}
+    log_comparison_errors(settings)  # confirm it work with no comparisons
+
+    # Build a more complicated settings dictionary with multiple errors
     settings = get_settings_dict()
 
     # Contents aren't tested as of yet
@@ -534,16 +562,16 @@ def test_comparison_validation():
         "comparison_lvls": [],
     }
 
-    # cll instead of cl
+    # cll instead of cl - TypeError, comparison level
     email_cc = cll.exact_match_level("email")
     settings["comparisons"][3] = email_cc
-    # random str
+    # random str - TypeError, invalid type
     settings["comparisons"][4] = "help"
-    # missing key dict key and replaced w/ `comparison_lvls`
+    # missing key dict key and replaced w/ `comparison_lvls`  - SyntaxError
     settings["comparisons"].append(email_no_comp_level)
-    # Check invalid import is detected
+    # Check invalid import is detected - InvalidDialect
     settings["comparisons"].append(exact_match("test"))
-    # mismashed comparison
+    # mismashed comparison - InvalidDialect(s)
     settings["comparisons"].append(
         {
             "comparison_levels": [
@@ -554,8 +582,7 @@ def test_comparison_validation():
             ]
         }
     )
-
-    log_comparison_errors(None, "duckdb")  # confirm it works with None as an input...
+    settings["sql_dialect"] = "duckdb"
 
     # Init the error logger. This is normally handled in
     # `log_comparison_errors`, but here we want to capture the
@@ -571,11 +598,11 @@ def test_comparison_validation():
 
     # Our expected error types and part of the corresponding error text
     expected_errors = (
-        (TypeError, "is a comparison level"),
-        (TypeError, "is of an invalid data type."),
-        (SyntaxError, "missing the required `comparison_levels`"),
-        (InvalidDialect, "within its comparison levels - spark."),
-        (InvalidDialect, "within its comparison levels - presto, spark."),
+        (TypeError, "comparison level and cannot be used"),
+        (TypeError, "is of an invalid data type"),
+        (SyntaxError, "missing the required `comparison_levels` dictionary"),
+        (InvalidDialect, "comparison levels - 'spark'."),
+        (InvalidDialect, "comparison levels - 'presto', 'spark'."),
     )
 
     for n, (e, txt) in enumerate(expected_errors):

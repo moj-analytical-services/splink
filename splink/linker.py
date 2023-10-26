@@ -18,6 +18,7 @@ from splink.settings_validation.column_lookups import InvalidColumnsLogger
 from splink.settings_validation.valid_types import (
     InvalidTypesAndValuesLogger,
     log_comparison_errors,
+    validate_input_comparison_dataframe_size,
 )
 
 from .accuracy import (
@@ -448,7 +449,6 @@ class Linker:
         return homogenised_tables, homogenised_aliases
 
     def _setup_settings_objs(self, settings_dict: dict, validate_settings: bool = True):
-
         # Always sets a default cache uid -> _cache_uid_no_settings
         self._cache_uid = ascii_uid(8)
 
@@ -1112,6 +1112,11 @@ class Linker:
             "sql_dialect", self._sql_dialect
         )
         settings_dict["linker_uid"] = settings_dict.get("linker_uid", cache_uid)
+
+        # For now, use settings validation flag to turn input df validation
+        # on/off. Without this, a large number of our tests will fail
+        # as they make use of single comparison settings objects.
+        validate_input_comparison_dataframe_size(self, settings_dict)
 
         # Check the user's comparisons (if they exist)
         log_comparison_errors(settings_dict)

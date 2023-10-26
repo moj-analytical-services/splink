@@ -38,7 +38,7 @@ class TestHelper(ABC):
         pass
 
     def extra_linker_args(self):
-        return {}
+        return {"validate_settings": False}
 
     @property
     def date_format(self):
@@ -113,7 +113,9 @@ class SparkTestHelper(TestHelper):
         return SparkLinker
 
     def extra_linker_args(self):
-        return {"spark": self.spark}
+        core_args = super().extra_linker_args()
+        core_args.update({"spark": self.spark})
+        return core_args
 
     def convert_frame(self, df):
         spark_frame = self.spark.createDataFrame(df)
@@ -159,7 +161,9 @@ class SQLiteTestHelper(TestHelper):
         return SQLiteLinker
 
     def extra_linker_args(self):
-        return {"connection": self.con}
+        core_args = super().extra_linker_args()
+        core_args.update({"connection": self.con})
+        return core_args
 
     @classmethod
     def _get_input_name(cls):
@@ -208,7 +212,9 @@ class PostgresTestHelper(TestHelper):
         return PostgresLinker
 
     def extra_linker_args(self):
-        return {"engine": self.engine}
+        core_args = super().extra_linker_args()
+        core_args.update({"engine": self.engine})
+        return core_args
 
     @classmethod
     def _get_input_name(cls):
