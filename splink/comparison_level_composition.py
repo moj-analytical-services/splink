@@ -387,9 +387,8 @@ def _cl_merge(
     result["sql_condition"] = f" {clause} ".join(conditions)
 
     # Set to null level if all supplied levels are "null levels"
-    if is_null_level is None:
-        if all(d.is_null_level for d in cls):
-            result["is_null_level"] = True
+    if is_null_level or (is_null_level is None and all(d.is_null_level for d in cls)):
+        result["is_null_level"] = True
 
     if label_for_charts:
         result["label_for_charts"] = label_for_charts
