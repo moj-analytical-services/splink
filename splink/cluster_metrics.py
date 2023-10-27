@@ -17,8 +17,8 @@ def _size_density_sql(
     """
 
     # Get physical table names from Splink dataframes
-    edges_table = df_edges.physical_name
-    clusters_table = df_clusters.physical_name
+    df_predict = df_predict.physical_name
+    df_clustered = df_clustered.physical_name
 
     sqls = []
     sql = f"""
