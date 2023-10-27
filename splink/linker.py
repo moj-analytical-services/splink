@@ -43,6 +43,7 @@ from .charts import (
     unlinkables_chart,
     waterfall_chart,
 )
+from .cluster_metrics import _size_density_sql
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -2039,6 +2040,44 @@ class Linker:
         )
 
         return cc
+
+    def _compute_cluster_metrics(
+        self,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        threshold_match_probability: float = None,
+    ):
+        """Generates a table containing cluster metrics and returns a Splink dataframe
+
+        Args:
+            df_predict (SplinkDataFrame): The results of `linker.predict()`
+            df_clustered (SplinkDataFrame): The outputs of
+                `linker.cluster_pairwise_predictions_at_threshold()`
+            threshold_match_probability (float): Filter the pairwise match predictions
+                to include only pairwise comparisons with a match_probability above this
+                threshold.
+
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame containing cluster IDs and selected cluster metrics
+
+        """
+
+        # Get unique row id column name from settings
+        unique_id_col = self._settings_dict["unique_id_column_name"]
+
+        sqls = _size_density_sql(
+            df_predict,
+            df_clustered,
+            threshold_match_probability,
+            _unique_row_id=unique_id_col,
+        )
+
+        for sql in sqls:
+            linker._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        df_cluster_metrics = linker._execute_sql_pipeline()
+
+        return df_cluster_metrics
 
     def profile_columns(
         self, column_expressions: str | list[str], top_n=10, bottom_n=10
