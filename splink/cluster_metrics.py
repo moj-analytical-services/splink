@@ -26,7 +26,7 @@ def _size_density_sql(
             {_unique_row_id}_l,
             COUNT(*) AS count_edges
         FROM {edges_table}
-        WHERE match_probability >= {cluster_threshold}
+        WHERE match_probability >= {threshold_match_probability}
         GROUP BY {_unique_row_id}_l
     """
 
