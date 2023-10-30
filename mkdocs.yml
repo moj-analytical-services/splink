@@ -208,7 +208,7 @@ nav:
           - confusion matrix from labels table: "charts/confusion_matrix_from_labels_table.ipynb"
           - precision recall chart from labels table: "charts/precision_recall_chart_from_labels_table.ipynb"
           - roc chart fromm labels table: "charts/roc_chart_from_labels_table.ipynb"
-      - In-build datasets: "datasets.md"
+      - In-built datasets: "datasets.md"
       - Settings:
         - Settings Dictionary Reference: "settings_dict_guide.md"
         - Interactive Settings Editor: "settingseditor/editor.md"
