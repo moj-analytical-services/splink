@@ -2058,7 +2058,8 @@ class Linker:
                 threshold.
 
         Returns:
-            SplinkDataFrame: A SplinkDataFrame containing cluster IDs and selected cluster metrics
+            SplinkDataFrame: A SplinkDataFrame containing cluster IDs and selected
+            cluster metrics
 
         """
 
