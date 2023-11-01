@@ -8,7 +8,7 @@ all_dialects = ["duckdb", "spark", "sqlite", "postgres"]
 
 
 class ComparisonLevelCreator(ABC):
-    def __init__(self, col_name: str):
+    def __init__(self, col_name: str=None):
         """_summary_
 
         Args:
