@@ -10,19 +10,15 @@ from sqlalchemy.types import (
 )
 
 import splink.duckdb.blocking_rule_library as brl_duckdb
-import splink.duckdb.comparison_level_library as cll_duckdb
 import splink.duckdb.comparison_library as cl_duckdb
 import splink.duckdb.comparison_template_library as ctl_duckdb
 import splink.postgres.blocking_rule_library as brl_postgres
-import splink.postgres.comparison_level_library as cll_postgres
 import splink.postgres.comparison_library as cl_postgres
 import splink.postgres.comparison_template_library as ctl_postgres
 import splink.spark.blocking_rule_library as brl_spark
-import splink.spark.comparison_level_library as cll_spark
 import splink.spark.comparison_library as cl_spark
 import splink.spark.comparison_template_library as ctl_spark
 import splink.sqlite.blocking_rule_library as brl_sqlite
-import splink.sqlite.comparison_level_library as cll_sqlite
 import splink.sqlite.comparison_library as cl_sqlite
 import splink.sqlite.comparison_template_library as ctl_sqlite
 from splink.duckdb.linker import DuckDBLinker
@@ -54,10 +50,6 @@ class TestHelper(ABC):
     def load_frame_from_parquet(self, path):
         return pd.read_parquet(path)
 
-    @property
-    @abstractmethod
-    def cll(self):
-        pass
 
     @property
     @abstractmethod
@@ -86,10 +78,6 @@ class DuckDBTestHelper(TestHelper):
     @property
     def date_format(self):
         return "%Y-%m-%d"
-
-    @property
-    def cll(self):
-        return cll_duckdb
 
     @property
     def cl(self):
@@ -130,9 +118,6 @@ class SparkTestHelper(TestHelper):
         df.persist()
         return df
 
-    @property
-    def cll(self):
-        return cll_spark
 
     @property
     def cl(self):
@@ -178,9 +163,6 @@ class SQLiteTestHelper(TestHelper):
     def load_frame_from_parquet(self, path):
         return self.convert_frame(super().load_frame_from_parquet(path))
 
-    @property
-    def cll(self):
-        return cll_sqlite
 
     @property
     def cl(self):
@@ -238,10 +220,6 @@ class PostgresTestHelper(TestHelper):
 
     def load_frame_from_parquet(self, path):
         return self.convert_frame(super().load_frame_from_parquet(path))
-
-    @property
-    def cll(self):
-        return cll_postgres
 
     @property
     def cl(self):
