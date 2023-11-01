@@ -9,12 +9,10 @@ from .input_column import InputColumn
 
 class ComparisonLevelCreator(ABC):
     def __init__(self, col_name: str = None):
-        """_summary_
-
+        """
+        Class to author ComparisonLevels
         Args:
-            col_name (str): _description_
-            dialect (str, optional): _description_. Defaults to None.
-            m_probability (_type_, optional): _description_. Defaults to None.
+            col_name (str): Input column name
         """
         self.col_name = col_name
 
@@ -65,12 +63,23 @@ class ComparisonLevelCreator(ABC):
         """_summary_
 
         Args:
-            m_probability (float, optional): _description_. Defaults to None.
-            u_probability (float, optional): _description_. Defaults to None.
-            tf_adjustment_column (str, optional): _description_. Defaults to None.
-            tf_adjustment_weight (float, optional): _description_. Defaults to None.
-            tf_minimum_u_value (float, optional): _description_. Defaults to None.
-            is_null_level (bool, optional): _description_. Defaults to None.
+            m_probability (float, optional): The m probability for this
+                comparison level. Defaults to None, meaning it is not set.
+            u_probability (float, optional): The u probability for this
+                comparison level. Defaults to None, meaning it is not set.
+            tf_adjustment_column (str, optional): Make term frequency adjustments for
+                this comparison level using this input column. Defaults to None,
+                meaning term-frequency adjustments will not be applied for this level.
+            tf_adjustment_weight (float, optional): Make term frequency adjustments
+                for this comparison level using this weight. Defaults to None,
+                meaning term-frequency adjustments are fully-weighted if turned on.
+            tf_minimum_u_value (float, optional): When term frequency adjustments are
+                turned on, where the term frequency adjustment implies a u value below
+                this value, use this minimum value instead. Defaults to None, meaning
+                no minimum value.
+            is_null_level (bool, optional): If true, m and u values will not be
+                estimated and instead the match weight will be zero for this column.
+                Defaults to None, equivalent to False.
         """
         args = locals()
         del args["self"]
