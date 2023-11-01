@@ -55,7 +55,7 @@ class BlockingRule:
         self.sqlglot_dialect = sqlglot_dialect
         self.salting_partitions = salting_partitions
         self.arrays_to_explode = arrays_to_explode
-        self.ids_to_compare = []
+        self.ids_to_compare = []  # list of SplinkDataFrames representing ids to compare
 
     @property
     def sql_dialect(self):
@@ -78,17 +78,15 @@ class BlockingRule:
         unique_id_column = linker._settings_obj._unique_id_column_name
 
         if self.ids_to_compare:
-
             ids_to_compare_sql = " union all ".join(
                 [f"select * from {ids.physical_name}" for ids in self.ids_to_compare]
             )
-            # self.ids_to_compare[0].physical_name
 
             return f"""EXISTS (
                 select 1 from ({ids_to_compare_sql}) as ids_to_compare
                 where (
-                    l.{unique_id_column} = ids_to_compare.{unique_id_column}_l and 
-                    r.{unique_id_column} = ids_to_compare.{unique_id_column}_r 
+                    l.{unique_id_column} = ids_to_compare.{unique_id_column}_l and
+                    r.{unique_id_column} = ids_to_compare.{unique_id_column}_r
                 )
             )
             """
@@ -223,8 +221,59 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
     return where_condition
 
 
+def materialise_array_exploded_id_lookup(linker: Linker, br, link_type, apply_salt):
+    try:
+        input_dataframe = linker._intermediate_table_cache[
+            "__splink__df_concat_with_tf"
+        ]
+    except KeyError:
+        input_dataframe = linker._initialise_df_concat_with_tf()
+
+    input_colnames = {col.name() for col in input_dataframe.columns}
+    arrays_to_explode_quoted = [
+        InputColumn(colname, sql_dialect=linker._sql_dialect).quote().name()
+        for colname in br.arrays_to_explode
+    ]
+
+    explode_sql = linker._gen_explode_sql(
+        "__splink__df_concat_with_tf",
+        br.arrays_to_explode,
+        list(input_colnames.difference(arrays_to_explode_quoted)),
+    )
+
+    linker._enqueue_sql(
+        f"{explode_sql}",
+        "__splink__df_concat_with_tf_unnested",
+    )
+    unique_id_col = linker.settings_obj._unique_id_column_name
+
+    if link_type == "two_dataset_link_only":
+        where_condition = where_condition + " and l.source_dataset < r.source_dataset"
+
+    # ensure that table names are unique
+    if apply_salt:
+        to_hash = (br + linker._cache_uid).encode("utf-8")
+        salt_id = "salt_id_" + hashlib.sha256(to_hash).hexdigest()[:9]
+    else:
+        salt_id = ""
+
+    linker._enqueue_sql(
+        f"""
+        select distinct
+            l.{unique_id_col} as {unique_id_col}_l,
+            r.{unique_id_col} as {unique_id_col}_r
+        from __splink__df_concat_with_tf_unnested as l
+        inner join __splink__df_concat_with_tf_unnested as r
+        on ({br})
+        {where_condition} {br.and_not_preceding_rules_sql(linker)}""",
+        f"ids_to_compare_blocking_rule_{br.match_key}{salt_id}",
+    )
+    ids_to_compare = linker._execute_sql_pipeline([input_dataframe])
+    br.ids_to_compare.append(ids_to_compare)
+
+
 # flake8: noqa: C901
-def block_using_rules_sql(linker: Linker):
+def block_using_rules(linker: Linker):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
@@ -285,76 +334,44 @@ def block_using_rules_sql(linker: Linker):
         probability = ""
 
     sqls = []
-    for br in blocking_rules:
 
+    all_blocking_rules = []
+    for br in blocking_rules:
         # Apply our salted rules to resolve skew issues. If no salt was
         # selected to be added, then apply the initial blocking rule.
         if apply_salt:
-            salted_blocking_rules = br.salted_blocking_rules
+            all_blocking_rules.extend(br.salted_blocking_rules)
         else:
-            salted_blocking_rules = [br.blocking_rule]
+            all_blocking_rules.append(br.blocking_rule)
 
-        for salted_br in salted_blocking_rules:
-            if not br.arrays_to_explode:
-                sql = f"""
-                select
-                {sql_select_expr}
-                , '{br.match_key}' as match_key
+    for br in all_blocking_rules:
+        materialise_array_exploded_id_lookup(linker, br)
+
+    for br in all_blocking_rules:
+        if not br.arrays_to_explode:
+            sql = f"""
+            select
+            {sql_select_expr}
+            , '{br.match_key}' as match_key
+            {probability}
+            from {linker._input_tablename_l} as l
+            inner join {linker._input_tablename_r} as r
+            on
+            ({br})
+            {where_condition}
+            {br.and_not_preceding_rules_sql(linker)}
+            """
+        else:
+            sql = f"""
+                select {sql_select_expr}, '{br.match_key}' as match_key
                 {probability}
-                from {linker._input_tablename_l} as l
-                inner join {linker._input_tablename_r} as r
-                on
-                ({salted_br})
-                {where_condition}
-                {br.and_not_preceding_rules_sql(linker)}
-                """
-            else:
-                try:
-                    input_dataframe = linker._intermediate_table_cache[
-                        "__splink__df_concat_with_tf"
-                    ]
-                except KeyError:
-                    input_dataframe = linker._initialise_df_concat_with_tf()
-                input_colnames = {col.name() for col in input_dataframe.columns}
-                arrays_to_explode_quoted = [
-                    InputColumn(colname, sql_dialect=linker._sql_dialect).quote().name()
-                    for colname in br.arrays_to_explode
-                ]
-                linker._enqueue_sql(
-                    f"{linker._gen_explode_sql('__splink__df_concat_with_tf',br.arrays_to_explode,list(input_colnames.difference(arrays_to_explode_quoted)))}",
-                    "__splink__df_concat_with_tf_unnested",
-                )
-                unique_id_col = settings_obj._unique_id_column_name
-
-                if link_type == "two_dataset_link_only":
-                    where_condition = (
-                        where_condition + " and l.source_dataset < r.source_dataset"
-                    )
-
-                # ensure that table names are unique
-                if apply_salt:
-                    to_hash = (salted_br + linker._cache_uid).encode("utf-8")
-                    salt_id = "salt_id_" + hashlib.sha256(to_hash).hexdigest()[:9]
-                else:
-                    salt_id = ""
-
-                linker._enqueue_sql(
-                    f"""
-                    select distinct l.{unique_id_col} as {unique_id_col}_l,r.{unique_id_col} as {unique_id_col}_r
-                    from __splink__df_concat_with_tf_unnested as l inner join __splink__df_concat_with_tf_unnested as r on ({salted_br})
-                    {where_condition} {br.and_not_preceding_rules_sql(linker)}""",
-                    f"ids_to_compare_blocking_rule_{br.match_key}{salt_id}",
-                )
-                ids_to_compare = linker._execute_sql_pipeline([input_dataframe])
-                br.ids_to_compare.append(ids_to_compare)
-                sql = f"""
-                    select {sql_select_expr}, '{br.match_key}' as match_key
-                    {probability}
-                    from {ids_to_compare.physical_name} as pairs
-                    left join {linker._input_tablename_l} as l on pairs.{unique_id_col}_l=l.{unique_id_col}
-                    left join {linker._input_tablename_r} as r on pairs.{unique_id_col}_r=r.{unique_id_col}
-                """
-            sqls.append(sql)
+                from {ids_to_compare.physical_name} as pairs
+                left join {linker._input_tablename_l} as l
+                    on pairs.{unique_id_col}_l=l.{unique_id_col}
+                left join {linker._input_tablename_r} as r
+                    on pairs.{unique_id_col}_r=r.{unique_id_col}
+            """
+        sqls.append(sql)
 
     if (
         linker._two_dataset_link_only
