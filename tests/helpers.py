@@ -60,10 +60,10 @@ class TestHelper(ABC):
     # def ctl(self):
     #     pass
 
-    @property
-    @abstractmethod
-    def brl(self):
-        pass
+    # @property
+    # @abstractmethod
+    # def brl(self):
+    #     pass
 
 
 class DuckDBTestHelper(TestHelper):
@@ -86,9 +86,9 @@ class DuckDBTestHelper(TestHelper):
     # def ctl(self):
     #     return ctl_duckdb
 
-    @property
-    def brl(self):
-        return brl_duckdb
+    # @property
+    # def brl(self):
+    #     return brl_duckdb
 
 
 class SparkTestHelper(TestHelper):
@@ -125,9 +125,9 @@ class SparkTestHelper(TestHelper):
     # def ctl(self):
     #     return ctl_spark
 
-    @property
-    def brl(self):
-        return brl_spark
+    # @property
+    # def brl(self):
+    #     return brl_spark
 
 
 class SQLiteTestHelper(TestHelper):
@@ -169,9 +169,9 @@ class SQLiteTestHelper(TestHelper):
     # def ctl(self):
     #     return ctl_sqlite
 
-    @property
-    def brl(self):
-        return brl_sqlite
+    # @property
+    # def brl(self):
+    #     return brl_sqlite
 
 
 class PostgresTestHelper(TestHelper):
@@ -226,9 +226,9 @@ class PostgresTestHelper(TestHelper):
     # def ctl(self):
     #     return ctl_postgres
 
-    @property
-    def brl(self):
-        return brl_postgres
+    # @property
+    # def brl(self):
+    #     return brl_postgres
 
 
 class SplinkTestException(Exception):
