@@ -1,4 +1,5 @@
 from .comparison_level_creator import ComparisonLevelCreator
+from .dialects import dialect_lookup
 
 
 class NullLevel(ComparisonLevelCreator):
@@ -35,3 +36,16 @@ class ExactMatchLevel(ComparisonLevelCreator):
     def create_label_for_charts(self):
         return f"Exact match {self.col_name}"
 
+
+class LevenshteinLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: str, distance_threshold: float):
+        self.distance_threshold = distance_threshold
+        super().__init__(col_name)
+
+    def create_sql(self, sql_dialect):
+        col = self.input_column(sql_dialect)
+        lev_fn = dialect_lookup[sql_dialect].levenshtein_function_name
+        return f"{lev_fn}({col.name_l()}, {col.name_r()}) <= {self.distance_threshold}"
+
+    def create_label_for_charts(self):
+        return f"Levenshtein distance in {self.col_name} <= {self.distance_threshold}"
