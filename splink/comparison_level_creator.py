@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from inspect import signature
 from typing import final
 
 from .comparison_level import ComparisonLevel
@@ -44,18 +45,12 @@ class ComparisonLevelCreator(ABC):
             "label_for_charts": self.create_label_for_charts(),
         }
 
-        if self.m_probability:
-            level_dict["m_probability"] = self.m_probability
-        if self.u_probability:
-            level_dict["u_probability"] = self.u_probability
-        if self.tf_adjustment_column:
-            level_dict["tf_adjustment_column"] = self.tf_adjustment_column
-        if self.tf_adjustment_weight:
-            level_dict["tf_adjustment_weight"] = self.tf_adjustment_weight
-        if self.tf_minimum_u_value:
-            level_dict["tf_minimum_u_value"] = self.tf_minimum_u_value
-        if self.is_null_level:
-            level_dict["is_null_level"] = self.is_null_level
+        # additional config options get passed only if created via .configure()
+        allowed_attrs = [s for s in signature(self.configure).parameters if s != "self"]
+
+        for attr in allowed_attrs:
+            if (value := getattr(self, attr, None)) is not None:
+                level_dict[attr] = value
 
         return level_dict
 
