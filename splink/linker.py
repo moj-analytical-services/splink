@@ -223,7 +223,7 @@ class Linker:
         else:
             self._validate_settings_components(settings_dict)
             settings_dict = deepcopy(settings_dict)
-            self._insantiate_comparison_levels(settings_dict)
+            self._instantiate_comparison_levels(settings_dict)
             self._setup_settings_objs(settings_dict)
 
         homogenised_tables, homogenised_aliases = self._register_input_tables(
@@ -517,7 +517,7 @@ class Linker:
         if validate_settings:
             InvalidColumnsLogger(self).construct_output_logs()
 
-    def _insantiate_comparison_levels(self, settings_dict):
+    def _instantiate_comparison_levels(self, settings_dict):
         """
         Mutate our settings_dict, so that any ComparisonLevelCreator
         instances are instead replaced with ComparisonLevels
