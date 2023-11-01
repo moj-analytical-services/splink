@@ -6,41 +6,36 @@ comparison_first_name = {
     "output_column_name": "first_name",
     "comparison_levels": [
         cll.NullLevel("first_name"),
-        cll.ExactMatchLevel("first_name",
-            # term_frequency_adjustments=True
-        ),
+        cll.ExactMatchLevel("first_name", term_frequency_adjustments=True),
         # cll.LevenshteinLevel("first_name", 2),
-        cll.ElseLevel()
-    ]
+        cll.ElseLevel(),
+    ],
 }
 comparison_surname = {
     "output_column_name": "surname",
     "comparison_levels": [
         cll.NullLevel("surname"),
-        cll.ExactMatchLevel("surname"),# term_frequency_adjustments=True),
+        cll.ExactMatchLevel("surname", term_frequency_adjustments=True),
         # cll.LevenshteinLevel("surname", 2),
-        cll.ElseLevel()
-    ]
+        cll.ElseLevel(),
+    ],
 }
 comparison_city = {
     "output_column_name": "city",
     "comparison_levels": [
         cll.NullLevel("city"),
-        cll.ExactMatchLevel("city"),# term_frequency_adjustments=True),
+        cll.ExactMatchLevel("city", term_frequency_adjustments=True),
         # cll.LevenshteinLevel("city", 1),
         # cll.LevenshteinLevel("city", 2),
-        cll.ElseLevel()
-    ]
+        cll.ElseLevel(),
+    ],
 }
 
 settings = {
     "link_type": "dedupe_only",
-    "comparisons": [
-        comparison_first_name,
-        comparison_surname,
-        comparison_city
-    ]
+    "comparisons": [comparison_first_name, comparison_surname, comparison_city],
 }
+
 
 @mark_with_dialects_excluding()
 def test_cll_creators_run_predict(dialect, test_helpers):
@@ -49,6 +44,7 @@ def test_cll_creators_run_predict(dialect, test_helpers):
 
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
     linker.predict()
+
 
 @mark_with_dialects_excluding()
 def test_cll_creators_instantiate_levels(dialect):
