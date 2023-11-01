@@ -4,8 +4,6 @@ from typing import final
 from .comparison_level import ComparisonLevel
 from .input_column import InputColumn
 
-all_dialects = ["duckdb", "spark", "sqlite", "postgres"]
-
 
 class ComparisonLevelCreator(ABC):
     def __init__(self, col_name: str = None):
