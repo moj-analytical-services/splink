@@ -7,7 +7,7 @@ comparison_first_name = {
     "comparison_levels": [
         cll.NullLevel("first_name"),
         cll.ExactMatchLevel("first_name", term_frequency_adjustments=True),
-        cll.LevenshteinLevel("first_name", 2),
+        cll.LevenshteinLevel("first_name", 2).configure(m_probability=0.2),
         cll.ElseLevel(),
     ],
 }
@@ -17,7 +17,7 @@ comparison_surname = {
         cll.NullLevel("surname"),
         cll.ExactMatchLevel("surname", term_frequency_adjustments=True),
         cll.LevenshteinLevel("surname", 2),
-        cll.ElseLevel(),
+        cll.ElseLevel().configure(m_probability=0.2, u_probability=0.85),
     ],
 }
 comparison_city = {
