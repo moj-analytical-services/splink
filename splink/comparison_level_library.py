@@ -1,5 +1,5 @@
 from .comparison_level_creator import ComparisonLevelCreator
-from .dialects import dialect_lookup
+from .dialects import SplinkDialect
 
 
 class NullLevel(ComparisonLevelCreator):
@@ -42,9 +42,9 @@ class LevenshteinLevel(ComparisonLevelCreator):
         self.distance_threshold = distance_threshold
         super().__init__(col_name)
 
-    def create_sql(self, sql_dialect):
+    def create_sql(self, sql_dialect: SplinkDialect):
         col = self.input_column(sql_dialect)
-        lev_fn = dialect_lookup[sql_dialect].levenshtein_function_name
+        lev_fn = sql_dialect.levenshtein_function_name
         return f"{lev_fn}({col.name_l()}, {col.name_r()}) <= {self.distance_threshold}"
 
     def create_label_for_charts(self):

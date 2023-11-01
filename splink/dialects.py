@@ -9,6 +9,10 @@ class SplinkDialect(ABC):
     def sqlglot_name(self):
         return self.name
 
+    @staticmethod
+    def from_string(dialect_name: str):
+        return _dialect_lookup[dialect_name]
+
     @property
     def levenshtein_function_name(self):
         raise NotImplementedError(
@@ -70,7 +74,7 @@ class AthenaDialect(SplinkDialect):
         return "levenshtein_distance"
 
 
-dialect_lookup = {
+_dialect_lookup = {
     "duckdb": DuckDBDialect(),
     "spark": SparkDialect(),
     "sqlite": SqliteDialect(),

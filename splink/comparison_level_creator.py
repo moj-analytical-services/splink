@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import final
 
 from .comparison_level import ComparisonLevel
+from .dialects import SplinkDialect
 from .input_column import InputColumn
 
 
@@ -24,7 +25,7 @@ class ComparisonLevelCreator(ABC):
         self.is_null_level = None
 
     @abstractmethod
-    def create_sql(self, sql_dialect: str):
+    def create_sql(self, dialect: SplinkDialect):
         pass
 
     @abstractmethod
@@ -37,8 +38,9 @@ class ComparisonLevelCreator(ABC):
 
     @final
     def create_level_dict(self, sql_dialect: str):
+        dialect = SplinkDialect.from_string(sql_dialect)
         level_dict = {
-            "sql_condition": self.create_sql(sql_dialect),
+            "sql_condition": self.create_sql(dialect),
             "label_for_charts": self.create_label_for_charts(),
         }
 
@@ -58,8 +60,8 @@ class ComparisonLevelCreator(ABC):
         return level_dict
 
     @final
-    def input_column(self, sql_dialect: str):
-        return InputColumn(self.col_name, sql_dialect=sql_dialect)
+    def input_column(self, sql_dialect: SplinkDialect):
+        return InputColumn(self.col_name, sql_dialect=sql_dialect.name)
 
     @final
     def configure(
