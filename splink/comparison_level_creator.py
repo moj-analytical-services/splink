@@ -17,13 +17,6 @@ class ComparisonLevelCreator(ABC):
             m_probability (_type_, optional): _description_. Defaults to None.
         """
         self.col_name = col_name
-        # TODO: do we need to set these to None, or let ComparisonLevel handle missings?
-        self.m_probability = None
-        self.u_probability = None
-        self.tf_adjustment_column = None
-        self.tf_adjustment_weight = None
-        self.tf_minimum_u_value = None
-        self.is_null_level = None
 
     @abstractmethod
     def create_sql(self, dialect: SplinkDialect):
