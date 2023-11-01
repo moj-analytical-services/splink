@@ -35,6 +35,7 @@ from .blocking import (
     BlockingRule,
     block_using_rules_sql,
     blocking_rule_to_obj,
+    materialise_exploded_id_tables,
 )
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
@@ -1727,6 +1728,8 @@ class Linker:
         input_dataframes = []
         if nodes_with_tf:
             input_dataframes.append(nodes_with_tf)
+
+        materialise_exploded_id_tables(self)
 
         sql = block_using_rules_sql(self)
         self._enqueue_sql(sql, "__splink__df_blocked")
