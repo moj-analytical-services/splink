@@ -531,7 +531,6 @@ class Linker:
                 if not isinstance(level, dict):
                     comparison_levels[idx] = level.get_comparison_level(dialect)
 
-
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
         concat_df = None

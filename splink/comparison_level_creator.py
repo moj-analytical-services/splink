@@ -8,7 +8,7 @@ all_dialects = ["duckdb", "spark", "sqlite", "postgres"]
 
 
 class ComparisonLevelCreator(ABC):
-    def __init__(self, col_name: str=None):
+    def __init__(self, col_name: str = None):
         """_summary_
 
         Args:
@@ -98,4 +98,3 @@ class ComparisonLevelCreator(ABC):
             "Call .get_comparison_level(sql_dialect) to instantiate "
             "a ComparisonLevel"
         )
-
