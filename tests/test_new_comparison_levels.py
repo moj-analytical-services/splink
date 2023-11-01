@@ -7,7 +7,7 @@ comparison_first_name = {
     "comparison_levels": [
         cll.NullLevel("first_name"),
         cll.ExactMatchLevel("first_name", term_frequency_adjustments=True),
-        # cll.LevenshteinLevel("first_name", 2),
+        cll.LevenshteinLevel("first_name", 2),
         cll.ElseLevel(),
     ],
 }
@@ -16,7 +16,7 @@ comparison_surname = {
     "comparison_levels": [
         cll.NullLevel("surname"),
         cll.ExactMatchLevel("surname", term_frequency_adjustments=True),
-        # cll.LevenshteinLevel("surname", 2),
+        cll.LevenshteinLevel("surname", 2),
         cll.ElseLevel(),
     ],
 }
@@ -25,8 +25,8 @@ comparison_city = {
     "comparison_levels": [
         cll.NullLevel("city"),
         cll.ExactMatchLevel("city", term_frequency_adjustments=True),
-        # cll.LevenshteinLevel("city", 1),
-        # cll.LevenshteinLevel("city", 2),
+        cll.LevenshteinLevel("city", 1),
+        cll.LevenshteinLevel("city", 2),
         cll.ElseLevel(),
     ],
 }
@@ -51,4 +51,4 @@ def test_cll_creators_instantiate_levels(dialect):
     cll.NullLevel("city").get_comparison_level(dialect)
     cll.ElseLevel().get_comparison_level(dialect)
     cll.ExactMatchLevel("city").get_comparison_level(dialect)
-    # cll.LevenshteinLevel("city", 5).get_comparison_level(dialect)
+    cll.LevenshteinLevel("city", 5).get_comparison_level(dialect)
