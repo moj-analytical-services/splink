@@ -1,3 +1,6 @@
+import sqlglot
+
+
 def execute_sql_logging_message_info(templated_name, physical_name):
     return (
         f"Executing sql to create "
@@ -7,4 +10,5 @@ def execute_sql_logging_message_info(templated_name, physical_name):
 
 
 def log_sql(sql):
+    # sql = sql).sql(pretty=True)
     return "\n------Start SQL---------\n" f"{sql}\n" "-------End SQL-----------\n"

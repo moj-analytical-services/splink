@@ -56,7 +56,6 @@ class BlockingRule:
         self.salting_partitions = salting_partitions
         self.arrays_to_explode = arrays_to_explode
         self.ids_to_compare = []
-        self.ids_to_use = None
 
     @property
     def sql_dialect(self):
@@ -224,11 +223,6 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
 
 
 def materialise_exploded_id_tables(linker: Linker):
-    if type(linker).__name__ in ["SparkLinker"]:
-        apply_salt = True
-    else:
-        apply_salt = False
-
     settings_obj = linker._settings_obj
 
     link_type = settings_obj._link_type
@@ -245,20 +239,12 @@ def materialise_exploded_id_tables(linker: Linker):
 
     blocking_rules = settings_obj._blocking_rules_to_generate_predictions
 
-    if settings_obj.salting_required and apply_salt is False:
-        logger.warning(
-            "WARNING: Salting is not currently supported by this linker backend and"
-            " will not be implemented for this run."
-        )
-
     for br in blocking_rules:
         # Apply our salted rules to resolve skew issues. If no salt was
         # selected to be added, then apply the initial blocking rule.
-        if apply_salt:
-            salted_blocking_rules = br.salted_blocking_rules
-        else:
-            salted_blocking_rules = [br.blocking_rule]
 
+        salted_blocking_rules = br.salted_blocking_rules
+        salt_counter = 0
         for salted_br in salted_blocking_rules:
             if br.arrays_to_explode:
                 try:
@@ -291,11 +277,10 @@ def materialise_exploded_id_tables(linker: Linker):
                     )
 
                 # ensure that table names are unique
-                if apply_salt:
-                    to_hash = (salted_br + linker._cache_uid).encode("utf-8")
-                    salt_id = "salt_id_" + hashlib.sha256(to_hash).hexdigest()[:9]
-                else:
-                    salt_id = ""
+
+                to_hash = (salted_br + linker._cache_uid).encode("utf-8")
+                salt_id = hashlib.sha256(to_hash).hexdigest()[:9]
+                salt_id = f"salt_{salt_counter}_{salt_id}"
 
                 linker._enqueue_sql(
                     f"""
@@ -311,7 +296,7 @@ def materialise_exploded_id_tables(linker: Linker):
 
                 ids_to_compare = linker._execute_sql_pipeline([input_dataframe])
                 br.ids_to_compare.append(ids_to_compare)
-                br.ids_to_use = ids_to_compare
+                salt_counter += 1
 
 
 def block_using_rules_sql(linker: Linker):
@@ -322,11 +307,6 @@ def block_using_rules_sql(linker: Linker):
     Where there are multiple blocking rules, the SQL statement contains logic
     so that duplicate comparisons are not generated.
     """
-
-    if type(linker).__name__ in ["SparkLinker"]:
-        apply_salt = True
-    else:
-        apply_salt = False
 
     settings_obj = linker._settings_obj
 
@@ -354,12 +334,6 @@ def block_using_rules_sql(linker: Linker):
     else:
         blocking_rules = settings_obj._blocking_rules_to_generate_predictions
 
-    if settings_obj.salting_required and apply_salt is False:
-        logger.warning(
-            "WARNING: Salting is not currently supported by this linker backend and"
-            " will not be implemented for this run."
-        )
-
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'
     # you create a cartesian product, rather than having separate code
@@ -378,11 +352,10 @@ def block_using_rules_sql(linker: Linker):
     for br in blocking_rules:
         # Apply our salted rules to resolve skew issues. If no salt was
         # selected to be added, then apply the initial blocking rule.
-        if apply_salt:
-            salted_blocking_rules = br.salted_blocking_rules
-        else:
-            salted_blocking_rules = [br.blocking_rule]
 
+        salted_blocking_rules = br.salted_blocking_rules
+
+        salt_counter = 0
         for salted_br in salted_blocking_rules:
             if not br.arrays_to_explode:
                 sql = f"""
@@ -398,7 +371,7 @@ def block_using_rules_sql(linker: Linker):
                 {br.and_not_preceding_rules_sql(linker)}
                 """
             else:
-                ids_to_compare = br.ids_to_use
+                ids_to_compare = br.ids_to_compare[salt_counter]
                 unique_id_col = settings_obj._unique_id_column_name
                 sql = f"""
                     select
@@ -412,6 +385,7 @@ def block_using_rules_sql(linker: Linker):
                         on pairs.{unique_id_col}_r=r.{unique_id_col}
                 """
             sqls.append(sql)
+            salt_counter += 1
 
     if (
         linker._two_dataset_link_only
