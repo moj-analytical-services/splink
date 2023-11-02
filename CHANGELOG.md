@@ -20,4 +20,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed issue where composing null levels would mistakenly sometimes result in a non-null level ([#1672](https://github.com/moj-analytical-services/splink/pull/1672))
 - Labelling tool correctly works even when offline ([#1646](https://github.com/moj-analytical-services/splink/pull/1646))
 
+## [3.9.8] - 2023-10-05
+
+### Added
+
+- Added ability to delete tables with Spark when working in Databricks ([#1526](https://github.com/moj-analytical-services/splink/pull/1526))
+
+### Changed
+
+- Re-added support for python 3.7 (specifically >= 3.7.1) and adjusted dependencies in this case ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
+
+### Fixed
+
+- Fix behaviour where using `to_csv` with Spark backend wouldn't overwrite files even when instructed to ([#1635](https://github.com/moj-analytical-services/splink/pull/1635))
+- Corrected path for Spark `.jar` file containing UDFs to work correctly for Spark < 3.0 ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
+- Spark UDF `damerau_levensthein` is now only registered for Spark >= 3.0, as it is not compatible with earlier versions ([#1622](https://github.com/moj-analytical-services/splink/pull/1622))
+
 [unreleased]: https://github.com/moj-analytical-services/splink/compare/v3.9.8...HEAD
+[3.9.8]: https://github.com/moj-analytical-services/splink/compare/v3.9.7...v3.9.8
