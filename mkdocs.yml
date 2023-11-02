@@ -185,6 +185,7 @@ nav:
       - Charts Gallery: 
         - "charts/index.md"
         - Exploratory Analysis:
+          - completeness chart: "charts/completeness_chart.ipynb" 
           - missingness chart: "charts/missingness_chart.ipynb"
           - profile columns: "charts/profile_columns.ipynb"
         - Blocking: 
