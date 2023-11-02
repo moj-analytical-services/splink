@@ -218,9 +218,12 @@ class Linker:
             # feed it a blank settings dictionary
             self._setup_settings_objs(None)
             self.load_settings(settings_dict)
+
+            # TODO: deal with instantiating comparison levels in this path
         else:
             self._validate_settings_components(settings_dict)
             settings_dict = deepcopy(settings_dict)
+            self._instantiate_comparison_levels(settings_dict)
             self._setup_settings_objs(settings_dict)
 
         homogenised_tables, homogenised_aliases = self._register_input_tables(
@@ -513,6 +516,20 @@ class Linker:
         # Constructs output logs for our various settings inputs
         if validate_settings:
             InvalidColumnsLogger(self).construct_output_logs()
+
+    def _instantiate_comparison_levels(self, settings_dict):
+        """
+        Mutate our settings_dict, so that any ComparisonLevelCreator
+        instances are instead replaced with ComparisonLevels
+        """
+        dialect = self._sql_dialect
+        # TODO: handle case where dict is in fact a Comparison object
+        for comparison_dict in settings_dict["comparisons"]:
+            comparison_levels = comparison_dict["comparison_levels"]
+            for idx, level in enumerate(comparison_levels):
+                # if we have a ComparisonLevelCreator
+                if not isinstance(level, dict):
+                    comparison_levels[idx] = level.get_comparison_level(dialect)
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
