@@ -185,6 +185,39 @@ class BlockingRule:
         else:
             return filter_condition.sql(self.sqlglot_dialect)
 
+    def exploded_id_pair_table_sql(self, linker: Linker, salted_br):
+        settings_obj = linker._settings_obj
+        unique_id_col = settings_obj._unique_id_column_name
+
+        link_type = settings_obj._link_type
+
+        if linker._two_dataset_link_only:
+            link_type = "two_dataset_link_only"
+
+        if linker._self_link_mode:
+            link_type = "self_link"
+
+        where_condition = _sql_gen_where_condition(
+            link_type, settings_obj._unique_id_input_columns
+        )
+
+        if link_type == "two_dataset_link_only":
+            where_condition = (
+                where_condition + " and l.source_dataset < r.source_dataset"
+            )
+
+        sql = f"""
+            select distinct
+                l.{unique_id_col} as {unique_id_col}_l,
+                r.{unique_id_col} as {unique_id_col}_r
+            from __splink__df_concat_with_tf_unnested as l
+            inner join __splink__df_concat_with_tf_unnested as r
+            on ({salted_br})
+            {where_condition}
+            {self.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}"""
+
+        return sql
+
     def as_dict(self):
         "The minimal representation of the blocking rule"
         output = {}
@@ -244,24 +277,11 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
 def materialise_exploded_id_tables(linker: Linker):
     settings_obj = linker._settings_obj
 
-    link_type = settings_obj._link_type
-
-    if linker._two_dataset_link_only:
-        link_type = "two_dataset_link_only"
-
-    if linker._self_link_mode:
-        link_type = "self_link"
-
-    where_condition = _sql_gen_where_condition(
-        link_type, settings_obj._unique_id_input_columns
-    )
-
     blocking_rules = settings_obj._blocking_rules_to_generate_predictions
 
     for br in blocking_rules:
-        salted_blocking_rules = br.salted_blocking_rules_as_sql_strings
         salt_counter = 0
-        for salted_br in salted_blocking_rules:
+        for salted_br in br.salted_blocking_rules_as_sql_strings:
             if br.array_columns_to_explode:
                 try:
                     input_dataframe = linker._intermediate_table_cache[
@@ -269,6 +289,7 @@ def materialise_exploded_id_tables(linker: Linker):
                     ]
                 except KeyError:
                     input_dataframe = linker._initialise_df_concat_with_tf()
+
                 input_colnames = {col.name() for col in input_dataframe.columns}
                 arrays_to_explode_quoted = [
                     InputColumn(colname, sql_dialect=linker._sql_dialect).quote().name()
@@ -285,28 +306,16 @@ def materialise_exploded_id_tables(linker: Linker):
                     "__splink__df_concat_with_tf_unnested",
                 )
 
-                unique_id_col = settings_obj._unique_id_column_name
-
-                if link_type == "two_dataset_link_only":
-                    where_condition = (
-                        where_condition + " and l.source_dataset < r.source_dataset"
-                    )
-
                 # ensure that table names are unique
 
                 to_hash = (salted_br + linker._cache_uid).encode("utf-8")
                 salt_id = hashlib.sha256(to_hash).hexdigest()[:9]
                 salt_id = f"salt_{salt_counter}_{salt_id}"
 
+                sql = br.exploded_id_pair_table_sql(linker, salted_br)
+
                 linker._enqueue_sql(
-                    f"""
-                    select distinct
-                        l.{unique_id_col} as {unique_id_col}_l,
-                        r.{unique_id_col} as {unique_id_col}_r
-                    from __splink__df_concat_with_tf_unnested as l
-                    inner join __splink__df_concat_with_tf_unnested as r
-                    on ({salted_br})
-                    {where_condition} {br.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}""",
+                    sql,
                     f"ids_to_compare_blocking_rule_{br.match_key}{salt_id}",
                 )
 
