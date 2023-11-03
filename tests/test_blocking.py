@@ -40,7 +40,7 @@ def test_binary_composition_internals_OR(test_helpers, dialect):
         brl.exact_match_rule("help4"),
     ]
     brs_as_objs = settings_tester._brs_as_objs(brs_as_strings)
-    brs_as_txt = [blocking_rule_to_obj(br).blocking_rule for br in brs_as_strings]
+    brs_as_txt = [blocking_rule_to_obj(br).blocking_rule_sql for br in brs_as_strings]
 
     assert brs_as_objs[0].preceding_rules == []
 

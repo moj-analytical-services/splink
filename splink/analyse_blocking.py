@@ -117,7 +117,7 @@ def cumulative_comparisons_generated_by_blocking_rules(
     for row, br in zip(br_count, brs_as_objs):
         out_dict = {
             "row_count": row,
-            "rule": br.blocking_rule,
+            "rule": br.blocking_rule_sql,
         }
         if output_chart:
             cumulative_sum += row

@@ -51,7 +51,7 @@ class SettingsValidator:
     @property
     def blocking_rules(self):
         brs = self.settings_obj._blocking_rules_to_generate_predictions
-        return [br.blocking_rule for br in brs]
+        return [br.blocking_rule_sql for br in brs]
 
     @property
     def comparisons(self):

@@ -125,7 +125,7 @@ class Settings:
             used_by_brs = []
             for br in self._blocking_rules_to_generate_predictions:
                 used_by_brs.extend(
-                    get_columns_used_from_sql(br.blocking_rule, br.sql_dialect)
+                    get_columns_used_from_sql(br.blocking_rule_sql, br.sql_dialect)
                 )
 
             used_by_brs = [InputColumn(c) for c in used_by_brs]

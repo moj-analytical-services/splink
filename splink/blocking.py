@@ -51,10 +51,10 @@ class BlockingRule:
         if sqlglot_dialect:
             self._sql_dialect = sqlglot_dialect
 
-        self.blocking_rule = blocking_rule
+        self.blocking_rule_sql = blocking_rule
         self.preceding_rules = []
         self.sqlglot_dialect = sqlglot_dialect
-        self.salting_partitions = salting_partitions
+        self.salting_partitions: int = salting_partitions
         self.array_columns_to_explode: List[str] = array_columns_to_explode
         self.exploded_id_pair_tables: List[SplinkDataFrame] = []
 
@@ -69,7 +69,7 @@ class BlockingRule:
     @property
     def sql(self):
         # Wrapper to reveal the underlying SQL
-        return self.blocking_rule
+        return self.blocking_rule_sql
 
     def add_preceding_rules(self, rules):
         rules = ensure_is_list(rules)
@@ -104,7 +104,7 @@ class BlockingRule:
             # Note the coalesce function is important here - otherwise
             # you filter out any records with nulls in the previous rules
             # meaning these comparisons get lost
-            return f"coalesce(({self.blocking_rule}),false)"
+            return f"coalesce(({self.blocking_rule_sql}),false)"
 
     def exclude_pairs_generated_by_all_preceding_rules_sql(self, linker: Linker):
         """A SQL string that excludes the results of ALL previous blocking rules from
@@ -120,16 +120,22 @@ class BlockingRule:
         return f"AND NOT ({previous_rules})"
 
     @property
-    def salted_blocking_rules(self):
+    def salted_blocking_rules_as_sql_strings(self) -> List[str]:
+        """A list of sql strings"""
+
         if self.salting_partitions == 1:
-            yield self.blocking_rule
+            yield self.blocking_rule_sql
         else:
             for n in range(self.salting_partitions):
-                yield f"{self.blocking_rule} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
+                yield (
+                    f"{self.blocking_rule_sql} and "
+                    f"ceiling(l.__splink_salt * {self.salting_partitions}) "
+                    f"= {n+1}"
+                )
 
     @property
     def _parsed_join_condition(self):
-        br = self.blocking_rule
+        br = self.blocking_rule_sql
         return parse_one("INNER JOIN r", into=Join).on(
             br, dialect=self.sqlglot_dialect
         )  # using sqlglot==11.4.1
@@ -183,7 +189,7 @@ class BlockingRule:
         "The minimal representation of the blocking rule"
         output = {}
 
-        output["blocking_rule"] = self.blocking_rule
+        output["blocking_rule"] = self.blocking_rule_sql
         output["sql_dialect"] = self.sql_dialect
 
         if self.salting_partitions > 1 and self.sql_dialect == "spark":
@@ -196,7 +202,7 @@ class BlockingRule:
 
     def _as_completed_dict(self):
         if not self.salting_partitions > 1 and self.sql_dialect == "spark":
-            return self.blocking_rule
+            return self.blocking_rule_sql
         else:
             return self.as_dict()
 
@@ -205,7 +211,7 @@ class BlockingRule:
         return "Custom" if not hasattr(self, "_description") else self._description
 
     def _abbreviated_sql(self, cutoff=75):
-        sql = self.blocking_rule
+        sql = self.blocking_rule_sql
         return (sql[:cutoff] + "...") if len(sql) > cutoff else sql
 
     def __repr__(self):
@@ -253,10 +259,7 @@ def materialise_exploded_id_tables(linker: Linker):
     blocking_rules = settings_obj._blocking_rules_to_generate_predictions
 
     for br in blocking_rules:
-        # Apply our salted rules to resolve skew issues. If no salt was
-        # selected to be added, then apply the initial blocking rule.
-
-        salted_blocking_rules = br.salted_blocking_rules
+        salted_blocking_rules = br.salted_blocking_rules_as_sql_strings
         salt_counter = 0
         for salted_br in salted_blocking_rules:
             if br.array_columns_to_explode:
@@ -366,7 +369,7 @@ def block_using_rules_sql(linker: Linker):
         # Apply our salted rules to resolve skew issues. If no salt was
         # selected to be added, then apply the initial blocking rule.
 
-        salted_blocking_rules = br.salted_blocking_rules
+        salted_blocking_rules = br.salted_blocking_rules_as_sql_strings
 
         salt_counter = 0
         for salted_br in salted_blocking_rules:
