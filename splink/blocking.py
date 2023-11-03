@@ -197,7 +197,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
 
 
 # flake8: noqa: C901
-def block_using_rules_sql(linker: Linker):
+def block_using_rules_sqls(linker: Linker):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
@@ -205,6 +205,54 @@ def block_using_rules_sql(linker: Linker):
     Where there are multiple blocking rules, the SQL statement contains logic
     so that duplicate comparisons are not generated.
     """
+
+    sqls = []
+
+    # For the two dataset link only, rather than a self join of
+    # __splink__df_concat_with_tf, it's much faster to split the input
+    # into two tables, and join (because then Splink doesn't have to evaluate)
+    # intra-dataset comparisons.
+    # see https://github.com/moj-analytical-services/splink/pull/1359
+    if (
+        linker._two_dataset_link_only
+        and not linker._find_new_matches_mode
+        and not linker._compare_two_records_mode
+    ):
+        source_dataset_col = linker._source_dataset_column_name
+        # Need df_l to be the one with the lowest id to preeserve the property
+        # that the left dataset is the one with the lowest concatenated id
+        keys = linker._input_tables_dict.keys()
+        keys = list(sorted(keys))
+        df_l = linker._input_tables_dict[keys[0]]
+        df_r = linker._input_tables_dict[keys[1]]
+
+        # This also needs to work for training u
+        if linker._train_u_using_random_sample_mode:
+            sample_switch = "_sample"
+        else:
+            sample_switch = ""
+
+        sql = f"""
+        select * from __splink__df_concat_with_tf{sample_switch}
+        where {source_dataset_col} = '{df_l.templated_name}'
+        """
+        sqls.append(
+            {
+                "sql": sql,
+                "output_table_name": f"__splink__df_concat_with_tf{sample_switch}_left",
+            }
+        )
+
+        sql = f"""
+        select * from __splink__df_concat_with_tf{sample_switch}
+        where {source_dataset_col} = '{df_r.templated_name}'
+        """
+        sqls.append(
+            {
+                "sql": sql,
+                "output_table_name": f"__splink__df_concat_with_tf{sample_switch}_right",
+            }
+        )
 
     if type(linker).__name__ in ["SparkLinker"]:
         apply_salt = True
@@ -243,36 +291,6 @@ def block_using_rules_sql(linker: Linker):
             " will not be implemented for this run."
         )
 
-    if (
-        linker._two_dataset_link_only
-        and not linker._find_new_matches_mode
-        and not linker._compare_two_records_mode
-    ):
-        source_dataset_col = linker._source_dataset_column_name
-        # Need df_l to be the one with the lowest id to preeserve the property
-        # that the left dataset is the one with the lowest concatenated id
-        keys = linker._input_tables_dict.keys()
-        keys = list(sorted(keys))
-        df_l = linker._input_tables_dict[keys[0]]
-        df_r = linker._input_tables_dict[keys[1]]
-
-        if linker._train_u_using_random_sample_mode:
-            sample_switch = "_sample"
-        else:
-            sample_switch = ""
-
-        sql = f"""
-        select * from __splink__df_concat_with_tf{sample_switch}
-        where {source_dataset_col} = '{df_l.templated_name}'
-        """
-        linker._enqueue_sql(sql, f"__splink__df_concat_with_tf{sample_switch}_left")
-
-        sql = f"""
-        select * from __splink__df_concat_with_tf{sample_switch}
-        where {source_dataset_col} = '{df_r.templated_name}'
-        """
-        linker._enqueue_sql(sql, f"__splink__df_concat_with_tf{sample_switch}_right")
-
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'
     # you create a cartesian product, rather than having separate code
@@ -287,7 +305,7 @@ def block_using_rules_sql(linker: Linker):
     else:
         probability = ""
 
-    sqls = []
+    br_sqls = []
     for br in blocking_rules:
         # Apply our salted rules to resolve skew issues. If no salt was
         # selected to be added, then apply the initial blocking rule.
@@ -310,8 +328,10 @@ def block_using_rules_sql(linker: Linker):
             {where_condition}
             """
 
-            sqls.append(sql)
+            br_sqls.append(sql)
 
-    sql = "union all".join(sqls)
+    sql = "union all".join(br_sqls)
 
-    return sql
+    sqls.append({"sql": sql, "output_table_name": "__splink__df_blocked"})
+
+    return sqls

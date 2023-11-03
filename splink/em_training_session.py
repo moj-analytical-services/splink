@@ -4,7 +4,7 @@ import logging
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from .blocking import BlockingRule, block_using_rules_sql
+from .blocking import BlockingRule, block_using_rules_sqls
 from .charts import (
     m_u_parameters_interactive_history_chart,
     match_weights_interactive_history_chart,
@@ -151,8 +151,9 @@ class EMTrainingSession:
 
         nodes_with_tf = self._original_linker._initialise_df_concat_with_tf()
 
-        sql = block_using_rules_sql(self._training_linker)
-        self._training_linker._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._training_linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         # repartition after blocking only exists on the SparkLinker
         repartition_after_blocking = getattr(
