@@ -228,29 +228,29 @@ def block_using_rules_sqls(linker: Linker):
 
         # This also needs to work for training u
         if linker._train_u_using_random_sample_mode:
-            sample_switch = "_sample"
+            spl_switch = "_sample"
         else:
-            sample_switch = ""
+            spl_switch = ""
 
         sql = f"""
-        select * from __splink__df_concat_with_tf{sample_switch}
+        select * from __splink__df_concat_with_tf{spl_switch}
         where {source_dataset_col} = '{df_l.templated_name}'
         """
         sqls.append(
             {
                 "sql": sql,
-                "output_table_name": f"__splink__df_concat_with_tf{sample_switch}_left",
+                "output_table_name": f"__splink__df_concat_with_tf{spl_switch}_left",
             }
         )
 
         sql = f"""
-        select * from __splink__df_concat_with_tf{sample_switch}
+        select * from __splink__df_concat_with_tf{spl_switch}
         where {source_dataset_col} = '{df_r.templated_name}'
         """
         sqls.append(
             {
                 "sql": sql,
-                "output_table_name": f"__splink__df_concat_with_tf{sample_switch}_right",
+                "output_table_name": f"__splink__df_concat_with_tf{spl_switch}_right",
             }
         )
 
