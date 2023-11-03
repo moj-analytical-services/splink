@@ -151,7 +151,7 @@ class EMTrainingSession:
 
         nodes_with_tf = self._original_linker._initialise_df_concat_with_tf()
 
-        sqls = block_using_rules_sqls(self)
+        sqls = block_using_rules_sqls(self._training_linker)
         for sql in sqls:
             self._training_linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
