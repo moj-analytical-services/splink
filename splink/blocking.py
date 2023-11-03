@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from sqlglot import parse_one
 from sqlglot.expressions import Column, Join
@@ -11,6 +11,7 @@ from sqlglot.optimizer.eliminate_joins import join_condition
 from .input_column import InputColumn
 from .misc import ensure_is_list
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
+from .splink_dataframe import SplinkDataFrame
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ class BlockingRule:
         blocking_rule: BlockingRule | dict | str,
         salting_partitions=1,
         sqlglot_dialect: str = None,
-        arrays_to_explode: list = [],
+        array_columns_to_explode: list = [],
     ):
         if sqlglot_dialect:
             self._sql_dialect = sqlglot_dialect
@@ -54,8 +55,8 @@ class BlockingRule:
         self.preceding_rules = []
         self.sqlglot_dialect = sqlglot_dialect
         self.salting_partitions = salting_partitions
-        self.arrays_to_explode = arrays_to_explode
-        self.ids_to_compare = []
+        self.array_columns_to_explode: List[str] = array_columns_to_explode
+        self.exploded_id_pair_tables: List[SplinkDataFrame] = []
 
     @property
     def sql_dialect(self):
@@ -74,12 +75,20 @@ class BlockingRule:
         rules = ensure_is_list(rules)
         self.preceding_rules = rules
 
-    def exclude_from_following_rules_sql(self, linker: Linker):
+    def exclude_pairs_generated_by_this_rule_sql(self, linker: Linker):
+        """A SQL string specifying how to exclude the results
+        of THIS blocking rule from subseqent blocking statements,
+        so that subsequent statements do not produce duplicate pairs
+        """
+
         unique_id_column = linker._settings_obj._unique_id_column_name
 
-        if self.ids_to_compare:
+        if self.exploded_id_pair_tables:
             ids_to_compare_sql = " union all ".join(
-                [f"select * from {ids.physical_name}" for ids in self.ids_to_compare]
+                [
+                    f"select * from {ids.physical_name}"
+                    for ids in self.exploded_id_pair_tables
+                ]
             )
             # self.ids_to_compare[0].physical_name
 
@@ -97,11 +106,15 @@ class BlockingRule:
             # meaning these comparisons get lost
             return f"coalesce(({self.blocking_rule}),false)"
 
-    def and_not_preceding_rules_sql(self, linker: Linker):
+    def exclude_pairs_generated_by_all_preceding_rules_sql(self, linker: Linker):
+        """A SQL string that excludes the results of ALL previous blocking rules from
+        the pairwise comparisons generated.
+        """
         if not self.preceding_rules:
             return ""
         or_clauses = [
-            br.exclude_from_following_rules_sql(linker) for br in self.preceding_rules
+            br.exclude_pairs_generated_by_this_rule_sql(linker)
+            for br in self.preceding_rules
         ]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
@@ -176,8 +189,8 @@ class BlockingRule:
         if self.salting_partitions > 1 and self.sql_dialect == "spark":
             output["salting_partitions"] = self.salting_partitions
 
-        if self.arrays_to_explode:
-            output["arrays_to_explode"] = self.arrays_to_explode
+        if self.array_columns_to_explode:
+            output["arrays_to_explode"] = self.array_columns_to_explode
 
         return output
 
@@ -246,7 +259,7 @@ def materialise_exploded_id_tables(linker: Linker):
         salted_blocking_rules = br.salted_blocking_rules
         salt_counter = 0
         for salted_br in salted_blocking_rules:
-            if br.arrays_to_explode:
+            if br.array_columns_to_explode:
                 try:
                     input_dataframe = linker._intermediate_table_cache[
                         "__splink__df_concat_with_tf"
@@ -256,11 +269,11 @@ def materialise_exploded_id_tables(linker: Linker):
                 input_colnames = {col.name() for col in input_dataframe.columns}
                 arrays_to_explode_quoted = [
                     InputColumn(colname, sql_dialect=linker._sql_dialect).quote().name()
-                    for colname in br.arrays_to_explode
+                    for colname in br.array_columns_to_explode
                 ]
                 expl_sql = linker._gen_explode_sql(
                     "__splink__df_concat_with_tf",
-                    br.arrays_to_explode,
+                    br.array_columns_to_explode,
                     list(input_colnames.difference(arrays_to_explode_quoted)),
                 )
 
@@ -290,12 +303,12 @@ def materialise_exploded_id_tables(linker: Linker):
                     from __splink__df_concat_with_tf_unnested as l
                     inner join __splink__df_concat_with_tf_unnested as r
                     on ({salted_br})
-                    {where_condition} {br.and_not_preceding_rules_sql(linker)}""",
+                    {where_condition} {br.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}""",
                     f"ids_to_compare_blocking_rule_{br.match_key}{salt_id}",
                 )
 
                 ids_to_compare = linker._execute_sql_pipeline([input_dataframe])
-                br.ids_to_compare.append(ids_to_compare)
+                br.exploded_id_pair_tables.append(ids_to_compare)
                 salt_counter += 1
 
 
@@ -357,7 +370,7 @@ def block_using_rules_sql(linker: Linker):
 
         salt_counter = 0
         for salted_br in salted_blocking_rules:
-            if not br.arrays_to_explode:
+            if not br.array_columns_to_explode:
                 sql = f"""
                 select
                 {sql_select_expr}
@@ -368,10 +381,10 @@ def block_using_rules_sql(linker: Linker):
                 on
                 ({salted_br})
                 {where_condition}
-                {br.and_not_preceding_rules_sql(linker)}
+                {br.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}
                 """
             else:
-                ids_to_compare = br.ids_to_compare[salt_counter]
+                ids_to_compare = br.exploded_id_pair_tables[salt_counter]
                 unique_id_col = settings_obj._unique_id_column_name
                 sql = f"""
                     select
