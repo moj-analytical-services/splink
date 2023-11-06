@@ -185,7 +185,11 @@ class BlockingRule:
         else:
             return filter_condition.sql(self.sqlglot_dialect)
 
-    def exploded_id_pair_table_sql(self, linker: Linker, salted_br):
+    def marginal_exploded_id_pairs_table_sql(self, linker: Linker, salted_br):
+        """generates a table of the marginal id pairs from the exploded blocking rule
+        i.e. pairs are only created that match this blocking rule and NOT any of
+        the preceding blocking rules
+        """
         settings_obj = linker._settings_obj
         unique_id_col = settings_obj._unique_id_column_name
 
@@ -306,21 +310,18 @@ def materialise_exploded_id_tables(linker: Linker):
                     "__splink__df_concat_with_tf_unnested",
                 )
 
-                # ensure that table names are unique
+                if br.salting_partitions > 1:
+                    salt_id = f"{salt_counter}"
 
-                to_hash = (salted_br + linker._cache_uid).encode("utf-8")
-                salt_id = hashlib.sha256(to_hash).hexdigest()[:9]
-                salt_id = f"salt_{salt_counter}_{salt_id}"
+                base_name = "__splink__marginal_exploded_ids_blocking_rule"
+                table_name = f"{base_name}_{br.match_key}_salt_{salt_id}"
 
-                sql = br.exploded_id_pair_table_sql(linker, salted_br)
+                sql = br.marginal_exploded_id_pairs_table_sql(linker, salted_br)
 
-                linker._enqueue_sql(
-                    sql,
-                    f"ids_to_compare_blocking_rule_{br.match_key}{salt_id}",
-                )
+                linker._enqueue_sql(sql, table_name)
 
-                ids_to_compare = linker._execute_sql_pipeline([input_dataframe])
-                br.exploded_id_pair_tables.append(ids_to_compare)
+                marginal_ids_table = linker._execute_sql_pipeline([input_dataframe])
+                br.exploded_id_pair_tables.append(marginal_ids_table)
                 salt_counter += 1
 
 
