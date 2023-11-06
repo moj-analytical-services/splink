@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlglot import parse_one
 from sqlglot.expressions import Join, Column
 from sqlglot.optimizer.eliminate_joins import join_condition
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, List
 import logging
 
 from .misc import ensure_is_list
@@ -37,6 +37,27 @@ def blocking_rule_to_obj(br):
         return br
 
 
+class SaltedBlockingRuleSegment:
+    """If a BlockingRule is salted, it will generate a list of
+    SaltedBlockingRuleSegments.  If it's not salted, it will
+    produce just one
+    """
+
+    def __init__(
+        self,
+        parent_blocking_rule: BlockingRule,
+        blocking_rule_sql: str,
+        salt: int = None,
+    ):
+        self.parent_blocking_rule = parent_blocking_rule
+        self.blocking_rule_sql = blocking_rule_sql
+        self.salt = salt
+
+    @property
+    def is_salted(self):
+        return self.parent_blocking_rule.is_salted
+
+
 class BlockingRule:
     def __init__(
         self,
@@ -47,10 +68,10 @@ class BlockingRule:
         if sqlglot_dialect:
             self._sql_dialect = sqlglot_dialect
 
-        self.blocking_rule = blocking_rule
+        self.blocking_rule_sql = blocking_rule
         self.preceding_rules = []
         self.sqlglot_dialect = sqlglot_dialect
-        self.salting_partitions = salting_partitions
+        self.salting_partitions: int = salting_partitions
 
     @property
     def sql_dialect(self):
@@ -61,39 +82,92 @@ class BlockingRule:
         return len(self.preceding_rules)
 
     @property
-    def sql(self):
-        # Wrapper to reveal the underlying SQL
-        return self.blocking_rule
+    def is_salted(self):
+        # Salting does not work in some backends due to the operation of random
+        # number generators https://github.com/duckdb/duckdb/issues/3974
+        # Currently we've only tested it's working corerctly in spark
+
+        if self.salting_partitions > 1 and self.sql_dialect != "spark":
+            logger.warning(
+                "WARNING: Salting is not currently supported by this linker backend and"
+                " will not be implemented for this run."
+            )
+            return True
+
+        return False
 
     def add_preceding_rules(self, rules):
         rules = ensure_is_list(rules)
         self.preceding_rules = rules
 
-    @property
-    def and_not_preceding_rules_sql(self):
-        if not self.preceding_rules:
-            return ""
+    def exclude_pairs_generated_by_this_rule_sql(self, linker: Linker):
+        """A SQL string specifying how to exclude the results
+        of THIS blocking rule from subseqent blocking statements,
+        so that subsequent statements do not produce duplicate pairs
+        """
 
         # Note the coalesce function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
+        return f"coalesce(({self.blocking_rule_sql}),false)"
+
+    def exclude_pairs_generated_by_all_preceding_rules_sql(self, linker: Linker):
+        """A SQL string that excludes the results of ALL previous blocking rules from
+        the pairwise comparisons generated.
+        """
+        if not self.preceding_rules:
+            return ""
         or_clauses = [
-            f"coalesce(({r.blocking_rule}), false)" for r in self.preceding_rules
+            br.exclude_pairs_generated_by_this_rule_sql(linker)
+            for br in self.preceding_rules
         ]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
 
+    def create_pairwise_comparisons_sql(
+        self,
+        linker: Linker,
+        sql_select_expr: str,
+        salted_br: SaltedBlockingRuleSegment,
+        probability: str,
+        where_condition: str,
+    ):
+        sql = f"""
+            select
+            {sql_select_expr}
+            , '{self.match_key}' as match_key
+            {probability}
+            from {linker._input_tablename_l} as l
+            inner join {linker._input_tablename_r} as r
+            on
+            ({salted_br.blocking_rule_sql})
+            {where_condition}
+            {self.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}
+            """
+        return sql
+
     @property
-    def salted_blocking_rules(self):
-        if self.salting_partitions == 1:
-            yield self.blocking_rule
-        else:
+    def salted_blocking_rule_segments(self) -> List[SaltedBlockingRuleSegment]:
+        if self.is_salted:
             for n in range(self.salting_partitions):
-                yield f"{self.blocking_rule} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
+                rule_sql = (
+                    f"{self.blocking_rule_sql} and "
+                    f"ceiling(l.__splink_salt * {self.salting_partitions}) "
+                    f"= {n+1}"
+                )
+
+                br_seg = SaltedBlockingRuleSegment(self, rule_sql, n)
+
+                yield br_seg
+
+        else:
+            rule_sql = self.blocking_rule_sql
+            br_seg = SaltedBlockingRuleSegment(self, rule_sql, 1)
+            yield br_seg
 
     @property
     def _parsed_join_condition(self):
-        br = self.blocking_rule
+        br = self.blocking_rule_sql
         return parse_one("INNER JOIN r", into=Join).on(
             br, dialect=self.sqlglot_dialect
         )  # using sqlglot==11.4.1
@@ -147,17 +221,17 @@ class BlockingRule:
         "The minimal representation of the blocking rule"
         output = {}
 
-        output["blocking_rule"] = self.blocking_rule
+        output["blocking_rule"] = self.blocking_rule_sql
         output["sql_dialect"] = self.sql_dialect
 
-        if self.salting_partitions > 1 and self.sql_dialect == "spark":
+        if self.is_salted:
             output["salting_partitions"] = self.salting_partitions
 
         return output
 
     def _as_completed_dict(self):
-        if not self.salting_partitions > 1 and self.sql_dialect == "spark":
-            return self.blocking_rule
+        if not self.is_salted:
+            return self.blocking_rule_sql
         else:
             return self.as_dict()
 
@@ -166,7 +240,7 @@ class BlockingRule:
         return "Custom" if not hasattr(self, "_description") else self._description
 
     def _abbreviated_sql(self, cutoff=75):
-        sql = self.blocking_rule
+        sql = self.blocking_rule_sql
         return (sql[:cutoff] + "...") if len(sql) > cutoff else sql
 
     def __repr__(self):
@@ -306,29 +380,17 @@ def block_using_rules_sqls(linker: Linker):
         probability = ""
 
     br_sqls = []
-    for br in blocking_rules:
-        # Apply our salted rules to resolve skew issues. If no salt was
-        # selected to be added, then apply the initial blocking rule.
-        if apply_salt:
-            salted_blocking_rules = br.salted_blocking_rules
-        else:
-            salted_blocking_rules = [br.blocking_rule]
-
-        for salted_br in salted_blocking_rules:
-            sql = f"""
-            select
-            {sql_select_expr}
-            , '{br.match_key}' as match_key
-            {probability}
-            from {linker._input_tablename_l} as l
-            inner join {linker._input_tablename_r} as r
-            on
-            ({salted_br})
-            {br.and_not_preceding_rules_sql}
-            {where_condition}
-            """
-
-            br_sqls.append(sql)
+    salted_blocking_rules = (
+        salted_br
+        for br in blocking_rules
+        for salted_br in br.salted_blocking_rule_segments
+    )
+    for salted_br in salted_blocking_rules:
+        parent_br = salted_br.parent_blocking_rule
+        sql = parent_br.create_pairwise_comparisons_sql(
+            linker, sql_select_expr, salted_br, probability, where_condition
+        )
+        br_sqls.append(sql)
 
     sql = "union all".join(br_sqls)
 
