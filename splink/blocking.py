@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlglot import parse_one
 from sqlglot.expressions import Join, Column
 from sqlglot.optimizer.eliminate_joins import join_condition
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, List
 import logging
 
 from .misc import ensure_is_list
@@ -48,7 +48,7 @@ class BlockingRule:
             self._sql_dialect = sqlglot_dialect
 
         self.blocking_rule_sql = blocking_rule_sql
-        self.preceding_rules = []
+        self.preceding_rules: List[BlockingRule] = []
         self.sqlglot_dialect = sqlglot_dialect
         self.salting_partitions = salting_partitions
 
@@ -73,7 +73,7 @@ class BlockingRule:
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
         or_clauses = [
-            f"coalesce(({r.blocking_rule}), false)" for r in self.preceding_rules
+            f"coalesce(({r.blocking_rule_sql}), false)" for r in self.preceding_rules
         ]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
