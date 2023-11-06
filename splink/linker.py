@@ -1754,6 +1754,10 @@ class Linker:
             self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         predictions = self._execute_sql_pipeline(input_dataframes)
+
+        for br in self._settings_obj._blocking_rules_to_generate_predictions:
+            br.drop_materialised_id_pairs_dataframes()
+
         self._predict_warning()
         return predictions
 

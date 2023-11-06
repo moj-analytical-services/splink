@@ -222,6 +222,10 @@ class BlockingRule:
 
         return sql
 
+    def drop_materialised_id_pairs_dataframes(self):
+        for df in self.exploded_id_pair_tables:
+            df.drop_table_from_database_and_remove_from_cache()
+
     def as_dict(self):
         "The minimal representation of the blocking rule"
         output = {}
@@ -287,12 +291,7 @@ def materialise_exploded_id_tables(linker: Linker):
         salt_counter = 0
         for salted_br in br.salted_blocking_rules_as_sql_strings:
             if br.array_columns_to_explode:
-                try:
-                    input_dataframe = linker._intermediate_table_cache[
-                        "__splink__df_concat_with_tf"
-                    ]
-                except KeyError:
-                    input_dataframe = linker._initialise_df_concat_with_tf()
+                input_dataframe = linker._initialise_df_concat_with_tf()
 
                 input_colnames = {col.name() for col in input_dataframe.columns}
                 arrays_to_explode_quoted = [
@@ -310,11 +309,12 @@ def materialise_exploded_id_tables(linker: Linker):
                     "__splink__df_concat_with_tf_unnested",
                 )
 
+                salt_name = ""
                 if br.salting_partitions > 1:
-                    salt_id = f"{salt_counter}"
+                    salt_name = f"_salt_{salt_counter}"
 
                 base_name = "__splink__marginal_exploded_ids_blocking_rule"
-                table_name = f"{base_name}_{br.match_key}_salt_{salt_id}"
+                table_name = f"{base_name}_mk_{br.match_key}{salt_name}"
 
                 sql = br.marginal_exploded_id_pairs_table_sql(linker, salted_br)
 
