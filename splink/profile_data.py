@@ -302,6 +302,6 @@ def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
         outer_spec["vconcat"] = inner_charts
 
         return altair_or_json(outer_spec)
-    
+
     else:
-        return(None)
+        return None
