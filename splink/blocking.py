@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import logging
 from typing import TYPE_CHECKING, List
 
@@ -10,8 +9,8 @@ from sqlglot.optimizer.eliminate_joins import join_condition
 
 from .input_column import InputColumn
 from .misc import ensure_is_list
-from .unique_id_concat import _composite_unique_id_from_nodes_sql
 from .splink_dataframe import SplinkDataFrame
+from .unique_id_concat import _composite_unique_id_from_nodes_sql
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +102,28 @@ class BlockingRule:
         ]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
+
+    def create_pairwise_comparisons_sql(
+        self,
+        linker: Linker,
+        sql_select_expr: str,
+        salted_br: SaltedBlockingRuleSegment,
+        probability: str,
+        where_condition: str,
+    ):
+        sql = f"""
+            select
+            {sql_select_expr}
+            , '{self.match_key}' as match_key
+            {probability}
+            from {linker._input_tablename_l} as l
+            inner join {linker._input_tablename_r} as r
+            on
+            ({salted_br.blocking_rule_sql})
+            {where_condition}
+            {self.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}
+            """
+        return sql
 
     @property
     def salted_blocking_rules(self) -> List[SaltedBlockingRuleSegment]:
@@ -299,6 +320,29 @@ class ExplodingBlockingRule(BlockingRule):
         )
         """
 
+    def create_pairwise_comparisons_sql(
+        self,
+        linker: Linker,
+        sql_select_expr: str,
+        salted_br: SaltedBlockingRuleSegment,
+        probability: str,
+        where_condition: str,
+    ):
+        exploded_id_pair_table = salted_br.exploded_id_pair_table
+        unique_id_col = linker._settings_obj._unique_id_column_name
+        sql = f"""
+            select
+                {sql_select_expr},
+                '{self.match_key}' as match_key
+                {probability}
+            from {exploded_id_pair_table.physical_name} as pairs
+            left join {linker._input_tablename_l} as l
+                on pairs.{unique_id_col}_l=l.{unique_id_col}
+            left join {linker._input_tablename_r} as r
+                on pairs.{unique_id_col}_r=r.{unique_id_col}
+        """
+        return sql
+
 
 class SaltedBlockingRuleSegment:
     def __init__(
@@ -441,9 +485,9 @@ def block_using_rules_sqls(linker: Linker):
         )
 
     if type(linker).__name__ in ["SparkLinker"]:
-        apply_salt = True
+        pass
     else:
-        apply_salt = False
+        pass
 
     settings_obj = linker._settings_obj
 
@@ -491,33 +535,9 @@ def block_using_rules_sqls(linker: Linker):
     )
     for salted_br in salted_blocking_rules:
         parent_br = salted_br.parent_blocking_rule
-        if not isinstance(parent_br, ExplodingBlockingRule):
-            sql = f"""
-            select
-            {sql_select_expr}
-            , '{parent_br.match_key}' as match_key
-            {probability}
-            from {linker._input_tablename_l} as l
-            inner join {linker._input_tablename_r} as r
-            on
-            ({salted_br.blocking_rule_sql})
-            {where_condition}
-            {parent_br.exclude_pairs_generated_by_all_preceding_rules_sql(linker)}
-            """
-        else:
-            ids_to_compare = salted_br.exploded_id_pair_table
-            unique_id_col = settings_obj._unique_id_column_name
-            sql = f"""
-                select
-                    {sql_select_expr},
-                    '{parent_br.match_key}' as match_key
-                    {probability}
-                from {ids_to_compare.physical_name} as pairs
-                left join {linker._input_tablename_l} as l
-                    on pairs.{unique_id_col}_l=l.{unique_id_col}
-                left join {linker._input_tablename_r} as r
-                    on pairs.{unique_id_col}_r=r.{unique_id_col}
-            """
+        sql = parent_br.create_pairwise_comparisons_sql(
+            linker, sql_select_expr, salted_br, probability, where_condition
+        )
         br_sqls.append(sql)
 
     sql = "union all".join(br_sqls)
