@@ -3,6 +3,7 @@ from copy import deepcopy
 from .block_from_labels import block_from_labels
 from .blocking import BlockingRule
 from .comparison_vector_values import compute_comparison_vector_values_sql
+from .linker import Linker
 from .predict import predict_from_comparison_vectors_sqls
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
 
@@ -143,10 +144,11 @@ def truth_space_table_from_labels_with_predictions_sqls(
     return sqls
 
 
-def _select_found_by_blocking_rules(linker):
+def _select_found_by_blocking_rules(linker: Linker):
     brs = linker._settings_obj._blocking_rules_to_generate_predictions
+
     if brs:
-        brs = [move_l_r_table_prefix_to_column_suffix(b.blocking_rule) for b in brs]
+        brs = [move_l_r_table_prefix_to_column_suffix(b.blocking_rule_sql) for b in brs]
         brs = [f"(coalesce({b}, false))" for b in brs]
         brs = " OR ".join(brs)
         br_col = f" ({brs}) "
