@@ -48,7 +48,6 @@ class BlockingRule:
         blocking_rule: BlockingRule | dict | str,
         salting_partitions=1,
         sqlglot_dialect: str = None,
-        array_columns_to_explode: list = [],
     ):
         if sqlglot_dialect:
             self._sql_dialect = sqlglot_dialect
@@ -126,7 +125,7 @@ class BlockingRule:
         return sql
 
     @property
-    def salted_blocking_rules(self) -> List[SaltedBlockingRuleSegment]:
+    def salted_blocking_rule_segments(self) -> List[SaltedBlockingRuleSegment]:
         """A list of sql strings"""
 
         for n in range(self.salting_partitions):
@@ -139,17 +138,17 @@ class BlockingRule:
             else:
                 rule_sql = self.blocking_rule_sql
 
-            br = SaltedBlockingRuleSegment(self, rule_sql, n)
+            br_seg = SaltedBlockingRuleSegment(self, rule_sql, n)
 
             # Exploding blocking rules may have a materialised exploded_id_pair_table
             # If so, we want to associated it with the SaltedBlockingRuleSegment
             if isinstance(self, ExplodingBlockingRule):
                 try:
-                    br.exploded_id_pair_table = self.exploded_id_pair_tables[n]
+                    br_seg.exploded_id_pair_table = self.exploded_id_pair_tables[n]
                 except IndexError:
                     pass
 
-            yield br
+            yield br_seg
 
     @property
     def _parsed_join_condition(self):
@@ -388,7 +387,9 @@ def materialise_exploded_id_tables(linker: Linker):
         br for br in blocking_rules if isinstance(br, ExplodingBlockingRule)
     ]
     salted_exploded_blocking_rules = (
-        salted_br for br in blocking_rules for salted_br in br.salted_blocking_rules
+        salted_br
+        for br in blocking_rules
+        for salted_br in br.salted_blocking_rule_segments
     )
 
     for salted_br in salted_exploded_blocking_rules:
@@ -531,7 +532,9 @@ def block_using_rules_sqls(linker: Linker):
 
     br_sqls = []
     salted_blocking_rules = (
-        salted_br for br in blocking_rules for salted_br in br.salted_blocking_rules
+        salted_br
+        for br in blocking_rules
+        for salted_br in br.salted_blocking_rule_segments
     )
     for salted_br in salted_blocking_rules:
         parent_br = salted_br.parent_blocking_rule
