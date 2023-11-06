@@ -359,8 +359,6 @@ def materialise_exploded_id_tables(linker: Linker):
             parent_br.exploded_id_pair_tables.append(marginal_ids_table)
 
 
-def block_using_rules_sql(linker: Linker):
-# flake8: noqa: C901
 def block_using_rules_sqls(linker: Linker):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
@@ -463,7 +461,7 @@ def block_using_rules_sqls(linker: Linker):
     else:
         probability = ""
 
-    sqls = []
+    br_sqls = []
     salted_blocking_rules = (
         salted_br for br in blocking_rules for salted_br in br.salted_blocking_rules
     )
@@ -496,37 +494,9 @@ def block_using_rules_sqls(linker: Linker):
                 left join {linker._input_tablename_r} as r
                     on pairs.{unique_id_col}_r=r.{unique_id_col}
             """
-        sqls.append(sql)
+        br_sqls.append(sql)
 
-    if (
-        linker._two_dataset_link_only
-        and not linker._find_new_matches_mode
-        and not linker._compare_two_records_mode
-    ):
-        source_dataset_col = linker._source_dataset_column_name
-        # Need df_l to be the one with the lowest id to preeserve the property
-        # that the left dataset is the one with the lowest concatenated id
-        keys = linker._input_tables_dict.keys()
-        keys = list(sorted(keys))
-        df_l = linker._input_tables_dict[keys[0]]
-        df_r = linker._input_tables_dict[keys[1]]
+    sql = "union all".join(br_sqls)
 
-        if linker._train_u_using_random_sample_mode:
-            sample_switch = "_sample"
-        else:
-            sample_switch = ""
-
-        sql = f"""
-        select * from __splink__df_concat_with_tf{sample_switch}
-        where {source_dataset_col} = '{df_l.templated_name}'
-        """
-        linker._enqueue_sql(sql, f"__splink__df_concat_with_tf{sample_switch}_left")
-
-        sql = f"""
-        select * from __splink__df_concat_with_tf{sample_switch}
-        where {source_dataset_col} = '{df_r.templated_name}'
-        """
-        linker._enqueue_sql(sql, f"__splink__df_concat_with_tf{sample_switch}_right")
-
-    sql = "union all".join(sqls)
-    return sql
+    sqls.append({"sql": sql, "output_table_name": "__splink__df_blocked"})
+    return sqls
