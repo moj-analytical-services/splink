@@ -5,6 +5,11 @@
 ::cards::
 [
   {
+    "title": "`completeness chart`",
+    "image": "./img/completeness_chart.png",
+    "url": "./completeness_chart.ipynb"
+  },
+  {
     "title": "`missingness chart`",
     "image": "./img/missingness_chart.png",
     "url": "./missingness_chart.ipynb"
@@ -164,6 +169,11 @@
     "title": "`comparison viewer dashboard`",
     "image": "./img/comparison_viewer_dashboard.png",
     "url": "./comparison_viewer_dashboard.ipynb"
+  },
+  {
+    "title": "`completeness chart`",
+    "image": "./img/completeness_chart.png",
+    "url": "./completeness_chart.ipynb"
   },
   {
     "title": "`cumulative num comparisons from blocking rules chart`",
