@@ -2037,14 +2037,14 @@ class Linker:
         into groups of connected record using the connected components graph clustering
         algorithm
 
-        Records with an estimated `match_probability` above
+        Records with an estimated `match_probability` at or above
         `threshold_match_probability` are considered to be a match (i.e. they represent
         the same entity).
 
         Args:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
             threshold_match_probability (float): Filter the pairwise match predictions
-                to include only pairwise comparisons with a match_probability above this
+                to include only pairwise comparisons with a match_probability at or above this
                 threshold. This dataframe is then fed into the clustering
                 algorithm.
             pairwise_formatting (bool): Whether to output the pairwise match predictions
