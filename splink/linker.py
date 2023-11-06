@@ -33,6 +33,7 @@ from .analyse_blocking import (
 )
 from .blocking import (
     BlockingRule,
+    ExplodingBlockingRule,
     block_using_rules_sqls,
     blocking_rule_to_obj,
     materialise_exploded_id_tables,
@@ -1758,7 +1759,8 @@ class Linker:
         predictions = self._execute_sql_pipeline(input_dataframes)
 
         for br in self._settings_obj._blocking_rules_to_generate_predictions:
-            br.drop_materialised_id_pairs_dataframes()
+            if isinstance(br, ExplodingBlockingRule):
+                br.drop_materialised_id_pairs_dataframes()
 
         self._predict_warning()
         return predictions

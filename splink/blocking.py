@@ -31,9 +31,12 @@ def blocking_rule_to_obj(br):
         salting_partitions = br.get("salting_partitions", 1)
         arrays_to_explode = br.get("arrays_to_explode", list())
 
-        return BlockingRule(
-            blocking_rule, salting_partitions, sqlglot_dialect, arrays_to_explode
-        )
+        if arrays_to_explode:
+            return ExplodingBlockingRule(
+                blocking_rule, salting_partitions, sqlglot_dialect, arrays_to_explode
+            )
+
+        return BlockingRule(blocking_rule, salting_partitions, sqlglot_dialect)
 
     else:
         br = BlockingRule(br)
@@ -55,8 +58,6 @@ class BlockingRule:
         self.preceding_rules = []
         self.sqlglot_dialect = sqlglot_dialect
         self.salting_partitions: int = salting_partitions
-        self.array_columns_to_explode: List[str] = array_columns_to_explode
-        self.exploded_id_pair_tables: List[SplinkDataFrame] = []
 
     @property
     def sql_dialect(self):
@@ -85,30 +86,10 @@ class BlockingRule:
         so that subsequent statements do not produce duplicate pairs
         """
 
-        unique_id_column = linker._settings_obj._unique_id_column_name
-
-        if self.exploded_id_pair_tables:
-            ids_to_compare_sql = " union all ".join(
-                [
-                    f"select * from {ids.physical_name}"
-                    for ids in self.exploded_id_pair_tables
-                ]
-            )
-            # self.ids_to_compare[0].physical_name
-
-            return f"""EXISTS (
-                select 1 from ({ids_to_compare_sql}) as ids_to_compare
-                where (
-                    l.{unique_id_column} = ids_to_compare.{unique_id_column}_l and
-                    r.{unique_id_column} = ids_to_compare.{unique_id_column}_r
-                )
-            )
-            """
-        else:
-            # Note the coalesce function is important here - otherwise
-            # you filter out any records with nulls in the previous rules
-            # meaning these comparisons get lost
-            return f"coalesce(({self.blocking_rule_sql}),false)"
+        # Note the coalesce function is important here - otherwise
+        # you filter out any records with nulls in the previous rules
+        # meaning these comparisons get lost
+        return f"coalesce(({self.blocking_rule_sql}),false)"
 
     def exclude_pairs_generated_by_all_preceding_rules_sql(self, linker: Linker):
         """A SQL string that excludes the results of ALL previous blocking rules from
@@ -139,10 +120,13 @@ class BlockingRule:
 
             br = SaltedBlockingRuleSegment(self, rule_sql, n)
 
-            try:  # If it has a materialised id pairs table, grab it
-                br.exploded_id_pair_table = self.exploded_id_pair_tables[n]
-            except IndexError:
-                pass
+            # Exploding blocking rules may have a materialised exploded_id_pair_table
+            # If so, we want to associated it with the SaltedBlockingRuleSegment
+            if isinstance(self, ExplodingBlockingRule):
+                try:
+                    br.exploded_id_pair_table = self.exploded_id_pair_tables[n]
+                except IndexError:
+                    pass
 
             yield br
 
@@ -198,6 +182,56 @@ class BlockingRule:
         else:
             return filter_condition.sql(self.sqlglot_dialect)
 
+    def as_dict(self):
+        "The minimal representation of the blocking rule"
+        output = {}
+
+        output["blocking_rule"] = self.blocking_rule_sql
+        output["sql_dialect"] = self.sql_dialect
+
+        if self.salting_partitions > 1 and self.sql_dialect == "spark":
+            output["salting_partitions"] = self.salting_partitions
+
+        if self.array_columns_to_explode:
+            output["arrays_to_explode"] = self.array_columns_to_explode
+
+        return output
+
+    def _as_completed_dict(self):
+        if not self.salting_partitions > 1 and self.sql_dialect == "spark":
+            return self.blocking_rule_sql
+        else:
+            return self.as_dict()
+
+    @property
+    def descr(self):
+        return "Custom" if not hasattr(self, "_description") else self._description
+
+    def _abbreviated_sql(self, cutoff=75):
+        sql = self.blocking_rule_sql
+        return (sql[:cutoff] + "...") if len(sql) > cutoff else sql
+
+    def __repr__(self):
+        return f"<{self._human_readable_succinct}>"
+
+    @property
+    def _human_readable_succinct(self):
+        sql = self._abbreviated_sql(75)
+        return f"{self.descr} blocking rule using SQL: {sql}"
+
+
+class ExplodingBlockingRule(BlockingRule):
+    def __init__(
+        self,
+        blocking_rule: BlockingRule | dict | str,
+        salting_partitions=1,
+        sqlglot_dialect: str = None,
+        array_columns_to_explode: list = [],
+    ):
+        super().__init__(blocking_rule, salting_partitions, sqlglot_dialect)
+        self.array_columns_to_explode: List[str] = array_columns_to_explode
+        self.exploded_id_pair_tables: List[SplinkDataFrame] = []
+
     def marginal_exploded_id_pairs_table_sql(
         self, linker: Linker, salted_br: BlockingRule
     ):
@@ -241,42 +275,29 @@ class BlockingRule:
         for df in self.exploded_id_pair_tables:
             df.drop_table_from_database_and_remove_from_cache()
 
-    def as_dict(self):
-        "The minimal representation of the blocking rule"
-        output = {}
+    def exclude_pairs_generated_by_this_rule_sql(self, linker: Linker):
+        """A SQL string specifying how to exclude the results
+        of THIS blocking rule from subseqent blocking statements,
+        so that subsequent statements do not produce duplicate pairs
+        """
 
-        output["blocking_rule"] = self.blocking_rule_sql
-        output["sql_dialect"] = self.sql_dialect
+        unique_id_column = linker._settings_obj._unique_id_column_name
 
-        if self.salting_partitions > 1 and self.sql_dialect == "spark":
-            output["salting_partitions"] = self.salting_partitions
+        ids_to_compare_sql = " union all ".join(
+            [
+                f"select * from {ids.physical_name}"
+                for ids in self.exploded_id_pair_tables
+            ]
+        )
 
-        if self.array_columns_to_explode:
-            output["arrays_to_explode"] = self.array_columns_to_explode
-
-        return output
-
-    def _as_completed_dict(self):
-        if not self.salting_partitions > 1 and self.sql_dialect == "spark":
-            return self.blocking_rule_sql
-        else:
-            return self.as_dict()
-
-    @property
-    def descr(self):
-        return "Custom" if not hasattr(self, "_description") else self._description
-
-    def _abbreviated_sql(self, cutoff=75):
-        sql = self.blocking_rule_sql
-        return (sql[:cutoff] + "...") if len(sql) > cutoff else sql
-
-    def __repr__(self):
-        return f"<{self._human_readable_succinct}>"
-
-    @property
-    def _human_readable_succinct(self):
-        sql = self._abbreviated_sql(75)
-        return f"{self.descr} blocking rule using SQL: {sql}"
+        return f"""EXISTS (
+            select 1 from ({ids_to_compare_sql}) as ids_to_compare
+            where (
+                l.{unique_id_column} = ids_to_compare.{unique_id_column}_l and
+                r.{unique_id_column} = ids_to_compare.{unique_id_column}_r
+            )
+        )
+        """
 
 
 class SaltedBlockingRuleSegment:
@@ -319,44 +340,47 @@ def materialise_exploded_id_tables(linker: Linker):
     settings_obj = linker._settings_obj
 
     blocking_rules = settings_obj._blocking_rules_to_generate_predictions
-    salted_blocking_rules = (
+    blocking_rules = [
+        br for br in blocking_rules if isinstance(br, ExplodingBlockingRule)
+    ]
+    salted_exploded_blocking_rules = (
         salted_br for br in blocking_rules for salted_br in br.salted_blocking_rules
     )
 
-    for salted_br in salted_blocking_rules:
+    for salted_br in salted_exploded_blocking_rules:
         parent_br = salted_br.parent_blocking_rule
-        if parent_br.array_columns_to_explode:
-            input_dataframe = linker._initialise_df_concat_with_tf()
 
-            input_colnames = {col.name() for col in input_dataframe.columns}
-            arrays_to_explode_quoted = [
-                InputColumn(colname, sql_dialect=linker._sql_dialect).quote().name()
-                for colname in parent_br.array_columns_to_explode
-            ]
-            expl_sql = linker._gen_explode_sql(
-                "__splink__df_concat_with_tf",
-                parent_br.array_columns_to_explode,
-                list(input_colnames.difference(arrays_to_explode_quoted)),
-            )
+        input_dataframe = linker._initialise_df_concat_with_tf()
 
-            linker._enqueue_sql(
-                expl_sql,
-                "__splink__df_concat_with_tf_unnested",
-            )
+        input_colnames = {col.name() for col in input_dataframe.columns}
+        arrays_to_explode_quoted = [
+            InputColumn(colname, sql_dialect=linker._sql_dialect).quote().name()
+            for colname in parent_br.array_columns_to_explode
+        ]
+        expl_sql = linker._gen_explode_sql(
+            "__splink__df_concat_with_tf",
+            parent_br.array_columns_to_explode,
+            list(input_colnames.difference(arrays_to_explode_quoted)),
+        )
 
-            salt_name = ""
-            if salted_br.is_salted:
-                salt_name = f"_salt_{salted_br.salt}"
+        linker._enqueue_sql(
+            expl_sql,
+            "__splink__df_concat_with_tf_unnested",
+        )
 
-            base_name = "__splink__marginal_exploded_ids_blocking_rule"
-            table_name = f"{base_name}_mk_{parent_br.match_key}{salt_name}"
+        salt_name = ""
+        if salted_br.is_salted:
+            salt_name = f"_salt_{salted_br.salt}"
 
-            sql = parent_br.marginal_exploded_id_pairs_table_sql(linker, salted_br)
+        base_name = "__splink__marginal_exploded_ids_blocking_rule"
+        table_name = f"{base_name}_mk_{parent_br.match_key}{salt_name}"
 
-            linker._enqueue_sql(sql, table_name)
+        sql = parent_br.marginal_exploded_id_pairs_table_sql(linker, salted_br)
 
-            marginal_ids_table = linker._execute_sql_pipeline([input_dataframe])
-            parent_br.exploded_id_pair_tables.append(marginal_ids_table)
+        linker._enqueue_sql(sql, table_name)
+
+        marginal_ids_table = linker._execute_sql_pipeline([input_dataframe])
+        parent_br.exploded_id_pair_tables.append(marginal_ids_table)
 
 
 def block_using_rules_sqls(linker: Linker):
@@ -467,7 +491,7 @@ def block_using_rules_sqls(linker: Linker):
     )
     for salted_br in salted_blocking_rules:
         parent_br = salted_br.parent_blocking_rule
-        if not parent_br.array_columns_to_explode:
+        if not isinstance(parent_br, ExplodingBlockingRule):
             sql = f"""
             select
             {sql_select_expr}
