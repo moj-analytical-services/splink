@@ -11,7 +11,7 @@ def binary_composition_internals(clause, comp_fun, brl, dialect):
     # Test what happens when only one value is fed
     # It should just report the regular outputs of our comparison level func
     level = comp_fun(brl.exact_match_rule("tom"))
-    assert level.blocking_rule == f"l.{q}tom{q} = r.{q}tom{q}"
+    assert level.blocking_rule_sql == f"l.{q}tom{q} = r.{q}tom{q}"
 
     # Exact match and null level composition
     level = comp_fun(
@@ -19,12 +19,12 @@ def binary_composition_internals(clause, comp_fun, brl, dialect):
         brl.exact_match_rule("surname"),
     )
     exact_match_sql = f"(l.{q}first_name{q} = r.{q}first_name{q}) {clause} (l.{q}surname{q} = r.{q}surname{q})"  # noqa: E501
-    assert level.blocking_rule == exact_match_sql
+    assert level.blocking_rule_sql == exact_match_sql
     # brl.not_(or_(...)) composition
     level = brl.not_(
         comp_fun(brl.exact_match_rule("first_name"), brl.exact_match_rule("surname")),
     )
-    assert level.blocking_rule == f"NOT ({exact_match_sql})"
+    assert level.blocking_rule_sql == f"NOT ({exact_match_sql})"
 
     # Check salting outputs
     # salting included in the composition function
