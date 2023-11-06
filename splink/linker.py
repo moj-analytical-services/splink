@@ -2044,8 +2044,8 @@ class Linker:
         Args:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
             threshold_match_probability (float): Filter the pairwise match predictions
-                to include only pairwise comparisons with a match_probability at or above this
-                threshold. This dataframe is then fed into the clustering
+                to include only pairwise comparisons with a match_probability at or
+                above this threshold. This dataframe is then fed into the clustering
                 algorithm.
             pairwise_formatting (bool): Whether to output the pairwise match predictions
                 from linker.predict() with cluster IDs.
