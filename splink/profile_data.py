@@ -295,8 +295,13 @@ def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
                 percentile_rows, top_n_rows, bottom_n_rows, expression
             )
             inner_charts.append(inner_chart)
-    outer_spec = deepcopy(_outer_chart_spec_freq)
 
-    outer_spec["vconcat"] = inner_charts
+    if inner_charts != []:
 
-    return altair_or_json(outer_spec)
+        outer_spec = deepcopy(_outer_chart_spec_freq)
+        outer_spec["vconcat"] = inner_charts
+
+        return altair_or_json(outer_spec)
+    
+    else:
+        return(None)
