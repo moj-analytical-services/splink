@@ -87,12 +87,14 @@ class BlockingRule:
         # number generators https://github.com/duckdb/duckdb/issues/3974
         # Currently we've only tested it's working corerctly in spark
 
-        if self.salting_partitions > 1 and self.sql_dialect != "spark":
+        if self.salting_partitions > 1 and self.sql_dialect == "spark":
+            return True
+
+        elif self.salting_partitions > 1:
             logger.warning(
                 "WARNING: Salting is not currently supported by this linker backend and"
                 " will not be implemented for this run."
             )
-            return True
 
         return False
 
@@ -162,7 +164,7 @@ class BlockingRule:
 
         else:
             rule_sql = self.blocking_rule_sql
-            br_seg = SaltedBlockingRuleSegment(self, rule_sql, 1)
+            br_seg = SaltedBlockingRuleSegment(self, rule_sql)
             yield br_seg
 
     @property
