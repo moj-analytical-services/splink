@@ -64,7 +64,7 @@ class BlockingRule:
         rules = ensure_is_list(rules)
         self.preceding_rules = rules
 
-    def exclude_pairs_generated_by_this_rule_sql(self, linker: Linker):
+    def exclude_pairs_generated_by_this_rule_sql(self):
         """A SQL string specifying how to exclude the results
         of THIS blocking rule from subseqent blocking statements,
         so that subsequent statements do not produce duplicate pairs
