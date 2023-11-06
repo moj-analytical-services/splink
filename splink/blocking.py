@@ -64,16 +64,26 @@ class BlockingRule:
         rules = ensure_is_list(rules)
         self.preceding_rules = rules
 
-    @property
-    def and_not_preceding_rules_sql(self):
-        if not self.preceding_rules:
-            return ""
+    def exclude_pairs_generated_by_this_rule_sql(self, linker: Linker):
+        """A SQL string specifying how to exclude the results
+        of THIS blocking rule from subseqent blocking statements,
+        so that subsequent statements do not produce duplicate pairs
+        """
 
         # Note the coalesce function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
+        return f"coalesce(({self.blocking_rule_sql}),false)"
+
+    @property
+    def exclude_pairs_generated_by_all_preceding_rules_sql(self):
+        """A SQL string that excludes the results of ALL previous blocking rules from
+        the pairwise comparisons generated.
+        """
+        if not self.preceding_rules:
+            return ""
         or_clauses = [
-            f"coalesce(({r.blocking_rule_sql}), false)" for r in self.preceding_rules
+            br.exclude_pairs_generated_by_this_rule_sql() for br in self.preceding_rules
         ]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
@@ -319,7 +329,7 @@ def block_using_rules_sqls(linker: Linker):
             inner join {linker._input_tablename_r} as r
             on
             ({salted_br})
-            {br.and_not_preceding_rules_sql}
+            {br.exclude_pairs_generated_by_all_preceding_rules_sql}
             {where_condition}
             """
 
