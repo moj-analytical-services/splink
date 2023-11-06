@@ -1,9 +1,9 @@
 from copy import deepcopy
 from typing import TYPE_CHECKING
+
 from .block_from_labels import block_from_labels
 from .blocking import BlockingRule
 from .comparison_vector_values import compute_comparison_vector_values_sql
-
 from .predict import predict_from_comparison_vectors_sqls
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
 
