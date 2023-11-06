@@ -40,14 +40,14 @@ def blocking_rule_to_obj(br):
 class BlockingRule:
     def __init__(
         self,
-        blocking_rule: BlockingRule | dict | str,
+        blocking_rule_sql: BlockingRule | dict | str,
         salting_partitions=1,
         sqlglot_dialect: str = None,
     ):
         if sqlglot_dialect:
             self._sql_dialect = sqlglot_dialect
 
-        self.blocking_rule = blocking_rule
+        self.blocking_rule_sql = blocking_rule_sql
         self.preceding_rules = []
         self.sqlglot_dialect = sqlglot_dialect
         self.salting_partitions = salting_partitions
@@ -59,11 +59,6 @@ class BlockingRule:
     @property
     def match_key(self):
         return len(self.preceding_rules)
-
-    @property
-    def sql(self):
-        # Wrapper to reveal the underlying SQL
-        return self.blocking_rule
 
     def add_preceding_rules(self, rules):
         rules = ensure_is_list(rules)
@@ -86,14 +81,14 @@ class BlockingRule:
     @property
     def salted_blocking_rules(self):
         if self.salting_partitions == 1:
-            yield self.blocking_rule
+            yield self.blocking_rule_sql
         else:
             for n in range(self.salting_partitions):
-                yield f"{self.blocking_rule} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
+                yield f"{self.blocking_rule_sql} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
 
     @property
     def _parsed_join_condition(self):
-        br = self.blocking_rule
+        br = self.blocking_rule_sql
         return parse_one("INNER JOIN r", into=Join).on(
             br, dialect=self.sqlglot_dialect
         )  # using sqlglot==11.4.1
@@ -147,7 +142,7 @@ class BlockingRule:
         "The minimal representation of the blocking rule"
         output = {}
 
-        output["blocking_rule"] = self.blocking_rule
+        output["blocking_rule"] = self.blocking_rule_sql
         output["sql_dialect"] = self.sql_dialect
 
         if self.salting_partitions > 1 and self.sql_dialect == "spark":
@@ -157,7 +152,7 @@ class BlockingRule:
 
     def _as_completed_dict(self):
         if not self.salting_partitions > 1 and self.sql_dialect == "spark":
-            return self.blocking_rule
+            return self.blocking_rule_sql
         else:
             return self.as_dict()
 
@@ -166,7 +161,7 @@ class BlockingRule:
         return "Custom" if not hasattr(self, "_description") else self._description
 
     def _abbreviated_sql(self, cutoff=75):
-        sql = self.blocking_rule
+        sql = self.blocking_rule_sql
         return (sql[:cutoff] + "...") if len(sql) > cutoff else sql
 
     def __repr__(self):
@@ -312,7 +307,7 @@ def block_using_rules_sqls(linker: Linker):
         if apply_salt:
             salted_blocking_rules = br.salted_blocking_rules
         else:
-            salted_blocking_rules = [br.blocking_rule]
+            salted_blocking_rules = [br.blocking_rule_sql]
 
         for salted_br in salted_blocking_rules:
             sql = f"""

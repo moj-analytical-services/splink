@@ -135,7 +135,7 @@ class EMTrainingSession:
         else:
             mu = "m and u probabilities"
 
-        blocking_rule = self._blocking_rule_for_training.blocking_rule
+        blocking_rule = self._blocking_rule_for_training.blocking_rule_sql
 
         logger.info(
             f"Estimating the {mu} of the model by blocking on:\n"
@@ -176,7 +176,7 @@ class EMTrainingSession:
         # check that the blocking rule actually generates _some_ record pairs,
         # if not give the user a helpful message
         if not cvv.as_record_dict(limit=1):
-            br_sql = f"`{self._blocking_rule_for_training.blocking_rule}`"
+            br_sql = f"`{self._blocking_rule_for_training.blocking_rule_sql}`"
             raise EMTrainingException(
                 f"Training rule {br_sql} resulted in no record pairs.  "
                 "This means that in the supplied data set "
@@ -195,7 +195,7 @@ class EMTrainingSession:
         # in the original (main) setting object
         expectation_maximisation(self, cvv)
 
-        rule = self._blocking_rule_for_training.blocking_rule
+        rule = self._blocking_rule_for_training.blocking_rule_sql
         training_desc = f"EM, blocked on: {rule}"
 
         # Add m and u values to original settings
@@ -254,7 +254,7 @@ class EMTrainingSession:
         comp_levels = self._comparison_levels_to_reverse_blocking_rule
         if not comp_levels:
             comp_levels = self._original_settings_obj._get_comparison_levels_corresponding_to_training_blocking_rule(  # noqa
-                self._blocking_rule_for_training.blocking_rule
+                self._blocking_rule_for_training.blocking_rule_sql
             )
 
         for cl in comp_levels:
@@ -271,7 +271,7 @@ class EMTrainingSession:
         logger.log(
             15,
             f"\nProb two random records match adjusted for blocking on "
-            f"{self._blocking_rule_for_training.blocking_rule}: "
+            f"{self._blocking_rule_for_training.blocking_rule_sql}: "
             f"{adjusted_prop_m:.3f}",
         )
         return adjusted_prop_m
@@ -411,7 +411,7 @@ class EMTrainingSession:
                 for cc in self._comparisons_that_cannot_be_estimated
             ]
         )
-        blocking_rule = self._blocking_rule_for_training.blocking_rule
+        blocking_rule = self._blocking_rule_for_training.blocking_rule_sql
         return (
             f"<EMTrainingSession, blocking on {blocking_rule}, "
             f"deactivating comparisons {deactivated_cols}>"

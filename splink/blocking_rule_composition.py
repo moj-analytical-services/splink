@@ -295,7 +295,7 @@ def not_(*brls: BlockingRule | dict | str, salting_partitions: int = 1) -> Block
 
     brls, sql_dialect, salt = _parse_blocking_rules(*brls)
     br = brls[0]
-    blocking_rule = f"NOT ({br.blocking_rule})"
+    blocking_rule = f"NOT ({br.blocking_rule_sql})"
 
     return BlockingRule(
         blocking_rule,
@@ -314,9 +314,9 @@ def _br_merge(
 
     brs, sql_dialect, salt = _parse_blocking_rules(*brls)
     if len(brs) > 1:
-        conditions = (f"({br.blocking_rule})" for br in brs)
+        conditions = (f"({br.blocking_rule_sql})" for br in brs)
     else:
-        conditions = (br.blocking_rule for br in brs)
+        conditions = (br.blocking_rule_sql for br in brs)
 
     blocking_rule = f" {clause} ".join(conditions)
 
