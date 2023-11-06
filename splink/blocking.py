@@ -339,12 +339,6 @@ def block_using_rules_sqls(linker: Linker):
     else:
         blocking_rules = settings_obj._blocking_rules_to_generate_predictions
 
-    if settings_obj.salting_required and apply_salt == False:
-        logger.warning(
-            "WARNING: Salting is not currently supported by this linker backend and"
-            " will not be implemented for this run."
-        )
-
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'
     # you create a cartesian product, rather than having separate code
@@ -360,25 +354,25 @@ def block_using_rules_sqls(linker: Linker):
         probability = ""
 
     br_sqls = []
-    for br in blocking_rules:
-        # Apply our salted rules to resolve skew issues. If no salt was
-        # selected to be added, then apply the initial blocking rule.
-        if apply_salt:
-            salted_blocking_rules = br.salted_blocking_rules
-        else:
-            salted_blocking_rules = [br.blocking_rule_sql]
+    salted_blocking_rules = (
+        salted_br
+        for br in blocking_rules
+        for salted_br in br.salted_blocking_rule_segments
+    )
+    for salted_br in salted_blocking_rules:
+        parent_br = salted_br.parent_blocking_rule
 
         for salted_br in salted_blocking_rules:
             sql = f"""
             select
             {sql_select_expr}
-            , '{br.match_key}' as match_key
+            , '{parent_br.match_key}' as match_key
             {probability}
             from {linker._input_tablename_l} as l
             inner join {linker._input_tablename_r} as r
             on
-            ({salted_br})
-            {br.exclude_pairs_generated_by_all_preceding_rules_sql}
+            ({salted_br.blocking_rule_sql})
+            {parent_br.exclude_pairs_generated_by_all_preceding_rules_sql}
             {where_condition}
             """
 
