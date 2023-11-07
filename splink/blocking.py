@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from sqlglot import parse_one
-from sqlglot.expressions import Join, Column
-from sqlglot.optimizer.eliminate_joins import join_condition
-from typing import TYPE_CHECKING, List
 import logging
+from typing import TYPE_CHECKING, List
+
+from sqlglot import parse_one
+from sqlglot.expressions import Column, Join
+from sqlglot.optimizer.eliminate_joins import join_condition
 
 from .misc import ensure_is_list
 from .unique_id_concat import _composite_unique_id_from_nodes_sql
