@@ -43,7 +43,6 @@ class BlockingRule:
     def __init__(
         self,
         blocking_rule_sql: str,
-        salting_partitions=1,
         sqlglot_dialect: str = None,
     ):
         if sqlglot_dialect:
@@ -200,9 +199,9 @@ class SaltedBlockingRule(BlockingRule):
         self,
         blocking_rule: BlockingRule | dict | str,
         sqlglot_dialect: str = None,
-        salting_partitions=None,
+        salting_partitions: int = 1,
     ):
-        if salting_partitions is None or salting_partitions < 1:
+        if salting_partitions <= 1:
             raise ValueError("Salting partitions must be specified and > 1")
 
         super().__init__(blocking_rule, sqlglot_dialect)
