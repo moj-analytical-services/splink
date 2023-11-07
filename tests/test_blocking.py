@@ -19,7 +19,7 @@ def test_binary_composition_internals_OR(test_helpers, dialect):
     assert br_surname.__repr__() == exp_txt.format("Exact match", em_rule)
     assert BlockingRule(em_rule).__repr__() == exp_txt.format("Custom", em_rule)
 
-    assert br_surname.blocking_rule == em_rule
+    assert br_surname.blocking_rule_sql == em_rule
     assert br_surname.salting_partitions == 4
     assert br_surname.preceding_rules == []
 
@@ -46,7 +46,7 @@ def test_binary_composition_internals_OR(test_helpers, dialect):
 
     def assess_preceding_rules(settings_brs_index):
         br_prec = brs_as_objs[settings_brs_index].preceding_rules
-        br_prec_txt = [br.blocking_rule for br in br_prec]
+        br_prec_txt = [br.blocking_rule_sql for br in br_prec]
         assert br_prec_txt == brs_as_txt[:settings_brs_index]
 
     assess_preceding_rules(1)
