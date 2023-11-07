@@ -33,7 +33,7 @@ def _size_density_sql(
         GROUP BY {unique_id_col_l}
     """
 
-    sql = {"sql": sql, "output_table_name": "__count_edges"}
+    sql = {"sql": sql, "output_table_name": "__splink__count_edges"}
     sqls.append(sql)
 
     sql = f"""
@@ -42,10 +42,10 @@ def _size_density_sql(
             count(*) AS n_nodes,
             sum(e.count_edges) AS n_edges
         FROM {clusters_table} AS c
-        LEFT JOIN __count_edges e ON c.{_unique_id_col} = e.{unique_id_col_l}
+        LEFT JOIN __splink__count_edges e ON c.{_unique_id_col} = e.{unique_id_col_l}
         GROUP BY c.cluster_id
     """
-    sql = {"sql": sql, "output_table_name": "__counts_per_cluster"}
+    sql = {"sql": sql, "output_table_name": "__splink__counts_per_cluster"}
     sqls.append(sql)
 
     sql = """
@@ -54,7 +54,7 @@ def _size_density_sql(
             n_nodes,
             n_edges,
             (n_edges * 2)/(n_nodes * (n_nodes-1)) AS density
-        FROM __counts_per_cluster
+        FROM __splink__counts_per_cluster
     """
     sql = {"sql": sql, "output_table_name": "__splink__cluster_metrics_clusters"}
     sqls.append(sql)
