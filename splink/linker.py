@@ -2070,7 +2070,7 @@ class Linker:
             df_predict,
             df_clustered,
             threshold_match_probability,
-            _unique_row_id=unique_id_col,
+            _unique_id_col=unique_id_col,
         )
 
         for sql in sqls:
