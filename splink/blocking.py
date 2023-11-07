@@ -42,13 +42,19 @@ def blocking_rule_to_obj(br):
 class BlockingRule:
     def __init__(
         self,
-        blocking_rule: BlockingRule | dict | str,
+        blocking_rule_sql: str,
+        salting_partitions=1,
         sqlglot_dialect: str = None,
     ):
         if sqlglot_dialect:
             self._sql_dialect = sqlglot_dialect
 
-        self.blocking_rule_sql = blocking_rule
+        # Temporarily just to see if tests still pass
+        if not isinstance(blocking_rule_sql, str):
+            raise ValueError(
+                f"Blocking rule must be a string, not {type(blocking_rule_sql)}"
+            )
+        self.blocking_rule_sql = blocking_rule_sql
         self.preceding_rules: List[BlockingRule] = []
         self.sqlglot_dialect = sqlglot_dialect
 
