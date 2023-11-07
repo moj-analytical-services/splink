@@ -1,5 +1,6 @@
 from splink.input_column import InputColumn
 
+
 def _size_density_sql(
     df_predict, df_clustered, threshold_match_probability, _unique_id_col
 ):
