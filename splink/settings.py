@@ -4,7 +4,7 @@ import logging
 from copy import deepcopy
 from typing import List
 
-from .blocking import BlockingRule, blocking_rule_to_obj
+from .blocking import BlockingRule, SaltedBlockingRule, blocking_rule_to_obj
 from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -518,6 +518,6 @@ class Settings:
     @property
     def salting_required(self):
         for br in self._blocking_rules_to_generate_predictions:
-            if br.salting_partitions > 1:
+            if isinstance(br, SaltedBlockingRule):
                 return True
         return False
