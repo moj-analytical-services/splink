@@ -1,5 +1,5 @@
 def _size_density_sql(
-    df_predict, df_clustered, threshold_match_probability, _unique_row_id
+    df_predict, df_clustered, threshold_match_probability, _unique_id_col
 ):
     """Generates sql for computing cluster size and density at a given threshold.
 
@@ -10,7 +10,7 @@ def _size_density_sql(
         threshold_match_probability (float): Filter the pairwise match
             predictions to include only pairwise comparisons with a
             match_probability above this threshold.
-        _unique_row_id (string): name of unique id column in settings dict
+        _unique_id_col (string): name of unique id column in settings dict
 
     Returns:
         sql string for computing cluster size and density
@@ -20,14 +20,17 @@ def _size_density_sql(
     edges_table = df_predict.physical_name
     clusters_table = df_clustered.physical_name
 
+    input_col = InputColumn(_unique_id_col)
+    unique_id_col_l = input_col.name_l()
+
     sqls = []
     sql = f"""
         SELECT
-            {_unique_row_id}_l,
+            {unique_id_col_l},
             COUNT(*) AS count_edges
         FROM {edges_table}
         WHERE match_probability >= {threshold_match_probability}
-        GROUP BY {_unique_row_id}_l
+        GROUP BY {unique_id_col_l}
     """
 
     sql = {"sql": sql, "output_table_name": "__count_edges"}
@@ -39,7 +42,7 @@ def _size_density_sql(
             count(*) AS n_nodes,
             sum(e.count_edges) AS n_edges
         FROM {clusters_table} AS c
-        LEFT JOIN __count_edges e ON c.{_unique_row_id} = e.{_unique_row_id}_l
+        LEFT JOIN __count_edges e ON c.{_unique_id_col} = e.{unique_id_col_l}
         GROUP BY c.cluster_id
     """
     sql = {"sql": sql, "output_table_name": "__counts_per_cluster"}
