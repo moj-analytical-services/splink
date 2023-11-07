@@ -33,7 +33,7 @@ from .analyse_blocking import (
 )
 from .blocking import (
     BlockingRule,
-    block_using_rules_sql,
+    block_using_rules_sqls,
     blocking_rule_to_obj,
 )
 from .cache_dict_with_logging import CacheDictWithLogging
@@ -1423,8 +1423,9 @@ class Linker:
         self._deterministic_link_mode = True
 
         concat_with_tf = self._initialise_df_concat_with_tf()
-        sql = block_using_rules_sql(self)
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
         return self._execute_sql_pipeline([concat_with_tf])
 
     def estimate_u_using_random_sampling(
@@ -1745,8 +1746,9 @@ class Linker:
         if nodes_with_tf:
             input_dataframes.append(nodes_with_tf)
 
-        sql = block_using_rules_sql(self)
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         repartition_after_blocking = getattr(self, "repartition_after_blocking", False)
 
@@ -1870,8 +1872,9 @@ class Linker:
 
         add_unique_id_and_source_dataset_cols_if_needed(self, new_records_df)
 
-        sql = block_using_rules_sql(self)
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
@@ -1954,8 +1957,9 @@ class Linker:
 
         self._enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
-        sql = block_using_rules_sql(self)
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
@@ -2010,9 +2014,9 @@ class Linker:
 
         nodes_with_tf = self._initialise_df_concat_with_tf()
 
-        sql = block_using_rules_sql(self)
-
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
 
@@ -2050,15 +2054,15 @@ class Linker:
         into groups of connected record using the connected components graph clustering
         algorithm
 
-        Records with an estimated `match_probability` above
+        Records with an estimated `match_probability` at or above
         `threshold_match_probability` are considered to be a match (i.e. they represent
         the same entity).
 
         Args:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
             threshold_match_probability (float): Filter the pairwise match predictions
-                to include only pairwise comparisons with a match_probability above this
-                threshold. This dataframe is then fed into the clustering
+                to include only pairwise comparisons with a match_probability at or
+                above this threshold. This dataframe is then fed into the clustering
                 algorithm.
             pairwise_formatting (bool): Whether to output the pairwise match predictions
                 from linker.predict() with cluster IDs.
@@ -3028,7 +3032,7 @@ class Linker:
             ```py
             from splink.charts import save_offline_chart
             c = linker.missingness_chart()
-            save_offline_chart(c.spec, "test_chart.html")
+            save_offline_chart(c.to_dict(), "test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
@@ -3062,7 +3066,7 @@ class Linker:
             ```py
             from splink.charts import save_offline_chart
             c = linker.completeness_chart()
-            save_offline_chart(c.spec, "test_chart.html")
+            save_offline_chart(c.to_dict(), "test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
@@ -3300,7 +3304,7 @@ class Linker:
             ```py
             from splink.charts import save_offline_chart
             c = linker.match_weights_chart()
-            save_offline_chart(c.spec, "test_chart.html")
+            save_offline_chart(c.to_dict(), "test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
@@ -3376,7 +3380,7 @@ class Linker:
             ```py
             from splink.charts import save_offline_chart
             c = linker.match_weights_chart()
-            save_offline_chart(c.spec, "test_chart.html")
+            save_offline_chart(c.to_dict(), "test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
