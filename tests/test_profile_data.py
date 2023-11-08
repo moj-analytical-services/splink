@@ -193,6 +193,7 @@ def test_profile_null_columns(caplog):
     captured_logs = caplog.text
 
     assert (
-        "Warning: No charts produced for test_2 as the column only contains null values."
+        ("Warning: No charts produced for test_2 as the column only "
+        "contains null values.")
         in captured_logs
     )
