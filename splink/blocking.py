@@ -171,6 +171,7 @@ class BlockingRule:
         output = {}
 
         output["blocking_rule"] = self.blocking_rule_sql
+        output["sql_dialect"] = self.sql_dialect
 
         return output
 
