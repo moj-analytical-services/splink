@@ -38,7 +38,6 @@ _distribution_plotss_plot = load_chart_definition(
 _top_n_plot = load_chart_definition("profile_data_top_n.json")
 _bottom_n_plot = load_chart_definition("profile_data_bottom_n.json")
 _kde_plot = load_chart_definition("profile_data_kde.json")
-_correlation_plot = load_chart_definition("profile_data_correlation_heatmap.json")
 
 
 def _get_inner_chart_spec_freq(
@@ -165,49 +164,6 @@ def _get_df_kde():
         value_count,
         group_name,
     from __splink__df_all_column_value_frequencies
-    """
-    return sql
-
-
-def _get_df_correlations(column_expressions):
-    sql = f"""
-    WITH column_list AS (
-    SELECT unnest(ARRAY{column_expressions}) AS column_name
-    ),
-    column_data AS (
-    SELECT {', '.join(column_expressions)}
-    FROM __splink__df_concat
-    )
-    SELECT
-    t1.column_name AS column1,
-    t2.column_name AS column2,
-    CORR(d1.val::DOUBLE PRECISION, d2.val::DOUBLE PRECISION) AS correlation
-    FROM
-    column_list AS t1
-    CROSS JOIN
-    column_list AS t2
-    JOIN
-    (
-        SELECT
-        unnest(ARRAY{column_expressions}) AS column_name,
-        unnest(ARRAY[{', '.join(f't.{column_name}' for column_name in column_expressions)}]) AS val
-        FROM column_data AS t
-    ) AS d1 ON t1.column_name = d1.column_name
-    JOIN
-    (
-        SELECT
-        unnest(ARRAY{column_expressions}) AS column_name,
-        unnest(ARRAY[{', '.join(f't.{column_name}' for column_name in column_expressions)}]) AS val
-        FROM column_data AS t
-    ) AS d2 ON t2.column_name = d2.column_name
-    WHERE
-    t1.column_name < t2.column_name
-    GROUP BY
-    t1.column_name,
-    t2.column_name
-    ORDER BY
-    t1.column_name,
-    t2.column_name
     """
     return sql
 
