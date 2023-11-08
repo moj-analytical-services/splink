@@ -10,7 +10,7 @@ from ...blocking_rules_library import (
     block_on as _block_on_,
 )
 
-exact_match_rule = partial(exact_match_rule, _sql_dialect="duckdb")
+exact_match_rule = partial(exact_match_rule, _sql_dialect="spark")
 
 
 def block_on(
