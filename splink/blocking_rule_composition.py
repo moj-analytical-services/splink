@@ -299,7 +299,7 @@ def not_(*brls: BlockingRule | dict | str, salting_partitions: int = 1) -> Block
 
     br_dict = {
         "blocking_rule": blocking_rule,
-        "sqlglot_dialect": sql_dialect,
+        "sql_dialect": sql_dialect,
     }
 
     if salting_partitions > 1:
@@ -328,7 +328,7 @@ def _br_merge(
 
     br_dict = {
         "blocking_rule": blocking_rule,
-        "sqlglot_dialect": sql_dialect,
+        "sql_dialect": sql_dialect,
     }
 
     if salting_partitions > 1:

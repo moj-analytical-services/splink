@@ -47,6 +47,7 @@ def exact_match_rule(
         {
             "blocking_rule": blocking_rule,
             "salting_partitions": salting_partitions,
+            "sql_dialect": _sql_dialect,
         }
     )
 
