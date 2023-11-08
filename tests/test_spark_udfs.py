@@ -1,12 +1,12 @@
 import pandas as pd
 
-import splink.spark.comparison_level_library as cll
+import splink.comparison_level_library as cll
 from splink.spark.linker import SparkLinker
 
 first_name_cc = {
     "output_column_name": "first_name",
     "comparison_levels": [
-        cll.null_level("first_name"),
+        cll.NullLevel("first_name"),
         {
             "sql_condition": "Dmetaphone(first_name_l) = Dmetaphone(first_name_r)",
             "label_for_charts": "demeta",
@@ -15,14 +15,14 @@ first_name_cc = {
             "sql_condition": "jaro_winkler(first_name_l, first_name_r) >= 0.95",
             "label_for_charts": "jaro_winkler >= 0.95",
         },
-        cll.else_level(),
+        cll.ElseLevel(),
     ],
 }
 
 surname_cc = {
     "output_column_name": "surname",
     "comparison_levels": [
-        cll.null_level("surname"),
+        cll.NullLevel("surname"),
         {
             "sql_condition": "DmetaphoneAlt(surname_l) = DmetaphoneAlt(surname_r)",
             "label_for_charts": "demeta_alt",
@@ -31,7 +31,7 @@ surname_cc = {
             "sql_condition": "cosine_distance(surname_l, surname_r) <= 0.95",
             "label_for_charts": "cosine_distance <= 0.95",
         },
-        cll.else_level(),
+        cll.ElseLevel(),
     ],
 }
 
