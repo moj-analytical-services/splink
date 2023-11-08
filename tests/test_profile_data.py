@@ -180,7 +180,7 @@ def test_profile_using_spark(df_spark):
 
 
 @mark_with_dialects_excluding()
-def test_profile_data(test_helpers, dialect):
+def test_profile_data(test_helpers, dialect, caplog):
     helper = test_helpers[dialect]
     settings = get_settings_dict()
     Linker = helper.Linker
@@ -188,15 +188,43 @@ def test_profile_data(test_helpers, dialect):
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     linker = Linker(df, settings, **helper.extra_linker_args())
 
+    #Test original syntax
     linker.profile_columns(
         ["first_name", "city", "surname", "email", "substr(dob, 1,4)"],
         top_n=10,
         bottom_n=5,
     )
+
+    # Test new chart specifically
     linker.profile_numeric_columns(
         ["substr(dob, 1,4)"],
         top_n=None,
         bottom_n=None,
         kde_plots=True,
         distribution_plots=False,
+    )
+
+    #Test ability to show all elements
+    linker.profile_numeric_columns(
+        ["first_name", "city", "surname", "email", "substr(dob, 1,4)"],
+        top_n=10,
+        bottom_n=5,
+        kde_plots=True,
+        distribution_plots=True,
+    )
+
+    # Test error message when user requests 0 elements
+    linker.profile_numeric_columns(
+        ["first_name", "city", "surname", "email", "substr(dob, 1,4)"],
+        top_n=None,
+        bottom_n=None,
+        kde_plots=False,
+        distribution_plots=False,
+    )
+
+    captured_logs = caplog.test
+
+    assert(
+        "Warning: No charts produced as all elements of profile_columns were set to none." 
+        in captured_logs
     )

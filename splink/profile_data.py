@@ -377,7 +377,15 @@ def profile_columns(
 
         inner_charts.append(inner_chart)
 
-    outer_spec = deepcopy(_outer_chart_spec_freq)
-    outer_spec["vconcat"] = inner_charts
+    if inner_charts != []:
 
-    return altair_or_json(outer_spec)
+        outer_spec = deepcopy(_outer_chart_spec_freq)
+        outer_spec["vconcat"] = inner_charts
+
+        return altair_or_json(outer_spec)
+
+    else:
+        logger.warning(
+            "Warning: No charts produced as all elements of profile_columns were set to none."
+            )
+        return None
