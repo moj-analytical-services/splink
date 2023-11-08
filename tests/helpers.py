@@ -21,6 +21,7 @@ from sqlalchemy.types import (
 # import splink.sqlite.blocking_rule_library as brl_sqlite
 # import splink.sqlite.comparison_library as cl_sqlite
 # import splink.sqlite.comparison_template_library as ctl_sqlite
+import splink.comparison_level_library as cll
 from splink.duckdb.linker import DuckDBLinker
 from splink.postgres.linker import PostgresLinker
 from splink.spark.linker import SparkLinker
@@ -49,6 +50,11 @@ class TestHelper(ABC):
 
     def load_frame_from_parquet(self, path):
         return pd.read_parquet(path)
+
+    # will be able to remove this once it's all universal, but as a stepping stone
+    @property
+    def cll(self):
+        return cll
 
     # @property
     # @abstractmethod
