@@ -2064,7 +2064,7 @@ class Linker:
         """
 
         # Get unique row id column name from settings
-        unique_id_col = self._settings_dict["unique_id_column_name"]
+        unique_id_col = self._settings_obj._unique_id_column_name
 
         sqls = _size_density_sql(
             df_predict,
