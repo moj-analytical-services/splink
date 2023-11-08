@@ -6,6 +6,7 @@ class SplinkDialect(ABC):
     def name(self):
         pass
 
+    @property
     def sqlglot_name(self):
         return self.name
 
