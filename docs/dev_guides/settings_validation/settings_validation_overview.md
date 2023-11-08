@@ -35,7 +35,7 @@ Detailed information on the arguments that can be suppled to the json schema can
 
 The settings validation code currently resides in the [settings validation](https://github.com/moj-analytical-services/splink/tree/32e66db1c8c0bed54682daf9a6fea8ef4ed79ab4/splink/settings_validation) directory of Splink. This code is responsible for executing a secondary series of tests to determine whether all values within the settings dictionary will generate valid SQL.
 
-Numerous inputs pass our initial schema checks before breaking other parts of the code base. These breaks are typically due to the construction of invalid SQL, that is then passed to the database engine, [commonly resulting in uninformative errors](https://github.com/moj-analytical-services/splink/issues/1362).
+Numerous inputs pass our initial schema checks before breaking other parts of the codebase. These breaks are typically due to the construction of invalid SQL, that is then passed to the database engine, [commonly resulting in uninformative errors](https://github.com/moj-analytical-services/splink/issues/1362).
 
 Frequently encountered problems include:
 
