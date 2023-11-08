@@ -297,11 +297,17 @@ def not_(*brls: BlockingRule | dict | str, salting_partitions: int = 1) -> Block
     br = brls[0]
     blocking_rule = f"NOT ({br.blocking_rule_sql})"
 
-    return BlockingRule(
-        blocking_rule,
-        salting_partitions=salting_partitions if salting_partitions > 1 else salt,
-        sqlglot_dialect=sql_dialect,
-    )
+    br_dict = {
+        "blocking_rule": blocking_rule,
+        "sqlglot_dialect": sql_dialect,
+    }
+
+    if salting_partitions > 1:
+        salt = salting_partitions
+    if salt > 1:
+        br_dict["salting_partitions"] = salt
+
+    return blocking_rule_to_obj(br_dict)
 
 
 def _br_merge(
