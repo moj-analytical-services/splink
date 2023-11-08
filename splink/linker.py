@@ -354,7 +354,7 @@ class Linker:
     @property
     def _two_dataset_link_only(self):
         # Two dataset link only join is a special case where an inner join of the
-        # two datasets is much more efficient than self-joining the vertically
+        # two datasets is much more efficient than self-joining the vertical
         # concatenation of all input datasets
         if self._find_new_matches_mode:
             return True
