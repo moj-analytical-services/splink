@@ -2082,9 +2082,9 @@ class Linker:
     def profile_columns(
         self,
         column_expressions: str | list[str],
-        top_n : int=10,
-        bottom_n : int=10,
-        distribution_plots : bool=True,
+        top_n: int = 10,
+        bottom_n: int = 10,
+        distribution_plots: bool = True,
     ):
         return profile_columns(
             self,
@@ -2098,10 +2098,10 @@ class Linker:
     def profile_numeric_columns(
         self,
         column_expressions: str | list[str],
-        top_n : int=10,
-        bottom_n : int=10,
-        kde_plots : bool=False,
-        distribution_plots : bool=True,
+        top_n: int = 10,
+        bottom_n: int = 10,
+        kde_plots: bool = False,
+        distribution_plots: bool = True,
     ):
         return profile_columns(
             self,
