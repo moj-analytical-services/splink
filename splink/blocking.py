@@ -201,7 +201,7 @@ class SaltedBlockingRule(BlockingRule):
         sqlglot_dialect: str = None,
         salting_partitions: int = 1,
     ):
-        if salting_partitions <= 1:
+        if salting_partitions is None or salting_partitions <= 1:
             raise ValueError("Salting partitions must be specified and > 1")
 
         super().__init__(blocking_rule, sqlglot_dialect)

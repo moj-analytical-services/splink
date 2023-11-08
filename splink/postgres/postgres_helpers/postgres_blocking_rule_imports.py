@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from functools import partial
+
 from ...blocking_rules_library import (
     BlockingRule,
     exact_match_rule,
@@ -7,13 +9,8 @@ from ...blocking_rules_library import (
 from ...blocking_rules_library import (
     block_on as _block_on_,
 )
-from .postgres_base import (
-    PostgresBase,
-)
 
-
-class exact_match_rule(PostgresBase, exact_match_rule):
-    pass
+exact_match_rule = partial(exact_match_rule, _sql_dialect="postgres")
 
 
 def block_on(

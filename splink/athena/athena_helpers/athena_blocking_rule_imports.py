@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from functools import partial
 from ...blocking_rules_library import (
     BlockingRule,
     exact_match_rule,
@@ -12,8 +12,7 @@ from .athena_base import (
 )
 
 
-class exact_match_rule(AthenaBase, exact_match_rule):
-    pass
+exact_match_rule = partial(exact_match_rule, _sql_dialect="presto")
 
 
 def block_on(
