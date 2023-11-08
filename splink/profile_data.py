@@ -289,6 +289,13 @@ def profile_columns(
         values to display in the respective charts.
     """
 
+    if top_n is None and bottom_n is None and not distribution_plots and not kde_plots:
+        logger.warning(
+            "Warning: No charts in profile_columns have been selected."
+        )
+        return None
+
+
     df_concat = linker._initialise_df_concat()
 
     input_dataframes = []
@@ -377,15 +384,7 @@ def profile_columns(
 
         inner_charts.append(inner_chart)
 
-    if inner_charts != []:
+    outer_spec = deepcopy(_outer_chart_spec_freq)
+    outer_spec["vconcat"] = inner_charts
 
-        outer_spec = deepcopy(_outer_chart_spec_freq)
-        outer_spec["vconcat"] = inner_charts
-
-        return altair_or_json(outer_spec)
-
-    else:
-        logger.warning(
-            "Warning: No charts produced as all elements of profile_columns were set to none."
-            )
-        return None
+    return altair_or_json(outer_spec)

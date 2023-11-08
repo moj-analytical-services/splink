@@ -188,7 +188,7 @@ def test_profile_data(test_helpers, dialect, caplog):
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
     linker = Linker(df, settings, **helper.extra_linker_args())
 
-    #Test original syntax
+    # Test original syntax
     linker.profile_columns(
         ["first_name", "city", "surname", "email", "substr(dob, 1,4)"],
         top_n=10,
@@ -204,7 +204,7 @@ def test_profile_data(test_helpers, dialect, caplog):
         distribution_plots=False,
     )
 
-    #Test ability to show all elements
+    # Test ability to show all elements
     linker.profile_numeric_columns(
         ["first_name", "city", "surname", "email", "substr(dob, 1,4)"],
         top_n=10,
@@ -225,6 +225,6 @@ def test_profile_data(test_helpers, dialect, caplog):
     captured_logs = caplog.test
 
     assert(
-        "Warning: No charts produced as all elements of profile_columns were set to none." 
+        "Warning: No charts in profile_columns have been selected." 
         in captured_logs
     )
