@@ -55,11 +55,11 @@ These exceptions serve to raise issues specific to Splink or to customize except
 
 It's crucial to also consider how to inform the user that such behavior is not permitted. For guidelines on crafting effective error messages, refer to [How to Write Good Error Messages](https://uxplanet.org/how-to-write-good-error-messages-858e4551cd4).
 
-For a comprehensive list of exceptions native to Splink, please visit [here](https://github.com/moj-analytical-services/splink/blob/master/splink/exceptions.py).
+For a comprehensive list of exceptions native to Splink, visit [the exceptions.py script](https://github.com/moj-analytical-services/splink/blob/master/splink/exceptions.py).
 
 #### Raising Multiple Exceptions
 
-Raising multiple errrors sequentially without disrupting the program, is a feature we commonly wish to implement across the validation steps.
+Raising multiple errors sequentially without disrupting the program, is a feature we commonly wish to implement across the validation steps.
 
 In numerous instances, it makes sense to wait until all checks have been performed before raising exceptions captured to the user in one go.
 
