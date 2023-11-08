@@ -88,7 +88,7 @@ def test_compound_comparison_level():
                 "comparison_levels": [
                     cll.NullLevel("city"),
                     cll.ExactMatchLevel("city"),
-                    cll.ElseLevel()
+                    cll.ElseLevel(),
                 ],
             },
             {
