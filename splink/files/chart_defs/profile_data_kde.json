@@ -3,7 +3,7 @@
     "mark": "area",
     "encoding": {
       "x": {
-        "type": "quantitative",
+        "type": "nominal",
         "field": "value",
         "title": "Value"
       },
@@ -13,7 +13,7 @@
         "title": "Density"
       },
       "tooltip": [
-        { "field": "value", "type": "quantitative" },
+        { "field": "value", "type": "nominal" },
         { "field": "value_count", "type": "quantitative" }
       ]
     },

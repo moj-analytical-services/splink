@@ -14,6 +14,7 @@ from splink.spark.linker import SparkLinker
 from splink.sqlite.linker import SQLiteLinker
 
 from .basic_settings import get_settings_dict
+from .decorator import mark_with_dialects_excluding
 
 
 def generate_raw_profile_dataset(columns_to_profile, linker):
@@ -176,3 +177,15 @@ def test_profile_using_spark(df_spark):
     )
 
     assert len(generate_raw_profile_dataset([["first_name", "blank"]], linker)) == 0
+
+@mark_with_dialects_excluding()
+def test_profile_data(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    settings = get_settings_dict()
+    Linker = helper.Linker
+
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+    linker = Linker(df, settings, **helper.extra_linker_args())
+
+    linker.profile_columns(["first_name", "city", "surname", "email", "substr(dob, 1,4)"], top_n=10, bottom_n=5)
+    linker.profile_numeric_columns(["substr(dob, 1,4)"], top_n=None, bottom_n=None, kde_plots=True, distribution_plots=False)
