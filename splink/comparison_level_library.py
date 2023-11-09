@@ -73,11 +73,7 @@ class LevenshteinLevel(ComparisonLevelCreator):
 
 
 class JaroWinklerLevel(ComparisonLevelCreator):
-    def __init__(
-        self,
-        col_name: str,
-        distance_threshold: Union[int, float]
-    ):
+    def __init__(self, col_name: str, distance_threshold: Union[int, float]):
         """A comparison level using a Jaro-Winkler distance function
 
         e.g. `jaro_winkler(val_l, val_r) <= distance_threshold`
@@ -91,9 +87,11 @@ class JaroWinklerLevel(ComparisonLevelCreator):
         self.distance_threshold = distance_threshold
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col_l, col_r = self.input_column(sql_dialect).names_l_r
+        col_l, col_r = self.input_column(sql_dialect).names_l_r()
         jw_fn = sql_dialect.jaro_winkler_function_name
-        return f"{jw_fn}({col_l()}, {col_r()}) >= {self.distance_threshold}"
+        return f"{jw_fn}({col_l}, {col_r}) >= {self.distance_threshold}"
 
     def create_label_for_charts(self) -> str:
-        return f"Jaro-Winkler distance of '{self.col_name} >= {self.distance_threshold}'"
+        return (
+            f"Jaro-Winkler distance of '{self.col_name} >= {self.distance_threshold}'"
+        )
