@@ -44,7 +44,10 @@ class ComparisonCreator(ABC):
         level_dict = {
             "comparison_description": self.create_description(),
             "output_column_name": self.create_output_column_name(),
-            "comparison_levels": self.create_comparison_levels(sql_dialect),
+            "comparison_levels": [
+                cl.get_comparison_level(sql_dialect_str)
+                for cl in self.create_comparison_levels(sql_dialect)
+            ],
         }
 
         return level_dict
