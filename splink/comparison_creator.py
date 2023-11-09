@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import final
+from typing import List, final
 
 from .comparison import Comparison
+from .comparison_level_creator import ComparisonLevelCreator
 from .dialects import SplinkDialect
 from .input_column import InputColumn
 
@@ -18,15 +19,17 @@ class ComparisonCreator(ABC):
         self.col_name = col_name
 
     @abstractmethod
-    def create_comparison_levels(self, sql_dialect: SplinkDialect):
+    def create_comparison_levels(
+        self, sql_dialect: SplinkDialect
+    ) -> List[ComparisonLevelCreator]:
         pass
 
     @abstractmethod
-    def create_description(self):
+    def create_description(self) -> str:
         pass
 
     @abstractmethod
-    def create_output_column_name(self):
+    def create_output_column_name(self) -> str:
         pass
 
     @final
@@ -52,7 +55,7 @@ class ComparisonCreator(ABC):
 
     def __repr__(self) -> str:
         return (
-            f"Comparison generator for {self.create_label_for_charts()}. "
+            f"Comparison generator for {self.create_description()}. "
             "Call .get_comparison(sql_dialect) to instantiate "
             "a Comparison"
         )
