@@ -1,4 +1,5 @@
 import splink.comparison_level_library as cll
+import splink.comparison_library as cl
 
 from .decorator import mark_with_dialects_excluding
 
@@ -31,7 +32,7 @@ comparison_city = {
     ],
 }
 
-settings = {
+cll_settings = {
     "link_type": "dedupe_only",
     "comparisons": [comparison_first_name, comparison_surname, comparison_city],
 }
@@ -42,7 +43,7 @@ def test_cll_creators_run_predict(dialect, test_helpers):
     helper = test_helpers[dialect]
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
-    linker = helper.Linker(df, settings, **helper.extra_linker_args())
+    linker = helper.Linker(df, cll_settings, **helper.extra_linker_args())
     linker.predict()
 
 
@@ -52,3 +53,26 @@ def test_cll_creators_instantiate_levels(dialect):
     cll.ElseLevel().get_comparison_level(dialect)
     cll.ExactMatchLevel("city").get_comparison_level(dialect)
     cll.LevenshteinLevel("city", 5).get_comparison_level(dialect)
+
+
+comparison_first_name = cl.ExactMatch("first_name")
+comparison_surname = cl.ExactMatch("surname")
+comparison_city = cl.ExactMatch("city")
+comparison_gender = cl.ExactMatch("gender")
+
+cl_settings = {
+    "link_type": "dedupe_only",
+    "comparisons": [
+        comparison_first_name,
+        comparison_surname,
+        comparison_city,
+        comparison_gender,
+    ],
+}
+@mark_with_dialects_excluding()
+def test_cl_creators_run_predict(dialect, test_helpers):
+    helper = test_helpers[dialect]
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    linker = helper.Linker(df, cl_settings, **helper.extra_linker_args())
+    linker.predict()
