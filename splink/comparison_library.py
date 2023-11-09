@@ -39,6 +39,26 @@ class LevenshteinAtThresholds(ComparisonCreator):
         col_name: str,
         distance_threshold_or_thresholds: Union[Iterable[int], int] = [1, 2],
     ):
+        """
+        Represents a comparison of the data in `col_name` with three or more levels:
+            - Exact match in `col_name`
+            - Levenshtein levels at specified distance thresholds
+            - ...
+            - Anything else
+
+        For example, with distance_threshold_or_thresholds = [1, 3] the levels are
+            - Exact match in `col_name`
+            - Levenshtein distance in `col_name` <= 1
+            - Levenshtein distance in `col_name` <= 3
+            - Anything else
+
+        Args:
+            col_name (str): The name of the column to compare
+            distance_threshold_or_thresholds (Union[int, list], optional): The
+                threshold(s) to use for the levenshtein similarity level(s).
+                Defaults to [1, 2].
+        """
+
         thresholds_as_iterable = ensure_is_iterable(distance_threshold_or_thresholds)
         # unpack it to a list so we can repeat iteration if needed
         self.thresholds = [*thresholds_as_iterable]
