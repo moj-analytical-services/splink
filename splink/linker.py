@@ -222,9 +222,11 @@ class Linker:
 
             # TODO: deal with instantiating comparison levels in this path
         else:
-            self._validate_settings_components(settings_dict)
+            # TODO: need to figure out how this flows with validation
+            # for now we instantiate all the correct types before the validator sees it
             settings_dict = deepcopy(settings_dict)
             self._instantiate_comparison_levels(settings_dict)
+            self._validate_settings_components(settings_dict)
             self._setup_settings_objs(settings_dict)
 
         homogenised_tables, homogenised_aliases = self._register_input_tables(
