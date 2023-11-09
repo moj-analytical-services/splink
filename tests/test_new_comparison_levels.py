@@ -55,10 +55,10 @@ def test_cll_creators_instantiate_levels(dialect):
     cll.LevenshteinLevel("city", 5).get_comparison_level(dialect)
 
 
-comparison_first_name = cl.ExactMatch("first_name")
-comparison_surname = cl.ExactMatch("surname")
+comparison_first_name = cl.LevenshteinAtThresholds("first_name", [2, 3])
+comparison_surname = cl.LevenshteinAtThresholds("surname", [3])
 comparison_city = cl.ExactMatch("city")
-comparison_email = cl.ExactMatch("email")
+comparison_email = cl.LevenshteinAtThresholds("email", 3)
 
 cl_settings = {
     "link_type": "dedupe_only",
