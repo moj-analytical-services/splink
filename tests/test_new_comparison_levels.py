@@ -69,6 +69,8 @@ cl_settings = {
         comparison_gender,
     ],
 }
+
+
 @mark_with_dialects_excluding()
 def test_cl_creators_run_predict(dialect, test_helpers):
     helper = test_helpers[dialect]
