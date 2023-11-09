@@ -58,7 +58,7 @@ def test_cll_creators_instantiate_levels(dialect):
 comparison_first_name = cl.ExactMatch("first_name")
 comparison_surname = cl.ExactMatch("surname")
 comparison_city = cl.ExactMatch("city")
-comparison_gender = cl.ExactMatch("gender")
+comparison_email = cl.ExactMatch("email")
 
 cl_settings = {
     "link_type": "dedupe_only",
@@ -66,7 +66,7 @@ cl_settings = {
         comparison_first_name,
         comparison_surname,
         comparison_city,
-        comparison_gender,
+        comparison_email,
     ],
 }
 
