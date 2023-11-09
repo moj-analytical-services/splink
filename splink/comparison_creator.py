@@ -59,6 +59,6 @@ class ComparisonCreator(ABC):
     def __repr__(self) -> str:
         return (
             f"Comparison generator for {self.create_description()}. "
-            "Call .get_comparison(sql_dialect) to instantiate "
+            "Call .get_comparison(sql_dialect_str) to instantiate "
             "a Comparison"
         )
