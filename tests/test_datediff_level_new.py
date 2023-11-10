@@ -19,6 +19,28 @@ def populate_identifiers_with_literals(sql, literal_lookup, sqlglot_dialect_name
     return transformed_tree.sql(dialect=sqlglot_dialect_name)
 
 
+def get_comparison_level(test_spec, test):
+    if "comparison_level" in test_spec:
+        return test_spec["comparison_level"]
+    else:
+        kwargs = test_spec.get("kwargs", {})
+        kwargs_overrides = test.get("kwargs_overrides", {})
+        kwargs.update(kwargs_overrides)
+        comparison_level_class = test_spec["comparison_level_class"]
+        return comparison_level_class(**kwargs)
+
+
+def get_sql_with_literals(comparison_level, test, linker):
+    sql = comparison_level.create_level_dict(linker.sqlglot_dialect_name)[
+        "sql_condition"
+    ]
+    values_lookup = test["values"]
+    sql_with_literals = populate_identifiers_with_literals(
+        sql, values_lookup, linker.sqlglot_dialect_name
+    )
+    return f"select {sql_with_literals} as in_level"
+
+
 def run_tests_with_args(test_spec, linker):
     tests = test_spec["tests"]
     for test in tests:
@@ -26,22 +48,9 @@ def run_tests_with_args(test_spec, linker):
         if linker.sqlglot_dialect_name not in sqlglot_dialects:
             continue
 
-        if "comparison_level" in test_spec:
-            comparison_level = test_spec["comparison_level"]
-        else:
-            kwargs = test_spec.get("kwargs", {})
-            kwargs_overrides = test.get("kwargs_overrides", {})
-            kwargs.update(kwargs_overrides)
-            comparison_level_class = test_spec["comparison_level_class"]
-            comparison_level = comparison_level_class(**kwargs)
-        sql = comparison_level.create_level_dict(linker.sqlglot_dialect_name)[
-            "sql_condition"
-        ]
-        values_lookup = test["values"]
-        sql_with_literals = populate_identifiers_with_literals(
-            sql, values_lookup, linker.sqlglot_dialect_name
-        )
-        sql_with_literals = f"select {sql_with_literals} as in_level"
+        comparison_level = get_comparison_level(test_spec, test)
+        sql_with_literals = get_sql_with_literals(comparison_level, test, linker)
+
         if "expected_exception" in test:
             with pytest.raises(test["expected_exception"]):
                 in_level = linker.query_sql(sql_with_literals).iloc[0, 0]
