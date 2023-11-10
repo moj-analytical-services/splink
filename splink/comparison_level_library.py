@@ -7,13 +7,13 @@ from .input_column import InputColumn
 
 def supported_splink_dialects(supported_dialects):
     def decorator(func):
-        def wrapper(self, sql_dialect: SplinkDialect, *args, **kwargs):
-            if sql_dialect.name not in supported_dialects:
+        def wrapper(self, splink_dialect: SplinkDialect, *args, **kwargs):
+            if splink_dialect.name not in supported_dialects:
                 raise ValueError(
-                    f"Dialect {sql_dialect.name} is not supported "
+                    f"Dialect {splink_dialect.name} is not supported "
                     f"for {self.__class__.__name__}"
                 )
-            return func(self, sql_dialect, *args, **kwargs)
+            return func(self, splink_dialect, *args, **kwargs)
 
         return wrapper
 
