@@ -106,6 +106,11 @@ class DatediffLevel(ComparisonLevelCreator):
         col_l_no_dialect = parse_one(date_col_l, read=sqlglot_dialect_name).sql()
         col_r_no_dialect = parse_one(date_col_r, read=sqlglot_dialect_name).sql()
 
+        # If the sql_dialect has a specific function, use it, otherwise
+        # use this implementation
+        # if hasattr(sql_dialect, "date_diff"):
+        #     return sql_dialect.date_diff(self)
+
         if self.cast_strings_to_date:
             col_l_no_dialect = f'STR_TO_TIME({col_l_no_dialect}, "{self.date_format}")'
             col_r_no_dialect = f'STR_TO_TIME({col_r_no_dialect}, "{self.date_format}")'

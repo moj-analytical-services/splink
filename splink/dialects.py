@@ -1,4 +1,8 @@
 from abc import ABC, abstractproperty
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .comparison_level_creator import ComparisonLevelCreator
 
 
 class SplinkDialect(ABC):
@@ -48,6 +52,9 @@ class SqliteDialect(SplinkDialect):
     @property
     def levenshtein_function_name(self):
         return "levenshtein"
+
+    def date_diff(self, comparison_level_creator: "ComparisonLevelCreator"):
+        return "custom implementation"
 
 
 class PostgresDialect(SplinkDialect):
