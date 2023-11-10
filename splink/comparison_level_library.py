@@ -7,10 +7,10 @@ from .dialects import SplinkDialect
 from .input_column import InputColumn
 
 
-def supported_splink_dialects(supported_dialects: List[str]):
+def unsupported_splink_dialects(unsupported_dialects: List[str]):
     def decorator(func):
         def wrapper(self, splink_dialect: SplinkDialect, *args, **kwargs):
-            if splink_dialect.name not in supported_dialects:
+            if splink_dialect.name in unsupported_dialects:
                 raise ValueError(
                     f"Dialect {splink_dialect.name} is not supported "
                     f"for {self.__class__.__name__}"
@@ -117,10 +117,11 @@ class DatediffLevel(ComparisonLevelCreator):
         self.cast_strings_to_date = cast_strings_to_date
         self.date_format = date_format
 
-    @supported_splink_dialects(["duckdb", "postgres", "athena", "spark"])
+    @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         """Use sqlglot to auto transpile where possible
-        Where unsupported, defer to the dialect date_diff function
+        Where sqlglot auto transpilation doesn't work correctly, a date_diff function
+        must be implemented in the dialect, which will be used instead
         """
 
         if self.date_metric not in ("day", "month", "year"):
