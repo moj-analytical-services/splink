@@ -4,6 +4,21 @@ from .comparison_level_creator import ComparisonLevelCreator
 from .dialects import SplinkDialect
 
 
+def supported_dialects(supported_dialects):
+    def decorator(func):
+        def wrapper(self, sql_dialect: SplinkDialect, *args, **kwargs):
+            if sql_dialect.sqlglot_name() not in supported_dialects:
+                raise ValueError(
+                    f"Dialect {sql_dialect.sqlglot_name()} is not supported "
+                    f"for {self.__class__.__name__}"
+                )
+            return func(self, sql_dialect, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
+
+
 class NullLevel(ComparisonLevelCreator):
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         col = self.input_column(sql_dialect)
@@ -99,17 +114,23 @@ class DatediffLevel(ComparisonLevelCreator):
         self.cast_strings_to_date = cast_strings_to_date
         self.date_format = date_format
 
+    @supported_dialects(["duckdb", "postgres", "presto", "spark"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        """Use sqlglot to auto transpile where possible
+        Where unsupported, defer to the dialect date_diff function
+        """
+
+        if self.date_metric not in ("day", "month", "year"):
+            raise ValueError("`date_metric` must be one of ('day', 'month', 'year')")
+
         sqlglot_dialect_name = sql_dialect.sqlglot_name()
         date_col = self.input_column(sql_dialect)
         date_col_l, date_col_r = date_col.names_l_r()
         col_l_no_dialect = parse_one(date_col_l, read=sqlglot_dialect_name).sql()
         col_r_no_dialect = parse_one(date_col_r, read=sqlglot_dialect_name).sql()
 
-        # If the sql_dialect has a specific function, use it, otherwise
-        # use this implementation
-        # if hasattr(sql_dialect, "date_diff"):
-        #     return sql_dialect.date_diff(self)
+        if hasattr(sql_dialect, "date_diff"):
+            return sql_dialect.date_diff(self)
 
         if self.cast_strings_to_date:
             col_l_no_dialect = f'STR_TO_TIME({col_l_no_dialect}, "{self.date_format}")'

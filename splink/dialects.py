@@ -53,9 +53,6 @@ class SqliteDialect(SplinkDialect):
     def levenshtein_function_name(self):
         return "levenshtein"
 
-    def date_diff(self, comparison_level_creator: "ComparisonLevelCreator"):
-        return "custom implementation"
-
 
 class PostgresDialect(SplinkDialect):
     @property
@@ -65,6 +62,47 @@ class PostgresDialect(SplinkDialect):
     @property
     def levenshtein_function_name(self):
         return "levenshtein"
+
+    def date_diff(self, clc: "ComparisonLevelCreator"):
+        """Note some of these functions are not native postgres functions and
+        instead are UDFs which are automatically registered by Splink
+        """
+
+        if clc.date_format is None:
+            clc.date_format = "yyyy-MM-dd"
+
+        col_name_l = clc.input_column(self).name_l()
+        col_name_r = clc.input_column(self).name_r()
+
+        if clc.cast_strings_to_date:
+            datediff_args = f"""
+                to_date({col_name_l}, '{clc.date_format}'),
+                to_date({col_name_r}, '{clc.date_format}')
+            """
+        else:
+            datediff_args = f"{col_name_l}, {col_name_r}"
+
+        if clc.date_metric == "day":
+            date_f = f"""
+                abs(
+                    datediff(
+                        {datediff_args}
+                    )
+                )
+            """
+        elif clc.date_metric in ["month", "year"]:
+            date_f = f"""
+                floor(abs(
+                    ave_months_between(
+                        {datediff_args}
+                    )"""
+            if clc.date_metric == "year":
+                date_f += " / 12))"
+            else:
+                date_f += "))"
+        return f"""
+            {date_f} <= {clc.date_threshold}
+        """
 
 
 class AthenaDialect(SplinkDialect):
