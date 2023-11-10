@@ -135,12 +135,12 @@ class DatediffLevel(ComparisonLevelCreator):
             return sql_dialect.date_diff(self)
 
         if self.cast_strings_to_date:
-            date_col_l = f'STR_TO_TIME({date_col_l}, "{self.date_format}")'
-            date_col_r = f'STR_TO_TIME({date_col_r}, "{self.date_format}")'
+            date_col_l = f"STR_TO_TIME({date_col_l}, '{self.date_format}')"
+            date_col_r = f"STR_TO_TIME({date_col_r}, '{self.date_format}')"
 
         sqlglot_base_dialect_sql = (
             f"ABS(DATE_DIFF({date_col_l}, "
-            f'{date_col_r}, "{self.date_metric}")) '
+            f"{date_col_r}, '{self.date_metric}'))"
             f"<= {self.date_threshold}"
         )
 
