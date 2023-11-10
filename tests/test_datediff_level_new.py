@@ -7,6 +7,11 @@ import pytest
 import json
 
 
+# -------------------------------------------------
+# These functions would go in a test helpers module
+# We could make similar ones for comparisons (where the tests would be )
+# for the comparison vector value, rather than bool
+# -------------------------------------------------
 def populate_identifiers_with_literals(sql, literal_lookup, sqlglot_dialect_name):
     expression_tree = sqlglot.parse_one(sql, dialect=sqlglot_dialect_name)
 
@@ -75,6 +80,9 @@ class DuckDBLinker:
 linker = DuckDBLinker()
 
 
+# -------------------------------------------------
+# Actual tests start here
+# -------------------------------------------------
 def test_datediff_levels():
     test_spec_day_threshold = {
         "comparison_level": cll.DatediffLevel(
