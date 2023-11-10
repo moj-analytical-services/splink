@@ -4,6 +4,22 @@ from .comparison_level_creator import ComparisonLevelCreator
 from .dialects import SplinkDialect
 
 
+def validate_distance_threshold(
+    lower_bound: Union[int, float],
+    upper_bound: Union[int, float],
+    distance_threshold: Union[int, float],
+    level_name: str,
+) -> Union[int, float]:
+    """Check if a distance threshold falls between two bounds."""
+    if lower_bound <= distance_threshold <= upper_bound:
+        return distance_threshold
+    else:
+        raise ValueError(
+            "'distance_threshold' must be between "
+            f"{lower_bound} and {upper_bound} for {level_name}"
+        )
+
+
 class NullLevel(ComparisonLevelCreator):
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         col = self.input_column(sql_dialect)
@@ -83,8 +99,14 @@ class JaroWinklerLevel(ComparisonLevelCreator):
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
         """
+
         super().__init__(col_name)
-        self.distance_threshold = distance_threshold
+        self.distance_threshold = validate_distance_threshold(
+            lower_bound=0,
+            upper_bound=1,
+            distance_threshold=distance_threshold,
+            level_name=self.__class__.__name__,
+        )
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         col_l, col_r = self.input_column(sql_dialect).names_l_r()
