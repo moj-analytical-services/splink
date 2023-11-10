@@ -2,14 +2,15 @@ from sqlglot import parse_one
 
 from .comparison_level_creator import ComparisonLevelCreator
 from .dialects import SplinkDialect
+from .input_column import InputColumn
 
 
-def supported_dialects(supported_dialects):
+def supported_splink_dialects(supported_dialects):
     def decorator(func):
         def wrapper(self, sql_dialect: SplinkDialect, *args, **kwargs):
-            if sql_dialect.sqlglot_name() not in supported_dialects:
+            if sql_dialect.name not in supported_dialects:
                 raise ValueError(
-                    f"Dialect {sql_dialect.sqlglot_name()} is not supported "
+                    f"Dialect {sql_dialect.name} is not supported "
                     f"for {self.__class__.__name__}"
                 )
             return func(self, sql_dialect, *args, **kwargs)
@@ -66,7 +67,7 @@ class ExactMatchLevel(ComparisonLevelCreator):
 
 class LevenshteinLevel(ComparisonLevelCreator):
     def __init__(self, col_name: str, distance_threshold: int):
-        """A comparison level using a levenshtein distance function
+        """A comparison level using a sqlglot_dialect_name distance function
 
         e.g. levenshtein(val_l, val_r) <= distance_threshold
 
@@ -114,7 +115,7 @@ class DatediffLevel(ComparisonLevelCreator):
         self.cast_strings_to_date = cast_strings_to_date
         self.date_format = date_format
 
-    @supported_dialects(["duckdb", "postgres", "presto", "spark"])
+    @supported_splink_dialects(["duckdb", "postgres", "athena", "spark"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         """Use sqlglot to auto transpile where possible
         Where unsupported, defer to the dialect date_diff function
@@ -123,28 +124,26 @@ class DatediffLevel(ComparisonLevelCreator):
         if self.date_metric not in ("day", "month", "year"):
             raise ValueError("`date_metric` must be one of ('day', 'month', 'year')")
 
-        sqlglot_dialect_name = sql_dialect.sqlglot_name()
-        date_col = self.input_column(sql_dialect)
+        sqlglot_dialect_name = sql_dialect.sqlglot_name
+        date_col = InputColumn(self.col_name)
         date_col_l, date_col_r = date_col.names_l_r()
-        col_l_no_dialect = parse_one(date_col_l, read=sqlglot_dialect_name).sql()
-        col_r_no_dialect = parse_one(date_col_r, read=sqlglot_dialect_name).sql()
 
         if hasattr(sql_dialect, "date_diff"):
             return sql_dialect.date_diff(self)
 
         if self.cast_strings_to_date:
-            col_l_no_dialect = f'STR_TO_TIME({col_l_no_dialect}, "{self.date_format}")'
-            col_r_no_dialect = f'STR_TO_TIME({col_r_no_dialect}, "{self.date_format}")'
+            date_col_l = f'STR_TO_TIME({date_col_l}, "{self.date_format}")'
+            date_col_r = f'STR_TO_TIME({date_col_r}, "{self.date_format}")'
 
-        undialected_sql = (
-            f"abs(date_diff({col_l_no_dialect}, "
-            f'{col_r_no_dialect}, "{self.date_metric}")) '
+        sqlglot_base_dialect_sql = (
+            f"ABS(DATE_DIFF({date_col_l}, "
+            f'{date_col_r}, "{self.date_metric}")) '
             f"<= {self.date_threshold}"
         )
 
-        query = parse_one(undialected_sql)
+        tree = parse_one(sqlglot_base_dialect_sql)
 
-        return query.sql(dialect=sqlglot_dialect_name)
+        return tree.sql(dialect=sqlglot_dialect_name)
 
     def create_label_for_charts(self) -> str:
         return (
