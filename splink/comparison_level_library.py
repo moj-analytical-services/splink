@@ -1,3 +1,5 @@
+from typing import List
+
 from sqlglot import parse_one
 
 from .comparison_level_creator import ComparisonLevelCreator
@@ -5,7 +7,7 @@ from .dialects import SplinkDialect
 from .input_column import InputColumn
 
 
-def supported_splink_dialects(supported_dialects):
+def supported_splink_dialects(supported_dialects: List[str]):
     def decorator(func):
         def wrapper(self, splink_dialect: SplinkDialect, *args, **kwargs):
             if splink_dialect.name not in supported_dialects:
