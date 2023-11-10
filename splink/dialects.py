@@ -60,6 +60,8 @@ class SqliteDialect(SplinkDialect):
     def name(self):
         return "sqlite"
 
+    # SQLite does not natively support string distance functions.
+    # However, sqlite UDFs are registered automatically by Splink
     @property
     def levenshtein_function_name(self):
         return "levenshtein"

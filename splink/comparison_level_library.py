@@ -92,14 +92,15 @@ class JaroWinklerLevel(ComparisonLevelCreator):
     def __init__(self, col_name: str, distance_threshold: Union[int, float]):
         """A comparison level using a Jaro-Winkler distance function
 
-        e.g. `jaro_winkler(val_l, val_r) <= distance_threshold`
+        e.g. `jaro_winkler(val_l, val_r) >= distance_threshold`
 
         Args:
             col_name (str): Input column name
             distance_threshold (Union[int, float]): The threshold to use to assess
                 similarity
         """
-        self.col_name = col_name
+
+        super().__init__(col_name)
         self.distance_threshold = validate_distance_threshold(
             lower_bound=0,
             upper_bound=1,
