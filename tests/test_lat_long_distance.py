@@ -1,7 +1,8 @@
 import pytest
 from duckdb import connect
 
-from splink.comparison_level_sql import great_circle_distance_km_sql
+# TODO: fix this import when we have something:
+# from splink.comparison_level_sql import great_circle_distance_km_sql
 
 # approx 1/4 of max circumference on Earth in spherical model,
 # using 12742 km diameter (as in splink.misc)

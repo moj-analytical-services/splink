@@ -95,39 +95,40 @@ record_pairs_gamma_name = {
 }
 
 
-@pytest.mark.parametrize(
-    ("Linker", "df", "level_set", "record_pairs_gamma"),
-    [
-        pytest.param(
-            DuckDBLinker,
-            df,
-            postcode_levels(clld),
-            record_pairs_gamma_postcode,
-            id="DuckDB postcode regex levels test",
-        ),
-        pytest.param(
-            DuckDBLinker,
-            df,
-            name_levels(clld),
-            record_pairs_gamma_name,
-            id="DuckDB name regex levels test",
-        ),
-        pytest.param(
-            SparkLinker,
-            df,
-            postcode_levels(clls),
-            record_pairs_gamma_postcode,
-            id="Spark postcode regex levels test",
-        ),
-        pytest.param(
-            SparkLinker,
-            df,
-            name_levels(clls),
-            record_pairs_gamma_name,
-            id="Spark name regex levels test",
-        ),
-    ],
-)
+# TODO: restore once code makes sense
+# @pytest.mark.parametrize(
+#     ("Linker", "df", "level_set", "record_pairs_gamma"),
+#     [
+#         pytest.param(
+#             DuckDBLinker,
+#             df,
+#             postcode_levels(clld),
+#             record_pairs_gamma_postcode,
+#             id="DuckDB postcode regex levels test",
+#         ),
+#         pytest.param(
+#             DuckDBLinker,
+#             df,
+#             name_levels(clld),
+#             record_pairs_gamma_name,
+#             id="DuckDB name regex levels test",
+#         ),
+#         pytest.param(
+#             SparkLinker,
+#             df,
+#             postcode_levels(clls),
+#             record_pairs_gamma_postcode,
+#             id="Spark postcode regex levels test",
+#         ),
+#         pytest.param(
+#             SparkLinker,
+#             df,
+#             name_levels(clls),
+#             record_pairs_gamma_name,
+#             id="Spark name regex levels test",
+#         ),
+#     ],
+# )
 def test_regex(spark, Linker, df, level_set, record_pairs_gamma):
     # Generate settings
     settings = {

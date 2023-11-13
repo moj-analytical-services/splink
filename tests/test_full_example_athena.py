@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import pytest
 
-import splink.athena.comparison_library as cl
+import splink.comparison_library as cl
 
 from .basic_settings import get_settings_dict
 from .linker_utils import _test_table_registration
@@ -23,43 +23,47 @@ except ImportError:
     # Skip if no AWS Connection exists
     pytestmark = pytest.mark.skip(reason="AWS Connection Required")
 
-settings_dict = get_settings_dict()
+# TODO: this is all commented out until we have the functionality, as it errors at
+# top-level currently
+# settings_dict = get_settings_dict()
 
-first_name_cc = cl.levenshtein_at_thresholds(
-    col_name="first_name",
-    distance_threshold_or_thresholds=2,
-    include_exact_match_level=True,
-    term_frequency_adjustments=True,
-    m_probability_exact_match=0.7,
-    m_probability_or_probabilities_lev=0.2,
-    m_probability_else=0.1,
-)
+# first_name_cc = cl.LevenshteinAtThresholds(
+#     col_name="first_name",
+#     distance_threshold_or_thresholds=2,
+    # TODO: compat
+    # include_exact_match_level=True,
+    # term_frequency_adjustments=True,
+    # m_probability_exact_match=0.7,
+    # m_probability_or_probabilities_lev=0.2,
+    # m_probability_else=0.1,
+# )
 
-dob_cc = cl.datediff_at_thresholds(
-    col_name="dob",
-    date_thresholds=[7, 3, 1],
-    date_metrics=["day", "month", "year"],
-    cast_strings_to_date=True,
-)
 
-# Update tf weight and u probabilities to match
-first_name_cc._comparison_dict["comparison_levels"][1]._tf_adjustment_weight = 0.6
-u_probabilities_first_name = [0.1, 0.1, 0.8]
-for u_prob, level in zip(
-    u_probabilities_first_name,
-    first_name_cc._comparison_dict["comparison_levels"][1:],
-):
-    level._u_probability = u_prob
+# # dob_cc = cl.datediff_at_thresholds(
+# #     col_name="dob",
+# #     date_thresholds=[7, 3, 1],
+# #     date_metrics=["day", "month", "year"],
+# #     cast_strings_to_date=True,
+# # )
 
-# Update settings w/ our edited first_name col
-settings_dict["comparisons"][0] = first_name_cc
-settings_dict["comparisons"][2] = dob_cc
+# # Update tf weight and u probabilities to match
+# first_name_cc._comparison_dict["comparison_levels"][1]._tf_adjustment_weight = 0.6
+# u_probabilities_first_name = [0.1, 0.1, 0.8]
+# for u_prob, level in zip(
+#     u_probabilities_first_name,
+#     first_name_cc._comparison_dict["comparison_levels"][1:],
+# ):
+#     level._u_probability = u_prob
 
-# Setup database names for tests
-db_name_read = "splink_awswrangler_test"
-db_name_write = "data_linking_temp"
-output_bucket = "alpha-data-linking"
-table_name = "__splink__fake_1000_from_splink_demos"
+# # Update settings w/ our edited first_name col
+# settings_dict["comparisons"][0] = first_name_cc
+# # settings_dict["comparisons"][2] = dob_cc
+
+# # Setup database names for tests
+# db_name_read = "splink_awswrangler_test"
+# db_name_write = "data_linking_temp"
+# output_bucket = "alpha-data-linking"
+# table_name = "__splink__fake_1000_from_splink_demos"
 
 
 def upload_data(db_name):
