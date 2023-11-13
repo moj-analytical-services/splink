@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
+from typing import List
 
-from .blocking import blocking_rule_to_obj
+from .blocking import BlockingRule, blocking_rule_to_obj
 from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -125,7 +126,7 @@ class Settings:
             used_by_brs = []
             for br in self._blocking_rules_to_generate_predictions:
                 used_by_brs.extend(
-                    get_columns_used_from_sql(br.blocking_rule, br.sql_dialect)
+                    get_columns_used_from_sql(br.blocking_rule_sql, br.sql_dialect)
                 )
 
             used_by_brs = [InputColumn(c) for c in used_by_brs]
@@ -300,7 +301,7 @@ class Settings:
                 return cc
         raise ValueError(f"No comparison column with name {name}")
 
-    def _brs_as_objs(self, brs_as_strings):
+    def _brs_as_objs(self, brs_as_strings) -> List[BlockingRule]:
         brs_as_objs = [blocking_rule_to_obj(br) for br in brs_as_strings]
         for n, br in enumerate(brs_as_objs):
             br.add_preceding_rules(brs_as_objs[:n])
