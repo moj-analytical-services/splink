@@ -13,7 +13,7 @@ def test_input_column():
 
     c = InputColumn("SUR name")
     assert c.name() == '"SUR name"'
-    assert c.name_r() == '"SUR name_r"'
+    assert c.name_r == '"SUR name_r"'
     assert c.r_name_as_r() == '"r"."SUR name" as "SUR name_r"'
 
     c = InputColumn("col['lat']")

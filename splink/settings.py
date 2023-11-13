@@ -241,7 +241,7 @@ class Settings:
 
         for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_l)
-            cols.append(uid_col.name_r())
+            cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_comparison_vector_values)
@@ -261,7 +261,7 @@ class Settings:
 
         for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_l)
-            cols.append(uid_col.name_r())
+            cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_bayes_factor_parts)
@@ -281,7 +281,7 @@ class Settings:
 
         for uid_col in self._unique_id_input_columns:
             cols.append(uid_col.name_l)
-            cols.append(uid_col.name_r())
+            cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_predict)

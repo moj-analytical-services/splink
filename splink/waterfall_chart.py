@@ -61,7 +61,7 @@ def _comparison_records(record_as_dict, comparison: Comparison):
     waterfall_record["bayes_factor_description"] = cl._bayes_factor_description
     input_cols_used = c._input_columns_used_by_case_statement
     input_cols_l = [ic.unquote().name_l for ic in input_cols_used]
-    input_cols_r = [ic.unquote().name_r() for ic in input_cols_used]
+    input_cols_r = [ic.unquote().name_r for ic in input_cols_used]
     waterfall_record["value_l"] = ", ".join(
         [str(record_as_dict[n]) for n in input_cols_l]
     )
@@ -81,7 +81,7 @@ def _comparison_records(record_as_dict, comparison: Comparison):
                 record_as_dict[cl._tf_adjustment_input_column.unquote().name_l]
             )
             waterfall_record_2["value_r"] = str(
-                record_as_dict[cl._tf_adjustment_input_column.unquote().name_r()]
+                record_as_dict[cl._tf_adjustment_input_column.unquote().name_r]
             )
         else:
             waterfall_record_2["value_l"] = ""
