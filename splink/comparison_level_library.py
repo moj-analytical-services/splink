@@ -166,8 +166,8 @@ class DatediffLevel(ComparisonLevelCreator):
 
     def create_label_for_charts(self) -> str:
         return (
-            f"Date difference of {self.col_name} <= "
-            f"{self.date_threshold} {self.date_metric}"
+            f"Date difference of '{self.col_name} <= "
+            f"{self.date_threshold} {self.date_metric}'"
         )
 
 
