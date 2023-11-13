@@ -241,7 +241,7 @@ class DistanceInKMLevel(ComparisonLevelCreator):
         self,
         lat_col: str,
         long_col: str,
-        km_threshold: int | float,
+        km_threshold: Union[int, float],
         not_null: bool = False,
     ):
         """Use the haversine formula to transform comparisons of lat,lngs
