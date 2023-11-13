@@ -87,9 +87,6 @@ class ColumnsReversedLevel(ComparisonLevelCreator):
         self.col_name_2 = col_name_2
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        # Refactor InputColumn so we don't need input_column_factory?
-        # (The factory just slightly improves readability)
-
         input_column_1 = input_column_factory(self.col_name_1, sql_dialect)
         input_column_2 = input_column_factory(self.col_name_2, sql_dialect)
 
