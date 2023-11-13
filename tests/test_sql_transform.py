@@ -95,12 +95,12 @@ def test_add_pref_and_suffix():
     assert dull.l_r_names_as_l_r() == dull_l_r
 
     assert dull.bf_name() == '"bf_dull"'
-    assert dull.tf_name_l() == '"tf_dull_l"'
+    assert dull.tf_name_l == '"tf_dull_l"'
     tf_dull_l_r = ['"l"."tf_dull" as "tf_dull_l"', '"r"."tf_dull" as "tf_dull_r"']
     assert dull.l_r_tf_names_as_l_r() == tf_dull_l_r
 
     ll = InputColumn("lat['long']")
-    assert ll.name_l() == "\"lat_l\"['long']"
+    assert ll.name_l == "\"lat_l\"['long']"
 
     ll_tf_l_r = [
         '"l"."tf_lat"[\'long\'] as "tf_lat_l"[\'long\']',
@@ -110,7 +110,7 @@ def test_add_pref_and_suffix():
     assert ll.l_r_tf_names_as_l_r() == ll_tf_l_r
 
     group = InputColumn("cluster")
-    assert group.name_l() == '"cluster_l"'
+    assert group.name_l == '"cluster_l"'
     assert group.bf_name() == '"bf_cluster"'
     group_l_r_names = ['"l"."cluster" as "cluster_l"', '"r"."cluster" as "cluster_r"']
     assert group.l_r_names_as_l_r() == group_l_r_names
