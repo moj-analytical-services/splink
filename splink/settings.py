@@ -247,7 +247,7 @@ class Settings:
             cols.extend(cc._columns_to_select_for_comparison_vector_values)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.names_l_r())
+            cols.extend(add_col.names_l_r)
 
         if self._needs_matchkey_column:
             cols.append("match_key")
@@ -267,7 +267,7 @@ class Settings:
             cols.extend(cc._columns_to_select_for_bayes_factor_parts)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.names_l_r())
+            cols.extend(add_col.names_l_r)
 
         if self._needs_matchkey_column:
             cols.append("match_key")
@@ -287,7 +287,7 @@ class Settings:
             cols.extend(cc._columns_to_select_for_predict)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.names_l_r())
+            cols.extend(add_col.names_l_r)
 
         if self._needs_matchkey_column:
             cols.append("match_key")

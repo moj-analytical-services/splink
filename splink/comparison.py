@@ -210,7 +210,7 @@ class Comparison:
         output_cols = []
         for col in input_cols:
             if self._settings_obj._retain_matching_columns:
-                output_cols.extend(col.names_l_r())
+                output_cols.extend(col.names_l_r)
 
         output_cols.append(self._case_statement)
 
@@ -230,7 +230,7 @@ class Comparison:
         output_cols = []
         for col in input_cols:
             if self._settings_obj._retain_matching_columns:
-                output_cols.extend(col.names_l_r())
+                output_cols.extend(col.names_l_r)
 
         output_cols.append(self._gamma_column_name)
 
@@ -268,7 +268,7 @@ class Comparison:
         output_cols = []
         for col in input_cols:
             if self._settings_obj._retain_matching_columns:
-                output_cols.extend(col.names_l_r())
+                output_cols.extend(col.names_l_r)
 
         if (
             self._settings_obj._training_mode
