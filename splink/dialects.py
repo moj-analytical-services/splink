@@ -64,6 +64,10 @@ class DuckDBDialect(SplinkDialect):
     def jaro_winkler_function_name(self):
         return "jaro_winkler_similarity"
 
+    @property
+    def jaccard_function_name(self):
+        return "jaccard"
+
 
 class SparkDialect(SplinkDialect):
     @property
@@ -85,6 +89,10 @@ class SparkDialect(SplinkDialect):
     @property
     def jaro_winkler_function_name(self):
         return "jaro_winkler"
+
+    @property
+    def jaccard_function_name(self):
+        return "jaccard"
 
 
 class SqliteDialect(SplinkDialect):

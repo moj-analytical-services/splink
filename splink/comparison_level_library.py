@@ -293,6 +293,35 @@ class JaroLevel(ComparisonLevelCreator):
         return f"Jaro distance of '{self.col_name} >= {self.distance_threshold}'"
 
 
+class JaccardLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: str, distance_threshold: Union[int, float]):
+        """A comparison level using a Jaccard distance function
+
+        e.g. `jaccard(val_l, val_r) >= distance_threshold`
+
+        Args:
+            col_name (str): Input column name
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+        """
+
+        super().__init__(col_name)
+        self.distance_threshold = validate_distance_threshold(
+            lower_bound=0,
+            upper_bound=1,
+            distance_threshold=distance_threshold,
+            level_name=self.__class__.__name__,
+        )
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        col_l, col_r = self.input_column(sql_dialect).names_l_r()
+        j_fn = sql_dialect._jaccard_function_name
+        return f"{j_fn}({col_l}, {col_r}) >= {self.distance_threshold}"
+
+    def create_label_for_charts(self) -> str:
+        return f"Jaccard distance of '{self.col_name} >= {self.distance_threshold}'"
+
+
 class DistanceInKMLevel(ComparisonLevelCreator):
     def __init__(
         self,
