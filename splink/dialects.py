@@ -24,6 +24,12 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'Levenshtein' function"
         )
 
+    @property
+    def jaro_winkler_function_name(self):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'Jaro-Winkler' function"
+        )
+
 
 class DuckDBDialect(SplinkDialect):
     @property
@@ -33,6 +39,10 @@ class DuckDBDialect(SplinkDialect):
     @property
     def levenshtein_function_name(self):
         return "levenshtein"
+
+    @property
+    def jaro_winkler_function_name(self):
+        return "jaro_winkler_similarity"
 
 
 class SparkDialect(SplinkDialect):
@@ -44,15 +54,25 @@ class SparkDialect(SplinkDialect):
     def levenshtein_function_name(self):
         return "levenshtein"
 
+    @property
+    def jaro_winkler_function_name(self):
+        return "jaro_winkler"
+
 
 class SqliteDialect(SplinkDialect):
     @property
     def name(self):
         return "sqlite"
 
+    # SQLite does not natively support string distance functions.
+    # However, sqlite UDFs are registered automatically by Splink
     @property
     def levenshtein_function_name(self):
         return "levenshtein"
+
+    @property
+    def jaro_winkler_function_name(self):
+        return "jaro_winkler"
 
 
 class PostgresDialect(SplinkDialect):
