@@ -25,6 +25,12 @@ class SplinkDialect(ABC):
         )
 
     @property
+    def damerau_levenshtein_function_name(self):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'Damerau-Levenshtein' function"
+        )
+
+    @property
     def jaro_winkler_function_name(self):
         raise NotImplementedError(
             f"Backend '{self.name}' does not have a 'Jaro-Winkler' function"
@@ -41,6 +47,10 @@ class DuckDBDialect(SplinkDialect):
         return "levenshtein"
 
     @property
+    def damerau_levenshtein_function_name(self):
+        return "damerau_levenshtein"
+
+    @property
     def jaro_winkler_function_name(self):
         return "jaro_winkler_similarity"
 
@@ -53,6 +63,10 @@ class SparkDialect(SplinkDialect):
     @property
     def levenshtein_function_name(self):
         return "levenshtein"
+
+    @property
+    def damerau_levenshtein_function_name(self):
+        return "damerau_levenshtein"
 
     @property
     def jaro_winkler_function_name(self):
