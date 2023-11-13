@@ -131,10 +131,10 @@ class Settings:
 
             used_by_brs = [InputColumn(c) for c in used_by_brs]
 
-            used_by_brs = [c.unquote().name() for c in used_by_brs]
+            used_by_brs = [c.unquote().name for c in used_by_brs]
             already_used = self._columns_used_by_comparisons
             already_used = [InputColumn(c) for c in already_used]
-            already_used = [c.unquote().name() for c in already_used]
+            already_used = [c.unquote().name for c in already_used]
 
             new_cols = list(set(used_by_brs) - set(already_used))
             a_cols.extend(new_cols)
@@ -170,7 +170,7 @@ class Settings:
     @property
     def _source_dataset_col(self):
         input_column = self._source_dataset_input_column
-        return (input_column, InputColumn(input_column, self).name())
+        return (input_column, InputColumn(input_column, self).name)
 
     @property
     def _unique_id_input_columns(self) -> list[InputColumn]:
@@ -214,7 +214,7 @@ class Settings:
         cols_used.append(self._unique_id_column_name)
         for cc in self.comparisons:
             cols = cc._input_columns_used_by_case_statement
-            cols = [c.name() for c in cols]
+            cols = [c.name for c in cols]
 
             cols_used.extend(cols)
         return dedupe_preserving_order(cols_used)
