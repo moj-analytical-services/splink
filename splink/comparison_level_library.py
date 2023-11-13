@@ -26,6 +26,10 @@ def validate_distance_threshold(
 
 
 class NullLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: str):
+        super().__init__(col_name)
+        self.is_null_level = True
+
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         col = self.input_column(sql_dialect)
         return f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL"

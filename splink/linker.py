@@ -52,6 +52,7 @@ from .charts import (
 )
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
+from .comparison_creator import ComparisonCreator
 from .comparison_level import ComparisonLevel
 from .comparison_vector_distribution import (
     comparison_vector_distribution_sql,
@@ -221,9 +222,11 @@ class Linker:
 
             # TODO: deal with instantiating comparison levels in this path
         else:
-            self._validate_settings_components(settings_dict)
+            # TODO: need to figure out how this flows with validation
+            # for now we instantiate all the correct types before the validator sees it
             settings_dict = deepcopy(settings_dict)
             self._instantiate_comparison_levels(settings_dict)
+            self._validate_settings_components(settings_dict)
             self._setup_settings_objs(settings_dict)
 
         homogenised_tables, homogenised_aliases = self._register_input_tables(
@@ -523,13 +526,18 @@ class Linker:
         instances are instead replaced with ComparisonLevels
         """
         dialect = self._sql_dialect
-        # TODO: handle case where dict is in fact a Comparison object
-        for comparison_dict in settings_dict["comparisons"]:
-            comparison_levels = comparison_dict["comparison_levels"]
-            for idx, level in enumerate(comparison_levels):
-                # if we have a ComparisonLevelCreator
-                if not isinstance(level, dict):
-                    comparison_levels[idx] = level.get_comparison_level(dialect)
+        if "comparisons" not in settings_dict:
+            return
+        comparisons = settings_dict["comparisons"]
+        for idx_c, comparison in enumerate(comparisons):
+            if isinstance(comparison, dict):
+                comparison_levels = comparison["comparison_levels"]
+                for idx_cl, level in enumerate(comparison_levels):
+                    # if we have a ComparisonLevelCreator
+                    if not isinstance(level, dict):
+                        comparison_levels[idx_cl] = level.get_comparison_level(dialect)
+            elif isinstance(comparison, ComparisonCreator):
+                comparisons[idx_c] = comparison.get_comparison(dialect)
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
