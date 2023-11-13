@@ -204,7 +204,7 @@ class InputColumn:
 
     @property
     def l_r_names_as_l_r(self) -> list[str]:
-        return [self.l_name_as_l(), self.r_name_as_r()]
+        return [self.l_name_as_l, self.r_name_as_r]
 
     @property
     def bf_name(self) -> str:
@@ -250,7 +250,7 @@ class InputColumn:
 
     @property
     def l_r_tf_names_as_l_r(self) -> list[str]:
-        return [self.l_tf_name_as_l(), self.r_tf_name_as_r()]
+        return [self.l_tf_name_as_l, self.r_tf_name_as_r]
 
     def _quote_if_sql_keyword(self, name: str) -> str:
         if name not in {"group", "index"}:

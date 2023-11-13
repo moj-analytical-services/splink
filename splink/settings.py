@@ -224,14 +224,14 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.l_name_as_l())
-            cols.append(uid_col.r_name_as_r())
+            cols.append(uid_col.l_name_as_l)
+            cols.append(uid_col.r_name_as_r)
 
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_blocking)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.l_r_names_as_l_r())
+            cols.extend(add_col.l_r_names_as_l_r)
 
         return dedupe_preserving_order(cols)
 
