@@ -1,4 +1,6 @@
-from typing import Union
+from typing import List, Union
+
+from sqlglot import parse_one
 
 from .comparison_level_creator import ComparisonLevelCreator
 from .dialects import SplinkDialect
@@ -7,6 +9,21 @@ from .input_column import InputColumn
 
 def input_column_factory(name, splink_dialect: SplinkDialect):
     return InputColumn(name, sql_dialect=splink_dialect.sqlglot_name)
+
+
+def unsupported_splink_dialects(unsupported_dialects: List[str]):
+    def decorator(func):
+        def wrapper(self, splink_dialect: SplinkDialect, *args, **kwargs):
+            if splink_dialect.name in unsupported_dialects:
+                raise ValueError(
+                    f"Dialect {splink_dialect.name} is not supported "
+                    f"for {self.__class__.__name__}"
+                )
+            return func(self, splink_dialect, *args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def validate_distance_threshold(
@@ -101,7 +118,7 @@ class ColumnsReversedLevel(ComparisonLevelCreator):
 
 class LevenshteinLevel(ComparisonLevelCreator):
     def __init__(self, col_name: str, distance_threshold: int):
-        """A comparison level using a levenshtein distance function
+        """A comparison level using a sqlglot_dialect_name distance function
 
         e.g. levenshtein(val_l, val_r) <= distance_threshold
 
@@ -120,6 +137,71 @@ class LevenshteinLevel(ComparisonLevelCreator):
 
     def create_label_for_charts(self) -> str:
         return f"Levenshtein distance of {self.col_name} <= {self.distance_threshold}"
+
+
+class DatediffLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        col_name: str,
+        date_threshold: int,
+        date_metric: str = "day",  ##TODO: Lock down to sqlglot supported values
+        cast_strings_to_date: bool = False,
+        date_format: str = "%Y-%m-%d",
+    ):
+        """A comparison level using a date difference function
+
+        e.g. abs(date_diff('day', "mydate_l", "mydate_r")) <= 2  (duckdb dialect)
+
+        Args:
+            col_name (str): Input column name
+            date_threshold (int): The threshold for the date difference
+            date_metric (str): The unit of time ('day', 'month', 'year')
+                for the threshold
+            cast_strings_to_date (bool): Whether to cast string columns to date format
+            date_format (str): The format of the date string
+        """
+        super().__init__(col_name)
+        self.date_threshold = date_threshold
+        self.date_metric = date_metric
+        self.cast_strings_to_date = cast_strings_to_date
+        self.date_format = date_format
+
+    @unsupported_splink_dialects(["sqlite"])
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        """Use sqlglot to auto transpile where possible
+        Where sqlglot auto transpilation doesn't work correctly, a date_diff function
+        must be implemented in the dialect, which will be used instead
+        """
+
+        if self.date_metric not in ("day", "month", "year"):
+            raise ValueError("`date_metric` must be one of ('day', 'month', 'year')")
+
+        sqlglot_dialect_name = sql_dialect.sqlglot_name
+        date_col = InputColumn(self.col_name)
+        date_col_l, date_col_r = date_col.names_l_r()
+
+        if hasattr(sql_dialect, "date_diff"):
+            return sql_dialect.date_diff(self)
+
+        if self.cast_strings_to_date:
+            date_col_l = f"STR_TO_TIME({date_col_l}, '{self.date_format}')"
+            date_col_r = f"STR_TO_TIME({date_col_r}, '{self.date_format}')"
+
+        sqlglot_base_dialect_sql = (
+            f"ABS(DATE_DIFF({date_col_l}, "
+            f"{date_col_r}, '{self.date_metric}'))"
+            f"<= {self.date_threshold}"
+        )
+
+        tree = parse_one(sqlglot_base_dialect_sql)
+
+        return tree.sql(dialect=sqlglot_dialect_name)
+
+    def create_label_for_charts(self) -> str:
+        return (
+            f"Date difference of '{self.col_name} <= "
+            f"{self.date_threshold} {self.date_metric}'"
+        )
 
 
 class JaroWinklerLevel(ComparisonLevelCreator):
