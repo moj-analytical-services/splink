@@ -357,10 +357,7 @@ class Linker:
             return "__splink__df_concat_with_tf_right"
         return "__splink__df_concat_with_tf"
 
-    @property
-    def _source_dataset_column_name(self):
-        if self._settings_obj_ is None:
-            return None
+
 
         # Used throughout the scripts to feed our SQL
         if self._settings_obj._source_dataset_column_name_is_required:
