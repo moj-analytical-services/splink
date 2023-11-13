@@ -52,10 +52,10 @@ def postcode_levels(cll):
     return {
         "output_column_name": "postcode",
         "comparison_levels": [
-            cll.exact_match_level(
+            cll.ExactMatchLevel(
                 "postcode", regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]? [0-9]"
             ),
-            cll.levenshtein_level(
+            cll.LevenshteinLevel(
                 "postcode",
                 distance_threshold=1,
                 regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]?",
@@ -63,7 +63,7 @@ def postcode_levels(cll):
             cll.jaro_level(
                 "postcode", distance_threshold=1, regex_extract="^[A-Z]{1,2}"
             ),
-            cll.else_level(),
+            cll.ElseLevel(),
         ],
     }
 
@@ -75,10 +75,10 @@ def name_levels(cll):
             cll.jaro_winkler_level(
                 "first_name", distance_threshold=1, regex_extract="^[A-Z]{1,4}"
             ),
-            cll.columns_reversed_level(
+            cll.ColumnsReversedLevel(
                 "first_name", "last_name", regex_extract="[A-Z]{1,3}"
             ),
-            cll.else_level(),
+            cll.ElseLevel(),
         ],
     }
 
@@ -157,7 +157,7 @@ def test_regex(spark, Linker, df, level_set, record_pairs_gamma):
 
 
 def test_invalid_regex():
-    clld.exact_match_level("postcode", regex_extract="^[A-Z]\\d")
-    clls.exact_match_level("postcode", regex_extract="^[A-Z]{1}")
+    clld.ExactMatchLevel("postcode", regex_extract="^[A-Z]\\d")
+    clls.ExactMatchLevel("postcode", regex_extract="^[A-Z]{1}")
     with pytest.raises(SyntaxError):
-        clls.exact_match_level("postcode", regex_extract="^[A-Z]\\d")
+        clls.ExactMatchLevel("postcode", regex_extract="^[A-Z]\\d")

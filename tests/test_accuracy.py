@@ -5,8 +5,8 @@ from splink.accuracy import (
     predictions_from_sample_of_pairwise_labels_sql,
     truth_space_table_from_labels_with_predictions_sqls,
 )
-from splink.duckdb.blocking_rule_library import exact_match_rule
-from splink.duckdb.comparison_library import exact_match
+from splink.comparison_library import ExactMatch
+from splink.duckdb.blocking_rule_library import block_on
 from splink.duckdb.linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict
@@ -33,13 +33,13 @@ def test_scored_labels_table():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            exact_match("first_name"),
-            exact_match("surname"),
-            exact_match("dob"),
+            ExactMatch("first_name"),
+            ExactMatch("surname"),
+            ExactMatch("dob"),
         ],
         "blocking_rules_to_generate_predictions": [
             "l.surname = r.surname",
-            exact_match_rule("dob"),
+            block_on("dob"),
         ],
     }
 
@@ -92,9 +92,9 @@ def test_truth_space_table():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            exact_match("first_name"),
-            exact_match("surname"),
-            exact_match("dob"),
+            ExactMatch("first_name"),
+            ExactMatch("surname"),
+            ExactMatch("dob"),
         ],
         "blocking_rules_to_generate_predictions": [
             "l.surname = r.surname",

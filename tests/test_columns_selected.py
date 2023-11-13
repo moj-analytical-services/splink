@@ -4,8 +4,7 @@ import os
 
 import pandas as pd
 
-import splink.duckdb.comparison_level_library as cll
-from splink.duckdb.comparison_level_library import else_level
+import splink.comparison_level_library as cll
 from splink.duckdb.linker import DuckDBLinker
 
 
@@ -97,7 +96,7 @@ def test_discussion_example(tmp_path):
                     "tf_adjustment_column": "metaphone_fname",
                     "tf_adjustment_weight": 1.0,
                 },
-                else_level(),
+                cll.else_level(),
             ]
 
             settings_dict = {
