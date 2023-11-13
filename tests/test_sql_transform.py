@@ -124,4 +124,4 @@ def test_add_pref_and_suffix():
     cols = ["unique_id", "SUR name", "cluster"]
     out_cols = ['"unique_id"', '"SUR name"', '"cluster"']
     cols_class = [InputColumn(c) for c in cols]
-    assert [c.name() for c in cols_class] == out_cols
+    assert [c.name for c in cols_class] == out_cols

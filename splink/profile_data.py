@@ -232,7 +232,7 @@ def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
     """
 
     if not column_expressions:
-        column_expressions = [col.name() for col in linker._input_columns]
+        column_expressions = [col.name for col in linker._input_columns]
 
     df_concat = linker._initialise_df_concat()
 
@@ -297,7 +297,6 @@ def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
             inner_charts.append(inner_chart)
 
     if inner_charts != []:
-
         outer_spec = deepcopy(_outer_chart_spec_freq)
         outer_spec["vconcat"] = inner_charts
 
