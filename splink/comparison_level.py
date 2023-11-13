@@ -577,8 +577,8 @@ class ComparisonLevel:
         else:
             tf_adj_col = self._tf_adjustment_input_column
 
-            coalesce_l_r = f"coalesce({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r()})"
-            coalesce_r_l = f"coalesce({tf_adj_col.tf_name_r()}, {tf_adj_col.tf_name_l})"
+            coalesce_l_r = f"coalesce({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r})"
+            coalesce_r_l = f"coalesce({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l})"
 
             tf_adjustment_exists = f"{coalesce_l_r} is not null"
             u_prob_exact_match = self._u_probability_corresponding_to_exact_match

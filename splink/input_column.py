@@ -186,7 +186,7 @@ class InputColumn:
 
     @property
     def names_l_r(self) -> list[str]:
-        return [self.name_l, self.name_r()]
+        return [self.name_l, self.name_r]
 
     @property
     def l_name_as_l(self) -> str:
@@ -200,7 +200,7 @@ class InputColumn:
         name_with_r_table = add_table(self.input_name_as_tree, "r").sql(
             dialect=self._sql_dialect
         )
-        return f"{name_with_r_table} as {self.name_r()}"
+        return f"{name_with_r_table} as {self.name_r}"
 
     @property
     def l_r_names_as_l_r(self) -> list[str]:
@@ -230,7 +230,7 @@ class InputColumn:
 
     @property
     def tf_name_l_r(self) -> list[str]:
-        return [self.tf_name_l, self.tf_name_r()]
+        return [self.tf_name_l, self.tf_name_r]
 
     @property
     def l_tf_name_as_l(self) -> str:
@@ -246,7 +246,7 @@ class InputColumn:
         tf_name_with_r_table = add_table(tree, tablename="r").sql(
             dialect=self._sql_dialect
         )
-        return f"{tf_name_with_r_table} as {self.tf_name_r()}"
+        return f"{tf_name_with_r_table} as {self.tf_name_r}"
 
     @property
     def l_r_tf_names_as_l_r(self) -> list[str]:

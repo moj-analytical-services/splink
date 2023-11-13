@@ -98,7 +98,7 @@ class NullLevelBase(ComparisonLevel):
             valid_string_pattern = valid_string_regex
 
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
-        col_name_l, col_name_r = col.name_l, col.name_r()
+        col_name_l, col_name_r = col.name_l, col.name_r
 
         if invalid_dates_as_null:
             col_name_l = self._valid_date_function(col_name_l, valid_string_pattern)
@@ -231,7 +231,7 @@ class ExactMatchLevelBase(ComparisonLevel):
         else:
             label_suffix = ""
 
-        col_name_l, col_name_r = col.name_l, col.name_r()
+        col_name_l, col_name_r = col.name_l, col.name_r
 
         if set_to_lowercase:
             col_name_l = f"lower({col_name_l})"
@@ -395,7 +395,7 @@ class DistanceFunctionLevelBase(ComparisonLevel):
         else:
             operator = "<="
 
-        col_name_l, col_name_r = col.name_l, col.name_r()
+        col_name_l, col_name_r = col.name_l, col.name_r
 
         if set_to_lowercase:
             col_name_l = f"lower({col_name_l})"
@@ -938,8 +938,8 @@ class ColumnsReversedLevelBase(ComparisonLevel):
         col_1 = InputColumn(col_name_1, sql_dialect=self._sql_dialect)
         col_2 = InputColumn(col_name_2, sql_dialect=self._sql_dialect)
 
-        col_1_l, col_1_r = col_1.name_l, col_1.name_r()
-        col_2_l, col_2_r = col_2.name_l, col_2.name_r()
+        col_1_l, col_1_r = col_1.name_l, col_1.name_r
+        col_2_l, col_2_r = col_2.name_l, col_2.name_r
 
         if set_to_lowercase:
             col_1_l = f"lower({col_1_l})"
@@ -1108,10 +1108,10 @@ class PercentageDifferenceLevelBase(ComparisonLevel):
         """
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
 
-        s = f"""(abs({col.name_l} - {col.name_r()})/
+        s = f"""(abs({col.name_l} - {col.name_r})/
             (case
-                when {col.name_r()} > {col.name_l}
-                then {col.name_r()}
+                when {col.name_r} > {col.name_l}
+                then {col.name_r}
                 else {col.name_l}
             end))
             < {percentage_distance_threshold}"""
@@ -1178,7 +1178,7 @@ class ArrayIntersectLevelBase(ComparisonLevel):
         col = InputColumn(col_name, sql_dialect=self._sql_dialect)
 
         size_array_intersection = (
-            f"{self._size_array_intersect_function(col.name_l, col.name_r())}"
+            f"{self._size_array_intersect_function(col.name_l, col.name_r)}"
         )
         sql = f"{size_array_intersection} >= {min_intersection}"
 
