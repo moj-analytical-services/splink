@@ -217,7 +217,7 @@ class Comparison:
         for cl in self.comparison_levels:
             if cl._has_tf_adjustments:
                 col = cl._tf_adjustment_input_column
-                output_cols.extend(col.tf_name_l_r())
+                output_cols.extend(col.tf_name_l_r)
 
         return dedupe_preserving_order(output_cols)
 
@@ -240,7 +240,7 @@ class Comparison:
                 and self._settings_obj._retain_intermediate_calculation_columns
             ):
                 col = cl._tf_adjustment_input_column
-                output_cols.extend(col.tf_name_l_r())
+                output_cols.extend(col.tf_name_l_r)
 
         # Bayes factor case when statement
         sqls = [cl._bayes_factor_sql for cl in self.comparison_levels]
@@ -282,7 +282,7 @@ class Comparison:
                 and self._settings_obj._retain_intermediate_calculation_columns
             ):
                 col = cl._tf_adjustment_input_column
-                output_cols.extend(col.tf_name_l_r())
+                output_cols.extend(col.tf_name_l_r)
 
         for _col in input_cols:
             if self._settings_obj._retain_intermediate_calculation_columns:

@@ -37,7 +37,7 @@ def term_frequencies_for_single_column_sql(
     select
     {col_name}, cast(count(*) as float8) / (select
         count({col_name}) as total from {table_name})
-            as {input_column.tf_name()}
+            as {input_column.tf_name}
     from {table_name}
     where {col_name} is not null
     group by {col_name}
@@ -56,7 +56,7 @@ def _join_tf_to_input_df_sql(linker: Linker):
         tbl = colname_to_tf_tablename(col)
         if tbl in linker._intermediate_table_cache:
             tbl = linker._intermediate_table_cache[tbl].physical_name
-        tf_col = col.tf_name()
+        tf_col = col.tf_name
         select_cols.append(f"{tbl}.{tf_col}")
 
     select_cols.insert(0, "__splink__df_concat.*")
@@ -91,7 +91,7 @@ def term_frequencies_from_concat_with_tf(input_column):
     sql = f"""
         select
         distinct {input_column.name},
-        {input_column.tf_name()}
+        {input_column.tf_name}
         from __splink__df_concat_with_tf
     """
 

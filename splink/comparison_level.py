@@ -465,11 +465,9 @@ class ComparisonLevel:
         cols = self._input_columns_used_by_sql_condition
 
         for c in cols:
-            output_cols.extend(c.l_r_names_as_l_r())
+            output_cols.extend(c.l_r_names_as_l_r)
             if self._tf_adjustment_input_column:
-                output_cols.extend(
-                    self._tf_adjustment_input_column.l_r_tf_names_as_l_r()
-                )
+                output_cols.extend(self._tf_adjustment_input_column.l_r_tf_names_as_l_r)
 
         return dedupe_preserving_order(output_cols)
 
