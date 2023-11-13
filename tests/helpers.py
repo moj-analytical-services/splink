@@ -9,19 +9,8 @@ from sqlalchemy.types import (
     TEXT,
 )
 
-# import splink.duckdb.blocking_rule_library as brl_duckdb
-# import splink.duckdb.comparison_library as cl_duckdb
-# import splink.duckdb.comparison_template_library as ctl_duckdb
-# import splink.postgres.blocking_rule_library as brl_postgres
-# import splink.postgres.comparison_library as cl_postgres
-# import splink.postgres.comparison_template_library as ctl_postgres
-# import splink.spark.blocking_rule_library as brl_spark
-# import splink.spark.comparison_library as cl_spark
-# import splink.spark.comparison_template_library as ctl_spark
-# import splink.sqlite.blocking_rule_library as brl_sqlite
-# import splink.sqlite.comparison_library as cl_sqlite
-# import splink.sqlite.comparison_template_library as ctl_sqlite
 import splink.comparison_level_library as cll
+import splink.comparison_library as cl
 from splink.duckdb.linker import DuckDBLinker
 from splink.postgres.linker import PostgresLinker
 from splink.spark.linker import SparkLinker
@@ -56,10 +45,9 @@ class TestHelper(ABC):
     def cll(self):
         return cll
 
-    # @property
-    # @abstractmethod
-    # def cl(self):
-    #     pass
+    @property
+    def cl(self):
+        return cl
 
     # @property
     # @abstractmethod
