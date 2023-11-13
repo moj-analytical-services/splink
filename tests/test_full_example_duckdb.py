@@ -290,7 +290,7 @@ def test_small_example_duckdb(tmp_path):
                 "comparison_levels": [
                     cll.null_level("full_name", valid_string_pattern=".*"),
                     cll.exact_match_level("full_name", term_frequency_adjustments=True),
-                    cll.columns_reversed_level(
+                    cll.ColumnsReversedLevel(
                         "first_name", "surname", tf_adjustment_column="full_name"
                     ),
                     cll.exact_match_level(

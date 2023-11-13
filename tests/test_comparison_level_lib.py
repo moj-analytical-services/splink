@@ -25,7 +25,7 @@ def test_column_reversal(test_helpers, dialect):
                 "comparison_levels": [
                     cll.NullLevel("full_name"),
                     cll.ExactMatchLevel("full_name"),
-                    cll.columns_reversed_level("forename", "surname"),
+                    cll.ColumnsReversedLevel("forename", "surname"),
                     cll.ElseLevel(),
                 ],
             },
