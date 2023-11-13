@@ -1,8 +1,11 @@
+import logging
 import re
 from copy import deepcopy
 
 from .charts import altair_or_json, load_chart_definition
 from .misc import ensure_is_list
+
+logger = logging.getLogger(__name__)
 
 
 def _group_name(cols_or_expr):
@@ -190,7 +193,47 @@ def _add_100_percentile_to_df_percentiles(percentile_rows):
     return percentile_rows
 
 
-def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
+def profile_columns(linker, column_expressions=None, top_n=10, bottom_n=10):
+    """
+    Profiles the specified columns of the dataframe initiated with the linker.
+
+    This can be computationally expensive if the dataframe is large.
+
+    For the provided columns with column_expressions (or for all columns if left empty)
+    calculate:
+    - A distribution plot that shows the count of values at each percentile.
+    - A top n chart, that produces a chart showing the count of the top n values
+    within the column
+    - A bottom n chart, that produces a chart showing the count of the bottom
+    n values within the column
+
+    This should be used to explore the dataframe, determine if columns have
+    sufficient completeness for linking, analyse the cardinality of columns, and
+    identify the need for standardisation within a given column.
+
+    Args:
+        linker (object): The initiated linker.
+        column_expressions (list, optional): A list of strings containing the
+            specified column names.
+            If left empty this will default to all columns.
+        top_n (int, optional): The number of top n values to plot.
+        bottom_n (int, optional): The number of bottom n values to plot.
+
+    Returns:
+        altair.Chart or dict: A visualization or JSON specification describing the
+         profiling charts.
+
+    Note:
+        - The `linker` object should be an instance of the initiated linker.
+        - The provided `column_expressions` can be a list of column names to profile.
+            If left empty, all columns will be profiled.
+        - The `top_n` and `bottom_n` parameters determine the number of top and bottom
+            values to display in the respective charts.
+    """
+
+    if not column_expressions:
+        column_expressions = [col.name() for col in linker._input_columns]
+
     df_concat = linker._initialise_df_concat()
 
     input_dataframes = []
@@ -230,21 +273,35 @@ def profile_columns(linker, column_expressions, top_n=10, bottom_n=10):
         percentile_rows = [
             p for p in percentile_rows_all if p["group_name"] == _group_name(expression)
         ]
-        percentile_rows = _add_100_percentile_to_df_percentiles(percentile_rows)
-        top_n_rows = [
-            p for p in top_n_rows_all if p["group_name"] == _group_name(expression)
-        ]
-        bottom_n_rows = [
-            p for p in bottom_n_rows_all if p["group_name"] == _group_name(expression)
-        ]
-        # remove concat blank from expression title
-        expression = expression.replace(", ' '", "")
-        inner_chart = _get_inner_chart_spec_freq(
-            percentile_rows, top_n_rows, bottom_n_rows, expression
-        )
-        inner_charts.append(inner_chart)
-    outer_spec = deepcopy(_outer_chart_spec_freq)
+        if percentile_rows == []:
+            logger.warning(
+                "Warning: No charts produced for "
+                f"{expression}"
+                " as the column only contains null values."
+            )
+        else:
+            percentile_rows = _add_100_percentile_to_df_percentiles(percentile_rows)
+            top_n_rows = [
+                p for p in top_n_rows_all if p["group_name"] == _group_name(expression)
+            ]
+            bottom_n_rows = [
+                p
+                for p in bottom_n_rows_all
+                if p["group_name"] == _group_name(expression)
+            ]
+            # remove concat blank from expression title
+            expression = expression.replace(", ' '", "")
+            inner_chart = _get_inner_chart_spec_freq(
+                percentile_rows, top_n_rows, bottom_n_rows, expression
+            )
+            inner_charts.append(inner_chart)
 
-    outer_spec["vconcat"] = inner_charts
+    if inner_charts != []:
 
-    return altair_or_json(outer_spec)
+        outer_spec = deepcopy(_outer_chart_spec_freq)
+        outer_spec["vconcat"] = inner_charts
+
+        return altair_or_json(outer_spec)
+
+    else:
+        return None

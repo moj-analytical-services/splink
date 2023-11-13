@@ -1,7 +1,7 @@
 import logging
 from copy import deepcopy
 
-from .blocking import BlockingRule, block_using_rules_sql
+from .blocking import BlockingRule, block_using_rules_sqls
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import (
     compute_new_parameters_sql,
@@ -34,8 +34,10 @@ def estimate_m_values_from_label_column(linker, df_dict, label_colname):
 
     concat_with_tf = linker._initialise_df_concat_with_tf()
 
-    sql = block_using_rules_sql(training_linker)
-    training_linker._enqueue_sql(sql, "__splink__df_blocked")
+    sqls = block_using_rules_sqls(training_linker)
+
+    for sql in sqls:
+        training_linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
     sql = compute_comparison_vector_values_sql(settings_obj)
 

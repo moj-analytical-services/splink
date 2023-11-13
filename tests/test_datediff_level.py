@@ -55,6 +55,7 @@ def test_datediff_levels(test_helpers, dialect):
             },
         ]
     )
+    df = helper.convert_frame(df)
 
     exact_match_fn = cl.exact_match("first_name")
 
@@ -68,21 +69,25 @@ def test_datediff_levels(test_helpers, dialect):
                 date_col="dob",
                 date_threshold=30,
                 date_metric="day",
+                cast_strings_to_date=True,
             ),
             cll.datediff_level(
                 date_col="dob",
                 date_threshold=12,
                 date_metric="month",
+                cast_strings_to_date=True,
             ),
             cll.datediff_level(
                 date_col="dob",
                 date_threshold=5,
                 date_metric="year",
+                cast_strings_to_date=True,
             ),
             cll.datediff_level(
                 date_col="dob",
                 date_threshold=100,
                 date_metric="year",
+                cast_strings_to_date=True,
             ),
             cll.else_level(),
         ],
@@ -98,14 +103,15 @@ def test_datediff_levels(test_helpers, dialect):
         "comparisons": [
             exact_match_fn,
             cl.datediff_at_thresholds(
-                "dob", [30, 12, 5, 100], ["day", "month", "year", "year"]
+                "dob",
+                [30, 12, 5, 100],
+                ["day", "month", "year", "year"],
+                cast_strings_to_date=True,
             ),
         ],
     }
 
     # We need to put our column in datetime format for this to work
-    df["dob"] = pd.to_datetime(df["dob"])
-
     linker = helper.Linker(df, settings_cl, **helper.extra_linker_args())
     cl_df_e = linker.predict().as_pandas_dataframe()
     linker = helper.Linker(df, settings_cll, **helper.extra_linker_args())
@@ -164,7 +170,7 @@ def test_datediff_error_logger(test_helpers, dialect):
         cl.datediff_at_thresholds("dob", [1], [])
 
 
-@mark_with_dialects_excluding("sqlite")
+@mark_with_dialects_excluding("sqlite", "postgres")
 def test_datediff_with_str_casting(test_helpers, dialect, caplog):
     caplog.set_level(logging.INFO)
     helper = test_helpers[dialect]
@@ -200,7 +206,11 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
         dob_diff = {
             "output_column_name": "dob",
             "comparison_levels": [
-                cll.null_level("dob", valid_string_regex=null_level_regex),
+                cll.null_level(
+                    "dob",
+                    valid_string_pattern=null_level_regex,
+                    invalid_dates_as_null=invalid_dates_as_null,
+                ),
                 cll.exact_match_level("dob"),
                 cll.datediff_level(
                     date_col="dob",
@@ -355,26 +365,20 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
                 date_format_param=valid_date_formats[3],
             )
 
-    # Test some incorrectly formatted dates with DuckDB which you
-    # expect to throw error, but with the invalid_dates_as_null
-    # parameter switched on there is no error.
-    # Don't run these tests with
-    # Spark as does not throw error
-    # in response to badly formatted dates
+    # Test some incorrectly formatted dates with the
+    # invalid_dates_as_null parameter
+    # invalid date (month > 12)
+    simple_dob_linker(
+        df,
+        dobs=["03-14-1994", "19-12-1993"],
+        date_format_param=valid_date_formats[1],
+        invalid_dates_as_null=True,
+    )
 
-    if dialect == "duckdb":
-        # mis-match between date formats:
-        simple_dob_linker(
-            df,
-            dobs=["03-14-1994", "19/22/1993"],
-            date_format_param=valid_date_formats[1],
-            invalid_dates_as_null=True,
-        )
-
-        # mis-match between input dates and expected date format
-        simple_dob_linker(
-            df,
-            dobs=["20-04-1993", "19-02-1993"],
-            date_format_param=valid_date_formats[3],
-            invalid_dates_as_null=True,
-        )
+    # mis-match between input dates and expected date format
+    simple_dob_linker(
+        df,
+        dobs=["20/04/1993", "19-02-1993"],
+        date_format_param=valid_date_formats[3],
+        invalid_dates_as_null=True,
+    )

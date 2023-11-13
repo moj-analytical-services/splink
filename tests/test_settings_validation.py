@@ -1,3 +1,4 @@
+import logging
 from copy import deepcopy
 
 import pandas as pd
@@ -5,9 +6,14 @@ import pytest
 
 from splink.convert_v2_to_v3 import convert_settings_from_v2_to_v3
 from splink.duckdb.linker import DuckDBLinker
-from splink.settings_validator import (
+from splink.exceptions import ErrorLogger
+from splink.settings_validation.column_lookups import (
     InvalidCols,
-    InvalidSettingsLogger,
+    InvalidColumnsLogger,
+)
+from splink.settings_validation.valid_types import (
+    log_comparison_errors,
+    validate_comparison_levels,
 )
 
 from .basic_settings import get_settings_dict
@@ -17,7 +23,7 @@ from .decorator import mark_with_dialects_excluding
 def alter_settings(linker, new_settings):
     linker = deepcopy(linker)
     linker.load_settings(new_settings)
-    return InvalidSettingsLogger(linker)
+    return InvalidColumnsLogger(linker)
 
 
 def verify_single_setting_validation(
@@ -32,9 +38,9 @@ def verify_single_setting_validation(
 
     Args:
         invalid_cols_tuple (tuple): The output from
-            `InvalidSettingsLogger(linker).validate_{}`.
+            `InvalidColumnsLogger(linker).validate_{}`.
         settings_reference (str): The reference assigned
-            to that given validation check. See the `InvalidSettingsLogger`
+            to that given validation check. See the `InvalidColumnsLogger`
             class for more.
         invalid_type (str): One of: `invalid_cols`, `invalid_table_pref`
             or `invalid_col_suffix`.
@@ -55,9 +61,9 @@ def verify_complicated_settings_objects(invalid, expected):
 
     Args:
         invalid_cols_tuple (tuple): The output from
-            `InvalidSettingsLogger(linker).validate_{}`.
+            `InvalidColumnsLogger(linker).validate_{}`.
         settings_reference (str): The reference assigned
-            to that given validation check. See the `InvalidSettingsLogger`
+            to that given validation check. See the `InvalidColumnsLogger`
             class for more.
         invalid_type (str): One of: `invalid_cols`, `invalid_table_pref`
             or `invalid_col_suffix`.
@@ -75,7 +81,7 @@ def verify_complicated_settings_objects(invalid, expected):
             )
 
 
-@mark_with_dialects_excluding()
+@mark_with_dialects_excluding("sqlite", "postgres")
 def test_invalid_cols_detected(test_helpers, dialect):
     helper = test_helpers[dialect]
     Linker = helper.Linker
@@ -88,7 +94,7 @@ def test_invalid_cols_detected(test_helpers, dialect):
         settings,
         **helper.extra_linker_args(),
     )
-    settings_logger = InvalidSettingsLogger(linker)
+    settings_logger = InvalidColumnsLogger(linker)
 
     # Check that `invalid_cols_detected` is triggered correctly
     assert settings_logger.invalid_cols_detected is False
@@ -98,8 +104,8 @@ def test_invalid_cols_detected(test_helpers, dialect):
     assert settings_logger.invalid_cols_detected is True
 
 
-@mark_with_dialects_excluding()
-def test_columns_from_settings(test_helpers, dialect):
+@mark_with_dialects_excluding("sqlite", "postgres", "spark")
+def test_unique_id_settings_validation(test_helpers, dialect, caplog):
     helper = test_helpers[dialect]
     Linker = helper.Linker
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
@@ -111,7 +117,7 @@ def test_columns_from_settings(test_helpers, dialect):
         settings,
         **helper.extra_linker_args(),
     )
-    settings_logger = InvalidSettingsLogger(linker)
+    settings_logger = InvalidColumnsLogger(linker)
 
     #############
     # UNIQUE ID #
@@ -125,36 +131,95 @@ def test_columns_from_settings(test_helpers, dialect):
     assert uid_check is None
 
     # Add additional faulty columns to retain
-    settings["unique_id_column_name"] = "invalid column name"
-    uid_check = alter_settings(linker, settings).validate_uid
+    invalid_id = "invalid column name"
+    settings["unique_id_column_name"] = invalid_id
+    uid_check = alter_settings(linker, settings)
     verify_single_setting_validation(
-        uid_check,
+        uid_check.validate_uid,
         "unique_id_column_name",
         "invalid_cols",
-        ["invalid column name"],
+        [invalid_id],
     )
+
+    # Check logger formatting is approximately what we expect...
+    with caplog.at_level(logging.WARNING):
+        uid_check.construct_output_logs()
+        str_header = (
+            "Setting: `unique_id_column_name`\n"
+            "======================================\n"
+        )
+        str_error = (
+            "       - Missing column(s) from input dataframe(s): " f"`{invalid_id}`\n"
+        )
+        for string in [str_header, str_error]:
+            assert string in caplog.text
+
+
+@mark_with_dialects_excluding("sqlite", "postgres", "spark")
+def test_retained_cols_settings_validation(test_helpers, dialect, caplog):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    # Create random settings to check outputs with
+    settings = get_settings_dict()
+    linker = Linker(
+        df,
+        settings,
+        **helper.extra_linker_args(),
+    )
+    settings_logger = InvalidColumnsLogger(linker)
 
     ##################
     # COLS TO RETAIN #
     ##################
-    # Only "group" supplied. As such, we expect a value of None to be returned
-    settings_logger = InvalidSettingsLogger(linker)
+    # Only "cluster" supplied. As such, we expect a value of None to be returned
+    settings_logger = InvalidColumnsLogger(linker)
     assert settings_logger.validate_cols_to_retain is None
 
     # Add additional faulty columns to retain
+    exp_cols_to_retain = ["also_invalid", "invalid column name"]
     settings["additional_columns_to_retain"] = [
-        "group",
+        "cluster",
         "invalid column name",
         "also_invalid",
-        "group",  # duplicate - check it is ignored
+        "cluster",  # duplicate - check it is ignored
     ]
-    c_to_retain = alter_settings(linker, settings).validate_cols_to_retain
+    c_to_retain = alter_settings(linker, settings)
     verify_single_setting_validation(
-        c_to_retain,
+        c_to_retain.validate_cols_to_retain,
         "additional_columns_to_retain",
         "invalid_cols",
-        ["also_invalid", "invalid column name"],
+        exp_cols_to_retain,
     )
+    # Check logger formatting is approximately what we expect...
+    with caplog.at_level(logging.WARNING):
+        c_to_retain.construct_output_logs()
+        str_header = (
+            "Setting: `additional_columns_to_retain`\n"
+            "======================================\n"
+        )
+        # column names are stored in a hashset, so we can't check for exact equality
+        # including the column names
+        str_error = "       - Missing column(s) from input dataframe(s): `"
+        for string in [str_header, str_error]:
+            assert string in caplog.text
+
+
+@mark_with_dialects_excluding("sqlite", "postgres", "spark")
+def test_blocking_rule_settings_validation(test_helpers, dialect, caplog):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    # Create random settings to check outputs with
+    settings = get_settings_dict()
+    linker = Linker(
+        df,
+        settings,
+        **helper.extra_linker_args(),
+    )
+    settings_logger = InvalidColumnsLogger(linker)
 
     ##################
     # BLOCKING RULES #
@@ -190,12 +255,12 @@ def test_columns_from_settings(test_helpers, dialect):
     blocking_rules_to_check = [
         'levenshtein("sur_name", r."sur Name") < 3',
         "coalesce(l.first_name, NULL) = coalesce(first_name, NULL)",
-        "datediff('day', l.\"group\", r.dob_test)",
+        "datediff('day', l.\"dob_test\", r.cluster)",
         # Identical rule - should be ignored
-        "datediff('day', l.\"group\", r.dob_test)",
+        "datediff('day', l.\"dob_test\", r.cluster)",
     ]
     settings["blocking_rules_to_generate_predictions"] = blocking_rules_to_check
-    invalid_brs = alter_settings(linker, settings).validate_blocking_rules
+    invalid_brs = alter_settings(linker, settings)
 
     lev_br = [
         InvalidCols(
@@ -203,18 +268,53 @@ def test_columns_from_settings(test_helpers, dialect):
         ),
         InvalidCols(invalid_type="invalid_table_pref", invalid_columns=["sur_name"]),
     ]
-    coal_br = [
-        InvalidCols(invalid_type="invalid_table_pref", invalid_columns=["first_name"])
-    ]
-    datediff_br = [
-        InvalidCols(invalid_type="invalid_cols", invalid_columns=["dob_test"])
-    ]
-    invalid_rules = (lev_br, coal_br, datediff_br)
+    coal_br = InvalidCols(
+        invalid_type="invalid_table_pref", invalid_columns=["first_name"]
+    )
+    datediff_br = InvalidCols(invalid_type="invalid_cols", invalid_columns=["dob_test"])
+    invalid_rules = (lev_br, [coal_br], [datediff_br])
     expected_out = {
         br: inv_cols for br, inv_cols in zip(blocking_rules_to_check, invalid_rules)
     }
     # Check both dictionaries are identical
-    verify_complicated_settings_objects(invalid_brs, expected_out)
+    verify_complicated_settings_objects(
+        invalid_brs.validate_blocking_rules, expected_out
+    )
+
+    # Check logger formatting is approximately what we expect...
+    with caplog.at_level(logging.WARNING):
+        invalid_brs.construct_output_logs()
+
+        str_header = (
+            "Invalid Columns(s) in Blocking Rule(s)\n"
+            "======================================\n"
+        )
+        # column names are stored in a hashset, so we can't check for exact equality
+        # where we have multiple column names
+        missing_cols = "       - Missing column(s) from input dataframe(s): `dob_test`"
+        invalid_prefix = (
+            "       - Invalid table prefixes (only `l.` and `r.` are valid): "
+            "`first_name`"
+        )
+        for string in [str_header, missing_cols, invalid_prefix]:
+            # for string in [str_header, missing_cols]:
+            assert string in caplog.text
+
+
+@mark_with_dialects_excluding("sqlite", "postgres", "spark")
+def test_comparison_settings_validation(test_helpers, dialect, caplog):
+    helper = test_helpers[dialect]
+    Linker = helper.Linker
+    df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+
+    # Create random settings to check outputs with
+    settings = get_settings_dict()
+    linker = Linker(
+        df,
+        settings,
+        **helper.extra_linker_args(),
+    )
+    settings_logger = InvalidColumnsLogger(linker)
 
     #####################
     # COMPARISON LEVELS #
@@ -280,7 +380,7 @@ def test_columns_from_settings(test_helpers, dialect):
     }
 
     settings["comparisons"][3:] = [email_cc, city_cc]
-    invalid_cls = alter_settings(linker, settings).validate_comparison_levels
+    invalid_cls = alter_settings(linker, settings)
 
     expected_email_invalid_output = {
         "levenshtein(emails_l, test.email_r) < 3": [
@@ -310,9 +410,28 @@ def test_columns_from_settings(test_helpers, dialect):
     # [1] - list of SQL statements and invalid column tuples
     # Dicts can't be used as output column name is not a required variable
     verify_complicated_settings_objects(
-        invalid_cls[0][1], expected_email_invalid_output
+        invalid_cls.validate_comparison_levels[0][1], expected_email_invalid_output
     )
-    verify_complicated_settings_objects(invalid_cls[1][1], expected_city_invalid_output)
+    verify_complicated_settings_objects(
+        invalid_cls.validate_comparison_levels[1][1], expected_city_invalid_output
+    )
+    # Check logger formatting is approximately what we expect...
+    with caplog.at_level(logging.WARNING):
+        invalid_cls.construct_output_logs()
+
+        str_header = (
+            "Invalid Columns(s) in Comparison(s)\n"
+            "======================================\n"
+        )
+        missing_cols = (
+            "\n       - Missing column(s) from input dataframe(s): " "`city_test`\n"
+        )
+        invalid_prefix = (
+            "\n       - Invalid table suffixes (only `_l` and `_r` are valid): "
+            "`city`\n"
+        )
+        for string in [str_header, missing_cols, invalid_prefix]:
+            assert string in caplog.text
 
 
 def test_settings_validation_on_2_to_3_converter():
@@ -347,7 +466,7 @@ def test_settings_validation_on_2_to_3_converter():
         df,
         converted,
     )
-    i_logger = InvalidSettingsLogger(linker)
+    i_logger = InvalidColumnsLogger(linker)
     # Longer form output without an output column name
     assert i_logger.validate_comparison_levels == [
         (
@@ -392,3 +511,73 @@ def test_validate_sql_dialect():
         "Incompatible SQL dialect! `settings` dictionary uses dialect "
         "spark, but expecting 'duckdb' for Linker of type `DuckDBLinker`"
     )
+
+
+def test_comparison_validation():
+    import splink.athena.comparison_level_library as ath_cll
+    import splink.duckdb.comparison_level_library as cll
+    import splink.spark.comparison_level_library as sp_cll
+    from splink.exceptions import InvalidDialect
+    from splink.spark.comparison_library import exact_match
+
+    # Check blank settings aren't flagged
+    # Trimmed settings (settings w/ only the link type, for example)
+    # are tested elsewhere.
+    DuckDBLinker(
+        pd.DataFrame({"a": [1, 2, 3]}),
+    )
+
+    settings = get_settings_dict()
+
+    # Contents aren't tested as of yet
+    email_no_comp_level = {
+        "comparison_lvls": [],
+    }
+
+    # cll instead of cl
+    email_cc = cll.exact_match_level("email")
+    settings["comparisons"][3] = email_cc
+    # random str
+    settings["comparisons"][4] = "help"
+    # missing key dict key and replaced w/ `comparison_lvls`
+    settings["comparisons"].append(email_no_comp_level)
+    # Check invalid import is detected
+    settings["comparisons"].append(exact_match("test"))
+    # mismashed comparison
+    settings["comparisons"].append(
+        {
+            "comparison_levels": [
+                sp_cll.null_level("test"),
+                # Invalid Spark cll
+                ath_cll.exact_match_level("test"),
+                cll.else_level(),
+            ]
+        }
+    )
+
+    log_comparison_errors(None, "duckdb")  # confirm it works with None as an input...
+
+    # Init the error logger. This is normally handled in
+    # `log_comparison_errors`, but here we want to capture the
+    # errors instead of logging.
+    error_logger = ErrorLogger()
+    error_logger = validate_comparison_levels(
+        error_logger, settings["comparisons"], "duckdb"
+    )
+
+    # Check our errors are raised
+    errors = error_logger.raw_errors
+    assert len(error_logger.raw_errors) == len(settings["comparisons"]) - 3
+
+    # Our expected error types and part of the corresponding error text
+    expected_errors = (
+        (TypeError, "is a comparison level"),
+        (TypeError, "is of an invalid data type."),
+        (SyntaxError, "missing the required `comparison_levels`"),
+        (InvalidDialect, "within its comparison levels - spark."),
+        (InvalidDialect, "within its comparison levels - presto, spark."),
+    )
+
+    for n, (e, txt) in enumerate(expected_errors):
+        with pytest.raises(e, match=txt):
+            raise errors[n]

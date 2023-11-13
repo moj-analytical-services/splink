@@ -30,3 +30,6 @@ def test_input_column():
 
     assert c.unquote().name() == "col['lat']"
     assert c.unquote().quote().name() == name
+
+    c = InputColumn("first name", sql_dialect="spark")
+    assert c.name() == "`first name`"

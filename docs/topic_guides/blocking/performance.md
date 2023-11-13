@@ -39,7 +39,7 @@ In reality, we recommend getting a model up and running with strict Blocking Rul
 
 ## Efficient Blocking Rules
 
-While the number of pariwise comparisons is important for reducing the computation, it is also helpful to consider the efficiency of the Blocking Rules. There are a number of ways to define subsets of records (i.e. "blocks"), but they are not all computationally efficient.
+While the number of pairwise comparisons is important for reducing the computation, it is also helpful to consider the efficiency of the Blocking Rules. There are a number of ways to define subsets of records (i.e. "blocks"), but they are not all computationally efficient.
 
 From a performance prespective, here we consider two classes of blocking rule:
 
@@ -52,11 +52,11 @@ Equi-joins are simply equality conditions between records, e.g.
 
 `l.first_name = r.first_name`
 
-These equality-based blocking rules are extremely efficient and can be executed quickly, even on very large datasets. 
+These equality-based blocking rules are extremely efficient and can be executed quickly, even on very large datasets.
 
 Equality-based blocking rules should be considered the default method for defining blocking rules and form the basis of the [Blocking Rules Library](../../blocking_rule_library.md). For example, the above example can be written as:
 
-`brl.exact_match_rule("first_name")`
+`brl.block_on("first_name")`
 
 
 ### Filter Conditions

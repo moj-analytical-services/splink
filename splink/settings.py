@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
+from typing import List
 
-from .blocking import blocking_rule_to_obj
+from .blocking import BlockingRule, blocking_rule_to_obj
 from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -32,19 +33,17 @@ class Settings:
 
         settings_dict["comparisons"] = ccs
 
-        # In incoming comparisons have nested ComparisonLevels, turn back into dict
         for comparison_dict in settings_dict["comparisons"]:
             comparison_dict["comparison_levels"] = [
                 cl.as_dict() if isinstance(cl, ComparisonLevel) else cl
                 for cl in comparison_dict["comparison_levels"]
             ]
 
+        # Validate against schema before processing
         validate_settings_against_schema(settings_dict)
-
         self._settings_dict = settings_dict
-
-        ccs = self._settings_dict["comparisons"]
         s_else_d = self._from_settings_dict_else_default
+        ccs = self._settings_dict["comparisons"]
         self._sql_dialect = s_else_d("sql_dialect")
 
         self.comparisons: list[Comparison] = []
@@ -127,7 +126,7 @@ class Settings:
             used_by_brs = []
             for br in self._blocking_rules_to_generate_predictions:
                 used_by_brs.extend(
-                    get_columns_used_from_sql(br.blocking_rule, br.sql_dialect)
+                    get_columns_used_from_sql(br.blocking_rule_sql, br.sql_dialect)
                 )
 
             used_by_brs = [InputColumn(c) for c in used_by_brs]
@@ -302,7 +301,7 @@ class Settings:
                 return cc
         raise ValueError(f"No comparison column with name {name}")
 
-    def _brs_as_objs(self, brs_as_strings):
+    def _brs_as_objs(self, brs_as_strings) -> List[BlockingRule]:
         brs_as_objs = [blocking_rule_to_obj(br) for br in brs_as_strings]
         for n, br in enumerate(brs_as_objs):
             br.add_preceding_rules(brs_as_objs[:n])
@@ -424,7 +423,9 @@ class Settings:
         to a dictionary, enabling the settings to be saved to disk and reloaded
         """
         rr_match = self._probability_two_random_records_match
+        brs = self._blocking_rules_to_generate_predictions
         current_settings = {
+            "blocking_rules_to_generate_predictions": [br.as_dict() for br in brs],
             "comparisons": [cc.as_dict() for cc in self.comparisons],
             "probability_two_random_records_match": rr_match,
         }
@@ -432,7 +433,11 @@ class Settings:
 
     def _as_completed_dict(self):
         rr_match = self._probability_two_random_records_match
+        brs = self._blocking_rules_to_generate_predictions
         current_settings = {
+            "blocking_rules_to_generate_predictions": [
+                br._as_completed_dict() for br in brs
+            ],
             "comparisons": [cc._as_completed_dict() for cc in self.comparisons],
             "probability_two_random_records_match": rr_match,
             "unique_id_column_name": self._unique_id_column_name,
@@ -469,6 +474,13 @@ class Settings:
         logger.info(message)
 
     @property
+    def _lambda_is_default(self):
+        if self._probability_two_random_records_match == 0.0001:
+            return True
+        else:
+            return False
+
+    @property
     def _is_fully_trained(self):
         return all([c._is_trained for c in self.comparisons])
 
@@ -476,6 +488,17 @@ class Settings:
         messages = []
         for c in self.comparisons:
             messages.extend(c._not_trained_messages)
+        if self._lambda_is_default:
+            messages.extend(
+                [
+                    "The 'probability_two_random_records_match' setting has been set to"
+                    " the default value (0.0001). \nIf this is not the desired "
+                    "behaviour, either: \n - assign a value for "
+                    "`probability_two_random_records_match` in your settings dictionary"
+                    ", or \n - estimate with the"
+                    " `linker.estimate_probability_two_random_records_match` function."
+                ]
+            )
         return messages
 
     @property

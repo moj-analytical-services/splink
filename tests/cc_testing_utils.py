@@ -5,7 +5,7 @@ import pandas as pd
 from networkx.algorithms import connected_components as cc_nx
 
 from splink.connected_components import solve_connected_components
-from splink.duckdb.linker import DuckDBLinker, DuckDBLinkerDataFrame
+from splink.duckdb.linker import DuckDBDataFrame, DuckDBLinker
 
 
 def generate_random_graph(graph_size, seed=None):
@@ -40,7 +40,7 @@ def register_cc_df(G):
     linker.register_table_input_nodes_concat_with_tf(df_nodes)
 
     # add our prediction df to our list of created tables
-    predict_df = DuckDBLinkerDataFrame(table_name, table_name, linker)
+    predict_df = DuckDBDataFrame(table_name, table_name, linker)
 
     return predict_df
 

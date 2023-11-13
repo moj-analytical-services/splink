@@ -1,6 +1,4 @@
 import pandas as pd
-from sqlglot import parse_one
-from sqlglot.optimizer.normalize import normalize
 
 import splink.duckdb.comparison_level_library as cll
 import splink.duckdb.comparison_library as cl
@@ -216,52 +214,3 @@ def test_complex_compound_comparison_level():
     linker = DuckDBLinker(df, settings)
 
     linker.estimate_parameters_using_expectation_maximisation("1=1")
-
-
-def test_normalise():
-    # check that the sqlglot normaliser is doing what we think
-    # try to not impose specific form too strongly, so we aren't too tightly
-    # coupled to the implementationß
-    sql_syntax_tree = parse_one("a or (b and c)")
-    sql_cnf = normalize(sql_syntax_tree).sql().lower()
-
-    subclauses_expected = [
-        ["a or c", "c or a"],
-        ["a or b", "b or a"],
-    ]
-
-    # get subclauses and remove outer parens
-    subclauses_found = map(lambda s: s.strip("()"), sql_cnf.split(" and "))
-
-    # loop through subclauses, make sure that we have exactly one of each
-    for found in subclauses_found:
-        term_found = False
-        for i, expected in enumerate(subclauses_expected):
-            if found in expected:
-                del subclauses_expected[i]
-                term_found = True
-                break
-        assert term_found, f"CNF contains unexpected clause '{found}'"
-    assert not subclauses_expected
-
-    # and a slightly more complex statement
-    sql_syntax_tree = parse_one("(a and b) or (a and c) or (c and d) or (d and b)")
-    sql_cnf = normalize(sql_syntax_tree).sql().lower()
-
-    subclauses_expected = [
-        ["b or c", "c or b"],
-        ["a or d", "d or a"],
-    ]
-
-    subclauses_found = map(lambda s: s.strip("()"), sql_cnf.split(" and "))
-
-    # loop through subclauses, make sure that we have exactly one of each
-    for found in subclauses_found:
-        term_found = False
-        for i, expected in enumerate(subclauses_expected):
-            if found in expected:
-                del subclauses_expected[i]
-                term_found = True
-                break
-        assert term_found, f"CNF contains unexpected clause '{found}'"
-    assert not subclauses_expected

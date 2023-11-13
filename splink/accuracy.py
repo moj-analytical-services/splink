@@ -1,10 +1,14 @@
 from copy import deepcopy
+from typing import TYPE_CHECKING
 
 from .block_from_labels import block_from_labels
 from .blocking import BlockingRule
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .predict import predict_from_comparison_vectors_sqls
 from .sql_transform import move_l_r_table_prefix_to_column_suffix
+
+if TYPE_CHECKING:
+    from .linker import Linker
 
 
 def truth_space_table_from_labels_with_predictions_sqls(
@@ -123,9 +127,18 @@ def truth_space_table_from_labels_with_predictions_sqls(
         cast(TN as float)/N as tn_rate,
         cast(FP as float)/N as fp_rate,
         cast(FN as float)/P as fn_rate,
-        cast(TP as float)/(TP+FP) as precision,
-        cast(TP as float)/(TP+FN) as recall,
-        cast(TP as float)/(TP + (FP + FN)/2) as f1
+        case when TP+FP=0 then 1 else cast(TP as float)/(TP+FP) end as precision,
+        cast(TP as float)/P as recall,
+        cast(TN as float)/N as specificity,
+        case when TN+FN=0 then 1 else cast(TN as float)/(TN+FN) end as npv,
+        cast(TP+TN as float)/(P+N) as accuracy,
+        2.0*TP/(2*TP + FN + FP) as f1,
+        5.0*TP/(5*TP + 4*FN + FP) as f2,
+        1.25*TP/(1.25*TP + 0.25*FN + FP) as f0_5,
+        4.0*TP*TN/((4.0*TP*TN) + ((TP + TN)*(FP + FN))) as p4,
+        case when TN+FN=0 or TP+FP=0 or P=0 or N=0 then 0
+            else cast((TP*TN)-(FP*FN) as float)/sqrt((TP+FP)*P*N*(TN+FN)) end as phi
+
     from __splink__labels_with_pos_neg_grouped_with_truth_stats
     """
 
@@ -134,10 +147,11 @@ def truth_space_table_from_labels_with_predictions_sqls(
     return sqls
 
 
-def _select_found_by_blocking_rules(linker):
+def _select_found_by_blocking_rules(linker: "Linker"):
     brs = linker._settings_obj._blocking_rules_to_generate_predictions
+
     if brs:
-        brs = [move_l_r_table_prefix_to_column_suffix(b.blocking_rule) for b in brs]
+        brs = [move_l_r_table_prefix_to_column_suffix(b.blocking_rule_sql) for b in brs]
         brs = [f"(coalesce({b}, false))" for b in brs]
         brs = " OR ".join(brs)
         br_col = f" ({brs}) "

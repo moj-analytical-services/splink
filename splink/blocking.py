@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlglot import parse_one
 from sqlglot.expressions import Join, Column
 from sqlglot.optimizer.eliminate_joins import join_condition
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, List
 import logging
 
 from .misc import ensure_is_list
@@ -23,9 +23,14 @@ def blocking_rule_to_obj(br):
         blocking_rule = br.get("blocking_rule", None)
         if blocking_rule is None:
             raise ValueError("No blocking rule submitted...")
+        sqlglot_dialect = br.get("sql_dialect", None)
         salting_partitions = br.get("salting_partitions", 1)
 
-        return BlockingRule(blocking_rule, salting_partitions)
+        return BlockingRule(
+            blocking_rule,
+            salting_partitions,
+            sqlglot_dialect,
+        )
 
     else:
         br = BlockingRule(br)
@@ -35,16 +40,20 @@ def blocking_rule_to_obj(br):
 class BlockingRule:
     def __init__(
         self,
-        blocking_rule: BlockingRule | dict | str,
+        blocking_rule_sql: str,
         salting_partitions=1,
         sqlglot_dialect: str = None,
     ):
-
         if sqlglot_dialect:
             self._sql_dialect = sqlglot_dialect
 
-        self.blocking_rule = blocking_rule
-        self.preceding_rules = []
+        # Temporarily just to see if tests still pass
+        if not isinstance(blocking_rule_sql, str):
+            raise ValueError(
+                f"Blocking rule must be a string, not {type(blocking_rule_sql)}"
+            )
+        self.blocking_rule_sql = blocking_rule_sql
+        self.preceding_rules: List[BlockingRule] = []
         self.sqlglot_dialect = sqlglot_dialect
         self.salting_partitions = salting_partitions
 
@@ -60,16 +69,26 @@ class BlockingRule:
         rules = ensure_is_list(rules)
         self.preceding_rules = rules
 
-    @property
-    def and_not_preceding_rules_sql(self):
-        if not self.preceding_rules:
-            return ""
+    def exclude_pairs_generated_by_this_rule_sql(self):
+        """A SQL string specifying how to exclude the results
+        of THIS blocking rule from subseqent blocking statements,
+        so that subsequent statements do not produce duplicate pairs
+        """
 
         # Note the coalesce function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
+        return f"coalesce(({self.blocking_rule_sql}),false)"
+
+    @property
+    def exclude_pairs_generated_by_all_preceding_rules_sql(self):
+        """A SQL string that excludes the results of ALL previous blocking rules from
+        the pairwise comparisons generated.
+        """
+        if not self.preceding_rules:
+            return ""
         or_clauses = [
-            f"coalesce(({r.blocking_rule}), false)" for r in self.preceding_rules
+            br.exclude_pairs_generated_by_this_rule_sql() for br in self.preceding_rules
         ]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
@@ -77,23 +96,23 @@ class BlockingRule:
     @property
     def salted_blocking_rules(self):
         if self.salting_partitions == 1:
-            yield self.blocking_rule
+            yield self.blocking_rule_sql
         else:
             for n in range(self.salting_partitions):
-                yield f"{self.blocking_rule} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
+                yield f"{self.blocking_rule_sql} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
 
     @property
     def _parsed_join_condition(self):
-        br = self.blocking_rule
+        br = self.blocking_rule_sql
         return parse_one("INNER JOIN r", into=Join).on(
             br, dialect=self.sqlglot_dialect
         )  # using sqlglot==11.4.1
 
     @property
-    def _join_conditions(self):
+    def _equi_join_conditions(self):
         """
-        Extract the join conditions from the blocking rule as a tuple:
-        source_keys, join_keys, condition_expr
+        Extract the equi join conditions from the blocking rule as a tuple:
+        source_keys, join_keys
 
         Returns:
             list of tuples like [(name, name), (substr(name,1,2), substr(name,2,3))]
@@ -138,19 +157,26 @@ class BlockingRule:
         "The minimal representation of the blocking rule"
         output = {}
 
-        output["blocking_rule"] = self.blocking_rule
+        output["blocking_rule"] = self.blocking_rule_sql
+        output["sql_dialect"] = self.sql_dialect
 
         if self.salting_partitions > 1 and self.sql_dialect == "spark":
             output["salting_partitions"] = self.salting_partitions
 
         return output
 
+    def _as_completed_dict(self):
+        if not self.salting_partitions > 1 and self.sql_dialect == "spark":
+            return self.blocking_rule_sql
+        else:
+            return self.as_dict()
+
     @property
     def descr(self):
         return "Custom" if not hasattr(self, "_description") else self._description
 
     def _abbreviated_sql(self, cutoff=75):
-        sql = self.blocking_rule
+        sql = self.blocking_rule_sql
         return (sql[:cutoff] + "...") if len(sql) > cutoff else sql
 
     def __repr__(self):
@@ -181,7 +207,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
 
 
 # flake8: noqa: C901
-def block_using_rules_sql(linker: Linker):
+def block_using_rules_sqls(linker: Linker):
     """Use the blocking rules specified in the linker's settings object to
     generate a SQL statement that will create pairwise record comparions
     according to the blocking rule(s).
@@ -189,6 +215,54 @@ def block_using_rules_sql(linker: Linker):
     Where there are multiple blocking rules, the SQL statement contains logic
     so that duplicate comparisons are not generated.
     """
+
+    sqls = []
+
+    # For the two dataset link only, rather than a self join of
+    # __splink__df_concat_with_tf, it's much faster to split the input
+    # into two tables, and join (because then Splink doesn't have to evaluate)
+    # intra-dataset comparisons.
+    # see https://github.com/moj-analytical-services/splink/pull/1359
+    if (
+        linker._two_dataset_link_only
+        and not linker._find_new_matches_mode
+        and not linker._compare_two_records_mode
+    ):
+        source_dataset_col = linker._source_dataset_column_name
+        # Need df_l to be the one with the lowest id to preeserve the property
+        # that the left dataset is the one with the lowest concatenated id
+        keys = linker._input_tables_dict.keys()
+        keys = list(sorted(keys))
+        df_l = linker._input_tables_dict[keys[0]]
+        df_r = linker._input_tables_dict[keys[1]]
+
+        # This also needs to work for training u
+        if linker._train_u_using_random_sample_mode:
+            spl_switch = "_sample"
+        else:
+            spl_switch = ""
+
+        sql = f"""
+        select * from __splink__df_concat_with_tf{spl_switch}
+        where {source_dataset_col} = '{df_l.templated_name}'
+        """
+        sqls.append(
+            {
+                "sql": sql,
+                "output_table_name": f"__splink__df_concat_with_tf{spl_switch}_left",
+            }
+        )
+
+        sql = f"""
+        select * from __splink__df_concat_with_tf{spl_switch}
+        where {source_dataset_col} = '{df_r.templated_name}'
+        """
+        sqls.append(
+            {
+                "sql": sql,
+                "output_table_name": f"__splink__df_concat_with_tf{spl_switch}_right",
+            }
+        )
 
     if type(linker).__name__ in ["SparkLinker"]:
         apply_salt = True
@@ -227,36 +301,6 @@ def block_using_rules_sql(linker: Linker):
             " will not be implemented for this run."
         )
 
-    if (
-        linker._two_dataset_link_only
-        and not linker._find_new_matches_mode
-        and not linker._compare_two_records_mode
-    ):
-        source_dataset_col = linker._source_dataset_column_name
-        # Need df_l to be the one with the lowest id to preeserve the property
-        # that the left dataset is the one with the lowest concatenated id
-        keys = linker._input_tables_dict.keys()
-        keys = list(sorted(keys))
-        df_l = linker._input_tables_dict[keys[0]]
-        df_r = linker._input_tables_dict[keys[1]]
-
-        if linker._train_u_using_random_sample_mode:
-            sample_switch = "_sample"
-        else:
-            sample_switch = ""
-
-        sql = f"""
-        select * from __splink__df_concat_with_tf{sample_switch}
-        where {source_dataset_col} = '{df_l.templated_name}'
-        """
-        linker._enqueue_sql(sql, f"__splink__df_concat_with_tf{sample_switch}_left")
-
-        sql = f"""
-        select * from __splink__df_concat_with_tf{sample_switch}
-        where {source_dataset_col} = '{df_r.templated_name}'
-        """
-        linker._enqueue_sql(sql, f"__splink__df_concat_with_tf{sample_switch}_right")
-
     # Cover the case where there are no blocking rules
     # This is a bit of a hack where if you do a self-join on 'true'
     # you create a cartesian product, rather than having separate code
@@ -271,14 +315,14 @@ def block_using_rules_sql(linker: Linker):
     else:
         probability = ""
 
-    sqls = []
+    br_sqls = []
     for br in blocking_rules:
         # Apply our salted rules to resolve skew issues. If no salt was
         # selected to be added, then apply the initial blocking rule.
         if apply_salt:
             salted_blocking_rules = br.salted_blocking_rules
         else:
-            salted_blocking_rules = [br.blocking_rule]
+            salted_blocking_rules = [br.blocking_rule_sql]
 
         for salted_br in salted_blocking_rules:
             sql = f"""
@@ -290,12 +334,14 @@ def block_using_rules_sql(linker: Linker):
             inner join {linker._input_tablename_r} as r
             on
             ({salted_br})
-            {br.and_not_preceding_rules_sql}
+            {br.exclude_pairs_generated_by_all_preceding_rules_sql}
             {where_condition}
             """
 
-            sqls.append(sql)
+            br_sqls.append(sql)
 
-    sql = "union all".join(sqls)
+    sql = "union all".join(br_sqls)
 
-    return sql
+    sqls.append({"sql": sql, "output_table_name": "__splink__df_blocked"})
+
+    return sqls

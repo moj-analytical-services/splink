@@ -105,8 +105,8 @@ class DuckDBTestHelper(TestHelper):
 
 
 class SparkTestHelper(TestHelper):
-    def __init__(self, spark):
-        self.spark = spark
+    def __init__(self, spark_creator_function):
+        self.spark = spark_creator_function()
 
     @property
     def Linker(self):
@@ -148,7 +148,6 @@ class SparkTestHelper(TestHelper):
 
 
 class SQLiteTestHelper(TestHelper):
-
     _frame_counter = 0
 
     def __init__(self):
@@ -197,7 +196,6 @@ class SQLiteTestHelper(TestHelper):
 
 
 class PostgresTestHelper(TestHelper):
-
     _frame_counter = 0
 
     def __init__(self, pg_engine):
@@ -223,7 +221,7 @@ class PostgresTestHelper(TestHelper):
         # workaround to handle array column conversion
         # manually mark any list columns so type is handled correctly
         dtypes = {}
-        for colname, values in df.iteritems():
+        for colname, values in df.items():
             # TODO: will fail if first value is null
             if isinstance(values[0], list):
                 # TODO: will fail if first array is empty

@@ -32,6 +32,8 @@ There are some user restrictions on both the splink and splink_demos repos, so t
 
 For small changes, such as wording and typos, changes can be made directly in GitHub. However, for larger changes it may be worth cloning the relevant repo to your local machine. This way, you can [build the docs site locally](./docs/dev_guides/changing_splink/build_docs_locally.md) to check how the changes will look in the deployed doc site.
 
+We are trying to make our documentation as accessible to as many people as possible. If you find any problems with accessibility then please let us know by raising an issue, or feel free to put in a Pull Request with your suggested fixes.
+
 
 ## Contributing code
 Thanks for your interest in contributing code to Splink!
@@ -62,7 +64,7 @@ When making code changes, we recommend:
 
 As mentioned above, we like to keep PRs small and our philosophy on branching reflects that. Splink does not work with a `dev` branch, so all branches/forks should be made from `master` in the first instance. 
 
-For small PRs, simply branching from `master` and merging from there is perfectly fine. However, if you have a larger feature to add we tend to try and break these up into chunks. If you have a larger feature, please consider creating a simple minimum-viable feeature and submit for review. Once this has been reviewed by the Splink dev team there are two options to consider:
+For small PRs, simply branching from `master` and merging from there is perfectly fine. However, if you have a larger feature to add we tend to try and break these up into chunks. If you have a larger feature, please consider creating a simple minimum-viable feature and submit for review. Once this has been reviewed by the Splink dev team there are two options to consider:
 
 1. Merge minimal feature into master then create a new branch with additional features.
 2. Do not merge the initial feature branch and create additional feature branches from the reviewed branch.

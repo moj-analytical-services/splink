@@ -71,7 +71,7 @@ def register_roc_data(linker):
     df_10["merge"] = 1
     df_10["source_dataset"] = "fake_data_1"
 
-    df_l = df_10[["unique_id", "source_dataset", "group", "merge"]].copy()
+    df_l = df_10[["unique_id", "source_dataset", "cluster", "merge"]].copy()
     df_r = df_l.copy()
 
     df_labels = df_l.merge(df_r, on="merge", suffixes=("_l", "_r"))
@@ -79,11 +79,11 @@ def register_roc_data(linker):
     df_labels = df_labels[f1]
 
     df_labels["clerical_match_score"] = (
-        df_labels["group_l"] == df_labels["group_r"]
+        df_labels["cluster_l"] == df_labels["cluster_r"]
     ).astype(float)
 
     df_labels = df_labels.drop(
-        ["group_l", "group_r", "source_dataset_l", "source_dataset_r", "merge"],
+        ["cluster_l", "cluster_r", "source_dataset_l", "source_dataset_r", "merge"],
         axis=1,
     )
 

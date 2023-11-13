@@ -14,6 +14,11 @@ from statistics import median
 import sqlglot
 
 from splink.input_column import InputColumn, remove_quotes_from_identifiers
+from splink.settings_validation.column_lookups import InvalidColumnsLogger
+from splink.settings_validation.valid_types import (
+    InvalidTypesAndValuesLogger,
+    log_comparison_errors,
+)
 
 from .accuracy import (
     prediction_errors_from_label_column,
@@ -28,12 +33,14 @@ from .analyse_blocking import (
 )
 from .blocking import (
     BlockingRule,
-    block_using_rules_sql,
+    block_using_rules_sqls,
     blocking_rule_to_obj,
 )
 from .cache_dict_with_logging import CacheDictWithLogging
 from .charts import (
+    accuracy_chart,
     completeness_chart,
+    confusion_matrix_chart,
     cumulative_blocking_rule_comparisons_generated,
     match_weights_histogram,
     missingness_chart,
@@ -43,6 +50,7 @@ from .charts import (
     unlinkables_chart,
     waterfall_chart,
 )
+from .cluster_metrics import _size_density_sql
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -56,7 +64,8 @@ from .connected_components import (
 )
 from .em_training_session import EMTrainingSession
 from .estimate_u import estimate_u_values
-from .exceptions import SplinkException
+from .exceptions import SplinkDeprecated, SplinkException
+from .find_matches_to_new_records import add_unique_id_and_source_dataset_cols_if_needed
 from .labelling_tool import (
     generate_labelling_tool_comparisons,
     render_labelling_tool_html,
@@ -82,7 +91,6 @@ from .pipeline import SQLPipeline
 from .predict import predict_from_comparison_vectors_sqls
 from .profile_data import profile_columns
 from .settings import Settings
-from .settings_validator import InvalidSettingsLogger
 from .splink_comparison_viewer import (
     comparison_viewer_table_sqls,
     render_splink_comparison_viewer_html,
@@ -104,8 +112,6 @@ from .unlinkables import unlinkables_data
 from .vertically_concatenate import vertically_concatenate_sql
 
 logger = logging.getLogger(__name__)
-
-warnings.simplefilter("always", DeprecationWarning)
 
 
 class Linker:
@@ -214,6 +220,7 @@ class Linker:
             self._setup_settings_objs(None)
             self.load_settings(settings_dict)
         else:
+            self._validate_settings_components(settings_dict)
             settings_dict = deepcopy(settings_dict)
             self._setup_settings_objs(settings_dict)
 
@@ -241,6 +248,40 @@ class Linker:
         self._deterministic_link_mode = False
 
         self.debug_mode = False
+
+    @property
+    def _input_columns(
+        self,
+    ):
+        """Retrieve the column names from the input dataset(s)"""
+        input_dfs = self._input_tables_dict.values()
+
+        # get a list of the column names for each input frame
+        # sort it for consistent ordering, and give each frame's
+        # columns as a tuple so we can hash it
+        column_names_by_input_df = [
+            tuple(sorted([col.name() for col in input_df.columns]))
+            for input_df in input_dfs
+        ]
+        # check that the set of input columns is the same for each frame,
+        # fail if the sets are different
+        if len(set(column_names_by_input_df)) > 1:
+            common_cols = set.intersection(
+                *(set(col_names) for col_names in column_names_by_input_df)
+            )
+            problem_names = {
+                col
+                for frame_col_names in column_names_by_input_df
+                for col in frame_col_names
+                if col not in common_cols
+            }
+            raise SplinkException(
+                "All linker input frames must have the same set of columns.  "
+                "The following columns were not found in all input frames: "
+                + ", ".join(problem_names)
+            )
+
+        return next(iter(input_dfs)).columns
 
     @property
     def _cache_uid(self):
@@ -456,7 +497,7 @@ class Linker:
         else:
             self._settings_obj_ = Settings(settings_dict)
 
-    def _validate_settings(self, validate_settings):
+    def _check_for_valid_settings(self):
         if (
             # no settings to check
             self._settings_obj_ is None
@@ -464,13 +505,35 @@ class Linker:
             # raw tables don't yet exist in db
             not hasattr(self, "_input_tables_dict")
         ):
+            return False
+        else:
+            return True
+
+    def _validate_settings_components(self, settings_dict):
+        # Vaidate our settings after plugging them through
+        # `Settings(<settings>)`
+        if settings_dict is None:
             return
 
-        self.settings_validator = InvalidSettingsLogger(self)
-        self.settings_validator._validate_dialect()
+        log_comparison_errors(
+            # null if not in dict - check using value is ignored
+            settings_dict.get("comparisons", None),
+            self._sql_dialect,
+        )
+
+    def _validate_settings(self, validate_settings):
+        # Vaidate our settings after plugging them through
+        # `Settings(<settings>)`
+        if not self._check_for_valid_settings():
+            return
+
+        # Run miscellaneous checks on our settings dictionary.
+        settings_invalid_types_values = InvalidTypesAndValuesLogger(self)
+        settings_invalid_types_values._validate_dialect()
+
         # Constructs output logs for our various settings inputs
         if validate_settings:
-            self.settings_validator.construct_output_logs()
+            InvalidColumnsLogger(self).construct_output_logs()
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
@@ -952,7 +1015,7 @@ class Linker:
                 15,
                 "\n"
                 f"Probability two random records match from trained model blocking on "
-                f"{em_training_session._blocking_rule_for_training.blocking_rule}: "
+                f"{em_training_session._blocking_rule_for_training.blocking_rule_sql}: "
                 f"{training_lambda:,.3f}",
             )
 
@@ -1122,25 +1185,25 @@ class Linker:
         Examples:
             === ":simple-duckdb: DuckDB"
                 ```py
-                linker = DuckDBLinker(df")
+                linker = DuckDBLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
             === ":simple-apachespark: Spark"
                 ```py
-                linker = SparkLinker(df")
+                linker = SparkLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
             === ":simple-amazonaws: Athena"
                 ```py
-                linker = AthenaLinker(df")
+                linker = AthenaLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
             === ":simple-sqlite: SQLite"
                 ```py
-                linker = SQLiteLinker(df")
+                linker = SQLiteLinker(df)
                 linker.profile_columns(["first_name", "surname"])
                 linker.initialise_settings(settings_dict)
                 ```
@@ -1161,7 +1224,7 @@ class Linker:
             "`initialise_settings` is deprecated. We advise you use "
             "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
-            DeprecationWarning,
+            SplinkDeprecated,
             stacklevel=2,
         )
 
@@ -1186,7 +1249,7 @@ class Linker:
             "`load_settings_from_json` is deprecated. We advise you use "
             "`linker.load_settings()` when loading in your settings or a previously "
             "trained model.",
-            DeprecationWarning,
+            SplinkDeprecated,
             stacklevel=2,
         )
 
@@ -1288,69 +1351,69 @@ class Linker:
 
         Examples:
             === ":simple-duckdb: DuckDB"
-            ```py
-            from splink.duckdb.linker import DuckDBLinker
+                ```py
+                from splink.duckdb.linker import DuckDBLinker
 
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
-                ],
-                "comparisons": []
-            }
-            >>>
-            linker = DuckDBLinker(df, settings)
-            df = linker.deterministic_link()
-            ```
+                settings = {
+                    "link_type": "dedupe_only",
+                    "blocking_rules_to_generate_predictions": [
+                        "l.first_name = r.first_name",
+                        "l.surname = r.surname",
+                    ],
+                    "comparisons": []
+                }
+                >>>
+                linker = DuckDBLinker(df, settings)
+                df = linker.deterministic_link()
+                ```
             === ":simple-apachespark: Spark"
-            ```py
-            from splink.spark.linker import SparkLinker
+                ```py
+                from splink.spark.linker import SparkLinker
 
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
-                ],
-                "comparisons": []
-            }
-            >>>
-            linker = SparkLinker(df, settings)
-            df = linker.deterministic_link()
-            ```
+                settings = {
+                    "link_type": "dedupe_only",
+                    "blocking_rules_to_generate_predictions": [
+                        "l.first_name = r.first_name",
+                        "l.surname = r.surname",
+                    ],
+                    "comparisons": []
+                }
+                >>>
+                linker = SparkLinker(df, settings)
+                df = linker.deterministic_link()
+                ```
             === ":simple-amazonaws: Athena"
-            ```py
-            from splink.athena.linker import AthenaLinker
+                ```py
+                from splink.athena.linker import AthenaLinker
 
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
-                ],
-                "comparisons": []
-            }
-            >>>
-            linker = AthenaLinker(df, settings)
-            df = linker.deterministic_link()
-            ```
+                settings = {
+                    "link_type": "dedupe_only",
+                    "blocking_rules_to_generate_predictions": [
+                        "l.first_name = r.first_name",
+                        "l.surname = r.surname",
+                    ],
+                    "comparisons": []
+                }
+                >>>
+                linker = AthenaLinker(df, settings)
+                df = linker.deterministic_link()
+                ```
             === ":simple-sqlite: SQLite"
-            ```py
-            from splink.sqlite.linker import SQLiteLinker
+                ```py
+                from splink.sqlite.linker import SQLiteLinker
 
-            settings = {
-                "link_type": "dedupe_only",
-                "blocking_rules_to_generate_predictions": [
-                    "l.first_name = r.first_name",
-                    "l.surname = r.surname",
-                ],
-                "comparisons": []
-            }
-            >>>
-            linker = SQLiteLinker(df, settings)
-            df = linker.deterministic_link()
-            ```
+                settings = {
+                    "link_type": "dedupe_only",
+                    "blocking_rules_to_generate_predictions": [
+                        "l.first_name = r.first_name",
+                        "l.surname = r.surname",
+                    ],
+                    "comparisons": []
+                }
+                >>>
+                linker = SQLiteLinker(df, settings)
+                df = linker.deterministic_link()
+                ```
 
         Returns:
             SplinkDataFrame: A SplinkDataFrame of the pairwise comparisons.  This
@@ -1364,8 +1427,9 @@ class Linker:
         self._deterministic_link_mode = True
 
         concat_with_tf = self._initialise_df_concat_with_tf()
-        sql = block_using_rules_sql(self)
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
         return self._execute_sql_pipeline([concat_with_tf])
 
     def estimate_u_using_random_sampling(
@@ -1418,7 +1482,7 @@ class Linker:
             # user is using deprecated argument
             warnings.warn(
                 "target_rows is deprecated; use max_pairs",
-                DeprecationWarning,
+                SplinkDeprecated,
                 stacklevel=2,
             )
             max_pairs = target_rows
@@ -1572,11 +1636,8 @@ class Linker:
             ```
             or using pre-built rules
             ```py
-            import splink.duckdb.blocking_rule_library as brl
-            blocking_rule = brl.and_(
-                brl.exact_match_rule("first_name"),
-                brl.exact_match_rule("surname"),
-            )
+            from splink.duckdb.blocking_rule_library import block_on
+            blocking_rule = block_on(["first_name", "surname"])
             linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
             ```
 
@@ -1590,7 +1651,7 @@ class Linker:
         self._initialise_df_concat_with_tf()
 
         # Extract the blocking rule
-        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule
+        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule_sql
 
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
@@ -1689,8 +1750,9 @@ class Linker:
         if nodes_with_tf:
             input_dataframes.append(nodes_with_tf)
 
-        sql = block_using_rules_sql(self)
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         repartition_after_blocking = getattr(self, "repartition_after_blocking", False)
 
@@ -1775,10 +1837,14 @@ class Linker:
         else:
             new_records_tablename = records_or_tablename
 
+        new_records_df = self._table_to_splink_dataframe(
+            "__splink__df_new_records", new_records_tablename
+        )
+
         cache = self._intermediate_table_cache
         input_dfs = []
-        # If our df_concat_with_tf table already exists, use backwards inference to
-        # find all underlying term frequency tables.
+        # If our df_concat_with_tf table already exists, derive the term frequency
+        # tables from df_concat_with_tf rather than computing them
         if "__splink__df_concat_with_tf" in cache:
             concat_with_tf = cache["__splink__df_concat_with_tf"]
             tf_tables = compute_term_frequencies_from_concat_with_tf(self)
@@ -1806,10 +1872,13 @@ class Linker:
 
         sql = _join_tf_to_input_df_sql(self)
         sql = sql.replace("__splink__df_concat", new_records_tablename)
-        self._enqueue_sql(sql, "__splink__df_new_records_with_tf")
+        self._enqueue_sql(sql, "__splink__df_new_records_with_tf_before_uid_fix")
 
-        sql = block_using_rules_sql(self)
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        add_unique_id_and_source_dataset_cols_if_needed(self, new_records_df)
+
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
@@ -1892,8 +1961,9 @@ class Linker:
 
         self._enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
-        sql = block_using_rules_sql(self)
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
@@ -1948,9 +2018,9 @@ class Linker:
 
         nodes_with_tf = self._initialise_df_concat_with_tf()
 
-        sql = block_using_rules_sql(self)
-
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
 
@@ -1988,15 +2058,15 @@ class Linker:
         into groups of connected record using the connected components graph clustering
         algorithm
 
-        Records with an estimated `match_probability` above
+        Records with an estimated `match_probability` at or above
         `threshold_match_probability` are considered to be a match (i.e. they represent
         the same entity).
 
         Args:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
             threshold_match_probability (float): Filter the pairwise match predictions
-                to include only pairwise comparisons with a match_probability above this
-                threshold. This dataframe is then fed into the clustering
+                to include only pairwise comparisons with a match_probability at or
+                above this threshold. This dataframe is then fed into the clustering
                 algorithm.
             pairwise_formatting (bool): Whether to output the pairwise match predictions
                 from linker.predict() with cluster IDs.
@@ -2033,10 +2103,110 @@ class Linker:
 
         return cc
 
-    def profile_columns(
-        self, column_expressions: str | list[str], top_n=10, bottom_n=10
+    def _compute_cluster_metrics(
+        self,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        threshold_match_probability: float = None,
     ):
-        return profile_columns(self, column_expressions, top_n=top_n, bottom_n=bottom_n)
+        """Generates a table containing cluster metrics and returns a Splink dataframe
+
+        Args:
+            df_predict (SplinkDataFrame): The results of `linker.predict()`
+            df_clustered (SplinkDataFrame): The outputs of
+                `linker.cluster_pairwise_predictions_at_threshold()`
+            threshold_match_probability (float): Filter the pairwise match predictions
+                to include only pairwise comparisons with a match_probability above this
+                threshold.
+
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame containing cluster IDs and selected
+            cluster metrics
+
+        """
+
+        # Get unique row id column name from settings
+        unique_id_col = self._settings_obj._unique_id_column_name
+
+        sqls = _size_density_sql(
+            df_predict,
+            df_clustered,
+            threshold_match_probability,
+            _unique_id_col=unique_id_col,
+        )
+
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        df_cluster_metrics = self._execute_sql_pipeline()
+
+        return df_cluster_metrics
+
+    def profile_columns(
+        self, column_expressions: str | list[str] = None, top_n=10, bottom_n=10
+    ):
+        """
+        Profiles the specified columns of the dataframe initiated with the linker.
+
+        This can be computationally expensive if the dataframe is large.
+
+        For the provided columns with column_expressions (or for all columns if
+         left empty) calculate:
+        - A distribution plot that shows the count of values at each percentile.
+        - A top n chart, that produces a chart showing the count of the top n values
+        within the column
+        - A bottom n chart, that produces a chart showing the count of the bottom
+        n values within the column
+
+        This should be used to explore the dataframe, determine if columns have
+        sufficient completeness for linking, analyse the cardinality of columns, and
+        identify the need for standardisation within a given column.
+
+        Args:
+            linker (object): The initiated linker.
+            column_expressions (list, optional): A list of strings containing the
+                specified column names.
+                If left empty this will default to all columns.
+            top_n (int, optional): The number of top n values to plot.
+            bottom_n (int, optional): The number of bottom n values to plot.
+
+        Returns:
+            altair.Chart or dict: A visualization or JSON specification describing the
+            profiling charts.
+
+        Examples:
+            === ":simple-duckdb: DuckDB"
+                ```py
+                linker = DuckDBLinker(df)
+                linker.profile_columns()
+                ```
+            === ":simple-apachespark: Spark"
+                ```py
+                linker = SparkLinker(df)
+                linker.profile_columns()
+                ```
+            === ":simple-amazonaws: Athena"
+                ```py
+                linker = AthenaLinker(df)
+                linker.profile_columns()
+                ```
+            === ":simple-sqlite: SQLite"
+                ```py
+                linker = SQLiteLinker(df)
+                linker.profile_columns()
+                ```
+
+        Note:
+            - The `linker` object should be an instance of the initiated linker.
+            - The provided `column_expressions` can be a list of column names to
+                profile. If left empty, all columns will be profiled.
+            - The `top_n` and `bottom_n` parameters determine the number of top and
+                 bottom values to display in the respective charts.
+        """
+
+        return profile_columns(
+            self, column_expressions=column_expressions, top_n=top_n, bottom_n=bottom_n
+        )
 
     def _get_labels_tablename_from_input(
         self, labels_splinkdataframe_or_table_name: str | SplinkDataFrame
@@ -2278,6 +2448,162 @@ class Linker:
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
 
+    def accuracy_chart_from_labels_table(
+        self,
+        labels_splinkdataframe_or_table_name,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+        add_metrics: list = [],
+    ):
+        """Generate an accuracy measure chart from labelled (ground truth) data.
+
+        The table of labels should be in the following format, and should be registered
+        as a table with your database:
+
+        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
+        |----------------|-----------|----------------|-----------|--------------------|
+        |df_1            |1          |df_2            |2          |0.99                |
+        |df_1            |1          |df_2            |3          |0.2                 |
+
+        Note that `source_dataset` and `unique_id` should correspond to the values
+        specified in the settings dict, and the `input_table_aliases` passed to the
+        `linker` object.
+
+        For `dedupe_only` links, the `source_dataset` columns can be ommitted.
+
+        Args:
+            labels_splinkdataframe_or_table_name (str | SplinkDataFrame): Name of table
+                containing labels in the database
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the chart. Defaults to None.
+            add_metrics (list(str), optional): Precision and recall metrics are always
+                included. Where provided, `add_metrics` specifies additional metrics
+                to show, with the following options:
+
+                - `"specificity"`: specificity, selectivity, true negative rate (TNR)
+                - `"npv"`: negative predictive value (NPV)
+                - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
+                (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                - `"p4"` -  an extended F1 score with specificity and NPV included
+                - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
+        Examples:
+            === ":simple-duckdb: DuckDB"
+                ```py
+                labels = pd.read_csv("my_labels.csv")
+                linker.register_table(labels, "labels")
+                linker.accuracy_chart_from_labels_table("labels", add_metrics=["f1"])
+                ```
+            === ":simple-apachespark: Spark"
+                ```py
+                labels = spark.read.csv("my_labels.csv", header=True)
+                labels.createDataFrame("labels")
+                linker.accuracy_chart_from_labels_table("labels", add_metrics=['f1'])
+                ```
+
+        Returns:
+            altair.Chart: An altair chart
+        """
+        allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
+
+        if not isinstance(add_metrics, list):
+            raise Exception(
+                "add_metrics must be a list containing one or more of the following:",
+                allowed,
+            )
+
+        # Silently filter out invalid entries (except case errors - e.g. ["NPV", "F1"])
+        add_metrics = list(set(map(str.lower, add_metrics)).intersection(allowed))
+
+        labels_tablename = self._get_labels_tablename_from_input(
+            labels_splinkdataframe_or_table_name
+        )
+        self._raise_error_if_necessary_accuracy_columns_not_computed()
+        df_truth_space = truth_space_table_from_labels_table(
+            self,
+            labels_tablename,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
+        recs = df_truth_space.as_record_dict()
+        return accuracy_chart(recs, add_metrics=add_metrics)
+
+    def confusion_matrix_from_labels_table(
+        self,
+        labels_splinkdataframe_or_table_name,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+        match_weight_range=[-15, 15],
+    ):
+        """Generate an interactive confusion matrix from labelled (ground truth) data.
+
+        The table of labels should be in the following format, and should be registered
+        as a table with your database:
+
+        |source_dataset_l|unique_id_l|source_dataset_r|unique_id_r|clerical_match_score|
+        |----------------|-----------|----------------|-----------|--------------------|
+        |df_1            |1          |df_2            |2          |0.99                |
+        |df_1            |1          |df_2            |3          |0.2                 |
+
+        Note that `source_dataset` and `unique_id` should correspond to the values
+        specified in the settings dict, and the `input_table_aliases` passed to the
+        `linker` object.
+
+        For `dedupe_only` links, the `source_dataset` columns can be ommitted.
+
+        Args:
+            labels_splinkdataframe_or_table_name (str | SplinkDataFrame): Name of table
+                containing labels in the database
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the chart. Defaults to None.
+            match_weight_range (list(float), optional): minimum and maximum thresholds
+                to include in chart output. Defaults to [-15,15].
+        Examples:
+            === ":simple-duckdb: DuckDB"
+                ```py
+                labels = pd.read_csv("my_labels.csv")
+                linker.register_table(labels, "labels")
+                linker.confusion_matrix_from_labels_table("labels")
+                ```
+            === ":simple-apachespark: Spark"
+                ```py
+                labels = spark.read.csv("my_labels.csv", header=True)
+                labels.createDataFrame("labels")
+                linker.confusion_matrix_from_labels_table("labels")
+                ```
+
+        Returns:
+            altair.Chart: An altair chart
+        """
+
+        labels_tablename = self._get_labels_tablename_from_input(
+            labels_splinkdataframe_or_table_name
+        )
+        self._raise_error_if_necessary_accuracy_columns_not_computed()
+        df_truth_space = truth_space_table_from_labels_table(
+            self,
+            labels_tablename,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
+
+        recs = df_truth_space.as_record_dict()
+        a, b = match_weight_range
+        recs = [r for r in recs if a < r["truth_threshold"] < b]
+        return confusion_matrix_chart(recs, match_weight_range=match_weight_range)
+
     def prediction_errors_from_labels_table(
         self,
         labels_splinkdataframe_or_table_name,
@@ -2422,6 +2748,109 @@ class Linker:
         recs = df_truth_space.as_record_dict()
         return precision_recall_chart(recs)
 
+    def accuracy_chart_from_labels_column(
+        self,
+        labels_column_name,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+        add_metrics: list = [],
+    ):
+        """Generate an accuracy chart from ground truth data, whereby the ground
+        truth is in a column in the input dataset called `labels_column_name`
+
+        Args:
+            labels_column_name (str): Column name containing labels in the input table
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the chart. Defaults to None.
+            add_metrics (list(str), optional): Precision and recall metrics are always
+                included. Where provided, `add_metrics` specifies additional metrics
+                to show, with the following options:
+
+                - `"specificity"`: specificity, selectivity, true negative rate (TNR)
+                - `"npv"`: negative predictive value (NPV)
+                - `"accuracy"`: overall accuracy (TP+TN)/(P+N)
+                - `"f1"`/`"f2"`/`"f0_5"`: F-scores for \u03B2=1 (balanced), \u03B2=2
+                (emphasis on recall) and \u03B2=0.5 (emphasis on precision)
+                - `"p4"` -  an extended F1 score with specificity and NPV included
+                - `"phi"` - \u03C6 coefficient or Matthews correlation coefficient (MCC)
+        Examples:
+            ```py
+            linker.accuracy_chart_from_labels_column("ground_truth", add_metrics=["f1"])
+            ```
+
+        Returns:
+            altair.Chart: An altair chart
+        """
+
+        allowed = ["specificity", "npv", "accuracy", "f1", "f2", "f0_5", "p4", "phi"]
+
+        if not isinstance(add_metrics, list):
+            raise Exception(
+                "add_metrics must be a list containing one or more of the following:",
+                allowed,
+            )
+
+        # Silently filter out invalid entries (except case errors - e.g. ["NPV", "F1"])
+        add_metrics = list(set(map(str.lower, add_metrics)).intersection(allowed))
+
+        df_truth_space = truth_space_table_from_labels_column(
+            self,
+            labels_column_name,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
+        recs = df_truth_space.as_record_dict()
+        return accuracy_chart(recs, add_metrics=add_metrics)
+
+    def confusion_matrix_from_labels_column(
+        self,
+        labels_column_name,
+        threshold_actual=0.5,
+        match_weight_round_to_nearest: float = None,
+        match_weight_range=[-15, 15],
+    ):
+        """Generate an accuracy chart from ground truth data, whereby the ground
+        truth is in a column in the input dataset called `labels_column_name`
+
+        Args:
+            labels_column_name (str): Column name containing labels in the input table
+            threshold_actual (float, optional): Where the `clerical_match_score`
+                provided by the user is a probability rather than binary, this value
+                is used as the threshold to classify `clerical_match_score`s as binary
+                matches or non matches. Defaults to 0.5.
+            match_weight_round_to_nearest (float, optional): When provided, thresholds
+                are rounded.  When large numbers of labels are provided, this is
+                sometimes necessary to reduce the size of the ROC table, and therefore
+                the number of points plotted on the chart. Defaults to None.
+            match_weight_range (list(float), optional): minimum and maximum thresholds
+                to include in chart output. Defaults to [-15,15].
+        Examples:
+            ```py
+            linker.confusion_matrix_from_labels_column("ground_truth")
+            ```
+
+        Returns:
+            altair.Chart: An altair chart
+        """
+
+        df_truth_space = truth_space_table_from_labels_column(
+            self,
+            labels_column_name,
+            threshold_actual=threshold_actual,
+            match_weight_round_to_nearest=match_weight_round_to_nearest,
+        )
+
+        recs = df_truth_space.as_record_dict()
+        a, b = match_weight_range
+        recs = [r for r in recs if a < r["truth_threshold"] < b]
+        return confusion_matrix_chart(recs, match_weight_range=match_weight_range)
+
     def prediction_errors_from_labels_column(
         self,
         label_colname,
@@ -2527,7 +2956,8 @@ class Linker:
             For the simplest code pipeline, load a pre-trained model
             and run this against the test data.
             ```py
-            df = pd.read_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
+            from splink.datasets import splink_datasets
+            df = splink_datasets.fake_1000
             linker = DuckDBLinker(df)
             linker.load_settings("saved_settings.json")
             linker.unlinkables_chart()
@@ -2599,7 +3029,7 @@ class Linker:
         if return_html_as_string:
             return rendered
 
-    def parameter_estimate_comparisons_chart(self, include_m=True, include_u=True):
+    def parameter_estimate_comparisons_chart(self, include_m=True, include_u=False):
         """Show a chart that shows how parameter estimates have differed across
         the different estimation methods you have used.
 
@@ -2612,7 +3042,7 @@ class Linker:
             include_m (bool, optional): Show different estimates of m values. Defaults
                 to True.
             include_u (bool, optional): Show different estimates of u values. Defaults
-                to True.
+                to False.
 
         """
         records = self._settings_obj._parameter_estimates_as_records
@@ -2634,8 +3064,9 @@ class Linker:
 
         Args:
             input_dataset (str, optional): Name of one of the input tables in the
-            database.  If provided, missingness will be computed for this table alone.
-            Defaults to None.
+                database.  If provided, missingness will be computed for
+                this table alone.
+                Defaults to None.
 
         Examples:
             ```py
@@ -2644,7 +3075,7 @@ class Linker:
             To view offline (if you don't have an internet connection):
             ```py
             c = linker.missingness_chart()
-            c.save("test_chart.html")
+            save_offline_chart(c.to_dict(), "test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
@@ -2677,7 +3108,7 @@ class Linker:
             To view offline (if you don't have an internet connection):
             ```py
             c = linker.completeness_chart()
-            c.save("test_chart.html")
+            save_offline_chart(c.to_dict(), "test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
@@ -2728,7 +3159,7 @@ class Linker:
             int: The number of comparisons generated by the blocking rule
         """
 
-        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule
+        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule_sql
 
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
@@ -2915,7 +3346,7 @@ class Linker:
             ```py
 
             c = linker.match_weights_chart()
-            c.save("test_chart.html")
+            save_offline_chart(c.to_dict(), "test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
@@ -2991,7 +3422,7 @@ class Linker:
             ```py
 
             c = linker.match_weights_chart()
-            c.save("test_chart.html")
+            save_offline_chart(c.to_dict(), "test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
@@ -3110,7 +3541,7 @@ class Linker:
         """
         warnings.warn(
             "This function is deprecated. Use save_model_to_json() instead.",
-            DeprecationWarning,
+            SplinkDeprecated,
             stacklevel=2,
         )
         return self.save_model_to_json(out_path, overwrite)

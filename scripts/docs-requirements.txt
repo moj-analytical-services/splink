@@ -1,7 +1,7 @@
 mkdocs==1.4.2
 mknotebooks
 mkdocs-schema-reader
-mkdocs-material
+mkdocs-material==9.2.0b1
 mkdocs-gen-files
 mkdocs-autorefs
 mkdocs-include-markdown-plugin
@@ -17,3 +17,6 @@ mkdocs-semiliterate
 mkdocs-click
 jinja2==3.0.3
 mkdocs-git-revision-date-localized-plugin
+mkdocs-charts-plugin
+neoteroi-mkdocs
+mkdocs-video
