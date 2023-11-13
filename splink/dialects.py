@@ -42,6 +42,12 @@ class SplinkDialect(ABC):
             f"Backend '{self.name}' does not have a 'Jaro' function"
         )
 
+    @property
+    def jaccard_function_name(self):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'Jaccard' function"
+        )
+
 
 class DuckDBDialect(SplinkDialect):
     @property
