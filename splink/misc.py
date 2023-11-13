@@ -160,15 +160,6 @@ def ascii_uid(len):
     return "".join(random.choices(string.ascii_lowercase + string.digits, k=len))
 
 
-def find_unique_source_dataset(src_ds):
-    sql = f"""
-        select distinct {src_ds} as src
-        from __splink__df_concat_with_tf
-    """
-
-    return sql
-
-
 def parse_duration(duration: float) -> str:
     # math.ceil to clean up our output for anything over a minute
     d = int(ceil(duration))
