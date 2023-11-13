@@ -2,6 +2,11 @@ from typing import Union
 
 from .comparison_level_creator import ComparisonLevelCreator
 from .dialects import SplinkDialect
+from .input_column import InputColumn
+
+
+def input_column_factory(name, splink_dialect: SplinkDialect):
+    return InputColumn(name, sql_dialect=splink_dialect.sqlglot_name)
 
 
 def validate_distance_threshold(
@@ -67,6 +72,31 @@ class ExactMatchLevel(ComparisonLevelCreator):
 
     def create_label_for_charts(self) -> str:
         return f"Exact match on {self.col_name}"
+
+
+class ColumnsReversedLevel(ComparisonLevelCreator):
+    def __init__(self, col_name_1: str, col_name_2: str):
+        """Represents a comparison level where the columns are reversed.  For example,
+        if surname is in the forename field and vice versa
+
+        Args:
+            col_name_1 (str): First column, e.g. forename
+            col_name_2 (str): Second column, e.g. surname
+        """
+        self.col_name_1 = col_name_1
+        self.col_name_2 = col_name_2
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        input_column_1 = input_column_factory(self.col_name_1, sql_dialect)
+        input_column_2 = input_column_factory(self.col_name_2, sql_dialect)
+
+        return (
+            f"{input_column_1.name_l()} = {input_column_2.name_r()} "
+            f"AND {input_column_1.name_r()} = {input_column_2.name_l()}"
+        )
+
+    def create_label_for_charts(self) -> str:
+        return f"Match on reversed cols: {self.col_name_1} and {self.col_name_2}"
 
 
 class LevenshteinLevel(ComparisonLevelCreator):
