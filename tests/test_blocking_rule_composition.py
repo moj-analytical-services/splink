@@ -10,19 +10,19 @@ def binary_composition_internals(clause, comp_fun, brl, dialect):
 
     # Test what happens when only one value is fed
     # It should just report the regular outputs of our comparison level func
-    level = comp_fun(brl.exact_match_rule("tom"))
+    level = comp_fun(brl.block_on("tom"))
     assert level.blocking_rule_sql == f"l.{q}tom{q} = r.{q}tom{q}"
 
     # Exact match and null level composition
     level = comp_fun(
-        brl.exact_match_rule("first_name"),
-        brl.exact_match_rule("surname"),
+        brl.block_on("first_name"),
+        brl.block_on("surname"),
     )
     exact_match_sql = f"(l.{q}first_name{q} = r.{q}first_name{q}) {clause} (l.{q}surname{q} = r.{q}surname{q})"  # noqa: E501
     assert level.blocking_rule_sql == exact_match_sql
     # brl.not_(or_(...)) composition
     level = brl.not_(
-        comp_fun(brl.exact_match_rule("first_name"), brl.exact_match_rule("surname")),
+        comp_fun(brl.block_on("first_name"), brl.block_on("surname")),
     )
     assert level.blocking_rule_sql == f"NOT ({exact_match_sql})"
 
@@ -31,7 +31,7 @@ def binary_composition_internals(clause, comp_fun, brl, dialect):
     salt = comp_fun(
         "l.help2 = r.help2",
         {"blocking_rule": "l.help3 = r.help3", "salting_partitions": 10},
-        brl.exact_match_rule("help4"),
+        brl.block_on("help4"),
         salting_partitions=4,
     ).salting_partitions
 
@@ -39,7 +39,7 @@ def binary_composition_internals(clause, comp_fun, brl, dialect):
     salt_2 = comp_fun(
         "l.help2 = r.help2",
         {"blocking_rule": "l.help3 = r.help3", "salting_partitions": 3},
-        brl.exact_match_rule("help4"),
+        brl.block_on("help4"),
     ).salting_partitions
 
     assert salt == 4

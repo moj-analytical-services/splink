@@ -98,7 +98,7 @@ def test_truth_space_table():
         ],
         "blocking_rules_to_generate_predictions": [
             "l.surname = r.surname",
-            exact_match_rule("dob"),
+            block_on("dob"),
         ],
     }
 

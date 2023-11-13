@@ -12,7 +12,7 @@ def test_binary_composition_internals_OR(test_helpers, dialect):
     brl = helper.brl
 
     settings = get_settings_dict()
-    br_surname = brl.exact_match_rule("surname", salting_partitions=4)
+    br_surname = brl.block_on("surname", salting_partitions=4)
     q, _ = _get_dialect_quotes(dialect)
     em_rule = f"l.{q}surname{q} = r.{q}surname{q}"
     exp_txt = "<{} blocking rule using SQL: {}>"
@@ -24,7 +24,7 @@ def test_binary_composition_internals_OR(test_helpers, dialect):
     assert br_surname.preceding_rules == []
 
     preceding_rules = [
-        brl.exact_match_rule("first_name"),
+        brl.block_on("first_name"),
         brl.block_on(["dob"]),
     ]
     br_surname.add_preceding_rules(preceding_rules)
@@ -37,7 +37,7 @@ def test_binary_composition_internals_OR(test_helpers, dialect):
         BlockingRule("l.help = r.help"),
         "l.help2 = r.help2",
         {"blocking_rule": "l.help3 = r.help3", "salting_partitions": 3},
-        brl.exact_match_rule("help4"),
+        brl.block_on("help4"),
     ]
     brs_as_objs = settings_tester._brs_as_objs(brs_as_strings)
     brs_as_txt = [blocking_rule_to_obj(br).blocking_rule_sql for br in brs_as_strings]
@@ -64,7 +64,7 @@ def test_simple_end_to_end(test_helpers, dialect):
     settings = get_settings_dict()
     settings["blocking_rules_to_generate_predictions"] = [
         brl.block_on(["first_name", "surname"]),
-        brl.exact_match_rule("dob"),
+        brl.block_on("dob"),
     ]
 
     linker = Linker(df, settings, **helper.extra_linker_args())
@@ -75,7 +75,7 @@ def test_simple_end_to_end(test_helpers, dialect):
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
     linker.estimate_parameters_using_expectation_maximisation(
-        brl.exact_match_rule("dob")
+        brl.block_on("dob")
     )
 
     linker.predict()

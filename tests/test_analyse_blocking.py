@@ -139,7 +139,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     )
 
     blocking_rules = [
-        brl.exact_match_rule("first_name"),
+        brl.block_on("first_name"),
         brl.block_on(["first_name", "surname"]),
         "l.dob = r.dob",
     ]
@@ -158,7 +158,7 @@ def test_blocking_records_accuracy(test_helpers, dialect):
     blocking_rules = [
         "l.surname = r.surname",
         brl.or_(
-            brl.exact_match_rule("first_name"),
+            brl.block_on("first_name"),
             "substr(l.dob,1,4) = substr(r.dob,1,4)",
         ),
         "l.city = r.city",
@@ -372,18 +372,18 @@ def test_cumulative_br_funs(test_helpers, dialect):
     linker.cumulative_comparisons_from_blocking_rules_records(
         [
             "l.first_name = r.first_name",
-            brl.exact_match_rule("surname"),
+            brl.block_on("surname"),
         ]
     )
 
     linker.cumulative_num_comparisons_from_blocking_rules_chart(
         [
             "l.first_name = r.first_name",
-            brl.exact_match_rule("surname"),
+            brl.block_on("surname"),
         ]
     )
 
     assert (
-        linker.count_num_comparisons_from_blocking_rule(brl.exact_match_rule("surname"))
+        linker.count_num_comparisons_from_blocking_rule(brl.block_on("surname"))
         == 3167
     )
