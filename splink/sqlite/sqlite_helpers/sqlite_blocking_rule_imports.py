@@ -7,13 +7,6 @@ from ...blocking_rules_library import (
 from ...blocking_rules_library import (
     block_on as _block_on_,
 )
-from .sqlite_base import (
-    SqliteBase,
-)
-
-
-class exact_match_rule(SqliteBase, exact_match_rule):
-    pass
 
 
 def block_on(

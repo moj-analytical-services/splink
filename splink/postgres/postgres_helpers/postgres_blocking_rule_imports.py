@@ -7,13 +7,6 @@ from ...blocking_rules_library import (
 from ...blocking_rules_library import (
     block_on as _block_on_,
 )
-from .postgres_base import (
-    PostgresBase,
-)
-
-
-class exact_match_rule(PostgresBase, exact_match_rule):
-    pass
 
 
 def block_on(

@@ -7,13 +7,6 @@ from ...blocking_rules_library import (
 from ...blocking_rules_library import (
     block_on as _block_on_,
 )
-from .spark_base import (
-    SparkBase,
-)
-
-
-class exact_match_rule(SparkBase, exact_match_rule):
-    pass
 
 
 def block_on(
