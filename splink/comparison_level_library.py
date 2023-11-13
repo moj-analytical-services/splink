@@ -1,6 +1,7 @@
 from typing import List
 
 from sqlglot import parse_one
+from typing import Union
 
 from .comparison_level_creator import ComparisonLevelCreator
 from .dialects import SplinkDialect
@@ -20,6 +21,22 @@ def unsupported_splink_dialects(unsupported_dialects: List[str]):
         return wrapper
 
     return decorator
+
+
+def validate_distance_threshold(
+    lower_bound: Union[int, float],
+    upper_bound: Union[int, float],
+    distance_threshold: Union[int, float],
+    level_name: str,
+) -> Union[int, float]:
+    """Check if a distance threshold falls between two bounds."""
+    if lower_bound <= distance_threshold <= upper_bound:
+        return distance_threshold
+    else:
+        raise ValueError(
+            "'distance_threshold' must be between "
+            f"{lower_bound} and {upper_bound} for {level_name}"
+        )
 
 
 class NullLevel(ComparisonLevelCreator):
@@ -152,4 +169,35 @@ class DatediffLevel(ComparisonLevelCreator):
         return (
             f"Date difference of {self.col_name} <= "
             f"{self.date_threshold} {self.date_metric}"
+        )
+
+
+class JaroWinklerLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: str, distance_threshold: Union[int, float]):
+        """A comparison level using a Jaro-Winkler distance function
+
+        e.g. `jaro_winkler(val_l, val_r) >= distance_threshold`
+
+        Args:
+            col_name (str): Input column name
+            distance_threshold (Union[int, float]): The threshold to use to assess
+                similarity
+        """
+
+        super().__init__(col_name)
+        self.distance_threshold = validate_distance_threshold(
+            lower_bound=0,
+            upper_bound=1,
+            distance_threshold=distance_threshold,
+            level_name=self.__class__.__name__,
+        )
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        col_l, col_r = self.input_column(sql_dialect).names_l_r()
+        jw_fn = sql_dialect.jaro_winkler_function_name
+        return f"{jw_fn}({col_l}, {col_r}) >= {self.distance_threshold}"
+
+    def create_label_for_charts(self) -> str:
+        return (
+            f"Jaro-Winkler distance of '{self.col_name} >= {self.distance_threshold}'"
         )
