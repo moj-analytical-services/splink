@@ -240,10 +240,12 @@ def block_using_rules_sqls(linker: Linker):
         else:
             spl_switch = ""
 
+        df_concat_tf = linker._intermediate_table_cache["__splink__df_concat_with_tf"]
+
         sql = f"""
         select * from __splink__df_concat_with_tf{spl_switch}
         where {source_dataset_col} =
-            (select min({source_dataset_col}) from __splink__df_concat_with_tf)
+            (select min({source_dataset_col}) from {df_concat_tf.physical_name})
         """
         sqls.append(
             {
@@ -255,7 +257,7 @@ def block_using_rules_sqls(linker: Linker):
         sql = f"""
         select * from __splink__df_concat_with_tf{spl_switch}
         where {source_dataset_col} =
-            (select max({source_dataset_col}) from __splink__df_concat_with_tf)
+            (select max({source_dataset_col}) from {df_concat_tf.physical_name})
         """
         sqls.append(
             {
