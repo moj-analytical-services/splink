@@ -49,7 +49,7 @@ class ComparisonLevelCreator(ABC):
 
     @final
     def input_column(self, sql_dialect: SplinkDialect) -> InputColumn:
-        return InputColumn(self.col_name, sql_dialect=sql_dialect.name)
+        return InputColumn(self.col_name, sql_dialect=sql_dialect.sqlglot_name)
 
     @final
     def configure(
@@ -103,6 +103,6 @@ class ComparisonLevelCreator(ABC):
     def __repr__(self) -> str:
         return (
             f"Comparison level generator for {self.create_label_for_charts()}. "
-            "Call .get_comparison_level(sql_dialect) to instantiate "
+            "Call .get_comparison_level(sql_dialect_str) to instantiate "
             "a ComparisonLevel"
         )

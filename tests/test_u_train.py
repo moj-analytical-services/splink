@@ -39,7 +39,7 @@ def test_u_train(test_helpers, dialect):
     assert cl_no.u_probability == (denom - 2) / denom
 
     br = linker._settings_obj._blocking_rules_to_generate_predictions[0]
-    assert br.blocking_rule == "l.name = r.name"
+    assert br.blocking_rule_sql == "l.name = r.name"
 
 
 @mark_with_dialects_excluding()
