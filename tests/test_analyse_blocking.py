@@ -384,6 +384,5 @@ def test_cumulative_br_funs(test_helpers, dialect):
     )
 
     assert (
-        linker.count_num_comparisons_from_blocking_rule(brl.block_on("surname"))
-        == 3167
+        linker.count_num_comparisons_from_blocking_rule(brl.block_on("surname")) == 3167
     )

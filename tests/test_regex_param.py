@@ -3,7 +3,8 @@ import pytest
 
 import splink.duckdb.comparison_level_library as clld
 import splink.spark.comparison_level_library as clls
-from splink.duckdb.linker import DuckDBLinker
+
+# from splink.duckdb.linker import DuckDBLinker
 from splink.spark.linker import SparkLinker
 
 df = pd.DataFrame(

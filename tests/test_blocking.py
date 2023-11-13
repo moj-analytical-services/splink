@@ -74,8 +74,6 @@ def test_simple_end_to_end(test_helpers, dialect):
     blocking_rule = brl.block_on(["first_name", "surname"])
     linker.estimate_parameters_using_expectation_maximisation(blocking_rule)
 
-    linker.estimate_parameters_using_expectation_maximisation(
-        brl.block_on("dob")
-    )
+    linker.estimate_parameters_using_expectation_maximisation(brl.block_on("dob"))
 
     linker.predict()
