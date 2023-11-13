@@ -5,6 +5,10 @@ from .dialects import SplinkDialect
 from .input_column import InputColumn
 
 
+def input_column_factory(name, splink_dialect: SplinkDialect):
+    return InputColumn(name, sql_dialect=splink_dialect.sqlglot_name)
+
+
 def validate_distance_threshold(
     lower_bound: Union[int, float],
     upper_bound: Union[int, float],
@@ -79,17 +83,11 @@ class ColumnsReversedLevel(ComparisonLevelCreator):
         self.col_name_2 = col_name_2
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        # This could be simplified by e.g. improving function signature of
-        # InputColumn to take a SplinkDialect as second argument or (temporarily)
-        # writing a new get_input_column function that takes
-        # the self.col_name_1 and the sql_dialect
+        # Refactor InputColumn so we don't need input_column_factory?
+        # (The factory just slightly improves readability)
 
-        input_column_1 = InputColumn(
-            self.col_name_1, sql_dialect=sql_dialect.sqlglot_name
-        )
-        input_column_2 = InputColumn(
-            self.col_name_2, sql_dialect=sql_dialect.sqlglot_name
-        )
+        input_column_1 = input_column_factory(self.col_name_1, sql_dialect)
+        input_column_2 = input_column_factory(self.col_name_2, sql_dialect)
 
         return (
             f"{input_column_1.name_l()} = {input_column_2.name_r()} "
