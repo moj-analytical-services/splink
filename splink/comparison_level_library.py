@@ -11,9 +11,6 @@ def input_column_factory(name, splink_dialect: SplinkDialect):
     return InputColumn(name, sql_dialect=splink_dialect.sqlglot_name)
 
 
-from .input_column import InputColumn
-
-
 def unsupported_splink_dialects(unsupported_dialects: List[str]):
     def decorator(func):
         def wrapper(self, splink_dialect: SplinkDialect, *args, **kwargs):
