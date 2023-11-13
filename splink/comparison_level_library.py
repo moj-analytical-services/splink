@@ -140,6 +140,34 @@ class LevenshteinLevel(ComparisonLevelCreator):
         return f"Levenshtein distance of {self.col_name} <= {self.distance_threshold}"
 
 
+class DamerauLevenshteinLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: str, distance_threshold: int):
+        """A comparison level using a Damerau-Levenshtein distance function
+
+        e.g. damerau_levenshtein(val_l, val_r) <= distance_threshold
+
+        Args:
+            col_name (str): Input column name
+            distance_threshold (int): The threshold to use to assess
+                similarity
+        """
+        super().__init__(col_name)
+        self.distance_threshold = distance_threshold
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        col = self.input_column(sql_dialect)
+        dm_lev_fn = sql_dialect.damerau_levenshtein_function_name
+        return (
+            f"{dm_lev_fn}({col.name_l()}, {col.name_r()}) <= {self.distance_threshold}"
+        )
+
+    def create_label_for_charts(self) -> str:
+        return (
+            f"Damerau-Levenshtein distance of {self.col_name} "
+            f"<= {self.distance_threshold}"
+        )
+
+
 class DatediffLevel(ComparisonLevelCreator):
     def __init__(
         self,
