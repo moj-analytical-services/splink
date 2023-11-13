@@ -173,7 +173,7 @@ class Settings:
 
         if self._source_dataset_column_name_is_required:
             col = InputColumn(
-                self._source_dataset_input_column,
+                self._source_dataset_column_name,
                 settings_obj=self,
             )
             cols.append(col)
