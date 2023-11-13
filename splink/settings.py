@@ -240,7 +240,7 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_l())
+            cols.append(uid_col.name_l)
             cols.append(uid_col.name_r())
 
         for cc in self.comparisons:
@@ -260,7 +260,7 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_l())
+            cols.append(uid_col.name_l)
             cols.append(uid_col.name_r())
 
         for cc in self.comparisons:
@@ -280,7 +280,7 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_l())
+            cols.append(uid_col.name_l)
             cols.append(uid_col.name_r())
 
         for cc in self.comparisons:

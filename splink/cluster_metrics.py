@@ -24,7 +24,7 @@ def _size_density_sql(
     clusters_table = df_clustered.physical_name
 
     input_col = InputColumn(_unique_id_col)
-    unique_id_col_l = input_col.name_l()
+    unique_id_col_l = input_col.name_l
 
     sqls = []
     sql = f"""

@@ -6,8 +6,8 @@ def test_input_column():
     assert c.name() == '"my_col"'
     assert c.unquote().name() == "my_col"
 
-    assert c.name_l() == '"my_col_l"'
-    assert c.tf_name_l() == '"tf_my_col_l"'
+    assert c.name_l == '"my_col_l"'
+    assert c.tf_name_l == '"tf_my_col_l"'
     assert c.unquote().quote().l_tf_name_as_l() == '"l"."tf_my_col" as "tf_my_col_l"'
     assert c.unquote().l_tf_name_as_l() == '"l".tf_my_col as tf_my_col_l'
 
