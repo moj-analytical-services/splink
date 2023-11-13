@@ -1,8 +1,7 @@
 import pandas as pd
 
 import splink.comparison_level_library as cll
-
-# import splink.duckdb.comparison_library as cl
+import splink.duckdb.comparison_library as cl
 from splink.duckdb.linker import DuckDBLinker
 
 
@@ -83,7 +82,7 @@ def test_compound_comparison_level():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            # cl.exact_match("city"),
+            cl.ExactMatch("city"),
             {
                 "output_column_name": "city",
                 "comparison_levels": [

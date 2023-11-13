@@ -34,7 +34,7 @@ def test_full_example_spark(spark, df_spark, tmp_path):
     settings_dict = get_settings_dict()
 
     # Only needed because the value can be overwritten by other tests
-    settings_dict["comparisons"][1] = cl.exact_match("surname")
+    settings_dict["comparisons"][1] = cl.ExactMatch("surname")
     settings_dict["comparisons"].append(name_comparison(cll, "surname"))
 
     settings = {

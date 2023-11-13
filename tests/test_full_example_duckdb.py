@@ -249,7 +249,7 @@ def test_duckdb_arrow_array():
         {
             "link_type": "dedupe_only",
             "unique_id_column_name": "uid",
-            "comparisons": [cl.exact_match("b")],
+            "comparisons": [cl.ExactMatch("b")],
             "blocking_rules_to_generate_predictions": ["l.a[1] = r.a[1]"],
         },
     )

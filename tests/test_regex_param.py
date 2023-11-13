@@ -73,7 +73,7 @@ def name_levels(cll):
     return {
         "output_column_name": "name",
         "comparison_levels": [
-            cll.jaro_winkler_level(
+            cll.JaroWinklerLevel(
                 "first_name", distance_threshold=1, regex_extract="^[A-Z]{1,4}"
             ),
             cll.ColumnsReversedLevel(

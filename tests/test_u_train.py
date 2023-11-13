@@ -20,7 +20,7 @@ def test_u_train(test_helpers, dialect):
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
     df_linker = helper.convert_frame(df)
@@ -67,7 +67,7 @@ def test_u_train_link_only(test_helpers, dialect):
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
@@ -124,7 +124,7 @@ def test_u_train_link_only_sample(test_helpers, dialect):
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
@@ -191,7 +191,7 @@ def test_u_train_multilink(test_helpers, dialect):
 
     settings = {
         "link_type": "link_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("name", 2)],
+        "comparisons": [helper.cl.LevenshteinAtThresholds("name", 2)],
         "blocking_rules_to_generate_predictions": [],
     }
 
@@ -266,7 +266,7 @@ def test_seed_u_outputs(test_helpers, dialect):
 
     settings = {
         "link_type": "dedupe_only",
-        "comparisons": [helper.cl.levenshtein_at_thresholds("first_name", 2)],
+        "comparisons": [helper.cl.LevenshteinAtThresholds("first_name", 2)],
     }
 
     linker_1 = helper.Linker(df, settings, **helper.extra_linker_args())

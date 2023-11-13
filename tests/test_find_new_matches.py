@@ -46,7 +46,7 @@ def test_tf_tables_init_works(test_helpers, dialect):
     helper = test_helpers[dialect]
     Linker = helper.Linker
 
-    for idx, s in enumerate(get_different_settings_dicts(helper.cl.exact_match)):
+    for idx, s in enumerate(get_different_settings_dicts(helper.cl.ExactMatch)):
         linker = Linker(
             df,
             s,

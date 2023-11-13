@@ -57,7 +57,7 @@ def test_datediff_levels(test_helpers, dialect):
     )
     df = helper.convert_frame(df)
 
-    exact_match_fn = cl.exact_match("first_name")
+    exact_match_fn = cl.ExactMatch("first_name")
 
     # For testing the cll version
     dob_diff = {
@@ -65,25 +65,25 @@ def test_datediff_levels(test_helpers, dialect):
         "comparison_levels": [
             cll.null_level("dob"),
             cll.exact_match_level("dob"),
-            cll.datediff_level(
+            cll.DatediffLevel(
                 date_col="dob",
                 date_threshold=30,
                 date_metric="day",
                 cast_strings_to_date=True,
             ),
-            cll.datediff_level(
+            cll.DatediffLevel(
                 date_col="dob",
                 date_threshold=12,
                 date_metric="month",
                 cast_strings_to_date=True,
             ),
-            cll.datediff_level(
+            cll.DatediffLevel(
                 date_col="dob",
                 date_threshold=5,
                 date_metric="year",
                 cast_strings_to_date=True,
             ),
-            cll.datediff_level(
+            cll.DatediffLevel(
                 date_col="dob",
                 date_threshold=100,
                 date_metric="year",
@@ -186,7 +186,7 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
         settings_cl = {
             "link_type": "dedupe_only",
             "comparisons": [
-                cl.exact_match("first_name"),
+                cl.ExactMatch("first_name"),
                 cl.datediff_at_thresholds(
                     "dob",
                     [30, 12, 5, 100],
@@ -212,28 +212,28 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
                     invalid_dates_as_null=invalid_dates_as_null,
                 ),
                 cll.exact_match_level("dob"),
-                cll.datediff_level(
+                cll.DatediffLevel(
                     date_col="dob",
                     date_threshold=30,
                     date_metric="day",
                     cast_strings_to_date=True,
                     date_format=date_format_param,
                 ),
-                cll.datediff_level(
+                cll.DatediffLevel(
                     date_col="dob",
                     date_threshold=12,
                     date_metric="month",
                     cast_strings_to_date=True,
                     date_format=date_format_param,
                 ),
-                cll.datediff_level(
+                cll.DatediffLevel(
                     date_col="dob",
                     date_threshold=5,
                     date_metric="year",
                     cast_strings_to_date=True,
                     date_format=date_format_param,
                 ),
-                cll.datediff_level(
+                cll.DatediffLevel(
                     date_col="dob",
                     date_threshold=100,
                     date_metric="year",
@@ -246,7 +246,7 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
 
         settings = {
             "link_type": "dedupe_only",
-            "comparisons": [cl.exact_match("first_name"), dob_diff],
+            "comparisons": [cl.ExactMatch("first_name"), dob_diff],
         }
         if len(dobs) == df.shape[0]:
             df["dob"] = dobs

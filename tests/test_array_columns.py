@@ -57,7 +57,7 @@ def test_array_comparisons(test_helpers, dialect):
         "link_type": "dedupe_only",
         "comparisons": [
             helper.cl.array_intersect_at_sizes("postcode", [4, 3, 2, 1]),
-            helper.cl.exact_match("first_name"),
+            helper.cl.ExactMatch("first_name"),
         ],
     }
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
@@ -92,7 +92,7 @@ def test_array_comparisons(test_helpers, dialect):
         "link_type": "dedupe_only",
         "comparisons": [
             helper.cl.array_intersect_at_sizes("postcode", [3, 1]),
-            helper.cl.exact_match("first_name"),
+            helper.cl.ExactMatch("first_name"),
         ],
     }
     linker = helper.Linker(df, settings, **helper.extra_linker_args())
@@ -126,6 +126,6 @@ def test_array_comparisons(test_helpers, dialect):
             "link_type": "dedupe_only",
             "comparisons": [
                 helper.cl.array_intersect_at_sizes("postcode", [-1, 2]),
-                helper.cl.exact_match("first_name"),
+                helper.cl.ExactMatch("first_name"),
             ],
         }

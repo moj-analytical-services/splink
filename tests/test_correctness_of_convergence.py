@@ -47,9 +47,9 @@ def test_splink_converges_to_known_params():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("col_1"),
-            cl.exact_match("col_2"),
-            cl.exact_match("col_3"),
+            cl.ExactMatch("col_1"),
+            cl.ExactMatch("col_2"),
+            cl.ExactMatch("col_3"),
         ],
         "max_iterations": 200,
         "em_convergence": 0.00001,

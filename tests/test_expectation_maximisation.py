@@ -20,8 +20,8 @@ def test_clear_error_when_empty_block():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.levenshtein_at_thresholds("name", 1),
-            cl.exact_match("surname"),
+            cl.LevenshteinAtThresholds("name", 1),
+            cl.ExactMatch("surname"),
         ],
         "blocking_rules_to_generate_predictions": ["l.name = r.name"],
     }
@@ -43,9 +43,9 @@ def test_estimate_without_term_frequencies():
     settings = {
         "link_type": "dedupe_only",
         "comparisons": [
-            cl.exact_match("first_name"),
-            cl.exact_match("surname"),
-            cl.exact_match("email"),
+            cl.ExactMatch("first_name"),
+            cl.ExactMatch("surname"),
+            cl.ExactMatch("email"),
         ],
     }
 

@@ -170,11 +170,11 @@ def name_comparison(cll, sn: str) -> dict:
             # (Levenshtein(fn) and jaro_winkler(fn)) or levenshtein(sur)
             cll.and_(
                 cll.or_(
-                    cll.levenshtein_level("first_name", 2),
-                    cll.jaro_winkler_level("first_name", 0.8),
+                    cll.LevenshteinLevel("first_name", 2),
+                    cll.JaroWinklerLevel("first_name", 0.8),
                     m_probability=0.8,
                 ),
-                cll.levenshtein_level(sn, 3),
+                cll.LevenshteinLevel(sn, 3),
             ),
             cll.else_level(0.1),
         ],
