@@ -286,4 +286,4 @@ class DistanceInKMLevel(ComparisonLevelCreator):
         return distance_km_sql
 
     def create_label_for_charts(self) -> str:
-        return (f"Distance less than {self.km_threshold}km",)
+        return f"Distance less than {self.km_threshold}km"
