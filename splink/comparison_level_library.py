@@ -1030,8 +1030,8 @@ class DistanceInKMLevelBase(ComparisonLevel):
 
         lat = InputColumn(lat_col, sql_dialect=self._sql_dialect)
         long = InputColumn(long_col, sql_dialect=self._sql_dialect)
-        lat_l, lat_r = lat.names_l_r()
-        long_l, long_r = long.names_l_r()
+        lat_l, lat_r = lat.names_l_r
+        long_l, long_r = long.names_l_r
 
         distance_km_sql = f"""
         {great_circle_distance_km_sql(lat_l, lat_r, long_l, long_r)} <= {km_threshold}
@@ -1359,7 +1359,7 @@ class DatediffLevelBase(ComparisonLevel):
         """
 
         date = InputColumn(date_col, sql_dialect=self._sql_dialect)
-        date_l, date_r = date.names_l_r()
+        date_l, date_r = date.names_l_r
 
         datediff_sql = self._datediff_function(
             date_l,
