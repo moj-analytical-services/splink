@@ -526,6 +526,8 @@ class Linker:
         instances are instead replaced with ComparisonLevels
         """
         dialect = self._sql_dialect
+        if "comparisons" not in settings_dict:
+            return
         comparisons = settings_dict["comparisons"]
         for idx_c, comparison in enumerate(comparisons):
             if isinstance(comparison, dict):
