@@ -1,7 +1,6 @@
-from typing import List
+from typing import List, Union
 
 from sqlglot import parse_one
-from typing import Union
 
 from .comparison_level_creator import ComparisonLevelCreator
 from .dialects import SplinkDialect
