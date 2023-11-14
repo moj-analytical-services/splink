@@ -251,7 +251,7 @@ class Linker:
     @property
     def _input_columns(
         self,
-    ):
+    ) -> list[InputColumn]:
         """Retrieve the column names from the input dataset(s)"""
         input_dfs = self._input_tables_dict.values()
 
@@ -281,6 +281,11 @@ class Linker:
             )
 
         return next(iter(input_dfs)).columns
+
+    @property
+    def _source_dataset_column_already_exists(self):
+        input_cols = [c.unquote().name() for c in self._input_columns]
+        return self._settings_obj._source_dataset_column_name in input_cols
 
     @property
     def _cache_uid(self):
