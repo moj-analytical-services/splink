@@ -113,7 +113,7 @@ class SparkTestHelper(TestHelper):
         return SparkLinker
 
     def extra_linker_args(self):
-        return {"spark": self.spark, "break_lineage_method": "persist"}
+        return {"spark": self.spark, "num_partitions_on_repartition": 4}
 
     def convert_frame(self, df):
         spark_frame = self.spark.createDataFrame(df)

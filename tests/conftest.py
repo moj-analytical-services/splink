@@ -43,9 +43,9 @@ def _make_spark():
 
     conf = SparkConf()
 
-    conf.set("spark.driver.memory", "4g")
-    conf.set("spark.sql.shuffle.partitions", "8")
-    conf.set("spark.default.parallelism", "8")
+    conf.set("spark.driver.memory", "6g")
+    conf.set("spark.sql.shuffle.partitions", "4")
+    conf.set("spark.default.parallelism", "4")
     # Add custom similarity functions, which are bundled with Splink
     # documented here: https://github.com/moj-analytical-services/splink_scalaudfs
     path = similarity_jar_location()
