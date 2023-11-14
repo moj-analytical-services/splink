@@ -200,7 +200,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
         source_dataset_col = unique_id_cols[0]
         where_condition = (
             f"where {id_expr_l} < {id_expr_r} "
-            f"and l.{source_dataset_col.name()} != r.{source_dataset_col.name()}"
+            f"and l.{source_dataset_col.name} != r.{source_dataset_col.name}"
         )
 
     return where_condition

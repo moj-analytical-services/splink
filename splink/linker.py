@@ -260,7 +260,7 @@ class Linker:
         # sort it for consistent ordering, and give each frame's
         # columns as a tuple so we can hash it
         column_names_by_input_df = [
-            tuple(sorted([col.name() for col in input_df.columns]))
+            tuple(sorted([col.name for col in input_df.columns]))
             for input_df in input_dfs
         ]
         # check that the set of input columns is the same for each frame,
