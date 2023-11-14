@@ -113,7 +113,7 @@ class SparkTestHelper(TestHelper):
         return SparkLinker
 
     def extra_linker_args(self):
-        return {"spark": self.spark, "break_lineage_method": "checkpoint"}
+        return {"spark": self.spark, "break_lineage_method": "persist"}
 
     def convert_frame(self, df):
         spark_frame = self.spark.createDataFrame(df)
