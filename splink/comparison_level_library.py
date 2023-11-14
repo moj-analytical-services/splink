@@ -225,7 +225,7 @@ class JaroWinklerLevel(ComparisonLevelCreator):
         )
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col_l, col_r = self.input_column(sql_dialect).names_l_r()
+        col_l, col_r = self.input_column(sql_dialect).names_l_r
         jw_fn = sql_dialect.jaro_winkler_function_name
         return f"{jw_fn}({col_l}, {col_r}) >= {self.distance_threshold}"
 
