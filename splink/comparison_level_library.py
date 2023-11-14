@@ -49,7 +49,7 @@ class NullLevel(ComparisonLevelCreator):
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         col = self.input_column(sql_dialect)
-        return f"{col.name_l()} IS NULL OR {col.name_r()} IS NULL"
+        return f"{col.name_l} IS NULL OR {col.name_r} IS NULL"
 
     def create_label_for_charts(self) -> str:
         return f"{self.col_name} is NULL"
@@ -85,7 +85,7 @@ class ExactMatchLevel(ComparisonLevelCreator):
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         col = self.input_column(sql_dialect)
-        return f"{col.name_l()} = {col.name_r()}"
+        return f"{col.name_l} = {col.name_r}"
 
     def create_label_for_charts(self) -> str:
         return f"Exact match on {self.col_name}"
@@ -108,8 +108,8 @@ class ColumnsReversedLevel(ComparisonLevelCreator):
         input_column_2 = input_column_factory(self.col_name_2, sql_dialect)
 
         return (
-            f"{input_column_1.name_l()} = {input_column_2.name_r()} "
-            f"AND {input_column_1.name_r()} = {input_column_2.name_l()}"
+            f"{input_column_1.name_l} = {input_column_2.name_r} "
+            f"AND {input_column_1.name_r} = {input_column_2.name_l}"
         )
 
     def create_label_for_charts(self) -> str:
@@ -133,7 +133,7 @@ class LevenshteinLevel(ComparisonLevelCreator):
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         col = self.input_column(sql_dialect)
         lev_fn = sql_dialect.levenshtein_function_name
-        return f"{lev_fn}({col.name_l()}, {col.name_r()}) <= {self.distance_threshold}"
+        return f"{lev_fn}({col.name_l}, {col.name_r}) <= {self.distance_threshold}"
 
     def create_label_for_charts(self) -> str:
         return f"Levenshtein distance of {self.col_name} <= {self.distance_threshold}"
@@ -178,7 +178,7 @@ class DatediffLevel(ComparisonLevelCreator):
 
         sqlglot_dialect_name = sql_dialect.sqlglot_name
         date_col = InputColumn(self.col_name)
-        date_col_l, date_col_r = date_col.names_l_r()
+        date_col_l, date_col_r = date_col.names_l_r
 
         if hasattr(sql_dialect, "date_diff"):
             return sql_dialect.date_diff(self)
