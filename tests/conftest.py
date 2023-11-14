@@ -37,7 +37,8 @@ def pytest_collection_modifyitems(items, config):
                 item.add_marker(mark)
 
 
-def _make_spark():
+@pytest.fixture(scope="module")
+def spark():
     from pyspark import SparkConf, SparkContext
     from pyspark.sql import SparkSession
 
@@ -59,12 +60,6 @@ def _make_spark():
 
 
 @pytest.fixture(scope="module")
-def spark():
-    spark = _make_spark()
-    yield spark
-
-
-@pytest.fixture(scope="module")
 def df_spark(spark):
     df = spark.read.csv("./tests/datasets/fake_1000_from_splink_demos.csv", header=True)
     df.persist()
@@ -75,14 +70,14 @@ def df_spark(spark):
 # see e.g. https://stackoverflow.com/a/42400786/11811947
 # ruff: noqa: F811
 @pytest.fixture
-def test_helpers(pg_engine):
+def test_helpers(spark, pg_engine):
     # LazyDict to lazy-load helpers
     # That way we do not instantiate helpers we do not need
     # e.g. running only duckdb tests we don't need PostgresTestHelper
     # so we can run duckdb tests in environments w/o access to postgres
     return LazyDict(
         duckdb=(DuckDBTestHelper, []),
-        spark=(SparkTestHelper, [_make_spark]),
+        spark=(SparkTestHelper, [spark]),
         sqlite=(SQLiteTestHelper, []),
         postgres=(PostgresTestHelper, [pg_engine]),
     )
