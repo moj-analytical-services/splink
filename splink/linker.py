@@ -527,6 +527,11 @@ class Linker:
             nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
 
         else:
+            # In duckdb, calls to random() in a CTE pipeline cause problems:
+            # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
+            if self._settings_obj.salting_required:
+                materialise = True
+
             if materialise:
                 # Clear the pipeline if we are materialising
                 # There's no reason not to do this, since when
