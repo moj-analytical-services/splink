@@ -16,12 +16,8 @@ def add_unique_id_and_source_dataset_cols_if_needed(
     # Add source dataset column to new records if required and not exists
     sds_sel_sql = ""
     if linker._settings_obj._source_dataset_column_name_is_required:
-        sds_col = linker._settings_obj._source_dataset_input_column
+        sds_col = linker._settings_obj._source_dataset_column_name
 
-        # TODO: Shouldn't be necessary but the source dataset properties on settings
-        # are currently broken
-        sds_col = InputColumn(sds_col, linker._settings_obj)
-        sds_col = sds_col.unquote().name
         if sds_col not in cols:
             sds_sel_sql = f", 'new_record' as {sds_col}"
 

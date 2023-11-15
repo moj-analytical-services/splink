@@ -280,13 +280,11 @@ def block_using_rules_sqls(linker: Linker):
         and not linker._find_new_matches_mode
         and not linker._compare_two_records_mode
     ):
-        source_dataset_col = linker._source_dataset_column_name
+        source_dataset_col = (
+            source_dataset_col
+        ) = linker._settings_obj._source_dataset_column_name
         # Need df_l to be the one with the lowest id to preeserve the property
         # that the left dataset is the one with the lowest concatenated id
-        keys = linker._input_tables_dict.keys()
-        keys = list(sorted(keys))
-        df_l = linker._input_tables_dict[keys[0]]
-        df_r = linker._input_tables_dict[keys[1]]
 
         # This also needs to work for training u
         if linker._train_u_using_random_sample_mode:
@@ -294,9 +292,12 @@ def block_using_rules_sqls(linker: Linker):
         else:
             spl_switch = ""
 
+        df_concat_tf = linker._intermediate_table_cache["__splink__df_concat_with_tf"]
+
         sql = f"""
         select * from __splink__df_concat_with_tf{spl_switch}
-        where {source_dataset_col} = '{df_l.templated_name}'
+        where {source_dataset_col} =
+            (select min({source_dataset_col}) from {df_concat_tf.physical_name})
         """
         sqls.append(
             {
@@ -307,7 +308,8 @@ def block_using_rules_sqls(linker: Linker):
 
         sql = f"""
         select * from __splink__df_concat_with_tf{spl_switch}
-        where {source_dataset_col} = '{df_r.templated_name}'
+        where {source_dataset_col} =
+            (select max({source_dataset_col}) from {df_concat_tf.physical_name})
         """
         sqls.append(
             {
