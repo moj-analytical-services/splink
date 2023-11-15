@@ -168,74 +168,89 @@ class InputColumn:
             "_tf_prefix", "term_frequency_adjustment_column_prefix"
         )
 
+    @property
     def name(self) -> str:
         return self.input_name_as_tree.sql(dialect=self._sql_dialect)
 
+    @property
     def name_l(self) -> str:
         return add_suffix(self.input_name_as_tree, suffix="_l").sql(
             dialect=self._sql_dialect
         )
 
+    @property
     def name_r(self) -> str:
         return add_suffix(self.input_name_as_tree, suffix="_r").sql(
             dialect=self._sql_dialect
         )
 
+    @property
     def names_l_r(self) -> list[str]:
-        return [self.name_l(), self.name_r()]
+        return [self.name_l, self.name_r]
 
+    @property
     def l_name_as_l(self) -> str:
         name_with_l_table = add_table(self.input_name_as_tree, "l").sql(
             dialect=self._sql_dialect
         )
-        return f"{name_with_l_table} as {self.name_l()}"
+        return f"{name_with_l_table} as {self.name_l}"
 
+    @property
     def r_name_as_r(self) -> str:
         name_with_r_table = add_table(self.input_name_as_tree, "r").sql(
             dialect=self._sql_dialect
         )
-        return f"{name_with_r_table} as {self.name_r()}"
+        return f"{name_with_r_table} as {self.name_r}"
 
+    @property
     def l_r_names_as_l_r(self) -> list[str]:
-        return [self.l_name_as_l(), self.r_name_as_r()]
+        return [self.l_name_as_l, self.r_name_as_r]
 
+    @property
     def bf_name(self) -> str:
         return add_prefix(self.input_name_as_tree, prefix=self.bf_prefix).sql(
             dialect=self._sql_dialect
         )
 
+    @property
     def tf_name(self) -> str:
         return add_prefix(self.input_name_as_tree, prefix=self.tf_prefix).sql(
             dialect=self._sql_dialect
         )
 
+    @property
     def tf_name_l(self) -> str:
         tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
         return add_suffix(tree, suffix="_l").sql(dialect=self._sql_dialect)
 
+    @property
     def tf_name_r(self) -> str:
         tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
         return add_suffix(tree, suffix="_r").sql(dialect=self._sql_dialect)
 
+    @property
     def tf_name_l_r(self) -> list[str]:
-        return [self.tf_name_l(), self.tf_name_r()]
+        return [self.tf_name_l, self.tf_name_r]
 
+    @property
     def l_tf_name_as_l(self) -> str:
         tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
         tf_name_with_l_table = add_table(tree, tablename="l").sql(
             dialect=self._sql_dialect
         )
-        return f"{tf_name_with_l_table} as {self.tf_name_l()}"
+        return f"{tf_name_with_l_table} as {self.tf_name_l}"
 
+    @property
     def r_tf_name_as_r(self) -> str:
         tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
         tf_name_with_r_table = add_table(tree, tablename="r").sql(
             dialect=self._sql_dialect
         )
-        return f"{tf_name_with_r_table} as {self.tf_name_r()}"
+        return f"{tf_name_with_r_table} as {self.tf_name_r}"
 
+    @property
     def l_r_tf_names_as_l_r(self) -> list[str]:
-        return [self.l_tf_name_as_l(), self.r_tf_name_as_r()]
+        return [self.l_tf_name_as_l, self.r_tf_name_as_r]
 
     def _quote_if_sql_keyword(self, name: str) -> str:
         if name not in {"group", "index"}:

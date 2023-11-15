@@ -11,7 +11,7 @@ def add_unique_id_and_source_dataset_cols_if_needed(
     linker: "Linker", new_records_df: "SplinkDataFrame"
 ):
     cols = new_records_df.columns
-    cols = [c.unquote().name() for c in cols]
+    cols = [c.unquote().name for c in cols]
 
     # Add source dataset column to new records if required and not exists
     sds_sel_sql = ""
@@ -25,7 +25,7 @@ def add_unique_id_and_source_dataset_cols_if_needed(
     uid_sel_sql = ""
     uid_col = linker._settings_obj._unique_id_column_name
     uid_col = InputColumn(uid_col, linker._settings_obj)
-    uid_col = uid_col.unquote().name()
+    uid_col = uid_col.unquote().name
     if uid_col not in cols:
         uid_sel_sql = f", 'no_id_provided' as {uid_col}"
 
