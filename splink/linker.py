@@ -286,7 +286,7 @@ class Linker:
     def _source_dataset_column_already_exists(self):
         if self._settings_obj_ is None:
             return False
-        input_cols = [c.unquote().name() for c in self._input_columns]
+        input_cols = [c.unquote().name for c in self._input_columns]
         return self._settings_obj._source_dataset_column_name in input_cols
 
     @property
