@@ -205,6 +205,9 @@ class SaltedBlockingRule(BlockingRule):
         if salting_partitions is None or salting_partitions <= 1:
             raise ValueError("Salting partitions must be specified and > 1")
 
+        if sqlglot_dialect != "spark":
+            raise ValueError("Salting blocking rules is only supported in Spark")
+
         super().__init__(blocking_rule, sqlglot_dialect)
         self.salting_partitions = salting_partitions
 
