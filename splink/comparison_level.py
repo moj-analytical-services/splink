@@ -202,7 +202,7 @@ class ComparisonLevel:
     def _tf_adjustment_input_column_name(self):
         input_column = self._tf_adjustment_input_column
         if input_column:
-            return input_column.unquote().name()
+            return input_column.unquote().name
 
     @property
     def _has_comparison(self):
@@ -465,11 +465,9 @@ class ComparisonLevel:
         cols = self._input_columns_used_by_sql_condition
 
         for c in cols:
-            output_cols.extend(c.l_r_names_as_l_r())
+            output_cols.extend(c.l_r_names_as_l_r)
             if self._tf_adjustment_input_column:
-                output_cols.extend(
-                    self._tf_adjustment_input_column.l_r_tf_names_as_l_r()
-                )
+                output_cols.extend(self._tf_adjustment_input_column.l_r_tf_names_as_l_r)
 
         return dedupe_preserving_order(output_cols)
 
@@ -577,12 +575,8 @@ class ComparisonLevel:
         else:
             tf_adj_col = self._tf_adjustment_input_column
 
-            coalesce_l_r = (
-                f"coalesce({tf_adj_col.tf_name_l()}, {tf_adj_col.tf_name_r()})"
-            )
-            coalesce_r_l = (
-                f"coalesce({tf_adj_col.tf_name_r()}, {tf_adj_col.tf_name_l()})"
-            )
+            coalesce_l_r = f"coalesce({tf_adj_col.tf_name_l}, {tf_adj_col.tf_name_r})"
+            coalesce_r_l = f"coalesce({tf_adj_col.tf_name_r}, {tf_adj_col.tf_name_l})"
 
             tf_adjustment_exists = f"{coalesce_l_r} is not null"
             u_prob_exact_match = self._u_probability_corresponding_to_exact_match
@@ -730,7 +724,7 @@ class ComparisonLevel:
     @property
     def human_readable_description(self):
         input_cols = join_list_with_commas_final_and(
-            [c.name() for c in self._input_columns_used_by_sql_condition]
+            [c.name for c in self._input_columns_used_by_sql_condition]
         )
         desc = (
             f"Comparison level: {self.label_for_charts} of {input_cols}\n"

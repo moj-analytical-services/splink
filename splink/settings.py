@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import logging
 from copy import deepcopy
+from typing import List
 
-from .blocking import blocking_rule_to_obj
+from .blocking import BlockingRule, blocking_rule_to_obj
 from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -125,15 +126,15 @@ class Settings:
             used_by_brs = []
             for br in self._blocking_rules_to_generate_predictions:
                 used_by_brs.extend(
-                    get_columns_used_from_sql(br.blocking_rule, br.sql_dialect)
+                    get_columns_used_from_sql(br.blocking_rule_sql, br.sql_dialect)
                 )
 
             used_by_brs = [InputColumn(c) for c in used_by_brs]
 
-            used_by_brs = [c.unquote().name() for c in used_by_brs]
+            used_by_brs = [c.unquote().name for c in used_by_brs]
             already_used = self._columns_used_by_comparisons
             already_used = [InputColumn(c) for c in already_used]
-            already_used = [c.unquote().name() for c in already_used]
+            already_used = [c.unquote().name for c in already_used]
 
             new_cols = list(set(used_by_brs) - set(already_used))
             a_cols.extend(new_cols)
@@ -169,7 +170,7 @@ class Settings:
     @property
     def _source_dataset_col(self):
         input_column = self._source_dataset_input_column
-        return (input_column, InputColumn(input_column, self).name())
+        return (input_column, InputColumn(input_column, self).name)
 
     @property
     def _unique_id_input_columns(self) -> list[InputColumn]:
@@ -213,7 +214,7 @@ class Settings:
         cols_used.append(self._unique_id_column_name)
         for cc in self.comparisons:
             cols = cc._input_columns_used_by_case_statement
-            cols = [c.name() for c in cols]
+            cols = [c.name for c in cols]
 
             cols_used.extend(cols)
         return dedupe_preserving_order(cols_used)
@@ -223,14 +224,14 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.l_name_as_l())
-            cols.append(uid_col.r_name_as_r())
+            cols.append(uid_col.l_name_as_l)
+            cols.append(uid_col.r_name_as_r)
 
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_blocking)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.l_r_names_as_l_r())
+            cols.extend(add_col.l_r_names_as_l_r)
 
         return dedupe_preserving_order(cols)
 
@@ -239,14 +240,14 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_l())
-            cols.append(uid_col.name_r())
+            cols.append(uid_col.name_l)
+            cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_comparison_vector_values)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.names_l_r())
+            cols.extend(add_col.names_l_r)
 
         if self._needs_matchkey_column:
             cols.append("match_key")
@@ -259,14 +260,14 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_l())
-            cols.append(uid_col.name_r())
+            cols.append(uid_col.name_l)
+            cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_bayes_factor_parts)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.names_l_r())
+            cols.extend(add_col.names_l_r)
 
         if self._needs_matchkey_column:
             cols.append("match_key")
@@ -279,14 +280,14 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_l())
-            cols.append(uid_col.name_r())
+            cols.append(uid_col.name_l)
+            cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_predict)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.names_l_r())
+            cols.extend(add_col.names_l_r)
 
         if self._needs_matchkey_column:
             cols.append("match_key")
@@ -300,7 +301,7 @@ class Settings:
                 return cc
         raise ValueError(f"No comparison column with name {name}")
 
-    def _brs_as_objs(self, brs_as_strings):
+    def _brs_as_objs(self, brs_as_strings) -> List[BlockingRule]:
         brs_as_objs = [blocking_rule_to_obj(br) for br in brs_as_strings]
         for n, br in enumerate(brs_as_objs):
             br.add_preceding_rules(brs_as_objs[:n])

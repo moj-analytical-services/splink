@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlglot import parse_one
 from sqlglot.expressions import Join, Column
 from sqlglot.optimizer.eliminate_joins import join_condition
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING, List
 import logging
 
 from .misc import ensure_is_list
@@ -40,15 +40,20 @@ def blocking_rule_to_obj(br):
 class BlockingRule:
     def __init__(
         self,
-        blocking_rule: BlockingRule | dict | str,
+        blocking_rule_sql: str,
         salting_partitions=1,
         sqlglot_dialect: str = None,
     ):
         if sqlglot_dialect:
             self._sql_dialect = sqlglot_dialect
 
-        self.blocking_rule = blocking_rule
-        self.preceding_rules = []
+        # Temporarily just to see if tests still pass
+        if not isinstance(blocking_rule_sql, str):
+            raise ValueError(
+                f"Blocking rule must be a string, not {type(blocking_rule_sql)}"
+            )
+        self.blocking_rule_sql = blocking_rule_sql
+        self.preceding_rules: List[BlockingRule] = []
         self.sqlglot_dialect = sqlglot_dialect
         self.salting_partitions = salting_partitions
 
@@ -60,25 +65,30 @@ class BlockingRule:
     def match_key(self):
         return len(self.preceding_rules)
 
-    @property
-    def sql(self):
-        # Wrapper to reveal the underlying SQL
-        return self.blocking_rule
-
     def add_preceding_rules(self, rules):
         rules = ensure_is_list(rules)
         self.preceding_rules = rules
 
-    @property
-    def and_not_preceding_rules_sql(self):
-        if not self.preceding_rules:
-            return ""
+    def exclude_pairs_generated_by_this_rule_sql(self):
+        """A SQL string specifying how to exclude the results
+        of THIS blocking rule from subseqent blocking statements,
+        so that subsequent statements do not produce duplicate pairs
+        """
 
         # Note the coalesce function is important here - otherwise
         # you filter out any records with nulls in the previous rules
         # meaning these comparisons get lost
+        return f"coalesce(({self.blocking_rule_sql}),false)"
+
+    @property
+    def exclude_pairs_generated_by_all_preceding_rules_sql(self):
+        """A SQL string that excludes the results of ALL previous blocking rules from
+        the pairwise comparisons generated.
+        """
+        if not self.preceding_rules:
+            return ""
         or_clauses = [
-            f"coalesce(({r.blocking_rule}), false)" for r in self.preceding_rules
+            br.exclude_pairs_generated_by_this_rule_sql() for br in self.preceding_rules
         ]
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
@@ -86,14 +96,14 @@ class BlockingRule:
     @property
     def salted_blocking_rules(self):
         if self.salting_partitions == 1:
-            yield self.blocking_rule
+            yield self.blocking_rule_sql
         else:
             for n in range(self.salting_partitions):
-                yield f"{self.blocking_rule} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
+                yield f"{self.blocking_rule_sql} and ceiling(l.__splink_salt * {self.salting_partitions}) = {n+1}"  # noqa: E501
 
     @property
     def _parsed_join_condition(self):
-        br = self.blocking_rule
+        br = self.blocking_rule_sql
         return parse_one("INNER JOIN r", into=Join).on(
             br, dialect=self.sqlglot_dialect
         )  # using sqlglot==11.4.1
@@ -147,7 +157,7 @@ class BlockingRule:
         "The minimal representation of the blocking rule"
         output = {}
 
-        output["blocking_rule"] = self.blocking_rule
+        output["blocking_rule"] = self.blocking_rule_sql
         output["sql_dialect"] = self.sql_dialect
 
         if self.salting_partitions > 1 and self.sql_dialect == "spark":
@@ -157,7 +167,7 @@ class BlockingRule:
 
     def _as_completed_dict(self):
         if not self.salting_partitions > 1 and self.sql_dialect == "spark":
-            return self.blocking_rule
+            return self.blocking_rule_sql
         else:
             return self.as_dict()
 
@@ -166,7 +176,7 @@ class BlockingRule:
         return "Custom" if not hasattr(self, "_description") else self._description
 
     def _abbreviated_sql(self, cutoff=75):
-        sql = self.blocking_rule
+        sql = self.blocking_rule_sql
         return (sql[:cutoff] + "...") if len(sql) > cutoff else sql
 
     def __repr__(self):
@@ -190,7 +200,7 @@ def _sql_gen_where_condition(link_type, unique_id_cols):
         source_dataset_col = unique_id_cols[0]
         where_condition = (
             f"where {id_expr_l} < {id_expr_r} "
-            f"and l.{source_dataset_col.name()} != r.{source_dataset_col.name()}"
+            f"and l.{source_dataset_col.name} != r.{source_dataset_col.name}"
         )
 
     return where_condition
@@ -312,7 +322,7 @@ def block_using_rules_sqls(linker: Linker):
         if apply_salt:
             salted_blocking_rules = br.salted_blocking_rules
         else:
-            salted_blocking_rules = [br.blocking_rule]
+            salted_blocking_rules = [br.blocking_rule_sql]
 
         for salted_br in salted_blocking_rules:
             sql = f"""
@@ -324,7 +334,7 @@ def block_using_rules_sqls(linker: Linker):
             inner join {linker._input_tablename_r} as r
             on
             ({salted_br})
-            {br.and_not_preceding_rules_sql}
+            {br.exclude_pairs_generated_by_all_preceding_rules_sql}
             {where_condition}
             """
 
