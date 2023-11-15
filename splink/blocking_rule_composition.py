@@ -297,17 +297,23 @@ def not_(*brls: BlockingRule | dict | str, salting_partitions: int = 1) -> Block
     br = brls[0]
     blocking_rule = f"NOT ({br.blocking_rule_sql})"
 
-    return BlockingRule(
-        blocking_rule,
-        salting_partitions=salting_partitions if salting_partitions > 1 else salt,
-        sqlglot_dialect=sql_dialect,
-    )
+    br_dict = {
+        "blocking_rule": blocking_rule,
+        "sql_dialect": sql_dialect,
+    }
+
+    if salting_partitions > 1:
+        salt = salting_partitions
+    if salt > 1:
+        br_dict["salting_partitions"] = salt
+
+    return blocking_rule_to_obj(br_dict)
 
 
 def _br_merge(
     *brls: BlockingRule | dict | str,
     clause: str,
-    salting_partitions: int = 1,
+    salting_partitions: int = None,
 ) -> BlockingRule:
     if len(brls) == 0:
         raise ValueError("You must provide at least one BlockingRule")
@@ -320,11 +326,17 @@ def _br_merge(
 
     blocking_rule = f" {clause} ".join(conditions)
 
-    return BlockingRule(
-        blocking_rule,
-        salting_partitions=salting_partitions if salting_partitions > 1 else salt,
-        sqlglot_dialect=sql_dialect,
-    )
+    br_dict = {
+        "blocking_rule": blocking_rule,
+        "sql_dialect": sql_dialect,
+    }
+
+    if salting_partitions > 1:
+        salt = salting_partitions
+    if salt > 1:
+        br_dict["salting_partitions"] = salt
+
+    return blocking_rule_to_obj(br_dict)
 
 
 def _parse_blocking_rules(
@@ -332,7 +344,7 @@ def _parse_blocking_rules(
 ) -> tuple[list[BlockingRule], str | None]:
     brs = [_to_blocking_rule(br) for br in brs]
     sql_dialect = _unify_sql_dialects(brs)
-    salting_partitions = max([br.salting_partitions for br in brs])
+    salting_partitions = max([getattr(br, "salting_partitions", 1) for br in brs])
     return brs, sql_dialect, salting_partitions
 
 

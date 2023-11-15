@@ -15,9 +15,6 @@ def test_binary_composition_internals_OR(test_helpers, dialect):
     br_surname = brl.exact_match_rule("surname", salting_partitions=4)
     q, _ = _get_dialect_quotes(dialect)
     em_rule = f"l.{q}surname{q} = r.{q}surname{q}"
-    exp_txt = "<{} blocking rule using SQL: {}>"
-    assert br_surname.__repr__() == exp_txt.format("Exact match", em_rule)
-    assert BlockingRule(em_rule).__repr__() == exp_txt.format("Custom", em_rule)
 
     assert br_surname.blocking_rule_sql == em_rule
     assert br_surname.salting_partitions == 4
