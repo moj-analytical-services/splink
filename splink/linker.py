@@ -50,6 +50,7 @@ from .charts import (
     unlinkables_chart,
     waterfall_chart,
 )
+from .cluster_metrics import _size_density_sql
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -249,18 +250,38 @@ class Linker:
         self.debug_mode = False
 
     @property
-    def _get_input_columns(
+    def _input_columns(
         self,
-        as_list=True,
     ):
         """Retrieve the column names from the input dataset(s)"""
-        df_obj: SplinkDataFrame = next(iter(self._input_tables_dict.values()))
+        input_dfs = self._input_tables_dict.values()
 
-        column_names = (
-            [col.name() for col in df_obj.columns] if as_list else df_obj.columns
-        )
+        # get a list of the column names for each input frame
+        # sort it for consistent ordering, and give each frame's
+        # columns as a tuple so we can hash it
+        column_names_by_input_df = [
+            tuple(sorted([col.name for col in input_df.columns]))
+            for input_df in input_dfs
+        ]
+        # check that the set of input columns is the same for each frame,
+        # fail if the sets are different
+        if len(set(column_names_by_input_df)) > 1:
+            common_cols = set.intersection(
+                *(set(col_names) for col_names in column_names_by_input_df)
+            )
+            problem_names = {
+                col
+                for frame_col_names in column_names_by_input_df
+                for col in frame_col_names
+                if col not in common_cols
+            }
+            raise SplinkException(
+                "All linker input frames must have the same set of columns.  "
+                "The following columns were not found in all input frames: "
+                + ", ".join(problem_names)
+            )
 
-        return column_names
+        return next(iter(input_dfs)).columns
 
     @property
     def _cache_uid(self):
@@ -2082,6 +2103,45 @@ class Linker:
 
         return cc
 
+    def _compute_cluster_metrics(
+        self,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        threshold_match_probability: float = None,
+    ):
+        """Generates a table containing cluster metrics and returns a Splink dataframe
+
+        Args:
+            df_predict (SplinkDataFrame): The results of `linker.predict()`
+            df_clustered (SplinkDataFrame): The outputs of
+                `linker.cluster_pairwise_predictions_at_threshold()`
+            threshold_match_probability (float): Filter the pairwise match predictions
+                to include only pairwise comparisons with a match_probability above this
+                threshold.
+
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame containing cluster IDs and selected
+            cluster metrics
+
+        """
+
+        # Get unique row id column name from settings
+        unique_id_col = self._settings_obj._unique_id_column_name
+
+        sqls = _size_density_sql(
+            df_predict,
+            df_clustered,
+            threshold_match_probability,
+            _unique_id_col=unique_id_col,
+        )
+
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        df_cluster_metrics = self._execute_sql_pipeline()
+
+        return df_cluster_metrics
+
     def profile_columns(
         self, column_expressions: str | list[str] = None, top_n=10, bottom_n=10
     ):
@@ -3004,8 +3064,9 @@ class Linker:
 
         Args:
             input_dataset (str, optional): Name of one of the input tables in the
-            database.  If provided, missingness will be computed for this table alone.
-            Defaults to None.
+                database.  If provided, missingness will be computed for
+                this table alone.
+                Defaults to None.
 
         Examples:
             ```py

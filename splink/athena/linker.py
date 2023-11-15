@@ -270,6 +270,7 @@ class AthenaLinker(Linker):
         table_exists = wr.catalog.does_table_exist(
             database=db,
             table=tb,
+            boto3_session=self.boto3_session,
         )
         if not table_exists:
             raise wr.exceptions.InvalidTable(
