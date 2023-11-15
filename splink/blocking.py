@@ -94,9 +94,7 @@ class BlockingRule:
         previous_rules = " OR ".join(or_clauses)
         return f"AND NOT ({previous_rules})"
 
-    def create_blocked_pairs_sql(
-        self, linker: Linker, where_condition, probability, salt_condition=""
-    ):
+    def create_blocked_pairs_sql(self, linker: Linker, where_condition, probability):
         columns_to_select = linker._settings_obj._columns_to_select_for_blocking
         sql_select_expr = ", ".join(columns_to_select)
 
@@ -108,7 +106,7 @@ class BlockingRule:
             from {linker._input_tablename_l} as l
             inner join {linker._input_tablename_r} as r
             on
-            ({self.blocking_rule_sql} {salt_condition})
+            ({self.blocking_rule_sql})
             {self.exclude_pairs_generated_by_all_preceding_rules_sql}
             {where_condition}
             """
@@ -205,9 +203,6 @@ class SaltedBlockingRule(BlockingRule):
         if salting_partitions is None or salting_partitions <= 1:
             raise ValueError("Salting partitions must be specified and > 1")
 
-        if sqlglot_dialect != "spark":
-            raise ValueError("Salting blocking rules is only supported in Spark")
-
         super().__init__(blocking_rule, sqlglot_dialect)
         self.salting_partitions = salting_partitions
 
@@ -223,12 +218,25 @@ class SaltedBlockingRule(BlockingRule):
         return f"AND ceiling(l.__splink_salt * {self.salting_partitions}) = {salt + 1}"
 
     def create_blocked_pairs_sql(self, linker: Linker, where_condition, probability):
+        columns_to_select = linker._settings_obj._columns_to_select_for_blocking
+        sql_select_expr = ", ".join(columns_to_select)
+
         sqls = []
         for salt in range(self.salting_partitions):
-            salting_condition = self._salting_condition(salt)
-            sql = super().create_blocked_pairs_sql(
-                linker, where_condition, probability, salting_condition
-            )
+            salt_condition = self._salting_condition(salt)
+            sql = f"""
+            select
+            {sql_select_expr}
+            , '{self.match_key}' as match_key
+            {probability}
+            from {linker._input_tablename_l} as l
+            inner join {linker._input_tablename_r} as r
+            on
+            ({self.blocking_rule_sql} {salt_condition})
+            {self.exclude_pairs_generated_by_all_preceding_rules_sql}
+            {where_condition}
+            """
+
             sqls.append(sql)
         return " UNION ALL ".join(sqls)
 
