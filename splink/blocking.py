@@ -198,7 +198,7 @@ class BlockingRule:
 class SaltedBlockingRule(BlockingRule):
     def __init__(
         self,
-        blocking_rule: BlockingRule | dict | str,
+        blocking_rule: str,
         sqlglot_dialect: str = None,
         salting_partitions: int = 1,
     ):
