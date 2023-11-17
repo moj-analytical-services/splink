@@ -285,3 +285,35 @@ def test_seed_u_outputs(test_helpers, dialect):
         linker_1._settings_obj._parameter_estimates_as_records
         != linker_3._settings_obj._parameter_estimates_as_records
     )
+
+# No SQLite or Postgres - don't support random seed
+@mark_with_dialects_excluding("sqlite", "postgres")
+def test_seed_u_outputs_complex_model(test_helpers, dialect):
+    # seed was producing different results due to lack of table ordering
+    # only with sufficiently 'complex' models
+    # have not been able to recreate with fake_1000 (even if replicated multiple times)
+    helper = test_helpers[dialect]
+
+    from splink.datasets import splink_datasets
+    df = helper.convert_frame(splink_datasets.historical_50k)
+
+    settings = {
+        "link_type": "dedupe_only",
+        "comparisons": [
+            helper.ctl.name_comparison("first_name", term_frequency_adjustments=True),
+        ],
+    }
+
+    u_vals = set()
+    for _ in range(15):
+        linker = helper.Linker(df, settings, **helper.extra_linker_args())
+        linker.estimate_u_using_random_sampling(1000, 5330)
+        u_prob = (linker
+                ._settings_obj.comparisons[0]
+                ._get_comparison_level_by_comparison_vector_value(0)
+                .u_probability
+        )
+        u_vals.add(u_prob)
+    print(u_vals)  # NOQA
+    # should have got the same u-value each time, as we supply a seed
+    assert len(u_vals) == 1
