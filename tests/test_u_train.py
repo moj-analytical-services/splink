@@ -307,6 +307,7 @@ def test_seed_u_outputs_complex_model(test_helpers, dialect):
     u_vals = set()
     for _ in range(15):
         linker = helper.Linker(df, settings, **helper.extra_linker_args())
+        linker.debug_mode = True
         linker.estimate_u_using_random_sampling(1000, 5330)
         u_prob = (linker
                 ._settings_obj.comparisons[0]
@@ -314,6 +315,5 @@ def test_seed_u_outputs_complex_model(test_helpers, dialect):
                 .u_probability
         )
         u_vals.add(u_prob)
-    print(u_vals)  # NOQA
     # should have got the same u-value each time, as we supply a seed
     assert len(u_vals) == 1

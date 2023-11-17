@@ -96,9 +96,24 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
     if sample_size > total_nodes:
         sample_size = total_nodes
 
+
+    table_to_sample_from = "__splink__df_concat_with_tf"
+    # if we are provided a seed, we want to order the table before we sample from it
+    # this ensures that the resulting table will be consistent across runs
+    # (which is what we want when we are supplying a seed)
+    # don't bother when we aren't using a seed as it is needless computation
+    if seed is not None:
+        table_to_sample_from =  f"""
+        (
+            select *
+            from {table_to_sample_from}
+            order by unique_id
+        )
+        """
+
     sql = f"""
     select *
-    from __splink__df_concat_with_tf
+    from {table_to_sample_from}
     {training_linker._random_sample_sql(proportion, sample_size, seed)}
     """
     training_linker._enqueue_sql(sql, "__splink__df_concat_with_tf_sample")
