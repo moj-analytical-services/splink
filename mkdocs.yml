@@ -52,7 +52,6 @@ plugins:
         python:
           rendering:
             show_source: false
-      custom_templates: templates
   - git-revision-date-localized:
       enable_creation_date: true
       type: timeago
