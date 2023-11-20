@@ -30,7 +30,7 @@ def _generate_output_combinations_table_row(
     row["blocking_columns_sanitised"] = blocking_columns
     row["splink_blocking_rule"] = splink_blocking_rule
     row["comparison_count"] = comparison_count
-    row["complexity"] = len(blocking_columns)
+    row["num_equi_joins"] = len(blocking_columns)
 
     for col in all_columns:
         row[f"__fixed__{col}"] = 1 if col in blocking_columns else 0
@@ -99,7 +99,7 @@ def _search_tree_for_blocking_rules_below_threshold_count(
     linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions
     to count
 
-    The tree looks like this, where c1 c2 are columns:
+    The full tree looks like this, where c1 c2 are columns:
     c1                    count_comparisons(c1)
     ├── c2                count_comparisons(c1, c2)
     │   └── c3            count_comparisons(c1, c2, c3)
@@ -111,12 +111,16 @@ def _search_tree_for_blocking_rules_below_threshold_count(
     ├── c3                count_comparisons(c2, c3)
     │   └── c1            count_comparisons(c2, c3, c1)
 
-    Once the count is below the threshold, no branches from the node are explored.
+    But many nodes do not need to be visited:
+        - Once the count is below the threshold, no branches from the node are explored.
+        - If a combination has alraedy been evaluated,  it is not evaluated again. For
+          example, c2 -> c1 will not be evaluated because c1 -> c2 has already been
+          counted
 
     When a count is below the threshold, create a dictionary with the relevant stats
     like :
     {
-        'blocking_columns':['first_name'],
+        'blocking_columns_sanitised':['first_name'],
         'splink_blocking_rule':<Custom rule>',
         comparison_count':4827,
         'complexity':1,
@@ -157,12 +161,6 @@ def _search_tree_for_blocking_rules_below_threshold_count(
     comparison_count = (
         linker._count_num_comparisons_from_blocking_rule_pre_filter_conditions(br)
     )
-    row = _generate_output_combinations_table_row(
-        current_combination,
-        br,
-        comparison_count,
-        all_columns,
-    )
 
     already_visited.add(frozenset(current_combination))
 
@@ -181,6 +179,12 @@ def _search_tree_for_blocking_rules_below_threshold_count(
                 results,
             )
     else:
+        row = _generate_output_combinations_table_row(
+            current_combination,
+            br,
+            comparison_count,
+            all_columns,
+        )
         results.append(row)
 
     return results
@@ -193,12 +197,12 @@ def find_blocking_rules_below_threshold_comparison_count(
     Finds blocking rules which return a comparison count below a given threshold.
 
     In addition to returning blocking rules, returns the comparison count and
-    'complexity', which refers to the number of equi-joins used by the rule.
+    'num_equi_joins', which refers to the number of equi-joins used by the rule.
 
     Also returns one-hot encoding that describes which columns are __fixed__ by the
     blocking rule
 
-    e.g. equality on first_name and surname is complexity of 2
+    e.g. equality on first_name and surname has num_equi_joins of 2
 
     Args:
         linker (Linker): The Linker object
@@ -207,7 +211,7 @@ def find_blocking_rules_below_threshold_comparison_count(
             ComparisonLevels of the Linker.
 
     Returns:
-        pd.DataFrame: DataFrame with blocking rules, comparison_count, and complexity.
+        pd.DataFrame: DataFrame with blocking rules, comparison_count and num_equi_joins
     """
 
     if not columns:
