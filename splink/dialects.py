@@ -89,7 +89,7 @@ class SparkDialect(SplinkDialect):
         return "damerau_levenshtein"
 
     @property
-    def _jaro_name(self):
+    def jaro_function_name(self):
         return "jaro_sim"
 
     @property
