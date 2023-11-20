@@ -231,4 +231,12 @@ def find_blocking_rules_below_threshold_comparison_count(
     results = _search_tree_for_blocking_rules_below_threshold_count(
         linker, columns_as_strings, max_comparisons_per_rule
     )
+
+    if not results:
+        raise ValueError(
+            "No blocking rules could be found that produce a comparison count below "
+            "your chosen max_comparisons_per_rule threshold of "
+            f"{max_comparisons_per_rule}. Try increasing the threshold."
+        )
+
     return pd.DataFrame(results)
