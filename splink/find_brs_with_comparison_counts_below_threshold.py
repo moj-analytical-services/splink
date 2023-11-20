@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Dict, List, Set
 import pandas as pd
 
 from .input_column import InputColumn
+from .blocking import BlockingRule
 
 if TYPE_CHECKING:
     from .linker import Linker
@@ -40,7 +41,7 @@ def _generate_output_combinations_table_row(
 
 def _generate_combinations(
     all_columns, current_combination, already_visited: Set[frozenset]
-):
+) -> list:
     """Generate combinations of columns to visit that haven't been visited already
     irrespective of order
     """
@@ -55,8 +56,11 @@ def _generate_combinations(
     return combinations
 
 
-def _generate_blocking_rule(linker: "Linker", cols_as_string):
-    """Generate a blocking rule given a list of column names as string"""
+def _generate_blocking_rule(
+    linker: "Linker", cols_as_string: List[str]
+) -> BlockingRule:
+    """Generate a Splink blocking rule given a list of column names which
+    are provided as as string"""
 
     dialect = linker._sql_dialect
 
@@ -191,7 +195,7 @@ def _search_tree_for_blocking_rules_below_threshold_count(
 
 
 def find_blocking_rules_below_threshold_comparison_count(
-    linker: "Linker", max_comparisons_per_rule, columns=None
+    linker: "Linker", max_comparisons_per_rule, column_expressions: List[str] = None
 ) -> pd.DataFrame:
     """
     Finds blocking rules which return a comparison count below a given threshold.
@@ -207,29 +211,32 @@ def find_blocking_rules_below_threshold_comparison_count(
     Args:
         linker (Linker): The Linker object
         max_comparisons_per_rule (int): Max comparisons allowed per blocking rule.
-        columns: Columns to consider. If None, uses all columns used by the
-            ComparisonLevels of the Linker.
+        column_expressions: List[str] = Algorithm will find combinations of these
+            column expressions to use as blocking rules. If None, uses all columns used
+            by the ComparisonLevels of the Linker. Column expressions can be SQL
+            expressions, not just column names i.e. 'substr(surname, 1,1)' is a valid
+            entry in this list.
 
     Returns:
         pd.DataFrame: DataFrame with blocking rules, comparison_count and num_equi_joins
     """
 
-    if not columns:
-        columns = linker._input_columns(
+    if not column_expressions:
+        column_expressions = linker._input_columns(
             include_unique_id_col_names=False,
             include_additional_columns_to_retain=False,
         )
 
-    columns_as_strings = []
+    column_expressions_as_strings = []
 
-    for c in columns:
+    for c in column_expressions:
         if isinstance(c, InputColumn):
-            columns_as_strings.append(c.quote().name)
+            column_expressions_as_strings.append(c.quote().name)
         else:
-            columns_as_strings.append(c)
+            column_expressions_as_strings.append(c)
 
     results = _search_tree_for_blocking_rules_below_threshold_count(
-        linker, columns_as_strings, max_comparisons_per_rule
+        linker, column_expressions_as_strings, max_comparisons_per_rule
     )
 
     if not results:
