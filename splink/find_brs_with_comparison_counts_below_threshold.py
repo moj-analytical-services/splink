@@ -117,7 +117,7 @@ def _search_tree_for_blocking_rules_below_threshold_count(
 
     But many nodes do not need to be visited:
         - Once the count is below the threshold, no branches from the node are explored.
-        - If a combination has alraedy been evaluated,  it is not evaluated again. For
+        - If a combination has alraedy been evaluated, it is not evaluated again. For
           example, c2 -> c1 will not be evaluated because c1 -> c2 has already been
           counted
 
