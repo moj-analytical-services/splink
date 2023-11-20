@@ -204,3 +204,11 @@ def read_resource(path: str) -> str:
     # Also, if you use importlib.resources, then you have to add an
     # __init__.py file to every subdirectory, which is annoying.
     return pkgutil.get_data("splink", path).decode("utf-8")
+
+
+def is_castable_to_int(value):
+    try:
+        int(value)
+        return True
+    except ValueError:
+        return False
