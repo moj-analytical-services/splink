@@ -248,11 +248,26 @@ class Linker:
 
         self.debug_mode = False
 
-    @property
     def _input_columns(
         self,
+        include_unique_id_col_names=True,
+        include_additional_columns_to_retain=True,
     ) -> list[InputColumn]:
-        """Retrieve the column names from the input dataset(s)"""
+        """Retrieve the column names from the input dataset(s) as InputColumns
+
+        Args:
+            include_unique_id_col_names (bool, optional): Whether to include unique ID
+                column names. Defaults to True.
+            include_additional_columns_to_retain (bool, optional): Whether to include
+                additional columns to retain. Defaults to True.
+
+        Raises:
+            SplinkException: If the input frames have different sets of columns.
+
+        Returns:
+            list[InputColumn]
+        """
+
         input_dfs = self._input_tables_dict.values()
 
         # get a list of the column names for each input frame
@@ -280,37 +295,25 @@ class Linker:
                 + ", ".join(problem_names)
             )
 
-        return next(iter(input_dfs)).columns
+        columns = next(iter(input_dfs)).columns
 
-    @property
-    def _source_dataset_column_already_exists(self):
-        if self._settings_obj_ is None:
-            return False
-        input_cols = [c.unquote().name for c in self._input_columns]
-        return self._settings_obj._source_dataset_column_name in input_cols
-
-    @property
-    def _column_names_as_input_columns(
-        self,
-        include_unique_id_col_names=False,
-        include_additional_columns_to_retain=False,
-    ):
-        """Retrieve the column names from the input dataset(s)"""
-        df_obj: SplinkDataFrame = next(iter(self._input_tables_dict.values()))
-
-        input_columns = df_obj.columns
         remove_columns = []
         if not include_unique_id_col_names:
             remove_columns.extend(self._settings_obj._unique_id_input_columns)
         if not include_additional_columns_to_retain:
             remove_columns.extend(self._settings_obj._additional_columns_to_retain)
 
-        remove_id_cols = [c.unquote().name() for c in remove_columns]
-        columns = [
-            col for col in input_columns if col.unquote().name() not in remove_id_cols
-        ]
+        remove_id_cols = [c.unquote().name for c in remove_columns]
+        columns = [col for col in columns if col.unquote().name not in remove_id_cols]
 
         return columns
+
+    @property
+    def _source_dataset_column_already_exists(self):
+        if self._settings_obj_ is None:
+            return False
+        input_cols = [c.unquote().name for c in self._input_columns()]
+        return self._settings_obj._source_dataset_column_name in input_cols
 
     @property
     def _cache_uid(self):

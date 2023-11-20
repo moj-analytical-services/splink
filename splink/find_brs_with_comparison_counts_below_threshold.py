@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def sanitise_column_name(column_name):
+def sanitise_column_name(column_name) -> str:
     allowed_chars = string.ascii_letters + string.digits + "_"
     sanitized_name = "".join(c for c in column_name if c in allowed_chars)
     return sanitized_name
@@ -209,13 +209,16 @@ def find_blocking_rules_below_threshold_comparison_count(
     """
 
     if not columns:
-        columns = linker._column_names_as_input_columns
+        columns = linker._input_columns(
+            include_unique_id_col_names=False,
+            include_additional_columns_to_retain=False,
+        )
 
     columns_as_strings = []
 
     for c in columns:
         if isinstance(c, InputColumn):
-            columns_as_strings.append(c.quote().name())
+            columns_as_strings.append(c.quote().name)
         else:
             columns_as_strings.append(c)
 
