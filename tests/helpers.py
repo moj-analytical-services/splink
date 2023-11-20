@@ -105,8 +105,8 @@ class DuckDBTestHelper(TestHelper):
 
 
 class SparkTestHelper(TestHelper):
-    def __init__(self, spark):
-        self.spark = spark
+    def __init__(self, spark_creator_function):
+        self.spark = spark_creator_function()
 
     @property
     def Linker(self):

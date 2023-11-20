@@ -4,7 +4,7 @@ import logging
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from .blocking import block_using_rules_sql
+from .blocking import block_using_rules_sqls
 from .comparison_vector_values import compute_comparison_vector_values_sql
 from .expectation_maximisation import (
     compute_new_parameters_sql,
@@ -106,8 +106,9 @@ def estimate_u_values(linker: Linker, max_pairs, seed=None):
 
     settings_obj._blocking_rules_to_generate_predictions = []
 
-    sql = block_using_rules_sql(training_linker)
-    training_linker._enqueue_sql(sql, "__splink__df_blocked")
+    sqls = block_using_rules_sqls(training_linker)
+    for sql in sqls:
+        training_linker._enqueue_sql(sql["sql"], sql["output_table_name"])
 
     # repartition after blocking only exists on the SparkLinker
     repartition_after_blocking = getattr(

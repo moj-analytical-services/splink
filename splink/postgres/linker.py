@@ -263,7 +263,7 @@ class PostgresLinker(Linker):
         sql = f"""
         CREATE OR REPLACE FUNCTION ave_months_between(x date, y date)
         RETURNS float8 AS $$
-        SELECT datediff(x, y)/{ave_length_month};
+        SELECT (datediff(x, y)/{ave_length_month})::float8;
         $$ LANGUAGE SQL IMMUTABLE;
         """
         self._run_sql_execution(sql)
@@ -273,7 +273,7 @@ class PostgresLinker(Linker):
             x {dateish_type}, y {dateish_type}
         )
         RETURNS integer AS $$
-        SELECT ave_months_between(DATE(x), DATE(y));
+        SELECT (ave_months_between(DATE(x), DATE(y)))::int;
         $$ LANGUAGE SQL IMMUTABLE;
         """
         for dateish_type in ("timestamp", "timestamp with time zone"):
