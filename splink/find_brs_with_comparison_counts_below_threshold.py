@@ -11,21 +11,23 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def sanitise_column_name(column_name) -> str:
+def sanitise_column_name_for_one_hot_encoding(column_name) -> str:
     allowed_chars = string.ascii_letters + string.digits + "_"
-    sanitized_name = "".join(c for c in column_name if c in allowed_chars)
-    return sanitized_name
+    sanitised_name = "".join(c for c in column_name if c in allowed_chars)
+    return sanitised_name
 
 
 def _generate_output_combinations_table_row(
     blocking_columns, splink_blocking_rule, comparison_count, all_columns
-):
+) -> dict:
     row = {}
 
-    blocking_columns = [sanitise_column_name(c) for c in blocking_columns]
-    all_columns = [sanitise_column_name(c) for c in all_columns]
+    blocking_columns = [
+        sanitise_column_name_for_one_hot_encoding(c) for c in blocking_columns
+    ]
+    all_columns = [sanitise_column_name_for_one_hot_encoding(c) for c in all_columns]
 
-    row["blocking_columns"] = blocking_columns
+    row["blocking_columns_sanitised"] = blocking_columns
     row["splink_blocking_rule"] = splink_blocking_rule
     row["comparison_count"] = comparison_count
     row["complexity"] = len(blocking_columns)
