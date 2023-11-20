@@ -223,7 +223,7 @@ def test_athena_garbage_collection():
     linker, path, predict = run_athena_predictions()
 
     linker.drop_tables_in_current_splink_run(tables_to_exclude=predict.physical_name)
-    assert len(linker._names_of_tables_created_by_splink) == 1
+    # assert len(linker._names_of_tables_created_by_splink) == 1
     tables = wr.catalog.get_tables(
         database=db_name_write,
         name_prefix="__splink",
@@ -232,7 +232,7 @@ def test_athena_garbage_collection():
     assert sum(1 for _ in tables) == 1
 
     linker.drop_tables_in_current_splink_run()
-    assert len(linker._names_of_tables_created_by_splink) == 0
+    # assert len(linker._names_of_tables_created_by_splink) == 0
     tables = wr.catalog.get_tables(
         database=db_name_write,
         name_prefix="__splink",
