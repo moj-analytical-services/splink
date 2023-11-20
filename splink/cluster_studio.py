@@ -211,7 +211,6 @@ def render_splink_cluster_studio_html(
     linker: "Linker",
     df_predicted_edges: SplinkDataFrame,
     df_clustered_nodes: SplinkDataFrame,
-    df_cluster_metrics: SplinkDataFrame,
     out_path: str,
     sampling_method="random",
     sample_size=10,
@@ -219,6 +218,7 @@ def render_splink_cluster_studio_html(
     cluster_ids: list = None,
     cluster_names: list = None,
     overwrite: bool = False,
+    _df_cluster_metrics: SplinkDataFrame = None,
 ):
     bundle_observable_notebook = True
 
@@ -245,7 +245,7 @@ def render_splink_cluster_studio_html(
         if sampling_method == "by_cluster_density":
             try:
                 cluster_ids = _get_cluster_id_by_density(
-                    linker, df_cluster_metrics, sample_size, min_nodes=3
+                    linker, _df_cluster_metrics, sample_size, min_nodes=3
                 )
             except Exception as e:
                 print(f"An error occurred: {e}")

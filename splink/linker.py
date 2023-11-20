@@ -3432,7 +3432,6 @@ class Linker:
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
-        df_cluster_metrics: SplinkDataFrame,
         out_path: str,
         sampling_method="random",
         sample_size: int = 10,
@@ -3440,6 +3439,7 @@ class Linker:
         cluster_names: list = None,
         overwrite: bool = False,
         return_html_as_string=False,
+        _df_cluster_metrics: SplinkDataFrame = None,
     ):
         """Generate an interactive html visualization of the predicted cluster and
         save to `out_path`.
@@ -3484,13 +3484,13 @@ class Linker:
             self,
             df_predict,
             df_clustered,
-            df_cluster_metrics,
             out_path,
             sampling_method=sampling_method,
             sample_size=sample_size,
             cluster_ids=cluster_ids,
             overwrite=overwrite,
             cluster_names=cluster_names,
+            _df_cluster_metrics=_df_cluster_metrics,
         )
 
         if return_html_as_string:
