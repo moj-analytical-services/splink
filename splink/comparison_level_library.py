@@ -3,6 +3,7 @@ from typing import List, Union
 from sqlglot import parse_one
 
 from .comparison_level_creator import ComparisonLevelCreator
+from .comparison_level_sql import great_circle_distance_km_sql
 from .dialects import SplinkDialect
 from .input_column import InputColumn
 
@@ -233,3 +234,56 @@ class JaroWinklerLevel(ComparisonLevelCreator):
         return (
             f"Jaro-Winkler distance of '{self.col_name} >= {self.distance_threshold}'"
         )
+
+
+class DistanceInKMLevel(ComparisonLevelCreator):
+    def __init__(
+        self,
+        lat_col: str,
+        long_col: str,
+        km_threshold: Union[int, float],
+        not_null: bool = False,
+    ):
+        """Use the haversine formula to transform comparisons of lat,lngs
+        into distances measured in kilometers
+
+        Arguments:
+            lat_col (str): The name of a latitude column or the respective array
+                or struct column column containing the information
+                For example: long_lat['lat'] or long_lat[0]
+            long_col (str): The name of a longitudinal column or the respective array
+                or struct column column containing the information, plus an index.
+                For example: long_lat['long'] or long_lat[1]
+            km_threshold (int): The total distance in kilometers to evaluate your
+                comparisons against
+            not_null (bool): If true, ensure no attempt is made to compute this if
+              any inputs are null. This is only necessary if you are not
+                capturing nulls elsewhere in your comparison level.
+
+        """
+        self.lat_col = lat_col
+        self.long_col = long_col
+        self.km_threshold = km_threshold
+        self.not_null = not_null
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        lat_col_ic = input_column_factory(self.lat_col, sql_dialect)
+        long_col_ic = input_column_factory(self.long_col, sql_dialect)
+        lat_l, lat_r = lat_col_ic.names_l_r()
+        long_l, long_r = long_col_ic.names_l_r()
+
+        distance_km_sql = (
+            f"{great_circle_distance_km_sql(lat_l, lat_r, long_l, long_r)} "
+            f"<= {self.km_threshold}"
+        )
+
+        if self.not_null:
+            null_sql = " AND ".join(
+                [f"{c} is not null" for c in [lat_r, lat_l, long_l, long_r]]
+            )
+            distance_km_sql = f"({null_sql}) AND {distance_km_sql}"
+
+        return distance_km_sql
+
+    def create_label_for_charts(self) -> str:
+        return f"Distance less than {self.km_threshold}km"
