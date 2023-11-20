@@ -211,6 +211,7 @@ def render_splink_cluster_studio_html(
     linker: "Linker",
     df_predicted_edges: SplinkDataFrame,
     df_clustered_nodes: SplinkDataFrame,
+    df_cluster_metrics: SplinkDataFrame,
     out_path: str,
     sampling_method="random",
     sample_size=10,
@@ -241,7 +242,7 @@ def render_splink_cluster_studio_html(
             ]
             cluster_ids = [c["cluster_id"] for c in cluster_ids]
             named_clusters_dict = dict(zip(cluster_ids, cluster_names))
-        if sampling_method == "by_density":
+        if sampling_method == "by_cluster_density":
             try:
                 cluster_ids = _get_cluster_id_by_density(
                     linker, df_cluster_metrics, sample_size, min_nodes=3
