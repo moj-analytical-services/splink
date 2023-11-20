@@ -31,13 +31,13 @@ def colname_to_tf_tablename(input_column: InputColumn):
 def term_frequencies_for_single_column_sql(
     input_column: InputColumn, table_name="__splink__df_concat"
 ):
-    col_name = input_column.name()
+    col_name = input_column.name
 
     sql = f"""
     select
     {col_name}, cast(count(*) as float8) / (select
         count({col_name}) as total from {table_name})
-            as {input_column.tf_name()}
+            as {input_column.tf_name}
     from {table_name}
     where {col_name} is not null
     group by {col_name}
@@ -56,7 +56,7 @@ def _join_tf_to_input_df_sql(linker: Linker):
         tbl = colname_to_tf_tablename(col)
         if tbl in linker._intermediate_table_cache:
             tbl = linker._intermediate_table_cache[tbl].physical_name
-        tf_col = col.tf_name()
+        tf_col = col.tf_name
         select_cols.append(f"{tbl}.{tf_col}")
 
     select_cols.insert(0, "__splink__df_concat.*")
@@ -69,11 +69,11 @@ def _join_tf_to_input_df_sql(linker: Linker):
         tbl = colname_to_tf_tablename(col)
         if tbl in linker._intermediate_table_cache:
             tbl = linker._intermediate_table_cache[tbl].physical_name
-        sql = templ.format(tbl=tbl, col=col.name())
+        sql = templ.format(tbl=tbl, col=col.name)
         left_joins.append(sql)
 
     # left_joins = [
-    #     templ.format(tbl=colname_to_tf_tablename(col), col=col.name())
+    #     templ.format(tbl=colname_to_tf_tablename(col), col=col.name)
     #     for col in tf_cols
     # ]
     left_joins = " ".join(left_joins)
@@ -90,8 +90,8 @@ def _join_tf_to_input_df_sql(linker: Linker):
 def term_frequencies_from_concat_with_tf(input_column):
     sql = f"""
         select
-        distinct {input_column.name()},
-        {input_column.tf_name()}
+        distinct {input_column.name},
+        {input_column.tf_name}
         from __splink__df_concat_with_tf
     """
 

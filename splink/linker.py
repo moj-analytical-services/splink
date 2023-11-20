@@ -33,7 +33,7 @@ from .analyse_blocking import (
 )
 from .blocking import (
     BlockingRule,
-    block_using_rules_sql,
+    block_using_rules_sqls,
     blocking_rule_to_obj,
 )
 from .cache_dict_with_logging import CacheDictWithLogging
@@ -50,6 +50,7 @@ from .charts import (
     unlinkables_chart,
     waterfall_chart,
 )
+from .cluster_metrics import _size_density_sql
 from .cluster_studio import render_splink_cluster_studio_html
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -81,7 +82,6 @@ from .misc import (
     bayes_factor_to_prob,
     ensure_is_list,
     ensure_is_tuple,
-    find_unique_source_dataset,
     parse_duration,
     prob_to_bayes_factor,
 )
@@ -249,18 +249,45 @@ class Linker:
         self.debug_mode = False
 
     @property
-    def _get_input_columns(
+    def _input_columns(
         self,
-        as_list=True,
-    ):
+    ) -> list[InputColumn]:
         """Retrieve the column names from the input dataset(s)"""
-        df_obj: SplinkDataFrame = next(iter(self._input_tables_dict.values()))
+        input_dfs = self._input_tables_dict.values()
 
-        column_names = (
-            [col.name() for col in df_obj.columns] if as_list else df_obj.columns
-        )
+        # get a list of the column names for each input frame
+        # sort it for consistent ordering, and give each frame's
+        # columns as a tuple so we can hash it
+        column_names_by_input_df = [
+            tuple(sorted([col.name for col in input_df.columns]))
+            for input_df in input_dfs
+        ]
+        # check that the set of input columns is the same for each frame,
+        # fail if the sets are different
+        if len(set(column_names_by_input_df)) > 1:
+            common_cols = set.intersection(
+                *(set(col_names) for col_names in column_names_by_input_df)
+            )
+            problem_names = {
+                col
+                for frame_col_names in column_names_by_input_df
+                for col in frame_col_names
+                if col not in common_cols
+            }
+            raise SplinkException(
+                "All linker input frames must have the same set of columns.  "
+                "The following columns were not found in all input frames: "
+                + ", ".join(problem_names)
+            )
 
-        return column_names
+        return next(iter(input_dfs)).columns
+
+    @property
+    def _source_dataset_column_already_exists(self):
+        if self._settings_obj_ is None:
+            return False
+        input_cols = [c.unquote().name for c in self._input_columns]
+        return self._settings_obj._source_dataset_column_name in input_cols
 
     @property
     def _column_names_as_input_columns(
@@ -360,21 +387,6 @@ class Linker:
         return "__splink__df_concat_with_tf"
 
     @property
-    def _source_dataset_column_name(self):
-        if self._settings_obj_ is None:
-            return None
-
-        # Used throughout the scripts to feed our SQL
-        if self._settings_obj._source_dataset_column_name_is_required:
-            df_obj = next(iter(self._input_tables_dict.values()))
-            columns = df_obj.columns_escaped
-
-            input_column, src_ds_col = self._settings_obj_._source_dataset_col
-            return "__splink_source_dataset" if src_ds_col in columns else input_column
-        else:
-            return None
-
-    @property
     def _two_dataset_link_only(self):
         # Two dataset link only join is a special case where an inner join of the
         # two datasets is much more efficient than self-joining the vertically
@@ -415,34 +427,6 @@ class Linker:
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
         raise NotImplementedError("Random sample sql not implemented for this linker")
-
-    @property
-    def _verify_link_only_job(self):
-        cache = self._intermediate_table_cache
-        if "__splink__df_concat_with_tf" not in cache:
-            return
-
-        if self._settings_obj._link_type == "link_only":
-            # if input datasets > 1 then skip
-            if len(self._input_tables_dict) > 1:
-                return
-
-            # else, check if source dataset column is populated...
-            src_ds = self._source_dataset_column_name
-            if src_ds == "__splink_source_dataset":
-                _, src_ds = self._settings_obj_._source_dataset_col
-
-            sql = find_unique_source_dataset(src_ds)
-            self._enqueue_sql(sql, "source_ds_distinct")
-            src_ds_distinct = self._execute_sql_pipeline(
-                [cache["__splink__df_concat_with_tf"]]
-            )
-            if len(src_ds_distinct.as_record_dict()) == 1:
-                raise SplinkException(
-                    "if `link_type` is `link_only`, it should have at least two "
-                    "input dataframes, or one dataframe with a `source_dataset` "
-                    "column outlining which dataset each record belongs to."
-                )
 
     def _register_input_tables(self, input_tables, input_aliases, accepted_df_dtypes):
         # 'homogenised' means all entries are strings representing tables
@@ -566,6 +550,11 @@ class Linker:
             nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
 
         else:
+            # In duckdb, calls to random() in a CTE pipeline cause problems:
+            # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
+            if self._settings_obj.salting_required:
+                materialise = True
+
             if materialise:
                 # Clear the pipeline if we are materialising
                 # There's no reason not to do this, since when
@@ -582,10 +571,6 @@ class Linker:
             if materialise:
                 nodes_with_tf = self._execute_sql_pipeline()
                 cache["__splink__df_concat_with_tf"] = nodes_with_tf
-
-        # verify the link job
-        if self._settings_obj_ is not None:
-            self._verify_link_only_job
 
         return nodes_with_tf
 
@@ -1017,7 +1002,7 @@ class Linker:
                 15,
                 "\n"
                 f"Probability two random records match from trained model blocking on "
-                f"{em_training_session._blocking_rule_for_training.blocking_rule}: "
+                f"{em_training_session._blocking_rule_for_training.blocking_rule_sql}: "
                 f"{training_lambda:,.3f}",
             )
 
@@ -1429,8 +1414,9 @@ class Linker:
         self._deterministic_link_mode = True
 
         concat_with_tf = self._initialise_df_concat_with_tf()
-        sql = block_using_rules_sql(self)
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
         return self._execute_sql_pipeline([concat_with_tf])
 
     def estimate_u_using_random_sampling(
@@ -1652,7 +1638,7 @@ class Linker:
         self._initialise_df_concat_with_tf()
 
         # Extract the blocking rule
-        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule
+        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule_sql
 
         if comparisons_to_deactivate:
             # If user provided a string, convert to Comparison object
@@ -1751,8 +1737,9 @@ class Linker:
         if nodes_with_tf:
             input_dataframes.append(nodes_with_tf)
 
-        sql = block_using_rules_sql(self)
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         repartition_after_blocking = getattr(self, "repartition_after_blocking", False)
 
@@ -1876,8 +1863,9 @@ class Linker:
 
         add_unique_id_and_source_dataset_cols_if_needed(self, new_records_df)
 
-        sql = block_using_rules_sql(self)
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
@@ -1960,8 +1948,9 @@ class Linker:
 
         self._enqueue_sql(sql_join_tf, "__splink__compare_two_records_right_with_tf")
 
-        sql = block_using_rules_sql(self)
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
         self._enqueue_sql(sql, "__splink__df_comparison_vectors")
@@ -2016,9 +2005,9 @@ class Linker:
 
         nodes_with_tf = self._initialise_df_concat_with_tf()
 
-        sql = block_using_rules_sql(self)
-
-        self._enqueue_sql(sql, "__splink__df_blocked")
+        sqls = block_using_rules_sqls(self)
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
 
         sql = compute_comparison_vector_values_sql(self._settings_obj)
 
@@ -2056,15 +2045,15 @@ class Linker:
         into groups of connected record using the connected components graph clustering
         algorithm
 
-        Records with an estimated `match_probability` above
+        Records with an estimated `match_probability` at or above
         `threshold_match_probability` are considered to be a match (i.e. they represent
         the same entity).
 
         Args:
             df_predict (SplinkDataFrame): The results of `linker.predict()`
             threshold_match_probability (float): Filter the pairwise match predictions
-                to include only pairwise comparisons with a match_probability above this
-                threshold. This dataframe is then fed into the clustering
+                to include only pairwise comparisons with a match_probability at or
+                above this threshold. This dataframe is then fed into the clustering
                 algorithm.
             pairwise_formatting (bool): Whether to output the pairwise match predictions
                 from linker.predict() with cluster IDs.
@@ -2100,6 +2089,45 @@ class Linker:
         )
 
         return cc
+
+    def _compute_cluster_metrics(
+        self,
+        df_predict: SplinkDataFrame,
+        df_clustered: SplinkDataFrame,
+        threshold_match_probability: float = None,
+    ):
+        """Generates a table containing cluster metrics and returns a Splink dataframe
+
+        Args:
+            df_predict (SplinkDataFrame): The results of `linker.predict()`
+            df_clustered (SplinkDataFrame): The outputs of
+                `linker.cluster_pairwise_predictions_at_threshold()`
+            threshold_match_probability (float): Filter the pairwise match predictions
+                to include only pairwise comparisons with a match_probability above this
+                threshold.
+
+        Returns:
+            SplinkDataFrame: A SplinkDataFrame containing cluster IDs and selected
+            cluster metrics
+
+        """
+
+        # Get unique row id column name from settings
+        unique_id_col = self._settings_obj._unique_id_column_name
+
+        sqls = _size_density_sql(
+            df_predict,
+            df_clustered,
+            threshold_match_probability,
+            _unique_id_col=unique_id_col,
+        )
+
+        for sql in sqls:
+            self._enqueue_sql(sql["sql"], sql["output_table_name"])
+
+        df_cluster_metrics = self._execute_sql_pipeline()
+
+        return df_cluster_metrics
 
     def profile_columns(
         self, column_expressions: str | list[str] = None, top_n=10, bottom_n=10
@@ -3023,8 +3051,9 @@ class Linker:
 
         Args:
             input_dataset (str, optional): Name of one of the input tables in the
-            database.  If provided, missingness will be computed for this table alone.
-            Defaults to None.
+                database.  If provided, missingness will be computed for
+                this table alone.
+                Defaults to None.
 
         Examples:
             ```py
@@ -3034,7 +3063,7 @@ class Linker:
             ```py
             from splink.charts import save_offline_chart
             c = linker.missingness_chart()
-            save_offline_chart(c.spec, "test_chart.html")
+            save_offline_chart(c.to_dict(), "test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
@@ -3068,7 +3097,7 @@ class Linker:
             ```py
             from splink.charts import save_offline_chart
             c = linker.completeness_chart()
-            save_offline_chart(c.spec, "test_chart.html")
+            save_offline_chart(c.to_dict(), "test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
@@ -3119,7 +3148,7 @@ class Linker:
             int: The number of comparisons generated by the blocking rule
         """
 
-        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule
+        blocking_rule = blocking_rule_to_obj(blocking_rule).blocking_rule_sql
 
         sql = vertically_concatenate_sql(self)
         self._enqueue_sql(sql, "__splink__df_concat")
@@ -3306,7 +3335,7 @@ class Linker:
             ```py
             from splink.charts import save_offline_chart
             c = linker.match_weights_chart()
-            save_offline_chart(c.spec, "test_chart.html")
+            save_offline_chart(c.to_dict(), "test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py
@@ -3382,7 +3411,7 @@ class Linker:
             ```py
             from splink.charts import save_offline_chart
             c = linker.match_weights_chart()
-            save_offline_chart(c.spec, "test_chart.html")
+            save_offline_chart(c.to_dict(), "test_chart.html")
             ```
             View resultant html file in Jupyter (or just load it in your browser)
             ```py

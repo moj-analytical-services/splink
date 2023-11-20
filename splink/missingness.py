@@ -8,8 +8,8 @@ def missingness_sqls(columns, input_tablename):
 
     selects = [
         col_template.format(
-            col_name_escaped=col.name(),
-            col_name=col.unquote().name(),
+            col_name_escaped=col.name,
+            col_name=col.unquote().name,
             input_tablename=input_tablename,
         )
         for col in columns
@@ -40,13 +40,13 @@ def missingness_sqls(columns, input_tablename):
 
 
 def missingness_data(linker, input_tablename):
+    columns = linker._input_columns
     if input_tablename is None:
         splink_dataframe = linker._initialise_df_concat(materialise=True)
     else:
         splink_dataframe = linker._table_to_splink_dataframe(
             input_tablename, input_tablename
         )
-    columns = splink_dataframe.columns
 
     sqls = missingness_sqls(columns, splink_dataframe.physical_name)
 
@@ -65,22 +65,23 @@ def completeness_data(linker, input_tablename=None, cols=None):
         df_concat = linker._initialise_df_concat(materialise=True)
         input_tablename = df_concat.physical_name
 
-    columns = linker._settings_obj._columns_used_by_comparisons
+    if cols is None:
+        cols = linker._settings_obj._columns_used_by_comparisons
 
     if linker._settings_obj._source_dataset_column_name_is_required:
-        source_name = linker._source_dataset_column_name
+        source_name = linker._settings_obj._source_dataset_column_name
     else:
         # Set source dataset to a literal string if dedupe_only
         source_name = "'_a'"
 
-    for col in columns:
+    for col in cols:
         sql = f"""
         (select
             {source_name} as source_dataset,
             '{col}' as column_name,
             count(*) - count({col}) as total_null_rows,
             count(*) as total_rows_inc_nulls,
-            count({col})*1.0/count(*) as completeness
+            cast(count({col})*1.0/count(*) as float) as completeness
         from {input_tablename}
         group by source_dataset
         order by count(*) desc)
