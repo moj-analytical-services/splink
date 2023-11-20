@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Dict, List, Set
 
 import pandas as pd
 
-from .input_column import InputColumn
 from .blocking import BlockingRule
+from .input_column import InputColumn
 
 if TYPE_CHECKING:
     from .linker import Linker
