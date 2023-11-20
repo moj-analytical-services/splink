@@ -113,6 +113,14 @@ class SqliteDialect(SplinkDialect):
         return "levenshtein"
 
     @property
+    def damerau_levenshtein_function_name(self):
+        return "damerau_levenshtein"
+
+    @property
+    def jaro_function_name(self):
+        return "jaro_sim"
+
+    @property
     def jaro_winkler_function_name(self):
         return "jaro_winkler"
 
