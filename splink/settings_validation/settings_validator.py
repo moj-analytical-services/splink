@@ -8,8 +8,9 @@ from typing import List
 
 import sqlglot
 
-from ..input_column import InputColumn, remove_quotes_from_identifiers
+from ..input_column import InputColumn
 from ..misc import ensure_is_list
+from ..sql_transform import remove_quotes_from_identifiers
 
 logger = logging.getLogger(__name__)
 

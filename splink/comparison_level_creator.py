@@ -49,7 +49,7 @@ class ComparisonLevelCreator(ABC):
 
     @final
     def input_column(self, sql_dialect: SplinkDialect) -> InputColumn:
-        return InputColumn(self.col_name, sql_dialect=sql_dialect.sqlglot_name)
+        return InputColumn(self.col_name, sql_dialect=sql_dialect)
 
     @final
     def configure(

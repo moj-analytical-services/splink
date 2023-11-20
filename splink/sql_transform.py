@@ -8,6 +8,25 @@ def sqlglot_transform_sql(sql, func, dialect=None):
     return transformed_tree.sql(dialect)
 
 
+def sqlglot_tree_signature(tree):
+    """
+    A short string representation of a SQLglot tree.
+
+    Allows you to easily check that a tree contains certain nodes
+
+    For instance, the string "robin['hi']" becomes:
+    'bracket column literal identifier'
+    """
+    return " ".join(n[0].key for n in tree.walk())
+
+
+def remove_quotes_from_identifiers(tree) -> exp.Expression:
+    tree = tree.copy()
+    for identifier in tree.find_all(exp.Identifier):
+        identifier.args["quoted"] = False
+    return tree
+
+
 def _add_l_or_r_to_identifier(node: exp.Expression):
     if not isinstance(node, exp.Identifier):
         return node

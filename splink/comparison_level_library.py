@@ -1,29 +1,11 @@
-from typing import List, Union
+from typing import Union
 
 from sqlglot import parse_one
 
+from .comparison_helpers_utils import unsupported_splink_dialects
 from .comparison_level_creator import ComparisonLevelCreator
 from .dialects import SplinkDialect
 from .input_column import InputColumn
-
-
-def input_column_factory(name, splink_dialect: SplinkDialect):
-    return InputColumn(name, sql_dialect=splink_dialect.sqlglot_name)
-
-
-def unsupported_splink_dialects(unsupported_dialects: List[str]):
-    def decorator(func):
-        def wrapper(self, splink_dialect: SplinkDialect, *args, **kwargs):
-            if splink_dialect.name in unsupported_dialects:
-                raise ValueError(
-                    f"Dialect {splink_dialect.name} is not supported "
-                    f"for {self.__class__.__name__}"
-                )
-            return func(self, splink_dialect, *args, **kwargs)
-
-        return wrapper
-
-    return decorator
 
 
 def validate_distance_threshold(
@@ -104,8 +86,8 @@ class ColumnsReversedLevel(ComparisonLevelCreator):
         self.col_name_2 = col_name_2
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        input_column_1 = input_column_factory(self.col_name_1, sql_dialect)
-        input_column_2 = input_column_factory(self.col_name_2, sql_dialect)
+        input_column_1 = InputColumn(self.col_name_1, sql_dialect)
+        input_column_2 = InputColumn(self.col_name_2, sql_dialect)
 
         return (
             f"{input_column_1.name_l} = {input_column_2.name_r} "

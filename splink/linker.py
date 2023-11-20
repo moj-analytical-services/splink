@@ -13,7 +13,7 @@ from statistics import median
 
 import sqlglot
 
-from splink.input_column import InputColumn, remove_quotes_from_identifiers
+from splink.input_column import InputColumn
 from splink.settings_validation.column_lookups import InvalidColumnsLogger
 from splink.settings_validation.valid_types import (
     InvalidTypesAndValuesLogger,
@@ -97,6 +97,7 @@ from .splink_comparison_viewer import (
     render_splink_comparison_viewer_html,
 )
 from .splink_dataframe import SplinkDataFrame
+from .sql_transform import remove_quotes_from_identifiers
 from .term_frequencies import (
     _join_tf_to_input_df_sql,
     colname_to_tf_tablename,

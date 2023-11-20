@@ -19,6 +19,10 @@ class SplinkDialect(ABC):
         return _dialect_lookup[dialect_name]
 
     @property
+    def str_to_date(self):
+        return "str_to_time"
+
+    @property
     def levenshtein_function_name(self):
         raise NotImplementedError(
             f"Backend '{self.name}' does not have a 'Levenshtein' function"
@@ -84,30 +88,20 @@ class PostgresDialect(SplinkDialect):
     def levenshtein_function_name(self):
         return "levenshtein"
 
-    def date_diff(self, clc: "ComparisonLevelCreator"):
+    @property
+    def str_to_date(self):
+        return "to_date"
+
+    def date_diff(self, clc: "ComparisonLevelCreator", col_l: str, col_r: str) -> str:
         """Note some of these functions are not native postgres functions and
         instead are UDFs which are automatically registered by Splink
         """
-
-        if clc.date_format is None:
-            clc.date_format = "yyyy-MM-dd"
-
-        col_name_l = clc.input_column(self).name_l()
-        col_name_r = clc.input_column(self).name_r()
-
-        if clc.cast_strings_to_date:
-            datediff_args = f"""
-                to_date({col_name_l}, '{clc.date_format}'),
-                to_date({col_name_r}, '{clc.date_format}')
-            """
-        else:
-            datediff_args = f"{col_name_l}, {col_name_r}"
 
         if clc.date_metric == "day":
             date_f = f"""
                 abs(
                     datediff(
-                        {datediff_args}
+                        {col_l}, {col_r}
                     )
                 )
             """
@@ -115,7 +109,7 @@ class PostgresDialect(SplinkDialect):
             date_f = f"""
                 floor(abs(
                     ave_months_between(
-                        {datediff_args}
+                        {col_l}, {col_r}
                     )"""
             if clc.date_metric == "year":
                 date_f += " / 12))"
