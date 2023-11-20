@@ -188,6 +188,25 @@ def _get_cluster_id_of_each_size(
     return df_cluster_sample_with_size.as_record_dict()
 
 
+def _get_cluster_id_by_density(
+    linker, df_cluster_metrics: SplinkDataFrame, sample_size: int, min_nodes: int
+):
+    # Least dense clusters first
+    sql = f"""
+    SELECT cluster_id
+    FROM {df_cluster_metrics.physical_name}
+    WHERE n_nodes >= {min_nodes}
+    ORDER BY density
+    LIMIT {sample_size}
+    """
+
+    df_density_sample = linker._sql_to_splink_dataframe_checking_cache(
+        sql, "__splink__density_sample"
+    )
+
+    return [r["cluster_id"] for r in df_density_sample.as_record_dict()]
+
+
 def render_splink_cluster_studio_html(
     linker: "Linker",
     df_predicted_edges: SplinkDataFrame,
@@ -222,6 +241,17 @@ def render_splink_cluster_studio_html(
             ]
             cluster_ids = [c["cluster_id"] for c in cluster_ids]
             named_clusters_dict = dict(zip(cluster_ids, cluster_names))
+        if sampling_method == "by_density":
+            try:
+                cluster_ids = _get_cluster_id_by_density(
+                    linker, df_cluster_metrics, sample_size, min_nodes=3
+                )
+            except Exception as e:
+                print(f"An error occurred: {e}")
+                print(
+                    """Cannot sample by density as cluster metrics table 
+                'df_cluster_metrics' does not yet exist"""
+                )
 
     cluster_recs = df_clusters_as_records(linker, df_clustered_nodes, cluster_ids)
     df_nodes = create_df_nodes(linker, df_clustered_nodes, cluster_ids)
