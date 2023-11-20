@@ -62,6 +62,7 @@ def _generate_blocking_rule(
     """Generate a Splink blocking rule given a list of column names which
     are provided as as string"""
 
+    # TODO: Refactor in Splink4
     dialect = linker._sql_dialect
 
     module_mapping = {
