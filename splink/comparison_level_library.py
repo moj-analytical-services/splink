@@ -155,7 +155,7 @@ class DamerauLevenshteinLevel(ComparisonLevelCreator):
         self.distance_threshold = distance_threshold
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        col = self.input_column(sql_dialect)
+        col_l, col_r = self.input_column(sql_dialect).names_l_r
         dm_lev_fn = sql_dialect.damerau_levenshtein_function_name
         return (
             f"{dm_lev_fn}({col.name_l()}, {col.name_r()}) <= {self.distance_threshold}"
