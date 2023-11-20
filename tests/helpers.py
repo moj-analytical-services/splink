@@ -113,7 +113,7 @@ class SparkTestHelper(TestHelper):
         return SparkLinker
 
     def extra_linker_args(self):
-        return {"spark": self.spark}
+        return {"spark": self.spark, "num_partitions_on_repartition": 1}
 
     def convert_frame(self, df):
         spark_frame = self.spark.createDataFrame(df)
