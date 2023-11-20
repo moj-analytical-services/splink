@@ -57,7 +57,7 @@ def calculate_cost_of_combination_of_brs(
     field_freedom_weight: Union[int, float] = 1,
     num_brs_weight: Union[int, float] = 1,
     num_comparison_weight: Union[int, float] = 1,
-) -> Dict:
+) -> dict:
     """
     Calculates the cost for a given combination of blocking rules.
 
