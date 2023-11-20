@@ -248,7 +248,7 @@ class JaccardLevel(ComparisonLevelCreator):
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         col_l, col_r = self.input_column(sql_dialect).names_l_r
-        j_fn = sql_dialect._jaccard_function_name
+        j_fn = sql_dialect.jaccard_function_name
         return f"{j_fn}({col_l}, {col_r}) >= {self.distance_threshold}"
 
     def create_label_for_charts(self) -> str:
