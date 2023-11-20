@@ -41,14 +41,26 @@ class AthenaDataFrame(SplinkDataFrame):
     def validate(self):
         pass
 
-    def _drop_table_from_database(self, force_non_splink_table=False):
+    def _drop_table_from_database(self, force_non_splink_table=False, delete_s3_data=True):
         # Check folder and table set for deletion
         self._check_drop_folder_created_by_splink(force_non_splink_table)
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
         # Delete the table from s3 and your database
         self.linker._drop_table_from_database_if_exists(self.physical_name)
-        self.linker._delete_table_from_s3(self.physical_name)
+        if delete_s3_data:
+            self.linker._delete_table_from_s3(self.physical_name)
+
+    def drop_table_from_database_and_remove_from_cache(
+        self,
+        force_non_splink_table=False,
+        delete_s3_data=True,
+    ):
+        self._drop_table_from_database(
+            force_non_splink_table=force_non_splink_table,
+            delete_s3_data=delete_s3_data
+        )
+        self.linker._remove_splinkdataframe_from_cache(self)
 
     def _check_drop_folder_created_by_splink(self, force_non_splink_table=False):
         filepath = self.linker.s3_output
@@ -443,7 +455,7 @@ class AthenaLinker(Linker):
     def drop_all_tables_created_by_splink(
         self,
         delete_s3_folders=True,
-        tables_to_exclude=[],
+        tables_to_exclude: list[SplinkDataFrame] = [],
     ):
         """Run a cleanup process for the tables created by splink and
         currently contained in your output database.
@@ -455,9 +467,9 @@ class AthenaLinker(Linker):
                 backing data contained on s3. If False, the tables created
                 by splink will be removed from your database, but the parquet
                 outputs will remain on s3. Defaults to True.
-            tables_to_exclude (list, optional): A list of input tables you wish to
-                add to an ignore list. These will not be removed during garbage
-                collection.
+            tables_to_exclude (list[SplinkDataFrame], optional): A list
+                of input tables you wish to add to an ignore list. These
+                will not be removed during garbage collection.
         """
         _garbage_collection(
             self.output_schema,
@@ -470,7 +482,7 @@ class AthenaLinker(Linker):
         self,
         database_name: str,
         delete_s3_folders: bool = True,
-        tables_to_exclude: list = [],
+        tables_to_exclude: list[SplinkDataFrame] = [],
     ):
         """Run a cleanup process for the tables created by splink
         in a specified database.
@@ -483,9 +495,9 @@ class AthenaLinker(Linker):
                 backing data contained on s3. If False, the tables created
                 by splink will be removed from your database, but the parquet
                 outputs will remain on s3. Defaults to True.
-            tables_to_exclude (list, optional): A list of input tables you wish to
-                add to an ignore list. These will not be removed during garbage
-                collection.
+            tables_to_exclude (list[SplinkDataFrame], optional): A list
+                of input tables you wish to add to an ignore list. These
+                will not be removed during garbage collection.
         """
         _garbage_collection(
             database_name,
@@ -497,7 +509,7 @@ class AthenaLinker(Linker):
     def drop_tables_in_current_splink_run(
         self,
         delete_s3_folders: bool = True,
-        tables_to_exclude: list = [],
+        tables_to_exclude: list[SplinkDataFrame] = [],
     ):
         """Run a cleanup process for the tables created
         by the current splink linker.
@@ -510,25 +522,20 @@ class AthenaLinker(Linker):
                 backing data contained on s3. If False, the tables created
                 by splink will be removed from your database, but the parquet
                 outputs will remain on s3. Defaults to True.
-            tables_to_exclude (list, optional): A list of input tables you wish to
-                add to an ignore list. These will not be removed during garbage
-                collection.
+            tables_to_exclude (list[SplinkDataFrame], optional): A list
+                of input tables you wish to add to an ignore list. These
+                will not be removed during garbage collection.
         """
-        tables_to_exclude = ensure_is_list(tables_to_exclude)
-        tables_to_exclude = [
-            df.physical_name if isinstance(df, SplinkDataFrame) else df
-            for df in tables_to_exclude
-        ]
-        # Exclude tables that the user doesn't want to delete
-        tables = self._names_of_tables_created_by_splink.copy()
-        tables = [t for t in tables if t not in tables_to_exclude]
 
-        for table in tables:
-            _garbage_collection(
-                self.output_schema,
-                self.boto3_session,
-                delete_s3_folders,
-                name_prefix=table,
-            )
-            # pop from our tables created by splink list
-            self._names_of_tables_created_by_splink.remove(table)
+        tables_to_exclude = ensure_is_list(tables_to_exclude)
+        tables_to_exclude = [df.physical_name for df in tables_to_exclude]
+
+        # Exclude tables that the user doesn't want to delete
+        cached_tables = self._intermediate_table_cache
+
+        for splink_df in list(cached_tables.values()):
+            if splink_df.physical_name not in tables_to_exclude:
+                splink_df.drop_table_from_database_and_remove_from_cache(
+                    force_non_splink_table=False,
+                    delete_s3_data=delete_s3_folders
+                )
