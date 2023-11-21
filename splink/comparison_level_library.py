@@ -387,8 +387,11 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
         self.col_name = col_name
         self.min_intersection = min_intersection
 
-    @unsupported_splink_dialects(["sqlite", "postgres"])
+    @unsupported_splink_dialects(["sqlite"])
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        if hasattr(sql_dialect, "array_intersect"):
+            return sql_dialect.array_intersect(self)
+
         sqlglot_dialect_name = sql_dialect.sqlglot_name
 
         # Use undialected InputColumn here since it's being interpolated into

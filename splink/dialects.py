@@ -1,5 +1,6 @@
 from abc import ABC, abstractproperty
 from typing import TYPE_CHECKING
+from .input_column import InputColumn
 
 if TYPE_CHECKING:
     from .comparison_level_creator import ComparisonLevelCreator
@@ -174,6 +175,13 @@ class PostgresDialect(SplinkDialect):
         return f"""
             {date_f} <= {clc.date_threshold}
         """
+
+    def array_intersect(self, clc: "ComparisonLevelCreator"):
+        col = InputColumn(clc.col_name, sql_dialect=self.sqlglot_name)
+        threhshold = clc.min_intersection
+        return f"""
+        CARDINALITY(ARRAY_INTERSECT({col.name_l}, {col.name_r})) >= {threhshold}
+        """.strip()
 
 
 class AthenaDialect(SplinkDialect):
