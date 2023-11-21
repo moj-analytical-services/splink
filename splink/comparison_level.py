@@ -14,7 +14,7 @@ from sqlglot.optimizer.simplify import simplify
 
 from .constants import LEVEL_NOT_OBSERVED_TEXT
 from .default_from_jsonschema import default_value_from_schema
-from .input_column import InputColumn, sqlglot_tree_signature
+from .input_column import InputColumn
 from .misc import (
     dedupe_preserving_order,
     interpolate,
@@ -22,6 +22,7 @@ from .misc import (
     match_weight_to_bayes_factor,
 )
 from .parse_sql import get_columns_used_from_sql
+from .sql_transform import sqlglot_tree_signature
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
