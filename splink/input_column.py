@@ -11,25 +11,6 @@ from sqlglot.expressions import Expression
 from .default_from_jsonschema import default_value_from_schema
 
 
-def sqlglot_tree_signature(tree):
-    """
-    A short string representation of a SQLglot tree.
-
-    Allows you to easily check that a tree contains certain nodes
-
-    For instance, the string "robin['hi']" becomes:
-    'bracket column literal identifier'
-    """
-    return " ".join(n[0].key for n in tree.walk())
-
-
-def remove_quotes_from_identifiers(tree) -> Expression:
-    tree = tree.copy()
-    for identifier in tree.find_all(exp.Identifier):
-        identifier.args["quoted"] = False
-    return tree
-
-
 @dataclass
 class ColumnTreeBuilder:
     """A builder class that allows you to copy and modify an input column.
