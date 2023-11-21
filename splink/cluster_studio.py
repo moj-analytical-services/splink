@@ -191,7 +191,7 @@ def _get_cluster_id_of_each_size(
 def _get_cluster_id_by_density(
     linker, df_cluster_metrics: SplinkDataFrame, sample_size: int, min_nodes: int
 ):
-    # Least dense clusters first
+    # Ordering: least dense clusters first
     sql = f"""
     SELECT cluster_id
     FROM {df_cluster_metrics.physical_name}
@@ -250,6 +250,8 @@ def render_splink_cluster_studio_html(
                       _compute_cluster_metrics method on the linker"""
                 )
             else:
+                # Using sensible default for min_nodes. Might be option
+                # for user in future
                 cluster_ids = _get_cluster_id_by_density(
                     linker, _df_cluster_metrics, sample_size, min_nodes=3
                 )
