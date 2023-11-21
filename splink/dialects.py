@@ -1,6 +1,8 @@
 from abc import ABC, abstractproperty
 from typing import TYPE_CHECKING
 
+from .input_column import InputColumn
+
 if TYPE_CHECKING:
     from .comparison_level_creator import ComparisonLevelCreator
 
@@ -142,16 +144,15 @@ class PostgresDialect(SplinkDialect):
         if clc.date_format is None:
             clc.date_format = "yyyy-MM-dd"
 
-        col_name_l = clc.input_column(self).name_l()
-        col_name_r = clc.input_column(self).name_r()
+        col = InputColumn(clc.col_name, sql_dialect=self.sqlglot_name)
 
         if clc.cast_strings_to_date:
             datediff_args = f"""
-                to_date({col_name_l}, '{clc.date_format}'),
-                to_date({col_name_r}, '{clc.date_format}')
+                to_date({col.name_l}, '{clc.date_format}'),
+                to_date({col.name_r}, '{clc.date_format}')
             """
         else:
-            datediff_args = f"{col_name_l}, {col_name_r}"
+            datediff_args = f"{col.name_l}, {col.name_r}"
 
         if clc.date_metric == "day":
             date_f = f"""
