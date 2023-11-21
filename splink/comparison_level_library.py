@@ -371,3 +371,37 @@ class DistanceInKMLevel(ComparisonLevelCreator):
 
     def create_label_for_charts(self) -> str:
         return f"Distance less than {self.km_threshold}km"
+
+
+class ArrayIntersectLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: str, min_intersection: int):
+        """Represents a comparison level based around the size of an intersection of
+        arrays
+
+        Args:
+            col_name (str): Input column name
+            min_intersection (int, optional): The minimum cardinality of the
+                intersection of arrays for this comparison level. Defaults to 1
+        """
+
+        self.col_name = col_name
+        self.min_intersection = min_intersection
+
+    @unsupported_splink_dialects(["sqlite", "postgres"])
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        sqlglot_dialect_name = sql_dialect.sqlglot_name
+
+        # Use undialected InputColumn here since it's being interpolated into
+        # base dialected sql
+        col = InputColumn(self.col_name)
+
+        sqlglot_base_dialect_sql = f"""
+            ARRAY_SIZE(ARRAY_INTERSECT({col.name_l}, {col.name_r}))
+                >= {self.min_intersection}
+                """
+        tree = parse_one(sqlglot_base_dialect_sql)
+
+        return tree.sql(dialect=sqlglot_dialect_name)
+
+    def create_label_for_charts(self) -> str:
+        return f"Array intersection size >= {self.min_intersection}"
