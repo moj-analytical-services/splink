@@ -67,7 +67,7 @@ def create_df_nodes(
 ):
     sql = _nodes_sql(df_clustered_nodes, cluster_ids)
     df_nodes = linker._sql_to_splink_dataframe_checking_cache(
-        sql, "__splink__scs_clusters"
+        sql, "__splink__scs_nodes"
     )
     return df_nodes
 
