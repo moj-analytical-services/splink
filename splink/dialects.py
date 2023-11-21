@@ -18,7 +18,7 @@ class SplinkDialect(ABC):
     @staticmethod
     def from_string(dialect_name: str):
         dialect_name = dialect_name.upper()
-        return DialectLookup[dialect_name].value
+        return _DialectLookup[dialect_name].value
 
     @property
     def levenshtein_function_name(self):
@@ -143,7 +143,7 @@ class AthenaDialect(SplinkDialect):
 
 
 @unique
-class DialectLookup(Enum):
+class _DialectLookup(Enum):
     DUCKDB = DuckDBDialect()
     SPARK = SparkDialect()
     SQLITE = SqliteDialect()
