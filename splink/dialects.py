@@ -1,4 +1,5 @@
 from abc import ABC, abstractproperty
+from enum import Enum, unique
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -16,7 +17,8 @@ class SplinkDialect(ABC):
 
     @staticmethod
     def from_string(dialect_name: str):
-        return _dialect_lookup[dialect_name]
+        dialect_name = dialect_name.upper()
+        return DialectLookup[dialect_name].value
 
     @property
     def levenshtein_function_name(self):
@@ -140,10 +142,10 @@ class AthenaDialect(SplinkDialect):
         return "levenshtein_distance"
 
 
-_dialect_lookup = {
-    "duckdb": DuckDBDialect(),
-    "spark": SparkDialect(),
-    "sqlite": SqliteDialect(),
-    "postgres": PostgresDialect(),
-    "athena": AthenaDialect(),
-}
+@unique
+class DialectLookup(Enum):
+    DUCKDB = DuckDBDialect()
+    SPARK = SparkDialect()
+    SQLITE = SqliteDialect()
+    POSTGRES = PostgresDialect()
+    ATHENA = AthenaDialect()
