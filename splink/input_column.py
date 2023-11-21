@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from dataclasses import dataclass, replace
 
 import sqlglot
 import sqlglot.expressions as exp
-from sqlglot.errors import ParseError
+from sqlglot.errors import ParseError, TokenError
 from sqlglot.expressions import Expression
 
 from .default_from_jsonschema import default_value_from_schema
@@ -22,30 +23,6 @@ def sqlglot_tree_signature(tree):
     return " ".join(n[0].key for n in tree.walk())
 
 
-def add_suffix(tree, suffix) -> Expression:
-    tree = tree.copy()
-    identifier_string = tree.find(exp.Identifier).this
-    identifier_string = f"{identifier_string}{suffix}"
-    tree.find(exp.Identifier).args["this"] = identifier_string
-    return tree
-
-
-def add_prefix(tree, prefix) -> Expression:
-    tree = tree.copy()
-    identifier_string = tree.find(exp.Identifier).this
-    identifier_string = f"{prefix}{identifier_string}"
-    tree.find(exp.Identifier).args["this"] = identifier_string
-    return tree
-
-
-def add_table(tree, tablename) -> Expression:
-    tree = tree.copy()
-    table_identifier = exp.Identifier(this=tablename, quoted=True)
-    identifier = tree.find(exp.Column)
-    identifier.args["table"] = table_identifier
-    return tree
-
-
 def remove_quotes_from_identifiers(tree) -> Expression:
     tree = tree.copy()
     for identifier in tree.find_all(exp.Identifier):
@@ -53,60 +30,140 @@ def remove_quotes_from_identifiers(tree) -> Expression:
     return tree
 
 
+@dataclass
+class ColumnTreeBuilder:
+    """A builder class that allows you to copy and modify an input column.
+
+    Modifications copy the base column and can be chained to produce a fresh
+    version of the column.
+
+    Columns can also be wrapped in SQLglot expressions by appending them to the
+    base class.
+    """
+
+    name: str
+    table: str = None
+    quoted: bool = True
+    column_reference: exp.Identifier = None  # the JSON index in 'surname['lat']'
+
+    def unquote(self):
+        return replace(self, quoted=False)
+
+    def exclude_expressions(self):
+        return replace(self, return_column_with_expressions=False)
+
+    def change_name(self, new_name: str):
+        return replace(self, name=new_name)
+
+    def add_prefix(self, prefix: str):
+        return replace(self, name=prefix + self.name) if prefix else self
+
+    def add_suffix(self, suffix: str):
+        return replace(self, name=self.name + suffix) if suffix else self
+
+    def add_table(self, table: str):
+        return replace(self, table=table) if table else self
+
+    def add_alias(self, alias: str) -> exp.Alias:
+        """Alias expects a SQLglot Identifier class or a str.
+
+        For safety, only pass strings to ensure we capture the entire
+        column reference, not just the identifier.
+
+        For example, col['lat'] is made up of both an identifier and bracket
+        index; the latter of which would be lost if passing identifiers.
+        """
+        # The identifier should be quoted or unquoted before being passed.
+        # This is to ensure we get the correct output.
+        alias = exp.Identifier(this=alias, quoted=self.quoted)
+        return self.build_column_tree().as_(alias)
+
+    def add_column_reference(self, index_name: str | int):
+        """
+        Manually add a column reference to your column - ['idx'], for example.
+
+        This is useful during the parsing process or when you try to combine
+        illegal name and bracket combinations such as 'SUR NAME['lat']',
+        without needing to add quotes to the column identifier.
+        """
+        is_str = type(index_name) == str
+        self.column_reference = exp.Literal(this=index_name, is_string=is_str)
+        return self
+
+    def build_column_tree(self):
+        # Create our column representation
+        column = sqlglot.column(col=self.name, table=self.table, quoted=self.quoted)
+        # Column is made up of the identifier + bracket index (if it exists)
+        if self.column_reference:
+            return exp.Bracket(this=column, expressions=[self.column_reference])
+        else:
+            return column
+
+    @classmethod
+    def from_sqlglot_column(
+        cls, column_tree: exp.Column, column_reference: exp.Identifier = None
+    ):
+        return cls(column_tree.name, column_reference=column_reference)
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}("
+            f"name='{self.name}', quoted={self.quoted}, "
+            f"column_reference={self.column_reference.sql()}"
+        )
+
+
 class InputColumn:
     """
     Represents a SQL column or column reference
     Handles SQL dialect-specific issues such as identifier quoting.
 
-    The input should be the raw identifier, without SQL-specific identifier quotes.
-
-    For example, if a column is named 'first name' (with a space), the input should be
-    'first name', not '"first name"'.
+    The input can be either the raw identifier, or an identifier with
+    SQL-specific identifier quotes.
 
     Examples of valid inputs include:
     - 'first_name'
-    - 'first name'
+    - 'first[name'
+    - '"first name"'
     - 'coordinates['lat']'
+    - '"sur NAME"['lat']
     - 'coordinates[1]'
-
     """
 
     def __init__(
-        self, raw_column_name_or_column_reference, settings_obj=None, sql_dialect=None
+        self,
+        raw_column_name_or_column_reference: str,
+        settings_obj=None,
+        sql_dialect: str = None,
     ):
         # If settings_obj is None, then default values will be used
         # from the jsonschama
         self._settings_obj = settings_obj
 
-        if sql_dialect:
-            self._sql_dialect = sql_dialect
-        elif settings_obj:
-            self._sql_dialect = self._settings_obj._sql_dialect
-        else:
-            self._sql_dialect = None
+        self.register_dialect(sql_dialect)
 
-        self.input_name = self._quote_if_sql_keyword(
-            raw_column_name_or_column_reference
+        self.column_tree_builder: ColumnTreeBuilder = (
+            self._parse_input_name_to_column_tree_builder(
+                raw_column_name_or_column_reference
+            )
         )
 
-        self.input_name_as_tree = self.parse_input_name_to_sqlglot_tree()
+    def register_dialect(self, sql_dialect: str):
+        if not sql_dialect and self._settings_obj:
+            sql_dialect = self._settings_obj._sql_dialect
 
-        for identifier in self.input_name_as_tree.find_all(exp.Identifier):
-            identifier.args["quoted"] = True
+        self.sqlglot_name = sql_dialect
 
-    def quote(self) -> "InputColumn":
-        self_copy = deepcopy(self)
-        for identifier in self_copy.input_name_as_tree.find_all(exp.Identifier):
-            identifier.args["quoted"] = True
-        return self_copy
+    def from_settings_obj_else_default(self, key, schema_key=None):
+        # Covers the case where no settings obj is set on the comparison level
+        if self._settings_obj:
+            return getattr(self._settings_obj, key)
+        else:
+            if not schema_key:
+                schema_key = key
+            return default_value_from_schema(schema_key, "root")
 
-    def unquote(self) -> "InputColumn":
-        self_copy = deepcopy(self)
-        for identifier in self_copy.input_name_as_tree.find_all(exp.Identifier):
-            identifier.args["quoted"] = False
-        return self_copy
-
-    def parse_input_name_to_sqlglot_tree(self) -> Expression:
+    def _parse_input_name_to_column_tree_builder(self, name: str) -> ColumnTreeBuilder:
         """
         Parses the input name into a SQLglot expression tree.
 
@@ -118,89 +175,135 @@ class InputColumn:
         Note: We do not support inputs like 'SUR name[1]', in this case the user
         would have to quote e.g. `SUR name`[1]
         """
-
-        q_s, q_e = _get_dialect_quotes(self._sql_dialect)
+        q_s, q_e = _get_dialect_quotes(self.sqlglot_name)
 
         try:
-            tree = sqlglot.parse_one(self.input_name, read=self._sql_dialect)
-        except ParseError:
-            tree = sqlglot.parse_one(
-                f"{q_s}{self.input_name}{q_e}", read=self._sql_dialect
+            tree = sqlglot.parse_one(name, read=self.sqlglot_name)
+        except (ParseError, TokenError):
+            # The parse statement will error in cases such as: sur "name"['lat']
+            sqlglot.parse_one(f"{q_s}{name}{q_e}", read=self.sqlglot_name)
+            # index is None if nothing is set
+            identifier, index = self.manually_split_identifier_and_index(name)
+
+            # Construct the column manually if it can be parsed with quotes.
+            # This is useful for illegal columns such as test[ing, test'ing, test"ing
+            return ColumnTreeBuilder(name=identifier, column_reference=index)
+
+        return self._parse_sql_tree_to_column_tree_builder(name, tree)
+
+    def _parse_sql_tree_to_column_tree_builder(
+        self, name: str, tree: sqlglot.Expression
+    ) -> ColumnTreeBuilder:
+        # Columns which contains spaces will be registered as aliases.
+        # Check that no quotes have been applied to either end of the name:
+        # - "sur" name, sur "name" are both invalid column names
+        if tree.find(exp.Alias):
+            if any([identifier.quoted for identifier in tree.find_all(exp.Identifier)]):
+                raise ParseError(
+                    f"The supplied column name '{name}' contains quotes and cannot be "
+                    "parsed as a valid SQL identifier."
+                )
+
+        if tree.find(exp.Bracket):
+            # Pop the column, leaving the bracket as the remaining section of the tree
+            return ColumnTreeBuilder.from_sqlglot_column(
+                column_tree=tree.find(exp.Column),
+                column_reference=tree.find(exp.Literal),
             )
 
-        tree_signature = sqlglot_tree_signature(tree)
-        valid_signatures = ["column identifier", "bracket column literal identifier"]
+        # If the column has already been quoted, parse it
+        if tree.find(exp.Identifier).args.get("quoted"):
+            return ColumnTreeBuilder.from_sqlglot_column(column_tree=tree)
 
-        if tree_signature in valid_signatures:
-            return tree
-        else:
-            # e.g. SUR name parses to 'alias column identifier identifier'
-            # but we want "SUR name"
-            tree = sqlglot.parse_one(
-                f"{q_s}{self.input_name}{q_e}", read=self._sql_dialect
-            )
-            return tree
+        # If our column does not contain a quoted identifier, we can safely return
+        # the column builder
+        return ColumnTreeBuilder(name)
 
-    def from_settings_obj_else_default(self, key, schema_key=None):
-        # Covers the case where no settings obj is set on the comparison level
-        if self._settings_obj:
-            return getattr(self._settings_obj, key)
+    @staticmethod
+    def manually_split_identifier_and_index(identifier: str) -> [str, str]:
+        # Manually pull out the bracket index for an unparseable column.
+        # This ensures we correctly parse cases such as: sur name['lat']
+        if identifier.endswith("]") and "[" in identifier:
+            split_index = identifier.rfind("[")
+            before_bracket = identifier[:split_index].strip()
+            after_bracket = identifier[split_index:].strip("[]")
+            return before_bracket, after_bracket
         else:
-            if not schema_key:
-                schema_key = key
-            return default_value_from_schema(schema_key, "root")
+            return identifier, None
 
     @property
-    def gamma_prefix(self) -> str:
-        return self.from_settings_obj_else_default(
-            "_gamma_prefix", "comparison_vector_value_column_prefix"
-        )
-
-    @property
-    def bf_prefix(self) -> str:
+    def _bf_prefix(self):
         return self.from_settings_obj_else_default(
             "_bf_prefix", "bayes_factor_column_prefix"
         )
 
     @property
-    def tf_prefix(self) -> str:
+    def _tf_prefix(self):
         return self.from_settings_obj_else_default(
             "_tf_prefix", "term_frequency_adjustment_column_prefix"
         )
 
-    @property
-    def name(self) -> str:
-        return self.input_name_as_tree.sql(dialect=self._sql_dialect)
+    def _copy_with_new_column_builder(self, new_builder) -> InputColumn:
+        input_column_copy = deepcopy(self)
+        input_column_copy.column_tree_builder = new_builder
+        return input_column_copy
 
-    @property
-    def name_l(self) -> str:
-        return add_suffix(self.input_name_as_tree, suffix="_l").sql(
-            dialect=self._sql_dialect
+    def change_input_column_name(self, new_name: str):
+        return self._copy_with_new_column_builder(
+            self.column_tree_builder.change_name(new_name)
         )
 
-    @property
-    def name_r(self) -> str:
-        return add_suffix(self.input_name_as_tree, suffix="_r").sql(
-            dialect=self._sql_dialect
-        )
+    def unquote(self) -> InputColumn:
+        return self._copy_with_new_column_builder(self.column_tree_builder.unquote())
 
     @property
-    def names_l_r(self) -> list[str]:
+    def as_base_dialect(self) -> InputColumn:
+        input_column_copy = deepcopy(self)
+        input_column_copy.sqlglot_name = None
+        return input_column_copy
+
+    def column_tree_to_sql(self, column_tree: ColumnTreeBuilder) -> str:
+        return column_tree.build_column_tree().sql(self.sqlglot_name)
+
+    def _table_name_as(self, table: str, prefix: str = "", suffix: str = "") -> str:
+        # Remove quotes, if applied. This prevents
+        # the accidental addition of quotes to the alias.
+        # See: exp.Identifier(this='`test`', quoted=True).sql("spark")
+        column_builder = self.column_tree_builder.unquote()
+        # Add both the prefix and suffix arguments to the column
+        alias_tree = column_builder.add_prefix(prefix).add_suffix(suffix)
+        alias_string = self.column_tree_to_sql(alias_tree)
+
+        column_with_table = self.column_tree_builder.add_table(table).add_prefix(prefix)
+        tree = column_with_table.add_alias(alias_string)
+        return tree.sql(self.sqlglot_name)
+
+    @property
+    def name(self):
+        tree = self.column_tree_builder
+        return self.column_tree_to_sql(tree)
+
+    @property
+    def name_l(self):
+        tree = self.column_tree_builder.add_suffix("_l")
+        return self.column_tree_to_sql(tree)
+
+    @property
+    def name_r(self):
+        tree = self.column_tree_builder.add_suffix("_r")
+        return self.column_tree_to_sql(tree)
+
+    @property
+    def names_l_r(self):
         return [self.name_l, self.name_r]
 
     @property
     def l_name_as_l(self) -> str:
-        name_with_l_table = add_table(self.input_name_as_tree, "l").sql(
-            dialect=self._sql_dialect
-        )
-        return f"{name_with_l_table} as {self.name_l}"
+        return self._table_name_as(table="l", suffix="_l")
 
     @property
     def r_name_as_r(self) -> str:
-        name_with_r_table = add_table(self.input_name_as_tree, "r").sql(
-            dialect=self._sql_dialect
-        )
-        return f"{name_with_r_table} as {self.name_r}"
+        return self._table_name_as(table="r", suffix="_r")
 
     @property
     def l_r_names_as_l_r(self) -> list[str]:
@@ -208,25 +311,23 @@ class InputColumn:
 
     @property
     def bf_name(self) -> str:
-        return add_prefix(self.input_name_as_tree, prefix=self.bf_prefix).sql(
-            dialect=self._sql_dialect
-        )
+        tree = self.column_tree_builder.add_prefix(self._bf_prefix)
+        return self.column_tree_to_sql(tree)
 
     @property
     def tf_name(self) -> str:
-        return add_prefix(self.input_name_as_tree, prefix=self.tf_prefix).sql(
-            dialect=self._sql_dialect
-        )
+        tree = self.column_tree_builder.add_prefix(self._tf_prefix)
+        return self.column_tree_to_sql(tree)
 
     @property
     def tf_name_l(self) -> str:
-        tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
-        return add_suffix(tree, suffix="_l").sql(dialect=self._sql_dialect)
+        tree = self.column_tree_builder.add_prefix(self._tf_prefix).add_suffix("_l")
+        return self.column_tree_to_sql(tree)
 
     @property
     def tf_name_r(self) -> str:
-        tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
-        return add_suffix(tree, suffix="_r").sql(dialect=self._sql_dialect)
+        tree = self.column_tree_builder.add_prefix(self._tf_prefix).add_suffix("_r")
+        return self.column_tree_to_sql(tree)
 
     @property
     def tf_name_l_r(self) -> list[str]:
@@ -234,29 +335,22 @@ class InputColumn:
 
     @property
     def l_tf_name_as_l(self) -> str:
-        tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
-        tf_name_with_l_table = add_table(tree, tablename="l").sql(
-            dialect=self._sql_dialect
-        )
-        return f"{tf_name_with_l_table} as {self.tf_name_l}"
+        return self._table_name_as(table="l", prefix=self._tf_prefix, suffix="_l")
 
     @property
     def r_tf_name_as_r(self) -> str:
-        tree = add_prefix(self.input_name_as_tree, prefix=self.tf_prefix)
-        tf_name_with_r_table = add_table(tree, tablename="r").sql(
-            dialect=self._sql_dialect
-        )
-        return f"{tf_name_with_r_table} as {self.tf_name_r}"
+        return self._table_name_as(table="r", prefix=self._tf_prefix, suffix="_r")
 
     @property
     def l_r_tf_names_as_l_r(self) -> list[str]:
         return [self.l_tf_name_as_l, self.r_tf_name_as_r]
 
-    def _quote_if_sql_keyword(self, name: str) -> str:
-        if name not in {"group", "index"}:
-            return name
-        start, end = _get_dialect_quotes(self._sql_dialect)
-        return start + name + end
+    def __repr__(self):
+        return (
+            "InputColumn(\n     "
+            f"{self.column_tree_builder.__repr__()}),\n     "
+            f"sql_dialect={self.sqlglot_name}\n)"
+        )
 
 
 def _get_dialect_quotes(dialect):
