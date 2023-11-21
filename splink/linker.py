@@ -13,7 +13,7 @@ from statistics import median
 
 import sqlglot
 
-from splink.input_column import InputColumn, remove_quotes_from_identifiers
+from splink.input_column import InputColumn
 from splink.settings_validation.column_lookups import InvalidColumnsLogger
 from splink.settings_validation.valid_types import (
     InvalidTypesAndValuesLogger,
@@ -1299,7 +1299,7 @@ class Linker:
         tf_tablename = colname_to_tf_tablename(input_col)
         cache = self._intermediate_table_cache
         concat_tf_tables = [
-            remove_quotes_from_identifiers(tf_col.input_name_as_tree).sql()
+            tf_col.unquote().name
             for tf_col in self._settings_obj._term_frequency_columns
         ]
 

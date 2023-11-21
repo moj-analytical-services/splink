@@ -21,11 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def colname_to_tf_tablename(input_column: InputColumn):
-    input_col_no_quotes = remove_quotes_from_identifiers(
-        input_column.input_name_as_tree
-    )
-
-    input_column = input_col_no_quotes.sql().replace(" ", "_")
+    input_column = input_column.unquote().name.replace(" ", "_")
     return f"__splink__df_tf_{input_column}"
 
 

@@ -123,6 +123,9 @@ class InputColumn:
 
         self.register_dialect(sql_dialect)
 
+        self.input_name: str = self._quote_if_sql_keyword(
+            raw_column_name_or_column_reference
+        )
         self.column_tree_builder: ColumnTreeBuilder = (
             self._parse_input_name_to_column_tree_builder(
                 raw_column_name_or_column_reference
@@ -325,6 +328,12 @@ class InputColumn:
     @property
     def l_r_tf_names_as_l_r(self) -> list[str]:
         return [self.l_tf_name_as_l, self.r_tf_name_as_r]
+
+    def _quote_if_sql_keyword(self, name: str) -> str:
+        if name not in {"group", "index"}:
+            return name
+        start, end = _get_dialect_quotes(self.sqlglot_name)
+        return start + name + end
 
     def __repr__(self):
         return (
