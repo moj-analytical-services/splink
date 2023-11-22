@@ -81,7 +81,7 @@ def _generate_blocking_rule(
     block_on = block_on_module.block_on
 
     if len(cols_as_string) == 0:
-        return "1 = 1"
+        return block_on("1")
 
     br = block_on(cols_as_string)
 
