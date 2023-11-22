@@ -13,7 +13,7 @@ class SplinkDialect(ABC):
     # Register a subclass of SplinkDialect on its creation.
     # Whenever that subclass is called again, use the previous instance.
     def __new__(cls, *args, **kwargs):
-        if cls not in cls._instances:
+        if cls not in cls._dialect_instances:
             instance = super(SplinkDialect, cls).__new__(cls)
             cls._dialect_instances[cls] = instance
         return cls._dialect_instances[cls]
