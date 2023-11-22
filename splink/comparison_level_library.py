@@ -371,3 +371,40 @@ class DistanceInKMLevel(ComparisonLevelCreator):
 
     def create_label_for_charts(self) -> str:
         return f"Distance less than {self.km_threshold}km"
+
+
+class PercentageDifferenceLevel(ComparisonLevelCreator):
+    def __init__(self, col_name: str, percentage_threshold: float):
+        """
+        Represents a comparison level where the difference between two numerical
+        values is within a specified percentage threshold.
+
+        The percentage difference is calculated as the absolute difference between the
+        two values divided by the greater of the two values.
+
+        Args:
+            col_name (str): Input column name.
+            percentage_threshold (float): The threshold percentage to use
+                to assess similarity e.g. 0.1 for 10%.
+        """
+        if not 0 <= percentage_threshold <= 1:
+            raise ValueError("percentage_threshold must be between 0 and 1")
+
+        self.col_name = col_name
+        self.percentage_threshold = percentage_threshold
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        col = input_column_factory(self.col_name, splink_dialect=sql_dialect)
+        return (
+            f"(ABS({col.name_l} - {col.name_r}) / "
+            f"(CASE "
+            f"WHEN {col.name_r} > {col.name_l} THEN {col.name_r} "
+            f"ELSE {col.name_l} "
+            f"END)) < {self.percentage_threshold}"
+        )
+
+    def create_label_for_charts(self) -> str:
+        return (
+            f"Percentage difference of '{self.col_name}' "
+            f"within {self.percentage_threshold:,.2%}"
+        )
