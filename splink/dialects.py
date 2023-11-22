@@ -8,6 +8,10 @@ if TYPE_CHECKING:
 class SplinkDialect(ABC):
     # Stores instances of each subclass of SplinkDialect.
     _dialect_instances = {}
+    # string defined by subclasses to be used in factory method from_string
+    # give a dummy default value so that subclasses that fail to do this
+    # don't ruin functionality for existing subclasses
+    _dialect_name_for_factory = None
 
     # Register a subclass of SplinkDialect on its creation.
     # Whenever that subclass is called again, use the previous instance.
@@ -30,7 +34,8 @@ class SplinkDialect(ABC):
         # generator of classes which match _dialect_name_for_factory
         # should just get a single subclass, as this should be unique
         classes_from_dialect_name = (
-            c for c in cls.__subclasses__()
+            c
+            for c in cls.__subclasses__()
             if c._dialect_name_for_factory == dialect_name
         )
         # use sequence unpacking to catch if we duplicate
