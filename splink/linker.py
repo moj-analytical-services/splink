@@ -83,7 +83,6 @@ from .misc import (
     bayes_factor_to_prob,
     ensure_is_list,
     ensure_is_tuple,
-    find_unique_source_dataset,
     parse_duration,
     prob_to_bayes_factor,
 )
@@ -255,11 +254,26 @@ class Linker:
 
         self.debug_mode = False
 
-    @property
     def _input_columns(
         self,
-    ):
-        """Retrieve the column names from the input dataset(s)"""
+        include_unique_id_col_names=True,
+        include_additional_columns_to_retain=True,
+    ) -> list[InputColumn]:
+        """Retrieve the column names from the input dataset(s) as InputColumns
+
+        Args:
+            include_unique_id_col_names (bool, optional): Whether to include unique ID
+                column names. Defaults to True.
+            include_additional_columns_to_retain (bool, optional): Whether to include
+                additional columns to retain. Defaults to True.
+
+        Raises:
+            SplinkException: If the input frames have different sets of columns.
+
+        Returns:
+            list[InputColumn]
+        """
+
         input_dfs = self._input_tables_dict.values()
 
         # get a list of the column names for each input frame
@@ -287,7 +301,25 @@ class Linker:
                 + ", ".join(problem_names)
             )
 
-        return next(iter(input_dfs)).columns
+        columns = next(iter(input_dfs)).columns
+
+        remove_columns = []
+        if not include_unique_id_col_names:
+            remove_columns.extend(self._settings_obj._unique_id_input_columns)
+        if not include_additional_columns_to_retain:
+            remove_columns.extend(self._settings_obj._additional_columns_to_retain)
+
+        remove_id_cols = [c.unquote().name for c in remove_columns]
+        columns = [col for col in columns if col.unquote().name not in remove_id_cols]
+
+        return columns
+
+    @property
+    def _source_dataset_column_already_exists(self):
+        if self._settings_obj_ is None:
+            return False
+        input_cols = [c.unquote().name for c in self._input_columns()]
+        return self._settings_obj._source_dataset_column_name in input_cols
 
     @property
     def _cache_uid(self):
@@ -364,21 +396,6 @@ class Linker:
         return "__splink__df_concat_with_tf"
 
     @property
-    def _source_dataset_column_name(self):
-        if self._settings_obj_ is None:
-            return None
-
-        # Used throughout the scripts to feed our SQL
-        if self._settings_obj._source_dataset_column_name_is_required:
-            df_obj = next(iter(self._input_tables_dict.values()))
-            columns = df_obj.columns_escaped
-
-            input_column, src_ds_col = self._settings_obj_._source_dataset_col
-            return "__splink_source_dataset" if src_ds_col in columns else input_column
-        else:
-            return None
-
-    @property
     def _two_dataset_link_only(self):
         # Two dataset link only join is a special case where an inner join of the
         # two datasets is much more efficient than self-joining the vertically
@@ -419,34 +436,6 @@ class Linker:
         self, proportion, sample_size, seed=None, table=None, unique_id=None
     ):
         raise NotImplementedError("Random sample sql not implemented for this linker")
-
-    @property
-    def _verify_link_only_job(self):
-        cache = self._intermediate_table_cache
-        if "__splink__df_concat_with_tf" not in cache:
-            return
-
-        if self._settings_obj._link_type == "link_only":
-            # if input datasets > 1 then skip
-            if len(self._input_tables_dict) > 1:
-                return
-
-            # else, check if source dataset column is populated...
-            src_ds = self._source_dataset_column_name
-            if src_ds == "__splink_source_dataset":
-                _, src_ds = self._settings_obj_._source_dataset_col
-
-            sql = find_unique_source_dataset(src_ds)
-            self._enqueue_sql(sql, "source_ds_distinct")
-            src_ds_distinct = self._execute_sql_pipeline(
-                [cache["__splink__df_concat_with_tf"]]
-            )
-            if len(src_ds_distinct.as_record_dict()) == 1:
-                raise SplinkException(
-                    "if `link_type` is `link_only`, it should have at least two "
-                    "input dataframes, or one dataframe with a `source_dataset` "
-                    "column outlining which dataset each record belongs to."
-                )
 
     def _register_input_tables(self, input_tables, input_aliases, accepted_df_dtypes):
         # 'homogenised' means all entries are strings representing tables
@@ -589,6 +578,11 @@ class Linker:
             nodes_with_tf = cache.get_with_logging("__splink__df_concat_with_tf")
 
         else:
+            # In duckdb, calls to random() in a CTE pipeline cause problems:
+            # https://gist.github.com/RobinL/d329e7004998503ce91b68479aa41139
+            if self._settings_obj.salting_required:
+                materialise = True
+
             if materialise:
                 # Clear the pipeline if we are materialising
                 # There's no reason not to do this, since when
@@ -605,10 +599,6 @@ class Linker:
             if materialise:
                 nodes_with_tf = self._execute_sql_pipeline()
                 cache["__splink__df_concat_with_tf"] = nodes_with_tf
-
-        # verify the link job
-        if self._settings_obj_ is not None:
-            self._verify_link_only_job
 
         return nodes_with_tf
 
@@ -3671,12 +3661,12 @@ class Linker:
         # As a result, any previously cached tables will not be found
         self._cache_uid = ascii_uid(8)
 
-        # As a result, any previously cached tables will not be found
-        self._intermediate_table_cache.invalidate_cache()
-
         # Drop any existing splink tables from the database
         # Note, this is not actually necessary, it's just good housekeeping
         self.delete_tables_created_by_splink_from_db()
+
+        # As a result, any previously cached tables will not be found
+        self._intermediate_table_cache.invalidate_cache()
 
     def register_table_input_nodes_concat_with_tf(self, input_data, overwrite=False):
         """Register a pre-computed version of the input_nodes_concat_with_tf table that
