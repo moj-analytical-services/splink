@@ -178,9 +178,9 @@ class PostgresDialect(SplinkDialect):
 
     def array_intersect(self, clc: "ComparisonLevelCreator"):
         col = InputColumn(clc.col_name, sql_dialect=self.sqlglot_name)
-        threhshold = clc.min_intersection
+        threshold = clc.min_intersection
         return f"""
-        CARDINALITY(ARRAY_INTERSECT({col.name_l}, {col.name_r})) >= {threhshold}
+        CARDINALITY(ARRAY_INTERSECT({col.name_l}, {col.name_r})) >= {threshold}
         """.strip()
 
 
