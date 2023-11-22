@@ -42,16 +42,16 @@ def _clusters_sql(df_clustered_nodes, cluster_ids: list) -> str:
 def df_clusters_as_records(
     linker: "Linker", df_clustered_nodes: SplinkDataFrame, cluster_ids: list
 ):
-    """
-    Retrieves clusters from the list of given cluster IDs and converts them to a record dictionary.
+    """Retrieves distinct clusters which exist in df_clustered_nodes based on
+    list of cluster IDs provided and converts them to a record dictionary.
 
     Args:
-        linker: Linker. An instance of the Splink Linker class.
+        linker: An instance of the Splink Linker class.
         df_clustered_nodes (SplinkDataFrame): Result of cluster_pairwise_predictions_at_threshold().
         cluster_ids (list): List of cluster IDs to filter the results.
 
     Returns:
-    dict: A record dictionary representing the clusters for the specified cluster IDs.
+    dict: A record dictionary of the specified cluster IDs.
     """
     sql = _clusters_sql(df_clustered_nodes, cluster_ids)
     df_clusters = linker._sql_to_splink_dataframe_checking_cache(
@@ -61,12 +61,12 @@ def df_clusters_as_records(
 
 
 def _nodes_sql(df_clustered_nodes, cluster_ids) -> str:
-    """Generates SQL query to select all columns from clustered nodes table
-    where the cluster_id is in the specified list `cluster_ids`.
+    """Generates SQL query to select all columns from df_clustered_nodes
+    for list of cluster IDs provided.
 
     Args:
         df_clustered_nodes (SplinkDataFrame): result of cluster_pairwise_predictions_at_threshold()
-        cluster_ids (list): List of cluster IDs to filter the results.
+        cluster_ids (list): List of cluster IDs to filter the results
     """
 
     cluster_ids = [_quo_if_str(x) for x in cluster_ids]
@@ -84,10 +84,10 @@ def _nodes_sql(df_clustered_nodes, cluster_ids) -> str:
 def create_df_nodes(
     linker: "Linker", df_clustered_nodes: SplinkDataFrame, cluster_ids: list
 ):
-    """Retrieves nodes from clustered nodes table for the given cluster IDs.
+    """Retrieves nodes from df_clustered_nodes for list of cluster IDs provided.
 
     Args:
-        linker: Linker. An instance of the Splink Linker class.
+        linker: An instance of the Splink Linker class.
         df_clustered_nodes (SplinkDataFrame): Result of cluster_pairwise_predictions_at_threshold().
         cluster_ids (list): List of cluster IDs to filter the results.
 
@@ -225,8 +225,7 @@ def _get_cluster_id_by_density(
     Args:
         linker: An instance of the Splink Linker class.
         df_cluster_metrics (SplinkDataFrame): dataframe containing cluster metrics, including density.
-        sample_size (int): size of sample returned
-        The number of cluster IDs to retrieve based on density, ordered from least dense to most dense.
+        sample_size (int): size of sample returned.
         min_nodes (int): The minimum number of nodes a cluster must have to be included in the sample.
 
     Returns:
