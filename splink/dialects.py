@@ -31,17 +31,33 @@ class SplinkDialect(ABC):
 
     @classmethod
     def from_string(cls, dialect_name: str):
-        # generator of classes which match _dialect_name_for_factory
+        # list of classes which match _dialect_name_for_factory
         # should just get a single subclass, as this should be unique
-        classes_from_dialect_name = (
+        classes_from_dialect_name = [
             c
             for c in cls.__subclasses__()
             if c._dialect_name_for_factory == dialect_name
-        )
+        ]
         # use sequence unpacking to catch if we duplicate
         # _dialect_name_for_factory in subclasses
-        [subclass] = classes_from_dialect_name
-        return subclass()
+        if len(classes_from_dialect_name) == 1:
+            subclass = classes_from_dialect_name[0]
+            return subclass()
+        # error - either too many subclasses found
+        if len(classes_from_dialect_name) > 1:
+            classes_string = ", ".join(map(str, classes_from_dialect_name))
+            error_message = (
+                "Found multiple subclasses of `SplinkDialect` with "
+                "lookup string `_dialect_name_for_factory` equal to "
+                f"supplied value {dialect_name}: {classes_string}!"
+            )
+        # or _no_ subclasses found
+        else:
+            error_message = (
+                "Could not find subclass of `SplinkDialect` with "
+                f"lookup string '{dialect_name}'."
+            )
+        raise ValueError(error_message)
 
     @property
     def levenshtein_function_name(self):
