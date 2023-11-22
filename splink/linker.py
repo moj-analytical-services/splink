@@ -3769,7 +3769,7 @@ class Linker:
         blocking_expressions=None,
         min_freedom=1,
         num_runs=200,
-        complexity_weight=0,
+        num_equi_join_weight=0,
         field_freedom_weight=1,
         num_brs_weight=10,
         num_comparison_weight=10,
@@ -3793,8 +3793,8 @@ class Linker:
             num_runs (int, optional): Each run selects rows using a heuristic and costs
                 them.  The more runs, the more likely you are to find the best rule.
                 Defaults to 5.
-            complexity_weight (int, optional): Weight allocated to the complexity of
-                blockign rules i.e. total number of distinct blocking expressions.
+            num_equi_join_weight (int, optional): Weight allocated to number of equi
+                joins in the blocking rules.
                 Defaults to 0 since this is cost better captured by other criteria.
             field_freedom_weight (int, optional): Weight given to the cost of
                 having individual fields which don't havem much flexibility.  Assigning
@@ -3822,7 +3822,7 @@ class Linker:
             df_br_below_thres,
             min_freedom=min_freedom,
             num_runs=num_runs,
-            complexity_weight=complexity_weight,
+            num_equi_join_weight=num_equi_join_weight,
             field_freedom_weight=field_freedom_weight,
             num_brs_weight=num_brs_weight,
             num_comparison_weight=num_comparison_weight,
@@ -3853,7 +3853,7 @@ class Linker:
         max_comparisons_per_rule,
         min_freedom=1,
         num_runs=200,
-        complexity_weight=0,
+        num_equi_join_weight=0,
         field_freedom_weight=1,
         num_brs_weight=20,
         num_comparison_weight=10,
@@ -3871,8 +3871,9 @@ class Linker:
             num_runs (int, optional): Each run selects rows using a heuristic and costs
                 them.  The more runs, the more likely you are to find the best rule.
                 Defaults to 5.
-            complexity_weight (int, optional): Weight allocated to the complexity of
-                blockign rules i.e. total number of distinct blocking expressions.
+            num_equi_join_weight (int, optional): Weight allocated to number of equi
+                joins in the blocking rules.
+                Defaults to 0 since this is cost better captured by other criteria.
                 Defaults to 0 since this is cost better captured by other criteria.
             field_freedom_weight (int, optional): Weight given to the cost of
                 having individual fields which don't havem much flexibility.  Assigning
@@ -3900,7 +3901,7 @@ class Linker:
             df_br_below_thres,
             min_freedom=min_freedom,
             num_runs=num_runs,
-            complexity_weight=complexity_weight,
+            num_equi_join_weight=num_equi_join_weight,
             field_freedom_weight=field_freedom_weight,
             num_brs_weight=num_brs_weight,
             num_comparison_weight=num_comparison_weight,
