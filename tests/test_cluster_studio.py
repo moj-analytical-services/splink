@@ -3,7 +3,7 @@ from splink.cluster_studio import _get_cluster_id_by_density
 
 from splink.duckdb.linker import DuckDBLinker
 
-# Dummy df and settings for linker
+# Simple df and settings for linker
 person_ids = [i + 1 for i in range(5)]
 df = pd.DataFrame({"person_id": person_ids})
 
