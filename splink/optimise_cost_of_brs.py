@@ -85,7 +85,7 @@ def get_block_on_string(br_rows):
             quoted_args.append(quoted_arg)
 
         block_on_args = ", ".join(quoted_args)
-        block_on_string = f"block_on({block_on_args})"
+        block_on_string = f"block_on([{block_on_args}])"
         block_on_strings.append(block_on_string)
 
     return " \n".join(block_on_strings)
@@ -101,7 +101,7 @@ def get_em_training_string(br_rows):
             quoted_args.append(quoted_arg)
 
         block_on_args = ", ".join(quoted_args)
-        block_on_string = f"block_on({block_on_args})"
+        block_on_string = f"block_on([{block_on_args}])"
         block_on_strings.append(block_on_string)
 
     training_statements = []
@@ -193,7 +193,7 @@ def suggest_blocking_rules(
         results.append(cost_dict)
 
     results_df = pd.DataFrame(results)
-    # easier to read if we normalise the cost to the best is 0
+    # easier to read if we normalise the cost so the best is 0
     min_ = results_df["field_freedom_cost"].min()
     results_df["field_freedom_cost"] = results_df["field_freedom_cost"] - min_
 

@@ -3793,7 +3793,7 @@ class Linker:
             min_freedom (int, optional): The minimum amount of freedom any column should
                 be allowed.
             num_runs (int, optional): Each run selects rows using a heuristic and costs
-                them.  The more runs, the more likely you are to find the best rule.
+                them. The more runs, the more likely you are to find the best rule.
                 Defaults to 5.
             complexity_weight (int, optional): Weight allocated to the complexity of
                 blockign rules i.e. total number of distinct blocking expressions.
