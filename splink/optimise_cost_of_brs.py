@@ -70,7 +70,9 @@ def heuristic_select_brs_that_have_min_freedom(data, field_names, min_field_free
         if check_field_freedom(candidate_rows, field_names, min_field_freedom):
             break
 
-    sorted_candidate_rows = sorted(candidate_rows, key=lambda x: x["blocking_columns"])
+    sorted_candidate_rows = sorted(
+        candidate_rows, key=lambda x: x["blocking_columns_sanitised"]
+    )
 
     return sorted_candidate_rows
 
@@ -80,7 +82,7 @@ def get_block_on_string(br_rows):
 
     for row in br_rows:
         quoted_args = []
-        for arg in row["blocking_columns"]:
+        for arg in row["blocking_columns_sanitised"]:
             quoted_arg = f'"{arg}"'
             quoted_args.append(quoted_arg)
 
@@ -96,7 +98,7 @@ def get_em_training_string(br_rows):
 
     for row in br_rows:
         quoted_args = []
-        for arg in row["blocking_columns"]:
+        for arg in row["blocking_columns_sanitised"]:
             quoted_arg = f'"{arg}"'
             quoted_args.append(quoted_arg)
 
@@ -118,7 +120,7 @@ def suggest_blocking_rules(
     df_block_stats,
     min_freedom=1,
     num_runs=100,
-    complexity_weight=0,
+    num_equi_join_weight=0,
     field_freedom_weight=1,
     num_brs_weight=10,
     num_comparison_weight=10,
@@ -131,7 +133,8 @@ def suggest_blocking_rules(
             opportunities to vary amongst the blocking rules. Defaults to 1.
         num_runs (int, optional): How many random combinations of
             rules to try.  The best will be selected. Defaults to 5.
-        complexity_weight (int, optional): The weight for complexity. Defaults to 10.
+        num_equi_join_weight (int, optional): The weight for number of equi joins.
+            Defaults to 0.
         field_freedom_weight (int, optional): The weight for field freedom. Defaults to
             10.
         num_brs_weight (int, optional): The weight for the number of blocking rules
@@ -150,7 +153,7 @@ def suggest_blocking_rules(
     max_comparison_count = df_block_stats["comparison_count"].max()
 
     df_block_stats = df_block_stats.sort_values(
-        by=["complexity", "comparison_count"], ascending=[True, False]
+        by=["num_equi_joins", "comparison_count"], ascending=[True, False]
     )
     blocks_found_recs = df_block_stats.to_dict(orient="records")
 
@@ -174,7 +177,7 @@ def suggest_blocking_rules(
         costs = calculate_cost_of_combination_of_brs(
             selected_rows,
             max_comparison_count,
-            complexity_weight,
+            num_equi_join_weight,
             field_freedom_weight,
             num_brs_weight,
             num_comparison_weight,
