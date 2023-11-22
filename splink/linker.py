@@ -14,9 +14,9 @@ from statistics import median
 import sqlglot
 
 from splink.input_column import InputColumn
-from splink.settings_validation.column_lookups import InvalidColumnsLogger
+from splink.settings_validation.log_invalid_columns import InvalidColumnsLogger
 from splink.settings_validation.valid_types import (
-    InvalidTypesAndValuesLogger,
+    _validate_dialect,
     log_comparison_errors,
 )
 
@@ -517,12 +517,14 @@ class Linker:
             return
 
         # Run miscellaneous checks on our settings dictionary.
-        settings_invalid_types_values = InvalidTypesAndValuesLogger(self)
-        settings_invalid_types_values._validate_dialect()
+        _validate_dialect(
+            settings_dialect=self._settings_obj._sql_dialect,
+            linker_dialect=self._sql_dialect,
+            linker_type=self.__class__.__name__,
+        )
 
         # Constructs output logs for our various settings inputs
-        if validate_settings:
-            InvalidColumnsLogger(self).construct_output_logs()
+        InvalidColumnsLogger(self).construct_output_logs(validate_settings)
 
     def _initialise_df_concat(self, materialise=False):
         cache = self._intermediate_table_cache
