@@ -81,7 +81,7 @@ def _generate_blocking_rule(
     block_on = block_on_module.block_on
 
     if len(cols_as_string) == 0:
-        return "1 = 1"
+        return block_on("1")
 
     br = block_on(cols_as_string)
 
@@ -128,7 +128,7 @@ def _search_tree_for_blocking_rules_below_threshold_count(
         'blocking_columns_sanitised':['first_name'],
         'splink_blocking_rule':<Custom rule>',
         comparison_count':4827,
-        'complexity':1,
+        'num_equi_join':1,
         '__fixed__first_name':1,
         '__fixed__surname':0,
         '__fixed__dob':0,

@@ -1,8 +1,6 @@
 import logging
 from typing import Dict, List, Union
 
-import pandas as pd
-
 logger = logging.getLogger(__name__)
 
 
@@ -51,9 +49,9 @@ def calculate_field_freedom_cost(combination_of_brs: List[Dict]) -> int:
 
 
 def calculate_cost_of_combination_of_brs(
-    br_combination: pd.DataFrame,
+    br_combination: List[Dict],
     max_comparison_count: int,
-    complexity_weight: Union[int, float] = 1,
+    num_equi_join_weight: Union[int, float] = 1,
     field_freedom_weight: Union[int, float] = 1,
     num_brs_weight: Union[int, float] = 1,
     num_comparison_weight: Union[int, float] = 1,
@@ -61,15 +59,15 @@ def calculate_cost_of_combination_of_brs(
     """
     Calculates the cost for a given combination of blocking rules.
 
-    The cost is a weighted sum of the complexity of the rules, the count of rules,
-    the number of fields that are allowed to vary, and the number of rows.
+    The cost is a weighted sum of the number of equi joins in the rules, the count of
+    rules, the number of fields that are allowed to vary, and the number of rows.
 
     Args:
-        br_combination (pd.DataFrame): The combination of rows outputted by
+        br_combination (List[Dict]): The combination of rows outputted by
             find_blocking_rules_below_threshold_comparison_count.
         max_comparison_count (int): The maximum comparison count amongst the rules.
             This is needed to normalise the cost of more or fewer comparison rows.
-        complexity_weight (Union[int, float], optional): The weight for complexity.
+        num_equi_join_weight (Union[int, float], optional): The weight for num_equi_join
             Defaults to 1.
         field_freedom_weight (Union[int, float], optional): The weight for field
             freedom. Defaults to 1.
@@ -81,7 +79,6 @@ def calculate_cost_of_combination_of_brs(
     Returns:
         dict: The calculated cost and individual component costs.
     """
-    br_combination = br_combination.to_dict(orient="records")
 
     num_equi_join_cost = sum(row["num_equi_joins"] for row in br_combination)
     total_row_count = sum(row["comparison_count"] for row in br_combination)
@@ -92,7 +89,7 @@ def calculate_cost_of_combination_of_brs(
     field_freedom_cost = calculate_field_freedom_cost(br_combination)
     num_brs_cost = len(br_combination)
 
-    num_equi_join_cost_weighted = complexity_weight * num_equi_join_cost
+    num_equi_join_cost_weighted = num_equi_join_weight * num_equi_join_cost
     field_freedom_cost_weighted = field_freedom_weight * field_freedom_cost
     num_brs_cost_weighted = num_brs_weight * num_brs_cost
     num_comparison_rows_cost_weighted = num_comparison_weight * normalised_row_count
