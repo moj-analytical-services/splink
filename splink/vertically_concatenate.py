@@ -41,6 +41,7 @@ def vertically_concatenate_sql(linker: Linker) -> str:
         source_dataset_col_req = (
             linker._settings_obj._source_dataset_column_name_is_required
         )
+
         salting_reqiured = linker._settings_obj.salting_required
 
     if salting_reqiured:
@@ -50,10 +51,15 @@ def vertically_concatenate_sql(linker: Linker) -> str:
 
     if source_dataset_col_req:
         sqls_to_union = []
+
+        create_sds_if_needed = ""
+
         for df_obj in linker._input_tables_dict.values():
-            source_ds_col = linker._source_dataset_column_name
+            if not linker._source_dataset_column_already_exists:
+                create_sds_if_needed = f"'{df_obj.templated_name}' as source_dataset,"
             sql = f"""
-            select '{df_obj.templated_name}' as {source_ds_col},
+            select
+            {create_sds_if_needed}
             {select_columns_sql}
             {salt_sql}
             from {df_obj.physical_name}
