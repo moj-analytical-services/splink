@@ -88,6 +88,42 @@ def test_not():
 
 
 @mark_with_dialects_excluding()
+def test_null_level_composition(test_helpers, dialect):
+    helper = test_helpers[dialect]
+    cll = helper.cll
+
+    c = cll.and_(
+        cll.null_level("first_name"), cll.null_level("surname"), is_null_level=True
+    )
+    assert c.is_null_level
+
+    c = cll.and_(
+        cll.null_level("first_name"),
+        cll.exact_match_level("surname"),
+        is_null_level=True,
+    )
+    assert c.is_null_level
+
+    c = cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
+    assert c.is_null_level
+
+    c = cll.or_(
+        cll.null_level("first_name"), cll.null_level("surname"), is_null_level=True
+    )
+    assert c.is_null_level
+
+    c = cll.or_(
+        cll.null_level("first_name"),
+        cll.exact_match_level("surname"),
+        is_null_level=True,
+    )
+    assert c.is_null_level
+
+    c = cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
+    assert c.is_null_level
+
+
+@mark_with_dialects_excluding()
 def test_composition_outputs(test_helpers, dialect):
     helper = test_helpers[dialect]
     cll = helper.cll

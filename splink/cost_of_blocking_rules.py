@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List
+from typing import Dict, List, Union
 
 logger = logging.getLogger(__name__)
 
@@ -30,10 +30,17 @@ def calculate_field_freedom_cost(combination_of_brs: List[Dict]) -> int:
     total_cost = 0
     field_names = [c for c in combination_of_brs[0].keys() if c.startswith("__fixed__")]
 
+    # This lookup is somewhat arbitary but its purpose is to assign a very high
+    # cost to combinations of blocking rules where a a field is not allowed to vary
+    # much
+    # TODO: Could incorporate information about how many other fields are allowed
+    # to vary i.e. it's not just the count of other blocking rules that allow this
+    # field to matter ,it's also how strict they are
+    costs_by_count = {0: 20, 1: 10, 2: 2, 3: 1, 4: 1}
+
     for field in field_names:
         field_can_vary_count = sum(row[field] == 0 for row in combination_of_brs)
 
-        costs_by_count = {0: 20, 1: 10, 2: 2, 3: 1, 4: 1}
         cost = costs_by_count.get(field_can_vary_count, 0) / 10
 
         total_cost = total_cost + cost
@@ -42,40 +49,38 @@ def calculate_field_freedom_cost(combination_of_brs: List[Dict]) -> int:
 
 
 def calculate_cost_of_combination_of_brs(
-    br_combination: List[Dict],
-    max_comparison_count,
-    complexity_weight,
-    field_freedom_weight,
-    num_brs_weight,
-    num_comparison_weight,
-):
+    br_combination: pd.DataFrame,
+    max_comparison_count: int,
+    complexity_weight: Union[int, float] = 1,
+    field_freedom_weight: Union[int, float] = 1,
+    num_brs_weight: Union[int, float] = 1,
+    num_comparison_weight: Union[int, float] = 1,
+) -> dict:
     """
-    Calculates a cost for a given br_combination of blocking rules.
+    Calculates the cost for a given combination of blocking rules.
 
     The cost is a weighted sum of the complexity of the rules, the count of rules,
-    number of fields that are allowed to vary, and number of rows.
-
-    The combination is a subset of rows from the output of
-    find_blocking_rules_below_threshold_comparison_count.
-
-    Each row represents a blocking rule and associated infomration.
-
+    the number of fields that are allowed to vary, and the number of rows.
 
     Args:
-        br_combination (list): The combination of rows outputted by
-            find_blocking_rules_below_threshold_comparison_count
-        complexity_weight (int, optional): The weight for complexity. Defaults to 10.
-        field_freedom_weight (int, optional): The weight for field freedom. Defaults to
-            10.
-        num_brs_weight (int, optional): The weight for the number of blocking rules
-            found. Defaults to 1000.
+        br_combination (pd.DataFrame): The combination of rows outputted by
+            find_blocking_rules_below_threshold_comparison_count.
+        max_comparison_count (int): The maximum comparison count amongst the rules.
+            This is needed to normalise the cost of more or fewer comparison rows.
+        complexity_weight (Union[int, float], optional): The weight for complexity.
+            Defaults to 1.
+        field_freedom_weight (Union[int, float], optional): The weight for field
+            freedom. Defaults to 1.
+        num_brs_weight (Union[int, float], optional): The weight for the number of
+            blocking rules found. Defaults to 1.
+        num_comparison_weight (Union[int, float], optional): The weight for the
+            number of comparison rows. Defaults to 1.
 
     Returns:
         dict: The calculated cost and individual component costs.
     """
 
-    # Complexity is the number of fields held constant in a given blocking rule
-    complexity_cost = sum(row["complexity"] for row in br_combination)
+    num_equi_join_cost = sum(row["num_equi_joins"] for row in br_combination)
     total_row_count = sum(row["comparison_count"] for row in br_combination)
     normalised_row_count = total_row_count / max_comparison_count
 
@@ -84,13 +89,13 @@ def calculate_cost_of_combination_of_brs(
     field_freedom_cost = calculate_field_freedom_cost(br_combination)
     num_brs_cost = len(br_combination)
 
-    complexity_cost_weighted = complexity_weight * complexity_cost
+    num_equi_join_cost_weighted = complexity_weight * num_equi_join_cost
     field_freedom_cost_weighted = field_freedom_weight * field_freedom_cost
     num_brs_cost_weighted = num_brs_weight * num_brs_cost
     num_comparison_rows_cost_weighted = num_comparison_weight * normalised_row_count
 
     total_cost = (
-        complexity_cost_weighted
+        num_equi_join_cost_weighted
         + field_freedom_cost_weighted
         + num_brs_cost_weighted
         + num_comparison_rows_cost_weighted
@@ -98,12 +103,11 @@ def calculate_cost_of_combination_of_brs(
 
     return {
         "cost": total_cost,
-        "total_pairwise_rows_created": total_row_count,
-        "complexity_cost_weighted": complexity_cost_weighted,
+        "num_equi_join_cost_weighted": num_equi_join_cost_weighted,
         "field_freedom_cost_weighted": field_freedom_cost_weighted,
         "num_brs_cost_weighted": num_brs_cost_weighted,
         "num_comparison_rows_cost_weighted": num_comparison_rows_cost_weighted,
-        "complexity_cost": complexity_cost,
+        "num_equi_join_cost": num_equi_join_cost,
         "field_freedom_cost": field_freedom_cost,
         "num_brs_cost": num_brs_cost,
         "num_comparison_rows_cost": normalised_row_count,

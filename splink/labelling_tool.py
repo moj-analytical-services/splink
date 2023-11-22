@@ -28,7 +28,7 @@ def generate_labelling_tool_comparisons(
     source_dataset_condition = ""
 
     if source_dataset is not None:
-        sds_col = settings._source_dataset_input_column
+        sds_col = settings._source_dataset_column_name
         source_dataset_condition = f"""
           and {sds_col} = '{source_dataset}'
         """

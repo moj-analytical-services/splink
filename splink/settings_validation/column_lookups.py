@@ -309,7 +309,7 @@ class InvalidColumnsLogger(InvalidColValidator):
             # so this allows those entries without a name to pass
             # through.
             if cn is not None:
-                output_warning.append(f"Comarpison: {cn}")
+                output_warning.append(f"Comparison: {cn}")
             output_warning.append("--------------------------------------")
 
             output_warning.append(self.log_invalid_warnings_within_sql(cls))

@@ -37,16 +37,15 @@ def pytest_collection_modifyitems(items, config):
                 item.add_marker(mark)
 
 
-@pytest.fixture(scope="module")
-def spark():
+def _make_spark():
     from pyspark import SparkConf, SparkContext
     from pyspark.sql import SparkSession
 
     conf = SparkConf()
 
-    conf.set("spark.driver.memory", "4g")
-    conf.set("spark.sql.shuffle.partitions", "8")
-    conf.set("spark.default.parallelism", "8")
+    conf.set("spark.driver.memory", "6g")
+    conf.set("spark.sql.shuffle.partitions", "1")
+    conf.set("spark.default.parallelism", "1")
     # Add custom similarity functions, which are bundled with Splink
     # documented here: https://github.com/moj-analytical-services/splink_scalaudfs
     path = similarity_jar_location()
@@ -56,7 +55,12 @@ def spark():
 
     spark = SparkSession(sc)
     spark.sparkContext.setCheckpointDir("./tmp_checkpoints")
+    return spark
 
+
+@pytest.fixture(scope="module")
+def spark():
+    spark = _make_spark()
     yield spark
 
 
@@ -71,14 +75,14 @@ def df_spark(spark):
 # see e.g. https://stackoverflow.com/a/42400786/11811947
 # ruff: noqa: F811
 @pytest.fixture
-def test_helpers(spark, pg_engine):
+def test_helpers(pg_engine):
     # LazyDict to lazy-load helpers
     # That way we do not instantiate helpers we do not need
     # e.g. running only duckdb tests we don't need PostgresTestHelper
     # so we can run duckdb tests in environments w/o access to postgres
     return LazyDict(
         duckdb=(DuckDBTestHelper, []),
-        spark=(SparkTestHelper, [spark]),
+        spark=(SparkTestHelper, [_make_spark]),
         sqlite=(SQLiteTestHelper, []),
         postgres=(PostgresTestHelper, [pg_engine]),
     )
