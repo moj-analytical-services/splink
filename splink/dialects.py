@@ -1,5 +1,4 @@
 from abc import ABC, abstractproperty
-from enum import Enum, unique
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -26,10 +25,18 @@ class SplinkDialect(ABC):
     def sqlglot_name(self):
         return self.name
 
-    @staticmethod
-    def from_string(dialect_name: str):
-        dialect_name = dialect_name.upper()
-        return _DialectLookup[dialect_name].value
+    @classmethod
+    def from_string(cls, dialect_name: str):
+        # generator of classes which match _dialect_name_for_factory
+        # should just get a single subclass, as this should be unique
+        classes_from_dialect_name = (
+            c for c in cls.__subclasses__()
+            if c._dialect_name_for_factory == dialect_name
+        )
+        # use sequence unpacking to catch if we duplicate
+        # _dialect_name_for_factory in subclasses
+        [subclass] = classes_from_dialect_name
+        return subclass()
 
     @property
     def levenshtein_function_name(self):
@@ -45,6 +52,8 @@ class SplinkDialect(ABC):
 
 
 class DuckDBDialect(SplinkDialect):
+    _dialect_name_for_factory = "duckdb"
+
     @property
     def name(self):
         return "duckdb"
@@ -59,6 +68,8 @@ class DuckDBDialect(SplinkDialect):
 
 
 class SparkDialect(SplinkDialect):
+    _dialect_name_for_factory = "spark"
+
     @property
     def name(self):
         return "spark"
@@ -73,6 +84,8 @@ class SparkDialect(SplinkDialect):
 
 
 class SqliteDialect(SplinkDialect):
+    _dialect_name_for_factory = "sqlite"
+
     @property
     def name(self):
         return "sqlite"
@@ -89,6 +102,8 @@ class SqliteDialect(SplinkDialect):
 
 
 class PostgresDialect(SplinkDialect):
+    _dialect_name_for_factory = "postgres"
+
     @property
     def name(self):
         return "postgres"
@@ -140,6 +155,8 @@ class PostgresDialect(SplinkDialect):
 
 
 class AthenaDialect(SplinkDialect):
+    _dialect_name_for_factory = "athena"
+
     @property
     def name(self):
         return "athena"
@@ -151,12 +168,3 @@ class AthenaDialect(SplinkDialect):
     @property
     def _levenshtein_name(self):
         return "levenshtein_distance"
-
-
-@unique
-class _DialectLookup(Enum):
-    DUCKDB = DuckDBDialect()
-    SPARK = SparkDialect()
-    SQLITE = SqliteDialect()
-    POSTGRES = PostgresDialect()
-    ATHENA = AthenaDialect()
