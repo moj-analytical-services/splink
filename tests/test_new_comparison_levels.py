@@ -128,7 +128,7 @@ def test_custom_dialect_duplicate_string_lookup():
     # should get an error as level doesn't know which 'duckdb' we mean
     with pytest.raises(ValueError) as exc_info:
         cll.ExactMatchLevel("some_column").get_comparison_level("duckdb")
-    assert "too many values" in str(exc_info.value)
+    assert "Found multiple subclasses" in str(exc_info.value)
 
     # should be able to use spark still
     cll.ExactMatchLevel("some_column").get_comparison_level("spark")
@@ -170,4 +170,4 @@ def test_invalid_dialect():
     # no such dialect defined!
     with pytest.raises(ValueError) as exc_info:
         cll.ExactMatchLevel("some_column").get_comparison_level("bad_test_dialect")
-    assert "not enough values" in str(exc_info.value)
+    assert "Could not find subclass" in str(exc_info.value)
