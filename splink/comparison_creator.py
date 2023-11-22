@@ -19,9 +19,7 @@ class ComparisonCreator(ABC):
         self.col_name = col_name
 
     @abstractmethod
-    def create_comparison_levels(
-        self, sql_dialect: SplinkDialect
-    ) -> List[ComparisonLevelCreator]:
+    def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         pass
 
     @abstractmethod
@@ -40,13 +38,12 @@ class ComparisonCreator(ABC):
 
     @final
     def create_comparison_dict(self, sql_dialect_str: str) -> dict:
-        sql_dialect = SplinkDialect.from_string(sql_dialect_str)
         level_dict = {
             "comparison_description": self.create_description(),
             "output_column_name": self.create_output_column_name(),
             "comparison_levels": [
                 cl.get_comparison_level(sql_dialect_str)
-                for cl in self.create_comparison_levels(sql_dialect)
+                for cl in self.create_comparison_levels()
             ],
         }
 
