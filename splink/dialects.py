@@ -7,15 +7,16 @@ if TYPE_CHECKING:
 
 
 class SplinkDialect(ABC):
-    _instances = {}
+    # Stores instances of each subclass of SplinkDialect.
+    _dialect_instances = {}
 
-    # Register a child on SplinkDialect on creation and load
-    # it whenever it's called in the future.
+    # Register a subclass of SplinkDialect on its creation.
+    # Whenever that subclass is called again, use the previous instance.
     def __new__(cls, *args, **kwargs):
         if cls not in cls._instances:
             instance = super(SplinkDialect, cls).__new__(cls)
-            cls._instances[cls] = instance
-        return cls._instances[cls]
+            cls._dialect_instances[cls] = instance
+        return cls._dialect_instances[cls]
 
     @abstractproperty
     def name(self):
