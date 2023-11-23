@@ -32,7 +32,7 @@ class ColumnTreeBuilder:
     """
 
     name: str
-    table: str = field(None, repr=False)
+    table: str = field(default=None, repr=False)
     quoted: bool = True
     column_reference: exp.Identifier = None  # the JSON index in 'surname['lat']'
 
@@ -90,10 +90,73 @@ class ColumnTreeBuilder:
             return column
 
     @classmethod
-    def from_sqlglot_column(
-        cls, column_tree: exp.Column, column_reference: exp.Identifier = None
-    ):
-        return cls(column_tree.name, column_reference=column_reference)
+    def from_raw_column_name_or_column_reference(
+        cls,
+        name: str,
+        sqlglot_name: str
+    ) -> ColumnTreeBuilder:
+        """
+        Parses a given input name into a ColumnTreeBuilder.
+
+        Fiddly because we need to deal with escaping issues. For example
+        the column name in the input dataset may be 'first and surname', but
+        if we naively parse this using sqlglot it will be interpreted as an AND
+        expression
+        """
+        try:
+            tree = sqlglot.parse_one(name, read=sqlglot_name)
+            return cls._parse_sql_tree_to_column_tree_builder(name, tree)
+        except:
+            q_s, q_e = _get_dialect_quotes(sqlglot_name)
+            # The parse statement will error in cases such as: sur "name"['lat']
+            sqlglot.parse_one(f"{q_s}{name}{q_e}", read=sqlglot_name)
+            # index is None if nothing is set
+            identifier, index = cls.manually_split_identifier_and_index(name)
+
+            # Construct the column manually if it can be parsed with quotes.
+            # This is useful for illegal columns such as test[ing, test'ing, test"ing
+            return cls(name=identifier, column_reference=index)
+
+    @classmethod
+    def _parse_sql_tree_to_column_tree_builder(
+        cls, name: str, tree: sqlglot.Expression
+    ) -> ColumnTreeBuilder:
+        # Columns which contains spaces will be registered as aliases.
+        # Check that no quotes have been applied to either end of the name:
+        # - "sur" name, sur "name" are both invalid column names
+        if tree.find(exp.Alias):
+            if any([identifier.quoted for identifier in tree.find_all(exp.Identifier)]):
+                raise ParseError(
+                    f"The supplied column name '{name}' contains quotes and cannot be "
+                    "parsed as a valid SQL identifier."
+                )
+
+        # If the column has an identifier, parse both elements
+        if tree.find(exp.Bracket):
+            return cls(
+                name=tree.find(exp.Column).name,
+                column_reference=tree.find(exp.Literal),
+            )
+
+        # If the column has already been quoted, parse it
+        if tree.find(exp.Identifier).args.get("quoted"):
+            return cls(name=tree.name)
+
+        # If our column does not contain a quoted identifier, we can safely return
+        # the column builder
+        return cls(name)
+
+    @staticmethod
+    def manually_split_identifier_and_index(identifier: str) -> [str, str]:
+        # Manually pull out the bracket index for an unparseable column.
+        # This ensures we correctly parse cases such as: sur name['lat']
+        if identifier.endswith("]") and "[" in identifier:
+            split_index = identifier.rfind("[")
+            before_bracket = identifier[:split_index].strip()
+            after_bracket = identifier[split_index:].strip("[]")
+            return before_bracket, after_bracket
+        else:
+            return identifier, None
 
 
 class InputColumn:
@@ -128,11 +191,13 @@ class InputColumn:
         self.input_name: str = self._quote_if_sql_keyword(
             raw_column_name_or_column_reference
         )
-        self.column_tree_builder: ColumnTreeBuilder = (
-            self._parse_input_name_to_column_tree_builder(
-                raw_column_name_or_column_reference
+
+        # Generate a ColumnTreeBuilder from the input column
+        tree_builder = ColumnTreeBuilder.from_raw_column_name_or_column_reference(
+                name=raw_column_name_or_column_reference,
+                sqlglot_name=sql_dialect
             )
-        )
+        self.column_tree_builder: ColumnTreeBuilder = tree_builder
 
     def register_dialect(self, sql_dialect: str):
         if not sql_dialect and self._settings_obj:
@@ -148,74 +213,6 @@ class InputColumn:
             if not schema_key:
                 schema_key = key
             return default_value_from_schema(schema_key, "root")
-
-    def _parse_input_name_to_column_tree_builder(self, name: str) -> ColumnTreeBuilder:
-        """
-        Parses the input name into a SQLglot expression tree.
-
-        Fiddly because we need to deal with escaping issues.  For example
-        the column name in the input dataset may be 'first and surname', but
-        if we naively parse this using sqlglot it will be interpreted as an AND
-        expression
-
-        Note: We do not support inputs like 'SUR name[1]', in this case the user
-        would have to quote e.g. `SUR name`[1]
-        """
-        q_s, q_e = _get_dialect_quotes(self.sqlglot_name)
-
-        try:
-            tree = sqlglot.parse_one(name, read=self.sqlglot_name)
-        except (ParseError, TokenError):
-            # The parse statement will error in cases such as: sur "name"['lat']
-            sqlglot.parse_one(f"{q_s}{name}{q_e}", read=self.sqlglot_name)
-            # index is None if nothing is set
-            identifier, index = self.manually_split_identifier_and_index(name)
-
-            # Construct the column manually if it can be parsed with quotes.
-            # This is useful for illegal columns such as test[ing, test'ing, test"ing
-            return ColumnTreeBuilder(name=identifier, column_reference=index)
-
-        return self._parse_sql_tree_to_column_tree_builder(name, tree)
-
-    def _parse_sql_tree_to_column_tree_builder(
-        self, name: str, tree: sqlglot.Expression
-    ) -> ColumnTreeBuilder:
-        # Columns which contains spaces will be registered as aliases.
-        # Check that no quotes have been applied to either end of the name:
-        # - "sur" name, sur "name" are both invalid column names
-        if tree.find(exp.Alias):
-            if any([identifier.quoted for identifier in tree.find_all(exp.Identifier)]):
-                raise ParseError(
-                    f"The supplied column name '{name}' contains quotes and cannot be "
-                    "parsed as a valid SQL identifier."
-                )
-
-        if tree.find(exp.Bracket):
-            # Pop the column, leaving the bracket as the remaining section of the tree
-            return ColumnTreeBuilder.from_sqlglot_column(
-                column_tree=tree.find(exp.Column),
-                column_reference=tree.find(exp.Literal),
-            )
-
-        # If the column has already been quoted, parse it
-        if tree.find(exp.Identifier).args.get("quoted"):
-            return ColumnTreeBuilder.from_sqlglot_column(column_tree=tree)
-
-        # If our column does not contain a quoted identifier, we can safely return
-        # the column builder
-        return ColumnTreeBuilder(name)
-
-    @staticmethod
-    def manually_split_identifier_and_index(identifier: str) -> [str, str]:
-        # Manually pull out the bracket index for an unparseable column.
-        # This ensures we correctly parse cases such as: sur name['lat']
-        if identifier.endswith("]") and "[" in identifier:
-            split_index = identifier.rfind("[")
-            before_bracket = identifier[:split_index].strip()
-            after_bracket = identifier[split_index:].strip("[]")
-            return before_bracket, after_bracket
-        else:
-            return identifier, None
 
     @property
     def _bf_prefix(self):
@@ -334,8 +331,8 @@ class InputColumn:
 
     def __repr__(self):
         return (
-            "InputColumn(\n     "
-            f"{self.column_tree_builder.__repr__()}),\n     "
+            f"{self.__class__.__name__}(\n     "
+            f"{self.column_tree_builder.__repr__()},\n     "
             f"sql_dialect={self.sqlglot_name}\n)"
         )
 
