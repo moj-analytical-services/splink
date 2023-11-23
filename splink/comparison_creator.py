@@ -27,6 +27,29 @@ class ComparisonCreator(ABC):
         pass
 
     @final
+    def get_configured_comparison_levels(self) -> List[ComparisonLevelCreator]:
+        # furnish comparison levels with m and u probabilities as needed
+        comparison_levels = self.create_comparison_levels()
+
+        if self.m_probabilities:
+            m_values = self.m_probabilities.copy()
+            comparison_levels = [
+                cl.configure(
+                    m_probability=m_values.pop(0) if not cl.is_null_level else None,
+                )
+                for cl in comparison_levels
+            ]
+        if self.u_probabilities:
+            u_values = self.u_probabilities.copy()
+            comparison_levels = [
+                cl.configure(
+                    u_probability=u_values.pop(0) if not cl.is_null_level else None,
+                )
+                for cl in comparison_levels
+            ]
+        return comparison_levels
+
+    @final
     @property
     def num_levels(self) -> int:
         return len(self.create_comparison_levels())
@@ -54,30 +77,13 @@ class ComparisonCreator(ABC):
 
     @final
     def create_comparison_dict(self, sql_dialect_str: str) -> dict:
-        comparison_levels = self.create_comparison_levels()
-
-        if self._levels_m_probabilities:
-            m_values = self._levels_m_probabilities.copy()
-            comparison_levels = [
-                cl.configure(
-                    m_probability=m_values.pop(0) if not cl.is_null_level else None,
-                )
-                for cl in comparison_levels
-            ]
-        if self._levels_u_probabilities:
-            u_values = self._levels_u_probabilities.copy()
-            comparison_levels = [
-                cl.configure(
-                    u_probability=u_values.pop(0) if not cl.is_null_level else None,
-                )
-                for cl in comparison_levels
-            ]
 
         level_dict = {
             "comparison_description": self.create_description(),
             "output_column_name": self.create_output_column_name(),
             "comparison_levels": [
-                cl.get_comparison_level(sql_dialect_str) for cl in comparison_levels
+                cl.get_comparison_level(sql_dialect_str)
+                for cl in self.get_configured_comparison_levels()
             ],
         }
 
@@ -94,15 +100,35 @@ class ComparisonCreator(ABC):
         m_probabilities: list[float] = None,
         u_probabilities: list[float] = None,
     ) -> "ComparisonCreator":
+        self.m_probabilities = m_probabilities
+        self.u_probabilities = u_probabilities
+        return self
+
+    @final
+    @property
+    def m_probabilities(self):
+        return getattr(self, "_m_probabilities", None)
+
+    @final
+    @m_probabilities.setter
+    def m_probabilities(self, m_probabilities: list[float]):
         if m_probabilities:
             if len(m_probabilities) != self.num_non_null_levels:
                 raise ValueError("nope")
+            self._m_probabilities = m_probabilities
+
+    @final
+    @property
+    def u_probabilities(self):
+        return getattr(self, "_u_probabilities", None)
+
+    @final
+    @u_probabilities.setter
+    def u_probabilities(self, u_probabilities: list[float]):
         if u_probabilities:
             if len(u_probabilities) != self.num_non_null_levels:
                 raise ValueError("nope")
-        self._levels_m_probabilities = m_probabilities
-        self._levels_u_probabilities = u_probabilities
-        return self
+            self._u_probabilities = u_probabilities
 
     def __repr__(self) -> str:
         return (
