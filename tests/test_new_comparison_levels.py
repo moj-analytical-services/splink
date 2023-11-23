@@ -31,10 +31,29 @@ comparison_city = {
         cll.ElseLevel(),
     ],
 }
+comparison_email = {
+    "output_column_name": "dob",
+    "comparison_levels": [
+        cll.NullLevel("dob"),
+        cll.ExactMatchLevel("dob"),
+        cll.CustomLevel("substr(dob_l, 1, 4) = substr(dob_r, 1, 4)", "year matches"),
+        {
+            "sql_condition": "substr(dob_l, 1, 2) = substr(dob_r, 1, 2)",
+            "label_for_charts": "century matches",
+        },
+        cll.LevenshteinLevel("dob", 3),
+        cll.ElseLevel(),
+    ],
+}
 
 cll_settings = {
     "link_type": "dedupe_only",
-    "comparisons": [comparison_first_name, comparison_surname, comparison_city],
+    "comparisons": [
+        comparison_first_name,
+        comparison_surname,
+        comparison_city,
+        comparison_email,
+    ],
 }
 
 

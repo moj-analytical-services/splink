@@ -64,6 +64,22 @@ class ElseLevel(ComparisonLevelCreator):
         return "All other comparisons"
 
 
+class CustomLevel(ComparisonLevelCreator):
+    def __init__(self, sql_condition: str, label_for_charts: str = None):
+        self.sql_condition = sql_condition
+        self.label_for_charts = label_for_charts
+
+    def create_sql(self, sql_dialect: SplinkDialect) -> str:
+        return self.sql_condition
+
+    def create_label_for_charts(self) -> str:
+        return (
+            self.label_for_charts
+            if self.label_for_charts is not None
+            else self.sql_condition
+        )
+
+
 class ExactMatchLevel(ComparisonLevelCreator):
     def __init__(self, col_name: str, term_frequency_adjustments: bool = False):
         """Represents a comparison level where there is an exact match
