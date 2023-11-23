@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import dataclass, replace, field
+from dataclasses import dataclass, field, replace
 
 import sqlglot
 import sqlglot.expressions as exp
@@ -58,22 +58,7 @@ class SqlglotColumnTreeBuilder:
         if self.alias is None:
             return tree
         else:
-            return exp.alias_(tree, self.alias)
-
-    @property
-    def as_sqlglot_tree(self):
-        tree = sqlglot.column(
-            col=self.column_name, table=self.table, quoted=self.quoted
-        )
-        if self._has_key_or_index:
-            tree = self._add_key_or_index_to_tree(tree)
-        if self.alias:
-            return exp.alias_(tree, self.alias, quoted=self.quoted)
-        return tree
-
-    @property
-    def sql(self):
-        return self.as_sqlglot_tree.sql(dialect=self.sqlglot_dialect)
+            return column
 
     @classmethod
     def from_raw_column_name_or_column_reference(cls, input_str, sqlglot_dialect):
