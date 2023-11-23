@@ -259,11 +259,11 @@ class InputColumn:
         # See: exp.Identifier(this='`test`', quoted=True).sql("spark")
         column_builder = self.base_column_tree.unquote()
         # Add both the prefix and suffix arguments to the column
-        alias_tree = column_builder.add_prefix(prefix).add_suffix(suffix)
-        alias_string = self.column_tree_to_sql(alias_tree)
+        column_alias_tree = column_builder.add_prefix(prefix).add_suffix(suffix)
+        column_alias_string = self.column_tree_to_sql(column_alias_tree)
 
         column_with_table = self.base_column_tree.add_table(table).add_prefix(prefix)
-        tree = column_with_table.add_alias(alias_string)
+        tree = column_with_table.add_alias(column_alias_string)
         return tree.sql(self.sqlglot_name)
 
     @property
