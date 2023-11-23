@@ -78,6 +78,21 @@ comparison_first_name = cl.LevenshteinAtThresholds("first_name", [2, 3])
 comparison_surname = cl.LevenshteinAtThresholds("surname", [3])
 comparison_city = cl.ExactMatch("city")
 comparison_email = cl.LevenshteinAtThresholds("email", 3)
+comparison_dob = cl.CustomComparison(
+    "dob",
+    [
+        cll.NullLevel("dob"),
+        cll.ExactMatchLevel("dob"),
+        cll.CustomLevel("substr(dob_l, 1, 4) = substr(dob_r, 1, 4)", "year matches"),
+        {
+            "sql_condition": "substr(dob_l, 1, 2) = substr(dob_r, 1, 2)",
+            "label_for_charts": "century matches",
+        },
+        cll.LevenshteinLevel("dob", 3),
+        cll.ElseLevel(),
+    ],
+    "Date of birth comparison with exact, year, century and lev<=3 levels",
+)
 
 cl_settings = {
     "link_type": "dedupe_only",
@@ -86,6 +101,7 @@ cl_settings = {
         comparison_surname,
         comparison_city,
         comparison_email,
+        comparison_dob,
     ],
 }
 

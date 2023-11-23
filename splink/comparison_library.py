@@ -3,8 +3,52 @@ from typing import Iterable, List, Union
 from . import comparison_level_library as cll
 from .comparison_creator import ComparisonCreator
 from .comparison_level_creator import ComparisonLevelCreator
+from .comparison_level_library import CustomLevel
 from .dialects import SplinkDialect
 from .misc import ensure_is_iterable
+
+
+class CustomComparison(ComparisonCreator):
+    def __init__(
+        self,
+        output_column_name: str,
+        comparison_levels: list[ComparisonLevelCreator],
+        description: str = None,
+    ):
+        self._output_column_name = output_column_name
+        self._comparison_levels = comparison_levels
+        self._description = description
+
+    @staticmethod
+    def _convert_to_creator(cl: Union[dict, ComparisonLevelCreator]):
+        if isinstance(cl, ComparisonLevelCreator):
+            return cl
+        if isinstance(cl, dict):
+            # TODO: swap this if we develop a more uniform approach to (de)serialising
+            return CustomLevel(**cl)
+        raise ValueError(
+            "`comparison_levels` entries must be `dict` or `ComparisonLevelCreator, "
+            f"but found type {type(cl)} for entry {cl}"
+        )
+
+    def create_comparison_levels(
+        self, sql_dialect: SplinkDialect
+    ) -> List[ComparisonLevelCreator]:
+        comparison_level_creators = [
+            self._convert_to_creator(cl) for cl in self._comparison_levels
+        ]
+        return comparison_level_creators
+
+    def create_description(self) -> str:
+        # TODO: fleshed out default description?
+        return (
+            self._description
+            if self._description is not None
+            else f"Comparison for {self._output_column_name}"
+        )
+
+    def create_output_column_name(self) -> str:
+        return self._output_column_name
 
 
 class ExactMatch(ComparisonCreator):
