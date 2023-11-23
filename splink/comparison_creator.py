@@ -18,9 +18,6 @@ class ComparisonCreator(ABC):
         """
         self.col_name = col_name
 
-        self._levels_m_probabilities = None
-        self._levels_u_probabilities = None
-
     # TODO: property?
     @abstractmethod
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
