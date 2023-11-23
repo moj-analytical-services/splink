@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, replace, field
 
 import sqlglot
 import sqlglot.expressions as exp
