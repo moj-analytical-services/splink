@@ -1,6 +1,5 @@
 from abc import ABC, abstractproperty
 from typing import TYPE_CHECKING
-from .input_column import InputColumn
 
 from .input_column import InputColumn
 
