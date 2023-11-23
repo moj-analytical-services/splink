@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import dataclass, replace, field
+from dataclasses import dataclass, field, replace
 
 import sqlglot
 import sqlglot.expressions as exp
 from sqlglot.errors import ParseError, TokenError
-from sqlglot.expressions import Expression
 
 from .default_from_jsonschema import default_value_from_schema
 
@@ -32,6 +31,7 @@ class ColumnTreeBuilder:
     """
 
     name: str
+    sqlglot_dialect: str = None
     table: str = field(default=None, repr=False)
     quoted: bool = True
     # key_or_field is the "lat" part of coords["lat"] or the 1 parts of coords[1]
@@ -84,6 +84,10 @@ class ColumnTreeBuilder:
         else:
             return column
 
+    @property
+    def sql(self):
+        return self.as_sqlglot_expression_tree().sql(self.sqlglot_dialect)
+
     @classmethod
     def from_raw_column_name_or_column_reference(
         cls, name: str, sqlglot_name: str
@@ -98,8 +102,8 @@ class ColumnTreeBuilder:
         """
         try:
             tree = sqlglot.parse_one(name, read=sqlglot_name)
-            return cls._parse_sql_tree_to_column_tree_builder(name, tree)
-        except:
+            return cls._parse_sql_tree_to_column_tree_builder(name, tree, sqlglot_name)
+        except (ParseError, TokenError):
             q_s, q_e = _get_dialect_quotes(sqlglot_name)
             # The parse statement will error in cases such as: sur "name"['lat']
             sqlglot.parse_one(f"{q_s}{name}{q_e}", read=sqlglot_name)
@@ -108,18 +112,20 @@ class ColumnTreeBuilder:
 
             # Construct the column manually if it can be parsed with quotes.
             # This is useful for illegal columns such as test[ing, test'ing, test"ing
-            return cls(name=identifier, key_or_field=index)
+            return cls(
+                name=identifier, sqlglot_dialect=sqlglot_name, key_or_field=index
+            )
 
     @classmethod
     def _parse_sql_tree_to_column_tree_builder(
-        cls, name: str, tree: sqlglot.Expression
+        cls, name: str, tree: sqlglot.Expression, sqlglot_dialect: str
     ) -> ColumnTreeBuilder:
         # Columns which contains spaces will be registered as aliases.
         # Check that no quotes have been applied to either end of the name:
         # - "sur" name, sur "name" are both invalid column names
         if tree.find(exp.Alias):
             if any([identifier.quoted for identifier in tree.find_all(exp.Identifier)]):
-                raise ParseError(
+                raise ValueError(
                     f"The supplied column name '{name}' contains quotes and cannot be "
                     "parsed as a valid SQL identifier."
                 )
@@ -134,16 +140,17 @@ class ColumnTreeBuilder:
             # > [(LITERAL this: lat, is_string: True)]
             return cls(
                 name=tree.find(exp.Column).name,
+                sqlglot_dialect=sqlglot_dialect,
                 key_or_field=tree.find(exp.Literal),
             )
 
         # If the column has already been quoted, parse it
         if tree.find(exp.Identifier).args.get("quoted"):
-            return cls(name=tree.name)
+            return cls(name=tree.name, sqlglot_dialect=sqlglot_dialect)
 
         # If our column does not contain a quoted identifier, we can safely return
         # the column builder
-        return cls(name)
+        return cls(name, sqlglot_dialect=sqlglot_dialect)
 
     @staticmethod
     def manually_split_identifier_and_index(identifier: str) -> [str, str]:
@@ -162,15 +169,12 @@ class InputColumn:
     """
     A wrapper class that simplifies interactions with a ColumnTreeBuilder instance.
 
-    This class serves as a simpler interface to the ColumnTreeBuilder, which is responsible
-    for building and returning a SQLglot expression tree representing SQL column references.
+    This class serves as a simpler interface to the ColumnTreeBuilder, which is
+    responsible for building, manipulating and returning SQLglot expression trees
+    and SQL strings, representing column references.
+
     The InputColumn class provides user-friendly helper methods for commonly required
     column manipulations and transformations.
-
-    Methods such as '.name_l' run the relevant of building steps on the tree
-    builder and convert the resulting tree into a valid SQL column reference. These methods
-    make it easier to perform operations like quoting, adding prefixes/suffixes, and
-    formatting column references according to specific SQL dialects.
 
     The input can be either the raw identifier, or an identifier with
     SQL-specific identifier quotes.
@@ -256,8 +260,7 @@ class InputColumn:
         # See: exp.Identifier(this='`test`', quoted=True).sql("spark")
         column_builder = self.base_column_tree.unquote()
         # Add both the prefix and suffix arguments to the column
-        column_alias_tree = column_builder.add_prefix(prefix).add_suffix(suffix)
-        column_alias_string = self.column_tree_to_sql(column_alias_tree)
+        column_alias_string = column_builder.add_prefix(prefix).add_suffix(suffix).sql
 
         column_with_table = self.base_column_tree.add_table(table).add_prefix(prefix)
         tree = column_with_table.add_alias(column_alias_string)
@@ -265,18 +268,15 @@ class InputColumn:
 
     @property
     def name(self):
-        tree = self.base_column_tree
-        return self.column_tree_to_sql(tree)
+        return self.base_column_tree.sql
 
     @property
     def name_l(self):
-        tree = self.base_column_tree.add_suffix("_l")
-        return self.column_tree_to_sql(tree)
+        return self.base_column_tree.add_suffix("_l").sql
 
     @property
     def name_r(self):
-        tree = self.base_column_tree.add_suffix("_r")
-        return self.column_tree_to_sql(tree)
+        return self.base_column_tree.add_suffix("_r").sql
 
     @property
     def names_l_r(self):
@@ -296,23 +296,19 @@ class InputColumn:
 
     @property
     def bf_name(self) -> str:
-        tree = self.base_column_tree.add_prefix(self._bf_prefix)
-        return self.column_tree_to_sql(tree)
+        return self.base_column_tree.add_prefix(self._bf_prefix).sql
 
     @property
     def tf_name(self) -> str:
-        tree = self.base_column_tree.add_prefix(self._tf_prefix)
-        return self.column_tree_to_sql(tree)
+        return self.base_column_tree.add_prefix(self._tf_prefix).sql
 
     @property
     def tf_name_l(self) -> str:
-        tree = self.base_column_tree.add_prefix(self._tf_prefix).add_suffix("_l")
-        return self.column_tree_to_sql(tree)
+        return self.base_column_tree.add_prefix(self._tf_prefix).add_suffix("_l").sql
 
     @property
     def tf_name_r(self) -> str:
-        tree = self.base_column_tree.add_prefix(self._tf_prefix).add_suffix("_r")
-        return self.column_tree_to_sql(tree)
+        return self.base_column_tree.add_prefix(self._tf_prefix).add_suffix("_r").sql
 
     @property
     def tf_name_l_r(self) -> list[str]:
@@ -339,8 +335,7 @@ class InputColumn:
     def __repr__(self):
         return (
             f"{self.__class__.__name__}(\n     "
-            f"{self.base_column_tree.__repr__()},\n     "
-            f"sql_dialect={self.sqlglot_name}\n)"
+            f"{self.base_column_tree.__repr__()}\n)"
         )
 
 
