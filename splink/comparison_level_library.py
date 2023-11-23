@@ -27,6 +27,14 @@ def unsupported_splink_dialects(unsupported_dialects: List[str]):
     return decorator
 
 
+def _translate_sql_string(
+    sqlglot_base_dialect_sql: str, to_sqlglot_dialect: str
+) -> str:
+    tree = parse_one(sqlglot_base_dialect_sql)
+
+    return tree.sql(dialect=to_sqlglot_dialect)
+
+
 def validate_distance_threshold(
     lower_bound: Union[int, float],
     upper_bound: Union[int, float],
@@ -325,9 +333,7 @@ class DatediffLevel(ComparisonLevelCreator):
             f"<= {self.date_threshold}"
         )
 
-        tree = parse_one(sqlglot_base_dialect_sql)
-
-        return tree.sql(dialect=sqlglot_dialect_name)
+        return _translate_sql_string(sqlglot_base_dialect_sql, sqlglot_dialect_name)
 
     def create_label_for_charts(self) -> str:
         return (
@@ -418,9 +424,7 @@ class ArrayIntersectLevel(ComparisonLevelCreator):
             ARRAY_SIZE(ARRAY_INTERSECT({col.name_l}, {col.name_r}))
                 >= {self.min_intersection}
                 """
-        tree = parse_one(sqlglot_base_dialect_sql)
-
-        return tree.sql(dialect=sqlglot_dialect_name)
+        return _translate_sql_string(sqlglot_base_dialect_sql, sqlglot_dialect_name)
 
     def create_label_for_charts(self) -> str:
         return f"Array intersection size >= {self.min_intersection}"
