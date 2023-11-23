@@ -162,8 +162,17 @@ class ColumnTreeBuilder:
 
 class InputColumn:
     """
-    Represents a SQL column or column reference
-    Handles SQL dialect-specific issues such as identifier quoting.
+    A wrapper class that simplifies interactions with a ColumnTreeBuilder instance.
+
+    This class serves as a simpler interface to the ColumnTreeBuilder, which is responsible
+    for building and returning a SQLglot expression tree representing SQL column references.
+    The InputColumn class provides user-friendly helper methods for commonly required
+    column manipulations and transformations.
+
+    Methods such as '.name_l' run the relevant of building steps on the tree
+    builder and convert the resulting tree into a valid SQL column reference. These methods
+    make it easier to perform operations like quoting, adding prefixes/suffixes, and
+    formatting column references according to specific SQL dialects.
 
     The input can be either the raw identifier, or an identifier with
     SQL-specific identifier quotes.
