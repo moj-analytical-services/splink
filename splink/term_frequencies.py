@@ -11,7 +11,6 @@ from pandas import concat, cut
 
 from .charts import altair_or_json, load_chart_definition
 from .input_column import InputColumn
-from .sql_transform import remove_quotes_from_identifiers
 
 # https://stackoverflow.com/questions/39740632/python-type-hinting-without-cyclic-imports
 if TYPE_CHECKING:
