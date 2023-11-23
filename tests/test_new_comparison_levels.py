@@ -54,6 +54,10 @@ cll_settings = {
         comparison_city,
         comparison_email,
     ],
+    "blocking_rules_to_generate_predictions": [
+        "l.dob = r.dob",
+        "l.first_name = r.first_name",
+    ],
 }
 
 
@@ -102,6 +106,10 @@ cl_settings = {
         comparison_city,
         comparison_email,
         comparison_dob,
+    ],
+    "blocking_rules_to_generate_predictions": [
+        "l.dob = r.dob",
+        "l.first_name = r.first_name",
     ],
 }
 
