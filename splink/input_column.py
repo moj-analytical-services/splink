@@ -206,7 +206,7 @@ class InputColumn:
 
         # Generate a ColumnTreeBuilder from the input column
         tree_builder = ColumnTreeBuilder.from_raw_column_name_or_column_reference(
-            name=raw_column_name_or_column_reference, sqlglot_name=sql_dialect
+            name=raw_column_name_or_column_reference, sqlglot_name=self.sqlglot_name
         )
         self.base_column_tree: ColumnTreeBuilder = tree_builder
 
@@ -250,9 +250,6 @@ class InputColumn:
         input_column_copy = deepcopy(self)
         input_column_copy.sqlglot_name = None
         return input_column_copy
-
-    def column_tree_to_sql(self, column_tree: ColumnTreeBuilder) -> str:
-        return column_tree.as_sqlglot_expression_tree().sql(self.sqlglot_name)
 
     def _table_name_as(self, table: str, prefix: str = "", suffix: str = "") -> str:
         # Remove quotes, if applied. This prevents
