@@ -2101,7 +2101,7 @@ class Linker:
         self,
         df_predict: SplinkDataFrame,
         df_clustered: SplinkDataFrame,
-        threshold_match_probability: float = None,
+        threshold_match_probability: float,
     ):
         """Generates a table containing cluster metrics and returns a Splink dataframe
 
