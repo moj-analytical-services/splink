@@ -110,8 +110,14 @@ class ComparisonCreator(ABC):
     @m_probabilities.setter
     def m_probabilities(self, m_probabilities: list[float]):
         if m_probabilities:
-            if len(m_probabilities) != self.num_non_null_levels:
-                raise ValueError("nope")
+            num_probs_supplied = len(m_probabilities)
+            num_non_null_levels = self.num_non_null_levels
+            if num_probs_supplied != self.num_non_null_levels:
+                raise ValueError(
+                    f"Comparison has {num_non_null_levels} non-null levels, "
+                    f"but received {num_probs_supplied} values for m_probabilities. "
+                    "These numbers must be the same."
+                )
             self._m_probabilities = m_probabilities
 
     @final
@@ -123,8 +129,14 @@ class ComparisonCreator(ABC):
     @u_probabilities.setter
     def u_probabilities(self, u_probabilities: list[float]):
         if u_probabilities:
-            if len(u_probabilities) != self.num_non_null_levels:
-                raise ValueError("nope")
+            num_probs_supplied = len(u_probabilities)
+            num_non_null_levels = self.num_non_null_levels
+            if num_probs_supplied != self.num_non_null_levels:
+                raise ValueError(
+                    f"Comparison has {num_non_null_levels} non-null levels, "
+                    f"but received {num_probs_supplied} values for u_probabilities. "
+                    "These numbers must be the same."
+                )
             self._u_probabilities = u_probabilities
 
     def __repr__(self) -> str:

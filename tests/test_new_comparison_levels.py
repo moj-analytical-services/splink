@@ -85,6 +85,7 @@ def test_cl_creators_run_predict(dialect, test_helpers):
 
 
 def test_cl_configure():
+    # this is fine:
     cl.LevenshteinAtThresholds("col", [1, 2, 3]).configure(
         m_probabilities=[0.4, 0.1, 0.1, 0.3, 0.1]
     )
@@ -95,4 +96,4 @@ def test_cl_configure():
 
     with pytest.raises(ValueError):
         # too few probabilities
-        cl.LevenshteinAtThresholds("col").configure(u_probabilities=[0.5, 0.5])
+        cl.LevenshteinAtThresholds("col", [1, 2]).configure(u_probabilities=[0.5, 0.5])
