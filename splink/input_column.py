@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, replace, field
 
 import sqlglot
 import sqlglot.expressions as exp
@@ -13,17 +13,26 @@ from .default_from_jsonschema import default_value_from_schema
 
 @dataclass
 class ColumnTreeBuilder:
-    """A builder class that allows you to copy and modify an input column.
+    """
+    A class that encapsulates the column name (e.g. first_name or first name),
+    or column reference (e.g. coords["lat"] or coords[0]) that represents an
+    input column into Splink.
 
-    Modifications copy the base column and can be chained to produce a fresh
-    version of the column.
+    The class facilitates common manipulations of the syntax tree such as
+    adding prefixes, suffixes, an associated table, identifiers, quotes etc.
 
-    Columns can also be wrapped in SQLglot expressions by appending them to the
-    base class.
+    The class limits its concerns to modifying the column name or reference itself,
+    as opposed to further generic manipulations such as wrapping with LOWER() etc.
+
+    All methods produce a copy of the object to prevent inadvertent
+    modification of the original object.
+
+    The build_column_tree method returns a modified column name or
+    a column reference as a sqlglot expression tree.
     """
 
     name: str
-    table: str = None
+    table: str = field(None, repr=False)
     quoted: bool = True
     column_reference: exp.Identifier = None  # the JSON index in 'surname['lat']'
 
@@ -85,13 +94,6 @@ class ColumnTreeBuilder:
         cls, column_tree: exp.Column, column_reference: exp.Identifier = None
     ):
         return cls(column_tree.name, column_reference=column_reference)
-
-    def __repr__(self):
-        return (
-            f"{self.__class__.__name__}("
-            f"name='{self.name}', quoted={self.quoted}, "
-            f"column_reference={self.column_reference.sql()}"
-        )
 
 
 class InputColumn:
@@ -231,11 +233,6 @@ class InputColumn:
         input_column_copy = deepcopy(self)
         input_column_copy.column_tree_builder = new_builder
         return input_column_copy
-
-    def change_input_column_name(self, new_name: str):
-        return self._copy_with_new_column_builder(
-            self.column_tree_builder.change_name(new_name)
-        )
 
     def unquote(self) -> InputColumn:
         return self._copy_with_new_column_builder(self.column_tree_builder.unquote())
