@@ -18,9 +18,25 @@ class ComparisonCreator(ABC):
         """
         self.col_name = col_name
 
+        self._levels_m_probabilities = None
+        self._levels_u_probabilities = None
+
+    # TODO: property?
     @abstractmethod
     def create_comparison_levels(self) -> List[ComparisonLevelCreator]:
         pass
+
+    @final
+    @property
+    def num_levels(self) -> int:
+        return len(self.create_comparison_levels())
+
+    @final
+    @property
+    def num_non_null_levels(self) -> int:
+        return len(
+            [cl for cl in self.create_comparison_levels() if not cl.is_null_level]
+        )
 
     @abstractmethod
     def create_description(self) -> str:
@@ -38,12 +54,30 @@ class ComparisonCreator(ABC):
 
     @final
     def create_comparison_dict(self, sql_dialect_str: str) -> dict:
+        comparison_levels = self.create_comparison_levels()
+
+        if self._levels_m_probabilities:
+            m_values = self._levels_m_probabilities.copy()
+            comparison_levels = [
+                cl.configure(
+                    m_probability=m_values.pop(0) if not cl.is_null_level else None,
+                )
+                for cl in comparison_levels
+            ]
+        if self._levels_u_probabilities:
+            u_values = self._levels_u_probabilities.copy()
+            comparison_levels = [
+                cl.configure(
+                    u_probability=u_values.pop(0) if not cl.is_null_level else None,
+                )
+                for cl in comparison_levels
+            ]
+
         level_dict = {
             "comparison_description": self.create_description(),
             "output_column_name": self.create_output_column_name(),
             "comparison_levels": [
-                cl.get_comparison_level(sql_dialect_str)
-                for cl in self.create_comparison_levels()
+                cl.get_comparison_level(sql_dialect_str) for cl in comparison_levels
             ],
         }
 
@@ -52,6 +86,23 @@ class ComparisonCreator(ABC):
     @final
     def input_column(self, sql_dialect: SplinkDialect) -> InputColumn:
         return InputColumn(self.col_name, sql_dialect=sql_dialect.sqlglot_name)
+
+    @final
+    def configure(
+        self,
+        *,
+        m_probabilities: list[float] = None,
+        u_probabilities: list[float] = None,
+    ) -> "ComparisonCreator":
+        if m_probabilities:
+            if len(m_probabilities) != self.num_non_null_levels:
+                raise ValueError("nope")
+        if u_probabilities:
+            if len(u_probabilities) != self.num_non_null_levels:
+                raise ValueError("nope")
+        self._levels_m_probabilities = m_probabilities
+        self._levels_u_probabilities = u_probabilities
+        return self
 
     def __repr__(self) -> str:
         return (
