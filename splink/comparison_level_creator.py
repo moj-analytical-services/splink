@@ -87,6 +87,16 @@ class ComparisonLevelCreator(ABC):
 
         return self
 
+    @final
+    @property
+    def is_null_level(self) -> bool:
+        return getattr(self, "_is_null_level", False)
+
+    @final
+    @is_null_level.setter
+    def is_null_level(self, is_null_level: bool):
+        self._is_null_level = is_null_level
+
     def __repr__(self) -> str:
         return (
             f"Comparison level generator for {self.create_label_for_charts()}. "
