@@ -86,9 +86,7 @@ class ColumnTreeBuilder:
 
     @classmethod
     def from_raw_column_name_or_column_reference(
-        cls,
-        name: str,
-        sqlglot_name: str
+        cls, name: str, sqlglot_name: str
     ) -> ColumnTreeBuilder:
         """
         Parses a given input name into a ColumnTreeBuilder.
@@ -204,9 +202,8 @@ class InputColumn:
 
         # Generate a ColumnTreeBuilder from the input column
         tree_builder = ColumnTreeBuilder.from_raw_column_name_or_column_reference(
-                name=raw_column_name_or_column_reference,
-                sqlglot_name=sql_dialect
-            )
+            name=raw_column_name_or_column_reference, sqlglot_name=sql_dialect
+        )
         self.base_column_tree: ColumnTreeBuilder = tree_builder
 
     def register_dialect(self, sql_dialect: str):
