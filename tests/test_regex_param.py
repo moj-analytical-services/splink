@@ -61,7 +61,7 @@ def postcode_levels(cll):
                 distance_threshold=1,
                 regex_extract="^[A-Z]{1,2}[0-9][A-Z0-9]?",
             ),
-            cll.jaro_level(
+            cll.JaroLevel(
                 "postcode", distance_threshold=1, regex_extract="^[A-Z]{1,2}"
             ),
             cll.ElseLevel(),

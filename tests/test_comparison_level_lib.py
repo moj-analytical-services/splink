@@ -69,10 +69,10 @@ def test_perc_difference(test_helpers, dialect):
                 "output_column_name": "amount",
                 "comparison_levels": [
                     cll.NullLevel("amount"),
-                    cll.percentage_difference_level("amount", 0.0),  # 4
-                    cll.percentage_difference_level("amount", (0.2 / 1.2) + 1e-4),  # 3
-                    cll.percentage_difference_level("amount", (0.2 / 1.0) + 1e-4),  # 2
-                    cll.percentage_difference_level("amount", (60 / 200) + 1e-4),  # 1
+                    cll.PercentageDifferenceLevel("amount", 0.0),  # 4
+                    cll.PercentageDifferenceLevel("amount", (0.2 / 1.2) + 1e-4),  # 3
+                    cll.PercentageDifferenceLevel("amount", (0.2 / 1.0) + 1e-4),  # 2
+                    cll.PercentageDifferenceLevel("amount", (60 / 200) + 1e-4),  # 1
                     cll.ElseLevel(),
                 ],
             },
@@ -179,7 +179,7 @@ def test_levenshtein_level(test_helpers, dialect):
 
 # postgres has no Damerau-Levenshtein
 @mark_with_dialects_excluding("postgres")
-def test_damerau_levenshtein_level(test_helpers, dialect):
+def test_DamerauLevenshteinLevel(test_helpers, dialect):
     helper = test_helpers[dialect]
     cll = helper.cll
 
@@ -220,10 +220,10 @@ def test_damerau_levenshtein_level(test_helpers, dialect):
                 "output_column_name": "name",
                 "comparison_levels": [
                     cll.NullLevel("name"),
-                    cll.damerau_levenshtein_level("name", 0),  # 4
-                    cll.damerau_levenshtein_level("name", 1),  # 3
-                    cll.damerau_levenshtein_level("name", 2),  # 2
-                    cll.damerau_levenshtein_level("name", 3),  # 1
+                    cll.DamerauLevenshteinLevel("name", 0),  # 4
+                    cll.DamerauLevenshteinLevel("name", 1),  # 3
+                    cll.DamerauLevenshteinLevel("name", 2),  # 2
+                    cll.DamerauLevenshteinLevel("name", 3),  # 1
                     cll.ElseLevel(),  # 0
                 ],
             },
