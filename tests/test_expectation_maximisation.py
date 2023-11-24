@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.comparison_library as cl
+import splink.comparison_library as cl
 from splink.duckdb.linker import DuckDBLinker
 from splink.exceptions import EMTrainingException
 

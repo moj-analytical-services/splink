@@ -5,8 +5,8 @@ import pyspark.sql.functions as f
 import pytest
 from pyspark.sql.types import StringType, StructField, StructType
 
-import splink.spark.comparison_level_library as cll
-import splink.spark.comparison_library as cl
+import splink.comparison_level_library as cll
+import splink.comparison_library as cl
 from splink.spark.linker import SparkLinker
 
 from .basic_settings import get_settings_dict, name_comparison

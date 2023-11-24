@@ -1,6 +1,6 @@
 import pandas as pd
 
-import splink.duckdb.comparison_library as cl
+import splink.comparison_library as cl
 from splink.duckdb.linker import DuckDBLinker
 
 # ground truth:
