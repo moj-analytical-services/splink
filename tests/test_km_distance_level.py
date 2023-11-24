@@ -26,9 +26,10 @@ def test_simple_run(dialect):
 
 @mark_with_dialects_excluding()
 def test_simple_run_cll(dialect):
-    (cll
-        .DistanceInKMLevel(lat_col="lat", long_col="long", km_threshold=1)
-        .create_level_dict(dialect)
+    (
+        cll.DistanceInKMLevel(
+            lat_col="lat", long_col="long", km_threshold=1
+        ).create_level_dict(dialect)
     )
     # cll.DistanceInKMLevel(
     #     lat_col="latlong[0]", long_col="latlong[1]", km_threshold=0.1
