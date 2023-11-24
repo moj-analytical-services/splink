@@ -89,7 +89,7 @@ comparison_name = cl.CustomComparison(
             "sql_condition": (
                 "concat(first_name_l, surname_l) = concat(first_name_r, surname_r)"
             ),
-            "label_for_charts": "both names matching"
+            "label_for_charts": "both names matching",
         },
         cll.CustomLevel(
             (
