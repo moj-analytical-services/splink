@@ -142,9 +142,7 @@ def test_composition_outputs(test_helpers, dialect):
     # For testing the cll version
     dbl_null = cll.or_(cll.NullLevel("forename"), cll.NullLevel("surname"))
     both = cll.and_(cll.ExactMatchLevel("forename"), cll.ExactMatchLevel("surname"))
-    either = cll.or_(
-        cll.ExactMatchLevel("forename"), cll.ExactMatchLevel("surname")
-    )
+    either = cll.or_(cll.ExactMatchLevel("forename"), cll.ExactMatchLevel("surname"))
 
     full_name = {
         "output_column_name": "full_name",

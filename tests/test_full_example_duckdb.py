@@ -293,9 +293,7 @@ def test_small_example_duckdb(tmp_path):
                     cll.ColumnsReversedLevel(
                         "first_name", "surname", tf_adjustment_column="full_name"
                     ),
-                    cll.ExactMatchLevel(
-                        "first_name", term_frequency_adjustments=True
-                    ),
+                    cll.ExactMatchLevel("first_name", term_frequency_adjustments=True),
                     cll.ElseLevel(),
                 ],
             },
