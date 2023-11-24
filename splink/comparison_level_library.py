@@ -1,6 +1,6 @@
 from typing import List, Union
 
-from sqlglot import parse_one
+from sqlglot import TokenError, parse_one
 
 from .comparison_level_creator import ComparisonLevelCreator
 from .comparison_level_sql import great_circle_distance_km_sql
@@ -28,9 +28,11 @@ def unsupported_splink_dialects(unsupported_dialects: List[str]):
 
 
 def _translate_sql_string(
-    sqlglot_base_dialect_sql: str, to_sqlglot_dialect: str
+    sqlglot_base_dialect_sql: str,
+    to_sqlglot_dialect: str,
+    from_sqlglot_dialect: str = None,
 ) -> str:
-    tree = parse_one(sqlglot_base_dialect_sql)
+    tree = parse_one(sqlglot_base_dialect_sql, read=from_sqlglot_dialect)
 
     return tree.sql(dialect=to_sqlglot_dialect)
 
@@ -73,12 +75,35 @@ class ElseLevel(ComparisonLevelCreator):
 
 
 class CustomLevel(ComparisonLevelCreator):
-    def __init__(self, sql_condition: str, label_for_charts: str = None):
+    def __init__(
+        self,
+        sql_condition: str,
+        label_for_charts: str = None,
+        base_dialect_str: str = None,
+    ):
         self.sql_condition = sql_condition
         self.label_for_charts = label_for_charts
+        self.base_dialect_str = base_dialect_str
 
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
-        return self.sql_condition
+        sql_condition = self.sql_condition
+        if self.base_dialect_str is not None:
+            base_dialect = SplinkDialect.from_string(self.base_dialect_str)
+            base_dialect_sqlglot_name = base_dialect.sqlglot_name
+        else:
+            base_dialect_sqlglot_name = None
+
+        # as default, translate condition into our dialect
+        try:
+            sql_condition = _translate_sql_string(
+                sql_condition, sql_dialect.sqlglot_name, base_dialect_sqlglot_name
+            )
+        # if we hit a sqlglot error, assume users knows what they are doing,
+        # e.g. it is something custom / unknown to sqlglot
+        # error will just appear when they try to use it
+        except TokenError:
+            pass
+        return sql_condition
 
     def create_label_for_charts(self) -> str:
         return (
