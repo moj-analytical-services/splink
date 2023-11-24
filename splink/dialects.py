@@ -1,4 +1,11 @@
 from abc import ABC, abstractproperty
+from typing import TYPE_CHECKING
+from .input_column import InputColumn
+
+from .input_column import InputColumn
+
+if TYPE_CHECKING:
+    from .comparison_level_creator import ComparisonLevelCreator
 
 
 class SplinkDialect(ABC):
@@ -21,9 +28,27 @@ class SplinkDialect(ABC):
         )
 
     @property
+    def damerau_levenshtein_function_name(self):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'Damerau-Levenshtein' function"
+        )
+
+    @property
     def jaro_winkler_function_name(self):
         raise NotImplementedError(
             f"Backend '{self.name}' does not have a 'Jaro-Winkler' function"
+        )
+
+    @property
+    def jaro_function_name(self):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'Jaro' function"
+        )
+
+    @property
+    def jaccard_function_name(self):
+        raise NotImplementedError(
+            f"Backend '{self.name}' does not have a 'Jaccard' function"
         )
 
 
@@ -37,8 +62,20 @@ class DuckDBDialect(SplinkDialect):
         return "levenshtein"
 
     @property
+    def damerau_levenshtein_function_name(self):
+        return "damerau_levenshtein"
+
+    @property
+    def jaro_function_name(self):
+        return "jaro_similarity"
+
+    @property
     def jaro_winkler_function_name(self):
         return "jaro_winkler_similarity"
+
+    @property
+    def jaccard_function_name(self):
+        return "jaccard"
 
 
 class SparkDialect(SplinkDialect):
@@ -51,8 +88,20 @@ class SparkDialect(SplinkDialect):
         return "levenshtein"
 
     @property
+    def damerau_levenshtein_function_name(self):
+        return "damerau_levenshtein"
+
+    @property
+    def jaro_function_name(self):
+        return "jaro_sim"
+
+    @property
     def jaro_winkler_function_name(self):
         return "jaro_winkler"
+
+    @property
+    def jaccard_function_name(self):
+        return "jaccard"
 
 
 class SqliteDialect(SplinkDialect):
@@ -67,6 +116,14 @@ class SqliteDialect(SplinkDialect):
         return "levenshtein"
 
     @property
+    def damerau_levenshtein_function_name(self):
+        return "damerau_levenshtein"
+
+    @property
+    def jaro_function_name(self):
+        return "jaro_sim"
+
+    @property
     def jaro_winkler_function_name(self):
         return "jaro_winkler"
 
@@ -79,6 +136,53 @@ class PostgresDialect(SplinkDialect):
     @property
     def levenshtein_function_name(self):
         return "levenshtein"
+
+    def date_diff(self, clc: "ComparisonLevelCreator"):
+        """Note some of these functions are not native postgres functions and
+        instead are UDFs which are automatically registered by Splink
+        """
+
+        if clc.date_format is None:
+            clc.date_format = "yyyy-MM-dd"
+
+        col = InputColumn(clc.col_name, sql_dialect=self.sqlglot_name)
+
+        if clc.cast_strings_to_date:
+            datediff_args = f"""
+                to_date({col.name_l}, '{clc.date_format}'),
+                to_date({col.name_r}, '{clc.date_format}')
+            """
+        else:
+            datediff_args = f"{col.name_l}, {col.name_r}"
+
+        if clc.date_metric == "day":
+            date_f = f"""
+                abs(
+                    datediff(
+                        {datediff_args}
+                    )
+                )
+            """
+        elif clc.date_metric in ["month", "year"]:
+            date_f = f"""
+                floor(abs(
+                    ave_months_between(
+                        {datediff_args}
+                    )"""
+            if clc.date_metric == "year":
+                date_f += " / 12))"
+            else:
+                date_f += "))"
+        return f"""
+            {date_f} <= {clc.date_threshold}
+        """
+
+    def array_intersect(self, clc: "ComparisonLevelCreator"):
+        col = InputColumn(clc.col_name, sql_dialect=self.sqlglot_name)
+        threshold = clc.min_intersection
+        return f"""
+        CARDINALITY(ARRAY_INTERSECT({col.name_l}, {col.name_r})) >= {threshold}
+        """.strip()
 
 
 class AthenaDialect(SplinkDialect):

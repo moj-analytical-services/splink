@@ -33,7 +33,7 @@ class SplinkDataFrame:
     @property
     def columns_escaped(self):
         cols = self.columns
-        return [c.name() for c in cols]
+        return [c.name for c in cols]
 
     def validate():
         pass

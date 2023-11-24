@@ -4,18 +4,9 @@ from typing import final
 
 from .comparison_level import ComparisonLevel
 from .dialects import SplinkDialect
-from .input_column import InputColumn
 
 
 class ComparisonLevelCreator(ABC):
-    def __init__(self, col_name: str = None):
-        """
-        Class to author ComparisonLevels
-        Args:
-            col_name (str): Input column name
-        """
-        self.col_name = col_name
-
     @abstractmethod
     def create_sql(self, sql_dialect: SplinkDialect) -> str:
         pass
@@ -46,10 +37,6 @@ class ComparisonLevelCreator(ABC):
                 level_dict[attr] = value
 
         return level_dict
-
-    @final
-    def input_column(self, sql_dialect: SplinkDialect) -> InputColumn:
-        return InputColumn(self.col_name, sql_dialect=sql_dialect.sqlglot_name)
 
     @final
     def configure(

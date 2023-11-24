@@ -4,99 +4,52 @@ import warnings
 
 import sqlglot
 
-from .blocking import BlockingRule
+from .blocking import BlockingRule, blocking_rule_to_obj
 from .blocking_rule_composition import and_
 from .misc import ensure_is_list
 from .sql_transform import add_quotes_and_table_prefix
 
 
-class exact_match_rule(BlockingRule):
-    def __init__(
-        self,
-        col_name: str,
-        salting_partitions: int = 1,
-    ) -> BlockingRule:
-        """Represents an exact match blocking rule.
+def exact_match_rule(
+    col_name: str,
+    _sql_dialect: str,
+    salting_partitions: int = None,
+) -> BlockingRule:
+    """Represents an exact match blocking rule.
 
-        **DEPRECATED:**
-        `exact_match_rule` is deprecated. Please use `block_on`
-        instead, which acts as a wrapper with additional functionality.
+    **DEPRECATED:**
+    `exact_match_rule` is deprecated. Please use `block_on`
+    instead, which acts as a wrapper with additional functionality.
 
-        Args:
-            col_name (str): Input column name, or a str represent a sql
-                statement you'd like to match on. For example, `surname` or
-                `"substr(surname,1,2)"` are both valid.
-            salting_partitions (optional, int): Whether to add salting
-                to the blocking rule. More information on salting can
-                be found within the docs. Salting is currently only valid
-                for Spark.
+    Args:
+        col_name (str): Input column name, or a str represent a sql
+            statement you'd like to match on. For example, `surname` or
+            `"substr(surname,1,2)"` are both valid.
+        salting_partitions (optional, int): Whether to add salting
+            to the blocking rule. More information on salting can
+            be found within the docs. Salting is currently only valid
+            for Spark.
+    """
+    warnings.warn(
+        "`exact_match_rule` is deprecated; use `block_on`",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
-        Examples:
-            === ":simple-duckdb: DuckDB"
-                Simple Exact match level
-                ``` python
-                import splink.duckdb.blocking_rule_library as brl
-                brl.exact_match_rule("name")
+    syntax_tree = sqlglot.parse_one(col_name, read=_sql_dialect)
 
-                sql = "substr(surname,1,2)"
-                brl.exact_match_rule(sql)
-                ```
-            === ":simple-apachespark: Spark"
-                Simple Exact match level
-                ``` python
-                import splink.spark.blocking_rule_library as brl
-                brl.exact_match_rule("name", salting_partitions=1)
+    l_col = add_quotes_and_table_prefix(syntax_tree, "l").sql(_sql_dialect)
+    r_col = add_quotes_and_table_prefix(syntax_tree, "r").sql(_sql_dialect)
 
-                sql = "substr(surname,1,2)"
-                brl.exact_match_rule(sql)
-                ```
-            === ":simple-amazonaws: Athena"
-                Simple Exact match level
-                ``` python
-                import splink.athena.blocking_rule_library as brl
-                brl.exact_match_rule("name")
+    blocking_rule = f"{l_col} = {r_col}"
 
-                sql = "substr(surname,1,2)"
-                brl.exact_match_rule(sql)
-                ```
-            === ":simple-sqlite: SQLite"
-                Simple Exact match level
-                ``` python
-                import splink.sqlite.blocking_rule_library as brl
-                brl.exact_match_rule("name")
-
-                sql = "substr(surname,1,2)"
-                brl.exact_match_rule(sql)
-                ```
-            === "PostgreSQL"
-                Simple Exact match level
-                ``` python
-                import splink.postgres.blocking_rule_library as brl
-                brl.exact_match_rule("name")
-
-                sql = "substr(surname,1,2)"
-                brl.exact_match_rule(sql)
-                ```
-        """
-
-        warnings.warn(
-            "`exact_match_rule` is deprecated; use `block_on`",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-        syntax_tree = sqlglot.parse_one(col_name, read=self._sql_dialect)
-
-        l_col = add_quotes_and_table_prefix(syntax_tree, "l").sql(self._sql_dialect)
-        r_col = add_quotes_and_table_prefix(syntax_tree, "r").sql(self._sql_dialect)
-
-        blocking_rule = f"{l_col} = {r_col}"
-        self._description = "Exact match"
-
-        super().__init__(
-            blocking_rule,
-            salting_partitions=salting_partitions,
-        )
+    return blocking_rule_to_obj(
+        {
+            "blocking_rule": blocking_rule,
+            "salting_partitions": salting_partitions,
+            "sql_dialect": _sql_dialect,
+        }
+    )
 
 
 def block_on(

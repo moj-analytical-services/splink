@@ -4,7 +4,7 @@ import logging
 from copy import deepcopy
 from typing import List
 
-from .blocking import BlockingRule, blocking_rule_to_obj
+from .blocking import BlockingRule, SaltedBlockingRule, blocking_rule_to_obj
 from .charts import m_u_parameters_chart, match_weights_chart
 from .comparison import Comparison
 from .comparison_level import ComparisonLevel
@@ -131,10 +131,10 @@ class Settings:
 
             used_by_brs = [InputColumn(c) for c in used_by_brs]
 
-            used_by_brs = [c.unquote().name() for c in used_by_brs]
+            used_by_brs = [c.unquote().name for c in used_by_brs]
             already_used = self._columns_used_by_comparisons
             already_used = [InputColumn(c) for c in already_used]
-            already_used = [c.unquote().name() for c in already_used]
+            already_used = [c.unquote().name for c in already_used]
 
             new_cols = list(set(used_by_brs) - set(already_used))
             a_cols.extend(new_cols)
@@ -160,7 +160,7 @@ class Settings:
         return self._link_type not in ["dedupe_only"]
 
     @property
-    def _source_dataset_input_column(self):
+    def _source_dataset_column_name(self):
         if self._source_dataset_column_name_is_required:
             s_else_d = self._from_settings_dict_else_default
             return s_else_d("source_dataset_column_name")
@@ -168,17 +168,12 @@ class Settings:
             return None
 
     @property
-    def _source_dataset_col(self):
-        input_column = self._source_dataset_input_column
-        return (input_column, InputColumn(input_column, self).name())
-
-    @property
     def _unique_id_input_columns(self) -> list[InputColumn]:
         cols = []
 
         if self._source_dataset_column_name_is_required:
             col = InputColumn(
-                self._source_dataset_input_column,
+                self._source_dataset_column_name,
                 settings_obj=self,
             )
             cols.append(col)
@@ -210,11 +205,11 @@ class Settings:
     def _columns_used_by_comparisons(self):
         cols_used = []
         if self._source_dataset_column_name_is_required:
-            cols_used.append(self._source_dataset_input_column)
+            cols_used.append(self._source_dataset_column_name)
         cols_used.append(self._unique_id_column_name)
         for cc in self.comparisons:
             cols = cc._input_columns_used_by_case_statement
-            cols = [c.name() for c in cols]
+            cols = [c.name for c in cols]
 
             cols_used.extend(cols)
         return dedupe_preserving_order(cols_used)
@@ -224,14 +219,14 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.l_name_as_l())
-            cols.append(uid_col.r_name_as_r())
+            cols.append(uid_col.l_name_as_l)
+            cols.append(uid_col.r_name_as_r)
 
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_blocking)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.l_r_names_as_l_r())
+            cols.extend(add_col.l_r_names_as_l_r)
 
         return dedupe_preserving_order(cols)
 
@@ -240,14 +235,14 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_l())
-            cols.append(uid_col.name_r())
+            cols.append(uid_col.name_l)
+            cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_comparison_vector_values)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.names_l_r())
+            cols.extend(add_col.names_l_r)
 
         if self._needs_matchkey_column:
             cols.append("match_key")
@@ -260,14 +255,14 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_l())
-            cols.append(uid_col.name_r())
+            cols.append(uid_col.name_l)
+            cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_bayes_factor_parts)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.names_l_r())
+            cols.extend(add_col.names_l_r)
 
         if self._needs_matchkey_column:
             cols.append("match_key")
@@ -280,14 +275,14 @@ class Settings:
         cols = []
 
         for uid_col in self._unique_id_input_columns:
-            cols.append(uid_col.name_l())
-            cols.append(uid_col.name_r())
+            cols.append(uid_col.name_l)
+            cols.append(uid_col.name_r)
 
         for cc in self.comparisons:
             cols.extend(cc._columns_to_select_for_predict)
 
         for add_col in self._additional_columns_to_retain:
-            cols.extend(add_col.names_l_r())
+            cols.extend(add_col.names_l_r)
 
         if self._needs_matchkey_column:
             cols.append("match_key")
@@ -441,7 +436,7 @@ class Settings:
             "comparisons": [cc._as_completed_dict() for cc in self.comparisons],
             "probability_two_random_records_match": rr_match,
             "unique_id_column_name": self._unique_id_column_name,
-            "source_dataset_column_name": self._source_dataset_input_column,
+            "source_dataset_column_name": self._source_dataset_column_name,
         }
         return {**self._settings_dict, **current_settings}
 
@@ -518,6 +513,6 @@ class Settings:
     @property
     def salting_required(self):
         for br in self._blocking_rules_to_generate_predictions:
-            if br.salting_partitions > 1:
+            if isinstance(br, SaltedBlockingRule):
                 return True
         return False
