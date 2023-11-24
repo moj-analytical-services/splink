@@ -9,14 +9,14 @@ from .decorator import mark_with_dialects_excluding
 def binary_composition_internals(clause, c_fun, cll, q):
     # Test what happens when only one value is fed
     # It should just report the regular outputs of our comparison level func
-    level = c_fun(cll.exact_match_level("tom", include_colname_in_charts_label=True))
+    level = c_fun(cll.ExactMatchLevel("tom", include_colname_in_charts_label=True))
     assert level.sql_condition == f"({q}tom_l{q} = {q}tom_r{q})"
     assert level.label_for_charts == "(Exact match tom)"
 
     # Two null levels composed
     level = c_fun(
-        cll.null_level("first_name"),
-        cll.null_level("surname"),
+        cll.NullLevel("first_name"),
+        cll.NullLevel("surname"),
         label_for_charts="This is a test",
     )
 
@@ -32,8 +32,8 @@ def binary_composition_internals(clause, c_fun, cll, q):
 
     # Exact match and null level composition
     level = c_fun(
-        cll.exact_match_level("first_name", include_colname_in_charts_label=True),
-        cll.null_level("first_name"),
+        cll.ExactMatchLevel("first_name", include_colname_in_charts_label=True),
+        cll.NullLevel("first_name"),
         m_probability=0.5,
     )
     assert (
@@ -48,7 +48,7 @@ def binary_composition_internals(clause, c_fun, cll, q):
 
     # cll.not_(or_(...)) composition
     level = cll.not_(
-        c_fun(cll.exact_match_level("first_name"), cll.exact_match_level("surname")),
+        c_fun(cll.ExactMatchLevel("first_name"), cll.ExactMatchLevel("surname")),
         m_probability=0.5,
     )
 
@@ -76,7 +76,7 @@ def test_binary_composition_internals_AND(test_helpers, dialect):
 def test_not():
     import splink.duckdb.duckdb_comparison_level_library as cll
 
-    level = cll.not_(cll.null_level("first_name"))
+    level = cll.not_(cll.NullLevel("first_name"))
     assert level.is_null_level is False
 
     # Integration test for a simple dictionary cl
@@ -93,33 +93,33 @@ def test_null_level_composition(test_helpers, dialect):
     cll = helper.cll
 
     c = cll.and_(
-        cll.null_level("first_name"), cll.null_level("surname"), is_null_level=True
+        cll.NullLevel("first_name"), cll.NullLevel("surname"), is_null_level=True
     )
     assert c.is_null_level
 
     c = cll.and_(
-        cll.null_level("first_name"),
-        cll.exact_match_level("surname"),
+        cll.NullLevel("first_name"),
+        cll.ExactMatchLevel("surname"),
         is_null_level=True,
     )
     assert c.is_null_level
 
-    c = cll.and_(cll.null_level("first_name"), cll.null_level("surname"))
+    c = cll.and_(cll.NullLevel("first_name"), cll.NullLevel("surname"))
     assert c.is_null_level
 
     c = cll.or_(
-        cll.null_level("first_name"), cll.null_level("surname"), is_null_level=True
+        cll.NullLevel("first_name"), cll.NullLevel("surname"), is_null_level=True
     )
     assert c.is_null_level
 
     c = cll.or_(
-        cll.null_level("first_name"),
-        cll.exact_match_level("surname"),
+        cll.NullLevel("first_name"),
+        cll.ExactMatchLevel("surname"),
         is_null_level=True,
     )
     assert c.is_null_level
 
-    c = cll.or_(cll.null_level("first_name"), cll.null_level("surname"))
+    c = cll.or_(cll.NullLevel("first_name"), cll.NullLevel("surname"))
     assert c.is_null_level
 
 
@@ -140,10 +140,10 @@ def test_composition_outputs(test_helpers, dialect):
     )
 
     # For testing the cll version
-    dbl_null = cll.or_(cll.null_level("forename"), cll.null_level("surname"))
-    both = cll.and_(cll.exact_match_level("forename"), cll.exact_match_level("surname"))
+    dbl_null = cll.or_(cll.NullLevel("forename"), cll.NullLevel("surname"))
+    both = cll.and_(cll.ExactMatchLevel("forename"), cll.ExactMatchLevel("surname"))
     either = cll.or_(
-        cll.exact_match_level("forename"), cll.exact_match_level("surname")
+        cll.ExactMatchLevel("forename"), cll.ExactMatchLevel("surname")
     )
 
     full_name = {
@@ -153,7 +153,7 @@ def test_composition_outputs(test_helpers, dialect):
             both,
             either,
             cll.not_(both),  # acts as an "else" level
-            cll.else_level(),
+            cll.ElseLevel(),
         ],
     }
 

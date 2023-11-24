@@ -78,8 +78,8 @@ def test_discussion_example(tmp_path):
     for rmc in [True, False]:
         for ricc in [True, False]:
             levels = [
-                cll.exact_match_level("fname", term_frequency_adjustments=True),
-                cll.null_level("fname"),
+                cll.ExactMatchLevel("fname", term_frequency_adjustments=True),
+                cll.NullLevel("fname"),
                 cll.distance_function_level(
                     "fname", "jaro_winkler_similarity", 0.8, True
                 ),
@@ -96,7 +96,7 @@ def test_discussion_example(tmp_path):
                     "tf_adjustment_column": "metaphone_fname",
                     "tf_adjustment_weight": 1.0,
                 },
-                cll.else_level(),
+                cll.ElseLevel(),
             ]
 
             settings_dict = {

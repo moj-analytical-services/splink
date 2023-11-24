@@ -159,11 +159,11 @@ def name_comparison(cll, sn: str) -> dict:
         "output_column_name": "first_name_and_surname",
         "comparison_levels": [
             # Null level
-            cll.or_(cll.null_level("first_name"), cll.null_level(sn)),
+            cll.or_(cll.NullLevel("first_name"), cll.NullLevel(sn)),
             # Exact match on fn and sn
             cll.or_(
-                cll.exact_match_level("first_name"),
-                cll.exact_match_level(sn),
+                cll.ExactMatchLevel("first_name"),
+                cll.ExactMatchLevel(sn),
                 m_probability=0.8,
                 label_for_charts="Exact match on first name or surname",
             ),
@@ -176,6 +176,6 @@ def name_comparison(cll, sn: str) -> dict:
                 ),
                 cll.LevenshteinLevel(sn, 3),
             ),
-            cll.else_level(0.1),
+            cll.ElseLevel(0.1),
         ],
     }

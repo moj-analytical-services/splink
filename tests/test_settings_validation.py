@@ -535,7 +535,7 @@ def test_comparison_validation():
     }
 
     # cll instead of cl
-    email_cc = cll.exact_match_level("email")
+    email_cc = cll.ExactMatchLevel("email")
     settings["comparisons"][3] = email_cc
     # random str
     settings["comparisons"][4] = "help"
@@ -547,10 +547,10 @@ def test_comparison_validation():
     settings["comparisons"].append(
         {
             "comparison_levels": [
-                sp_cll.null_level("test"),
+                sp_cll.NullLevel("test"),
                 # Invalid Spark cll
-                ath_cll.exact_match_level("test"),
-                cll.else_level(),
+                ath_cll.ExactMatchLevel("test"),
+                cll.ElseLevel(),
             ]
         }
     )

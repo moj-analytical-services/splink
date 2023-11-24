@@ -6,8 +6,8 @@ import pyarrow.csv as pa_csv
 import pyarrow.parquet as pq
 import pytest
 
-import splink.duckdb.comparison_level_library as cll
-import splink.duckdb.comparison_library as cl
+import splink.comparison_level_library as cll
+import splink.comparison_library as cl
 from splink.duckdb.linker import DuckDBLinker
 
 from .basic_settings import get_settings_dict, name_comparison
@@ -288,15 +288,15 @@ def test_small_example_duckdb(tmp_path):
             {
                 "output_column_name": "name",
                 "comparison_levels": [
-                    cll.null_level("full_name", valid_string_pattern=".*"),
-                    cll.exact_match_level("full_name", term_frequency_adjustments=True),
+                    cll.NullLevel("full_name", valid_string_pattern=".*"),
+                    cll.ExactMatchLevel("full_name", term_frequency_adjustments=True),
                     cll.ColumnsReversedLevel(
                         "first_name", "surname", tf_adjustment_column="full_name"
                     ),
-                    cll.exact_match_level(
+                    cll.ExactMatchLevel(
                         "first_name", term_frequency_adjustments=True
                     ),
-                    cll.else_level(),
+                    cll.ElseLevel(),
                 ],
             },
             cl.damerau_levenshtein_at_thresholds(

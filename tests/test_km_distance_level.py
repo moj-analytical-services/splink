@@ -115,7 +115,7 @@ def test_km_distance_levels(dialect, test_helpers):
                 long_col="long",
                 km_threshold=300,
             ),
-            cll.else_level(),
+            cll.ElseLevel(),
         ],
     }
 
