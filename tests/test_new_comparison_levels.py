@@ -78,31 +78,42 @@ def test_cll_creators_instantiate_levels(dialect):
     cll.LevenshteinLevel("city", 5).get_comparison_level(dialect)
 
 
-comparison_first_name = cl.LevenshteinAtThresholds("first_name", [2, 3])
-comparison_surname = cl.LevenshteinAtThresholds("surname", [3])
-comparison_city = cl.ExactMatch("city")
-comparison_email = cl.LevenshteinAtThresholds("email", 3)
-comparison_dob = cl.CustomComparison(
-    "dob",
+comparison_name = cl.CustomComparison(
+    "name",
     [
-        cll.NullLevel("dob"),
-        cll.ExactMatchLevel("dob"),
-        cll.CustomLevel("substr(dob_l, 1, 4) = substr(dob_r, 1, 4)", "year matches"),
+        cll.CustomLevel(
+            "(first_name_l IS NULL OR first_name_r IS NULL) AND "
+            "(surname_l IS NULL OR surname_r IS NULL) "
+        ).configure(is_null_level=True),
         {
-            "sql_condition": "substr(dob_l, 1, 2) = substr(dob_r, 1, 2)",
-            "label_for_charts": "century matches",
+            "sql_condition": (
+                "concat(first_name_l, surname_l) = concat(first_name_r, surname_r)"
+            ),
+            "label_for_charts": "both names matching"
         },
-        cll.LevenshteinLevel("dob", 3),
+        cll.CustomLevel(
+            (
+                "levenshtein("
+                "concat(first_name_l, surname_l), "
+                "concat(first_name_r, surname_r)"
+                ") <= 3"
+            ),
+            "both names fuzzy matching",
+        ),
+        cll.ExactMatchLevel("first_name"),
+        cll.ExactMatchLevel("surname"),
         cll.ElseLevel(),
     ],
-    "Date of birth comparison with exact, year, century and lev<=3 levels",
 )
+comparison_city = cl.ExactMatch("city")
+comparison_email = cl.LevenshteinAtThresholds("email", 3)
+comparison_dob = cl.LevenshteinAtThresholds("dob", [1, 2])
+
 
 cl_settings = {
     "link_type": "dedupe_only",
     "comparisons": [
-        comparison_first_name,
-        comparison_surname,
+        comparison_name,
         comparison_city,
         comparison_email,
         comparison_dob,
@@ -120,4 +131,5 @@ def test_cl_creators_run_predict(dialect, test_helpers):
     df = helper.load_frame_from_csv("./tests/datasets/fake_1000_from_splink_demos.csv")
 
     linker = helper.Linker(df, cl_settings, **helper.extra_linker_args())
+
     linker.predict()
