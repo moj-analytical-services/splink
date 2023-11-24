@@ -1,8 +1,7 @@
 import pandas as pd
 import pytest
 
-import splink.duckdb.comparison_level_library as clld
-import splink.spark.comparison_level_library as clls
+import splink.comparison_level_library as cll
 
 # from splink.duckdb.linker import DuckDBLinker
 from splink.spark.linker import SparkLinker
@@ -49,7 +48,7 @@ df = pd.DataFrame(
 )
 
 
-def postcode_levels(cll):
+def postcode_levels():
     return {
         "output_column_name": "postcode",
         "comparison_levels": [
@@ -69,7 +68,7 @@ def postcode_levels(cll):
     }
 
 
-def name_levels(cll):
+def name_levels():
     return {
         "output_column_name": "name",
         "comparison_levels": [
@@ -158,7 +157,7 @@ def test_regex(spark, Linker, df, level_set, record_pairs_gamma):
 
 
 def test_invalid_regex():
-    clld.ExactMatchLevel("postcode", regex_extract="^[A-Z]\\d")
-    clls.ExactMatchLevel("postcode", regex_extract="^[A-Z]{1}")
+    cll.ExactMatchLevel("postcode", regex_extract="^[A-Z]\\d")
+    cll.ExactMatchLevel("postcode", regex_extract="^[A-Z]{1}")
     with pytest.raises(SyntaxError):
-        clls.ExactMatchLevel("postcode", regex_extract="^[A-Z]\\d")
+        cll.ExactMatchLevel("postcode", regex_extract="^[A-Z]\\d")
