@@ -11,6 +11,10 @@ from sqlalchemy.types import (
 
 import splink.comparison_level_library as cll
 import splink.comparison_library as cl
+import splink.duckdb.blocking_rule_library as brl_duckdb
+import splink.postgres.blocking_rule_library as brl_postgres
+import splink.spark.blocking_rule_library as brl_spark
+import splink.sqlite.blocking_rule_library as brl_sqlite
 from splink.duckdb.linker import DuckDBLinker
 from splink.postgres.linker import PostgresLinker
 from splink.spark.linker import SparkLinker
@@ -54,10 +58,10 @@ class TestHelper(ABC):
     # def ctl(self):
     #     pass
 
-    # @property
-    # @abstractmethod
-    # def brl(self):
-    #     pass
+    @property
+    @abstractmethod
+    def brl(self):
+        pass
 
 
 class DuckDBTestHelper(TestHelper):
@@ -73,16 +77,12 @@ class DuckDBTestHelper(TestHelper):
         return "%Y-%m-%d"
 
     # @property
-    # def cl(self):
-    #     return cl_duckdb
-
-    # @property
     # def ctl(self):
     #     return ctl_duckdb
 
-    # @property
-    # def brl(self):
-    #     return brl_duckdb
+    @property
+    def brl(self):
+        return brl_duckdb
 
 
 class SparkTestHelper(TestHelper):
@@ -112,16 +112,12 @@ class SparkTestHelper(TestHelper):
         return df
 
     # @property
-    # def cl(self):
-    #     return cl_spark
-
-    # @property
     # def ctl(self):
     #     return ctl_spark
 
-    # @property
-    # def brl(self):
-    #     return brl_spark
+    @property
+    def brl(self):
+        return brl_spark
 
 
 class SQLiteTestHelper(TestHelper):
@@ -156,16 +152,12 @@ class SQLiteTestHelper(TestHelper):
         return self.convert_frame(super().load_frame_from_parquet(path))
 
     # @property
-    # def cl(self):
-    #     return cl_sqlite
-
-    # @property
     # def ctl(self):
     #     return ctl_sqlite
 
-    # @property
-    # def brl(self):
-    #     return brl_sqlite
+    @property
+    def brl(self):
+        return brl_sqlite
 
 
 class PostgresTestHelper(TestHelper):
@@ -213,16 +205,12 @@ class PostgresTestHelper(TestHelper):
         return self.convert_frame(super().load_frame_from_parquet(path))
 
     # @property
-    # def cl(self):
-    #     return cl_postgres
-
-    # @property
     # def ctl(self):
     #     return ctl_postgres
 
-    # @property
-    # def brl(self):
-    #     return brl_postgres
+    @property
+    def brl(self):
+        return brl_postgres
 
 
 class SplinkTestException(Exception):
