@@ -3,6 +3,8 @@ import logging
 import pandas as pd
 import pytest
 
+import splink.comparison_level_library as cll
+import splink.comparison_library as cl
 from splink import exceptions
 
 from .decorator import mark_with_dialects_excluding
@@ -12,8 +14,6 @@ from .decorator import mark_with_dialects_excluding
 @mark_with_dialects_excluding("sqlite")
 def test_datediff_levels(test_helpers, dialect):
     helper = test_helpers[dialect]
-    cl = helper.cl
-    cll = helper.cll
 
     # Capture differing comparison levels to allow unique settings generation
     df = pd.DataFrame(
@@ -66,25 +66,25 @@ def test_datediff_levels(test_helpers, dialect):
             cll.NullLevel("dob"),
             cll.ExactMatchLevel("dob"),
             cll.DatediffLevel(
-                date_col="dob",
+                col_name="dob",
                 date_threshold=30,
                 date_metric="day",
                 cast_strings_to_date=True,
             ),
             cll.DatediffLevel(
-                date_col="dob",
+                col_name="dob",
                 date_threshold=12,
                 date_metric="month",
                 cast_strings_to_date=True,
             ),
             cll.DatediffLevel(
-                date_col="dob",
+                col_name="dob",
                 date_threshold=5,
                 date_metric="year",
                 cast_strings_to_date=True,
             ),
             cll.DatediffLevel(
-                date_col="dob",
+                col_name="dob",
                 date_threshold=100,
                 date_metric="year",
                 cast_strings_to_date=True,
@@ -150,9 +150,7 @@ def test_datediff_levels(test_helpers, dialect):
 
 
 @mark_with_dialects_excluding("sqlite")
-def test_datediff_error_logger(test_helpers, dialect):
-    helper = test_helpers[dialect]
-    cl = helper.cl
+def test_datediff_error_logger(dialect):
     # Differing lengths between thresholds and units
     with pytest.raises(ValueError):
         cl.datediff_at_thresholds("dob", [1], ["day", "month", "year", "year"])
@@ -174,8 +172,6 @@ def test_datediff_error_logger(test_helpers, dialect):
 def test_datediff_with_str_casting(test_helpers, dialect, caplog):
     caplog.set_level(logging.INFO)
     helper = test_helpers[dialect]
-    cl = helper.cl
-    cll = helper.cll
 
     def simple_dob_linker(
         df,
@@ -213,28 +209,28 @@ def test_datediff_with_str_casting(test_helpers, dialect, caplog):
                 ),
                 cll.ExactMatchLevel("dob"),
                 cll.DatediffLevel(
-                    date_col="dob",
+                    col_name="dob",
                     date_threshold=30,
                     date_metric="day",
                     cast_strings_to_date=True,
                     date_format=date_format_param,
                 ),
                 cll.DatediffLevel(
-                    date_col="dob",
+                    col_name="dob",
                     date_threshold=12,
                     date_metric="month",
                     cast_strings_to_date=True,
                     date_format=date_format_param,
                 ),
                 cll.DatediffLevel(
-                    date_col="dob",
+                    col_name="dob",
                     date_threshold=5,
                     date_metric="year",
                     cast_strings_to_date=True,
                     date_format=date_format_param,
                 ),
                 cll.DatediffLevel(
-                    date_col="dob",
+                    col_name="dob",
                     date_threshold=100,
                     date_metric="year",
                     cast_strings_to_date=True,
