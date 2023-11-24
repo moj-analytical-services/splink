@@ -81,6 +81,20 @@ class CustomLevel(ComparisonLevelCreator):
         label_for_charts: str = None,
         base_dialect_str: str = None,
     ):
+        """Represents a comparison level with a custom sql expression
+
+        Must be in a form suitable for use in a SQL CASE WHEN expression
+        e.g. "substr(name_l, 1, 1) = substr(name_r, 1, 1)"
+
+        Args:
+            sql_condition (str): SQL condition to assess similarity
+            label_for_charts (str, optional): A label for this level to be used in
+                charts. Default None, so that `sql_condition` is used
+            base_dialect_str (str, optional): If specified, the SQL dialect that
+                this expression will parsed as when attempting to translate to
+                other backends
+
+        """
         self.sql_condition = sql_condition
         self.label_for_charts = label_for_charts
         self.base_dialect_str = base_dialect_str

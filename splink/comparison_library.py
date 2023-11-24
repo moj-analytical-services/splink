@@ -12,15 +12,27 @@ class CustomComparison(ComparisonCreator):
     def __init__(
         self,
         output_column_name: str,
-        comparison_levels: list[ComparisonLevelCreator],
+        comparison_levels: list[Union[ComparisonLevelCreator, dict]],
         description: str = None,
     ):
+        """
+        Represents a comparison of the data with custom supplied levels.
+
+        Args:
+            output_col_name (str): The column name to use to refer to this comparison
+            comparison_levels (list): A list of some combination of
+                `ComparisonLevelCreator` objects, or dicts. These represent the
+                similarity levels assessed by the comparison, in order of decreasing
+                specificity
+            description (str, optional): An optional description of the comparison
+        """
+
         self._output_column_name = output_column_name
         self._comparison_levels = comparison_levels
         self._description = description
 
     @staticmethod
-    def _convert_to_creator(cl: Union[dict, ComparisonLevelCreator]):
+    def _convert_to_creator(cl: Union[ComparisonLevelCreator, dict]):
         if isinstance(cl, ComparisonLevelCreator):
             return cl
         if isinstance(cl, dict):
