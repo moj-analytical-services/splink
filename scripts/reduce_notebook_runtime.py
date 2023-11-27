@@ -8,6 +8,17 @@ def modify_notebook(file_path):
         data = json.load(file)
 
     changed = False
+
+    is_febrl_notebook = file_path.endswith("febrl4.ipynb") or file_path.endswith(
+        "febrl3.ipynb"
+    )
+
+    # if file_path.endswith("febrl4.ipynb"):
+    #     # These cells need a very high max_pairs value
+    #     # otherwise you get divide by zero errors.  Easiest just to delete
+    #     data["cells"] = data["cells"][:19]
+    #     changed = True
+
     for cell in data["cells"]:
         if cell["cell_type"] == "code":
             source = cell["source"]
@@ -15,15 +26,20 @@ def modify_notebook(file_path):
             for line in source:
                 if "splink_datasets" in line and "=" in line:
                     parts = line.split("=")
-                    parts[1] = parts[1].strip() + ".head(1000)"
+                    parts[1] = parts[1].strip() + ".head(400)"
                     new_line = " = ".join(parts) + "\n"
                     new_source.append(new_line)
                     changed = True
                 elif "estimate_u_using_random_sampling(" in line:
-                    # Use regular expression to replace max_pairs value
                     new_line = (
-                        re.sub(r"max_pairs=\d+(\.\d+)?[eE]\d+", "max_pairs=1e6", line)
+                        re.sub(r"max_pairs=\d+(\.\d+)?[eE]\d+", "max_pairs=1e5", line)
                         + "\n"
+                    )
+                    new_source.append(new_line)
+                    changed = True
+                elif is_febrl_notebook and "ctl.name_comparison" in line:
+                    new_line = (
+                        line.replace("ctl.name_comparison", "cl.exact_match") + "\n"
                     )
                     new_source.append(new_line)
                     changed = True
