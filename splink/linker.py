@@ -2121,14 +2121,11 @@ class Linker:
 
         """
 
-        # Get unique row id column name from settings
-        unique_id_col = self._settings_obj._unique_id_column_name
-
         sqls = _size_density_sql(
+            self,
             df_predict,
             df_clustered,
             threshold_match_probability,
-            _unique_id_col=unique_id_col,
         )
 
         for sql in sqls:
