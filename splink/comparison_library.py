@@ -356,8 +356,8 @@ class ArrayIntersectAtSizes(ComparisonCreator):
         comma_separated_thresholds_string = ", ".join(map(str, self.thresholds))
         plural = "s" if len(self.thresholds) > 1 else ""
         return (
-            f"Array intersection at minimum size{plural} {comma_separated_thresholds_string} vs. "
-            "anything else"
+            f"Array intersection at minimum size{plural} "
+            f"{comma_separated_thresholds_string} vs. anything else"
         )
 
     def create_output_column_name(self) -> str:
