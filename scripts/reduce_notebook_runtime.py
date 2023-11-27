@@ -15,7 +15,7 @@ def modify_notebook(file_path):
             for line in source:
                 if "splink_datasets" in line and "=" in line:
                     parts = line.split("=")
-                    parts[1] = parts[1].strip() + ".head(100)"
+                    parts[1] = parts[1].strip() + ".head(1000)"
                     new_line = " = ".join(parts) + "\n"
                     new_source.append(new_line)
                     changed = True
