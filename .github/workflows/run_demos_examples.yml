@@ -60,6 +60,12 @@ jobs:
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction
       #----------------------------------------------
+      # Modify the notebooks to reduce the amount of data processed and speed up the tests
+      #----------------------------------------------
+      - name: Modify Notebooks
+        run: |
+          python scripts/modify_notebooks.py
+      #----------------------------------------------
       # Make sure that the demo notebooks run without error
       #----------------------------------------------
       - name: Test DuckDB example notebooks with pytest
