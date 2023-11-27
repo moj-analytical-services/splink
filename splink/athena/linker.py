@@ -7,6 +7,7 @@ import awswrangler as wr
 import boto3
 import numpy as np
 import pandas as pd
+from typing import Union
 
 from ..input_column import InputColumn
 from ..linker import Linker
@@ -512,7 +513,7 @@ class AthenaLinker(Linker):
     def drop_tables_in_current_splink_run(
         self,
         delete_s3_folders: bool = True,
-        tables_to_exclude: list[SplinkDataFrame] = [],
+        tables_to_exclude: list[Union[SplinkDataFrame, str]] = [],
     ):
         """Run a cleanup process for the tables created
         by the current splink linker.
@@ -525,17 +526,22 @@ class AthenaLinker(Linker):
                 backing data contained on s3. If False, the tables created
                 by splink will be removed from your database, but the parquet
                 outputs will remain on s3. Defaults to True.
-            tables_to_exclude (list[SplinkDataFrame], optional): A list
+            tables_to_exclude (list[SplinkDataFrame | str], optional): A list
                 of input tables you wish to add to an ignore list. These
                 will not be removed during garbage collection.
         """
 
         tables_to_exclude = ensure_is_list(tables_to_exclude)
-        tables_to_exclude = [df.physical_name for df in tables_to_exclude]
+        tables_to_exclude = {
+            df.physical_name if isinstance(df, SplinkDataFrame) else df
+            for df in tables_to_exclude
+        }
 
         # Exclude tables that the user doesn't want to delete
         cached_tables = self._intermediate_table_cache
 
+        # Loop through our cached tables and delete all those not in our exclusion
+        # list.
         for splink_df in list(cached_tables.values()):
             if (splink_df.physical_name not in tables_to_exclude) and (
                 splink_df.templated_name not in tables_to_exclude
@@ -543,3 +549,8 @@ class AthenaLinker(Linker):
                 splink_df.drop_table_from_database_and_remove_from_cache(
                     force_non_splink_table=False, delete_s3_data=delete_s3_folders
                 )
+        # As our cache contains duplicate term frequency tables and AWSwrangler
+        # run deletions asynchronously, add any previously seen tables to the
+        # list of tables to exclude from deletion.
+        # This prevents attempts to delete a table that has already been purged.
+        tables_to_exclude.add(splink_df.physical_name)
