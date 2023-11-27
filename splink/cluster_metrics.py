@@ -1,9 +1,11 @@
 from splink.input_column import InputColumn
+from splink.unique_id_concat import (
+    _composite_unique_id_from_nodes_sql,
+    _composite_unique_id_from_edges_sql,
+)
 
 
-def _size_density_sql(
-    df_predict, df_clustered, threshold_match_probability, _unique_id_col
-):
+def _size_density_sql(self, df_predict, df_clustered, threshold_match_probability):
     """Generates sql for computing cluster size and density at a given threshold.
 
     Args:
@@ -19,38 +21,40 @@ def _size_density_sql(
         sql string for computing cluster size and density
     """
 
-    # Get physical table names from Splink dataframes
-    edges_table = df_predict.physical_name
-    clusters_table = df_clustered.physical_name
-
-    input_col = InputColumn(_unique_id_col)
-    unique_id_col_l = input_col.name_l
+    # Get unique id columns from linker
+    uid_cols = self._settings_obj._unique_id_input_columns
+    # Create unique id for left-hand edges from unique (eg person) id and source dataset
+    uid_edges_l = _composite_unique_id_from_edges_sql(uid_cols, "l")
+    # Create unique id for clusters table
+    uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
     sqls = []
+    # Count edges per node at or above a given match probability
     sql = f"""
         SELECT
-            {unique_id_col_l},
+            {uid_edges_l} AS unique_id_l,
             COUNT(*) AS count_edges
-        FROM {edges_table}
+        FROM {df_predict.physical_name}
         WHERE match_probability >= {threshold_match_probability}
-        GROUP BY {unique_id_col_l}
+        GROUP BY {uid_edges_l}
     """
-
-    sql = {"sql": sql, "output_table_name": "__splink__count_edges"}
+    sql = {"sql": sql, "output_table_name": "__splink__edges_per_node"}
     sqls.append(sql)
 
+    # Count nodes and edges per cluster
     sql = f"""
         SELECT
             c.cluster_id,
             count(*) AS n_nodes,
             sum(e.count_edges) AS n_edges
-        FROM {clusters_table} AS c
-        LEFT JOIN __splink__count_edges e ON c.{_unique_id_col} = e.{unique_id_col_l}
+        FROM {df_clustered.physical_name} AS c
+        LEFT JOIN __splink__edges_per_node e ON c.{uid_clusters} = e.unique_id_l
         GROUP BY c.cluster_id
     """
     sql = {"sql": sql, "output_table_name": "__splink__counts_per_cluster"}
     sqls.append(sql)
 
+    # Compute density of each cluster
     sql = """
         SELECT
             cluster_id,
