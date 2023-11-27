@@ -41,14 +41,18 @@ class AthenaDataFrame(SplinkDataFrame):
     def validate(self):
         pass
 
-    def _drop_table_from_database(self, force_non_splink_table=False, delete_s3_data=True):
+    def _drop_table_from_database(
+        self, force_non_splink_table=False, delete_s3_data=True
+    ):
         # Check folder and table set for deletion
         self._check_drop_folder_created_by_splink(force_non_splink_table)
         self._check_drop_table_created_by_splink(force_non_splink_table)
 
         # Delete the table from s3 and your database
-        self.linker._drop_table_from_database_if_exists(self.physical_name)
-        if delete_s3_data:
+        table_deleted = self.linker._drop_table_from_database_if_exists(
+            self.physical_name
+        )
+        if delete_s3_data and table_deleted:
             self.linker._delete_table_from_s3(self.physical_name)
 
     def drop_table_from_database_and_remove_from_cache(
@@ -57,8 +61,7 @@ class AthenaDataFrame(SplinkDataFrame):
         delete_s3_data=True,
     ):
         self._drop_table_from_database(
-            force_non_splink_table=force_non_splink_table,
-            delete_s3_data=delete_s3_data
+            force_non_splink_table=force_non_splink_table, delete_s3_data=delete_s3_data
         )
         self.linker._remove_splinkdataframe_from_cache(self)
 
@@ -534,8 +537,9 @@ class AthenaLinker(Linker):
         cached_tables = self._intermediate_table_cache
 
         for splink_df in list(cached_tables.values()):
-            if splink_df.physical_name not in tables_to_exclude:
+            if (splink_df.physical_name not in tables_to_exclude) and (
+                splink_df.templated_name not in tables_to_exclude
+            ):
                 splink_df.drop_table_from_database_and_remove_from_cache(
-                    force_non_splink_table=False,
-                    delete_s3_data=delete_s3_folders
+                    force_non_splink_table=False, delete_s3_data=delete_s3_folders
                 )
