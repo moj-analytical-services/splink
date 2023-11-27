@@ -1,5 +1,5 @@
-import os
 import json
+import os
 import re
 
 
@@ -55,7 +55,7 @@ def modify_notebook(file_path):
 
 
 def process_directory(directory):
-    for dirpath, dirnames, filenames in os.walk(directory):
+    for dirpath, _dirnames, filenames in os.walk(directory):
         for filename in [f for f in filenames if f.endswith(".ipynb")]:
             modify_notebook(os.path.join(dirpath, filename))
 
