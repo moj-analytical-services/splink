@@ -19,7 +19,11 @@ class ComparisonLevelCreator(ABC):
     def get_comparison_level(self, sql_dialect_str: str) -> ComparisonLevel:
         """sql_dialect_str is a string to make this method easier to use
         for the end user - otherwise they'd need to import a SplinkDialect"""
-        return ComparisonLevel(self.create_level_dict(sql_dialect_str))
+        sql_dialect = SplinkDialect.from_string(sql_dialect_str)
+        return ComparisonLevel(
+            self.create_level_dict(sql_dialect_str),
+            sql_dialect=sql_dialect.sqlglot_name,
+        )
 
     @final
     def create_level_dict(self, sql_dialect_str: str) -> dict:
