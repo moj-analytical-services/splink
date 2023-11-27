@@ -2152,6 +2152,7 @@ class Linker:
         composite_uid_clusters = _composite_unique_id_from_nodes_sql(uid_cols)
 
         sqls = _size_density_sql(
+            self,
             df_predict,
             df_clustered,
             threshold_match_probability,
