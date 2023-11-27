@@ -59,10 +59,6 @@ jobs:
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction
-      - name: Generate cache key
-        id: generate-cache-key
-        run: echo "::set-output name=cache-key::venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}"
-
       #----------------------------------------------
       # Modify the notebooks to reduce the amount of data processed and speed up the tests
       #----------------------------------------------
