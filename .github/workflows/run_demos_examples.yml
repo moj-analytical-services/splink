@@ -5,18 +5,17 @@ on:
     branches:
       - master
     paths:
-      - splink/**
-      - docs/demos/examples/**
-      - pyproject.toml
+      - "splink/**"
+      - "docs/demos/examples/**"
+      - "pyproject.toml"
 
   workflow_dispatch:
 
 jobs:
-  build:
+  setup-and-modify-notebooks:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9"]
+    outputs:
+      cache-key: ${{ steps.cache-keys.outputs.cache-key }}
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
@@ -65,24 +64,29 @@ jobs:
       - name: Modify Notebooks to reduce data size
         run: |
           python scripts/reduce_notebook_runtime.py
-      #----------------------------------------------
-      # Make sure that the demo notebooks run without error
-      #----------------------------------------------
-      - name: Test DuckDB example notebooks with pytest
+
+  test-notebooks:
+    needs: setup-and-modify-notebooks
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9"]
+        test-group: ["duckdb", "spark", "sqlite"]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Load cached venv
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: ${{ needs.setup-and-modify-notebooks.outputs.cache-key }}
+      - name: Install dependencies
+        run: poetry install --no-interaction
+      - name: Test ${{ matrix.test-group }} example notebooks with pytest
         run: |
           source .venv/bin/activate
           pip install pytest-xdist
-          python -m pytest --nbmake -n=auto --nbmake-kernel=python3 --durations=0 docs/demos/examples/duckdb/*ipynb
-      - name: Test Spark example notebooks with pytest
-        run: |
-          source .venv/bin/activate
-          pip install pytest-xdist
-          python -m pytest --nbmake -n=auto --nbmake-kernel=python3 --durations=0 docs/demos/examples/spark/*ipynb
-      #- name: Test Athena example notebooks with pytest
-      #  run: |
-      #    python -m pytest --nbmake -n=auto --nbmake-kernel=python3 --durations=0 examples/athena/*ipynb
-      - name: Test SQLite example notebooks with pytest
-        run: |
-          source .venv/bin/activate
-          pip install pytest-xdist
-          python -m pytest --nbmake -n=auto --nbmake-kernel=python3 --durations=0 docs/demos/examples/sqlite/*ipynb
+          python -m pytest --nbmake -n=auto --nbmake-kernel=python3 --durations=0 docs/demos/examples/${{ matrix.test-group }}/*ipynb
