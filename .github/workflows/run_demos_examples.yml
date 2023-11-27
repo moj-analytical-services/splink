@@ -14,6 +14,9 @@ on:
 jobs:
   setup-and-modify-notebooks:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9"]
     outputs:
       cache-key: ${{ steps.cache-keys.outputs.cache-key }}
     steps:
@@ -73,18 +76,6 @@ jobs:
         python-version: ["3.9"]
         test-group: ["duckdb", "spark", "sqlite"]
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Load cached venv
-        uses: actions/cache@v2
-        with:
-          path: .venv
-          key: ${{ needs.setup-and-modify-notebooks.outputs.cache-key }}
-      - name: Install dependencies
-        run: poetry install --no-interaction
       - name: Test ${{ matrix.test-group }} example notebooks with pytest
         run: |
           source .venv/bin/activate
