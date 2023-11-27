@@ -64,7 +64,7 @@ jobs:
       #----------------------------------------------
       - name: Modify Notebooks to reduce data size
         run: |
-          python scripts/modify_notebooks.py
+          python scripts/reduce_notebook_runtime.py
       #----------------------------------------------
       # Make sure that the demo notebooks run without error
       #----------------------------------------------
