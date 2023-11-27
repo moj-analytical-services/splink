@@ -62,9 +62,9 @@ jobs:
       #----------------------------------------------
       # Modify the notebooks to reduce the amount of data processed and speed up the tests
       #----------------------------------------------
-      - name: Modify Notebooks
+      - name: Modify Notebooks to reduce data size
         run: |
-          python scripts/modify_notebooks.py
+          python scripts/reduce_notebook_runtime.py
       #----------------------------------------------
       # Make sure that the demo notebooks run without error
       #----------------------------------------------
