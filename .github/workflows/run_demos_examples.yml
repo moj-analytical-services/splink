@@ -12,13 +12,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  setup-and-modify-notebooks:
+  test-notebooks:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.9"]
-    outputs:
-      cache-key: ${{ steps.cache-keys.outputs.cache-key }}
+        test-group: ["duckdb", "spark", "sqlite"]
     steps:
       #----------------------------------------------
       #       check-out repo and set-up python
@@ -45,7 +44,6 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
-
       #----------------------------------------------
       #       load cached venv if cache exists
       #----------------------------------------------
@@ -61,35 +59,15 @@ jobs:
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction
-      - name: Generate cache key
-        id: generate-cache-key
-        run: echo "::set-output name=cache-key::venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}"
-
       #----------------------------------------------
       # Modify the notebooks to reduce the amount of data processed and speed up the tests
       #----------------------------------------------
       - name: Modify Notebooks to reduce data size
         run: |
           python scripts/reduce_notebook_runtime.py
-
-  test-notebooks:
-    needs: setup-and-modify-notebooks
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.9"]
-        test-group: ["duckdb", "spark", "sqlite"]
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Load cached venv
-        uses: actions/cache@v2
-        with:
-          path: .venv
-          key: ${{ needs.setup-and-modify-notebooks.outputs.cache-key }}
+      #----------------------------------------------
+      # Test each notebook group in parallel
+      #----------------------------------------------
       - name: Test ${{ matrix.test-group }} example notebooks with pytest
         run: |
           source .venv/bin/activate
