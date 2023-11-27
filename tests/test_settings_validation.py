@@ -514,11 +514,9 @@ def test_validate_sql_dialect():
 
 
 def test_comparison_validation():
-    import splink.athena.comparison_level_library as ath_cll
-    import splink.duckdb.comparison_level_library as cll
-    import splink.spark.comparison_level_library as sp_cll
+    import splink.comparison_level_library as cll
+    from splink.comparison_library import ExactMatch
     from splink.exceptions import InvalidDialect
-    from splink.spark.comparison_library import exact_match
 
     # Check blank settings aren't flagged
     # Trimmed settings (settings w/ only the link type, for example)
@@ -535,22 +533,22 @@ def test_comparison_validation():
     }
 
     # cll instead of cl
-    email_cc = cll.ExactMatchLevel("email")
+    email_cc = cll.ExactMatchLevel("email").get_comparison_level("duckdb")
     settings["comparisons"][3] = email_cc
     # random str
     settings["comparisons"][4] = "help"
     # missing key dict key and replaced w/ `comparison_lvls`
     settings["comparisons"].append(email_no_comp_level)
     # Check invalid import is detected
-    settings["comparisons"].append(exact_match("test"))
+    settings["comparisons"].append(ExactMatch("test").get_comparison("spark"))
     # mismashed comparison
     settings["comparisons"].append(
         {
             "comparison_levels": [
-                sp_cll.NullLevel("test"),
+                cll.NullLevel("test").get_comparison_level("spark"),
                 # Invalid Spark cll
-                ath_cll.ExactMatchLevel("test"),
-                cll.ElseLevel(),
+                cll.ExactMatchLevel("test").get_comparison_level("athena"),
+                cll.ElseLevel().get_comparison_level("duckdb"),
             ]
         }
     )
@@ -567,7 +565,7 @@ def test_comparison_validation():
 
     # Check our errors are raised
     errors = error_logger.raw_errors
-    assert len(error_logger.raw_errors) == len(settings["comparisons"]) - 3
+    assert len(errors) == len(settings["comparisons"]) - 3
 
     # Our expected error types and part of the corresponding error text
     expected_errors = (
