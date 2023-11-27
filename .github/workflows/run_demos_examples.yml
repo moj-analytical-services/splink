@@ -32,8 +32,8 @@ jobs:
       - name: Load cached Poetry installation
         uses: actions/cache@v2
         with:
-          path: ~/.local  # the path depends on the OS
-          key: poetry-0  # increment to reset cache
+          path: ~/.local # the path depends on the OS
+          key: poetry-0 # increment to reset cache
       #----------------------------------------------
       #  -----  install & configure poetry  -----
       #----------------------------------------------
@@ -65,15 +65,15 @@ jobs:
       - name: Test DuckDB example notebooks with pytest
         run: |
           source .venv/bin/activate
-          python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/examples/duckdb/*ipynb
+          python -m pytest --nbmake --nbmake-kernel=python3 --durations=0 docs/demos/examples/duckdb/*ipynb
       - name: Test Spark example notebooks with pytest
         run: |
           source .venv/bin/activate
-          python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/examples/spark/*ipynb
+          python -m pytest --nbmake --nbmake-kernel=python3 --durations=0 docs/demos/examples/spark/*ipynb
       #- name: Test Athena example notebooks with pytest
       #  run: |
-      #    python -m pytest --nbmake --nbmake-kernel=python3 examples/athena/*ipynb
+      #    python -m pytest --nbmake --nbmake-kernel=python3 --durations=0 examples/athena/*ipynb
       - name: Test SQLite example notebooks with pytest
         run: |
           source .venv/bin/activate
-          python -m pytest --nbmake --nbmake-kernel=python3 docs/demos/examples/sqlite/*ipynb
+          python -m pytest --nbmake --nbmake-kernel=python3 --durations=0 docs/demos/examples/sqlite/*ipynb
