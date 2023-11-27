@@ -1,7 +1,6 @@
-from splink.input_column import InputColumn
 from splink.unique_id_concat import (
-    _composite_unique_id_from_nodes_sql,
     _composite_unique_id_from_edges_sql,
+    _composite_unique_id_from_nodes_sql,
 )
 
 
